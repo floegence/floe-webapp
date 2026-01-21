@@ -146,12 +146,12 @@ export function Shell(props: ShellProps) {
           <Show when={!layout.sidebarCollapsed()}>
             <Sidebar
               width={layout.sidebarWidth()}
-              resizer={(
+              resizer={
                 <ResizeHandle
-                direction="horizontal"
-                onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
-              />
-              )}
+                  direction="horizontal"
+                  onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
+                />
+              }
             >
               {renderSidebarContent(layout.sidebarActiveTab())}
             </Sidebar>
