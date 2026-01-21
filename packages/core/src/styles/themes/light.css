@@ -1,0 +1,79 @@
+/* Light theme - Warm paper aesthetic */
+:root,
+.light {
+  color-scheme: light;
+
+  /* Base - Warm creamy paper */
+  --background: hsl(38 20% 98%);
+  --foreground: hsl(240 5% 10%);
+
+  /* Primary - Deep blue-black ink */
+  --primary: hsl(240 4% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+
+  /* Secondary - Warm muted */
+  --secondary: hsl(38 10% 94%);
+  --secondary-foreground: hsl(240 5% 26%);
+
+  /* Muted - Warm gray */
+  --muted: hsl(38 10% 94%);
+  --muted-foreground: hsl(240 4% 46%);
+
+  /* Accent - Subtle warm highlight */
+  --accent: hsl(38 15% 94%);
+  --accent-foreground: hsl(240 5% 10%);
+
+  /* Border - Warm gray */
+  --border: hsl(38 8% 88%);
+  --input: hsl(38 8% 88%);
+  --ring: hsl(240 4% 10%);
+
+  /* Card */
+  --card: hsl(38 15% 99%);
+  --card-foreground: hsl(240 5% 10%);
+
+  /* Popover */
+  --popover: hsl(38 15% 99%);
+  --popover-foreground: hsl(240 5% 10%);
+
+  /* Status colors - Using OKLCH for perceptual consistency */
+  --success: oklch(0.68 0.16 150);
+  --success-foreground: hsl(0 0% 100%);
+  --warning: oklch(0.78 0.14 80);
+  --warning-foreground: hsl(240 5% 10%);
+  --error: oklch(0.65 0.2 25);
+  --error-foreground: hsl(0 0% 100%);
+  --info: oklch(0.65 0.13 250);
+  --info-foreground: hsl(0 0% 100%);
+
+  /* Sidebar - Slightly warmer */
+  --sidebar: hsl(38 15% 97.5%);
+  --sidebar-foreground: hsl(240 5% 10%);
+  --sidebar-primary: hsl(240 4% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(38 15% 94%);
+  --sidebar-accent-foreground: hsl(240 5% 10%);
+  --sidebar-border: hsl(38 8% 90%);
+  --sidebar-ring: hsl(240 4% 10%);
+
+  /* Activity bar */
+  --activity-bar: hsl(38 10% 96%);
+  --activity-bar-foreground: hsl(240 4% 46%);
+  --activity-bar-foreground-active: hsl(240 5% 10%);
+  --activity-bar-badge: hsl(240 4% 10%);
+  --activity-bar-badge-foreground: hsl(0 0% 98%);
+
+  /* Terminal */
+  --terminal-background: hsl(240 5% 10%);
+  --terminal-foreground: hsl(0 0% 92%);
+
+  /* Chart colors */
+  --chart-1: hsl(240 4% 10%);
+  --chart-2: hsl(38 15% 60%);
+  --chart-3: oklch(0.65 0.13 250);
+  --chart-4: oklch(0.68 0.16 150);
+  --chart-5: oklch(0.78 0.14 80);
+
+  /* Radius */
+  --radius: 0.5rem;
+}
