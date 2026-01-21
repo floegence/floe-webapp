@@ -4,8 +4,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@floe/core": ["../../packages/core/src/index.ts"],
-      "@floe/protocol": ["../../packages/protocol/src/index.ts"]
+      "@floegence/floe-webapp-core": ["../../packages/core/src/index.ts"],
+      "@floegence/floe-webapp-protocol": ["../../packages/protocol/src/index.ts"]
     }
   },
   "include": ["src/**/*"],

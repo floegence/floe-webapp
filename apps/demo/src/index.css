@@ -4,4 +4,4 @@
 @source './**/*.{ts,tsx}';
 
 /* Floe core ships a precompiled stylesheet for its components + tokens. */
-@import '@floe/core/styles';
+@import '@floegence/floe-webapp-core/styles';

@@ -67,7 +67,7 @@ floe-webapp/
 
 ## Packages
 
-### @floe/core
+### @floegence/floe-webapp-core
 
 Core UI framework with:
 
@@ -78,7 +78,7 @@ Core UI framework with:
 - **Hooks**: useMediaQuery, useDebounce, useResizeObserver, useKeybind, usePersisted
 - **Utilities**: cn (class names), persist (localStorage), keybind (keyboard shortcuts), animations
 
-### @floe/protocol
+### @floegence/floe-webapp-protocol
 
 Protocol layer for communication:
 
@@ -96,9 +96,9 @@ import {
   Shell,
   CommandPalette,
   NotificationContainer,
-} from '@floe/core';
-import '@floe/core/styles';
-import { ProtocolProvider } from '@floe/protocol';
+} from '@floegence/floe-webapp-core';
+import '@floegence/floe-webapp-core/styles';
+import { ProtocolProvider } from '@floegence/floe-webapp-protocol';
 import { onMount } from 'solid-js';
 
 function AppContent() {
@@ -133,7 +133,7 @@ export function App() {
 
 Notes:
 
-- `@floe/core/styles` is shipped as a precompiled CSS file, so downstream apps can get the full Floe UI look without running Tailwind.
+- `@floegence/floe-webapp-core/styles` is shipped as a precompiled CSS file, so downstream apps can get the full Floe UI look without running Tailwind.
 - If your app uses Tailwind for its own UI, keep that setup in your app; Floe styles can be imported alongside it.
 
 ## Tech Stack

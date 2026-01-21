@@ -38,10 +38,10 @@ importers:
 
   apps/demo:
     dependencies:
-      '@floe/core':
+      '@floegence/floe-webapp-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@floe/protocol':
+      '@floegence/floe-webapp-protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       solid-js:

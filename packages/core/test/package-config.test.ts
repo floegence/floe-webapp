@@ -6,7 +6,7 @@ function readJson(path: string) {
   return JSON.parse(readFileSync(resolve(__dirname, '..', path), 'utf-8')) as Record<string, unknown>;
 }
 
-describe('@floe/core package config', () => {
+describe('@floegence/floe-webapp-core package config', () => {
   it('should export dist entrypoints and styles', () => {
     const pkg = readJson('package.json');
 
@@ -25,4 +25,3 @@ describe('@floe/core package config', () => {
     expect(pkg.files).toEqual(['dist']);
   });
 });
-

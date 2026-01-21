@@ -15,6 +15,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     // Don't pre-bundle workspace packages
-    exclude: ['@floe/core', '@floe/protocol'],
+    exclude: ['@floegence/floe-webapp-core', '@floegence/floe-webapp-protocol'],
   },
 });

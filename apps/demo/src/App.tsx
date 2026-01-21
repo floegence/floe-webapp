@@ -23,8 +23,12 @@ import {
   Moon,
   GitBranch,
   Bell,
-} from '@floe/core';
-import { ProtocolProvider, useProtocol, type ConnectConfig } from '@floe/protocol';
+} from '@floegence/floe-webapp-core';
+import {
+  ProtocolProvider,
+  useProtocol,
+  type ConnectConfig,
+} from '@floegence/floe-webapp-protocol';
 
 // Demo sidebar components
 function FileExplorer() {

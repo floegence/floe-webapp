@@ -1,5 +1,5 @@
 {
-  "name": "@floe/demo",
+  "name": "@floegence/floe-webapp-demo",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@floe/core": "workspace:*",
-    "@floe/protocol": "workspace:*",
+    "@floegence/floe-webapp-core": "workspace:*",
+    "@floegence/floe-webapp-protocol": "workspace:*",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {

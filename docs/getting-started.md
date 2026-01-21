@@ -19,11 +19,11 @@ pnpm dev
 
 `pnpm dev` will:
 
-- Build `@floe/core` and `@floe/protocol` into `dist/`
+- Build `@floegence/floe-webapp-core` and `@floegence/floe-webapp-protocol` into `dist/`
 - Start them in watch mode
 - Start the demo app dev server (`apps/demo`)
 
-The demo uses the VSCode-style Shell layout from `@floe/core`:
+The demo uses the VSCode-style Shell layout from `@floegence/floe-webapp-core`:
 
 - Top bar (command/search)
 - Activity bar (left)
@@ -36,13 +36,13 @@ The demo uses the VSCode-style Shell layout from `@floe/core`:
 Install the packages:
 
 ```bash
-pnpm add @floe/core @floe/protocol solid-js
+pnpm add @floegence/floe-webapp-core @floegence/floe-webapp-protocol solid-js
 ```
 
 Import Floe styles once at your app entry:
 
 ```ts
-import '@floe/core/styles';
+import '@floegence/floe-webapp-core/styles';
 ```
 
 Then wire up the providers and the Shell:
@@ -56,8 +56,8 @@ import {
   useComponentRegistry,
   useComponentContextFactory,
   type FloeComponent,
-} from '@floe/core';
-import { ProtocolProvider } from '@floe/protocol';
+} from '@floegence/floe-webapp-core';
+import { ProtocolProvider } from '@floegence/floe-webapp-protocol';
 import { onMount } from 'solid-js';
 
 function AppContent() {
@@ -94,12 +94,12 @@ export function App() {
 Notes:
 
 - `Shell` can be driven by `ComponentRegistry` (sidebar + status bar) without passing `activityItems`/`sidebarContent`.
-- `@floe/protocol` is optional. Keep it outside `@floe/core` and inject it into component context when you need it.
+- `@floegence/floe-webapp-protocol` is optional. Keep it outside `@floegence/floe-webapp-core` and inject it into component context when you need it.
 
 ### Example: a minimal sidebar component
 
 ```tsx
-import { Files, type FloeComponent } from '@floe/core';
+import { Files, type FloeComponent } from '@floegence/floe-webapp-core';
 
 export const filesComponent: FloeComponent = {
   id: 'files',

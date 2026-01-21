@@ -21,14 +21,14 @@ function runOnce(command, args) {
 }
 
 await Promise.all([
-  runOnce('pnpm', ['--filter', '@floe/core', 'build']),
-  runOnce('pnpm', ['--filter', '@floe/protocol', 'build']),
+  runOnce('pnpm', ['--filter', '@floegence/floe-webapp-core', 'build']),
+  runOnce('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'build']),
 ]);
 
 const children = [
-  run('pnpm', ['--filter', '@floe/core', 'dev']),
-  run('pnpm', ['--filter', '@floe/protocol', 'dev']),
-  run('pnpm', ['--filter', '@floe/demo', 'dev']),
+  run('pnpm', ['--filter', '@floegence/floe-webapp-core', 'dev']),
+  run('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'dev']),
+  run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev']),
 ];
 
 const shutdown = (signal) => {
