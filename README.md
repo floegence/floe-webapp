@@ -18,10 +18,10 @@ A professional VSCode-style web application framework built with Solid.js.
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start dev (builds core/protocol first, then starts watchers + demo)
 pnpm dev
 
-# Run local CI (lint + typecheck + test + build)
+# Run local CI (lint + typecheck + test + build + verify)
 make check
 ```
 
@@ -130,6 +130,11 @@ export function App() {
   );
 }
 ```
+
+Notes:
+
+- `@floe/core/styles` is shipped as a precompiled CSS file, so downstream apps can get the full Floe UI look without running Tailwind.
+- If your app uses Tailwind for its own UI, keep that setup in your app; Floe styles can be imported alongside it.
 
 ## Tech Stack
 

@@ -24,6 +24,15 @@ export default [
     },
   },
   {
+    files: ['scripts/**/*.mjs', 'packages/**/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['**/dist/**', '**/node_modules/**', '**/*.config.*'],
   },
 ];

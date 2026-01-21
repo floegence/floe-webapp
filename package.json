@@ -5,9 +5,10 @@
   "description": "A professional VSCode-style web application framework",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @floe/demo dev",
+    "dev": "node scripts/dev.mjs",
     "build": "pnpm -r build",
-    "lint": "eslint packages apps --ext .ts,.tsx",
+    "verify": "node scripts/verify-dist.mjs",
+    "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest",

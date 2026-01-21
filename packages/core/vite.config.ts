@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   build: {
+    emptyOutDir: false,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'FloeCore',
@@ -18,7 +19,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['solid-js', 'solid-js/web', 'solid-js/store', '@solidjs/router'],
+      external: ['solid-js', 'solid-js/web', 'solid-js/store'],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',

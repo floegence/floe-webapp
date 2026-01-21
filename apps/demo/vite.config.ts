@@ -5,13 +5,7 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [
-    solid({
-      // Include core package in Solid compilation
-      include: [
-        /\.tsx$/,
-        /packages\/core\/.*\.tsx?$/,
-      ],
-    }),
+    solid(),
     tailwindcss(),
   ],
   resolve: {

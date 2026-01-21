@@ -1,3 +1,7 @@
-@import '@floe/core/styles';
+@import 'tailwindcss';
 
-/* Demo-specific overrides if needed */
+/* Scan demo sources so Tailwind utilities used by the demo are generated. */
+@source './**/*.{ts,tsx}';
+
+/* Floe core ships a precompiled stylesheet for its components + tokens. */
+@import '@floe/core/styles';
