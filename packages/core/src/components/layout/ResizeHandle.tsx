@@ -13,8 +13,10 @@ export interface ResizeHandleProps {
 export function ResizeHandle(props: ResizeHandleProps) {
   const [isDragging, setIsDragging] = createSignal(false);
   let startPos = 0;
+  let lastPos = 0;
   let activePointerId: number | null = null;
   let handleRef: HTMLDivElement | undefined;
+  let rafId: number | null = null;
 
   const setGlobalDraggingStyles = (dragging: boolean) => {
     if (typeof document === 'undefined') return;
@@ -28,6 +30,17 @@ export function ResizeHandle(props: ResizeHandleProps) {
 
   const stopDragging = () => {
     if (!isDragging()) return;
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    const delta = lastPos - startPos;
+    if (delta !== 0) {
+      props.onResize(delta);
+      startPos = lastPos;
+    }
+
     setIsDragging(false);
     activePointerId = null;
     setGlobalDraggingStyles(false);
@@ -43,6 +56,7 @@ export function ResizeHandle(props: ResizeHandleProps) {
     activePointerId = e.pointerId;
     setIsDragging(true);
     startPos = getPos(e);
+    lastPos = startPos;
     setGlobalDraggingStyles(true);
 
     handleRef?.setPointerCapture(e.pointerId);
@@ -51,12 +65,27 @@ export function ResizeHandle(props: ResizeHandleProps) {
   const handlePointerMove = (e: PointerEvent) => {
     if (!isDragging() || activePointerId !== e.pointerId) return;
 
-    const currentPos = getPos(e);
-    const delta = currentPos - startPos;
-    if (delta !== 0) {
-      props.onResize(delta);
-      startPos = currentPos;
+    lastPos = getPos(e);
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      const delta = lastPos - startPos;
+      if (delta !== 0) {
+        props.onResize(delta);
+        startPos = lastPos;
+      }
+      return;
     }
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      if (!isDragging()) return;
+
+      const delta = lastPos - startPos;
+      if (delta !== 0) {
+        props.onResize(delta);
+        startPos = lastPos;
+      }
+    });
   };
 
   const handlePointerUpOrCancel = (e: PointerEvent) => {

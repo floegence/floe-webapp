@@ -8,7 +8,7 @@ import { useTheme } from './ThemeContext';
 import { useLayout } from './LayoutContext';
 import { useCommand } from './CommandContext';
 import { useNotification } from './NotificationContext';
-import { load, remove, save } from '../utils/persist';
+import { debouncedSave, load, remove } from '../utils/persist';
 
 /**
  * Component registration system for pluggable architecture
@@ -108,8 +108,8 @@ function createComponentStorage(componentId: string): ComponentStorage {
   const prefix = `component:${componentId}:`;
   return {
     get: (key, defaultValue) => load(prefix + key, defaultValue),
-    set: (key, value) => save(prefix + key, value),
-    remove: (key) => remove(prefix + key),
+    set: (key, value) => debouncedSave(prefix + key, value),
+    remove: (key) => setTimeout(() => remove(prefix + key), 0),
   };
 }
 

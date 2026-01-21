@@ -57,7 +57,7 @@ describe('createCommandService', () => {
   });
 
   it('execute should run command and reset open/search', async () => {
-    await withSolidRoot(() => {
+    await withSolidRoot(async () => {
       const service = createCommandService();
       const run = vi.fn();
 
@@ -71,10 +71,13 @@ describe('createCommandService', () => {
       service.setSearch('run');
       service.execute('cmd.run');
 
-      expect(run).toHaveBeenCalledTimes(1);
       expect(service.isOpen()).toBe(false);
       expect(service.search()).toBe('');
+
+      // Command execution is deferred to avoid blocking paint.
+      expect(run).toHaveBeenCalledTimes(0);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(run).toHaveBeenCalledTimes(1);
     });
   });
 });
-

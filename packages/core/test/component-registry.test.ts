@@ -87,6 +87,8 @@ describe('createComponentRegistry', () => {
 
       expect(ctx.commands.commands().map((c) => c.id)).toEqual(['files.hello']);
       ctx.commands.execute('files.hello');
+      expect(exec).toHaveBeenCalledTimes(0);
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(exec).toHaveBeenCalledWith({ tag: 'proto' });
 
       await registry.unmount('files');
@@ -124,4 +126,3 @@ describe('createComponentRegistry', () => {
     });
   });
 });
-

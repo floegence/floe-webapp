@@ -1,7 +1,6 @@
-import { onCleanup, type Accessor, type Component } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
+import { createSignal, onCleanup, type Accessor, type Component } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
-import { matchKeybind, formatKeybind } from '../utils/keybind';
+import { formatKeybind, matchKeybind, parseKeybind, type ParsedKeybind } from '../utils/keybind';
 
 export interface Command {
   id: string;
@@ -11,12 +10,6 @@ export interface Command {
   keybind?: string;
   category?: string;
   execute: () => void | Promise<void>;
-}
-
-interface CommandStore {
-  commands: Map<string, Command>;
-  open: boolean;
-  search: string;
 }
 
 export interface CommandContextValue {
@@ -38,11 +31,20 @@ export interface CommandContextValue {
 }
 
 export function createCommandService(): CommandContextValue {
-  const [store, setStore] = createStore<CommandStore>({
-    commands: new Map(),
-    open: false,
-    search: '',
-  });
+  const commandsMap = new Map<string, Command>();
+  const parsedKeybinds = new Map<string, ParsedKeybind>();
+
+  const [isOpen, setIsOpen] = createSignal(false);
+  const [search, setSearch] = createSignal('');
+  const [commands, setCommands] = createSignal<Command[]>([]);
+
+  const deferNonBlocking = (fn: () => void) => {
+    setTimeout(fn, 0);
+  };
+
+  const syncCommands = () => {
+    setCommands(Array.from(commandsMap.values()));
+  };
 
   // Global keybind listener
   if (typeof window !== 'undefined') {
@@ -50,16 +52,20 @@ export function createCommandService(): CommandContextValue {
       // Command palette shortcut (Cmd/Ctrl + K)
       if (matchKeybind(e, 'mod+k')) {
         e.preventDefault();
-        setStore('open', (v) => !v);
+        setIsOpen((v) => !v);
         return;
       }
 
       // Check registered command keybinds
-      if (!store.open) {
-        for (const command of store.commands.values()) {
-          if (command.keybind && matchKeybind(e, command.keybind)) {
+      if (!isOpen()) {
+        for (const command of commandsMap.values()) {
+          if (!command.keybind) continue;
+          const parsed = parsedKeybinds.get(command.id);
+          if (parsed && matchKeybind(e, parsed)) {
             e.preventDefault();
-            command.execute();
+            deferNonBlocking(() => {
+              void Promise.resolve(command.execute()).catch((err) => console.error(err));
+            });
             return;
           }
         }
@@ -70,76 +76,91 @@ export function createCommandService(): CommandContextValue {
     onCleanup(() => window.removeEventListener('keydown', handleKeydown));
   }
 
-  // Filter commands based on search
+  let lastFilterQuery = '';
+  let lastFilterCommands: Command[] | null = null;
+  let lastFilterResult: Command[] = [];
+
   const filteredCommands = () => {
-    const allCommands = Array.from(store.commands.values());
-    const query = store.search.toLowerCase().trim();
+    const all = commands();
+    const query = search().toLowerCase().trim();
 
-    if (!query) return allCommands;
+    if (all === lastFilterCommands && query === lastFilterQuery) return lastFilterResult;
 
-    return allCommands.filter(
+    lastFilterCommands = all;
+    lastFilterQuery = query;
+
+    if (!query) {
+      lastFilterResult = all;
+      return all;
+    }
+
+    lastFilterResult = all.filter(
       (cmd) =>
         cmd.title.toLowerCase().includes(query) ||
         cmd.description?.toLowerCase().includes(query) ||
         cmd.category?.toLowerCase().includes(query)
     );
+    return lastFilterResult;
   };
 
   return {
     // State
-    isOpen: () => store.open,
-    search: () => store.search,
-    commands: () => Array.from(store.commands.values()),
+    isOpen,
+    search,
+    commands,
     filteredCommands,
 
     // Actions
-    open: () => setStore('open', true),
+    open: () => setIsOpen(true),
     close: () => {
-      setStore('open', false);
-      setStore('search', '');
+      setIsOpen(false);
+      setSearch('');
     },
-    toggle: () => setStore('open', (v) => !v),
-    setSearch: (value: string) => setStore('search', value),
+    toggle: () => setIsOpen((v) => !v),
+    setSearch: (value: string) => setSearch(value),
 
     register: (command: Command) => {
-      setStore(
-        produce((s) => {
-          s.commands.set(command.id, command);
-        })
-      );
+      commandsMap.set(command.id, command);
+      if (command.keybind) {
+        parsedKeybinds.set(command.id, parseKeybind(command.keybind));
+      }
+      syncCommands();
       // Return unregister function
       return () => {
-        setStore(
-          produce((s) => {
-            s.commands.delete(command.id);
-          })
-        );
+        commandsMap.delete(command.id);
+        parsedKeybinds.delete(command.id);
+        syncCommands();
       };
     },
 
     registerAll: (commands: Command[]) => {
-      setStore(
-        produce((s) => {
-          commands.forEach((cmd) => s.commands.set(cmd.id, cmd));
-        })
-      );
+      commands.forEach((cmd) => {
+        commandsMap.set(cmd.id, cmd);
+        if (cmd.keybind) {
+          parsedKeybinds.set(cmd.id, parseKeybind(cmd.keybind));
+        }
+      });
+      syncCommands();
       // Return unregister function
       return () => {
-        setStore(
-          produce((s) => {
-            commands.forEach((cmd) => s.commands.delete(cmd.id));
-          })
-        );
+        commands.forEach((cmd) => {
+          commandsMap.delete(cmd.id);
+          parsedKeybinds.delete(cmd.id);
+        });
+        syncCommands();
       };
     },
 
     execute: (id: string) => {
-      const command = store.commands.get(id);
-      if (command) {
-        command.execute();
-        setStore('open', false);
-        setStore('search', '');
-      }
+      const command = commandsMap.get(id);
+      if (!command) return;
+
+      // Close UI first, then run command in the next task to avoid blocking paint.
+      setIsOpen(false);
+      setSearch('');
+      deferNonBlocking(() => {
+        void Promise.resolve(command.execute()).catch((err) => console.error(err));
+      });
     },
 
     getKeybindDisplay: formatKeybind,

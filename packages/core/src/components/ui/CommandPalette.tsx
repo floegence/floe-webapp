@@ -1,4 +1,4 @@
-import { Show, For, createEffect, onCleanup, createSignal } from 'solid-js';
+import { Show, For, createEffect, onCleanup, createMemo, createSignal } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useCommand, type Command } from '../../context/CommandContext';
@@ -67,21 +67,22 @@ export function CommandPalette() {
     });
   });
 
-  // Group commands
-  const groupedCommands = () => {
+  const groupedCommands = createMemo(() => {
     const filtered = command.filteredCommands();
-    const groups = new Map<string, Command[]>();
+    const groups = new Map<string, Array<{ cmd: Command; index: number }>>();
 
-    for (const cmd of filtered) {
+    filtered.forEach((cmd, index) => {
       const category = cmd.category ?? 'Commands';
-      if (!groups.has(category)) {
-        groups.set(category, []);
+      const group = groups.get(category);
+      if (group) {
+        group.push({ cmd, index });
+      } else {
+        groups.set(category, [{ cmd, index }]);
       }
-      groups.get(category)!.push(cmd);
-    }
+    });
 
-    return groups;
-  };
+    return Array.from(groups.entries());
+  });
 
   return (
     <Show when={command.isOpen()}>
@@ -133,16 +134,14 @@ export function CommandPalette() {
                 </div>
               }
             >
-              <For each={Array.from(groupedCommands().entries())}>
+              <For each={groupedCommands()}>
                 {([category, commands]) => (
                   <div>
                     <div class="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       {category}
                     </div>
                     <For each={commands}>
-                      {(cmd) => {
-                        const index = () => command.filteredCommands().indexOf(cmd);
-
+                      {(entry) => {
                         return (
                           <button
                             type="button"
@@ -150,29 +149,29 @@ export function CommandPalette() {
                               'w-full flex items-center gap-3 px-4 py-2 text-sm',
                               'transition-colors duration-75',
                               'focus:outline-none',
-                              selectedIndex() === index()
+                              selectedIndex() === entry.index
                                 ? 'bg-accent text-accent-foreground'
                                 : 'hover:bg-accent/50'
                             )}
-                            onClick={() => command.execute(cmd.id)}
-                            onMouseEnter={() => setSelectedIndex(index())}
+                            onClick={() => command.execute(entry.cmd.id)}
+                            onMouseEnter={() => setSelectedIndex(entry.index)}
                           >
-                            <Show when={cmd.icon}>
+                            <Show when={entry.cmd.icon}>
                               <span class="w-5 h-5 flex items-center justify-center text-muted-foreground">
-                                <Dynamic component={cmd.icon} class="w-5 h-5" />
+                                <Dynamic component={entry.cmd.icon} class="w-5 h-5" />
                               </span>
                             </Show>
                             <div class="flex-1 text-left">
-                              <span>{cmd.title}</span>
-                              <Show when={cmd.description}>
+                              <span>{entry.cmd.title}</span>
+                              <Show when={entry.cmd.description}>
                                 <span class="ml-2 text-muted-foreground text-xs">
-                                  {cmd.description}
+                                  {entry.cmd.description}
                                 </span>
                               </Show>
                             </div>
-                            <Show when={cmd.keybind}>
+                            <Show when={entry.cmd.keybind}>
                               <kbd class="text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted font-mono">
-                                {command.getKeybindDisplay(cmd.keybind!)}
+                                {command.getKeybindDisplay(entry.cmd.keybind!)}
                               </kbd>
                             </Show>
                           </button>
