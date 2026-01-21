@@ -12,6 +12,7 @@
   "dependencies": {
     "@floegence/floe-webapp-core": "workspace:*",
     "@floegence/floe-webapp-protocol": "workspace:*",
+    "monaco-editor": "^0.55.1",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {

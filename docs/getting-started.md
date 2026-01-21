@@ -31,6 +31,21 @@ The demo uses the VSCode-style Shell layout from `@floegence/floe-webapp-core`:
 - Bottom bar (status)
 - Mobile tab bar on small screens
 
+### Demo tour
+
+The demo is intentionally “batteries-included” so downstream apps can copy patterns quickly:
+
+- **Showcase tab**: interactive examples for all core UI components (Button/Input/Dropdown/Dialog/Tooltip/CommandPalette, layout primitives, and loading states).
+- **Files tab**: Monaco-powered file viewer for real workspace sources (core components, protocol client, docs).
+- **Search tab**: simple workspace search that can jump into the file viewer.
+- **Settings tab**: protocol connect/disconnect + theme controls.
+
+Tips:
+
+- Press <kbd>Mod</kbd>+<kbd>K</kbd> to open the Command Palette and search for `Demo:` commands.
+- Use the Showcase sidebar to jump between sections.
+- Use “View Source” buttons in Showcase to open the source file in the Monaco viewer.
+
 ## Use Floe in your own app
 
 Install the packages:

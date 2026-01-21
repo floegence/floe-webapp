@@ -11,6 +11,7 @@ A professional VSCode-style web application framework built with Solid.js.
 - **Plugin Registry**: Register components to drive navigation and status bar
 - **Protocol Layer**: Flowersec WebSocket integration for secure communication
 - **Non-blocking UI**: Smooth animations and async operations
+- **Demo Playground**: Component showcase + Monaco source viewer
 
 ## Quick Start
 

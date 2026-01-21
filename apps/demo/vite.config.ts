@@ -13,6 +13,12 @@ export default defineConfig({
       '@': resolve(__dirname, './src'),
     },
   },
+  server: {
+    fs: {
+      // Allow importing source files across the monorepo (e.g. `?raw` file viewer).
+      allow: [resolve(__dirname, '../..')],
+    },
+  },
   optimizeDeps: {
     // Don't pre-bundle workspace packages
     exclude: ['@floegence/floe-webapp-core', '@floegence/floe-webapp-protocol'],
