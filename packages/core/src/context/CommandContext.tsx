@@ -1,6 +1,7 @@
 import { createSignal, onCleanup, type Accessor, type Component } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
 import { formatKeybind, matchKeybind, parseKeybind, type ParsedKeybind } from '../utils/keybind';
+import { deferNonBlocking } from '../utils/defer';
 
 export interface Command {
   id: string;
@@ -37,10 +38,6 @@ export function createCommandService(): CommandContextValue {
   const [isOpen, setIsOpen] = createSignal(false);
   const [search, setSearch] = createSignal('');
   const [commands, setCommands] = createSignal<Command[]>([]);
-
-  const deferNonBlocking = (fn: () => void) => {
-    setTimeout(fn, 0);
-  };
 
   const syncCommands = () => {
     setCommands(Array.from(commandsMap.values()));

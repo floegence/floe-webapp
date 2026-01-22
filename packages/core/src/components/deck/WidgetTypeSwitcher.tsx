@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget } from '../../context/DeckContext';
 import { useWidgetRegistry } from '../../context/WidgetRegistry';
+import { deferNonBlocking } from '../../utils/defer';
 import { ArrowRightLeft, ChevronDown } from '../icons';
 
 export interface WidgetTypeSwitcherProps {
@@ -33,8 +34,11 @@ export function WidgetTypeSwitcher(props: WidgetTypeSwitcherProps) {
   const handleSwitch = (e: MouseEvent, newType: string) => {
     e.stopPropagation();
     e.preventDefault();
-    deck.changeWidgetType(props.widget.id, newType);
     setIsOpen(false);
+    // Close UI first, then mutate deck state.
+    const widgetId = props.widget.id;
+    const changeWidgetType = deck.changeWidgetType;
+    deferNonBlocking(() => changeWidgetType(widgetId, newType));
   };
 
   const handleToggle = (e: MouseEvent) => {

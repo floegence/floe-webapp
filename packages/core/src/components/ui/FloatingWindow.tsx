@@ -81,6 +81,49 @@ export function FloatingWindow(props: FloatingWindowProps) {
   let resizeStartWindowPos = { x: 0, y: 0 };
   let resizeHandle: ResizeHandle = 'se';
 
+  // Pointer interaction state (drag/resize) - RAF throttled to avoid main thread jank.
+  let windowRef: HTMLDivElement | undefined;
+  let activePointerId: number | null = null;
+  let mode: 'drag' | 'resize' | null = null;
+  let lastPointerPos = { x: 0, y: 0 };
+  let rafId: number | null = null;
+
+  const RESIZE_CURSORS: Record<ResizeHandle, string> = {
+    n: 'ns-resize',
+    s: 'ns-resize',
+    e: 'ew-resize',
+    w: 'ew-resize',
+    ne: 'nesw-resize',
+    nw: 'nwse-resize',
+    se: 'nwse-resize',
+    sw: 'nesw-resize',
+  };
+
+  const setGlobalInteractionStyles = (active: boolean, cursor: string) => {
+    if (typeof document === 'undefined') return;
+    document.body.style.cursor = active ? cursor : '';
+    document.body.style.userSelect = active ? 'none' : '';
+  };
+
+  const stopInteraction = (pointerId?: number) => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    if (pointerId !== undefined) {
+      try {
+        windowRef?.releasePointerCapture(pointerId);
+      } catch {
+        // Ignore (e.g. already released).
+      }
+    }
+    activePointerId = null;
+    mode = null;
+    setIsDragging(false);
+    setIsResizing(false);
+    setGlobalInteractionStyles(false, '');
+  };
+
   // 初始化窗口位置（居中）
   onMount(() => {
     if (!props.defaultPosition) {
@@ -108,60 +151,78 @@ export function FloatingWindow(props: FloatingWindowProps) {
     onCleanup(() => document.removeEventListener('keydown', handleEscape));
   });
 
+  // If the window is closed mid-interaction, ensure we always clean up styles/state.
+  createEffect(() => {
+    if (!props.open) {
+      stopInteraction(activePointerId ?? undefined);
+    }
+  });
+
   // 拖拽处理
-  const handleDragStart = (e: MouseEvent) => {
+  const handleDragStart = (e: PointerEvent) => {
     if (!draggable() || isMaximized()) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    const target = e.target as HTMLElement | null;
+    // Don't start dragging from interactive elements inside the title bar.
+    if (target?.closest('button, input, select, textarea, a, [role="button"]')) return;
+
     e.preventDefault();
 
+    activePointerId = e.pointerId;
+    mode = 'drag';
     setIsDragging(true);
     dragStartPos = { x: e.clientX, y: e.clientY };
     dragStartWindowPos = { ...position() };
-
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-  };
-
-  const handleDragMove = (e: MouseEvent) => {
-    if (!isDragging()) return;
-
-    const deltaX = e.clientX - dragStartPos.x;
-    const deltaY = e.clientY - dragStartPos.y;
-
-    const newX = Math.max(0, Math.min(window.innerWidth - size().width, dragStartWindowPos.x + deltaX));
-    const newY = Math.max(0, Math.min(window.innerHeight - size().height, dragStartWindowPos.y + deltaY));
-
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    document.removeEventListener('mousemove', handleDragMove);
-    document.removeEventListener('mouseup', handleDragEnd);
+    lastPointerPos = { x: e.clientX, y: e.clientY };
+    setGlobalInteractionStyles(true, 'grabbing');
+    windowRef?.setPointerCapture(e.pointerId);
   };
 
   // 调整大小处理
   // eslint-disable-next-line solid/reactivity -- This returns an event handler
-  const handleResizeStart = (handle: ResizeHandle) => (e: MouseEvent) => {
+  const handleResizeStart = (handle: ResizeHandle) => (e: PointerEvent) => {
     if (!resizable() || isMaximized()) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
     e.preventDefault();
     e.stopPropagation();
 
+    activePointerId = e.pointerId;
+    mode = 'resize';
     setIsResizing(true);
     resizeHandle = handle;
     resizeStartPos = { x: e.clientX, y: e.clientY };
     resizeStartSize = { ...size() };
     resizeStartWindowPos = { ...position() };
-
-    document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', handleResizeEnd);
+    lastPointerPos = { x: e.clientX, y: e.clientY };
+    setGlobalInteractionStyles(true, RESIZE_CURSORS[handle]);
+    windowRef?.setPointerCapture(e.pointerId);
   };
 
-  const handleResizeMove = (e: MouseEvent) => {
-    if (!isResizing()) return;
+  const flushPointerMove = () => {
+    rafId = null;
+    if (!props.open) return;
+    if (activePointerId === null || mode === null) return;
 
-    const deltaX = e.clientX - resizeStartPos.x;
-    const deltaY = e.clientY - resizeStartPos.y;
+    const deltaX = lastPointerPos.x - (mode === 'drag' ? dragStartPos.x : resizeStartPos.x);
+    const deltaY = lastPointerPos.y - (mode === 'drag' ? dragStartPos.y : resizeStartPos.y);
 
+    if (mode === 'drag') {
+      const nextSize = size();
+      const newX = Math.max(
+        0,
+        Math.min(window.innerWidth - nextSize.width, dragStartWindowPos.x + deltaX)
+      );
+      const newY = Math.max(
+        0,
+        Math.min(window.innerHeight - nextSize.height, dragStartWindowPos.y + deltaY)
+      );
+      setPosition({ x: newX, y: newY });
+      return;
+    }
+
+    // mode === 'resize'
     let newWidth = resizeStartSize.width;
     let newHeight = resizeStartSize.height;
     let newX = resizeStartWindowPos.x;
@@ -179,7 +240,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
       }
     }
     if (resizeHandle.includes('s')) {
-      newHeight = Math.max(minSize().height, Math.min(maxSize().height, resizeStartSize.height + deltaY));
+      newHeight = Math.max(
+        minSize().height,
+        Math.min(maxSize().height, resizeStartSize.height + deltaY)
+      );
     }
     if (resizeHandle.includes('n')) {
       const possibleHeight = resizeStartSize.height - deltaY;
@@ -197,10 +261,23 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setPosition({ x: newX, y: newY });
   };
 
-  const handleResizeEnd = () => {
-    setIsResizing(false);
-    document.removeEventListener('mousemove', handleResizeMove);
-    document.removeEventListener('mouseup', handleResizeEnd);
+  const handlePointerMove = (e: PointerEvent) => {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    if (mode === null) return;
+
+    lastPointerPos = { x: e.clientX, y: e.clientY };
+
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      flushPointerMove();
+      return;
+    }
+    rafId = requestAnimationFrame(flushPointerMove);
+  };
+
+  const handlePointerUpOrCancel = (e: PointerEvent) => {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    stopInteraction(e.pointerId);
   };
 
   // 最大化/还原
@@ -251,6 +328,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       <Portal>
         {/* Window container */}
         <div
+          ref={windowRef}
           class={cn(
             'fixed bg-card text-card-foreground rounded-md shadow-xl',
             'border border-border',
@@ -267,6 +345,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
             height: `${size().height}px`,
             'z-index': zIndex(),
           }}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUpOrCancel}
+          onPointerCancel={handlePointerUpOrCancel}
           role="dialog"
           aria-modal="true"
           aria-labelledby={props.title ? 'floating-window-title' : undefined}
@@ -280,8 +361,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
               isMaximized() ? 'rounded-none' : 'rounded-t-md',
               draggable() && !isMaximized() && 'cursor-move'
             )}
-            onMouseDown={handleDragStart}
+            onPointerDown={handleDragStart}
             onDblClick={handleTitleBarDoubleClick}
+            style={{ 'touch-action': 'none' }}
           >
             {/* Title */}
             <div class="flex-1 min-w-0">
@@ -342,16 +424,48 @@ export function FloatingWindow(props: FloatingWindowProps) {
           {/* Resize handles */}
           <Show when={resizable() && !isMaximized()}>
             {/* Edge handles */}
-            <div class={getResizeHandleClass('n')} onMouseDown={handleResizeStart('n')} />
-            <div class={getResizeHandleClass('s')} onMouseDown={handleResizeStart('s')} />
-            <div class={getResizeHandleClass('e')} onMouseDown={handleResizeStart('e')} />
-            <div class={getResizeHandleClass('w')} onMouseDown={handleResizeStart('w')} />
+            <div
+              class={getResizeHandleClass('n')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('n')}
+            />
+            <div
+              class={getResizeHandleClass('s')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('s')}
+            />
+            <div
+              class={getResizeHandleClass('e')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('e')}
+            />
+            <div
+              class={getResizeHandleClass('w')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('w')}
+            />
 
             {/* Corner handles */}
-            <div class={getResizeHandleClass('ne')} onMouseDown={handleResizeStart('ne')} />
-            <div class={getResizeHandleClass('nw')} onMouseDown={handleResizeStart('nw')} />
-            <div class={getResizeHandleClass('se')} onMouseDown={handleResizeStart('se')} />
-            <div class={getResizeHandleClass('sw')} onMouseDown={handleResizeStart('sw')} />
+            <div
+              class={getResizeHandleClass('ne')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('ne')}
+            />
+            <div
+              class={getResizeHandleClass('nw')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('nw')}
+            />
+            <div
+              class={getResizeHandleClass('se')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('se')}
+            />
+            <div
+              class={getResizeHandleClass('sw')}
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('sw')}
+            />
           </Show>
         </div>
       </Portal>

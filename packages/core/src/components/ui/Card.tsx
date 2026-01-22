@@ -1,4 +1,4 @@
-import { splitProps, type JSX, createSignal } from 'solid-js';
+import { splitProps, type JSX, createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type CardVariant = 'default' | 'hover-lift' | 'gradient-border' | 'glass' | 'spotlight' | 'shimmer' | 'glow';
@@ -33,24 +33,54 @@ export function Card(props: CardProps) {
   const [tiltStyle, setTiltStyle] = createSignal<JSX.CSSProperties>({});
   let cardRef: HTMLDivElement | undefined;
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!local.enableTilt || !cardRef) return;
+  let rafId: number | null = null;
+  let pendingClientX = 0;
+  let pendingClientY = 0;
+
+  const flushMouseMove = () => {
+    rafId = null;
+    if (!cardRef) return;
+    if (!local.enableTilt && variant() !== 'spotlight') return;
 
     const rect = cardRef.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const x = pendingClientX - rect.left;
+    const y = pendingClientY - rect.top;
 
-    const rotateX = (y - centerY) / 10;
-    const rotateY = (centerX - x) / 10;
+    if (local.enableTilt) {
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = (y - centerY) / 10;
+      const rotateY = (centerX - x) / 10;
+      setTiltStyle({
+        transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
+      });
+    }
 
-    setTiltStyle({
-      transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`,
-    });
+    if (variant() === 'spotlight') {
+      setSpotlightPos({ x, y });
+    }
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!cardRef) return;
+    if (!local.enableTilt && variant() !== 'spotlight') return;
+    pendingClientX = e.clientX;
+    pendingClientY = e.clientY;
+
+    // RAF throttle for performance (mousemove can fire at a much higher rate than 60fps).
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      flushMouseMove();
+      return;
+    }
+    rafId = requestAnimationFrame(flushMouseMove);
   };
 
   const handleMouseLeave = () => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
     if (!local.enableTilt) return;
     setTiltStyle({
       transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
@@ -60,14 +90,12 @@ export function Card(props: CardProps) {
   // Spotlight tracking for spotlight variant
   const [spotlightPos, setSpotlightPos] = createSignal({ x: 0, y: 0 });
 
-  const handleSpotlightMove = (e: MouseEvent) => {
-    if (variant() !== 'spotlight' || !cardRef) return;
-    const rect = cardRef.getBoundingClientRect();
-    setSpotlightPos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
+  onCleanup(() => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  });
 
   const baseStyles = 'rounded-lg transition-all duration-300 ease-out';
 
@@ -148,10 +176,7 @@ export function Card(props: CardProps) {
         ...glowStyles(),
         'transform-style': 'preserve-3d',
       }}
-      onMouseMove={(e) => {
-        handleMouseMove(e);
-        handleSpotlightMove(e);
-      }}
+      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       {...rest}
     >
@@ -261,15 +286,19 @@ export function Interactive3DCard(props: Interactive3DCardProps) {
   const [shinePos, setShinePos] = createSignal({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = createSignal(false);
   let cardRef: HTMLDivElement | undefined;
+  let rafId: number | null = null;
+  let pendingClientX = 0;
+  let pendingClientY = 0;
 
   const intensity = () => local.intensity ?? 10;
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const flushMouseMove = () => {
+    rafId = null;
     if (!cardRef) return;
 
     const rect = cardRef.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = pendingClientX - rect.left;
+    const y = pendingClientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
@@ -286,11 +315,35 @@ export function Interactive3DCard(props: Interactive3DCardProps) {
     }
   };
 
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!cardRef) return;
+    pendingClientX = e.clientX;
+    pendingClientY = e.clientY;
+
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      flushMouseMove();
+      return;
+    }
+    rafId = requestAnimationFrame(flushMouseMove);
+  };
+
   const handleMouseEnter = () => setIsHovered(true);
   const handleMouseLeave = () => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
     setIsHovered(false);
     setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg)');
   };
+
+  onCleanup(() => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  });
 
   return (
     <div

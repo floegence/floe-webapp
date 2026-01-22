@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck } from '../../context/DeckContext';
+import { deferNonBlocking } from '../../utils/defer';
 import { ChevronDown, Check, Trash, Copy, Pencil } from '../icons';
 
 export interface LayoutSelectorProps {
@@ -21,22 +22,28 @@ export function LayoutSelector(props: LayoutSelectorProps) {
   const layouts = () => deck.layouts();
 
   const handleSelect = (id: string) => {
-    deck.setActiveLayout(id);
     setIsOpen(false);
+    // Close UI first, then mutate deck state.
+    deferNonBlocking(() => deck.setActiveLayout(id));
   };
 
   const handleDuplicate = (id: string, e: Event) => {
     e.stopPropagation();
     const wsLayout = layouts().find((l) => l.id === id);
     if (wsLayout) {
-      deck.duplicateLayout(id, `${wsLayout.name} (Copy)`);
+      setIsOpen(false);
+      // Close UI first, then mutate deck state.
+      deferNonBlocking(() => deck.duplicateLayout(id, `${wsLayout.name} (Copy)`));
+      return;
     }
     setIsOpen(false);
   };
 
   const handleDelete = (id: string, e: Event) => {
     e.stopPropagation();
-    deck.deleteLayout(id);
+    setIsOpen(false);
+    // Close UI first, then mutate deck state.
+    deferNonBlocking(() => deck.deleteLayout(id));
   };
 
   const startRename = (id: string, currentName: string, e: Event) => {
@@ -47,11 +54,12 @@ export function LayoutSelector(props: LayoutSelectorProps) {
 
   const confirmRename = (id: string) => {
     const value = renameValue().trim();
-    if (value) {
-      deck.renameLayout(id, value);
-    }
     setIsRenaming(null);
     setRenameValue('');
+    if (value) {
+      // Close UI first, then mutate deck state.
+      deferNonBlocking(() => deck.renameLayout(id, value));
+    }
   };
 
   const cancelRename = () => {
@@ -168,8 +176,9 @@ export function LayoutSelector(props: LayoutSelectorProps) {
             <button
               class="w-full text-left text-xs text-primary hover:underline cursor-pointer"
               onClick={() => {
-                deck.createLayout('New Layout');
                 setIsOpen(false);
+                // Close UI first, then mutate deck state.
+                deferNonBlocking(() => deck.createLayout('New Layout'));
               }}
             >
               + New Layout

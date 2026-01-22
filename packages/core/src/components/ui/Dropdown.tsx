@@ -7,6 +7,7 @@ import {
   onCleanup,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { deferNonBlocking } from '../../utils/defer';
 import { ChevronDown, Check } from '../icons';
 
 export interface DropdownItem {
@@ -99,8 +100,11 @@ export function Dropdown(props: DropdownProps) {
                   selected={props.value === item.id}
                   onSelect={() => {
                     if (!item.disabled) {
-                      props.onSelect(item.id);
+                      const id = item.id;
+                      const onSelect = props.onSelect;
                       setOpen(false);
+                      // Close UI first to avoid blocking paint, then run selection logic.
+                      deferNonBlocking(() => onSelect(id));
                     }
                   }}
                 />

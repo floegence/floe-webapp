@@ -1,4 +1,4 @@
-import { type Component, For, Show, createSignal, onMount } from 'solid-js';
+import { type Component, For, Show, createSignal, onCleanup, onMount } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 
@@ -23,11 +23,24 @@ export function MobileTabBar(props: MobileTabBarProps) {
   let scrollRef: HTMLDivElement | undefined;
   const [canScrollLeft, setCanScrollLeft] = createSignal(false);
   const [canScrollRight, setCanScrollRight] = createSignal(false);
+  let rafId: number | null = null;
 
   const checkScroll = () => {
     if (!scrollRef) return;
     setCanScrollLeft(scrollRef.scrollLeft > 0);
     setCanScrollRight(scrollRef.scrollLeft < scrollRef.scrollWidth - scrollRef.clientWidth - 1);
+  };
+
+  const scheduleCheckScroll = () => {
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      checkScroll();
+      return;
+    }
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      checkScroll();
+    });
   };
 
   onMount(() => {
@@ -37,6 +50,13 @@ export function MobileTabBar(props: MobileTabBarProps) {
     if (activeIndex > 0 && scrollRef) {
       const itemWidth = scrollRef.scrollWidth / props.items.length;
       scrollRef.scrollLeft = Math.max(0, itemWidth * activeIndex - scrollRef.clientWidth / 2 + itemWidth / 2);
+    }
+  });
+
+  onCleanup(() => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
     }
   });
 
@@ -63,7 +83,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
           ref={scrollRef}
           class="h-full flex items-center overflow-x-auto scrollbar-hide snap-x snap-mandatory"
           style={{ '-webkit-overflow-scrolling': 'touch' }}
-          onScroll={checkScroll}
+          onScroll={scheduleCheckScroll}
         >
           <For each={props.items}>
             {(item) => (

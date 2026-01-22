@@ -4,6 +4,7 @@ import { cn } from '../../utils/cn';
 import { useDeck } from '../../context/DeckContext';
 import { useLayout } from '../../context/LayoutContext';
 import { useWidgetRegistry } from '../../context/WidgetRegistry';
+import { deferNonBlocking } from '../../utils/defer';
 import { LayoutSelector } from './LayoutSelector';
 import { Pencil, Check, Plus, ChevronDown } from '../icons';
 import { Button } from '../ui/Button';
@@ -30,8 +31,9 @@ export function DeckTopBar(props: DeckTopBarProps) {
   const handleAddWidget = (e: MouseEvent, type: string) => {
     e.stopPropagation();
     e.preventDefault();
-    deck.addWidget(type);
     setShowWidgetMenu(false);
+    // Close UI first, then mutate deck state.
+    deferNonBlocking(() => deck.addWidget(type));
   };
 
   const handleToggle = (e: MouseEvent) => {

@@ -4,6 +4,7 @@ import { useDeck } from '../../context/DeckContext';
 import { useWidgetRegistry, type WidgetDefinition } from '../../context/WidgetRegistry';
 import { Plus, X, ChevronRight } from '../icons';
 import { Button } from '../ui/Button';
+import { deferNonBlocking } from '../../utils/defer';
 
 export interface WidgetPaletteProps {
   class?: string;
@@ -26,8 +27,9 @@ export function WidgetPalette(props: WidgetPaletteProps) {
   ];
 
   const handleAddWidget = (type: string) => {
-    deck.addWidget(type);
     setIsOpen(false);
+    // Close UI first, then mutate deck state.
+    deferNonBlocking(() => deck.addWidget(type));
   };
 
   const toggleCategory = (key: string) => {
