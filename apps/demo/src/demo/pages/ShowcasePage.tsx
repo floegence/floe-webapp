@@ -1,7 +1,14 @@
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
 import {
+  AnimatedBorderCard,
   Bell,
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
   ConfirmDialog,
   Dialog,
   Dropdown,
@@ -10,9 +17,12 @@ import {
   FloatingWindow,
   GitBranch,
   Input,
+  Interactive3DCard,
   Loader2,
   LoadingOverlay,
   Moon,
+  MorphCard,
+  NeonCard,
   Panel,
   PanelContent,
   Search,
@@ -139,6 +149,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-buttons')}>
             Jump: Buttons
           </Button>
+          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-cards')}>
+            Jump: Cards
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-dialogs')}>
             Jump: Dialogs
           </Button>
@@ -181,6 +194,188 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-cards"
+          title="Advanced Cards"
+          description="Stunning card effects with 3D transforms, gradients, glow, and interactive animations."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.card')}>
+              View Source
+            </Button>
+          }
+        />
+
+        {/* Basic Card Variants */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Basic Variants</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card variant="default">
+              <CardHeader>
+                <CardTitle>Default Card</CardTitle>
+                <CardDescription>Simple card with subtle shadow on hover</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Clean and minimal design.</p>
+              </CardContent>
+            </Card>
+
+            <Card variant="hover-lift">
+              <CardHeader>
+                <CardTitle>Hover Lift</CardTitle>
+                <CardDescription>Elevates on hover with shadow</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Hover to see the lift effect.</p>
+              </CardContent>
+            </Card>
+
+            <Card variant="glass">
+              <CardHeader>
+                <CardTitle>Glass Card</CardTitle>
+                <CardDescription>Glassmorphism effect</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Frosted glass appearance.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Animated Border Cards */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Animated Effects</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card variant="gradient-border">
+              <CardHeader>
+                <CardTitle>Gradient Border</CardTitle>
+                <CardDescription>Animated gradient border effect</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Smooth gradient animation.</p>
+              </CardContent>
+            </Card>
+
+            <Card variant="shimmer">
+              <CardHeader>
+                <CardTitle>Shimmer Card</CardTitle>
+                <CardDescription>Continuous shimmer animation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Watch the light sweep across.</p>
+              </CardContent>
+            </Card>
+
+            <Card variant="glow" glowColor="var(--primary)">
+              <CardHeader>
+                <CardTitle>Glow Card</CardTitle>
+                <CardDescription>Ambient glow effect</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Soft ambient lighting.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Interactive 3D Cards */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Interactive 3D Cards</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Interactive3DCard intensity={15} shine borderGlow>
+              <CardHeader>
+                <CardTitle>3D Interactive Card</CardTitle>
+                <CardDescription>Mouse-tracking 3D tilt with shine effect</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">
+                  Move your mouse over this card to see the 3D perspective effect.
+                  The card follows your cursor with realistic depth.
+                </p>
+              </CardContent>
+              <CardFooter class="gap-2">
+                <Button size="sm" variant="primary">Action</Button>
+                <Button size="sm" variant="ghost">Learn More</Button>
+              </CardFooter>
+            </Interactive3DCard>
+
+            <Card variant="spotlight" enableTilt>
+              <CardHeader>
+                <CardTitle>Spotlight Card</CardTitle>
+                <CardDescription>Spotlight follows cursor with 3D tilt</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">
+                  Hover to reveal the spotlight effect that tracks your mouse position.
+                </p>
+              </CardContent>
+              <CardFooter class="gap-2">
+                <Button size="sm" variant="outline">Details</Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+
+        {/* Special Effect Cards */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Special Effects</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatedBorderCard duration={4} borderWidth={2}>
+              <CardHeader>
+                <CardTitle>Rotating Border</CardTitle>
+                <CardDescription>Conic gradient animation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Continuous rotating gradient border.</p>
+              </CardContent>
+            </AnimatedBorderCard>
+
+            <NeonCard color="oklch(0.7 0.2 280)">
+              <CardHeader>
+                <CardTitle>Neon Glow</CardTitle>
+                <CardDescription>Cyberpunk neon aesthetic</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Vibrant neon glow effect.</p>
+              </CardContent>
+            </NeonCard>
+
+            <MorphCard>
+              <CardHeader>
+                <CardTitle>Morph Card</CardTitle>
+                <CardDescription>Animated blob background</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-xs text-muted-foreground">Organic morphing shapes.</p>
+              </CardContent>
+            </MorphCard>
+          </div>
+        </div>
+
+        {/* Feature Card Example */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Feature Card Example</p>
+          <Interactive3DCard intensity={8} shine class="max-w-md">
+            <div class="p-6 space-y-4">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Terminal class="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div class="space-y-2">
+                <h3 class="text-base font-bold">Terminal Integration</h3>
+                <p class="text-xs text-muted-foreground leading-relaxed">
+                  Powerful terminal integration with syntax highlighting,
+                  command history, and multi-tab support for seamless development workflow.
+                </p>
+              </div>
+              <div class="flex items-center gap-3 pt-2">
+                <Button size="sm" variant="primary">Get Started</Button>
+                <Button size="sm" variant="ghost">Documentation</Button>
+              </div>
+            </div>
+          </Interactive3DCard>
+        </div>
       </div>
 
       <div class="space-y-4">
