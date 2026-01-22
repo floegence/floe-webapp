@@ -1,6 +1,9 @@
 import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
 import { useResizeObserver, useTheme } from '@floegence/floe-webapp-core';
 import * as monaco from 'monaco-editor';
+import { isCancellationError } from 'monaco-editor/esm/vs/base/common/errors.js';
+import { ConsoleLogger } from 'monaco-editor/esm/vs/platform/log/common/log.js';
+import { LogService } from 'monaco-editor/esm/vs/platform/log/common/logService.js';
 
 import 'monaco-editor/min/vs/editor/editor.main.css';
 import 'monaco-editor/esm/vs/basic-languages/markdown/markdown.contribution.js';
@@ -35,6 +38,22 @@ if (!globalWithMonaco.MonacoEnvironment) {
     },
   };
 }
+
+// On Safari/WebKit, Monaco's clipboard workaround cancels the previous DeferredPromise on each
+// user gesture. This is expected, but the default logService prints it as an error
+// ("ERR Canceled: Canceled"). Override logService to filter CancellationError noise.
+const monacoLogService = (() => {
+  const service = new LogService(new ConsoleLogger());
+  const originalError = service.error.bind(service);
+
+  service.error = (message: unknown, ...args: unknown[]) => {
+    if (isCancellationError(message)) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return originalError(message as any, ...(args as any[]));
+  };
+
+  return service;
+})();
 
 export interface MonacoViewerProps {
   path: string;
@@ -98,7 +117,7 @@ export default function MonacoViewer(props: MonacoViewerProps) {
       fontSize: 12,
       tabSize: 2,
       ...props.options,
-    });
+    }, { logService: monacoLogService });
 
     applyTheme();
     ensureModel();
