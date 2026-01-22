@@ -3,18 +3,32 @@
  */
 
 // Type ID constants for RPC calls
+/**
+ * Type IDs that are currently implemented by `useRpc()`.
+ *
+ * Keep this list aligned with `packages/protocol/src/rpc.ts` to avoid misleading downstream users.
+ */
 export const TypeIds = {
   // File system operations
   FS_LIST: 1001,
   FS_READ_FILE: 1002,
   FS_WRITE_FILE: 1003,
+  FS_DELETE: 1006,
+  FS_GET_HOME: 1010,
+} as const;
+
+/**
+ * Reserved Type IDs for future protocol domains.
+ *
+ * These are part of the protocol contract, but are not yet exposed via `useRpc()`.
+ */
+export const ReservedTypeIds = {
+  // File system operations
   FS_CREATE_FILE: 1004,
   FS_CREATE_DIR: 1005,
-  FS_DELETE: 1006,
   FS_RENAME: 1007,
   FS_MOVE: 1008,
   FS_COPY: 1009,
-  FS_GET_HOME: 1010,
 
   // Terminal operations
   TERMINAL_SESSION_CREATE: 2001,
