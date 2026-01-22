@@ -125,7 +125,7 @@ function AppContent() {
 
 export function App() {
   return (
-    <FloeProvider wrapAfterTheme={(children) => <ProtocolProvider>{children}</ProtocolProvider>}>
+    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}>
       <AppContent />
     </FloeProvider>
   );

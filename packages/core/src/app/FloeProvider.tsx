@@ -7,7 +7,11 @@ import { CommandProvider } from '../context/CommandContext';
 
 export interface FloeProviderProps {
   children: JSX.Element;
-  wrapAfterTheme?: (children: JSX.Element) => JSX.Element;
+  /**
+   * Allows consumers to inject their own providers *after* ThemeProvider,
+   * while ensuring the inner tree is created inside the injected provider.
+   */
+  wrapAfterTheme?: (renderChildren: () => JSX.Element) => JSX.Element;
 }
 
 /**
@@ -15,7 +19,7 @@ export interface FloeProviderProps {
  * Protocol/Router are intentionally kept outside of core to avoid hard coupling.
  */
 export function FloeProvider(props: FloeProviderProps) {
-  const inner = (
+  const renderInner = (): JSX.Element => (
     <NotificationProvider>
       <ComponentRegistryProvider>
         <LayoutProvider>
@@ -27,7 +31,7 @@ export function FloeProvider(props: FloeProviderProps) {
 
   return (
     <ThemeProvider>
-      {props.wrapAfterTheme ? props.wrapAfterTheme(inner) : inner}
+      {props.wrapAfterTheme ? props.wrapAfterTheme(renderInner) : renderInner()}
     </ThemeProvider>
   );
 }
