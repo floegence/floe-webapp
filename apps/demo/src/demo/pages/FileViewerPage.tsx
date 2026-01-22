@@ -1,6 +1,7 @@
-import { Show, Suspense, createMemo, createResource, createSignal, lazy, type Accessor, onCleanup } from 'solid-js';
-import { Button, Panel, PanelContent, PanelHeader, Skeleton, useCommand, useNotification, save as persistSave } from '@floegence/floe-webapp-core';
+import { Show, Suspense, createEffect, createMemo, createResource, createSignal, lazy, on, type Accessor, onCleanup } from 'solid-js';
+import { Button, Panel, PanelContent, PanelHeader, Skeleton, deferNonBlocking, useCommand, useNotification, save as persistSave } from '@floegence/floe-webapp-core';
 import type { DemoFile } from '../workspace';
+import type { MonacoViewerApi } from '../components/MonacoViewer';
 
 export interface FileViewerPageProps {
   file: Accessor<DemoFile>;
@@ -16,28 +17,68 @@ export function FileViewerPage(props: FileViewerPageProps) {
   const [wordWrap, setWordWrap] = createSignal(false);
   const [minimap, setMinimap] = createSignal(false);
   const [readOnly, setReadOnly] = createSignal(true);
-  const [editedContent, setEditedContent] = createSignal<string | null>(null);
   const [isDirty, setIsDirty] = createSignal(false);
+  const [isSaving, setIsSaving] = createSignal(false);
+  const [cleanAltVersionId, setCleanAltVersionId] = createSignal<number | null>(null);
+  let editorApi: MonacoViewerApi | null = null;
 
   // Get storage key for this file
   const getStorageKey = () => `file-content:${props.file().id}`;
 
-  // Handle content changes from editor
-  const handleContentChange = (value: string) => {
-    setEditedContent(value);
-    const original = content() ?? '';
-    setIsDirty(value !== original);
+  // Reset editor-related state when switching files (avoid leaking dirty/saving state across files).
+  createEffect(
+    on(
+      () => props.file().id,
+      () => {
+        editorApi = null;
+        setIsDirty(false);
+        setIsSaving(false);
+        setCleanAltVersionId(null);
+      }
+    )
+  );
+
+  const handleEditorReady = (api: MonacoViewerApi) => {
+    editorApi = api;
+    setCleanAltVersionId(api.model.getAlternativeVersionId());
+    setIsDirty(false);
+  };
+
+  const handleEditorContentChange = (_e: unknown, api: MonacoViewerApi) => {
+    const clean = cleanAltVersionId();
+    const current = api.model.getAlternativeVersionId();
+    if (clean === null) {
+      setCleanAltVersionId(current);
+      setIsDirty(false);
+      return;
+    }
+    setIsDirty(current !== clean);
   };
 
   // Save function
   const handleSave = () => {
-    const currentContent = editedContent();
-    if (currentContent === null) {
-      return; // Nothing to save
-    }
-    persistSave(getStorageKey(), currentContent);
-    setIsDirty(false);
-    notifications.success('File saved', `${props.file().path} saved to local storage`);
+    if (isSaving() || !isDirty()) return;
+    const api = editorApi;
+    if (!api) return;
+
+    // Update UI first, then perform potentially heavy work (stringify + localStorage).
+    setIsSaving(true);
+    const storageKey = getStorageKey();
+    const filePath = props.file().path;
+
+    deferNonBlocking(() => {
+      try {
+        // If the user switched files before we run, drop this save.
+        if (editorApi !== api) return;
+
+        persistSave(storageKey, api.getValue());
+        setCleanAltVersionId(api.model.getAlternativeVersionId());
+        setIsDirty(false);
+        notifications.success('File saved', `${filePath} saved to local storage`);
+      } finally {
+        setIsSaving(false);
+      }
+    });
   };
 
   // Register save command
@@ -72,6 +113,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
                   variant="default"
                   onClick={handleSave}
                   title="Save file (Cmd/Ctrl+S)"
+                  loading={isSaving()}
                 >
                   Save
                 </Button>
@@ -140,7 +182,8 @@ export function FileViewerPage(props: FileViewerPageProps) {
                 language={props.file().language}
                 value={content() ?? ''}
                 options={editorOptions()}
-                onChange={handleContentChange}
+                onReady={handleEditorReady}
+                onContentChange={handleEditorContentChange}
                 class="h-full"
               />
             </Suspense>

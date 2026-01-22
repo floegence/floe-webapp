@@ -62,7 +62,23 @@ export interface MonacoViewerProps {
   options?: monaco.editor.IStandaloneEditorConstructionOptions;
   class?: string;
   style?: JSX.CSSProperties;
+  /**
+   * Called when the editor/model are ready (and whenever the model is switched for a new path).
+   * Avoid doing heavy work in this callback.
+   */
+  onReady?: (api: MonacoViewerApi) => void;
+  /**
+   * Called on every model content change. Prefer this over `onChange` to avoid
+   * pulling the full editor value on every keystroke.
+   */
+  onContentChange?: (e: monaco.editor.IModelContentChangedEvent, api: MonacoViewerApi) => void;
   onChange?: (value: string) => void;
+}
+
+export interface MonacoViewerApi {
+  editor: monaco.editor.IStandaloneCodeEditor;
+  model: monaco.editor.ITextModel;
+  getValue: () => string;
 }
 
 function createModelUri(path: string) {
@@ -76,11 +92,30 @@ export default function MonacoViewer(props: MonacoViewerProps) {
   let editor: monaco.editor.IStandaloneCodeEditor | undefined;
   let model: monaco.editor.ITextModel | undefined;
   let rafId: number | undefined;
+  let lastReadyModelUri: string | null = null;
 
   const size = useResizeObserver(() => container);
 
   const applyTheme = () => {
     monaco.editor.setTheme(theme.resolvedTheme() === 'dark' ? 'vs-dark' : 'vs');
+  };
+
+  const getApi = (): MonacoViewerApi | null => {
+    if (!editor || !model) return null;
+    return {
+      editor,
+      model,
+      getValue: () => editor!.getValue(),
+    };
+  };
+
+  const notifyReadyIfNeeded = () => {
+    const api = getApi();
+    if (!api) return;
+    const uri = api.model.uri.toString();
+    if (uri === lastReadyModelUri) return;
+    lastReadyModelUri = uri;
+    props.onReady?.(api);
   };
 
   const ensureModel = () => {
@@ -102,6 +137,7 @@ export default function MonacoViewer(props: MonacoViewerProps) {
     model?.dispose();
     model = existing ?? monaco.editor.createModel(props.value, props.language, uri);
     editor.setModel(model);
+    notifyReadyIfNeeded();
   };
 
   onMount(() => {
@@ -123,9 +159,15 @@ export default function MonacoViewer(props: MonacoViewerProps) {
     ensureModel();
 
     // Listen for content changes
-    const disposable = editor.onDidChangeModelContent(() => {
-      if (props.onChange && editor) {
-        props.onChange(editor.getValue());
+    const onContentChange = props.onContentChange;
+    const onChange = props.onChange;
+    const disposable = editor.onDidChangeModelContent((e) => {
+      const api = getApi();
+      if (!api) return;
+      onContentChange?.(e, api);
+      // Fallback API: only compute full text when requested.
+      if (onChange) {
+        onChange(api.getValue());
       }
     });
 
