@@ -46,13 +46,13 @@ export function ActivityBar(props: ActivityBarProps) {
   return (
     <div
       class={cn(
-        'w-12 flex flex-col justify-between shrink-0 min-h-0',
+        'w-12 md:w-14 flex flex-col justify-between shrink-0 min-h-0',
         'bg-activity-bar border-r border-border',
         props.class
       )}
     >
       {/* Top items */}
-      <div class="flex flex-col items-center py-1.5 gap-0.5">
+      <div class="flex flex-col items-center py-1.5 gap-0.5 md:gap-2 md:py-2">
         <For each={props.items}>
           {(item) => (
             <ActivityBarButton
@@ -66,7 +66,7 @@ export function ActivityBar(props: ActivityBarProps) {
 
       {/* Bottom items */}
       <Show when={props.bottomItems?.length}>
-        <div class="flex flex-col items-center py-1.5 gap-0.5">
+        <div class="flex flex-col items-center py-1.5 gap-0.5 md:gap-2 md:py-2">
           <For each={props.bottomItems}>
             {(item) => (
               <ActivityBarButton
@@ -111,7 +111,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
     >
       {/* Active indicator - positioned to touch left edge of activity bar */}
       <Show when={props.isActive}>
-        <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
+        <div class="absolute -left-1.5 md:-left-2.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
       </Show>
 
       {/* Icon */}
