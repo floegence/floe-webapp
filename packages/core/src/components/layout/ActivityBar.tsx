@@ -52,7 +52,7 @@ export function ActivityBar(props: ActivityBarProps) {
       )}
     >
       {/* Top items */}
-      <div class="flex flex-col items-center py-2 gap-1">
+      <div class="flex flex-col items-center py-1.5 gap-0.5">
         <For each={props.items}>
           {(item) => (
             <ActivityBarButton
@@ -66,7 +66,7 @@ export function ActivityBar(props: ActivityBarProps) {
 
       {/* Bottom items */}
       <Show when={props.bottomItems?.length}>
-        <div class="flex flex-col items-center py-2 gap-1">
+        <div class="flex flex-col items-center py-1.5 gap-0.5">
           <For each={props.bottomItems}>
             {(item) => (
               <ActivityBarButton
@@ -97,33 +97,33 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
     <button
       type="button"
       class={cn(
-        'relative w-10 h-10 flex items-center justify-center rounded-md',
-        'transition-colors duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'relative w-9 h-9 flex items-center justify-center rounded cursor-pointer',
+        'transition-all duration-100',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         props.isActive
-          ? 'text-activity-bar-foreground-active bg-accent'
-          : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active hover:bg-accent/50'
+          ? 'text-activity-bar-foreground-active bg-accent/80'
+          : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active hover:bg-accent/40'
       )}
       onClick={() => props.onClick()}
       title={props.item.label}
       aria-label={props.item.label}
       aria-pressed={props.isActive}
     >
-      {/* Active indicator */}
+      {/* Active indicator - positioned to touch left edge of activity bar */}
       <Show when={props.isActive}>
-        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-primary rounded-r" />
+        <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-0.5 h-7 bg-primary rounded-r" />
       </Show>
 
       {/* Icon */}
-      <Dynamic component={props.item.icon} class="w-6 h-6" />
+      <Dynamic component={props.item.icon} class="w-5 h-5" />
 
       {/* Badge */}
       <Show when={badgeValue()}>
         <span
           class={cn(
-            'absolute top-1 right-1 min-w-4 h-4 px-1',
+            'absolute top-0.5 right-0.5 min-w-3.5 h-3.5 px-1',
             'flex items-center justify-center',
-            'text-[10px] font-medium rounded-full',
+            'text-[9px] font-medium rounded-full',
             'bg-activity-bar-badge text-activity-bar-badge-foreground'
           )}
         >

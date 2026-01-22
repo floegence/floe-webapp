@@ -81,7 +81,7 @@ export const popIn = {
  */
 export const sidebarVariants = {
   open: {
-    width: 260,
+    width: 300,
     transition: { duration: duration.normal, ease: easing.easeOut },
   },
   collapsed: {

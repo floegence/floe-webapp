@@ -5,36 +5,36 @@
 
   /* Base - Warm creamy paper */
   --background: hsl(38 20% 98%);
-  --foreground: hsl(240 5% 10%);
+  --foreground: hsl(215 40% 13%);
 
   /* Primary - Deep blue-black ink */
-  --primary: hsl(240 4% 10%);
+  --primary: hsl(215 40% 13%);
   --primary-foreground: hsl(0 0% 98%);
 
   /* Secondary - Warm muted */
   --secondary: hsl(38 10% 94%);
-  --secondary-foreground: hsl(240 5% 26%);
+  --secondary-foreground: hsl(215 30% 26%);
 
   /* Muted - Warm gray */
   --muted: hsl(38 10% 94%);
-  --muted-foreground: hsl(240 4% 46%);
+  --muted-foreground: hsl(215 20% 46%);
 
   /* Accent - Subtle warm highlight */
   --accent: hsl(38 15% 94%);
-  --accent-foreground: hsl(240 5% 10%);
+  --accent-foreground: hsl(215 40% 13%);
 
   /* Border - Warm gray */
   --border: hsl(38 8% 88%);
   --input: hsl(38 8% 88%);
-  --ring: hsl(240 4% 10%);
+  --ring: hsl(215 40% 13%);
 
   /* Card */
   --card: hsl(38 15% 99%);
-  --card-foreground: hsl(240 5% 10%);
+  --card-foreground: hsl(215 40% 13%);
 
   /* Popover */
   --popover: hsl(38 15% 99%);
-  --popover-foreground: hsl(240 5% 10%);
+  --popover-foreground: hsl(215 40% 13%);
 
   /* Status colors - Using OKLCH for perceptual consistency */
   --success: oklch(0.68 0.16 150);
@@ -48,32 +48,32 @@
 
   /* Sidebar - Slightly warmer */
   --sidebar: hsl(38 15% 97.5%);
-  --sidebar-foreground: hsl(240 5% 10%);
-  --sidebar-primary: hsl(240 4% 10%);
+  --sidebar-foreground: hsl(215 40% 13%);
+  --sidebar-primary: hsl(215 40% 13%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
   --sidebar-accent: hsl(38 15% 94%);
-  --sidebar-accent-foreground: hsl(240 5% 10%);
+  --sidebar-accent-foreground: hsl(215 40% 13%);
   --sidebar-border: hsl(38 8% 90%);
-  --sidebar-ring: hsl(240 4% 10%);
+  --sidebar-ring: hsl(215 40% 13%);
 
   /* Activity bar */
   --activity-bar: hsl(38 10% 96%);
-  --activity-bar-foreground: hsl(240 4% 46%);
-  --activity-bar-foreground-active: hsl(240 5% 10%);
-  --activity-bar-badge: hsl(240 4% 10%);
+  --activity-bar-foreground: hsl(215 20% 46%);
+  --activity-bar-foreground-active: hsl(215 40% 13%);
+  --activity-bar-badge: hsl(215 40% 13%);
   --activity-bar-badge-foreground: hsl(0 0% 98%);
 
   /* Terminal */
-  --terminal-background: hsl(240 5% 10%);
+  --terminal-background: hsl(215 40% 13%);
   --terminal-foreground: hsl(0 0% 92%);
 
   /* Chart colors */
-  --chart-1: hsl(240 4% 10%);
+  --chart-1: hsl(215 40% 13%);
   --chart-2: hsl(38 15% 60%);
   --chart-3: oklch(0.65 0.13 250);
   --chart-4: oklch(0.68 0.16 150);
   --chart-5: oklch(0.78 0.14 80);
 
-  /* Radius */
-  --radius: 0.5rem;
+  /* Radius - Slightly smaller for refined look */
+  --radius: 0.375rem;
 }

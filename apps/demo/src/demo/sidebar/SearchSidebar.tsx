@@ -16,7 +16,7 @@ function fileName(path: string) {
 
 export function SearchSidebar(props: SearchSidebarProps) {
   return (
-    <div class="p-3 space-y-4">
+    <div class="p-2.5 space-y-3">
       <SidebarSection title="Search">
         <Input
           value={props.query()}
@@ -24,14 +24,14 @@ export function SearchSidebar(props: SearchSidebarProps) {
           placeholder="Search files…"
           leftIcon={<Search class="w-4 h-4" />}
         />
-        <div class="mt-3">
-          <p class="text-xs text-muted-foreground">
+        <div class="mt-2">
+          <p class="text-[11px] text-muted-foreground">
             <Show when={props.query()} fallback="Type to search.">
               {props.results().length} results
             </Show>
           </p>
         </div>
-        <div class="mt-2 space-y-1">
+        <div class="mt-1.5 space-y-0.5">
           <For each={props.results().slice(0, 12)}>
             {(file) => (
               <SidebarItem onClick={() => props.onOpenFile(file.id)}>

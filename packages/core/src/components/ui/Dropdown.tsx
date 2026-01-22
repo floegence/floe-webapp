@@ -71,7 +71,7 @@ export function Dropdown(props: DropdownProps) {
   return (
     <div class={cn('relative inline-block', props.class)}>
       {/* Trigger */}
-      <div ref={triggerRef} onClick={() => setOpen((v) => !v)}>
+      <div ref={triggerRef} onClick={() => setOpen((v) => !v)} class="cursor-pointer">
         {props.trigger}
       </div>
 
@@ -80,9 +80,9 @@ export function Dropdown(props: DropdownProps) {
         <div
           ref={menuRef}
           class={cn(
-            'absolute z-50 mt-1 min-w-40 py-1',
+            'absolute z-50 mt-1 min-w-36 py-0.5',
             'bg-popover text-popover-foreground',
-            'rounded-md border border-border shadow-lg',
+            'rounded border border-border shadow-md',
             'animate-in fade-in slide-in-from-top-2',
             alignClass[props.align ?? 'start']
           )}
@@ -124,8 +124,8 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     <button
       type="button"
       class={cn(
-        'w-full flex items-center gap-2 px-3 py-1.5 text-sm',
-        'transition-colors duration-100',
+        'w-full flex items-center gap-1.5 px-2 py-1 text-xs',
+        'transition-colors duration-75',
         'focus:outline-none focus:bg-accent',
         props.item.disabled
           ? 'opacity-50 cursor-not-allowed'
@@ -135,14 +135,14 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       disabled={props.item.disabled}
       onClick={() => props.onSelect()}
     >
-      <span class="w-4 h-4 flex items-center justify-center">
+      <span class="w-3.5 h-3.5 flex items-center justify-center">
         <Show when={props.selected}>
-          <Check class="w-4 h-4" />
+          <Check class="w-3 h-3" />
         </Show>
       </span>
       <Show when={props.item.icon} keyed>
         {(Icon) => (
-          <span class="w-4 h-4 flex items-center justify-center">
+          <span class="w-3.5 h-3.5 flex items-center justify-center">
             {Icon()}
           </span>
         )}
@@ -178,10 +178,10 @@ export function Select(props: SelectProps) {
         <button
           type="button"
           class={cn(
-            'flex items-center justify-between gap-2 h-9 px-3 w-full',
-            'rounded-md border border-input bg-background text-sm',
-            'transition-colors duration-150',
-            'focus:outline-none focus:ring-2 focus:ring-ring',
+            'flex items-center justify-between gap-2 h-8 px-2.5 w-full cursor-pointer',
+            'rounded border border-input bg-background text-xs shadow-sm',
+            'transition-colors duration-100',
+            'focus:outline-none focus:ring-1 focus:ring-ring',
             'disabled:cursor-not-allowed disabled:opacity-50',
             props.class
           )}
@@ -190,7 +190,7 @@ export function Select(props: SelectProps) {
           <span class={cn(!selectedOption() && 'text-muted-foreground')}>
             {selectedOption()?.label ?? props.placeholder ?? 'Select...'}
           </span>
-          <ChevronDown class="w-4 h-4 text-muted-foreground" />
+          <ChevronDown class="w-3.5 h-3.5 text-muted-foreground" />
         </button>
       }
       items={items()}

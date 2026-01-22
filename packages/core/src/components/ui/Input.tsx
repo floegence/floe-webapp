@@ -11,9 +11,9 @@ export interface InputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElemen
 }
 
 const sizeStyles: Record<InputSize, string> = {
-  sm: 'h-8 text-xs px-2',
-  md: 'h-9 text-sm px-3',
-  lg: 'h-10 text-base px-4',
+  sm: 'h-7 text-xs px-2',
+  md: 'h-8 text-xs px-2.5',
+  lg: 'h-9 text-sm px-3',
 };
 
 export function Input(props: InputProps) {
@@ -28,35 +28,36 @@ export function Input(props: InputProps) {
   return (
     <div class="relative">
       <Show when={local.leftIcon}>
-        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <div class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
           {local.leftIcon}
         </div>
       </Show>
 
       <input
         class={cn(
-          'w-full rounded-md border border-input bg-background',
-          'placeholder:text-muted-foreground',
-          'transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
+          'w-full rounded border border-input bg-background shadow-sm',
+          'placeholder:text-muted-foreground/60',
+          'transition-colors duration-100',
+          'focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring',
           'disabled:cursor-not-allowed disabled:opacity-50',
           local.error && 'border-error focus:ring-error',
-          local.leftIcon && 'pl-9',
-          local.rightIcon && 'pr-9',
           sizeStyles[local.size ?? 'md'],
+          // Icon padding must come AFTER sizeStyles to override px-*
+          local.leftIcon && 'pl-10',
+          local.rightIcon && 'pr-10',
           local.class
         )}
         {...rest}
       />
 
       <Show when={local.rightIcon}>
-        <div class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
           {local.rightIcon}
         </div>
       </Show>
 
       <Show when={local.error}>
-        <p class="mt-1 text-xs text-error">{local.error}</p>
+        <p class="mt-1 text-[11px] text-error">{local.error}</p>
       </Show>
     </div>
   );
@@ -76,10 +77,10 @@ export function Textarea(props: TextareaProps) {
     <div>
       <textarea
         class={cn(
-          'w-full min-h-20 rounded-md border border-input bg-background p-3 text-sm',
-          'placeholder:text-muted-foreground',
-          'transition-colors duration-150',
-          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
+          'w-full min-h-16 rounded border border-input bg-background p-2.5 text-xs shadow-sm',
+          'placeholder:text-muted-foreground/60',
+          'transition-colors duration-100',
+          'focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring',
           'disabled:cursor-not-allowed disabled:opacity-50',
           'resize-y',
           local.error && 'border-error focus:ring-error',
@@ -88,7 +89,7 @@ export function Textarea(props: TextareaProps) {
         {...rest}
       />
       <Show when={local.error}>
-        <p class="mt-1 text-xs text-error">{local.error}</p>
+        <p class="mt-1 text-[11px] text-error">{local.error}</p>
       </Show>
     </div>
   );

@@ -13,9 +13,9 @@ export function BottomBar(props: BottomBarProps) {
   return (
     <footer
       class={cn(
-        'h-6 shrink-0 flex items-center justify-between px-2',
+        'h-5 shrink-0 flex items-center justify-between px-1.5',
         'bg-background border-t border-border',
-        'text-xs text-muted-foreground font-mono',
+        'text-[10px] text-muted-foreground font-mono',
         props.class
       )}
     >
@@ -36,9 +36,9 @@ export interface BottomBarItemProps {
 
 export function BottomBarItem(props: BottomBarItemProps) {
   const baseClass = () => cn(
-    'flex items-center gap-1 px-1.5 py-0.5 rounded',
-    props.onClick && 'hover:bg-muted cursor-pointer',
-    'transition-colors duration-100',
+    'flex items-center gap-1 px-1 py-0.5 rounded-sm',
+    props.onClick && 'hover:bg-muted/80 cursor-pointer',
+    'transition-colors duration-75',
     props.class
   );
 
@@ -48,7 +48,7 @@ export function BottomBarItem(props: BottomBarItemProps) {
       fallback={
         <span class={baseClass()}>
           <Show when={props.icon}>
-            <span class="w-3 h-3">{props.icon}</span>
+            <span class="w-2.5 h-2.5">{props.icon}</span>
           </Show>
           {props.children}
         </span>
@@ -60,7 +60,7 @@ export function BottomBarItem(props: BottomBarItemProps) {
         onClick={() => props.onClick?.()}
       >
         <Show when={props.icon}>
-          <span class="w-3 h-3">{props.icon}</span>
+          <span class="w-2.5 h-2.5">{props.icon}</span>
         </Show>
         {props.children}
       </button>
@@ -93,7 +93,7 @@ export function StatusIndicator(props: StatusIndicatorProps) {
 
   return (
     <BottomBarItem>
-      <span class={cn('w-2 h-2 rounded-full', statusColors[props.status])} />
+      <span class={cn('w-1.5 h-1.5 rounded-full', statusColors[props.status])} />
       <span>{props.label ?? statusLabels[props.status]}</span>
     </BottomBarItem>
   );

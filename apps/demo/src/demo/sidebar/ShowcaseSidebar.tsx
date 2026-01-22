@@ -21,9 +21,9 @@ const sections = [
 
 export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
   return (
-    <div class="p-3 space-y-4">
+    <div class="p-2.5 space-y-3">
       <SidebarSection title="Showcase">
-        <div class="space-y-1">
+        <div class="space-y-0.5">
           <For each={sections}>
             {(item) => (
               <SidebarItem onClick={() => props.onJumpTo(item.id)}>
@@ -35,7 +35,7 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
       </SidebarSection>
 
       <SidebarSection title="Source">
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-1.5">
           <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.shell')}>
             View Shell.tsx
           </Button>

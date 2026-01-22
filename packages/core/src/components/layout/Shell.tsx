@@ -1,4 +1,4 @@
-import { Show, For, createEffect, createMemo, type JSX } from 'solid-js';
+import { Show, For, createEffect, createMemo, createSignal, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -35,6 +35,7 @@ export interface ShellProps {
 export function Shell(props: ShellProps) {
   const layout = useLayout();
   const isMobile = useMediaQuery('(max-width: 767px)');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
   const registry = (() => {
     try {
       return useComponentRegistry();
@@ -50,6 +51,13 @@ export function Shell(props: ShellProps) {
     }
   };
   updateMobile();
+
+  // Close mobile sidebar when switching to desktop
+  createEffect(() => {
+    if (!isMobile()) {
+      setMobileSidebarOpen(false);
+    }
+  });
 
   const activityItems = createMemo<ActivityBarItem[]>(() => {
     if (props.activityItems) return props.activityItems;
@@ -109,10 +117,17 @@ export function Shell(props: ShellProps) {
     }
   });
 
-  const mobileMainContent = createMemo<JSX.Element>(() => {
-    const active = layout.sidebarActiveTab();
-    return renderSidebarContent(active) ?? props.children;
-  });
+  // Handle mobile tab selection - toggle sidebar
+  const handleMobileTabSelect = (id: string) => {
+    if (layout.sidebarActiveTab() === id && mobileSidebarOpen()) {
+      // Same tab clicked, close sidebar
+      setMobileSidebarOpen(false);
+    } else {
+      // Different tab or sidebar closed, open sidebar
+      layout.setSidebarActiveTab(id);
+      setMobileSidebarOpen(true);
+    }
+  };
 
   return (
     <div
@@ -120,6 +135,8 @@ export function Shell(props: ShellProps) {
         // Use dvh when supported to avoid mobile browser UI causing layout jumps.
         'h-screen h-[100dvh] w-full flex flex-col overflow-hidden',
         'bg-background text-foreground',
+        // Prevent overscroll on the shell container
+        'overscroll-none',
         props.class
       )}
     >
@@ -127,7 +144,7 @@ export function Shell(props: ShellProps) {
       <TopBar logo={props.logo} actions={props.topBarActions} />
 
       {/* Main area */}
-      <div class="flex-1 min-h-0 flex overflow-hidden">
+      <div class="flex-1 min-h-0 flex overflow-hidden relative">
         {/* Desktop: Activity Bar + Sidebar */}
         <Show when={!isMobile()}>
           {/* Activity Bar */}
@@ -158,13 +175,33 @@ export function Shell(props: ShellProps) {
           </Show>
         </Show>
 
+        {/* Mobile: Sidebar as overlay */}
+        <Show when={isMobile() && mobileSidebarOpen()}>
+          {/* Backdrop */}
+          <div
+            class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm cursor-pointer"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          {/* Sidebar panel */}
+          <div
+            class={cn(
+              'absolute left-0 top-0 bottom-0 z-50 w-80 max-w-[85vw]',
+              'bg-sidebar border-r border-sidebar-border',
+              'shadow-xl',
+              'animate-in slide-in-from-left duration-200'
+            )}
+          >
+            <div class="h-full overflow-auto overscroll-contain">
+              {renderSidebarContent(layout.sidebarActiveTab())}
+            </div>
+          </div>
+        </Show>
+
         {/* Content area */}
         <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {/* Main content */}
-          <main class="flex-1 min-h-0 overflow-auto">
-            <Show when={isMobile()} fallback={props.children}>
-              {mobileMainContent()}
-            </Show>
+          {/* Main content - always visible, allows overscroll bounce */}
+          <main class="flex-1 min-h-0 overflow-auto overscroll-auto">
+            {props.children}
           </main>
 
           {/* Terminal panel (desktop only) */}
@@ -190,8 +227,8 @@ export function Shell(props: ShellProps) {
       <Show when={isMobile() && activityItems().length > 0}>
         <MobileTabBar
           items={activityItems()}
-          activeId={layout.sidebarActiveTab()}
-          onSelect={layout.setSidebarActiveTab}
+          activeId={mobileSidebarOpen() ? layout.sidebarActiveTab() : ''}
+          onSelect={handleMobileTabSelect}
         />
       </Show>
     </div>

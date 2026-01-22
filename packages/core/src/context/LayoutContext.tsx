@@ -45,7 +45,7 @@ const STORAGE_KEY = 'layout';
 
 const DEFAULT_STATE: LayoutStore = {
   sidebar: {
-    width: 260,
+    width: 350,
     activeTab: '',
     collapsed: false,
   },
@@ -97,7 +97,7 @@ export function createLayoutService(): LayoutContextValue {
     setSidebarWidth: (width: number) =>
       setStore(
         produce((s) => {
-          s.sidebar.width = Math.max(200, Math.min(400, width));
+          s.sidebar.width = Math.max(220, Math.min(480, width));
         })
       ),
     setSidebarActiveTab: (tab: string) =>

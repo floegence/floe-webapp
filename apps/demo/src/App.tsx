@@ -239,12 +239,12 @@ function AppContent() {
         <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
       </Match>
       <Match when={layout.sidebarActiveTab() === 'settings'}>
-        <div class="p-6 max-w-3xl mx-auto space-y-4">
-          <h1 class="text-2xl font-semibold">Settings</h1>
-          <p class="text-sm text-muted-foreground">
+        <div class="p-4 max-w-2xl mx-auto space-y-3">
+          <h1 class="text-lg font-semibold">Settings</h1>
+          <p class="text-xs text-muted-foreground">
             Settings are rendered in the sidebar. Use the command palette to discover demo commands.
           </p>
-          <div class="max-w-md">
+          <div class="max-w-sm">
             <SettingsPanel />
           </div>
         </div>
@@ -256,12 +256,12 @@ function AppContent() {
     <>
       <Shell
         logo={
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm">
+          <div class="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-xs">
             F
           </div>
         }
         topBarActions={
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -273,8 +273,8 @@ function AppContent() {
           </div>
         }
         terminalPanel={
-          <div class="h-full flex items-center justify-center text-muted-foreground">
-            <Terminal class="w-6 h-6 mr-2" />
+          <div class="h-full flex items-center justify-center text-muted-foreground text-xs">
+            <Terminal class="w-4 h-4 mr-1.5" />
             Terminal placeholder
           </div>
         }

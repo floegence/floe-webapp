@@ -49,7 +49,7 @@ export function Dialog(props: DialogProps) {
       <Portal>
         {/* Backdrop */}
         <div
-          class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in"
+          class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in cursor-pointer"
           onClick={() => props.onOpenChange(false)}
         />
 
@@ -57,8 +57,8 @@ export function Dialog(props: DialogProps) {
         <div
           class={cn(
             'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
-            'w-full max-w-lg max-h-[85vh]',
-            'bg-card text-card-foreground rounded-lg shadow-lg',
+            'w-full max-w-md max-h-[85vh]',
+            'bg-card text-card-foreground rounded-md shadow-lg',
             'border border-border',
             'animate-in fade-in zoom-in-95',
             'flex flex-col',
@@ -71,15 +71,15 @@ export function Dialog(props: DialogProps) {
         >
           {/* Header */}
           <Show when={props.title || props.description}>
-            <div class="flex items-start justify-between p-4 border-b border-border">
+            <div class="flex items-start justify-between p-3 border-b border-border">
               <div>
                 <Show when={props.title}>
-                  <h2 id="dialog-title" class="text-lg font-semibold">
+                  <h2 id="dialog-title" class="text-sm font-semibold">
                     {props.title}
                   </h2>
                 </Show>
                 <Show when={props.description}>
-                  <p id="dialog-description" class="mt-1 text-sm text-muted-foreground">
+                  <p id="dialog-description" class="mt-0.5 text-xs text-muted-foreground">
                     {props.description}
                   </p>
                 </Show>
@@ -87,21 +87,21 @@ export function Dialog(props: DialogProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                class="h-8 w-8 -mr-2"
+                class="h-6 w-6 -mr-1"
                 onClick={() => props.onOpenChange(false)}
                 aria-label="Close"
               >
-                <X class="w-4 h-4" />
+                <X class="w-3.5 h-3.5" />
               </Button>
             </div>
           </Show>
 
           {/* Content */}
-          <div class="flex-1 overflow-auto p-4">{props.children}</div>
+          <div class="flex-1 overflow-auto p-3">{props.children}</div>
 
           {/* Footer */}
           <Show when={props.footer}>
-            <div class="flex items-center justify-end gap-2 p-4 border-t border-border">
+            <div class="flex items-center justify-end gap-2 p-3 border-t border-border">
               {props.footer}
             </div>
           </Show>

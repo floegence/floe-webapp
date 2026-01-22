@@ -25,7 +25,7 @@ export function TopBar(props: TopBarProps) {
         props.class
       )}
     >
-      <div class="h-12 flex items-center gap-4 px-4">
+      <div class="h-10 flex items-center gap-3 px-3">
         {/* Logo */}
         <div class="flex items-center gap-2 flex-shrink-0">
           {props.logo || (
@@ -34,7 +34,7 @@ export function TopBar(props: TopBarProps) {
             </div>
           )}
           <Show when={props.title}>
-            <span class="font-semibold text-sm hidden sm:inline">{props.title}</span>
+            <span class="font-medium text-xs hidden sm:inline">{props.title}</span>
           </Show>
         </div>
 
@@ -42,24 +42,24 @@ export function TopBar(props: TopBarProps) {
         <button
           type="button"
           class={cn(
-            'flex-1 max-w-md flex items-center gap-2 h-8 px-3',
-            'text-sm text-muted-foreground',
-            'bg-muted/50 hover:bg-muted rounded-md',
-            'border border-transparent hover:border-border',
-            'transition-colors duration-150',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+            'flex-1 max-w-sm flex items-center gap-2 h-7 px-2.5 cursor-pointer',
+            'text-xs text-muted-foreground',
+            'bg-muted/40 hover:bg-muted/70 rounded',
+            'border border-transparent hover:border-border/50',
+            'transition-colors duration-100',
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
           )}
           onClick={() => command.open()}
         >
-          <Search class="w-4 h-4" />
-          <span class="flex-1 text-left hidden sm:inline">Search commands...</span>
-          <kbd class="hidden md:inline text-xs px-1.5 py-0.5 rounded bg-background border border-border font-mono">
+          <Search class="w-3.5 h-3.5 shrink-0" />
+          <span class="flex-1 text-left hidden sm:inline truncate">Search commands...</span>
+          <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/80 border border-border/50 font-mono shrink-0">
             {command.getKeybindDisplay('mod+k')}
           </kbd>
         </button>
 
         {/* Actions */}
-        <div class="flex items-center gap-2">{props.actions}</div>
+        <div class="flex items-center gap-1">{props.actions}</div>
       </div>
     </header>
   );

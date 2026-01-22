@@ -43,16 +43,16 @@ function SectionHeader(props: {
   actions?: JSX.Element;
 }) {
   return (
-    <div id={props.id} class="scroll-mt-6">
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <div class="space-y-1">
-          <h2 class="text-xl font-semibold">{props.title}</h2>
+    <div id={props.id} class="scroll-mt-4">
+      <div class="flex flex-wrap items-end justify-between gap-2">
+        <div class="space-y-0.5">
+          <h2 class="text-sm font-medium">{props.title}</h2>
           <Show when={props.description}>
-            <p class="text-sm text-muted-foreground">{props.description}</p>
+            <p class="text-[11px] text-muted-foreground">{props.description}</p>
           </Show>
         </div>
         <Show when={props.actions}>
-          <div class="flex items-center gap-2">{props.actions}</div>
+          <div class="flex items-center gap-1.5">{props.actions}</div>
         </Show>
       </div>
     </div>
@@ -109,16 +109,16 @@ export function ShowcasePage(props: ShowcasePageProps) {
   };
 
   return (
-    <div class="p-6 max-w-6xl mx-auto space-y-10">
-      <div id="overview" class="space-y-4 scroll-mt-6">
-        <div class="space-y-2">
-          <h1 class="text-3xl font-bold">Floe Webapp Demo</h1>
-          <p class="text-sm text-muted-foreground">
+    <div class="p-4 max-w-5xl mx-auto space-y-6">
+      <div id="overview" class="space-y-3 scroll-mt-4">
+        <div class="space-y-1">
+          <h1 class="text-lg font-bold">Floe Webapp Demo</h1>
+          <p class="text-[11px] text-muted-foreground">
             This playground showcases all core UI components, layout primitives, and loading states.
           </p>
         </div>
 
-        <div class="flex flex-wrap gap-3">
+        <div class="flex flex-wrap gap-2">
           <Button onClick={() => command.open()}>
             Open Command Palette ({command.getKeybindDisplay('mod+k')})
           </Button>
@@ -136,7 +136,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           </Button>
         </div>
 
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-1.5">
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-buttons')}>
             Jump: Buttons
           </Button>
@@ -152,7 +152,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </div>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-buttons"
           title="Buttons"
@@ -163,9 +163,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="space-y-6">
-            <div class="flex flex-wrap gap-2">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-4">
+            <div class="flex flex-wrap gap-1.5">
               <Button variant="default">Default</Button>
               <Button variant="primary">Primary</Button>
               <Button variant="secondary">Secondary</Button>
@@ -173,12 +173,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Button variant="ghost">Ghost</Button>
               <Button variant="destructive">Destructive</Button>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
               <Button size="sm">Small</Button>
               <Button size="md">Medium</Button>
               <Button size="lg">Large</Button>
               <Button size="icon" title="Icon button">
-                <Bell class="w-4 h-4" />
+                <Bell class="w-3.5 h-3.5" />
               </Button>
               <Button loading>Loading</Button>
               <Button disabled>Disabled</Button>
@@ -187,30 +187,30 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </Panel>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-inputs"
           title="Inputs"
           description="Input + Textarea with sizes, icons and error state."
           actions={
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.input')}>
                 View Source
               </Button>
             </div>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-3">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
               <Input size="sm" placeholder="Small input" />
               <Input size="md" placeholder="Medium input" />
               <Input size="lg" placeholder="Large input" />
             </div>
-            <div class="space-y-3">
+            <div class="space-y-2">
               <Input
                 placeholder="Search with icon"
-                leftIcon={<Search class="w-4 h-4" />}
+                leftIcon={<Search class="w-3.5 h-3.5" />}
               />
               <Input placeholder="Error state" error="Something went wrong" />
               <Textarea placeholder="Textarea (resizable)" />
@@ -219,7 +219,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </Panel>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-menus"
           title="Dropdown & Select"
@@ -230,10 +230,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="flex flex-wrap items-start gap-6">
-            <div class="space-y-2">
-              <p class="text-xs text-muted-foreground">Dropdown</p>
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap items-start gap-4">
+            <div class="space-y-1.5">
+              <p class="text-[11px] text-muted-foreground">Dropdown</p>
               <Dropdown
                 value={dropdownValue()}
                 onSelect={setDropdownValue}
@@ -245,8 +245,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 }
               />
             </div>
-            <div class="space-y-2 w-64">
-              <p class="text-xs text-muted-foreground">Select</p>
+            <div class="space-y-1.5 w-56">
+              <p class="text-[11px] text-muted-foreground">Select</p>
               <Select
                 value={selectValue()}
                 onChange={setSelectValue}
@@ -257,13 +257,13 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   { value: 'dark', label: 'Dark' },
                 ]}
               />
-              <p class="text-xs text-muted-foreground">Selected: {selectValue()}</p>
+              <p class="text-[11px] text-muted-foreground">Selected: {selectValue()}</p>
             </div>
           </PanelContent>
         </Panel>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-tooltips"
           title="Tooltip"
@@ -274,8 +274,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-4 items-center">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-3 items-center">
             <Tooltip content="Top tooltip" placement="top">
               <Button variant="outline">Top</Button>
             </Tooltip>
@@ -285,14 +285,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <Tooltip content="Left tooltip" placement="left">
               <Button variant="outline">Left</Button>
             </Tooltip>
-            <Tooltip content={<span class="font-mono text-xs">Custom JSX content</span>} placement="right">
+            <Tooltip content={<span class="font-mono text-[10px]">Custom JSX content</span>} placement="right">
               <Button variant="outline">Right</Button>
             </Tooltip>
           </PanelContent>
         </Panel>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-dialogs"
           title="Dialogs"
@@ -303,8 +303,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-3 items-center">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
             <Button variant="outline" onClick={openConfirm}>Open Confirm Dialog</Button>
             <Button
@@ -340,15 +340,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </>
           }
         >
-          <div class="space-y-3">
+          <div class="space-y-2">
             <Input placeholder="Type something..." />
             <Textarea placeholder="Longer content..." />
-            <div class="space-y-2">
-              <p class="text-sm text-muted-foreground">
-                Tip: press <kbd class="font-mono text-xs px-1.5 py-0.5 rounded bg-muted border border-border">Esc</kbd>{' '}
+            <div class="space-y-1.5">
+              <p class="text-[11px] text-muted-foreground">
+                Tip: press <kbd class="font-mono text-[10px] px-1 py-0.5 rounded bg-muted border border-border">Esc</kbd>{' '}
                 to close.
               </p>
-              <div class="h-40 rounded border border-border bg-muted/30" />
+              <div class="h-32 rounded border border-border bg-muted/30" />
             </div>
           </div>
         </Dialog>
@@ -365,7 +365,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="ui-command-palette"
           title="Command Palette"
@@ -376,12 +376,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-3 items-center">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => command.open()}>Open</Button>
             <Button
               variant="outline"
-              onClick={() => notifications.success('Tip', 'Try searching for “demo” commands.')}
+              onClick={() => notifications.success('Tip', 'Try searching for "demo" commands.')}
             >
               Show tip
             </Button>
@@ -389,20 +389,20 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </Panel>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="layout-resize"
           title="Layout: Panel + ResizeHandle"
           description="Use ResizeHandle to build split panes without blocking UI."
           actions={
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.panel')}>
                 View Panel Source
               </Button>
             </div>
           }
         />
-        <div class="border border-border rounded-lg overflow-hidden h-[360px] flex bg-card">
+        <div class="border border-border rounded-md overflow-hidden h-[280px] flex bg-card">
           <div
             class="h-full shrink-0 border-r border-border bg-muted/20"
             style={{ width: `${splitWidth()}px` }}
@@ -417,14 +417,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
               >
                 Sidebar (Resizable)
               </PanelHeader>
-              <PanelContent class="space-y-2">
-                <p class="text-sm text-muted-foreground">
+              <PanelContent class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">
                   Drag the handle to resize.
                 </p>
-                <div class="space-y-2">
+                <div class="space-y-1">
                   <For each={[1, 2, 3, 4, 5]}>
                     {() => (
-                      <div class="h-7 rounded bg-muted/60" />
+                      <div class="h-5 rounded bg-muted/60" />
                     )}
                   </For>
                 </div>
@@ -440,15 +440,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <div class="flex-1 min-w-0">
             <Panel class="h-full">
               <PanelHeader>Content</PanelHeader>
-              <PanelContent class="space-y-3">
-                <p class="text-sm text-muted-foreground">
+              <PanelContent class="space-y-2">
+                <p class="text-[11px] text-muted-foreground">
                   ResizeHandle is throttled with requestAnimationFrame for smooth drag behavior.
                 </p>
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="h-20 rounded bg-muted/30" />
-                  <div class="h-20 rounded bg-muted/30" />
-                  <div class="h-20 rounded bg-muted/30" />
-                  <div class="h-20 rounded bg-muted/30" />
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="h-14 rounded bg-muted/30" />
+                  <div class="h-14 rounded bg-muted/30" />
+                  <div class="h-14 rounded bg-muted/30" />
+                  <div class="h-14 rounded bg-muted/30" />
                 </div>
               </PanelContent>
             </Panel>
@@ -456,13 +456,13 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </div>
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="loading-overlay"
           title="Loading"
           description="SnakeLoader + Skeleton + LoadingOverlay."
           actions={
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.loading-overlay')}>
                 View Overlay Source
               </Button>
@@ -470,29 +470,29 @@ export function ShowcasePage(props: ShowcasePageProps) {
           }
         />
 
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="space-y-6">
-            <div class="flex flex-wrap items-center gap-6">
-              <div class="space-y-2">
-                <p class="text-xs text-muted-foreground">SnakeLoader</p>
-                <div class="flex items-center gap-4">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-4">
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">SnakeLoader</p>
+                <div class="flex items-center gap-3">
                   <SnakeLoader size="sm" />
                   <SnakeLoader size="md" />
                   <SnakeLoader size="lg" />
                 </div>
               </div>
 
-              <div class="space-y-2 flex-1 min-w-72">
-                <p class="text-xs text-muted-foreground">Skeleton</p>
-                <div class="space-y-2">
-                  <Skeleton class="h-4 w-1/3" />
-                  <Skeleton class="h-4 w-2/3" />
-                  <Skeleton class="h-24 w-full" />
+              <div class="space-y-1.5 flex-1 min-w-64">
+                <p class="text-[11px] text-muted-foreground">Skeleton</p>
+                <div class="space-y-1.5">
+                  <Skeleton class="h-3 w-1/3" />
+                  <Skeleton class="h-3 w-2/3" />
+                  <Skeleton class="h-16 w-full" />
                 </div>
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2">
               <Button onClick={() => setOverlayVisible(true)}>Show fullscreen overlay</Button>
               <Button variant="outline" onClick={() => setOverlayVisible(false)}>Hide</Button>
             </div>
@@ -502,19 +502,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <LoadingOverlay visible={overlayVisible()} fullscreen message="Loading something..." />
       </div>
 
-      <div class="space-y-6">
+      <div class="space-y-4">
         <SectionHeader
           id="icons"
           title="Icons"
           description="All built-in icons shipped with @floegence/floe-webapp-core."
         />
-        <Panel class="border border-border rounded-lg overflow-hidden">
-          <PanelContent class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             <For each={icons()}>
               {(item) => (
-                <div class="flex items-center gap-3 rounded border border-border bg-muted/20 px-3 py-2">
+                <div class="flex items-center gap-2 rounded border border-border bg-muted/20 px-2 py-1.5">
                   <item.icon class="w-4 h-4" />
-                  <span class="text-sm">{item.name}</span>
+                  <span class="text-[11px]">{item.name}</span>
                 </div>
               )}
             </For>

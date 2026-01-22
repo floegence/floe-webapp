@@ -140,12 +140,25 @@
   /* Opacity variants for overlays */
   .bg-background\/60 { background-color: color-mix(in srgb, var(--background) 60%, transparent); }
   .bg-background\/80 { background-color: color-mix(in srgb, var(--background) 80%, transparent); }
+  .bg-muted\/40 { background-color: color-mix(in srgb, var(--muted) 40%, transparent); }
   .bg-muted\/50 { background-color: color-mix(in srgb, var(--muted) 50%, transparent); }
+  .bg-muted\/70 { background-color: color-mix(in srgb, var(--muted) 70%, transparent); }
+  .bg-muted\/80 { background-color: color-mix(in srgb, var(--muted) 80%, transparent); }
   .bg-muted-foreground\/30 { background-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent); }
   .bg-primary\/70 { background-color: color-mix(in srgb, var(--primary) 70%, transparent); }
+  .bg-accent\/40 { background-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .bg-accent\/80 { background-color: color-mix(in srgb, var(--accent) 80%, transparent); }
+  .text-muted-foreground\/70 { color: color-mix(in srgb, var(--muted-foreground) 70%, transparent); }
+  .placeholder\:text-muted-foreground\/60::placeholder { color: color-mix(in srgb, var(--muted-foreground) 60%, transparent); }
 
   /* Additional hover states */
   .hover\:bg-primary\/50:hover { background-color: color-mix(in srgb, var(--primary) 50%, transparent); }
+  .hover\:bg-muted\/70:hover { background-color: color-mix(in srgb, var(--muted) 70%, transparent); }
+  .hover\:bg-muted\/80:hover { background-color: color-mix(in srgb, var(--muted) 80%, transparent); }
+  .hover\:bg-accent\/40:hover { background-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+  .hover\:bg-sidebar-accent\/80:hover { background-color: color-mix(in srgb, var(--sidebar-accent) 80%, transparent); }
+  .hover\:border-border\/50:hover { border-color: color-mix(in srgb, var(--border) 50%, transparent); }
+  .border-border\/50 { border-color: color-mix(in srgb, var(--border) 50%, transparent); }
 
   /* Gradient utilities with CSS variables */
   .from-primary {
