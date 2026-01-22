@@ -49,6 +49,20 @@ export function createCommandService(): CommandContextValue {
   // Global keybind listener
   if (typeof window !== 'undefined') {
     const handleKeydown = (e: KeyboardEvent) => {
+      // Always prevent browser save dialog for Cmd/Ctrl+S
+      // This must come first to ensure the browser dialog never shows
+      if (matchKeybind(e, 'mod+s')) {
+        e.preventDefault();
+        // Check if there's a registered save command, execute it
+        const saveCommand = commandsMap.get('file.save');
+        if (saveCommand) {
+          deferNonBlocking(() => {
+            void Promise.resolve(saveCommand.execute()).catch((err) => console.error(err));
+          });
+        }
+        return;
+      }
+
       // Command palette shortcut (Cmd/Ctrl + K)
       if (matchKeybind(e, 'mod+k')) {
         e.preventDefault();

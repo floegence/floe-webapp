@@ -43,6 +43,7 @@ export interface MonacoViewerProps {
   options?: monaco.editor.IStandaloneEditorConstructionOptions;
   class?: string;
   style?: JSX.CSSProperties;
+  onChange?: (value: string) => void;
 }
 
 function createModelUri(path: string) {
@@ -102,7 +103,15 @@ export default function MonacoViewer(props: MonacoViewerProps) {
     applyTheme();
     ensureModel();
 
+    // Listen for content changes
+    const disposable = editor.onDidChangeModelContent(() => {
+      if (props.onChange && editor) {
+        props.onChange(editor.getValue());
+      }
+    });
+
     onCleanup(() => {
+      disposable.dispose();
       if (rafId) cancelAnimationFrame(rafId);
       editor?.dispose();
       model?.dispose();
