@@ -13,8 +13,8 @@ const sections = [
   { id: 'ui-menus', label: 'Dropdown & Select' },
   { id: 'ui-tooltips', label: 'Tooltip' },
   { id: 'ui-dialogs', label: 'Dialogs' },
+  { id: 'ui-floating-window', label: 'Floating Window' },
   { id: 'ui-command-palette', label: 'Command Palette' },
-  { id: 'layout-resize', label: 'Layout & Resize' },
   { id: 'loading-overlay', label: 'Loading' },
   { id: 'icons', label: 'Icons' },
 ];

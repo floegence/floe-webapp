@@ -7,6 +7,7 @@ import {
   Dropdown,
   type DropdownItem,
   Files,
+  FloatingWindow,
   GitBranch,
   Input,
   Loader2,
@@ -14,8 +15,6 @@ import {
   Moon,
   Panel,
   PanelContent,
-  PanelHeader,
-  ResizeHandle,
   Search,
   Select,
   Settings,
@@ -69,7 +68,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
   const [confirmLoading, setConfirmLoading] = createSignal(false);
   const [overlayVisible, setOverlayVisible] = createSignal(false);
-  const [splitWidth, setSplitWidth] = createSignal(260);
+  const [floatingWindowOpen, setFloatingWindowOpen] = createSignal(false);
 
   const [dropdownValue, setDropdownValue] = createSignal('profile');
   const dropdownItems: DropdownItem[] = [
@@ -142,9 +141,6 @@ export function ShowcasePage(props: ShowcasePageProps) {
           </Button>
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-dialogs')}>
             Jump: Dialogs
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('layout-resize')}>
-            Jump: Resize
           </Button>
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('loading-overlay')}>
             Jump: Loading
@@ -367,6 +363,67 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
       <div class="space-y-4">
         <SectionHeader
+          id="ui-floating-window"
+          title="Floating Window"
+          description="Draggable, resizable window with maximize/restore and close buttons."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.floating-window')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
+            <Button onClick={() => setFloatingWindowOpen(true)}>Open Floating Window</Button>
+            <p class="text-[11px] text-muted-foreground">
+              Features: drag title bar, resize edges/corners, maximize/restore, close with X or Esc
+            </p>
+          </PanelContent>
+        </Panel>
+
+        <FloatingWindow
+          open={floatingWindowOpen()}
+          onOpenChange={setFloatingWindowOpen}
+          title="Floating Window Demo"
+          defaultSize={{ width: 450, height: 320 }}
+          minSize={{ width: 280, height: 200 }}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setFloatingWindowOpen(false)}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setFloatingWindowOpen(false);
+                  notifications.success('Done', 'Window action completed.');
+                }}
+              >
+                Confirm
+              </Button>
+            </>
+          }
+        >
+          <div class="space-y-3">
+            <p class="text-xs text-muted-foreground">
+              This is a floating window component. Try these interactions:
+            </p>
+            <ul class="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Drag the title bar to move the window</li>
+              <li>Drag edges or corners to resize</li>
+              <li>Double-click title bar to maximize/restore</li>
+              <li>Click the maximize button in the title bar</li>
+              <li>Press Escape or click X to close</li>
+            </ul>
+            <div class="pt-2">
+              <Input placeholder="Type something..." />
+            </div>
+          </div>
+        </FloatingWindow>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
           id="ui-command-palette"
           title="Command Palette"
           description="Press Mod+K (or click the top search bar) to open it."
@@ -387,73 +444,6 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           </PanelContent>
         </Panel>
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="layout-resize"
-          title="Layout: Panel + ResizeHandle"
-          description="Use ResizeHandle to build split panes without blocking UI."
-          actions={
-            <div class="flex items-center gap-1.5">
-              <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.panel')}>
-                View Panel Source
-              </Button>
-            </div>
-          }
-        />
-        <div class="border border-border rounded-md overflow-hidden h-[280px] flex bg-card">
-          <div
-            class="h-full shrink-0 border-r border-border bg-muted/20"
-            style={{ width: `${splitWidth()}px` }}
-          >
-            <Panel class="h-full">
-              <PanelHeader
-                actions={
-                  <Button size="sm" variant="ghost" onClick={() => setSplitWidth(260)}>
-                    Reset
-                  </Button>
-                }
-              >
-                Sidebar (Resizable)
-              </PanelHeader>
-              <PanelContent class="space-y-1.5">
-                <p class="text-[11px] text-muted-foreground">
-                  Drag the handle to resize.
-                </p>
-                <div class="space-y-1">
-                  <For each={[1, 2, 3, 4, 5]}>
-                    {() => (
-                      <div class="h-5 rounded bg-muted/60" />
-                    )}
-                  </For>
-                </div>
-              </PanelContent>
-            </Panel>
-          </div>
-
-          <ResizeHandle
-            direction="horizontal"
-            onResize={(delta) => setSplitWidth((w) => Math.max(200, Math.min(420, w + delta)))}
-          />
-
-          <div class="flex-1 min-w-0">
-            <Panel class="h-full">
-              <PanelHeader>Content</PanelHeader>
-              <PanelContent class="space-y-2">
-                <p class="text-[11px] text-muted-foreground">
-                  ResizeHandle is throttled with requestAnimationFrame for smooth drag behavior.
-                </p>
-                <div class="grid grid-cols-2 gap-2">
-                  <div class="h-14 rounded bg-muted/30" />
-                  <div class="h-14 rounded bg-muted/30" />
-                  <div class="h-14 rounded bg-muted/30" />
-                  <div class="h-14 rounded bg-muted/30" />
-                </div>
-              </PanelContent>
-            </Panel>
-          </div>
-        </div>
       </div>
 
       <div class="space-y-4">
