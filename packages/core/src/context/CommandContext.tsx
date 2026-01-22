@@ -1,5 +1,6 @@
 import { createSignal, onCleanup, type Accessor, type Component } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
+import { useResolvedFloeConfig } from './FloeConfigContext';
 import { formatKeybind, matchKeybind, parseKeybind, type ParsedKeybind } from '../utils/keybind';
 import { deferNonBlocking } from '../utils/defer';
 
@@ -32,6 +33,8 @@ export interface CommandContextValue {
 }
 
 export function createCommandService(): CommandContextValue {
+  const floe = useResolvedFloeConfig();
+  const cfg = () => floe.config.commands;
   const commandsMap = new Map<string, Command>();
   const parsedKeybinds = new Map<string, ParsedKeybind>();
 
@@ -44,24 +47,53 @@ export function createCommandService(): CommandContextValue {
   };
 
   // Global keybind listener
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && cfg().enableGlobalKeybinds) {
+    const isTypingElement = (el: Element | null): boolean => {
+      if (!el || !(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+      if (el.isContentEditable) return true;
+      // Some editors use role="textbox" on non-input elements.
+      if (el.getAttribute('role') === 'textbox') return true;
+      return false;
+    };
+
+    const shouldIgnoreHotkeys = (e: KeyboardEvent): boolean => {
+      const c = cfg();
+      if (!c.ignoreWhenTyping) return false;
+
+      const el = (e.target as Element | null) ?? (typeof document !== 'undefined' ? document.activeElement : null);
+      if (!isTypingElement(el)) return false;
+
+      // Allow opt-in containers (e.g. code editor).
+      if (c.allowWhenTypingWithin && el instanceof Element && el.closest(c.allowWhenTypingWithin)) {
+        return false;
+      }
+
+      return true;
+    };
+
     const handleKeydown = (e: KeyboardEvent) => {
-      // Always prevent browser save dialog for Cmd/Ctrl+S
-      // This must come first to ensure the browser dialog never shows
-      if (matchKeybind(e, 'mod+s')) {
-        e.preventDefault();
-        // Check if there's a registered save command, execute it
-        const saveCommand = commandsMap.get('file.save');
+      const c = cfg();
+
+      // Save (Cmd/Ctrl+S) is expected to work even while typing.
+      if (c.save.enabled && matchKeybind(e, c.save.keybind)) {
+        const saveCommand = commandsMap.get(c.save.commandId);
         if (saveCommand) {
+          e.preventDefault();
           deferNonBlocking(() => {
             void Promise.resolve(saveCommand.execute()).catch((err) => console.error(err));
           });
+        } else if (c.save.preventDefaultWhenNoHandler) {
+          e.preventDefault();
         }
         return;
       }
 
+      if (shouldIgnoreHotkeys(e)) return;
+
       // Command palette shortcut (Cmd/Ctrl + K)
-      if (matchKeybind(e, 'mod+k')) {
+      if (c.palette.enabled && matchKeybind(e, c.palette.keybind)) {
         e.preventDefault();
         setIsOpen((v) => !v);
         return;

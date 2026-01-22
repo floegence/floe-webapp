@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget, type ResizeState } from '../../context/DeckContext';
 import { applyResizeDelta } from '../../utils/gridLayout';
 import { DECK_GRID_CONFIG } from './DeckGrid';
+import { lockBodyStyle } from '../../utils/bodyStyleLock';
 
 export interface WidgetResizeHandleProps {
   widget: DeckWidget;
@@ -45,11 +46,17 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   let lastX = 0;
   let lastY = 0;
   let rafId: number | null = null;
+  let unlockBody: (() => void) | null = null;
 
   const setGlobalStyles = (active: boolean) => {
-    if (typeof document === 'undefined') return;
-    document.body.style.cursor = active ? EDGE_CURSORS[props.edge] : '';
-    document.body.style.userSelect = active ? 'none' : '';
+    if (!active) {
+      unlockBody?.();
+      unlockBody = null;
+      return;
+    }
+
+    unlockBody?.();
+    unlockBody = lockBodyStyle({ cursor: EDGE_CURSORS[props.edge], 'user-select': 'none' });
   };
 
   const stopResizing = () => {

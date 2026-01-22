@@ -1,8 +1,9 @@
-import { Show, type JSX, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import { Show, createUniqueId, type JSX, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Button } from './Button';
 import { X, Maximize, Restore } from '../icons';
+import { lockBodyStyle } from '../../utils/bodyStyleLock';
 
 export interface FloatingWindowProps {
   /** Whether the window is open */
@@ -33,7 +34,7 @@ export interface FloatingWindowProps {
   zIndex?: number;
 }
 
-// 拖拽手柄位置类型
+// Resize handle directions
 type ResizeHandle =
   | 'n'
   | 's'
@@ -53,8 +54,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const minSize = () => props.minSize ?? { width: 200, height: 150 };
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
   const zIndex = () => props.zIndex ?? 100;
+  const baseId = createUniqueId();
+  const titleId = () => `floating-window-${baseId}-title`;
 
-  // 窗口状态
+  // Window state
   const [position, setPosition] = createSignal(
     props.defaultPosition ?? { x: 0, y: 0 }
   );
@@ -65,17 +68,17 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [isDragging, setIsDragging] = createSignal(false);
   const [isResizing, setIsResizing] = createSignal(false);
 
-  // 保存最大化前的状态
+  // Store state before maximize (for restore)
   const [preMaximizeState, setPreMaximizeState] = createSignal<{
     position: { x: number; y: number };
     size: { width: number; height: number };
   } | null>(null);
 
-  // 拖拽状态
+  // Drag state
   let dragStartPos = { x: 0, y: 0 };
   let dragStartWindowPos = { x: 0, y: 0 };
 
-  // 调整大小状态
+  // Resize state
   let resizeStartPos = { x: 0, y: 0 };
   let resizeStartSize = { width: 0, height: 0 };
   let resizeStartWindowPos = { x: 0, y: 0 };
@@ -87,6 +90,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   let mode: 'drag' | 'resize' | null = null;
   let lastPointerPos = { x: 0, y: 0 };
   let rafId: number | null = null;
+  let unlockBody: (() => void) | null = null;
 
   const RESIZE_CURSORS: Record<ResizeHandle, string> = {
     n: 'ns-resize',
@@ -100,9 +104,14 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const setGlobalInteractionStyles = (active: boolean, cursor: string) => {
-    if (typeof document === 'undefined') return;
-    document.body.style.cursor = active ? cursor : '';
-    document.body.style.userSelect = active ? 'none' : '';
+    if (!active) {
+      unlockBody?.();
+      unlockBody = null;
+      return;
+    }
+
+    unlockBody?.();
+    unlockBody = lockBodyStyle({ cursor, 'user-select': 'none' });
   };
 
   const stopInteraction = (pointerId?: number) => {
@@ -124,7 +133,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setGlobalInteractionStyles(false, '');
   };
 
-  // 初始化窗口位置（居中）
+  // Initialize the window position (centered)
   onMount(() => {
     if (!props.defaultPosition) {
       const windowWidth = window.innerWidth;
@@ -137,7 +146,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     }
   });
 
-  // Escape 键关闭窗口
+  // Close on Escape
   createEffect(() => {
     if (!props.open) return;
 
@@ -158,7 +167,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     }
   });
 
-  // 拖拽处理
+  // Drag handling
   const handleDragStart = (e: PointerEvent) => {
     if (!draggable() || isMaximized()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -179,7 +188,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     windowRef?.setPointerCapture(e.pointerId);
   };
 
-  // 调整大小处理
+  // Resize handling
   // eslint-disable-next-line solid/reactivity -- This returns an event handler
   const handleResizeStart = (handle: ResizeHandle) => (e: PointerEvent) => {
     if (!resizable() || isMaximized()) return;
@@ -228,7 +237,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     let newX = resizeStartWindowPos.x;
     let newY = resizeStartWindowPos.y;
 
-    // 根据拖拽手柄方向计算新的尺寸和位置
+    // Compute new size/position based on the handle direction.
     if (resizeHandle.includes('e')) {
       newWidth = Math.max(minSize().width, Math.min(maxSize().width, resizeStartSize.width + deltaX));
     }
@@ -253,7 +262,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       }
     }
 
-    // 确保窗口不超出视口
+    // Ensure the window stays within the viewport.
     newX = Math.max(0, Math.min(window.innerWidth - newWidth, newX));
     newY = Math.max(0, Math.min(window.innerHeight - newHeight, newY));
 
@@ -280,10 +289,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
     stopInteraction(e.pointerId);
   };
 
-  // 最大化/还原
+  // Maximize / restore
   const toggleMaximize = () => {
     if (isMaximized()) {
-      // 还原
+      // Restore
       const prevState = preMaximizeState();
       if (prevState) {
         setPosition(prevState.position);
@@ -291,7 +300,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       }
       setIsMaximized(false);
     } else {
-      // 最大化
+      // Maximize
       setPreMaximizeState({
         position: position(),
         size: size(),
@@ -302,12 +311,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
     }
   };
 
-  // 双击标题栏最大化/还原
+  // Double-click title bar to maximize/restore
   const handleTitleBarDoubleClick = () => {
     toggleMaximize();
   };
 
-  // 获取调整大小手柄的样式
+  // Build resize handle className for a given direction
   const getResizeHandleClass = (handle: ResizeHandle) => {
     const baseClass = 'absolute z-10';
     const cursorMap: Record<ResizeHandle, string> = {
@@ -350,7 +359,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
           onPointerCancel={handlePointerUpOrCancel}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={props.title ? 'floating-window-title' : undefined}
+          aria-labelledby={props.title ? titleId() : undefined}
         >
           {/* Title bar */}
           <div
@@ -369,7 +378,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             <div class="flex-1 min-w-0">
               <Show when={props.title}>
                 <h2
-                  id="floating-window-title"
+                  id={titleId()}
                   class="text-sm font-medium truncate select-none"
                 >
                   {props.title}

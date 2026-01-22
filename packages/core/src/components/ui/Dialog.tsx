@@ -1,8 +1,10 @@
-import { Show, type JSX, createEffect, onCleanup } from 'solid-js';
+import { Show, createUniqueId, type JSX, createEffect, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Button } from './Button';
 import { X } from '../icons';
+import { lockBodyStyle } from '../../utils/bodyStyleLock';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 
 export interface DialogProps {
   open: boolean;
@@ -14,34 +16,94 @@ export interface DialogProps {
   class?: string;
 }
 
+function getFocusableElements(root: HTMLElement): HTMLElement[] {
+  const selector = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+    '[contenteditable="true"]',
+  ].join(',');
+
+  return Array.from(root.querySelectorAll(selector)).filter((el): el is HTMLElement => el instanceof HTMLElement);
+}
+
 /**
  * Modal dialog component
  */
 export function Dialog(props: DialogProps) {
-  // Close on escape
+  const baseId = createUniqueId();
+  const titleId = () => `dialog-${baseId}-title`;
+  const descriptionId = () => `dialog-${baseId}-description`;
+  let dialogRef: HTMLDivElement | undefined;
+
+  // Close on escape + basic focus management (trap within dialog while open).
   createEffect(() => {
     if (!props.open) return;
+    if (typeof document === 'undefined') return;
 
-    const handleEscape = (e: KeyboardEvent) => {
+    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const focusFirst = () => {
+      const root = dialogRef;
+      if (!root) return;
+
+      const focusables = getFocusableElements(root);
+      const target = focusables[0] ?? root;
+      target.focus();
+    };
+
+    // Defer focus to ensure DOM nodes are mounted.
+    setTimeout(focusFirst, 0);
+
+    const handleKeydown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         props.onOpenChange(false);
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const root = dialogRef;
+      if (!root) return;
+
+      const focusables = getFocusableElements(root);
+      if (!focusables.length) {
+        e.preventDefault();
+        root.focus();
+        return;
+      }
+
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+      // Keep tabbing within the dialog.
+      if (e.shiftKey) {
+        if (active === first || !active || !root.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    onCleanup(() => document.removeEventListener('keydown', handleEscape));
+    document.addEventListener('keydown', handleKeydown, true);
+    onCleanup(() => document.removeEventListener('keydown', handleKeydown, true));
+    onCleanup(() => prevActive?.focus());
   });
 
   // Prevent body scroll when open
   createEffect(() => {
-    if (props.open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    onCleanup(() => {
-      document.body.style.overflow = '';
-    });
+    if (!props.open) return;
+    const unlock = lockBodyStyle({ overflow: 'hidden' });
+    onCleanup(unlock);
   });
 
   return (
@@ -55,6 +117,7 @@ export function Dialog(props: DialogProps) {
 
         {/* Dialog */}
         <div
+          ref={dialogRef}
           class={cn(
             'fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
             'w-full max-w-md max-h-[85vh]',
@@ -66,20 +129,21 @@ export function Dialog(props: DialogProps) {
           )}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={props.title ? 'dialog-title' : undefined}
-          aria-describedby={props.description ? 'dialog-description' : undefined}
+          aria-labelledby={props.title ? titleId() : undefined}
+          aria-describedby={props.description ? descriptionId() : undefined}
+          tabIndex={-1}
         >
           {/* Header */}
           <Show when={props.title || props.description}>
             <div class="flex items-start justify-between p-3 border-b border-border">
               <div>
                 <Show when={props.title}>
-                  <h2 id="dialog-title" class="text-sm font-semibold">
+                  <h2 id={titleId()} class="text-sm font-semibold">
                     {props.title}
                   </h2>
                 </Show>
                 <Show when={props.description}>
-                  <p id="dialog-description" class="mt-0.5 text-xs text-muted-foreground">
+                  <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
                     {props.description}
                   </p>
                 </Show>
@@ -127,6 +191,7 @@ export interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog(props: ConfirmDialogProps) {
+  const floe = useResolvedFloeConfig();
   return (
     <Dialog
       open={props.open}
@@ -136,14 +201,14 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
       footer={
         <>
           <Button variant="ghost" onClick={() => props.onOpenChange(false)}>
-            {props.cancelText ?? 'Cancel'}
+            {props.cancelText ?? floe.config.strings.confirmDialog.cancel}
           </Button>
           <Button
             variant={props.variant === 'destructive' ? 'destructive' : 'primary'}
             onClick={props.onConfirm}
             loading={props.loading}
           >
-            {props.confirmText ?? 'Confirm'}
+            {props.confirmText ?? floe.config.strings.confirmDialog.confirm}
           </Button>
         </>
       }

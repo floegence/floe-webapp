@@ -1,5 +1,6 @@
 import { createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { lockBodyStyle } from '../../utils/bodyStyleLock';
 
 export interface ResizeHandleProps {
   direction: 'horizontal' | 'vertical';
@@ -17,15 +18,20 @@ export function ResizeHandle(props: ResizeHandleProps) {
   let activePointerId: number | null = null;
   let handleRef: HTMLDivElement | undefined;
   let rafId: number | null = null;
+  let unlockBody: (() => void) | null = null;
 
   const setGlobalDraggingStyles = (dragging: boolean) => {
-    if (typeof document === 'undefined') return;
-    document.body.style.cursor = dragging
-      ? props.direction === 'horizontal'
-        ? 'col-resize'
-        : 'row-resize'
-      : '';
-    document.body.style.userSelect = dragging ? 'none' : '';
+    if (!dragging) {
+      unlockBody?.();
+      unlockBody = null;
+      return;
+    }
+
+    unlockBody?.();
+    unlockBody = lockBodyStyle({
+      cursor: props.direction === 'horizontal' ? 'col-resize' : 'row-resize',
+      'user-select': 'none',
+    });
   };
 
   const stopDragging = () => {

@@ -3,12 +3,15 @@ import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useCommand, type Command } from '../../context/CommandContext';
 import { Search } from '../icons';
+import { lockBodyStyle } from '../../utils/bodyStyleLock';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 
 /**
  * Command palette / search modal
  */
 export function CommandPalette() {
   const command = useCommand();
+  const floe = useResolvedFloeConfig();
   let inputRef: HTMLInputElement | undefined;
   const [selectedIndex, setSelectedIndex] = createSignal(0);
 
@@ -34,6 +37,10 @@ export function CommandPalette() {
       const filtered = command.filteredCommands();
 
       switch (e.key) {
+        case 'Escape':
+          e.preventDefault();
+          command.close();
+          break;
         case 'ArrowDown':
           e.preventDefault();
           setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
@@ -57,14 +64,9 @@ export function CommandPalette() {
 
   // Prevent body scroll
   createEffect(() => {
-    if (command.isOpen()) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    onCleanup(() => {
-      document.body.style.overflow = '';
-    });
+    if (!command.isOpen()) return;
+    const unlock = lockBodyStyle({ overflow: 'hidden' });
+    onCleanup(unlock);
   });
 
   const groupedCommands = createMemo(() => {
@@ -110,7 +112,7 @@ export function CommandPalette() {
             <input
               ref={inputRef}
               type="text"
-              placeholder="Type a command or search..."
+              placeholder={floe.config.strings.commandPalette.placeholder}
               class={cn(
                 'flex-1 h-12 bg-transparent text-sm',
                 'placeholder:text-muted-foreground',
@@ -120,7 +122,7 @@ export function CommandPalette() {
               onInput={(e) => command.setSearch(e.currentTarget.value)}
             />
             <kbd class="text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted font-mono">
-              esc
+              {floe.config.strings.commandPalette.esc}
             </kbd>
           </div>
 
@@ -130,7 +132,7 @@ export function CommandPalette() {
               when={command.filteredCommands().length > 0}
               fallback={
                 <div class="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No commands found
+                  {floe.config.strings.commandPalette.empty}
                 </div>
               }
             >

@@ -1,7 +1,7 @@
 import { createEffect, createSignal, type Accessor } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
-import { debouncedSave, load } from '../utils/persist';
+import { useResolvedFloeConfig } from './FloeConfigContext';
 import type { GridPosition } from '../utils/gridCollision';
 import { findFreePosition, hasCollision, constrainPosition } from '../utils/gridCollision';
 
@@ -105,8 +105,6 @@ export interface DeckContextValue {
   getWidgetMinConstraints: (type: string) => { minColSpan: number; minRowSpan: number };
 }
 
-const STORAGE_KEY = 'deck';
-
 // Default presets (24-column grid, 40px row height)
 const DEFAULT_PRESETS: DeckLayout[] = [
   {
@@ -177,8 +175,11 @@ export const { Provider: DeckProvider, use: useDeck } =
   });
 
 export function createDeckService(): DeckContextValue {
+  const floe = useResolvedFloeConfig();
+  const storageKey = () => floe.config.deck.storageKey;
+
   // Load persisted state (merge with presets to ensure presets exist)
-  const persisted = load<Partial<DeckStore>>(STORAGE_KEY, {});
+  const persisted = floe.persist.load<Partial<DeckStore>>(storageKey(), {});
 
   // Merge persisted layouts with presets (presets always come first, user layouts appended)
   const userLayouts = (persisted.layouts ?? []).filter((l) => !l.isPreset);
@@ -202,7 +203,7 @@ export function createDeckService(): DeckContextValue {
       layouts: store.layouts,
       activeLayoutId: store.activeLayoutId,
     };
-    debouncedSave(STORAGE_KEY, state);
+    floe.persist.debouncedSave(storageKey(), state);
   });
 
   // Helper to get current layout

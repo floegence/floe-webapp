@@ -91,43 +91,26 @@ Protocol layer for communication:
 
 ```tsx
 import {
-  FloeProvider,
-  useComponentRegistry,
-  useComponentContextFactory,
-  Shell,
-  CommandPalette,
-  NotificationContainer,
+  FloeApp,
+  type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import '@floegence/floe-webapp-core/styles';
-import { ProtocolProvider } from '@floegence/floe-webapp-protocol';
-import { onMount } from 'solid-js';
+import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
 
-function AppContent() {
-  const registry = useComponentRegistry();
-  const createCtx = useComponentContextFactory();
-
-  onMount(() => {
-    registry.registerAll([
-      // Register your Floe components here (sidebar + commands + status bar).
-    ]);
-    void registry.mountAll((id) => createCtx(id));
-  });
-
-  return (
-    <>
-      {/* When `activityItems`/`sidebarContent` are not provided, Shell can be driven by ComponentRegistry. */}
-      <Shell>{/* Main content fallback */}</Shell>
-      <CommandPalette />
-      <NotificationContainer />
-    </>
-  );
-}
+const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
+  // Register your Floe components here (sidebar + commands + status bar).
+];
 
 export function App() {
   return (
-    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}>
-      <AppContent />
-    </FloeProvider>
+    <FloeApp
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      getProtocol={useProtocol}
+      components={components}
+    >
+      {/* Your main content fallback */}
+      <div />
+    </FloeApp>
   );
 }
 ```

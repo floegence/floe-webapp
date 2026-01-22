@@ -1,4 +1,15 @@
 export { createSimpleContext } from './createSimpleContext';
+export {
+  FloeConfigProvider,
+  useFloeConfig,
+  useResolvedFloeConfig,
+  DEFAULT_FLOE_CONFIG,
+  type FloeConfig,
+  type FloeConfigValue,
+  type DeepPartial,
+  type FloeStorageAdapter,
+  type PersistApi,
+} from './FloeConfigContext';
 export { ThemeProvider, useTheme, createThemeService, type ThemeContextValue } from './ThemeContext';
 export { LayoutProvider, useLayout, createLayoutService, type LayoutContextValue } from './LayoutContext';
 export { CommandProvider, useCommand, createCommandService, type Command, type CommandContextValue } from './CommandContext';

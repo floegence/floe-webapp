@@ -1,5 +1,6 @@
 import { Show, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 
 export interface BottomBarProps {
   children?: JSX.Element;
@@ -77,6 +78,7 @@ export interface StatusIndicatorProps {
 }
 
 export function StatusIndicator(props: StatusIndicatorProps) {
+  const floe = useResolvedFloeConfig();
   const statusColors = {
     connected: 'bg-success',
     disconnected: 'bg-muted-foreground',
@@ -84,17 +86,12 @@ export function StatusIndicator(props: StatusIndicatorProps) {
     error: 'bg-error',
   };
 
-  const statusLabels = {
-    connected: 'Connected',
-    disconnected: 'Disconnected',
-    connecting: 'Connecting',
-    error: 'Error',
-  };
+  const statusLabels = () => floe.config.strings.statusIndicator;
 
   return (
     <BottomBarItem>
       <span class={cn('w-1.5 h-1.5 rounded-full', statusColors[props.status])} />
-      <span>{props.label ?? statusLabels[props.status]}</span>
+      <span>{props.label ?? statusLabels()[props.status]}</span>
     </BottomBarItem>
   );
 }

@@ -2,6 +2,7 @@ import { Show, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useCommand } from '../../context/CommandContext';
 import { Search } from '../icons';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 
 export interface TopBarProps {
   logo?: JSX.Element;
@@ -15,6 +16,8 @@ export interface TopBarProps {
  */
 export function TopBar(props: TopBarProps) {
   const command = useCommand();
+  const floe = useResolvedFloeConfig();
+  const paletteEnabled = () => floe.config.commands.palette.enabled;
 
   return (
     <header
@@ -41,21 +44,26 @@ export function TopBar(props: TopBarProps) {
         {/* Search / Command Palette Trigger */}
         <button
           type="button"
+          disabled={!paletteEnabled()}
           class={cn(
-            'flex-1 max-w-sm flex items-center gap-2 h-7 px-2.5 cursor-pointer',
+            'flex-1 max-w-sm flex items-center gap-2 h-7 px-2.5',
+            paletteEnabled() ? 'cursor-pointer' : 'cursor-not-allowed',
             'text-xs text-muted-foreground',
             'bg-muted/40 hover:bg-muted/70 rounded',
             'border border-transparent hover:border-border/50',
             'transition-colors duration-100',
-            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+            !paletteEnabled() && 'opacity-60 hover:bg-muted/40'
           )}
-          onClick={() => command.open()}
+          onClick={() => paletteEnabled() && command.open()}
         >
           <Search class="w-3.5 h-3.5 shrink-0" />
-          <span class="flex-1 text-left hidden sm:inline truncate">Search commands...</span>
-          <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/80 border border-border/50 font-mono shrink-0">
-            {command.getKeybindDisplay('mod+k')}
-          </kbd>
+          <span class="flex-1 text-left hidden sm:inline truncate">{floe.config.strings.topBar.searchPlaceholder}</span>
+          <Show when={paletteEnabled()}>
+            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/80 border border-border/50 font-mono shrink-0">
+              {command.getKeybindDisplay(floe.config.commands.palette.keybind)}
+            </kbd>
+          </Show>
         </button>
 
         {/* Actions */}

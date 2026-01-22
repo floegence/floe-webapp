@@ -1,15 +1,16 @@
 import { createSignal, createEffect, type Accessor } from 'solid-js';
-import { load, debouncedSave } from '../utils/persist';
+import { useResolvedFloeConfig } from '../context/FloeConfigContext';
 
 /**
- * Persisted signal with localStorage
+ * Persisted signal using Floe's configured persistence (storage adapter + namespace).
  */
 export function usePersisted<T>(key: string, defaultValue: T): [Accessor<T>, (value: T) => void] {
-  const initial = load(key, defaultValue);
+  const floe = useResolvedFloeConfig();
+  const initial = floe.persist.load(key, defaultValue);
   const [value, setValue] = createSignal<T>(initial);
 
   createEffect(() => {
-    debouncedSave(key, value());
+    floe.persist.debouncedSave(key, value());
   });
 
   return [value as Accessor<T>, setValue];

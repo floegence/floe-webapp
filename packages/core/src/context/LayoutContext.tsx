@@ -1,7 +1,7 @@
 import { createEffect, type Accessor } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
-import { debouncedSave, load } from '../utils/persist';
+import { useResolvedFloeConfig } from './FloeConfigContext';
 
 interface SidebarState {
   width: number;
@@ -41,39 +41,32 @@ export interface LayoutContextValue {
   setIsMobile: (mobile: boolean) => void;
 }
 
-const STORAGE_KEY = 'layout';
-
-const DEFAULT_STATE: LayoutStore = {
-  sidebar: {
-    width: 350,
-    activeTab: '',
-    collapsed: false,
-  },
-  terminal: {
-    opened: false,
-    height: 280,
-  },
-  isMobile: false,
-};
-
 export const { Provider: LayoutProvider, use: useLayout } = createSimpleContext<LayoutContextValue>({
   name: 'Layout',
   init: createLayoutService,
 });
 
 export function createLayoutService(): LayoutContextValue {
-  const persisted = load<Partial<LayoutStore> & { sidebar?: Partial<SidebarState> & { opened?: boolean } }>(
-    STORAGE_KEY,
-    {}
-  );
+  const floe = useResolvedFloeConfig();
+  const cfg = () => floe.config.layout;
+
+  type PersistedLayoutStore = {
+    sidebar?: Partial<SidebarState>;
+    terminal?: Partial<TerminalState>;
+  };
+
+  const persisted = floe.persist.load<PersistedLayoutStore>(cfg().storageKey, {});
   const initialState: LayoutStore = {
     sidebar: {
-      width: persisted.sidebar?.width ?? DEFAULT_STATE.sidebar.width,
-      activeTab: persisted.sidebar?.activeTab ?? DEFAULT_STATE.sidebar.activeTab,
-      collapsed: persisted.sidebar?.collapsed ?? DEFAULT_STATE.sidebar.collapsed,
+      width: persisted.sidebar?.width ?? cfg().sidebar.defaultWidth,
+      activeTab: persisted.sidebar?.activeTab ?? cfg().sidebar.defaultActiveTab,
+      collapsed: persisted.sidebar?.collapsed ?? cfg().sidebar.defaultCollapsed,
     },
-    terminal: { ...DEFAULT_STATE.terminal, ...persisted.terminal },
-    isMobile: DEFAULT_STATE.isMobile,
+    terminal: {
+      opened: persisted.terminal?.opened ?? cfg().terminal.defaultOpened,
+      height: persisted.terminal?.height ?? cfg().terminal.defaultHeight,
+    },
+    isMobile: false,
   };
 
   const [store, setStore] = createStore<LayoutStore>(initialState);
@@ -84,7 +77,7 @@ export function createLayoutService(): LayoutContextValue {
       sidebar: store.sidebar,
       terminal: store.terminal,
     };
-    debouncedSave(STORAGE_KEY, state);
+    floe.persist.debouncedSave(cfg().storageKey, state);
   });
 
   return {
@@ -97,7 +90,7 @@ export function createLayoutService(): LayoutContextValue {
     setSidebarWidth: (width: number) =>
       setStore(
         produce((s) => {
-          s.sidebar.width = Math.max(220, Math.min(480, width));
+          s.sidebar.width = Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
         })
       ),
     setSidebarActiveTab: (tab: string) =>
@@ -135,7 +128,7 @@ export function createLayoutService(): LayoutContextValue {
     setTerminalHeight: (height: number) =>
       setStore(
         produce((s) => {
-          s.terminal.height = Math.max(150, Math.min(600, height));
+          s.terminal.height = Math.max(cfg().terminal.clamp.min, Math.min(cfg().terminal.clamp.max, height));
         })
       ),
 

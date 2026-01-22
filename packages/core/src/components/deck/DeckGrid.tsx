@@ -56,8 +56,8 @@ export function DeckGrid(props: DeckGridProps) {
           class="absolute inset-1 pointer-events-none z-0 rounded"
           style={{
             'background-image': `
-              linear-gradient(to right, hsl(var(--border) / 0.15) 1px, transparent 1px),
-              linear-gradient(to bottom, hsl(var(--border) / 0.15) 1px, transparent 1px)
+              linear-gradient(to right, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px),
+              linear-gradient(to bottom, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px)
             `,
             'background-size': `calc((100% - ${GAP}px) / ${GRID_COLS}) ${ROW_HEIGHT + GAP}px`,
             'background-position': `0 0`,

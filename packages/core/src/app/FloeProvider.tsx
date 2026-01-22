@@ -1,4 +1,6 @@
 import type { JSX } from 'solid-js';
+import type { DeepPartial, FloeConfig } from '../context/FloeConfigContext';
+import { FloeConfigProvider } from '../context/FloeConfigContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { NotificationProvider } from '../context/NotificationContext';
 import { ComponentRegistryProvider } from '../context/ComponentRegistry';
@@ -9,6 +11,8 @@ import { DeckProvider } from '../context/DeckContext';
 
 export interface FloeProviderProps {
   children: JSX.Element;
+  /** Global Floe configuration (storage, keybinds, strings, defaults). */
+  config?: DeepPartial<FloeConfig>;
   /**
    * Allows consumers to inject their own providers *after* ThemeProvider,
    * while ensuring the inner tree is created inside the injected provider.
@@ -36,8 +40,10 @@ export function FloeProvider(props: FloeProviderProps) {
   );
 
   return (
-    <ThemeProvider>
-      {props.wrapAfterTheme ? props.wrapAfterTheme(renderInner) : renderInner()}
-    </ThemeProvider>
+    <FloeConfigProvider config={props.config}>
+      <ThemeProvider>
+        {props.wrapAfterTheme ? props.wrapAfterTheme(renderInner) : renderInner()}
+      </ThemeProvider>
+    </FloeConfigProvider>
   );
 }

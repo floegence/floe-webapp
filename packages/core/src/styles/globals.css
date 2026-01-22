@@ -53,6 +53,9 @@
   .bg-warning-foreground { background-color: var(--warning-foreground); }
   .bg-error { background-color: var(--error); }
   .bg-error-foreground { background-color: var(--error-foreground); }
+  /* Alias: destructive == error (VSCode-style danger actions) */
+  .bg-destructive { background-color: var(--error); }
+  .bg-destructive-foreground { background-color: var(--error-foreground); }
   .bg-info { background-color: var(--info); }
   .bg-info-foreground { background-color: var(--info-foreground); }
   .bg-sidebar { background-color: var(--sidebar); }
@@ -95,6 +98,9 @@
   .text-warning-foreground { color: var(--warning-foreground); }
   .text-error { color: var(--error); }
   .text-error-foreground { color: var(--error-foreground); }
+  /* Alias: destructive == error */
+  .text-destructive { color: var(--error); }
+  .text-destructive-foreground { color: var(--error-foreground); }
   .text-info { color: var(--info); }
   .text-info-foreground { color: var(--info-foreground); }
   .text-sidebar { color: var(--sidebar); }
@@ -136,6 +142,8 @@
   .hover\:bg-muted:hover { background-color: var(--muted); }
   .hover\:text-accent-foreground:hover { color: var(--accent-foreground); }
   .hover\:bg-error\/90:hover { background-color: color-mix(in srgb, var(--error) 90%, transparent); }
+  .hover\:bg-destructive\/10:hover { background-color: color-mix(in srgb, var(--error) 10%, transparent); }
+  .hover\:text-destructive:hover { color: var(--error); }
 
   /* Opacity variants for overlays */
   .bg-background\/60 { background-color: color-mix(in srgb, var(--background) 60%, transparent); }

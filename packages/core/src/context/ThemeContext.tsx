@@ -1,7 +1,7 @@
 import { createSignal, createEffect, onCleanup, type Accessor } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
+import { useResolvedFloeConfig } from './FloeConfigContext';
 import { applyTheme, getSystemTheme, type ThemeType } from '../styles/themes';
-import { debouncedSave, load } from '../utils/persist';
 
 export interface ThemeContextValue {
   theme: Accessor<ThemeType>;
@@ -10,10 +10,12 @@ export interface ThemeContextValue {
   toggleTheme: () => void;
 }
 
-const STORAGE_KEY = 'theme';
-
 export function createThemeService(): ThemeContextValue {
-  const storedTheme = load<ThemeType>(STORAGE_KEY, 'system');
+  const floe = useResolvedFloeConfig();
+  const storageKey = () => floe.config.theme.storageKey;
+  const defaultTheme = () => floe.config.theme.defaultTheme;
+
+  const storedTheme = floe.persist.load<ThemeType>(storageKey(), defaultTheme());
   const [theme, setThemeSignal] = createSignal<ThemeType>(storedTheme);
   const [systemTheme, setSystemTheme] = createSignal<'light' | 'dark'>(getSystemTheme());
 
@@ -44,7 +46,7 @@ export function createThemeService(): ThemeContextValue {
 
   const setTheme = (newTheme: ThemeType) => {
     setThemeSignal(newTheme);
-    debouncedSave(STORAGE_KEY, newTheme);
+    floe.persist.debouncedSave(storageKey(), newTheme);
   };
 
   const toggleTheme = () => {

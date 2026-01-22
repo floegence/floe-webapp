@@ -2,6 +2,7 @@ import { createEffect, onCleanup } from 'solid-js';
 import { useDeck } from '../context/DeckContext';
 import { applyDragDelta } from '../utils/gridLayout';
 import { DECK_GRID_CONFIG } from '../components/deck/DeckGrid';
+import { lockBodyStyle } from '../utils/bodyStyleLock';
 
 /**
  * Hook to set up drag handling for deck widgets
@@ -19,11 +20,17 @@ export function useDeckDrag() {
   let rafId: number | null = null;
   let currentWidgetId: string | null = null;
   let handleEl: HTMLElement | null = null;
+  let unlockBody: (() => void) | null = null;
 
   const setGlobalStyles = (active: boolean) => {
-    if (typeof document === 'undefined') return;
-    document.body.style.cursor = active ? 'grabbing' : '';
-    document.body.style.userSelect = active ? 'none' : '';
+    if (!active) {
+      unlockBody?.();
+      unlockBody = null;
+      return;
+    }
+
+    unlockBody?.();
+    unlockBody = lockBodyStyle({ cursor: 'grabbing', 'user-select': 'none' });
   };
 
   const stopDragging = () => {

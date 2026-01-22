@@ -1,6 +1,7 @@
 import { Show, For, createEffect, createMemo, createSignal, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { cn } from '../../utils/cn';
 import { useComponentRegistry } from '../../context/ComponentRegistry';
@@ -34,7 +35,8 @@ export interface ShellProps {
  */
 export function Shell(props: ShellProps) {
   const layout = useLayout();
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const floe = useResolvedFloeConfig();
+  const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
   const registry = (() => {
     try {
@@ -44,13 +46,13 @@ export function Shell(props: ShellProps) {
     }
   })();
 
-  // Sync mobile state to layout context
-  const updateMobile = () => {
-    if (layout.isMobile() !== isMobile()) {
-      layout.setIsMobile(isMobile());
+  // Sync media-query state to LayoutContext so feature components can rely on `useLayout().isMobile()`.
+  createEffect(() => {
+    const mobile = isMobile();
+    if (layout.isMobile() !== mobile) {
+      layout.setIsMobile(mobile);
     }
-  };
-  updateMobile();
+  });
 
   // Close mobile sidebar when switching to desktop
   createEffect(() => {

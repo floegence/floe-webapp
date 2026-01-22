@@ -60,7 +60,95 @@ Import Floe styles once at your app entry:
 import '@floegence/floe-webapp-core/styles';
 ```
 
-Then wire up the providers and the Shell:
+### Recommended: `FloeApp` (all-in-one)
+
+`FloeApp` wires up:
+
+- `FloeProvider`
+- `ComponentRegistry` registration + mount/unmount lifecycle
+- `<Shell />` + `<CommandPalette />` + `<NotificationContainer />`
+
+```tsx
+import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+
+const components: FloeComponent[] = [
+  // Register your sidebar/commands/status contributions here.
+];
+
+export function App() {
+  return (
+    <FloeApp components={components}>
+      <div>Your main content</div>
+    </FloeApp>
+  );
+}
+```
+
+### Optional: inject protocol into `ComponentContext.protocol`
+
+If you want `commands.execute(ctx)` / `onMount(ctx)` to receive your protocol object, use:
+
+- `wrapAfterTheme` to place `ProtocolProvider` outside core
+- `getProtocol` to inject `useProtocol()` result into `ctx.protocol`
+
+```tsx
+import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+
+const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
+  // Your Floe components.
+];
+
+export function App() {
+  return (
+    <FloeApp
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      getProtocol={useProtocol}
+      components={components}
+    >
+      <div>Your main content</div>
+    </FloeApp>
+  );
+}
+```
+
+### Optional: customize `FloeConfig`
+
+Use `config` to override defaults (storage namespace, keybinds, strings, layout defaults, etc):
+
+```tsx
+import { FloeApp } from '@floegence/floe-webapp-core';
+
+export function App() {
+  return (
+    <FloeApp
+      config={{
+        storage: { namespace: 'myapp' },
+        commands: {
+          palette: { keybind: 'mod+p' },
+          save: { enabled: false },
+        },
+        strings: {
+          commandPalette: { placeholder: 'Search...', empty: 'No results', esc: 'Esc' },
+        },
+      }}
+    >
+      <div>Your main content</div>
+    </FloeApp>
+  );
+}
+```
+
+Notes:
+
+- By default, global hotkeys are ignored while typing in form fields/contenteditable (except save).
+- To allow global hotkeys inside an editor, add `data-floe-hotkeys="allow"` on an ancestor element.
+
+---
+
+### Advanced: manual assembly (Provider + Registry + Shell)
+
+If you want full control, you can still wire providers and the registry manually:
 
 ```tsx
 import {
@@ -72,12 +160,13 @@ import {
   useComponentContextFactory,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
-import { ProtocolProvider } from '@floegence/floe-webapp-protocol';
-import { onMount } from 'solid-js';
+import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { onCleanup, onMount } from 'solid-js';
 
 function AppContent() {
   const registry = useComponentRegistry();
   const createCtx = useComponentContextFactory();
+  const protocol = useProtocol();
 
   const components: FloeComponent[] = [
     // Register your sidebar/commands/status contributions here.
@@ -85,7 +174,10 @@ function AppContent() {
 
   onMount(() => {
     registry.registerAll(components);
-    void registry.mountAll((id) => createCtx(id));
+    void registry.mountAll((id) => createCtx(id, { protocol }));
+  });
+  onCleanup(() => {
+    void registry.unmountAll();
   });
 
   return (
