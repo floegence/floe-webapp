@@ -8,10 +8,10 @@ describe('createLayoutService', () => {
       const layout = createLayoutService();
 
       layout.setSidebarWidth(100);
-      expect(layout.sidebarWidth()).toBe(200);
+      expect(layout.sidebarWidth()).toBe(220);
 
       layout.setSidebarWidth(999);
-      expect(layout.sidebarWidth()).toBe(400);
+      expect(layout.sidebarWidth()).toBe(480);
 
       layout.setTerminalHeight(10);
       expect(layout.terminalHeight()).toBe(150);
@@ -47,4 +47,3 @@ describe('createLayoutService', () => {
     });
   });
 });
-

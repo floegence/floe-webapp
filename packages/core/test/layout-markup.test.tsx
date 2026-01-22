@@ -18,9 +18,9 @@ describe('layout markup', () => {
   it('TopBar should not squeeze content when using safe-area padding', () => {
     const html = renderWithCoreProviders(() => <TopBar />);
 
-    // The safe-area padding lives on the outer wrapper, while the visual bar keeps h-12.
+    // The safe-area padding lives on the outer wrapper, while the visual bar keeps a fixed height.
     expect(html).toContain('safe-top');
-    expect(html).toContain('h-12');
+    expect(html).toContain('h-10');
   });
 
   it('MobileTabBar should keep a stable 56px content height and add safe-area padding outside', () => {
