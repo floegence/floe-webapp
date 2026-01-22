@@ -198,12 +198,18 @@
   }
 
   html {
+    height: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /* Prevent the viewport from rubber-banding; scroll should be inside app panels. */
+    overscroll-behavior: none;
   }
 
   body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
     background-color: var(--background);
     color: var(--foreground);
     font-family:
@@ -213,6 +219,10 @@
       'Segoe UI',
       Roboto,
       sans-serif;
+  }
+
+  #root {
+    height: 100%;
   }
 
   /* Monospace for code and terminal */

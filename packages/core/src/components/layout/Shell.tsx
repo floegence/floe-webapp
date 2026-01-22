@@ -200,7 +200,7 @@ export function Shell(props: ShellProps) {
         {/* Content area */}
         <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Main content - always visible, allows overscroll bounce */}
-          <main class="flex-1 min-h-0 overflow-auto overscroll-auto">
+          <main class="flex-1 min-h-0 overflow-auto overscroll-contain">
             {props.children}
           </main>
 
