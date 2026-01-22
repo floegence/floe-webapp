@@ -418,3 +418,25 @@ export const ArrowRightLeft = (props: IconProps = {}) => (
     <path d="M4 17h16" />
   </svg>
 );
+
+// Grid3x3 icon (for launchpad, 9-grid pattern like macOS)
+export const Grid3x3 = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    class={props.class}
+  >
+    <circle cx="5" cy="5" r="2" />
+    <circle cx="12" cy="5" r="2" />
+    <circle cx="19" cy="5" r="2" />
+    <circle cx="5" cy="12" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="19" cy="12" r="2" />
+    <circle cx="5" cy="19" r="2" />
+    <circle cx="12" cy="19" r="2" />
+    <circle cx="19" cy="19" r="2" />
+  </svg>
+);

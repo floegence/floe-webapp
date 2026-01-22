@@ -7,6 +7,7 @@ import {
   type FloeComponent,
   Files,
   GitBranch,
+  Grid3x3,
   LayoutDashboard,
   Moon,
   NotificationContainer,
@@ -28,6 +29,7 @@ import { FileViewerPage } from './demo/pages/FileViewerPage';
 import { SearchPage } from './demo/pages/SearchPage';
 import { ShowcasePage } from './demo/pages/ShowcasePage';
 import { DeckPage } from './demo/pages/DeckPage';
+import { LaunchpadPage } from './demo/pages/LaunchpadPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
@@ -126,7 +128,31 @@ function AppContent() {
 
   const DeckView: Component = () => <DeckPage />;
 
+  const LaunchpadView: Component = () => (
+    <LaunchpadPage
+      onClose={() => layout.setSidebarActiveTab('showcase')}
+      onNavigate={(id) => layout.setSidebarActiveTab(id)}
+    />
+  );
+
   const demoComponents: FloeComponent[] = [
+    {
+      id: 'launchpad',
+      name: 'Launchpad',
+      icon: Grid3x3,
+      description: 'macOS-style app launcher',
+      component: LaunchpadView,
+      sidebar: { order: -1, fullScreen: true },
+      commands: [
+        {
+          id: 'demo.open.launchpad',
+          title: 'Demo: Open Launchpad',
+          keybind: 'mod+0',
+          category: 'Demo',
+          execute: () => layout.setSidebarActiveTab('launchpad'),
+        },
+      ],
+    },
     {
       id: 'deck',
       name: 'Deck',
@@ -253,6 +279,12 @@ function AppContent() {
 
   const DesktopMain: Component = () => (
     <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
+      <Match when={layout.sidebarActiveTab() === 'launchpad'}>
+        <LaunchpadPage
+          onClose={() => layout.setSidebarActiveTab('showcase')}
+          onNavigate={(id) => layout.setSidebarActiveTab(id)}
+        />
+      </Match>
       <Match when={layout.sidebarActiveTab() === 'deck'}>
         <DeckPage />
       </Match>
