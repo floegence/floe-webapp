@@ -18,3 +18,6 @@ export * from './utils';
 
 // Theme system
 export * from './styles/themes';
+
+// Widgets
+export * from './widgets';

@@ -65,6 +65,8 @@ export function Shell(props: ShellProps) {
 
     return registry.sidebarItems()
       .filter((c) => !!c.icon)
+      // Hide components marked as hiddenOnMobile when on mobile
+      .filter((c) => !(isMobile() && c.sidebar?.hiddenOnMobile))
       .map((c) => ({
         id: c.id,
         icon: c.icon!,
@@ -79,8 +81,17 @@ export function Shell(props: ShellProps) {
 
     const comp = registry.getComponent(activeId);
     if (!comp?.sidebar) return undefined;
+    // Don't render sidebar content for fullScreen components
+    if (comp.sidebar.fullScreen) return undefined;
     return <Dynamic component={comp.component} />;
   };
+
+  // Check if active component is fullScreen (should hide sidebar)
+  const isFullScreen = createMemo(() => {
+    if (!registry) return false;
+    const comp = registry.getComponent(layout.sidebarActiveTab());
+    return comp?.sidebar?.fullScreen ?? false;
+  });
 
   const bottomBarContent = createMemo<JSX.Element | undefined>(() => {
     if (props.bottomBarItems) return props.bottomBarItems;
@@ -159,8 +170,8 @@ export function Shell(props: ShellProps) {
             />
           </Show>
 
-          {/* Sidebar */}
-          <Show when={!layout.sidebarCollapsed()}>
+          {/* Sidebar - hidden when collapsed or when fullScreen component is active */}
+          <Show when={!layout.sidebarCollapsed() && !isFullScreen()}>
             <Sidebar
               width={layout.sidebarWidth()}
               resizer={

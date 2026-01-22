@@ -7,6 +7,7 @@ import {
   type FloeComponent,
   Files,
   GitBranch,
+  LayoutDashboard,
   Moon,
   NotificationContainer,
   Select,
@@ -26,6 +27,7 @@ import { demoFiles } from './demo/workspace';
 import { FileViewerPage } from './demo/pages/FileViewerPage';
 import { SearchPage } from './demo/pages/SearchPage';
 import { ShowcasePage } from './demo/pages/ShowcasePage';
+import { DeckPage } from './demo/pages/DeckPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
@@ -122,7 +124,26 @@ function AppContent() {
 
   const SettingsView: Component = () => <SettingsPanel />;
 
+  const DeckView: Component = () => <DeckPage />;
+
   const demoComponents: FloeComponent[] = [
+    {
+      id: 'deck',
+      name: 'Deck',
+      icon: LayoutDashboard,
+      description: 'Grafana-style deck layout editor',
+      component: DeckView,
+      sidebar: { order: 0, fullScreen: true, hiddenOnMobile: true },
+      commands: [
+        {
+          id: 'demo.open.deck',
+          title: 'Demo: Open Deck',
+          keybind: 'mod+d',
+          category: 'Demo',
+          execute: () => layout.setSidebarActiveTab('deck'),
+        },
+      ],
+    },
     {
       id: 'showcase',
       name: 'Showcase',
@@ -232,6 +253,9 @@ function AppContent() {
 
   const DesktopMain: Component = () => (
     <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
+      <Match when={layout.sidebarActiveTab() === 'deck'}>
+        <DeckPage />
+      </Match>
       <Match when={layout.sidebarActiveTab() === 'files'}>
         <FileViewerPage file={activeFile} />
       </Match>

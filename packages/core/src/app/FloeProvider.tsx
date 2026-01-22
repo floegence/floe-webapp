@@ -4,6 +4,8 @@ import { NotificationProvider } from '../context/NotificationContext';
 import { ComponentRegistryProvider } from '../context/ComponentRegistry';
 import { LayoutProvider } from '../context/LayoutContext';
 import { CommandProvider } from '../context/CommandContext';
+import { WidgetRegistryProvider } from '../context/WidgetRegistry';
+import { DeckProvider } from '../context/DeckContext';
 
 export interface FloeProviderProps {
   children: JSX.Element;
@@ -23,7 +25,11 @@ export function FloeProvider(props: FloeProviderProps) {
     <NotificationProvider>
       <ComponentRegistryProvider>
         <LayoutProvider>
-          <CommandProvider>{props.children}</CommandProvider>
+          <WidgetRegistryProvider>
+            <DeckProvider>
+              <CommandProvider>{props.children}</CommandProvider>
+            </DeckProvider>
+          </WidgetRegistryProvider>
         </LayoutProvider>
       </ComponentRegistryProvider>
     </NotificationProvider>

@@ -22,3 +22,21 @@ export {
   type StatusBarContribution,
   type ComponentRegistryValue,
 } from './ComponentRegistry';
+export {
+  WidgetRegistryProvider,
+  useWidgetRegistry,
+  createWidgetRegistry,
+  type WidgetDefinition,
+  type WidgetProps,
+  type WidgetRegistryValue,
+} from './WidgetRegistry';
+export {
+  DeckProvider,
+  useDeck,
+  createDeckService,
+  type DeckWidget,
+  type DeckLayout,
+  type DragState,
+  type ResizeState,
+  type DeckContextValue,
+} from './DeckContext';

@@ -1,0 +1,166 @@
+import { createSignal, onCleanup } from 'solid-js';
+import { cn } from '../../utils/cn';
+import { useDeck, type DeckWidget, type ResizeState } from '../../context/DeckContext';
+import { applyResizeDelta } from '../../utils/gridLayout';
+import { DECK_GRID_CONFIG } from './DeckGrid';
+
+export interface WidgetResizeHandleProps {
+  widget: DeckWidget;
+  edge: ResizeState['edge'];
+}
+
+const EDGE_STYLES: Record<ResizeState['edge'], string> = {
+  n: 'top-0 left-2 right-2 h-2 cursor-ns-resize',
+  s: 'bottom-0 left-2 right-2 h-2 cursor-ns-resize',
+  e: 'right-0 top-2 bottom-2 w-2 cursor-ew-resize',
+  w: 'left-0 top-2 bottom-2 w-2 cursor-ew-resize',
+  ne: 'top-0 right-0 w-4 h-4 cursor-nesw-resize',
+  nw: 'top-0 left-0 w-4 h-4 cursor-nwse-resize',
+  se: 'bottom-0 right-0 w-4 h-4 cursor-nwse-resize',
+  sw: 'bottom-0 left-0 w-4 h-4 cursor-nesw-resize',
+};
+
+const EDGE_CURSORS: Record<ResizeState['edge'], string> = {
+  n: 'ns-resize',
+  s: 'ns-resize',
+  e: 'ew-resize',
+  w: 'ew-resize',
+  ne: 'nesw-resize',
+  nw: 'nwse-resize',
+  se: 'nwse-resize',
+  sw: 'nesw-resize',
+};
+
+/**
+ * Resize handle for a specific edge of a widget
+ */
+export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
+  const deck = useDeck();
+
+  const [isActive, setIsActive] = createSignal(false);
+  let handleRef: HTMLDivElement | undefined;
+  let activePointerId: number | null = null;
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastY = 0;
+  let rafId: number | null = null;
+
+  const setGlobalStyles = (active: boolean) => {
+    if (typeof document === 'undefined') return;
+    document.body.style.cursor = active ? EDGE_CURSORS[props.edge] : '';
+    document.body.style.userSelect = active ? 'none' : '';
+  };
+
+  const stopResizing = () => {
+    if (!isActive()) return;
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    setIsActive(false);
+    activePointerId = null;
+    setGlobalStyles(false);
+    deck.endResize(true);
+  };
+
+  const handlePointerDown = (e: PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    activePointerId = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    lastX = startX;
+    lastY = startY;
+    setIsActive(true);
+    setGlobalStyles(true);
+
+    deck.startResize(props.widget.id, props.edge, startX, startY);
+    handleRef?.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    if (!isActive() || activePointerId !== e.pointerId) return;
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    // RAF throttle for performance
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      updatePosition();
+      return;
+    }
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      if (!isActive()) return;
+      updatePosition();
+    });
+  };
+
+  const updatePosition = () => {
+    const deltaX = lastX - startX;
+    const deltaY = lastY - startY;
+
+    // Get grid element and calculate cell sizes
+    const gridEl = document.querySelector('.deck-grid');
+    if (!gridEl) return;
+
+    const gridRect = gridEl.getBoundingClientRect();
+    const { cols, rowHeight, gap } = DECK_GRID_CONFIG;
+
+    // Calculate cell dimensions
+    const totalGapWidth = gap * (cols - 1);
+    const cellWidth = (gridRect.width - totalGapWidth - gap * 2) / cols; // Account for padding
+    const cellHeight = rowHeight + gap;
+
+    // Convert pixel delta to grid units
+    const colDelta = Math.round(deltaX / cellWidth);
+    const rowDelta = Math.round(deltaY / cellHeight);
+
+    const constraints = deck.getWidgetMinConstraints(props.widget.type);
+    const newPosition = applyResizeDelta(
+      props.widget.position,
+      props.edge,
+      colDelta,
+      rowDelta,
+      constraints.minColSpan,
+      constraints.minRowSpan,
+      cols
+    );
+
+    deck.updateResize(newPosition);
+  };
+
+  const handlePointerUpOrCancel = (e: PointerEvent) => {
+    if (activePointerId !== e.pointerId) return;
+    try {
+      handleRef?.releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignore
+    }
+    stopResizing();
+  };
+
+  onCleanup(() => stopResizing());
+
+  return (
+    <div
+      ref={handleRef}
+      class={cn(
+        'absolute z-30',
+        EDGE_STYLES[props.edge],
+        'hover:bg-primary/30 transition-colors',
+        isActive() && 'bg-primary/50'
+      )}
+      style={{ 'touch-action': 'none' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUpOrCancel}
+      onPointerCancel={handlePointerUpOrCancel}
+    />
+  );
+}

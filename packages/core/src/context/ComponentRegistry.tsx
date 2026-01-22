@@ -66,6 +66,10 @@ export interface FloeComponent {
   sidebar?: {
     order?: number;
     badge?: () => number | string | undefined;
+    /** When true, this component uses the full content area without sidebar */
+    fullScreen?: boolean;
+    /** When true, this component is hidden in the activity bar on mobile */
+    hiddenOnMobile?: boolean;
   };
 
   commands?: CommandContribution[];
