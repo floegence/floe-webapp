@@ -256,9 +256,7 @@ function AppContent() {
     <>
       <Shell
         logo={
-          <div class="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-xs">
-            F
-          </div>
+          <img src="/logo.svg" alt="Floe" class="w-7 h-7" />
         }
         topBarActions={
           <div class="flex items-center gap-1">
