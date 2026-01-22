@@ -111,7 +111,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
     >
       {/* Active indicator - positioned to touch left edge of activity bar */}
       <Show when={props.isActive}>
-        <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-0.5 h-7 bg-primary rounded-r" />
+        <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
       </Show>
 
       {/* Icon */}
