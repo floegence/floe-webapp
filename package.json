@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "pnpm -r build",
-    "build:demo": "pnpm --filter @floegence/floe-webapp-core build && pnpm --filter @floegence/floe-webapp-protocol build && pnpm --filter @floegence/floe-webapp-demo build",
+    "build:demo": "pnpm --filter @floegence/floe-webapp-core build && pnpm --filter @floegence/floe-webapp-protocol build && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @floegence/floe-webapp-demo build",
     "deploy:demo": "pnpm build:demo && pnpm dlx wrangler@^3 pages deploy apps/demo/dist --project-name webapp-demo",
     "verify": "node scripts/verify-dist.mjs",
     "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs",
