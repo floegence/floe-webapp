@@ -1,0 +1,169 @@
+import { For, Show } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { cn } from '../../utils/cn';
+import { useFileBrowser } from './FileBrowserContext';
+import { FolderIcon, getFileIcon } from './FileIcons';
+import type { FileItem } from './types';
+
+export interface FileGridViewProps {
+  class?: string;
+}
+
+/**
+ * Grid/tile view for displaying files in a card format
+ */
+export function FileGridView(props: FileGridViewProps) {
+  const ctx = useFileBrowser();
+
+  return (
+    <div class={cn('h-full min-h-0 overflow-auto p-3', props.class)}>
+      <Show
+        when={ctx.currentFiles().length > 0}
+        fallback={
+          <div class="flex items-center justify-center h-32 text-xs text-muted-foreground">
+            This folder is empty
+          </div>
+        }
+      >
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <For each={ctx.currentFiles()}>
+            {(item, index) => <FileGridItem item={item} index={index()} />}
+          </For>
+        </div>
+      </Show>
+    </div>
+  );
+}
+
+interface FileGridItemProps {
+  item: FileItem;
+  index: number;
+}
+
+function FileGridItem(props: FileGridItemProps) {
+  const ctx = useFileBrowser();
+  const isSelected = () => ctx.isSelected(props.item.id);
+
+  const handleClick = (e: MouseEvent) => {
+    if (props.item.type === 'folder') {
+      ctx.navigateTo(props.item);
+    } else {
+      ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
+    }
+  };
+
+  const handleDoubleClick = () => {
+    if (props.item.type === 'folder') {
+      ctx.navigateTo(props.item);
+    }
+  };
+
+  const handleContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // If item is not selected, select it first
+    if (!isSelected()) {
+      ctx.selectItem(props.item.id, false);
+    }
+
+    // Get all selected items for the context menu
+    const selectedIds = ctx.selectedItems();
+    const allFiles = ctx.currentFiles();
+    const selectedItems = selectedIds.size > 0
+      ? allFiles.filter((f) => selectedIds.has(f.id))
+      : [props.item];
+
+    ctx.showContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: selectedItems,
+    });
+  };
+
+  const fileIcon = () =>
+    props.item.type === 'folder'
+      ? FolderIcon
+      : getFileIcon(props.item.extension);
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      onDblClick={handleDoubleClick}
+      onContextMenu={handleContextMenu}
+      class={cn(
+        'group relative flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer',
+        'transition-all duration-150',
+        'hover:bg-accent/50 hover:scale-[1.02]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'active:scale-[0.98]',
+        isSelected() && 'bg-accent ring-2 ring-primary/50',
+        // Staggered animation on mount
+        'animate-in fade-in zoom-in-95'
+      )}
+      style={{
+        'animation-delay': `${Math.min(props.index * 30, 300)}ms`,
+        'animation-fill-mode': 'backwards',
+      }}
+    >
+      {/* Selection indicator */}
+      <Show when={isSelected()}>
+        <div class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="w-2.5 h-2.5 text-primary-foreground"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      </Show>
+
+      {/* Icon */}
+      <div
+        class={cn(
+          'w-12 h-12 flex items-center justify-center rounded-lg',
+          'transition-transform duration-200',
+          'group-hover:scale-110',
+          props.item.type === 'folder'
+            ? 'bg-warning/10'
+            : 'bg-muted/50'
+        )}
+      >
+        <Dynamic component={fileIcon()} class="w-8 h-8" />
+      </div>
+
+      {/* Name */}
+      <span
+        class={cn(
+          'text-xs text-center line-clamp-2 w-full px-1',
+          'transition-colors duration-150',
+          isSelected() && 'font-medium'
+        )}
+        title={props.item.name}
+      >
+        {props.item.name}
+      </span>
+
+      {/* Subtle glow effect on hover */}
+      <div
+        class={cn(
+          'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300',
+          'group-hover:opacity-100',
+          'pointer-events-none'
+        )}
+        style={{
+          background: props.item.type === 'folder'
+            ? 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--warning) 8%, transparent), transparent 70%)'
+            : 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 70%)',
+        }}
+      />
+    </button>
+  );
+}

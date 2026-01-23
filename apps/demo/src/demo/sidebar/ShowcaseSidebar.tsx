@@ -16,6 +16,7 @@ const sections = [
   { id: 'ui-dialogs', label: 'Dialogs' },
   { id: 'ui-floating-window', label: 'Floating Window' },
   { id: 'ui-command-palette', label: 'Command Palette' },
+  { id: 'ui-file-browser', label: 'File Browser' },
   { id: 'loading-overlay', label: 'Loading' },
   { id: 'icons', label: 'Icons' },
 ];

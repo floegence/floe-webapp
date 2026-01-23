@@ -13,6 +13,8 @@ import {
   Dialog,
   Dropdown,
   type DropdownItem,
+  FileBrowser,
+  type FileItem,
   Files,
   FloatingWindow,
   GitBranch,
@@ -67,6 +69,73 @@ function SectionHeader(props: {
     </div>
   );
 }
+
+// Demo data for FileBrowser component
+const demoFileBrowserData: FileItem[] = [
+  {
+    id: 'src',
+    name: 'src',
+    type: 'folder',
+    path: '/src',
+    modifiedAt: new Date('2025-01-20'),
+    children: [
+      {
+        id: 'src-components',
+        name: 'components',
+        type: 'folder',
+        path: '/src/components',
+        modifiedAt: new Date('2025-01-19'),
+        children: [
+          { id: 'src-button', name: 'Button.tsx', type: 'file', path: '/src/components/Button.tsx', extension: 'tsx', size: 2048, modifiedAt: new Date('2025-01-18') },
+          { id: 'src-card', name: 'Card.tsx', type: 'file', path: '/src/components/Card.tsx', extension: 'tsx', size: 3512, modifiedAt: new Date('2025-01-17') },
+          { id: 'src-dialog', name: 'Dialog.tsx', type: 'file', path: '/src/components/Dialog.tsx', extension: 'tsx', size: 4096, modifiedAt: new Date('2025-01-16') },
+          { id: 'src-input', name: 'Input.tsx', type: 'file', path: '/src/components/Input.tsx', extension: 'tsx', size: 1824, modifiedAt: new Date('2025-01-15') },
+        ],
+      },
+      {
+        id: 'src-hooks',
+        name: 'hooks',
+        type: 'folder',
+        path: '/src/hooks',
+        modifiedAt: new Date('2025-01-18'),
+        children: [
+          { id: 'src-use-theme', name: 'useTheme.ts', type: 'file', path: '/src/hooks/useTheme.ts', extension: 'ts', size: 1024, modifiedAt: new Date('2025-01-17') },
+          { id: 'src-use-media', name: 'useMediaQuery.ts', type: 'file', path: '/src/hooks/useMediaQuery.ts', extension: 'ts', size: 768, modifiedAt: new Date('2025-01-16') },
+        ],
+      },
+      { id: 'src-app', name: 'App.tsx', type: 'file', path: '/src/App.tsx', extension: 'tsx', size: 5120, modifiedAt: new Date('2025-01-20') },
+      { id: 'src-index', name: 'index.ts', type: 'file', path: '/src/index.ts', extension: 'ts', size: 256, modifiedAt: new Date('2025-01-14') },
+      { id: 'src-styles', name: 'styles.css', type: 'file', path: '/src/styles.css', extension: 'css', size: 8192, modifiedAt: new Date('2025-01-19') },
+    ],
+  },
+  {
+    id: 'docs',
+    name: 'docs',
+    type: 'folder',
+    path: '/docs',
+    modifiedAt: new Date('2025-01-15'),
+    children: [
+      { id: 'docs-readme', name: 'README.md', type: 'file', path: '/docs/README.md', extension: 'md', size: 4096, modifiedAt: new Date('2025-01-15') },
+      { id: 'docs-api', name: 'API.md', type: 'file', path: '/docs/API.md', extension: 'md', size: 8192, modifiedAt: new Date('2025-01-14') },
+      { id: 'docs-guide', name: 'getting-started.md', type: 'file', path: '/docs/getting-started.md', extension: 'md', size: 6144, modifiedAt: new Date('2025-01-13') },
+    ],
+  },
+  {
+    id: 'public',
+    name: 'public',
+    type: 'folder',
+    path: '/public',
+    modifiedAt: new Date('2025-01-10'),
+    children: [
+      { id: 'public-logo', name: 'logo.svg', type: 'file', path: '/public/logo.svg', extension: 'svg', size: 2048, modifiedAt: new Date('2025-01-10') },
+      { id: 'public-favicon', name: 'favicon.ico', type: 'file', path: '/public/favicon.ico', extension: 'ico', size: 1024, modifiedAt: new Date('2025-01-09') },
+    ],
+  },
+  { id: 'root-readme', name: 'README.md', type: 'file', path: '/README.md', extension: 'md', size: 2048, modifiedAt: new Date('2025-01-20') },
+  { id: 'root-package', name: 'package.json', type: 'file', path: '/package.json', extension: 'json', size: 1536, modifiedAt: new Date('2025-01-19') },
+  { id: 'root-tsconfig', name: 'tsconfig.json', type: 'file', path: '/tsconfig.json', extension: 'json', size: 512, modifiedAt: new Date('2025-01-18') },
+  { id: 'root-vite', name: 'vite.config.ts', type: 'file', path: '/vite.config.ts', extension: 'ts', size: 1024, modifiedAt: new Date('2025-01-17') },
+];
 
 export function ShowcasePage(props: ShowcasePageProps) {
   const command = useCommand();
@@ -639,6 +708,35 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           </PanelContent>
         </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-file-browser"
+          title="File Browser"
+          description="Professional file browser with list/grid views, directory tree, and breadcrumb navigation."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.file-browser')}>
+              View Source
+            </Button>
+          }
+        />
+        <div class="h-[420px] border border-border rounded-lg overflow-hidden">
+          <FileBrowser
+            files={demoFileBrowserData}
+            initialPath="/"
+            initialViewMode="list"
+            onNavigate={(path) => notifications.info('Navigate', `Path: ${path}`)}
+            onSelect={(items) => {
+              if (items.length > 0) {
+                notifications.info('Selected', items.map((i) => i.name).join(', '));
+              }
+            }}
+          />
+        </div>
+        <p class="text-[11px] text-muted-foreground">
+          Features: List/Grid view toggle, collapsible sidebar tree, breadcrumb navigation, sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
+        </p>
       </div>
 
       <div class="space-y-4">
