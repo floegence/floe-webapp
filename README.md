@@ -13,6 +13,10 @@ A professional VSCode-style web application framework built with Solid.js.
 - **Non-blocking UI**: Smooth animations and async operations
 - **Demo Playground**: Component showcase + Monaco source viewer
 
+## Live Demo
+
+https://webapp-demo.floegence.io
+
 ## Quick Start
 
 ### Create a new project
@@ -40,6 +44,12 @@ pnpm dev
 # Run local CI (lint + typecheck + test + build + verify)
 make check
 ```
+
+## Deploy Demo (Cloudflare Pages)
+
+- Build: `pnpm build:demo` (outputs to `apps/demo/dist`)
+- Deploy (requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`): `pnpm deploy:demo`
+- CI: `.github/workflows/deploy-demo.yml`
 
 ## Docs
 

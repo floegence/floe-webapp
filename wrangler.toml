@@ -1,0 +1,6 @@
+name = "webapp-demo"
+compatibility_date = "2026-01-23"
+
+# Cloudflare Pages build output (static site)
+pages_build_output_dir = "apps/demo/dist"
+
