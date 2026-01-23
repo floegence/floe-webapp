@@ -48,11 +48,14 @@ make check
 ## Deploy Demo (Cloudflare Pages)
 
 - Recommended: Cloudflare Pages + Git integration (no Wrangler, no API token)
-- Create: Workers & Pages → Create application → Pages → Connect to Git
+- Create: Workers & Pages → Create application → Pages → Connect to Git → select this repo
+- Production branch: `main`
 - Build command: `pnpm build:demo`
-- Build output directory: `apps/demo/dist`
-- Root directory: leave empty (repo root). Do not point to `apps/demo/dist` (it's a build output).
-- Custom domain: `webapp-demo.floegence.io`
+- Build output directory: `apps/demo/dist` (no leading slash)
+- Root directory (advanced): leave empty (repo root). Do not point to `apps/demo/dist` (it's a build output) or `apps/demo` (this is a pnpm workspace/monorepo).
+- Deploy command: leave empty (Git integration deploys automatically). If your UI asks for a deploy command, you're configuring a Workers project or Direct Upload.
+- Custom domain (optional): `webapp-demo.floegence.io`
+- Note: `wrangler.toml` is only for Wrangler Direct Upload (manual `wrangler pages deploy`), not for Git integration.
 
 ## Docs
 
