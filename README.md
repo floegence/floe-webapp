@@ -47,9 +47,10 @@ make check
 
 ## Deploy Demo (Cloudflare Pages)
 
-- Build: `pnpm build:demo` (outputs to `apps/demo/dist`)
-- Deploy (requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`): `pnpm deploy:demo`
-- CI: `.github/workflows/deploy-demo.yml`
+- Recommended: connect this repo to Cloudflare Pages (Git integration)
+- Build command: `pnpm build:demo`
+- Build output directory: `apps/demo/dist`
+- Custom domain: `webapp-demo.floegence.io`
 
 ## Docs
 
