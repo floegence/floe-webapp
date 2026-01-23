@@ -41,10 +41,12 @@ function main() {
   assertFile('packages/core/dist/styles.css');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
+  assertFile('packages/init/dist/index.mjs');
 
   // Package entrypoints must point to dist
   const corePkg = readJson('packages/core/package.json');
   const protocolPkg = readJson('packages/protocol/package.json');
+  const initPkg = readJson('packages/init/package.json');
 
   assert(corePkg.name === '@floegence/floe-webapp-core', '@floegence/floe-webapp-core package name mismatch');
   assert(corePkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-core main must point to ./dist/*');
@@ -76,6 +78,11 @@ function main() {
     protocolPkg.exports?.['.']?.types?.startsWith('./dist/'),
     '@floegence/floe-webapp-protocol exports["."].types must point to ./dist/*'
   );
+
+  assert(initPkg.name === '@floegence/floe-webapp-init', '@floegence/floe-webapp-init package name mismatch');
+  assert(initPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-init main must point to ./dist/*');
+  assert(initPkg.bin?.['floe-webapp-init']?.startsWith('./dist/'), '@floegence/floe-webapp-init bin must point to ./dist/*');
+  assert(initPkg.files?.includes('templates'), '@floegence/floe-webapp-init must include templates in files');
 
   // Repo rule: hidden markdown should never be committed
   const gitignore = readFileSync(resolve(process.cwd(), '.gitignore'), 'utf-8');

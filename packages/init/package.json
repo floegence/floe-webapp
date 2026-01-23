@@ -1,0 +1,35 @@
+{
+  "name": "@floegence/floe-webapp-init",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Scaffolding tool for Floe Webapp applications",
+  "bin": {
+    "floe-webapp-init": "./dist/index.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --stub",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "prompts": "^2.4.2",
+    "kolorist": "^1.8.0"
+  },
+  "devDependencies": {
+    "@types/prompts": "^2.4.9",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "unbuild": "^3.3.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
