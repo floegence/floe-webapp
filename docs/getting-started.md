@@ -5,7 +5,37 @@
 - Node.js `>= 20`
 - pnpm `>= 9`
 
-## Install
+## Create a new project (recommended)
+
+The fastest way to get started is using the CLI scaffolding tool:
+
+```bash
+# Interactive mode - prompts for project name and template
+npx @floegence/floe-webapp-init
+
+# Or specify project name directly
+npx @floegence/floe-webapp-init my-app
+
+# Use the full template with sample pages
+npx @floegence/floe-webapp-init my-app --template full
+```
+
+**Available templates:**
+
+- `minimal` (default) - Basic setup with FloeApp and a single page
+- `full` - Full setup with multiple pages, settings page, and theme toggle
+
+After scaffolding:
+
+```bash
+cd my-app
+pnpm install
+pnpm dev
+```
+
+## Development (this repo)
+
+### Install
 
 ```bash
 pnpm install

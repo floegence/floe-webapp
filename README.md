@@ -15,6 +15,21 @@ A professional VSCode-style web application framework built with Solid.js.
 
 ## Quick Start
 
+### Create a new project
+
+```bash
+# Interactive mode
+npx @floegence/floe-webapp-init
+
+# Or specify project name directly
+npx @floegence/floe-webapp-init my-app
+
+# Use the full template with sample pages
+npx @floegence/floe-webapp-init my-app --template full
+```
+
+### Development (this repo)
+
 ```bash
 # Install dependencies
 pnpm install
@@ -57,10 +72,14 @@ floe-webapp/
 │   │   ├── styles/        # Global CSS and themes
 │   │   └── utils/         # Utility functions
 │   │
-│   └── protocol/          # Flowersec protocol integration
-│       ├── client.ts      # Protocol context provider
-│       ├── rpc.ts         # RPC wrapper
-│       └── types/         # Type definitions
+│   ├── protocol/          # Flowersec protocol integration
+│   │   ├── client.ts      # Protocol context provider
+│   │   ├── rpc.ts         # RPC wrapper
+│   │   └── types/         # Type definitions
+│   │
+│   └── init/              # CLI scaffolding tool
+│       ├── src/           # CLI entry point
+│       └── templates/     # Project templates (minimal, full)
 │
 └── apps/
     └── demo/              # Demo application
@@ -86,6 +105,24 @@ Protocol layer for communication:
 - Flowersec WebSocket integration
 - RPC wrapper for type-safe calls
 - Connection state management
+
+### @floegence/floe-webapp-init
+
+CLI scaffolding tool for creating new Floe Webapp projects:
+
+```bash
+npx @floegence/floe-webapp-init [project-name] [options]
+```
+
+**Options:**
+
+- `--template <name>` - Use a specific template (`minimal` or `full`)
+- `--help` - Show help message
+
+**Templates:**
+
+- `minimal` (default) - Basic setup with FloeApp and a single page
+- `full` - Full setup with multiple pages, settings, and theme toggle
 
 ## Usage
 
