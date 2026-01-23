@@ -200,25 +200,10 @@ export function Shell(props: ShellProps) {
           </Show>
         </Show>
 
-        {/* Mobile: Sidebar as overlay */}
-        <Show when={isMobile() && mobileSidebarOpen() && !isFullScreen()}>
-          {/* Backdrop */}
-          <div
-            class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm cursor-pointer"
-            onClick={() => setMobileSidebarOpen(false)}
-          />
-          {/* Sidebar panel - full width on mobile for page content */}
-          <div
-            class={cn(
-              'absolute left-0 top-0 bottom-0 z-50 w-full',
-              'bg-sidebar border-r border-sidebar-border',
-              'shadow-xl',
-              'animate-in slide-in-from-left duration-200'
-            )}
-          >
-            <div class="h-full overflow-auto overscroll-contain">
-              {renderSidebarContent(layout.sidebarActiveTab())}
-            </div>
+        {/* Mobile: Render active component content directly (not as overlay) */}
+        <Show when={isMobile() && !isFullScreen()}>
+          <div class="absolute inset-0 z-30 bg-background overflow-auto overscroll-contain">
+            {renderSidebarContent(layout.sidebarActiveTab())}
           </div>
         </Show>
 
