@@ -55,6 +55,12 @@ export function createLayoutService(): LayoutContextValue {
     terminal?: Partial<TerminalState>;
   };
 
+  // Check initial mobile state synchronously based on media query
+  const getInitialMobile = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(cfg().mobileQuery).matches;
+  };
+
   const persisted = floe.persist.load<PersistedLayoutStore>(cfg().storageKey, {});
   const initialState: LayoutStore = {
     sidebar: {
@@ -66,7 +72,7 @@ export function createLayoutService(): LayoutContextValue {
       opened: persisted.terminal?.opened ?? cfg().terminal.defaultOpened,
       height: persisted.terminal?.height ?? cfg().terminal.defaultHeight,
     },
-    isMobile: false,
+    isMobile: getInitialMobile(),
   };
 
   const [store, setStore] = createStore<LayoutStore>(initialState);
