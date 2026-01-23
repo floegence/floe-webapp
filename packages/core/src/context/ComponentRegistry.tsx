@@ -12,8 +12,9 @@ import { useNotification } from './NotificationContext';
 import { deferNonBlocking } from '../utils/defer';
 
 /**
- * Component registration system for pluggable architecture
- * Designed to match `.design.md` 8.x: contributions + lifecycle + explicit mount/unmount.
+ * Component registration system for pluggable architecture.
+ *
+ * Public docs: `docs/component-registry.md`
  */
 
 export interface Logger {

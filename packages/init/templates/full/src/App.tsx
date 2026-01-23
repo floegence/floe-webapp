@@ -5,6 +5,8 @@ import {
   useLayout,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
+import { createMemo } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -22,7 +24,8 @@ const components: FloeComponent[] = [
       {
         id: 'home.open',
         title: 'Go to Home',
-        handler: ({ setActive }) => setActive('home'),
+        category: 'Navigation',
+        execute: (ctx) => ctx.layout.setSidebarActiveTab('home'),
       },
     ],
   },
@@ -37,7 +40,8 @@ const components: FloeComponent[] = [
       {
         id: 'settings.open',
         title: 'Open Settings',
-        handler: ({ setActive }) => setActive('settings'),
+        category: 'Navigation',
+        execute: (ctx) => ctx.layout.setSidebarActiveTab('settings'),
       },
     ],
   },
@@ -46,18 +50,23 @@ const components: FloeComponent[] = [
 // Content switcher based on active component
 function AppContent() {
   const layout = useLayout();
+  const active = createMemo(() => components.find((c) => c.id === layout.sidebarActiveTab()) ?? components[0]);
 
   return (
-    <>
-      {layout.sidebarActiveTab() === 'home' && <HomePage />}
-      {layout.sidebarActiveTab() === 'settings' && <SettingsPage />}
-    </>
+    <Dynamic component={active().component} />
   );
 }
 
 export default function App() {
   return (
-    <FloeApp components={components}>
+    <FloeApp
+      components={components}
+      config={{
+        layout: {
+          sidebar: { defaultActiveTab: 'home' },
+        },
+      }}
+    >
       <AppContent />
     </FloeApp>
   );

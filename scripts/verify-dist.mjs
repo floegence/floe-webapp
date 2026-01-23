@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 
 function assert(condition, message) {
   if (!condition) {
@@ -19,6 +19,48 @@ function readJson(path) {
 
 function assertFile(path) {
   assert(fileExists(path), `Missing build output: ${path}`);
+}
+
+function walkFiles(rootDir) {
+  const out = [];
+  const stack = [rootDir];
+  while (stack.length) {
+    const dir = stack.pop();
+    const entries = readdirSync(dir);
+    for (const entry of entries) {
+      const abs = join(dir, entry);
+      const st = statSync(abs);
+      if (st.isDirectory()) {
+        stack.push(abs);
+      } else {
+        out.push(abs);
+      }
+    }
+  }
+  return out;
+}
+
+function assertInitTemplates() {
+  const templatesRoot = resolve(process.cwd(), 'packages/init/templates');
+  assert(existsSync(templatesRoot), 'Missing init templates folder: packages/init/templates');
+
+  const files = walkFiles(templatesRoot).filter((f) => /\.(ts|tsx)$/i.test(f));
+  const violations = [];
+
+  for (const file of files) {
+    const content = readFileSync(file, 'utf-8');
+    // Historical drift: templates used `commands[].handler`, but core expects `execute(ctx)`.
+    if (/\bhandler\s*:/.test(content) || /\bsetActive\b/.test(content)) {
+      violations.push(file);
+    }
+  }
+
+  assert(
+    violations.length === 0,
+    `Init templates contain legacy command API usage (handler/setActive). Fix templates: ${violations
+      .map((f) => f.replace(`${process.cwd()}/`, ''))
+      .join(', ')}`
+  );
 }
 
 function assertNoTrackedDotMarkdown() {
@@ -96,6 +138,9 @@ function main() {
   const styles = readFileSync(resolve(process.cwd(), 'packages/core/dist/styles.css'), 'utf-8');
   assert(styles.length > 0, 'Expected @floegence/floe-webapp-core styles.css to be non-empty');
   assert(styles.includes('--background'), 'Expected @floegence/floe-webapp-core styles.css to include theme variables');
+
+  // Starter templates must stay aligned with public APIs.
+  assertInitTemplates();
 }
 
 try {

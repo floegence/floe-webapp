@@ -6,11 +6,11 @@ export interface ControlplaneConfig {
 }
 
 /**
- * 向控制面请求隧道连接凭证（grant）。
+ * Request a tunnel grant (ChannelInitGrant) from the controlplane.
  *
- * 说明：
- * - `.design.md` 约定的接口为 POST `${baseUrl}/v1/channel/init`，body: { endpoint_id }
- * - 返回体结构按设计约定：`{ grant_client: ChannelInitGrant }`
+ * HTTP contract (documented in `docs/protocol.md`):
+ * - POST `${baseUrl}/v1/channel/init`, body: { endpoint_id }
+ * - Response: `{ grant_client: ChannelInitGrant }`
  */
 export async function requestChannelGrant(config: ControlplaneConfig): Promise<ChannelInitGrant> {
   const response = await fetch(`${config.baseUrl}/v1/channel/init`, {

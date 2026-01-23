@@ -11,6 +11,7 @@ import { BottomBar } from './BottomBar';
 import { MobileTabBar } from './MobileTabBar';
 import { ActivityBar, type ActivityBarItem } from './ActivityBar';
 import { ResizeHandle } from './ResizeHandle';
+import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
 
 export interface ShellProps {
   children: JSX.Element;
@@ -95,6 +96,13 @@ export function Shell(props: ShellProps) {
     return comp?.sidebar?.fullScreen ?? false;
   });
 
+  // FullScreen components are navigated as pages on mobile (no overlay).
+  createEffect(() => {
+    if (isMobile() && isFullScreen()) {
+      setMobileSidebarOpen(false);
+    }
+  });
+
   const bottomBarContent = createMemo<JSX.Element | undefined>(() => {
     if (props.bottomBarItems) return props.bottomBarItems;
     if (!registry) return undefined;
@@ -132,14 +140,18 @@ export function Shell(props: ShellProps) {
 
   // Handle mobile tab selection - toggle sidebar
   const handleMobileTabSelect = (id: string) => {
-    if (layout.sidebarActiveTab() === id && mobileSidebarOpen()) {
-      // Same tab clicked, close sidebar
-      setMobileSidebarOpen(false);
-    } else {
-      // Different tab or sidebar closed, open sidebar
-      layout.setSidebarActiveTab(id);
-      setMobileSidebarOpen(true);
+    const clickedIsFullScreen = registry?.getComponent(id)?.sidebar?.fullScreen ?? false;
+    const { nextActiveId, nextMobileSidebarOpen } = resolveMobileTabSelect({
+      clickedId: id,
+      activeId: layout.sidebarActiveTab(),
+      mobileSidebarOpen: mobileSidebarOpen(),
+      clickedIsFullScreen,
+    });
+
+    if (layout.sidebarActiveTab() !== nextActiveId) {
+      layout.setSidebarActiveTab(nextActiveId);
     }
+    setMobileSidebarOpen(nextMobileSidebarOpen);
   };
 
   return (
@@ -189,7 +201,7 @@ export function Shell(props: ShellProps) {
         </Show>
 
         {/* Mobile: Sidebar as overlay */}
-        <Show when={isMobile() && mobileSidebarOpen()}>
+        <Show when={isMobile() && mobileSidebarOpen() && !isFullScreen()}>
           {/* Backdrop */}
           <div
             class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm cursor-pointer"
@@ -240,7 +252,11 @@ export function Shell(props: ShellProps) {
       <Show when={isMobile() && activityItems().length > 0}>
         <MobileTabBar
           items={activityItems()}
-          activeId={mobileSidebarOpen() ? layout.sidebarActiveTab() : ''}
+          activeId={resolveMobileTabActiveId({
+            activeId: layout.sidebarActiveTab(),
+            mobileSidebarOpen: mobileSidebarOpen(),
+            activeIsFullScreen: isFullScreen(),
+          })}
           onSelect={handleMobileTabSelect}
         />
       </Show>

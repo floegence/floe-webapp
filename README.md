@@ -43,7 +43,11 @@ make check
 
 ## Docs
 
+- `docs/README.md`
 - `docs/getting-started.md`
+- `docs/configuration.md`
+- `docs/component-registry.md`
+- `docs/protocol.md`
 
 ## Demo protocol config (optional)
 

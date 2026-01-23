@@ -308,6 +308,28 @@ function AppContent() {
     </Switch>
   );
 
+  const MobileFullScreenMain: Component = () => (
+    <Switch>
+      <Match when={layout.sidebarActiveTab() === 'launchpad'}>
+        <LaunchpadPage
+          onClose={() => layout.setSidebarActiveTab('showcase')}
+          onNavigate={(id) => layout.setSidebarActiveTab(id)}
+        />
+      </Match>
+      <Match when={layout.sidebarActiveTab() === 'deck'}>
+        <div class="p-4 max-w-md mx-auto space-y-2">
+          <h1 class="text-lg font-semibold">Deck</h1>
+          <p class="text-xs text-muted-foreground">
+            Deck is currently a desktop-first demo. Please open it on desktop to use drag & resize interactions.
+          </p>
+          <Button size="sm" variant="outline" onClick={() => layout.setSidebarActiveTab('showcase')}>
+            Back to Showcase
+          </Button>
+        </div>
+      </Match>
+    </Switch>
+  );
+
   return (
     <>
       <Shell
@@ -335,6 +357,9 @@ function AppContent() {
       >
         <Show when={!layout.isMobile()}>
           <DesktopMain />
+        </Show>
+        <Show when={layout.isMobile()}>
+          <MobileFullScreenMain />
         </Show>
       </Shell>
 

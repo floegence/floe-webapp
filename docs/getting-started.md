@@ -176,6 +176,12 @@ Notes:
 
 ---
 
+## Next docs
+
+- Configuration (FloeConfig): `docs/configuration.md`
+- Component Registry & Contributions: `docs/component-registry.md`
+- Protocol Layer (Flowersec): `docs/protocol.md`
+
 ### Advanced: manual assembly (Provider + Registry + Shell)
 
 If you want full control, you can still wire providers and the registry manually:
