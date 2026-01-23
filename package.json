@@ -8,8 +8,6 @@
     "dev": "node scripts/dev.mjs",
     "build": "pnpm -r build",
     "build:demo": "pnpm --filter @floegence/floe-webapp-core build && pnpm --filter @floegence/floe-webapp-protocol build && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @floegence/floe-webapp-demo build",
-    "deploy:demo": "pnpm build:demo && pnpm deploy:demo:ci",
-    "deploy:demo:ci": "node scripts/deploy-pages.mjs",
     "verify": "node scripts/verify-dist.mjs",
     "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",

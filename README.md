@@ -47,9 +47,11 @@ make check
 
 ## Deploy Demo (Cloudflare Pages)
 
-- Recommended: connect this repo to Cloudflare Pages (Git integration)
+- Recommended: Cloudflare Pages + Git integration (no Wrangler, no API token)
+- Create: Workers & Pages → Create application → Pages → Connect to Git
 - Build command: `pnpm build:demo`
 - Build output directory: `apps/demo/dist`
+- Root directory: leave empty (repo root). Do not point to `apps/demo/dist` (it's a build output).
 - Custom domain: `webapp-demo.floegence.io`
 
 ## Docs
