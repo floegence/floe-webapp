@@ -34,6 +34,12 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
 
+      - name: Ensure npm supports trusted publishing (OIDC)
+        run: |
+          set -euo pipefail
+          npm i -g npm@^11.5.1
+          npm --version
+
       - name: Install
         run: pnpm install --frozen-lockfile
 
@@ -102,17 +108,17 @@ jobs:
       - name: Publish @floegence/floe-webapp-core (npm Trusted Publisher)
         if: steps.core_exists.outputs.exists != 'true'
         working-directory: packages/core
-        run: npm publish --access public --provenance
+        run: npm publish --access public
 
       - name: Publish @floegence/floe-webapp-protocol (npm Trusted Publisher)
         if: steps.protocol_exists.outputs.exists != 'true'
         working-directory: packages/protocol
-        run: npm publish --access public --provenance
+        run: npm publish --access public
 
       - name: Publish @floegence/floe-webapp-init (npm Trusted Publisher)
         if: steps.init_exists.outputs.exists != 'true'
         working-directory: packages/init
-        run: npm publish --access public --provenance
+        run: npm publish --access public
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
