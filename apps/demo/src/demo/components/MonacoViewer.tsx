@@ -1,6 +1,6 @@
 import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
 import { useResizeObserver, useTheme } from '@floegence/floe-webapp-core';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 import { isCancellationError } from 'monaco-editor/esm/vs/base/common/errors.js';
 import { ConsoleLogger } from 'monaco-editor/esm/vs/platform/log/common/log.js';
 import { LogService } from 'monaco-editor/esm/vs/platform/log/common/logService.js';
@@ -152,7 +152,7 @@ export default function MonacoViewer(props: MonacoViewerProps) {
     // Listen for content changes
     const onContentChange = props.onContentChange;
     const onChange = props.onChange;
-    const disposable = editor.onDidChangeModelContent((e) => {
+    const disposable = editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent) => {
       const api = getApi();
       if (!api) return;
       onContentChange?.(e, api);
