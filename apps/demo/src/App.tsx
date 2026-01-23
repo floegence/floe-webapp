@@ -80,48 +80,20 @@ function AppContent() {
   );
 
   const ShowcaseView: Component = () => (
-    <Show
-      when={layout.isMobile()}
-      fallback={<ShowcaseSidebar onJumpTo={jumpTo} onOpenFile={openFile} />}
-    >
-      <ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />
-    </Show>
+    <ShowcaseSidebar onJumpTo={jumpTo} onOpenFile={openFile} />
   );
 
   const FilesView: Component = () => (
-    <Show
-      when={layout.isMobile()}
-      fallback={<FileExplorer files={demoFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId} />}
-    >
-      <div class="h-full flex flex-col">
-        <div class="p-3 border-b border-border bg-background">
-          <Select
-            value={activeFileId()}
-            onChange={setActiveFileId}
-            options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
-          />
-        </div>
-        <div class="flex-1 min-h-0">
-          <FileViewerPage file={activeFile} />
-        </div>
-      </div>
-    </Show>
+    <FileExplorer files={demoFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId} />
   );
 
   const SearchView: Component = () => (
-    <Show
-      when={layout.isMobile()}
-      fallback={
-        <SearchSidebar
-          query={searchQuery}
-          results={searchResults}
-          onQueryChange={setSearchQuery}
-          onOpenFile={openFile}
-        />
-      }
-    >
-      <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
-    </Show>
+    <SearchSidebar
+      query={searchQuery}
+      results={searchResults}
+      onQueryChange={setSearchQuery}
+      onOpenFile={openFile}
+    />
   );
 
   const SettingsView: Component = () => <SettingsPanel />;
@@ -309,7 +281,7 @@ function AppContent() {
   );
 
   const MobileFullScreenMain: Component = () => (
-    <Switch>
+    <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
       <Match when={layout.sidebarActiveTab() === 'launchpad'}>
         <LaunchpadPage
           onClose={() => layout.setSidebarActiveTab('showcase')}
@@ -325,6 +297,29 @@ function AppContent() {
           <Button size="sm" variant="outline" onClick={() => layout.setSidebarActiveTab('showcase')}>
             Back to Showcase
           </Button>
+        </div>
+      </Match>
+      <Match when={layout.sidebarActiveTab() === 'files'}>
+        <div class="h-full flex flex-col">
+          <div class="p-3 border-b border-border bg-background">
+            <Select
+              value={activeFileId()}
+              onChange={setActiveFileId}
+              options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
+            />
+          </div>
+          <div class="flex-1 min-h-0">
+            <FileViewerPage file={activeFile} />
+          </div>
+        </div>
+      </Match>
+      <Match when={layout.sidebarActiveTab() === 'search'}>
+        <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
+      </Match>
+      <Match when={layout.sidebarActiveTab() === 'settings'}>
+        <div class="p-4 max-w-md mx-auto space-y-3">
+          <h1 class="text-lg font-semibold">Settings</h1>
+          <SettingsPanel />
         </div>
       </Match>
     </Switch>

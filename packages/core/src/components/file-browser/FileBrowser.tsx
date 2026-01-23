@@ -79,16 +79,22 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   const [isMobile, setIsMobile] = createSignal(false);
   const sidebarWidth = () => props.sidebarWidth ?? 220;
 
-  // Mobile detection
+  // Mobile detection with auto-collapse
   onMount(() => {
     const mq = window.matchMedia('(max-width: 767px)');
-    setIsMobile(mq.matches);
+    const initialMobile = mq.matches;
+    setIsMobile(initialMobile);
+
+    // Auto-collapse sidebar on initial mobile state
+    if (initialMobile && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
+      ctx.toggleSidebar();
+    }
 
     const handler = (e: MediaQueryListEvent) => {
       setIsMobile(e.matches);
-      // Auto-collapse sidebar on mobile
-      if (e.matches && props.hideSidebarOnMobile !== false) {
-        // Will use the context's sidebarCollapsed state
+      // Auto-collapse sidebar when transitioning to mobile
+      if (e.matches && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
+        ctx.toggleSidebar();
       }
     };
 
@@ -113,7 +119,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
       </Show>
 
       {/* Main content area */}
-      <div class="flex flex-1 min-h-0">
+      <div class="flex flex-1 min-h-0 relative">
         {/* Sidebar with directory tree */}
         <aside
           class={cn(
@@ -170,7 +176,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
         {/* Mobile overlay backdrop */}
         <Show when={isMobile() && !ctx.sidebarCollapsed()}>
           <div
-            class="fixed inset-0 bg-background/60 backdrop-blur-sm z-[9]"
+            class="absolute inset-0 bg-background/60 backdrop-blur-sm z-[9]"
             onClick={ctx.toggleSidebar}
           />
         </Show>

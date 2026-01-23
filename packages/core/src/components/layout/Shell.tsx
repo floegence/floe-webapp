@@ -200,10 +200,26 @@ export function Shell(props: ShellProps) {
           </Show>
         </Show>
 
-        {/* Mobile: Render active component content directly (not as overlay) */}
-        <Show when={isMobile() && !isFullScreen()}>
-          <div class="absolute inset-0 z-30 bg-background overflow-auto overscroll-contain">
-            {renderSidebarContent(layout.sidebarActiveTab())}
+        {/* Mobile: Sidebar as collapsible drawer */}
+        <Show when={isMobile() && mobileSidebarOpen()}>
+          {/* Backdrop */}
+          <div
+            class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm cursor-pointer"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          {/* Sidebar drawer - narrower width, drawer style */}
+          <div
+            class={cn(
+              'absolute left-0 top-0 bottom-0 z-50',
+              'w-72 max-w-[80vw]',
+              'bg-sidebar border-r border-sidebar-border',
+              'shadow-xl',
+              'animate-in slide-in-from-left duration-200'
+            )}
+          >
+            <div class="h-full overflow-auto overscroll-contain">
+              {renderSidebarContent(layout.sidebarActiveTab())}
+            </div>
           </div>
         </Show>
 

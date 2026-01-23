@@ -8,11 +8,13 @@ export interface ResolveMobileTabActiveIdArgs {
 }
 
 /**
- * On mobile, the active tab is always shown as active since content is always visible.
- * The mobileSidebarOpen state is no longer used for content visibility.
+ * Determine which tab should appear active in the mobile tab bar.
+ * - For fullScreen components: always show as active
+ * - For sidebar components: show as active only when sidebar is open
  */
 export function resolveMobileTabActiveId(args: ResolveMobileTabActiveIdArgs): string {
-  return args.activeId;
+  if (args.activeIsFullScreen) return args.activeId;
+  return args.mobileSidebarOpen ? args.activeId : '';
 }
 
 export interface ResolveMobileTabSelectArgs {
@@ -28,12 +30,22 @@ export interface ResolveMobileTabSelectResult {
 }
 
 /**
- * On mobile, clicking a tab simply switches to that tab.
- * The mobileSidebarOpen state is kept for backwards compatibility but is no longer
- * used to control content visibility.
+ * Handle mobile tab selection:
+ * - FullScreen components: navigate directly, close sidebar
+ * - Sidebar components: toggle sidebar visibility
  */
 export function resolveMobileTabSelect(args: ResolveMobileTabSelectArgs): ResolveMobileTabSelectResult {
-  // Simply switch to the clicked tab
-  return { nextActiveId: args.clickedId, nextMobileSidebarOpen: false };
+  // FullScreen components navigate directly without sidebar
+  if (args.clickedIsFullScreen) {
+    return { nextActiveId: args.clickedId, nextMobileSidebarOpen: false };
+  }
+
+  // Same tab clicked while sidebar is open: close sidebar
+  if (args.clickedId === args.activeId && args.mobileSidebarOpen) {
+    return { nextActiveId: args.clickedId, nextMobileSidebarOpen: false };
+  }
+
+  // Different tab or sidebar is closed: open sidebar with new tab
+  return { nextActiveId: args.clickedId, nextMobileSidebarOpen: true };
 }
 
