@@ -1,5 +1,5 @@
 import { For, Show, type Accessor } from 'solid-js';
-import { Input, SidebarSection, SidebarItem, Search } from '@floegence/floe-webapp-core';
+import { Input, SidebarContent, SidebarItemList, SidebarSection, SidebarItem, Search } from '@floegence/floe-webapp-core';
 import type { DemoFile } from '../workspace';
 
 export interface SearchSidebarProps {
@@ -16,7 +16,7 @@ function fileName(path: string) {
 
 export function SearchSidebar(props: SearchSidebarProps) {
   return (
-    <div class="p-2.5 space-y-3">
+    <SidebarContent>
       <SidebarSection title="Search">
         <Input
           value={props.query()}
@@ -31,17 +31,19 @@ export function SearchSidebar(props: SearchSidebarProps) {
             </Show>
           </p>
         </div>
-        <div class="mt-1.5 space-y-0.5">
-          <For each={props.results().slice(0, 12)}>
-            {(file) => (
-              <SidebarItem onClick={() => props.onOpenFile(file.id)}>
-                <span class="truncate">{fileName(file.path)}</span>
-              </SidebarItem>
-            )}
-          </For>
+        <div class="mt-1.5">
+          <SidebarItemList>
+            <For each={props.results().slice(0, 12)}>
+              {(file) => (
+                <SidebarItem onClick={() => props.onOpenFile(file.id)}>
+                  <span class="truncate">{fileName(file.path)}</span>
+                </SidebarItem>
+              )}
+            </For>
+          </SidebarItemList>
         </div>
       </SidebarSection>
-    </div>
+    </SidebarContent>
   );
 }
 

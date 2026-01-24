@@ -1,5 +1,5 @@
 import { For } from 'solid-js';
-import { SidebarSection, SidebarItem, Button } from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarItemList, SidebarSection, SidebarItem, Button } from '@floegence/floe-webapp-core';
 
 export interface ShowcaseSidebarProps {
   onJumpTo: (id: string) => void;
@@ -23,9 +23,9 @@ const sections = [
 
 export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
   return (
-    <div class="p-2.5 space-y-3">
+    <SidebarContent>
       <SidebarSection title="Showcase">
-        <div class="space-y-0.5">
+        <SidebarItemList>
           <For each={sections}>
             {(item) => (
               <SidebarItem onClick={() => props.onJumpTo(item.id)}>
@@ -33,7 +33,7 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
               </SidebarItem>
             )}
           </For>
-        </div>
+        </SidebarItemList>
       </SidebarSection>
 
       <SidebarSection title="Source">
@@ -49,7 +49,7 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
           </Button>
         </div>
       </SidebarSection>
-    </div>
+    </SidebarContent>
   );
 }
 

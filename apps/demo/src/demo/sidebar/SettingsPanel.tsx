@@ -1,5 +1,5 @@
 import { Show } from 'solid-js';
-import { Button, useTheme, useNotification, Sun, Moon } from '@floegence/floe-webapp-core';
+import { Button, SidebarContent, SidebarSection, useTheme, useNotification, Sun, Moon } from '@floegence/floe-webapp-core';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 
 export function SettingsPanel() {
@@ -32,9 +32,8 @@ export function SettingsPanel() {
   };
 
   return (
-    <div class="p-2.5 space-y-3">
-      <div>
-        <h3 class="text-xs font-medium mb-1.5">Connection</h3>
+    <SidebarContent>
+      <SidebarSection title="Connection">
         <div class="flex items-center gap-2">
           <span class="text-xs text-muted-foreground">Status: {protocol.status()}</span>
           <Button
@@ -60,10 +59,9 @@ export function SettingsPanel() {
         <Show when={protocol.error()}>
           <p class="mt-1.5 text-[11px] text-error">{protocol.error()?.message}</p>
         </Show>
-      </div>
+      </SidebarSection>
 
-      <div>
-        <h3 class="text-xs font-medium mb-1.5">Appearance</h3>
+      <SidebarSection title="Appearance">
         <div class="flex gap-1.5">
           <Button
             variant={theme.resolvedTheme() === 'light' ? 'default' : 'outline'}
@@ -82,8 +80,8 @@ export function SettingsPanel() {
             Dark
           </Button>
         </div>
-      </div>
-    </div>
+      </SidebarSection>
+    </SidebarContent>
   );
 }
 

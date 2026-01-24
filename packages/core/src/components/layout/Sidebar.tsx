@@ -30,6 +30,32 @@ export function Sidebar(props: SidebarProps) {
 }
 
 /**
+ * Unified wrapper for sidebar content.
+ * Use this component to ensure consistent padding and spacing across all sidebars.
+ */
+export interface SidebarContentProps {
+  children: JSX.Element;
+  class?: string;
+}
+
+export function SidebarContent(props: SidebarContentProps) {
+  return <div class={cn('p-2.5 space-y-3', props.class)}>{props.children}</div>;
+}
+
+/**
+ * Container for sidebar items within a section.
+ * Provides consistent spacing between list items.
+ */
+export interface SidebarItemListProps {
+  children: JSX.Element;
+  class?: string;
+}
+
+export function SidebarItemList(props: SidebarItemListProps) {
+  return <div class={cn('space-y-0.5', props.class)}>{props.children}</div>;
+}
+
+/**
  * Sidebar section with optional header
  */
 export interface SidebarSectionProps {
