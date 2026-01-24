@@ -202,9 +202,9 @@ export function Shell(props: ShellProps) {
 
         {/* Mobile: Sidebar as collapsible drawer */}
         <Show when={isMobile() && mobileSidebarOpen()}>
-          {/* Backdrop */}
+          {/* Backdrop - semi-transparent to show content behind */}
           <div
-            class="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm cursor-pointer"
+            class="absolute inset-0 z-40 bg-black/30 cursor-pointer"
             onClick={() => setMobileSidebarOpen(false)}
           />
           {/* Sidebar drawer - narrower width, drawer style */}

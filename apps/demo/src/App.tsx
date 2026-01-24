@@ -300,17 +300,15 @@ function AppContent() {
         </div>
       </Match>
       <Match when={layout.sidebarActiveTab() === 'files'}>
-        <div class="h-full flex flex-col">
-          <div class="p-3 border-b border-border bg-background">
-            <Select
-              value={activeFileId()}
-              onChange={setActiveFileId}
-              options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
-            />
-          </div>
-          <div class="flex-1 min-h-0">
-            <FileViewerPage file={activeFile} />
-          </div>
+        <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
+          <Select
+            value={activeFileId()}
+            onChange={setActiveFileId}
+            options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
+          />
+        </div>
+        <div class="p-4" style={{ height: 'calc(100vh - 180px)', "min-height": '300px' }}>
+          <FileViewerPage file={activeFile} />
         </div>
       </Match>
       <Match when={layout.sidebarActiveTab() === 'search'}>
