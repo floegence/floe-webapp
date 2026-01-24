@@ -55,6 +55,13 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
+
+  // Mobile detection
+  const MOBILE_BREAKPOINT = 768;
+  const MOBILE_PADDING = 16; // Padding on each side for mobile
+  const [isMobile, setIsMobile] = createSignal(
+    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
+  );
   const titleId = () => `floating-window-${baseId}-title`;
 
   // Window state
@@ -135,14 +142,43 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   // Initialize the window position (centered)
   onMount(() => {
+    // Listen for resize to update mobile state
+    const handleResize = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT;
+      setIsMobile(mobile);
+
+      // Adjust size and position when switching to mobile
+      if (mobile && !isMaximized()) {
+        const mobileWidth = window.innerWidth - MOBILE_PADDING * 2;
+        setSize((prev) => ({ ...prev, width: mobileWidth }));
+        setPosition((prev) => ({ ...prev, x: MOBILE_PADDING }));
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    onCleanup(() => window.removeEventListener('resize', handleResize));
+
     if (!props.defaultPosition) {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-      const currentSize = size();
-      setPosition({
-        x: Math.max(0, (windowWidth - currentSize.width) / 2),
-        y: Math.max(0, (windowHeight - currentSize.height) / 2),
-      });
+      const mobile = windowWidth < MOBILE_BREAKPOINT;
+
+      if (mobile) {
+        // On mobile: full width with padding, centered vertically
+        const mobileWidth = windowWidth - MOBILE_PADDING * 2;
+        const currentSize = size();
+        setSize({ width: mobileWidth, height: currentSize.height });
+        setPosition({
+          x: MOBILE_PADDING,
+          y: Math.max(0, (windowHeight - currentSize.height) / 2),
+        });
+      } else {
+        const currentSize = size();
+        setPosition({
+          x: Math.max(0, (windowWidth - currentSize.width) / 2),
+          y: Math.max(0, (windowHeight - currentSize.height) / 2),
+        });
+      }
     }
   });
 
@@ -219,10 +255,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
     if (mode === 'drag') {
       const nextSize = size();
-      const newX = Math.max(
-        0,
-        Math.min(window.innerWidth - nextSize.width, dragStartWindowPos.x + deltaX)
-      );
+      const mobile = isMobile();
+      // On mobile, keep x fixed at MOBILE_PADDING
+      const newX = mobile
+        ? MOBILE_PADDING
+        : Math.max(0, Math.min(window.innerWidth - nextSize.width, dragStartWindowPos.x + deltaX));
       const newY = Math.max(
         0,
         Math.min(window.innerHeight - nextSize.height, dragStartWindowPos.y + deltaY)
@@ -237,11 +274,14 @@ export function FloatingWindow(props: FloatingWindowProps) {
     let newX = resizeStartWindowPos.x;
     let newY = resizeStartWindowPos.y;
 
+    // On mobile, skip horizontal resize (width is fixed)
+    const mobile = isMobile();
+
     // Compute new size/position based on the handle direction.
-    if (resizeHandle.includes('e')) {
+    if (!mobile && resizeHandle.includes('e')) {
       newWidth = Math.max(minSize().width, Math.min(maxSize().width, resizeStartSize.width + deltaX));
     }
-    if (resizeHandle.includes('w')) {
+    if (!mobile && resizeHandle.includes('w')) {
       const possibleWidth = resizeStartSize.width - deltaX;
       if (possibleWidth >= minSize().width && possibleWidth <= maxSize().width) {
         newWidth = possibleWidth;
@@ -432,7 +472,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
           {/* Resize handles */}
           <Show when={resizable() && !isMaximized()}>
-            {/* Edge handles */}
+            {/* Vertical edge handles (always visible) */}
             <div
               class={getResizeHandleClass('n')}
               style={{ 'touch-action': 'none' }}
@@ -443,38 +483,42 @@ export function FloatingWindow(props: FloatingWindowProps) {
               style={{ 'touch-action': 'none' }}
               onPointerDown={handleResizeStart('s')}
             />
-            <div
-              class={getResizeHandleClass('e')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('e')}
-            />
-            <div
-              class={getResizeHandleClass('w')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('w')}
-            />
 
-            {/* Corner handles */}
-            <div
-              class={getResizeHandleClass('ne')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('ne')}
-            />
-            <div
-              class={getResizeHandleClass('nw')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('nw')}
-            />
-            <div
-              class={getResizeHandleClass('se')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('se')}
-            />
-            <div
-              class={getResizeHandleClass('sw')}
-              style={{ 'touch-action': 'none' }}
-              onPointerDown={handleResizeStart('sw')}
-            />
+            {/* Horizontal edge handles (hidden on mobile) */}
+            <Show when={!isMobile()}>
+              <div
+                class={getResizeHandleClass('e')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('e')}
+              />
+              <div
+                class={getResizeHandleClass('w')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('w')}
+              />
+
+              {/* Corner handles (hidden on mobile) */}
+              <div
+                class={getResizeHandleClass('ne')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('ne')}
+              />
+              <div
+                class={getResizeHandleClass('nw')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('nw')}
+              />
+              <div
+                class={getResizeHandleClass('se')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('se')}
+              />
+              <div
+                class={getResizeHandleClass('sw')}
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('sw')}
+              />
+            </Show>
           </Show>
         </div>
       </Portal>
