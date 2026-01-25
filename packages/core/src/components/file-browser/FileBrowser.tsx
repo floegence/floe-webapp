@@ -19,6 +19,8 @@ export interface FileBrowserProps {
   onNavigate?: (path: string) => void;
   /** Callback when selection changes */
   onSelect?: (items: FileItem[]) => void;
+  /** Callback when a file is opened (double-click) */
+  onOpen?: (item: FileItem) => void;
   /** Additional class names */
   class?: string;
   /** Custom header content */
@@ -48,6 +50,7 @@ export function FileBrowser(props: FileBrowserProps) {
       initialViewMode={props.initialViewMode}
       onNavigate={props.onNavigate}
       onSelect={props.onSelect}
+      onOpen={props.onOpen}
     >
       <FileBrowserInner
         class={props.class}

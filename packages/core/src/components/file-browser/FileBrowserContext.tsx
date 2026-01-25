@@ -10,6 +10,7 @@ export interface FileBrowserProviderProps {
   initialViewMode?: ViewMode;
   onNavigate?: (path: string) => void;
   onSelect?: (items: FileItem[]) => void;
+  onOpen?: (item: FileItem) => void;
 }
 
 /**
@@ -151,6 +152,14 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const showContextMenu = (event: ContextMenuEvent) => setContextMenu(event);
   const hideContextMenu = () => setContextMenu(null);
 
+  const openItem = (item: FileItem) => {
+    if (item.type === 'folder') {
+      navigateTo(item);
+    } else {
+      props.onOpen?.(item);
+    }
+  };
+
   const contextValue: FileBrowserContextValue = {
     currentPath,
     setCurrentPath,
@@ -174,6 +183,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     contextMenu,
     showContextMenu,
     hideContextMenu,
+    openItem,
   };
 
   return (

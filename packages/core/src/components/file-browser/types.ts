@@ -130,4 +130,7 @@ export interface FileBrowserContextValue {
   contextMenu: Accessor<ContextMenuEvent | null>;
   showContextMenu: (event: ContextMenuEvent) => void;
   hideContextMenu: () => void;
+
+  // Open file
+  openItem: (item: FileItem) => void;
 }

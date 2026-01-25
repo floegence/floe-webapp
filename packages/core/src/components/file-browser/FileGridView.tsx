@@ -53,9 +53,7 @@ function FileGridItem(props: FileGridItemProps) {
   };
 
   const handleDoubleClick = () => {
-    if (props.item.type === 'folder') {
-      ctx.navigateTo(props.item);
-    }
+    ctx.openItem(props.item);
   };
 
   const handleContextMenu = (e: MouseEvent) => {

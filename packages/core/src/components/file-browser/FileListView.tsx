@@ -137,9 +137,7 @@ function FileListItem(props: FileListItemProps) {
   };
 
   const handleDoubleClick = () => {
-    if (props.item.type === 'folder') {
-      ctx.navigateTo(props.item);
-    }
+    ctx.openItem(props.item);
   };
 
   const handleContextMenu = (e: MouseEvent) => {
