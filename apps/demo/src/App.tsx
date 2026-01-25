@@ -363,8 +363,41 @@ function AppContent() {
 }
 
 export function App() {
+  const demoFloeConfig = {
+    storage: { namespace: 'floe-demo' },
+    deck: {
+      storageKey: 'deck',
+      defaultActiveLayoutId: 'demo-layout-files-terminal',
+      presets: [
+        {
+          id: 'demo-layout-files-terminal',
+          name: 'Files + Terminal',
+          // Allow users to rename/delete the default demo layout for experimentation.
+          isPreset: false,
+          widgets: [
+            { id: 'w-files', type: 'file-browser', position: { col: 0, row: 0, colSpan: 12, rowSpan: 12 } },
+            { id: 'w-terminal', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 12 } },
+          ],
+        },
+        {
+          id: 'demo-layout-monitoring',
+          name: 'Monitoring',
+          isPreset: true,
+          widgets: [
+            { id: 'w-metrics-1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
+            { id: 'w-metrics-2', type: 'metrics', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
+            { id: 'w-terminal', type: 'terminal', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
+          ],
+        },
+      ],
+    },
+  } as const;
+
   return (
-    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}>
+    <FloeProvider
+      config={demoFloeConfig}
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+    >
       <AppContent />
     </FloeProvider>
   );
