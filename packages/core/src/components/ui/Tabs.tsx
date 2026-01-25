@@ -270,7 +270,7 @@ export function Tabs(props: TabsProps) {
                 {/* Tab label */}
                 <span class="truncate max-w-32">{item.label}</span>
 
-                {/* Close button - red background */}
+                {/* Close button - show red background only on hover */}
                 <Show when={isClosable() && !item.disabled}>
                   <button
                     type="button"
@@ -278,7 +278,8 @@ export function Tabs(props: TabsProps) {
                     class={cn(
                       'flex-shrink-0 flex items-center justify-center',
                       'w-5 h-5 rounded cursor-pointer',
-                      'bg-red-500 hover:bg-red-600 text-white',
+                      'bg-transparent text-muted-foreground',
+                      'hover:bg-red-500 hover:text-white',
                       'transition-colors duration-150',
                       'ml-1.5'
                     )}
