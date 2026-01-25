@@ -1,6 +1,7 @@
 import { type Component, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { Tooltip } from '../ui/Tooltip';
 
 export interface ActivityBarItem {
   id: string;
@@ -94,44 +95,45 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
   );
 
   return (
-    <button
-      type="button"
-      class={cn(
-        'relative w-9 h-9 flex items-center justify-center rounded cursor-pointer',
-        'transition-all duration-100',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-        props.isActive
-          ? 'text-activity-bar-foreground-active bg-accent/80'
-          : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active hover:bg-accent/40'
-      )}
-      onClick={() => props.onClick()}
-      title={props.item.label}
-      aria-label={props.item.label}
-      aria-pressed={props.isActive}
-    >
-      {/* Active indicator - positioned to touch left edge of activity bar */}
-      <Show when={props.isActive}>
-        <div class="absolute -left-1.5 md:-left-2.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
-      </Show>
+    <Tooltip content={props.item.label} placement="right" delay={0}>
+      <button
+        type="button"
+        class={cn(
+          'relative w-9 h-9 flex items-center justify-center rounded cursor-pointer',
+          'transition-all duration-100',
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          props.isActive
+            ? 'text-activity-bar-foreground-active bg-accent/80'
+            : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active hover:bg-accent/40'
+        )}
+        onClick={() => props.onClick()}
+        aria-label={props.item.label}
+        aria-pressed={props.isActive}
+      >
+        {/* Active indicator - positioned to touch left edge of activity bar */}
+        <Show when={props.isActive}>
+          <div class="absolute -left-1.5 md:-left-2.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
+        </Show>
 
-      {/* Icon */}
-      <Dynamic component={props.item.icon} class="w-5 h-5" />
+        {/* Icon */}
+        <Dynamic component={props.item.icon} class="w-5 h-5" />
 
-      {/* Badge */}
-      <Show when={badgeValue()}>
-        <span
-          class={cn(
-            'absolute top-0.5 right-0.5 min-w-3.5 h-3.5 px-1',
-            'flex items-center justify-center',
-            'text-[9px] font-medium rounded-full',
-            'bg-activity-bar-badge text-activity-bar-badge-foreground'
-          )}
-        >
-          {typeof badgeValue() === 'number' && (badgeValue() as number) > 99
-            ? '99+'
-            : badgeValue()}
-        </span>
-      </Show>
-    </button>
+        {/* Badge */}
+        <Show when={badgeValue()}>
+          <span
+            class={cn(
+              'absolute top-0.5 right-0.5 min-w-3.5 h-3.5 px-1',
+              'flex items-center justify-center',
+              'text-[9px] font-medium rounded-full',
+              'bg-activity-bar-badge text-activity-bar-badge-foreground'
+            )}
+          >
+            {typeof badgeValue() === 'number' && (badgeValue() as number) > 99
+              ? '99+'
+              : badgeValue()}
+          </span>
+        </Show>
+      </button>
+    </Tooltip>
   );
 }
