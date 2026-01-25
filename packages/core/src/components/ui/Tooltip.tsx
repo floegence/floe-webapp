@@ -17,11 +17,20 @@ export function Tooltip(props: TooltipProps) {
   let timeout: ReturnType<typeof setTimeout> | undefined;
 
   const show = () => {
-    timeout = setTimeout(() => setVisible(true), props.delay ?? 300);
+    if (timeout) clearTimeout(timeout);
+    const delay = props.delay ?? 300;
+    if (delay <= 0) {
+      setVisible(true);
+      return;
+    }
+    timeout = setTimeout(() => setVisible(true), delay);
   };
 
   const hide = () => {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = undefined;
+    }
     setVisible(false);
   };
 
