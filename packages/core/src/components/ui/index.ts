@@ -28,3 +28,4 @@ export {
   type NeonCardProps,
   type MorphCardProps,
 } from './Card';
+export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';

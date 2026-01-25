@@ -33,6 +33,9 @@ import {
   Skeleton,
   SnakeLoader,
   Sun,
+  Tabs,
+  type TabItem,
+  TabPanel,
   Terminal,
   Textarea,
   Tooltip,
@@ -160,6 +163,50 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
   const [selectValue, setSelectValue] = createSignal('system');
 
+  // Tabs demo state
+  const [basicTabsActive, setBasicTabsActive] = createSignal('tab1');
+  const [cardTabsActive, setCardTabsActive] = createSignal('home');
+  const [dynamicTabs, setDynamicTabs] = createSignal<TabItem[]>([
+    { id: 'file1', label: 'index.ts', closable: true },
+    { id: 'file2', label: 'App.tsx', closable: true },
+    { id: 'file3', label: 'styles.css', closable: true },
+  ]);
+  const [dynamicActiveTab, setDynamicActiveTab] = createSignal('file1');
+  const [scrollableTabsActive, setScrollableTabsActive] = createSignal('tab1');
+  let tabCounter = 3;
+
+  const handleAddTab = () => {
+    tabCounter++;
+    const newTab: TabItem = {
+      id: `file${tabCounter}`,
+      label: `NewFile${tabCounter}.tsx`,
+      closable: true,
+    };
+    setDynamicTabs([...dynamicTabs(), newTab]);
+    setDynamicActiveTab(newTab.id);
+    notifications.info('Tab Added', `Created ${newTab.label}`);
+  };
+
+  const handleCloseTab = (id: string) => {
+    const tabs = dynamicTabs();
+    const index = tabs.findIndex((t) => t.id === id);
+    const newTabs = tabs.filter((t) => t.id !== id);
+    setDynamicTabs(newTabs);
+
+    // If closing active tab, switch to adjacent tab
+    if (dynamicActiveTab() === id && newTabs.length > 0) {
+      const newIndex = Math.min(index, newTabs.length - 1);
+      setDynamicActiveTab(newTabs[newIndex].id);
+    }
+    notifications.info('Tab Closed', `Removed tab`);
+  };
+
+  // Generate many tabs for scroll demo
+  const scrollableTabs: TabItem[] = Array.from({ length: 15 }, (_, i) => ({
+    id: `tab${i + 1}`,
+    label: `Tab ${i + 1}`,
+  }));
+
   const icons = createMemo(() => [
     { name: 'Files', icon: Files },
     { name: 'Search', icon: Search },
@@ -218,6 +265,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-buttons')}>
             Jump: Buttons
           </Button>
+          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-tabs')}>
+            Jump: Tabs
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-cards')}>
             Jump: Cards
           </Button>
@@ -260,6 +310,116 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </Button>
               <Button loading>Loading</Button>
               <Button disabled>Disabled</Button>
+            </div>
+          </PanelContent>
+        </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-tabs"
+          title="Tabs"
+          description="Scrollable tabs with add/close functionality, multiple variants, mobile-friendly."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.tabs')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Basic Tabs */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Default Variant</p>
+              <Tabs
+                items={[
+                  { id: 'tab1', label: 'Overview' },
+                  { id: 'tab2', label: 'Analytics' },
+                  { id: 'tab3', label: 'Reports' },
+                  { id: 'tab4', label: 'Disabled', disabled: true },
+                ]}
+                activeId={basicTabsActive()}
+                onChange={setBasicTabsActive}
+              />
+              <TabPanel active={basicTabsActive() === 'tab1'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+                Overview content - This is the first tab panel.
+              </TabPanel>
+              <TabPanel active={basicTabsActive() === 'tab2'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+                Analytics content - View your metrics here.
+              </TabPanel>
+              <TabPanel active={basicTabsActive() === 'tab3'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+                Reports content - Generate and export reports.
+              </TabPanel>
+            </div>
+
+            {/* Card Variant */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Card Variant</p>
+              <Tabs
+                variant="card"
+                items={[
+                  { id: 'home', label: 'Home', icon: <Files class="w-3 h-3" /> },
+                  { id: 'settings', label: 'Settings', icon: <Settings class="w-3 h-3" /> },
+                  { id: 'terminal', label: 'Terminal', icon: <Terminal class="w-3 h-3" /> },
+                ]}
+                activeId={cardTabsActive()}
+                onChange={setCardTabsActive}
+              />
+              <div class="p-3 text-xs text-muted-foreground border border-border border-t-0 rounded-b bg-background">
+                Active: {cardTabsActive()}
+              </div>
+            </div>
+
+            {/* Underline Variant */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Underline Variant (Small Size)</p>
+              <Tabs
+                variant="underline"
+                size="sm"
+                items={[
+                  { id: 'all', label: 'All' },
+                  { id: 'active', label: 'Active' },
+                  { id: 'archived', label: 'Archived' },
+                ]}
+                activeId="all"
+                onChange={(id) => notifications.info('Tab Changed', `Selected: ${id}`)}
+              />
+            </div>
+
+            {/* Dynamic Tabs with Add/Close */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Dynamic Tabs (Add/Close)</p>
+              <p class="text-[10px] text-muted-foreground">
+                Click + to add new tabs. Close button has red background.
+              </p>
+              <Tabs
+                items={dynamicTabs()}
+                activeId={dynamicActiveTab()}
+                onChange={setDynamicActiveTab}
+                onClose={handleCloseTab}
+                onAdd={handleAddTab}
+                showAdd
+                closable
+              />
+              <TabPanel active class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+                Currently editing: {dynamicTabs().find((t) => t.id === dynamicActiveTab())?.label || 'None'}
+              </TabPanel>
+            </div>
+
+            {/* Scrollable Tabs */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Scrollable Tabs (15 tabs)</p>
+              <p class="text-[10px] text-muted-foreground">
+                Scroll arrows appear when tabs overflow. Touch-friendly on mobile.
+              </p>
+              <Tabs
+                items={scrollableTabs}
+                activeId={scrollableTabsActive()}
+                onChange={setScrollableTabsActive}
+              />
+              <div class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+                Selected: {scrollableTabsActive()}
+              </div>
             </div>
           </PanelContent>
         </Panel>
