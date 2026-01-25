@@ -9,6 +9,7 @@ export interface ShowcaseSidebarProps {
 const sections = [
   { id: 'overview', label: 'Overview' },
   { id: 'ui-buttons', label: 'Buttons' },
+  { id: 'ui-tabs', label: 'Tabs' },
   { id: 'ui-cards', label: 'Cards' },
   { id: 'ui-inputs', label: 'Inputs' },
   { id: 'ui-menus', label: 'Dropdown & Select' },
