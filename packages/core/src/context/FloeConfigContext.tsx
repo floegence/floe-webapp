@@ -77,6 +77,33 @@ export interface FloeThemeConfig {
 
 export interface FloeDeckConfig {
   storageKey: string;
+  /**
+   * Optional deck presets to seed the initial layouts list.
+   * When provided, these layouts are treated as (potentially) read-only presets
+   * depending on `isPreset`.
+   */
+  presets?: FloeDeckPresetLayout[];
+  /**
+   * Optional default active layout id when there is no persisted active layout.
+   * If the id does not exist, the deck will fall back to the first available layout.
+   */
+  defaultActiveLayoutId?: string;
+}
+
+export interface FloeDeckPresetLayout {
+  id: string;
+  name: string;
+  widgets: FloeDeckPresetWidget[];
+  /** When true, the layout is treated as a preset (rename/delete disabled by default UI). */
+  isPreset?: boolean;
+}
+
+export interface FloeDeckPresetWidget {
+  id: string;
+  type: string;
+  position: { col: number; row: number; colSpan: number; rowSpan: number };
+  config?: Record<string, unknown>;
+  title?: string;
 }
 
 export interface FloeStrings {
@@ -126,7 +153,7 @@ export interface FloeConfigValue {
 export type DeepPartial<T> = T extends (...args: never[]) => unknown
   ? T
   : T extends readonly (infer U)[]
-    ? readonly U[]
+    ? readonly DeepPartial<U>[]
     : T extends object
       ? { [K in keyof T]?: DeepPartial<T[K]> }
       : T;

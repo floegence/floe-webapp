@@ -1,7 +1,8 @@
 import { createEffect, createSignal, type Accessor } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
-import { useResolvedFloeConfig } from './FloeConfigContext';
+import { useResolvedFloeConfig, type FloeDeckPresetLayout } from './FloeConfigContext';
+import { useWidgetRegistry } from './WidgetRegistry';
 import type { GridPosition } from '../utils/gridCollision';
 import { findFreePosition, hasCollision, constrainPosition } from '../utils/gridCollision';
 
@@ -105,68 +106,77 @@ export interface DeckContextValue {
   getWidgetMinConstraints: (type: string) => { minColSpan: number; minRowSpan: number };
 }
 
-// Default presets (24-column grid, 40px row height)
-const DEFAULT_PRESETS: DeckLayout[] = [
-  {
-    id: 'preset-default',
-    name: 'Default',
-    isPreset: true,
-    widgets: [
-      { id: 'w1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w2', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: 'preset-focus',
-    name: 'Focus',
-    isPreset: true,
-    widgets: [
-      { id: 'w1', type: 'terminal', position: { col: 0, row: 0, colSpan: 24, rowSpan: 12 } },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: 'preset-monitoring',
-    name: 'Monitoring',
-    isPreset: true,
-    widgets: [
-      { id: 'w1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w2', type: 'metrics', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 12, rowSpan: 6 } },
-      { id: 'w4', type: 'metrics', position: { col: 12, row: 6, colSpan: 12, rowSpan: 6 } },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-  {
-    id: 'preset-development',
-    name: 'Development',
-    isPreset: true,
-    widgets: [
-      { id: 'w1', type: 'terminal', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w2', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
-      { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-];
+function createDefaultPresets(): DeckLayout[] {
+  const now = Date.now();
+  // 24-column grid, 40px row height
+  return [
+    {
+      id: 'preset-default',
+      name: 'Default',
+      isPreset: true,
+      widgets: [
+        { id: 'w1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w2', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'preset-focus',
+      name: 'Focus',
+      isPreset: true,
+      widgets: [{ id: 'w1', type: 'terminal', position: { col: 0, row: 0, colSpan: 24, rowSpan: 12 } }],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'preset-monitoring',
+      name: 'Monitoring',
+      isPreset: true,
+      widgets: [
+        { id: 'w1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w2', type: 'metrics', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 12, rowSpan: 6 } },
+        { id: 'w4', type: 'metrics', position: { col: 12, row: 6, colSpan: 12, rowSpan: 6 } },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'preset-development',
+      name: 'Development',
+      isPreset: true,
+      widgets: [
+        { id: 'w1', type: 'terminal', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w2', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
+        { id: 'w3', type: 'metrics', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+}
 
-const DEFAULT_STATE: DeckStore = {
-  layouts: DEFAULT_PRESETS,
-  activeLayoutId: 'preset-default',
-  editMode: false,
-};
+function normalizePresetLayouts(presets?: FloeDeckPresetLayout[]): DeckLayout[] {
+  if (!presets || presets.length === 0) return createDefaultPresets();
 
-// Widget type to constraints mapping (24-column grid, 40px row height)
-const DEFAULT_CONSTRAINTS: Record<string, { minColSpan: number; minRowSpan: number }> = {
-  metrics: { minColSpan: 6, minRowSpan: 4 },
-  terminal: { minColSpan: 8, minRowSpan: 4 },
-};
+  const now = Date.now();
+  return presets.map((layout) => ({
+    id: layout.id,
+    name: layout.name,
+    isPreset: layout.isPreset ?? true,
+    widgets: layout.widgets.map((w) => ({
+      id: w.id,
+      type: w.type,
+      position: w.position,
+      config: w.config,
+      title: w.title,
+    })),
+    createdAt: now,
+    updatedAt: now,
+  }));
+}
 
 export const { Provider: DeckProvider, use: useDeck } =
   createSimpleContext<DeckContextValue>({
@@ -176,18 +186,40 @@ export const { Provider: DeckProvider, use: useDeck } =
 
 export function createDeckService(): DeckContextValue {
   const floe = useResolvedFloeConfig();
+  const widgetRegistry = useWidgetRegistry();
   const storageKey = () => floe.config.deck.storageKey;
 
-  // Load persisted state (merge with presets to ensure presets exist)
+  const presetLayouts = normalizePresetLayouts(floe.config.deck.presets);
+  const presetIds = new Set(presetLayouts.map((l) => l.id));
+
+  // Load persisted state
   const persisted = floe.persist.load<Partial<DeckStore>>(storageKey(), {});
 
-  // Merge persisted layouts with presets (presets always come first, user layouts appended)
-  const userLayouts = (persisted.layouts ?? []).filter((l) => !l.isPreset);
-  const initialLayouts = [...DEFAULT_PRESETS, ...userLayouts];
+  const persistedLayouts = persisted.layouts ?? [];
+  const persistedById = new Map(persistedLayouts.map((l) => [l.id, l] as const));
+
+  // Presets always come first. If a preset id exists in persisted layouts, prefer it to keep user edits.
+  const resolvedPresets = presetLayouts.map((preset) => {
+    const saved = persistedById.get(preset.id);
+    if (!saved) return preset;
+    return { ...saved, isPreset: preset.isPreset } as DeckLayout;
+  });
+
+  // User layouts are appended after presets; ignore persisted layouts that collide with preset ids.
+  const userLayouts = persistedLayouts.filter((l) => !l.isPreset && !presetIds.has(l.id));
+  const initialLayouts = [...resolvedPresets, ...userLayouts];
+
+  const initialLayoutIds = new Set(initialLayouts.map((l) => l.id));
+  const initialActiveLayoutId =
+    (persisted.activeLayoutId && initialLayoutIds.has(persisted.activeLayoutId))
+      ? persisted.activeLayoutId
+      : (floe.config.deck.defaultActiveLayoutId && initialLayoutIds.has(floe.config.deck.defaultActiveLayoutId))
+        ? floe.config.deck.defaultActiveLayoutId
+        : (initialLayouts[0]?.id ?? '');
 
   const initialState: DeckStore = {
     layouts: initialLayouts,
-    activeLayoutId: persisted.activeLayoutId ?? DEFAULT_STATE.activeLayoutId,
+    activeLayoutId: initialActiveLayoutId,
     editMode: false,
   };
 
@@ -272,7 +304,7 @@ export function createDeckService(): DeckContextValue {
             s.layouts.splice(idx, 1);
             // Switch to default if deleting active
             if (s.activeLayoutId === id) {
-              s.activeLayoutId = 'preset-default';
+              s.activeLayoutId = s.layouts[0]?.id ?? '';
             }
           }
         })
@@ -304,10 +336,14 @@ export function createDeckService(): DeckContextValue {
       const layout = getActiveLayout();
       if (!layout) return undefined;
 
-      const constraints = DEFAULT_CONSTRAINTS[type] ?? { minColSpan: 2, minRowSpan: 2 };
+      const def = widgetRegistry.getWidget(type);
+      const constraints = {
+        minColSpan: def?.minColSpan ?? 2,
+        minRowSpan: def?.minRowSpan ?? 2,
+      };
       const defaultSpan = {
-        colSpan: position?.colSpan ?? Math.max(constraints.minColSpan, 4),
-        rowSpan: position?.rowSpan ?? Math.max(constraints.minRowSpan, 3),
+        colSpan: position?.colSpan ?? (def?.defaultColSpan ?? Math.max(constraints.minColSpan, 4)),
+        rowSpan: position?.rowSpan ?? (def?.defaultRowSpan ?? Math.max(constraints.minRowSpan, 3)),
       };
 
       // Find free position if not specified
@@ -509,7 +545,11 @@ export function createDeckService(): DeckContextValue {
 
     // Utilities
     getWidgetMinConstraints: (type: string) => {
-      return DEFAULT_CONSTRAINTS[type] ?? { minColSpan: 2, minRowSpan: 2 };
+      const def = widgetRegistry.getWidget(type);
+      return {
+        minColSpan: def?.minColSpan ?? 2,
+        minRowSpan: def?.minRowSpan ?? 2,
+      };
     },
   };
 }
