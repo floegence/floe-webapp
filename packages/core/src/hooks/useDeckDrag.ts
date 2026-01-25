@@ -105,15 +105,20 @@ export function useDeckDrag() {
     const deltaY = lastY - startY;
 
     // Get grid element and calculate cell sizes
-    const gridEl = document.querySelector('.deck-grid');
+    const gridEl = document.querySelector('.deck-grid') as HTMLElement | null;
     if (!gridEl) return;
 
-    const gridRect = gridEl.getBoundingClientRect();
     const { cols, rowHeight, gap } = DECK_GRID_CONFIG;
 
-    // Calculate cell dimensions
+    // Calculate cell dimensions.
+    // Use clientWidth (excludes scrollbar) to avoid width jitter when scrollbars appear/disappear.
+    const styles = window.getComputedStyle(gridEl);
+    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+    const paddingRight = parseFloat(styles.paddingRight) || 0;
+    const innerWidth = gridEl.clientWidth - paddingLeft - paddingRight;
     const totalGapWidth = gap * (cols - 1);
-    const cellWidth = (gridRect.width - totalGapWidth - gap * 2) / cols; // Account for padding
+    const cellWidth = (innerWidth - totalGapWidth) / cols;
+    if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
     const cellHeight = rowHeight + gap;
 
     // Convert pixel delta to grid units (for snap position)

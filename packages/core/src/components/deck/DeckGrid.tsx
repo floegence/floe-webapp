@@ -1,6 +1,7 @@
 import { For, Show, createMemo, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck } from '../../context/DeckContext';
+import { hasCollision } from '../../utils/gridCollision';
 import { DeckCell } from './DeckCell';
 import { DropZonePreview } from './DropZonePreview';
 
@@ -13,6 +14,8 @@ export interface DeckGridProps {
 const GRID_COLS = 24;
 const ROW_HEIGHT = 40; // Smaller rows for finer control
 const GAP = 4;
+const TOTAL_GAP_WIDTH = (GRID_COLS - 1) * GAP;
+const ZERO_OFFSET = { x: 0, y: 0 } as const;
 
 /**
  * CSS Grid container for the deck layout (24 columns for fine-grained control)
@@ -25,6 +28,14 @@ export function DeckGrid(props: DeckGridProps) {
   const dragState = () => deck.dragState();
   const resizeState = () => deck.resizeState();
 
+  const dragPreviewValid = createMemo(() => {
+    const drag = dragState();
+    if (!drag) return true;
+    const layout = deck.activeLayout();
+    if (!layout) return true;
+    return !hasCollision(drag.currentPosition, layout.widgets, drag.widgetId);
+  });
+
   // Calculate the minimum rows needed based on widget positions
   const minRows = createMemo(() => {
     const ws = widgets();
@@ -35,12 +46,15 @@ export function DeckGrid(props: DeckGridProps) {
   return (
     <div
       class={cn(
-        'deck-grid relative w-full h-full overflow-auto',
+        // Reserve scrollbar gutter to avoid width jitter when drop previews change scrollability.
+        'deck-grid relative w-full h-full overflow-y-scroll overflow-x-hidden',
         'grid p-1',
         deck.editMode() && 'bg-muted/20',
         props.class
       )}
       style={{
+        // Safe to ignore in browsers without support; helps avoid layout jitter when supported.
+        'scrollbar-gutter': 'stable',
         'grid-template-columns': `repeat(${GRID_COLS}, 1fr)`,
         'grid-auto-rows': `${ROW_HEIGHT}px`,
         'gap': `${GAP}px`,
@@ -53,14 +67,20 @@ export function DeckGrid(props: DeckGridProps) {
       {/* Grid overlay in edit mode */}
       <Show when={deck.editMode()}>
         <div
-          class="absolute inset-1 pointer-events-none z-0 rounded"
+          class="absolute inset-0 pointer-events-none z-0 rounded"
           style={{
+            // Keep the overlay aligned with the grid even if consumers override padding (e.g. `p-0`).
+            padding: 'inherit',
+            'background-origin': 'content-box',
+            'background-clip': 'content-box',
             'background-image': `
               linear-gradient(to right, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px),
               linear-gradient(to bottom, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px)
             `,
-            'background-size': `calc((100% - ${GAP}px) / ${GRID_COLS}) ${ROW_HEIGHT + GAP}px`,
-            'background-position': `0 0`,
+            // Match CSS grid math: cellWidth = (W - (cols - 1) * gap) / cols
+            // Background tile is (cellWidth + gap) so the vertical lines align with column boundaries.
+            'background-size': `calc((100% - ${TOTAL_GAP_WIDTH}px) / ${GRID_COLS} + ${GAP}px) ${ROW_HEIGHT + GAP}px`,
+            'background-position': '0 0',
           }}
         />
       </Show>
@@ -68,7 +88,7 @@ export function DeckGrid(props: DeckGridProps) {
       {/* Drop zone preview - shows where the widget will be placed */}
       <Show when={dragState()}>
         {(drag) => (
-          <DropZonePreview position={drag().currentPosition} />
+          <DropZonePreview position={drag().currentPosition} isValid={dragPreviewValid()} />
         )}
       </Show>
 
@@ -107,7 +127,10 @@ export function DeckGrid(props: DeckGridProps) {
             if (drag && drag.widgetId === widget.id) {
               return drag.pixelOffset;
             }
-            return { x: 0, y: 0 };
+            // Important: keep a stable reference for non-dragging widgets.
+            // Otherwise, every mousemove would create a new object and trigger
+            // unnecessary updates/reflows in heavy widgets (e.g. FileBrowser).
+            return ZERO_OFFSET;
           });
 
           return (
