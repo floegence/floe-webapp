@@ -1,53 +1,77 @@
-import type { JSX } from 'solid-js';
+import { createUniqueId, type JSX } from 'solid-js';
 
 interface FileIconProps {
   class?: string;
 }
 
 // Folder icon with subtle gradient
-export const FolderIcon = (props: FileIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    class={props.class}
-  >
-    <defs>
-      <linearGradient id="folder-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
-        <stop offset="100%" style={{ 'stop-color': 'color-mix(in srgb, var(--warning) 80%, var(--foreground))', 'stop-opacity': 1 }} />
-      </linearGradient>
-    </defs>
-    <path
-      fill="url(#folder-gradient)"
-      d="M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"
-    />
-  </svg>
-);
+export const FolderIcon = (props: FileIconProps) => {
+  // Avoid duplicate DOM ids: `url(#...)` references break under repeated hardcoded ids.
+  const baseId = createUniqueId();
+  const gradientId = `floe-folder-gradient-${baseId}`;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      class={props.class}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
+          <stop
+            offset="100%"
+            style={{
+              'stop-color': 'color-mix(in srgb, var(--warning) 80%, var(--foreground))',
+              'stop-opacity': 1,
+            }}
+          />
+        </linearGradient>
+      </defs>
+      <path
+        fill={`url(#${gradientId})`}
+        d="M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"
+      />
+    </svg>
+  );
+};
 
 // Folder open icon
-export const FolderOpenIcon = (props: FileIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    class={props.class}
-  >
-    <defs>
-      <linearGradient id="folder-open-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
-        <stop offset="100%" style={{ 'stop-color': 'color-mix(in srgb, var(--warning) 70%, var(--foreground))', 'stop-opacity': 1 }} />
-      </linearGradient>
-    </defs>
-    <path
-      fill="url(#folder-open-gradient)"
-      d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z"
-    />
-    <path
-      fill="var(--background)"
-      opacity="0.3"
-      d="M3 8l4-3h14l-4 3H3z"
-    />
-  </svg>
-);
+export const FolderOpenIcon = (props: FileIconProps) => {
+  // Avoid duplicate DOM ids: `url(#...)` references break under repeated hardcoded ids.
+  const baseId = createUniqueId();
+  const gradientId = `floe-folder-open-gradient-${baseId}`;
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      class={props.class}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
+          <stop
+            offset="100%"
+            style={{
+              'stop-color': 'color-mix(in srgb, var(--warning) 70%, var(--foreground))',
+              'stop-opacity': 1,
+            }}
+          />
+        </linearGradient>
+      </defs>
+      <path
+        fill={`url(#${gradientId})`}
+        d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z"
+      />
+      <path
+        fill="var(--background)"
+        opacity="0.3"
+        d="M3 8l4-3h14l-4 3H3z"
+      />
+    </svg>
+  );
+};
 
 // Generic file icon
 export const FileIcon = (props: FileIconProps) => (
