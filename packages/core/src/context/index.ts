@@ -51,3 +51,11 @@ export {
   type ResizeState,
   type DeckContextValue,
 } from './DeckContext';
+export {
+  WidgetStateProvider,
+  useWidgetStateContext,
+  useWidgetState,
+  useCurrentWidgetId,
+  type WidgetStateContextValue,
+  type WidgetStateProviderProps,
+} from './WidgetStateContext';

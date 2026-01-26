@@ -3,6 +3,7 @@ import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget } from '../../context/DeckContext';
 import { useWidgetRegistry } from '../../context/WidgetRegistry';
+import { WidgetStateProvider } from '../../context/WidgetStateContext';
 import { positionToGridArea } from '../../utils/gridLayout';
 import type { GridPosition } from '../../utils/gridCollision';
 import { WidgetFrame } from './WidgetFrame';
@@ -28,6 +29,12 @@ export function DeckCell(props: DeckCellProps) {
   const widgetType = () => props.widget.type;
   const widgetDef = createMemo(() => widgetRegistry.getWidget(widgetType()));
   const gridArea = createMemo(() => positionToGridArea(props.position));
+
+  // Reactive widget state accessor
+  const widgetState = () => deck.getWidgetState(props.widget.id);
+  const handleStateChange = (key: string, value: unknown) => {
+    deck.updateWidgetState(props.widget.id, key, value);
+  };
 
   // Get the component to render - using a function ensures reactivity
   const WidgetComponent = () => {
@@ -75,13 +82,19 @@ export function DeckCell(props: DeckCellProps) {
         {/* Content wrapper - disable pointer events in edit mode */}
         <div class={cn('h-full', editMode() && 'pointer-events-none')}>
           <Show when={WidgetComponent()} fallback={<PlaceholderWidget type={widgetType()} />}>
-            {/* Use Dynamic to properly re-render when component changes */}
-            <Dynamic
-              component={WidgetComponent()}
+            <WidgetStateProvider
               widgetId={props.widget.id}
-              config={props.widget.config}
-              isEditMode={editMode()}
-            />
+              state={widgetState}
+              onStateChange={handleStateChange}
+            >
+              {/* Use Dynamic to properly re-render when component changes */}
+              <Dynamic
+                component={WidgetComponent()}
+                widgetId={props.widget.id}
+                config={props.widget.config}
+                isEditMode={editMode()}
+              />
+            </WidgetStateProvider>
           </Show>
         </div>
       </WidgetFrame>

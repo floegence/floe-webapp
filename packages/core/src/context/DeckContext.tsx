@@ -15,6 +15,8 @@ export interface DeckWidget {
   position: GridPosition;
   config?: Record<string, unknown>;
   title?: string;
+  /** Persisted widget-level state (e.g., viewMode, sortBy) */
+  state?: Record<string, unknown>;
 }
 
 /**
@@ -84,6 +86,10 @@ export interface DeckContextValue {
   updateWidgetTitle: (widgetId: string, title: string) => void;
   /** Change widget type while preserving position */
   changeWidgetType: (widgetId: string, newType: string) => void;
+  /** Update a single widget state value */
+  updateWidgetState: (widgetId: string, key: string, value: unknown) => void;
+  /** Get widget state accessor for a specific widget */
+  getWidgetState: (widgetId: string) => Record<string, unknown>;
 
   // Drag state
   dragState: Accessor<DragState | null>;
@@ -448,11 +454,37 @@ export function createDeckService(): DeckContextValue {
               w.config = undefined;
               // Clear custom title to use new widget's default name
               w.title = undefined;
+              // Clear state when changing type
+              w.state = undefined;
               l.updatedAt = Date.now();
             }
           }
         })
       );
+    },
+
+    updateWidgetState: (widgetId: string, key: string, value: unknown) => {
+      setStore(
+        produce((s) => {
+          const l = s.layouts.find((l) => l.id === s.activeLayoutId);
+          if (l) {
+            const w = l.widgets.find((w) => w.id === widgetId);
+            if (w) {
+              if (!w.state) {
+                w.state = {};
+              }
+              w.state[key] = value;
+              l.updatedAt = Date.now();
+            }
+          }
+        })
+      );
+    },
+
+    getWidgetState: (widgetId: string) => {
+      const layout = getActiveLayout();
+      const widget = layout?.widgets.find((w) => w.id === widgetId);
+      return widget?.state ?? {};
     },
 
     // Drag state
