@@ -1,12 +1,10 @@
 import {
+  ActivityAppsMain,
   FloeApp,
   Files,
   Settings,
-  useLayout,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
-import { createMemo } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -47,16 +45,6 @@ const components: FloeComponent[] = [
   },
 ];
 
-// Content switcher based on active component
-function AppContent() {
-  const layout = useLayout();
-  const active = createMemo(() => components.find((c) => c.id === layout.sidebarActiveTab()) ?? components[0]);
-
-  return (
-    <Dynamic component={active().component} />
-  );
-}
-
 export default function App() {
   return (
     <FloeApp
@@ -67,7 +55,7 @@ export default function App() {
         },
       }}
     >
-      <AppContent />
+      <ActivityAppsMain />
     </FloeApp>
   );
 }

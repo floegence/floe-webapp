@@ -17,4 +17,5 @@ export { BottomBar, BottomBarItem, StatusIndicator, type BottomBarProps, type Bo
 export { MobileTabBar, type MobileTabBarItem, type MobileTabBarProps } from './MobileTabBar';
 export { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 export { Panel, PanelHeader, PanelContent, type PanelProps, type PanelHeaderProps, type PanelContentProps } from './Panel';
+export { KeepAliveStack, type KeepAliveStackProps, type KeepAliveView } from './KeepAliveStack';
 export * from '../deck';

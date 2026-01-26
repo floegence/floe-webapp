@@ -1,5 +1,6 @@
 import { Match, Show, Switch, createMemo, createSignal, onMount, type Component } from 'solid-js';
 import {
+  ActivityAppsMain,
   BottomBarItem,
   Button,
   CommandPalette,
@@ -249,78 +250,67 @@ function AppContent() {
     void registry.mountAll((id) => createCtx(id, { protocol }));
   });
 
+  const isFullScreenActive = createMemo(() => {
+    const comp = registry.getComponent(layout.sidebarActiveTab());
+    return comp?.sidebar?.fullScreen === true;
+  });
+
   const DesktopMain: Component = () => (
-    <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
-      <Match when={layout.sidebarActiveTab() === 'launchpad'}>
-        <LaunchpadPage
-          onClose={() => layout.setSidebarActiveTab('showcase')}
-          onNavigate={(id) => layout.setSidebarActiveTab(id)}
-        />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'deck'}>
-        <DeckPage />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'files'}>
-        <FileViewerPage file={activeFile} />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'search'}>
-        <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'settings'}>
-        <div class="p-4 max-w-2xl mx-auto space-y-3">
-          <h1 class="text-lg font-semibold">Settings</h1>
-          <p class="text-xs text-muted-foreground">
-            Settings are rendered in the sidebar. Use the command palette to discover demo commands.
-          </p>
-          <div class="max-w-sm">
-            <SettingsPanel />
-          </div>
-        </div>
-      </Match>
-    </Switch>
+    <>
+      <ActivityAppsMain />
+      <Show when={!isFullScreenActive()}>
+        <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
+          <Match when={layout.sidebarActiveTab() === 'files'}>
+            <FileViewerPage file={activeFile} />
+          </Match>
+          <Match when={layout.sidebarActiveTab() === 'search'}>
+            <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
+          </Match>
+          <Match when={layout.sidebarActiveTab() === 'settings'}>
+            <div class="p-4 max-w-2xl mx-auto space-y-3">
+              <h1 class="text-lg font-semibold">Settings</h1>
+              <p class="text-xs text-muted-foreground">
+                Settings are rendered in the sidebar. Use the command palette to discover demo commands.
+              </p>
+              <div class="max-w-sm">
+                <SettingsPanel />
+              </div>
+            </div>
+          </Match>
+        </Switch>
+      </Show>
+    </>
   );
 
-  const MobileFullScreenMain: Component = () => (
-    <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
-      <Match when={layout.sidebarActiveTab() === 'launchpad'}>
-        <LaunchpadPage
-          onClose={() => layout.setSidebarActiveTab('showcase')}
-          onNavigate={(id) => layout.setSidebarActiveTab(id)}
-        />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'deck'}>
-        <div class="p-4 max-w-md mx-auto space-y-2">
-          <h1 class="text-lg font-semibold">Deck</h1>
-          <p class="text-xs text-muted-foreground">
-            Deck is currently a desktop-first demo. Please open it on desktop to use drag & resize interactions.
-          </p>
-          <Button size="sm" variant="outline" onClick={() => layout.setSidebarActiveTab('showcase')}>
-            Back to Showcase
-          </Button>
-        </div>
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'files'}>
-        <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
-          <Select
-            value={activeFileId()}
-            onChange={setActiveFileId}
-            options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
-          />
-        </div>
-        <div class="p-4" style={{ height: 'calc(100vh - 180px)', "min-height": '300px' }}>
-          <FileViewerPage file={activeFile} />
-        </div>
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'search'}>
-        <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
-      </Match>
-      <Match when={layout.sidebarActiveTab() === 'settings'}>
-        <div class="p-4 max-w-md mx-auto space-y-3">
-          <h1 class="text-lg font-semibold">Settings</h1>
-          <SettingsPanel />
-        </div>
-      </Match>
-    </Switch>
+  const MobileMain: Component = () => (
+    <>
+      <ActivityAppsMain />
+      <Show when={!isFullScreenActive()}>
+        <Switch fallback={<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />}>
+          <Match when={layout.sidebarActiveTab() === 'files'}>
+            <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
+              <Select
+                value={activeFileId()}
+                onChange={setActiveFileId}
+                options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
+              />
+            </div>
+            <div class="p-4" style={{ height: 'calc(100vh - 180px)', "min-height": '300px' }}>
+              <FileViewerPage file={activeFile} />
+            </div>
+          </Match>
+          <Match when={layout.sidebarActiveTab() === 'search'}>
+            <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />
+          </Match>
+          <Match when={layout.sidebarActiveTab() === 'settings'}>
+            <div class="p-4 max-w-md mx-auto space-y-3">
+              <h1 class="text-lg font-semibold">Settings</h1>
+              <SettingsPanel />
+            </div>
+          </Match>
+        </Switch>
+      </Show>
+    </>
   );
 
   return (
@@ -352,7 +342,7 @@ function AppContent() {
           <DesktopMain />
         </Show>
         <Show when={layout.isMobile()}>
-          <MobileFullScreenMain />
+          <MobileMain />
         </Show>
       </Shell>
 

@@ -59,3 +59,4 @@ export {
   type WidgetStateContextValue,
   type WidgetStateProviderProps,
 } from './WidgetStateContext';
+export { ViewActivationProvider, useViewActivation, type ViewActivationContextValue, type ViewActivationProviderProps } from './ViewActivationContext';

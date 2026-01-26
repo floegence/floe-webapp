@@ -99,20 +99,26 @@ import '@floegence/floe-webapp-core/styles';
 - `<Shell />` + `<CommandPalette />` + `<NotificationContainer />`
 
 ```tsx
-import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain, FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
 
 const components: FloeComponent[] = [
   // Register your sidebar/commands/status contributions here.
+  // For page-style tabs, set: sidebar: { fullScreen: true }
 ];
 
 export function App() {
   return (
     <FloeApp components={components}>
-      <div>Your main content</div>
+      <ActivityAppsMain />
     </FloeApp>
   );
 }
 ```
+
+Notes:
+
+- `ActivityAppsMain` renders fullScreen pages based on `useLayout().sidebarActiveTab()` and keeps visited pages mounted.
+- For heavy pages, use `useViewActivation()` to detect active/inactive and pause expensive rendering while the view is hidden.
 
 ### Optional: inject protocol into `ComponentContext.protocol`
 

@@ -50,12 +50,10 @@ This means the app should render fullScreen pages in the main content area, base
 
 - `useLayout().sidebarActiveTab()` (`packages/core/src/context/LayoutContext.tsx`)
 
-Example (generic page switch):
+Recommended: use `ActivityAppsMain` to render fullScreen pages with keep-alive semantics (pages stay mounted after first activation):
 
 ```tsx
-import { Dynamic } from 'solid-js/web';
-import { createMemo } from 'solid-js';
-import { useLayout, type FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain, type FloeComponent } from '@floegence/floe-webapp-core';
 
 const components: FloeComponent[] = [
   { id: 'home', name: 'Home', icon: HomeIcon, component: HomePage, sidebar: { fullScreen: true } },
@@ -63,11 +61,7 @@ const components: FloeComponent[] = [
 ];
 
 export function AppContent() {
-  const layout = useLayout();
-  const active = createMemo(
-    () => components.find((c) => c.id === layout.sidebarActiveTab()) ?? components[0]
-  );
-  return <Dynamic component={active().component} />;
+  return <ActivityAppsMain />;
 }
 ```
 
@@ -114,4 +108,3 @@ Shell renders them in:
 - backed by `FloeConfig.storage` (implementation: `packages/core/src/context/FloeConfigContext.tsx`)
 
 `ComponentContext.logger` is a lightweight wrapper over `console.*` with a component prefix.
-

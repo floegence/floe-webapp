@@ -1,6 +1,4 @@
-import { FloeApp, Files, useLayout, type FloeComponent } from '@floegence/floe-webapp-core';
-import { createMemo } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
+import { ActivityAppsMain, FloeApp, Files, type FloeComponent } from '@floegence/floe-webapp-core';
 
 const HomePage = () => (
   <div class="flex h-full items-center justify-center">
@@ -30,12 +28,6 @@ const components: FloeComponent[] = [
   },
 ];
 
-function AppContent() {
-  const layout = useLayout();
-  const active = createMemo(() => components.find((c) => c.id === layout.sidebarActiveTab()) ?? components[0]);
-  return <Dynamic component={active().component} />;
-}
-
 export default function App() {
   return (
     <FloeApp
@@ -46,7 +38,7 @@ export default function App() {
         },
       }}
     >
-      <AppContent />
+      <ActivityAppsMain />
     </FloeApp>
   );
 }
