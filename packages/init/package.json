@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-init",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "type": "module",
   "description": "Scaffolding tool for Floe Webapp applications",
   "bin": {
