@@ -20,6 +20,7 @@ describe('@floegence/floe-webapp-core package config', () => {
         import: './dist/index.js',
       },
       './styles': './dist/styles.css',
+      './tailwind': './dist/tailwind.css',
     });
 
     expect(pkg.files).toEqual(['dist']);

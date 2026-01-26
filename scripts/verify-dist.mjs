@@ -61,6 +61,24 @@ function assertInitTemplates() {
       .map((f) => f.replace(`${process.cwd()}/`, ''))
       .join(', ')}`
   );
+
+  const cssFiles = walkFiles(templatesRoot).filter((f) => /\.css$/i.test(f));
+  const cssViolations = [];
+
+  for (const file of cssFiles) {
+    const content = readFileSync(file, 'utf-8');
+    if (content.includes('@floegence/floe-webapp-core/styles')) cssViolations.push(file);
+    if (content.includes('@floegence/floe-webapp-core/tailwind')) continue;
+    // Only enforce index.css (templates may add other plain CSS files later).
+    if (file.endsWith('/src/index.css') || file.endsWith('\\src\\index.css')) cssViolations.push(file);
+  }
+
+  assert(
+    cssViolations.length === 0,
+    `Init templates must use @floegence/floe-webapp-core/tailwind (not /styles). Fix templates: ${cssViolations
+      .map((f) => f.replace(`${process.cwd()}/`, ''))
+      .join(', ')}`
+  );
 }
 
 function assertNoTrackedDotMarkdown() {
@@ -81,6 +99,10 @@ function main() {
   assertFile('packages/core/dist/index.js');
   assertFile('packages/core/dist/index.d.ts');
   assertFile('packages/core/dist/styles.css');
+  assertFile('packages/core/dist/tailwind.css');
+  assertFile('packages/core/dist/floe.css');
+  assertFile('packages/core/dist/themes/light.css');
+  assertFile('packages/core/dist/themes/dark.css');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
   assertFile('packages/init/dist/index.mjs');
@@ -104,6 +126,10 @@ function main() {
   assert(
     corePkg.exports?.['./styles'] === './dist/styles.css',
     '@floegence/floe-webapp-core exports["./styles"] must be ./dist/styles.css'
+  );
+  assert(
+    corePkg.exports?.['./tailwind'] === './dist/tailwind.css',
+    '@floegence/floe-webapp-core exports["./tailwind"] must be ./dist/tailwind.css'
   );
 
   assert(
@@ -138,6 +164,14 @@ function main() {
   const styles = readFileSync(resolve(process.cwd(), 'packages/core/dist/styles.css'), 'utf-8');
   assert(styles.length > 0, 'Expected @floegence/floe-webapp-core styles.css to be non-empty');
   assert(styles.includes('--background'), 'Expected @floegence/floe-webapp-core styles.css to include theme variables');
+
+  const tailwind = readFileSync(resolve(process.cwd(), 'packages/core/dist/tailwind.css'), 'utf-8');
+  assert(tailwind.length > 0, 'Expected @floegence/floe-webapp-core tailwind.css to be non-empty');
+  assert(
+    !/^\s*@import\s+['"]tailwindcss['"]\s*;/m.test(tailwind),
+    'Expected tailwind.css to not import tailwindcss'
+  );
+  assert(tailwind.includes('@source'), 'Expected tailwind.css to include @source for scanning dist JS');
 
   // Starter templates must stay aligned with public APIs.
   assertInitTemplates();

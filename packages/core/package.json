@@ -10,14 +10,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./styles": "./dist/styles.css"
+    "./styles": "./dist/styles.css",
+    "./tailwind": "./dist/tailwind.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
-    "build": "pnpm clean && vite build && tsc -p tsconfig.build.json && pnpm build:styles",
+    "build": "pnpm clean && vite build && tsc -p tsconfig.build.json && pnpm build:styles && pnpm build:assets",
+    "build:assets": "node ./scripts/copy-style-assets.mjs",
     "build:styles": "vite build -c vite.styles.config.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"

@@ -84,7 +84,41 @@ Install the packages:
 pnpm add @floegence/floe-webapp-core @floegence/floe-webapp-protocol solid-js
 ```
 
-Import Floe styles once at your app entry:
+### Styling (Tailwind v4)
+
+Recommended: run Tailwind v4 in your app and import the Floe Tailwind entry from your CSS entry file.
+
+1) Install Tailwind v4 + the Vite plugin:
+
+```bash
+pnpm add -D tailwindcss @tailwindcss/vite
+```
+
+2) Enable the plugin in `vite.config.ts`:
+
+```ts
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [solid(), tailwindcss()],
+});
+```
+
+3) In your CSS entry (e.g. `src/index.css`):
+
+```css
+@import 'tailwindcss';
+@source './**/*.{ts,tsx,html}';
+@import '@floegence/floe-webapp-core/tailwind';
+```
+
+Notes:
+
+- In this mode, do not also import `@floegence/floe-webapp-core/styles` (it would duplicate Tailwind output).
+
+#### Fallback: no Tailwind build
+
+If you don't want to run Tailwind in your app, import the precompiled stylesheet once at your app entry:
 
 ```ts
 import '@floegence/floe-webapp-core/styles';

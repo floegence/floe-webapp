@@ -10,6 +10,7 @@ function run(command, args) {
 }
 
 const children = [
+  run('node', ['scripts/copy-style-assets.mjs', '--watch']),
   run('vite', ['build', '--watch']),
   run('vite', ['build', '--watch', '-c', 'vite.styles.config.ts']),
 ];

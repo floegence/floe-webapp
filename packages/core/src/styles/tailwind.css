@@ -1,0 +1,9 @@
+/*
+ * Tailwind v4 integration entry for downstream apps.
+ *
+ * - Do NOT `@import 'tailwindcss'` here. The application owns Tailwind base/utilities.
+ * - Scan this package's published dist JS output so core component utilities are generated.
+ */
+
+@source './**/*.{js}';
+@import './floe.css';

@@ -146,12 +146,20 @@ npx @floegence/floe-webapp-init [project-name] [options]
 
 ## Usage
 
+Create a CSS entry (e.g. `src/index.css`):
+
+```css
+@import 'tailwindcss';
+@source './**/*.{ts,tsx,html}';
+@import '@floegence/floe-webapp-core/tailwind';
+```
+
 ```tsx
 import {
   FloeApp,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
-import '@floegence/floe-webapp-core/styles';
+import './index.css';
 import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
 
 const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
@@ -174,8 +182,8 @@ export function App() {
 
 Notes:
 
-- `@floegence/floe-webapp-core/styles` is shipped as a precompiled CSS file, so downstream apps can get the full Floe UI look without running Tailwind.
-- If your app uses Tailwind for its own UI, keep that setup in your app; Floe styles can be imported alongside it.
+- Recommended: run Tailwind v4 in your app and import `@floegence/floe-webapp-core/tailwind` from your CSS entry.
+- Fallback (no Tailwind build): import `@floegence/floe-webapp-core/styles` once at your app entry, and do not rely on arbitrary Tailwind utility classes in your own components.
 
 ## Tech Stack
 

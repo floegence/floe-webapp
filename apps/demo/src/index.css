@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* Scan demo sources so Tailwind utilities used by the demo are generated. */
-@source './**/*.{ts,tsx}';
+@source './**/*.{ts,tsx,html}';
 
-/* Floe core ships a precompiled stylesheet for its components + tokens. */
-@import '@floegence/floe-webapp-core/styles';
+/* Floe core provides a Tailwind entry that scans core dist + injects tokens/utilities. */
+@import '@floegence/floe-webapp-core/tailwind';
