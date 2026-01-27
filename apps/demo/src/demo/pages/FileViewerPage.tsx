@@ -1,5 +1,5 @@
 import { Show, Suspense, createEffect, createMemo, createResource, createSignal, lazy, on, type Accessor, onCleanup } from 'solid-js';
-import { Button, Panel, PanelContent, PanelHeader, Skeleton, deferNonBlocking, useCommand, useNotification, save as persistSave } from '@floegence/floe-webapp-core';
+import { Button, Panel, PanelContent, PanelHeader, Skeleton, deferNonBlocking, useCommand, useNotification, useResolvedFloeConfig } from '@floegence/floe-webapp-core';
 import type { DemoFile } from '../workspace';
 import type { MonacoViewerApi } from '../components/MonacoViewer';
 
@@ -12,6 +12,7 @@ const MonacoViewer = lazy(() => import('../components/MonacoViewer'));
 export function FileViewerPage(props: FileViewerPageProps) {
   const command = useCommand();
   const notifications = useNotification();
+  const floe = useResolvedFloeConfig();
 
   const [content] = createResource(() => props.file(), (file) => file.load());
   const [wordWrap, setWordWrap] = createSignal(false);
@@ -65,6 +66,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
     setIsSaving(true);
     const storageKey = getStorageKey();
     const filePath = props.file().path;
+    const persistSave = floe.persist.save;
 
     deferNonBlocking(() => {
       try {
