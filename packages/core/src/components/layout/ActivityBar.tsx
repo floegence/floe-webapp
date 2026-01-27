@@ -47,13 +47,13 @@ export function ActivityBar(props: ActivityBarProps) {
   return (
     <div
       class={cn(
-        'w-12 md:w-14 flex flex-col justify-between shrink-0 min-h-0',
+        'w-10 md:w-12 flex flex-col justify-between shrink-0 min-h-0',
         'bg-activity-bar border-r border-border',
         props.class
       )}
     >
       {/* Top items */}
-      <div class="flex flex-col items-center py-1.5 gap-0.5 md:gap-2 md:py-2">
+      <div class="flex flex-col">
         <For each={props.items}>
           {(item) => (
             <ActivityBarButton
@@ -67,7 +67,7 @@ export function ActivityBar(props: ActivityBarProps) {
 
       {/* Bottom items */}
       <Show when={props.bottomItems?.length}>
-        <div class="flex flex-col items-center py-1.5 gap-0.5 md:gap-2 md:py-2">
+        <div class="flex flex-col">
           <For each={props.bottomItems}>
             {(item) => (
               <ActivityBarButton
@@ -99,9 +99,9 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
       <button
         type="button"
         class={cn(
-          'relative w-9 h-9 flex items-center justify-center rounded cursor-pointer',
+          'relative w-full aspect-square flex items-center justify-center cursor-pointer',
           'transition-all duration-100',
-          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
           props.isActive
             ? 'text-activity-bar-foreground-active bg-accent/80'
             : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active hover:bg-accent/40'
@@ -110,9 +110,9 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         aria-label={props.item.label}
         aria-pressed={props.isActive}
       >
-        {/* Active indicator - positioned to touch left edge of activity bar */}
+        {/* Active indicator - positioned at left edge, full height */}
         <Show when={props.isActive}>
-          <div class="absolute -left-1.5 md:-left-2.5 top-1/2 -translate-y-1/2 w-1 h-7 bg-primary rounded-r" />
+          <div class="absolute left-0 top-0 w-1 h-full bg-primary rounded-r" />
         </Show>
 
         {/* Icon */}
