@@ -234,9 +234,17 @@ export function createDeckService(): DeckContextValue {
   // Drag/resize state (not persisted)
   const [dragState, setDragState] = createSignal<DragState | null>(null);
   const [resizeState, setResizeState] = createSignal<ResizeState | null>(null);
+  const track = <T,>(v: T): T => v;
 
   // Persist layout changes
   createEffect(() => {
+    // Solid store tracks dependencies per-property. If we only read store.layouts (array reference),
+    // deep updates (e.g. updateWidgetState -> widget.state) won't re-run this effect and the deck
+    // won't be persisted. We already "touch" layout.updatedAt on every persisted mutation, so use it
+    // as a lightweight change signal (avoids deep traversal / JSON serialization on every interaction).
+    track(store.layouts.length); // track layout add/remove
+    for (const l of store.layouts) track(l.updatedAt); // track deep changes within a layout (widgets/state/position/config)
+
     const state = {
       layouts: store.layouts,
       activeLayoutId: store.activeLayoutId,
