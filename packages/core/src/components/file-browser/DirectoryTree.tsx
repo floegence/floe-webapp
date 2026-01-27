@@ -59,54 +59,75 @@ function FolderTreeItem(props: TreeItemProps) {
   // Check if folder has any subfolders
   const hasSubfolders = () => subfolderCount() > 0;
 
-  const handleClick = () => {
-    ctx.toggleFolder(props.item.path);
+  const handleNavigate = () => {
     ctx.setCurrentPath(props.item.path);
+  };
+
+  const handleToggle = () => {
+    if (!hasSubfolders()) return;
+    ctx.toggleFolder(props.item.path);
   };
 
   return (
     <div class="flex flex-col">
-      <button
-        type="button"
-        onClick={handleClick}
+      <div
         class={cn(
-          'group flex items-center gap-1 w-full py-1 text-xs cursor-pointer',
+          'group flex items-center w-full py-1 text-xs',
           'transition-all duration-100',
           'hover:bg-sidebar-accent/60',
-          'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring',
           isActive() && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
         )}
         style={{ 'padding-left': `${8 + props.depth * 12}px` }}
       >
-        {/* Expand/collapse chevron - only show if has subfolders */}
-        <span
+        {/* Expand/collapse chevron - only render for folders that have subfolders */}
+        <Show
+          when={hasSubfolders()}
+          fallback={<span class="flex-shrink-0 w-3.5 h-3.5" />}
+        >
+          <button
+            type="button"
+            onClick={handleToggle}
+            class={cn(
+              'flex-shrink-0 w-3.5 h-3.5 flex items-center justify-center cursor-pointer',
+              'transition-transform duration-150',
+              isExpanded() && 'rotate-90',
+              'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring'
+            )}
+            aria-label={isExpanded() ? 'Collapse folder' : 'Expand folder'}
+          >
+            <ChevronRight class="w-3 h-3 opacity-50" />
+          </button>
+        </Show>
+
+        <button
+          type="button"
+          onClick={handleNavigate}
           class={cn(
-            'flex-shrink-0 w-3.5 h-3.5 flex items-center justify-center',
-            'transition-transform duration-150',
-            isExpanded() && 'rotate-90',
-            !hasSubfolders() && 'opacity-0'
+            'flex items-center gap-1 flex-1 min-w-0 text-left cursor-pointer pl-1',
+            'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring'
           )}
         >
-          <ChevronRight class="w-3 h-3 opacity-50" />
-        </span>
-
-        {/* Folder icon */}
-        <span class="flex-shrink-0 w-4 h-4">
-          <Show when={isExpanded()} fallback={<FolderIcon class="w-4 h-4" />}>
-            <FolderOpenIcon class="w-4 h-4" />
-          </Show>
-        </span>
-
-        {/* Folder name */}
-        <span class="truncate">{props.item.name}</span>
-
-        {/* Subfolder count badge */}
-        <Show when={hasSubfolders()}>
-          <span class="ml-auto mr-2 text-[10px] text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity">
-            {subfolderCount()}
+          {/* Folder icon */}
+          <span class="flex-shrink-0 w-4 h-4">
+            <Show
+              when={hasSubfolders() && isExpanded()}
+              fallback={<FolderIcon class="w-4 h-4" />}
+            >
+              <FolderOpenIcon class="w-4 h-4" />
+            </Show>
           </span>
-        </Show>
-      </button>
+
+          {/* Folder name */}
+          <span class="truncate">{props.item.name}</span>
+
+          {/* Subfolder count badge */}
+          <Show when={hasSubfolders()}>
+            <span class="ml-auto mr-2 text-[10px] text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity">
+              {subfolderCount()}
+            </span>
+          </Show>
+        </button>
+      </div>
 
       {/* Children (only folders) */}
       <Show when={isExpanded() && hasSubfolders()}>
