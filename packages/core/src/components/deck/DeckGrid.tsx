@@ -1,6 +1,7 @@
-import { For, Show, createMemo, createSignal, onMount, onCleanup, type JSX } from 'solid-js';
+import { For, Show, createEffect, createMemo, createSignal, onMount, onCleanup, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck } from '../../context/DeckContext';
+import { useLayout } from '../../context/LayoutContext';
 import { hasCollision } from '../../utils/gridCollision';
 import { DeckCell } from './DeckCell';
 import { DropZonePreview } from './DropZonePreview';
@@ -29,6 +30,7 @@ const ZERO_OFFSET = { x: 0, y: 0 } as const;
  */
 export function DeckGrid(props: DeckGridProps) {
   const deck = useDeck();
+  const layout = useLayout();
   let gridRef: HTMLDivElement | undefined;
 
   // Track container dimensions for dynamic row height calculation
@@ -38,6 +40,13 @@ export function DeckGrid(props: DeckGridProps) {
   const widgets = () => deck.activeLayout()?.widgets ?? [];
   const dragState = () => deck.dragState();
   const resizeState = () => deck.resizeState();
+
+  // Mobile UX safety: never allow edit mode on mobile to avoid disabling widget interactions.
+  createEffect(() => {
+    if (layout.isMobile() && deck.editMode()) {
+      deck.setEditMode(false);
+    }
+  });
 
   const dragPreviewValid = createMemo(() => {
     const drag = dragState();
@@ -51,7 +60,12 @@ export function DeckGrid(props: DeckGridProps) {
   const actualRows = createMemo(() => {
     const ws = widgets();
     if (ws.length === 0) return DEFAULT_ROWS;
-    return Math.max(DEFAULT_ROWS, ...ws.map((w) => w.position.row + w.position.rowSpan));
+    let max = DEFAULT_ROWS;
+    for (const w of ws) {
+      const end = w.position.row + w.position.rowSpan;
+      if (end > max) max = end;
+    }
+    return max;
   });
 
   // Calculate dynamic row height based on container height

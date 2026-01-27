@@ -8,6 +8,7 @@ import {
   onCleanup,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { deferAfterPaint } from '../../utils/defer';
 import { Plus, X, ChevronRight } from '../icons';
 
 // Tab item interface
@@ -76,6 +77,14 @@ export function Tabs(props: TabsProps) {
   // Refs for scroll container
   let scrollContainerRef: HTMLDivElement | undefined;
 
+  // Optimistic UI: update active highlight immediately on click, then notify parent after paint.
+  const [optimisticActiveId, setOptimisticActiveId] = createSignal('');
+  createEffect(() => {
+    if (local.activeId !== undefined) {
+      setOptimisticActiveId(local.activeId);
+    }
+  });
+
   // Scroll state
   const [canScrollLeft, setCanScrollLeft] = createSignal(false);
   const [canScrollRight, setCanScrollRight] = createSignal(false);
@@ -113,13 +122,22 @@ export function Tabs(props: TabsProps) {
     const handleScroll = () => updateScrollState();
     scrollContainerRef.addEventListener('scroll', handleScroll);
 
-    // Listen for resize events
-    const resizeObserver = new ResizeObserver(() => updateScrollState());
-    resizeObserver.observe(scrollContainerRef);
+    // Listen for resize events (ResizeObserver when available, otherwise fall back to window resize).
+    const handleResize = () => updateScrollState();
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver.observe(scrollContainerRef);
+    } else if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+    }
 
     onCleanup(() => {
       scrollContainerRef?.removeEventListener('scroll', handleScroll);
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', handleResize);
+      }
     });
   });
 
@@ -134,19 +152,26 @@ export function Tabs(props: TabsProps) {
   // Handle tab click with UI-first response
   const handleTabClick = (id: string, disabled?: boolean) => {
     if (disabled) return;
-    // Respond UI first
-    requestAnimationFrame(() => {
-      local.onChange?.(id);
-    });
+    const onChange = local.onChange;
+
+    // Read-only controlled mode: do not change highlight without a handler.
+    if (local.activeId !== undefined && !onChange) return;
+
+    // UI first: highlight immediately.
+    setOptimisticActiveId(id);
+
+    if (!onChange) return;
+    const nextId = id;
+    deferAfterPaint(() => onChange(nextId));
   };
 
   // Handle close with UI-first response
   const handleClose = (e: MouseEvent, id: string) => {
     e.stopPropagation();
-    // Respond UI first
-    requestAnimationFrame(() => {
-      local.onClose?.(id);
-    });
+    const onClose = local.onClose;
+    if (!onClose) return;
+    const nextId = id;
+    deferAfterPaint(() => onClose(nextId));
   };
 
   // Size styles
@@ -244,7 +269,7 @@ export function Tabs(props: TabsProps) {
       >
         <For each={local.items}>
           {(item) => {
-            const isActive = () => item.id === local.activeId;
+            const isActive = () => item.id === optimisticActiveId();
             const isClosable = () => item.closable ?? local.closable ?? false;
 
             return (
@@ -299,9 +324,9 @@ export function Tabs(props: TabsProps) {
         <button
           type="button"
           onClick={() => {
-            requestAnimationFrame(() => {
-              local.onAdd?.();
-            });
+            const onAdd = local.onAdd;
+            if (!onAdd) return;
+            deferAfterPaint(() => onAdd());
           }}
           class={cn(
             'flex-shrink-0 flex items-center justify-center',

@@ -54,7 +54,11 @@ export function findFreePosition(
     }
   }
   // Fallback: place at bottom
-  const maxRow = Math.max(0, ...widgets.map((w) => w.position.row + w.position.rowSpan));
+  let maxRow = 0;
+  for (const w of widgets) {
+    const end = w.position.row + w.position.rowSpan;
+    if (end > maxRow) maxRow = end;
+  }
   return { col: 0, row: maxRow, colSpan, rowSpan };
 }
 

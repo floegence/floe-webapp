@@ -1,4 +1,4 @@
-import { For, Show, type Accessor } from 'solid-js';
+import { For, Show, onCleanup, type Accessor } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
 import { cn } from '../utils/cn';
@@ -40,6 +40,11 @@ export function createNotificationService(): NotificationContextValue {
   });
 
   const timeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+  onCleanup(() => {
+    timeouts.forEach((t) => clearTimeout(t));
+    timeouts.clear();
+  });
 
   const dismiss = (id: string) => {
     const timeout = timeouts.get(id);

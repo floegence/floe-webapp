@@ -1,6 +1,7 @@
-import { For, Show, onCleanup, createEffect } from 'solid-js';
+import { For, Show, createEffect, onCleanup } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { deferAfterPaint } from '../../utils/defer';
 import { useFileBrowser } from './FileBrowserContext';
 import type { ContextMenuItem, ContextMenuCallbacks, FileItem } from './types';
 
@@ -139,32 +140,38 @@ export function FileContextMenu(props: FileContextMenuProps) {
     // Close menu first
     ctx.hideContextMenu();
 
-    // Execute action
-    switch (item.type) {
-      case 'duplicate':
-        props.callbacks?.onDuplicate?.(targetItems);
-        break;
-      case 'ask-agent':
-        props.callbacks?.onAskAgent?.(targetItems);
-        break;
-      case 'copy-to':
-        props.callbacks?.onCopyTo?.(targetItems);
-        break;
-      case 'move-to':
-        props.callbacks?.onMoveTo?.(targetItems);
-        break;
-      case 'delete':
-        props.callbacks?.onDelete?.(targetItems);
-        break;
-      case 'rename':
-        if (targetItems.length === 1) {
-          props.callbacks?.onRename?.(targetItems[0]!);
-        }
-        break;
-      case 'custom':
-        item.onAction?.(targetItems);
-        break;
-    }
+    // Defer action execution so the close animation can paint first.
+    const type = item.type;
+    const items = [...targetItems];
+    const callbacks = props.callbacks;
+    const onAction = item.onAction;
+    deferAfterPaint(() => {
+      switch (type) {
+        case 'duplicate':
+          callbacks?.onDuplicate?.(items);
+          break;
+        case 'ask-agent':
+          callbacks?.onAskAgent?.(items);
+          break;
+        case 'copy-to':
+          callbacks?.onCopyTo?.(items);
+          break;
+        case 'move-to':
+          callbacks?.onMoveTo?.(items);
+          break;
+        case 'delete':
+          callbacks?.onDelete?.(items);
+          break;
+        case 'rename':
+          if (items.length === 1) {
+            callbacks?.onRename?.(items[0]!);
+          }
+          break;
+        case 'custom':
+          onAction?.(items);
+          break;
+      }
+    });
   };
 
   // Close menu on click outside
@@ -183,15 +190,13 @@ export function FileContextMenu(props: FileContextMenuProps) {
 
   // Setup/cleanup event listeners
   createEffect(() => {
-    if (ctx.contextMenu()) {
-      document.addEventListener('click', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
-  });
-
-  onCleanup(() => {
-    document.removeEventListener('click', handleClickOutside);
-    document.removeEventListener('keydown', handleKeyDown);
+    if (!ctx.contextMenu()) return;
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    });
   });
 
   // Adjust position to stay within viewport

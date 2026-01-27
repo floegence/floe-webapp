@@ -1,9 +1,10 @@
-import { For, Show } from 'solid-js';
+import { For, Show, untrack } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem } from './types';
+import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 
 export interface FileGridViewProps {
   class?: string;
@@ -43,13 +44,12 @@ interface FileGridItemProps {
 function FileGridItem(props: FileGridItemProps) {
   const ctx = useFileBrowser();
   const isSelected = () => ctx.isSelected(props.item.id);
+  const item = untrack(() => props.item);
+  const longPress = createLongPressContextMenuHandlers(ctx, item);
 
   const handleClick = (e: MouseEvent) => {
-    if (props.item.type === 'folder') {
-      ctx.navigateTo(props.item);
-    } else {
-      ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
-    }
+    if (longPress.consumeClickSuppression(e)) return;
+    ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
   };
 
   const handleDoubleClick = () => {
@@ -90,6 +90,10 @@ function FileGridItem(props: FileGridItemProps) {
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
+      onPointerDown={longPress.onPointerDown}
+      onPointerMove={longPress.onPointerMove}
+      onPointerUp={longPress.onPointerUp}
+      onPointerCancel={longPress.onPointerCancel}
       class={cn(
         'group relative flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer',
         'transition-all duration-150',

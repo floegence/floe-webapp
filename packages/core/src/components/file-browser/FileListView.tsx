@@ -1,10 +1,11 @@
-import { For, Show } from 'solid-js';
+import { For, Show, untrack } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, SortField } from './types';
 import { ChevronDown } from '../icons';
+import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 
 export interface FileListViewProps {
   class?: string;
@@ -127,13 +128,12 @@ interface FileListItemProps {
 function FileListItem(props: FileListItemProps) {
   const ctx = useFileBrowser();
   const isSelected = () => ctx.isSelected(props.item.id);
+  const item = untrack(() => props.item);
+  const longPress = createLongPressContextMenuHandlers(ctx, item);
 
   const handleClick = (e: MouseEvent) => {
-    if (props.item.type === 'folder') {
-      ctx.navigateTo(props.item);
-    } else {
-      ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
-    }
+    if (longPress.consumeClickSuppression(e)) return;
+    ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
   };
 
   const handleDoubleClick = () => {
@@ -174,6 +174,10 @@ function FileListItem(props: FileListItemProps) {
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
+      onPointerDown={longPress.onPointerDown}
+      onPointerMove={longPress.onPointerMove}
+      onPointerUp={longPress.onPointerUp}
+      onPointerCancel={longPress.onPointerCancel}
       class={cn(
         'group w-full flex items-center text-xs cursor-pointer',
         'transition-all duration-100',

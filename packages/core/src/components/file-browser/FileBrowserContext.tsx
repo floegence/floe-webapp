@@ -1,4 +1,5 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo } from 'solid-js';
+import { deferNonBlocking } from '../../utils/defer';
 import type { FileItem, ViewMode, SortConfig, FileBrowserContextValue, ContextMenuEvent } from './types';
 
 const FileBrowserContext = createContext<FileBrowserContextValue>();
@@ -28,32 +29,32 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Build file tree accessor
   const files: Accessor<FileItem[]> = () => props.files;
 
-  // Get files at current path
-  const currentFiles = createMemo(() => {
-    const path = currentPath();
-    const allFiles = files();
+  const normalizePath = (path: string) => {
+    const p = (path ?? '').trim();
+    return p === '' ? '/' : p;
+  };
 
-    // Find the folder at the current path
-    const findFolder = (items: FileItem[], targetPath: string): FileItem[] | undefined => {
-      if (targetPath === '/' || targetPath === '') {
-        return items;
-      }
+  const fileIndex = createMemo(() => {
+    const map = new Map<string, FileItem[]>();
 
+    const visit = (items: FileItem[]) => {
       for (const item of items) {
-        if (item.type === 'folder') {
-          if (item.path === targetPath) {
-            return item.children ?? [];
-          }
-          if (item.children) {
-            const found = findFolder(item.children, targetPath);
-            if (found) return found;
-          }
-        }
+        if (item.type !== 'folder') continue;
+        map.set(normalizePath(item.path), item.children ?? []);
+        if (item.children?.length) visit(item.children);
       }
-      return undefined;
     };
 
-    const found = findFolder(allFiles, path) ?? [];
+    const rootItems = files();
+    map.set('/', rootItems);
+    visit(rootItems);
+    return map;
+  });
+
+  // Get files at current path
+  const currentFiles = createMemo(() => {
+    const path = normalizePath(currentPath());
+    const found = fileIndex().get(path) ?? [];
 
     // Sort files
     const config = sortConfig();
@@ -86,8 +87,13 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   });
 
   const setCurrentPath = (path: string) => {
-    setCurrentPathInternal(path);
-    props.onNavigate?.(path);
+    const nextPath = normalizePath(path);
+    setCurrentPathInternal(nextPath);
+    // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
+    setSelectedIds(new Set<string>());
+    const onSelect = props.onSelect;
+    deferNonBlocking(() => onSelect?.([]));
+    props.onNavigate?.(nextPath);
   };
 
   const navigateUp = () => {
@@ -112,23 +118,31 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   };
 
   const selectItem = (id: string, multi = false) => {
-    setSelectedIds((prev) => {
-      const next = multi ? new Set(prev) : new Set<string>();
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+    const prev = selectedIds();
+    const next = multi ? new Set(prev) : new Set<string>();
 
-    // Notify parent
-    const selected = currentFiles().filter((f) => selectedIds().has(f.id));
-    props.onSelect?.(selected);
+    if (multi) {
+      // Ctrl/Cmd: toggle membership.
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+    } else {
+      // Single click: always select the item (do not toggle-off).
+      next.clear();
+      next.add(id);
+    }
+
+    setSelectedIds(next);
+
+    // Notify parent after paint to keep selection highlight responsive.
+    const selected = currentFiles().filter((f) => next.has(f.id));
+    const onSelect = props.onSelect;
+    deferNonBlocking(() => onSelect?.(selected));
   };
 
   const clearSelection = () => {
     setSelectedIds(new Set<string>());
+    const onSelect = props.onSelect;
+    deferNonBlocking(() => onSelect?.([]));
   };
 
   const isSelected = (id: string) => selectedIds().has(id);

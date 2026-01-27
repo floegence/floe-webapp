@@ -100,10 +100,13 @@ export function MobileTabBar(props: MobileTabBarProps) {
                   }
 
                   // Defer callback execution to let UI update first (consistent with CommandContext.execute)
+                  const onClick = item.onClick;
+                  const onSelect = props.onSelect;
+                  const id = item.id;
                   if (item.onClick) {
-                    deferNonBlocking(() => item.onClick!());
+                    deferNonBlocking(() => onClick!());
                   } else {
-                    deferNonBlocking(() => props.onSelect(item.id));
+                    deferNonBlocking(() => onSelect(id));
                   }
                 }}
               />

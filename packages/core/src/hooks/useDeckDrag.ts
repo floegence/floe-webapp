@@ -3,6 +3,7 @@ import { useDeck } from '../context/DeckContext';
 import { applyDragDelta } from '../utils/gridLayout';
 import { getGridConfigFromElement } from '../components/deck/DeckGrid';
 import { lockBodyStyle } from '../utils/bodyStyleLock';
+import type { GridPosition } from '../utils/gridCollision';
 
 /**
  * Hook to set up drag handling for deck widgets
@@ -21,6 +22,10 @@ export function useDeckDrag() {
   let currentWidgetId: string | null = null;
   let handleEl: HTMLElement | null = null;
   let unlockBody: (() => void) | null = null;
+  let gridEl: HTMLElement | null = null;
+  let gridPaddingLeft = 0;
+  let gridPaddingRight = 0;
+  let originalPosition: GridPosition | null = null;
 
   const setGlobalStyles = (active: boolean) => {
     if (!active) {
@@ -42,6 +47,8 @@ export function useDeckDrag() {
     activePointerId = null;
     currentWidgetId = null;
     handleEl = null;
+    gridEl = null;
+    originalPosition = null;
     setGlobalStyles(false);
     deck.endDrag(true);
   };
@@ -67,6 +74,9 @@ export function useDeckDrag() {
     const widgetId = handle.dataset.widgetDragHandle;
     if (!widgetId) return;
 
+    const nearestGrid = handle.closest('.deck-grid') as HTMLElement | null;
+    if (!nearestGrid) return;
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -77,7 +87,17 @@ export function useDeckDrag() {
     lastY = startY;
     currentWidgetId = widgetId;
     handleEl = handle;
+    gridEl = nearestGrid;
     setGlobalStyles(true);
+
+    const wsLayout = deck.activeLayout();
+    const widget = wsLayout?.widgets.find((w) => w.id === widgetId);
+    originalPosition = widget ? { ...widget.position } : null;
+
+    // Cache horizontal paddings once per interaction (avoid per-frame getComputedStyle).
+    const styles = window.getComputedStyle(nearestGrid);
+    gridPaddingLeft = parseFloat(styles.paddingLeft) || 0;
+    gridPaddingRight = parseFloat(styles.paddingRight) || 0;
 
     deck.startDrag(widgetId, startX, startY);
     handle.setPointerCapture(e.pointerId);
@@ -104,23 +124,16 @@ export function useDeckDrag() {
 
   const updatePosition = () => {
     if (!currentWidgetId) return;
+    if (!gridEl || !originalPosition) return;
 
     const deltaX = lastX - startX;
     const deltaY = lastY - startY;
 
-    // Get grid element and calculate cell sizes
-    const gridEl = document.querySelector('.deck-grid') as HTMLElement | null;
-    if (!gridEl) return;
-
     // Read dynamic row height from the grid element
     const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);
 
-    // Calculate cell dimensions.
-    // Use clientWidth (excludes scrollbar) to avoid width jitter when scrollbars appear/disappear.
-    const styles = window.getComputedStyle(gridEl);
-    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
-    const paddingRight = parseFloat(styles.paddingRight) || 0;
-    const innerWidth = gridEl.clientWidth - paddingLeft - paddingRight;
+    // Calculate cell dimensions (use clientWidth to avoid width jitter when scrollbars appear/disappear).
+    const innerWidth = gridEl.clientWidth - gridPaddingLeft - gridPaddingRight;
     const totalGapWidth = gap * (cols - 1);
     const cellWidth = (innerWidth - totalGapWidth) / cols;
     if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
@@ -130,11 +143,7 @@ export function useDeckDrag() {
     const colDelta = Math.round(deltaX / cellWidth);
     const rowDelta = Math.round(deltaY / cellHeight);
 
-    const wsLayout = deck.activeLayout();
-    const widget = wsLayout?.widgets.find((w) => w.id === currentWidgetId);
-    if (!widget) return;
-
-    const newPosition = applyDragDelta(widget.position, colDelta, rowDelta, cols);
+    const newPosition = applyDragDelta(originalPosition, colDelta, rowDelta, cols);
 
     // Pass both the snapped grid position and the raw pixel offset for smooth visual
     deck.updateDrag(newPosition, { x: deltaX, y: deltaY });

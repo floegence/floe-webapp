@@ -250,6 +250,18 @@ export function createDeckService(): DeckContextValue {
   // Generate unique ID
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+  const cloneSerializable = <T,>(value: T): T => {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+    if (value === null || typeof value !== 'object') return value;
+    if (value instanceof Date) return new Date(value.getTime()) as T;
+    if (Array.isArray(value)) return value.map((v) => cloneSerializable(v)) as T;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = cloneSerializable(v);
+    }
+    return out as T;
+  };
+
   return {
     // Layout management
     layouts: () => store.layouts,
@@ -286,7 +298,13 @@ export function createDeckService(): DeckContextValue {
       const layout: DeckLayout = {
         id: generateId(),
         name: newName,
-        widgets: source.widgets.map((w) => ({ ...w, id: generateId() })),
+        widgets: source.widgets.map((w) => ({
+          ...w,
+          id: generateId(),
+          position: { ...w.position },
+          config: w.config ? cloneSerializable(w.config) : undefined,
+          state: w.state ? cloneSerializable(w.state) : undefined,
+        })),
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };

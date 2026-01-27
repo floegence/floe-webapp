@@ -47,6 +47,9 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   let lastY = 0;
   let rafId: number | null = null;
   let unlockBody: (() => void) | null = null;
+  let gridEl: HTMLElement | null = null;
+  let gridPaddingLeft = 0;
+  let gridPaddingRight = 0;
 
   const setGlobalStyles = (active: boolean) => {
     if (!active) {
@@ -67,6 +70,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     }
     setIsActive(false);
     activePointerId = null;
+    gridEl = null;
     setGlobalStyles(false);
     deck.endResize(true);
   };
@@ -76,6 +80,9 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     e.preventDefault();
     e.stopPropagation();
 
+    const nearestGrid = (e.currentTarget as HTMLElement | null)?.closest('.deck-grid') as HTMLElement | null;
+    if (!nearestGrid) return;
+
     activePointerId = e.pointerId;
     startX = e.clientX;
     startY = e.clientY;
@@ -83,6 +90,12 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     lastY = startY;
     setIsActive(true);
     setGlobalStyles(true);
+    gridEl = nearestGrid;
+
+    // Cache horizontal paddings once per interaction (avoid per-frame getComputedStyle).
+    const styles = window.getComputedStyle(nearestGrid);
+    gridPaddingLeft = parseFloat(styles.paddingLeft) || 0;
+    gridPaddingRight = parseFloat(styles.paddingRight) || 0;
 
     deck.startResize(props.widget.id, props.edge, startX, startY);
     handleRef?.setPointerCapture(e.pointerId);
@@ -113,7 +126,6 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     const deltaY = lastY - startY;
 
     // Get grid element and calculate cell sizes
-    const gridEl = document.querySelector('.deck-grid') as HTMLElement | null;
     if (!gridEl) return;
 
     // Read dynamic row height from the grid element
@@ -121,10 +133,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
 
     // Calculate cell dimensions
     // Use clientWidth (excludes scrollbar) to avoid jitter when scrollbars appear/disappear.
-    const styles = window.getComputedStyle(gridEl);
-    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
-    const paddingRight = parseFloat(styles.paddingRight) || 0;
-    const innerWidth = gridEl.clientWidth - paddingLeft - paddingRight;
+    const innerWidth = gridEl.clientWidth - gridPaddingLeft - gridPaddingRight;
     const totalGapWidth = gap * (cols - 1);
     const cellWidth = (innerWidth - totalGapWidth) / cols;
     if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
