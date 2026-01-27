@@ -1,12 +1,15 @@
 import { type Component, For, Show, createSignal, onCleanup, onMount } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { deferNonBlocking } from '../../utils/defer';
 
 export interface MobileTabBarItem {
   id: string;
   icon: Component<{ class?: string }>;
   label: string;
   badge?: number | string | (() => number | string | undefined);
+  /** Custom click handler. If provided, takes precedence over onSelect (consistent with ActivityBar). */
+  onClick?: () => void;
 }
 
 export interface MobileTabBarProps {
@@ -91,10 +94,16 @@ export function MobileTabBar(props: MobileTabBarProps) {
                 item={item}
                 isActive={props.activeId === item.id}
                 onClick={() => {
-                  props.onSelect(item.id);
-                  // Haptic feedback on iOS
+                  // UI response first: trigger haptic feedback immediately
                   if ('vibrate' in navigator) {
                     navigator.vibrate(10);
+                  }
+
+                  // Defer callback execution to let UI update first (consistent with CommandContext.execute)
+                  if (item.onClick) {
+                    deferNonBlocking(() => item.onClick!());
+                  } else {
+                    deferNonBlocking(() => props.onSelect(item.id));
                   }
                 }}
               />

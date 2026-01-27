@@ -1,6 +1,7 @@
 import { type Component, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { deferNonBlocking } from '../../utils/defer';
 import { Tooltip } from '../ui/Tooltip';
 
 export interface ActivityBarItem {
@@ -28,10 +29,12 @@ export interface ActivityBarProps {
 export function ActivityBar(props: ActivityBarProps) {
   const handleItemClick = (item: ActivityBarItem) => {
     if (item.onClick) {
-      item.onClick();
+      // Defer custom callback execution to let UI update first (consistent with CommandContext.execute)
+      deferNonBlocking(() => item.onClick!());
       return;
     }
 
+    // Default behavior: toggle sidebar collapse or change active tab (lightweight, keep synchronous)
     const isActive = props.activeId === item.id;
     const isCollapsed = props.collapsed ?? false;
 
