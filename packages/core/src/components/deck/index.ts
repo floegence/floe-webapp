@@ -1,4 +1,4 @@
-export { DeckGrid, DECK_GRID_CONFIG, type DeckGridProps } from './DeckGrid';
+export { DeckGrid, DECK_GRID_CONFIG, getGridConfigFromElement, type DeckGridProps } from './DeckGrid';
 export { DeckCell, type DeckCellProps } from './DeckCell';
 export { WidgetFrame, type WidgetFrameProps } from './WidgetFrame';
 export { WidgetResizeHandle, type WidgetResizeHandleProps } from './WidgetResizeHandle';

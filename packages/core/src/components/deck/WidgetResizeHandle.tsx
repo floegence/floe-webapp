@@ -2,7 +2,7 @@ import { createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget, type ResizeState } from '../../context/DeckContext';
 import { applyResizeDelta } from '../../utils/gridLayout';
-import { DECK_GRID_CONFIG } from './DeckGrid';
+import { getGridConfigFromElement } from './DeckGrid';
 import { lockBodyStyle } from '../../utils/bodyStyleLock';
 
 export interface WidgetResizeHandleProps {
@@ -116,7 +116,8 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     const gridEl = document.querySelector('.deck-grid') as HTMLElement | null;
     if (!gridEl) return;
 
-    const { cols, rowHeight, gap } = DECK_GRID_CONFIG;
+    // Read dynamic row height from the grid element
+    const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);
 
     // Calculate cell dimensions
     // Use clientWidth (excludes scrollbar) to avoid jitter when scrollbars appear/disappear.
@@ -169,6 +170,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
         isActive() && 'bg-primary/50'
       )}
       style={{ 'touch-action': 'none' }}
+      data-widget-resize-handle={props.edge}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUpOrCancel}

@@ -1,7 +1,7 @@
 import { createEffect, onCleanup } from 'solid-js';
 import { useDeck } from '../context/DeckContext';
 import { applyDragDelta } from '../utils/gridLayout';
-import { DECK_GRID_CONFIG } from '../components/deck/DeckGrid';
+import { getGridConfigFromElement } from '../components/deck/DeckGrid';
 import { lockBodyStyle } from '../utils/bodyStyleLock';
 
 /**
@@ -53,6 +53,10 @@ export function useDeckDrag() {
     // Skip if clicking on interactive elements (buttons, inputs, etc.)
     const interactiveElement = target.closest('button, input, select, textarea, [role="button"], a');
     if (interactiveElement) return;
+
+    // Skip if clicking on a resize handle (let resize handler take over)
+    const resizeHandle = target.closest('[data-widget-resize-handle]');
+    if (resizeHandle) return;
 
     const handle = target.closest('[data-widget-drag-handle]') as HTMLElement | null;
     if (!handle) return;
@@ -108,7 +112,8 @@ export function useDeckDrag() {
     const gridEl = document.querySelector('.deck-grid') as HTMLElement | null;
     if (!gridEl) return;
 
-    const { cols, rowHeight, gap } = DECK_GRID_CONFIG;
+    // Read dynamic row height from the grid element
+    const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);
 
     // Calculate cell dimensions.
     // Use clientWidth (excludes scrollbar) to avoid width jitter when scrollbars appear/disappear.
