@@ -16,6 +16,7 @@ const sections = [
   { id: 'ui-tooltips', label: 'Tooltip' },
   { id: 'ui-dialogs', label: 'Dialogs' },
   { id: 'ui-directory-picker', label: 'Directory Picker' },
+  { id: 'ui-file-save-picker', label: 'File Save Picker' },
   { id: 'ui-floating-window', label: 'Floating Window' },
   { id: 'ui-command-palette', label: 'Command Palette' },
   { id: 'ui-file-browser', label: 'File Browser' },

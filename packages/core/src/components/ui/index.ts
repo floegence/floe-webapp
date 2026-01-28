@@ -30,3 +30,4 @@ export {
 } from './Card';
 export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';
 export { DirectoryPicker, type DirectoryPickerProps } from './DirectoryPicker';
+export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';

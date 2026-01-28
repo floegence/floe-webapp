@@ -17,6 +17,7 @@ import {
   FileBrowser,
   type FileItem,
   Files,
+  FileSavePicker,
   FloatingWindow,
   GitBranch,
   Input,
@@ -175,6 +176,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [overlayVisible, setOverlayVisible] = createSignal(false);
   const [floatingWindowOpen, setFloatingWindowOpen] = createSignal(false);
   const [directoryPickerOpen, setDirectoryPickerOpen] = createSignal(false);
+  const [fileSavePickerOpen, setFileSavePickerOpen] = createSignal(false);
 
   const [dropdownValue, setDropdownValue] = createSignal('profile');
   const dropdownItems: DropdownItem[] = [
@@ -838,6 +840,38 @@ export function ShowcasePage(props: ShowcasePageProps) {
             notifications.success('Directory Selected', path);
           }}
           onCreateFolder={handleDemoCreateFolder}
+        />
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-file-save-picker"
+          title="File Save Picker"
+          description="Save-as dialog with directory tree, file list panel, and filename input."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
+            <Button onClick={() => setFileSavePickerOpen(true)}>Open File Save Picker</Button>
+            <p class="text-[11px] text-muted-foreground">
+              Features: split view (folder tree + file list), click file to fill name, filename validation, new folder
+            </p>
+          </PanelContent>
+        </Panel>
+
+        <FileSavePicker
+          open={fileSavePickerOpen()}
+          onOpenChange={setFileSavePickerOpen}
+          files={demoFileBrowserData}
+          initialPath="/src"
+          initialFileName="report.pdf"
+          onSave={(dirPath, fileName) => {
+            notifications.success('File Saved', `${dirPath}/${fileName}`);
+          }}
+          onCreateFolder={handleDemoCreateFolder}
+          validateFileName={(name) => {
+            if (name.includes(' ')) return 'Filename must not contain spaces';
+            return '';
+          }}
         />
       </div>
 
