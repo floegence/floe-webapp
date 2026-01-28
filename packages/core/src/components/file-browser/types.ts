@@ -98,6 +98,55 @@ export interface FilterMatchInfo {
 }
 
 /**
+ * Optimistic update operation types
+ */
+export type OptimisticUpdateType = 'remove' | 'update' | 'insert';
+
+/**
+ * Optimistic remove operation
+ */
+export interface OptimisticRemove {
+  type: 'remove';
+  /** Paths to remove */
+  paths: string[];
+}
+
+/**
+ * Optimistic update operation (rename/move)
+ */
+export interface OptimisticUpdate {
+  type: 'update';
+  /** Original path */
+  oldPath: string;
+  /** Updated item data */
+  updates: Partial<FileItem>;
+}
+
+/**
+ * Optimistic insert operation (duplicate/copy/new)
+ */
+export interface OptimisticInsert {
+  type: 'insert';
+  /** Parent folder path where item will be inserted */
+  parentPath: string;
+  /** Item to insert */
+  item: FileItem;
+}
+
+/**
+ * Union type for all optimistic operations
+ */
+export type OptimisticOperation = OptimisticRemove | OptimisticUpdate | OptimisticInsert;
+
+/**
+ * Scroll position state
+ */
+export interface ScrollPosition {
+  top: number;
+  left: number;
+}
+
+/**
  * File browser context value for internal state management
  */
 export interface FileBrowserContextValue {
@@ -148,4 +197,75 @@ export interface FileBrowserContextValue {
 
   // Open file
   openItem: (item: FileItem) => void;
+
+  // Optimistic updates - allow immediate UI feedback before server confirmation
+  /**
+   * Optimistically remove items from the file list.
+   * Call this before the actual delete operation for instant UI feedback.
+   * @param paths - Array of file/folder paths to remove
+   */
+  optimisticRemove: (paths: string[]) => void;
+
+  /**
+   * Optimistically update an item (rename/move).
+   * Call this before the actual operation for instant UI feedback.
+   * @param oldPath - Original path of the item
+   * @param updates - Partial updates to apply (name, path, etc.)
+   */
+  optimisticUpdate: (oldPath: string, updates: Partial<FileItem>) => void;
+
+  /**
+   * Optimistically insert a new item (duplicate/copy/create).
+   * Call this before the actual operation for instant UI feedback.
+   * @param parentPath - Parent folder path
+   * @param item - The new item to insert
+   */
+  optimisticInsert: (parentPath: string, item: FileItem) => void;
+
+  /**
+   * Clear all pending optimistic updates.
+   * Call this after successful server confirmation to sync with real data.
+   */
+  clearOptimisticUpdates: () => void;
+
+  /**
+   * Rollback all optimistic updates and restore original state.
+   * Call this when an operation fails to revert the UI.
+   */
+  rollbackOptimisticUpdates: () => void;
+
+  /**
+   * Check if there are pending optimistic updates.
+   */
+  hasOptimisticUpdates: Accessor<boolean>;
+
+  // Scroll position management - preserve scroll position across operations
+  /**
+   * Register a scroll container element for position tracking.
+   * Pass this as a ref callback to your scrollable container.
+   */
+  setScrollContainer: (el: HTMLElement | null) => void;
+
+  /**
+   * Get the current scroll position of the registered container.
+   */
+  getScrollPosition: () => ScrollPosition;
+
+  /**
+   * Set the scroll position of the registered container.
+   * Useful for restoring position after data refresh.
+   */
+  setScrollPosition: (position: ScrollPosition) => void;
+
+  /**
+   * Save current scroll position and return it.
+   * Convenience method that combines get + internal save.
+   */
+  saveScrollPosition: () => ScrollPosition;
+
+  /**
+   * Restore the last saved scroll position.
+   * Call this after an operation completes to maintain user's view.
+   */
+  restoreScrollPosition: () => void;
 }

@@ -1,6 +1,15 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo } from 'solid-js';
 import { deferNonBlocking } from '../../utils/defer';
-import type { FileItem, ViewMode, SortConfig, FileBrowserContextValue, ContextMenuEvent, FilterMatchInfo } from './types';
+import type {
+  FileItem,
+  ViewMode,
+  SortConfig,
+  FileBrowserContextValue,
+  ContextMenuEvent,
+  FilterMatchInfo,
+  OptimisticOperation,
+  ScrollPosition,
+} from './types';
 
 const FileBrowserContext = createContext<FileBrowserContextValue>();
 
@@ -49,12 +58,88 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [filterQuery, setFilterQueryInternal] = createSignal('');
   const [isFilterActive, setFilterActive] = createSignal(false);
 
+  // Optimistic updates state
+  const [optimisticOps, setOptimisticOps] = createSignal<OptimisticOperation[]>([]);
+
+  // Scroll position management
+  let scrollContainerEl: HTMLElement | null = null;
+  let savedScrollPosition: ScrollPosition = { top: 0, left: 0 };
+
   // Build file tree accessor
   const files: Accessor<FileItem[]> = () => props.files;
 
   const normalizePath = (path: string) => {
     const p = (path ?? '').trim();
     return p === '' ? '/' : p;
+  };
+
+  // Helper to get parent path
+  const getParentPath = (path: string): string => {
+    const p = normalizePath(path);
+    if (p === '/') return '/';
+    const parts = p.split('/').filter(Boolean);
+    parts.pop();
+    return parts.length ? '/' + parts.join('/') : '/';
+  };
+
+  // Apply optimistic operations to a file list
+  const applyOptimisticOps = (items: FileItem[], parentPath: string): FileItem[] => {
+    const ops = optimisticOps();
+    if (ops.length === 0) return items;
+
+    let result = [...items];
+    const normalizedParent = normalizePath(parentPath);
+
+    for (const op of ops) {
+      switch (op.type) {
+        case 'remove': {
+          // Remove items whose path is in the removal list
+          const pathsToRemove = new Set(op.paths.map(normalizePath));
+          result = result.filter((item) => !pathsToRemove.has(normalizePath(item.path)));
+          break;
+        }
+        case 'update': {
+          // Update item if it exists in current list
+          const oldPathNorm = normalizePath(op.oldPath);
+          const idx = result.findIndex((item) => normalizePath(item.path) === oldPathNorm);
+          if (idx !== -1) {
+            // Check if the updated item should still be in this directory
+            const newPath = op.updates.path ?? result[idx].path;
+            const newParent = getParentPath(newPath);
+            if (newParent === normalizedParent) {
+              // Item stays in this directory, apply updates
+              result[idx] = { ...result[idx], ...op.updates };
+            } else {
+              // Item moved to different directory, remove from current list
+              result.splice(idx, 1);
+            }
+          } else {
+            // Item might have been moved INTO this directory
+            const newPath = op.updates.path;
+            if (newPath && getParentPath(newPath) === normalizedParent) {
+              // We need the original item data, which we don't have here
+              // This case should be handled by the caller providing full item data
+            }
+          }
+          break;
+        }
+        case 'insert': {
+          // Insert item if it belongs to current directory
+          if (normalizePath(op.parentPath) === normalizedParent) {
+            // Check if item already exists (avoid duplicates)
+            const exists = result.some(
+              (item) => normalizePath(item.path) === normalizePath(op.item.path)
+            );
+            if (!exists) {
+              result.push(op.item);
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    return result;
   };
 
   const fileIndex = createMemo(() => {
@@ -78,6 +163,9 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const currentFiles = createMemo(() => {
     const path = normalizePath(currentPath());
     let found = fileIndex().get(path) ?? [];
+
+    // Apply optimistic updates first (before filtering/sorting)
+    found = applyOptimisticOps(found, path);
 
     // Apply fuzzy filter
     const query = filterQuery().trim();
@@ -218,6 +306,61 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     }
   };
 
+  // Optimistic update methods
+  const optimisticRemove = (paths: string[]) => {
+    if (paths.length === 0) return;
+    setOptimisticOps((prev) => [...prev, { type: 'remove', paths }]);
+  };
+
+  const optimisticUpdate = (oldPath: string, updates: Partial<FileItem>) => {
+    setOptimisticOps((prev) => [...prev, { type: 'update', oldPath, updates }]);
+  };
+
+  const optimisticInsert = (parentPath: string, item: FileItem) => {
+    setOptimisticOps((prev) => [...prev, { type: 'insert', parentPath, item }]);
+  };
+
+  const clearOptimisticUpdates = () => {
+    setOptimisticOps([]);
+  };
+
+  const rollbackOptimisticUpdates = () => {
+    setOptimisticOps([]);
+  };
+
+  const hasOptimisticUpdates = () => optimisticOps().length > 0;
+
+  // Scroll position management methods
+  const setScrollContainer = (el: HTMLElement | null) => {
+    scrollContainerEl = el;
+  };
+
+  const getScrollPosition = (): ScrollPosition => {
+    if (!scrollContainerEl) return { top: 0, left: 0 };
+    return {
+      top: scrollContainerEl.scrollTop,
+      left: scrollContainerEl.scrollLeft,
+    };
+  };
+
+  const setScrollPosition = (position: ScrollPosition) => {
+    if (!scrollContainerEl) return;
+    scrollContainerEl.scrollTop = position.top;
+    scrollContainerEl.scrollLeft = position.left;
+  };
+
+  const saveScrollPosition = (): ScrollPosition => {
+    savedScrollPosition = getScrollPosition();
+    return savedScrollPosition;
+  };
+
+  const restoreScrollPosition = () => {
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      setScrollPosition(savedScrollPosition);
+    });
+  };
+
   const contextValue: FileBrowserContextValue = {
     currentPath,
     setCurrentPath,
@@ -247,6 +390,19 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     showContextMenu,
     hideContextMenu,
     openItem,
+    // Optimistic updates
+    optimisticRemove,
+    optimisticUpdate,
+    optimisticInsert,
+    clearOptimisticUpdates,
+    rollbackOptimisticUpdates,
+    hasOptimisticUpdates,
+    // Scroll position management
+    setScrollContainer,
+    getScrollPosition,
+    setScrollPosition,
+    saveScrollPosition,
+    restoreScrollPosition,
   };
 
   return (

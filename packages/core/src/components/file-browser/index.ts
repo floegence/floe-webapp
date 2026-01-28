@@ -29,4 +29,10 @@ export type {
   ContextMenuItem,
   ContextMenuEvent,
   ContextMenuCallbacks,
+  OptimisticUpdateType,
+  OptimisticRemove,
+  OptimisticUpdate,
+  OptimisticInsert,
+  OptimisticOperation,
+  ScrollPosition,
 } from './types';
