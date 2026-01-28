@@ -3,7 +3,21 @@ import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
 import { useFileBrowser } from './FileBrowserContext';
-import type { ContextMenuItem, ContextMenuCallbacks, FileItem } from './types';
+import type { ContextMenuItem, ContextMenuCallbacks, FileItem, ContextMenuActionType } from './types';
+
+/**
+ * 内置菜单项的 action type（不包含 'custom'）
+ */
+export type BuiltinContextMenuAction = Exclude<ContextMenuActionType, 'custom'>;
+
+/**
+ * hideItems 支持静态数组或动态函数。
+ * - 静态数组：直接列出要隐藏的 action types
+ * - 动态函数：根据右键目标 items 动态决定要隐藏的 action types
+ */
+export type HideItemsValue =
+  | BuiltinContextMenuAction[]
+  | ((targetItems: FileItem[]) => BuiltinContextMenuAction[]);
 
 // Default icons for menu items
 const CopyIcon = (props: { class?: string }) => (
@@ -58,8 +72,17 @@ export interface FileContextMenuProps {
   overrideItems?: ContextMenuItem[];
   /** Callbacks for built-in actions */
   callbacks?: ContextMenuCallbacks;
-  /** Items to hide from default menu */
-  hideItems?: Array<'duplicate' | 'ask-agent' | 'copy-to' | 'move-to' | 'delete' | 'rename'>;
+  /**
+   * Items to hide from default menu.
+   * Can be a static array or a function that receives target items and returns the array.
+   *
+   * @example Static array
+   * hideItems={['ask-agent', 'duplicate']}
+   *
+   * @example Dynamic function (e.g., hide non-atomic operations for folders)
+   * hideItems={(items) => items.some(i => i.type === 'folder') ? ['duplicate', 'copy-to'] : []}
+   */
+  hideItems?: HideItemsValue;
 }
 
 /**
@@ -121,10 +144,22 @@ export function FileContextMenu(props: FileContextMenuProps) {
       return props.overrideItems;
     }
 
+    // Resolve hideItems: can be static array or dynamic function
+    const resolveHideItems = (): BuiltinContextMenuAction[] => {
+      const hideItems = props.hideItems;
+      if (!hideItems) return [];
+      if (typeof hideItems === 'function') {
+        const targetItems = ctx.contextMenu()?.items ?? [];
+        return hideItems(targetItems);
+      }
+      return hideItems;
+    };
+
     // Filter out hidden items
     let items = defaultItems;
-    if (props.hideItems?.length) {
-      items = items.filter((item) => !props.hideItems?.includes(item.type as never));
+    const hiddenTypes = resolveHideItems();
+    if (hiddenTypes.length > 0) {
+      items = items.filter((item) => !hiddenTypes.includes(item.type as BuiltinContextMenuAction));
     }
 
     // Add custom items

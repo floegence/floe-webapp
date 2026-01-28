@@ -4,7 +4,7 @@ export { FileBrowserProvider, useFileBrowser, type FileBrowserProviderProps } fr
 export { DirectoryTree, type DirectoryTreeProps } from './DirectoryTree';
 export { FileListView, type FileListViewProps } from './FileListView';
 export { FileGridView, type FileGridViewProps } from './FileGridView';
-export { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
+export { FileContextMenu, type FileContextMenuProps, type BuiltinContextMenuAction, type HideItemsValue } from './FileContextMenu';
 export { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
 export { FileBrowserToolbar, type FileBrowserToolbarProps } from './FileBrowserToolbar';
 export {
