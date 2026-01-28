@@ -69,8 +69,8 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
     files: () => props.files,
     // eslint-disable-next-line solid/reactivity -- filter is a static callback
     filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
-    homeLabel: props.homeLabel,
-    homePath: props.homePath,
+    homeLabel: () => props.homeLabel,
+    homePath: () => props.homePath,
   });
 
   // ── Confirm / Cancel ─────────────────────────────────────────────────

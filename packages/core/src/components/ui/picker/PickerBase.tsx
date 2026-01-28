@@ -80,14 +80,14 @@ export interface UsePickerTreeOptions {
   filter?: (item: FileItem) => boolean;
   /** Additional reset logic when the dialog opens */
   onReset?: (initialPath: string) => void;
-  /** Label for the home/root directory in tree and breadcrumb (default: 'Root') */
-  homeLabel?: string;
+  /** Label for the home/root directory in tree and breadcrumb (default: 'Root'). Supports accessor for reactivity. */
+  homeLabel?: string | Accessor<string | undefined>;
   /**
    * Real filesystem path of the home directory (e.g. '/home/user').
    * When set, the path input bar and display paths will show real filesystem
-   * paths instead of internal tree-relative paths.
+   * paths instead of internal tree-relative paths. Supports accessor for reactivity.
    */
-  homePath?: string;
+  homePath?: string | Accessor<string | undefined>;
 }
 
 export interface PickerTreeState {
@@ -110,20 +110,28 @@ export interface PickerTreeState {
   expandToPath: (path: string) => void;
   breadcrumbSegments: Accessor<{ name: string; path: string }[]>;
   handleBreadcrumbClick: (path: string) => void;
-  /** Home label for display */
-  homeLabel: string;
+  /** Home label for display (reactive) */
+  homeLabel: Accessor<string>;
   /** Convert internal tree path to display (real filesystem) path */
   toDisplayPath: (internalPath: string) => string;
 }
 
 export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   const initial = opts.initialPath ?? '/';
-  const homeLabel = opts.homeLabel ?? 'Root';
-  // homePath: normalized real filesystem path for the tree root (e.g. '/home/user')
-  const homePath = opts.homePath ? normalizePath(opts.homePath) : undefined;
+
+  // Reactive getters for homeLabel and homePath (support both string and accessor)
+  const getHomeLabel = (): string => {
+    const hl = typeof opts.homeLabel === 'function' ? opts.homeLabel() : opts.homeLabel;
+    return hl ?? 'Root';
+  };
+  const getHomePath = (): string | undefined => {
+    const hp = typeof opts.homePath === 'function' ? opts.homePath() : opts.homePath;
+    return hp ? normalizePath(hp) : undefined;
+  };
 
   /** Convert internal tree path (e.g. '/Documents') to display path (e.g. '/home/user/Documents') */
   const toDisplayPath = (internalPath: string): string => {
+    const homePath = getHomePath();
     if (!homePath) return internalPath;
     const p = normalizePath(internalPath);
     if (p === '/') return homePath;
@@ -132,6 +140,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
 
   /** Convert display path (e.g. '/home/user/Documents') back to internal tree path (e.g. '/Documents') */
   const toInternalPath = (displayPath: string): string => {
+    const homePath = getHomePath();
     if (!homePath) return normalizePath(displayPath);
     const dp = normalizePath(displayPath);
     if (dp === homePath) return '/';
@@ -236,9 +245,10 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
 
   const breadcrumbSegments = createMemo(() => {
     const path = selectedPath();
-    if (path === '/' || path === '') return [{ name: homeLabel, path: '/' }];
+    const label = getHomeLabel();
+    if (path === '/' || path === '') return [{ name: label, path: '/' }];
     const parts = path.split('/').filter(Boolean);
-    const result: { name: string; path: string }[] = [{ name: homeLabel, path: '/' }];
+    const result: { name: string; path: string }[] = [{ name: label, path: '/' }];
     let current = '';
     for (const part of parts) {
       current += '/' + part;
@@ -272,7 +282,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     expandToPath,
     breadcrumbSegments,
     handleBreadcrumbClick,
-    homeLabel,
+    homeLabel: getHomeLabel,
     toDisplayPath,
   };
 }
@@ -455,11 +465,16 @@ export interface PickerFolderTreeProps {
   class?: string;
   style?: JSX.CSSProperties;
   emptyText?: string;
-  /** Label for the home/root directory (default: 'Root') */
-  homeLabel?: string;
+  /** Label for the home/root directory (default: 'Root'). Supports accessor for reactivity. */
+  homeLabel?: string | Accessor<string>;
 }
 
 export function PickerFolderTree(props: PickerFolderTreeProps) {
+  const getLabel = () => {
+    const hl = typeof props.homeLabel === 'function' ? props.homeLabel() : props.homeLabel;
+    return hl ?? 'Root';
+  };
+
   return (
     <div
       class={cn('border border-border rounded overflow-y-auto', props.class)}
@@ -478,7 +493,7 @@ export function PickerFolderTree(props: PickerFolderTreeProps) {
         )}
       >
         <FolderOpenIcon class="w-4 h-4 flex-shrink-0" />
-        <span>{props.homeLabel ?? 'Root'}</span>
+        <span>{getLabel()}</span>
       </button>
 
       <For each={props.rootFolders()}>
