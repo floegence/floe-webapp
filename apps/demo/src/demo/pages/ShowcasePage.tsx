@@ -89,6 +89,28 @@ const demoFileBrowserData: FileItem[] = [
         path: '/src/components',
         modifiedAt: new Date('2025-01-19'),
         children: [
+          {
+            id: 'src-components-ui',
+            name: 'ui',
+            type: 'folder',
+            path: '/src/components/ui',
+            modifiedAt: new Date('2025-01-19'),
+            children: [
+              {
+                id: 'src-components-ui-primitives',
+                name: 'primitives',
+                type: 'folder',
+                path: '/src/components/ui/primitives',
+                modifiedAt: new Date('2025-01-18'),
+                children: [
+                  { id: 'ui-button', name: 'Button.tsx', type: 'file', path: '/src/components/ui/primitives/Button.tsx', extension: 'tsx', size: 2048, modifiedAt: new Date('2025-01-18') },
+                  { id: 'ui-input', name: 'Input.tsx', type: 'file', path: '/src/components/ui/primitives/Input.tsx', extension: 'tsx', size: 1824, modifiedAt: new Date('2025-01-17') },
+                  { id: 'ui-checkbox', name: 'Checkbox.tsx', type: 'file', path: '/src/components/ui/primitives/Checkbox.tsx', extension: 'tsx', size: 1536, modifiedAt: new Date('2025-01-16') },
+                ],
+              },
+              { id: 'ui-index', name: 'index.ts', type: 'file', path: '/src/components/ui/index.ts', extension: 'ts', size: 512, modifiedAt: new Date('2025-01-18') },
+            ],
+          },
           { id: 'src-button', name: 'Button.tsx', type: 'file', path: '/src/components/Button.tsx', extension: 'tsx', size: 2048, modifiedAt: new Date('2025-01-18') },
           { id: 'src-card', name: 'Card.tsx', type: 'file', path: '/src/components/Card.tsx', extension: 'tsx', size: 3512, modifiedAt: new Date('2025-01-17') },
           { id: 'src-dialog', name: 'Dialog.tsx', type: 'file', path: '/src/components/Dialog.tsx', extension: 'tsx', size: 4096, modifiedAt: new Date('2025-01-16') },
@@ -884,7 +906,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <div class="h-[420px] border border-border rounded-lg overflow-hidden">
           <FileBrowser
             files={demoFileBrowserData}
-            initialPath="/"
+            initialPath="/src/components/ui/primitives"
             initialViewMode="list"
             onNavigate={(path) => notifications.info('Navigate', `Path: ${path}`)}
             onSelect={(items) => {
@@ -896,7 +918,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           />
         </div>
         <p class="text-[11px] text-muted-foreground">
-          Features: List/Grid view toggle, collapsible sidebar tree, breadcrumb navigation, sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
+          Features: List/Grid view toggle, collapsible sidebar tree, <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments), sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
         </p>
       </div>
 
