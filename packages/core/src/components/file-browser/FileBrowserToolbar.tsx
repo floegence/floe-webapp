@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js';
+import { Show, onMount } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { Breadcrumb } from './Breadcrumb';
@@ -7,6 +8,8 @@ import { Grid } from '../icons';
 
 export interface FileBrowserToolbarProps {
   class?: string;
+  /** Reference to focus the filter input */
+  filterInputRef?: (el: HTMLInputElement) => void;
 }
 
 // List icon
@@ -65,16 +68,90 @@ const SidebarIcon = (props: { class?: string }) => (
   </svg>
 );
 
+// Search icon
+const SearchIcon = (props: { class?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
+
+// X icon for clear
+const XIcon = (props: { class?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
+
 /**
- * Toolbar with navigation, breadcrumb, and view mode toggle
+ * Toolbar with navigation, breadcrumb, filter, and view mode toggle
  */
 export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
   const ctx = useFileBrowser();
+  let inputRef: HTMLInputElement | undefined;
 
   const canNavigateUp = () => {
     const path = ctx.currentPath();
     return path !== '/' && path !== '';
   };
+
+  const handleFilterToggle = () => {
+    if (ctx.isFilterActive()) {
+      // Close filter: clear query and collapse
+      ctx.setFilterQuery('');
+      ctx.setFilterActive(false);
+    } else {
+      // Open filter
+      ctx.setFilterActive(true);
+      // Focus input after expansion animation
+      setTimeout(() => inputRef?.focus(), 50);
+    }
+  };
+
+  const handleClearFilter = () => {
+    ctx.setFilterQuery('');
+    inputRef?.focus();
+  };
+
+  const handleFilterKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      ctx.setFilterQuery('');
+      ctx.setFilterActive(false);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Collapse if empty on blur
+    if (!ctx.filterQuery().trim()) {
+      ctx.setFilterActive(false);
+    }
+  };
+
+  // Set ref for external access (keyboard shortcut)
+  onMount(() => {
+    if (props.filterInputRef && inputRef) {
+      props.filterInputRef(inputRef);
+    }
+  });
 
   return (
     <div
@@ -117,9 +194,80 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
         <FolderUpIcon class="w-4 h-4" />
       </button>
 
-      {/* Breadcrumb navigation */}
-      <div class="flex-1 min-w-0 overflow-hidden">
+      {/* Breadcrumb navigation - hidden when filter is active on mobile */}
+      <div
+        class={cn(
+          'flex-1 min-w-0 overflow-hidden transition-all duration-200',
+          ctx.isFilterActive() && 'hidden sm:block sm:flex-1'
+        )}
+      >
         <Breadcrumb />
+      </div>
+
+      {/* Filter search box */}
+      <div
+        class={cn(
+          'flex items-center gap-1 transition-all duration-200 ease-out',
+          ctx.isFilterActive()
+            ? 'flex-1 sm:flex-none sm:w-48'
+            : 'w-7'
+        )}
+      >
+        <Show
+          when={ctx.isFilterActive()}
+          fallback={
+            <button
+              type="button"
+              onClick={handleFilterToggle}
+              class={cn(
+                'flex items-center justify-center w-7 h-7 rounded cursor-pointer',
+                'transition-colors duration-100',
+                'hover:bg-muted/70',
+                'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+              )}
+              aria-label="Filter files"
+            >
+              <SearchIcon class="w-4 h-4" />
+            </button>
+          }
+        >
+          <div class="flex items-center flex-1 gap-1 px-2 py-1 bg-muted/50 rounded-md border border-border/50 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+            <SearchIcon class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+            <input
+              ref={(el) => {
+                inputRef = el;
+                if (props.filterInputRef) props.filterInputRef(el);
+              }}
+              type="text"
+              value={ctx.filterQuery()}
+              onInput={(e) => ctx.setFilterQuery(e.currentTarget.value)}
+              onKeyDown={handleFilterKeyDown}
+              onBlur={handleInputBlur}
+              placeholder="Filter..."
+              class={cn(
+                'flex-1 min-w-0 bg-transparent text-xs',
+                'outline-none border-0 ring-0 shadow-none appearance-none',
+                'focus:outline-none focus:border-0 focus:ring-0',
+                'placeholder:text-muted-foreground/60'
+              )}
+              aria-label="Filter files by name"
+            />
+            <Show when={ctx.filterQuery()}>
+              <button
+                type="button"
+                onClick={handleClearFilter}
+                class={cn(
+                  'flex items-center justify-center w-4 h-4 rounded-sm cursor-pointer',
+                  'text-muted-foreground hover:text-foreground',
+                  'transition-colors duration-100'
+                )}
+                aria-label="Clear filter"
+              >
+                <XIcon class="w-3 h-3" />
+              </button>
+            </Show>
+          </div>
+        </Show>
       </div>
 
       {/* View mode toggle */}

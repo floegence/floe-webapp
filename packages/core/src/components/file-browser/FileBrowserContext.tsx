@@ -1,8 +1,29 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo } from 'solid-js';
 import { deferNonBlocking } from '../../utils/defer';
-import type { FileItem, ViewMode, SortConfig, FileBrowserContextValue, ContextMenuEvent } from './types';
+import type { FileItem, ViewMode, SortConfig, FileBrowserContextValue, ContextMenuEvent, FilterMatchInfo } from './types';
 
 const FileBrowserContext = createContext<FileBrowserContextValue>();
+
+/**
+ * Fuzzy match function - returns matched indices or null if no match
+ * Supports subsequence matching (e.g., "cfg" matches "ConFiGuration")
+ */
+function fuzzyMatch(text: string, pattern: string): number[] | null {
+  if (!pattern) return [];
+  const t = text.toLowerCase();
+  const p = pattern.toLowerCase();
+  const indices: number[] = [];
+  let ti = 0;
+
+  for (const char of p) {
+    const found = t.indexOf(char, ti);
+    if (found === -1) return null;
+    indices.push(found);
+    ti = found + 1;
+  }
+
+  return indices;
+}
 
 export interface FileBrowserProviderProps {
   children: JSX.Element;
@@ -25,6 +46,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(['/']));
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
+  const [filterQuery, setFilterQueryInternal] = createSignal('');
+  const [isFilterActive, setFilterActive] = createSignal(false);
 
   // Build file tree accessor
   const files: Accessor<FileItem[]> = () => props.files;
@@ -54,7 +77,13 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Get files at current path
   const currentFiles = createMemo(() => {
     const path = normalizePath(currentPath());
-    const found = fileIndex().get(path) ?? [];
+    let found = fileIndex().get(path) ?? [];
+
+    // Apply fuzzy filter
+    const query = filterQuery().trim();
+    if (query) {
+      found = found.filter(item => fuzzyMatch(item.name, query) !== null);
+    }
 
     // Sort files
     const config = sortConfig();
@@ -91,6 +120,9 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setCurrentPathInternal(nextPath);
     // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
     setSelectedIds(new Set<string>());
+    // Clear filter when navigating to a different directory
+    setFilterQueryInternal('');
+    setFilterActive(false);
     const onSelect = props.onSelect;
     deferNonBlocking(() => onSelect?.([]));
     props.onNavigate?.(nextPath);
@@ -166,6 +198,18 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const showContextMenu = (event: ContextMenuEvent) => setContextMenu(event);
   const hideContextMenu = () => setContextMenu(null);
 
+  const setFilterQuery = (query: string) => {
+    setFilterQueryInternal(query);
+  };
+
+  const getFilterMatch = (name: string): FilterMatchInfo | null => {
+    const query = filterQuery().trim();
+    if (!query) return null;
+    const indices = fuzzyMatch(name, query);
+    if (!indices) return null;
+    return { matchedIndices: indices };
+  };
+
   const openItem = (item: FileItem) => {
     if (item.type === 'folder') {
       navigateTo(item);
@@ -192,6 +236,11 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     isExpanded,
     files,
     currentFiles,
+    filterQuery,
+    setFilterQuery,
+    isFilterActive,
+    setFilterActive,
+    getFilterMatch,
     sidebarCollapsed,
     toggleSidebar,
     contextMenu,

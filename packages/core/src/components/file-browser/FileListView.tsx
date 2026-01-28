@@ -1,14 +1,61 @@
-import { For, Show, untrack } from 'solid-js';
+import { For, Show, untrack, createMemo } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
-import type { FileItem, SortField } from './types';
+import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 
 export interface FileListViewProps {
   class?: string;
+}
+
+/**
+ * Render file name with highlighted matched characters
+ */
+function HighlightedName(props: { name: string; match: FilterMatchInfo | null }) {
+  const segments = createMemo(() => {
+    if (!props.match || props.match.matchedIndices.length === 0) {
+      return [{ text: props.name, highlight: false }];
+    }
+
+    const result: Array<{ text: string; highlight: boolean }> = [];
+    const indices = new Set(props.match.matchedIndices);
+    let currentText = '';
+    let currentHighlight = false;
+
+    for (let i = 0; i < props.name.length; i++) {
+      const isHighlight = indices.has(i);
+      if (i === 0) {
+        currentHighlight = isHighlight;
+        currentText = props.name[i];
+      } else if (isHighlight === currentHighlight) {
+        currentText += props.name[i];
+      } else {
+        result.push({ text: currentText, highlight: currentHighlight });
+        currentText = props.name[i];
+        currentHighlight = isHighlight;
+      }
+    }
+    if (currentText) {
+      result.push({ text: currentText, highlight: currentHighlight });
+    }
+
+    return result;
+  });
+
+  return (
+    <span class="truncate">
+      <For each={segments()}>
+        {(seg) => (
+          <Show when={seg.highlight} fallback={<>{seg.text}</>}>
+            <mark class="bg-warning/40 text-inherit rounded-sm">{seg.text}</mark>
+          </Show>
+        )}
+      </For>
+    </span>
+  );
 }
 
 /**
@@ -97,8 +144,20 @@ export function FileListView(props: FileListViewProps) {
         <Show
           when={ctx.currentFiles().length > 0}
           fallback={
-            <div class="flex items-center justify-center h-32 text-xs text-muted-foreground">
-              This folder is empty
+            <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+              <Show
+                when={ctx.filterQuery().trim()}
+                fallback={<span>This folder is empty</span>}
+              >
+                <span>No files matching "{ctx.filterQuery()}"</span>
+                <button
+                  type="button"
+                  onClick={() => ctx.setFilterQuery('')}
+                  class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  Clear Filter
+                </button>
+              </Show>
             </div>
           }
         >
@@ -128,6 +187,7 @@ interface FileListItemProps {
 function FileListItem(props: FileListItemProps) {
   const ctx = useFileBrowser();
   const isSelected = () => ctx.isSelected(props.item.id);
+  const filterMatch = () => ctx.getFilterMatch(props.item.name);
   const item = untrack(() => props.item);
   const longPress = createLongPressContextMenuHandlers(ctx, item);
   let lastPointerType: PointerEvent['pointerType'] | undefined;
@@ -226,7 +286,7 @@ function FileListItem(props: FileListItemProps) {
         <span class="flex-shrink-0 w-4 h-4">
           <Dynamic component={fileIcon()} class="w-4 h-4" />
         </span>
-        <span class="truncate">{props.item.name}</span>
+        <HighlightedName name={props.item.name} match={filterMatch()} />
       </div>
 
       {/* Modified column */}

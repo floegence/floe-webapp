@@ -90,6 +90,14 @@ export interface ContextMenuCallbacks {
 }
 
 /**
+ * Filter match info for highlighting
+ */
+export interface FilterMatchInfo {
+  /** Matched character indices in the name */
+  matchedIndices: number[];
+}
+
+/**
  * File browser context value for internal state management
  */
 export interface FileBrowserContextValue {
@@ -121,6 +129,13 @@ export interface FileBrowserContextValue {
   // Files
   files: Accessor<FileItem[]>;
   currentFiles: Accessor<FileItem[]>;
+
+  // Filter
+  filterQuery: Accessor<string>;
+  setFilterQuery: (query: string) => void;
+  isFilterActive: Accessor<boolean>;
+  setFilterActive: (active: boolean) => void;
+  getFilterMatch: (name: string) => FilterMatchInfo | null;
 
   // Sidebar
   sidebarCollapsed: Accessor<boolean>;

@@ -81,6 +81,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   const ctx = useFileBrowser();
   const [isMobile, setIsMobile] = createSignal(false);
   const sidebarWidth = () => props.sidebarWidth ?? 220;
+  let filterInputRef: HTMLInputElement | undefined;
 
   // Mobile detection with auto-collapse
   onMount(() => {
@@ -103,6 +104,18 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
 
     mq.addEventListener('change', handler);
     onCleanup(() => mq.removeEventListener('change', handler));
+
+    // Keyboard shortcut for filter (Ctrl/Cmd + F)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        ctx.setFilterActive(true);
+        setTimeout(() => filterInputRef?.focus(), 50);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => document.removeEventListener('keydown', handleKeyDown));
   });
 
   const showSidebar = () => !ctx.sidebarCollapsed() || !isMobile();
@@ -187,7 +200,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
         {/* Main file view area */}
         <div class="flex-1 min-w-0 flex flex-col">
           {/* Toolbar */}
-          <FileBrowserToolbar />
+          <FileBrowserToolbar filterInputRef={(el) => (filterInputRef = el)} />
 
           {/* File view (list or grid) */}
           <div class="flex-1 min-h-0">
@@ -203,6 +216,9 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
           <div class="flex items-center justify-between px-3 py-1 border-t border-border text-[10px] text-muted-foreground">
             <span>
               {ctx.currentFiles().length} items
+              <Show when={ctx.filterQuery().trim()}>
+                {' '}(filtered)
+              </Show>
               <Show when={ctx.selectedItems().size > 0}>
                 {' · '}{ctx.selectedItems().size} selected
               </Show>
