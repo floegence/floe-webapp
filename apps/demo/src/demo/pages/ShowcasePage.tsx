@@ -892,6 +892,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 notifications.info('Selected', items.map((i) => i.name).join(', '));
               }
             }}
+            onOpen={(item) => notifications.success('Opened', item.name)}
           />
         </div>
         <p class="text-[11px] text-muted-foreground">
