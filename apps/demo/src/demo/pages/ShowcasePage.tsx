@@ -11,6 +11,7 @@ import {
   CardTitle,
   ConfirmDialog,
   Dialog,
+  DirectoryPicker,
   Dropdown,
   type DropdownItem,
   FileBrowser,
@@ -173,6 +174,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [confirmLoading, setConfirmLoading] = createSignal(false);
   const [overlayVisible, setOverlayVisible] = createSignal(false);
   const [floatingWindowOpen, setFloatingWindowOpen] = createSignal(false);
+  const [directoryPickerOpen, setDirectoryPickerOpen] = createSignal(false);
 
   const [dropdownValue, setDropdownValue] = createSignal('profile');
   const dropdownItems: DropdownItem[] = [
@@ -253,6 +255,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
     setConfirmLoading(false);
     setConfirmOpen(false);
     notifications.success('Confirmed', 'The async action has completed.');
+  };
+
+  const handleDemoCreateFolder = async (parentPath: string, name: string) => {
+    await new Promise((r) => setTimeout(r, 800));
+    notifications.info('Folder Created', `${parentPath}/${name}`);
   };
 
   return (
@@ -804,6 +811,33 @@ export function ShowcasePage(props: ShowcasePageProps) {
           cancelText="Cancel"
           loading={confirmLoading()}
           onConfirm={confirmAction}
+        />
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-directory-picker"
+          title="Directory Picker"
+          description="Modal directory selector with tree navigation, path input, breadcrumb, and new folder creation."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
+            <Button onClick={() => setDirectoryPickerOpen(true)}>Open Directory Picker</Button>
+            <p class="text-[11px] text-muted-foreground">
+              Features: folder tree, path input with Go, breadcrumb, new folder, filter prop
+            </p>
+          </PanelContent>
+        </Panel>
+
+        <DirectoryPicker
+          open={directoryPickerOpen()}
+          onOpenChange={setDirectoryPickerOpen}
+          files={demoFileBrowserData}
+          initialPath="/src"
+          onSelect={(path) => {
+            notifications.success('Directory Selected', path);
+          }}
+          onCreateFolder={handleDemoCreateFolder}
         />
       </div>
 
