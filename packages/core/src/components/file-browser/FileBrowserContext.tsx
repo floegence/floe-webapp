@@ -50,7 +50,12 @@ export interface FileBrowserProviderProps {
  * Provider for file browser state management
  */
 export function FileBrowserProvider(props: FileBrowserProviderProps) {
-  const [currentPath, setCurrentPathInternal] = createSignal(props.initialPath ?? '/');
+  const normalizePath = (path: string) => {
+    const p = (path ?? '').trim();
+    return p === '' ? '/' : p;
+  };
+
+  const [currentPath, setCurrentPathInternal] = createSignal(normalizePath(props.initialPath ?? '/'));
   const [selectedIds, setSelectedIds] = createSignal<Set<string>>(new Set());
   const [viewMode, setViewMode] = createSignal<ViewMode>(props.initialViewMode ?? 'list');
   const [sortConfig, setSortConfig] = createSignal<SortConfig>({ field: 'name', direction: 'asc' });
@@ -72,11 +77,6 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   // Build file tree accessor
   const files: Accessor<FileItem[]> = () => props.files;
-
-  const normalizePath = (path: string) => {
-    const p = (path ?? '').trim();
-    return p === '' ? '/' : p;
-  };
 
   // Helper to get parent path
   const getParentPath = (path: string): string => {
@@ -210,6 +210,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   const setCurrentPath = (path: string) => {
     const nextPath = normalizePath(path);
+    if (nextPath === currentPath()) return;
     setCurrentPathInternal(nextPath);
     // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
     setSelectedIds(new Set<string>());

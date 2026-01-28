@@ -91,7 +91,9 @@ function FolderTreeItem(props: TreeItemProps) {
 
   const handleNavigate = (e: MouseEvent) => {
     if (longPress.consumeClickSuppression(e)) return;
-    ctx.setCurrentPath(props.item.path);
+    // Keep tree behavior consistent with list/grid "open folder" behavior:
+    // navigating into a folder should also expand it in the tree.
+    ctx.navigateTo(item);
   };
 
   const handleContextMenu = (e: MouseEvent) => {
