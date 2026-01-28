@@ -130,19 +130,48 @@ function FileListItem(props: FileListItemProps) {
   const isSelected = () => ctx.isSelected(props.item.id);
   const item = untrack(() => props.item);
   const longPress = createLongPressContextMenuHandlers(ctx, item);
+  let lastPointerType: PointerEvent['pointerType'] | undefined;
+
+  const isTouchLike = () => lastPointerType === 'touch' || lastPointerType === 'pen';
+
+  const handlePointerDown = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerDown(e);
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerMove(e);
+  };
+
+  const handlePointerUp = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerUp();
+  };
+
+  const handlePointerCancel = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerCancel();
+  };
 
   const handleClick = (e: MouseEvent) => {
     if (longPress.consumeClickSuppression(e)) return;
+    if (isTouchLike()) {
+      ctx.openItem(props.item);
+      return;
+    }
     ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
   };
 
   const handleDoubleClick = () => {
+    if (isTouchLike()) return;
     ctx.openItem(props.item);
   };
 
   const handleContextMenu = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isTouchLike()) return;
 
     // If item is not selected, select it first
     if (!isSelected()) {
@@ -174,10 +203,10 @@ function FileListItem(props: FileListItemProps) {
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
-      onPointerDown={longPress.onPointerDown}
-      onPointerMove={longPress.onPointerMove}
-      onPointerUp={longPress.onPointerUp}
-      onPointerCancel={longPress.onPointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
       class={cn(
         'group w-full flex items-center text-xs cursor-pointer',
         'transition-all duration-100',

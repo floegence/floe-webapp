@@ -4,10 +4,11 @@ import type { FileBrowserContextValue, FileItem } from './types';
 export function createLongPressContextMenuHandlers(
   ctx: FileBrowserContextValue,
   item: FileItem,
-  options?: { delayMs?: number; moveTolerancePx?: number }
+  options?: { delayMs?: number; moveTolerancePx?: number; selectOnOpen?: boolean }
 ) {
   const delayMs = options?.delayMs ?? 500;
   const moveTolerancePx = options?.moveTolerancePx ?? 10;
+  const selectOnOpen = options?.selectOnOpen ?? true;
 
   let timer: number | null = null;
   let start: { x: number; y: number } | null = null;
@@ -21,7 +22,17 @@ export function createLongPressContextMenuHandlers(
     start = null;
   };
 
+  const armSuppressNextClick = () => {
+    suppressNextClick = true;
+  };
+
   const openMenuAt = (x: number, y: number) => {
+    if (!selectOnOpen) {
+      ctx.showContextMenu({ x, y, items: [item] });
+      armSuppressNextClick();
+      return;
+    }
+
     const id = item.id;
     if (!ctx.isSelected(id)) {
       ctx.selectItem(id, false);
@@ -29,14 +40,17 @@ export function createLongPressContextMenuHandlers(
 
     const selectedIds = ctx.selectedItems();
     const allFiles = ctx.currentFiles();
-    const selectedItems =
-      selectedIds.size > 0 ? allFiles.filter((f) => selectedIds.has(f.id)) : [item];
+    const selectedFromCurrent = allFiles.filter((f) => selectedIds.has(f.id));
+    const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [item];
 
     ctx.showContextMenu({ x, y, items: selectedItems });
-    suppressNextClick = true;
+    armSuppressNextClick();
   };
 
   const onPointerDown = (e: PointerEvent) => {
+    // New gesture: clear any stale suppression from previous interactions on this item.
+    suppressNextClick = false;
+
     // Long-press is for touch/pen; keep desktop interactions unchanged.
     if (e.pointerType === 'mouse') return;
     if (typeof window === 'undefined') return;
@@ -58,6 +72,8 @@ export function createLongPressContextMenuHandlers(
     const dy = e.clientY - start.y;
     if (Math.hypot(dx, dy) > moveTolerancePx) {
       clear();
+      // Treat as a scroll/drag gesture: suppress the synthetic click that may follow.
+      armSuppressNextClick();
     }
   };
 
@@ -72,7 +88,9 @@ export function createLongPressContextMenuHandlers(
     return true;
   };
 
-  onCleanup(() => clear());
+  onCleanup(() => {
+    clear();
+  });
 
   return {
     onPointerDown,

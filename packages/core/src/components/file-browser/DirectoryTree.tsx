@@ -1,9 +1,10 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, untrack } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, FolderOpenIcon } from './FileIcons';
 import type { FileItem } from './types';
 import { ChevronRight } from '../icons';
+import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 
 export interface DirectoryTreeProps {
   class?: string;
@@ -19,7 +20,11 @@ export function DirectoryTree(props: DirectoryTreeProps) {
   const folders = createMemo(() => ctx.files().filter((item) => item.type === 'folder'));
 
   return (
-    <div class={cn('flex flex-col', props.class)}>
+    <div
+      class={cn('flex flex-col', props.class)}
+      // Prevent browser context menu inside the tree area.
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <TreeNode items={folders()} depth={0} />
     </div>
   );
@@ -50,6 +55,11 @@ function FolderTreeItem(props: TreeItemProps) {
   const ctx = useFileBrowser();
   const isExpanded = () => ctx.isExpanded(props.item.path);
   const isActive = () => ctx.currentPath() === props.item.path;
+  const item = untrack(() => props.item);
+  const longPress = createLongPressContextMenuHandlers(ctx, item, { selectOnOpen: false });
+  let lastPointerType: PointerEvent['pointerType'] | undefined;
+
+  const isTouchLike = () => lastPointerType === 'touch' || lastPointerType === 'pen';
 
   // Count only subfolders for the badge
   const subfolderCount = createMemo(() =>
@@ -59,8 +69,41 @@ function FolderTreeItem(props: TreeItemProps) {
   // Check if folder has any subfolders
   const hasSubfolders = () => subfolderCount() > 0;
 
-  const handleNavigate = () => {
+  const handlePointerDown = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerDown(e);
+  };
+
+  const handlePointerMove = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerMove(e);
+  };
+
+  const handlePointerUp = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerUp();
+  };
+
+  const handlePointerCancel = (e: PointerEvent) => {
+    lastPointerType = e.pointerType;
+    longPress.onPointerCancel();
+  };
+
+  const handleNavigate = (e: MouseEvent) => {
+    if (longPress.consumeClickSuppression(e)) return;
     ctx.setCurrentPath(props.item.path);
+  };
+
+  const handleContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isTouchLike()) return;
+
+    ctx.showContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [props.item],
+    });
   };
 
   const handleToggle = () => {
@@ -102,6 +145,11 @@ function FolderTreeItem(props: TreeItemProps) {
         <button
           type="button"
           onClick={handleNavigate}
+          onContextMenu={handleContextMenu}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           class={cn(
             'flex items-center gap-1 flex-1 min-w-0 text-left cursor-pointer pl-1',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring'

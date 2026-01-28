@@ -19,7 +19,7 @@ export interface FileBrowserProps {
   onNavigate?: (path: string) => void;
   /** Callback when selection changes */
   onSelect?: (items: FileItem[]) => void;
-  /** Callback when a file is opened (double-click) */
+  /** Callback when a file is opened */
   onOpen?: (item: FileItem) => void;
   /** Additional class names */
   class?: string;
