@@ -215,12 +215,12 @@ export function FileSavePicker(props: FileSavePickerProps) {
             onSelect={tree.handleSelectFolder}
             onSelectRoot={tree.handleSelectRoot}
             isSelectable={tree.isSelectable}
-            class="w-1/2 border-r border-border border-0 rounded-none"
+            class="w-1/2 min-w-0 border-r border-border border-0 rounded-none"
             style={{ 'max-height': 'none', 'min-height': '0' }}
           />
 
           {/* Right: file list */}
-          <div class="w-1/2 overflow-y-auto">
+          <div class="w-1/2 min-w-0 overflow-y-auto">
             <Show
               when={currentFiles().length > 0}
               fallback={
