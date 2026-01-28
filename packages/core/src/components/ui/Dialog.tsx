@@ -182,7 +182,10 @@ export interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** Description displayed under title (header area). Use children for content area. */
   description?: string;
+  /** Custom content in the dialog body. If not provided, an empty placeholder is used. */
+  children?: JSX.Element;
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
@@ -200,7 +203,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
       description={props.description}
       footer={
         <>
-          <Button variant="ghost" onClick={() => props.onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => props.onOpenChange(false)} disabled={props.loading}>
             {props.cancelText ?? floe.config.strings.confirmDialog.cancel}
           </Button>
           <Button
@@ -213,7 +216,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
         </>
       }
     >
-      <div />
+      {props.children ?? <div />}
     </Dialog>
   );
 }
