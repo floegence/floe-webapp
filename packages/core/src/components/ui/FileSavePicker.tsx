@@ -58,6 +58,15 @@ export interface FileSavePickerProps {
    */
   validateFileName?: (name: string) => string;
 
+  /** Label for the home/root directory in tree and breadcrumb (default: 'Root') */
+  homeLabel?: string;
+
+  /**
+   * Real filesystem path of the home directory (e.g. '/home/user').
+   * When set, path input and display paths show real filesystem paths.
+   */
+  homePath?: string;
+
   class?: string;
 }
 
@@ -75,6 +84,8 @@ export function FileSavePicker(props: FileSavePickerProps) {
     files: () => props.files,
     // eslint-disable-next-line solid/reactivity -- filter is a static callback
     filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
+    homeLabel: props.homeLabel,
+    homePath: props.homePath,
     onReset: () => {
       setFileName(props.initialFileName ?? '');
       setFileNameError('');
@@ -141,9 +152,9 @@ export function FileSavePicker(props: FileSavePickerProps) {
     }
   };
 
-  // Full path preview
+  // Full path preview (display path for user)
   const fullPath = createMemo(() => {
-    const dir = tree.selectedPath();
+    const dir = tree.toDisplayPath(tree.selectedPath());
     const name = fileName().trim();
     if (!name) return dir;
     return dir === '/' ? `/${name}` : `${dir}/${name}`;
@@ -215,6 +226,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
             onSelect={tree.handleSelectFolder}
             onSelectRoot={tree.handleSelectRoot}
             isSelectable={tree.isSelectable}
+            homeLabel={tree.homeLabel}
             class="w-1/2 min-w-0 border-r border-border border-0 rounded-none"
             style={{ 'max-height': 'none', 'min-height': '0' }}
           />
@@ -263,6 +275,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
           <NewFolderSection
             parentPath={tree.selectedPath}
             onCreateFolder={props.onCreateFolder!}
+            toDisplayPath={tree.toDisplayPath}
           />
         </Show>
       </div>

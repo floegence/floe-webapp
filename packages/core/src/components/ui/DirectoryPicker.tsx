@@ -46,6 +46,15 @@ export interface DirectoryPickerProps {
   /** Optional: filter which directories are selectable (return false to grey-out) */
   filter?: (item: FileItem) => boolean;
 
+  /** Label for the home/root directory in tree and breadcrumb (default: 'Root') */
+  homeLabel?: string;
+
+  /**
+   * Real filesystem path of the home directory (e.g. '/home/user').
+   * When set, path input and display paths show real filesystem paths.
+   */
+  homePath?: string;
+
   class?: string;
 }
 
@@ -60,6 +69,8 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
     files: () => props.files,
     // eslint-disable-next-line solid/reactivity -- filter is a static callback
     filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
+    homeLabel: props.homeLabel,
+    homePath: props.homePath,
   });
 
   // ── Confirm / Cancel ─────────────────────────────────────────────────
@@ -84,8 +95,8 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
       class={cn('max-w-lg', props.class)}
       footer={
         <div class="flex items-center w-full gap-2">
-          <span class="flex-1 text-[11px] text-muted-foreground truncate" title={tree.selectedPath()}>
-            {tree.selectedPath()}
+          <span class="flex-1 text-[11px] text-muted-foreground truncate" title={tree.toDisplayPath(tree.selectedPath())}>
+            {tree.toDisplayPath(tree.selectedPath())}
           </span>
           <Button variant="ghost" size="sm" onClick={handleCancel}>
             {props.cancelText ?? 'Cancel'}
@@ -121,6 +132,7 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
           onSelect={tree.handleSelectFolder}
           onSelectRoot={tree.handleSelectRoot}
           isSelectable={tree.isSelectable}
+          homeLabel={tree.homeLabel}
           style={{ 'max-height': '280px', 'min-height': '160px' }}
         />
 
@@ -128,6 +140,7 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
           <NewFolderSection
             parentPath={tree.selectedPath}
             onCreateFolder={props.onCreateFolder!}
+            toDisplayPath={tree.toDisplayPath}
           />
         </Show>
       </div>

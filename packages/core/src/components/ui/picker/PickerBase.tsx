@@ -80,6 +80,14 @@ export interface UsePickerTreeOptions {
   filter?: (item: FileItem) => boolean;
   /** Additional reset logic when the dialog opens */
   onReset?: (initialPath: string) => void;
+  /** Label for the home/root directory in tree and breadcrumb (default: 'Root') */
+  homeLabel?: string;
+  /**
+   * Real filesystem path of the home directory (e.g. '/home/user').
+   * When set, the path input bar and display paths will show real filesystem
+   * paths instead of internal tree-relative paths.
+   */
+  homePath?: string;
 }
 
 export interface PickerTreeState {
@@ -102,14 +110,41 @@ export interface PickerTreeState {
   expandToPath: (path: string) => void;
   breadcrumbSegments: Accessor<{ name: string; path: string }[]>;
   handleBreadcrumbClick: (path: string) => void;
+  /** Home label for display */
+  homeLabel: string;
+  /** Convert internal tree path to display (real filesystem) path */
+  toDisplayPath: (internalPath: string) => string;
 }
 
 export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   const initial = opts.initialPath ?? '/';
+  const homeLabel = opts.homeLabel ?? 'Root';
+  // homePath: normalized real filesystem path for the tree root (e.g. '/home/user')
+  const homePath = opts.homePath ? normalizePath(opts.homePath) : undefined;
+
+  /** Convert internal tree path (e.g. '/Documents') to display path (e.g. '/home/user/Documents') */
+  const toDisplayPath = (internalPath: string): string => {
+    if (!homePath) return internalPath;
+    const p = normalizePath(internalPath);
+    if (p === '/') return homePath;
+    return homePath === '/' ? p : homePath + p;
+  };
+
+  /** Convert display path (e.g. '/home/user/Documents') back to internal tree path (e.g. '/Documents') */
+  const toInternalPath = (displayPath: string): string => {
+    if (!homePath) return normalizePath(displayPath);
+    const dp = normalizePath(displayPath);
+    if (dp === homePath) return '/';
+    if (homePath !== '/' && dp.startsWith(homePath + '/')) {
+      return dp.slice(homePath.length) || '/';
+    }
+    // If display path doesn't start with homePath, treat as-is (internal path was entered directly)
+    return normalizePath(displayPath);
+  };
 
   const [selectedPath, setSelectedPath] = createSignal(initial);
   const [expandedPaths, setExpandedPaths] = createSignal<Set<string>>(new Set(['/']));
-  const [pathInput, setPathInput] = createSignal(initial);
+  const [pathInput, setPathInput] = createSignal(toDisplayPath(initial));
   const [pathInputError, setPathInputError] = createSignal('');
 
   const folderIndex = useFolderIndex(opts.files);
@@ -121,7 +156,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
       if (open) {
         const init = opts.initialPath ?? '/';
         setSelectedPath(init);
-        setPathInput(init);
+        setPathInput(toDisplayPath(init));
         setPathInputError('');
         const ancestors = getAncestorPaths(init);
         setExpandedPaths(new Set(['/', ...ancestors]));
@@ -133,7 +168,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   // Sync path input when selection changes via tree click
   createEffect(
     on(selectedPath, (path) => {
-      setPathInput(path);
+      setPathInput(toDisplayPath(path));
       setPathInputError('');
     })
   );
@@ -182,7 +217,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   };
 
   const handlePathInputGo = () => {
-    const value = normalizePath(pathInput().trim());
+    const value = toInternalPath(pathInput().trim());
     if (isValidPath(value)) {
       setSelectedPath(value);
       setPathInputError('');
@@ -201,9 +236,9 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
 
   const breadcrumbSegments = createMemo(() => {
     const path = selectedPath();
-    if (path === '/' || path === '') return [{ name: 'Root', path: '/' }];
+    if (path === '/' || path === '') return [{ name: homeLabel, path: '/' }];
     const parts = path.split('/').filter(Boolean);
-    const result: { name: string; path: string }[] = [{ name: 'Root', path: '/' }];
+    const result: { name: string; path: string }[] = [{ name: homeLabel, path: '/' }];
     let current = '';
     for (const part of parts) {
       current += '/' + part;
@@ -237,6 +272,8 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     expandToPath,
     breadcrumbSegments,
     handleBreadcrumbClick,
+    homeLabel,
+    toDisplayPath,
   };
 }
 
@@ -245,6 +282,8 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
 export interface NewFolderSectionProps {
   parentPath: Accessor<string>;
   onCreateFolder: (parentPath: string, name: string) => Promise<void>;
+  /** Optional function to convert internal path to display path */
+  toDisplayPath?: (internalPath: string) => string;
 }
 
 export function NewFolderSection(props: NewFolderSectionProps) {
@@ -329,7 +368,7 @@ export function NewFolderSection(props: NewFolderSectionProps) {
         </Button>
       </div>
       <p class="text-[11px] text-muted-foreground -mt-1">
-        Creating in: {props.parentPath()}
+        Creating in: {props.toDisplayPath ? props.toDisplayPath(props.parentPath()) : props.parentPath()}
       </p>
     </Show>
   );
@@ -416,6 +455,8 @@ export interface PickerFolderTreeProps {
   class?: string;
   style?: JSX.CSSProperties;
   emptyText?: string;
+  /** Label for the home/root directory (default: 'Root') */
+  homeLabel?: string;
 }
 
 export function PickerFolderTree(props: PickerFolderTreeProps) {
@@ -437,7 +478,7 @@ export function PickerFolderTree(props: PickerFolderTreeProps) {
         )}
       >
         <FolderOpenIcon class="w-4 h-4 flex-shrink-0" />
-        <span>Root</span>
+        <span>{props.homeLabel ?? 'Root'}</span>
       </button>
 
       <For each={props.rootFolders()}>
