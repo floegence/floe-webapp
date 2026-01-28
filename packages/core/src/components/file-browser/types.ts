@@ -156,6 +156,9 @@ export interface FileBrowserContextValue {
   navigateUp: () => void;
   navigateTo: (item: FileItem) => void;
 
+  // Home/root label for display (e.g., "Home", "~", default: "Root")
+  homeLabel: Accessor<string>;
+
   // Selection
   selectedItems: Accessor<Set<string>>;
   selectItem: (id: string, multi?: boolean) => void;

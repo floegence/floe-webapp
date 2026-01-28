@@ -39,6 +39,8 @@ export interface FileBrowserProviderProps {
   files: FileItem[];
   initialPath?: string;
   initialViewMode?: ViewMode;
+  /** Label for the root/home directory in breadcrumb (default: 'Root') */
+  homeLabel?: string;
   onNavigate?: (path: string) => void;
   onSelect?: (items: FileItem[]) => void;
   onOpen?: (item: FileItem) => void;
@@ -57,6 +59,9 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
   const [filterQuery, setFilterQueryInternal] = createSignal('');
   const [isFilterActive, setFilterActive] = createSignal(false);
+
+  // Home label accessor (reactive)
+  const homeLabel = () => props.homeLabel ?? 'Root';
 
   // Optimistic updates state
   const [optimisticOps, setOptimisticOps] = createSignal<OptimisticOperation[]>([]);
@@ -366,6 +371,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setCurrentPath,
     navigateUp,
     navigateTo,
+    homeLabel,
     selectedItems: () => selectedIds(),
     selectItem,
     clearSelection,

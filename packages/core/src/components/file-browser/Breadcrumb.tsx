@@ -59,12 +59,13 @@ export function Breadcrumb(props: BreadcrumbProps) {
   // 解析路径为段落
   const segments = createMemo<BreadcrumbSegment[]>(() => {
     const path = ctx.currentPath();
+    const rootLabel = ctx.homeLabel();
     if (path === '/' || path === '') {
-      return [{ name: 'Root', path: '/' }];
+      return [{ name: rootLabel, path: '/' }];
     }
 
     const parts = path.split('/').filter(Boolean);
-    const result: BreadcrumbSegment[] = [{ name: 'Root', path: '/' }];
+    const result: BreadcrumbSegment[] = [{ name: rootLabel, path: '/' }];
 
     let currentPath = '';
     for (const part of parts) {
