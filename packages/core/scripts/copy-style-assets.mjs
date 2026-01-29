@@ -25,6 +25,10 @@ const copies = [
     src: resolve(pkgRoot, 'src/styles/themes/dark.css'),
     dest: resolve(pkgRoot, 'dist/themes/dark.css'),
   },
+  {
+    src: resolve(pkgRoot, 'src/components/chat/styles/chat.css'),
+    dest: resolve(pkgRoot, 'dist/chat.css'),
+  },
 ];
 
 function copyFile({ src, dest }) {

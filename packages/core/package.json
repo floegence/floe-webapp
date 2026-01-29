@@ -29,6 +29,10 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "diff": "^8.0.3",
+    "marked": "^17.0.1",
+    "mermaid": "^11.12.2",
+    "shiki": "^3.21.0",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {

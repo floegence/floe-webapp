@@ -10,6 +10,7 @@ import {
   GitBranch,
   Grid3x3,
   LayoutDashboard,
+  MessageSquare,
   Moon,
   NotificationContainer,
   Select,
@@ -31,10 +32,12 @@ import { SearchPage } from './demo/pages/SearchPage';
 import { ShowcasePage } from './demo/pages/ShowcasePage';
 import { DeckPage } from './demo/pages/DeckPage';
 import { LaunchpadPage } from './demo/pages/LaunchpadPage';
+import { ChatPage } from './demo/pages/ChatPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
+import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 
 function AppContent() {
   const theme = useTheme();
@@ -98,6 +101,8 @@ function AppContent() {
   );
 
   const SettingsView: Component = () => <SettingsPanel />;
+
+  const ChatView: Component = () => <ChatSidebar />;
 
   const DeckView: Component = () => <DeckPage />;
 
@@ -242,6 +247,23 @@ function AppContent() {
         },
       ],
     },
+    {
+      id: 'chat',
+      name: 'Chat',
+      icon: MessageSquare,
+      description: 'AI chat interface demo',
+      component: ChatView,
+      sidebar: { order: 5 },
+      commands: [
+        {
+          id: 'demo.open.chat',
+          title: 'Demo: Open Chat',
+          keybind: 'mod+5',
+          category: 'Demo',
+          execute: () => layout.setSidebarActiveTab('chat'),
+        },
+      ],
+    },
   ];
 
   registry.registerAll(demoComponents);
@@ -277,6 +299,9 @@ function AppContent() {
               </div>
             </div>
           </Match>
+          <Match when={layout.sidebarActiveTab() === 'chat'}>
+            <ChatPage />
+          </Match>
         </Switch>
       </Show>
     </>
@@ -307,6 +332,9 @@ function AppContent() {
               <h1 class="text-lg font-semibold">Settings</h1>
               <SettingsPanel />
             </div>
+          </Match>
+          <Match when={layout.sidebarActiveTab() === 'chat'}>
+            <ChatPage />
           </Match>
         </Switch>
       </Show>

@@ -260,10 +260,12 @@
     outline: none;
   }
 
-  /* Selection */
+  /* Selection (全局默认选中效果)
+     使用主题变量，组件可通过更具体的选择器覆盖
+     注意：此样式在 @layer base 中，优先级较低，组件层可以覆盖 */
   ::selection {
-    background: color-mix(in srgb, var(--primary) 20%, transparent);
-    color: var(--foreground);
+    background-color: var(--selection-bg);
+    color: var(--selection-fg);
   }
 }
 

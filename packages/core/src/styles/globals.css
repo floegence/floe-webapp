@@ -9,3 +9,4 @@
 @source '../**/*.{ts,tsx}';
 
 @import './floe.css';
+@import '../components/chat/styles/chat.css';
