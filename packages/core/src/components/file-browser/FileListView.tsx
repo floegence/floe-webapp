@@ -289,14 +289,25 @@ export function FileListView(props: FileListViewProps) {
         ref={setHeaderEl}
         class="flex items-center border-b border-border text-[11px] text-muted-foreground font-medium"
       >
-        <div class="relative flex-1 min-w-0">
+        <div
+          class={cn(
+            'relative flex-1 min-w-0',
+            columnLayout().showModified && 'border-r border-border'
+          )}
+        >
           <button
             type="button"
             onClick={() => handleSort('name')}
             class="group w-full flex items-center min-w-0 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
           >
-            Name
-            <SortIndicator field="name" />
+            {/* Align header label with row content (icons + name). */}
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="flex-shrink-0 w-4 h-4" aria-hidden="true" />
+              <span class="flex items-center min-w-0">
+                <span class="truncate">Name</span>
+                <SortIndicator field="name" />
+              </span>
+            </span>
           </button>
           <Show when={columnLayout().showModified}>
             <ResizeHandle
@@ -308,7 +319,7 @@ export function FileListView(props: FileListViewProps) {
 
         <Show when={columnLayout().showModified}>
           <div
-            class="relative shrink-0"
+            class={cn('relative shrink-0', columnLayout().showSize && 'border-r border-border')}
             style={{ width: `${modifiedWidthPx()}px` }}
           >
             <button
