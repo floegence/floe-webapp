@@ -325,7 +325,7 @@ export function FileListView(props: FileListViewProps) {
             <button
               type="button"
               onClick={() => handleSort('modifiedAt')}
-              class="group w-full flex items-center px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
             >
               Modified
               <SortIndicator field="modifiedAt" />
@@ -344,7 +344,7 @@ export function FileListView(props: FileListViewProps) {
             <button
               type="button"
               onClick={() => handleSort('size')}
-              class="group w-full flex items-center px-3 py-2 text-right justify-end cursor-pointer hover:bg-muted/50 transition-colors"
+              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
             >
               Size
               <SortIndicator field="size" />
@@ -514,7 +514,7 @@ function FileListItem(props: FileListItemProps) {
       {/* Modified column */}
       <Show when={props.showModified}>
         <div
-          class="shrink-0 px-3 py-1.5 text-muted-foreground truncate"
+          class="shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate"
           style={{ width: `${props.modifiedWidthPx}px` }}
         >
           {props.formatDate(props.item.modifiedAt)}
@@ -524,7 +524,7 @@ function FileListItem(props: FileListItemProps) {
       {/* Size column */}
       <Show when={props.showSize}>
         <div
-          class="shrink-0 px-3 py-1.5 text-right text-muted-foreground"
+          class="shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate"
           style={{ width: `${props.sizeWidthPx}px` }}
         >
           {props.item.type === 'folder' ? '-' : props.formatSize(props.item.size)}
