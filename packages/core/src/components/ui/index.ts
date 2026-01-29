@@ -31,3 +31,21 @@ export {
 export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';
 export { DirectoryPicker, type DirectoryPickerProps } from './DirectoryPicker';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';
+export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';
+export {
+  HighlightBlock,
+  InfoBlock,
+  WarningBlock,
+  SuccessBlock,
+  ErrorBlock,
+  NoteBlock,
+  TipBlock,
+  type HighlightBlockProps,
+  type HighlightVariant,
+} from './HighlightBlock';
+export {
+  ProcessingIndicator,
+  type ProcessingIndicatorProps,
+  type ProcessingIndicatorVariant,
+  type ProcessingIndicatorStatus,
+} from './ProcessingIndicator';
