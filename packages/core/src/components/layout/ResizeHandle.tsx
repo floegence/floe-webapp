@@ -129,6 +129,18 @@ export function ResizeHandle(props: ResizeHandleProps) {
       role="separator"
       aria-orientation={isHorizontal() ? 'vertical' : 'horizontal'}
     >
+      {/* Subtle always-visible guide line for discoverability */}
+      <div
+        class={cn(
+          'absolute pointer-events-none',
+          isHorizontal()
+            ? 'top-0 bottom-0 left-1/2 w-px -translate-x-1/2'
+            : 'left-0 right-0 top-1/2 h-px -translate-y-1/2',
+          isDragging() && 'bg-primary opacity-100',
+          !isDragging() && 'bg-border/60 opacity-70 group-hover:bg-primary/50 group-hover:opacity-100'
+        )}
+      />
+
       {/* Visual indicator */}
       <div
         class={cn(
