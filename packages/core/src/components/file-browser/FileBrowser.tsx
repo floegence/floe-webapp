@@ -6,7 +6,7 @@ import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
 import { FileBrowserToolbar } from './FileBrowserToolbar';
 import { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
-import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem } from './types';
+import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem, FileListColumnRatios } from './types';
 
 export interface FileBrowserProps {
   /** File tree data */
@@ -15,6 +15,8 @@ export interface FileBrowserProps {
   initialPath?: string;
   /** Initial view mode */
   initialViewMode?: ViewMode;
+  /** Initial list view column ratios (for resizable columns) */
+  initialListColumnRatios?: FileListColumnRatios;
   /** Callback when navigation occurs */
   onNavigate?: (path: string) => void;
   /** Callback when selection changes */
@@ -48,6 +50,7 @@ export function FileBrowser(props: FileBrowserProps) {
       files={props.files}
       initialPath={props.initialPath}
       initialViewMode={props.initialViewMode}
+      initialListColumnRatios={props.initialListColumnRatios}
       onNavigate={props.onNavigate}
       onSelect={props.onSelect}
       onOpen={props.onOpen}

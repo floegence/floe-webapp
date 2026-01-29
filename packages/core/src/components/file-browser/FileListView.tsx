@@ -1,11 +1,14 @@
-import { For, Show, untrack, createMemo } from 'solid-js';
+import { For, Show, untrack, createMemo, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
+import { ResizeHandle } from '../layout/ResizeHandle';
 
 export interface FileListViewProps {
   class?: string;
@@ -109,34 +112,234 @@ export function FileListView(props: FileListViewProps) {
     );
   };
 
+  const isSmUp = useMediaQuery('(min-width: 640px)');
+  const isMdUp = useMediaQuery('(min-width: 768px)');
+
+  const [headerEl, setHeaderEl] = createSignal<HTMLDivElement | null>(null);
+  const headerSize = useResizeObserver(headerEl);
+
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+  const columnLayout = createMemo(() => {
+    const width = headerSize()?.width ?? 0;
+    const showModified = isSmUp();
+    const showSize = isMdUp();
+    const ratios = ctx.listColumnRatios();
+
+    // Min widths tuned for the current typography (text-[11px] header, text-xs rows).
+    const minName = 160;
+    const minModified = 120;
+    const minSize = 80;
+
+    // Fallbacks when we cannot measure yet (e.g. before mount).
+    const fallbackModified = 128;
+    const fallbackSize = 96;
+
+    if (!showModified || width <= 0) {
+      return {
+        width,
+        showModified,
+        showSize,
+        minName,
+        minModified,
+        minSize,
+        modifiedWidth: fallbackModified,
+        sizeWidth: fallbackSize,
+      };
+    }
+
+    if (!showSize) {
+      // Size is hidden (<md). Name + Modified should occupy full width.
+      const hiddenSizeRatio = ratios.size;
+      const available = Math.max(0, 1 - hiddenSizeRatio);
+
+      let modifiedWidth = (available > 0 ? ratios.modifiedAt / available : ratios.modifiedAt) * width;
+      modifiedWidth = clamp(modifiedWidth, minModified, Math.max(minModified, width - minName));
+
+      return {
+        width,
+        showModified,
+        showSize,
+        minName,
+        minModified,
+        minSize,
+        modifiedWidth,
+        sizeWidth: 0,
+      };
+    }
+
+    // >=md: show all 3 columns. We only store ratios; here we map to px and enforce min widths.
+    let modifiedWidth = Math.max(minModified, ratios.modifiedAt * width);
+    let sizeWidth = Math.max(minSize, ratios.size * width);
+
+    const maxOther = Math.max(0, width - minName);
+    if (modifiedWidth + sizeWidth > maxOther) {
+      // Pull space back into the Name column while respecting min widths.
+      const over = modifiedWidth + sizeWidth - maxOther;
+      const mShrink = Math.max(0, modifiedWidth - minModified);
+      const sShrink = Math.max(0, sizeWidth - minSize);
+      const totalShrink = mShrink + sShrink;
+
+      if (totalShrink > 0) {
+        modifiedWidth -= over * (mShrink / totalShrink);
+        sizeWidth -= over * (sShrink / totalShrink);
+      }
+    }
+
+    modifiedWidth = Math.max(minModified, modifiedWidth);
+    sizeWidth = Math.max(minSize, sizeWidth);
+
+    return {
+      width,
+      showModified,
+      showSize,
+      minName,
+      minModified,
+      minSize,
+      modifiedWidth,
+      sizeWidth,
+    };
+  });
+
+  const modifiedWidthPx = () => columnLayout().modifiedWidth;
+  const sizeWidthPx = () => columnLayout().sizeWidth;
+
+  const handleResizeNameModified = (delta: number) => {
+    const layout = columnLayout();
+    if (!layout.showModified || layout.width <= 0) return;
+
+    if (!layout.showSize) {
+      // <md: only Name + Modified visible; keep the hidden Size ratio stable.
+      const ratios = ctx.listColumnRatios();
+      const sizeRatio = ratios.size;
+      const available = Math.max(0, 1 - sizeRatio);
+      if (available <= 0) return;
+
+      const width = layout.width;
+      const modified = layout.modifiedWidth;
+      const name = Math.max(0, width - modified);
+
+      const minDelta = layout.minName - name;
+      const maxDelta = modified - layout.minModified;
+      const d = clamp(delta, minDelta, maxDelta);
+      if (d === 0) return;
+
+      const nextName = name + d;
+      const nextModified = modified - d;
+
+      const nextNameRatio = (nextName / width) * available;
+      const nextModifiedRatio = (nextModified / width) * available;
+      ctx.setListColumnRatios({
+        name: nextNameRatio,
+        modifiedAt: nextModifiedRatio,
+        size: sizeRatio,
+      });
+      return;
+    }
+
+    // >=md: transfer width between Name and Modified (Size stays the same).
+    const width = layout.width;
+    const modified = layout.modifiedWidth;
+    const size = layout.sizeWidth;
+    const name = Math.max(0, width - modified - size);
+
+    const minDelta = layout.minName - name;
+    const maxDelta = modified - layout.minModified;
+    const d = clamp(delta, minDelta, maxDelta);
+    if (d === 0) return;
+
+    const nextName = name + d;
+    const nextModified = modified - d;
+    ctx.setListColumnRatios({
+      name: nextName / width,
+      modifiedAt: nextModified / width,
+      size: size / width,
+    });
+  };
+
+  const handleResizeModifiedSize = (delta: number) => {
+    const layout = columnLayout();
+    if (!layout.showSize || layout.width <= 0) return;
+
+    const width = layout.width;
+    const modified = layout.modifiedWidth;
+    const size = layout.sizeWidth;
+
+    // Transfer width between Modified and Size (Name stays the same).
+    const minDelta = layout.minModified - modified;
+    const maxDelta = size - layout.minSize;
+    const d = clamp(delta, minDelta, maxDelta);
+    if (d === 0) return;
+
+    const nextModified = modified + d;
+    const nextSize = size - d;
+    const nextName = Math.max(0, width - nextModified - nextSize);
+
+    ctx.setListColumnRatios({
+      name: nextName / width,
+      modifiedAt: nextModified / width,
+      size: nextSize / width,
+    });
+  };
+
   return (
     <div class={cn('flex flex-col h-full min-h-0', props.class)}>
       {/* Header */}
-      <div class="flex items-center border-b border-border text-[11px] text-muted-foreground font-medium">
-        <button
-          type="button"
-          onClick={() => handleSort('name')}
-          class="group flex items-center flex-1 min-w-0 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
-        >
-          Name
-          <SortIndicator field="name" />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSort('modifiedAt')}
-          class="group hidden sm:flex items-center w-32 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
-        >
-          Modified
-          <SortIndicator field="modifiedAt" />
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSort('size')}
-          class="group hidden md:flex items-center w-24 px-3 py-2 text-right justify-end cursor-pointer hover:bg-muted/50 transition-colors"
-        >
-          Size
-          <SortIndicator field="size" />
-        </button>
+      <div
+        ref={setHeaderEl}
+        class="flex items-center border-b border-border text-[11px] text-muted-foreground font-medium"
+      >
+        <div class="relative flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={() => handleSort('name')}
+            class="group w-full flex items-center min-w-0 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+          >
+            Name
+            <SortIndicator field="name" />
+          </button>
+          <Show when={columnLayout().showModified}>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={handleResizeNameModified}
+            />
+          </Show>
+        </div>
+
+        <Show when={columnLayout().showModified}>
+          <div
+            class="relative shrink-0"
+            style={{ width: `${modifiedWidthPx()}px` }}
+          >
+            <button
+              type="button"
+              onClick={() => handleSort('modifiedAt')}
+              class="group w-full flex items-center px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              Modified
+              <SortIndicator field="modifiedAt" />
+            </button>
+            <Show when={columnLayout().showSize}>
+              <ResizeHandle
+                direction="horizontal"
+                onResize={handleResizeModifiedSize}
+              />
+            </Show>
+          </div>
+        </Show>
+
+        <Show when={columnLayout().showSize}>
+          <div class="shrink-0" style={{ width: `${sizeWidthPx()}px` }}>
+            <button
+              type="button"
+              onClick={() => handleSort('size')}
+              class="group w-full flex items-center px-3 py-2 text-right justify-end cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              Size
+              <SortIndicator field="size" />
+            </button>
+          </div>
+        </Show>
       </div>
 
       {/* File list */}
@@ -168,6 +371,10 @@ export function FileListView(props: FileListViewProps) {
                 formatSize={formatSize}
                 formatDate={formatDate}
                 index={index()}
+                showModified={columnLayout().showModified}
+                showSize={columnLayout().showSize}
+                modifiedWidthPx={modifiedWidthPx()}
+                sizeWidthPx={sizeWidthPx()}
               />
             )}
           </For>
@@ -182,6 +389,10 @@ interface FileListItemProps {
   formatSize: (bytes?: number) => string;
   formatDate: (date?: Date) => string;
   index: number;
+  showModified: boolean;
+  showSize: boolean;
+  modifiedWidthPx: number;
+  sizeWidthPx: number;
 }
 
 function FileListItem(props: FileListItemProps) {
@@ -290,14 +501,24 @@ function FileListItem(props: FileListItemProps) {
       </div>
 
       {/* Modified column */}
-      <div class="hidden sm:block w-32 px-3 py-1.5 text-muted-foreground truncate">
-        {props.formatDate(props.item.modifiedAt)}
-      </div>
+      <Show when={props.showModified}>
+        <div
+          class="shrink-0 px-3 py-1.5 text-muted-foreground truncate"
+          style={{ width: `${props.modifiedWidthPx}px` }}
+        >
+          {props.formatDate(props.item.modifiedAt)}
+        </div>
+      </Show>
 
       {/* Size column */}
-      <div class="hidden md:block w-24 px-3 py-1.5 text-right text-muted-foreground">
-        {props.item.type === 'folder' ? '-' : props.formatSize(props.item.size)}
-      </div>
+      <Show when={props.showSize}>
+        <div
+          class="shrink-0 px-3 py-1.5 text-right text-muted-foreground"
+          style={{ width: `${props.sizeWidthPx}px` }}
+        >
+          {props.item.type === 'folder' ? '-' : props.formatSize(props.item.size)}
+        </div>
+      </Show>
     </button>
   );
 }

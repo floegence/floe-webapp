@@ -24,6 +24,7 @@ export type {
   SortField,
   SortDirection,
   SortConfig,
+  FileListColumnRatios,
   FileBrowserContextValue,
   ContextMenuActionType,
   ContextMenuItem,

@@ -1,9 +1,11 @@
-import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo } from 'solid-js';
+import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo, createEffect } from 'solid-js';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { deferNonBlocking } from '../../utils/defer';
 import type {
   FileItem,
   ViewMode,
   SortConfig,
+  FileListColumnRatios,
   FileBrowserContextValue,
   ContextMenuEvent,
   FilterMatchInfo,
@@ -12,6 +14,35 @@ import type {
 } from './types';
 
 const FileBrowserContext = createContext<FileBrowserContextValue>();
+
+const DEFAULT_LIST_COLUMN_RATIOS: FileListColumnRatios = {
+  name: 0.65,
+  modifiedAt: 0.2,
+  size: 0.15,
+};
+
+const LIST_COLUMN_RATIOS_STORAGE_KEY = 'fileBrowser:listColumnRatios';
+
+function normalizeListColumnRatios(ratios: FileListColumnRatios): FileListColumnRatios {
+  // Defensive normalization to keep a stable, sum-to-1 layout state.
+  const rawName = Number.isFinite(ratios.name) ? ratios.name : DEFAULT_LIST_COLUMN_RATIOS.name;
+  const rawModifiedAt = Number.isFinite(ratios.modifiedAt)
+    ? ratios.modifiedAt
+    : DEFAULT_LIST_COLUMN_RATIOS.modifiedAt;
+  const rawSize = Number.isFinite(ratios.size) ? ratios.size : DEFAULT_LIST_COLUMN_RATIOS.size;
+
+  const name = Math.max(0, rawName);
+  const modifiedAt = Math.max(0, rawModifiedAt);
+  const size = Math.max(0, rawSize);
+
+  const sum = name + modifiedAt + size;
+  if (sum <= 0) return DEFAULT_LIST_COLUMN_RATIOS;
+  return {
+    name: name / sum,
+    modifiedAt: modifiedAt / sum,
+    size: size / sum,
+  };
+}
 
 /**
  * Fuzzy match function - returns matched indices or null if no match
@@ -39,6 +70,8 @@ export interface FileBrowserProviderProps {
   files: FileItem[];
   initialPath?: string;
   initialViewMode?: ViewMode;
+  /** Initial list view column ratios (for resizable columns) */
+  initialListColumnRatios?: FileListColumnRatios;
   /** Label for the root/home directory in breadcrumb (default: 'Root') */
   homeLabel?: string;
   onNavigate?: (path: string) => void;
@@ -50,6 +83,8 @@ export interface FileBrowserProviderProps {
  * Provider for file browser state management
  */
 export function FileBrowserProvider(props: FileBrowserProviderProps) {
+  const floe = useResolvedFloeConfig();
+
   const normalizePath = (path: string) => {
     const p = (path ?? '').trim();
     return p === '' ? '/' : p;
@@ -59,11 +94,26 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [selectedIds, setSelectedIds] = createSignal<Set<string>>(new Set());
   const [viewMode, setViewMode] = createSignal<ViewMode>(props.initialViewMode ?? 'list');
   const [sortConfig, setSortConfig] = createSignal<SortConfig>({ field: 'name', direction: 'asc' });
+
+  const initialListColumnRatios = normalizeListColumnRatios(
+    floe.persist.load<FileListColumnRatios>(
+      LIST_COLUMN_RATIOS_STORAGE_KEY,
+      props.initialListColumnRatios ?? DEFAULT_LIST_COLUMN_RATIOS
+    )
+  );
+  const [listColumnRatios, setListColumnRatiosInternal] = createSignal<FileListColumnRatios>(
+    initialListColumnRatios
+  );
   const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(['/']));
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
   const [filterQuery, setFilterQueryInternal] = createSignal('');
   const [isFilterActive, setFilterActive] = createSignal(false);
+
+  // Persist column ratios as a user preference (debounced for drag performance).
+  createEffect(() => {
+    floe.persist.debouncedSave(LIST_COLUMN_RATIOS_STORAGE_KEY, listColumnRatios());
+  });
 
   // Home label accessor (reactive)
   const homeLabel = () => props.homeLabel ?? 'Root';
@@ -220,6 +270,10 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     const onSelect = props.onSelect;
     deferNonBlocking(() => onSelect?.([]));
     props.onNavigate?.(nextPath);
+  };
+
+  const setListColumnRatios = (ratios: FileListColumnRatios) => {
+    setListColumnRatiosInternal(normalizeListColumnRatios(ratios));
   };
 
   const navigateUp = () => {
@@ -381,6 +435,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setViewMode,
     sortConfig,
     setSortConfig,
+    listColumnRatios,
+    setListColumnRatios,
     expandedFolders,
     toggleFolder,
     isExpanded,

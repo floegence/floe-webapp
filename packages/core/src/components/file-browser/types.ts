@@ -32,6 +32,16 @@ export interface SortConfig {
 }
 
 /**
+ * List view column width ratios (sum to ~1.0).
+ * Used for user-adjustable column resizing and persistence.
+ */
+export interface FileListColumnRatios {
+  name: number;
+  modifiedAt: number;
+  size: number;
+}
+
+/**
  * Built-in context menu action types
  */
 export type ContextMenuActionType =
@@ -172,6 +182,10 @@ export interface FileBrowserContextValue {
   // Sorting
   sortConfig: Accessor<SortConfig>;
   setSortConfig: (config: SortConfig) => void;
+
+  // List view column layout (user-adjustable)
+  listColumnRatios: Accessor<FileListColumnRatios>;
+  setListColumnRatios: (ratios: FileListColumnRatios) => void;
 
   // Tree state
   expandedFolders: Accessor<Set<string>>;
