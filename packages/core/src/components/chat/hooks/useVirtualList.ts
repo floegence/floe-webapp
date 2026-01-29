@@ -18,6 +18,8 @@ export interface UseVirtualListOptions {
 export interface UseVirtualListReturn {
   containerRef: (el: HTMLElement) => void;
   scrollRef: (el: HTMLElement) => void;
+  /** Call this from the scroll container's onScroll handler (rAF throttled). */
+  onScroll: () => void;
   virtualItems: Accessor<VirtualItem[]>;
   totalHeight: Accessor<number>;
   scrollToIndex: (index: number, align?: 'start' | 'center' | 'end') => void;
@@ -36,7 +38,9 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   const [containerHeight, setContainerHeight] = createSignal(0);
   const [isAtBottom, setIsAtBottom] = createSignal(true);
 
-  // 计算所有项目的位置
+  let rafId: number | null = null;
+
+  // Measure positions for all items
   const measurements = createMemo(() => {
     const result: { start: number; size: number; end: number }[] = [];
     let offset = 0;
@@ -54,13 +58,13 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     return result;
   });
 
-  // 总高度
+  // Total height
   const totalHeight = createMemo(() => {
     const m = measurements();
     return m.length > 0 ? m[m.length - 1].end : 0;
   });
 
-  // 二分查找起始索引
+  // Binary search for the start index
   const findStartIndex = (scrollTop: number) => {
     const m = measurements();
     let low = 0;
@@ -80,7 +84,7 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     return Math.max(0, low);
   };
 
-  // 计算可见范围
+  // Visible range
   const visibleRange = createMemo(() => {
     const m = measurements();
     if (m.length === 0) {
@@ -102,7 +106,7 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     return { start, end };
   });
 
-  // 虚拟项目列表
+  // Virtual items
   const virtualItems = createMemo(() => {
     const { start, end } = visibleRange();
     const m = measurements();
@@ -120,17 +124,27 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     return items;
   });
 
-  // 滚动处理
-  const handleScroll = () => {
+  // Scroll handler (high-frequency): rAF throttled to avoid sync work on every scroll event.
+  const onScroll = () => {
     if (!scrollEl) return;
-
-    const newScrollTop = scrollEl.scrollTop;
-    setScrollTop(newScrollTop);
-
-    // 判断是否在底部
-    const threshold = 50;
-    const atBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight < threshold;
-    setIsAtBottom(atBottom);
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      const newScrollTop = scrollEl.scrollTop;
+      setScrollTop(newScrollTop);
+      const threshold = 50;
+      const atBottom = scrollEl.scrollHeight - newScrollTop - scrollEl.clientHeight < threshold;
+      setIsAtBottom(atBottom);
+      return;
+    }
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      if (!scrollEl) return;
+      const newScrollTop = scrollEl.scrollTop;
+      setScrollTop(newScrollTop);
+      const threshold = 50;
+      const atBottom = scrollEl.scrollHeight - newScrollTop - scrollEl.clientHeight < threshold;
+      setIsAtBottom(atBottom);
+    });
   };
 
   // ResizeObserver
@@ -146,18 +160,18 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
       resizeObserver.observe(containerEl);
       setContainerHeight(containerEl.clientHeight);
     }
-
-    if (scrollEl) {
-      scrollEl.addEventListener('scroll', handleScroll, { passive: true });
-    }
+    onScroll();
   });
 
   onCleanup(() => {
     resizeObserver?.disconnect();
-    scrollEl?.removeEventListener('scroll', handleScroll);
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   });
 
-  // 滚动到指定索引
+  // Scroll to a specific index
   const scrollToIndex = (index: number, align: 'start' | 'center' | 'end' = 'start') => {
     if (!scrollEl) return;
 
@@ -182,7 +196,7 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     scrollEl.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
   };
 
-  // 滚动到底部
+  // Scroll to bottom
   const scrollToBottom = () => {
     if (!scrollEl) return;
     scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
@@ -194,7 +208,9 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     },
     scrollRef: (el) => {
       scrollEl = el;
+      onScroll();
     },
+    onScroll,
     virtualItems,
     totalHeight,
     scrollToIndex,

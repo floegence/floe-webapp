@@ -12,7 +12,7 @@ export interface ShellBlockProps {
 export const ShellBlock: Component<ShellBlockProps> = (props) => {
   return (
     <div class={cn('chat-shell-block', props.class)}>
-      {/* 命令行 */}
+      {/* Command */}
       <div class="chat-shell-command">
         <span class="chat-shell-prompt">$</span>
         <code class="chat-shell-command-text">{props.command}</code>
@@ -23,7 +23,7 @@ export const ShellBlock: Component<ShellBlockProps> = (props) => {
         </Show>
       </div>
 
-      {/* 输出 */}
+      {/* Output */}
       <Show when={props.output}>
         <div
           class={cn(
@@ -35,7 +35,7 @@ export const ShellBlock: Component<ShellBlockProps> = (props) => {
         </div>
       </Show>
 
-      {/* 退出码 */}
+      {/* Exit code */}
       <Show when={props.status !== 'running' && props.exitCode !== undefined}>
         <div
           class={cn(

@@ -7,9 +7,9 @@ export interface SvgBlockProps {
 }
 
 export const SvgBlock: Component<SvgBlockProps> = (props) => {
-  // 简单的 SVG 安全处理
+  // Basic SVG sanitization
   const sanitizeSvg = (svg: string): string => {
-    // 移除可能的脚本标签
+    // Remove potentially dangerous script/event handlers
     return svg
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/on\w+="[^"]*"/gi, '')

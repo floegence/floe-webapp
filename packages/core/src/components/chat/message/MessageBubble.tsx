@@ -32,7 +32,7 @@ export const MessageBubble: Component<MessageBubbleProps> = (props) => {
         )}
       </For>
 
-      {/* 错误状态 */}
+      {/* Error state */}
       <Show when={props.message.status === 'error' && props.message.error}>
         <div class="chat-message-error">
           <ErrorIcon />

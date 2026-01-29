@@ -1,4 +1,4 @@
-import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo, createEffect } from 'solid-js';
+import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo, createEffect, untrack } from 'solid-js';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { deferNonBlocking } from '../../utils/defer';
 import type {
@@ -314,9 +314,15 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setSelectedIds(next);
 
     // Notify parent after paint to keep selection highlight responsive.
-    const selected = currentFiles().filter((f) => next.has(f.id));
+    // Also compute the selected list outside the click handler hot-path.
     const onSelect = props.onSelect;
-    deferNonBlocking(() => onSelect?.(selected));
+    if (onSelect) {
+      const selectedIdsSnapshot = new Set(next);
+      deferNonBlocking(() => {
+        const selected = untrack(() => currentFiles().filter((f) => selectedIdsSnapshot.has(f.id)));
+        onSelect(selected);
+      });
+    }
   };
 
   const clearSelection = () => {

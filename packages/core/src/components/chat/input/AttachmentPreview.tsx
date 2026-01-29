@@ -25,7 +25,7 @@ export const AttachmentPreview: Component<AttachmentPreviewProps> = (props) => {
               attachment.status === 'error' && 'chat-attachment-item-error'
             )}
           >
-            {/* 图片预览 */}
+            {/* Image preview */}
             <Show
               when={attachment.type === 'image' && attachment.preview}
               fallback={
@@ -41,7 +41,7 @@ export const AttachmentPreview: Component<AttachmentPreviewProps> = (props) => {
               />
             </Show>
 
-            {/* 信息 */}
+            {/* Info */}
             <div class="chat-attachment-info">
               <div class="chat-attachment-name" title={attachment.file.name}>
                 {attachment.file.name}
@@ -51,7 +51,7 @@ export const AttachmentPreview: Component<AttachmentPreviewProps> = (props) => {
               </div>
             </div>
 
-            {/* 上传进度 */}
+            {/* Upload progress */}
             <Show when={attachment.status === 'uploading'}>
               <div class="chat-attachment-progress">
                 <div
@@ -61,14 +61,14 @@ export const AttachmentPreview: Component<AttachmentPreviewProps> = (props) => {
               </div>
             </Show>
 
-            {/* 错误信息 */}
+            {/* Error indicator */}
             <Show when={attachment.status === 'error'}>
               <div class="chat-attachment-error" title={attachment.error}>
                 <ErrorIcon />
               </div>
             </Show>
 
-            {/* 删除按钮 */}
+            {/* Remove button */}
             <button
               type="button"
               class="chat-attachment-remove-btn"

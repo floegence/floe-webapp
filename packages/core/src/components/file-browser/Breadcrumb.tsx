@@ -13,16 +13,16 @@ interface BreadcrumbSegment {
   path: string;
 }
 
-// 宽度估算常量
-const SEPARATOR_WIDTH = 16; // 分隔符 w-3 (12px) + gap (4px)
-const ELLIPSIS_WIDTH = 28; // 省略号按钮宽度
+// Width estimation constants
+const SEPARATOR_WIDTH = 16; // Separator icon w-3 (12px) + gap (4px)
+const ELLIPSIS_WIDTH = 28; // Ellipsis button width
 const SEGMENT_PADDING = 12; // px-1.5 * 2 = 12px
-const CHAR_WIDTH = 7; // 每个字符约 7px (text-xs)
+const CHAR_WIDTH = 7; // Approx. 7px per character (text-xs)
 const MAX_SEGMENT_WIDTH = 120; // max-w-[120px]
-const MIN_CONTAINER_WIDTH = 100; // 最小容器宽度
+const MIN_CONTAINER_WIDTH = 100; // Minimum container width
 
 /**
- * 估算路径段的显示宽度
+ * Estimate the display width of a path segment.
  */
 function estimateSegmentWidth(name: string): number {
   const textWidth = name.length * CHAR_WIDTH;
@@ -31,14 +31,15 @@ function estimateSegmentWidth(name: string): number {
 
 /**
  * Breadcrumb navigation showing current path
- * 基于容器宽度自适应折叠：尽量显示更多路径段，宽度不足时折叠中间部分
+ * Responsive collapsing based on container width: show as many segments as possible,
+ * and collapse middle segments when space is limited.
  */
 export function Breadcrumb(props: BreadcrumbProps) {
   const ctx = useFileBrowser();
   let containerRef: HTMLElement | undefined;
   const [containerWidth, setContainerWidth] = createSignal(0);
 
-  // 监听容器宽度变化
+  // Observe container width changes
   onMount(() => {
     if (!containerRef) return;
 
@@ -56,7 +57,7 @@ export function Breadcrumb(props: BreadcrumbProps) {
     onCleanup(() => resizeObserver.disconnect());
   });
 
-  // 解析路径为段落
+  // Parse path into segments
   const segments = createMemo<BreadcrumbSegment[]>(() => {
     const path = ctx.currentPath();
     const rootLabel = ctx.homeLabel();
@@ -76,29 +77,29 @@ export function Breadcrumb(props: BreadcrumbProps) {
     return result;
   });
 
-  // 根据容器宽度计算可见和折叠的段落
+  // Compute visible/collapsed segments based on container width
   const collapsedInfo = createMemo(() => {
     const all = segments();
     const width = containerWidth();
 
-    // 宽度未知或只有一个段落时，显示全部
+    // If width is unknown or there are too few segments, show all.
     if (width < MIN_CONTAINER_WIDTH || all.length <= 2) {
       return { collapsed: [], visible: all, shouldCollapse: false };
     }
 
-    // 计算每个段落的宽度
+    // Estimate widths for each segment.
     const segmentWidths = all.map((seg) => estimateSegmentWidth(seg.name));
 
-    // 始终保留第一个（Root）和最后一个段落
+    // Always keep the first (Root) and the last segment.
     const firstWidth = segmentWidths[0];
     const lastWidth = segmentWidths[all.length - 1];
     const firstSeparator = SEPARATOR_WIDTH;
     const lastSeparator = all.length > 1 ? SEPARATOR_WIDTH : 0;
 
-    // 基础宽度：Root + 最后一个 + 它们的分隔符
+    // Base width: Root + last segment + separators.
     const usedWidth = firstWidth + lastWidth + firstSeparator + lastSeparator;
 
-    // 如果基础宽度已经超出，只显示 Root 和最后一个
+    // If base width already overflows, show only Root and the last segment.
     if (usedWidth > width && all.length > 2) {
       return {
         collapsed: all.slice(1, -1),
@@ -107,22 +108,22 @@ export function Breadcrumb(props: BreadcrumbProps) {
       };
     }
 
-    // 尝试从尾部向前添加更多段落
-    // 策略：优先显示靠近当前位置的路径
+    // Try to add more segments from the end.
+    // Strategy: prefer segments closer to the current path.
     const middleSegments = all.slice(1, -1);
     const visibleMiddle: BreadcrumbSegment[] = [];
     let remainingWidth = width - usedWidth;
 
-    // 预留省略号的空间（如果有中间段落需要折叠）
+    // Reserve space for the ellipsis if we need to collapse middle segments.
     const ellipsisReserve = middleSegments.length > 0 ? ELLIPSIS_WIDTH + SEPARATOR_WIDTH : 0;
 
-    // 从后往前尝试添加中间段落
+    // Try to add middle segments from the end.
     for (let i = middleSegments.length - 1; i >= 0; i--) {
-      const segWidth = segmentWidths[i + 1]; // +1 因为跳过了 Root
+      const segWidth = segmentWidths[i + 1]; // +1 because we skip Root
       const separatorWidth = SEPARATOR_WIDTH;
       const neededWidth = segWidth + separatorWidth;
 
-      // 检查是否还有剩余段落需要折叠
+      // Check if there are still segments left to collapse.
       const hasMoreToCollapse = i > 0;
       const reserveForEllipsis = hasMoreToCollapse ? ellipsisReserve : 0;
 
@@ -130,7 +131,7 @@ export function Breadcrumb(props: BreadcrumbProps) {
         visibleMiddle.unshift(middleSegments[i]);
         remainingWidth -= neededWidth;
       } else {
-        // 宽度不够，剩余的都要折叠
+        // Not enough width; collapse the remaining segments.
         break;
       }
     }
@@ -160,7 +161,7 @@ export function Breadcrumb(props: BreadcrumbProps) {
             <Show when={index() > 0}>
               <ChevronRight class="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
             </Show>
-            {/* 在 Root 后面插入折叠的省略号下拉 */}
+            {/* Insert the collapsed ellipsis dropdown after Root */}
             <Show when={collapsedInfo().shouldCollapse && index() === 1}>
               <CollapsedSegments
                 segments={collapsedInfo().collapsed}
@@ -186,8 +187,8 @@ interface CollapsedSegmentsProps {
 }
 
 /**
- * 折叠的路径段下拉菜单
- * 点击 "…" 展开显示被折叠的中间路径
+ * Dropdown for collapsed path segments.
+ * Click "…" to reveal the hidden middle segments.
  */
 function CollapsedSegments(props: CollapsedSegmentsProps) {
   const items = (): DropdownItem[] =>

@@ -18,6 +18,9 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
   const [isDragging, setIsDragging] = createSignal(false);
   const [dragStart, setDragStart] = createSignal({ x: 0, y: 0 });
 
+  let panRafId: number | null = null;
+  let pendingPan = { x: 0, y: 0 };
+
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 5;
   const SCALE_STEP = 0.25;
@@ -71,17 +74,35 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging()) {
-      setPosition({
-        x: e.clientX - dragStart().x,
-        y: e.clientY - dragStart().y,
-      });
+    if (!isDragging()) return;
+
+    pendingPan = {
+      x: e.clientX - dragStart().x,
+      y: e.clientY - dragStart().y,
+    };
+
+    if (panRafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      setPosition(pendingPan);
+      return;
     }
+    panRafId = requestAnimationFrame(() => {
+      panRafId = null;
+      if (!isDragging()) return;
+      setPosition(pendingPan);
+    });
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
+
+  onCleanup(() => {
+    if (panRafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(panRafId);
+      panRafId = null;
+    }
+  });
 
   // Handle keyboard shortcuts
   createEffect(() => {

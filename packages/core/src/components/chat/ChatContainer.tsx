@@ -7,21 +7,21 @@ import { ChatInput } from './input';
 import { ConnectionStatus, type ConnectionState } from './status';
 
 export interface ChatContainerProps extends ChatProviderProps {
-  /** 自定义标题 */
+  /** Custom title */
   title?: string;
-  /** 连接状态 */
+  /** Connection state */
   connectionState?: ConnectionState;
-  /** 是否显示头部 */
+  /** Whether to show the header */
   showHeader?: boolean;
-  /** 自定义头部 */
+  /** Custom header */
   header?: Component;
-  /** 自定义底部（替代默认输入框） */
+  /** Custom footer (replaces the default input) */
   footer?: Component;
-  /** 禁用输入 */
+  /** Disable input */
   inputDisabled?: boolean;
-  /** 输入框占位符 */
+  /** Input placeholder */
   inputPlaceholder?: string;
-  /** 容器样式类 */
+  /** Container class */
   class?: string;
 }
 
@@ -33,7 +33,7 @@ export const ChatContainer: Component<ChatContainerProps> = (props) => {
       callbacks={props.callbacks}
     >
       <div class={cn('chat-container', props.class)}>
-        {/* 头部 */}
+        {/* Header */}
         <Show when={props.showHeader !== false}>
           <Show
             when={!props.header}
@@ -46,10 +46,10 @@ export const ChatContainer: Component<ChatContainerProps> = (props) => {
           </Show>
         </Show>
 
-        {/* 消息列表 */}
+        {/* Message list */}
         <SimpleMessageList class="chat-container-messages" />
 
-        {/* 输入区域 */}
+        {/* Input area */}
         <Show
           when={!props.footer}
           fallback={props.footer && <Dynamic component={props.footer} />}
@@ -65,7 +65,7 @@ export const ChatContainer: Component<ChatContainerProps> = (props) => {
   );
 };
 
-// 默认头部组件
+// Default header component
 interface ChatHeaderProps {
   title?: string;
   connectionState?: ConnectionState;

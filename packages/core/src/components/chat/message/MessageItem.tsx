@@ -33,16 +33,16 @@ export const MessageItem: Component<MessageItemProps> = (props) => {
         props.class
       )}
     >
-      {/* 头像 */}
+      {/* Avatar */}
       <Show when={props.showAvatar !== false}>
         <MessageAvatar role={props.message.role} src={avatarSrc()} />
       </Show>
 
-      {/* 消息内容区域 */}
+      {/* Message content */}
       <div class="chat-message-content-wrapper">
         <MessageBubble message={props.message} />
 
-        {/* 元信息和操作 */}
+        {/* Meta + actions */}
         <div class="chat-message-footer">
           <MessageMeta
             timestamp={props.message.timestamp}

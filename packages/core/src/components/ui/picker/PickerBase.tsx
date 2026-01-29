@@ -13,6 +13,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { cn } from '../../../utils/cn';
+import { deferAfterPaint } from '../../../utils/defer';
 import { Button } from '../Button';
 import { Input } from '../Input';
 import { ChevronRight, Plus, Check, X } from '../../icons';
@@ -311,17 +312,29 @@ export function NewFolderSection(props: NewFolderSectionProps) {
     setName('');
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     const trimmed = name().trim();
-    if (!trimmed) return;
+    if (!trimmed || loading()) return;
+
+    // UI response priority: show loading first, then start potentially heavy async work after a paint.
     setLoading(true);
-    try {
-      await props.onCreateFolder(props.parentPath(), trimmed);
-      setCreating(false);
-      setName('');
-    } finally {
-      setLoading(false);
-    }
+    const parentPath = props.parentPath();
+    const folderName = trimmed;
+    const onCreateFolder = props.onCreateFolder;
+
+    deferAfterPaint(() => {
+      void onCreateFolder(parentPath, folderName)
+        .then(() => {
+          setCreating(false);
+          setName('');
+        })
+        .catch((err) => {
+          console.error('Failed to create folder:', err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    });
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {

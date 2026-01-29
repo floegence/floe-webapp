@@ -1,6 +1,16 @@
-import { Show, createUniqueId, type JSX, createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import {
+  Show,
+  createUniqueId,
+  type JSX,
+  createSignal,
+  createEffect,
+  onCleanup,
+  onMount,
+  untrack,
+} from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { useLayout } from '../../context/LayoutContext';
 import { Button } from './Button';
 import { X, Maximize, Restore } from '../icons';
 import { lockBodyStyle } from '../../utils/bodyStyleLock';
@@ -56,12 +66,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
 
-  // Mobile detection
-  const MOBILE_BREAKPOINT = 768;
+  // Use LayoutContext.isMobile() to stay consistent with Shell + FloeConfig.layout.mobileQuery.
+  const layout = useLayout();
+  const isMobile = () => layout.isMobile();
   const MOBILE_PADDING = 16; // Padding on each side for mobile
-  const [isMobile, setIsMobile] = createSignal(
-    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
-  );
   const titleId = () => `floating-window-${baseId}-title`;
 
   // Window state
@@ -140,46 +148,60 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setGlobalInteractionStyles(false, '');
   };
 
+  const recenterIfNeeded = () => {
+    if (typeof window === 'undefined') return;
+    if (props.defaultPosition) return;
+    if (isMaximized()) return;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const mobile = isMobile();
+
+    // Avoid tracking `size()` so this helper can be called from reactive effects safely.
+    const currentSize = untrack(() => size());
+
+    if (mobile) {
+      // On mobile: full width with padding, centered vertically
+      const mobileWidth = windowWidth - MOBILE_PADDING * 2;
+      const nextWidth = Math.max(minSize().width, Math.min(mobileWidth, maxSize().width));
+      const nextHeight = Math.max(minSize().height, Math.min(currentSize.height, maxSize().height));
+      setSize({ width: nextWidth, height: nextHeight });
+      setPosition({
+        x: MOBILE_PADDING,
+        y: Math.max(0, (windowHeight - nextHeight) / 2),
+      });
+      return;
+    }
+
+    // Desktop: keep current size, center it.
+    const nextWidth = Math.max(minSize().width, Math.min(currentSize.width, maxSize().width));
+    const nextHeight = Math.max(minSize().height, Math.min(currentSize.height, maxSize().height));
+    setSize({ width: nextWidth, height: nextHeight });
+    setPosition({
+      x: Math.max(0, (windowWidth - nextWidth) / 2),
+      y: Math.max(0, (windowHeight - nextHeight) / 2),
+    });
+  };
+
   // Initialize the window position (centered)
   onMount(() => {
-    // Listen for resize to update mobile state
-    const handleResize = () => {
-      const mobile = window.innerWidth < MOBILE_BREAKPOINT;
-      setIsMobile(mobile);
+    recenterIfNeeded();
 
-      // Adjust size and position when switching to mobile
-      if (mobile && !isMaximized()) {
-        const mobileWidth = window.innerWidth - MOBILE_PADDING * 2;
-        setSize((prev) => ({ ...prev, width: mobileWidth }));
-        setPosition((prev) => ({ ...prev, x: MOBILE_PADDING }));
-      }
-    };
-
+    const handleResize = () => recenterIfNeeded();
     window.addEventListener('resize', handleResize);
     onCleanup(() => window.removeEventListener('resize', handleResize));
+  });
 
-    if (!props.defaultPosition) {
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const mobile = windowWidth < MOBILE_BREAKPOINT;
-
-      if (mobile) {
-        // On mobile: full width with padding, centered vertically
-        const mobileWidth = windowWidth - MOBILE_PADDING * 2;
-        const currentSize = size();
-        setSize({ width: mobileWidth, height: currentSize.height });
-        setPosition({
-          x: MOBILE_PADDING,
-          y: Math.max(0, (windowHeight - currentSize.height) / 2),
-        });
-      } else {
-        const currentSize = size();
-        setPosition({
-          x: Math.max(0, (windowWidth - currentSize.width) / 2),
-          y: Math.max(0, (windowHeight - currentSize.height) / 2),
-        });
-      }
+  // Recenter when switching between mobile/desktop modes (e.g., responsive breakpoint changes).
+  createEffect(() => {
+    if (!props.open) return;
+    // Track only the mobile flag; recenterIfNeeded() reads size untracked.
+    void isMobile();
+    if (typeof requestAnimationFrame === 'undefined') {
+      recenterIfNeeded();
+      return;
     }
+    requestAnimationFrame(() => recenterIfNeeded());
   });
 
   // Close on Escape

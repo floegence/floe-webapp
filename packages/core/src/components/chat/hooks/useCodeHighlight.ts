@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js';
 import type { ShikiWorkerResponse } from '../types';
 
-// Worker 实例（可选，由外部配置）
+// Worker instance (optional, configured by the host).
 let shikiWorker: Worker | null = null;
 let workerReady = false;
 let workerReadyPromise: Promise<void> | null = null;
@@ -11,18 +11,18 @@ const pendingRequests = new Map<string, {
   reject: (error: Error) => void;
 }>();
 
-// 缓存
+// Cache
 const highlightCache = new Map<string, string>();
 const MAX_CACHE_SIZE = 500;
 
-// 同步高亮器（降级方案）
+// Synchronous highlighter (fallback).
 let syncHighlighter: {
   codeToHtml: (code: string, options: { lang: string; theme: string }) => string;
 } | null = null;
 
 /**
- * 配置 Shiki Worker
- * 在应用初始化时调用此函数来启用 Worker 模式
+ * Configure the Shiki worker.
+ * Call this during app initialization to enable worker mode.
  */
 export function configureShikiWorker(worker: Worker): Promise<void> {
   shikiWorker = worker;
@@ -56,8 +56,8 @@ export function configureShikiWorker(worker: Worker): Promise<void> {
 }
 
 /**
- * 配置同步高亮器（降级方案）
- * 如果不使用 Worker，可以在应用中直接创建 highlighter 并配置
+ * Configure a synchronous highlighter (fallback).
+ * If you don't use a worker, create/configure a highlighter in the app and pass it here.
  */
 export function configureSyncHighlighter(highlighter: {
   codeToHtml: (code: string, options: { lang: string; theme: string }) => string;
@@ -75,7 +75,7 @@ async function waitForWorker(): Promise<boolean> {
   return false;
 }
 
-// 转义 HTML（降级时使用）
+// Escape HTML (used in the fallback path).
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -90,12 +90,12 @@ export async function highlightCode(
   language: string,
   theme: string = 'github-dark'
 ): Promise<string> {
-  // 检查缓存
+  // Check cache
   const cacheKey = `${theme}:${language}:${code}`;
   const cached = highlightCache.get(cacheKey);
   if (cached) return cached;
 
-  // 尝试使用 Worker
+  // Try worker
   const hasWorker = await waitForWorker();
 
   if (hasWorker && shikiWorker) {
@@ -104,7 +104,7 @@ export async function highlightCode(
 
       pendingRequests.set(id, {
         resolve: (html) => {
-          // 添加到缓存
+          // Add to cache
           if (highlightCache.size >= MAX_CACHE_SIZE) {
             const firstKey = highlightCache.keys().next().value;
             if (firstKey) highlightCache.delete(firstKey);
@@ -119,18 +119,18 @@ export async function highlightCode(
     });
   }
 
-  // 尝试使用同步高亮器
+  // Try sync highlighter
   if (syncHighlighter) {
     try {
       const html = syncHighlighter.codeToHtml(code, { lang: language, theme });
       highlightCache.set(cacheKey, html);
       return html;
     } catch {
-      // 降级到纯文本
+      // Fall back to plain text
     }
   }
 
-  // 最终降级：返回纯文本
+  // Final fallback: return plain text
   const fallbackHtml = `<pre class="shiki"><code>${escapeHtml(code)}</code></pre>`;
   return fallbackHtml;
 }
@@ -157,7 +157,7 @@ export function useCodeHighlight() {
   };
 }
 
-// 清理函数
+// Cleanup
 export function terminateShikiWorker(): void {
   if (shikiWorker) {
     shikiWorker.terminate();

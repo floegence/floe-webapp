@@ -1,5 +1,5 @@
 import { type Component, Switch, Match, lazy, Suspense } from 'solid-js';
-import type { MessageBlock } from '../types';
+import type { MessageBlock, ChecklistBlock as ChecklistBlockType, ToolCallBlock as ToolCallBlockType } from '../types';
 import { TextBlock } from './TextBlock';
 import { MarkdownBlock } from './MarkdownBlock';
 import { ImageBlock } from './ImageBlock';
@@ -9,7 +9,7 @@ import { ShellBlock } from './ShellBlock';
 import { ThinkingBlock } from './ThinkingBlock';
 import { Skeleton } from '../../loading';
 
-// 重型组件懒加载
+// Lazy-load heavy blocks
 const CodeBlock = lazy(() => import('./CodeBlock').then((m) => ({ default: m.CodeBlock })));
 const CodeDiffBlock = lazy(() => import('./CodeDiffBlock').then((m) => ({ default: m.CodeDiffBlock })));
 const MermaidBlock = lazy(() => import('./MermaidBlock').then((m) => ({ default: m.MermaidBlock })));
@@ -81,7 +81,7 @@ export const BlockRenderer: Component<BlockRendererProps> = (props) => {
 
       <Match when={props.block.type === 'checklist'}>
         <ChecklistBlock
-          items={(props.block as { items: any[] }).items}
+          items={(props.block as ChecklistBlockType).items}
           messageId={props.messageId}
           blockIndex={props.blockIndex}
         />
@@ -115,7 +115,7 @@ export const BlockRenderer: Component<BlockRendererProps> = (props) => {
       <Match when={props.block.type === 'tool-call'}>
         <Suspense fallback={<ToolCallSkeleton />}>
           <ToolCallBlock
-            block={props.block as any}
+            block={props.block as ToolCallBlockType}
             messageId={props.messageId}
             blockIndex={props.blockIndex}
           />
@@ -125,7 +125,7 @@ export const BlockRenderer: Component<BlockRendererProps> = (props) => {
   );
 };
 
-// 骨架屏组件
+// Skeletons
 const CodeBlockSkeleton: Component = () => (
   <div class="chat-code-skeleton">
     <div class="chat-code-skeleton-header">

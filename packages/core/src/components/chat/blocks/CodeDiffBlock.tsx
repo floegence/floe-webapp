@@ -14,12 +14,12 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
   const [viewMode, setViewMode] = createSignal<'unified' | 'split'>('unified');
   const [copied, setCopied] = createSignal(false);
 
-  // 计算 diff
+  // Compute diff
   const diffResult = createMemo(() => {
     return diffLines(props.oldCode, props.newCode);
   });
 
-  // 统计变化
+  // Compute stats
   const stats = createMemo(() => {
     const changes = diffResult();
     let added = 0;
@@ -34,7 +34,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
     return { added, removed };
   });
 
-  // 复制新代码
+  // Copy new code
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(props.newCode);
@@ -47,7 +47,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
 
   return (
     <div class={cn('chat-code-diff-block', props.class)}>
-      {/* 头部 */}
+      {/* Header */}
       <div class="chat-code-diff-header">
         <div class="chat-code-diff-info">
           <Show when={props.filename}>
@@ -59,7 +59,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
           </span>
         </div>
         <div class="chat-code-diff-actions">
-          {/* 视图切换 */}
+          {/* View toggle */}
           <div class="chat-code-diff-view-toggle">
             <button
               type="button"
@@ -82,7 +82,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
               Split
             </button>
           </div>
-          {/* 复制按钮 */}
+          {/* Copy button */}
           <button
             type="button"
             class="chat-code-copy-btn"
@@ -96,7 +96,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
         </div>
       </div>
 
-      {/* Diff 内容 */}
+      {/* Diff content */}
       <div class="chat-code-diff-content">
         <Show
           when={viewMode() === 'unified'}
@@ -109,7 +109,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
   );
 };
 
-// 统一视图
+// Unified view
 const UnifiedView: Component<{ changes: Change[] }> = (props) => {
   let lineNumber = 0;
 
@@ -118,7 +118,7 @@ const UnifiedView: Component<{ changes: Change[] }> = (props) => {
       <For each={props.changes}>
         {(change) => {
           const lines = change.value.split('\n');
-          // 移除最后一个空行
+          // Remove trailing empty line
           if (lines[lines.length - 1] === '') lines.pop();
 
           return (
@@ -153,9 +153,9 @@ const UnifiedView: Component<{ changes: Change[] }> = (props) => {
   );
 };
 
-// 分栏视图
+// Split view
 const SplitView: Component<{ changes: Change[] }> = (props) => {
-  // 构建左右两侧的行
+  // Build left/right lines
   const buildSides = () => {
     const left: Array<{ content: string; type: 'removed' | 'context' | 'empty' }> = [];
     const right: Array<{ content: string; type: 'added' | 'context' | 'empty' }> = [];
@@ -189,7 +189,7 @@ const SplitView: Component<{ changes: Change[] }> = (props) => {
 
   return (
     <div class="chat-diff-split">
-      {/* 左侧 - 旧代码 */}
+      {/* Left - old code */}
       <div class="chat-diff-split-side">
         <For each={sides().left}>
           {(line, i) => (
@@ -208,7 +208,7 @@ const SplitView: Component<{ changes: Change[] }> = (props) => {
           )}
         </For>
       </div>
-      {/* 右侧 - 新代码 */}
+      {/* Right - new code */}
       <div class="chat-diff-split-side">
         <For each={sides().right}>
           {(line, i) => (
@@ -231,7 +231,7 @@ const SplitView: Component<{ changes: Change[] }> = (props) => {
   );
 };
 
-// 图标
+// Icons
 const CopyIcon: Component = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />

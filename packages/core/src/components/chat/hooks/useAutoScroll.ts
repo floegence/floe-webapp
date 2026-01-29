@@ -1,11 +1,11 @@
 import { createSignal, type Accessor } from 'solid-js';
 
 export interface UseAutoScrollOptions {
-  /** 是否启用自动滚动 */
+  /** Whether auto-scroll is enabled */
   enabled?: Accessor<boolean>;
-  /** 判断是否在底部的阈值 */
+  /** Threshold (px) for considering the user at the bottom */
   threshold?: number;
-  /** 滚动行为 */
+  /** Scroll behavior */
   behavior?: ScrollBehavior;
 }
 
@@ -26,7 +26,7 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
     const atBottom = checkIfAtBottom();
     setIsAtBottom(atBottom);
 
-    // 用户手动滚动离开底部时，禁用自动滚动
+    // Disable auto-scroll when the user scrolls away from the bottom.
     if (!atBottom) {
       setShouldAutoScroll(false);
     }
@@ -48,11 +48,11 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
 
     el.addEventListener('scroll', handleScroll, { passive: true });
 
-    // 初始滚动到底部
+    // Initial scroll to bottom
     scrollToBottom(true);
   };
 
-  // 当内容变化且应该自动滚动时，滚动到底部
+  // When content changes and auto-scroll is allowed, scroll to bottom.
   const onContentChange = () => {
     if (enabled() && shouldAutoScroll()) {
       requestAnimationFrame(() => {
@@ -67,7 +67,7 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
     shouldAutoScroll,
     scrollToBottom,
     onContentChange,
-    // 重新启用自动滚动
+    // Re-enable auto-scroll
     enableAutoScroll: () => setShouldAutoScroll(true),
   };
 }

@@ -74,26 +74,26 @@
   --chart-5: oklch(0.82 0.16 80);
 
   /* ============================================
-     Selection Colors (选中效果)
+     Selection Colors
      ============================================
-     设计原则：
-     1. 默认选中：蓝色背景 + 白色文字
-     2. 主题色背景上的选中：需要与背景形成对比
-        - 深色主题下 --primary 是近白色，所以用深色（深蓝色）选中
-     3. 代码块选中：固定亮蓝色，因为代码块始终是深色背景
+     Design notes:
+     1. Default selection: blue background + white text
+     2. Selection on primary backgrounds: must contrast with the primary color
+        - In dark theme, --primary is near-white, so we use a darker selection (deep blue)
+     3. Code selection: fixed bright blue, since code blocks always use a dark background
   */
 
-  /* 默认选中效果 */
+  /* Default selection */
   --selection-bg: hsl(215 70% 50%);
   --selection-fg: hsl(0 0% 100%);
 
-  /* 在 primary 背景上的选中效果
-     深色主题下 primary 是近白色 hsl(210 20% 98%)，
-     需要用深色选中才能形成对比 */
+  /* Selection on primary backgrounds
+     In dark theme, primary is near-white (hsl(210 20% 98%)),
+     so we use a darker selection to keep contrast. */
   --selection-on-primary-bg: hsl(215 80% 35%);
   --selection-on-primary-fg: hsl(0 0% 100%);
 
-  /* 代码块选中效果（代码块始终是深色背景 #0d1117） */
+  /* Code-block selection (code blocks use a dark background: #0d1117) */
   --selection-code-bg: hsl(212 100% 67%);
   --selection-code-fg: hsl(220 20% 8%);
 }

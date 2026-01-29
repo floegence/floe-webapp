@@ -7,16 +7,16 @@ export interface MarkdownBlockProps {
   class?: string;
 }
 
-// 配置 marked
+// Configure marked
 marked.setOptions({
   gfm: true,
   breaks: true,
 });
 
-// 自定义渲染器
+// Custom renderer
 const renderer = new marked.Renderer();
 
-// 代码块特殊处理 - 返回占位符，由外层处理
+// Code blocks: return a placeholder; handled by the outer layer
 renderer.code = function (this: unknown, token: { text: string; lang?: string }) {
   const language = token.lang || 'text';
   const escaped = token.text
@@ -26,24 +26,24 @@ renderer.code = function (this: unknown, token: { text: string; lang?: string })
   return `<pre class="chat-md-code-block" data-language="${language}"><code>${escaped}</code></pre>`;
 };
 
-// 行内代码
+// Inline code
 renderer.codespan = function (this: unknown, token: { text: string }) {
   return `<code class="chat-md-inline-code">${token.text}</code>`;
 };
 
-// 链接 - 新窗口打开
+// Links: open in a new tab
 renderer.link = function (this: unknown, token: { href: string; title?: string | null; text: string }) {
   const titleAttr = token.title ? ` title="${token.title}"` : '';
   return `<a href="${token.href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="chat-md-link">${token.text}</a>`;
 };
 
-// 图片
+// Images
 renderer.image = function (this: unknown, token: { href: string; title?: string | null; text: string }) {
   const titleAttr = token.title ? ` title="${token.title}"` : '';
   return `<img src="${token.href}" alt="${token.text}"${titleAttr} class="chat-md-image" loading="lazy" />`;
 };
 
-// 块引用
+// Blockquote
 renderer.blockquote = function (this: unknown, token: { text: string }) {
   return `<blockquote class="chat-md-blockquote">${token.text}</blockquote>`;
 };

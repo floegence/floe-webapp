@@ -23,8 +23,8 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
     acceptedTypes: ctx.config().acceptedFileTypes,
     onUpload: ctx.config().allowAttachments
       ? async (file) => {
-          // 调用外部上传回调（如果有的话）
-          // 这里返回模拟 URL
+          // Placeholder upload handler:
+          // return an object URL for preview/testing.
           return URL.createObjectURL(file);
         }
       : undefined,
@@ -36,7 +36,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   const canSend = () =>
     (text().trim() || attachments.attachments().length > 0) && !props.disabled;
 
-  // 自动调整高度
+  // Auto-resize textarea height
   const adjustHeight = () => {
     if (!textareaRef) return;
     textareaRef.style.height = 'auto';
@@ -49,7 +49,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    // Enter 发送（Shift+Enter 换行）
+    // Enter to send (Shift+Enter for newline)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -90,7 +90,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
       onDragOver={attachments.handleDragOver}
       onDrop={attachments.handleDrop}
     >
-      {/* 拖拽提示 */}
+      {/* Drag-and-drop hint */}
       <Show when={attachments.isDragging()}>
         <div class="chat-input-drop-overlay">
           <UploadIcon />
@@ -98,7 +98,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
         </div>
       </Show>
 
-      {/* 附件预览 */}
+      {/* Attachment preview */}
       <Show when={attachments.attachments().length > 0}>
         <AttachmentPreview
           attachments={attachments.attachments()}
@@ -106,9 +106,9 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
         />
       </Show>
 
-      {/* 输入区域 */}
+      {/* Input row */}
       <div class="chat-input-row">
-        {/* 附件按钮 */}
+        {/* Attachment button */}
         <Show when={ctx.config().allowAttachments}>
           <button
             type="button"
@@ -120,7 +120,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
           </button>
         </Show>
 
-        {/* 文本输入 */}
+        {/* Text input */}
         <textarea
           ref={textareaRef}
           class="chat-input-textarea"
@@ -135,7 +135,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
           rows={1}
         />
 
-        {/* 发送按钮 */}
+        {/* Send button */}
         <button
           type="button"
           class={cn('chat-input-send-btn', canSend() && 'chat-input-send-btn-active')}
@@ -150,7 +150,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   );
 };
 
-// 图标组件
+// Icon components
 const PaperclipIcon: Component = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />

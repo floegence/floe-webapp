@@ -76,6 +76,7 @@ export function Tabs(props: TabsProps) {
 
   // Refs for scroll container
   let scrollContainerRef: HTMLDivElement | undefined;
+  let rafId: number | null = null;
 
   // Optimistic UI: update active highlight immediately on click, then notify parent after paint.
   const [optimisticActiveId, setOptimisticActiveId] = createSignal('');
@@ -100,6 +101,19 @@ export function Tabs(props: TabsProps) {
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
   };
 
+  // High-frequency scroll/resize → rAF throttle to keep UI responsive.
+  const scheduleUpdateScrollState = () => {
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      updateScrollState();
+      return;
+    }
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      updateScrollState();
+    });
+  };
+
   // Scroll handlers
   const scrollLeft = () => {
     if (!scrollContainerRef) return;
@@ -119,11 +133,11 @@ export function Tabs(props: TabsProps) {
     updateScrollState();
 
     // Listen for scroll events
-    const handleScroll = () => updateScrollState();
+    const handleScroll = () => scheduleUpdateScrollState();
     scrollContainerRef.addEventListener('scroll', handleScroll);
 
     // Listen for resize events (ResizeObserver when available, otherwise fall back to window resize).
-    const handleResize = () => updateScrollState();
+    const handleResize = () => scheduleUpdateScrollState();
     let resizeObserver: ResizeObserver | undefined;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(handleResize);
@@ -138,6 +152,10 @@ export function Tabs(props: TabsProps) {
       if (typeof window !== 'undefined') {
         window.removeEventListener('resize', handleResize);
       }
+      if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
     });
   });
 
@@ -146,7 +164,7 @@ export function Tabs(props: TabsProps) {
     // Track items array changes
     void local.items.length;
     // Defer to ensure DOM is updated
-    setTimeout(updateScrollState, 0);
+    setTimeout(scheduleUpdateScrollState, 0);
   });
 
   // Handle tab click with UI-first response

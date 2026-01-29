@@ -10,6 +10,7 @@ import {
   type Accessor,
 } from 'solid-js';
 import { createStore, produce, reconcile } from 'solid-js/store';
+import { deferNonBlocking } from '../../utils/defer';
 import type {
   Message,
   MessageBlock,
@@ -25,41 +26,41 @@ import { DEFAULT_VIRTUAL_LIST_CONFIG } from './types';
 // ============ Context Value Type ============
 
 export interface ChatContextValue {
-  // 消息状态
+  // Message state
   messages: Accessor<Message[]>;
   coldMessages: Map<string, ColdMessage>;
 
-  // 加载状态
+  // Loading state
   isLoadingHistory: Accessor<boolean>;
   hasMoreHistory: Accessor<boolean>;
 
-  // 流式状态
+  // Streaming state
   streamingMessageId: Accessor<string | null>;
   isWorking: Accessor<boolean>;
 
-  // 配置
+  // Configuration
   config: Accessor<ChatConfig>;
   virtualListConfig: Accessor<VirtualListConfig>;
 
-  // 操作
+  // Actions
   sendMessage: (content: string, attachments?: Attachment[]) => Promise<void>;
   loadMoreHistory: () => Promise<void>;
   retryMessage: (messageId: string) => void;
 
-  // 消息操作
+  // Message operations
   addMessage: (message: Message) => void;
   updateMessage: (messageId: string, updater: (message: Message) => Message) => void;
   deleteMessage: (messageId: string) => void;
   clearMessages: () => void;
   setMessages: (messages: Message[]) => void;
 
-  // 流式更新
+  // Streaming updates
   handleStreamEvent: (event: StreamEvent) => void;
 
-  // 工具调用折叠
+  // Tool call collapse
   toggleToolCollapse: (messageId: string, toolId: string) => void;
 
-  // 高度缓存
+  // Height cache
   heightCache: Map<string, number>;
   setMessageHeight: (id: string, height: number) => void;
   getMessageHeight: (id: string) => number;
@@ -91,7 +92,7 @@ export interface ChatProviderProps {
 // ============ Provider Component ============
 
 export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
-  // 合并配置
+  // Merge config
   const config = createMemo(() => ({
     placeholder: 'Type a message...',
     allowAttachments: true,
@@ -105,11 +106,11 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     ...props.config?.virtualList,
   }));
 
-  // 消息状态
+  // Message state
   const [messages, setMessagesStore] = createStore<Message[]>(props.initialMessages || []);
   const coldMessages = new Map<string, ColdMessage>();
 
-  // 同步外部 initialMessages 变化
+  // Sync external initialMessages changes
   createEffect(
     on(
       () => props.initialMessages,
@@ -122,22 +123,22 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     )
   );
 
-  // 加载状态
+  // Loading state
   const [isLoadingHistory, setIsLoadingHistory] = createSignal(false);
   const [hasMoreHistory, setHasMoreHistory] = createSignal(true);
 
-  // 流式状态
+  // Streaming state
   const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
 
-  // 高度缓存
+  // Height cache
   const heightCache = new Map<string, number>();
 
-  // 计算是否正在工作
+  // Compute whether we're working (streaming)
   const isWorking = createMemo(() => {
     return streamingMessageId() !== null;
   });
 
-  // ============ 消息操作 ============
+  // ============ Message Operations ============
 
   const addMessage = (message: Message) => {
     setMessagesStore(produce((msgs) => {
@@ -173,9 +174,9 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     setMessagesStore(reconcile(newMessages));
   };
 
-  // ============ 流式处理 ============
+  // ============ Streaming ============
 
-  // 批量更新缓冲
+  // Batch update buffer
   let streamBuffer: StreamEvent[] = [];
   let rafId: number | null = null;
 
@@ -225,7 +226,7 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
       }
 
       case 'block-end': {
-        // block 完成，可以触发后处理（如代码高亮）
+        // Block finished; optional post-processing can run here (e.g. highlighting).
         break;
       }
 
@@ -257,10 +258,10 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     }
   };
 
-  // ============ 用户操作 ============
+  // ============ User Actions ============
 
   const sendMessage = async (content: string, attachments: Attachment[] = []) => {
-    // 创建用户消息
+    // Create user message
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -269,66 +270,79 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
       timestamp: Date.now(),
     };
 
-    addMessage(userMessage);
+    batch(() => {
+      addMessage(userMessage);
+      // Mark as complete
+      updateMessage(userMessage.id, (msg) => ({
+        ...msg,
+        status: 'complete',
+      }));
+    });
 
-    // 更新状态为完成
-    updateMessage(userMessage.id, (msg) => ({
-      ...msg,
-      status: 'complete',
-    }));
+    const onSendMessage = props.callbacks?.onSendMessage;
+    if (!onSendMessage) return;
 
-    // 调用回调，传入 addMessage 以便添加 AI 响应
-    if (props.callbacks?.onSendMessage) {
-      try {
-        await props.callbacks.onSendMessage(content, attachments, addMessage);
-      } catch (error) {
+    // UI-first: enqueue + render first, then invoke the external callback in the next macrotask.
+    const contentSnapshot = content;
+    const attachmentsSnapshot = [...attachments];
+    deferNonBlocking(() => {
+      void Promise.resolve(onSendMessage(contentSnapshot, attachmentsSnapshot, addMessage)).catch((error) => {
         console.error('Failed to send message:', error);
-      }
-    }
+      });
+    });
   };
 
   const loadMoreHistory = async () => {
     if (isLoadingHistory() || !hasMoreHistory()) return;
 
-    setIsLoadingHistory(true);
+    const onLoadMore = props.callbacks?.onLoadMore;
+    if (!onLoadMore) return;
 
-    try {
-      if (props.callbacks?.onLoadMore) {
-        const olderMessages = await props.callbacks.onLoadMore();
-        if (olderMessages.length === 0) {
-          setHasMoreHistory(false);
-        } else {
-          setMessagesStore(produce((msgs) => {
-            msgs.unshift(...olderMessages);
-          }));
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load history:', error);
-    } finally {
-      setIsLoadingHistory(false);
-    }
+    // UI-first: show loading first, then start async loading.
+    setIsLoadingHistory(true);
+    deferNonBlocking(() => {
+      void Promise.resolve(onLoadMore())
+        .then((olderMessages) => {
+          if (olderMessages.length === 0) {
+            setHasMoreHistory(false);
+            return;
+          }
+          setMessagesStore(
+            produce((msgs) => {
+              msgs.unshift(...olderMessages);
+            })
+          );
+        })
+        .catch((error) => {
+          console.error('Failed to load history:', error);
+        })
+        .finally(() => {
+          setIsLoadingHistory(false);
+        });
+    });
   };
 
   const retryMessage = (messageId: string) => {
     props.callbacks?.onRetry?.(messageId);
   };
 
-  // ============ 工具调用折叠 ============
+  // ============ Tool Call Collapse ============
 
   const toggleToolCollapse = (messageId: string, toolId: string) => {
     updateMessage(messageId, (msg) => ({
       ...msg,
       blocks: msg.blocks.map((block) => {
         if (block.type === 'tool-call' && block.toolId === toolId) {
-          return { ...block, collapsed: !block.collapsed };
+          // Default collapsed is true; first toggle should open (collapsed=false).
+          const nextCollapsed = block.collapsed === undefined ? false : !block.collapsed;
+          return { ...block, collapsed: nextCollapsed };
         }
         return block;
       }),
     }));
   };
 
-  // ============ 高度缓存 ============
+  // ============ Height Cache ============
 
   const setMessageHeight = (id: string, height: number) => {
     heightCache.set(id, height);
@@ -426,7 +440,7 @@ function createEmptyBlock(type: MessageBlock['type']): MessageBlock {
 function createUserMessageBlocks(content: string, attachments: Attachment[]): MessageBlock[] {
   const blocks: MessageBlock[] = [];
 
-  // 添加附件
+  // Attachments
   for (const attachment of attachments) {
     if (attachment.type === 'image') {
       blocks.push({
@@ -445,7 +459,7 @@ function createUserMessageBlocks(content: string, attachments: Attachment[]): Me
     }
   }
 
-  // 添加文本内容
+  // Text content
   if (content.trim()) {
     blocks.push({
       type: 'text',

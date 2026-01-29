@@ -3,6 +3,7 @@ import { Portal } from 'solid-js/web';
 import { cn } from '../../../utils/cn';
 import { renderMermaid } from '../hooks/useMermaid';
 import { lockBodyStyle } from '../../../utils/bodyStyleLock';
+import { deferNonBlocking } from '../../../utils/defer';
 
 export interface MermaidBlockProps {
   content: string;
@@ -19,11 +20,16 @@ export const MermaidBlock: Component<MermaidBlockProps> = (props) => {
   const [isDragging, setIsDragging] = createSignal(false);
   const [dragStart, setDragStart] = createSignal({ x: 0, y: 0 });
 
+  let renderRunId = 0;
+  let panRafId: number | null = null;
+  let pendingPan = { x: 0, y: 0 };
+
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 5;
   const SCALE_STEP = 0.25;
 
   createEffect(() => {
+    const currentRun = ++renderRunId;
     const content = props.content;
     if (!content) {
       setSvg(null);
@@ -34,15 +40,20 @@ export const MermaidBlock: Component<MermaidBlockProps> = (props) => {
     setIsLoading(true);
     setError(null);
 
-    renderMermaid(content)
-      .then((result) => {
-        setSvg(result);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message || 'Failed to render diagram');
-        setIsLoading(false);
-      });
+    // UI-first: let the loading state paint first, then render Mermaid (fallback path may be main-thread heavy).
+    deferNonBlocking(() => {
+      renderMermaid(content)
+        .then((result) => {
+          if (currentRun !== renderRunId) return;
+          setSvg(result);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          if (currentRun !== renderRunId) return;
+          setError(err.message || 'Failed to render diagram');
+          setIsLoading(false);
+        });
+    });
   });
 
   const openDialog = () => {
@@ -85,17 +96,35 @@ export const MermaidBlock: Component<MermaidBlockProps> = (props) => {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging()) {
-      setPosition({
-        x: e.clientX - dragStart().x,
-        y: e.clientY - dragStart().y,
-      });
+    if (!isDragging()) return;
+
+    pendingPan = {
+      x: e.clientX - dragStart().x,
+      y: e.clientY - dragStart().y,
+    };
+
+    if (panRafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      setPosition(pendingPan);
+      return;
     }
+    panRafId = requestAnimationFrame(() => {
+      panRafId = null;
+      if (!isDragging()) return;
+      setPosition(pendingPan);
+    });
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
+
+  onCleanup(() => {
+    if (panRafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(panRafId);
+      panRafId = null;
+    }
+  });
 
   // Handle keyboard shortcuts
   createEffect(() => {

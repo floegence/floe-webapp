@@ -7,6 +7,7 @@ import {
   onCleanup,
 } from 'solid-js';
 import { cn } from '../../../utils/cn';
+import { deferNonBlocking } from '../../../utils/defer';
 import { useChatContext } from '../ChatProvider';
 import { useVirtualList } from '../hooks/useVirtualList';
 import { MessageItem } from '../message';
@@ -23,10 +24,12 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
   let scrollContainerRef: HTMLDivElement | undefined;
   let isUserScrolling = false;
   let scrollTimeout: number | undefined;
+  let rafId: number | null = null;
+  let pendingHistoryLoad = false;
 
   const messages = () => ctx.messages();
 
-  // 虚拟列表
+  // Virtual list
   const virtualList = useVirtualList({
     count: () => messages().length,
     getItemKey: (index) => messages()[index]?.id || `msg-${index}`,
@@ -38,7 +41,7 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
     config: ctx.virtualListConfig(),
   });
 
-  // 滚动到底部
+  // Scroll to bottom
   const scrollToBottom = (smooth = true) => {
     if (!scrollContainerRef) return;
     scrollContainerRef.scrollTo({
@@ -47,35 +50,63 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
     });
   };
 
-  // 监听滚动
+  // Scroll handler
   const handleScroll = () => {
     if (!scrollContainerRef) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef;
-    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    // Keep the virtual list math off the hot path.
+    virtualList.onScroll();
 
-    // 显示返回底部按钮
-    setShowScrollToBottom(distanceFromBottom > 200);
-
-    // 检测用户是否在滚动
+    // Detect whether the user is actively scrolling
     isUserScrolling = true;
     clearTimeout(scrollTimeout);
     scrollTimeout = window.setTimeout(() => {
       isUserScrolling = false;
     }, 150);
 
-    // 触发加载更多（向上滚动）
-    if (scrollTop < 500 && ctx.hasMoreHistory() && !ctx.isLoadingHistory()) {
-      ctx.loadMoreHistory();
+    // High-frequency scroll: rAF throttle DOM reads + state updates.
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      rafId = null;
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      setShowScrollToBottom(distanceFromBottom > 200);
+
+      if (scrollTop < 500 && ctx.hasMoreHistory() && !ctx.isLoadingHistory() && !pendingHistoryLoad) {
+        pendingHistoryLoad = true;
+        deferNonBlocking(() => {
+          pendingHistoryLoad = false;
+          void ctx.loadMoreHistory().catch((err) => console.error(err));
+        });
+      }
+      return;
     }
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      if (!scrollContainerRef) return;
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      setShowScrollToBottom(distanceFromBottom > 200);
+
+      // Trigger loading more (near top)
+      if (scrollTop < 500 && ctx.hasMoreHistory() && !ctx.isLoadingHistory() && !pendingHistoryLoad) {
+        pendingHistoryLoad = true;
+        // UI response priority: defer async work out of the scroll handler.
+        deferNonBlocking(() => {
+          pendingHistoryLoad = false;
+          void ctx.loadMoreHistory().catch((err) => console.error(err));
+        });
+      }
+    });
   };
 
-  // 消息变化时自动滚动到底部
+  // Auto-scroll to bottom when messages change
   createEffect(() => {
     const msgCount = messages().length;
     const isStreaming = ctx.streamingMessageId() !== null;
 
-    // 仅在用户没有主动滚动时自动滚动
+    // Only auto-scroll when the user is not actively scrolling
     if (!isUserScrolling && (isStreaming || msgCount > 0)) {
       requestAnimationFrame(() => {
         if (!virtualList.isAtBottom()) return;
@@ -84,7 +115,18 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
     }
   });
 
-  // 测量消息高度
+  onCleanup(() => {
+    if (scrollTimeout) {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = undefined;
+    }
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  });
+
+  // Measure message height
   const measureHeight = (messageId: string, el: HTMLElement | null) => {
     if (!el) return;
 
@@ -103,7 +145,7 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
 
   return (
     <div class={cn('chat-message-list-container', props.class)}>
-      {/* 加载更多指示器 */}
+      {/* Load-more indicator */}
       <Show when={ctx.isLoadingHistory()}>
         <div class="chat-loading-more">
           <LoadingSpinner />
@@ -111,7 +153,7 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
         </div>
       </Show>
 
-      {/* 消息列表 */}
+      {/* Message list */}
       <div
         ref={(el) => {
           scrollContainerRef = el;
@@ -149,7 +191,7 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
           </For>
         </div>
 
-        {/* Working 状态 */}
+        {/* Working state */}
         <Show when={ctx.isWorking()}>
           <div class="chat-working-indicator-wrapper">
             <WorkingIndicator />
@@ -157,7 +199,7 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
         </Show>
       </div>
 
-      {/* 返回底部按钮 */}
+      {/* Scroll-to-bottom button */}
       <Show when={showScrollToBottom()}>
         <button
           type="button"

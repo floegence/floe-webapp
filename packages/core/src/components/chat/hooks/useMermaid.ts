@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js';
 import type { MermaidWorkerResponse } from '../types';
 
-// Worker 实例（可选，由外部配置）
+// Worker instance (optional, configured by the host).
 let mermaidWorker: Worker | null = null;
 let workerReady = false;
 let workerReadyPromise: Promise<void> | null = null;
@@ -11,11 +11,11 @@ const pendingRequests = new Map<string, {
   reject: (error: Error) => void;
 }>();
 
-// 缓存
+// Cache
 const mermaidCache = new Map<string, string>();
 const MAX_CACHE_SIZE = 200;
 
-// 同步渲染器（降级方案）
+// Synchronous renderer (fallback).
 let syncMermaid: {
   render: (id: string, content: string) => Promise<{ svg: string }>;
 } | null = null;
@@ -23,8 +23,8 @@ let syncMermaid: {
 let renderCounter = 0;
 
 /**
- * 配置 Mermaid Worker
- * 在应用初始化时调用此函数来启用 Worker 模式
+ * Configure the Mermaid worker.
+ * Call this during app initialization to enable worker mode.
  */
 export function configureMermaidWorker(worker: Worker): Promise<void> {
   mermaidWorker = worker;
@@ -58,8 +58,8 @@ export function configureMermaidWorker(worker: Worker): Promise<void> {
 }
 
 /**
- * 配置同步 Mermaid 渲染器（降级方案）
- * 如果不使用 Worker，可以直接传入 mermaid 实例
+ * Configure a synchronous Mermaid renderer (fallback).
+ * If you don't use a worker, pass a Mermaid instance directly.
  */
 export function configureSyncMermaid(mermaid: {
   render: (id: string, content: string) => Promise<{ svg: string }>;
@@ -81,12 +81,12 @@ export async function renderMermaid(
   content: string,
   theme: string = 'default'
 ): Promise<string> {
-  // 检查缓存
+  // Check cache
   const cacheKey = `${theme}:${content}`;
   const cached = mermaidCache.get(cacheKey);
   if (cached) return cached;
 
-  // 尝试使用 Worker
+  // Try worker
   const hasWorker = await waitForWorker();
 
   if (hasWorker && mermaidWorker) {
@@ -109,7 +109,7 @@ export async function renderMermaid(
     });
   }
 
-  // 尝试使用同步渲染器
+  // Try sync renderer
   if (syncMermaid) {
     try {
       const graphId = `mermaid-sync-${renderCounter++}`;
@@ -122,7 +122,7 @@ export async function renderMermaid(
     }
   }
 
-  // 无可用渲染器
+  // No renderer available
   throw new Error('Mermaid renderer not configured. Call configureMermaidWorker() or configureSyncMermaid() first.');
 }
 

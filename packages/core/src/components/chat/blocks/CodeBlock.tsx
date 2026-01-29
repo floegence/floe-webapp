@@ -1,6 +1,7 @@
 import { type Component, createSignal, createEffect, Show } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { highlightCode } from '../hooks/useCodeHighlight';
+import { deferNonBlocking } from '../../../utils/defer';
 
 export interface CodeBlockProps {
   language: string;
@@ -13,9 +14,11 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
   const [highlightedHtml, setHighlightedHtml] = createSignal<string | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
   const [copied, setCopied] = createSignal(false);
+  let runId = 0;
 
-  // 高亮代码
+  // Highlight code
   createEffect(() => {
+    const currentRun = ++runId;
     const code = props.content;
     const lang = props.language || 'text';
 
@@ -27,19 +30,24 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
 
     setIsLoading(true);
 
-    highlightCode(code, lang)
-      .then((html) => {
-        setHighlightedHtml(html);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        // 降级为纯文本
-        setHighlightedHtml(null);
-        setIsLoading(false);
-      });
+    // UI-first: render/paint first, then run highlighting outside the current sync stack.
+    deferNonBlocking(() => {
+      highlightCode(code, lang)
+        .then((html) => {
+          if (currentRun !== runId) return;
+          setHighlightedHtml(html);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          if (currentRun !== runId) return;
+          // Fallback to plain text
+          setHighlightedHtml(null);
+          setIsLoading(false);
+        });
+    });
   });
 
-  // 复制代码
+  // Copy code
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(props.content);
@@ -52,7 +60,7 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
 
   return (
     <div class={cn('chat-code-block', props.class)}>
-      {/* 头部 */}
+      {/* Header */}
       <div class="chat-code-header">
         <div class="chat-code-info">
           <Show when={props.filename}>
@@ -74,7 +82,7 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
         </button>
       </div>
 
-      {/* 代码内容 */}
+      {/* Code content */}
       <div class="chat-code-content">
         <Show
           when={!isLoading() && highlightedHtml()}
@@ -92,7 +100,7 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
   );
 };
 
-// 图标组件
+// Icon components
 const CopyIcon: Component = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

@@ -78,26 +78,26 @@
   --radius: 0.375rem;
 
   /* ============================================
-     Selection Colors (选中效果)
+     Selection Colors
      ============================================
-     设计原则：
-     1. 默认选中：蓝色背景 + 白色文字，适用于大多数场景
-     2. 主题色背景上的选中：需要与背景形成对比
-        - 浅色主题下 --primary 是深蓝黑色，所以用亮色（金黄色）选中
-     3. 代码块选中：固定亮蓝色，因为代码块始终是深色背景
+     Design notes:
+     1. Default selection: blue background + white text (works for most cases)
+     2. Selection on primary backgrounds: must contrast with the primary color
+        - In light theme, --primary is dark, so we use a bright highlight (yellow)
+     3. Code selection: fixed bright blue, since code blocks always use a dark background
   */
 
-  /* 默认选中效果 */
+  /* Default selection */
   --selection-bg: hsl(215 80% 55%);
   --selection-fg: hsl(0 0% 100%);
 
-  /* 在 primary 背景上的选中效果
-     浅色主题下 primary 是深蓝黑色 hsl(215 40% 13%)，
-     需要用亮色选中才能形成对比 */
+  /* Selection on primary backgrounds
+     In light theme, primary is dark (hsl(215 40% 13%)),
+     so we use a bright selection to keep contrast. */
   --selection-on-primary-bg: hsl(45 100% 55%);
   --selection-on-primary-fg: hsl(0 0% 0%);
 
-  /* 代码块选中效果（代码块始终是深色背景 #0d1117） */
+  /* Code-block selection (code blocks use a dark background: #0d1117) */
   --selection-code-bg: hsl(212 100% 67%);
   --selection-code-fg: hsl(220 20% 8%);
 }

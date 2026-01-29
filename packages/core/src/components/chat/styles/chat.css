@@ -2,15 +2,15 @@
    Chat Component Styles
    ============================================
 
-   样式系统设计原则：
-   1. 所有样式放在 @layer components 中，确保在 Tailwind 层级系统中有明确的优先级
-   2. 主题响应区域使用 CSS 变量（如 var(--foreground)）
-   3. 固定颜色区域（如代码块）使用硬编码颜色，并通过容器设置颜色隔离
+   Style system design principles:
+   1. Keep all styles inside @layer components for predictable precedence within Tailwind layers.
+   2. Theme-responsive areas use CSS variables (e.g. var(--foreground)).
+   3. Fixed-color areas (e.g. code blocks) use hard-coded colors and isolate via container inheritance.
 
-   颜色隔离模式：
-   - 容器设置 background-color 和 color
-   - 子元素通过 color: inherit 继承容器颜色
-   - 这确保即使有全局样式，容器内的颜色也是一致的
+   Color isolation pattern:
+   - Container sets background-color and color.
+   - Children inherit via color: inherit.
+   - Ensures consistent colors even with global styles.
 */
 
 @layer components {
@@ -355,8 +355,8 @@
   color: var(--primary);
 }
 
-/* Markdown 代码块 - 始终深色背景
-   使用 pre.chat-md-code-block 选择器确保足够的特异性 */
+/* Markdown code blocks - always dark background
+   Use pre.chat-md-code-block for sufficient specificity. */
 pre.chat-md-code-block {
   margin: 0.75rem 0;
   border-radius: 0.5rem;
@@ -435,7 +435,7 @@ pre.chat-md-code-block code {
    Code Block - Professional Look
    ============================================ */
 
-/* Code Block - 始终深色背景 */
+/* Code Block - always dark background */
 .chat-code-block {
   border-radius: 0.5rem;
   overflow: hidden;
@@ -528,7 +528,7 @@ pre.chat-md-code-block code {
 
 /* ============================================
    Code Diff Block - Clear Visual Diff
-   始终深色背景
+   Always dark background
    ============================================ */
 
 .chat-code-diff-block {
@@ -716,7 +716,7 @@ pre.chat-md-code-block code {
    Shell Block - Terminal Style
    ============================================ */
 
-/* Shell Block - 始终深色背景 */
+/* Shell Block - always dark background */
 .chat-shell-block {
   margin: 0.5rem 0;
   border-radius: 0.5rem;
@@ -1030,6 +1030,52 @@ pre.chat-md-code-block code {
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.chat-tool-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chat-tool-section-header .chat-tool-section-label {
+  margin-bottom: 0;
+}
+
+.chat-tool-json-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.chat-tool-json-action-btn {
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 150ms;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.chat-tool-json-action-btn:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.chat-tool-json-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.chat-tool-json-hint {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
 }
 
 .chat-tool-args,
@@ -1569,29 +1615,29 @@ pre.chat-md-code-block code {
 }
 
 /* ============================================
-   Text Selection Styles (文字选中效果)
+   Text Selection Styles
    ============================================
 
-   设计原则：
-   1. 组件层样式不使用 @layer，确保能覆盖 floe.css 中 @layer base 的全局样式
-   2. 代码块使用硬编码颜色，因为代码块有固定的深色背景 (#0d1117)
-   3. 用户消息使用主题变量，因为背景色随主题变化
+   Design notes:
+   1. These rules live in @layer components so they can override the global @layer base selection styles in floe.css.
+   2. Code blocks use hard-coded colors because they always have a fixed dark background (#0d1117).
+   3. User message bubbles use theme variables because bubble colors vary by theme.
 
-   颜色方案：
-   - 代码块选中：亮蓝色背景 (#57a5ff) + 深色文字 (#0d1117)
-   - 浅色主题用户消息：金黄色背景 + 黑色文字（因为气泡是深蓝黑色背景）
-   - 深色主题用户消息：深蓝色背景 + 白色文字（因为气泡是近白色背景）
+   Color scheme:
+   - Code blocks: bright blue background (#57a5ff) + dark text (#0d1117)
+   - User bubbles (light theme): yellow background + black text (bubble background is dark)
+   - User bubbles (dark theme): dark blue background + white text (bubble background is light)
 */
 
-/* 默认选中效果（继承主题变量） */
+/* Default selection (theme variables) */
 .chat-container ::selection {
   background-color: var(--selection-bg);
   color: var(--selection-fg);
 }
 
-/* 代码块选中效果
-   代码块始终是深色背景 (#0d1117)，所以使用固定的亮色选中效果
-   使用硬编码颜色确保在任何情况下都可见 */
+/* Code-block selection
+   Code blocks always use a dark background (#0d1117), so we use a fixed bright selection style.
+   Hard-coded colors ensure visibility in all cases. */
 .chat-code-block ::selection,
 .chat-code-block *::selection,
 .chat-code-diff-block ::selection,
@@ -1604,9 +1650,8 @@ pre.chat-md-code-block *::selection,
   color: #0d1117;
 }
 
-/* 用户消息气泡选中效果
-   背景色随主题变化（浅色主题是深色背景，深色主题是浅色背景）
-   所以选中效果也需要随主题变化 */
+/* User message bubble selection
+   Bubble background colors vary by theme, so the selection style must vary as well. */
 .chat-message-bubble-user ::selection,
 .chat-message-bubble-user *::selection {
   background-color: var(--selection-on-primary-bg);

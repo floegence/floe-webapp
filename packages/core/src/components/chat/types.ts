@@ -76,7 +76,7 @@ export interface ThinkingBlock {
   duration?: number;
 }
 
-// 工具调用 - 支持嵌套
+// Tool call block (supports nesting)
 export interface ToolCallBlock {
   type: 'tool-call';
   toolName: string;
@@ -108,10 +108,10 @@ export type MessageBlock =
 export type MessageRole = 'user' | 'assistant' | 'system';
 
 export type MessageStatus =
-  | 'sending'     // 用户消息发送中
-  | 'streaming'   // AI 正在流式输出
-  | 'complete'    // 完成
-  | 'error';      // 出错
+  | 'sending'     // User message is sending
+  | 'streaming'   // Assistant is streaming
+  | 'complete'    // Complete
+  | 'error';      // Error
 
 export interface Message {
   id: string;
@@ -166,15 +166,15 @@ export type StreamEvent =
 // ============ Virtual List Config ============
 
 export interface VirtualListConfig {
-  // 渲染窗口
+  // Render window (overscan)
   overscan: number;
-  // 数据窗口
+  // Data windows
   hotWindow: number;
   warmWindow: number;
-  // 加载策略
+  // Loading strategy
   loadBatchSize: number;
   loadThreshold: number;
-  // 高度估算
+  // Height estimation
   defaultItemHeight: number;
 }
 
@@ -190,34 +190,34 @@ export const DEFAULT_VIRTUAL_LIST_CONFIG: VirtualListConfig = {
 // ============ Chat Context Types ============
 
 export interface ChatConfig {
-  // 虚拟列表配置
+  // Virtual list config
   virtualList?: Partial<VirtualListConfig>;
-  // 用户头像
+  // User avatar
   userAvatar?: string;
-  // AI 头像
+  // Assistant avatar
   assistantAvatar?: string;
-  // 占位符文本
+  // Placeholder text
   placeholder?: string;
-  // 是否允许附件
+  // Whether attachments are allowed
   allowAttachments?: boolean;
-  // 允许的附件类型
+  // Accepted attachment types
   acceptedFileTypes?: string;
-  // 最大附件大小（字节）
+  // Max attachment size (bytes)
   maxAttachmentSize?: number;
-  // 最大附件数量
+  // Max attachment count
   maxAttachments?: number;
 }
 
 export interface ChatCallbacks {
-  // 发送消息 - addMessage 允许外部回调添加 AI 响应消息
+  // Send message - addMessage allows the host to append assistant messages.
   onSendMessage?: (content: string, attachments: Attachment[], addMessage: (msg: Message) => void) => Promise<void>;
-  // 加载更多历史消息
+  // Load more history messages
   onLoadMore?: () => Promise<Message[]>;
-  // 重试消息
+  // Retry message
   onRetry?: (messageId: string) => void;
-  // 附件上传
+  // Attachment upload
   onUploadAttachment?: (file: File) => Promise<string>;
-  // checklist 项目变化
+  // Checklist item change
   onChecklistChange?: (messageId: string, blockIndex: number, itemId: string, checked: boolean) => void;
 }
 

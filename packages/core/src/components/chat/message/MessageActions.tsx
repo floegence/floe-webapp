@@ -43,7 +43,7 @@ export const MessageActions: Component<MessageActionsProps> = (props) => {
 
   return (
     <div class={cn('chat-message-actions', props.class)}>
-      {/* 复制按钮 */}
+      {/* Copy button */}
       <button
         type="button"
         class="chat-message-action-btn"
@@ -55,7 +55,7 @@ export const MessageActions: Component<MessageActionsProps> = (props) => {
         </Show>
       </button>
 
-      {/* 重试按钮（仅错误状态显示） */}
+      {/* Retry button (error state only) */}
       <Show when={props.message.status === 'error'}>
         <button
           type="button"

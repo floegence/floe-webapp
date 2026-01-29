@@ -6,14 +6,14 @@ import { useFileBrowser } from './FileBrowserContext';
 import type { ContextMenuItem, ContextMenuCallbacks, FileItem, ContextMenuActionType } from './types';
 
 /**
- * 内置菜单项的 action type（不包含 'custom'）
+ * Built-in menu action types (excluding 'custom').
  */
 export type BuiltinContextMenuAction = Exclude<ContextMenuActionType, 'custom'>;
 
 /**
- * hideItems 支持静态数组或动态函数。
- * - 静态数组：直接列出要隐藏的 action types
- * - 动态函数：根据右键目标 items 动态决定要隐藏的 action types
+ * hideItems supports a static array or a dynamic function.
+ * - Static array: list action types to hide.
+ * - Dynamic function: decide which action types to hide based on the target items.
  */
 export type HideItemsValue =
   | BuiltinContextMenuAction[]

@@ -19,7 +19,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
   const [attachments, setAttachments] = createSignal<Attachment[]>([]);
   const [isDragging, setIsDragging] = createSignal(false);
 
-  // 验证文件
+  // Validate file
   const validateFile = (file: File): string | null => {
     if (file.size > maxSize) {
       return `File "${file.name}" is too large. Maximum size is ${formatFileSize(maxSize)}.`;
@@ -45,7 +45,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     return null;
   };
 
-  // 添加附件
+  // Add attachments
   const addFiles = async (files: File[]): Promise<string[]> => {
     const errors: string[] = [];
     const currentCount = attachments().length;
@@ -80,7 +80,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     if (newAttachments.length > 0) {
       setAttachments((prev) => [...prev, ...newAttachments]);
 
-      // 开始上传
+      // Start uploading
       if (onUpload) {
         for (const attachment of newAttachments) {
           uploadAttachment(attachment);
@@ -91,7 +91,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     return errors;
   };
 
-  // 上传单个附件
+  // Upload a single attachment
   const uploadAttachment = async (attachment: Attachment) => {
     updateAttachment(attachment.id, { status: 'uploading', uploadProgress: 0 });
 
@@ -106,14 +106,14 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     }
   };
 
-  // 更新附件
+  // Update attachment
   const updateAttachment = (id: string, updates: Partial<Attachment>) => {
     setAttachments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
     );
   };
 
-  // 移除附件
+  // Remove attachment
   const removeAttachment = (id: string) => {
     setAttachments((prev) => {
       const attachment = prev.find((a) => a.id === id);
@@ -124,7 +124,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     });
   };
 
-  // 清空所有附件
+  // Clear all attachments
   const clearAttachments = () => {
     const current = attachments();
     for (const a of current) {
@@ -135,7 +135,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     setAttachments([]);
   };
 
-  // 拖拽处理
+  // Drag-and-drop handlers
   const handleDragEnter = (e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -162,7 +162,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     return addFiles(files);
   };
 
-  // 粘贴处理
+  // Paste handler
   const handlePaste = async (e: ClipboardEvent): Promise<string[]> => {
     const items = Array.from(e.clipboardData?.items || []);
     const files = items
@@ -178,7 +178,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
     return [];
   };
 
-  // 文件选择器
+  // File picker
   const openFilePicker = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -210,7 +210,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
   };
 }
 
-// 格式化文件大小
+// Format file size
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

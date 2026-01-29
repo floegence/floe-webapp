@@ -260,9 +260,9 @@
     outline: none;
   }
 
-  /* Selection (全局默认选中效果)
-     使用主题变量，组件可通过更具体的选择器覆盖
-     注意：此样式在 @layer base 中，优先级较低，组件层可以覆盖 */
+  /* Selection (global default)
+     Uses theme variables. Components may override via more specific selectors.
+     Note: this lives in @layer base (low priority); component layers can override it. */
   ::selection {
     background-color: var(--selection-bg);
     color: var(--selection-fg);

@@ -1,5 +1,6 @@
-import { Show, type JSX, createSignal, onMount, onCleanup } from 'solid-js';
+import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { useLayout } from '../../context/LayoutContext';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
 import { DirectoryTree } from './DirectoryTree';
 import { FileListView } from './FileListView';
@@ -82,33 +83,35 @@ interface FileBrowserInnerProps {
 
 function FileBrowserInner(props: FileBrowserInnerProps) {
   const ctx = useFileBrowser();
-  const [isMobile, setIsMobile] = createSignal(false);
+  const layout = useLayout();
+  const isMobile = () => layout.isMobile();
   const sidebarWidth = () => props.sidebarWidth ?? 220;
   let filterInputRef: HTMLInputElement | undefined;
 
-  // Mobile detection with auto-collapse
-  onMount(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const initialMobile = mq.matches;
-    setIsMobile(initialMobile);
+  // Auto-collapse sidebar only when entering mobile mode (and on initial mount if already mobile).
+  let didInitMobile = false;
+  let prevMobile = false;
+  createEffect(() => {
+    const mobile = isMobile();
 
-    // Auto-collapse sidebar on initial mobile state
-    if (initialMobile && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
+    if (!didInitMobile) {
+      didInitMobile = true;
+      prevMobile = mobile;
+      if (mobile && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
+        ctx.toggleSidebar();
+      }
+      return;
+    }
+
+    if (!prevMobile && mobile && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
       ctx.toggleSidebar();
     }
 
-    const handler = (e: MediaQueryListEvent) => {
-      setIsMobile(e.matches);
-      // Auto-collapse sidebar when transitioning to mobile
-      if (e.matches && props.hideSidebarOnMobile !== false && !ctx.sidebarCollapsed()) {
-        ctx.toggleSidebar();
-      }
-    };
+    prevMobile = mobile;
+  });
 
-    mq.addEventListener('change', handler);
-    onCleanup(() => mq.removeEventListener('change', handler));
-
-    // Keyboard shortcut for filter (Ctrl/Cmd + F)
+  // Keyboard shortcut for filter (Ctrl/Cmd + F)
+  onMount(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault();
