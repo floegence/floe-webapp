@@ -45,6 +45,47 @@ import {
   useLayout,
   useNotification,
   useTheme,
+  // New components
+  QuoteBlock,
+  InfoBlock,
+  WarningBlock,
+  SuccessBlock,
+  ErrorBlock,
+  NoteBlock,
+  TipBlock,
+  ProcessingIndicator,
+  // More icons
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  XCircle,
+  Home,
+  Star,
+  Heart,
+  Play,
+  Pause,
+  Database,
+  Cloud,
+  Clock,
+  Lock,
+  Eye,
+  Zap,
+  Sparkles,
+  Code,
+  Globe,
+  Mail,
+  // Colored icons
+  SuccessIcon,
+  ErrorIcon,
+  WarningIcon,
+  InfoIcon,
+  SparkleIcon,
+  LoadingIcon,
 } from '@floegence/floe-webapp-core';
 
 export interface ShowcasePageProps {
@@ -243,6 +284,39 @@ export function ShowcasePage(props: ShowcasePageProps) {
     { name: 'GitBranch', icon: GitBranch },
     { name: 'Bell', icon: Bell },
     { name: 'Loader2', icon: Loader2 },
+    { name: 'ArrowUp', icon: ArrowUp },
+    { name: 'ArrowDown', icon: ArrowDown },
+    { name: 'ArrowLeft', icon: ArrowLeft },
+    { name: 'ArrowRight', icon: ArrowRight },
+    { name: 'AlertCircle', icon: AlertCircle },
+    { name: 'AlertTriangle', icon: AlertTriangle },
+    { name: 'Info', icon: Info },
+    { name: 'CheckCircle', icon: CheckCircle },
+    { name: 'XCircle', icon: XCircle },
+    { name: 'Home', icon: Home },
+    { name: 'Star', icon: Star },
+    { name: 'Heart', icon: Heart },
+    { name: 'Play', icon: Play },
+    { name: 'Pause', icon: Pause },
+    { name: 'Database', icon: Database },
+    { name: 'Cloud', icon: Cloud },
+    { name: 'Clock', icon: Clock },
+    { name: 'Lock', icon: Lock },
+    { name: 'Eye', icon: Eye },
+    { name: 'Zap', icon: Zap },
+    { name: 'Sparkles', icon: Sparkles },
+    { name: 'Code', icon: Code },
+    { name: 'Globe', icon: Globe },
+    { name: 'Mail', icon: Mail },
+  ]);
+
+  const coloredIcons = createMemo(() => [
+    { name: 'SuccessIcon', icon: SuccessIcon },
+    { name: 'ErrorIcon', icon: ErrorIcon },
+    { name: 'WarningIcon', icon: WarningIcon },
+    { name: 'InfoIcon', icon: InfoIcon },
+    { name: 'SparkleIcon', icon: SparkleIcon },
+    { name: 'LoadingIcon', icon: LoadingIcon },
   ]);
 
   const openConfirm = () => {
@@ -1040,18 +1114,250 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="icons"
           title="Icons"
-          description="All built-in icons shipped with @floegence/floe-webapp-core."
+          description="All built-in icons shipped with @floegence/floe-webapp-core (monochrome and colored)."
         />
         <Panel class="border border-border rounded-md overflow-hidden">
-          <PanelContent class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            <For each={icons()}>
-              {(item) => (
-                <div class="flex items-center gap-2 rounded border border-border bg-muted/20 px-2 py-1.5">
-                  <item.icon class="w-4 h-4" />
-                  <span class="text-[11px]">{item.name}</span>
-                </div>
-              )}
-            </For>
+          <PanelContent class="space-y-4">
+            <div>
+              <p class="text-[11px] text-muted-foreground font-medium mb-2">Monochrome Icons</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                <For each={icons()}>
+                  {(item) => (
+                    <div class="flex items-center gap-2 rounded border border-border bg-muted/20 px-2 py-1.5">
+                      <item.icon class="w-4 h-4" />
+                      <span class="text-[10px] truncate">{item.name}</span>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+            <div>
+              <p class="text-[11px] text-muted-foreground font-medium mb-2">Colored Status Icons</p>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                <For each={coloredIcons()}>
+                  {(item) => (
+                    <div class="flex items-center gap-2 rounded border border-border bg-muted/20 px-2 py-1.5">
+                      <item.icon class="w-5 h-5" />
+                      <span class="text-[10px] truncate">{item.name}</span>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-quote-block"
+          title="Quote Block"
+          description="Clean blockquote component for documentation and code comments."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Default</p>
+                <QuoteBlock>
+                  Functions should do one thing. They should do it well. They should do it only.
+                </QuoteBlock>
+              </div>
+
+              <div class="space-y-1.5">
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Subtle</p>
+                <QuoteBlock variant="subtle" author="Rob Pike">
+                  Simplicity is complicated.
+                </QuoteBlock>
+              </div>
+
+              <div class="space-y-1.5">
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Bordered</p>
+                <QuoteBlock variant="bordered" author="Donald Knuth" citation="The Art of Programming">
+                  Premature optimization is the root of all evil.
+                </QuoteBlock>
+              </div>
+
+              <div class="space-y-1.5">
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Code</p>
+                <QuoteBlock variant="code">
+                  // TODO: Refactor this function to use async/await
+                </QuoteBlock>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Inline</p>
+              <div class="flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
+                <span>See the documentation:</span>
+                <QuoteBlock variant="inline" class="my-0">Returns undefined if key not found</QuoteBlock>
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-highlight-block"
+          title="Highlight Block"
+          description="Callout/admonition component for highlighting important content with semantic variants."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-3">
+            <InfoBlock title="Information">
+              This is an informational callout. Use it to provide additional context or helpful tips.
+            </InfoBlock>
+
+            <WarningBlock title="Warning">
+              Be careful with this operation. It may have unintended side effects.
+            </WarningBlock>
+
+            <SuccessBlock title="Success">
+              Operation completed successfully! Your changes have been saved.
+            </SuccessBlock>
+
+            <ErrorBlock title="Error">
+              Something went wrong. Please check your input and try again.
+            </ErrorBlock>
+
+            <NoteBlock title="Note">
+              This is a note block. Use it to highlight important information.
+            </NoteBlock>
+
+            <TipBlock title="Pro Tip">
+              Use keyboard shortcuts to improve your productivity: Cmd+K to open command palette.
+            </TipBlock>
+          </PanelContent>
+        </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-processing-indicator"
+          title="Processing Indicator"
+          description="Premium status indicators with sophisticated animations for AI states, workflows, and background tasks."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Premium Variants */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Aurora Variant - Flowing Northern Lights</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="aurora" status="thinking" />
+                <ProcessingIndicator
+                  variant="aurora"
+                  status="analyzing"
+                  description="Deep analysis in progress..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Neural Variant - AI Network Visualization</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="neural" status="thinking" />
+                <ProcessingIndicator
+                  variant="neural"
+                  status="processing"
+                  description="Neural network processing..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Orbit Variant - Multi-layer Orbital System</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="orbit" status="working" />
+                <ProcessingIndicator
+                  variant="orbit"
+                  status="analyzing"
+                  description="Scanning dependencies..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Quantum Variant - Dot Grid Wave</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="quantum" status="thinking" />
+                <ProcessingIndicator
+                  variant="quantum"
+                  status="processing"
+                  description="Processing data..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Pulse Variant - Expanding Rings</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="pulse" status="thinking" />
+                <ProcessingIndicator
+                  variant="pulse"
+                  status="working"
+                  description="Scanning..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            {/* Classic Variants */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Default Variant - Animated Rings</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator status="thinking" />
+                <ProcessingIndicator status="working" description="Processing your request..." />
+                <ProcessingIndicator status="analyzing" showElapsed />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Elegant Variant - Layered Orb</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="elegant" status="thinking" />
+                <ProcessingIndicator
+                  variant="elegant"
+                  status="working"
+                  description="Generating response..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Card Variant - Glassmorphism</p>
+              <div class="max-w-md">
+                <ProcessingIndicator
+                  variant="card"
+                  status="processing"
+                  description="Analyzing code structure and dependencies..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Pill Variant - Gradient Border</p>
+              <div class="flex flex-wrap gap-3">
+                <ProcessingIndicator variant="pill" status="thinking" />
+                <ProcessingIndicator variant="pill" status="working" showElapsed />
+                <ProcessingIndicator variant="pill" status="analyzing" />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Minimal Variant - Inline Waveform</p>
+              <div class="flex flex-wrap gap-4">
+                <ProcessingIndicator variant="minimal" status="thinking" />
+                <ProcessingIndicator variant="minimal" status="processing" showElapsed />
+                <ProcessingIndicator variant="minimal" status="loading" />
+              </div>
+            </div>
           </PanelContent>
         </Panel>
       </div>
