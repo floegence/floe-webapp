@@ -17,14 +17,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "prompts": "^2.4.2",
-    "kolorist": "^1.8.0"
+    "kolorist": "^1.8.0",
+    "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "@types/node": "^25.1.0",
     "@types/prompts": "^2.4.9",
-    "@types/node": "^22.10.0",
-    "typescript": "^5.7.2",
-    "unbuild": "^3.3.1"
+    "typescript": "^5.9.3",
+    "unbuild": "^3.6.1"
   },
   "engines": {
     "node": ">=20.0.0"
