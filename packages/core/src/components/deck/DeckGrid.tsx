@@ -57,7 +57,7 @@ export function DeckGrid(props: DeckGridProps) {
   });
 
   // Calculate actual rows needed (minimum 24 to fill one screen)
-  const actualRows = createMemo(() => {
+  const widgetRows = createMemo(() => {
     const ws = widgets();
     if (ws.length === 0) return DEFAULT_ROWS;
     let max = DEFAULT_ROWS;
@@ -66,6 +66,25 @@ export function DeckGrid(props: DeckGridProps) {
       if (end > max) max = end;
     }
     return max;
+  });
+
+  // Include drag/resize preview so the canvas can grow (and become scrollable) during the interaction.
+  const previewRows = createMemo(() => {
+    let max = widgetRows();
+
+    const drag = dragState();
+    if (drag) {
+      const end = drag.currentPosition.row + drag.currentPosition.rowSpan;
+      if (end > max) max = end;
+    }
+
+    const resize = resizeState();
+    if (resize) {
+      const end = resize.currentPosition.row + resize.currentPosition.rowSpan;
+      if (end > max) max = end;
+    }
+
+    return Math.max(DEFAULT_ROWS, max);
   });
 
   // Calculate dynamic row height based on container height
@@ -97,7 +116,15 @@ export function DeckGrid(props: DeckGridProps) {
   });
 
   // Check if content exceeds container (needs scrolling)
-  const needsScroll = createMemo(() => actualRows() > DEFAULT_ROWS);
+  const needsScroll = createMemo(() => {
+    if (previewRows() > DEFAULT_ROWS) return true;
+    if (containerHeight() <= 0) return false;
+
+    // If the container is too short to fit 24 rows at the minimum row height, allow scrolling
+    // instead of clipping content (e.g. small viewport / embedded container).
+    const baseHeight = DEFAULT_ROWS * rowHeight() + (DEFAULT_ROWS - 1) * GAP + PADDING * 2;
+    return baseHeight > containerHeight() + 1;
+  });
 
   return (
     <div
@@ -125,27 +152,45 @@ export function DeckGrid(props: DeckGridProps) {
       <div
         class="pointer-events-none"
         style={{
-          'grid-column': '1',
-          'grid-row': `1 / ${actualRows() + 1}`,
+          'grid-column': '1 / -1',
+          'grid-row': `1 / ${previewRows() + 1}`,
         }}
         aria-hidden="true"
       />
 
-      {/* Grid overlay in edit mode */}
+      {/* Grid background (edit mode only) – behind widgets, scrolls with the canvas */}
       <Show when={deck.editMode()}>
         <div
-          class="absolute inset-0 pointer-events-none z-0 rounded"
+          class="pointer-events-none z-0"
           style={{
-            padding: 'inherit',
-            'background-origin': 'content-box',
-            'background-clip': 'content-box',
-            'background-image': `
-              linear-gradient(to right, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px),
-              linear-gradient(to bottom, color-mix(in srgb, var(--border) 15%, transparent) 1px, transparent 1px)
-            `,
-            // Dynamic background size based on calculated row height
-            'background-size': `calc((100% - ${TOTAL_GAP_WIDTH}px) / ${GRID_COLS} + ${GAP}px) ${rowHeight() + GAP}px`,
-            'background-position': '0 0',
+            'grid-column': '1 / -1',
+            'grid-row': `1 / ${previewRows() + 1}`,
+            '--deck-grid-unit-x': `calc((100% - ${TOTAL_GAP_WIDTH}px) / ${GRID_COLS} + ${GAP}px)`,
+            '--deck-grid-unit-y': `${rowHeight() + GAP}px`,
+            // Fine grid + major gridlines every 6 / 12 cells (Grafana style)
+            'background-image': [
+              // Fine
+              'linear-gradient(to right, color-mix(in srgb, var(--border) 35%, transparent) 1px, transparent 1px)',
+              'linear-gradient(to bottom, color-mix(in srgb, var(--border) 35%, transparent) 1px, transparent 1px)',
+              // Major (6)
+              'linear-gradient(to right, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px)',
+              'linear-gradient(to bottom, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px)',
+              // Major (12)
+              'linear-gradient(to right, color-mix(in srgb, var(--border) 75%, transparent) 2px, transparent 2px)',
+              'linear-gradient(to bottom, color-mix(in srgb, var(--border) 75%, transparent) 2px, transparent 2px)',
+            ].join(', '),
+            'background-size': [
+              // Fine
+              'var(--deck-grid-unit-x) var(--deck-grid-unit-y)',
+              'var(--deck-grid-unit-x) var(--deck-grid-unit-y)',
+              // Major (6)
+              'calc(var(--deck-grid-unit-x) * 6) calc(var(--deck-grid-unit-y) * 6)',
+              'calc(var(--deck-grid-unit-x) * 6) calc(var(--deck-grid-unit-y) * 6)',
+              // Major (12)
+              'calc(var(--deck-grid-unit-x) * 12) calc(var(--deck-grid-unit-y) * 12)',
+              'calc(var(--deck-grid-unit-x) * 12) calc(var(--deck-grid-unit-y) * 12)',
+            ].join(', '),
+            'background-position': '0 0, 0 0, 0 0, 0 0, 0 0, 0 0',
           }}
         />
       </Show>

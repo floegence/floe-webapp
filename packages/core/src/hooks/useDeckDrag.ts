@@ -16,8 +16,12 @@ export function useDeckDrag() {
   let activePointerId: number | null = null;
   let startX = 0;
   let startY = 0;
+  let startScrollTop = 0;
   let lastX = 0;
   let lastY = 0;
+  let lastAppliedX = 0;
+  let lastAppliedY = 0;
+  let lastAppliedScrollTop = 0;
   let rafId: number | null = null;
   let currentWidgetId: string | null = null;
   let handleEl: HTMLElement | null = null;
@@ -53,6 +57,45 @@ export function useDeckDrag() {
     deck.endDrag(true);
   };
 
+  const maybeAutoScroll = (): void => {
+    if (!gridEl) return;
+    // Only vertical auto-scroll is needed (rows are unbounded).
+    const rect = gridEl.getBoundingClientRect();
+    const threshold = 48;
+    const maxSpeed = 24;
+
+    const distTop = lastY - rect.top;
+    const distBottom = rect.bottom - lastY;
+
+    let delta = 0;
+    if (distTop < threshold) {
+      delta = -Math.ceil(((threshold - distTop) / threshold) * maxSpeed);
+    } else if (distBottom < threshold) {
+      delta = Math.ceil(((threshold - distBottom) / threshold) * maxSpeed);
+    }
+
+    if (delta === 0) return;
+    const prev = gridEl.scrollTop;
+    const next = Math.max(0, Math.min(prev + delta, gridEl.scrollHeight - gridEl.clientHeight));
+    if (next !== prev) gridEl.scrollTop = next;
+  };
+
+  const startTick = () => {
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') return;
+
+    const tick = () => {
+      if (activePointerId === null) {
+        rafId = null;
+        return;
+      }
+      updatePosition();
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+  };
+
   const handlePointerDown = (e: PointerEvent) => {
     // Find the drag handle element
     const target = e.target as HTMLElement;
@@ -85,9 +128,13 @@ export function useDeckDrag() {
     startY = e.clientY;
     lastX = startX;
     lastY = startY;
+    lastAppliedX = startX;
+    lastAppliedY = startY;
     currentWidgetId = widgetId;
     handleEl = handle;
     gridEl = nearestGrid;
+    startScrollTop = nearestGrid.scrollTop;
+    lastAppliedScrollTop = startScrollTop;
     setGlobalStyles(true);
 
     const wsLayout = deck.activeLayout();
@@ -101,6 +148,7 @@ export function useDeckDrag() {
 
     deck.startDrag(widgetId, startX, startY);
     handle.setPointerCapture(e.pointerId);
+    startTick();
   };
 
   const handlePointerMove = (e: PointerEvent) => {
@@ -108,26 +156,27 @@ export function useDeckDrag() {
 
     lastX = e.clientX;
     lastY = e.clientY;
-
-    if (rafId !== null) return;
     if (typeof requestAnimationFrame === 'undefined') {
       updatePosition();
-      return;
     }
-
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      if (activePointerId === null) return;
-      updatePosition();
-    });
   };
 
   const updatePosition = () => {
     if (!currentWidgetId) return;
     if (!gridEl || !originalPosition) return;
 
+    // Keep scrolling responsive even if the pointer is stationary near edges.
+    maybeAutoScroll();
+
+    const scrollTop = gridEl.scrollTop;
+    if (lastX === lastAppliedX && lastY === lastAppliedY && scrollTop === lastAppliedScrollTop) return;
+    lastAppliedX = lastX;
+    lastAppliedY = lastY;
+    lastAppliedScrollTop = scrollTop;
+
     const deltaX = lastX - startX;
-    const deltaY = lastY - startY;
+    // Include scroll delta so the dragged widget stays under the pointer while the canvas scrolls.
+    const deltaY = (lastY - startY) + (scrollTop - startScrollTop);
 
     // Read dynamic row height from the grid element
     const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);

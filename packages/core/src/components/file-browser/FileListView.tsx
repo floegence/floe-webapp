@@ -3,6 +3,7 @@ import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
+import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
@@ -66,6 +67,18 @@ function HighlightedName(props: { name: string; match: FilterMatchInfo | null })
  */
 export function FileListView(props: FileListViewProps) {
   const ctx = useFileBrowser();
+
+  const ROW_HEIGHT_PX = 32;
+  const virtual = useVirtualWindow({
+    count: () => ctx.currentFiles().length,
+    itemSize: () => ROW_HEIGHT_PX,
+    overscan: 12,
+  });
+
+  const visibleFiles = createMemo(() => {
+    const { start, end } = virtual.range();
+    return ctx.currentFiles().slice(start, end);
+  });
 
   const handleSort = (field: SortField) => {
     const current = ctx.sortConfig();
@@ -354,16 +367,23 @@ export function FileListView(props: FileListViewProps) {
       </div>
 
       {/* File list */}
-      <div class="flex-1 min-h-0 overflow-auto">
+      <div
+        ref={(el) => {
+          virtual.scrollRef(el);
+          ctx.setScrollContainer(el);
+        }}
+        class="flex-1 min-h-0 overflow-auto"
+        onScroll={virtual.onScroll}
+      >
         <Show
           when={ctx.currentFiles().length > 0}
           fallback={
             <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
               <Show
-                when={ctx.filterQuery().trim()}
+                when={ctx.filterQueryApplied().trim()}
                 fallback={<span>This folder is empty</span>}
               >
-                <span>No files matching "{ctx.filterQuery()}"</span>
+                <span>No files matching "{ctx.filterQueryApplied()}"</span>
                 <button
                   type="button"
                   onClick={() => ctx.setFilterQuery('')}
@@ -375,20 +395,26 @@ export function FileListView(props: FileListViewProps) {
             </div>
           }
         >
-          <For each={ctx.currentFiles()}>
-            {(item, index) => (
-              <FileListItem
-                item={item}
-                formatSize={formatSize}
-                formatDate={formatDate}
-                index={index()}
-                showModified={columnLayout().showModified}
-                showSize={columnLayout().showSize}
-                modifiedWidthPx={modifiedWidthPx()}
-                sizeWidthPx={sizeWidthPx()}
-              />
-            )}
-          </For>
+          <div
+            style={{
+              'padding-top': `${virtual.paddingTop()}px`,
+              'padding-bottom': `${virtual.paddingBottom()}px`,
+            }}
+          >
+            <For each={visibleFiles()}>
+              {(item) => (
+                <FileListItem
+                  item={item}
+                  formatSize={formatSize}
+                  formatDate={formatDate}
+                  showModified={columnLayout().showModified}
+                  showSize={columnLayout().showSize}
+                  modifiedWidthPx={modifiedWidthPx()}
+                  sizeWidthPx={sizeWidthPx()}
+                />
+              )}
+            </For>
+          </div>
         </Show>
       </div>
     </div>
@@ -399,7 +425,6 @@ interface FileListItemProps {
   item: FileItem;
   formatSize: (bytes?: number) => string;
   formatDate: (date?: Date) => string;
-  index: number;
   showModified: boolean;
   showSize: boolean;
   modifiedWidthPx: number;
@@ -409,7 +434,7 @@ interface FileListItemProps {
 function FileListItem(props: FileListItemProps) {
   const ctx = useFileBrowser();
   const isSelected = () => ctx.isSelected(props.item.id);
-  const filterMatch = () => ctx.getFilterMatch(props.item.name);
+  const filterMatch = () => ctx.getFilterMatchForId(props.item.id);
   const item = untrack(() => props.item);
   const longPress = createLongPressContextMenuHandlers(ctx, item);
   let lastPointerType: PointerEvent['pointerType'] | undefined;
@@ -461,11 +486,8 @@ function FileListItem(props: FileListItemProps) {
     }
 
     // Get all selected items for the context menu
-    const selectedIds = ctx.selectedItems();
-    const allFiles = ctx.currentFiles();
-    const selectedItems = selectedIds.size > 0
-      ? allFiles.filter((f) => selectedIds.has(f.id))
-      : [props.item];
+    const selectedFromCurrent = ctx.getSelectedItemsList();
+    const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
     ctx.showContextMenu({
       x: e.clientX,
@@ -490,18 +512,12 @@ function FileListItem(props: FileListItemProps) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       class={cn(
-        'group w-full flex items-center text-xs cursor-pointer',
+        'group w-full h-8 flex items-center text-xs cursor-pointer',
         'transition-all duration-100',
         'hover:bg-accent/50',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-        isSelected() && 'bg-accent text-accent-foreground',
-        // Staggered animation on mount
-        'animate-in fade-in slide-in-from-top-2'
+        isSelected() && 'bg-accent text-accent-foreground'
       )}
-      style={{
-        'animation-delay': `${Math.min(props.index * 20, 200)}ms`,
-        'animation-fill-mode': 'backwards',
-      }}
     >
       {/* Name column */}
       <div class="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5">

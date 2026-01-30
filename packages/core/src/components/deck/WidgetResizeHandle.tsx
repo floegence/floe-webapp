@@ -43,8 +43,12 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   let activePointerId: number | null = null;
   let startX = 0;
   let startY = 0;
+  let startScrollTop = 0;
   let lastX = 0;
   let lastY = 0;
+  let lastAppliedX = 0;
+  let lastAppliedY = 0;
+  let lastAppliedScrollTop = 0;
   let rafId: number | null = null;
   let unlockBody: (() => void) | null = null;
   let gridEl: HTMLElement | null = null;
@@ -75,6 +79,44 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     deck.endResize(true);
   };
 
+  const maybeAutoScroll = (): void => {
+    if (!gridEl) return;
+    const rect = gridEl.getBoundingClientRect();
+    const threshold = 48;
+    const maxSpeed = 24;
+
+    const distTop = lastY - rect.top;
+    const distBottom = rect.bottom - lastY;
+
+    let delta = 0;
+    if (distTop < threshold) {
+      delta = -Math.ceil(((threshold - distTop) / threshold) * maxSpeed);
+    } else if (distBottom < threshold) {
+      delta = Math.ceil(((threshold - distBottom) / threshold) * maxSpeed);
+    }
+
+    if (delta === 0) return;
+    const prev = gridEl.scrollTop;
+    const next = Math.max(0, Math.min(prev + delta, gridEl.scrollHeight - gridEl.clientHeight));
+    if (next !== prev) gridEl.scrollTop = next;
+  };
+
+  const startTick = () => {
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') return;
+
+    const tick = () => {
+      if (!isActive()) {
+        rafId = null;
+        return;
+      }
+      updatePosition();
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+  };
+
   const handlePointerDown = (e: PointerEvent) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
@@ -88,9 +130,13 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     startY = e.clientY;
     lastX = startX;
     lastY = startY;
+    lastAppliedX = startX;
+    lastAppliedY = startY;
     setIsActive(true);
     setGlobalStyles(true);
     gridEl = nearestGrid;
+    startScrollTop = nearestGrid.scrollTop;
+    lastAppliedScrollTop = startScrollTop;
 
     // Cache horizontal paddings once per interaction (avoid per-frame getComputedStyle).
     const styles = window.getComputedStyle(nearestGrid);
@@ -99,6 +145,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
 
     deck.startResize(props.widget.id, props.edge, startX, startY);
     handleRef?.setPointerCapture(e.pointerId);
+    startTick();
   };
 
   const handlePointerMove = (e: PointerEvent) => {
@@ -106,27 +153,26 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
 
     lastX = e.clientX;
     lastY = e.clientY;
-
-    // RAF throttle for performance
-    if (rafId !== null) return;
     if (typeof requestAnimationFrame === 'undefined') {
       updatePosition();
-      return;
     }
-
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
-      if (!isActive()) return;
-      updatePosition();
-    });
   };
 
   const updatePosition = () => {
-    const deltaX = lastX - startX;
-    const deltaY = lastY - startY;
-
     // Get grid element and calculate cell sizes
     if (!gridEl) return;
+
+    // Keep scrolling responsive even if the pointer is stationary near edges.
+    maybeAutoScroll();
+
+    const scrollTop = gridEl.scrollTop;
+    if (lastX === lastAppliedX && lastY === lastAppliedY && scrollTop === lastAppliedScrollTop) return;
+    lastAppliedX = lastX;
+    lastAppliedY = lastY;
+    lastAppliedScrollTop = scrollTop;
+
+    const deltaX = lastX - startX;
+    const deltaY = (lastY - startY) + (scrollTop - startScrollTop);
 
     // Read dynamic row height from the grid element
     const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);

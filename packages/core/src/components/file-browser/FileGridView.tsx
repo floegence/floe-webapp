@@ -1,6 +1,8 @@
 import { For, Show, untrack, createMemo } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
@@ -63,47 +65,84 @@ function HighlightedName(props: { name: string; match: FilterMatchInfo | null })
 export function FileGridView(props: FileGridViewProps) {
   const ctx = useFileBrowser();
 
+  const isSmUp = useMediaQuery('(min-width: 640px)');
+  const isMdUp = useMediaQuery('(min-width: 768px)');
+  const isLgUp = useMediaQuery('(min-width: 1024px)');
+  const isXlUp = useMediaQuery('(min-width: 1280px)');
+
+  const columns = () => (isXlUp() ? 6 : isLgUp() ? 5 : isMdUp() ? 4 : isSmUp() ? 3 : 2);
+
+  const TILE_HEIGHT_PX = 112; // h-28
+  const GRID_GAP_PX = 8; // gap-2
+  const rowHeightPx = () => TILE_HEIGHT_PX + GRID_GAP_PX;
+  const rowCount = () => Math.ceil(ctx.currentFiles().length / Math.max(1, columns()));
+
+  const virtualRows = useVirtualWindow({
+    count: rowCount,
+    itemSize: rowHeightPx,
+    overscan: 2,
+  });
+
+  const startIndex = () => virtualRows.range().start * columns();
+  const endIndex = () => Math.min(ctx.currentFiles().length, virtualRows.range().end * columns());
+
+  const visibleFiles = createMemo(() => ctx.currentFiles().slice(startIndex(), endIndex()));
+
   return (
-    <div class={cn('h-full min-h-0 overflow-auto p-3', props.class)}>
-      <Show
-        when={ctx.currentFiles().length > 0}
-        fallback={
-          <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
-            <Show
-              when={ctx.filterQuery().trim()}
-              fallback={<span>This folder is empty</span>}
-            >
-              <span>No files matching "{ctx.filterQuery()}"</span>
-              <button
-                type="button"
-                onClick={() => ctx.setFilterQuery('')}
-                class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+    <div
+      ref={(el) => {
+        virtualRows.scrollRef(el);
+        ctx.setScrollContainer(el);
+      }}
+      class={cn('h-full min-h-0 overflow-auto', props.class)}
+      onScroll={virtualRows.onScroll}
+    >
+      <div class="p-3">
+        <Show
+          when={ctx.currentFiles().length > 0}
+          fallback={
+            <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+              <Show
+                when={ctx.filterQueryApplied().trim()}
+                fallback={<span>This folder is empty</span>}
               >
-                Clear Filter
-              </button>
-            </Show>
+                <span>No files matching "{ctx.filterQueryApplied()}"</span>
+                <button
+                  type="button"
+                  onClick={() => ctx.setFilterQuery('')}
+                  class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  Clear Filter
+                </button>
+              </Show>
+            </div>
+          }
+        >
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
+            style={{
+              'padding-top': `${virtualRows.paddingTop()}px`,
+              'padding-bottom': `${virtualRows.paddingBottom()}px`,
+            }}
+          >
+            <For each={visibleFiles()}>
+              {(item) => <FileGridItem item={item} />}
+            </For>
           </div>
-        }
-      >
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-          <For each={ctx.currentFiles()}>
-            {(item, index) => <FileGridItem item={item} index={index()} />}
-          </For>
-        </div>
-      </Show>
+        </Show>
+      </div>
     </div>
   );
 }
 
 interface FileGridItemProps {
   item: FileItem;
-  index: number;
 }
 
 function FileGridItem(props: FileGridItemProps) {
   const ctx = useFileBrowser();
   const isSelected = () => ctx.isSelected(props.item.id);
-  const filterMatch = () => ctx.getFilterMatch(props.item.name);
+  const filterMatch = () => ctx.getFilterMatchForId(props.item.id);
   const item = untrack(() => props.item);
   const longPress = createLongPressContextMenuHandlers(ctx, item);
   let lastPointerType: PointerEvent['pointerType'] | undefined;
@@ -155,11 +194,8 @@ function FileGridItem(props: FileGridItemProps) {
     }
 
     // Get all selected items for the context menu
-    const selectedIds = ctx.selectedItems();
-    const allFiles = ctx.currentFiles();
-    const selectedItems = selectedIds.size > 0
-      ? allFiles.filter((f) => selectedIds.has(f.id))
-      : [props.item];
+    const selectedFromCurrent = ctx.getSelectedItemsList();
+    const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
     ctx.showContextMenu({
       x: e.clientX,
@@ -184,19 +220,13 @@ function FileGridItem(props: FileGridItemProps) {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
       class={cn(
-        'group relative flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer',
+        'group relative flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer h-28',
         'transition-all duration-150',
         'hover:bg-accent/50 hover:scale-[1.02]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'active:scale-[0.98]',
-        isSelected() && 'bg-accent ring-2 ring-primary/50',
-        // Staggered animation on mount
-        'animate-in fade-in zoom-in-95'
+        isSelected() && 'bg-accent ring-2 ring-primary/50'
       )}
-      style={{
-        'animation-delay': `${Math.min(props.index * 30, 300)}ms`,
-        'animation-fill-mode': 'backwards',
-      }}
     >
       {/* Selection indicator */}
       <Show when={isSelected()}>

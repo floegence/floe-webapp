@@ -199,9 +199,15 @@ export interface FileBrowserContextValue {
   // Filter
   filterQuery: Accessor<string>;
   setFilterQuery: (query: string) => void;
+  /** Query that is actually applied to the list (may lag behind filterQuery for UI-first rendering) */
+  filterQueryApplied: Accessor<string>;
   isFilterActive: Accessor<boolean>;
   setFilterActive: (active: boolean) => void;
   getFilterMatch: (name: string) => FilterMatchInfo | null;
+  /** Fast path: match info by file id (no repeated fuzzy matching) */
+  getFilterMatchForId: (id: string) => FilterMatchInfo | null;
+  /** Selected items in the current view, ordered by currentFiles order */
+  getSelectedItemsList: () => FileItem[];
 
   // Sidebar
   sidebarCollapsed: Accessor<boolean>;

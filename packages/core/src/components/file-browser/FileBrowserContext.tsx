@@ -1,6 +1,6 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo, createEffect, untrack } from 'solid-js';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
-import { deferNonBlocking } from '../../utils/defer';
+import { deferAfterPaint, deferNonBlocking } from '../../utils/defer';
 import type {
   FileItem,
   ViewMode,
@@ -58,15 +58,13 @@ function normalizeListColumnRatios(ratios: FileListColumnRatios): FileListColumn
  * Fuzzy match function - returns matched indices or null if no match
  * Supports subsequence matching (e.g., "cfg" matches "ConFiGuration")
  */
-function fuzzyMatch(text: string, pattern: string): number[] | null {
-  if (!pattern) return [];
-  const t = text.toLowerCase();
-  const p = pattern.toLowerCase();
+function fuzzyMatchLower(textLower: string, patternLower: string): number[] | null {
+  if (!patternLower) return [];
   const indices: number[] = [];
   let ti = 0;
 
-  for (const char of p) {
-    const found = t.indexOf(char, ti);
+  for (const char of patternLower) {
+    const found = textLower.indexOf(char, ti);
     if (found === -1) return null;
     indices.push(found);
     ti = found + 1;
@@ -134,7 +132,27 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
   const [filterQuery, setFilterQueryInternal] = createSignal('');
+  const [filterQueryApplied, setFilterQueryApplied] = createSignal('');
   const [isFilterActive, setFilterActive] = createSignal(false);
+
+  // UI-first filtering: apply the query after a paint so typing never blocks the input event.
+  // We also coalesce rapid updates and only apply the latest query.
+  let filterApplyJob = 0;
+  createEffect(() => {
+    const next = filterQuery().trim();
+    filterApplyJob += 1;
+    const jobId = filterApplyJob;
+
+    if (!next) {
+      setFilterQueryApplied('');
+      return;
+    }
+
+    deferAfterPaint(() => {
+      if (jobId !== filterApplyJob) return;
+      setFilterQueryApplied(next);
+    });
+  });
 
   // Persist column ratios as a user preference (debounced for drag performance).
   createEffect(() => {
@@ -245,27 +263,17 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return map;
   });
 
-  // Get files at current path
-  const currentFiles = createMemo(() => {
+  const sortedState = createMemo(() => {
     const path = normalizePath(currentPath());
     let found = fileIndex().get(path) ?? [];
 
-    // Apply optimistic updates first (before filtering/sorting)
+    // Apply optimistic updates first (before sorting/filtering)
     found = applyOptimisticOps(found, path);
 
-    // Apply fuzzy filter
-    const query = filterQuery().trim();
-    if (query) {
-      found = found.filter(item => fuzzyMatch(item.name, query) !== null);
-    }
-
-    // Sort files
+    // Sort files (folders first)
     const config = sortConfig();
     const sorted = [...found].sort((a, b) => {
-      // Folders always come first
-      if (a.type !== b.type) {
-        return a.type === 'folder' ? -1 : 1;
-      }
+      if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
 
       let comparison = 0;
       switch (config.field) {
@@ -286,8 +294,65 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
       return config.direction === 'asc' ? comparison : -comparison;
     });
 
-    return sorted;
+    // Cache lowercased names once per sort/path/optimistic change.
+    const nameLowerById = new Map<string, string>();
+    for (const item of sorted) {
+      nameLowerById.set(item.id, item.name.toLowerCase());
+    }
+
+    return { items: sorted, nameLowerById };
   });
+
+  const filterState = createMemo(() => {
+    const { items: sortedItems, nameLowerById } = sortedState();
+    const queryRaw = filterQueryApplied().trim();
+    const queryLower = queryRaw.toLowerCase();
+
+    const matchById = new Map<string, FilterMatchInfo>();
+    const fileById = new Map<string, FileItem>();
+    const indexById = new Map<string, number>();
+
+    // No filter: keep the sorted list as-is.
+    if (!queryLower) {
+      for (let i = 0; i < sortedItems.length; i++) {
+        const item = sortedItems[i]!;
+        fileById.set(item.id, item);
+        indexById.set(item.id, i);
+      }
+      return { items: sortedItems, matchById, fileById, indexById };
+    }
+
+    const filtered: FileItem[] = [];
+    let idx = 0;
+    for (const item of sortedItems) {
+      const nameLower = nameLowerById.get(item.id) ?? item.name.toLowerCase();
+      const indices = fuzzyMatchLower(nameLower, queryLower);
+      if (!indices) continue;
+      filtered.push(item);
+      matchById.set(item.id, { matchedIndices: indices });
+      fileById.set(item.id, item);
+      indexById.set(item.id, idx);
+      idx += 1;
+    }
+
+    return { items: filtered, matchById, fileById, indexById };
+  });
+
+  // Public accessor required by FileBrowserContextValue
+  const currentFiles: Accessor<FileItem[]> = () => filterState().items;
+
+  const getSelectedItemsFromIds = (ids: Set<string>): FileItem[] => {
+    const state = filterState();
+    const out: Array<{ index: number; item: FileItem }> = [];
+    for (const id of ids) {
+      const item = state.fileById.get(id);
+      if (!item) continue;
+      const index = state.indexById.get(id);
+      out.push({ index: index ?? Number.MAX_SAFE_INTEGER, item });
+    }
+    out.sort((a, b) => a.index - b.index);
+    return out.map((e) => e.item);
+  };
 
   const setCurrentPath = (path: string) => {
     const nextPath = normalizePath(path);
@@ -297,6 +362,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setSelectedIds(new Set<string>());
     // Clear filter when navigating to a different directory
     setFilterQueryInternal('');
+    setFilterQueryApplied('');
     setFilterActive(false);
     const onSelect = props.onSelect;
     deferNonBlocking(() => onSelect?.([]));
@@ -350,7 +416,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     if (onSelect) {
       const selectedIdsSnapshot = new Set(next);
       deferNonBlocking(() => {
-        const selected = untrack(() => currentFiles().filter((f) => selectedIdsSnapshot.has(f.id)));
+        const selected = untrack(() => getSelectedItemsFromIds(selectedIdsSnapshot));
         onSelect(selected);
       });
     }
@@ -392,12 +458,18 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   };
 
   const getFilterMatch = (name: string): FilterMatchInfo | null => {
-    const query = filterQuery().trim();
+    const query = filterQueryApplied().trim();
     if (!query) return null;
-    const indices = fuzzyMatch(name, query);
+    const indices = fuzzyMatchLower(name.toLowerCase(), query.toLowerCase());
     if (!indices) return null;
     return { matchedIndices: indices };
   };
+
+  const getFilterMatchForId = (id: string): FilterMatchInfo | null => {
+    return filterState().matchById.get(id) ?? null;
+  };
+
+  const getSelectedItemsList = () => getSelectedItemsFromIds(selectedIds());
 
   const openItem = (item: FileItem) => {
     if (item.type === 'folder') {
@@ -472,6 +544,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     selectItem,
     clearSelection,
     isSelected,
+    getSelectedItemsList,
     viewMode,
     setViewMode,
     sortConfig,
@@ -485,9 +558,11 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     currentFiles,
     filterQuery,
     setFilterQuery,
+    filterQueryApplied,
     isFilterActive,
     setFilterActive,
     getFilterMatch,
+    getFilterMatchForId,
     sidebarCollapsed,
     toggleSidebar,
     sidebarWidth,

@@ -38,9 +38,7 @@ export function createLongPressContextMenuHandlers(
       ctx.selectItem(id, false);
     }
 
-    const selectedIds = ctx.selectedItems();
-    const allFiles = ctx.currentFiles();
-    const selectedFromCurrent = allFiles.filter((f) => selectedIds.has(f.id));
+    const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [item];
 
     ctx.showContextMenu({ x, y, items: selectedItems });

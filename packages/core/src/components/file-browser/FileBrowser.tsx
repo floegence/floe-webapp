@@ -1,4 +1,4 @@
-import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
+import { Show, type JSX, createEffect } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
@@ -118,24 +118,20 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
     prevMobile = mobile;
   });
 
-  // Keyboard shortcut for filter (Ctrl/Cmd + F)
-  onMount(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
-        e.preventDefault();
-        ctx.setFilterActive(true);
-        setTimeout(() => filterInputRef?.focus(), 50);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    onCleanup(() => document.removeEventListener('keydown', handleKeyDown));
-  });
+  // Keyboard shortcut for filter (Ctrl/Cmd + F) – scoped to this FileBrowser instance.
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    if (e.key.toLowerCase() !== 'f') return;
+    e.preventDefault();
+    ctx.setFilterActive(true);
+    setTimeout(() => filterInputRef?.focus(), 50);
+  };
 
   const showSidebar = () => !ctx.sidebarCollapsed() || !isMobile();
 
   return (
     <div
+      onKeyDown={handleKeyDown}
       class={cn(
         'flex flex-col h-full min-h-0 bg-background',
         'border border-border rounded-lg overflow-hidden',
@@ -239,7 +235,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
           <div class="flex items-center justify-between px-3 py-1 border-t border-border text-[10px] text-muted-foreground">
             <span>
               {ctx.currentFiles().length} items
-              <Show when={ctx.filterQuery().trim()}>
+              <Show when={ctx.filterQueryApplied().trim()}>
                 {' '}(filtered)
               </Show>
               <Show when={ctx.selectedItems().size > 0}>
