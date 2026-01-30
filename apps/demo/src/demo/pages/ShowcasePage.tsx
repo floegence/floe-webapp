@@ -54,6 +54,12 @@ import {
   NoteBlock,
   TipBlock,
   ProcessingIndicator,
+  // Charts
+  LineChart,
+  AreaChart,
+  DataBarChart,
+  DataPieChart,
+  MonitoringChart,
   // More icons
   ArrowUp,
   ArrowDown,
@@ -1551,6 +1557,139 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-charts"
+          title="Charts"
+          description="Professional data visualization components with animations and responsive design."
+        />
+
+        {/* Line Chart */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Line Chart - Trend Visualization</p>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <LineChart
+                title="Weekly Performance"
+                series={[
+                  { name: 'Revenue', data: [120, 180, 150, 220, 280, 260, 340] },
+                  { name: 'Users', data: [80, 120, 140, 160, 200, 180, 240] },
+                ]}
+                labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
+                height={220}
+                showArea
+                variant="gradient"
+              />
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Area Chart */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Area Chart - Volume Data</p>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <AreaChart
+                title="Traffic Overview"
+                series={[
+                  { name: 'Page Views', data: [450, 520, 480, 610, 580, 720, 680, 750, 800, 720, 680, 640] },
+                ]}
+                labels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+                height={200}
+              />
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Bar Chart */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Bar Chart - Categorical Comparison</p>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <DataBarChart
+                title="Sales by Region"
+                data={[
+                  { label: 'North', value: 420 },
+                  { label: 'South', value: 380 },
+                  { label: 'East', value: 510 },
+                  { label: 'West', value: 290 },
+                  { label: 'Central', value: 340 },
+                ]}
+                height={200}
+                variant="gradient"
+              />
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Pie Charts */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Pie & Donut Charts - Proportions</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Panel class="border border-border rounded-md overflow-hidden">
+              <PanelContent>
+                <DataPieChart
+                  title="Market Share"
+                  data={[
+                    { label: 'Product A', value: 35 },
+                    { label: 'Product B', value: 25 },
+                    { label: 'Product C', value: 20 },
+                    { label: 'Others', value: 20 },
+                  ]}
+                  size={160}
+                />
+              </PanelContent>
+            </Panel>
+            <Panel class="border border-border rounded-md overflow-hidden">
+              <PanelContent>
+                <DataPieChart
+                  title="Resource Usage"
+                  data={[
+                    { label: 'CPU', value: 45 },
+                    { label: 'Memory', value: 30 },
+                    { label: 'Storage', value: 15 },
+                    { label: 'Network', value: 10 },
+                  ]}
+                  size={160}
+                  innerRadius={0.6}
+                />
+              </PanelContent>
+            </Panel>
+          </div>
+        </div>
+
+        {/* Monitoring Chart */}
+        <div class="space-y-2">
+          <p class="text-[11px] text-muted-foreground font-medium">Monitoring Chart - Real-time Dashboard</p>
+          <p class="text-[10px] text-muted-foreground">
+            Live updating chart for monitoring metrics. The chart updates automatically with simulated data.
+          </p>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <MonitoringChart
+                title="System Metrics"
+                series={[
+                  { name: 'CPU Usage', data: [45, 52, 48, 61, 55, 58, 62, 54, 49, 53] },
+                  { name: 'Memory', data: [72, 68, 75, 71, 69, 74, 76, 73, 70, 72] },
+                ]}
+                labels={['10s', '9s', '8s', '7s', '6s', '5s', '4s', '3s', '2s', '1s']}
+                height={200}
+                realtime
+                updateInterval={2000}
+                maxPoints={15}
+                onUpdate={() => ({
+                  values: [
+                    Math.round(40 + Math.random() * 30),
+                    Math.round(65 + Math.random() * 15),
+                  ],
+                  label: 'now',
+                })}
+              />
+            </PanelContent>
+          </Panel>
+        </div>
       </div>
     </div>
   );
