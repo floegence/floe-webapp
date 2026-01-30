@@ -438,12 +438,15 @@ export function LineChart(props: LineChartProps) {
       return new Set<number>(Array.from({ length: n }, (_, i) => i));
     }
 
-    // Pick indices evenly, always include first and last.
+    // Pick indices by stepping through points, always include last.
+    // This avoids rounding artifacts that can collapse ticks to adjacent indices (causing overlap).
     if (max === 1) return new Set<number>([n - 1]);
     const out = new Set<number>();
-    for (let i = 0; i < max; i += 1) {
-      out.add(Math.round((i * (n - 1)) / (max - 1)));
+    const step = Math.ceil((n - 1) / (max - 1));
+    for (let idx = 0; idx < n; idx += step) {
+      out.add(idx);
     }
+    out.add(n - 1);
     return out;
   });
 

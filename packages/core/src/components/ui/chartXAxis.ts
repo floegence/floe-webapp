@@ -61,8 +61,9 @@ export function computeAutoMaxXAxisLabels(options: ComputeAutoMaxXAxisLabelsOpti
   const pointSpacingPx = innerPxWidth / Math.max(1, n - 1);
   if (pointSpacingPx >= minSpacingPx) return undefined;
 
-  // Otherwise, compute a max label count that keeps spacing >= minSpacingPx.
-  const max = Math.floor(innerPxWidth / minSpacingPx) + 1;
+  // Otherwise, compute a max label count that implies a minimum index step between labels.
+  // Using an index step avoids rounding artifacts (e.g. evenly-picked indices collapsing to adjacent ticks).
+  const minIndexStep = Math.max(1, Math.ceil(minSpacingPx / Math.max(1, pointSpacingPx)));
+  const max = Math.floor((n - 1) / minIndexStep) + 1;
   return Math.max(2, Math.min(n, max));
 }
-
