@@ -37,6 +37,14 @@ export interface FileBrowserProps {
   sidebarResizable?: boolean;
   /** Hide sidebar on mobile by default */
   hideSidebarOnMobile?: boolean;
+  /**
+   * Persistence key prefix for storing UI state (viewMode, sortConfig, expandedFolders, sidebarCollapsed).
+   * When set, these states will be persisted to localStorage.
+   * Each instance should use a unique key to avoid conflicts.
+   */
+  persistenceKey?: string;
+  /** Label for the root/home directory in breadcrumb (default: 'Root') */
+  homeLabel?: string;
   /** Context menu callbacks for built-in actions */
   contextMenuCallbacks?: ContextMenuCallbacks;
   /** Custom context menu items to add */
@@ -59,6 +67,8 @@ export function FileBrowser(props: FileBrowserProps) {
       initialListColumnRatios={props.initialListColumnRatios}
       initialSidebarWidth={props.sidebarWidth}
       sidebarWidthStorageKey={props.sidebarWidthStorageKey}
+      persistenceKey={props.persistenceKey}
+      homeLabel={props.homeLabel}
       onNavigate={props.onNavigate}
       onSelect={props.onSelect}
       onOpen={props.onOpen}

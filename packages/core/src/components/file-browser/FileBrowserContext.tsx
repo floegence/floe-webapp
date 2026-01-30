@@ -28,9 +28,47 @@ const SIDEBAR_WIDTH_STORAGE_KEY = 'fileBrowser:sidebarWidth';
 const SIDEBAR_MIN_WIDTH_PX = 160;
 const SIDEBAR_MAX_WIDTH_PX = 520;
 
+// 新增持久化存储 key
+const VIEW_MODE_STORAGE_KEY = 'fileBrowser:viewMode';
+const SORT_CONFIG_STORAGE_KEY = 'fileBrowser:sortConfig';
+const EXPANDED_FOLDERS_STORAGE_KEY = 'fileBrowser:expandedFolders';
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'fileBrowser:sidebarCollapsed';
+
 function normalizeSidebarWidthPx(widthPx: unknown, fallbackPx: number): number {
   const raw = typeof widthPx === 'number' && Number.isFinite(widthPx) ? widthPx : fallbackPx;
   return Math.max(SIDEBAR_MIN_WIDTH_PX, Math.min(SIDEBAR_MAX_WIDTH_PX, Math.round(raw)));
+}
+
+function normalizeViewMode(mode: unknown, fallback: ViewMode): ViewMode {
+  if (mode === 'list' || mode === 'grid') return mode;
+  return fallback;
+}
+
+function normalizeSortConfig(config: unknown, fallback: SortConfig): SortConfig {
+  if (!config || typeof config !== 'object') return fallback;
+  const c = config as Record<string, unknown>;
+  const field = c.field;
+  const direction = c.direction;
+  const validField = field === 'name' || field === 'size' || field === 'modifiedAt' || field === 'type';
+  const validDir = direction === 'asc' || direction === 'desc';
+  if (!validField || !validDir) return fallback;
+  return { field: field as SortConfig['field'], direction: direction as SortConfig['direction'] };
+}
+
+function normalizeExpandedFolders(folders: unknown): string[] {
+  if (!Array.isArray(folders)) return ['/'];
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const item of folders) {
+    if (typeof item !== 'string') continue;
+    const p = item.trim();
+    if (!p || seen.has(p)) continue;
+    seen.add(p);
+    result.push(p);
+  }
+  // 根目录始终展开
+  if (!seen.has('/')) result.unshift('/');
+  return result;
 }
 
 function normalizeListColumnRatios(ratios: FileListColumnRatios): FileListColumnRatios {
@@ -87,6 +125,12 @@ export interface FileBrowserProviderProps {
    * When omitted, a shared key is used (acts like a user preference).
    */
   sidebarWidthStorageKey?: string;
+  /**
+   * 持久化存储 key 前缀，用于区分不同实例的持久化数据。
+   * 设置后会持久化 viewMode、sortConfig、expandedFolders、sidebarCollapsed。
+   * 若不设置则不持久化这些状态。
+   */
+  persistenceKey?: string;
   /** Label for the root/home directory in breadcrumb (default: 'Root') */
   homeLabel?: string;
   onNavigate?: (path: string) => void;
@@ -105,10 +149,46 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return p === '' ? '/' : p;
   };
 
+  // eslint-disable-next-line solid/reactivity -- Provider props are intended to be static for the provider lifetime.
+  const persistenceKey = (props.persistenceKey ?? '').trim();
+  const shouldPersist = !!persistenceKey;
+
+  // 构建持久化存储 key
+  const getStorageKey = (base: string) => persistenceKey ? `${persistenceKey}:${base}` : base;
+
+  // 加载持久化的 viewMode
+  const initialViewMode = shouldPersist
+    ? normalizeViewMode(
+        floe.persist.load<ViewMode>(getStorageKey(VIEW_MODE_STORAGE_KEY), props.initialViewMode ?? 'list'),
+        props.initialViewMode ?? 'list'
+      )
+    : (props.initialViewMode ?? 'list');
+
+  // 加载持久化的 sortConfig
+  const defaultSortConfig: SortConfig = { field: 'name', direction: 'asc' };
+  const initialSortConfig = shouldPersist
+    ? normalizeSortConfig(
+        floe.persist.load<SortConfig>(getStorageKey(SORT_CONFIG_STORAGE_KEY), defaultSortConfig),
+        defaultSortConfig
+      )
+    : defaultSortConfig;
+
+  // 加载持久化的 expandedFolders
+  const initialExpandedFolders = shouldPersist
+    ? normalizeExpandedFolders(
+        floe.persist.load<string[]>(getStorageKey(EXPANDED_FOLDERS_STORAGE_KEY), ['/'])
+      )
+    : ['/'];
+
+  // 加载持久化的 sidebarCollapsed
+  const initialSidebarCollapsed = shouldPersist
+    ? floe.persist.load<boolean>(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), false) === true
+    : false;
+
   const [currentPath, setCurrentPathInternal] = createSignal(normalizePath(props.initialPath ?? '/'));
   const [selectedIds, setSelectedIds] = createSignal<Set<string>>(new Set());
-  const [viewMode, setViewMode] = createSignal<ViewMode>(props.initialViewMode ?? 'list');
-  const [sortConfig, setSortConfig] = createSignal<SortConfig>({ field: 'name', direction: 'asc' });
+  const [viewMode, setViewModeInternal] = createSignal<ViewMode>(initialViewMode);
+  const [sortConfig, setSortConfigInternal] = createSignal<SortConfig>(initialSortConfig);
 
   const initialListColumnRatios = normalizeListColumnRatios(
     floe.persist.load<FileListColumnRatios>(
@@ -128,8 +208,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     props.initialSidebarWidth ?? DEFAULT_SIDEBAR_WIDTH_PX
   );
   const [sidebarWidth, setSidebarWidthInternal] = createSignal<number>(initialSidebarWidthPx);
-  const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(['/']));
-  const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
+  const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(initialExpandedFolders));
+  const [sidebarCollapsed, setSidebarCollapsed] = createSignal(initialSidebarCollapsed);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
   const [filterQuery, setFilterQueryInternal] = createSignal('');
   const [filterQueryApplied, setFilterQueryApplied] = createSignal('');
@@ -163,6 +243,35 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   createEffect(() => {
     floe.persist.debouncedSave(sidebarWidthStorageKey, sidebarWidth());
   });
+
+  // 持久化 viewMode
+  createEffect(() => {
+    if (!shouldPersist) return;
+    floe.persist.debouncedSave(getStorageKey(VIEW_MODE_STORAGE_KEY), viewMode());
+  });
+
+  // 持久化 sortConfig
+  createEffect(() => {
+    if (!shouldPersist) return;
+    floe.persist.debouncedSave(getStorageKey(SORT_CONFIG_STORAGE_KEY), sortConfig());
+  });
+
+  // 持久化 expandedFolders
+  createEffect(() => {
+    if (!shouldPersist) return;
+    const folders = [...expandedFolders()].sort((a, b) => a.localeCompare(b));
+    floe.persist.debouncedSave(getStorageKey(EXPANDED_FOLDERS_STORAGE_KEY), folders);
+  });
+
+  // 持久化 sidebarCollapsed
+  createEffect(() => {
+    if (!shouldPersist) return;
+    floe.persist.debouncedSave(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), sidebarCollapsed());
+  });
+
+  // 包装 setViewMode 和 setSortConfig 以便外部使用
+  const setViewMode = (mode: ViewMode) => setViewModeInternal(mode);
+  const setSortConfig = (config: SortConfig) => setSortConfigInternal(config);
 
   // Home label accessor (reactive)
   const homeLabel = () => props.homeLabel ?? 'Root';
