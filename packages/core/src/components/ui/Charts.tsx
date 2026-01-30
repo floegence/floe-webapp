@@ -9,6 +9,7 @@ import {
   createUniqueId,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { useResizeObserver } from '../../hooks/useResizeObserver';
 
 // =============================================================================
 // Common Types
@@ -154,11 +155,20 @@ export function LineChart(props: LineChartProps) {
     return n > 0 ? n : undefined;
   };
 
-  // Chart dimensions - use larger viewBox for better proportions
+  // Chart dimensions - keep SVG user units aligned with rendered pixel size.
+  // This avoids "letterboxing" on wide containers when height is fixed (common in dashboards).
   const padding = { top: 20, right: 20, bottom: 40, left: 45 };
-  const chartWidth = 400; // Larger viewBox width for proper proportions
   const chartHeight = () => height();
-  const svgViewBox = () => `0 0 ${chartWidth} ${chartHeight()}`;
+
+  let containerRef: HTMLDivElement | undefined;
+  const containerSize = useResizeObserver(() => containerRef);
+  const chartWidth = createMemo(() => {
+    const w = containerSize()?.width;
+    if (!w || !Number.isFinite(w)) return 400;
+    // Avoid tiny widths that would make axes unreadable.
+    return Math.max(240, Math.round(w));
+  });
+  const svgViewBox = () => `0 0 ${chartWidth()} ${chartHeight()}`;
 
   // Hover state
   const [hoverIndex, setHoverIndex] = createSignal<number | null>(null);
@@ -252,7 +262,7 @@ export function LineChart(props: LineChartProps) {
   const getPointPositions = createMemo(() => {
     const b = bounds();
     const dataLength = local.series[0]?.data.length ?? 0;
-    const xStep = (chartWidth - padding.left - padding.right) / Math.max(1, dataLength - 1);
+    const xStep = (chartWidth() - padding.left - padding.right) / Math.max(1, dataLength - 1);
     const yScale = (height() - padding.top - padding.bottom) / b.range;
 
     return local.series.map((series) =>
@@ -275,13 +285,13 @@ export function LineChart(props: LineChartProps) {
     const dataLength = local.series[0]?.data.length ?? 0;
     if (dataLength === 0) return;
 
-    const xStep = (chartWidth - padding.left - padding.right) / Math.max(1, dataLength - 1);
+    const xStep = (chartWidth() - padding.left - padding.right) / Math.max(1, dataLength - 1);
     const relativeX = mouseX - padding.left;
     const index = Math.round(relativeX / xStep);
     const clampedIndex = Math.max(0, Math.min(dataLength - 1, index));
 
     // Only update if within chart area
-    if (mouseX >= padding.left && mouseX <= chartWidth - padding.right) {
+    if (mouseX >= padding.left && mouseX <= chartWidth() - padding.right) {
       setHoverIndex(clampedIndex);
     } else {
       setHoverIndex(null);
@@ -297,7 +307,7 @@ export function LineChart(props: LineChartProps) {
     if (data.length === 0) return '';
 
     const b = bounds();
-    const xStep = (chartWidth - padding.left - padding.right) / Math.max(1, data.length - 1);
+    const xStep = (chartWidth() - padding.left - padding.right) / Math.max(1, data.length - 1);
     const yScale = (height() - padding.top - padding.bottom) / b.range;
 
     const points = data.map((value, i) => ({
@@ -403,8 +413,21 @@ export function LineChart(props: LineChartProps) {
     return out;
   });
 
+  const xTicks = createMemo(() => {
+    const labels = local.labels;
+    const indices = xTickIndices();
+    const out: { idx: number; label: string }[] = [];
+    for (let idx = 0; idx < labels.length; idx += 1) {
+      const label = labels[idx];
+      if (!label) continue;
+      if (!indices.has(idx)) continue;
+      out.push({ idx, label });
+    }
+    return out;
+  });
+
   return (
-    <div class={cn('chart-container', local.class)}>
+    <div ref={containerRef} class={cn('chart-container', local.class)}>
       <Show when={local.title}>
         <div class="chart-title">{local.title}</div>
       </Show>
@@ -433,7 +456,7 @@ export function LineChart(props: LineChartProps) {
         <rect
           x={padding.left}
           y={padding.top}
-          width={chartWidth - padding.left - padding.right}
+          width={chartWidth() - padding.left - padding.right}
           height={height() - padding.top - padding.bottom}
           fill="transparent"
           class="chart-hover-area"
@@ -447,7 +470,7 @@ export function LineChart(props: LineChartProps) {
                 <line
                   x1={padding.left}
                   y1={tick.y}
-                  x2={chartWidth - padding.right}
+                  x2={chartWidth() - padding.right}
                   y2={tick.y}
                   class="chart-grid-line"
                 />
@@ -469,18 +492,17 @@ export function LineChart(props: LineChartProps) {
 
         {/* X-axis labels */}
         <g class="chart-axis-labels">
-          <For each={local.labels}>
-            {(label, i) => {
-              const idx = i();
-              if (!label || !xTickIndices().has(idx)) return null;
-
-              const x = padding.left + (idx * (chartWidth - padding.left - padding.right)) / Math.max(1, local.labels.length - 1);
-              const isFirst = idx === 0;
-              const isLast = idx === local.labels.length - 1;
+          <For each={xTicks()}>
+            {(tick) => {
+              const x =
+                padding.left +
+                (tick.idx * (chartWidth() - padding.left - padding.right)) / Math.max(1, local.labels.length - 1);
+              const isFirst = tick.idx === 0;
+              const isLast = tick.idx === local.labels.length - 1;
               const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
               return (
                 <text x={x} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor={anchor}>
-                  {label}
+                  {tick.label}
                 </text>
               );
             }}
@@ -530,7 +552,7 @@ export function LineChart(props: LineChartProps) {
           <For each={local.series}>
             {(series, seriesIndex) => {
               const b = bounds();
-              const xStep = (chartWidth - padding.left - padding.right) / Math.max(1, series.data.length - 1);
+              const xStep = (chartWidth() - padding.left - padding.right) / Math.max(1, series.data.length - 1);
               const yScale = (height() - padding.top - padding.bottom) / b.range;
               return (
                 <For each={series.data}>
@@ -573,12 +595,12 @@ export function LineChart(props: LineChartProps) {
 
             // Prefer placing tooltip on the side with more available space,
             // then clamp within chart bounds when possible.
-            const canPlaceRight = xPos + 12 + tooltipW <= chartWidth - padding.right;
+            const canPlaceRight = xPos + 12 + tooltipW <= chartWidth() - padding.right;
             const canPlaceLeft = xPos - 12 - tooltipW >= padding.left;
             let tooltipX = canPlaceRight ? xPos + 12 : xPos - tooltipW - 12;
             if (!canPlaceRight && !canPlaceLeft) {
               const minX = padding.left;
-              const maxX = chartWidth - padding.right - tooltipW;
+              const maxX = chartWidth() - padding.right - tooltipW;
               tooltipX = maxX > minX ? Math.min(Math.max(tooltipX, minX), maxX) : minX;
             }
 
