@@ -67,6 +67,16 @@ export interface LineChartProps {
   yAxisLabel?: string;
   /** X-axis label */
   xAxisLabel?: string;
+  /** Fixed minimum value for y-axis (overrides computed bounds) */
+  yMin?: number;
+  /** Fixed maximum value for y-axis (overrides computed bounds) */
+  yMax?: number;
+  /** Format function for y-axis tick labels */
+  formatYTick?: (value: number) => string;
+  /** Format function for tooltip values (and point titles) */
+  formatTooltipValue?: (value: number, ctx: { series: ChartSeries; seriesIndex: number; pointIndex: number }) => string;
+  /** Maximum number of x-axis tick labels to render (helps avoid overlap/ghosting) */
+  maxXAxisLabels?: number;
 }
 
 const defaultColors = [
@@ -76,6 +86,17 @@ const defaultColors = [
   'oklch(0.65 0.18 45)',  // orange
   'oklch(0.65 0.18 340)', // pink
 ];
+
+function clampFiniteNumber(v: unknown): number | undefined {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+  return v;
+}
+
+function formatNumberFixed(value: number, maxDecimals = 2): string {
+  if (!Number.isFinite(value)) return String(value);
+  const s = value.toFixed(maxDecimals);
+  return s.replace(/\.?0+$/, '');
+}
 
 /**
  * LineChart - A flexible line chart component for trend visualization.
@@ -105,6 +126,11 @@ export function LineChart(props: LineChartProps) {
     'title',
     'yAxisLabel',
     'xAxisLabel',
+    'yMin',
+    'yMax',
+    'formatYTick',
+    'formatTooltipValue',
+    'maxXAxisLabels',
   ]);
 
   const id = createUniqueId();
@@ -116,6 +142,17 @@ export function LineChart(props: LineChartProps) {
   const smooth = () => local.smooth ?? true;
   const animate = () => local.animate ?? true;
   const variant = () => local.variant ?? 'default';
+  const yMin = () => clampFiniteNumber(local.yMin);
+  const yMax = () => clampFiniteNumber(local.yMax);
+  const formatYTick = () => local.formatYTick ?? ((v: number) => String(Math.round(v)));
+  const formatTooltipValue = () =>
+    local.formatTooltipValue ?? ((v: number) => formatNumberFixed(v, 2));
+  const maxXAxisLabels = () => {
+    const v = clampFiniteNumber(local.maxXAxisLabels);
+    if (!v) return undefined;
+    const n = Math.floor(v);
+    return n > 0 ? n : undefined;
+  };
 
   // Chart dimensions - use larger viewBox for better proportions
   const padding = { top: 20, right: 20, bottom: 40, left: 45 };
@@ -146,11 +183,20 @@ export function LineChart(props: LineChartProps) {
 
   // Calculate data bounds
   const bounds = createMemo(() => {
-    const allValues = local.series.flatMap((s) => s.data);
-    const min = Math.min(0, ...allValues);
-    const max = Math.max(...allValues);
-    const range = max - min || 1;
-    return { min, max, range };
+    const allValues = local.series.flatMap((s) => s.data).filter((v) => Number.isFinite(v));
+
+    const computedMin = allValues.length > 0 ? Math.min(0, ...allValues) : 0;
+    const computedMax = allValues.length > 0 ? Math.max(...allValues) : 0;
+
+    const min = yMin() ?? computedMin;
+    const max = yMax() ?? computedMax;
+
+    // Guard: avoid invalid range (empty series / same min-max / user mistakes)
+    const safeMax = Number.isFinite(max) ? max : 0;
+    const safeMin = Number.isFinite(min) ? min : 0;
+    const finalMax = safeMax === safeMin ? safeMin + 1 : safeMax;
+    const range = finalMax - safeMin || 1;
+    return { min: safeMin, max: finalMax, range };
   });
 
   // Get data point positions
@@ -290,6 +336,24 @@ export function LineChart(props: LineChartProps) {
   const getSeriesColor = (index: number, series: ChartSeries) =>
     series.color ?? defaultColors[index % defaultColors.length];
 
+  const xTickIndices = createMemo(() => {
+    const n = local.labels.length;
+    if (n <= 0) return new Set<number>();
+
+    const max = maxXAxisLabels();
+    if (!max || max >= n) {
+      return new Set<number>(Array.from({ length: n }, (_, i) => i));
+    }
+
+    // Pick indices evenly, always include first and last.
+    if (max === 1) return new Set<number>([n - 1]);
+    const out = new Set<number>();
+    for (let i = 0; i < max; i += 1) {
+      out.add(Math.round((i * (n - 1)) / (max - 1)));
+    }
+    return out;
+  });
+
   return (
     <div class={cn('chart-container', local.class)}>
       <Show when={local.title}>
@@ -348,7 +412,7 @@ export function LineChart(props: LineChartProps) {
           <For each={yTicks()}>
             {(tick) => (
               <text x={padding.left - 6} y={tick.y} class="chart-axis-label" text-anchor="end" dominant-baseline="middle">
-                {Math.round(tick.value)}
+                {formatYTick()(tick.value)}
               </text>
             )}
           </For>
@@ -358,9 +422,15 @@ export function LineChart(props: LineChartProps) {
         <g class="chart-axis-labels">
           <For each={local.labels}>
             {(label, i) => {
-              const x = padding.left + (i() * (chartWidth - padding.left - padding.right)) / Math.max(1, local.labels.length - 1);
+              const idx = i();
+              if (!label || !xTickIndices().has(idx)) return null;
+
+              const x = padding.left + (idx * (chartWidth - padding.left - padding.right)) / Math.max(1, local.labels.length - 1);
+              const isFirst = idx === 0;
+              const isLast = idx === local.labels.length - 1;
+              const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
               return (
-                <text x={x} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor="middle">
+                <text x={x} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor={anchor}>
                   {label}
                 </text>
               );
@@ -430,12 +500,12 @@ export function LineChart(props: LineChartProps) {
                         class="chart-point"
                         style={{ opacity: animationProgress() }}
                       >
-                        <title>{`${local.labels[i()]}: ${value}`}</title>
+                        <title>{`${local.labels[i()] ?? ''}: ${formatTooltipValue()(value, { series, seriesIndex: seriesIndex(), pointIndex: i() })}`}</title>
                       </circle>
                     );
                   }}
                 </For>
-              );
+            );
             }}
           </For>
         </Show>
@@ -519,7 +589,7 @@ export function LineChart(props: LineChartProps) {
                           y={padding.top + 32 + seriesIdx() * 18}
                           class="chart-tooltip-value"
                         >
-                          {series.name}: {value}
+                          {series.name}: {formatTooltipValue()(value, { series, seriesIndex: seriesIdx(), pointIndex: idx })}
                         </text>
                       </g>
                     );
@@ -625,9 +695,9 @@ export function DataBarChart(props: DataBarChartProps) {
 
   // Calculate bounds
   const bounds = createMemo(() => {
-    const values = local.data.map((d) => d.value);
-    const max = Math.max(...values, 0);
-    return { max };
+    const values = local.data.map((d) => d.value).filter((v) => Number.isFinite(v));
+    const max = values.length > 0 ? Math.max(...values) : 0;
+    return { max: Math.max(max, 0) };
   });
 
   // Animation state
@@ -661,10 +731,14 @@ export function DataBarChart(props: DataBarChartProps) {
 
   // Bar dimensions
   const barSpacing = 0.3;
-  const barWidth = () => {
-    const availableWidth = chartWidth - padding.left - padding.right;
-    const barCount = local.data.length;
-    return (availableWidth / barCount) * (1 - barSpacing);
+  const availableWidth = () => chartWidth - padding.left - padding.right;
+  const barCount = () => Math.max(1, local.data.length);
+  const gap = () => availableWidth() / barCount();
+  const barWidth = () => gap() * (1 - barSpacing);
+  const maxBarHeight = () => height() - padding.top - padding.bottom;
+  const maxValue = () => {
+    const m = bounds().max;
+    return Number.isFinite(m) && m > 0 ? m : 1;
   };
 
   const getBarColor = (index: number, item: ChartDataPoint) =>
@@ -716,34 +790,32 @@ export function DataBarChart(props: DataBarChartProps) {
         {/* Bars */}
         <For each={local.data}>
           {(item, i) => {
-            const barW = barWidth();
-            const gap = (chartWidth - padding.left - padding.right) / local.data.length;
-            const x = padding.left + i() * gap + (gap - barW) / 2;
-            const maxBarHeight = height() - padding.top - padding.bottom;
-            const barH = (item.value / bounds().max) * maxBarHeight * animationProgress();
-            const y = height() - padding.bottom - barH;
+            const value = () => (Number.isFinite(item.value) ? Math.max(0, item.value) : 0);
+            const x = () => padding.left + i() * gap() + (gap() - barWidth()) / 2;
+            const barH = () => (value() / maxValue()) * maxBarHeight() * animationProgress();
+            const y = () => height() - padding.bottom - barH();
 
             return (
               <g>
                 <rect
-                  x={x}
-                  y={y}
-                  width={barW}
-                  height={barH}
+                  x={x()}
+                  y={y()}
+                  width={barWidth()}
+                  height={barH()}
                   rx="2"
                   fill={variant() === 'gradient' ? `url(#bar-gradient-${id}-${i()})` : getBarColor(i(), item)}
                   class="chart-bar"
                 >
-                  <title>{`${item.label}: ${item.value}`}</title>
+                  <title>{`${item.label}: ${value()}`}</title>
                 </rect>
                 <Show when={showValues() && animationProgress() > 0.8}>
                   <text
-                    x={x + barW / 2}
-                    y={y - 4}
+                    x={x() + barWidth() / 2}
+                    y={y() - 4}
                     class="chart-bar-value"
                     text-anchor="middle"
                   >
-                    {item.value}
+                    {value()}
                   </text>
                 </Show>
               </g>
@@ -755,10 +827,9 @@ export function DataBarChart(props: DataBarChartProps) {
         <g class="chart-axis-labels">
           <For each={local.data}>
             {(item, i) => {
-              const gap = (chartWidth - padding.left - padding.right) / local.data.length;
-              const x = padding.left + i() * gap + gap / 2;
+              const x = () => padding.left + i() * gap() + gap() / 2;
               return (
-                <text x={x} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor="middle">
+                <text x={x()} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor="middle">
                   {item.label}
                 </text>
               );
@@ -1001,6 +1072,18 @@ export interface MonitoringChartProps {
   title?: string;
   /** Whether real-time updates are enabled */
   realtime?: boolean;
+  /** Use smooth curves instead of straight lines */
+  smooth?: boolean;
+  /** Fixed minimum value for y-axis (overrides computed bounds) */
+  yMin?: number;
+  /** Fixed maximum value for y-axis (overrides computed bounds) */
+  yMax?: number;
+  /** Format function for y-axis tick labels */
+  formatYTick?: (value: number) => string;
+  /** Format function for tooltip values */
+  formatTooltipValue?: (value: number, ctx: { series: ChartSeries; seriesIndex: number; pointIndex: number }) => string;
+  /** Maximum number of x-axis tick labels to render */
+  maxXAxisLabels?: number;
 }
 
 /**
@@ -1025,11 +1108,18 @@ export function MonitoringChart(props: MonitoringChartProps) {
     'class',
     'title',
     'realtime',
+    'smooth',
+    'yMin',
+    'yMax',
+    'formatYTick',
+    'formatTooltipValue',
+    'maxXAxisLabels',
   ]);
 
   const maxPoints = () => local.maxPoints ?? 20;
   const updateInterval = () => local.updateInterval ?? 2000;
   const realtime = () => local.realtime ?? false;
+  const smooth = () => local.smooth ?? true;
 
   // Internal data state for real-time updates
   const [internalSeries, setInternalSeries] = createSignal<ChartSeries[]>(
@@ -1097,9 +1187,14 @@ export function MonitoringChart(props: MonitoringChartProps) {
         showLegend={local.showLegend}
         showPoints={false}
         showArea
-        smooth
+        smooth={smooth()}
         animate={false}
         variant="gradient"
+        yMin={local.yMin}
+        yMax={local.yMax}
+        formatYTick={local.formatYTick}
+        formatTooltipValue={local.formatTooltipValue}
+        maxXAxisLabels={local.maxXAxisLabels}
       />
     </div>
   );

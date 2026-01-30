@@ -303,22 +303,18 @@ function CardVariant(props: VariantProps) {
         <div class="absolute inset-0 processing-shimmer-sweep" />
         <div class="relative flex items-center gap-3">
           <div class="relative w-11 h-11">
-            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 44 44">
+            <svg class="absolute inset-0 w-full h-full" viewBox="0 0 44 44" shape-rendering="geometricPrecision">
               <defs>
                 <radialGradient id={`orb-${id}`} cx="30%" cy="30%">
-                  <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.6' }} />
-                  <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.1' }} />
+                  <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.35' }} />
+                  <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.04' }} />
                 </radialGradient>
-                <filter id={`glow-${id}`}>
-                  <feGaussianBlur stdDeviation="2" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
               </defs>
               <circle cx="22" cy="22" r="16" fill={`url(#orb-${id})`} class="processing-breathe" />
-              <g filter={`url(#glow-${id})`}>
-                <path d="M 22 6 A 16 16 0 0 1 38 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" class="processing-arc-spin" />
-                <path d="M 22 38 A 16 16 0 0 1 6 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5" class="processing-arc-spin" />
-              </g>
+              {/* Crisp ring + arcs (no blurry glow) */}
+              <circle cx="22" cy="22" r="16" fill="none" stroke="var(--primary)" stroke-opacity="0.12" stroke-width="1.5" />
+              <path d="M 22 6 A 16 16 0 0 1 38 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85" class="processing-arc-spin" />
+              <path d="M 22 38 A 16 16 0 0 1 6 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.35" class="processing-arc-spin" />
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
               <svg class="w-4 h-4 text-primary processing-icon-morph" viewBox="0 0 24 24" fill="none">
