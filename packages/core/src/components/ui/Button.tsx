@@ -4,7 +4,7 @@ import { cn } from '../../utils/cn';
 import { Loader2 } from '../icons';
 
 export type ButtonVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
-export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -23,6 +23,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
+  xs: 'h-6 px-2 text-[11px] rounded',
   sm: 'h-7 px-2.5 text-xs rounded',
   md: 'h-8 px-3 text-xs rounded-md',
   lg: 'h-9 px-4 text-sm rounded-md',
@@ -30,6 +31,7 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 const iconSizeStyles: Record<ButtonSize, string> = {
+  xs: 'w-3 h-3',
   sm: 'w-3.5 h-3.5',
   md: 'w-3.5 h-3.5',
   lg: 'w-4 h-4',

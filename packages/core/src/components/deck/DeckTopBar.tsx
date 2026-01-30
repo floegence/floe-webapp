@@ -7,7 +7,6 @@ import { useWidgetRegistry } from '../../context/WidgetRegistry';
 import { deferNonBlocking } from '../../utils/defer';
 import { LayoutSelector } from './LayoutSelector';
 import { Pencil, Check, Plus, ChevronDown } from '../icons';
-import { Button } from '../ui/Button';
 
 export interface DeckTopBarProps {
   class?: string;
@@ -72,25 +71,33 @@ export function DeckTopBar(props: DeckTopBarProps) {
   return (
     <div
       class={cn(
-        'deck-topbar flex items-center gap-3 px-3 py-2 border-b border-border bg-background',
+        'deck-topbar flex items-center gap-1.5 h-7 px-2',
+        'bg-gradient-to-b from-background to-background/95',
+        'border-b border-border/30',
         props.class
       )}
     >
       {/* Layout selector */}
       <LayoutSelector />
 
+      {/* Separator */}
+      <div class="w-px h-3.5 bg-border/40" />
+
       {/* Add Widget button (edit mode only) */}
       <Show when={deck.editMode()}>
-        <Button
+        <button
           ref={triggerRef}
-          variant="outline"
-          size="sm"
           onClick={handleToggle}
+          class={cn(
+            'flex items-center gap-1 px-1.5 h-5 rounded text-[10px]',
+            'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50',
+            'transition-colors cursor-pointer'
+          )}
         >
-          <Plus class="w-3.5 h-3.5 mr-1" />
-          Add Widget
-          <ChevronDown class={cn('w-3.5 h-3.5 ml-1 transition-transform', showWidgetMenu() && 'rotate-180')} />
-        </Button>
+          <Plus class="w-2.5 h-2.5" />
+          <span>Add</span>
+          <ChevronDown class={cn('w-2.5 h-2.5 opacity-50 transition-transform', showWidgetMenu() && 'rotate-180')} />
+        </button>
 
         {/* Portal dropdown to body */}
         <Show when={showWidgetMenu()}>
@@ -149,24 +156,28 @@ export function DeckTopBar(props: DeckTopBarProps) {
 
       {/* Edit mode toggle (desktop only) */}
       <Show when={!isMobile()}>
-        <Button
-          variant={deck.editMode() ? 'default' : 'outline'}
-          size="sm"
+        <button
           onClick={() => deck.toggleEditMode()}
+          class={cn(
+            'flex items-center gap-1 px-1.5 h-5 rounded text-[10px] transition-colors cursor-pointer',
+            deck.editMode()
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
+          )}
         >
           <Show
             when={deck.editMode()}
             fallback={
               <>
-                <Pencil class="w-3.5 h-3.5 mr-1.5" />
-                Edit
+                <Pencil class="w-2.5 h-2.5" />
+                <span>Edit</span>
               </>
             }
           >
-            <Check class="w-3.5 h-3.5 mr-1.5" />
-            Done
+            <Check class="w-2.5 h-2.5" />
+            <span>Done</span>
           </Show>
-        </Button>
+        </button>
       </Show>
 
       {/* Custom actions */}
