@@ -151,7 +151,7 @@ export function Dialog(props: DialogProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                class="h-6 w-6 -mr-1"
+                class="h-6 w-6 -mr-1 bg-transparent text-muted-foreground hover:bg-red-500 hover:text-white"
                 onClick={() => props.onOpenChange(false)}
                 aria-label="Close"
               >

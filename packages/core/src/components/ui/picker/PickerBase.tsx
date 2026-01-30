@@ -386,7 +386,13 @@ export function NewFolderSection(props: NewFolderSectionProps) {
         >
           <Check class="w-3.5 h-3.5" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleCancel} disabled={loading()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="bg-transparent text-muted-foreground hover:bg-red-500 hover:text-white"
+          onClick={handleCancel}
+          disabled={loading()}
+        >
           <X class="w-3.5 h-3.5" />
         </Button>
       </div>

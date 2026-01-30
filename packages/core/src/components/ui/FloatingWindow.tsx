@@ -470,7 +470,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                class="h-6 w-6 hover:bg-error hover:text-error-foreground"
+                class="h-6 w-6 bg-transparent text-muted-foreground hover:bg-red-500 hover:text-white"
                 onClick={(e: MouseEvent) => {
                   e.stopPropagation();
                   props.onOpenChange(false);
