@@ -2,7 +2,6 @@ import { type JSX, Show, splitProps, createEffect, createSignal, onCleanup, For,
 import { cn } from '../../utils/cn';
 
 export type ProcessingIndicatorVariant =
-  | 'default'
   | 'minimal'
   | 'pill'
   | 'card'
@@ -46,16 +45,17 @@ const statusLabels: Record<ProcessingIndicatorStatus, string> = {
 /**
  * ProcessingIndicator - A premium status indicator with sophisticated animations.
  *
- * Features multiple elegant visual variants with advanced animations:
- * - Aurora: Flowing gradient aurora effect
- * - Neural: AI-inspired neural network particles
- * - Hologram: Futuristic holographic with scan lines
- * - Quantum: Particle wave quantum visualization
- * - Prism: Rainbow light refraction effect
- * - DNA: Double helix animation
- * - Constellation: Star particles with connections
- *
- * All variants feature animated text with light sweep effects.
+ * Features multiple visual variants:
+ * - Minimal: Sleek inline bars
+ * - Pill: Gradient border chip
+ * - Card: Glassmorphism container
+ * - Elegant: Layered orb
+ * - Aurora: Flowing arc segments
+ * - Neural: AI network visualization
+ * - Orbit: Multi-layer orbital system
+ * - Quantum: Dot grid wave
+ * - Pulse: Expanding rings
+ * - Atom: 3D electron orbits
  */
 export function ProcessingIndicator(props: ProcessingIndicatorProps) {
   const [local, rest] = splitProps(props, [
@@ -69,7 +69,7 @@ export function ProcessingIndicator(props: ProcessingIndicatorProps) {
     'class',
   ]);
 
-  const variant = () => local.variant ?? 'default';
+  const variant = () => local.variant ?? 'minimal';
   const status = () => local.status ?? 'working';
 
   // Elapsed time tracking
@@ -110,9 +110,6 @@ export function ProcessingIndicator(props: ProcessingIndicatorProps) {
 
   return (
     <div class={cn('processing-indicator', local.class)} {...rest}>
-      <Show when={variant() === 'default'}>
-        <DefaultVariant label={getStatusLabel()} description={local.description} elapsed={elapsedText()} />
-      </Show>
       <Show when={variant() === 'minimal'}>
         <MinimalVariant label={getStatusLabel()} description={local.description} elapsed={elapsedText()} />
       </Show>
@@ -172,66 +169,6 @@ function GlowText(props: { children: string; class?: string }) {
     <span class={cn('processing-text-glow', props.class)}>
       {props.children}
     </span>
-  );
-}
-
-// =============================================================================
-// Default Variant - Animated rings with breathing icon
-// =============================================================================
-function DefaultVariant(props: VariantProps) {
-  const id = createUniqueId();
-
-  return (
-    <div class="flex items-center gap-3">
-      <div class="relative w-10 h-10">
-        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
-          <defs>
-            <linearGradient id={`grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
-              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.3' }} />
-            </linearGradient>
-          </defs>
-          <circle
-            cx="20" cy="20" r="18"
-            fill="none" stroke={`url(#grad-${id})`}
-            stroke-width="2" stroke-linecap="round"
-            stroke-dasharray="28 85"
-            class="processing-ring-spin"
-          />
-          <circle
-            cx="20" cy="20" r="12"
-            fill="none" stroke="var(--primary)"
-            stroke-width="1.5" stroke-opacity="0.3"
-            stroke-dasharray="19 57"
-            class="processing-ring-spin-reverse"
-          />
-        </svg>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div class="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center processing-breathe">
-            <svg class="w-3 h-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 3v3m0 12v3M3 12h3m12 0h3" stroke-linecap="round" class="processing-sparkle" />
-              <circle cx="12" cy="12" r="4" class="processing-sparkle-delayed" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-0.5">
-        <div class="flex items-center gap-2">
-          <ShimmerText class="text-xs font-medium">{props.label}</ShimmerText>
-          <WaveformDots />
-        </div>
-        <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground">
-            {props.description}
-            <Show when={props.description && props.elapsed}> · </Show>
-            <Show when={props.elapsed}>
-              <span class="font-mono">{props.elapsed}</span>
-            </Show>
-          </span>
-        </Show>
-      </div>
-    </div>
   );
 }
 

@@ -1505,15 +1505,6 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Classic Variants */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Default Variant - Animated Rings</p>
-              <div class="flex flex-wrap gap-6">
-                <ProcessingIndicator status="thinking" />
-                <ProcessingIndicator status="working" description="Processing your request..." />
-                <ProcessingIndicator status="analyzing" showElapsed />
-              </div>
-            </div>
-
-            <div class="space-y-2">
               <p class="text-[11px] text-muted-foreground font-medium">Elegant Variant - Layered Orb</p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="elegant" status="thinking" />
