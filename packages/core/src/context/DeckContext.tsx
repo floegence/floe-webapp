@@ -213,15 +213,52 @@ export function createDeckService(): DeckContextValue {
   const immutablePresets = presetsMode === 'immutable';
 
   const cloneSerializable = <T,>(value: T): T => {
-    if (typeof structuredClone === 'function') return structuredClone(value);
+    // Widget config/state must be persistable (JSON.stringify) and also clonable for duplicateLayout.
+    // Prefer structuredClone (fast + broad built-in support), but it cannot clone Proxy objects
+    // (e.g. Solid Store values) and will throw DataCloneError for non-cloneables.
+    // In that case, fall back to a best-effort deep clone of enumerable fields to avoid crashing UX.
     if (value === null || typeof value !== 'object') return value;
     if (value instanceof Date) return new Date(value.getTime()) as T;
-    if (Array.isArray(value)) return value.map((v) => cloneSerializable(v)) as T;
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = cloneSerializable(v);
+
+    if (typeof structuredClone === 'function') {
+      try {
+        return structuredClone(value);
+      } catch {
+        // fallback below
+      }
     }
-    return out as T;
+
+    const seen = new WeakMap<object, unknown>();
+
+    const cloneFallback = (v: unknown): unknown => {
+      if (v === null || typeof v !== 'object') return v;
+      if (v instanceof Date) return new Date(v.getTime());
+      if (Array.isArray(v)) return v.map((item) => cloneFallback(item));
+      if (v instanceof Map) {
+        const next = new Map();
+        for (const [k, val] of v.entries()) {
+          next.set(cloneFallback(k), cloneFallback(val));
+        }
+        return next;
+      }
+      if (v instanceof Set) {
+        const next = new Set();
+        for (const item of v.values()) {
+          next.add(cloneFallback(item));
+        }
+        return next;
+      }
+
+      if (seen.has(v)) return seen.get(v);
+      const out: Record<string, unknown> = {};
+      seen.set(v, out);
+      for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+        out[k] = cloneFallback(val);
+      }
+      return out;
+    };
+
+    return cloneFallback(value) as T;
   };
 
   const extractPresetWidgetStateByWidgetId = (layout: DeckLayout): PresetWidgetStateByWidgetId => {
