@@ -7,6 +7,7 @@ import {
   onCleanup,
   createMemo,
   createUniqueId,
+  untrack,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
@@ -274,6 +275,17 @@ export function LineChart(props: LineChartProps) {
     );
   });
 
+  const hoverData = createMemo(() => {
+    const idx = hoverIndex();
+    if (idx === null) return null;
+
+    const positions = getPointPositions();
+    const point = positions[0]?.[idx];
+    if (!point) return null;
+
+    return { idx, positions, xPos: point.x };
+  });
+
   // Handle mouse move on SVG
   const handleMouseMove = (e: MouseEvent) => {
     const svgCoords = screenToSVGCoords(e);
@@ -383,13 +395,18 @@ export function LineChart(props: LineChartProps) {
     const b = bounds();
     const tickCount = 5;
     const step = b.range / (tickCount - 1);
-    return Array.from({ length: tickCount }, (_, i) => {
+    const innerHeight = height() - padding.top - padding.bottom;
+    const bottomY = height() - padding.bottom;
+
+    const out: { value: number; y: number }[] = [];
+    for (let i = 0; i < tickCount; i += 1) {
       const value = b.min + step * i;
-      return {
+      out.push({
         value,
-        y: height() - padding.bottom - ((value - b.min) / b.range) * (height() - padding.top - padding.bottom),
-      };
-    });
+        y: bottomY - ((value - b.min) / b.range) * innerHeight,
+      });
+    }
+    return out;
   });
 
   const getSeriesColor = (index: number, series: ChartSeries) =>
@@ -494,14 +511,19 @@ export function LineChart(props: LineChartProps) {
         <g class="chart-axis-labels">
           <For each={xTicks()}>
             {(tick) => {
-              const x =
-                padding.left +
-                (tick.idx * (chartWidth() - padding.left - padding.right)) / Math.max(1, local.labels.length - 1);
               const isFirst = tick.idx === 0;
               const isLast = tick.idx === local.labels.length - 1;
               const anchor = isFirst ? 'start' : isLast ? 'end' : 'middle';
               return (
-                <text x={x} y={height() - padding.bottom + 14} class="chart-axis-label" text-anchor={anchor}>
+                <text
+                  x={
+                    padding.left +
+                    (tick.idx * (chartWidth() - padding.left - padding.right)) / Math.max(1, local.labels.length - 1)
+                  }
+                  y={height() - padding.bottom + 14}
+                  class="chart-axis-label"
+                  text-anchor={anchor}
+                >
                   {tick.label}
                 </text>
               );
@@ -527,11 +549,14 @@ export function LineChart(props: LineChartProps) {
         {/* Lines */}
         <For each={local.series}>
           {(series, i) => {
-            const path = generatePath(series.data);
-            const pathLength = path.length * 2;
+            // NOTE: Don't precompute values that depend on chartWidth()/height() here.
+            // If the first render uses the fallback width (400), the values would get "frozen"
+            // and won't follow ResizeObserver updates, causing the line/points to desync from the grid/area.
+            const path = createMemo(() => generatePath(series.data));
+            const pathLength = createMemo(() => path().length * 2);
             return (
               <path
-                d={path}
+                d={path()}
                 fill="none"
                 stroke={getSeriesColor(i(), series)}
                 stroke-width="2"
@@ -539,8 +564,8 @@ export function LineChart(props: LineChartProps) {
                 stroke-linejoin="round"
                 class="chart-line"
                 style={{
-                  'stroke-dasharray': animate() ? pathLength : 'none',
-                  'stroke-dashoffset': animate() ? pathLength * (1 - animationProgress()) : 0,
+                  'stroke-dasharray': animate() ? pathLength() : 'none',
+                  'stroke-dashoffset': animate() ? pathLength() * (1 - animationProgress()) : 0,
                 }}
               />
             );
@@ -551,19 +576,20 @@ export function LineChart(props: LineChartProps) {
         <Show when={showPoints()}>
           <For each={local.series}>
             {(series, seriesIndex) => {
-              const b = bounds();
-              const xStep = (chartWidth() - padding.left - padding.right) / Math.max(1, series.data.length - 1);
-              const yScale = (height() - padding.top - padding.bottom) / b.range;
+              const xStep = createMemo(
+                () => (chartWidth() - padding.left - padding.right) / Math.max(1, series.data.length - 1)
+              );
+              const yScale = createMemo(() => (height() - padding.top - padding.bottom) / bounds().range);
               return (
                 <For each={series.data}>
                   {(value, i) => {
-                    const x = padding.left + i() * xStep;
-                    const y = height() - padding.bottom - (value - b.min) * yScale;
+                    const x = () => padding.left + i() * xStep();
+                    const y = () => height() - padding.bottom - (value - bounds().min) * yScale();
                     const isHovered = () => hoverIndex() === i();
                     return (
                       <circle
-                        cx={x}
-                        cy={y}
+                        cx={x()}
+                        cy={y()}
                         r={isHovered() ? 6 : 4}
                         fill={isHovered() ? getSeriesColor(seriesIndex(), series) : 'var(--background)'}
                         stroke={getSeriesColor(seriesIndex(), series)}
@@ -582,13 +608,12 @@ export function LineChart(props: LineChartProps) {
         </Show>
 
         {/* Hover crosshair and tooltip */}
-        <Show when={hoverIndex() !== null}>
+        <Show when={hoverData()}>
           {(() => {
-            const idx = hoverIndex()!;
-            const positions = getPointPositions();
-            if (positions.length === 0 || !positions[0][idx]) return null;
-
-            const xPos = positions[0][idx].x;
+            const data = hoverData()!;
+            const idx = data.idx;
+            const positions = data.positions;
+            const xPos = data.xPos;
             const tooltipHeight = 18 + local.series.length * 18;
 
             const tooltipW = tooltipWidth();
@@ -715,9 +740,7 @@ export interface AreaChartProps extends Omit<LineChartProps, 'showArea'> {
  * Ideal for showing volume or cumulative data.
  */
 export function AreaChart(props: AreaChartProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { stacked: _, ...rest } = props;
-
+  const [, rest] = splitProps(props, ['stacked']);
   return <LineChart {...rest} showArea smooth variant="gradient" />;
 }
 
@@ -1206,9 +1229,9 @@ export function MonitoringChart(props: MonitoringChartProps) {
 
   // Internal data state for real-time updates
   const [internalSeries, setInternalSeries] = createSignal<ChartSeries[]>(
-    local.series.map((s) => ({ ...s, data: [...s.data] }))
+    untrack(() => local.series.map((s) => ({ ...s, data: [...s.data] })))
   );
-  const [internalLabels, setInternalLabels] = createSignal<string[]>([...local.labels]);
+  const [internalLabels, setInternalLabels] = createSignal<string[]>(untrack(() => [...local.labels]));
 
   // Update series when props change
   createEffect(() => {
