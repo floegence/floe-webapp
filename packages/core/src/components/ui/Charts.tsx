@@ -11,6 +11,7 @@ import {
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
+import { computeAutoMaxXAxisLabels } from './chartXAxis';
 
 // =============================================================================
 // Common Types
@@ -412,11 +413,27 @@ export function LineChart(props: LineChartProps) {
   const getSeriesColor = (index: number, series: ChartSeries) =>
     series.color ?? defaultColors[index % defaultColors.length];
 
+  const autoMaxXAxisLabels = createMemo(() => {
+    return computeAutoMaxXAxisLabels({
+      labels: local.labels,
+      viewBoxWidth: chartWidth(),
+      viewportWidthPx: containerSize()?.width,
+      padding: { left: padding.left, right: padding.right },
+    });
+  });
+
+  const effectiveMaxXAxisLabels = createMemo(() => {
+    const byProp = maxXAxisLabels();
+    const byAuto = autoMaxXAxisLabels();
+    if (typeof byProp === 'number') return Math.min(byProp, byAuto ?? byProp);
+    return byAuto;
+  });
+
   const xTickIndices = createMemo(() => {
     const n = local.labels.length;
     if (n <= 0) return new Set<number>();
 
-    const max = maxXAxisLabels();
+    const max = effectiveMaxXAxisLabels();
     if (!max || max >= n) {
       return new Set<number>(Array.from({ length: n }, (_, i) => i));
     }
