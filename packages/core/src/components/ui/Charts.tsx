@@ -164,6 +164,16 @@ export function LineChart(props: LineChartProps) {
   const [hoverIndex, setHoverIndex] = createSignal<number | null>(null);
   let svgRef: SVGSVGElement | undefined;
 
+  // Tooltip sizing: measure rendered SVG text so long labels/values don't overflow the background rect.
+  const TOOLTIP_MIN_WIDTH = 100;
+  const TOOLTIP_LABEL_X_OFFSET = 10;
+  const TOOLTIP_VALUE_X_OFFSET = 24;
+  const TOOLTIP_RIGHT_PADDING = 10;
+  const [tooltipWidth, setTooltipWidth] = createSignal(TOOLTIP_MIN_WIDTH);
+  let tooltipLabelRef: SVGTextElement | undefined;
+  const tooltipValueRefs: Array<SVGTextElement | undefined> = [];
+  let lastTooltipContentKey = '';
+
   // Convert screen coordinates to SVG coordinates
   const screenToSVGCoords = (e: MouseEvent): { x: number; y: number } | null => {
     if (!svgRef) return null;
@@ -180,6 +190,44 @@ export function LineChart(props: LineChartProps) {
     const svgPoint = point.matrixTransform(ctm.inverse());
     return { x: svgPoint.x, y: svgPoint.y };
   };
+
+  createEffect(() => {
+    const idx = hoverIndex();
+    if (idx === null) {
+      lastTooltipContentKey = '';
+      return;
+    }
+
+    const fmt = formatTooltipValue();
+    const label = local.labels[idx] ?? '';
+    const valueLines = local.series.map((series, seriesIndex) => {
+      const value = series.data[idx];
+      return `${series.name}: ${fmt(value, { series, seriesIndex, pointIndex: idx })}`;
+    });
+    const contentKey = `${label}\n${valueLines.join('\n')}`;
+    if (contentKey === lastTooltipContentKey) return;
+    lastTooltipContentKey = contentKey;
+
+    const raf = requestAnimationFrame(() => {
+      const labelLen = tooltipLabelRef?.isConnected ? tooltipLabelRef.getComputedTextLength() : 0;
+      const maxValueLen = tooltipValueRefs.reduce((max, el) => {
+        if (!el?.isConnected) return max;
+        return Math.max(max, el.getComputedTextLength());
+      }, 0);
+
+      const nextWidth = Math.ceil(
+        Math.max(
+          TOOLTIP_MIN_WIDTH,
+          TOOLTIP_LABEL_X_OFFSET + labelLen + TOOLTIP_RIGHT_PADDING,
+          TOOLTIP_VALUE_X_OFFSET + maxValueLen + TOOLTIP_RIGHT_PADDING,
+        ),
+      );
+
+      if (tooltipWidth() !== nextWidth) setTooltipWidth(nextWidth);
+    });
+
+    onCleanup(() => cancelAnimationFrame(raf));
+  });
 
   // Calculate data bounds
   const bounds = createMemo(() => {
@@ -519,12 +567,20 @@ export function LineChart(props: LineChartProps) {
             if (positions.length === 0 || !positions[0][idx]) return null;
 
             const xPos = positions[0][idx].x;
-            const tooltipWidth = 100;
             const tooltipHeight = 18 + local.series.length * 18;
 
-            // Position tooltip on left side if near right edge
-            const tooltipOnRight = xPos + tooltipWidth + 15 < chartWidth - padding.right;
-            const tooltipX = tooltipOnRight ? xPos + 12 : xPos - tooltipWidth - 12;
+            const tooltipW = tooltipWidth();
+
+            // Prefer placing tooltip on the side with more available space,
+            // then clamp within chart bounds when possible.
+            const canPlaceRight = xPos + 12 + tooltipW <= chartWidth - padding.right;
+            const canPlaceLeft = xPos - 12 - tooltipW >= padding.left;
+            let tooltipX = canPlaceRight ? xPos + 12 : xPos - tooltipW - 12;
+            if (!canPlaceRight && !canPlaceLeft) {
+              const minX = padding.left;
+              const maxX = chartWidth - padding.right - tooltipW;
+              tooltipX = maxX > minX ? Math.min(Math.max(tooltipX, minX), maxX) : minX;
+            }
 
             return (
               <>
@@ -558,7 +614,7 @@ export function LineChart(props: LineChartProps) {
                 <rect
                   x={tooltipX}
                   y={padding.top}
-                  width={tooltipWidth}
+                  width={tooltipW}
                   height={tooltipHeight}
                   rx={4}
                   class="chart-tooltip-bg"
@@ -566,9 +622,10 @@ export function LineChart(props: LineChartProps) {
 
                 {/* Tooltip label */}
                 <text
-                  x={tooltipX + 10}
+                  x={tooltipX + TOOLTIP_LABEL_X_OFFSET}
                   y={padding.top + 14}
                   class="chart-tooltip-label"
+                  ref={tooltipLabelRef}
                 >
                   {local.labels[idx]}
                 </text>
@@ -586,9 +643,12 @@ export function LineChart(props: LineChartProps) {
                           fill={getSeriesColor(seriesIdx(), series)}
                         />
                         <text
-                          x={tooltipX + 24}
+                          x={tooltipX + TOOLTIP_VALUE_X_OFFSET}
                           y={padding.top + 32 + seriesIdx() * 18}
                           class="chart-tooltip-value"
+                          ref={(el) => {
+                            tooltipValueRefs[seriesIdx()] = el;
+                          }}
                         >
                           {series.name}: {formatTooltipValue()(value, { series, seriesIndex: seriesIdx(), pointIndex: idx })}
                         </text>
