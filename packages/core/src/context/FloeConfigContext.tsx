@@ -78,6 +78,14 @@ export interface FloeThemeConfig {
 export interface FloeDeckConfig {
   storageKey: string;
   /**
+   * Preset persistence/edit policy.
+   *
+   * - `mutable` (default): preset layouts can be edited and persisted as full layouts (legacy behavior).
+   * - `immutable`: preset layouts are treated as read-only templates; layout structure always comes from
+   *   `FloeDeckConfig.presets`, and only widget `state` is persisted per preset layout.
+   */
+  presetsMode?: 'mutable' | 'immutable';
+  /**
    * Optional deck presets to seed the initial layouts list.
    * When provided, these layouts are treated as (potentially) read-only presets
    * depending on `isPreset`.

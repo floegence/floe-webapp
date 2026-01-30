@@ -62,6 +62,20 @@ interface DeckStore {
   editMode: boolean;
 }
 
+type PresetWidgetStateByWidgetId = Record<string, Record<string, unknown>>;
+type PresetWidgetStateByLayoutId = Record<string, PresetWidgetStateByWidgetId>;
+
+interface PersistedDeckState {
+  layouts?: DeckLayout[];
+  activeLayoutId?: string;
+  /**
+   * Persisted widget `state` for preset layouts. Only used when `deck.presetsMode === 'immutable'`.
+   *
+   * Shape: { [layoutId]: { [widgetId]: widgetState } }
+   */
+  presetWidgetStateByLayoutId?: PresetWidgetStateByLayoutId;
+}
+
 export interface DeckContextValue {
   // Layout management
   layouts: Accessor<DeckLayout[]>;
@@ -195,23 +209,72 @@ export function createDeckService(): DeckContextValue {
   const widgetRegistry = useWidgetRegistry();
   const storageKey = () => floe.config.deck.storageKey;
 
+  const presetsMode = floe.config.deck.presetsMode ?? 'mutable';
+  const immutablePresets = presetsMode === 'immutable';
+
+  const cloneSerializable = <T,>(value: T): T => {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+    if (value === null || typeof value !== 'object') return value;
+    if (value instanceof Date) return new Date(value.getTime()) as T;
+    if (Array.isArray(value)) return value.map((v) => cloneSerializable(v)) as T;
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = cloneSerializable(v);
+    }
+    return out as T;
+  };
+
+  const extractPresetWidgetStateByWidgetId = (layout: DeckLayout): PresetWidgetStateByWidgetId => {
+    const out: PresetWidgetStateByWidgetId = {};
+    for (const w of layout.widgets ?? []) {
+      if (!w?.id || !w.state) continue;
+      out[w.id] = w.state;
+    }
+    return out;
+  };
+
   const presetLayouts = normalizePresetLayouts(floe.config.deck.presets);
   const presetIds = new Set(presetLayouts.map((l) => l.id));
 
-  // Load persisted state
-  const persisted = floe.persist.load<Partial<DeckStore>>(storageKey(), {});
+  // Load persisted state (shape depends on presetsMode).
+  const persisted = floe.persist.load<Partial<PersistedDeckState>>(storageKey(), {});
 
-  const persistedLayouts = persisted.layouts ?? [];
+  const persistedLayouts = Array.isArray(persisted.layouts) ? persisted.layouts : [];
   const persistedById = new Map(persistedLayouts.map((l) => [l.id, l] as const));
 
-  // Presets always come first. If a preset id exists in persisted layouts, prefer it to keep user edits.
   const resolvedPresets = presetLayouts.map((preset) => {
     const saved = persistedById.get(preset.id);
-    if (!saved) return preset;
-    return { ...saved, isPreset: preset.isPreset } as DeckLayout;
+
+    // Legacy behavior: allow presets to be edited and persisted as full layouts.
+    if (!immutablePresets) {
+      if (!saved) return preset;
+      return { ...saved, isPreset: preset.isPreset } as DeckLayout;
+    }
+
+    // Immutable presets: never let persisted layouts override preset structure; only restore widget state.
+    if (!preset.isPreset) {
+      // Non-preset seeds: keep user edits if they exist (same as legacy).
+      if (!saved) return preset;
+      return { ...saved, isPreset: false } as DeckLayout;
+    }
+
+    // Restore preset widget state: { [widgetId]: state }
+    const fromPersisted = (persisted.presetWidgetStateByLayoutId ?? {})[preset.id] ?? {};
+    // Migration: older versions might have persisted the whole preset layout. If so, extract widget state.
+    const migrated = saved ? extractPresetWidgetStateByWidgetId(saved) : {};
+    const merged: PresetWidgetStateByWidgetId = { ...migrated, ...fromPersisted };
+
+    return {
+      ...preset,
+      widgets: preset.widgets.map((w) => ({
+        ...w,
+        state: merged[w.id] ? cloneSerializable(merged[w.id]) : undefined,
+      })),
+    };
   });
 
   // User layouts are appended after presets; ignore persisted layouts that collide with preset ids.
+  // When immutablePresets=true, this also drops legacy "edited presets" (we migrate their widget state above).
   const userLayouts = persistedLayouts.filter((l) => !l.isPreset && !presetIds.has(l.id));
   const initialLayouts = [...resolvedPresets, ...userLayouts];
 
@@ -245,9 +308,36 @@ export function createDeckService(): DeckContextValue {
     track(store.layouts.length); // track layout add/remove
     for (const l of store.layouts) track(l.updatedAt); // track deep changes within a layout (widgets/state/position/config)
 
-    const state = {
-      layouts: store.layouts,
+    if (!immutablePresets) {
+      const state: PersistedDeckState = {
+        layouts: store.layouts,
+        activeLayoutId: store.activeLayoutId,
+      };
+      floe.persist.debouncedSave(storageKey(), state);
+      return;
+    }
+
+    // Immutable presets: persist only user layouts; store preset widget state separately (per layout).
+    const presetWidgetStateByLayoutId: PresetWidgetStateByLayoutId = {};
+    const userLayouts: DeckLayout[] = [];
+
+    for (const layout of store.layouts) {
+      if (layout.isPreset) {
+        const byWidget: PresetWidgetStateByWidgetId = {};
+        for (const w of layout.widgets ?? []) {
+          if (!w?.id || !w.state) continue;
+          byWidget[w.id] = w.state;
+        }
+        presetWidgetStateByLayoutId[layout.id] = byWidget;
+        continue;
+      }
+      userLayouts.push(layout);
+    }
+
+    const state: PersistedDeckState = {
+      layouts: userLayouts,
       activeLayoutId: store.activeLayoutId,
+      presetWidgetStateByLayoutId,
     };
     floe.persist.debouncedSave(storageKey(), state);
   });
@@ -258,18 +348,6 @@ export function createDeckService(): DeckContextValue {
   // Generate unique ID
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  const cloneSerializable = <T,>(value: T): T => {
-    if (typeof structuredClone === 'function') return structuredClone(value);
-    if (value === null || typeof value !== 'object') return value;
-    if (value instanceof Date) return new Date(value.getTime()) as T;
-    if (Array.isArray(value)) return value.map((v) => cloneSerializable(v)) as T;
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = cloneSerializable(v);
-    }
-    return out as T;
-  };
-
   return {
     // Layout management
     layouts: () => store.layouts,
@@ -279,6 +357,13 @@ export function createDeckService(): DeckContextValue {
     setActiveLayout: (id: string) => {
       if (store.layouts.some((l) => l.id === id)) {
         setStore('activeLayoutId', id);
+        // Immutable presets: switching to a preset must exit edit mode (prevents drag/resize/mutations).
+        if (immutablePresets) {
+          const next = store.layouts.find((l) => l.id === id);
+          if (next?.isPreset) {
+            setStore('editMode', false);
+          }
+        }
       }
     },
 
@@ -360,13 +445,20 @@ export function createDeckService(): DeckContextValue {
 
     // Edit mode
     editMode: () => store.editMode,
-    setEditMode: (enabled: boolean) => setStore('editMode', enabled),
-    toggleEditMode: () => setStore('editMode', !store.editMode),
+    setEditMode: (enabled: boolean) => {
+      if (enabled && immutablePresets && getActiveLayout()?.isPreset) return;
+      setStore('editMode', enabled);
+    },
+    toggleEditMode: () => {
+      if (!store.editMode && immutablePresets && getActiveLayout()?.isPreset) return;
+      setStore('editMode', !store.editMode);
+    },
 
     // Widget management
     addWidget: (type: string, position?: Partial<GridPosition>, config?: Record<string, unknown>) => {
       const layout = getActiveLayout();
       if (!layout) return undefined;
+      if (immutablePresets && layout.isPreset) return undefined;
 
       const def = widgetRegistry.getWidget(type);
       const constraints = {
@@ -406,6 +498,8 @@ export function createDeckService(): DeckContextValue {
     },
 
     removeWidget: (widgetId: string) => {
+      const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       setStore(
         produce((s) => {
           const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -421,6 +515,8 @@ export function createDeckService(): DeckContextValue {
     },
 
     updateWidgetPosition: (widgetId: string, position: GridPosition) => {
+      const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       setStore(
         produce((s) => {
           const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -439,6 +535,8 @@ export function createDeckService(): DeckContextValue {
     },
 
     updateWidgetConfig: (widgetId: string, config: Record<string, unknown>) => {
+      const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       setStore(
         produce((s) => {
           const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -454,6 +552,8 @@ export function createDeckService(): DeckContextValue {
     },
 
     updateWidgetTitle: (widgetId: string, title: string) => {
+      const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       setStore(
         produce((s) => {
           const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -469,6 +569,8 @@ export function createDeckService(): DeckContextValue {
     },
 
     changeWidgetType: (widgetId: string, newType: string) => {
+      const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       setStore(
         produce((s) => {
           const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -517,6 +619,7 @@ export function createDeckService(): DeckContextValue {
     dragState,
     startDrag: (widgetId: string, startX: number, startY: number) => {
       const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       const widget = layout?.widgets.find((w) => w.id === widgetId);
       if (!widget) return;
 
@@ -538,7 +641,7 @@ export function createDeckService(): DeckContextValue {
 
       if (commit) {
         const layout = getActiveLayout();
-        if (layout && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
+        if (layout && !(immutablePresets && layout.isPreset) && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
           setStore(
             produce((s) => {
               const l = s.layouts.find((l) => l.id === s.activeLayoutId);
@@ -561,6 +664,7 @@ export function createDeckService(): DeckContextValue {
     resizeState,
     startResize: (widgetId, edge, startX, startY) => {
       const layout = getActiveLayout();
+      if (immutablePresets && layout?.isPreset) return;
       const widget = layout?.widgets.find((w) => w.id === widgetId);
       if (!widget) return;
 
@@ -582,7 +686,7 @@ export function createDeckService(): DeckContextValue {
 
       if (commit) {
         const layout = getActiveLayout();
-        if (layout && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
+        if (layout && !(immutablePresets && layout.isPreset) && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
           setStore(
             produce((s) => {
               const l = s.layouts.find((l) => l.id === s.activeLayoutId);
