@@ -23,6 +23,16 @@ const DEFAULT_LIST_COLUMN_RATIOS: FileListColumnRatios = {
 
 const LIST_COLUMN_RATIOS_STORAGE_KEY = 'fileBrowser:listColumnRatios';
 
+const DEFAULT_SIDEBAR_WIDTH_PX = 220;
+const SIDEBAR_WIDTH_STORAGE_KEY = 'fileBrowser:sidebarWidth';
+const SIDEBAR_MIN_WIDTH_PX = 160;
+const SIDEBAR_MAX_WIDTH_PX = 520;
+
+function normalizeSidebarWidthPx(widthPx: unknown, fallbackPx: number): number {
+  const raw = typeof widthPx === 'number' && Number.isFinite(widthPx) ? widthPx : fallbackPx;
+  return Math.max(SIDEBAR_MIN_WIDTH_PX, Math.min(SIDEBAR_MAX_WIDTH_PX, Math.round(raw)));
+}
+
 function normalizeListColumnRatios(ratios: FileListColumnRatios): FileListColumnRatios {
   // Defensive normalization to keep a stable, sum-to-1 layout state.
   const rawName = Number.isFinite(ratios.name) ? ratios.name : DEFAULT_LIST_COLUMN_RATIOS.name;
@@ -72,6 +82,13 @@ export interface FileBrowserProviderProps {
   initialViewMode?: ViewMode;
   /** Initial list view column ratios (for resizable columns) */
   initialListColumnRatios?: FileListColumnRatios;
+  /** Initial sidebar width in pixels (resizable Explorer panel) */
+  initialSidebarWidth?: number;
+  /**
+   * Optional storage key for persisting sidebar width.
+   * When omitted, a shared key is used (acts like a user preference).
+   */
+  sidebarWidthStorageKey?: string;
   /** Label for the root/home directory in breadcrumb (default: 'Root') */
   homeLabel?: string;
   onNavigate?: (path: string) => void;
@@ -104,6 +121,15 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [listColumnRatios, setListColumnRatiosInternal] = createSignal<FileListColumnRatios>(
     initialListColumnRatios
   );
+
+  // Treat storage keys as static for the provider lifetime.
+  // eslint-disable-next-line solid/reactivity -- Provider props are intended to be static for the provider lifetime.
+  const sidebarWidthStorageKey = (props.sidebarWidthStorageKey ?? '').trim() || SIDEBAR_WIDTH_STORAGE_KEY;
+  const initialSidebarWidthPx = normalizeSidebarWidthPx(
+    floe.persist.load<number>(sidebarWidthStorageKey, props.initialSidebarWidth ?? DEFAULT_SIDEBAR_WIDTH_PX),
+    props.initialSidebarWidth ?? DEFAULT_SIDEBAR_WIDTH_PX
+  );
+  const [sidebarWidth, setSidebarWidthInternal] = createSignal<number>(initialSidebarWidthPx);
   const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(['/']));
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(false);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
@@ -113,6 +139,11 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Persist column ratios as a user preference (debounced for drag performance).
   createEffect(() => {
     floe.persist.debouncedSave(LIST_COLUMN_RATIOS_STORAGE_KEY, listColumnRatios());
+  });
+
+  // Persist sidebar width as a user preference (debounced for drag performance).
+  createEffect(() => {
+    floe.persist.debouncedSave(sidebarWidthStorageKey, sidebarWidth());
   });
 
   // Home label accessor (reactive)
@@ -349,6 +380,10 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   const toggleSidebar = () => setSidebarCollapsed((prev) => !prev);
 
+  const setSidebarWidth = (widthPx: number) => {
+    setSidebarWidthInternal((prev) => normalizeSidebarWidthPx(widthPx, prev));
+  };
+
   const showContextMenu = (event: ContextMenuEvent) => setContextMenu(event);
   const hideContextMenu = () => setContextMenu(null);
 
@@ -455,6 +490,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     getFilterMatch,
     sidebarCollapsed,
     toggleSidebar,
+    sidebarWidth,
+    setSidebarWidth,
     contextMenu,
     showContextMenu,
     hideContextMenu,

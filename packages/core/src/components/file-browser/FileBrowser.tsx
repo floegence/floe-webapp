@@ -2,6 +2,7 @@ import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
+import { ResizeHandle } from '../layout/ResizeHandle';
 import { DirectoryTree } from './DirectoryTree';
 import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
@@ -30,6 +31,10 @@ export interface FileBrowserProps {
   header?: JSX.Element;
   /** Sidebar width in pixels */
   sidebarWidth?: number;
+  /** Persisted sidebar width storage key (defaults to a shared user preference key) */
+  sidebarWidthStorageKey?: string;
+  /** Whether the sidebar is resizable (desktop only) */
+  sidebarResizable?: boolean;
   /** Hide sidebar on mobile by default */
   hideSidebarOnMobile?: boolean;
   /** Context menu callbacks for built-in actions */
@@ -52,6 +57,8 @@ export function FileBrowser(props: FileBrowserProps) {
       initialPath={props.initialPath}
       initialViewMode={props.initialViewMode}
       initialListColumnRatios={props.initialListColumnRatios}
+      initialSidebarWidth={props.sidebarWidth}
+      sidebarWidthStorageKey={props.sidebarWidthStorageKey}
       onNavigate={props.onNavigate}
       onSelect={props.onSelect}
       onOpen={props.onOpen}
@@ -59,7 +66,7 @@ export function FileBrowser(props: FileBrowserProps) {
       <FileBrowserInner
         class={props.class}
         header={props.header}
-        sidebarWidth={props.sidebarWidth}
+        sidebarResizable={props.sidebarResizable}
         hideSidebarOnMobile={props.hideSidebarOnMobile}
         contextMenuCallbacks={props.contextMenuCallbacks}
         customContextMenuItems={props.customContextMenuItems}
@@ -73,7 +80,7 @@ export function FileBrowser(props: FileBrowserProps) {
 interface FileBrowserInnerProps {
   class?: string;
   header?: JSX.Element;
-  sidebarWidth?: number;
+  sidebarResizable?: boolean;
   hideSidebarOnMobile?: boolean;
   contextMenuCallbacks?: ContextMenuCallbacks;
   customContextMenuItems?: ContextMenuItem[];
@@ -85,7 +92,8 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   const ctx = useFileBrowser();
   const layout = useLayout();
   const isMobile = () => layout.isMobile();
-  const sidebarWidth = () => props.sidebarWidth ?? 220;
+  const sidebarWidth = () => ctx.sidebarWidth();
+  const sidebarResizable = () => props.sidebarResizable ?? true;
   let filterInputRef: HTMLInputElement | undefined;
 
   // Auto-collapse sidebar only when entering mobile mode (and on initial mount if already mobile).
@@ -145,7 +153,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
         {/* Sidebar with directory tree */}
         <aside
           class={cn(
-            'flex-shrink-0 border-r border-border bg-sidebar',
+            'flex-shrink-0 border-r border-border bg-sidebar relative',
             'transition-all duration-200 ease-out',
             'overflow-hidden',
             // Mobile overlay
@@ -193,6 +201,15 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
               <DirectoryTree />
             </div>
           </div>
+
+          <Show when={sidebarResizable() && showSidebar() && !isMobile()}>
+            <ResizeHandle
+              direction="horizontal"
+              onResize={(delta) => {
+                ctx.setSidebarWidth(ctx.sidebarWidth() + delta);
+              }}
+            />
+          </Show>
         </aside>
 
         {/* Mobile overlay backdrop */}
