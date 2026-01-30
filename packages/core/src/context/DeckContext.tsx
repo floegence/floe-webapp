@@ -1,5 +1,5 @@
 import { createEffect, createSignal, type Accessor } from 'solid-js';
-import { createStore, produce } from 'solid-js/store';
+import { createStore, produce, unwrap } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig, type FloeDeckPresetLayout } from './FloeConfigContext';
 import { useWidgetRegistry } from './WidgetRegistry';
@@ -214,51 +214,69 @@ export function createDeckService(): DeckContextValue {
 
   const cloneSerializable = <T,>(value: T): T => {
     // Widget config/state must be persistable (JSON.stringify) and also clonable for duplicateLayout.
-    // Prefer structuredClone (fast + broad built-in support), but it cannot clone Proxy objects
-    // (e.g. Solid Store values) and will throw DataCloneError for non-cloneables.
-    // In that case, fall back to a best-effort deep clone of enumerable fields to avoid crashing UX.
-    if (value === null || typeof value !== 'object') return value;
-    if (value instanceof Date) return new Date(value.getTime()) as T;
+    // Solid Store values are Proxies (structuredClone will throw). Unwrap first and deep-clone best-effort.
+    try {
+      if (value === null || typeof value !== 'object') return value;
+      if (value instanceof Date) return new Date(value.getTime()) as T;
 
-    if (typeof structuredClone === 'function') {
-      try {
-        return structuredClone(value);
-      } catch {
-        // fallback below
+      const raw = unwrap(value as unknown as Record<string, unknown>) as unknown;
+
+      if (typeof structuredClone === 'function') {
+        try {
+          return structuredClone(raw) as T;
+        } catch {
+          // fallback below
+        }
       }
+
+      const seen = new WeakMap<object, unknown>();
+
+      const cloneFallback = (v: unknown): unknown => {
+        if (v === null || typeof v !== 'object') return v;
+        if (v instanceof Date) return new Date(v.getTime());
+        if (Array.isArray(v)) {
+          const out = new Array(v.length);
+          for (let i = 0; i < v.length; i += 1) {
+            out[i] = cloneFallback(v[i]);
+          }
+          return out;
+        }
+        if (v instanceof Map) {
+          const next = new Map();
+          for (const [k, val] of v.entries()) {
+            next.set(cloneFallback(k), cloneFallback(val));
+          }
+          return next;
+        }
+        if (v instanceof Set) {
+          const next = new Set();
+          for (const item of v.values()) {
+            next.add(cloneFallback(item));
+          }
+          return next;
+        }
+
+        if (seen.has(v)) return seen.get(v);
+        const out: Record<string, unknown> = {};
+        seen.set(v, out);
+
+        // Use Object.keys + per-key try/catch so getters / exotic objects can't crash duplication.
+        for (const k of Object.keys(v as Record<string, unknown>)) {
+          try {
+            out[k] = cloneFallback((v as Record<string, unknown>)[k]);
+          } catch {
+            // ignore non-cloneable/throwing fields
+          }
+        }
+
+        return out;
+      };
+
+      return cloneFallback(raw) as T;
+    } catch {
+      // Last resort: never crash UX on duplicate; return the value as-is.
+      return value;
     }
-
-    const seen = new WeakMap<object, unknown>();
-
-    const cloneFallback = (v: unknown): unknown => {
-      if (v === null || typeof v !== 'object') return v;
-      if (v instanceof Date) return new Date(v.getTime());
-      if (Array.isArray(v)) return v.map((item) => cloneFallback(item));
-      if (v instanceof Map) {
-        const next = new Map();
-        for (const [k, val] of v.entries()) {
-          next.set(cloneFallback(k), cloneFallback(val));
-        }
-        return next;
-      }
-      if (v instanceof Set) {
-        const next = new Set();
-        for (const item of v.values()) {
-          next.add(cloneFallback(item));
-        }
-        return next;
-      }
-
-      if (seen.has(v)) return seen.get(v);
-      const out: Record<string, unknown> = {};
-      seen.set(v, out);
-      for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-        out[k] = cloneFallback(val);
-      }
-      return out;
-    };
-
-    return cloneFallback(value) as T;
   };
 
   const extractPresetWidgetStateByWidgetId = (layout: DeckLayout): PresetWidgetStateByWidgetId => {
