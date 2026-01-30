@@ -188,15 +188,16 @@ export function LineChart(props: LineChartProps) {
     const computedMin = allValues.length > 0 ? Math.min(0, ...allValues) : 0;
     const computedMax = allValues.length > 0 ? Math.max(...allValues) : 0;
 
-    const min = yMin() ?? computedMin;
-    const max = yMax() ?? computedMax;
+    const rawMin = yMin() ?? computedMin;
+    const rawMax = yMax() ?? computedMax;
 
     // Guard: avoid invalid range (empty series / same min-max / user mistakes)
-    const safeMax = Number.isFinite(max) ? max : 0;
-    const safeMin = Number.isFinite(min) ? min : 0;
-    const finalMax = safeMax === safeMin ? safeMin + 1 : safeMax;
-    const range = finalMax - safeMin || 1;
-    return { min: safeMin, max: finalMax, range };
+    let min = Number.isFinite(rawMin) ? rawMin : 0;
+    let max = Number.isFinite(rawMax) ? rawMax : 0;
+    if (max < min) [min, max] = [max, min];
+    if (max === min) max = min + 1;
+    const range = max - min || 1;
+    return { min, max, range };
   });
 
   // Get data point positions
