@@ -451,18 +451,33 @@
     animation: aurora-arc-3 1.5s linear infinite;
   }
 
+  /* Aurora center breathing effect */
+  @keyframes aurora-center-breathe {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.4);
+      opacity: 1;
+    }
+  }
+
+  .processing-aurora-center {
+    transform-origin: 20px 20px;
+    animation: aurora-center-breathe 2s ease-in-out infinite;
+  }
+
   /* =============================================================================
      Quantum Variant - Dot grid wave
      ============================================================================= */
 
   @keyframes quantum-dot-wave {
     0%, 100% {
-      opacity: 0.3;
-      transform: scale(0.8);
+      opacity: 0.25;
     }
     50% {
       opacity: 1;
-      transform: scale(1);
     }
   }
 

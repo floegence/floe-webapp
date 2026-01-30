@@ -11,7 +11,8 @@ export type ProcessingIndicatorVariant =
   | 'neural'
   | 'orbit'
   | 'quantum'
-  | 'pulse';
+  | 'pulse'
+  | 'atom';
 
 export type ProcessingIndicatorStatus = 'thinking' | 'working' | 'processing' | 'loading' | 'analyzing';
 
@@ -138,6 +139,9 @@ export function ProcessingIndicator(props: ProcessingIndicatorProps) {
       </Show>
       <Show when={variant() === 'pulse'}>
         <PulseVariant label={getStatusLabel()} description={local.description} elapsed={elapsedText()} />
+      </Show>
+      <Show when={variant() === 'atom'}>
+        <AtomVariant label={getStatusLabel()} description={local.description} elapsed={elapsedText()} />
       </Show>
     </div>
   );
@@ -391,16 +395,24 @@ function ElegantVariant(props: VariantProps) {
 // Aurora Variant - Clean rotating arc segments
 // =============================================================================
 function AuroraVariant(props: VariantProps) {
+  const id = createUniqueId();
+
   return (
     <div class="flex items-center gap-4">
       <div class="relative w-10 h-10">
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
+          <defs>
+            <radialGradient id={`aurora-center-${id}`} cx="30%" cy="30%">
+              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
+              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.6' }} />
+            </radialGradient>
+          </defs>
           {/* Outer arc - slow rotation */}
           <circle
             cx="20" cy="20" r="18"
             fill="none"
             stroke="var(--primary)"
-            stroke-width="1.5"
+            stroke-width="2.5"
             stroke-linecap="round"
             stroke-dasharray="28 85"
             class="processing-aurora-arc-1"
@@ -410,7 +422,7 @@ function AuroraVariant(props: VariantProps) {
             cx="20" cy="20" r="13"
             fill="none"
             stroke="var(--primary)"
-            stroke-width="1.5"
+            stroke-width="2.5"
             stroke-opacity="0.6"
             stroke-linecap="round"
             stroke-dasharray="20 62"
@@ -421,14 +433,20 @@ function AuroraVariant(props: VariantProps) {
             cx="20" cy="20" r="8"
             fill="none"
             stroke="var(--primary)"
-            stroke-width="1.5"
+            stroke-width="2"
             stroke-opacity="0.3"
             stroke-linecap="round"
             stroke-dasharray="12 38"
             class="processing-aurora-arc-3"
           />
-          {/* Center dot */}
-          <circle cx="20" cy="20" r="2" fill="var(--primary)" />
+          {/* Center dot with breathing effect */}
+          <circle
+            cx="20"
+            cy="20"
+            r="3"
+            fill={`url(#aurora-center-${id})`}
+            class="processing-aurora-center"
+          />
         </svg>
       </div>
       <div class="flex flex-col">
@@ -453,10 +471,57 @@ function AuroraVariant(props: VariantProps) {
 // =============================================================================
 function NeuralVariant(props: VariantProps) {
   const id = createUniqueId();
-  const nodes = [
-    { x: 20, y: 8 }, { x: 8, y: 20 }, { x: 32, y: 20 },
-    { x: 14, y: 32 }, { x: 26, y: 32 }, { x: 20, y: 20 },
+
+  // 基础节点位置
+  const baseNodes = [
+    { x: 20, y: 8 },   // 0: top
+    { x: 8, y: 20 },   // 1: left
+    { x: 32, y: 20 },  // 2: right
+    { x: 14, y: 32 },  // 3: bottom-left
+    { x: 26, y: 32 },  // 4: bottom-right
+    { x: 20, y: 20 },  // 5: center
   ];
+
+  // 每个节点的动画参数（振幅、频率、相位）
+  const nodeAnimParams = [
+    { ax: 2, ay: 1.5, fx: 1.2, fy: 0.8, px: 0, py: 0.5 },
+    { ax: 1.5, ay: 2, fx: 0.9, fy: 1.1, px: 1, py: 0.3 },
+    { ax: 1.5, ay: 2, fx: 0.9, fy: 1.1, px: 2, py: 0.7 },
+    { ax: 2, ay: 1.5, fx: 1.1, fy: 0.9, px: 0.5, py: 1.2 },
+    { ax: 2, ay: 1.5, fx: 1.1, fy: 0.9, px: 1.5, py: 0.8 },
+    { ax: 0, ay: 0, fx: 0, fy: 0, px: 0, py: 0 }, // 中心点不动
+  ];
+
+  // 使用 signal 存储动态节点位置
+  const [nodePositions, setNodePositions] = createSignal(baseNodes.map(n => ({ x: n.x, y: n.y })));
+
+  // 动画循环
+  createEffect(() => {
+    let animationId: number;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = (currentTime - startTime) / 1000; // 转换为秒
+
+      setNodePositions(
+        baseNodes.map((base, i) => {
+          const params = nodeAnimParams[i];
+          return {
+            x: base.x + Math.sin(elapsed * params.fx + params.px) * params.ax,
+            y: base.y + Math.sin(elapsed * params.fy + params.py) * params.ay,
+          };
+        })
+      );
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    onCleanup(() => cancelAnimationFrame(animationId));
+  });
+
+  // 连接关系
+  const connections = [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [0, 1], [0, 2], [1, 3], [2, 4], [3, 4]];
 
   return (
     <div class="flex items-center gap-4">
@@ -468,26 +533,46 @@ function NeuralVariant(props: VariantProps) {
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
+          {/* 连线 - 跟随节点位置 */}
           <g stroke="var(--primary)" stroke-opacity="0.3" fill="none">
-            <For each={[[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [0, 1], [0, 2], [1, 3], [2, 4], [3, 4]]}>
-              {([from, to], i) => (
-                <line x1={nodes[from].x} y1={nodes[from].y} x2={nodes[to].x} y2={nodes[to].y} stroke-width="1" class="processing-neural-line" style={{ 'animation-delay': `${i() * 100}ms` }} />
+            <For each={connections}>
+              {([from, to]) => (
+                <line
+                  x1={nodePositions()[from].x}
+                  y1={nodePositions()[from].y}
+                  x2={nodePositions()[to].x}
+                  y2={nodePositions()[to].y}
+                  stroke-width="1"
+                />
               )}
             </For>
           </g>
+          {/* 流动粒子 */}
           <g filter={`url(#neural-glow-${id})`}>
             <For each={[0, 1, 2, 3, 4]}>
               {(i) => (
-                <circle r="1.5" fill="var(--primary)" class="processing-neural-pulse" style={{ '--pulse-index': i }}>
-                  <animateMotion dur="1.5s" repeatCount="indefinite" begin={`${i * 0.3}s`} path={`M${nodes[i].x},${nodes[i].y} L${nodes[5].x},${nodes[5].y}`} />
+                <circle r="1.5" fill="var(--primary)" class="processing-neural-pulse">
+                  <animateMotion
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                    begin={`${i * 0.3}s`}
+                    path={`M${baseNodes[i].x},${baseNodes[i].y} L${baseNodes[5].x},${baseNodes[5].y}`}
+                  />
                 </circle>
               )}
             </For>
           </g>
+          {/* 节点 - 动态位置 */}
           <g filter={`url(#neural-glow-${id})`}>
-            <For each={nodes}>
+            <For each={nodePositions()}>
               {(node, i) => (
-                <circle cx={node.x} cy={node.y} r={i() === 5 ? 4 : 2.5} fill="var(--primary)" fill-opacity={i() === 5 ? 1 : 0.7} class="processing-neural-node" style={{ 'animation-delay': `${i() * 150}ms` }} />
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={i() === 5 ? 4 : 2.5}
+                  fill="var(--primary)"
+                  fill-opacity={i() === 5 ? 1 : 0.7}
+                />
               )}
             </For>
           </g>
@@ -563,26 +648,32 @@ function OrbitVariant(props: VariantProps) {
 }
 
 // =============================================================================
-// Quantum Variant - Clean dot grid with wave animation
+// Quantum Variant - Compact 3x3 square grid with wave animation
 // =============================================================================
 function QuantumVariant(props: VariantProps) {
-  // 3x3 grid of dots
-  const dots = [
-    { x: 10, y: 10 }, { x: 20, y: 10 }, { x: 30, y: 10 },
-    { x: 10, y: 20 }, { x: 20, y: 20 }, { x: 30, y: 20 },
-    { x: 10, y: 30 }, { x: 20, y: 30 }, { x: 30, y: 30 },
+  // 3x3 grid of squares - more compact layout
+  const squareSize = 5;
+  const gap = 2;
+  const startOffset = 20 - (squareSize * 1.5 + gap); // Center the grid
+
+  const squares = [
+    { row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 },
+    { row: 1, col: 0 }, { row: 1, col: 1 }, { row: 1, col: 2 },
+    { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 },
   ];
 
   return (
     <div class="flex items-center gap-4">
       <div class="relative w-10 h-10">
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
-          <For each={dots}>
-            {(dot, i) => (
-              <circle
-                cx={dot.x}
-                cy={dot.y}
-                r="2.5"
+          <For each={squares}>
+            {(sq, i) => (
+              <rect
+                x={startOffset + sq.col * (squareSize + gap)}
+                y={startOffset + sq.row * (squareSize + gap)}
+                width={squareSize}
+                height={squareSize}
+                rx="1"
                 fill="var(--primary)"
                 class="processing-quantum-dot-wave"
                 style={{ 'animation-delay': `${i() * 80}ms` }}
@@ -651,6 +742,166 @@ function PulseVariant(props: VariantProps) {
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
+          </span>
+        </Show>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Atom Variant - 3D electron orbits around nucleus
+// =============================================================================
+function AtomVariant(props: VariantProps) {
+  const id = createUniqueId();
+
+  // 定义三个轨道平面，每个有不同的旋转角度来创造3D效果
+  // rx/ry 的比例模拟轨道倾斜，rotateZ 控制轨道在平面上的旋转方向
+  const orbits = [
+    { rx: 16, ry: 6, rotateZ: 0, speed: 2 },     // 水平轨道
+    { rx: 14, ry: 5, rotateZ: 60, speed: 2.5 },  // 60度旋转
+    { rx: 14, ry: 5, rotateZ: 120, speed: 3 },   // 120度旋转
+  ];
+
+  // 电子位置状态
+  const [electronAngles, setElectronAngles] = createSignal(
+    orbits.map(() => Math.random() * Math.PI * 2) // 随机初始角度
+  );
+
+  // 动画循环
+  createEffect(() => {
+    let animationId: number;
+    let lastTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      setElectronAngles((prev) =>
+        prev.map((angle, i) => angle + deltaTime * orbits[i].speed)
+      );
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animationId = requestAnimationFrame(animate);
+    onCleanup(() => cancelAnimationFrame(animationId));
+  });
+
+  // 计算电子在椭圆轨道上的位置
+  const getElectronPosition = (orbitIndex: number, angle: number) => {
+    const orbit = orbits[orbitIndex];
+
+    // 在椭圆轨道上的位置
+    const x2d = Math.cos(angle) * orbit.rx;
+    const y2d = Math.sin(angle) * orbit.ry;
+
+    // 应用 rotateZ 变换（与轨道椭圆的旋转一致）
+    const rotateZRad = (orbit.rotateZ * Math.PI) / 180;
+    const finalX = x2d * Math.cos(rotateZRad) - y2d * Math.sin(rotateZRad);
+    const finalY = x2d * Math.sin(rotateZRad) + y2d * Math.cos(rotateZRad);
+
+    // z 深度基于椭圆上的 y 位置（y2d > 0 表示在前面）
+    return { x: finalX + 20, y: finalY + 20, z: y2d };
+  };
+
+  // 获取所有电子及其深度信息
+  const getElectronsWithDepth = () => {
+    const electrons: { x: number; y: number; z: number; orbitIndex: number }[] = [];
+    electronAngles().forEach((angle, orbitIndex) => {
+      const pos = getElectronPosition(orbitIndex, angle);
+      electrons.push({ ...pos, orbitIndex });
+    });
+    // 按z排序，z小的（后面）先绘制
+    return electrons.sort((a, b) => a.z - b.z);
+  };
+
+  return (
+    <div class="flex items-center gap-4">
+      <div class="relative w-10 h-10">
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
+          <defs>
+            <filter id={`atom-glow-${id}`}>
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <radialGradient id={`nucleus-grad-${id}`} cx="35%" cy="35%">
+              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
+              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.6' }} />
+            </radialGradient>
+          </defs>
+
+          {/* 轨道环 */}
+          <g opacity="0.2">
+            <For each={orbits}>
+              {(orbit) => (
+                <ellipse
+                  cx="20"
+                  cy="20"
+                  rx={orbit.rx}
+                  ry={orbit.ry}
+                  fill="none"
+                  stroke="var(--primary)"
+                  stroke-width="0.5"
+                  transform={`rotate(${orbit.rotateZ} 20 20)`}
+                />
+              )}
+            </For>
+          </g>
+
+          {/* 后面的电子（z < 0） */}
+          <For each={getElectronsWithDepth().filter((e) => e.z < 0)}>
+            {(electron) => (
+              <circle
+                cx={electron.x}
+                cy={electron.y}
+                r={2}
+                fill="var(--primary)"
+                opacity={0.5}
+              />
+            )}
+          </For>
+
+          {/* 原子核 */}
+          <g filter={`url(#atom-glow-${id})`}>
+            <circle cx="20" cy="20" r="4" fill={`url(#nucleus-grad-${id})`} />
+            {/* 核内质子/中子效果 */}
+            <circle cx="19" cy="19" r="1.2" fill="var(--primary)" opacity="0.8" />
+            <circle cx="21" cy="20.5" r="1" fill="var(--primary)" opacity="0.6" />
+            <circle cx="19.5" cy="21" r="0.8" fill="var(--primary)" opacity="0.5" />
+          </g>
+
+          {/* 前面的电子（z >= 0） */}
+          <g filter={`url(#atom-glow-${id})`}>
+            <For each={getElectronsWithDepth().filter((e) => e.z >= 0)}>
+              {(electron) => (
+                <circle
+                  cx={electron.x}
+                  cy={electron.y}
+                  r={2}
+                  fill="var(--primary)"
+                  opacity={1}
+                />
+              )}
+            </For>
+          </g>
+        </svg>
+      </div>
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <GlowText class="text-xs font-medium">{props.label}</GlowText>
+          <OrbitDots />
+        </div>
+        <Show when={props.description || props.elapsed}>
+          <span class="text-[10px] text-muted-foreground mt-0.5">
+            {props.description}
+            <Show when={props.description && props.elapsed}> · </Show>
+            <Show when={props.elapsed}>
+              <span class="font-mono">{props.elapsed}</span>
+            </Show>
           </span>
         </Show>
       </div>

@@ -85,7 +85,93 @@ import {
   WarningIcon,
   InfoIcon,
   SparkleIcon,
-  LoadingIcon,
+  HeartIcon,
+  StarIcon,
+  BellIcon,
+  CloudIcon,
+  DatabaseIcon,
+  TerminalIcon,
+  MailIcon,
+  LockIcon,
+  ShieldIcon,
+  ZapIcon,
+  GlobeIcon,
+  ClockIcon,
+  CalendarIcon,
+  CameraIcon,
+  MicIcon,
+  SettingsIcon,
+  UserIcon,
+  HomeIcon,
+  SearchIcon,
+  DownloadIcon,
+  UploadIcon,
+  GitBranchIcon,
+  BookmarkIcon,
+  PlayIcon,
+  PauseIcon,
+  SendIcon,
+  TrashIcon,
+  CopyIcon,
+  CodeIcon,
+  ImageIcon,
+  VideoIcon,
+  PackageIcon,
+  LayersIcon,
+  // New colored icons
+  CheckIcon,
+  CloseIcon,
+  PlusIcon,
+  MinusIcon,
+  EditIcon,
+  RefreshIcon,
+  LinkIcon,
+  EyeIcon,
+  FilterIcon,
+  PinIcon,
+  TagIcon,
+  MessageIcon,
+  HelpIcon,
+  BugIcon,
+  RocketIcon,
+  FireIcon,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
+  ShareIcon,
+  SaveIcon,
+  WifiIcon,
+  WifiOffIcon,
+  BatteryIcon,
+  MapPinIcon,
+  SunIcon,
+  MoonIcon,
+  FolderPlusIcon,
+  FilePlusIcon,
+  ArchiveIcon,
+  CreditCardIcon,
+  DollarIcon,
+  ChartIcon,
+  ActivityIcon,
+  HeadphonesIcon,
+  VolumeIcon,
+  MuteIcon,
+  PowerIcon,
+  AwardIcon,
+  GiftIcon,
+  TargetIcon,
+  CompassIcon,
+  KeyIcon,
+  PrinterIcon,
+  BotIcon,
+  MagicIcon,
+  // File browser icons (colored)
+  FolderIcon,
+  FolderOpenIcon,
+  CodeFileIcon,
+  ImageFileIcon,
+  DocumentFileIcon,
+  ConfigFileIcon,
+  StyleFileIcon,
 } from '@floegence/floe-webapp-core';
 
 export interface ShowcasePageProps {
@@ -311,12 +397,104 @@ export function ShowcasePage(props: ShowcasePageProps) {
   ]);
 
   const coloredIcons = createMemo(() => [
+    // Status icons
     { name: 'SuccessIcon', icon: SuccessIcon },
     { name: 'ErrorIcon', icon: ErrorIcon },
     { name: 'WarningIcon', icon: WarningIcon },
     { name: 'InfoIcon', icon: InfoIcon },
     { name: 'SparkleIcon', icon: SparkleIcon },
-    { name: 'LoadingIcon', icon: LoadingIcon },
+    { name: 'CheckIcon', icon: CheckIcon },
+    { name: 'CloseIcon', icon: CloseIcon },
+    // File browser icons
+    { name: 'FolderIcon', icon: FolderIcon },
+    { name: 'FolderOpenIcon', icon: FolderOpenIcon },
+    { name: 'FolderPlusIcon', icon: FolderPlusIcon },
+    { name: 'FilePlusIcon', icon: FilePlusIcon },
+    { name: 'CodeFileIcon', icon: CodeFileIcon },
+    { name: 'ImageFileIcon', icon: ImageFileIcon },
+    { name: 'DocumentFileIcon', icon: DocumentFileIcon },
+    { name: 'ConfigFileIcon', icon: ConfigFileIcon },
+    { name: 'StyleFileIcon', icon: StyleFileIcon },
+    // Common UI icons
+    { name: 'HeartIcon', icon: HeartIcon },
+    { name: 'StarIcon', icon: StarIcon },
+    { name: 'BellIcon', icon: BellIcon },
+    { name: 'CloudIcon', icon: CloudIcon },
+    { name: 'DatabaseIcon', icon: DatabaseIcon },
+    { name: 'TerminalIcon', icon: TerminalIcon },
+    { name: 'MailIcon', icon: MailIcon },
+    { name: 'LockIcon', icon: LockIcon },
+    { name: 'ShieldIcon', icon: ShieldIcon },
+    { name: 'ZapIcon', icon: ZapIcon },
+    { name: 'GlobeIcon', icon: GlobeIcon },
+    { name: 'ClockIcon', icon: ClockIcon },
+    { name: 'CalendarIcon', icon: CalendarIcon },
+    { name: 'CameraIcon', icon: CameraIcon },
+    { name: 'MicIcon', icon: MicIcon },
+    { name: 'SettingsIcon', icon: SettingsIcon },
+    { name: 'UserIcon', icon: UserIcon },
+    { name: 'HomeIcon', icon: HomeIcon },
+    { name: 'SearchIcon', icon: SearchIcon },
+    { name: 'DownloadIcon', icon: DownloadIcon },
+    { name: 'UploadIcon', icon: UploadIcon },
+    { name: 'GitBranchIcon', icon: GitBranchIcon },
+    { name: 'BookmarkIcon', icon: BookmarkIcon },
+    { name: 'PlayIcon', icon: PlayIcon },
+    { name: 'PauseIcon', icon: PauseIcon },
+    { name: 'SendIcon', icon: SendIcon },
+    { name: 'TrashIcon', icon: TrashIcon },
+    { name: 'CopyIcon', icon: CopyIcon },
+    { name: 'CodeIcon', icon: CodeIcon },
+    { name: 'ImageIcon', icon: ImageIcon },
+    { name: 'VideoIcon', icon: VideoIcon },
+    { name: 'PackageIcon', icon: PackageIcon },
+    { name: 'LayersIcon', icon: LayersIcon },
+    // Action icons
+    { name: 'PlusIcon', icon: PlusIcon },
+    { name: 'MinusIcon', icon: MinusIcon },
+    { name: 'EditIcon', icon: EditIcon },
+    { name: 'RefreshIcon', icon: RefreshIcon },
+    { name: 'LinkIcon', icon: LinkIcon },
+    { name: 'EyeIcon', icon: EyeIcon },
+    { name: 'FilterIcon', icon: FilterIcon },
+    { name: 'PinIcon', icon: PinIcon },
+    { name: 'TagIcon', icon: TagIcon },
+    { name: 'MessageIcon', icon: MessageIcon },
+    { name: 'HelpIcon', icon: HelpIcon },
+    { name: 'ShareIcon', icon: ShareIcon },
+    { name: 'SaveIcon', icon: SaveIcon },
+    { name: 'ArchiveIcon', icon: ArchiveIcon },
+    { name: 'PrinterIcon', icon: PrinterIcon },
+    // Feedback icons
+    { name: 'ThumbsUpIcon', icon: ThumbsUpIcon },
+    { name: 'ThumbsDownIcon', icon: ThumbsDownIcon },
+    { name: 'BugIcon', icon: BugIcon },
+    // Fun icons
+    { name: 'RocketIcon', icon: RocketIcon },
+    { name: 'FireIcon', icon: FireIcon },
+    { name: 'AwardIcon', icon: AwardIcon },
+    { name: 'GiftIcon', icon: GiftIcon },
+    { name: 'TargetIcon', icon: TargetIcon },
+    { name: 'CompassIcon', icon: CompassIcon },
+    { name: 'MagicIcon', icon: MagicIcon },
+    { name: 'BotIcon', icon: BotIcon },
+    // System icons
+    { name: 'WifiIcon', icon: WifiIcon },
+    { name: 'WifiOffIcon', icon: WifiOffIcon },
+    { name: 'BatteryIcon', icon: BatteryIcon },
+    { name: 'PowerIcon', icon: PowerIcon },
+    { name: 'VolumeIcon', icon: VolumeIcon },
+    { name: 'MuteIcon', icon: MuteIcon },
+    { name: 'HeadphonesIcon', icon: HeadphonesIcon },
+    { name: 'SunIcon', icon: SunIcon },
+    { name: 'MoonIcon', icon: MoonIcon },
+    // Location & Finance
+    { name: 'MapPinIcon', icon: MapPinIcon },
+    { name: 'CreditCardIcon', icon: CreditCardIcon },
+    { name: 'DollarIcon', icon: DollarIcon },
+    { name: 'ChartIcon', icon: ChartIcon },
+    { name: 'ActivityIcon', icon: ActivityIcon },
+    { name: 'KeyIcon', icon: KeyIcon },
   ]);
 
   const openConfirm = () => {
@@ -1132,8 +1310,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
             </div>
             <div>
-              <p class="text-[11px] text-muted-foreground font-medium mb-2">Colored Status Icons</p>
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+              <p class="text-[11px] text-muted-foreground font-medium mb-2">Colored Icons (Status, Files, UI)</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 <For each={coloredIcons()}>
                   {(item) => (
                     <div class="flex items-center gap-2 rounded border border-border bg-muted/20 px-2 py-1.5">
@@ -1301,6 +1479,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   variant="pulse"
                   status="working"
                   description="Scanning..."
+                  showElapsed
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Atom Variant - 3D Electron Orbits</p>
+              <div class="flex flex-wrap gap-6">
+                <ProcessingIndicator variant="atom" status="thinking" />
+                <ProcessingIndicator
+                  variant="atom"
+                  status="analyzing"
+                  description="Computing quantum states..."
                   showElapsed
                 />
               </div>
