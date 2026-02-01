@@ -184,20 +184,19 @@ export function Shell(props: ShellProps) {
             />
           </Show>
 
-          {/* Sidebar - hidden when collapsed or when fullScreen component is active */}
-          <Show when={!layout.sidebarCollapsed() && !isFullScreen()}>
-            <Sidebar
-              width={layout.sidebarWidth()}
-              resizer={
-                <ResizeHandle
-                  direction="horizontal"
-                  onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
-                />
-              }
-            >
-              {renderSidebarContent(layout.sidebarActiveTab())}
-            </Sidebar>
-          </Show>
+          {/* Sidebar - CSS-hidden when collapsed or when fullScreen component is active, DOM stays mounted */}
+          <Sidebar
+            width={layout.sidebarWidth()}
+            collapsed={layout.sidebarCollapsed() || isFullScreen()}
+            resizer={
+              <ResizeHandle
+                direction="horizontal"
+                onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
+              />
+            }
+          >
+            {renderSidebarContent(layout.sidebarActiveTab())}
+          </Sidebar>
         </Show>
 
         {/* Mobile: Sidebar as collapsible drawer */}

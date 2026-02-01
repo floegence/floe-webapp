@@ -5,6 +5,7 @@ export interface SidebarProps {
   children: JSX.Element;
   resizer?: JSX.Element;
   width?: number;
+  collapsed?: boolean;
   class?: string;
 }
 
@@ -12,6 +13,9 @@ export interface SidebarProps {
  * Collapsible sidebar panel
  */
 export function Sidebar(props: SidebarProps) {
+  const collapsed = () => props.collapsed ?? false;
+  const width = () => props.width ?? 350;
+
   return (
     <aside
       class={cn(
@@ -19,9 +23,14 @@ export function Sidebar(props: SidebarProps) {
         'bg-sidebar text-sidebar-foreground',
         'border-r border-sidebar-border',
         'overflow-hidden',
+        'transition-[width] duration-150 ease-out',
         props.class
       )}
-      style={{ width: `${props.width ?? 350}px` }}
+      style={{
+        width: collapsed() ? '0px' : `${width()}px`,
+        visibility: collapsed() ? 'hidden' : 'visible',
+        'border-right-width': collapsed() ? '0px' : undefined,
+      }}
     >
       <div class="flex-1 overflow-auto overscroll-contain">{props.children}</div>
       {props.resizer}
