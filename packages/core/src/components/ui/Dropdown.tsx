@@ -37,6 +37,8 @@ export interface DropdownProps {
 /** Viewport margin in pixels. */
 const VIEWPORT_MARGIN = 8;
 
+let dropdownIdSeq = 0;
+
 /** Calculate menu position and keep it within the viewport. */
 function calculateMenuPosition(
   triggerRect: DOMRect,
@@ -133,6 +135,7 @@ export function Dropdown(props: DropdownProps) {
   const [menuPosition, setMenuPosition] = createSignal({ x: -9999, y: -9999 });
   let triggerRef: HTMLDivElement | undefined;
   let menuRef: HTMLDivElement | undefined;
+  const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
 
   // Update menu position
   const updateMenuPosition = () => {
@@ -143,7 +146,7 @@ export function Dropdown(props: DropdownProps) {
     setMenuPosition(pos);
   };
 
-  // Close on click outside
+  // Close on click outside (including portal-rendered submenus)
   createEffect(() => {
     if (!open()) {
       setMenuPosition({ x: -9999, y: -9999 });
@@ -151,14 +154,11 @@ export function Dropdown(props: DropdownProps) {
     }
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        triggerRef &&
-        !triggerRef.contains(e.target as Node) &&
-        menuRef &&
-        !menuRef.contains(e.target as Node)
-      ) {
-        setOpen(false);
+      const target = e.target as HTMLElement | null;
+      if (target && typeof target.closest === 'function') {
+        if (target.closest(`[data-floe-dropdown="${dropdownId}"]`)) return;
       }
+      setOpen(false);
     };
 
     const handleEscape = (e: KeyboardEvent) => {
@@ -177,14 +177,14 @@ export function Dropdown(props: DropdownProps) {
     });
   });
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (item: DropdownItem) => {
     const onSelect = props.onSelect;
-    setOpen(false);
-    deferNonBlocking(() => onSelect(id));
+    if (!item.keepOpen) setOpen(false);
+    deferNonBlocking(() => onSelect(item.id));
   };
 
   return (
-    <div class={cn('relative inline-block', props.class)}>
+    <div class={cn('relative inline-block', props.class)} data-floe-dropdown={dropdownId}>
       {/* Trigger */}
       <div ref={triggerRef} onClick={() => setOpen((v) => !v)} class="cursor-pointer">
         {props.trigger}
@@ -201,6 +201,7 @@ export function Dropdown(props: DropdownProps) {
               'rounded border border-border shadow-md',
               'animate-in fade-in slide-in-from-top-2'
             )}
+            data-floe-dropdown={dropdownId}
             style={{
               left: `${menuPosition().x}px`,
               top: `${menuPosition().y}px`,
@@ -218,6 +219,7 @@ export function Dropdown(props: DropdownProps) {
                     selected={props.value === item.id}
                     onSelect={handleSelect}
                     onCloseMenu={() => setOpen(false)}
+                    dropdownId={dropdownId}
                   />
                 </Show>
               )}
@@ -232,8 +234,9 @@ export function Dropdown(props: DropdownProps) {
 interface DropdownMenuItemProps {
   item: DropdownItem;
   selected: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (item: DropdownItem) => void;
   onCloseMenu: () => void;
+  dropdownId: string;
 }
 
 function DropdownMenuItem(props: DropdownMenuItemProps) {
@@ -268,6 +271,8 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const handleMouseLeave = () => {
     if (!hasChildren()) return;
     clearTimeout(hoverTimeout);
+    hoverTimeout = undefined;
+    if (props.item.keepOpen) return;
     hoverTimeout = setTimeout(() => {
       setSubmenuOpen(false);
     }, 150);
@@ -288,7 +293,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       requestAnimationFrame(updateSubmenuPosition);
     } else if (!props.item.content) {
       // For regular items, trigger selection.
-      props.onSelect(props.item.id);
+      props.onSelect(props.item);
     }
   };
 
@@ -350,18 +355,19 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       {/* Submenu */}
       <Show when={submenuOpen() && hasChildren()}>
         <Portal>
-          <div
-            ref={submenuRef}
-            class={cn(
-              'fixed z-50 min-w-36 py-0.5',
-              'bg-popover text-popover-foreground',
-              'rounded border border-border shadow-md',
-              'animate-in fade-in slide-in-from-left-1'
-            )}
-            style={{
-              left: `${submenuPosition().x}px`,
-              top: `${submenuPosition().y}px`,
-            }}
+	          <div
+	            ref={submenuRef}
+	            class={cn(
+	              'fixed z-50 min-w-36 py-0.5',
+	              'bg-popover text-popover-foreground',
+	              'rounded border border-border shadow-md',
+	              'animate-in fade-in slide-in-from-left-1'
+	            )}
+	            data-floe-dropdown={props.dropdownId}
+	            style={{
+	              left: `${submenuPosition().x}px`,
+	              top: `${submenuPosition().y}px`,
+	            }}
             role="menu"
             onMouseEnter={() => {
               clearTimeout(hoverTimeout);
@@ -374,12 +380,13 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                   when={!child.separator}
                   fallback={<div class="my-1 h-px bg-border" role="separator" />}
                 >
-                  <DropdownMenuItem
-                    item={child}
-                    selected={false}
-                    onSelect={props.onSelect}
-                    onCloseMenu={props.onCloseMenu}
-                  />
+	                  <DropdownMenuItem
+	                    item={child}
+	                    selected={false}
+	                    onSelect={props.onSelect}
+	                    onCloseMenu={props.onCloseMenu}
+	                    dropdownId={props.dropdownId}
+	                  />
                 </Show>
               )}
             </For>
