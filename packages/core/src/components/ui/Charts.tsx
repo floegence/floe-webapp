@@ -186,21 +186,23 @@ export function LineChart(props: LineChartProps) {
   const tooltipValueRefs: Array<SVGTextElement | undefined> = [];
   let lastTooltipContentKey = '';
 
-  // Convert screen coordinates to SVG coordinates
-  const screenToSVGCoords = (e: MouseEvent): { x: number; y: number } | null => {
+  // Convert screen coordinates to SVG coordinates.
+  // Keep this allocation-free on hot paths (mousemove) by reusing the SVGPoint instance.
+  let svgPoint: SVGPoint | null = null;
+  const screenToSVGCoords = (clientX: number, clientY: number): { x: number; y: number } | null => {
     if (!svgRef) return null;
 
-    // Use SVG's built-in coordinate transformation
-    const point = svgRef.createSVGPoint();
-    point.x = e.clientX;
-    point.y = e.clientY;
+    // Use SVG's built-in coordinate transformation.
+    svgPoint ??= svgRef.createSVGPoint();
+    svgPoint.x = clientX;
+    svgPoint.y = clientY;
 
-    // Get the inverse of the screen transformation matrix
+    // Get the inverse of the screen transformation matrix.
     const ctm = svgRef.getScreenCTM();
     if (!ctm) return null;
 
-    const svgPoint = point.matrixTransform(ctm.inverse());
-    return { x: svgPoint.x, y: svgPoint.y };
+    const p = svgPoint.matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
   };
 
   createEffect(() => {
@@ -287,14 +289,23 @@ export function LineChart(props: LineChartProps) {
     return { idx, positions, xPos: point.x };
   });
 
-  // Handle mouse move on SVG
-  const handleMouseMove = (e: MouseEvent) => {
-    const svgCoords = screenToSVGCoords(e);
+  // Handle mouse move on SVG (RAF-throttled to keep hover interactions smooth).
+  let hoverRafId: number | null = null;
+  let pendingClientX = 0;
+  let pendingClientY = 0;
+  let hasPendingHover = false;
+
+  const flushHoverMove = () => {
+    hoverRafId = null;
+    if (!hasPendingHover) return;
+    hasPendingHover = false;
+
+    const svgCoords = screenToSVGCoords(pendingClientX, pendingClientY);
     if (!svgCoords) return;
 
     const mouseX = svgCoords.x;
 
-    // Find nearest data point index
+    // Find nearest data point index.
     const dataLength = local.series[0]?.data.length ?? 0;
     if (dataLength === 0) return;
 
@@ -303,7 +314,7 @@ export function LineChart(props: LineChartProps) {
     const index = Math.round(relativeX / xStep);
     const clampedIndex = Math.max(0, Math.min(dataLength - 1, index));
 
-    // Only update if within chart area
+    // Only update if within chart area.
     if (mouseX >= padding.left && mouseX <= chartWidth() - padding.right) {
       setHoverIndex(clampedIndex);
     } else {
@@ -311,9 +322,35 @@ export function LineChart(props: LineChartProps) {
     }
   };
 
+  const handleMouseMove = (e: MouseEvent) => {
+    pendingClientX = e.clientX;
+    pendingClientY = e.clientY;
+    hasPendingHover = true;
+
+    // RAF throttle for performance (mousemove can fire much faster than 60fps).
+    if (hoverRafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      flushHoverMove();
+      return;
+    }
+    hoverRafId = requestAnimationFrame(flushHoverMove);
+  };
+
   const handleMouseLeave = () => {
+    hasPendingHover = false;
+    if (hoverRafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(hoverRafId);
+      hoverRafId = null;
+    }
     setHoverIndex(null);
   };
+
+  onCleanup(() => {
+    if (hoverRafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(hoverRafId);
+      hoverRafId = null;
+    }
+  });
 
   // Generate path for a series
   const generatePath = (data: number[], filled = false) => {
