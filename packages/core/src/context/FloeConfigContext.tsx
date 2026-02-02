@@ -151,6 +151,13 @@ export interface PersistApi {
   debouncedSave: <T>(key: string, value: T, delayMs?: number) => void;
   remove: (key: string) => void;
   clearAll: () => void;
+  /**
+   * Flush pending debounced saves immediately.
+   *
+   * Note: This is primarily used to ensure the latest state is persisted on page refresh/close,
+   * while keeping debounced persistence in the hot interaction path.
+   */
+  flush?: () => void;
 }
 
 export interface FloeConfigValue {
@@ -245,7 +252,37 @@ function createPersist(storage: FloeStorageConfig): PersistApi {
   const key = (k: string) => `${prefix}${k}`;
   const enabled = () => storage.enabled && !!adapter;
 
-  const saveTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  type PendingSave = { timer: ReturnType<typeof setTimeout>; value: unknown };
+  const pending = new Map<string, PendingSave>();
+
+  const flush = () => {
+    if (!enabled()) return;
+    for (const [fullKey, entry] of pending.entries()) {
+      clearTimeout(entry.timer);
+      try {
+        adapter!.setItem(fullKey, JSON.stringify(entry.value));
+      } catch (e) {
+        console.warn(`Failed to save ${fullKey}:`, e);
+      }
+    }
+    pending.clear();
+  };
+
+  // Ensure pending debounced saves are not lost when the page is refreshed/closed.
+  // We intentionally do not remove listeners: PersistApi is expected to be app-lifetime.
+  if (typeof window !== 'undefined') {
+    try {
+      window.addEventListener('pagehide', flush);
+      window.addEventListener('beforeunload', flush);
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'hidden') flush();
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   return {
     key,
@@ -271,20 +308,23 @@ function createPersist(storage: FloeStorageConfig): PersistApi {
       if (!enabled()) return;
       const fullKey = key(k);
 
-      const existing = saveTimeouts.get(fullKey);
-      if (existing) clearTimeout(existing);
+      const existing = pending.get(fullKey);
+      if (existing) clearTimeout(existing.timer);
 
-      saveTimeouts.set(
-        fullKey,
-        setTimeout(() => {
-          try {
-            adapter!.setItem(fullKey, JSON.stringify(value));
-            saveTimeouts.delete(fullKey);
-          } catch (e) {
-            console.warn(`Failed to save ${fullKey}:`, e);
-          }
-        }, delayMs)
-      );
+      const timer = setTimeout(() => {
+        const current = pending.get(fullKey);
+        // Avoid races if a newer debouncedSave overwrote this timer.
+        if (!current || current.timer !== timer) return;
+        pending.delete(fullKey);
+
+        try {
+          adapter!.setItem(fullKey, JSON.stringify(current.value));
+        } catch (e) {
+          console.warn(`Failed to save ${fullKey}:`, e);
+        }
+      }, delayMs);
+
+      pending.set(fullKey, { timer, value });
     },
     remove: (k) => {
       if (!enabled()) return;
@@ -303,6 +343,7 @@ function createPersist(storage: FloeStorageConfig): PersistApi {
         }
       }
     },
+    flush,
   };
 }
 
