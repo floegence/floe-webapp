@@ -1,14 +1,17 @@
 import { Match, Show, Switch, createMemo, createSignal, onMount, type Component } from 'solid-js';
+import { createHighlighter } from 'shiki';
 import {
   ActivityAppsMain,
   BottomBarItem,
   Button,
   CommandPalette,
+  configureSyncHighlighter,
   FloeProvider,
   type FloeComponent,
   Files,
   GitBranch,
   Grid3x3,
+  Layers,
   LayoutDashboard,
   MessageSquare,
   Moon,
@@ -33,6 +36,7 @@ import { ShowcasePage } from './demo/pages/ShowcasePage';
 import { DeckPage } from './demo/pages/DeckPage';
 import { LaunchpadPage } from './demo/pages/LaunchpadPage';
 import { ChatPage } from './demo/pages/ChatPage';
+import { DesignTokensPage } from './demo/pages/DesignTokensPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
@@ -105,6 +109,8 @@ function AppContent() {
   const ChatView: Component = () => <ChatSidebar />;
 
   const DeckView: Component = () => <DeckPage />;
+
+  const DesignTokensView: Component = () => <DesignTokensPage />;
 
   const LaunchpadView: Component = () => (
     <LaunchpadPage
@@ -264,11 +270,63 @@ function AppContent() {
         },
       ],
     },
+    {
+      id: 'design-tokens',
+      name: 'Design Tokens',
+      icon: Layers,
+      description: 'Design system tokens reference',
+      component: DesignTokensView,
+      sidebar: { order: 6, fullScreen: true },
+      commands: [
+        {
+          id: 'demo.open.design-tokens',
+          title: 'Demo: Open Design Tokens',
+          keybind: 'mod+6',
+          category: 'Demo',
+          execute: () => layout.setSidebarActiveTab('design-tokens'),
+        },
+      ],
+    },
   ];
 
   registry.registerAll(demoComponents);
 
+  // Initialize Shiki highlighter globally for CodeSnippet components
+  const initShiki = async () => {
+    try {
+      const highlighter = await createHighlighter({
+        themes: ['github-dark', 'github-light'],
+        langs: ['typescript', 'javascript', 'tsx', 'jsx', 'python', 'json', 'html', 'css', 'bash', 'text', 'shell'],
+      });
+
+      configureSyncHighlighter({
+        codeToHtml: (code: string, options: { lang: string; theme: string }) => {
+          try {
+            const loadedLangs = highlighter.getLoadedLanguages();
+            const lang = loadedLangs.includes(options.lang as never) ? options.lang : 'text';
+            return highlighter.codeToHtml(code, {
+              lang,
+              theme: options.theme,
+            });
+          } catch {
+            const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre class="shiki"><code>${escaped}</code></pre>`;
+          }
+        },
+      });
+    } catch (error) {
+      console.error('Failed to initialize Shiki:', error);
+      configureSyncHighlighter({
+        codeToHtml: (code: string) => {
+          const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<pre class="shiki"><code>${escaped}</code></pre>`;
+        },
+      });
+    }
+  };
+
   onMount(() => {
+    void initShiki();
     void registry.mountAll((id) => createCtx(id, { protocol }));
   });
 

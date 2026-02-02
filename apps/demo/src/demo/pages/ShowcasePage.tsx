@@ -1,4 +1,36 @@
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
+import { PropsTable, CodeSnippet, UsageGuidelines } from '../components/docs';
+import {
+  buttonDoc,
+  inputDoc,
+  tabsDoc,
+  cardDoc,
+  dialogDoc,
+  dropdownDoc,
+  selectDoc,
+  tooltipDoc,
+  // Loading components
+  skeletonDoc,
+  snakeLoaderDoc,
+  loadingOverlayDoc,
+  // Block components
+  highlightBlockDoc,
+  quoteBlockDoc,
+  // Picker components
+  directoryPickerDoc,
+  fileSavePickerDoc,
+  fileBrowserDoc,
+  // Window components
+  floatingWindowDoc,
+  // Status components
+  processingIndicatorDoc,
+  // Chart components
+  lineChartDoc,
+  barChartDoc,
+  pieChartDoc,
+  // Command
+  commandPaletteDoc,
+} from '../data/componentDocs';
 import {
   AnimatedBorderCard,
   Bell,
@@ -602,6 +634,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* Button Documentation */}
+        <UsageGuidelines
+          whenToUse={buttonDoc.usage.whenToUse}
+          bestPractices={buttonDoc.usage.bestPractices}
+          avoid={buttonDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Button.tsx"
+          code={buttonDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={buttonDoc.props} componentName="Button" />
       </div>
 
       <div class="space-y-4">
@@ -712,6 +757,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* Tabs Documentation */}
+        <UsageGuidelines
+          whenToUse={tabsDoc.usage.whenToUse}
+          bestPractices={tabsDoc.usage.bestPractices}
+          avoid={tabsDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Tabs.tsx"
+          code={tabsDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={tabsDoc.props} componentName="Tabs" />
       </div>
 
       <div class="space-y-4">
@@ -894,6 +952,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </Interactive3DCard>
         </div>
+
+        {/* Card Documentation */}
+        <UsageGuidelines
+          whenToUse={cardDoc.usage.whenToUse}
+          bestPractices={cardDoc.usage.bestPractices}
+          avoid={cardDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Card.tsx"
+          code={cardDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={cardDoc.props} componentName="Card" />
       </div>
 
       <div class="space-y-4">
@@ -926,6 +997,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* Input Documentation */}
+        <UsageGuidelines
+          whenToUse={inputDoc.usage.whenToUse}
+          bestPractices={inputDoc.usage.bestPractices}
+          avoid={inputDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Input.tsx"
+          code={inputDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={inputDoc.props} componentName="Input" />
       </div>
 
       <div class="space-y-4">
@@ -970,6 +1054,36 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* Dropdown Documentation */}
+        <UsageGuidelines
+          whenToUse={dropdownDoc.usage.whenToUse}
+          bestPractices={dropdownDoc.usage.bestPractices}
+          avoid={dropdownDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Dropdown.tsx"
+          code={dropdownDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={dropdownDoc.props} componentName="Dropdown" />
+
+        {/* Select Documentation */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Select Component</h3>
+          <UsageGuidelines
+            whenToUse={selectDoc.usage.whenToUse}
+            bestPractices={selectDoc.usage.bestPractices}
+            avoid={selectDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="Select.tsx"
+            code={selectDoc.examples[0].code}
+            language="tsx"
+            class="mt-3"
+          />
+          <PropsTable props={selectDoc.props} componentName="Select" class="mt-3" />
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -999,6 +1113,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Tooltip>
           </PanelContent>
         </Panel>
+
+        {/* Tooltip Documentation */}
+        <UsageGuidelines
+          whenToUse={tooltipDoc.usage.whenToUse}
+          bestPractices={tooltipDoc.usage.bestPractices}
+          avoid={tooltipDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Tooltip.tsx"
+          code={tooltipDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={tooltipDoc.props} componentName="Tooltip" />
       </div>
 
       <div class="space-y-4">
@@ -1072,6 +1199,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
           loading={confirmLoading()}
           onConfirm={confirmAction}
         />
+
+        {/* Dialog Documentation */}
+        <UsageGuidelines
+          whenToUse={dialogDoc.usage.whenToUse}
+          bestPractices={dialogDoc.usage.bestPractices}
+          avoid={dialogDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Dialog.tsx"
+          code={dialogDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={dialogDoc.props} componentName="Dialog" />
       </div>
 
       <div class="space-y-4">
@@ -1099,6 +1239,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
           }}
           onCreateFolder={handleDemoCreateFolder}
         />
+
+        {/* DirectoryPicker Documentation */}
+        <UsageGuidelines
+          whenToUse={directoryPickerDoc.usage.whenToUse}
+          bestPractices={directoryPickerDoc.usage.bestPractices}
+          avoid={directoryPickerDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="DirectoryPicker.tsx"
+          code={directoryPickerDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={directoryPickerDoc.props} componentName="DirectoryPicker" />
       </div>
 
       <div class="space-y-4">
@@ -1131,6 +1284,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             return '';
           }}
         />
+
+        {/* FileSavePicker Documentation */}
+        <UsageGuidelines
+          whenToUse={fileSavePickerDoc.usage.whenToUse}
+          bestPractices={fileSavePickerDoc.usage.bestPractices}
+          avoid={fileSavePickerDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="FileSavePicker.tsx"
+          code={fileSavePickerDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={fileSavePickerDoc.props} componentName="FileSavePicker" />
       </div>
 
       <div class="space-y-4">
@@ -1192,6 +1358,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </div>
         </FloatingWindow>
+
+        {/* FloatingWindow Documentation */}
+        <UsageGuidelines
+          whenToUse={floatingWindowDoc.usage.whenToUse}
+          bestPractices={floatingWindowDoc.usage.bestPractices}
+          avoid={floatingWindowDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="FloatingWindow.tsx"
+          code={floatingWindowDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={floatingWindowDoc.props} componentName="FloatingWindow" />
       </div>
 
       <div class="space-y-4">
@@ -1216,6 +1395,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           </PanelContent>
         </Panel>
+
+        {/* CommandPalette Documentation */}
+        <UsageGuidelines
+          whenToUse={commandPaletteDoc.usage.whenToUse}
+          bestPractices={commandPaletteDoc.usage.bestPractices}
+          avoid={commandPaletteDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="CommandPalette.tsx"
+          code={commandPaletteDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={commandPaletteDoc.props} componentName="CommandPalette" />
       </div>
 
       <div class="space-y-4">
@@ -1246,6 +1438,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <p class="text-[11px] text-muted-foreground">
           Features: List/Grid view toggle, collapsible sidebar tree, <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments), sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
         </p>
+
+        {/* FileBrowser Documentation */}
+        <UsageGuidelines
+          whenToUse={fileBrowserDoc.usage.whenToUse}
+          bestPractices={fileBrowserDoc.usage.bestPractices}
+          avoid={fileBrowserDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="FileBrowser.tsx"
+          code={fileBrowserDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={fileBrowserDoc.props} componentName="FileBrowser" />
       </div>
 
       <div class="space-y-4">
@@ -1292,6 +1497,23 @@ export function ShowcasePage(props: ShowcasePageProps) {
         </Panel>
 
         <LoadingOverlay visible={overlayVisible()} fullscreen message="Loading something..." />
+
+        {/* Loading Documentation */}
+        <UsageGuidelines
+          whenToUse={loadingOverlayDoc.usage.whenToUse}
+          bestPractices={loadingOverlayDoc.usage.bestPractices}
+          avoid={loadingOverlayDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Loading Components"
+          code={skeletonDoc.examples[0].code}
+          language="tsx"
+        />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <PropsTable props={skeletonDoc.props} componentName="Skeleton" />
+          <PropsTable props={snakeLoaderDoc.props} componentName="SnakeLoader" />
+          <PropsTable props={loadingOverlayDoc.props} componentName="LoadingOverlay" />
+        </div>
       </div>
 
       <div class="space-y-4">
@@ -1379,6 +1601,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* QuoteBlock Documentation */}
+        <UsageGuidelines
+          whenToUse={quoteBlockDoc.usage.whenToUse}
+          bestPractices={quoteBlockDoc.usage.bestPractices}
+          avoid={quoteBlockDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="QuoteBlock.tsx"
+          code={quoteBlockDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={quoteBlockDoc.props} componentName="QuoteBlock" />
       </div>
 
       <div class="space-y-4">
@@ -1414,6 +1649,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </TipBlock>
           </PanelContent>
         </Panel>
+
+        {/* HighlightBlock Documentation */}
+        <UsageGuidelines
+          whenToUse={highlightBlockDoc.usage.whenToUse}
+          bestPractices={highlightBlockDoc.usage.bestPractices}
+          avoid={highlightBlockDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="HighlightBlock.tsx"
+          code={highlightBlockDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={highlightBlockDoc.props} componentName="HighlightBlock" />
       </div>
 
       <div class="space-y-4">
@@ -1548,6 +1796,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* ProcessingIndicator Documentation */}
+        <UsageGuidelines
+          whenToUse={processingIndicatorDoc.usage.whenToUse}
+          bestPractices={processingIndicatorDoc.usage.bestPractices}
+          avoid={processingIndicatorDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="ProcessingIndicator.tsx"
+          code={processingIndicatorDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={processingIndicatorDoc.props} componentName="ProcessingIndicator" />
       </div>
 
       <div class="space-y-4">
@@ -1680,6 +1941,23 @@ export function ShowcasePage(props: ShowcasePageProps) {
               />
             </PanelContent>
           </Panel>
+        </div>
+
+        {/* Charts Documentation */}
+        <UsageGuidelines
+          whenToUse={lineChartDoc.usage.whenToUse}
+          bestPractices={lineChartDoc.usage.bestPractices}
+          avoid={lineChartDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Charts"
+          code={lineChartDoc.examples[0].code}
+          language="tsx"
+        />
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <PropsTable props={lineChartDoc.props} componentName="LineChart" />
+          <PropsTable props={barChartDoc.props} componentName="DataBarChart" />
+          <PropsTable props={pieChartDoc.props} componentName="DataPieChart" />
         </div>
       </div>
     </div>

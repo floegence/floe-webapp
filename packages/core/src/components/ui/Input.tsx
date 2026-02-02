@@ -1,12 +1,18 @@
-import { splitProps, type JSX, Show } from 'solid-js';
+import { splitProps, type JSX, Show, createUniqueId } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type InputSize = 'sm' | 'md' | 'lg';
 
 export interface InputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  /** Input size variant */
   size?: InputSize;
+  /** Error message - also sets aria-invalid and aria-describedby */
   error?: string;
+  /** Helper text displayed below the input */
+  helperText?: string;
+  /** Icon displayed on the left side */
   leftIcon?: JSX.Element;
+  /** Icon displayed on the right side */
   rightIcon?: JSX.Element;
 }
 
@@ -20,10 +26,23 @@ export function Input(props: InputProps) {
   const [local, rest] = splitProps(props, [
     'size',
     'error',
+    'helperText',
     'leftIcon',
     'rightIcon',
     'class',
+    'id',
   ]);
+
+  const inputId = local.id ?? createUniqueId();
+  const errorId = `${inputId}-error`;
+  const helperId = `${inputId}-helper`;
+
+  const ariaDescribedBy = () => {
+    const ids: string[] = [];
+    if (local.error) ids.push(errorId);
+    if (local.helperText && !local.error) ids.push(helperId);
+    return ids.length > 0 ? ids.join(' ') : undefined;
+  };
 
   return (
     <div class="relative">
@@ -34,6 +53,9 @@ export function Input(props: InputProps) {
       </Show>
 
       <input
+        id={inputId}
+        aria-invalid={local.error ? true : undefined}
+        aria-describedby={ariaDescribedBy()}
         class={cn(
           'w-full rounded border border-input bg-background shadow-sm',
           'placeholder:text-muted-foreground/60',
@@ -57,25 +79,50 @@ export function Input(props: InputProps) {
       </Show>
 
       <Show when={local.error}>
-        <p class="mt-1 text-[11px] text-error">{local.error}</p>
+        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+          {local.error}
+        </p>
+      </Show>
+
+      <Show when={local.helperText && !local.error}>
+        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+          {local.helperText}
+        </p>
       </Show>
     </div>
   );
 }
 
 /**
- * Textarea variant
+ * Textarea variant - Multi-line text input with auto-resize support
  */
 export interface TextareaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  /** Error message - also sets aria-invalid and aria-describedby */
   error?: string;
+  /** Helper text displayed below the textarea */
+  helperText?: string;
 }
 
 export function Textarea(props: TextareaProps) {
-  const [local, rest] = splitProps(props, ['error', 'class']);
+  const [local, rest] = splitProps(props, ['error', 'helperText', 'class', 'id']);
+
+  const textareaId = local.id ?? createUniqueId();
+  const errorId = `${textareaId}-error`;
+  const helperId = `${textareaId}-helper`;
+
+  const ariaDescribedBy = () => {
+    const ids: string[] = [];
+    if (local.error) ids.push(errorId);
+    if (local.helperText && !local.error) ids.push(helperId);
+    return ids.length > 0 ? ids.join(' ') : undefined;
+  };
 
   return (
     <div>
       <textarea
+        id={textareaId}
+        aria-invalid={local.error ? true : undefined}
+        aria-describedby={ariaDescribedBy()}
         class={cn(
           'w-full min-h-16 rounded border border-input bg-background p-2.5 text-xs shadow-sm',
           'placeholder:text-muted-foreground/60',
@@ -89,7 +136,14 @@ export function Textarea(props: TextareaProps) {
         {...rest}
       />
       <Show when={local.error}>
-        <p class="mt-1 text-[11px] text-error">{local.error}</p>
+        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+          {local.error}
+        </p>
+      </Show>
+      <Show when={local.helperText && !local.error}>
+        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+          {local.helperText}
+        </p>
       </Show>
     </div>
   );

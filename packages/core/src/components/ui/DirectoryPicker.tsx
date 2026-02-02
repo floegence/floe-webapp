@@ -10,52 +10,14 @@ import {
   PickerBreadcrumb,
   PickerFolderTree,
   NewFolderSection,
+  type BasePickerProps,
 } from './picker/PickerBase';
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-export interface DirectoryPickerProps {
-  /** Whether the picker dialog is open */
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-
-  /** Full file tree (same FileItem[] as FileBrowser) */
-  files: FileItem[];
-
-  /** Initial selected path (default: '/') */
-  initialPath?: string;
-
-  /** Dialog title (default: 'Select Directory') */
-  title?: string;
-
-  /** Confirm button text (default: 'Select') */
-  confirmText?: string;
-
-  /** Cancel button text (default: 'Cancel') */
-  cancelText?: string;
-
+export interface DirectoryPickerProps extends BasePickerProps {
   /** Called when user confirms selection */
   onSelect: (path: string) => void;
-
-  /**
-   * Called when user creates a new folder.
-   * When provided, a "New Folder" button is shown.
-   */
-  onCreateFolder?: (parentPath: string, name: string) => Promise<void>;
-
-  /** Optional: filter which directories are selectable (return false to grey-out) */
-  filter?: (item: FileItem) => boolean;
-
-  /** Label for the home/root directory in tree and breadcrumb (default: 'Root') */
-  homeLabel?: string;
-
-  /**
-   * Real filesystem path of the home directory (e.g. '/home/user').
-   * When set, path input and display paths show real filesystem paths.
-   */
-  homePath?: string;
-
-  class?: string;
 }
 
 /**

@@ -20,6 +20,45 @@ import { ChevronRight, Plus, Check, X } from '../../icons';
 import { FolderIcon, FolderOpenIcon } from '../../file-browser/FileIcons';
 import type { FileItem } from '../../file-browser/types';
 
+// ─── Common Picker Props Interface ────────────────────────────────────────────
+
+/**
+ * Base props shared by DirectoryPicker and FileSavePicker.
+ * Provides consistent API for file tree navigation.
+ */
+export interface BasePickerProps {
+  /** Whether the picker dialog is open */
+  open: boolean;
+  /** Callback when open state changes */
+  onOpenChange: (open: boolean) => void;
+  /** Full file tree data */
+  files: FileItem[];
+  /** Initial directory path (default: '/') */
+  initialPath?: string;
+  /** Dialog title */
+  title?: string;
+  /** Confirm button text */
+  confirmText?: string;
+  /** Cancel button text (default: 'Cancel') */
+  cancelText?: string;
+  /**
+   * Callback when user creates a new folder.
+   * When provided, a "New Folder" button is shown.
+   */
+  onCreateFolder?: (parentPath: string, name: string) => Promise<void>;
+  /** Filter which directories are selectable (return false to grey-out) */
+  filter?: (item: FileItem) => boolean;
+  /** Label for the home/root directory (default: 'Root') */
+  homeLabel?: string;
+  /**
+   * Real filesystem path of the home directory (e.g. '/home/user').
+   * When set, paths display with real filesystem paths.
+   */
+  homePath?: string;
+  /** Additional CSS class */
+  class?: string;
+}
+
 // ─── Path utilities ──────────────────────────────────────────────────────────
 
 export function normalizePath(path: string): string {

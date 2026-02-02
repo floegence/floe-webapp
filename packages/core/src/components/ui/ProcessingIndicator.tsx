@@ -1,4 +1,4 @@
-import { type JSX, Show, splitProps, createEffect, createSignal, onCleanup, For, createUniqueId } from 'solid-js';
+import { Show, splitProps, createEffect, createSignal, onCleanup, For, createUniqueId } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type ProcessingIndicatorVariant =
@@ -18,10 +18,8 @@ export type ProcessingIndicatorStatus = 'thinking' | 'working' | 'processing' | 
 export interface ProcessingIndicatorProps {
   /** Display status text */
   status?: ProcessingIndicatorStatus | string;
-  /** Visual variant */
+  /** Visual variant - each has unique built-in animations */
   variant?: ProcessingIndicatorVariant;
-  /** Custom icon */
-  icon?: JSX.Element;
   /** Show elapsed time */
   showElapsed?: boolean;
   /** Start time for elapsed calculation (defaults to mount time) */
@@ -61,7 +59,6 @@ export function ProcessingIndicator(props: ProcessingIndicatorProps) {
   const [local, rest] = splitProps(props, [
     'status',
     'variant',
-    'icon',
     'showElapsed',
     'startTime',
     'description',

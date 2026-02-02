@@ -21,23 +21,38 @@ export interface TabItem {
 }
 
 export interface TabsProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'onClose'> {
-  // Tab data
+  /** Tab data items */
   items: TabItem[];
-  // Currently active tab id
+  /**
+   * Active tab id (controlled mode).
+   * When set, you must also provide onChange to handle changes.
+   */
   activeId?: string;
-  // Callback when active tab changes
+  /**
+   * Default active tab id (uncontrolled mode).
+   * Use this when you don't need external control over the active tab.
+   */
+  defaultActiveId?: string;
+  /**
+   * Callback when active tab changes.
+   * Alias: onActiveIdChange (for consistency with other components)
+   */
   onChange?: (id: string) => void;
-  // Callback when tab is closed
+  /**
+   * Alias for onChange (consistent naming with Radix/shadcn patterns).
+   */
+  onActiveIdChange?: (id: string) => void;
+  /** Callback when tab is closed */
   onClose?: (id: string) => void;
-  // Callback when add button is clicked
+  /** Callback when add button is clicked */
   onAdd?: () => void;
-  // Whether to show add button
+  /** Whether to show add button */
   showAdd?: boolean;
-  // Whether tabs are closable by default
+  /** Whether tabs are closable by default */
   closable?: boolean;
-  // Tab size variant
+  /** Tab size variant */
   size?: 'sm' | 'md';
-  // Tab style variant
+  /** Tab style variant */
   variant?: 'default' | 'card' | 'underline';
 }
 
@@ -64,7 +79,9 @@ export function Tabs(props: TabsProps) {
   const [local, rest] = splitProps(props, [
     'items',
     'activeId',
+    'defaultActiveId',
     'onChange',
+    'onActiveIdChange',
     'onClose',
     'onAdd',
     'showAdd',
@@ -78,12 +95,23 @@ export function Tabs(props: TabsProps) {
   let scrollContainerRef: HTMLDivElement | undefined;
   let rafId: number | null = null;
 
+  // Determine if controlled or uncontrolled
+  const isControlled = () => local.activeId !== undefined;
+  const changeHandler = () => local.onChange ?? local.onActiveIdChange;
+
+  // Internal state for uncontrolled mode
+  const [internalActiveId, setInternalActiveId] = createSignal(
+    local.defaultActiveId ?? local.items[0]?.id ?? ''
+  );
+
+  // Get the current active id (controlled or uncontrolled)
+  const currentActiveId = () => (isControlled() ? local.activeId! : internalActiveId());
+
   // Optimistic UI: update active highlight immediately on click, then notify parent after paint.
-  const [optimisticActiveId, setOptimisticActiveId] = createSignal('');
+  const [optimisticActiveId, setOptimisticActiveId] = createSignal(currentActiveId());
+
   createEffect(() => {
-    if (local.activeId !== undefined) {
-      setOptimisticActiveId(local.activeId);
-    }
+    setOptimisticActiveId(currentActiveId());
   });
 
   // Scroll state
@@ -170,17 +198,21 @@ export function Tabs(props: TabsProps) {
   // Handle tab click with UI-first response
   const handleTabClick = (id: string, disabled?: boolean) => {
     if (disabled) return;
-    const onChange = local.onChange;
-
-    // Read-only controlled mode: do not change highlight without a handler.
-    if (local.activeId !== undefined && !onChange) return;
+    const handler = changeHandler();
 
     // UI first: highlight immediately.
     setOptimisticActiveId(id);
 
-    if (!onChange) return;
-    const nextId = id;
-    deferAfterPaint(() => onChange(nextId));
+    // Update internal state for uncontrolled mode
+    if (!isControlled()) {
+      setInternalActiveId(id);
+    }
+
+    // Notify parent after paint
+    if (handler) {
+      const nextId = id;
+      deferAfterPaint(() => handler(nextId));
+    }
   };
 
   // Handle close with UI-first response
