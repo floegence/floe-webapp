@@ -180,6 +180,200 @@ function Example() {
 };
 
 // ===========================
+// NumberInput Component
+// ===========================
+export const numberInputDoc: ComponentDoc = {
+  name: 'NumberInput',
+  description: 'Number input with increment/decrement buttons and configurable min/max/step values.',
+  props: [
+    {
+      name: 'value',
+      type: 'number',
+      required: true,
+      description: 'Current numeric value.',
+    },
+    {
+      name: 'onChange',
+      type: '(value: number) => void',
+      required: true,
+      description: 'Callback when value changes.',
+    },
+    {
+      name: 'min',
+      type: 'number',
+      description: 'Minimum allowed value.',
+    },
+    {
+      name: 'max',
+      type: 'number',
+      description: 'Maximum allowed value.',
+    },
+    {
+      name: 'step',
+      type: 'number',
+      default: '1',
+      description: 'Step increment for buttons.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of the input field.',
+    },
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Disables the input and buttons.',
+    },
+    {
+      name: 'error',
+      type: 'string',
+      description: 'Error message to display below the input.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Quantity selectors in e-commerce',
+      'Numeric settings with bounded ranges',
+      'Step-based value adjustments',
+    ],
+    bestPractices: [
+      'Set appropriate min/max bounds',
+      'Use meaningful step values',
+      'Provide visual feedback at boundaries',
+    ],
+    avoid: [
+      'Very large number ranges without step',
+      'Using for unbounded numeric input',
+      'Hiding the direct input capability',
+    ],
+  },
+  examples: [
+    {
+      title: 'NumberInput with Range',
+      code: `import { NumberInput } from '@floegence/floe-webapp-core';
+
+function Example() {
+  const [count, setCount] = createSignal(5);
+
+  return (
+    <NumberInput
+      value={count()}
+      onChange={setCount}
+      min={0}
+      max={10}
+      step={1}
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
+// AffixInput Component
+// ===========================
+export const affixInputDoc: ComponentDoc = {
+  name: 'AffixInput',
+  description: 'Input with fixed or selectable prefix/suffix for URLs, currencies, units, and more.',
+  props: [
+    {
+      name: 'prefix',
+      type: 'string',
+      description: 'Fixed prefix text (non-selectable).',
+    },
+    {
+      name: 'suffix',
+      type: 'string',
+      description: 'Fixed suffix text (non-selectable).',
+    },
+    {
+      name: 'prefixOptions',
+      type: 'AffixOption[]',
+      description: 'Selectable prefix options with value and label.',
+    },
+    {
+      name: 'prefixValue',
+      type: 'string',
+      description: 'Selected prefix value when using prefixOptions.',
+    },
+    {
+      name: 'onPrefixChange',
+      type: '(value: string) => void',
+      description: 'Callback when prefix selection changes.',
+    },
+    {
+      name: 'suffixOptions',
+      type: 'AffixOption[]',
+      description: 'Selectable suffix options with value and label.',
+    },
+    {
+      name: 'suffixValue',
+      type: 'string',
+      description: 'Selected suffix value when using suffixOptions.',
+    },
+    {
+      name: 'onSuffixChange',
+      type: '(value: string) => void',
+      description: 'Callback when suffix selection changes.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of the input field.',
+    },
+    {
+      name: 'error',
+      type: 'string',
+      description: 'Error message to display below the input.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'URL inputs with protocol selection',
+      'Currency inputs with symbol prefix',
+      'Unit inputs with selectable units',
+      'Domain inputs with TLD suffix',
+    ],
+    bestPractices: [
+      'Use fixed affixes for constant values',
+      'Use selectable affixes when users need choices',
+      'Keep affix options concise',
+    ],
+    avoid: [
+      'Too many affix options (use dropdown instead)',
+      'Very long prefix/suffix text',
+      'Combining fixed and selectable on same side',
+    ],
+  },
+  examples: [
+    {
+      title: 'URL Input with Protocol',
+      code: `import { AffixInput } from '@floegence/floe-webapp-core';
+
+function Example() {
+  const [protocol, setProtocol] = createSignal('https');
+
+  return (
+    <AffixInput
+      prefixOptions={[
+        { value: 'https', label: 'https://' },
+        { value: 'http', label: 'http://' },
+      ]}
+      prefixValue={protocol()}
+      onPrefixChange={setProtocol}
+      suffix=".com"
+      placeholder="domain"
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
 // Tabs Component
 // ===========================
 export const tabsDoc: ComponentDoc = {

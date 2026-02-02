@@ -3,6 +3,8 @@ import { PropsTable, CodeSnippet, UsageGuidelines } from '../components/docs';
 import {
   buttonDoc,
   inputDoc,
+  numberInputDoc,
+  affixInputDoc,
   tabsDoc,
   cardDoc,
   dialogDoc,
@@ -54,6 +56,8 @@ import {
   FloatingWindow,
   GitBranch,
   Input,
+  NumberInput,
+  AffixInput,
   Interactive3DCard,
   Loader2,
   LoadingOverlay,
@@ -364,6 +368,83 @@ export function ShowcasePage(props: ShowcasePageProps) {
   ];
 
   const [selectValue, setSelectValue] = createSignal('system');
+
+  // NumberInput demo state
+  const [numberValue, setNumberValue] = createSignal(50);
+  const [stepValue, setStepValue] = createSignal(25);
+  const [buttonOnlyValue, setButtonOnlyValue] = createSignal(5);
+
+  // AffixInput demo state
+  const [protocol, setProtocol] = createSignal('https');
+  const [unit, setUnit] = createSignal('px');
+  const [tld, setTld] = createSignal('com');
+
+  // Dropdown with custom content state
+  const [dropdownQuantity, setDropdownQuantity] = createSignal(5);
+  const [zoomLevel, setZoomLevel] = createSignal(100);
+
+  // Cascade dropdown items
+  const cascadeItems: DropdownItem[] = [
+    {
+      id: 'edit',
+      label: 'Edit',
+      children: [
+        { id: 'cut', label: 'Cut' },
+        { id: 'copy', label: 'Copy' },
+        { id: 'paste', label: 'Paste' },
+      ],
+    },
+    {
+      id: 'view',
+      label: 'View',
+      children: [
+        { id: 'zoom-in', label: 'Zoom In' },
+        { id: 'zoom-out', label: 'Zoom Out' },
+        { id: 'sep', label: '', separator: true },
+        { id: 'fullscreen', label: 'Fullscreen' },
+      ],
+    },
+    { id: 'sep-1', label: '', separator: true },
+    { id: 'settings', label: 'Settings' },
+  ];
+
+  // File menu items with nested structure
+  const fileMenuItems: DropdownItem[] = [
+    {
+      id: 'new',
+      label: 'New',
+      children: [
+        { id: 'new-file', label: 'File' },
+        { id: 'new-folder', label: 'Folder' },
+        { id: 'new-project', label: 'Project' },
+      ],
+    },
+    { id: 'open', label: 'Open' },
+    {
+      id: 'open-recent',
+      label: 'Open Recent',
+      children: [
+        { id: 'recent-1', label: 'project-a.ts' },
+        { id: 'recent-2', label: 'styles.css' },
+        { id: 'recent-3', label: 'index.html' },
+        { id: 'sep', label: '', separator: true },
+        { id: 'clear-recent', label: 'Clear Recent' },
+      ],
+    },
+    { id: 'sep-1', label: '', separator: true },
+    { id: 'save', label: 'Save' },
+    { id: 'save-as', label: 'Save As...' },
+    { id: 'sep-2', label: '', separator: true },
+    {
+      id: 'export',
+      label: 'Export',
+      children: [
+        { id: 'export-pdf', label: 'PDF' },
+        { id: 'export-png', label: 'PNG' },
+        { id: 'export-svg', label: 'SVG' },
+      ],
+    },
+  ];
 
   // Tabs demo state
   const [basicTabsActive, setBasicTabsActive] = createSignal('tab1');
@@ -982,7 +1063,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-inputs"
           title="Inputs"
-          description="Input + Textarea with sizes, icons and error state."
+          description="Text inputs, number inputs, and inputs with prefix/suffix support."
           actions={
             <div class="flex items-center gap-1.5">
               <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.input')}>
@@ -991,6 +1072,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           }
         />
+
+        {/* Basic Input & Textarea */}
+        <h3 class="text-xs font-medium text-muted-foreground">Basic Input & Textarea</h3>
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2">
@@ -1021,6 +1105,211 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={inputDoc.props} componentName="Input" />
+
+        {/* NumberInput */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">NumberInput</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Default (0-100)</label>
+                  <NumberInput
+                    value={numberValue()}
+                    onChange={(v) => {
+                      setNumberValue(v);
+                      notifications.info('Value Changed', `New value: ${v}`);
+                    }}
+                    min={0}
+                    max={100}
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Step by 5</label>
+                  <NumberInput
+                    value={stepValue()}
+                    onChange={(v) => {
+                      setStepValue(v);
+                      notifications.info('Step Value', `Value: ${v}`);
+                    }}
+                    min={0}
+                    max={50}
+                    step={5}
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Button Only (inputDisabled)</label>
+                  <NumberInput
+                    value={buttonOnlyValue()}
+                    onChange={(v) => {
+                      setButtonOnlyValue(v);
+                      notifications.info('Button Click', `Value: ${v}`);
+                    }}
+                    min={1}
+                    max={10}
+                    inputDisabled
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Small</label>
+                  <NumberInput value={5} onChange={() => {}} size="sm" min={0} max={10} />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Medium</label>
+                  <NumberInput value={5} onChange={() => {}} size="md" min={0} max={10} />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Large</label>
+                  <NumberInput value={5} onChange={() => {}} size="lg" min={0} max={10} />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Disabled</label>
+                  <NumberInput
+                    value={10}
+                    onChange={() => {}}
+                    disabled
+                  />
+                </div>
+              </div>
+            </PanelContent>
+          </Panel>
+
+          <div class="mt-4">
+            <UsageGuidelines
+              whenToUse={numberInputDoc.usage.whenToUse}
+              bestPractices={numberInputDoc.usage.bestPractices}
+              avoid={numberInputDoc.usage.avoid}
+            />
+            <CodeSnippet
+              title="NumberInput.tsx"
+              code={numberInputDoc.examples[0].code}
+              language="tsx"
+            />
+            <PropsTable props={numberInputDoc.props} componentName="NumberInput" />
+          </div>
+        </div>
+
+        {/* AffixInput */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">AffixInput</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Fixed prefix & suffix</label>
+                  <AffixInput
+                    prefix="https://"
+                    suffix=".com"
+                    placeholder="domain"
+                    onInput={(e) => {
+                      const val = (e.target as HTMLInputElement).value;
+                      if (val) notifications.info('Domain Input', `https://${val}.com`);
+                    }}
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Currency input</label>
+                  <AffixInput
+                    prefix="$"
+                    placeholder="0.00"
+                    type="number"
+                    onInput={(e) => {
+                      const val = (e.target as HTMLInputElement).value;
+                      if (val) notifications.info('Amount', `$${val}`);
+                    }}
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Selectable protocol</label>
+                  <AffixInput
+                    prefixOptions={[
+                      { value: 'https', label: 'https://' },
+                      { value: 'http', label: 'http://' },
+                      { value: 'ftp', label: 'ftp://' },
+                    ]}
+                    prefixValue={protocol()}
+                    onPrefixChange={(v) => {
+                      setProtocol(v);
+                      notifications.info('Protocol Changed', `Protocol: ${v}://`);
+                    }}
+                    placeholder="example.com"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Selectable unit suffix</label>
+                  <AffixInput
+                    suffixOptions={[
+                      { value: 'px', label: 'px' },
+                      { value: 'rem', label: 'rem' },
+                      { value: 'em', label: 'em' },
+                      { value: '%', label: '%' },
+                    ]}
+                    suffixValue={unit()}
+                    onSuffixChange={(v) => {
+                      setUnit(v);
+                      notifications.info('Unit Changed', `Unit: ${v}`);
+                    }}
+                    placeholder="16"
+                    type="number"
+                  />
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Both selectable</label>
+                  <AffixInput
+                    prefixOptions={[
+                      { value: 'https', label: 'https://' },
+                      { value: 'http', label: 'http://' },
+                    ]}
+                    prefixValue={protocol()}
+                    onPrefixChange={(v) => {
+                      setProtocol(v);
+                      notifications.info('Protocol', `${v}://`);
+                    }}
+                    suffixOptions={[
+                      { value: 'com', label: '.com' },
+                      { value: 'org', label: '.org' },
+                      { value: 'net', label: '.net' },
+                    ]}
+                    suffixValue={tld()}
+                    onSuffixChange={(v) => {
+                      setTld(v);
+                      notifications.info('TLD Changed', `.${v}`);
+                    }}
+                    placeholder="domain"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs text-muted-foreground">Disabled</label>
+                  <AffixInput
+                    prefix="@"
+                    placeholder="username"
+                    disabled
+                  />
+                </div>
+              </div>
+            </PanelContent>
+          </Panel>
+
+          <div class="mt-4">
+            <UsageGuidelines
+              whenToUse={affixInputDoc.usage.whenToUse}
+              bestPractices={affixInputDoc.usage.bestPractices}
+              avoid={affixInputDoc.usage.avoid}
+            />
+            <CodeSnippet
+              title="AffixInput.tsx"
+              code={affixInputDoc.examples[0].code}
+              language="tsx"
+            />
+            <PropsTable props={affixInputDoc.props} componentName="AffixInput" />
+          </div>
+        </div>
       </div>
 
       {/* Form Components */}
@@ -1128,20 +1417,26 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-menus"
           title="Dropdown & Select"
-          description="Menu items, separators, disabled items, and a Select wrapper."
+          description="Menu items, cascade submenus, custom content, and a Select wrapper."
           actions={
             <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.dropdown')}>
               View Source
             </Button>
           }
         />
+
+        {/* Basic Dropdown & Select */}
+        <h3 class="text-xs font-medium text-muted-foreground">Basic Dropdown & Select</h3>
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap items-start gap-4">
             <div class="space-y-1.5">
               <p class="text-[11px] text-muted-foreground">Dropdown</p>
               <Dropdown
                 value={dropdownValue()}
-                onSelect={setDropdownValue}
+                onSelect={(id) => {
+                  setDropdownValue(id);
+                  notifications.info('Selection Changed', `Selected: ${id}`);
+                }}
                 items={dropdownItems}
                 trigger={
                   <Button variant="outline">
@@ -1154,7 +1449,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <p class="text-[11px] text-muted-foreground">Select</p>
               <Select
                 value={selectValue()}
-                onChange={setSelectValue}
+                onChange={(v) => {
+                  setSelectValue(v);
+                  notifications.info('Theme Changed', `Theme set to: ${v}`);
+                }}
                 placeholder="Choose a theme"
                 options={[
                   { value: 'system', label: 'System' },
@@ -1166,6 +1464,131 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
           </PanelContent>
         </Panel>
+
+        {/* Cascade Dropdown */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Cascade Dropdown</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent class="flex flex-wrap items-start gap-4">
+              <div class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">With Submenus</p>
+                <Dropdown
+                  onSelect={(id) => {
+                    notifications.info('Action Selected', `You clicked: ${id}`);
+                  }}
+                  items={cascadeItems}
+                  trigger={
+                    <Button variant="outline">
+                      Actions
+                    </Button>
+                  }
+                />
+              </div>
+              <div class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">File Menu Style</p>
+                <Dropdown
+                  onSelect={(id) => {
+                    notifications.info('File Action', `Action: ${id}`);
+                  }}
+                  items={fileMenuItems}
+                  trigger={
+                    <Button variant="outline">
+                      File
+                    </Button>
+                  }
+                />
+              </div>
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Dropdown with Custom Content */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Dropdown with Custom Content</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent class="flex flex-wrap items-start gap-4">
+              <div class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">With NumberInput</p>
+                <Dropdown
+                  onSelect={() => {}}
+                  items={[
+                    {
+                      id: 'quantity',
+                      label: 'Quantity',
+                      content: () => (
+                        <div class="space-y-1">
+                          <label class="text-xs text-muted-foreground">Quantity</label>
+                          <NumberInput
+                            value={dropdownQuantity()}
+                            onChange={(v) => {
+                              setDropdownQuantity(v);
+                              notifications.info('Quantity Changed', `New quantity: ${v}`);
+                            }}
+                            min={1}
+                            max={99}
+                            size="sm"
+                            inputDisabled
+                          />
+                        </div>
+                      ),
+                      keepOpen: true,
+                    },
+                    { id: 'sep', label: '', separator: true },
+                    { id: 'apply', label: 'Apply' },
+                    { id: 'reset', label: 'Reset to Default' },
+                  ]}
+                  trigger={
+                    <Button variant="outline">
+                      Settings ({dropdownQuantity()})
+                    </Button>
+                  }
+                />
+              </div>
+              <div class="space-y-1.5">
+                <p class="text-[11px] text-muted-foreground">Zoom Control</p>
+                <Dropdown
+                  onSelect={(id) => {
+                    if (id === 'fit') {
+                      setZoomLevel(100);
+                      notifications.info('Zoom Reset', 'Zoom set to 100%');
+                    }
+                  }}
+                  items={[
+                    {
+                      id: 'zoom-control',
+                      label: 'Zoom',
+                      content: () => (
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs text-muted-foreground w-12">Zoom</span>
+                          <NumberInput
+                            value={zoomLevel()}
+                            onChange={(v) => {
+                              setZoomLevel(v);
+                              notifications.info('Zoom Changed', `Zoom: ${v}%`);
+                            }}
+                            min={25}
+                            max={400}
+                            step={25}
+                            size="sm"
+                          />
+                          <span class="text-xs text-muted-foreground">%</span>
+                        </div>
+                      ),
+                      keepOpen: true,
+                    },
+                    { id: 'sep', label: '', separator: true },
+                    { id: 'fit', label: 'Fit to Window' },
+                  ]}
+                  trigger={
+                    <Button variant="outline">
+                      Zoom: {zoomLevel()}%
+                    </Button>
+                  }
+                />
+              </div>
+            </PanelContent>
+          </Panel>
+        </div>
 
         {/* Dropdown Documentation */}
         <UsageGuidelines
