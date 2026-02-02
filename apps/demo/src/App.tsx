@@ -1,4 +1,4 @@
-import { Match, Show, Switch, createMemo, createSignal, onMount, type Component } from 'solid-js';
+import { Match, Show, Switch, createMemo, createSignal, createEffect, onMount, type Component } from 'solid-js';
 import { createHighlighter } from 'shiki';
 import {
   ActivityAppsMain,
@@ -24,6 +24,7 @@ import {
   StatusIndicator,
   Sun,
   Terminal,
+  deferAfterPaint,
   useComponentContextFactory,
   useComponentRegistry,
   useLayout,
@@ -55,8 +56,27 @@ function AppContent() {
   const activeFile = createMemo(() => demoFiles.find((f) => f.id === activeFileId()) ?? demoFiles[0]!);
 
   const [searchQuery, setSearchQuery] = createSignal('');
+  const [searchQueryApplied, setSearchQueryApplied] = createSignal('');
+  let searchApplyJob = 0;
+  createEffect(() => {
+    const next = searchQuery().trim();
+    searchApplyJob += 1;
+    const jobId = searchApplyJob;
+
+    if (!next) {
+      setSearchQueryApplied('');
+      return;
+    }
+
+    // UI-first search: let the input paint first, then compute results.
+    deferAfterPaint(() => {
+      if (jobId !== searchApplyJob) return;
+      setSearchQueryApplied(next.toLowerCase());
+    });
+  });
+
   const searchResults = createMemo(() => {
-    const q = searchQuery().trim().toLowerCase();
+    const q = searchQueryApplied();
     if (!q) return [];
     return demoFiles
       .filter((f) => f.path.toLowerCase().includes(q))
@@ -327,7 +347,8 @@ function AppContent() {
   };
 
   onMount(() => {
-    void initShiki();
+    // UI-first: allow the initial frame to paint before initializing the syntax highlighter.
+    deferAfterPaint(() => void initShiki());
     void registry.mountAll((id) => createCtx(id, { protocol }));
   });
 
