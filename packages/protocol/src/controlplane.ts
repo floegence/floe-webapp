@@ -15,6 +15,8 @@ export interface ControlplaneConfig {
 export async function requestChannelGrant(config: ControlplaneConfig): Promise<ChannelInitGrant> {
   const response = await fetch(`${config.baseUrl}/v1/channel/init`, {
     method: 'POST',
+    credentials: 'omit',
+    cache: 'no-store',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint_id: config.endpointId }),
   });

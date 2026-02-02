@@ -123,8 +123,22 @@ Core UI framework with:
 Protocol layer for communication:
 
 - Flowersec WebSocket integration
-- RPC wrapper for type-safe calls
-- Connection state management
+- Contract-driven RPC SDK (`useRpc()`) with a built-in Redeven contract
+- Connection state management with dynamic `getGrant()` reconnect support
+
+### @floegence/floe-webapp-runtime
+
+Optional infrastructure utilities for Flowersec E2EE deployments:
+
+- Start Flowersec proxy runtime (`startProxyRuntime`)
+- Register Service Worker and ensure page control (`registerServiceWorkerAndEnsureControl`)
+
+### @floegence/floe-webapp-boot
+
+Optional boot utilities for multi-window + sandbox flows:
+
+- Hash/sessionStorage helpers (parse + clear)
+- `postMessage` handshake helpers
 
 ### @floegence/floe-webapp-init
 

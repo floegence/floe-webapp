@@ -7,6 +7,8 @@ import type {
   DirectConnectInfo,
 } from '@floegence/flowersec-core';
 import { requestChannelGrant, type ControlplaneConfig } from './controlplane';
+import type { ProtocolContract } from './contract';
+import { redevenV1Contract } from './contracts/redeven_v1';
 
 /**
  * Connection status
@@ -26,6 +28,7 @@ interface ProtocolContextValue {
   status: () => ConnectionStatus;
   error: () => Error | null;
   client: () => Client | null;
+  contract: () => ProtocolContract;
   connect: (config: ConnectConfig) => Promise<void>;
   disconnect: () => void;
 }
@@ -61,6 +64,13 @@ export interface ConnectConfig {
 
   // Tunnel mode
   controlplane?: ControlplaneConfig;
+  /**
+   * Provide a fresh grant for each connection attempt.
+   *
+   * This is the recommended way to support "reconnect requires new ticket/grant"
+   * flows (e.g. entry_ticket -> channel_init -> grant_client).
+   */
+  getGrant?: () => Promise<ChannelInitGrant>;
   grant?: ChannelInitGrant;
 
   // Direct mode
@@ -107,12 +117,15 @@ function backoffDelayMs(attemptIndex: number, cfg: AutoReconnectSettings): numbe
   return Math.max(0, Math.round(base + jitter));
 }
 
-export function ProtocolProvider(props: { children: JSX.Element }) {
+export function ProtocolProvider(props: { children: JSX.Element; contract?: ProtocolContract }) {
   const [state, setState] = createStore<ProtocolState>({
     status: 'disconnected',
     error: null,
     client: null,
   });
+
+  // eslint-disable-next-line solid/reactivity -- contract is expected to be static for the provider lifetime.
+  const contract = props.contract ?? redevenV1Contract;
 
   let connectToken = 0;
   let activeConfig: ConnectConfig | null = null;
@@ -211,9 +224,11 @@ export function ProtocolProvider(props: { children: JSX.Element }) {
 
     if (mode === 'tunnel') {
       const grant =
-        config.grant ?? (config.controlplane ? await requestChannelGrant(config.controlplane) : null);
+        (config.getGrant ? await config.getGrant() : null) ??
+        config.grant ??
+        (config.controlplane ? await requestChannelGrant(config.controlplane) : null);
       if (!grant) {
-        throw new Error('Tunnel mode requires `grant` or `controlplane` config');
+        throw new Error('Tunnel mode requires `getGrant`, `grant`, or `controlplane` config');
       }
       return connectTunnelBrowser(grant, connectOptions);
     }
@@ -287,6 +302,7 @@ export function ProtocolProvider(props: { children: JSX.Element }) {
     status: () => state.status,
     error: () => state.error,
     client: () => state.client,
+    contract: () => contract,
     connect,
     disconnect,
   };

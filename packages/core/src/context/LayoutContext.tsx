@@ -26,7 +26,7 @@ export interface LayoutContextValue {
   sidebarActiveTab: Accessor<string>;
   sidebarCollapsed: Accessor<boolean>;
   setSidebarWidth: (width: number) => void;
-  setSidebarActiveTab: (tab: string) => void;
+  setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapse: () => void;
 
@@ -99,12 +99,13 @@ export function createLayoutService(): LayoutContextValue {
           s.sidebar.width = Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
         })
       ),
-    setSidebarActiveTab: (tab: string) =>
+    setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) =>
       setStore(
         produce((s) => {
           s.sidebar.activeTab = tab;
-          // Un-collapse sidebar when selecting a tab
-          s.sidebar.collapsed = false;
+          // Default: VSCode-style. Allow consumers to opt out (e.g. Shell sidebarMode="hidden").
+          const open = opts?.openSidebar !== false;
+          if (open) s.sidebar.collapsed = false;
         })
       ),
     setSidebarCollapsed: (collapsed: boolean) =>

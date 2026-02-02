@@ -1,8 +1,11 @@
 import { useProtocol } from './client';
-import { TypeIds, type ListRequest, type ListResponse, type ReadFileRequest, type ReadFileResponse, type WriteFileRequest, type WriteFileResponse, type DeleteRequest, type DeleteResponse } from './types';
+import type { ProtocolContract, RpcHelpers } from './contract';
+import { redevenV1Contract, type RedevenV1Rpc } from './contracts/redeven_v1';
 
 /**
- * RPC wrapper for type-safe remote calls
+ * RPC wrapper for typed remote calls.
+ *
+ * This module is contract-driven: a contract defines TypeIds + wire codecs + domain surface.
  */
 export class ProtocolNotConnectedError extends Error {
   constructor() {
@@ -23,18 +26,14 @@ export class RpcError extends Error {
   }
 }
 
-export function useRpc() {
-  const protocol = useProtocol();
-
-  const call = async <Req, Res>(typeId: number, request: Req): Promise<Res> => {
+function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
+  const call: RpcHelpers['call'] = async <Req, Res>(typeId: number, payload: Req): Promise<Res> => {
     const client = protocol.client();
-    if (!client) {
-      throw new ProtocolNotConnectedError();
-    }
+    if (!client) throw new ProtocolNotConnectedError();
 
     let response: Awaited<ReturnType<typeof client.rpc.call>>;
     try {
-      response = await client.rpc.call(typeId, request);
+      response = await client.rpc.call(typeId, payload);
     } catch (err) {
       throw new RpcError({ typeId, code: -1, message: 'RPC transport error', cause: err });
     }
@@ -47,20 +46,46 @@ export function useRpc() {
         cause: response.error,
       });
     }
+
     return response.payload as Res;
   };
 
-  return {
-    // File system operations
-    fs: {
-      list: (req: ListRequest) => call<ListRequest, ListResponse>(TypeIds.FS_LIST, req),
-      readFile: (req: ReadFileRequest) => call<ReadFileRequest, ReadFileResponse>(TypeIds.FS_READ_FILE, req),
-      writeFile: (req: WriteFileRequest) => call<WriteFileRequest, WriteFileResponse>(TypeIds.FS_WRITE_FILE, req),
-      delete: (req: DeleteRequest) => call<DeleteRequest, DeleteResponse>(TypeIds.FS_DELETE, req),
-      getHome: () => call<Record<string, never>, { path: string }>(TypeIds.FS_GET_HOME, {}),
-    },
-
-    // Raw call for custom operations
-    call,
+  const notify: RpcHelpers['notify'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+    const client = protocol.client();
+    if (!client) return;
+    try {
+      await client.rpc.notify(typeId, payload);
+    } catch (err) {
+      throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
+    }
   };
+
+  const onNotify: RpcHelpers['onNotify'] = <Payload>(
+    typeId: number,
+    handler: (payload: Payload) => void
+  ) => {
+    const client = protocol.client();
+    if (!client) return () => {};
+
+    return client.rpc.onNotify(typeId, (payload) => {
+      handler(payload as Payload);
+    });
+  };
+
+  return { call, notify, onNotify };
+}
+
+export type UseRpcOptions<TApi extends object> = {
+  contract?: ProtocolContract<TApi>;
+};
+
+export function useRpc<TApi extends object = RedevenV1Rpc>(options?: UseRpcOptions<TApi>): TApi & RpcHelpers {
+  const protocol = useProtocol();
+  const contract = (options?.contract ?? protocol.contract() ?? redevenV1Contract) as ProtocolContract<TApi>;
+
+  const helpers = createHelpers(protocol);
+  const api = contract.createRpc(helpers);
+
+  // Provide both: domain API + raw helpers.
+  return Object.assign(api, helpers);
 }

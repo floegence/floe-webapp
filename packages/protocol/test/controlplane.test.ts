@@ -28,6 +28,8 @@ describe('requestChannelGrant', () => {
     expect(spy.mock.calls[0]?.[0]).toBe('https://cp.example.com/v1/channel/init');
     const init = spy.mock.calls[0]?.[1];
     expect(init && typeof init === 'object' ? (init as RequestInit).method : undefined).toBe('POST');
+    expect(init && typeof init === 'object' ? (init as RequestInit).credentials : undefined).toBe('omit');
+    expect(init && typeof init === 'object' ? (init as RequestInit).cache : undefined).toBe('no-store');
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({ endpoint_id: 'endpoint-1' });
     expect(result).toEqual(grant);
 
@@ -61,4 +63,3 @@ describe('requestChannelGrant', () => {
     spy.mockRestore();
   });
 });
-

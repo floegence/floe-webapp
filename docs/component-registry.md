@@ -6,6 +6,22 @@ Primary implementation:
 
 - `packages/core/src/context/ComponentRegistry.tsx`
 
+## Registry lifecycle
+
+Recommended options:
+
+- Use `FloeApp` when you want the standard Shell + overlays wiring (it mounts and cleans up the registry for you).
+- Use `FloeRegistryRuntime` when you want a custom shell (Portal/EnvApp style) but still want registry lifecycle to be symmetric (register + mount + cleanup).
+
+Notes:
+
+- `ComponentRegistry.registerAll()` returns a disposer. Call it on cleanup to avoid registration leaks in HMR/remount flows.
+
+Implementation references:
+
+- `packages/core/src/app/FloeApp.tsx`
+- `packages/core/src/app/FloeRegistryRuntime.tsx`
+
 ## FloeComponent
 
 ```ts

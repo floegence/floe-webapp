@@ -21,6 +21,13 @@ export interface ShellProps {
   topBarActions?: JSX.Element;
   bottomBarItems?: JSX.Element;
   sidebarContent?: (activeTab: string) => JSX.Element;
+  /**
+   * Sidebar rendering mode.
+   *
+   * - `auto` (default): render Sidebar unless collapsed/fullScreen.
+   * - `hidden`: never render Sidebar (useful for Portal-style shells).
+   */
+  sidebarMode?: 'auto' | 'hidden';
   terminalPanel?: JSX.Element;
   class?: string;
 }
@@ -39,6 +46,8 @@ export function Shell(props: ShellProps) {
   const floe = useResolvedFloeConfig();
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
+  const sidebarHidden = () => props.sidebarMode === 'hidden';
+  const setSidebarActiveTab = (id: string) => layout.setSidebarActiveTab(id, { openSidebar: !sidebarHidden() });
   const registry = (() => {
     try {
       return useComponentRegistry();
@@ -46,6 +55,11 @@ export function Shell(props: ShellProps) {
       return null;
     }
   })();
+
+  // Sidebar is a structural part of the layout. When disabled, force-close the mobile drawer.
+  createEffect(() => {
+    if (sidebarHidden()) setMobileSidebarOpen(false);
+  });
 
   // Sync media-query state to LayoutContext so feature components can rely on `useLayout().isMobile()`.
   createEffect(() => {
@@ -79,6 +93,7 @@ export function Shell(props: ShellProps) {
   });
 
   const renderSidebarContent = (activeId: string): JSX.Element | undefined => {
+    if (sidebarHidden()) return undefined;
     if (props.sidebarContent) return props.sidebarContent(activeId);
     if (!registry) return undefined;
 
@@ -91,6 +106,7 @@ export function Shell(props: ShellProps) {
 
   // Check if active component is fullScreen (should hide sidebar)
   const isFullScreen = createMemo(() => {
+    if (sidebarHidden()) return true;
     if (!registry) return false;
     const comp = registry.getComponent(layout.sidebarActiveTab());
     return comp?.sidebar?.fullScreen ?? false;
@@ -134,13 +150,13 @@ export function Shell(props: ShellProps) {
 
     const active = layout.sidebarActiveTab();
     if (!active || !items.some((i) => i.id === active)) {
-      layout.setSidebarActiveTab(items[0].id);
+      setSidebarActiveTab(items[0].id);
     }
   });
 
   // Handle mobile tab selection - toggle sidebar
   const handleMobileTabSelect = (id: string) => {
-    const clickedIsFullScreen = registry?.getComponent(id)?.sidebar?.fullScreen ?? false;
+    const clickedIsFullScreen = sidebarHidden() ? true : (registry?.getComponent(id)?.sidebar?.fullScreen ?? false);
     const { nextActiveId, nextMobileSidebarOpen } = resolveMobileTabSelect({
       clickedId: id,
       activeId: layout.sidebarActiveTab(),
@@ -149,10 +165,12 @@ export function Shell(props: ShellProps) {
     });
 
     if (layout.sidebarActiveTab() !== nextActiveId) {
-      layout.setSidebarActiveTab(nextActiveId);
+      setSidebarActiveTab(nextActiveId);
     }
     setMobileSidebarOpen(nextMobileSidebarOpen);
   };
+
+  const effectiveSidebarCollapsed = () => (sidebarHidden() ? true : layout.sidebarCollapsed());
 
   return (
     <div
@@ -178,29 +196,31 @@ export function Shell(props: ShellProps) {
               items={activityItems()}
               bottomItems={props.activityBottomItems}
               activeId={layout.sidebarActiveTab()}
-              onActiveChange={layout.setSidebarActiveTab}
-              collapsed={layout.sidebarCollapsed()}
-              onCollapsedChange={layout.setSidebarCollapsed}
+              onActiveChange={setSidebarActiveTab}
+              collapsed={effectiveSidebarCollapsed()}
+              onCollapsedChange={sidebarHidden() ? undefined : layout.setSidebarCollapsed}
             />
           </Show>
 
           {/* Sidebar - CSS-hidden when collapsed or when fullScreen component is active, DOM stays mounted */}
-          <Sidebar
-            width={layout.sidebarWidth()}
-            collapsed={layout.sidebarCollapsed() || isFullScreen()}
-            resizer={
-              <ResizeHandle
-                direction="horizontal"
-                onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
-              />
-            }
-          >
-            {renderSidebarContent(layout.sidebarActiveTab())}
-          </Sidebar>
+          <Show when={!sidebarHidden()}>
+            <Sidebar
+              width={layout.sidebarWidth()}
+              collapsed={layout.sidebarCollapsed() || isFullScreen()}
+              resizer={
+                <ResizeHandle
+                  direction="horizontal"
+                  onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
+                />
+              }
+            >
+              {renderSidebarContent(layout.sidebarActiveTab())}
+            </Sidebar>
+          </Show>
         </Show>
 
         {/* Mobile: Sidebar as collapsible drawer */}
-        <Show when={isMobile() && mobileSidebarOpen()}>
+        <Show when={isMobile() && mobileSidebarOpen() && !sidebarHidden()}>
           {/* Backdrop - semi-transparent to show content behind */}
           <div
             class="absolute inset-0 z-40 bg-black/30 cursor-pointer"

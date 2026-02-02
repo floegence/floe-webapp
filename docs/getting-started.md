@@ -221,6 +221,7 @@ Notes:
 - Configuration (FloeConfig): `docs/configuration.md`
 - Component Registry & Contributions: `docs/component-registry.md`
 - Protocol Layer (Flowersec): `docs/protocol.md`
+- E2EE Boot & Runtime Utilities: `docs/runtime.md`
 
 ### Advanced: manual assembly (Provider + Registry + Shell)
 
@@ -229,33 +230,19 @@ If you want full control, you can still wire providers and the registry manually
 ```tsx
 import {
   FloeProvider,
+  FloeRegistryRuntime,
   Shell,
   CommandPalette,
   NotificationContainer,
-  useComponentRegistry,
-  useComponentContextFactory,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
-import { onCleanup, onMount } from 'solid-js';
+
+const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
+  // Register your sidebar/commands/status contributions here.
+];
 
 function AppContent() {
-  const registry = useComponentRegistry();
-  const createCtx = useComponentContextFactory();
-  const protocol = useProtocol();
-
-  const components: FloeComponent[] = [
-    // Register your sidebar/commands/status contributions here.
-  ];
-
-  onMount(() => {
-    registry.registerAll(components);
-    void registry.mountAll((id) => createCtx(id, { protocol }));
-  });
-  onCleanup(() => {
-    void registry.unmountAll();
-  });
-
   return (
     <>
       <Shell>{/* Your main content fallback */}</Shell>
@@ -268,7 +255,9 @@ function AppContent() {
 export function App() {
   return (
     <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}>
-      <AppContent />
+      <FloeRegistryRuntime components={components} getProtocol={useProtocol}>
+        <AppContent />
+      </FloeRegistryRuntime>
     </FloeProvider>
   );
 }

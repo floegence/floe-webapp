@@ -83,7 +83,8 @@ export interface FloeComponent<TProtocol = unknown> {
 
 export interface ComponentRegistryValue<TProtocol = unknown> {
   register: (component: FloeComponent<TProtocol>) => void;
-  registerAll: (componentList: FloeComponent<TProtocol>[]) => void;
+  /** Register multiple components and return a disposer to unregister them. */
+  registerAll: (componentList: FloeComponent<TProtocol>[]) => () => void;
   unregister: (componentId: string) => Promise<void>;
 
   mount: (componentId: string, context: ComponentContext<TProtocol>) => Promise<void>;
@@ -162,11 +163,19 @@ export function createComponentRegistry(): ComponentRegistryValue<unknown> {
   };
 
   const registerAll = (componentList: FloeComponent<unknown>[]) => {
+    const ids = componentList.map((c) => c.id).filter((id) => !!id);
     setComponents((prev) => {
       const next = new Map(prev);
       componentList.forEach((c) => next.set(c.id, c));
       return next;
     });
+
+    // Return disposer for HMR/remount safety: unregistering also unmounts.
+    return () => {
+      ids.forEach((id) => {
+        void unregister(id);
+      });
+    };
   };
 
   const mount = async (componentId: string, context: ComponentContext<unknown>) => {
