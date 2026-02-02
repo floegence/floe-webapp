@@ -1,4 +1,4 @@
-import { For, Show, createEffect, onCleanup } from 'solid-js';
+import { For, Show, createEffect, createSignal, onCleanup } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
@@ -91,6 +91,9 @@ export interface FileContextMenuProps {
 export function FileContextMenu(props: FileContextMenuProps) {
   const ctx = useFileBrowser();
   let menuRef: HTMLDivElement | undefined;
+
+  // 使用信号来跟踪菜单位置，初始时先放在屏幕外，渲染后再调整
+  const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
 
   // Default menu items
   const defaultItems: ContextMenuItem[] = [
@@ -234,10 +237,10 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   });
 
-  // Adjust position to stay within viewport
-  const getAdjustedPosition = () => {
+  // 计算调整后的位置，确保菜单在可视区域内
+  const calculateAdjustedPosition = () => {
     const menu = ctx.contextMenu();
-    if (!menu || !menuRef) return { x: 0, y: 0 };
+    if (!menu || !menuRef) return { x: menu?.x ?? 0, y: menu?.y ?? 0 };
 
     const rect = menuRef.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
@@ -245,6 +248,11 @@ export function FileContextMenu(props: FileContextMenuProps) {
 
     let x = menu.x;
     let y = menu.y;
+
+    // 如果菜单尺寸还没有计算出来（初始渲染时），返回原始位置
+    if (rect.width === 0 || rect.height === 0) {
+      return { x, y };
+    }
 
     // Adjust if menu would go off right edge
     if (x + rect.width > viewportWidth) {
@@ -256,8 +264,28 @@ export function FileContextMenu(props: FileContextMenuProps) {
       y = viewportHeight - rect.height - 8;
     }
 
+    // 确保最小边距
     return { x: Math.max(8, x), y: Math.max(8, y) };
   };
+
+  // 在菜单显示时，用 requestAnimationFrame 等待渲染完成后调整位置
+  createEffect(() => {
+    const menu = ctx.contextMenu();
+    if (!menu) {
+      // 菜单关闭时重置位置
+      setPosition({ x: -9999, y: -9999 });
+      return;
+    }
+
+    // 初始时使用原始位置
+    setPosition({ x: menu.x, y: menu.y });
+
+    // 等待下一帧渲染完成后，重新计算位置
+    requestAnimationFrame(() => {
+      const adjusted = calculateAdjustedPosition();
+      setPosition(adjusted);
+    });
+  });
 
   return (
     <Show when={ctx.contextMenu()}>
@@ -271,8 +299,8 @@ export function FileContextMenu(props: FileContextMenuProps) {
               'animate-in fade-in zoom-in-95 duration-100'
             )}
             style={{
-              left: `${getAdjustedPosition().x}px`,
-              top: `${getAdjustedPosition().y}px`,
+              left: `${position().x}px`,
+              top: `${position().y}px`,
             }}
             role="menu"
             aria-orientation="vertical"
