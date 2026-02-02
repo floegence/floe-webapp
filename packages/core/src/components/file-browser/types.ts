@@ -156,6 +156,46 @@ export interface ScrollPosition {
   left: number;
 }
 
+// =====================================================
+// Drag & Drop Types
+// =====================================================
+
+/**
+ * Represents an item being dragged in a file browser
+ */
+export interface FileDraggedItem {
+  /** The file item being dragged */
+  item: FileItem;
+  /** Instance ID of the source FileBrowser */
+  sourceInstanceId: string;
+  /** The path where the item was dragged from */
+  sourcePath: string;
+}
+
+/**
+ * Information about a potential drop target
+ */
+export interface FileDropTarget {
+  /** Instance ID of the target FileBrowser */
+  instanceId: string;
+  /** Path where the item would be dropped */
+  targetPath: string;
+  /** The folder item being dropped onto, or null for current directory root */
+  targetItem: FileItem | null;
+}
+
+/**
+ * Props for enabling drag behavior on a FileBrowser
+ */
+export interface FileBrowserDragProps {
+  /** Unique instance identifier for cross-browser drag operations */
+  instanceId?: string;
+  /** Whether drag and drop is enabled (default: true) */
+  enableDragDrop?: boolean;
+  /** Callback when items are moved via drag and drop */
+  onDragMove?: (items: FileItem[], targetPath: string, sourceInstanceId: string) => void;
+}
+
 /**
  * File browser context value for internal state management
  */

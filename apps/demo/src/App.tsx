@@ -6,6 +6,7 @@ import {
   Button,
   CommandPalette,
   configureSyncHighlighter,
+  FileBrowserDragProvider,
   FloeProvider,
   type FloeComponent,
   Files,
@@ -474,7 +475,9 @@ export function App() {
       config={demoFloeConfig}
       wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
     >
-      <AppContent />
+      <FileBrowserDragProvider>
+        <AppContent />
+      </FileBrowserDragProvider>
     </FloeProvider>
   );
 }

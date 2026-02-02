@@ -2141,3 +2141,99 @@ function App() {
     },
   ],
 };
+
+// ===========================
+// Form Components
+// ===========================
+export const formDoc: ComponentDoc = {
+  name: 'Form',
+  description: 'Composable form components for building accessible forms with validation support.',
+  props: [
+    {
+      name: 'onSubmit',
+      type: '(e: SubmitEvent) => void | Promise<void>',
+      description: 'Called when form is submitted. Automatically handles async operations.',
+    },
+    {
+      name: 'class',
+      type: 'string',
+      description: 'Additional CSS classes to apply.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'User input collection (login, signup, settings)',
+      'Data entry forms with validation',
+      'Multi-step wizards',
+    ],
+    bestPractices: [
+      'Use FormField to wrap each input with label and error handling',
+      'Group related fields with FormSection',
+      'Place action buttons in FormActions with align="end"',
+    ],
+    avoid: [
+      'Deeply nested form structures',
+      'Missing labels for accessibility',
+      'Forms without proper error feedback',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Form',
+      code: `import { Form, FormField, FormLabel, FormMessage, FormActions, Input, Button } from '@floegence/floe-webapp-core';
+
+function LoginForm() {
+  const handleSubmit = async () => {
+    await new Promise(r => setTimeout(r, 1000));
+    console.log('Form submitted');
+  };
+
+  return (
+    <Form onSubmit={handleSubmit}>
+      <FormField>
+        <FormLabel required>Email</FormLabel>
+        <Input type="email" placeholder="you@example.com" />
+        <FormMessage error="Please enter a valid email" />
+      </FormField>
+
+      <FormField>
+        <FormLabel required>Password</FormLabel>
+        <Input type="password" />
+      </FormField>
+
+      <FormActions>
+        <Button type="submit">Sign In</Button>
+      </FormActions>
+    </Form>
+  );
+}`,
+    },
+    {
+      title: 'Form with Sections',
+      code: `<Form>
+  <FormSection title="Personal Info" description="Basic information about you">
+    <FormRow>
+      <FormField>
+        <FormLabel>First Name</FormLabel>
+        <Input />
+      </FormField>
+      <FormField>
+        <FormLabel>Last Name</FormLabel>
+        <Input />
+      </FormField>
+    </FormRow>
+  </FormSection>
+
+  <FormDivider label="or" />
+
+  <FormSection title="Contact">
+    <FormField>
+      <FormLabel>Email</FormLabel>
+      <Input type="email" />
+      <FormDescription>We'll never share your email.</FormDescription>
+    </FormField>
+  </FormSection>
+</Form>`,
+    },
+  ],
+};

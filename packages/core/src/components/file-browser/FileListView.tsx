@@ -5,6 +5,7 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
+import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { ChevronDown } from '../icons';
@@ -13,6 +14,10 @@ import { ResizeHandle } from '../layout/ResizeHandle';
 
 export interface FileListViewProps {
   class?: string;
+  /** Instance ID for drag operations */
+  instanceId?: string;
+  /** Whether drag and drop is enabled */
+  enableDragDrop?: boolean;
 }
 
 /**
@@ -67,6 +72,9 @@ function HighlightedName(props: { name: string; match: FilterMatchInfo | null })
  */
 export function FileListView(props: FileListViewProps) {
   const ctx = useFileBrowser();
+  const dragContext = useFileBrowserDrag();
+  const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
+  const instanceId = () => props.instanceId ?? 'default';
 
   const ROW_HEIGHT_PX = 32;
   const virtual = useVirtualWindow({
@@ -411,6 +419,9 @@ export function FileListView(props: FileListViewProps) {
                   showSize={columnLayout().showSize}
                   modifiedWidthPx={modifiedWidthPx()}
                   sizeWidthPx={sizeWidthPx()}
+                  instanceId={instanceId()}
+                  enableDragDrop={isDragEnabled()}
+                  dragContext={dragContext}
                 />
               )}
             </For>
@@ -429,6 +440,9 @@ interface FileListItemProps {
   showSize: boolean;
   modifiedWidthPx: number;
   sizeWidthPx: number;
+  instanceId: string;
+  enableDragDrop: boolean;
+  dragContext: FileBrowserDragContextValue | undefined;
 }
 
 function FileListItem(props: FileListItemProps) {
@@ -439,29 +453,226 @@ function FileListItem(props: FileListItemProps) {
   const longPress = createLongPressContextMenuHandlers(ctx, item);
   let lastPointerType: PointerEvent['pointerType'] | undefined;
 
+  // Drag state
+  let activePointerId: number | null = null;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let isDragMode = false;
+  const DRAG_THRESHOLD_PX = 5;
+  const LONG_PRESS_DRAG_MS = 500;
+  let longPressDragTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Drop target state
+  const [isDropHovered, setIsDropHovered] = createSignal(false);
+
   const isTouchLike = () => lastPointerType === 'touch' || lastPointerType === 'pen';
+
+  const isFolder = () => props.item.type === 'folder';
+
+  const canBeDropTarget = () => isFolder() && props.enableDragDrop && props.dragContext;
+
+  // Check if this folder is a valid drop target
+  const isValidDropTarget = () => {
+    if (!canBeDropTarget() || !props.dragContext) return false;
+    const state = props.dragContext.dragState();
+    if (!state.isDragging) return false;
+    return props.dragContext.canDropOn(
+      state.draggedItems,
+      props.item.path,
+      props.item,
+      props.instanceId
+    );
+  };
+
+  // Check if currently being dragged
+  const isBeingDragged = () => {
+    if (!props.dragContext) return false;
+    const state = props.dragContext.dragState();
+    if (!state.isDragging) return false;
+    return state.draggedItems.some((d) => d.item.id === props.item.id);
+  };
+
+  const clearDragTimers = () => {
+    if (longPressDragTimer !== null) {
+      clearTimeout(longPressDragTimer);
+      longPressDragTimer = null;
+    }
+  };
+
+  // Clean up global listeners
+  const removeGlobalListeners = () => {
+    if (typeof document === 'undefined') return;
+    document.removeEventListener('pointermove', globalPointerMove, true);
+    document.removeEventListener('pointerup', globalPointerUp, true);
+    document.removeEventListener('pointercancel', globalPointerCancel, true);
+  };
+
+  // Add global listeners
+  const addGlobalListeners = () => {
+    if (typeof document === 'undefined') return;
+    document.addEventListener('pointermove', globalPointerMove, true);
+    document.addEventListener('pointerup', globalPointerUp, true);
+    document.addEventListener('pointercancel', globalPointerCancel, true);
+  };
+
+  const stopDragOperation = (commit: boolean) => {
+    clearDragTimers();
+    removeGlobalListeners();
+
+    // End drag in context
+    if (isDragMode && props.dragContext) {
+      props.dragContext.endDrag(commit);
+    }
+
+    activePointerId = null;
+    isDragMode = false;
+  };
+
+  const startDragOperation = (x: number, y: number) => {
+    if (!props.enableDragDrop || !props.dragContext || isDragMode) return;
+
+    isDragMode = true;
+
+    // If item is not selected, select it
+    if (!isSelected()) {
+      ctx.selectItem(props.item.id, false);
+    }
+
+    // Get all selected items
+    const selectedItems = ctx.getSelectedItemsList();
+    const itemsToDrag = selectedItems.length > 0 && isSelected()
+      ? selectedItems
+      : [props.item];
+
+    // Create dragged items
+    const draggedItems = itemsToDrag.map((fileItem) => ({
+      item: fileItem,
+      sourceInstanceId: props.instanceId,
+      sourcePath: ctx.currentPath(),
+    }));
+
+    // Trigger haptic feedback on mobile
+    if (isTouchLike() && 'vibrate' in navigator) {
+      try { navigator.vibrate(50); } catch { /* ignore */ }
+    }
+
+    props.dragContext.startDrag(draggedItems, x, y);
+  };
+
+  // Global pointer event handlers
+  const globalPointerMove = (e: PointerEvent) => {
+    if (activePointerId !== e.pointerId) return;
+
+    const deltaX = e.clientX - dragStartX;
+    const deltaY = e.clientY - dragStartY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // For touch, cancel drag if moved before long press completes
+    if (isTouchLike() && !isDragMode) {
+      if (distance > 10) {
+        stopDragOperation(false);
+        return;
+      }
+    }
+
+    // For mouse, start drag after threshold
+    if (!isTouchLike() && !isDragMode && distance > DRAG_THRESHOLD_PX) {
+      startDragOperation(e.clientX, e.clientY);
+    }
+
+    // Update drag position if in drag mode
+    if (isDragMode && props.dragContext) {
+      props.dragContext.updateDrag(e.clientX, e.clientY);
+    }
+  };
+
+  const globalPointerUp = (e: PointerEvent) => {
+    if (activePointerId !== e.pointerId) return;
+    longPress.onPointerUp();
+    stopDragOperation(true);
+  };
+
+  const globalPointerCancel = (e: PointerEvent) => {
+    if (activePointerId !== e.pointerId) return;
+    longPress.onPointerCancel();
+    stopDragOperation(false);
+  };
 
   const handlePointerDown = (e: PointerEvent) => {
     lastPointerType = e.pointerType;
+
+    // For context menu long press (non-drag)
     longPress.onPointerDown(e);
+
+    // Only enable drag for primary button
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (!props.enableDragDrop || !props.dragContext) return;
+
+    // Store pointer state
+    activePointerId = e.pointerId;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    isDragMode = false;
+
+    // Add global listeners for tracking pointer movement
+    addGlobalListeners();
+
+    // For touch devices, use long press to initiate drag
+    if (isTouchLike()) {
+      clearDragTimers();
+      longPressDragTimer = setTimeout(() => {
+        if (activePointerId !== null && !isDragMode) {
+          startDragOperation(dragStartX, dragStartY);
+        }
+      }, LONG_PRESS_DRAG_MS);
+    }
   };
 
+  // Local pointer move for updating lastPointerType
   const handlePointerMove = (e: PointerEvent) => {
     lastPointerType = e.pointerType;
     longPress.onPointerMove(e);
   };
 
-  const handlePointerUp = (e: PointerEvent) => {
-    lastPointerType = e.pointerType;
-    longPress.onPointerUp();
+  // Drop target handlers for folders
+  const handlePointerEnter = (_e: PointerEvent) => {
+    if (!canBeDropTarget() || !props.dragContext) return;
+    const state = props.dragContext.dragState();
+    if (!state.isDragging) return;
+
+    setIsDropHovered(true);
+    const isValid = props.dragContext.canDropOn(
+      state.draggedItems,
+      props.item.path,
+      props.item,
+      props.instanceId
+    );
+    props.dragContext.setDropTarget(
+      {
+        instanceId: props.instanceId,
+        targetPath: props.item.path,
+        targetItem: props.item,
+      },
+      isValid
+    );
   };
 
-  const handlePointerCancel = (e: PointerEvent) => {
-    lastPointerType = e.pointerType;
-    longPress.onPointerCancel();
+  const handlePointerLeave = (_e: PointerEvent) => {
+    if (!props.dragContext) return;
+    setIsDropHovered(false);
+
+    const state = props.dragContext.dragState();
+    if (state.isDragging && state.dropTarget?.targetPath === props.item.path) {
+      props.dragContext.setDropTarget(null, false);
+    }
   };
 
   const handleClick = (e: MouseEvent) => {
+    // Skip if we just finished a drag operation
+    if (isDragMode) {
+      isDragMode = false;
+      return;
+    }
     if (longPress.consumeClickSuppression(e)) return;
     if (isTouchLike()) {
       ctx.openItem(props.item);
@@ -501,6 +712,12 @@ function FileListItem(props: FileListItemProps) {
       ? FolderIcon
       : getFileIcon(props.item.extension);
 
+  // Get drag state for styling
+  const dragState = () => props.dragContext?.dragState();
+  const isGlobalDragging = () => dragState()?.isDragging ?? false;
+  const isActiveDropTarget = () =>
+    isDropHovered() && isGlobalDragging() && canBeDropTarget();
+
   return (
     <button
       type="button"
@@ -509,14 +726,24 @@ function FileListItem(props: FileListItemProps) {
       onContextMenu={handleContextMenu}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
       class={cn(
         'group w-full h-8 flex items-center text-xs cursor-pointer',
-        'transition-all duration-100',
+        'transition-all duration-150 ease-out',
         'hover:bg-accent/50',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-        isSelected() && 'bg-accent text-accent-foreground'
+        isSelected() && 'bg-accent text-accent-foreground',
+        // Drag state styling - being dragged items become translucent
+        isBeingDragged() && 'opacity-40 scale-[0.98]',
+        // Drop target styling - enhanced visual feedback
+        isActiveDropTarget() && isValidDropTarget() && [
+          'bg-primary/15 outline outline-2 outline-primary/60',
+          'scale-[1.01] shadow-sm shadow-primary/10'
+        ],
+        isActiveDropTarget() && !isValidDropTarget() && [
+          'bg-destructive/10 outline outline-2 outline-dashed outline-destructive/50'
+        ]
       )}
     >
       {/* Name column */}

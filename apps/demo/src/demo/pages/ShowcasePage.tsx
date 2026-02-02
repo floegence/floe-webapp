@@ -9,6 +9,7 @@ import {
   dropdownDoc,
   selectDoc,
   tooltipDoc,
+  formDoc,
   // Loading components
   skeletonDoc,
   snakeLoaderDoc,
@@ -73,6 +74,16 @@ import {
   Terminal,
   Textarea,
   Tooltip,
+  // Form components
+  Form,
+  FormField,
+  FormLabel,
+  FormDescription,
+  FormMessage,
+  FormActions,
+  FormSection,
+  FormDivider,
+  FormRow,
   useCommand,
   useLayout,
   useNotification,
@@ -1010,6 +1021,107 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={inputDoc.props} componentName="Input" />
+      </div>
+
+      {/* Form Components */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-forms"
+          title="Form"
+          description="Composable form components for accessible forms with validation."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.form')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent>
+            <Form class="max-w-md" onSubmit={() => {
+              setTimeout(async () => {
+                await new Promise(r => setTimeout(r, 1000));
+                notifications.success('Form submitted', 'Your data has been saved.');
+              }, 0);
+            }}>
+              <FormSection title="Account Information" description="Create your account credentials">
+                <FormField>
+                  <FormLabel required>Email</FormLabel>
+                  <Input type="email" placeholder="you@example.com" />
+                  <FormDescription>We'll never share your email with anyone.</FormDescription>
+                </FormField>
+
+                <FormField>
+                  <FormLabel required>Password</FormLabel>
+                  <Input type="password" placeholder="Enter a strong password" />
+                </FormField>
+              </FormSection>
+
+              <FormDivider label="optional" />
+
+              <FormSection title="Profile" description="Tell us about yourself">
+                <FormRow cols={2}>
+                  <FormField>
+                    <FormLabel>First Name</FormLabel>
+                    <Input placeholder="John" />
+                  </FormField>
+                  <FormField>
+                    <FormLabel>Last Name</FormLabel>
+                    <Input placeholder="Doe" />
+                  </FormField>
+                </FormRow>
+
+                <FormField>
+                  <FormLabel>Bio</FormLabel>
+                  <Textarea placeholder="Tell us about yourself..." rows={3} />
+                </FormField>
+              </FormSection>
+
+              <FormActions align="end">
+                <Button variant="outline" type="button">Cancel</Button>
+                <Button type="submit">Create Account</Button>
+              </FormActions>
+            </Form>
+          </PanelContent>
+        </Panel>
+
+        {/* Validation Example */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Form with Validation Errors</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <Form class="max-w-sm">
+                <FormField>
+                  <FormLabel required>Username</FormLabel>
+                  <Input value="ab" class="border-error" />
+                  <FormMessage error="Username must be at least 3 characters" />
+                </FormField>
+
+                <FormField>
+                  <FormLabel required>Email</FormLabel>
+                  <Input type="email" value="invalid-email" class="border-error" />
+                  <FormMessage error="Please enter a valid email address" />
+                </FormField>
+
+                <FormActions>
+                  <Button type="submit" disabled>Submit</Button>
+                </FormActions>
+              </Form>
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Form Documentation */}
+        <UsageGuidelines
+          whenToUse={formDoc.usage.whenToUse}
+          bestPractices={formDoc.usage.bestPractices}
+          avoid={formDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Form.tsx"
+          code={formDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={formDoc.props} componentName="Form" />
       </div>
 
       <div class="space-y-4">

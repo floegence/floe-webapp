@@ -60,3 +60,14 @@ export {
   type WidgetStateProviderProps,
 } from './WidgetStateContext';
 export { ViewActivationProvider, useViewActivation, type ViewActivationContextValue, type ViewActivationProviderProps } from './ViewActivationContext';
+export {
+  FileBrowserDragProvider,
+  useFileBrowserDrag,
+  hasFileBrowserDragContext,
+  type DraggedItem,
+  type DropTarget,
+  type FileBrowserDragState,
+  type FileBrowserDragInstance,
+  type FileBrowserDragContextValue,
+  type FileBrowserDragProviderProps,
+} from './FileBrowserDragContext';

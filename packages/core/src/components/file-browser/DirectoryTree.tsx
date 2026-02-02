@@ -1,6 +1,7 @@
-import { For, Show, createMemo, untrack } from 'solid-js';
+import { For, Show, createMemo, untrack, createSignal } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
+import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
 import { FolderIcon, FolderOpenIcon } from './FileIcons';
 import type { FileItem } from './types';
 import { ChevronRight } from '../icons';
@@ -8,6 +9,10 @@ import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 
 export interface DirectoryTreeProps {
   class?: string;
+  /** Instance ID for drag operations */
+  instanceId?: string;
+  /** Whether drag and drop is enabled */
+  enableDragDrop?: boolean;
 }
 
 /**
@@ -15,6 +20,9 @@ export interface DirectoryTreeProps {
  */
 export function DirectoryTree(props: DirectoryTreeProps) {
   const ctx = useFileBrowser();
+  const dragContext = useFileBrowserDrag();
+  const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
+  const instanceId = () => props.instanceId ?? 'default';
 
   // Filter to only show folders at the root level
   const folders = createMemo(() => ctx.files().filter((item) => item.type === 'folder'));
@@ -25,7 +33,13 @@ export function DirectoryTree(props: DirectoryTreeProps) {
       // Prevent browser context menu inside the tree area.
       onContextMenu={(e) => e.preventDefault()}
     >
-      <TreeNode items={folders()} depth={0} />
+      <TreeNode
+        items={folders()}
+        depth={0}
+        instanceId={instanceId()}
+        enableDragDrop={isDragEnabled()}
+        dragContext={dragContext}
+      />
     </div>
   );
 }
@@ -33,6 +47,9 @@ export function DirectoryTree(props: DirectoryTreeProps) {
 interface TreeNodeProps {
   items: FileItem[];
   depth: number;
+  instanceId: string;
+  enableDragDrop: boolean;
+  dragContext: FileBrowserDragContextValue | undefined;
 }
 
 function TreeNode(props: TreeNodeProps) {
@@ -41,7 +58,15 @@ function TreeNode(props: TreeNodeProps) {
 
   return (
     <For each={folders()}>
-      {(item) => <FolderTreeItem item={item} depth={props.depth} />}
+      {(item) => (
+        <FolderTreeItem
+          item={item}
+          depth={props.depth}
+          instanceId={props.instanceId}
+          enableDragDrop={props.enableDragDrop}
+          dragContext={props.dragContext}
+        />
+      )}
     </For>
   );
 }
@@ -49,6 +74,9 @@ function TreeNode(props: TreeNodeProps) {
 interface TreeItemProps {
   item: FileItem;
   depth: number;
+  instanceId: string;
+  enableDragDrop: boolean;
+  dragContext: FileBrowserDragContextValue | undefined;
 }
 
 function FolderTreeItem(props: TreeItemProps) {
@@ -59,6 +87,9 @@ function FolderTreeItem(props: TreeItemProps) {
   const longPress = createLongPressContextMenuHandlers(ctx, item, { selectOnOpen: false });
   let lastPointerType: PointerEvent['pointerType'] | undefined;
 
+  // Drop target state
+  const [isDropHovered, setIsDropHovered] = createSignal(false);
+
   const isTouchLike = () => lastPointerType === 'touch' || lastPointerType === 'pen';
 
   // Count only subfolders for the badge
@@ -68,6 +99,25 @@ function FolderTreeItem(props: TreeItemProps) {
 
   // Check if folder has any subfolders
   const hasSubfolders = () => subfolderCount() > 0;
+
+  // Check if this folder is a valid drop target
+  const isValidDropTarget = () => {
+    if (!props.enableDragDrop || !props.dragContext) return false;
+    const state = props.dragContext.dragState();
+    if (!state.isDragging) return false;
+    return props.dragContext.canDropOn(
+      state.draggedItems,
+      props.item.path,
+      props.item,
+      props.instanceId
+    );
+  };
+
+  // Get drag state for styling
+  const dragState = () => props.dragContext?.dragState();
+  const isGlobalDragging = () => dragState()?.isDragging ?? false;
+  const isActiveDropTarget = () =>
+    isDropHovered() && isGlobalDragging() && props.enableDragDrop;
 
   const handlePointerDown = (e: PointerEvent) => {
     lastPointerType = e.pointerType;
@@ -87,6 +137,39 @@ function FolderTreeItem(props: TreeItemProps) {
   const handlePointerCancel = (e: PointerEvent) => {
     lastPointerType = e.pointerType;
     longPress.onPointerCancel();
+  };
+
+  // Drop target handlers
+  const handlePointerEnter = (_e: PointerEvent) => {
+    if (!props.enableDragDrop || !props.dragContext) return;
+    const state = props.dragContext.dragState();
+    if (!state.isDragging) return;
+
+    setIsDropHovered(true);
+    const isValid = props.dragContext.canDropOn(
+      state.draggedItems,
+      props.item.path,
+      props.item,
+      props.instanceId
+    );
+    props.dragContext.setDropTarget(
+      {
+        instanceId: props.instanceId,
+        targetPath: props.item.path,
+        targetItem: props.item,
+      },
+      isValid
+    );
+  };
+
+  const handlePointerLeave = (_e: PointerEvent) => {
+    if (!props.dragContext) return;
+    setIsDropHovered(false);
+
+    const state = props.dragContext.dragState();
+    if (state.isDragging && state.dropTarget?.targetPath === props.item.path) {
+      props.dragContext.setDropTarget(null, false);
+    }
   };
 
   const handleNavigate = (e: MouseEvent) => {
@@ -116,11 +199,21 @@ function FolderTreeItem(props: TreeItemProps) {
   return (
     <div class="flex flex-col">
       <div
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
         class={cn(
           'group flex items-center w-full py-1 text-xs',
-          'transition-all duration-100',
+          'transition-all duration-150 ease-out',
           'hover:bg-sidebar-accent/60',
-          isActive() && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+          isActive() && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
+          // Drop target styling - enhanced visual feedback
+          isActiveDropTarget() && isValidDropTarget() && [
+            'bg-primary/15 outline outline-2 outline-primary/60',
+            'shadow-sm shadow-primary/10'
+          ],
+          isActiveDropTarget() && !isValidDropTarget() && [
+            'bg-destructive/10 outline outline-2 outline-dashed outline-destructive/50'
+          ]
         )}
         style={{ 'padding-left': `${8 + props.depth * 12}px` }}
       >
@@ -187,7 +280,13 @@ function FolderTreeItem(props: TreeItemProps) {
             isExpanded() ? 'opacity-100' : 'opacity-0'
           )}
         >
-          <TreeNode items={props.item.children ?? []} depth={props.depth + 1} />
+          <TreeNode
+            items={props.item.children ?? []}
+            depth={props.depth + 1}
+            instanceId={props.instanceId}
+            enableDragDrop={props.enableDragDrop}
+            dragContext={props.dragContext}
+          />
         </div>
       </Show>
     </div>

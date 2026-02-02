@@ -1,6 +1,7 @@
-import { Show, type JSX, createEffect } from 'solid-js';
+import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
+import { useFileBrowserDrag, type FileBrowserDragInstance } from '../../context/FileBrowserDragContext';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
 import { ResizeHandle } from '../layout/ResizeHandle';
 import { DirectoryTree } from './DirectoryTree';
@@ -8,6 +9,7 @@ import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
 import { FileBrowserToolbar } from './FileBrowserToolbar';
 import { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
+import { DragPreview } from './DragPreview';
 import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem, FileListColumnRatios } from './types';
 
 export interface FileBrowserProps {
@@ -53,6 +55,12 @@ export interface FileBrowserProps {
   overrideContextMenuItems?: ContextMenuItem[];
   /** Default context menu items to hide */
   hideContextMenuItems?: FileContextMenuProps['hideItems'];
+  /** Unique instance identifier for cross-browser drag operations */
+  instanceId?: string;
+  /** Whether drag and drop is enabled (default: true) */
+  enableDragDrop?: boolean;
+  /** Callback when items are moved via drag and drop */
+  onDragMove?: (items: FileItem[], targetPath: string, sourceInstanceId: string) => void;
 }
 
 /**
@@ -82,6 +90,9 @@ export function FileBrowser(props: FileBrowserProps) {
         customContextMenuItems={props.customContextMenuItems}
         overrideContextMenuItems={props.overrideContextMenuItems}
         hideContextMenuItems={props.hideContextMenuItems}
+        instanceId={props.instanceId}
+        enableDragDrop={props.enableDragDrop}
+        onDragMove={props.onDragMove}
       />
     </FileBrowserProvider>
   );
@@ -96,15 +107,47 @@ interface FileBrowserInnerProps {
   customContextMenuItems?: ContextMenuItem[];
   overrideContextMenuItems?: ContextMenuItem[];
   hideContextMenuItems?: FileContextMenuProps['hideItems'];
+  instanceId?: string;
+  enableDragDrop?: boolean;
+  onDragMove?: (items: FileItem[], targetPath: string, sourceInstanceId: string) => void;
 }
 
 function FileBrowserInner(props: FileBrowserInnerProps) {
   const ctx = useFileBrowser();
   const layout = useLayout();
+  const dragContext = useFileBrowserDrag();
   const isMobile = () => layout.isMobile();
   const sidebarWidth = () => ctx.sidebarWidth();
   const sidebarResizable = () => props.sidebarResizable ?? true;
+  const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
+  const instanceId = () => props.instanceId ?? `filebrowser-${Math.random().toString(36).slice(2, 9)}`;
   let filterInputRef: HTMLInputElement | undefined;
+  let mainScrollContainerRef: HTMLElement | null = null;
+  let sidebarScrollContainerRef: HTMLElement | null = null;
+
+  // Register this instance with the drag context
+  onMount(() => {
+    if (!dragContext || !isDragEnabled()) return;
+
+    const instance: FileBrowserDragInstance = {
+      instanceId: instanceId(),
+      currentPath: ctx.currentPath,
+      files: ctx.files,
+      onDragMove: props.onDragMove,
+      getScrollContainer: () => mainScrollContainerRef,
+      getSidebarScrollContainer: () => sidebarScrollContainerRef,
+      optimisticRemove: ctx.optimisticRemove,
+      optimisticInsert: ctx.optimisticInsert,
+    };
+
+    dragContext.registerInstance(instance);
+  });
+
+  onCleanup(() => {
+    if (dragContext && isDragEnabled()) {
+      dragContext.unregisterInstance(instanceId());
+    }
+  });
 
   // Auto-collapse sidebar only when entering mobile mode (and on initial mount if already mobile).
   let didInitMobile = false;
@@ -203,8 +246,14 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
             </div>
 
             {/* Directory tree */}
-            <div class="flex-1 min-h-0 overflow-auto py-1">
-              <DirectoryTree />
+            <div
+              ref={(el) => { sidebarScrollContainerRef = el; }}
+              class="flex-1 min-h-0 overflow-auto py-1"
+            >
+              <DirectoryTree
+                instanceId={instanceId()}
+                enableDragDrop={isDragEnabled()}
+              />
             </div>
           </div>
 
@@ -232,12 +281,23 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
           <FileBrowserToolbar filterInputRef={(el) => (filterInputRef = el)} />
 
           {/* File view (list or grid) */}
-          <div class="flex-1 min-h-0">
+          <div
+            ref={(el) => { mainScrollContainerRef = el; }}
+            class="flex-1 min-h-0"
+          >
             <Show
               when={ctx.viewMode() === 'list'}
-              fallback={<FileGridView />}
+              fallback={
+                <FileGridView
+                  instanceId={instanceId()}
+                  enableDragDrop={isDragEnabled()}
+                />
+              }
             >
-              <FileListView />
+              <FileListView
+                instanceId={instanceId()}
+                enableDragDrop={isDragEnabled()}
+              />
             </Show>
           </div>
 
@@ -264,6 +324,11 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
         overrideItems={props.overrideContextMenuItems}
         hideItems={props.hideContextMenuItems}
       />
+
+      {/* Drag Preview */}
+      <Show when={isDragEnabled()}>
+        <DragPreview />
+      </Show>
     </div>
   );
 }
