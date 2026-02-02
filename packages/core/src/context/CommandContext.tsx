@@ -1,8 +1,8 @@
-import { createSignal, onCleanup, type Accessor, type Component } from 'solid-js';
+import { createSignal, createEffect, onCleanup, type Accessor, type Component } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import { formatKeybind, matchKeybind, parseKeybind, type ParsedKeybind } from '../utils/keybind';
-import { deferNonBlocking } from '../utils/defer';
+import { deferAfterPaint, deferNonBlocking } from '../utils/defer';
 
 export interface Command {
   id: string;
@@ -40,6 +40,7 @@ export function createCommandService(): CommandContextValue {
 
   const [isOpen, setIsOpen] = createSignal(false);
   const [search, setSearch] = createSignal('');
+  const [searchApplied, setSearchApplied] = createSignal('');
   const [commands, setCommands] = createSignal<Command[]>([]);
 
   const syncCommands = () => {
@@ -119,13 +120,32 @@ export function createCommandService(): CommandContextValue {
     onCleanup(() => window.removeEventListener('keydown', handleKeydown));
   }
 
+  // UI-first search: apply the query after a paint so typing never blocks the input event.
+  // Coalesce rapid updates and only apply the latest query.
+  let searchApplyJob = 0;
+  createEffect(() => {
+    const next = search().trim();
+    searchApplyJob += 1;
+    const jobId = searchApplyJob;
+
+    if (!next) {
+      setSearchApplied('');
+      return;
+    }
+
+    deferAfterPaint(() => {
+      if (jobId !== searchApplyJob) return;
+      setSearchApplied(next.toLowerCase());
+    });
+  });
+
   let lastFilterQuery = '';
   let lastFilterCommands: Command[] | null = null;
   let lastFilterResult: Command[] = [];
 
   const filteredCommands = () => {
     const all = commands();
-    const query = search().toLowerCase().trim();
+    const query = searchApplied();
 
     if (all === lastFilterCommands && query === lastFilterQuery) return lastFilterResult;
 

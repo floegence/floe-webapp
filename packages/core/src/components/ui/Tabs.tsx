@@ -5,6 +5,7 @@ import {
   Show,
   createSignal,
   createEffect,
+  untrack,
   onCleanup,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
@@ -101,7 +102,7 @@ export function Tabs(props: TabsProps) {
 
   // Internal state for uncontrolled mode
   const [internalActiveId, setInternalActiveId] = createSignal(
-    local.defaultActiveId ?? local.items[0]?.id ?? ''
+    untrack(() => local.defaultActiveId ?? local.items[0]?.id ?? '')
   );
 
   // Get the current active id (controlled or uncontrolled)

@@ -92,7 +92,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
   const ctx = useFileBrowser();
   let menuRef: HTMLDivElement | undefined;
 
-  // 使用信号来跟踪菜单位置，初始时先放在屏幕外，渲染后再调整
+  // Track the menu position. Start off-screen, then adjust after the first render.
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
 
   // Default menu items
@@ -237,7 +237,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   });
 
-  // 计算调整后的位置，确保菜单在可视区域内
+  // Calculate an adjusted position to keep the menu within the viewport.
   const calculateAdjustedPosition = () => {
     const menu = ctx.contextMenu();
     if (!menu || !menuRef) return { x: menu?.x ?? 0, y: menu?.y ?? 0 };
@@ -249,7 +249,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
     let x = menu.x;
     let y = menu.y;
 
-    // 如果菜单尺寸还没有计算出来（初始渲染时），返回原始位置
+    // If the menu size isn't available yet (initial render), keep the original position.
     if (rect.width === 0 || rect.height === 0) {
       return { x, y };
     }
@@ -264,23 +264,23 @@ export function FileContextMenu(props: FileContextMenuProps) {
       y = viewportHeight - rect.height - 8;
     }
 
-    // 确保最小边距
+    // Ensure a minimum margin.
     return { x: Math.max(8, x), y: Math.max(8, y) };
   };
 
-  // 在菜单显示时，用 requestAnimationFrame 等待渲染完成后调整位置
+  // When the menu opens, wait for the next frame to measure and adjust positioning.
   createEffect(() => {
     const menu = ctx.contextMenu();
     if (!menu) {
-      // 菜单关闭时重置位置
+      // Reset position when the menu closes.
       setPosition({ x: -9999, y: -9999 });
       return;
     }
 
-    // 初始时使用原始位置
+    // Start with the raw pointer position.
     setPosition({ x: menu.x, y: menu.y });
 
-    // 等待下一帧渲染完成后，重新计算位置
+    // Recalculate after the next frame when DOM measurements are ready.
     requestAnimationFrame(() => {
       const adjusted = calculateAdjustedPosition();
       setPosition(adjusted);

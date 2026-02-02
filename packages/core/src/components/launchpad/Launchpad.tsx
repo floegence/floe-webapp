@@ -1,8 +1,9 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, type JSX } from 'solid-js';
+import { createSignal, createMemo, createEffect, onMount, onCleanup, Show, type JSX } from 'solid-js';
 import { LaunchpadGrid } from './LaunchpadGrid';
 import { LaunchpadSearch } from './LaunchpadSearch';
 import { LaunchpadPagination } from './LaunchpadPagination';
 import type { LaunchpadItemData } from './LaunchpadItem';
+import { deferAfterPaint } from '../../utils/defer';
 
 export interface LaunchpadProps {
   items: LaunchpadItemData[];
@@ -18,9 +19,11 @@ export interface LaunchpadProps {
 
 export function Launchpad(props: LaunchpadProps) {
   const [searchQuery, setSearchQuery] = createSignal('');
+  const [searchQueryApplied, setSearchQueryApplied] = createSignal('');
   const [currentPage, setCurrentPage] = createSignal(0);
   const [isAnimating, setIsAnimating] = createSignal(true);
   const [touchStart, setTouchStart] = createSignal<{ x: number; y: number } | null>(null);
+  let animationRestoreTimer: ReturnType<typeof setTimeout> | null = null;
 
   const itemsPerPage = () => props.itemsPerPage ?? 20;
   const columns = () => props.columns ?? 5;
@@ -33,15 +36,41 @@ export function Launchpad(props: LaunchpadProps) {
     return [...base, ...additional];
   });
 
-  // Filter items based on search query
+  // UI-first search: apply the query after a paint so typing never blocks the input event.
+  // Coalesce rapid updates and only apply the latest query.
+  let applyJob = 0;
+  createEffect(() => {
+    const next = searchQuery().trim();
+    applyJob += 1;
+    const jobId = applyJob;
+
+    if (!next) {
+      setSearchQueryApplied('');
+      return;
+    }
+
+    deferAfterPaint(() => {
+      if (jobId !== applyJob) return;
+      setSearchQueryApplied(next);
+    });
+  });
+
+  // Precompute lowercase fields once per item list to avoid repeated work during filtering.
+  const searchIndex = createMemo(() => {
+    return allItems().map((item) => ({
+      item,
+      nameLower: item.name.toLowerCase(),
+      descLower: item.description?.toLowerCase() ?? '',
+    }));
+  });
+
+  // Filter items based on applied search query
   const filteredItems = createMemo(() => {
-    const query = searchQuery().toLowerCase().trim();
+    const query = searchQueryApplied().toLowerCase().trim();
     if (!query) return allItems();
-    return allItems().filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.description?.toLowerCase().includes(query)
-    );
+    return searchIndex()
+      .filter((entry) => entry.nameLower.includes(query) || entry.descLower.includes(query))
+      .map((entry) => entry.item);
   });
 
   // Calculate pagination
@@ -66,7 +95,8 @@ export function Launchpad(props: LaunchpadProps) {
       setIsAnimating(false);
       setCurrentPage(page);
       // Re-enable animation after a short delay
-      setTimeout(() => setIsAnimating(true), 50);
+      if (animationRestoreTimer !== null) clearTimeout(animationRestoreTimer);
+      animationRestoreTimer = setTimeout(() => setIsAnimating(true), 50);
     }
   };
 
@@ -148,6 +178,7 @@ export function Launchpad(props: LaunchpadProps) {
 
   onCleanup(() => {
     document.removeEventListener('keydown', handleKeyDown);
+    if (animationRestoreTimer !== null) clearTimeout(animationRestoreTimer);
   });
 
   return (

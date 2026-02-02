@@ -34,10 +34,10 @@ export interface DropdownProps {
   class?: string;
 }
 
-/** 视口边距常量 */
+/** Viewport margin in pixels. */
 const VIEWPORT_MARGIN = 8;
 
-/** 计算菜单位置，确保在视口内 */
+/** Calculate menu position and keep it within the viewport. */
 function calculateMenuPosition(
   triggerRect: DOMRect,
   menuRect: DOMRect,
@@ -46,7 +46,7 @@ function calculateMenuPosition(
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
 
-  // 计算水平位置
+  // Horizontal alignment
   let x: number;
   switch (align) {
     case 'center':
@@ -59,37 +59,37 @@ function calculateMenuPosition(
       x = triggerRect.left;
   }
 
-  // 计算垂直位置（默认在 trigger 下方）
+  // Vertical position (default below the trigger)
   let y = triggerRect.bottom + 4;
 
-  // 检查右边界溢出
+  // Clamp to the right edge
   if (x + menuRect.width > viewportWidth - VIEWPORT_MARGIN) {
     x = viewportWidth - menuRect.width - VIEWPORT_MARGIN;
   }
-  // 检查左边界溢出
+  // Clamp to the left edge
   x = Math.max(VIEWPORT_MARGIN, x);
 
-  // 检查底部溢出，如果下方空间不够则显示在上方
+  // Clamp to the bottom edge; flip above when needed.
   if (y + menuRect.height > viewportHeight - VIEWPORT_MARGIN) {
     const spaceAbove = triggerRect.top - VIEWPORT_MARGIN;
     const spaceBelow = viewportHeight - triggerRect.bottom - VIEWPORT_MARGIN;
 
     if (spaceAbove > spaceBelow && spaceAbove >= menuRect.height) {
-      // 在上方显示
+      // Place above the trigger
       y = triggerRect.top - menuRect.height - 4;
     } else {
-      // 下方空间不够，但仍在下方显示，调整到最大可用位置
+      // Not enough space either way; stick to the max visible position.
       y = viewportHeight - menuRect.height - VIEWPORT_MARGIN;
     }
   }
 
-  // 确保顶部不溢出
+  // Clamp to the top edge
   y = Math.max(VIEWPORT_MARGIN, y);
 
   return { x, y };
 }
 
-/** 计算子菜单位置，确保在视口内 */
+/** Calculate submenu position and keep it within the viewport. */
 function calculateSubmenuPosition(
   parentRect: DOMRect,
   submenuRect: DOMRect
@@ -97,28 +97,28 @@ function calculateSubmenuPosition(
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
 
-  // 默认在右侧显示
+  // Default to the right side
   let x = parentRect.right;
   let y = parentRect.top;
 
-  // 检查右侧空间是否足够，不够则显示在左侧
+  // Flip to the left if there's not enough space on the right
   if (x + submenuRect.width > viewportWidth - VIEWPORT_MARGIN) {
-    // 尝试在左侧显示
+    // Try placing on the left
     const leftPosition = parentRect.left - submenuRect.width;
     if (leftPosition >= VIEWPORT_MARGIN) {
       x = leftPosition;
     } else {
-      // 左右都不够，尽量靠右显示
+      // Neither side fits; keep it as visible as possible.
       x = viewportWidth - submenuRect.width - VIEWPORT_MARGIN;
     }
   }
 
-  // 检查底部溢出
+  // Clamp to the bottom edge
   if (y + submenuRect.height > viewportHeight - VIEWPORT_MARGIN) {
     y = viewportHeight - submenuRect.height - VIEWPORT_MARGIN;
   }
 
-  // 确保顶部和左侧不溢出
+  // Clamp to the top/left edges
   x = Math.max(VIEWPORT_MARGIN, x);
   y = Math.max(VIEWPORT_MARGIN, y);
 
@@ -134,7 +134,7 @@ export function Dropdown(props: DropdownProps) {
   let triggerRef: HTMLDivElement | undefined;
   let menuRef: HTMLDivElement | undefined;
 
-  // 更新菜单位置
+  // Update menu position
   const updateMenuPosition = () => {
     if (!triggerRef || !menuRef) return;
     const triggerRect = triggerRef.getBoundingClientRect();
@@ -168,7 +168,7 @@ export function Dropdown(props: DropdownProps) {
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
 
-    // 初始定位
+    // Initial positioning (after mount)
     requestAnimationFrame(updateMenuPosition);
 
     onCleanup(() => {
@@ -245,7 +245,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
 
   const hasChildren = () => props.item.children && props.item.children.length > 0;
 
-  // 更新子菜单位置
+  // Update submenu position
   const updateSubmenuPosition = () => {
     if (!itemRef || !submenuRef) return;
     const parentRect = itemRef.getBoundingClientRect();
@@ -254,7 +254,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     setSubmenuPosition(pos);
   };
 
-  // 鼠标进入
+  // Mouse enter
   const handleMouseEnter = () => {
     if (!hasChildren()) return;
     clearTimeout(hoverTimeout);
@@ -264,7 +264,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     }, 100);
   };
 
-  // 鼠标离开
+  // Mouse leave
   const handleMouseLeave = () => {
     if (!hasChildren()) return;
     clearTimeout(hoverTimeout);
@@ -276,18 +276,18 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const handleClick = (e: MouseEvent) => {
     if (props.item.disabled) return;
 
-    // 如果有自定义内容且设置了 keepOpen，阻止关闭
+    // When using custom content with keepOpen, prevent closing the menu.
     if (props.item.content && props.item.keepOpen) {
       e.stopPropagation();
       return;
     }
 
     if (hasChildren()) {
-      // 有子菜单时点击只切换子菜单显示
+      // For submenus, click toggles submenu visibility.
       setSubmenuOpen((v) => !v);
       requestAnimationFrame(updateSubmenuPosition);
     } else if (!props.item.content) {
-      // 没有子菜单且没有自定义内容时触发选择
+      // For regular items, trigger selection.
       props.onSelect(props.item.id);
     }
   };
@@ -299,7 +299,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* 自定义内容 */}
+      {/* Custom content */}
       <Show when={props.item.content}>
         <div
           class={cn(
@@ -312,7 +312,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
         </div>
       </Show>
 
-      {/* 默认按钮布局 */}
+      {/* Default button layout */}
       <Show when={!props.item.content}>
         <button
           type="button"

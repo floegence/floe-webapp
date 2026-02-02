@@ -35,14 +35,15 @@ export function Input(props: InputProps) {
     'id',
   ]);
 
-  const inputId = local.id ?? createUniqueId();
-  const errorId = `${inputId}-error`;
-  const helperId = `${inputId}-helper`;
+  const fallbackId = createUniqueId();
+  const inputId = () => local.id ?? fallbackId;
+  const errorId = () => `${inputId()}-error`;
+  const helperId = () => `${inputId()}-helper`;
 
   const ariaDescribedBy = () => {
     const ids: string[] = [];
-    if (local.error) ids.push(errorId);
-    if (local.helperText && !local.error) ids.push(helperId);
+    if (local.error) ids.push(errorId());
+    if (local.helperText && !local.error) ids.push(helperId());
     return ids.length > 0 ? ids.join(' ') : undefined;
   };
 
@@ -55,7 +56,7 @@ export function Input(props: InputProps) {
       </Show>
 
       <input
-        id={inputId}
+        id={inputId()}
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
@@ -81,13 +82,13 @@ export function Input(props: InputProps) {
       </Show>
 
       <Show when={local.error}>
-        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
           {local.error}
         </p>
       </Show>
 
       <Show when={local.helperText && !local.error}>
-        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
           {local.helperText}
         </p>
       </Show>
@@ -108,21 +109,22 @@ export interface TextareaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
 export function Textarea(props: TextareaProps) {
   const [local, rest] = splitProps(props, ['error', 'helperText', 'class', 'id']);
 
-  const textareaId = local.id ?? createUniqueId();
-  const errorId = `${textareaId}-error`;
-  const helperId = `${textareaId}-helper`;
+  const fallbackId = createUniqueId();
+  const textareaId = () => local.id ?? fallbackId;
+  const errorId = () => `${textareaId()}-error`;
+  const helperId = () => `${textareaId()}-helper`;
 
   const ariaDescribedBy = () => {
     const ids: string[] = [];
-    if (local.error) ids.push(errorId);
-    if (local.helperText && !local.error) ids.push(helperId);
+    if (local.error) ids.push(errorId());
+    if (local.helperText && !local.error) ids.push(helperId());
     return ids.length > 0 ? ids.join(' ') : undefined;
   };
 
   return (
     <div>
       <textarea
-        id={textareaId}
+        id={textareaId()}
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
@@ -138,12 +140,12 @@ export function Textarea(props: TextareaProps) {
         {...rest}
       />
       <Show when={local.error}>
-        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
           {local.error}
         </p>
       </Show>
       <Show when={local.helperText && !local.error}>
-        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
           {local.helperText}
         </p>
       </Show>
@@ -380,14 +382,15 @@ export function AffixInput(props: AffixInputProps) {
     'id',
   ]);
 
-  const inputId = local.id ?? createUniqueId();
-  const errorId = `${inputId}-error`;
-  const helperId = `${inputId}-helper`;
+  const fallbackId = createUniqueId();
+  const inputId = () => local.id ?? fallbackId;
+  const errorId = () => `${inputId()}-error`;
+  const helperId = () => `${inputId()}-helper`;
 
   const ariaDescribedBy = () => {
     const ids: string[] = [];
-    if (local.error) ids.push(errorId);
-    if (local.helperText && !local.error) ids.push(helperId);
+    if (local.error) ids.push(errorId());
+    if (local.helperText && !local.error) ids.push(helperId());
     return ids.length > 0 ? ids.join(' ') : undefined;
   };
 
@@ -455,7 +458,7 @@ export function AffixInput(props: AffixInputProps) {
 
         {/* Input */}
         <input
-          id={inputId}
+          id={inputId()}
           aria-invalid={local.error ? true : undefined}
           aria-describedby={ariaDescribedBy()}
           class={cn(
@@ -500,13 +503,13 @@ export function AffixInput(props: AffixInputProps) {
       </div>
 
       <Show when={local.error}>
-        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
           {local.error}
         </p>
       </Show>
 
       <Show when={local.helperText && !local.error}>
-        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
           {local.helperText}
         </p>
       </Show>

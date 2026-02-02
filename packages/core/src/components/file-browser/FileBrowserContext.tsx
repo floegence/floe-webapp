@@ -28,7 +28,7 @@ const SIDEBAR_WIDTH_STORAGE_KEY = 'fileBrowser:sidebarWidth';
 const SIDEBAR_MIN_WIDTH_PX = 160;
 const SIDEBAR_MAX_WIDTH_PX = 520;
 
-// 新增持久化存储 key
+// Persisted state keys
 const VIEW_MODE_STORAGE_KEY = 'fileBrowser:viewMode';
 const SORT_CONFIG_STORAGE_KEY = 'fileBrowser:sortConfig';
 const EXPANDED_FOLDERS_STORAGE_KEY = 'fileBrowser:expandedFolders';
@@ -66,7 +66,7 @@ function normalizeExpandedFolders(folders: unknown): string[] {
     seen.add(p);
     result.push(p);
   }
-  // 根目录始终展开
+  // The root folder is always expanded.
   if (!seen.has('/')) result.unshift('/');
   return result;
 }
@@ -126,9 +126,9 @@ export interface FileBrowserProviderProps {
    */
   sidebarWidthStorageKey?: string;
   /**
-   * 持久化存储 key 前缀，用于区分不同实例的持久化数据。
-   * 设置后会持久化 viewMode、sortConfig、expandedFolders、sidebarCollapsed。
-   * 若不设置则不持久化这些状态。
+   * Persistence key prefix to isolate per-instance state.
+   * When provided, we persist viewMode, sortConfig, expandedFolders, and sidebarCollapsed.
+   * When omitted, these states are not persisted.
    */
   persistenceKey?: string;
   /** Label for the root/home directory in breadcrumb (default: 'Root') */
@@ -153,10 +153,10 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const persistenceKey = (props.persistenceKey ?? '').trim();
   const shouldPersist = !!persistenceKey;
 
-  // 构建持久化存储 key
+  // Build the persisted storage key.
   const getStorageKey = (base: string) => persistenceKey ? `${persistenceKey}:${base}` : base;
 
-  // 加载持久化的 viewMode
+  // Load persisted viewMode.
   const initialViewMode = shouldPersist
     ? normalizeViewMode(
         floe.persist.load<ViewMode>(getStorageKey(VIEW_MODE_STORAGE_KEY), props.initialViewMode ?? 'list'),
@@ -164,7 +164,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
       )
     : (props.initialViewMode ?? 'list');
 
-  // 加载持久化的 sortConfig
+  // Load persisted sortConfig.
   const defaultSortConfig: SortConfig = { field: 'name', direction: 'asc' };
   const initialSortConfig = shouldPersist
     ? normalizeSortConfig(
@@ -173,14 +173,14 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
       )
     : defaultSortConfig;
 
-  // 加载持久化的 expandedFolders
+  // Load persisted expandedFolders.
   const initialExpandedFolders = shouldPersist
     ? normalizeExpandedFolders(
         floe.persist.load<string[]>(getStorageKey(EXPANDED_FOLDERS_STORAGE_KEY), ['/'])
       )
     : ['/'];
 
-  // 加载持久化的 sidebarCollapsed
+  // Load persisted sidebarCollapsed.
   const initialSidebarCollapsed = shouldPersist
     ? floe.persist.load<boolean>(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), false) === true
     : false;
@@ -244,32 +244,32 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     floe.persist.debouncedSave(sidebarWidthStorageKey, sidebarWidth());
   });
 
-  // 持久化 viewMode
+  // Persist viewMode.
   createEffect(() => {
     if (!shouldPersist) return;
     floe.persist.debouncedSave(getStorageKey(VIEW_MODE_STORAGE_KEY), viewMode());
   });
 
-  // 持久化 sortConfig
+  // Persist sortConfig.
   createEffect(() => {
     if (!shouldPersist) return;
     floe.persist.debouncedSave(getStorageKey(SORT_CONFIG_STORAGE_KEY), sortConfig());
   });
 
-  // 持久化 expandedFolders
+  // Persist expandedFolders.
   createEffect(() => {
     if (!shouldPersist) return;
     const folders = [...expandedFolders()].sort((a, b) => a.localeCompare(b));
     floe.persist.debouncedSave(getStorageKey(EXPANDED_FOLDERS_STORAGE_KEY), folders);
   });
 
-  // 持久化 sidebarCollapsed
+  // Persist sidebarCollapsed.
   createEffect(() => {
     if (!shouldPersist) return;
     floe.persist.debouncedSave(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), sidebarCollapsed());
   });
 
-  // 包装 setViewMode 和 setSortConfig 以便外部使用
+  // Wrap setViewMode and setSortConfig for external usage.
   const setViewMode = (mode: ViewMode) => setViewModeInternal(mode);
   const setSortConfig = (config: SortConfig) => setSortConfigInternal(config);
 
@@ -475,7 +475,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setFilterActive(false);
     const onSelect = props.onSelect;
     deferNonBlocking(() => onSelect?.([]));
-    props.onNavigate?.(nextPath);
+    const onNavigate = props.onNavigate;
+    deferNonBlocking(() => onNavigate?.(nextPath));
   };
 
   const setListColumnRatios = (ratios: FileListColumnRatios) => {
@@ -584,7 +585,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     if (item.type === 'folder') {
       navigateTo(item);
     } else {
-      props.onOpen?.(item);
+      const onOpen = props.onOpen;
+      deferNonBlocking(() => onOpen?.(item));
     }
   };
 

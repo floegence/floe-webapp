@@ -1,4 +1,4 @@
-import { Show, splitProps, createEffect, createSignal, onCleanup, For, createUniqueId } from 'solid-js';
+import { Show, splitProps, createEffect, createMemo, createSignal, onCleanup, For, createUniqueId } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type ProcessingIndicatorVariant =
@@ -402,7 +402,7 @@ function AuroraVariant(props: VariantProps) {
 function NeuralVariant(props: VariantProps) {
   const id = createUniqueId();
 
-  // 基础节点位置
+  // Base node positions
   const baseNodes = [
     { x: 20, y: 8 },   // 0: top
     { x: 8, y: 20 },   // 1: left
@@ -412,26 +412,26 @@ function NeuralVariant(props: VariantProps) {
     { x: 20, y: 20 },  // 5: center
   ];
 
-  // 每个节点的动画参数（振幅、频率、相位）
+  // Animation params per node (amplitude, frequency, phase)
   const nodeAnimParams = [
     { ax: 2, ay: 1.5, fx: 1.2, fy: 0.8, px: 0, py: 0.5 },
     { ax: 1.5, ay: 2, fx: 0.9, fy: 1.1, px: 1, py: 0.3 },
     { ax: 1.5, ay: 2, fx: 0.9, fy: 1.1, px: 2, py: 0.7 },
     { ax: 2, ay: 1.5, fx: 1.1, fy: 0.9, px: 0.5, py: 1.2 },
     { ax: 2, ay: 1.5, fx: 1.1, fy: 0.9, px: 1.5, py: 0.8 },
-    { ax: 0, ay: 0, fx: 0, fy: 0, px: 0, py: 0 }, // 中心点不动
+    { ax: 0, ay: 0, fx: 0, fy: 0, px: 0, py: 0 }, // Center node stays still
   ];
 
-  // 使用 signal 存储动态节点位置
+  // Store animated node positions
   const [nodePositions, setNodePositions] = createSignal(baseNodes.map(n => ({ x: n.x, y: n.y })));
 
-  // 动画循环
+  // Animation loop
   createEffect(() => {
     let animationId: number;
     const startTime = performance.now();
 
     const animate = (currentTime: number) => {
-      const elapsed = (currentTime - startTime) / 1000; // 转换为秒
+      const elapsed = (currentTime - startTime) / 1000; // seconds
 
       setNodePositions(
         baseNodes.map((base, i) => {
@@ -450,7 +450,7 @@ function NeuralVariant(props: VariantProps) {
     onCleanup(() => cancelAnimationFrame(animationId));
   });
 
-  // 连接关系
+  // Connection list
   const connections = [[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [0, 1], [0, 2], [1, 3], [2, 4], [3, 4]];
 
   return (
@@ -463,7 +463,7 @@ function NeuralVariant(props: VariantProps) {
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
-          {/* 连线 - 跟随节点位置 */}
+          {/* Edges (follow animated node positions) */}
           <g stroke="var(--primary)" stroke-opacity="0.3" fill="none">
             <For each={connections}>
               {([from, to]) => (
@@ -477,7 +477,7 @@ function NeuralVariant(props: VariantProps) {
               )}
             </For>
           </g>
-          {/* 流动粒子 */}
+          {/* Flow particles */}
           <g filter={`url(#neural-glow-${id})`}>
             <For each={[0, 1, 2, 3, 4]}>
               {(i) => (
@@ -492,7 +492,7 @@ function NeuralVariant(props: VariantProps) {
               )}
             </For>
           </g>
-          {/* 节点 - 动态位置 */}
+          {/* Nodes (animated) */}
           <g filter={`url(#neural-glow-${id})`}>
             <For each={nodePositions()}>
               {(node, i) => (
@@ -685,20 +685,20 @@ function PulseVariant(props: VariantProps) {
 function AtomVariant(props: VariantProps) {
   const id = createUniqueId();
 
-  // 定义三个轨道平面，每个有不同的旋转角度来创造3D效果
-  // rx/ry 的比例模拟轨道倾斜，rotateZ 控制轨道在平面上的旋转方向
+  // Three orbit planes with different rotations to create a 3D-ish effect.
+  // rx/ry simulates tilt; rotateZ controls orbit rotation in the plane.
   const orbits = [
-    { rx: 16, ry: 6, rotateZ: 0, speed: 2 },     // 水平轨道
-    { rx: 14, ry: 5, rotateZ: 60, speed: 2.5 },  // 60度旋转
-    { rx: 14, ry: 5, rotateZ: 120, speed: 3 },   // 120度旋转
+    { rx: 16, ry: 6, rotateZ: 0, speed: 2 },     // horizontal orbit
+    { rx: 14, ry: 5, rotateZ: 60, speed: 2.5 },  // rotated 60deg
+    { rx: 14, ry: 5, rotateZ: 120, speed: 3 },   // rotated 120deg
   ];
 
-  // 电子位置状态
+  // Electron angles
   const [electronAngles, setElectronAngles] = createSignal(
-    orbits.map(() => Math.random() * Math.PI * 2) // 随机初始角度
+    orbits.map(() => Math.random() * Math.PI * 2) // random initial angle
   );
 
-  // 动画循环
+  // Animation loop
   createEffect(() => {
     let animationId: number;
     let lastTime = performance.now();
@@ -718,33 +718,46 @@ function AtomVariant(props: VariantProps) {
     onCleanup(() => cancelAnimationFrame(animationId));
   });
 
-  // 计算电子在椭圆轨道上的位置
+  // Compute electron position on an ellipse
   const getElectronPosition = (orbitIndex: number, angle: number) => {
     const orbit = orbits[orbitIndex];
 
-    // 在椭圆轨道上的位置
+    // Position on the orbit ellipse
     const x2d = Math.cos(angle) * orbit.rx;
     const y2d = Math.sin(angle) * orbit.ry;
 
-    // 应用 rotateZ 变换（与轨道椭圆的旋转一致）
+    // Apply rotateZ (matches the orbit ellipse rotation)
     const rotateZRad = (orbit.rotateZ * Math.PI) / 180;
     const finalX = x2d * Math.cos(rotateZRad) - y2d * Math.sin(rotateZRad);
     const finalY = x2d * Math.sin(rotateZRad) + y2d * Math.cos(rotateZRad);
 
-    // z 深度基于椭圆上的 y 位置（y2d > 0 表示在前面）
+    // Depth is based on the orbit's local Y (y2d > 0 is closer to the viewer).
     return { x: finalX + 20, y: finalY + 20, z: y2d };
   };
 
-  // 获取所有电子及其深度信息
-  const getElectronsWithDepth = () => {
+  // Compute electron positions (sorted by depth) once per frame.
+  const electronLayers = createMemo(() => {
     const electrons: { x: number; y: number; z: number; orbitIndex: number }[] = [];
-    electronAngles().forEach((angle, orbitIndex) => {
+    const angles = electronAngles();
+
+    for (let orbitIndex = 0; orbitIndex < angles.length; orbitIndex++) {
+      const angle = angles[orbitIndex]!;
       const pos = getElectronPosition(orbitIndex, angle);
       electrons.push({ ...pos, orbitIndex });
-    });
-    // 按z排序，z小的（后面）先绘制
-    return electrons.sort((a, b) => a.z - b.z);
-  };
+    }
+
+    // Sort by depth: farther first.
+    electrons.sort((a, b) => a.z - b.z);
+
+    const back: typeof electrons = [];
+    const front: typeof electrons = [];
+    for (const e of electrons) {
+      if (e.z < 0) back.push(e);
+      else front.push(e);
+    }
+
+    return { back, front };
+  });
 
   return (
     <div class="flex items-center gap-4">
@@ -764,7 +777,7 @@ function AtomVariant(props: VariantProps) {
             </radialGradient>
           </defs>
 
-          {/* 轨道环 */}
+          {/* Orbit rings */}
           <g opacity="0.2">
             <For each={orbits}>
               {(orbit) => (
@@ -782,8 +795,8 @@ function AtomVariant(props: VariantProps) {
             </For>
           </g>
 
-          {/* 后面的电子（z < 0） */}
-          <For each={getElectronsWithDepth().filter((e) => e.z < 0)}>
+          {/* Back electrons (z < 0) */}
+          <For each={electronLayers().back}>
             {(electron) => (
               <circle
                 cx={electron.x}
@@ -795,18 +808,18 @@ function AtomVariant(props: VariantProps) {
             )}
           </For>
 
-          {/* 原子核 */}
+          {/* Nucleus */}
           <g filter={`url(#atom-glow-${id})`}>
             <circle cx="20" cy="20" r="4" fill={`url(#nucleus-grad-${id})`} />
-            {/* 核内质子/中子效果 */}
+            {/* Proton/neutron highlights */}
             <circle cx="19" cy="19" r="1.2" fill="var(--primary)" opacity="0.8" />
             <circle cx="21" cy="20.5" r="1" fill="var(--primary)" opacity="0.6" />
             <circle cx="19.5" cy="21" r="0.8" fill="var(--primary)" opacity="0.5" />
           </g>
 
-          {/* 前面的电子（z >= 0） */}
+          {/* Front electrons (z >= 0) */}
           <g filter={`url(#atom-glow-${id})`}>
-            <For each={getElectronsWithDepth().filter((e) => e.z >= 0)}>
+            <For each={electronLayers().front}>
               {(electron) => (
                 <circle
                   cx={electron.x}
