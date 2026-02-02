@@ -1,7 +1,7 @@
 import {
   createSignal,
   Show,
-  For,
+  Index,
   type JSX,
   createEffect,
   onCleanup,
@@ -208,22 +208,22 @@ export function Dropdown(props: DropdownProps) {
             }}
             role="menu"
           >
-            <For each={props.items}>
+            <Index each={props.items}>
               {(item) => (
                 <Show
-                  when={!item.separator}
+                  when={!item().separator}
                   fallback={<div class="my-1 h-px bg-border" role="separator" />}
                 >
                   <DropdownMenuItem
-                    item={item}
-                    selected={props.value === item.id}
+                    item={item()}
+                    selected={props.value === item().id}
                     onSelect={handleSelect}
                     onCloseMenu={() => setOpen(false)}
                     dropdownId={dropdownId}
                   />
                 </Show>
               )}
-            </For>
+            </Index>
           </div>
         </Portal>
       </Show>
@@ -374,14 +374,14 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
             }}
             onMouseLeave={handleMouseLeave}
           >
-            <For each={props.item.children}>
+            <Index each={props.item.children}>
               {(child) => (
                 <Show
-                  when={!child.separator}
+                  when={!child().separator}
                   fallback={<div class="my-1 h-px bg-border" role="separator" />}
                 >
 	                  <DropdownMenuItem
-	                    item={child}
+	                    item={child()}
 	                    selected={false}
 	                    onSelect={props.onSelect}
 	                    onCloseMenu={props.onCloseMenu}
@@ -389,7 +389,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
 	                  />
                 </Show>
               )}
-            </For>
+            </Index>
           </div>
         </Portal>
       </Show>
