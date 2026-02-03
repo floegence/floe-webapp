@@ -143,13 +143,17 @@ export function Shell(props: ShellProps) {
     );
   });
 
-  // Ensure the active tab always exists when driven by registry items.
+  // Set default active tab when items are available and none is selected.
+  // We intentionally do NOT reset if the stored ID isn't in items yet,
+  // because components may register dynamically after initial load.
+  // This preserves the user's selection across page refreshes.
   createEffect(() => {
     const items = activityItems();
     if (!items.length) return;
 
     const active = layout.sidebarActiveTab();
-    if (!active || !items.some((i) => i.id === active)) {
+    // Only auto-select first item if no active tab is set
+    if (!active) {
       setSidebarActiveTab(items[0].id);
     }
   });
