@@ -123,7 +123,7 @@ Core UI framework with:
 Protocol layer for communication:
 
 - Flowersec WebSocket integration
-- Contract-driven RPC SDK (`useRpc()`) with a built-in Redeven contract
+- Contract-driven RPC SDK (`useRpc()`) via injected `ProtocolContract` (no built-in business contract)
 - Connection state management with dynamic `getGrant()` reconnect support
 
 Best practice:
@@ -173,7 +173,12 @@ import {
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import './index.css';
-import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+
+const appContract: ProtocolContract = {
+  id: 'app_v1',
+  createRpc: () => ({}),
+};
 
 const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
   // Register your Floe components here (sidebar + commands + status bar).
@@ -182,7 +187,7 @@ const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
 export function App() {
   return (
     <FloeApp
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}
       getProtocol={useProtocol}
       components={components}
     >

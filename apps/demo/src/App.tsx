@@ -30,7 +30,8 @@ import {
   useLayout,
   useTheme,
 } from '@floegence/floe-webapp-core';
-import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+
 import { demoFiles } from './demo/workspace';
 import { FileViewerPage } from './demo/pages/FileViewerPage';
 import { SearchPage } from './demo/pages/SearchPage';
@@ -44,6 +45,11 @@ import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
+
+const demoProtocolContract: ProtocolContract = {
+  id: 'demo_v1',
+  createRpc: () => ({}),
+};
 
 function AppContent() {
   const theme = useTheme();
@@ -494,7 +500,7 @@ export function App() {
   return (
     <FloeProvider
       config={demoFloeConfig}
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={demoProtocolContract}>{renderChildren()}</ProtocolProvider>}
     >
       <FileBrowserDragProvider>
         <AppContent />

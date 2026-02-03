@@ -13,7 +13,6 @@ import {
 } from '@floegence/flowersec-core/reconnect';
 import { requestChannelGrant, type ControlplaneConfig } from './controlplane';
 import type { ProtocolContract } from './contract';
-import { redevenV1Contract } from './contracts/redeven_v1';
 
 /**
  * Protocol context state
@@ -60,7 +59,7 @@ export interface ConnectConfig {
 
 const ProtocolContext = createContext<ProtocolContextValue>();
 
-export function ProtocolProvider(props: { children: JSX.Element; contract?: ProtocolContract }) {
+export function ProtocolProvider(props: { children: JSX.Element; contract: ProtocolContract }) {
   const mgr = createReconnectManager();
   const [state, setState] = createStore<ProtocolState>({
     status: mgr.state().status,
@@ -69,7 +68,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract?: Prot
   });
 
   // eslint-disable-next-line solid/reactivity -- contract is expected to be static for the provider lifetime.
-  const contract = props.contract ?? redevenV1Contract;
+  const contract = props.contract;
 
   const unsubscribe = mgr.subscribe((s) => {
     setState({ status: s.status, error: s.error, client: s.client });

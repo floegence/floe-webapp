@@ -5,5 +5,3 @@ export { useRpc, RpcError, ProtocolNotConnectedError } from './rpc';
 export { requestChannelGrant, type ControlplaneConfig } from './controlplane';
 export type { ProtocolContract, RpcClientLike, RpcHelpers } from './contract';
 
-// Built-in contract(s)
-export * from './contracts/redeven_v1';

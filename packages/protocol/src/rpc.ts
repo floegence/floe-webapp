@@ -1,6 +1,5 @@
 import { useProtocol } from './client';
 import type { ProtocolContract, RpcHelpers } from './contract';
-import { redevenV1Contract, type RedevenV1Rpc } from './contracts/redeven_v1';
 
 /**
  * RPC wrapper for typed remote calls.
@@ -79,9 +78,9 @@ export type UseRpcOptions<TApi extends object> = {
   contract?: ProtocolContract<TApi>;
 };
 
-export function useRpc<TApi extends object = RedevenV1Rpc>(options?: UseRpcOptions<TApi>): TApi & RpcHelpers {
+export function useRpc<TApi extends object = Record<string, never>>(options?: UseRpcOptions<TApi>): TApi & RpcHelpers {
   const protocol = useProtocol();
-  const contract = (options?.contract ?? protocol.contract() ?? redevenV1Contract) as ProtocolContract<TApi>;
+  const contract = (options?.contract ?? protocol.contract()) as ProtocolContract<TApi>;
 
   const helpers = createHelpers(protocol);
   const api = contract.createRpc(helpers);

@@ -17,7 +17,7 @@ export interface RpcHelpers {
 }
 
 export interface ProtocolContract<TApi = unknown> {
-  /** A stable identifier for logging and debugging (e.g. "redeven_v1"). */
+  /** A stable identifier for logging and debugging (e.g. "app_v1"). */
   id: string;
   /** Build a typed RPC surface from the low-level transport helpers. */
   createRpc: (helpers: RpcHelpers) => TApi;

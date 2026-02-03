@@ -3,7 +3,7 @@
 The protocol layer is an optional package that provides:
 
 - a `ProtocolProvider` + `useProtocol()` context for connection state
-- a contract-driven `useRpc()` wrapper for typed RPC calls
+- a contract-driven `useRpc()` wrapper for typed RPC calls (via injected `ProtocolContract`)
 
 Package entrypoint:
 
@@ -15,11 +15,37 @@ Package entrypoint:
 pnpm add @floegence/floe-webapp-protocol @floegence/floe-webapp-core solid-js
 ```
 
+## Provide a Contract (required)
+
+`@floegence/floe-webapp-protocol` does not ship any business contract.
+Downstream apps must provide a `ProtocolContract` from the host app (or a separate npm package)
+and inject it into `ProtocolProvider`.
+
+Minimal example:
+
+```ts
+import type { ProtocolContract } from '@floegence/floe-webapp-protocol';
+
+const typeIds = { ping: 1 } as const;
+
+export type AppRpc = {
+  ping: () => Promise<{ ok: true }>;
+};
+
+export const appContract: ProtocolContract<AppRpc> = {
+  id: 'app_v1',
+  createRpc: ({ call }) => ({
+    ping: () => call<Record<string, never>, { ok: true }>(typeIds.ping, {}),
+  }),
+};
+```
+
 ## Use With FloeApp (recommended)
 
 ```tsx
 import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
 import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { appContract } from './protocol/contract';
 
 const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
   // ...
@@ -28,7 +54,9 @@ const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
 export function App() {
   return (
     <FloeApp
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => (
+        <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>
+      )}
       getProtocol={useProtocol}
       components={components}
     >
@@ -131,25 +159,20 @@ Errors:
 - `ProtocolNotConnectedError` when `protocol.client()` is missing
 - `RpcError` for transport errors and remote errors
 
-This SDK is contract-driven.
-
-- Built-in contract: `redevenV1Contract` (`packages/protocol/src/contracts/redeven_v1/*`)
-- `useRpc()` uses the provider contract by default (see `ProtocolProvider contract={...}`), and you can override it per-hook.
+This SDK is contract-driven: it uses the provider contract by default, and you can override it per-hook.
 
 Example:
 
 ```ts
 import { useRpc } from '@floegence/floe-webapp-protocol';
+import type { AppRpc } from './protocol/contract';
 
-const rpc = useRpc();
-const home = await rpc.fs.getHome();
-const list = await rpc.fs.list({ path: home.path, showHidden: false });
+const rpc = useRpc<AppRpc>();
+await rpc.ping();
 ```
 
 ## TypeIds Governance
 
-Type IDs are part of the protocol contract:
-
-- Built-in contract ids: `redevenV1TypeIds` (`packages/protocol/src/contracts/redeven_v1/typeIds.ts`)
+Type IDs are part of the protocol contract.
 
 Downstream apps should call `useRpc()` instead of `client.rpc.call(...)` directly.

@@ -163,7 +163,12 @@ If you want `commands.execute(ctx)` / `onMount(ctx)` to receive your protocol ob
 
 ```tsx
 import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
-import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+
+const appContract: ProtocolContract = {
+  id: 'app_v1',
+  createRpc: () => ({}),
+};
 
 const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
   // Your Floe components.
@@ -172,7 +177,7 @@ const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
 export function App() {
   return (
     <FloeApp
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}
       getProtocol={useProtocol}
       components={components}
     >
@@ -236,7 +241,12 @@ import {
   NotificationContainer,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
-import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
+import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+
+const appContract: ProtocolContract = {
+  id: 'app_v1',
+  createRpc: () => ({}),
+};
 
 const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
   // Register your sidebar/commands/status contributions here.
@@ -254,7 +264,7 @@ function AppContent() {
 
 export function App() {
   return (
-    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider>{renderChildren()}</ProtocolProvider>}>
+    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}>
       <FloeRegistryRuntime components={components} getProtocol={useProtocol}>
         <AppContent />
       </FloeRegistryRuntime>
