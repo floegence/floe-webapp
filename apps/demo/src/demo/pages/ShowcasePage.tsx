@@ -2017,8 +2017,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Directory Input"
           description="Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked."
         />
+
+        {/* Basic Usage */}
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
+            <h3 class="text-xs font-medium">Basic Usage & Size Variants</h3>
             <div class="flex flex-col gap-3 max-w-md">
               <DirectoryInput
                 value={directoryInputValue()}
@@ -2057,6 +2060,68 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </p>
           </PanelContent>
         </Panel>
+
+        {/* Form Integration Example */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Form Integration</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <Form class="max-w-md" onSubmit={() => {
+                notifications.success('Project Created', `Created project at ${directoryInputValue()}`);
+              }}>
+                <FormSection title="Project Settings" description="Configure your new project">
+                  <FormField>
+                    <FormLabel required>Project Name</FormLabel>
+                    <Input placeholder="my-awesome-project" />
+                    <FormDescription>A unique name for your project.</FormDescription>
+                  </FormField>
+
+                  <FormField>
+                    <FormLabel required>Project Directory</FormLabel>
+                    <DirectoryInput
+                      value={directoryInputValue()}
+                      onChange={setDirectoryInputValue}
+                      files={demoFileBrowserData}
+                      placeholder="Select project location..."
+                    />
+                    <FormDescription>Where your project files will be stored.</FormDescription>
+                  </FormField>
+
+                  <FormRow cols={2}>
+                    <FormField>
+                      <FormLabel>Template</FormLabel>
+                      <Select
+                        value="blank"
+                        onChange={() => {}}
+                        options={[
+                          { value: 'blank', label: 'Blank Project' },
+                          { value: 'react', label: 'React App' },
+                          { value: 'node', label: 'Node.js Server' },
+                        ]}
+                      />
+                    </FormField>
+                    <FormField>
+                      <FormLabel>Visibility</FormLabel>
+                      <Select
+                        value="private"
+                        onChange={() => {}}
+                        options={[
+                          { value: 'private', label: 'Private' },
+                          { value: 'public', label: 'Public' },
+                        ]}
+                      />
+                    </FormField>
+                  </FormRow>
+                </FormSection>
+
+                <FormActions align="end">
+                  <Button variant="outline" type="button">Cancel</Button>
+                  <Button type="submit" disabled={!directoryInputValue()}>Create Project</Button>
+                </FormActions>
+              </Form>
+            </PanelContent>
+          </Panel>
+        </div>
 
         {/* DirectoryInput Documentation */}
         <UsageGuidelines

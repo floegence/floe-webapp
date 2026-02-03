@@ -1642,7 +1642,7 @@ export const directoryInputDoc: ComponentDoc = {
   },
   examples: [
     {
-      title: 'DirectoryInput',
+      title: 'Basic Usage',
       code: `import { DirectoryInput } from '@floegence/floe-webapp-core';
 
 function Example() {
@@ -1658,6 +1658,45 @@ function Example() {
       placeholder="Select project directory..."
       helperText="Choose the root directory for your project."
     />
+  );
+}`,
+    },
+    {
+      title: 'Form Integration',
+      code: `import {
+  DirectoryInput, Form, FormField, FormLabel,
+  FormDescription, FormActions, Button
+} from '@floegence/floe-webapp-core';
+
+function ProjectForm() {
+  const [projectDir, setProjectDir] = createSignal('');
+  const [files, setFiles] = createSignal<FileItem[]>([]);
+
+  return (
+    <Form onSubmit={() => console.log('Creating project at:', projectDir())}>
+      <FormField>
+        <FormLabel required>Project Name</FormLabel>
+        <Input placeholder="my-awesome-project" />
+        <FormDescription>A unique name for your project.</FormDescription>
+      </FormField>
+
+      <FormField>
+        <FormLabel required>Project Directory</FormLabel>
+        <DirectoryInput
+          value={projectDir()}
+          onChange={setProjectDir}
+          files={files()}
+          onExpand={(dir) => loadDirectory(dir)}
+          placeholder="Select project location..."
+        />
+        <FormDescription>Where your project files will be stored.</FormDescription>
+      </FormField>
+
+      <FormActions align="end">
+        <Button variant="outline" type="button">Cancel</Button>
+        <Button type="submit" disabled={!projectDir()}>Create Project</Button>
+      </FormActions>
+    </Form>
   );
 }`,
     },
