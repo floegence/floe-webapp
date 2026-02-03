@@ -43,6 +43,8 @@ export interface DirectoryInputProps {
   class?: string;
   /** Maximum height for the tree panel (default: '200px') */
   treeMaxHeight?: string;
+  /** Whether the tree panel is expanded by default (default: true) */
+  defaultExpanded?: boolean;
 }
 
 const sizeStyles: Record<DirectoryInputSize, { container: string; icon: string; text: string }> = {
@@ -79,12 +81,21 @@ export function DirectoryInput(props: DirectoryInputProps) {
     'helperText',
     'class',
     'treeMaxHeight',
+    'defaultExpanded',
   ]);
 
-  const [expanded, setExpanded] = createSignal(false);
+  // Default to expanded
+  const [expanded, setExpanded] = createSignal(local.defaultExpanded !== false);
 
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
+
+  // Trigger initial load on mount if expanded and no files
+  createEffect(() => {
+    if (expanded() && local.files.length === 0 && local.onExpand) {
+      local.onExpand('/');
+    }
+  });
 
   // Picker tree state — initialized once on mount (open is always true to skip reset behavior)
   const tree = usePickerTree({
