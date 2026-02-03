@@ -270,11 +270,16 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   const handleSelectFolder = (item: FileItem) => {
     if (!isSelectable(item)) return;
     setSelectedPath(item.path);
+    const wasExpanded = expandedPaths().has(item.path);
     setExpandedPaths((prev) => {
       const next = new Set(prev);
       next.add(item.path);
       return next;
     });
+    // Trigger lazy loading when selecting a previously unexpanded folder
+    if (!wasExpanded) {
+      opts.onExpand?.(item.path);
+    }
   };
 
   const handleSelectRoot = () => {

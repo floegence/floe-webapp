@@ -1567,7 +1567,7 @@ function Example() {
 // ===========================
 export const directoryInputDoc: ComponentDoc = {
   name: 'DirectoryInput',
-  description: 'Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked.',
+  description: 'Form-compatible input for selecting directories. Shows selected path and expands an inline folder tree panel when clicked.',
   props: [
     {
       name: 'value',
@@ -1622,6 +1622,12 @@ export const directoryInputDoc: ComponentDoc = {
       name: 'helperText',
       type: 'string',
       description: 'Helper text displayed below the input.',
+    },
+    {
+      name: 'treeMaxHeight',
+      type: 'string',
+      default: "'200px'",
+      description: 'Maximum height for the inline tree panel.',
     },
   ],
   usage: {
