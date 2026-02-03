@@ -35,8 +35,8 @@ export interface BasePickerProps {
   files: FileItem[];
   /** Initial directory path (default: '/') */
   initialPath?: string;
-  /** Dialog title */
-  title?: string;
+  /** Dialog title - can be a string or JSX element for custom headers */
+  title?: string | JSX.Element;
   /** Confirm button text */
   confirmText?: string;
   /** Cancel button text (default: 'Cancel') */

@@ -58,8 +58,8 @@ const sizeConfig = {
     iconSize: 'w-3 h-3',
     label: 'text-xs',
     description: 'text-[10px]',
-    connector: 'h-px',
-    connectorVertical: 'w-px min-h-4',
+    connector: 'h-px mx-2',
+    connectorVertical: 'w-px min-h-4 my-1',
     gap: 'gap-1',
   },
   md: {
@@ -67,8 +67,8 @@ const sizeConfig = {
     iconSize: 'w-4 h-4',
     label: 'text-sm',
     description: 'text-xs',
-    connector: 'h-0.5',
-    connectorVertical: 'w-0.5 min-h-6',
+    connector: 'h-0.5 mx-3',
+    connectorVertical: 'w-0.5 min-h-6 my-1.5',
     gap: 'gap-1.5',
   },
   lg: {
@@ -76,8 +76,8 @@ const sizeConfig = {
     iconSize: 'w-5 h-5',
     label: 'text-base',
     description: 'text-sm',
-    connector: 'h-0.5',
-    connectorVertical: 'w-0.5 min-h-8',
+    connector: 'h-0.5 mx-4',
+    connectorVertical: 'w-0.5 min-h-8 my-2',
     gap: 'gap-2',
   },
 };
@@ -101,7 +101,7 @@ function StepIndicator(props: StepIndicatorProps) {
 
   const baseClasses = () => cn(
     'flex items-center justify-center rounded-full transition-all duration-200',
-    'font-medium select-none',
+    'font-medium select-none flex-shrink-0',
     config().indicator,
     props.clickable && !props.step.disabled
       ? 'cursor-pointer hover:scale-110'
@@ -246,7 +246,7 @@ function Connector(props: ConnectorProps) {
 // ─── Main Stepper Component ───────────────────────────────────────────────────
 
 export function Stepper(props: StepperProps) {
-  const [local, _rest] = splitProps(props, [
+  const [local] = splitProps(props, [
     'steps',
     'currentStep',
     'onStepClick',

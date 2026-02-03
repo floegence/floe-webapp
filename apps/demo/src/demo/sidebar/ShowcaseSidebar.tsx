@@ -13,6 +13,7 @@ const sections = [
   { id: 'ui-cards', label: 'Cards' },
   { id: 'ui-inputs', label: 'Inputs' },
   { id: 'ui-forms', label: 'Form' },
+  { id: 'ui-stepper', label: 'Stepper & Wizard' },
   { id: 'ui-menus', label: 'Dropdown & Select' },
   { id: 'ui-tooltips', label: 'Tooltip' },
   { id: 'ui-dialogs', label: 'Dialogs' },

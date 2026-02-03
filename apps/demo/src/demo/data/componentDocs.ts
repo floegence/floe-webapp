@@ -2431,3 +2431,305 @@ function LoginForm() {
     },
   ],
 };
+
+// ===========================
+// Stepper Component
+// ===========================
+export const stepperDoc: ComponentDoc = {
+  name: 'Stepper',
+  description: 'Multi-step progress indicator for wizards and workflows. Shows users where they are in a multi-step process.',
+  props: [
+    {
+      name: 'steps',
+      type: 'StepItem[]',
+      description: 'Array of step definitions with id, label, and optional description.',
+      required: true,
+    },
+    {
+      name: 'currentStep',
+      type: 'number | Accessor<number>',
+      description: 'Current active step index (0-based).',
+      required: true,
+    },
+    {
+      name: 'onStepClick',
+      type: '(stepIndex: number, step: StepItem) => void',
+      description: 'Callback when a step is clicked. Use for navigation.',
+    },
+    {
+      name: 'variant',
+      type: "'default' | 'minimal' | 'dots'",
+      default: "'default'",
+      description: 'Visual style variant.',
+    },
+    {
+      name: 'orientation',
+      type: "'horizontal' | 'vertical'",
+      default: "'horizontal'",
+      description: 'Layout direction of the stepper.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of step indicators.',
+    },
+    {
+      name: 'showConnector',
+      type: 'boolean',
+      default: 'true',
+      description: 'Whether to show connector lines between steps.',
+    },
+    {
+      name: 'allowClickCompleted',
+      type: 'boolean',
+      default: 'true',
+      description: 'Allow clicking on completed steps to navigate back.',
+    },
+    {
+      name: 'allowClickFuture',
+      type: 'boolean',
+      default: 'false',
+      description: 'Allow clicking on future steps.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Multi-step forms and wizards',
+      'Checkout or registration flows',
+      'Onboarding processes',
+      'Any linear progression workflow',
+    ],
+    bestPractices: [
+      'Keep step count between 3-5 for best UX',
+      'Use clear, concise step labels',
+      'Allow users to go back to completed steps',
+      'Show step descriptions for complex processes',
+    ],
+    avoid: [
+      'Using for non-linear navigation',
+      'Too many steps (>7)',
+      'Vague step labels',
+      'Hiding current position in the process',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Horizontal Stepper',
+      code: `import { Stepper, type StepItem } from '@floegence/floe-webapp-core';
+import { createSignal } from 'solid-js';
+
+const steps: StepItem[] = [
+  { id: 'account', label: 'Account', description: 'Create your account' },
+  { id: 'profile', label: 'Profile', description: 'Set up your profile' },
+  { id: 'complete', label: 'Complete', description: 'All done!' },
+];
+
+function Example() {
+  const [current, setCurrent] = createSignal(1);
+
+  return (
+    <Stepper
+      steps={steps}
+      currentStep={current()}
+      onStepClick={(index) => setCurrent(index)}
+      allowClickCompleted={true}
+    />
+  );
+}`,
+    },
+    {
+      title: 'Vertical Stepper',
+      code: `<Stepper
+  steps={steps}
+  currentStep={1}
+  orientation="vertical"
+  size="lg"
+/>`,
+    },
+    {
+      title: 'Minimal Variant',
+      code: `<Stepper
+  steps={steps}
+  currentStep={0}
+  variant="minimal"
+/>`,
+    },
+    {
+      title: 'Dots Variant',
+      code: `<Stepper
+  steps={steps}
+  currentStep={2}
+  variant="dots"
+/>`,
+    },
+  ],
+};
+
+// ===========================
+// Wizard Component
+// ===========================
+export const wizardDoc: ComponentDoc = {
+  name: 'Wizard',
+  description: 'Complete wizard component combining Stepper with step content. Provides a full multi-step form experience.',
+  props: [
+    {
+      name: 'steps',
+      type: '(StepItem & { content: JSX.Element })[]',
+      description: 'Array of steps with content to render for each step.',
+      required: true,
+    },
+    {
+      name: 'currentStep',
+      type: 'number | Accessor<number>',
+      description: 'Current active step index.',
+      required: true,
+    },
+    {
+      name: 'footer',
+      type: 'JSX.Element',
+      description: 'Footer content, typically navigation buttons.',
+    },
+    {
+      name: 'contentClass',
+      type: 'string',
+      description: 'Additional class for the content area.',
+    },
+    {
+      name: 'footerClass',
+      type: 'string',
+      description: 'Additional class for the footer area.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Complete wizard flows with content',
+      'Step-by-step forms with varying content',
+      'Setup or configuration processes',
+    ],
+    bestPractices: [
+      'Use with useWizard hook for state management',
+      'Provide clear navigation buttons in footer',
+      'Validate each step before proceeding',
+    ],
+    avoid: [
+      'Mixing with external stepper state',
+      'Complex nested wizards',
+    ],
+  },
+  examples: [
+    {
+      title: 'Complete Wizard with useWizard Hook',
+      code: `import { Wizard, useWizard, Button, type StepItem } from '@floegence/floe-webapp-core';
+
+function SetupWizard() {
+  const wizard = useWizard({ totalSteps: 3 });
+
+  const steps = [
+    {
+      id: 'welcome',
+      label: 'Welcome',
+      content: <div>Welcome to the setup wizard!</div>,
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      content: <div>Configure your preferences here.</div>,
+    },
+    {
+      id: 'finish',
+      label: 'Finish',
+      content: <div>Setup complete!</div>,
+    },
+  ];
+
+  return (
+    <Wizard
+      steps={steps}
+      currentStep={wizard.currentStep}
+      footer={
+        <div class="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={wizard.prevStep}
+            disabled={wizard.isFirstStep()}
+          >
+            Back
+          </Button>
+          <Button onClick={wizard.nextStep}>
+            {wizard.isLastStep() ? 'Finish' : 'Next'}
+          </Button>
+        </div>
+      }
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
+// useWizard Hook
+// ===========================
+export const useWizardDoc: ComponentDoc = {
+  name: 'useWizard',
+  description: 'Hook for managing wizard state including navigation between steps.',
+  props: [
+    {
+      name: 'totalSteps',
+      type: 'number',
+      description: 'Total number of steps in the wizard.',
+      required: true,
+    },
+    {
+      name: 'initialStep',
+      type: 'number',
+      default: '0',
+      description: 'Initial step index (0-based).',
+    },
+    {
+      name: 'onStepChange',
+      type: '(step: number) => void',
+      description: 'Callback when step changes.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Managing wizard navigation state',
+      'Custom wizard implementations',
+      'When you need programmatic step control',
+    ],
+    bestPractices: [
+      'Use with Stepper or Wizard components',
+      'Implement validation before nextStep',
+    ],
+    avoid: [],
+  },
+  examples: [
+    {
+      title: 'Basic Usage',
+      code: `import { useWizard } from '@floegence/floe-webapp-core';
+
+function MyWizard() {
+  const {
+    currentStep,
+    nextStep,
+    prevStep,
+    goToStep,
+    isFirstStep,
+    isLastStep,
+    reset,
+  } = useWizard({ totalSteps: 4 });
+
+  return (
+    <div>
+      <p>Current Step: {currentStep()}</p>
+      <button onClick={prevStep} disabled={isFirstStep()}>Back</button>
+      <button onClick={nextStep} disabled={isLastStep()}>Next</button>
+      <button onClick={reset}>Reset</button>
+    </div>
+  );
+}`,
+    },
+  ],
+};

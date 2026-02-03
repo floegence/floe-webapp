@@ -9,7 +9,8 @@ import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 export interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title?: string;
+  /** Dialog title - can be a string or JSX element for custom headers */
+  title?: string | JSX.Element;
   description?: string;
   children: JSX.Element;
   footer?: JSX.Element;

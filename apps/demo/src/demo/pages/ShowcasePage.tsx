@@ -33,6 +33,10 @@ import {
   pieChartDoc,
   // Command
   commandPaletteDoc,
+  // Stepper & Wizard
+  stepperDoc,
+  wizardDoc,
+  useWizardDoc,
 } from '../data/componentDocs';
 import {
   AnimatedBorderCard,
@@ -107,6 +111,10 @@ import {
   DataBarChart,
   DataPieChart,
   MonitoringChart,
+  // Stepper & Wizard
+  Stepper,
+  useWizard,
+  type StepItem,
   // More icons
   ArrowUp,
   ArrowDown,
@@ -250,6 +258,77 @@ function SectionHeader(props: {
         <Show when={props.actions}>
           <div class="flex items-center gap-1.5">{props.actions}</div>
         </Show>
+      </div>
+    </div>
+  );
+}
+
+// Interactive Wizard Demo Component
+function WizardDemo() {
+  const wizard = useWizard({ totalSteps: 3 });
+
+  const steps: StepItem[] = [
+    { id: 'account', label: 'Account', description: 'Setup your account' },
+    { id: 'profile', label: 'Profile', description: 'Personal information' },
+    { id: 'finish', label: 'Finish', description: 'Review and confirm' },
+  ];
+
+  return (
+    <div class="space-y-4">
+      <Stepper
+        steps={steps}
+        currentStep={wizard.currentStep()}
+        onStepClick={(index) => wizard.goToStep(index)}
+      />
+
+      <div class="p-4 border border-border rounded-md bg-muted/30 min-h-[100px]">
+        <Show when={wizard.currentStep() === 0}>
+          <div class="space-y-2">
+            <h4 class="text-sm font-medium">Step 1: Account Setup</h4>
+            <p class="text-xs text-muted-foreground">Create your account credentials.</p>
+            <Input placeholder="Email address" class="max-w-xs" />
+          </div>
+        </Show>
+        <Show when={wizard.currentStep() === 1}>
+          <div class="space-y-2">
+            <h4 class="text-sm font-medium">Step 2: Profile Information</h4>
+            <p class="text-xs text-muted-foreground">Tell us about yourself.</p>
+            <Input placeholder="Full name" class="max-w-xs" />
+          </div>
+        </Show>
+        <Show when={wizard.currentStep() === 2}>
+          <div class="space-y-2">
+            <h4 class="text-sm font-medium">Step 3: Review & Confirm</h4>
+            <p class="text-xs text-muted-foreground">Review your information and complete setup.</p>
+            <p class="text-xs">All steps completed. Ready to finish!</p>
+          </div>
+        </Show>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={wizard.prevStep}
+          disabled={wizard.isFirstStep()}
+        >
+          Previous
+        </Button>
+        <Button
+          size="sm"
+          onClick={wizard.nextStep}
+          disabled={wizard.isLastStep()}
+        >
+          Next
+        </Button>
+        <Show when={wizard.isLastStep()}>
+          <Button size="sm" variant="primary" onClick={() => wizard.goToStep(0)}>
+            Start Over
+          </Button>
+        </Show>
+        <span class="ml-auto text-xs text-muted-foreground">
+          Step {wizard.currentStep() + 1} of {steps.length}
+        </span>
       </div>
     </div>
   );
@@ -1411,6 +1490,145 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={formDoc.props} componentName="Form" />
+      </div>
+
+      {/* ============================================================
+          STEPPER & WIZARD SECTION
+          ============================================================ */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-stepper"
+          title="Stepper & Wizard"
+          description="Multi-step progress indicators and wizard components for guided workflows."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.stepper')}>
+              View Source
+            </Button>
+          }
+        />
+
+        {/* Stepper Variants */}
+        <h3 class="text-xs font-medium text-muted-foreground">Stepper Variants</h3>
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Default Variant */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Default</p>
+              <Stepper
+                steps={[
+                  { id: 'details', label: 'Details' },
+                  { id: 'config', label: 'Configuration' },
+                  { id: 'review', label: 'Review' },
+                  { id: 'complete', label: 'Complete' },
+                ]}
+                currentStep={1}
+              />
+            </div>
+
+            {/* Minimal Variant */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Minimal</p>
+              <Stepper
+                variant="minimal"
+                steps={[
+                  { id: 's1', label: 'Step 1' },
+                  { id: 's2', label: 'Step 2' },
+                  { id: 's3', label: 'Step 3' },
+                ]}
+                currentStep={2}
+              />
+            </div>
+
+            {/* Dots Variant */}
+            <div class="space-y-2">
+              <p class="text-[11px] text-muted-foreground font-medium">Dots</p>
+              <Stepper
+                variant="dots"
+                steps={[
+                  { id: 'account', label: 'Account' },
+                  { id: 'profile', label: 'Profile' },
+                  { id: 'settings', label: 'Settings' },
+                  { id: 'done', label: 'Done' },
+                ]}
+                currentStep={0}
+              />
+            </div>
+          </PanelContent>
+        </Panel>
+
+        {/* Stepper Sizes */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Stepper Sizes</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent class="space-y-4">
+              <div class="space-y-2">
+                <p class="text-[11px] text-muted-foreground">Small</p>
+                <Stepper
+                  size="sm"
+                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  currentStep={1}
+                />
+              </div>
+              <div class="space-y-2">
+                <p class="text-[11px] text-muted-foreground">Medium (default)</p>
+                <Stepper
+                  size="md"
+                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  currentStep={1}
+                />
+              </div>
+              <div class="space-y-2">
+                <p class="text-[11px] text-muted-foreground">Large</p>
+                <Stepper
+                  size="lg"
+                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  currentStep={1}
+                />
+              </div>
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Interactive Wizard Example */}
+        <div class="pt-4 border-t border-border">
+          <h3 class="text-xs font-medium mb-3">Interactive Wizard</h3>
+          <Panel class="border border-border rounded-md overflow-hidden">
+            <PanelContent>
+              <WizardDemo />
+            </PanelContent>
+          </Panel>
+        </div>
+
+        {/* Stepper Documentation */}
+        <UsageGuidelines
+          whenToUse={stepperDoc.usage.whenToUse}
+          bestPractices={stepperDoc.usage.bestPractices}
+          avoid={stepperDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Stepper.tsx"
+          code={stepperDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={stepperDoc.props} componentName="Stepper" />
+
+        {/* Wizard Documentation */}
+        <h3 class="text-xs font-medium text-muted-foreground mt-6">Wizard Component</h3>
+        <CodeSnippet
+          title="Wizard.tsx"
+          code={wizardDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={wizardDoc.props} componentName="Wizard" />
+
+        {/* useWizard Hook Documentation */}
+        <h3 class="text-xs font-medium text-muted-foreground mt-6">useWizard Hook</h3>
+        <CodeSnippet
+          title="useWizard.ts"
+          code={useWizardDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={useWizardDoc.props} componentName="useWizard" />
       </div>
 
       <div class="space-y-4">
