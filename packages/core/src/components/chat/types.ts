@@ -82,6 +82,9 @@ export interface ToolCallBlock {
   toolName: string;
   toolId: string;
   args: Record<string, unknown>;
+  // Whether this tool call requires explicit user approval before executing.
+  requiresApproval?: boolean;
+  approvalState?: 'required' | 'approved' | 'rejected';
   status: 'pending' | 'running' | 'success' | 'error';
   result?: unknown;
   error?: string;
@@ -159,6 +162,8 @@ export type StreamEvent =
   | { type: 'message-start'; messageId: string }
   | { type: 'block-start'; messageId: string; blockIndex: number; blockType: MessageBlock['type'] }
   | { type: 'block-delta'; messageId: string; blockIndex: number; delta: string }
+  // Replace an existing block (used for structured/non-text blocks updates).
+  | { type: 'block-set'; messageId: string; blockIndex: number; block: MessageBlock }
   | { type: 'block-end'; messageId: string; blockIndex: number }
   | { type: 'message-end'; messageId: string }
   | { type: 'error'; messageId: string; error: string };
@@ -217,6 +222,8 @@ export interface ChatCallbacks {
   onRetry?: (messageId: string) => void;
   // Attachment upload
   onUploadAttachment?: (file: File) => Promise<string>;
+  // Tool approval (e.g. dangerous actions)
+  onToolApproval?: (messageId: string, toolId: string, approved: boolean) => Promise<void> | void;
   // Checklist item change
   onChecklistChange?: (messageId: string, blockIndex: number, itemId: string, checked: boolean) => void;
 }
