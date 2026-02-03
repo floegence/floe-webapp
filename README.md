@@ -126,12 +126,11 @@ Protocol layer for communication:
 - Contract-driven RPC SDK (`useRpc()`) with a built-in Redeven contract
 - Connection state management with dynamic `getGrant()` reconnect support
 
-### @floegence/floe-webapp-runtime
+Best practice:
 
-Optional infrastructure utilities for Flowersec E2EE deployments:
-
-- Start Flowersec proxy runtime (`startProxyRuntime`)
-- Register Service Worker and ensure page control (`registerServiceWorkerAndEnsureControl`)
+- Keep low-level Flowersec building blocks in `@floegence/flowersec-core` (source of truth).
+- Keep Floe Webapp packages focused on UI/protocol glue (providers, contracts, typed RPC).
+- For proxy runtime mode (Service Worker + HTML injection + WS patch), integrate directly via `@floegence/flowersec-core/proxy`.
 
 ### @floegence/floe-webapp-boot
 

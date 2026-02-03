@@ -221,7 +221,7 @@ Notes:
 - Configuration (FloeConfig): `docs/configuration.md`
 - Component Registry & Contributions: `docs/component-registry.md`
 - Protocol Layer (Flowersec): `docs/protocol.md`
-- E2EE Boot & Runtime Utilities: `docs/runtime.md`
+- E2EE Boot Utilities & Flowersec Proxy Integration: `docs/runtime.md`
 
 ### Advanced: manual assembly (Provider + Registry + Shell)
 

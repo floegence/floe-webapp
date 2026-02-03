@@ -52,10 +52,9 @@ jobs:
           PROTOCOL_VERSION="$(node --input-type=module -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('packages/protocol/package.json', 'utf8')).version);")"
           INIT_VERSION="$(node --input-type=module -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('packages/init/package.json', 'utf8')).version);")"
           BOOT_VERSION="$(node --input-type=module -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('packages/boot/package.json', 'utf8')).version);")"
-          RUNTIME_VERSION="$(node --input-type=module -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('packages/runtime/package.json', 'utf8')).version);")"
 
-          if [ "${TAG_VERSION}" != "${CORE_VERSION}" ] || [ "${TAG_VERSION}" != "${PROTOCOL_VERSION}" ] || [ "${TAG_VERSION}" != "${INIT_VERSION}" ] || [ "${TAG_VERSION}" != "${BOOT_VERSION}" ] || [ "${TAG_VERSION}" != "${RUNTIME_VERSION}" ]; then
-            echo "Tag version ${TAG_VERSION} must match package versions (core=${CORE_VERSION}, protocol=${PROTOCOL_VERSION}, init=${INIT_VERSION}, boot=${BOOT_VERSION}, runtime=${RUNTIME_VERSION})"
+          if [ "${TAG_VERSION}" != "${CORE_VERSION}" ] || [ "${TAG_VERSION}" != "${PROTOCOL_VERSION}" ] || [ "${TAG_VERSION}" != "${INIT_VERSION}" ] || [ "${TAG_VERSION}" != "${BOOT_VERSION}" ]; then
+            echo "Tag version ${TAG_VERSION} must match package versions (core=${CORE_VERSION}, protocol=${PROTOCOL_VERSION}, init=${INIT_VERSION}, boot=${BOOT_VERSION})"
             exit 1
           fi
 
@@ -118,17 +117,6 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Check if @floegence/floe-webapp-runtime is already published
-        id: runtime_exists
-        run: |
-          set -euo pipefail
-          VERSION="$(node --input-type=module -e "import fs from 'node:fs'; console.log(JSON.parse(fs.readFileSync('packages/runtime/package.json', 'utf8')).version);")"
-          if npm view "@floegence/floe-webapp-runtime@${VERSION}" version >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Publish @floegence/floe-webapp-core (npm Trusted Publisher)
         if: steps.core_exists.outputs.exists != 'true'
         working-directory: packages/core
@@ -147,11 +135,6 @@ jobs:
       - name: Publish @floegence/floe-webapp-boot (npm Trusted Publisher)
         if: steps.boot_exists.outputs.exists != 'true'
         working-directory: packages/boot
-        run: npm publish --access public
-
-      - name: Publish @floegence/floe-webapp-runtime (npm Trusted Publisher)
-        if: steps.runtime_exists.outputs.exists != 'true'
-        working-directory: packages/runtime
         run: npm publish --access public
 
       - name: Create GitHub Release

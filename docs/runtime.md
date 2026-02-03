@@ -1,11 +1,14 @@
-# E2EE Boot & Runtime Utilities
+# E2EE Boot Utilities & Flowersec Proxy Integration
 
-This repo provides two optional helper packages for Flowersec E2EE deployments (multi-window + sandbox + Service Worker):
+This repo provides an optional helper package for bootstrapping Flowersec E2EE deployments (multi-window + sandbox flows):
 
 - `@floegence/floe-webapp-boot`: small browser-side helpers for bootstrapping (hash/sessionStorage/postMessage).
-- `@floegence/floe-webapp-runtime`: runtime helpers for Flowersec proxy mode and Service Worker control.
 
-These packages are intentionally **not** part of `@floegence/floe-webapp-core` (UI framework). They are infrastructure glue you can reuse in Portal / Env App style shells.
+Best practice:
+
+- Keep low-level Flowersec building blocks in `@floegence/flowersec-core` (source of truth).
+- Keep Floe Webapp packages focused on UI/protocol glue (providers, contracts, typed RPC).
+- For proxy runtime mode (Service Worker + HTML injection + WS patch), integrate directly via `@floegence/flowersec-core/proxy`.
 
 ---
 
@@ -58,40 +61,23 @@ const init = await waitForMessage({
 
 ---
 
-## @floegence/floe-webapp-runtime
+## Flowersec proxy runtime (recommended entrypoints)
 
-Entry: `packages/runtime/src/index.ts`
-
-Exports:
-
-- `startProxyRuntime({ client, globalName? })`
-- `registerServiceWorkerAndEnsureControl({ scriptUrl, scope?, repairQueryKey?, maxRepairAttempts?, controllerTimeoutMs? })`
-
-### startProxyRuntime
-
-Use this when your app runs under Flowersec proxy mode.
+Use `@floegence/flowersec-core` directly:
 
 ```ts
-import { startProxyRuntime } from '@floegence/floe-webapp-runtime';
+import { createProxyRuntime, createProxyServiceWorkerScript, registerServiceWorkerAndEnsureControl } from '@floegence/flowersec-core/proxy';
 
 // `client` is a Flowersec Client (e.g. from `useProtocol().client()`).
-const runtime = startProxyRuntime({ client, globalName: '__floeRuntime' });
-```
+const runtime = createProxyRuntime({ client });
+(window as any).__flowersecProxyRuntime = runtime;
 
-### registerServiceWorkerAndEnsureControl
-
-This helper registers a Service Worker and ensures the current page load is controlled.
-In DevTools hard reload flows, it can perform a limited "soft navigation" repair when `repairQueryKey` is provided.
-
-```ts
-import { registerServiceWorkerAndEnsureControl } from '@floegence/floe-webapp-runtime';
-
-await registerServiceWorkerAndEnsureControl({
-  scriptUrl: '/service-worker.js',
-  scope: '/',
-  repairQueryKey: '_floe_sw_repair',
-  maxRepairAttempts: 2,
-  controllerTimeoutMs: 2000,
+// Serve this script at "/_proxy/sw.js" (same-origin).
+const swScript = createProxyServiceWorkerScript({
+  sameOriginOnly: true,
+  passthrough: { prefixes: ['/assets/', '/api/'], paths: ['/_proxy/sw.js'] },
+  injectHTML: { mode: 'external_script', scriptUrl: '/_proxy/inject.js', excludePathPrefixes: ['/_proxy/'] },
 });
-```
 
+await registerServiceWorkerAndEnsureControl({ scriptUrl: '/_proxy/sw.js', scope: '/' });
+```

@@ -59,6 +59,11 @@ Type reference:
 
 - `packages/protocol/src/client.tsx` (`ConnectConfig`, `AutoReconnectConfig`)
 
+Best practice:
+
+- `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
+- For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
+
 ### Tunnel mode (controlplane)
 
 ```ts

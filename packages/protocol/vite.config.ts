@@ -13,7 +13,13 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['solid-js', 'solid-js/store', '@floegence/flowersec-core', '@floegence/flowersec-core/browser'],
+      external: [
+        'solid-js',
+        'solid-js/store',
+        '@floegence/flowersec-core',
+        '@floegence/flowersec-core/browser',
+        '@floegence/flowersec-core/reconnect',
+      ],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',
