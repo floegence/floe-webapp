@@ -57,8 +57,14 @@ export interface ChatContextValue {
   // Streaming updates
   handleStreamEvent: (event: StreamEvent) => void;
 
+  // Attachment upload (ChatInput uses this to decide between real upload and object URL fallback).
+  uploadAttachment: (file: File) => Promise<string>;
+
   // Tool call collapse
   toggleToolCollapse: (messageId: string, toolId: string) => void;
+
+  // Tool approval
+  approveToolCall: (messageId: string, toolId: string, approved: boolean) => void;
 
   // Height cache
   heightCache: Map<string, number>;
@@ -225,6 +231,19 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
         break;
       }
 
+      case 'block-set': {
+        updateMessage(event.messageId, (msg) => {
+          const blocks = [...msg.blocks];
+          if (event.blockIndex === blocks.length) {
+            blocks.push(event.block);
+          } else if (event.blockIndex >= 0 && event.blockIndex < blocks.length) {
+            blocks[event.blockIndex] = event.block;
+          }
+          return { ...msg, blocks };
+        });
+        break;
+      }
+
       case 'block-end': {
         // Block finished; optional post-processing can run here (e.g. highlighting).
         break;
@@ -256,6 +275,15 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     if (!rafId) {
       rafId = requestAnimationFrame(flushStreamBuffer);
     }
+  };
+
+  const uploadAttachment = async (file: File): Promise<string> => {
+    const onUploadAttachment = props.callbacks?.onUploadAttachment;
+    if (onUploadAttachment) {
+      return await onUploadAttachment(file);
+    }
+    // Fallback for local demos/previews.
+    return URL.createObjectURL(file);
   };
 
   // ============ User Actions ============
@@ -342,6 +370,33 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     }));
   };
 
+  // ============ Tool Approval ============
+
+  const approveToolCall = (messageId: string, toolId: string, approved: boolean) => {
+    // UI-first: update the message store synchronously so users get immediate feedback.
+    updateMessage(messageId, (msg) => ({
+      ...msg,
+      blocks: msg.blocks.map((block) => {
+        if (block.type !== 'tool-call' || block.toolId !== toolId) return block;
+        if (block.requiresApproval !== true || block.approvalState !== 'required') return block;
+
+        if (approved) {
+          return { ...block, approvalState: 'approved', status: 'running' };
+        }
+        return { ...block, approvalState: 'rejected', status: 'error', error: block.error || 'Rejected by user' };
+      }),
+    }));
+
+    const onToolApproval = props.callbacks?.onToolApproval;
+    if (!onToolApproval) return;
+
+    deferNonBlocking(() => {
+      void Promise.resolve(onToolApproval(messageId, toolId, approved)).catch((error) => {
+        console.error('Failed to approve tool call:', error);
+      });
+    });
+  };
+
   // ============ Height Cache ============
 
   const setMessageHeight = (id: string, height: number) => {
@@ -390,7 +445,9 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     clearMessages,
     setMessages,
     handleStreamEvent,
+    uploadAttachment,
     toggleToolCollapse,
+    approveToolCall,
     heightCache,
     setMessageHeight,
     getMessageHeight,

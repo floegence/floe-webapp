@@ -91,8 +91,34 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
 
         <span class="chat-tool-name">{props.block.toolName}</span>
 
-        {/* Show summary when collapsed */}
-        <Show when={isCollapsed()}>
+        {/* Approval actions (high-risk tools) */}
+        <Show when={props.block.requiresApproval === true && props.block.approvalState === 'required'}>
+          <div class="chat-tool-approval-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              class="chat-tool-approval-btn chat-tool-approval-btn-approve"
+              onClick={(e) => {
+                e.stopPropagation();
+                ctx.approveToolCall(props.messageId, props.block.toolId, true);
+              }}
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              class="chat-tool-approval-btn chat-tool-approval-btn-reject"
+              onClick={(e) => {
+                e.stopPropagation();
+                ctx.approveToolCall(props.messageId, props.block.toolId, false);
+              }}
+            >
+              Reject
+            </button>
+          </div>
+        </Show>
+
+        {/* Show summary when collapsed (avoid cluttering the header when awaiting approval). */}
+        <Show when={isCollapsed() && !(props.block.requiresApproval === true && props.block.approvalState === 'required')}>
           <span class="chat-tool-summary">{getSummary()}</span>
         </Show>
       </div>

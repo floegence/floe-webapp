@@ -22,11 +22,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
     maxSize: ctx.config().maxAttachmentSize,
     acceptedTypes: ctx.config().acceptedFileTypes,
     onUpload: ctx.config().allowAttachments
-      ? async (file) => {
-          // Placeholder upload handler:
-          // return an object URL for preview/testing.
-          return URL.createObjectURL(file);
-        }
+      ? (file) => ctx.uploadAttachment(file)
       : undefined,
   });
 
