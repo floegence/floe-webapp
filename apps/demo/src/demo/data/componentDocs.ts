@@ -1563,6 +1563,108 @@ function Example() {
 };
 
 // ===========================
+// Directory Input Component
+// ===========================
+export const directoryInputDoc: ComponentDoc = {
+  name: 'DirectoryInput',
+  description: 'Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked.',
+  props: [
+    {
+      name: 'value',
+      type: 'string',
+      description: 'Currently selected directory path.',
+    },
+    {
+      name: 'onChange',
+      type: '(path: string) => void',
+      description: 'Callback when directory is selected.',
+    },
+    {
+      name: 'files',
+      type: 'FileItem[]',
+      required: true,
+      description: 'File tree data for the picker.',
+    },
+    {
+      name: 'onExpand',
+      type: '(path: string) => void',
+      description: 'Callback to load directory contents (for lazy loading).',
+    },
+    {
+      name: 'placeholder',
+      type: 'string',
+      default: "'Select a directory...'",
+      description: 'Placeholder text when no directory is selected.',
+    },
+    {
+      name: 'homePath',
+      type: 'string',
+      description: 'Optional home directory path for display shortening.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Input size variant.',
+    },
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Whether the input is disabled.',
+    },
+    {
+      name: 'error',
+      type: 'string',
+      description: 'Error message to display.',
+    },
+    {
+      name: 'helperText',
+      type: 'string',
+      description: 'Helper text displayed below the input.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Forms requiring directory path input',
+      'Project configuration dialogs',
+      'Workspace selection in settings',
+    ],
+    bestPractices: [
+      'Use with FormField for consistent form layout',
+      'Provide onExpand for lazy loading large file trees',
+      'Show helpful placeholder text',
+    ],
+    avoid: [
+      'Using for file selection (use a file input instead)',
+      'Complex multi-directory selections',
+    ],
+  },
+  examples: [
+    {
+      title: 'DirectoryInput',
+      code: `import { DirectoryInput } from '@floegence/floe-webapp-core';
+
+function Example() {
+  const [path, setPath] = createSignal('');
+  const [files, setFiles] = createSignal<FileItem[]>([]);
+
+  return (
+    <DirectoryInput
+      value={path()}
+      onChange={setPath}
+      files={files()}
+      onExpand={(dir) => loadDirectory(dir)}
+      placeholder="Select project directory..."
+      helperText="Choose the root directory for your project."
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
 // File Save Picker Component
 // ===========================
 export const fileSavePickerDoc: ComponentDoc = {

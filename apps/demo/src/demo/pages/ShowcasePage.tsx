@@ -21,6 +21,7 @@ import {
   quoteBlockDoc,
   // Picker components
   directoryPickerDoc,
+  directoryInputDoc,
   fileSavePickerDoc,
   fileBrowserDoc,
   // Window components
@@ -51,6 +52,7 @@ import {
   ConfirmDialog,
   Dialog,
   DirectoryPicker,
+  DirectoryInput,
   Dropdown,
   type DropdownItem,
   FileBrowser,
@@ -436,6 +438,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [floatingWindowOpen, setFloatingWindowOpen] = createSignal(false);
   const [directoryPickerOpen, setDirectoryPickerOpen] = createSignal(false);
   const [fileSavePickerOpen, setFileSavePickerOpen] = createSignal(false);
+  const [directoryInputValue, setDirectoryInputValue] = createSignal('');
 
   const [dropdownValue, setDropdownValue] = createSignal('profile');
   const dropdownItems: DropdownItem[] = [
@@ -2005,6 +2008,68 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={directoryPickerDoc.props} componentName="DirectoryPicker" />
+      </div>
+
+      {/* DirectoryInput Section */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-directory-input"
+          title="Directory Input"
+          description="Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-4">
+            <div class="flex flex-col gap-3 max-w-md">
+              <DirectoryInput
+                value={directoryInputValue()}
+                onChange={setDirectoryInputValue}
+                files={demoFileBrowserData}
+                placeholder="Select project directory..."
+                helperText="Choose the root directory for your project."
+              />
+              <DirectoryInput
+                value={directoryInputValue()}
+                onChange={setDirectoryInputValue}
+                files={demoFileBrowserData}
+                size="sm"
+                placeholder="Small size"
+              />
+              <DirectoryInput
+                value={directoryInputValue()}
+                onChange={setDirectoryInputValue}
+                files={demoFileBrowserData}
+                size="lg"
+                placeholder="Large size"
+              />
+              <DirectoryInput
+                files={demoFileBrowserData}
+                disabled
+                placeholder="Disabled input"
+              />
+              <DirectoryInput
+                files={demoFileBrowserData}
+                error="Directory is required"
+                placeholder="With error state"
+              />
+            </div>
+            <p class="text-[11px] text-muted-foreground">
+              Selected: {directoryInputValue() || '(none)'}
+            </p>
+          </PanelContent>
+        </Panel>
+
+        {/* DirectoryInput Documentation */}
+        <UsageGuidelines
+          whenToUse={directoryInputDoc.usage.whenToUse}
+          bestPractices={directoryInputDoc.usage.bestPractices}
+          avoid={directoryInputDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="DirectoryInput.tsx"
+          code={directoryInputDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={directoryInputDoc.props} componentName="DirectoryInput" />
       </div>
 
       <div class="space-y-4">

@@ -41,6 +41,7 @@ export {
 } from './Card';
 export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';
 export { DirectoryPicker, type DirectoryPickerProps } from './DirectoryPicker';
+export { DirectoryInput, type DirectoryInputProps, type DirectoryInputSize } from './DirectoryInput';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';
 export { type BasePickerProps } from './picker/PickerBase';
 export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';
