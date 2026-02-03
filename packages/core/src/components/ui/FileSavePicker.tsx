@@ -44,6 +44,8 @@ export function FileSavePicker(props: FileSavePickerProps) {
     files: () => props.files,
     // eslint-disable-next-line solid/reactivity -- filter is a static callback
     filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
+    // eslint-disable-next-line solid/reactivity -- onExpand is a static callback
+    onExpand: props.onExpand,
     homeLabel: () => props.homeLabel,
     homePath: () => props.homePath,
     onReset: () => {

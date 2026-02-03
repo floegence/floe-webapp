@@ -46,6 +46,12 @@ export interface BasePickerProps {
    * When provided, a "New Folder" button is shown.
    */
   onCreateFolder?: (parentPath: string, name: string) => Promise<void>;
+  /**
+   * Callback when user expands a directory.
+   * Use this to dynamically load children for the expanded directory.
+   * The path parameter is the internal tree path (not the display path).
+   */
+  onExpand?: (path: string) => void;
   /** Filter which directories are selectable (return false to grey-out) */
   filter?: (item: FileItem) => boolean;
   /** Label for the home/root directory (default: 'Root') */
@@ -120,6 +126,11 @@ export interface UsePickerTreeOptions {
   filter?: (item: FileItem) => boolean;
   /** Additional reset logic when the dialog opens */
   onReset?: (initialPath: string) => void;
+  /**
+   * Callback when user expands a directory.
+   * Use this to dynamically load children for the expanded directory.
+   */
+  onExpand?: (path: string) => void;
   /** Label for the home/root directory in tree and breadcrumb (default: 'Root'). Supports accessor for reactivity. */
   homeLabel?: string | Accessor<string | undefined>;
   /**
@@ -243,12 +254,17 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   };
 
   const toggleExpand = (path: string) => {
+    const wasExpanded = expandedPaths().has(path);
     setExpandedPaths((prev) => {
       const next = new Set(prev);
       if (next.has(path)) next.delete(path);
       else next.add(path);
       return next;
     });
+    // Call onExpand callback when expanding (not collapsing)
+    if (!wasExpanded) {
+      opts.onExpand?.(path);
+    }
   };
 
   const handleSelectFolder = (item: FileItem) => {
