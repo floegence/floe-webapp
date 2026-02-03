@@ -61,15 +61,15 @@ export function DragPreview() {
           <div
             class={cn(
               'flex flex-col gap-1 p-2.5 rounded-lg',
-              'bg-popover/95 backdrop-blur-sm border border-border',
-              'shadow-xl shadow-black/10',
+              'bg-card border border-border',
+              'shadow-md',
               'min-w-[150px] max-w-[220px]',
               // Entrance animation
               'animate-in fade-in zoom-in-95 duration-150',
               // Visual feedback for valid/invalid drop with smooth transition
               'transition-[border-color,box-shadow] duration-150',
-              hasDropTarget() && isValidDrop() && 'border-primary shadow-primary/20',
-              hasDropTarget() && !isValidDrop() && 'border-destructive shadow-destructive/20'
+              hasDropTarget() && isValidDrop() && 'border-success/60',
+              hasDropTarget() && !isValidDrop() && 'border-error/60'
             )}
           >
             {/* Item list */}
@@ -95,9 +95,9 @@ export function DragPreview() {
             <Show when={hasDropTarget()}>
               <div
                 class={cn(
-                  'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border/50 text-[11px] font-medium',
+                  'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
                   'transition-colors duration-150',
-                  isValidDrop() ? 'text-primary' : 'text-destructive'
+                  isValidDrop() ? 'text-success' : 'text-error'
                 )}
               >
                 <Show
@@ -116,17 +116,17 @@ export function DragPreview() {
             </Show>
           </div>
 
-          {/* Item count badge with pulse animation */}
+          {/* Item count badge */}
           <Show when={draggedItems().length > 1}>
             <div
               class={cn(
                 'absolute -top-2 -right-2',
-                'min-w-[20px] h-5 px-1 rounded-full',
-                'bg-primary text-primary-foreground',
+                'min-w-[20px] h-5 px-1.5 rounded-full',
+                'bg-foreground text-background',
                 'flex items-center justify-center',
                 'text-[10px] font-semibold',
-                'shadow-lg shadow-primary/30',
-                // Subtle pulse on first render
+                'shadow-sm',
+                // Entrance animation
                 'animate-in zoom-in-50 duration-200'
               )}
             >

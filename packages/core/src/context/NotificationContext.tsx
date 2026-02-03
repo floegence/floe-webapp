@@ -1,4 +1,4 @@
-import { For, Show, onCleanup, type Accessor } from 'solid-js';
+import { For, Show, onCleanup, type Accessor, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
 import { cn } from '../utils/cn';
@@ -125,23 +125,50 @@ interface NotificationToastProps {
 
 function NotificationToast(props: NotificationToastProps) {
   const typeStyles: Record<NotificationType, string> = {
-    info: 'border-info/50 bg-info/10',
-    success: 'border-success/50 bg-success/10',
-    warning: 'border-warning/50 bg-warning/10',
-    error: 'border-error/50 bg-error/10',
+    info: 'border-l-info',
+    success: 'border-l-success',
+    warning: 'border-l-warning',
+    error: 'border-l-error',
+  };
+
+  const typeIcons: Record<NotificationType, () => JSX.Element> = {
+    info: () => (
+      <svg class="w-4 h-4 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4M12 8h.01" />
+      </svg>
+    ),
+    success: () => (
+      <svg class="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    ),
+    warning: () => (
+      <svg class="w-4 h-4 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    ),
+    error: () => (
+      <svg class="w-4 h-4 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <path stroke-linecap="round" d="M15 9l-6 6M9 9l6 6" />
+      </svg>
+    ),
   };
 
   return (
     <div
       class={cn(
-        'animate-in slide-in-from-right fade-in',
-        'rounded-lg border p-4 shadow-lg backdrop-blur-sm',
+        'animate-in slide-in-from-right fade-in duration-200',
+        'rounded-lg border border-border border-l-[3px] p-3.5',
+        'shadow-md',
         'bg-card text-card-foreground',
         typeStyles[props.notification.type]
       )}
       role="alert"
     >
       <div class="flex items-start gap-3">
+        <span class="flex-shrink-0 mt-0.5">{typeIcons[props.notification.type]()}</span>
         <div class="flex-1 min-w-0">
           <p class="font-medium text-sm">{props.notification.title}</p>
           <Show when={props.notification.message}>
@@ -150,7 +177,7 @@ function NotificationToast(props: NotificationToastProps) {
           <Show when={props.notification.action}>
             <button
               type="button"
-              class="mt-2 text-sm font-medium text-primary hover:underline"
+              class="mt-2 text-sm font-medium text-foreground hover:underline"
               onClick={() => props.notification.action?.onClick()}
             >
               {props.notification.action!.label}
@@ -159,12 +186,12 @@ function NotificationToast(props: NotificationToastProps) {
         </div>
         <button
           type="button"
-          class="text-muted-foreground hover:text-foreground transition-colors"
+          class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
           onClick={() => props.onDismiss()}
           aria-label="Dismiss"
         >
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
