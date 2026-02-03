@@ -613,6 +613,8 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
     () => props.item.children?.filter((c) => c.type === 'folder') ?? []
   );
   const hasSubfolders = () => subfolders().length > 0;
+  // For lazy loading: always show expand arrow for folders (they might have children not yet loaded)
+  const showExpandArrow = () => props.item.type === 'folder';
 
   const handleChevronClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -635,7 +637,7 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
         style={{ 'padding-left': `${4 + props.depth * 14}px` }}
       >
         <Show
-          when={hasSubfolders()}
+          when={showExpandArrow()}
           fallback={<span class="flex-shrink-0 w-4 h-4" />}
         >
           <button
