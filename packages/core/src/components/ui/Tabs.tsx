@@ -158,8 +158,8 @@ export function Tabs(props: TabsProps) {
   createEffect(() => {
     if (!scrollContainerRef) return;
 
-    // Initial check
-    updateScrollState();
+    // Initial check: defer until after paint to avoid forced reflow during view switches.
+    deferAfterPaint(updateScrollState);
 
     // Listen for scroll events
     const handleScroll = () => scheduleUpdateScrollState();
