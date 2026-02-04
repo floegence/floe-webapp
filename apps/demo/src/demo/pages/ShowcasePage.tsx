@@ -1417,7 +1417,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <FormSection title="Account Information" description="Create your account credentials">
                 <FormField>
                   <FormLabel required>Email</FormLabel>
-                  <Input type="email" placeholder="you@example.com" />
+                  <Input type="email" placeholder="you@example.com" autocomplete="email" />
                   <FormDescription>We'll never share your email with anyone.</FormDescription>
                 </FormField>
 
@@ -1469,7 +1469,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
                 <FormField>
                   <FormLabel required>Email</FormLabel>
-                  <Input type="email" value="invalid-email" class="border-error" />
+                  <Input type="email" value="invalid-email" class="border-error" autocomplete="email" />
                   <FormMessage error="Please enter a valid email address" />
                 </FormField>
 
