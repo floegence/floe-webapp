@@ -47,11 +47,16 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` will:
+`pnpm dev` will start the demo dev server in workspace mode:
 
-- Build `@floegence/floe-webapp-core` and `@floegence/floe-webapp-protocol` into `dist/`
-- Start them in watch mode
-- Start the demo app dev server (`apps/demo`)
+- The demo imports `packages/*` sources directly (fast startup + proper HMR, no dist rebuild loops)
+- Dist rebuilds (e.g. `make check`) won't spam HMR
+
+If you want to emulate downstream consumption (demo imports packages via `dist/` outputs), run:
+
+```bash
+pnpm dev:dist
+```
 
 The demo uses the VSCode-style Shell layout from `@floegence/floe-webapp-core`:
 

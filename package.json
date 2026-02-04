@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:dist": "node scripts/dev.mjs --dist",
     "build": "pnpm -r build",
     "build:demo": "pnpm --filter @floegence/floe-webapp-core build && pnpm --filter @floegence/floe-webapp-protocol build && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @floegence/floe-webapp-demo build",
     "verify": "node scripts/verify-dist.mjs",

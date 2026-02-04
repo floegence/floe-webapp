@@ -1,0 +1,18 @@
+/*
+ * Workspace-only Tailwind entry for Floe core.
+ *
+ * In this monorepo, we prefer importing core/protocol source files directly in
+ * dev for fast startup and proper HMR (no dist rebuild loops).
+ *
+ * This file is wired via a Vite alias in `apps/demo/vite.config.ts` (serve
+ * only). Production build still uses `@floegence/floe-webapp-core/tailwind`.
+ */
+
+/* Scan core sources so Tailwind utilities used by core components are generated. */
+@source '../../../packages/core/src/**/*.{ts,tsx}';
+
+/* Bring in Floe tokens + component CSS (Tailwind v4 input CSS). */
+@import '../../../packages/core/src/styles/floe.css';
+@import '../../../packages/core/src/components/chat/styles/chat.css';
+@import '../../../packages/core/src/components/ui/styles/ui.css';
+

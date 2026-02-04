@@ -38,8 +38,11 @@ npx @floegence/floe-webapp-init my-app --template full
 # Install dependencies
 pnpm install
 
-# Start dev (builds core/protocol first, then starts watchers + demo)
+# Start dev (workspace mode: demo imports packages/* sources directly for instant HMR)
 pnpm dev
+
+# Optional: dist mode (demo consumes packages via dist outputs + watch rebuild)
+pnpm dev:dist
 
 # Run local CI (lint + typecheck + test + build + verify)
 make check

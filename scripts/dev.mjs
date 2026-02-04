@@ -24,15 +24,32 @@ function runOnce(command, args) {
 // This prevents confusing build-time missing-module errors when node_modules is stale.
 await runOnce('pnpm', ['install', '--frozen-lockfile']);
 
-await Promise.all([
-  runOnce('pnpm', ['--filter', '@floegence/floe-webapp-core', 'build']),
-  runOnce('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'build']),
-]);
+const useDist = process.argv.includes('--dist');
+
+if (useDist) {
+  // Dist mode: demo consumes packages via dist outputs (same shape as downstream apps).
+  // Keep dist outputs in watch mode (core/protocol dev scripts).
+  await Promise.all([
+    runOnce('pnpm', ['--filter', '@floegence/floe-webapp-core', 'build']),
+    runOnce('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'build']),
+  ]);
+}
 
 const children = [
-  run('pnpm', ['--filter', '@floegence/floe-webapp-core', 'dev']),
-  run('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'dev']),
-  run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev']),
+  ...(useDist
+    ? [
+        run('pnpm', ['--filter', '@floegence/floe-webapp-core', 'dev']),
+        run('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'dev']),
+        run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev'], {
+          env: { ...process.env, FLOE_DEMO_DEV_MODE: 'dist' },
+        }),
+      ]
+    : [
+        // Workspace mode (default): demo imports packages/* sources directly for instant HMR.
+        run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev'], {
+          env: { ...process.env, FLOE_DEMO_DEV_MODE: 'workspace' },
+        }),
+      ]),
 ];
 
 const shutdown = (signal) => {
