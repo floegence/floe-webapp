@@ -1,4 +1,4 @@
-import { For, Show, untrack, createMemo, createSignal } from 'solid-js';
+import { For, Show, untrack, createMemo, createSignal, onCleanup } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -239,6 +239,11 @@ function FileGridItem(props: FileGridItemProps) {
     activePointerId = null;
     isDragMode = false;
   };
+
+  // If the tile is virtualized out or unmounted mid-gesture, always clean up.
+  onCleanup(() => {
+    stopDragOperation(false);
+  });
 
   const startDragOperation = (x: number, y: number) => {
     if (!props.enableDragDrop || !props.dragContext || isDragMode) return;
