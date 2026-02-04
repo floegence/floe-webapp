@@ -3621,3 +3621,77 @@ export const MagicIcon = (props: IconProps = {}) => (
     <path d="M5 3v4M3 5h4M19 17v4M17 19h4" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" />
   </svg>
 );
+
+// Paste outline icon
+export const Paste = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
+    <path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z" />
+    <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2" />
+    <path d="M21 14H11" />
+    <path d="m15 10-4 4 4 4" />
+  </svg>
+);
+
+// CopyCheck (copy success) outline icon
+export const CopyCheck = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
+    <path d="m12 15 2 2 4-4" />
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </svg>
+);
+
+// Paste colored icon (blue/info)
+export const PasteIcon = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    class={props.class}
+  >
+    <path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z" fill="var(--info)" opacity="0.3" />
+    <path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z" fill="none" stroke="var(--info)" stroke-width="2" />
+    <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M21 14H11" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" />
+    <path d="m15 10-4 4 4 4" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+);
+
+// CopyCheck (copy success) colored icon (green/success)
+export const CopyCheckIcon = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    class={props.class}
+  >
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" fill="var(--success)" opacity="0.2" />
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" fill="none" stroke="var(--success)" stroke-width="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="m12 15 2 2 4-4" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+);
