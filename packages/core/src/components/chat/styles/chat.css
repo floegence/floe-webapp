@@ -1442,6 +1442,14 @@ pre.chat-md-code-block code {
   line-height: 1.5;
 }
 
+/* Override global :focus-visible box-shadow for textarea.
+   The container already handles focus indication via chat-input-container-focused. */
+.chat-input-textarea:focus,
+.chat-input-textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .chat-input-textarea::placeholder {
   color: var(--muted-foreground);
 }
