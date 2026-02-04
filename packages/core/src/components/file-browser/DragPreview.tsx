@@ -1,5 +1,6 @@
-import { Show, For, createMemo, createSignal, createEffect, onCleanup } from 'solid-js';
+import { Show, For, createMemo, createSignal, createEffect } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
+import { Motion, Presence } from 'solid-motionone';
 import { cn } from '../../utils/cn';
 import { useFileBrowserDrag } from '../../context/FileBrowserDragContext';
 import { FolderIcon, getFileIcon } from './FileIcons';
@@ -13,13 +14,13 @@ const MAX_PREVIEW_ITEMS = 3;
 /**
  * Offset from cursor position
  */
-const CURSOR_OFFSET_X = 16;
-const CURSOR_OFFSET_Y = 16;
+const CURSOR_OFFSET_X = 4;
+const CURSOR_OFFSET_Y = 4;
 
 /**
- * Duration of the drag end animation in milliseconds
+ * Duration of the drag end animation in seconds
  */
-const DRAG_END_ANIMATION_DURATION_MS = 200;
+const DRAG_END_ANIMATION_DURATION = 0.2;
 
 /**
  * Frozen state captured when drag ends, before Context resets
@@ -34,12 +35,8 @@ interface FrozenDragState {
 /**
  * Floating preview that follows the cursor during drag operations.
  * Shows dragged items with a count badge for multiple items.
- * Uses CSS transform for GPU-accelerated smooth positioning.
+ * Uses Motion library for smooth animations.
  * Includes fly-to-target animation when dropping onto a valid target.
- *
- * IMPORTANT: This component manages its own visibility independently from
- * Context state. The Context resets after 200ms, but we freeze all needed
- * data and control our own animation timeline to ensure smooth exit animation.
  */
 export function DragPreview() {
   const dragContext = useFileBrowserDrag();
@@ -48,34 +45,29 @@ export function DragPreview() {
   const isDragging = () => dragState()?.isDragging ?? false;
   const isDragEnding = () => dragState()?.isDragEnding ?? false;
 
-  // Component's own visibility state - independent from Context
-  const [isVisible, setIsVisible] = createSignal(false);
-
-  // Animation phase: 'idle' | 'prepare' | 'animate'
-  const [animationPhase, setAnimationPhase] = createSignal<'idle' | 'prepare' | 'animate'>('idle');
-
   // Frozen state captured when drag ends (preserved even after Context resets)
   const [frozenState, setFrozenState] = createSignal<FrozenDragState | null>(null);
 
-  // Track previous isDragEnding to detect the moment it becomes true
+  // Track if we're in exit animation phase
+  const [isExiting, setIsExiting] = createSignal(false);
+
+  // Track previous isDragEnding to detect transitions
   let prevIsDragEnding = false;
 
   createEffect(() => {
     const dragging = isDragging();
     const ending = isDragEnding();
 
-    // Drag started
+    // Drag started - clear previous frozen state
     if (dragging && !ending && !prevIsDragEnding) {
-      setIsVisible(true);
-      setAnimationPhase('idle');
       setFrozenState(null);
+      setIsExiting(false);
     }
 
-    // Drag ending just started (transition from not-ending to ending)
+    // Drag ending just started - freeze state for exit animation
     if (ending && !prevIsDragEnding) {
       const state = dragState();
       if (state && state.draggedItems.length > 0) {
-        // Freeze all state NOW before Context resets it
         const pos = state.pointerPosition;
         setFrozenState({
           items: state.draggedItems.map((d) => d.item),
@@ -83,41 +75,15 @@ export function DragPreview() {
           target: state.endAnimationTarget,
           committed: state.isDropCommitted,
         });
-
-        // Phase 1: prepare - add transition, stay at current position
-        setAnimationPhase('prepare');
-
-        // Phase 2: animate - next frame, move to target
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setAnimationPhase('animate');
-
-            // Phase 3: complete - hide component after animation
-            setTimeout(() => {
-              setIsVisible(false);
-              setAnimationPhase('idle');
-              setFrozenState(null);
-            }, DRAG_END_ANIMATION_DURATION_MS);
-          });
-        });
+        setIsExiting(true);
       }
-    }
-
-    // Drag cancelled (not ending, not dragging, no animation running)
-    if (!dragging && !ending && animationPhase() === 'idle') {
-      setIsVisible(false);
-      setFrozenState(null);
     }
 
     prevIsDragEnding = ending;
   });
 
-  // Cleanup on unmount
-  onCleanup(() => {
-    setIsVisible(false);
-    setAnimationPhase('idle');
-    setFrozenState(null);
-  });
+  // Show preview when dragging or when in exit animation
+  const shouldShow = () => isDragging() || isDragEnding() || isExiting();
 
   // Display items: use frozen state during animation, live state during drag
   const displayItems = createMemo(() => {
@@ -142,25 +108,24 @@ export function DragPreview() {
     return total > MAX_PREVIEW_ITEMS ? total - MAX_PREVIEW_ITEMS : 0;
   });
 
-  // Transform position calculation
-  const transformPosition = createMemo(() => {
+  // Current position (frozen or live)
+  const currentPosition = createMemo(() => {
     const frozen = frozenState();
-    const phase = animationPhase();
-
-    // During animation, use frozen state
     if (frozen) {
-      if (phase === 'animate' && frozen.committed && frozen.target) {
-        // Fly to target
-        return frozen.target;
-      }
-      // Stay at frozen position (prepare phase or non-committed)
       return frozen.position;
     }
-
-    // Normal dragging: follow pointer
     const state = dragState();
     const pos = state?.pointerPosition ?? { x: 0, y: 0 };
     return { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y };
+  });
+
+  // Target position for exit animation (if committed to a drop target)
+  const exitPosition = createMemo(() => {
+    const frozen = frozenState();
+    if (frozen?.committed && frozen?.target) {
+      return frozen.target;
+    }
+    return currentPosition();
   });
 
   // Visual state helpers
@@ -173,106 +138,118 @@ export function DragPreview() {
     item.type === 'folder' ? FolderIcon : getFileIcon(item.extension);
 
   return (
-    <Show when={isVisible() && displayItems().length > 0}>
-      <Portal>
-        <div
-          class={cn(
-            'fixed top-0 left-0 pointer-events-none z-[9999]',
-            'will-change-transform'
-          )}
-          style={{
-            transform: `translate3d(${transformPosition().x}px, ${transformPosition().y}px, 0)`,
-            // Enable transition only during animation phases
-            transition:
-              animationPhase() !== 'idle'
-                ? `all ${DRAG_END_ANIMATION_DURATION_MS}ms ease-out`
-                : 'none',
-            // Apply exit styles in animate phase
-            opacity: animationPhase() === 'animate' ? 0 : 1,
-            scale: animationPhase() === 'animate' ? 0.75 : 1,
-          }}
-        >
-          {/* Preview card */}
-          <div
+    <Presence>
+      <Show when={shouldShow() && displayItems().length > 0}>
+        <Portal>
+          <Motion.div
             class={cn(
-              'flex flex-col gap-1 p-2.5 rounded-lg',
-              'bg-card border border-border',
-              'shadow-md',
-              'min-w-[150px] max-w-[220px]',
-              // Entrance animation (only when not animating exit)
-              !frozenState() && 'animate-in fade-in zoom-in-95 duration-150',
-              // Border transitions
-              'transition-[border-color,box-shadow] duration-150',
-              showDropIndicator() && isValidDrop() && 'border-success/60',
-              showDropIndicator() && !isValidDrop() && 'border-error/60',
-              // Committed state
-              frozenState() && isCommitted() && 'border-success/60'
+              'fixed top-0 left-0 pointer-events-none z-[9999]',
+              'will-change-transform'
             )}
+            initial={false}
+            animate={{
+              x: isExiting() ? exitPosition().x : currentPosition().x,
+              y: isExiting() ? exitPosition().y : currentPosition().y,
+              opacity: isExiting() ? 0 : 1,
+              scale: isExiting() ? 0.75 : 1,
+            }}
+            exit={{
+              opacity: 0,
+              scale: 0.75,
+            }}
+            transition={{
+              duration: isExiting() ? DRAG_END_ANIMATION_DURATION : 0,
+              easing: 'ease-out',
+            }}
+            onMotionComplete={() => {
+              if (isExiting()) {
+                setIsExiting(false);
+                setFrozenState(null);
+              }
+            }}
           >
-            {/* Item list */}
-            <For each={displayItems()}>
-              {(item) => (
-                <div class="flex items-center gap-2.5 text-xs text-foreground">
-                  <span class="flex-shrink-0 w-4 h-4">
-                    <Dynamic component={getIcon(item)} class="w-4 h-4" />
-                  </span>
-                  <span class="truncate font-medium">{item.name}</span>
-                </div>
-              )}
-            </For>
-
-            {/* "and X more" indicator */}
-            <Show when={remainingCount() > 0}>
-              <div class="text-[10px] text-muted-foreground pl-6">
-                and {remainingCount()} more...
-              </div>
-            </Show>
-
-            {/* Drop status indicator */}
-            <Show when={showDropIndicator()}>
-              <div
-                class={cn(
-                  'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
-                  'transition-colors duration-150',
-                  isValidDrop() ? 'text-success' : 'text-error'
-                )}
-              >
-                <Show
-                  when={isValidDrop()}
-                  fallback={
-                    <>
-                      <InvalidDropIcon class="w-3.5 h-3.5" />
-                      <span>Cannot drop here</span>
-                    </>
-                  }
-                >
-                  <ValidDropIcon class="w-3.5 h-3.5" />
-                  <span>Drop to move</span>
-                </Show>
-              </div>
-            </Show>
-          </div>
-
-          {/* Item count badge */}
-          <Show when={totalItemCount() > 1}>
+            {/* Preview card */}
             <div
               class={cn(
-                'absolute -top-2 -right-2',
-                'min-w-[20px] h-5 px-1.5 rounded-full',
-                'bg-foreground text-background',
-                'flex items-center justify-center',
-                'text-[10px] font-semibold',
-                'shadow-sm',
-                // Entrance animation (only when not animating exit)
-                !frozenState() && 'animate-in zoom-in-50 duration-200'
+                'flex flex-col gap-1 p-2.5 rounded-lg',
+                'bg-card border border-border',
+                'shadow-md',
+                'min-w-[150px] max-w-[220px]',
+                // Entrance animation (only when not exiting)
+                !isExiting() && 'animate-in fade-in zoom-in-95 duration-150',
+                // Border transitions
+                'transition-[border-color,box-shadow] duration-150',
+                showDropIndicator() && isValidDrop() && 'border-success/60',
+                showDropIndicator() && !isValidDrop() && 'border-error/60',
+                // Committed state
+                isExiting() && isCommitted() && 'border-success/60'
               )}
             >
-              {totalItemCount()}
+              {/* Item list */}
+              <For each={displayItems()}>
+                {(item) => (
+                  <div class="flex items-center gap-2.5 text-xs text-foreground">
+                    <span class="flex-shrink-0 w-4 h-4">
+                      <Dynamic component={getIcon(item)} class="w-4 h-4" />
+                    </span>
+                    <span class="truncate font-medium">{item.name}</span>
+                  </div>
+                )}
+              </For>
+
+              {/* "and X more" indicator */}
+              <Show when={remainingCount() > 0}>
+                <div class="text-[10px] text-muted-foreground pl-6">
+                  and {remainingCount()} more...
+                </div>
+              </Show>
+
+              {/* Drop status indicator */}
+              <Show when={showDropIndicator()}>
+                <div
+                  class={cn(
+                    'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
+                    'transition-colors duration-150',
+                    isValidDrop() ? 'text-success' : 'text-error'
+                  )}
+                >
+                  <Show
+                    when={isValidDrop()}
+                    fallback={
+                      <>
+                        <InvalidDropIcon class="w-3.5 h-3.5" />
+                        <span>Cannot drop here</span>
+                      </>
+                    }
+                  >
+                    <ValidDropIcon class="w-3.5 h-3.5" />
+                    <span>Drop to move</span>
+                  </Show>
+                </div>
+              </Show>
             </div>
-          </Show>
-        </div>
-      </Portal>
-    </Show>
+
+            {/* Item count badge */}
+            <Show when={totalItemCount() > 1}>
+              <div
+                class={cn(
+                  'absolute -top-2 -right-2',
+                  'min-w-[20px] h-5 px-1.5 rounded-full',
+                  'bg-foreground text-background',
+                  'flex items-center justify-center',
+                  'text-[10px] font-semibold',
+                  'shadow-sm',
+                  // Entrance animation (only when not exiting)
+                  !isExiting() && 'animate-in zoom-in-50 duration-200'
+                )}
+              >
+                {totalItemCount()}
+              </div>
+            </Show>
+          </Motion.div>
+        </Portal>
+      </Show>
+    </Presence>
   );
 }
 
