@@ -1,5 +1,5 @@
-import { createSignal, type Component } from 'solid-js';
-import { useLayout, useNotification } from '@floegence/floe-webapp-core';
+import type { Component } from 'solid-js';
+import { useLayout, useNotification, useTheme } from '@floegence/floe-webapp-core';
 import { Launchpad, type LaunchpadItemData } from '@floegence/floe-webapp-core/launchpad';
 import { Bell, Files, GitBranch, Grid, Moon, Search, Settings, Sun, Terminal } from '@floegence/floe-webapp-core/icons';
 
@@ -9,9 +9,8 @@ export interface LaunchpadPageProps {
 }
 
 export function LaunchpadPage(props: LaunchpadPageProps) {
-  const layout = useLayout();
   const notifications = useNotification();
-  const [isOpen, setIsOpen] = createSignal(true);
+  const theme = useTheme();
 
   // Demo apps with various colors
   const demoApps: LaunchpadItemData[] = [
@@ -21,10 +20,6 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
       icon: Terminal,
       description: 'View all UI components',
       color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      onClick: () => {
-        layout.setSidebarActiveTab('showcase');
-        handleClose();
-      },
     },
     {
       id: 'files',
@@ -32,10 +27,6 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
       icon: Files,
       description: 'Browse project files',
       color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-      onClick: () => {
-        layout.setSidebarActiveTab('files');
-        handleClose();
-      },
     },
     {
       id: 'search',
@@ -43,10 +34,6 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
       icon: Search,
       description: 'Search the workspace',
       color: 'linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
-      onClick: () => {
-        layout.setSidebarActiveTab('search');
-        handleClose();
-      },
     },
     {
       id: 'settings',
@@ -54,10 +41,6 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
       icon: Settings,
       description: 'Configure preferences',
       color: 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)',
-      onClick: () => {
-        layout.setSidebarActiveTab('settings');
-        handleClose();
-      },
     },
     {
       id: 'notifications',
@@ -65,10 +48,6 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
       icon: Bell,
       description: 'View notifications',
       color: 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)',
-      onClick: () => {
-        notifications.info('Notifications', 'No new notifications');
-        handleClose();
-      },
     },
     {
       id: 'theme-light',
@@ -123,27 +102,47 @@ export function LaunchpadPage(props: LaunchpadPageProps) {
   ];
 
   const handleClose = () => {
-    setIsOpen(false);
     props.onClose?.();
   };
 
   const handleItemClick = (item: LaunchpadItemData) => {
-    notifications.success('Launched', `Opening ${item.name}`);
-    props.onNavigate?.(item.id);
+    if (item.id === 'showcase' || item.id === 'files' || item.id === 'search' || item.id === 'settings') {
+      notifications.success('Launched', `Opening ${item.name}`);
+      props.onNavigate?.(item.id);
+      return;
+    }
+
+    if (item.id === 'notifications') {
+      notifications.info('Notifications', 'No new notifications');
+      handleClose();
+      return;
+    }
+
+    if (item.id === 'theme-light') {
+      theme.setTheme('light');
+      notifications.success('Theme', 'Switched to light mode');
+      return;
+    }
+
+    if (item.id === 'theme-dark') {
+      theme.setTheme('dark');
+      notifications.success('Theme', 'Switched to dark mode');
+      return;
+    }
+
+    notifications.info('Not implemented', `${item.name} is a demo item`);
   };
 
   return (
     <div class="relative w-full h-full">
-      {isOpen() && (
-        <Launchpad
-          items={demoApps}
-          onItemClick={handleItemClick}
-          onClose={handleClose}
-          itemsPerPage={12}
-          columns={4}
-          showSearch={true}
-        />
-      )}
+      <Launchpad
+        items={demoApps}
+        onItemClick={handleItemClick}
+        onClose={handleClose}
+        itemsPerPage={12}
+        columns={4}
+        showSearch={true}
+      />
     </div>
   );
 }

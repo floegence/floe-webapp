@@ -5,6 +5,7 @@ import { LaunchpadPagination } from './LaunchpadPagination';
 import type { LaunchpadItemData } from './LaunchpadItem';
 import { deferAfterPaint } from '../../utils/defer';
 import { shouldIgnoreHotkeys } from '../../utils/dom';
+import { useViewActivation } from '../../context/ViewActivationContext';
 
 export interface LaunchpadProps {
   items: LaunchpadItemData[];
@@ -19,6 +20,7 @@ export interface LaunchpadProps {
 }
 
 export function Launchpad(props: LaunchpadProps) {
+  let container: HTMLDivElement | undefined;
   const [searchQuery, setSearchQuery] = createSignal('');
   const [searchQueryApplied, setSearchQueryApplied] = createSignal('');
   const [currentPage, setCurrentPage] = createSignal(0);
@@ -29,6 +31,16 @@ export function Launchpad(props: LaunchpadProps) {
   const itemsPerPage = () => props.itemsPerPage ?? 20;
   const columns = () => props.columns ?? 5;
   const showSearch = () => props.showSearch !== false;
+
+  const viewActivation = (() => {
+    try {
+      return useViewActivation();
+    } catch {
+      return null;
+    }
+  })();
+
+  const isActive = () => (viewActivation ? viewActivation.active() : true);
 
   // Combine items and additionalItems
   const allItems = createMemo(() => {
@@ -177,22 +189,31 @@ export function Launchpad(props: LaunchpadProps) {
   };
 
   // Setup event listeners
-  onMount(() => {
+  createEffect(() => {
+    if (!isActive()) return;
     document.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => {
+      document.removeEventListener('keydown', handleKeyDown);
+    });
+  });
+
+  onMount(() => {
+    // `handleWheel` does not call preventDefault, so we can keep it passive for smoother scrolling.
+    container?.addEventListener('wheel', handleWheel, { passive: true });
   });
 
   onCleanup(() => {
-    document.removeEventListener('keydown', handleKeyDown);
+    container?.removeEventListener('wheel', handleWheel);
     if (animationRestoreTimer !== null) clearTimeout(animationRestoreTimer);
   });
 
   return (
     <div
+      ref={container}
       class={`launchpad fixed inset-0 z-50 flex flex-col select-none
               bg-black/70 backdrop-blur-xl ${props.class ?? ''}`}
       style={props.style}
       onClick={handleBackgroundClick}
-      onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
