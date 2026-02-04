@@ -1383,9 +1383,8 @@ pre.chat-md-code-block code {
   background-color: var(--background);
 }
 
-.chat-input-container-focused {
-  box-shadow: inset 0 1px 0 var(--primary);
-}
+/* Removed .chat-input-container-focused box-shadow to avoid double focus ring.
+   The textarea's global :focus-visible style is sufficient for focus indication. */
 
 .chat-input-container-dragging {
   box-shadow: inset 0 0 0 2px var(--primary);
@@ -1440,14 +1439,6 @@ pre.chat-md-code-block code {
   max-height: 200px;
   padding: 0.5rem 0;
   line-height: 1.5;
-}
-
-/* Override global :focus-visible box-shadow for textarea.
-   The container already handles focus indication via chat-input-container-focused. */
-.chat-input-textarea:focus,
-.chat-input-textarea:focus-visible {
-  outline: none;
-  box-shadow: none;
 }
 
 .chat-input-textarea::placeholder {
