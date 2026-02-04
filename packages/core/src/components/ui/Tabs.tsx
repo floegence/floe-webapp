@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
+import { useViewActivation } from '../../context/ViewActivationContext';
 import { Plus, X, ChevronRight } from '../icons';
 
 // Tab item interface
@@ -94,7 +95,22 @@ export function Tabs(props: TabsProps) {
 
   // Refs for scroll container
   let scrollContainerRef: HTMLDivElement | undefined;
-  let rafId: number | null = null;
+
+  // Optional view activation support (KeepAliveStack). When available, only
+  // measure/observe layout while the view is active to avoid forced reflow
+  // during ActivityBar switches.
+  const viewActivation = (() => {
+    try {
+      return useViewActivation();
+    } catch {
+      return null;
+    }
+  })();
+  const isActive = () => (viewActivation ? viewActivation.active() : true);
+
+  // Coalesce scroll-state updates and run them after paint so layout reads don't
+  // block UI interactions (e.g. switching ActivityBar tabs).
+  let scrollStateScheduled = false;
 
   // Determine if controlled or uncontrolled
   const isControlled = () => local.activeId !== undefined;
@@ -130,15 +146,13 @@ export function Tabs(props: TabsProps) {
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
   };
 
-  // High-frequency scroll/resize → rAF throttle to keep UI responsive.
+  // High-frequency scroll/resize → coalesce and defer after paint to keep UI responsive.
   const scheduleUpdateScrollState = () => {
-    if (rafId !== null) return;
-    if (typeof requestAnimationFrame === 'undefined') {
-      updateScrollState();
-      return;
-    }
-    rafId = requestAnimationFrame(() => {
-      rafId = null;
+    if (scrollStateScheduled) return;
+    scrollStateScheduled = true;
+    deferAfterPaint(() => {
+      scrollStateScheduled = false;
+      if (!isActive()) return;
       updateScrollState();
     });
   };
@@ -157,9 +171,10 @@ export function Tabs(props: TabsProps) {
   // Setup scroll listener
   createEffect(() => {
     if (!scrollContainerRef) return;
+    if (!isActive()) return;
 
     // Initial check: defer until after paint to avoid forced reflow during view switches.
-    deferAfterPaint(updateScrollState);
+    scheduleUpdateScrollState();
 
     // Listen for scroll events
     const handleScroll = () => scheduleUpdateScrollState();
@@ -181,19 +196,16 @@ export function Tabs(props: TabsProps) {
       if (typeof window !== 'undefined') {
         window.removeEventListener('resize', handleResize);
       }
-      if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
     });
   });
 
   // Re-check when items change
   createEffect(() => {
+    if (!isActive()) return;
     // Track items array changes
     void local.items.length;
     // Defer to ensure DOM is updated
-    setTimeout(scheduleUpdateScrollState, 0);
+    scheduleUpdateScrollState();
   });
 
   // Handle tab click with UI-first response
