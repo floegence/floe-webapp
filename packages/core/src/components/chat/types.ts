@@ -254,3 +254,48 @@ export interface MermaidWorkerResponse {
   svg: string;
   error?: string;
 }
+
+export interface MarkdownWorkerRequest {
+  id: string;
+  content: string;
+}
+
+export interface MarkdownWorkerResponse {
+  id: string;
+  html: string;
+  error?: string;
+}
+
+// ============ Code Diff Render Model (Serializable) ============
+
+export interface UnifiedDiffLine {
+  type: 'context' | 'added' | 'removed';
+  sign: ' ' | '+' | '-';
+  /** Simplified single-column line numbers (context lines only). */
+  lineNumber: number | null;
+  content: string;
+}
+
+export interface SplitDiffLine {
+  type: 'context' | 'added' | 'removed' | 'empty';
+  lineNumber: number | null;
+  content: string;
+}
+
+export interface CodeDiffRenderModel {
+  unifiedLines: UnifiedDiffLine[];
+  split: { left: SplitDiffLine[]; right: SplitDiffLine[] };
+  stats: { added: number; removed: number };
+}
+
+export interface DiffWorkerRequest {
+  id: string;
+  oldCode: string;
+  newCode: string;
+}
+
+export interface DiffWorkerResponse {
+  id: string;
+  model: CodeDiffRenderModel;
+  error?: string;
+}

@@ -2,6 +2,7 @@ import {
   type Component,
   For,
   Show,
+  createMemo,
   createEffect,
   createSignal,
   onCleanup,
@@ -127,14 +128,16 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
   });
 
   // Measure message height
-  const measureHeight = (messageId: string, el: HTMLElement | null) => {
+  const measureHeight = (index: number, el: HTMLElement | null) => {
     if (!el) return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const height = entry.borderBoxSize[0]?.blockSize || entry.contentRect.height;
         if (height > 0) {
-          ctx.setMessageHeight(messageId, height);
+          virtualList.setItemHeight(index, height);
+          const msg = messages()[index];
+          if (msg) ctx.setMessageHeight(msg.id, height);
         }
       }
     });
@@ -142,6 +145,13 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
     observer.observe(el);
     onCleanup(() => observer.disconnect());
   };
+
+  const visibleIndices = createMemo(() => {
+    const { start, end } = virtualList.visibleRange();
+    const out: number[] = [];
+    for (let i = start; i < end; i += 1) out.push(i);
+    return out;
+  });
 
   return (
     <div class={cn('chat-message-list-container', props.class)}>
@@ -158,30 +168,26 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
         ref={(el) => {
           scrollContainerRef = el;
           virtualList.scrollRef(el);
+          virtualList.containerRef(el);
         }}
         class="chat-message-list-scroll"
         onScroll={handleScroll}
       >
         <div
-          ref={virtualList.containerRef}
           class="chat-message-list-inner"
-          style={{ height: `${virtualList.totalHeight()}px`, position: 'relative' }}
+          style={{
+            'padding-top': `${virtualList.paddingTop()}px`,
+            'padding-bottom': `${virtualList.paddingBottom()}px`,
+          }}
         >
-          <For each={virtualList.virtualItems()}>
-            {(virtualItem) => {
-              const message = () => messages()[virtualItem.index];
+          <For each={visibleIndices()}>
+            {(index) => {
+              const message = () => messages()[index];
               return (
                 <Show when={message()}>
                   <div
-                    ref={(el) => measureHeight(message().id, el)}
+                    ref={(el) => measureHeight(index, el)}
                     class="chat-message-list-item"
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }}
                   >
                     <MessageItem message={message()} />
                   </div>

@@ -2,7 +2,7 @@ import { type Component, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { ChatProvider, type ChatProviderProps } from './ChatProvider';
-import { SimpleMessageList } from './message-list';
+import { VirtualMessageList } from './message-list';
 import { ChatInput } from './input';
 import { ConnectionStatus, type ConnectionState } from './status';
 
@@ -47,7 +47,7 @@ export const ChatContainer: Component<ChatContainerProps> = (props) => {
         </Show>
 
         {/* Message list */}
-        <SimpleMessageList class="chat-container-messages" />
+        <VirtualMessageList class="chat-container-messages" />
 
         {/* Input area */}
         <Show

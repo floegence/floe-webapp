@@ -155,6 +155,7 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
                     block={child}
                     messageId={props.messageId}
                     blockIndex={index()}
+                    isStreaming={ctx.streamingMessageId() === props.messageId}
                   />
                 )}
               </For>
