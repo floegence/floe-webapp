@@ -390,7 +390,7 @@ export function useFileBrowserDropTarget(options: UseFileBrowserDropTargetOption
     );
   };
 
-  const handlePointerEnter = (_e: PointerEvent) => {
+  const handlePointerEnter = (e: PointerEvent) => {
     if (!isEnabled() || !dragContext) return;
     const state = dragContext.dragState();
     if (!state.isDragging) return;
@@ -401,13 +401,18 @@ export function useFileBrowserDropTarget(options: UseFileBrowserDropTargetOption
     const targetItem = options.targetItem();
     const isValid = dragContext.canDropOn(state.draggedItems, targetPath, targetItem, options.instanceId);
 
+    // Get the target element's bounding rect for fly-to animation
+    const targetEl = e.currentTarget as HTMLElement;
+    const targetRect = targetEl?.getBoundingClientRect() ?? null;
+
     dragContext.setDropTarget(
       {
         instanceId: options.instanceId,
         targetPath,
         targetItem,
       },
-      isValid
+      isValid,
+      targetRect
     );
   };
 

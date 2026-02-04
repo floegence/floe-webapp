@@ -17,19 +17,47 @@ const CURSOR_OFFSET_X = 16;
 const CURSOR_OFFSET_Y = 16;
 
 /**
+ * Duration of the drag end animation in milliseconds (should match context)
+ */
+const DRAG_END_ANIMATION_DURATION_MS = 200;
+
+/**
  * Floating preview that follows the cursor during drag operations.
  * Shows dragged items with a count badge for multiple items.
  * Uses CSS transform for GPU-accelerated smooth positioning.
+ * Includes fly-to-target animation when dropping onto a valid target.
  */
 export function DragPreview() {
   const dragContext = useFileBrowserDrag();
 
   const dragState = () => dragContext?.dragState();
   const isDragging = () => dragState()?.isDragging ?? false;
+  const isDragEnding = () => dragState()?.isDragEnding ?? false;
+  const isDropCommitted = () => dragState()?.isDropCommitted ?? false;
   const draggedItems = () => dragState()?.draggedItems ?? [];
   const position = () => dragState()?.pointerPosition ?? { x: 0, y: 0 };
+  const endAnimationTarget = () => dragState()?.endAnimationTarget;
   const isValidDrop = () => dragState()?.isValidDrop ?? false;
   const hasDropTarget = () => !!dragState()?.dropTarget;
+
+  // Show preview when dragging OR when ending (for exit animation)
+  const shouldShow = () => (isDragging() || isDragEnding()) && draggedItems().length > 0;
+
+  // Calculate the transform position
+  const transformPosition = createMemo(() => {
+    const ending = isDragEnding();
+    const target = endAnimationTarget();
+    const committed = isDropCommitted();
+
+    // When ending with a valid drop target, fly to the target position
+    if (ending && committed && target) {
+      return { x: target.x, y: target.y };
+    }
+
+    // Otherwise use pointer position with offset
+    const pos = position();
+    return { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y };
+  });
 
   const previewItems = createMemo(() => {
     const items = draggedItems();
@@ -45,16 +73,21 @@ export function DragPreview() {
     item.type === 'folder' ? FolderIcon : getFileIcon(item.extension);
 
   return (
-    <Show when={isDragging() && draggedItems().length > 0}>
+    <Show when={shouldShow()}>
       <Portal>
         <div
           class={cn(
             'fixed top-0 left-0 pointer-events-none z-[9999]',
             // GPU-accelerated transform for smooth movement
-            'will-change-transform'
+            'will-change-transform',
+            // Add transition for fly-to-target animation during drag end
+            isDragEnding() && 'transition-all ease-out',
+            // Fade out and scale down during exit
+            isDragEnding() && 'opacity-0 scale-75'
           )}
           style={{
-            transform: `translate3d(${position().x + CURSOR_OFFSET_X}px, ${position().y + CURSOR_OFFSET_Y}px, 0)`,
+            transform: `translate3d(${transformPosition().x}px, ${transformPosition().y}px, 0)`,
+            'transition-duration': isDragEnding() ? `${DRAG_END_ANIMATION_DURATION_MS}ms` : '0ms',
           }}
         >
           {/* Preview card with entrance animation */}
@@ -64,12 +97,14 @@ export function DragPreview() {
               'bg-card border border-border',
               'shadow-md',
               'min-w-[150px] max-w-[220px]',
-              // Entrance animation
-              'animate-in fade-in zoom-in-95 duration-150',
+              // Entrance animation (only when not ending)
+              !isDragEnding() && 'animate-in fade-in zoom-in-95 duration-150',
               // Visual feedback for valid/invalid drop with smooth transition
               'transition-[border-color,box-shadow] duration-150',
-              hasDropTarget() && isValidDrop() && 'border-success/60',
-              hasDropTarget() && !isValidDrop() && 'border-error/60'
+              hasDropTarget() && isValidDrop() && !isDragEnding() && 'border-success/60',
+              hasDropTarget() && !isValidDrop() && !isDragEnding() && 'border-error/60',
+              // Success state when committed
+              isDragEnding() && isDropCommitted() && 'border-success/60'
             )}
           >
             {/* Item list */}
@@ -92,7 +127,7 @@ export function DragPreview() {
             </Show>
 
             {/* Drop status indicator with smooth transition */}
-            <Show when={hasDropTarget()}>
+            <Show when={hasDropTarget() && !isDragEnding()}>
               <div
                 class={cn(
                   'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
@@ -126,8 +161,8 @@ export function DragPreview() {
                 'flex items-center justify-center',
                 'text-[10px] font-semibold',
                 'shadow-sm',
-                // Entrance animation
-                'animate-in zoom-in-50 duration-200'
+                // Entrance animation (only when not ending)
+                !isDragEnding() && 'animate-in zoom-in-50 duration-200'
               )}
             >
               {draggedItems().length}

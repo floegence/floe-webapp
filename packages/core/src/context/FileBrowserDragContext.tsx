@@ -22,6 +22,14 @@ export interface DropTarget {
 }
 
 /**
+ * Animation target position for drag end animation
+ */
+export interface DragEndAnimationTarget {
+  x: number;
+  y: number;
+}
+
+/**
  * Global drag state for FileBrowser instances
  */
 export interface FileBrowserDragState {
@@ -32,6 +40,14 @@ export interface FileBrowserDragState {
   dropTarget: DropTarget | null;
   /** Whether the current drop target is valid */
   isValidDrop: boolean;
+  /** Whether the drag is ending (playing exit animation) */
+  isDragEnding: boolean;
+  /** Target position for fly-to animation when drop is committed */
+  endAnimationTarget: DragEndAnimationTarget | null;
+  /** Whether the drop was committed (successful drop vs cancel) */
+  isDropCommitted: boolean;
+  /** Current drop target element rect for animation targeting */
+  dropTargetRect: DOMRect | null;
 }
 
 /**
@@ -69,7 +85,7 @@ export interface FileBrowserDragContextValue {
   // Drag operations
   startDrag: (items: DraggedItem[], x: number, y: number) => void;
   updateDrag: (x: number, y: number) => void;
-  setDropTarget: (target: DropTarget | null, isValid: boolean) => void;
+  setDropTarget: (target: DropTarget | null, isValid: boolean, targetRect?: DOMRect | null) => void;
   endDrag: (commit: boolean) => void;
 
   // Validation helpers
@@ -85,7 +101,16 @@ const initialDragState: FileBrowserDragState = {
   pointerPosition: { x: 0, y: 0 },
   dropTarget: null,
   isValidDrop: false,
+  isDragEnding: false,
+  endAnimationTarget: null,
+  isDropCommitted: false,
+  dropTargetRect: null,
 };
+
+/**
+ * Duration of the drag end animation in milliseconds
+ */
+const DRAG_END_ANIMATION_DURATION_MS = 200;
 
 /**
  * Get parent path from a given path
@@ -137,6 +162,10 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
       pointerPosition: { x, y },
       dropTarget: null,
       isValidDrop: false,
+      isDragEnding: false,
+      endAnimationTarget: null,
+      isDropCommitted: false,
+      dropTargetRect: null,
     });
   };
 
@@ -147,11 +176,12 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
     }));
   };
 
-  const setDropTarget = (target: DropTarget | null, isValid: boolean) => {
+  const setDropTarget = (target: DropTarget | null, isValid: boolean, targetRect?: DOMRect | null) => {
     setDragState((prev) => ({
       ...prev,
       dropTarget: target,
       isValidDrop: isValid,
+      dropTargetRect: targetRect ?? null,
     }));
   };
 
@@ -200,9 +230,30 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
     unlockBody?.();
     unlockBody = null;
 
-    if (commit && state.dropTarget && state.isValidDrop) {
+    const shouldCommit = !!(commit && state.dropTarget && state.isValidDrop);
+
+    // Calculate animation target position if committing to a valid drop target
+    let animationTarget: DragEndAnimationTarget | null = null;
+    if (shouldCommit && state.dropTargetRect) {
+      // Target the center of the drop target element
+      animationTarget = {
+        x: state.dropTargetRect.left + state.dropTargetRect.width / 2 - 75, // 75 = half of preview min-width
+        y: state.dropTargetRect.top + state.dropTargetRect.height / 2 - 30, // 30 = approximate half height
+      };
+    }
+
+    // Start exit animation phase
+    setDragState((prev) => ({
+      ...prev,
+      isDragEnding: true,
+      isDropCommitted: shouldCommit,
+      endAnimationTarget: animationTarget,
+    }));
+
+    // Execute move operations immediately (optimistic UI updates)
+    if (shouldCommit) {
       const { draggedItems, sourceInstanceId } = state;
-      const { targetPath, instanceId: targetInstanceId } = state.dropTarget;
+      const { targetPath, instanceId: targetInstanceId } = state.dropTarget!;
 
       const sourceInstance = sourceInstanceId ? instances.get(sourceInstanceId) : undefined;
       const targetInstance = instances.get(targetInstanceId);
@@ -235,7 +286,10 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
       }
     }
 
-    setDragState(initialDragState);
+    // Reset state after animation completes
+    setTimeout(() => {
+      setDragState(initialDragState);
+    }, DRAG_END_ANIMATION_DURATION_MS);
   };
 
   // Cleanup on unmount
