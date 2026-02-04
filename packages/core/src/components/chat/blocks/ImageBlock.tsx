@@ -16,14 +16,30 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
   const [scale, setScale] = createSignal(1);
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = createSignal(false);
-  const [dragStart, setDragStart] = createSignal({ x: 0, y: 0 });
 
   let panRafId: number | null = null;
   let pendingPan = { x: 0, y: 0 };
+  const pointers = new Map<number, { x: number; y: number }>();
+  let panStart: { x: number; y: number } | null = null;
+  let panOrigin: { x: number; y: number } | null = null;
+  let pinchStartDistance = 0;
+  let pinchStartScale = 1;
 
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 5;
   const SCALE_STEP = 0.25;
+
+  const clampScale = (next: number) => Math.max(MIN_SCALE, Math.min(next, MAX_SCALE));
+
+  const setScaleClamped = (next: number) => {
+    const clamped = clampScale(next);
+    setScale(clamped);
+    // When not zoomed-in, keep the content centered.
+    if (clamped <= 1) {
+      setPosition({ x: 0, y: 0 });
+      setIsDragging(false);
+    }
+  };
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -45,16 +61,17 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
   };
 
   const zoomIn = () => {
-    setScale((s) => Math.min(s + SCALE_STEP, MAX_SCALE));
+    setScaleClamped(scale() + SCALE_STEP);
   };
 
   const zoomOut = () => {
-    setScale((s) => Math.max(s - SCALE_STEP, MIN_SCALE));
+    setScaleClamped(scale() - SCALE_STEP);
   };
 
   const resetZoom = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
+    setIsDragging(false);
   };
 
   const handleWheel = (e: WheelEvent) => {
@@ -66,19 +83,59 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
     }
   };
 
-  const handleMouseDown = (e: MouseEvent) => {
-    if (scale() > 1) {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - position().x, y: e.clientY - position().y });
+  const handlePointerDown = (e: PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+
+    const target = e.currentTarget as HTMLElement;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    try {
+      target.setPointerCapture(e.pointerId);
+    } catch {
+      // Ignore (e.g. not supported).
+    }
+
+    if (pointers.size === 1) {
+      panStart = { x: e.clientX, y: e.clientY };
+      panOrigin = { ...position() };
+      setIsDragging(scale() > 1);
+      return;
+    }
+
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      pinchStartDistance = Math.hypot(a.x - b.x, a.y - b.y);
+      pinchStartScale = scale();
+      panStart = null;
+      panOrigin = null;
+      setIsDragging(false);
     }
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging()) return;
+  const handlePointerMove = (e: PointerEvent) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchStartDistance > 0) {
+        setScaleClamped(pinchStartScale * (dist / pinchStartDistance));
+      }
+      return;
+    }
+
+    if (pointers.size !== 1 || scale() <= 1) return;
+    setIsDragging(true);
+
+    if (!panStart || !panOrigin) {
+      panStart = { x: e.clientX, y: e.clientY };
+      panOrigin = { ...position() };
+    }
 
     pendingPan = {
-      x: e.clientX - dragStart().x,
-      y: e.clientY - dragStart().y,
+      x: panOrigin.x + (e.clientX - panStart.x),
+      y: panOrigin.y + (e.clientY - panStart.y),
     };
 
     if (panRafId !== null) return;
@@ -88,13 +145,46 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
     }
     panRafId = requestAnimationFrame(() => {
       panRafId = null;
-      if (!isDragging()) return;
+      if (pointers.size !== 1 || scale() <= 1) return;
       setPosition(pendingPan);
     });
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handlePointerUpOrCancel = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignore.
+    }
+
+    if (pointers.size === 0) {
+      setIsDragging(false);
+      panStart = null;
+      panOrigin = null;
+      pinchStartDistance = 0;
+      pinchStartScale = scale();
+      return;
+    }
+
+    if (pointers.size === 1) {
+      const remaining = Array.from(pointers.values())[0]!;
+      panStart = { x: remaining.x, y: remaining.y };
+      panOrigin = { ...position() };
+      setIsDragging(scale() > 1);
+      pinchStartDistance = 0;
+      pinchStartScale = scale();
+      return;
+    }
+
+    if (pointers.size === 2) {
+      const [a, b] = Array.from(pointers.values());
+      pinchStartDistance = Math.hypot(a.x - b.x, a.y - b.y);
+      pinchStartScale = scale();
+      panStart = null;
+      panOrigin = null;
+      setIsDragging(false);
+    }
   };
 
   onCleanup(() => {
@@ -102,6 +192,7 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
       cancelAnimationFrame(panRafId);
       panRafId = null;
     }
+    pointers.clear();
   });
 
   // Handle keyboard shortcuts
@@ -170,14 +261,7 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
           />
 
           {/* Dialog Content */}
-          <div
-            class="chat-image-dialog"
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
+          <div class="chat-image-dialog">
             {/* Toolbar */}
             <div class="chat-image-dialog-toolbar">
               <button
@@ -217,7 +301,15 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
             </div>
 
             {/* Image Container */}
-            <div class="chat-image-dialog-content">
+            <div
+              class="chat-image-dialog-content"
+              style={{ 'touch-action': 'none' }}
+              onWheel={handleWheel}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUpOrCancel}
+              onPointerCancel={handlePointerUpOrCancel}
+            >
               <img
                 src={props.src}
                 alt={props.alt || 'Image'}
@@ -232,7 +324,7 @@ export const ImageBlock: Component<ImageBlockProps> = (props) => {
 
             {/* Hint */}
             <div class="chat-image-dialog-hint">
-              Scroll to zoom · Drag to pan · Press Esc to close
+              Scroll/pinch to zoom · Drag to pan · Press Esc to close
             </div>
           </div>
         </Portal>

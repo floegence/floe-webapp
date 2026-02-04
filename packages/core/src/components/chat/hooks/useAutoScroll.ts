@@ -1,4 +1,4 @@
-import { createSignal, type Accessor } from 'solid-js';
+import { createSignal, onCleanup, type Accessor } from 'solid-js';
 
 export interface UseAutoScrollOptions {
   /** Whether auto-scroll is enabled */
@@ -32,6 +32,11 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
     }
   };
 
+  const detachScrollListener = () => {
+    if (!scrollEl) return;
+    scrollEl.removeEventListener('scroll', handleScroll);
+  };
+
   const scrollToBottom = (immediate = false) => {
     if (!scrollEl) return;
 
@@ -44,6 +49,10 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
   };
 
   const setScrollRef = (el: HTMLElement) => {
+    // If the ref changes, remove the previous listener first.
+    if (scrollEl && scrollEl !== el) {
+      detachScrollListener();
+    }
     scrollEl = el;
 
     el.addEventListener('scroll', handleScroll, { passive: true });
@@ -55,11 +64,18 @@ export function useAutoScroll(options: UseAutoScrollOptions = {}) {
   // When content changes and auto-scroll is allowed, scroll to bottom.
   const onContentChange = () => {
     if (enabled() && shouldAutoScroll()) {
-      requestAnimationFrame(() => {
+      if (typeof requestAnimationFrame === 'undefined') {
         scrollToBottom();
-      });
+        return;
+      }
+      requestAnimationFrame(() => scrollToBottom());
     }
   };
+
+  onCleanup(() => {
+    detachScrollListener();
+    scrollEl = null;
+  });
 
   return {
     setScrollRef,
