@@ -17,23 +17,29 @@ const CURSOR_OFFSET_X = 16;
 const CURSOR_OFFSET_Y = 16;
 
 /**
- * Duration of the drag end animation in milliseconds (should match context)
+ * Duration of the drag end animation in milliseconds
  */
 const DRAG_END_ANIMATION_DURATION_MS = 200;
 
 /**
- * Animation phase for proper CSS transition timing
- * - idle: normal dragging state
- * - prepare: transition property added, waiting for next frame
- * - animate: target state applied, animation running
+ * Frozen state captured when drag ends, before Context resets
  */
-type AnimationPhase = 'idle' | 'prepare' | 'animate';
+interface FrozenDragState {
+  items: FileItem[];
+  position: { x: number; y: number };
+  target: { x: number; y: number } | null;
+  committed: boolean;
+}
 
 /**
  * Floating preview that follows the cursor during drag operations.
  * Shows dragged items with a count badge for multiple items.
  * Uses CSS transform for GPU-accelerated smooth positioning.
  * Includes fly-to-target animation when dropping onto a valid target.
+ *
+ * IMPORTANT: This component manages its own visibility independently from
+ * Context state. The Context resets after 200ms, but we freeze all needed
+ * data and control our own animation timeline to ensure smooth exit animation.
  */
 export function DragPreview() {
   const dragContext = useFileBrowserDrag();
@@ -41,139 +47,170 @@ export function DragPreview() {
   const dragState = () => dragContext?.dragState();
   const isDragging = () => dragState()?.isDragging ?? false;
   const isDragEnding = () => dragState()?.isDragEnding ?? false;
-  const isDropCommitted = () => dragState()?.isDropCommitted ?? false;
-  const draggedItems = () => dragState()?.draggedItems ?? [];
-  const position = () => dragState()?.pointerPosition ?? { x: 0, y: 0 };
-  const endAnimationTarget = () => dragState()?.endAnimationTarget;
-  const isValidDrop = () => dragState()?.isValidDrop ?? false;
-  const hasDropTarget = () => !!dragState()?.dropTarget;
 
-  // Two-phase animation to ensure CSS transition works correctly
-  // Phase 1 (prepare): add transition property, keep current position
-  // Phase 2 (animate): set target position and opacity (triggers animation)
-  const [animationPhase, setAnimationPhase] = createSignal<AnimationPhase>('idle');
+  // Component's own visibility state - independent from Context
+  const [isVisible, setIsVisible] = createSignal(false);
 
-  // Store the frozen position when drag ends (before state changes)
-  const [frozenPosition, setFrozenPosition] = createSignal<{ x: number; y: number } | null>(null);
+  // Animation phase: 'idle' | 'prepare' | 'animate'
+  const [animationPhase, setAnimationPhase] = createSignal<'idle' | 'prepare' | 'animate'>('idle');
+
+  // Frozen state captured when drag ends (preserved even after Context resets)
+  const [frozenState, setFrozenState] = createSignal<FrozenDragState | null>(null);
+
+  // Track previous isDragEnding to detect the moment it becomes true
+  let prevIsDragEnding = false;
 
   createEffect(() => {
+    const dragging = isDragging();
     const ending = isDragEnding();
 
-    if (ending && animationPhase() === 'idle') {
-      // Freeze current position before any state changes
-      const pos = position();
-      setFrozenPosition({ x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y });
-
-      // Phase 1: prepare - add transition, keep current position
-      setAnimationPhase('prepare');
-
-      // Phase 2: animate - next frame, apply target state
-      // Using double rAF to ensure browser has painted the prepare state
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setAnimationPhase('animate');
-        });
-      });
-    } else if (!ending && animationPhase() !== 'idle') {
-      // Reset when drag ending is complete
+    // Drag started
+    if (dragging && !ending && !prevIsDragEnding) {
+      setIsVisible(true);
       setAnimationPhase('idle');
-      setFrozenPosition(null);
-    }
-  });
-
-  // Cleanup animation frame on unmount
-  onCleanup(() => {
-    setAnimationPhase('idle');
-    setFrozenPosition(null);
-  });
-
-  // Show preview when dragging OR when ending (for exit animation)
-  const shouldShow = () => (isDragging() || isDragEnding()) && draggedItems().length > 0;
-
-  // Calculate the transform position
-  const transformPosition = createMemo(() => {
-    const phase = animationPhase();
-    const target = endAnimationTarget();
-    const committed = isDropCommitted();
-    const frozen = frozenPosition();
-
-    // During animation phases, use controlled positions
-    if (phase === 'prepare') {
-      // Keep at frozen position (where drag ended)
-      return frozen ?? { x: 0, y: 0 };
+      setFrozenState(null);
     }
 
-    if (phase === 'animate') {
-      // Fly to target if committed, otherwise stay at frozen position
-      if (committed && target) {
-        return { x: target.x, y: target.y };
+    // Drag ending just started (transition from not-ending to ending)
+    if (ending && !prevIsDragEnding) {
+      const state = dragState();
+      if (state && state.draggedItems.length > 0) {
+        // Freeze all state NOW before Context resets it
+        const pos = state.pointerPosition;
+        setFrozenState({
+          items: state.draggedItems.map((d) => d.item),
+          position: { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y },
+          target: state.endAnimationTarget,
+          committed: state.isDropCommitted,
+        });
+
+        // Phase 1: prepare - add transition, stay at current position
+        setAnimationPhase('prepare');
+
+        // Phase 2: animate - next frame, move to target
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setAnimationPhase('animate');
+
+            // Phase 3: complete - hide component after animation
+            setTimeout(() => {
+              setIsVisible(false);
+              setAnimationPhase('idle');
+              setFrozenState(null);
+            }, DRAG_END_ANIMATION_DURATION_MS);
+          });
+        });
       }
-      return frozen ?? { x: 0, y: 0 };
     }
 
-    // Normal dragging: follow pointer
-    const pos = position();
-    return { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y };
+    // Drag cancelled (not ending, not dragging, no animation running)
+    if (!dragging && !ending && animationPhase() === 'idle') {
+      setIsVisible(false);
+      setFrozenState(null);
+    }
+
+    prevIsDragEnding = ending;
   });
 
-  // Should apply exit animation styles (opacity, scale)
-  const shouldAnimateExit = () => animationPhase() === 'animate';
+  // Cleanup on unmount
+  onCleanup(() => {
+    setIsVisible(false);
+    setAnimationPhase('idle');
+    setFrozenState(null);
+  });
 
-  // Should have transition enabled
-  const hasTransition = () => animationPhase() !== 'idle';
-
-  const previewItems = createMemo(() => {
-    const items = draggedItems();
+  // Display items: use frozen state during animation, live state during drag
+  const displayItems = createMemo(() => {
+    const frozen = frozenState();
+    if (frozen) {
+      return frozen.items.slice(0, MAX_PREVIEW_ITEMS);
+    }
+    const items = dragState()?.draggedItems ?? [];
     return items.slice(0, MAX_PREVIEW_ITEMS).map((d) => d.item);
   });
 
+  const totalItemCount = createMemo(() => {
+    const frozen = frozenState();
+    if (frozen) {
+      return frozen.items.length;
+    }
+    return dragState()?.draggedItems?.length ?? 0;
+  });
+
   const remainingCount = createMemo(() => {
-    const total = draggedItems().length;
+    const total = totalItemCount();
     return total > MAX_PREVIEW_ITEMS ? total - MAX_PREVIEW_ITEMS : 0;
   });
+
+  // Transform position calculation
+  const transformPosition = createMemo(() => {
+    const frozen = frozenState();
+    const phase = animationPhase();
+
+    // During animation, use frozen state
+    if (frozen) {
+      if (phase === 'animate' && frozen.committed && frozen.target) {
+        // Fly to target
+        return frozen.target;
+      }
+      // Stay at frozen position (prepare phase or non-committed)
+      return frozen.position;
+    }
+
+    // Normal dragging: follow pointer
+    const state = dragState();
+    const pos = state?.pointerPosition ?? { x: 0, y: 0 };
+    return { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y };
+  });
+
+  // Visual state helpers
+  const isCommitted = createMemo(() => frozenState()?.committed ?? false);
+  const isValidDrop = () => dragState()?.isValidDrop ?? false;
+  const hasDropTarget = () => !!dragState()?.dropTarget;
+  const showDropIndicator = () => hasDropTarget() && !frozenState();
 
   const getIcon = (item: FileItem) =>
     item.type === 'folder' ? FolderIcon : getFileIcon(item.extension);
 
   return (
-    <Show when={shouldShow()}>
+    <Show when={isVisible() && displayItems().length > 0}>
       <Portal>
         <div
           class={cn(
             'fixed top-0 left-0 pointer-events-none z-[9999]',
-            // GPU-accelerated transform for smooth movement
             'will-change-transform'
           )}
           style={{
             transform: `translate3d(${transformPosition().x}px, ${transformPosition().y}px, 0)`,
-            // Only enable transition during animation phases
-            transition: hasTransition()
-              ? `all ${DRAG_END_ANIMATION_DURATION_MS}ms ease-out`
-              : 'none',
-            // Apply exit animation in animate phase
-            opacity: shouldAnimateExit() ? 0 : 1,
-            scale: shouldAnimateExit() ? 0.75 : 1,
+            // Enable transition only during animation phases
+            transition:
+              animationPhase() !== 'idle'
+                ? `all ${DRAG_END_ANIMATION_DURATION_MS}ms ease-out`
+                : 'none',
+            // Apply exit styles in animate phase
+            opacity: animationPhase() === 'animate' ? 0 : 1,
+            scale: animationPhase() === 'animate' ? 0.75 : 1,
           }}
         >
-          {/* Preview card with entrance animation */}
+          {/* Preview card */}
           <div
             class={cn(
               'flex flex-col gap-1 p-2.5 rounded-lg',
               'bg-card border border-border',
               'shadow-md',
               'min-w-[150px] max-w-[220px]',
-              // Entrance animation (only when not ending)
-              !isDragEnding() && 'animate-in fade-in zoom-in-95 duration-150',
-              // Visual feedback for valid/invalid drop with smooth transition
+              // Entrance animation (only when not animating exit)
+              !frozenState() && 'animate-in fade-in zoom-in-95 duration-150',
+              // Border transitions
               'transition-[border-color,box-shadow] duration-150',
-              hasDropTarget() && isValidDrop() && !isDragEnding() && 'border-success/60',
-              hasDropTarget() && !isValidDrop() && !isDragEnding() && 'border-error/60',
-              // Success state when committed
-              isDragEnding() && isDropCommitted() && 'border-success/60'
+              showDropIndicator() && isValidDrop() && 'border-success/60',
+              showDropIndicator() && !isValidDrop() && 'border-error/60',
+              // Committed state
+              frozenState() && isCommitted() && 'border-success/60'
             )}
           >
             {/* Item list */}
-            <For each={previewItems()}>
+            <For each={displayItems()}>
               {(item) => (
                 <div class="flex items-center gap-2.5 text-xs text-foreground">
                   <span class="flex-shrink-0 w-4 h-4">
@@ -191,8 +228,8 @@ export function DragPreview() {
               </div>
             </Show>
 
-            {/* Drop status indicator with smooth transition */}
-            <Show when={hasDropTarget() && !isDragEnding()}>
+            {/* Drop status indicator */}
+            <Show when={showDropIndicator()}>
               <div
                 class={cn(
                   'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
@@ -217,7 +254,7 @@ export function DragPreview() {
           </div>
 
           {/* Item count badge */}
-          <Show when={draggedItems().length > 1}>
+          <Show when={totalItemCount() > 1}>
             <div
               class={cn(
                 'absolute -top-2 -right-2',
@@ -226,11 +263,11 @@ export function DragPreview() {
                 'flex items-center justify-center',
                 'text-[10px] font-semibold',
                 'shadow-sm',
-                // Entrance animation (only when not ending)
-                !isDragEnding() && 'animate-in zoom-in-50 duration-200'
+                // Entrance animation (only when not animating exit)
+                !frozenState() && 'animate-in zoom-in-50 duration-200'
               )}
             >
-              {draggedItems().length}
+              {totalItemCount()}
             </div>
           </Show>
         </div>
