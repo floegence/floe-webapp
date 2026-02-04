@@ -1,4 +1,4 @@
-import { type Component, For, Show } from 'solid-js';
+import { type Component, For, Show, createMemo } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -27,6 +27,13 @@ export interface ActivityBarProps {
  * Vertical icon strip on the left side
  */
 export function ActivityBar(props: ActivityBarProps) {
+  // Cache potentially-dynamic props under a reactive owner so reading them in event handlers
+  // doesn't create detached computations (Solid warns when that happens).
+  const activeId = createMemo(() => props.activeId);
+  const collapsed = createMemo(() => props.collapsed ?? false);
+  const onActiveChange = createMemo(() => props.onActiveChange);
+  const onCollapsedChange = createMemo(() => props.onCollapsedChange);
+
   const handleItemClick = (item: ActivityBarItem) => {
     if (item.onClick) {
       // Defer custom callback execution to let UI update first (consistent with CommandContext.execute)
@@ -35,16 +42,16 @@ export function ActivityBar(props: ActivityBarProps) {
     }
 
     // Default behavior: toggle sidebar collapse or change active tab (lightweight, keep synchronous)
-    const isActive = props.activeId === item.id;
-    const isCollapsed = props.collapsed ?? false;
+    const isActive = activeId() === item.id;
+    const isCollapsed = collapsed();
 
     if (isActive && !isCollapsed) {
-      props.onCollapsedChange?.(true);
+      onCollapsedChange()?.(true);
       return;
     }
 
-    props.onActiveChange(item.id);
-    props.onCollapsedChange?.(false);
+    onActiveChange()(item.id);
+    onCollapsedChange()?.(false);
   };
 
   return (
@@ -61,7 +68,7 @@ export function ActivityBar(props: ActivityBarProps) {
           {(item) => (
             <ActivityBarButton
               item={item}
-              isActive={props.activeId === item.id}
+              isActive={activeId() === item.id}
               onClick={() => handleItemClick(item)}
             />
           )}
