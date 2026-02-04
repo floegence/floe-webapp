@@ -1423,7 +1423,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
                 <FormField>
                   <FormLabel required>Password</FormLabel>
-                  <Input type="password" placeholder="Enter a strong password" />
+                  <Input type="password" placeholder="Enter a strong password" autocomplete="new-password" />
                 </FormField>
               </FormSection>
 
