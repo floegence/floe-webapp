@@ -1,4 +1,4 @@
-import { Show, For, createMemo } from 'solid-js';
+import { Show, For, createMemo, createSignal, createEffect, onCleanup } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useFileBrowserDrag } from '../../context/FileBrowserDragContext';
@@ -22,6 +22,14 @@ const CURSOR_OFFSET_Y = 16;
 const DRAG_END_ANIMATION_DURATION_MS = 200;
 
 /**
+ * Animation phase for proper CSS transition timing
+ * - idle: normal dragging state
+ * - prepare: transition property added, waiting for next frame
+ * - animate: target state applied, animation running
+ */
+type AnimationPhase = 'idle' | 'prepare' | 'animate';
+
+/**
  * Floating preview that follows the cursor during drag operations.
  * Shows dragged items with a count badge for multiple items.
  * Uses CSS transform for GPU-accelerated smooth positioning.
@@ -40,24 +48,79 @@ export function DragPreview() {
   const isValidDrop = () => dragState()?.isValidDrop ?? false;
   const hasDropTarget = () => !!dragState()?.dropTarget;
 
+  // Two-phase animation to ensure CSS transition works correctly
+  // Phase 1 (prepare): add transition property, keep current position
+  // Phase 2 (animate): set target position and opacity (triggers animation)
+  const [animationPhase, setAnimationPhase] = createSignal<AnimationPhase>('idle');
+
+  // Store the frozen position when drag ends (before state changes)
+  const [frozenPosition, setFrozenPosition] = createSignal<{ x: number; y: number } | null>(null);
+
+  createEffect(() => {
+    const ending = isDragEnding();
+
+    if (ending && animationPhase() === 'idle') {
+      // Freeze current position before any state changes
+      const pos = position();
+      setFrozenPosition({ x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y });
+
+      // Phase 1: prepare - add transition, keep current position
+      setAnimationPhase('prepare');
+
+      // Phase 2: animate - next frame, apply target state
+      // Using double rAF to ensure browser has painted the prepare state
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimationPhase('animate');
+        });
+      });
+    } else if (!ending && animationPhase() !== 'idle') {
+      // Reset when drag ending is complete
+      setAnimationPhase('idle');
+      setFrozenPosition(null);
+    }
+  });
+
+  // Cleanup animation frame on unmount
+  onCleanup(() => {
+    setAnimationPhase('idle');
+    setFrozenPosition(null);
+  });
+
   // Show preview when dragging OR when ending (for exit animation)
   const shouldShow = () => (isDragging() || isDragEnding()) && draggedItems().length > 0;
 
   // Calculate the transform position
   const transformPosition = createMemo(() => {
-    const ending = isDragEnding();
+    const phase = animationPhase();
     const target = endAnimationTarget();
     const committed = isDropCommitted();
+    const frozen = frozenPosition();
 
-    // When ending with a valid drop target, fly to the target position
-    if (ending && committed && target) {
-      return { x: target.x, y: target.y };
+    // During animation phases, use controlled positions
+    if (phase === 'prepare') {
+      // Keep at frozen position (where drag ended)
+      return frozen ?? { x: 0, y: 0 };
     }
 
-    // Otherwise use pointer position with offset
+    if (phase === 'animate') {
+      // Fly to target if committed, otherwise stay at frozen position
+      if (committed && target) {
+        return { x: target.x, y: target.y };
+      }
+      return frozen ?? { x: 0, y: 0 };
+    }
+
+    // Normal dragging: follow pointer
     const pos = position();
     return { x: pos.x + CURSOR_OFFSET_X, y: pos.y + CURSOR_OFFSET_Y };
   });
+
+  // Should apply exit animation styles (opacity, scale)
+  const shouldAnimateExit = () => animationPhase() === 'animate';
+
+  // Should have transition enabled
+  const hasTransition = () => animationPhase() !== 'idle';
 
   const previewItems = createMemo(() => {
     const items = draggedItems();
@@ -79,15 +142,17 @@ export function DragPreview() {
           class={cn(
             'fixed top-0 left-0 pointer-events-none z-[9999]',
             // GPU-accelerated transform for smooth movement
-            'will-change-transform',
-            // Add transition for fly-to-target animation during drag end
-            isDragEnding() && 'transition-all ease-out',
-            // Fade out and scale down during exit
-            isDragEnding() && 'opacity-0 scale-75'
+            'will-change-transform'
           )}
           style={{
             transform: `translate3d(${transformPosition().x}px, ${transformPosition().y}px, 0)`,
-            'transition-duration': isDragEnding() ? `${DRAG_END_ANIMATION_DURATION_MS}ms` : '0ms',
+            // Only enable transition during animation phases
+            transition: hasTransition()
+              ? `all ${DRAG_END_ANIMATION_DURATION_MS}ms ease-out`
+              : 'none',
+            // Apply exit animation in animate phase
+            opacity: shouldAnimateExit() ? 0 : 1,
+            scale: shouldAnimateExit() ? 0.75 : 1,
           }}
         >
           {/* Preview card with entrance animation */}
