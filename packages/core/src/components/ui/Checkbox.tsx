@@ -1,99 +1,117 @@
 import { splitProps, type JSX, type Component, For, Show, Match, Switch, createContext, useContext, createUniqueId } from 'solid-js';
 import { cn } from '../../utils/cn';
 
-export type RadioSize = 'sm' | 'md' | 'lg';
-export type RadioOrientation = 'horizontal' | 'vertical';
-export type RadioVariant = 'default' | 'card' | 'button' | 'tile';
+export type CheckboxSize = 'sm' | 'md' | 'lg';
+export type CheckboxVariant = 'default' | 'card' | 'button' | 'tile';
 
-export interface RadioGroupProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
-  /** Current selected value */
-  value?: string;
-  /** Callback when value changes */
-  onChange?: (value: string) => void;
-  /** Size of radio buttons */
-  size?: RadioSize;
+export interface CheckboxGroupProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  /** Current selected values */
+  value?: string[];
+  /** Callback when values change */
+  onChange?: (value: string[]) => void;
+  /** Size of checkboxes */
+  size?: CheckboxSize;
   /** Layout orientation */
-  orientation?: RadioOrientation;
+  orientation?: 'horizontal' | 'vertical';
   /** Visual variant */
-  variant?: RadioVariant;
-  /** Whether the radio group is disabled */
+  variant?: CheckboxVariant;
+  /** Whether the checkbox group is disabled */
   disabled?: boolean;
-  /** Name attribute for form submission */
-  name?: string;
 }
 
-export interface RadioOptionProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type' | 'size'> {
-  /** Value of this option */
-  value: string;
+export interface CheckboxProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type' | 'size'> {
+  /** Value of this checkbox */
+  value?: string;
+  /** Whether the checkbox is checked (for standalone use) */
+  checked?: boolean;
+  /** Callback when state changes (for standalone use) */
+  onChange?: (checked: boolean) => void;
   /** Label text */
   label?: string;
   /** Description text */
   description?: string;
   /** Icon component for tile variant */
   icon?: Component<{ class?: string }>;
-  /** Size override (defaults to group size) */
-  size?: RadioSize;
+  /** Size of the checkbox */
+  size?: CheckboxSize;
+  /** Visual variant (for standalone use) */
+  variant?: CheckboxVariant;
+  /** Indeterminate state */
+  indeterminate?: boolean;
 }
 
-interface RadioContextValue {
-  value: () => string | undefined;
-  onChange: (value: string) => void;
-  size: () => RadioSize;
-  variant: () => RadioVariant;
+interface CheckboxContextValue {
+  value: () => string[];
+  onChange: (value: string, checked: boolean) => void;
+  size: () => CheckboxSize;
+  variant: () => CheckboxVariant;
   disabled: () => boolean;
-  name: () => string;
 }
 
-const RadioContext = createContext<RadioContextValue>();
+const CheckboxContext = createContext<CheckboxContextValue>();
 
-function useRadioContext() {
-  const context = useContext(RadioContext);
-  if (!context) {
-    throw new Error('RadioOption must be used within a RadioGroup');
-  }
-  return context;
+function useCheckboxContext() {
+  return useContext(CheckboxContext);
 }
 
-const sizeStyles: Record<RadioSize, { outer: string; inner: string; label: string; description: string }> = {
+const sizeStyles: Record<CheckboxSize, { box: string; icon: string; label: string; description: string }> = {
   sm: {
-    outer: 'w-3.5 h-3.5',
-    inner: 'w-1.5 h-1.5',
+    box: 'w-3.5 h-3.5',
+    icon: 'w-2.5 h-2.5',
     label: 'text-xs',
     description: 'text-[10px]',
   },
   md: {
-    outer: 'w-4 h-4',
-    inner: 'w-2 h-2',
+    box: 'w-4 h-4',
+    icon: 'w-3 h-3',
     label: 'text-xs',
     description: 'text-[11px]',
   },
   lg: {
-    outer: 'w-5 h-5',
-    inner: 'w-2.5 h-2.5',
+    box: 'w-5 h-5',
+    icon: 'w-3.5 h-3.5',
     label: 'text-sm',
     description: 'text-xs',
   },
 };
 
-const buttonSizeStyles: Record<RadioSize, string> = {
+const buttonSizeStyles: Record<CheckboxSize, string> = {
   sm: 'px-2.5 py-1 text-xs',
   md: 'px-3 py-1.5 text-xs',
   lg: 'px-4 py-2 text-sm',
 };
 
-const cardSizeStyles: Record<RadioSize, string> = {
+const cardSizeStyles: Record<CheckboxSize, string> = {
   sm: 'p-2.5',
   md: 'p-3',
   lg: 'p-4',
 };
 
-const tileSizeStyles: Record<RadioSize, { container: string; icon: string }> = {
+const tileSizeStyles: Record<CheckboxSize, { container: string; icon: string }> = {
   sm: { container: 'p-3 min-w-[80px]', icon: 'w-5 h-5' },
   md: { container: 'p-4 min-w-[100px]', icon: 'w-6 h-6' },
   lg: { container: 'p-5 min-w-[120px]', icon: 'w-8 h-8' },
 };
 
-export function RadioGroup(props: RadioGroupProps) {
+// Checkmark icon
+function CheckIcon(props: { class?: string }) {
+  return (
+    <svg class={props.class} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 6l3 3 5-6" />
+    </svg>
+  );
+}
+
+// Minus icon for indeterminate state
+function MinusIcon(props: { class?: string }) {
+  return (
+    <svg class={props.class} viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M2 6h8" />
+    </svg>
+  );
+}
+
+export function CheckboxGroup(props: CheckboxGroupProps) {
   const [local, rest] = splitProps(props, [
     'value',
     'onChange',
@@ -101,21 +119,24 @@ export function RadioGroup(props: RadioGroupProps) {
     'orientation',
     'variant',
     'disabled',
-    'name',
     'class',
     'children',
   ]);
 
-  const groupName = () => local.name ?? createUniqueId();
   const variant = () => local.variant ?? 'default';
 
-  const contextValue: RadioContextValue = {
-    value: () => local.value,
-    onChange: (v: string) => local.onChange?.(v),
+  const contextValue: CheckboxContextValue = {
+    value: () => local.value ?? [],
+    onChange: (itemValue: string, checked: boolean) => {
+      const current = local.value ?? [];
+      const newValue = checked
+        ? [...current, itemValue]
+        : current.filter(v => v !== itemValue);
+      local.onChange?.(newValue);
+    },
     size: () => local.size ?? 'md',
     variant,
     disabled: () => local.disabled ?? false,
-    name: groupName,
   };
 
   const getContainerClass = () => {
@@ -143,49 +164,88 @@ export function RadioGroup(props: RadioGroupProps) {
   };
 
   return (
-    <RadioContext.Provider value={contextValue}>
+    <CheckboxContext.Provider value={contextValue}>
       <div
-        role="radiogroup"
+        role="group"
         class={cn(getContainerClass(), local.class)}
         {...rest}
       >
         {local.children}
       </div>
-    </RadioContext.Provider>
+    </CheckboxContext.Provider>
   );
 }
 
-export function RadioOption(props: RadioOptionProps) {
-  const context = useRadioContext();
+export function Checkbox(props: CheckboxProps) {
+  const context = useCheckboxContext();
   const [local, rest] = splitProps(props, [
     'value',
+    'checked',
+    'onChange',
     'label',
     'description',
     'icon',
     'size',
+    'variant',
+    'indeterminate',
     'class',
     'disabled',
     'id',
   ]);
 
   const id = () => local.id ?? createUniqueId();
-  const size = () => local.size ?? context.size();
-  const variant = () => context.variant();
-  const isDisabled = () => local.disabled ?? context.disabled();
-  const isChecked = () => context.value() === local.value;
+
+  // Determine if we're in a group context
+  const isInGroup = () => context !== undefined;
+
+  const size = () => local.size ?? context?.size() ?? 'md';
+  const variant = () => local.variant ?? context?.variant() ?? 'default';
+  const isDisabled = () => local.disabled ?? context?.disabled() ?? false;
+
+  const isChecked = () => {
+    if (isInGroup() && local.value) {
+      return context!.value().includes(local.value);
+    }
+    return local.checked ?? false;
+  };
 
   const handleChange = () => {
-    if (!isDisabled()) {
-      context.onChange(local.value);
+    if (isDisabled()) return;
+
+    if (isInGroup() && local.value) {
+      context!.onChange(local.value, !isChecked());
+    } else {
+      local.onChange?.(!isChecked());
     }
   };
 
-  // Common radio input for all variants
-  const RadioInput = (inputProps: { class?: string }) => (
+  // Checkbox indicator component
+  const CheckboxIndicator = () => (
+    <div
+      class={cn(
+        'rounded-[3px] border-2 transition-all duration-150',
+        'flex items-center justify-center',
+        sizeStyles[size()].box,
+        isChecked() || local.indeterminate
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-input bg-background hover:border-primary/50',
+        isDisabled() && 'cursor-not-allowed opacity-50'
+      )}
+    >
+      <Show when={local.indeterminate}>
+        <MinusIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-150')} />
+      </Show>
+      <Show when={!local.indeterminate && isChecked()}>
+        <CheckIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-150')} />
+      </Show>
+    </div>
+  );
+
+  // Common checkbox input
+  const CheckboxInput = (inputProps: { class?: string }) => (
     <input
-      type="radio"
+      type="checkbox"
       id={id()}
-      name={context.name()}
       value={local.value}
       checked={isChecked()}
       disabled={isDisabled()}
@@ -195,33 +255,9 @@ export function RadioOption(props: RadioOptionProps) {
     />
   );
 
-  // Radio indicator for default and card variants
-  const RadioIndicator = () => (
-    <div
-      class={cn(
-        'rounded-full border-2 transition-colors duration-150',
-        'flex items-center justify-center',
-        sizeStyles[size()].outer,
-        isChecked()
-          ? 'border-primary bg-primary'
-          : 'border-input bg-background hover:border-primary/50',
-        isDisabled() && 'cursor-not-allowed',
-        'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
-      )}
-    >
-      <div
-        class={cn(
-          'rounded-full bg-primary-foreground transition-transform duration-150',
-          sizeStyles[size()].inner,
-          isChecked() ? 'scale-100' : 'scale-0'
-        )}
-      />
-    </div>
-  );
-
   return (
     <Switch>
-      {/* Default variant - classic radio button */}
+      {/* Default variant */}
       <Match when={variant() === 'default'}>
         <label
           class={cn(
@@ -231,8 +267,8 @@ export function RadioOption(props: RadioOptionProps) {
           )}
         >
           <div class="relative flex items-center justify-center pt-0.5">
-            <RadioInput />
-            <RadioIndicator />
+            <CheckboxInput />
+            <CheckboxIndicator />
           </div>
           <Show when={local.label || local.description}>
             <div class="flex flex-col">
@@ -251,7 +287,7 @@ export function RadioOption(props: RadioOptionProps) {
         </label>
       </Match>
 
-      {/* Button variant - segmented control style */}
+      {/* Button variant */}
       <Match when={variant() === 'button'}>
         <label
           class={cn(
@@ -265,12 +301,12 @@ export function RadioOption(props: RadioOptionProps) {
             local.class
           )}
         >
-          <RadioInput class="sr-only" />
+          <CheckboxInput class="sr-only" />
           <span class="font-medium">{local.label}</span>
         </label>
       </Match>
 
-      {/* Card variant - bordered card with radio indicator */}
+      {/* Card variant */}
       <Match when={variant() === 'card'}>
         <label
           class={cn(
@@ -283,28 +319,10 @@ export function RadioOption(props: RadioOptionProps) {
             local.class
           )}
         >
-          <RadioInput />
+          <CheckboxInput class="sr-only" />
           <div class="flex items-start gap-3">
             <div class="flex items-center justify-center pt-0.5">
-              <div
-                class={cn(
-                  'rounded-full border-2 transition-colors duration-150',
-                  'flex items-center justify-center',
-                  sizeStyles[size()].outer,
-                  isChecked()
-                    ? 'border-primary bg-primary'
-                    : 'border-input bg-background',
-                  'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
-                )}
-              >
-                <div
-                  class={cn(
-                    'rounded-full bg-primary-foreground transition-transform duration-150',
-                    sizeStyles[size()].inner,
-                    isChecked() ? 'scale-100' : 'scale-0'
-                  )}
-                />
-              </div>
+              <CheckboxIndicator />
             </div>
             <div class="flex flex-col flex-1 min-w-0">
               <Show when={local.label}>
@@ -319,7 +337,6 @@ export function RadioOption(props: RadioOptionProps) {
               </Show>
             </div>
           </div>
-          {/* Checkmark indicator */}
           <Show when={isChecked()}>
             <div class="absolute top-2 right-2">
               <svg class="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
@@ -330,7 +347,7 @@ export function RadioOption(props: RadioOptionProps) {
         </label>
       </Match>
 
-      {/* Tile variant - icon-centric card */}
+      {/* Tile variant */}
       <Match when={variant() === 'tile'}>
         <label
           class={cn(
@@ -344,7 +361,7 @@ export function RadioOption(props: RadioOptionProps) {
             local.class
           )}
         >
-          <RadioInput class="sr-only" />
+          <CheckboxInput class="sr-only" />
           <Show when={local.icon}>
             {(getIcon) => {
               const Icon = getIcon();
@@ -372,10 +389,11 @@ export function RadioOption(props: RadioOptionProps) {
               {local.description}
             </span>
           </Show>
-          {/* Selection indicator */}
           <Show when={isChecked()}>
             <div class="absolute top-1.5 right-1.5">
-              <div class="w-2 h-2 rounded-full bg-primary" />
+              <div class="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                <CheckIcon class="w-2.5 h-2.5 text-primary-foreground" />
+              </div>
             </div>
           </Show>
         </label>
@@ -384,8 +402,8 @@ export function RadioOption(props: RadioOptionProps) {
   );
 }
 
-/** Convenience component for rendering a list of radio options */
-export interface RadioListProps extends RadioGroupProps {
+/** Convenience component for rendering a list of checkbox options */
+export interface CheckboxListProps extends CheckboxGroupProps {
   /** Options to render */
   options: Array<{
     value: string;
@@ -396,14 +414,14 @@ export interface RadioListProps extends RadioGroupProps {
   }>;
 }
 
-export function RadioList(props: RadioListProps) {
+export function CheckboxList(props: CheckboxListProps) {
   const [local, rest] = splitProps(props, ['options']);
 
   return (
-    <RadioGroup {...rest}>
+    <CheckboxGroup {...rest}>
       <For each={local.options}>
         {(option) => (
-          <RadioOption
+          <Checkbox
             value={option.value}
             label={option.label}
             description={option.description}
@@ -412,6 +430,6 @@ export function RadioList(props: RadioListProps) {
           />
         )}
       </For>
-    </RadioGroup>
+    </CheckboxGroup>
   );
 }

@@ -24,27 +24,31 @@ const sizeStyles: Record<SwitchSize, {
   thumbTranslate: string;
   label: string;
   description: string;
+  trackHeight: number;
 }> = {
   sm: {
     track: 'w-7 h-4',
     thumb: 'w-3 h-3',
     thumbTranslate: 'translate-x-3',
-    label: 'text-xs',
-    description: 'text-[10px]',
+    label: 'text-xs leading-4',
+    description: 'text-[10px] leading-3',
+    trackHeight: 16,
   },
   md: {
     track: 'w-9 h-5',
     thumb: 'w-4 h-4',
     thumbTranslate: 'translate-x-4',
-    label: 'text-xs',
-    description: 'text-[11px]',
+    label: 'text-xs leading-5',
+    description: 'text-[11px] leading-4',
+    trackHeight: 20,
   },
   lg: {
     track: 'w-11 h-6',
     thumb: 'w-5 h-5',
     thumbTranslate: 'translate-x-5',
-    label: 'text-sm',
-    description: 'text-xs',
+    label: 'text-sm leading-6',
+    description: 'text-xs leading-4',
+    trackHeight: 24,
   },
 };
 
@@ -61,7 +65,7 @@ export function Switch(props: SwitchProps) {
     'id',
   ]);
 
-  const id = local.id ?? createUniqueId();
+  const id = () => local.id ?? createUniqueId();
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
   const labelPos = () => local.labelPosition ?? 'right';
@@ -72,11 +76,11 @@ export function Switch(props: SwitchProps) {
   };
 
   const SwitchControl = () => (
-    <div class="relative inline-flex items-center">
+    <div class="relative inline-flex items-center shrink-0">
       <input
         type="checkbox"
         role="switch"
-        id={id}
+        id={id()}
         checked={local.checked}
         disabled={local.disabled}
         onChange={handleChange}
@@ -107,7 +111,7 @@ export function Switch(props: SwitchProps) {
 
   const LabelContent = () => (
     <Show when={local.label || local.description}>
-      <div class="flex flex-col">
+      <div class="flex flex-col justify-center min-h-0">
         <Show when={local.label}>
           <span class={cn('text-foreground', styles().label)}>
             {local.label}
@@ -122,10 +126,14 @@ export function Switch(props: SwitchProps) {
     </Show>
   );
 
+  // Use items-center when there's only a label, items-start when there's a description
+  const alignmentClass = () => local.description ? 'items-start' : 'items-center';
+
   return (
     <label
       class={cn(
-        'inline-flex items-start gap-2 cursor-pointer select-none',
+        'inline-flex gap-2 cursor-pointer select-none',
+        alignmentClass(),
         local.disabled && 'opacity-50 cursor-not-allowed',
         local.class
       )}
@@ -133,9 +141,7 @@ export function Switch(props: SwitchProps) {
       <Show when={labelPos() === 'left'}>
         <LabelContent />
       </Show>
-      <div class="pt-0.5">
-        <SwitchControl />
-      </div>
+      <SwitchControl />
       <Show when={labelPos() === 'right'}>
         <LabelContent />
       </Show>

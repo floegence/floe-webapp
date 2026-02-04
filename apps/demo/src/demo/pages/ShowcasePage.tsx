@@ -41,6 +41,12 @@ import {
   // Radio & Switch
   radioDoc,
   switchDoc,
+  // Checkbox
+  checkboxDoc,
+  // Pagination
+  paginationDoc,
+  // Progress
+  linearProgressDoc,
 } from '../data/componentDocs';
 import {
   AnimatedBorderCard,
@@ -123,8 +129,17 @@ import {
   // Radio & Switch
   RadioGroup,
   RadioOption,
-  RadioList,
   Switch,
+  // Checkbox
+  Checkbox,
+  CheckboxGroup,
+  // Pagination
+  Pagination,
+  // Progress
+  LinearProgress,
+  CircularProgress,
+  SegmentedProgress,
+  StepsProgress,
   // More icons
   ArrowUp,
   ArrowDown,
@@ -481,6 +496,17 @@ export function ShowcasePage(props: ShowcasePageProps) {
   // Switch demo state
   const [switchValue, setSwitchValue] = createSignal(false);
   const [darkModeSwitch, setDarkModeSwitch] = createSignal(true);
+
+  // Checkbox demo state
+  const [checkboxValues, setCheckboxValues] = createSignal<string[]>(['option1']);
+  const [singleCheckbox, setSingleCheckbox] = createSignal(false);
+
+  // Pagination demo state
+  const [currentPage, setCurrentPage] = createSignal(1);
+  const [pageSize, setPageSize] = createSignal(10);
+
+  // Progress demo state
+  const [progressValue, setProgressValue] = createSignal(65);
 
   // Dropdown with custom content state
   const [dropdownQuantity, setDropdownQuantity] = createSignal(5);
@@ -1425,7 +1451,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-radio"
           title="Radio"
-          description="Radio button group for selecting a single option from a list."
+          description="Radio button group for selecting a single option from a list. Supports multiple visual variants."
           actions={
             <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.radio')}>
               View Source
@@ -1434,9 +1460,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
-            {/* Basic RadioGroup */}
+            {/* Default Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-muted-foreground">Basic RadioGroup</h4>
+              <h4 class="text-xs font-medium text-muted-foreground">Default Variant</h4>
               <RadioGroup
                 value={radioValue()}
                 onChange={(v) => {
@@ -1450,12 +1476,13 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </RadioGroup>
             </div>
 
-            {/* Horizontal orientation */}
+            {/* Button Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-muted-foreground">Horizontal Layout</h4>
+              <h4 class="text-xs font-medium text-muted-foreground">Button Variant (Segmented Control)</h4>
               <RadioGroup
                 value={radioValue()}
                 onChange={setRadioValue}
+                variant="button"
                 orientation="horizontal"
               >
                 <RadioOption value="option1" label="Option 1" />
@@ -1464,21 +1491,36 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </RadioGroup>
             </div>
 
-            {/* With descriptions */}
+            {/* Card Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-muted-foreground">With Descriptions</h4>
-              <RadioList
+              <h4 class="text-xs font-medium text-muted-foreground">Card Variant</h4>
+              <RadioGroup
                 value={planValue()}
                 onChange={(v) => {
                   setPlanValue(v);
                   notifications.info('Plan Selected', `Selected: ${v}`);
                 }}
-                options={[
-                  { value: 'free', label: 'Free', description: 'For personal use, limited features' },
-                  { value: 'pro', label: 'Pro', description: 'For professionals, all features' },
-                  { value: 'team', label: 'Team', description: 'For teams, unlimited users' },
-                ]}
-              />
+                variant="card"
+              >
+                <RadioOption value="free" label="Free" description="For personal use, limited features" />
+                <RadioOption value="pro" label="Pro" description="For professionals, all features" />
+                <RadioOption value="team" label="Team" description="For teams, unlimited users" />
+              </RadioGroup>
+            </div>
+
+            {/* Tile Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Tile Variant</h4>
+              <RadioGroup
+                value={radioValue()}
+                onChange={setRadioValue}
+                variant="tile"
+                orientation="horizontal"
+              >
+                <RadioOption value="option1" label="Home" icon={Home} />
+                <RadioOption value="option2" label="Settings" icon={Settings} />
+                <RadioOption value="option3" label="Files" icon={Files} />
+              </RadioGroup>
             </div>
 
             {/* Sizes */}
@@ -1652,6 +1694,385 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={switchDoc.props} componentName="Switch" />
+      </div>
+
+      {/* Checkbox */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-checkbox"
+          title="Checkbox"
+          description="Checkbox component for multi-select options. Supports multiple visual variants like Radio."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.checkbox')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Basic Checkbox */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Standalone Checkbox</h4>
+              <div class="flex flex-col gap-2">
+                <Checkbox
+                  checked={singleCheckbox()}
+                  onChange={(v) => {
+                    setSingleCheckbox(v);
+                    notifications.info('Checkbox', v ? 'Checked' : 'Unchecked');
+                  }}
+                  label="Accept terms and conditions"
+                />
+                <Checkbox
+                  checked={true}
+                  onChange={() => {}}
+                  label="With description"
+                  description="This option has additional information"
+                />
+                <Checkbox
+                  indeterminate
+                  label="Indeterminate state"
+                />
+              </div>
+            </div>
+
+            {/* CheckboxGroup - Default */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">CheckboxGroup - Default</h4>
+              <CheckboxGroup
+                value={checkboxValues()}
+                onChange={(v) => {
+                  setCheckboxValues(v);
+                  notifications.info('Selection Changed', `Selected: ${v.join(', ')}`);
+                }}
+              >
+                <Checkbox value="option1" label="Option 1" />
+                <Checkbox value="option2" label="Option 2" />
+                <Checkbox value="option3" label="Option 3" />
+              </CheckboxGroup>
+            </div>
+
+            {/* CheckboxGroup - Button Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Button Variant (Multi-select)</h4>
+              <CheckboxGroup
+                value={checkboxValues()}
+                onChange={setCheckboxValues}
+                variant="button"
+                orientation="horizontal"
+              >
+                <Checkbox value="option1" label="Option 1" />
+                <Checkbox value="option2" label="Option 2" />
+                <Checkbox value="option3" label="Option 3" />
+              </CheckboxGroup>
+            </div>
+
+            {/* CheckboxGroup - Card Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Card Variant</h4>
+              <CheckboxGroup
+                value={checkboxValues()}
+                onChange={setCheckboxValues}
+                variant="card"
+              >
+                <Checkbox value="option1" label="Notifications" description="Receive email notifications" />
+                <Checkbox value="option2" label="Updates" description="Get product updates" />
+                <Checkbox value="option3" label="Marketing" description="Receive marketing emails" />
+              </CheckboxGroup>
+            </div>
+
+            {/* CheckboxGroup - Tile Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Tile Variant</h4>
+              <CheckboxGroup
+                value={checkboxValues()}
+                onChange={setCheckboxValues}
+                variant="tile"
+                orientation="horizontal"
+              >
+                <Checkbox value="option1" label="Home" icon={Home} />
+                <Checkbox value="option2" label="Settings" icon={Settings} />
+                <Checkbox value="option3" label="Files" icon={Files} />
+              </CheckboxGroup>
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="flex items-center gap-6">
+                <Checkbox checked={true} onChange={() => {}} label="Small" size="sm" />
+                <Checkbox checked={true} onChange={() => {}} label="Medium" size="md" />
+                <Checkbox checked={true} onChange={() => {}} label="Large" size="lg" />
+              </div>
+            </div>
+
+            {/* Disabled */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Disabled</h4>
+              <div class="flex items-center gap-4">
+                <Checkbox checked={false} onChange={() => {}} label="Unchecked disabled" disabled />
+                <Checkbox checked={true} onChange={() => {}} label="Checked disabled" disabled />
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={checkboxDoc.usage.whenToUse}
+          bestPractices={checkboxDoc.usage.bestPractices}
+          avoid={checkboxDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Checkbox.tsx"
+          code={checkboxDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={checkboxDoc.props} componentName="Checkbox" />
+      </div>
+
+      {/* Pagination */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-pagination"
+          title="Pagination"
+          description="Navigation component for paginated content. Multiple variants for different use cases."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.pagination')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Default Pagination */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Default Pagination</h4>
+              <Pagination
+                page={currentPage()}
+                totalPages={20}
+                onChange={(p) => {
+                  setCurrentPage(p);
+                  notifications.info('Page Changed', `Page: ${p}`);
+                }}
+              />
+            </div>
+
+            {/* With First/Last & Jump */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">With First/Last & Jump To</h4>
+              <Pagination
+                page={currentPage()}
+                totalPages={20}
+                onChange={setCurrentPage}
+                showFirstLast
+                showJumpTo
+              />
+            </div>
+
+            {/* With Page Size */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">With Page Size Selector</h4>
+              <Pagination
+                page={currentPage()}
+                totalPages={20}
+                onChange={setCurrentPage}
+                showPageSize
+                pageSize={pageSize()}
+                pageSizes={[10, 20, 50, 100]}
+                onPageSizeChange={(s) => {
+                  setPageSize(s);
+                  notifications.info('Page Size', `${s} items per page`);
+                }}
+                totalItems={200}
+              />
+            </div>
+
+            {/* Simple Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Simple Variant</h4>
+              <Pagination
+                page={currentPage()}
+                totalPages={20}
+                onChange={setCurrentPage}
+                variant="simple"
+              />
+            </div>
+
+            {/* Minimal Variant */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Minimal Variant</h4>
+              <Pagination
+                page={currentPage()}
+                totalPages={20}
+                onChange={setCurrentPage}
+                variant="minimal"
+                showFirstLast
+              />
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="flex flex-col gap-4">
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Small</label>
+                  <Pagination page={5} totalPages={10} onChange={() => {}} size="sm" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Medium</label>
+                  <Pagination page={5} totalPages={10} onChange={() => {}} size="md" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Large</label>
+                  <Pagination page={5} totalPages={10} onChange={() => {}} size="lg" />
+                </div>
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={paginationDoc.usage.whenToUse}
+          bestPractices={paginationDoc.usage.bestPractices}
+          avoid={paginationDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Pagination.tsx"
+          code={paginationDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={paginationDoc.props} componentName="Pagination" />
+      </div>
+
+      {/* Progress */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-progress"
+          title="Progress"
+          description="Progress indicators for loading states and task completion. Linear, circular, segmented, and step variants."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.progress')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Linear Progress */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Linear Progress</h4>
+              <div class="space-y-4">
+                <LinearProgress value={progressValue()} showLabel />
+                <div class="flex gap-2">
+                  <Button size="xs" onClick={() => setProgressValue(Math.max(0, progressValue() - 10))}>-10%</Button>
+                  <Button size="xs" onClick={() => setProgressValue(Math.min(100, progressValue() + 10))}>+10%</Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Linear Progress Variants */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Colors</h4>
+              <div class="space-y-3">
+                <LinearProgress value={80} color="primary" />
+                <LinearProgress value={65} color="success" />
+                <LinearProgress value={50} color="warning" />
+                <LinearProgress value={35} color="error" />
+                <LinearProgress value={70} color="info" />
+              </div>
+            </div>
+
+            {/* Striped & Animated */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Striped & Animated</h4>
+              <div class="space-y-3">
+                <LinearProgress value={75} striped />
+                <LinearProgress value={60} striped animated />
+              </div>
+            </div>
+
+            {/* Indeterminate */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Indeterminate (Loading)</h4>
+              <LinearProgress indeterminate />
+            </div>
+
+            {/* With Buffer */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">With Buffer</h4>
+              <LinearProgress value={45} buffer={70} />
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="space-y-3">
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-1 block">Small</label>
+                  <LinearProgress value={60} size="sm" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-1 block">Medium</label>
+                  <LinearProgress value={60} size="md" />
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-1 block">Large</label>
+                  <LinearProgress value={60} size="lg" />
+                </div>
+              </div>
+            </div>
+
+            {/* Circular Progress */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Circular Progress</h4>
+              <div class="flex items-center gap-4">
+                <CircularProgress value={progressValue()} showLabel size="sm" />
+                <CircularProgress value={progressValue()} showLabel size="md" />
+                <CircularProgress value={progressValue()} showLabel size="lg" />
+                <CircularProgress value={progressValue()} showLabel size={80} strokeWidth={6} />
+              </div>
+            </div>
+
+            {/* Circular Colors */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Circular Colors</h4>
+              <div class="flex items-center gap-4">
+                <CircularProgress value={75} showLabel color="primary" />
+                <CircularProgress value={75} showLabel color="success" />
+                <CircularProgress value={75} showLabel color="warning" />
+                <CircularProgress value={75} showLabel color="error" />
+                <CircularProgress indeterminate color="info" />
+              </div>
+            </div>
+
+            {/* Segmented Progress */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Segmented Progress</h4>
+              <div class="space-y-3">
+                <SegmentedProgress value={progressValue()} segments={5} showLabel />
+                <SegmentedProgress value={80} segments={10} color="success" />
+                <SegmentedProgress value={40} segments={4} color="warning" gap={4} />
+              </div>
+            </div>
+
+            {/* Steps Progress */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Steps Progress</h4>
+              <StepsProgress
+                current={2}
+                steps={['Account', 'Profile', 'Review', 'Complete']}
+              />
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={linearProgressDoc.usage.whenToUse}
+          bestPractices={linearProgressDoc.usage.bestPractices}
+          avoid={linearProgressDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Progress.tsx"
+          code={linearProgressDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={linearProgressDoc.props} componentName="LinearProgress" />
       </div>
 
       {/* Form Components */}

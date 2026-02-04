@@ -2820,7 +2820,7 @@ function SetupWizard() {
 // ===========================
 export const radioDoc: ComponentDoc = {
   name: 'Radio',
-  description: 'Radio button group for selecting a single option from a list. Includes RadioGroup, RadioOption, and RadioList components.',
+  description: 'Radio button group for selecting a single option from a list. Includes RadioGroup, RadioOption, and RadioList components. Supports multiple visual variants.',
   props: [
     {
       name: 'value',
@@ -2831,6 +2831,12 @@ export const radioDoc: ComponentDoc = {
       name: 'onChange',
       type: '(value: string) => void',
       description: 'Callback when selection changes.',
+    },
+    {
+      name: 'variant',
+      type: "'default' | 'card' | 'button' | 'tile'",
+      default: "'default'",
+      description: 'Visual variant of the radio group.',
     },
     {
       name: 'size',
@@ -3076,6 +3082,288 @@ function MyWizard() {
     </div>
   );
 }`,
+    },
+  ],
+};
+
+export const checkboxDoc: ComponentDoc = {
+  name: 'Checkbox',
+  description: 'A versatile checkbox component with multiple variants for different use cases.',
+  props: [
+    { name: 'checked', type: 'boolean', description: 'Whether the checkbox is checked' },
+    { name: 'onChange', type: '(checked: boolean) => void', description: 'Callback when state changes' },
+    { name: 'value', type: 'string', description: 'Value for use with CheckboxGroup' },
+    { name: 'label', type: 'string', description: 'Label text' },
+    { name: 'description', type: 'string', description: 'Description text shown below label' },
+    { name: 'icon', type: 'Component', description: 'Icon component for tile variant' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of the checkbox' },
+    { name: 'variant', type: "'default' | 'card' | 'button' | 'tile'", default: "'default'", description: 'Visual style variant' },
+    { name: 'indeterminate', type: 'boolean', description: 'Show indeterminate state (partial selection)' },
+    { name: 'disabled', type: 'boolean', description: 'Whether the checkbox is disabled' },
+  ],
+  usage: {
+    whenToUse: [
+      'Multi-selection scenarios',
+      'Form inputs for boolean values',
+      'Feature toggles and settings',
+      'Card variant for rich selection options',
+    ],
+    bestPractices: [
+      'Use clear, concise labels',
+      'Group related checkboxes with CheckboxGroup',
+      'Use card variant for options needing description',
+    ],
+    avoid: [
+      'Using for mutually exclusive options (use Radio)',
+      'Too many checkboxes in one group',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Checkbox',
+      code: `<Checkbox
+  checked={checked()}
+  onChange={setChecked}
+  label="Accept terms"
+/>`,
+    },
+    {
+      title: 'Card Variant',
+      code: `<CheckboxGroup value={selected()} onChange={setSelected} variant="card">
+  <CheckboxList
+    options={[
+      { value: 'email', label: 'Email', description: 'Receive email notifications' },
+      { value: 'sms', label: 'SMS', description: 'Receive text messages' },
+    ]}
+  />
+</CheckboxGroup>`,
+    },
+  ],
+};
+
+export const paginationDoc: ComponentDoc = {
+  name: 'Pagination',
+  description: 'A flexible pagination component with multiple variants and customization options.',
+  props: [
+    { name: 'page', type: 'number', required: true, description: 'Current page (1-indexed)' },
+    { name: 'totalPages', type: 'number', required: true, description: 'Total number of pages' },
+    { name: 'onChange', type: '(page: number) => void', description: 'Callback when page changes' },
+    { name: 'variant', type: "'default' | 'simple' | 'minimal'", default: "'default'", description: 'Visual style variant' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of pagination controls' },
+    { name: 'showFirstLast', type: 'boolean', description: 'Show first/last page buttons' },
+    { name: 'showJumpTo', type: 'boolean', description: 'Show page jump input' },
+    { name: 'showPageSize', type: 'boolean', description: 'Show page size selector' },
+    { name: 'pageSize', type: 'number', description: 'Current page size' },
+    { name: 'pageSizes', type: 'number[]', description: 'Available page size options' },
+    { name: 'onPageSizeChange', type: '(size: number) => void', description: 'Callback when page size changes' },
+    { name: 'siblingCount', type: 'number', default: '1', description: 'Number of siblings on each side of current page' },
+  ],
+  usage: {
+    whenToUse: [
+      'Navigating large datasets',
+      'Table pagination',
+      'Gallery or list navigation',
+    ],
+    bestPractices: [
+      'Use simple variant for compact spaces',
+      'Show total pages for context',
+      'Include page size selector for data tables',
+    ],
+    avoid: [
+      'Using for small datasets that fit on one page',
+      'Hiding page numbers when total is small',
+    ],
+  },
+  examples: [
+    {
+      title: 'Default Pagination',
+      code: `<Pagination
+  page={currentPage()}
+  totalPages={10}
+  onChange={setCurrentPage}
+/>`,
+    },
+    {
+      title: 'Simple Variant',
+      code: `<Pagination
+  page={currentPage()}
+  totalPages={10}
+  onChange={setCurrentPage}
+  variant="simple"
+/>`,
+    },
+  ],
+};
+
+export const linearProgressDoc: ComponentDoc = {
+  name: 'LinearProgress',
+  description: 'A horizontal progress bar with various styling options including stripes and animation.',
+  props: [
+    { name: 'value', type: 'number', description: 'Progress value (0-100)' },
+    { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Height of the progress bar' },
+    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    { name: 'showLabel', type: 'boolean', description: 'Show percentage label above bar' },
+    { name: 'labelFormat', type: '(value: number, max: number) => string', description: 'Custom label format function' },
+    { name: 'striped', type: 'boolean', description: 'Show striped pattern' },
+    { name: 'animated', type: 'boolean', description: 'Animate stripes (requires striped)' },
+    { name: 'indeterminate', type: 'boolean', description: 'Indeterminate loading state' },
+    { name: 'buffer', type: 'number', description: 'Buffer progress value for streaming' },
+  ],
+  usage: {
+    whenToUse: [
+      'File upload progress',
+      'Form completion status',
+      'Loading indicators',
+      'Task progress tracking',
+    ],
+    bestPractices: [
+      'Use appropriate color for context (success for completion)',
+      'Show label for important progress indicators',
+      'Use indeterminate when duration is unknown',
+    ],
+    avoid: [
+      'Showing 0% for extended periods',
+      'Jumping from low to 100% suddenly',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Progress',
+      code: `<LinearProgress value={75} showLabel />`,
+    },
+    {
+      title: 'Animated Striped',
+      code: `<LinearProgress value={60} striped animated color="success" />`,
+    },
+  ],
+};
+
+export const circularProgressDoc: ComponentDoc = {
+  name: 'CircularProgress',
+  description: 'A circular progress indicator perfect for dashboards and compact spaces.',
+  props: [
+    { name: 'value', type: 'number', description: 'Progress value (0-100)' },
+    { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
+    { name: 'size', type: "'sm' | 'md' | 'lg' | number", default: "'md'", description: 'Size of the circle' },
+    { name: 'strokeWidth', type: 'number', description: 'Width of the progress stroke' },
+    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    { name: 'showLabel', type: 'boolean', description: 'Show percentage in center' },
+    { name: 'labelFormat', type: '(value: number, max: number) => string', description: 'Custom label format function' },
+    { name: 'indeterminate', type: 'boolean', description: 'Spinning loading state' },
+    { name: 'showTrack', type: 'boolean', default: 'true', description: 'Show background track' },
+  ],
+  usage: {
+    whenToUse: [
+      'Dashboard metrics',
+      'Skill level indicators',
+      'Loading spinners',
+      'Completion percentages',
+    ],
+    bestPractices: [
+      'Use showLabel for important metrics',
+      'Match size to available space',
+      'Use indeterminate for unknown durations',
+    ],
+    avoid: [
+      'Using for very small values that are hard to see',
+      'Placing too many in close proximity',
+    ],
+  },
+  examples: [
+    {
+      title: 'With Label',
+      code: `<CircularProgress value={75} showLabel />`,
+    },
+    {
+      title: 'Custom Size',
+      code: `<CircularProgress value={60} size={80} color="success" showLabel />`,
+    },
+  ],
+};
+
+export const segmentedProgressDoc: ComponentDoc = {
+  name: 'SegmentedProgress',
+  description: 'A progress bar divided into discrete segments for step-based progress.',
+  props: [
+    { name: 'value', type: 'number', description: 'Progress value (0-100)' },
+    { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
+    { name: 'segments', type: 'number', default: '5', description: 'Number of segments' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of segments' },
+    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    { name: 'showLabel', type: 'boolean', description: 'Show percentage label' },
+    { name: 'gap', type: 'number', default: '2', description: 'Gap between segments in pixels' },
+  ],
+  usage: {
+    whenToUse: [
+      'Multi-step processes',
+      'Level indicators',
+      'Rating displays',
+      'Battery-style indicators',
+    ],
+    bestPractices: [
+      'Match segment count to actual steps',
+      'Use meaningful segment numbers (3-10)',
+    ],
+    avoid: [
+      'Too many segments (becomes hard to distinguish)',
+      'Using for continuous values',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Segmented',
+      code: `<SegmentedProgress value={60} segments={5} />`,
+    },
+    {
+      title: 'With Label',
+      code: `<SegmentedProgress value={80} segments={10} showLabel color="success" />`,
+    },
+  ],
+};
+
+export const stepsProgressDoc: ComponentDoc = {
+  name: 'StepsProgress',
+  description: 'A step indicator showing progress through a multi-step process with labels.',
+  props: [
+    { name: 'current', type: 'number', required: true, description: 'Current step (0-indexed)' },
+    { name: 'steps', type: 'string[]', required: true, description: 'Array of step labels' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of step indicators' },
+    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    { name: 'orientation', type: "'horizontal' | 'vertical'", default: "'horizontal'", description: 'Layout orientation' },
+  ],
+  usage: {
+    whenToUse: [
+      'Multi-step forms',
+      'Checkout flows',
+      'Onboarding processes',
+      'Tutorial progress',
+    ],
+    bestPractices: [
+      'Keep step labels short and clear',
+      'Use vertical for many steps or narrow spaces',
+      'Indicate completed vs current vs pending states',
+    ],
+    avoid: [
+      'Too many steps (consider grouping)',
+      'Very long step labels',
+    ],
+  },
+  examples: [
+    {
+      title: 'Horizontal Steps',
+      code: `<StepsProgress
+  current={1}
+  steps={['Account', 'Profile', 'Review', 'Complete']}
+/>`,
+    },
+    {
+      title: 'Vertical Steps',
+      code: `<StepsProgress
+  current={2}
+  steps={['Start', 'Configure', 'Verify', 'Done']}
+  orientation="vertical"
+/>`,
     },
   ],
 };
