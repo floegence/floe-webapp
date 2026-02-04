@@ -20,6 +20,10 @@ function runOnce(command, args) {
   });
 }
 
+// Ensure workspace dependencies are installed and in sync with pnpm-lock.yaml.
+// This prevents confusing build-time missing-module errors when node_modules is stale.
+await runOnce('pnpm', ['install', '--frozen-lockfile']);
+
 await Promise.all([
   runOnce('pnpm', ['--filter', '@floegence/floe-webapp-core', 'build']),
   runOnce('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'build']),
