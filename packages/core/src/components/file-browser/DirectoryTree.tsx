@@ -140,7 +140,7 @@ function FolderTreeItem(props: TreeItemProps) {
   };
 
   // Drop target handlers
-  const handlePointerEnter = (_e: PointerEvent) => {
+  const handlePointerEnter = (e: PointerEvent) => {
     if (!props.enableDragDrop || !props.dragContext) return;
     const state = props.dragContext.dragState();
     if (!state.isDragging) return;
@@ -152,13 +152,19 @@ function FolderTreeItem(props: TreeItemProps) {
       props.item,
       props.instanceId
     );
+
+    // Get the target element's bounding rect for fly-to animation
+    const targetEl = e.currentTarget as HTMLElement;
+    const targetRect = targetEl?.getBoundingClientRect() ?? null;
+
     props.dragContext.setDropTarget(
       {
         instanceId: props.instanceId,
         targetPath: props.item.path,
         targetItem: props.item,
       },
-      isValid
+      isValid,
+      targetRect
     );
   };
 
