@@ -1,4 +1,4 @@
-import { splitProps, type JSX, Show, createUniqueId, createSignal, For } from 'solid-js';
+import { splitProps, type JSX, Show, createUniqueId, createSignal, For, createEffect, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Plus, Minus, ChevronDown } from '../icons';
@@ -587,17 +587,24 @@ function AffixSelect(props: AffixSelectProps) {
     setOpen(false);
   };
 
-  // Event listeners for closing
-  const setupListeners = () => {
+  // When open, close on outside click/Escape and position the menu.
+  // Use reactive cleanup to guarantee listeners are removed on any close path or unmount.
+  createEffect(() => {
+    if (!open()) {
+      setMenuPosition({ x: -9999, y: -9999 });
+      return;
+    }
+    if (typeof document === 'undefined') return;
+
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
     requestAnimationFrame(updateMenuPosition);
-  };
 
-  const cleanupListeners = () => {
-    document.removeEventListener('mousedown', handleClickOutside);
-    document.removeEventListener('keydown', handleEscape);
-  };
+    onCleanup(() => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    });
+  });
 
   return (
     <>
@@ -606,13 +613,7 @@ function AffixSelect(props: AffixSelectProps) {
         type="button"
         disabled={props.disabled}
         onClick={() => {
-          if (open()) {
-            setOpen(false);
-            cleanupListeners();
-          } else {
-            setOpen(true);
-            setupListeners();
-          }
+          setOpen((v) => !v);
         }}
         class={cn(
           'flex items-center gap-1 bg-muted/50 text-muted-foreground',
