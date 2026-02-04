@@ -4,6 +4,7 @@ import { LaunchpadSearch } from './LaunchpadSearch';
 import { LaunchpadPagination } from './LaunchpadPagination';
 import type { LaunchpadItemData } from './LaunchpadItem';
 import { deferAfterPaint } from '../../utils/defer';
+import { shouldIgnoreHotkeys } from '../../utils/dom';
 
 export interface LaunchpadProps {
   items: LaunchpadItemData[];
@@ -105,6 +106,10 @@ export function Launchpad(props: LaunchpadProps) {
 
   // Keyboard navigation
   const handleKeyDown = (e: KeyboardEvent) => {
+    // Don't hijack arrow keys from typing elements (search input), but keep Escape working.
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && shouldIgnoreHotkeys(e, { ignoreWhenTyping: true })) {
+      return;
+    }
     switch (e.key) {
       case 'Escape':
         props.onClose?.();

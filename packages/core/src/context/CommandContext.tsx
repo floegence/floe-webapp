@@ -3,6 +3,7 @@ import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import { formatKeybind, matchKeybind, parseKeybind, type ParsedKeybind } from '../utils/keybind';
 import { deferAfterPaint, deferNonBlocking } from '../utils/defer';
+import { shouldIgnoreHotkeys } from '../utils/dom';
 
 export interface Command {
   id: string;
@@ -49,31 +50,6 @@ export function createCommandService(): CommandContextValue {
 
   // Global keybind listener
   if (typeof window !== 'undefined' && cfg().enableGlobalKeybinds) {
-    const isTypingElement = (el: Element | null): boolean => {
-      if (!el || !(el instanceof HTMLElement)) return false;
-      const tag = el.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-      if (el.isContentEditable) return true;
-      // Some editors use role="textbox" on non-input elements.
-      if (el.getAttribute('role') === 'textbox') return true;
-      return false;
-    };
-
-    const shouldIgnoreHotkeys = (e: KeyboardEvent): boolean => {
-      const c = cfg();
-      if (!c.ignoreWhenTyping) return false;
-
-      const el = (e.target as Element | null) ?? (typeof document !== 'undefined' ? document.activeElement : null);
-      if (!isTypingElement(el)) return false;
-
-      // Allow opt-in containers (e.g. code editor).
-      if (c.allowWhenTypingWithin && el instanceof Element && el.closest(c.allowWhenTypingWithin)) {
-        return false;
-      }
-
-      return true;
-    };
-
     const handleKeydown = (e: KeyboardEvent) => {
       const c = cfg();
 
@@ -91,7 +67,9 @@ export function createCommandService(): CommandContextValue {
         return;
       }
 
-      if (shouldIgnoreHotkeys(e)) return;
+      if (shouldIgnoreHotkeys(e, { ignoreWhenTyping: c.ignoreWhenTyping, allowWhenTypingWithin: c.allowWhenTypingWithin })) {
+        return;
+      }
 
       // Command palette shortcut (Cmd/Ctrl + K)
       if (c.palette.enabled && matchKeybind(e, c.palette.keybind)) {
