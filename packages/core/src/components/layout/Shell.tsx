@@ -12,6 +12,7 @@ import { MobileTabBar } from './MobileTabBar';
 import { ActivityBar, type ActivityBarItem } from './ActivityBar';
 import { ResizeHandle } from './ResizeHandle';
 import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
+import { KeepAliveStack, type KeepAliveView } from './KeepAliveStack';
 
 export interface ShellProps {
   children: JSX.Element;
@@ -92,16 +93,30 @@ export function Shell(props: ShellProps) {
       }));
   });
 
+  // Keep sidebar panels mounted after first activation to preserve state and avoid remount thrash
+  // when switching between activity tabs (VSCode-like behavior on desktop).
+  const sidebarViews = createMemo<KeepAliveView[]>(() => {
+    if (sidebarHidden()) return [];
+    if (props.sidebarContent) return [];
+    if (!registry) return [];
+
+    return registry.sidebarItems()
+      // Keep behavior consistent with activity items: hide panels marked as hiddenOnMobile.
+      .filter((c) => !(isMobile() && c.sidebar?.hiddenOnMobile))
+      // FullScreen tabs are pages and should not render inside the sidebar.
+      .filter((c) => !c.sidebar?.fullScreen)
+      .map((c) => ({
+        id: c.id,
+        render: () => <Dynamic component={c.component} />,
+      }));
+  });
+
   const renderSidebarContent = (activeId: string): JSX.Element | undefined => {
     if (sidebarHidden()) return undefined;
     if (props.sidebarContent) return props.sidebarContent(activeId);
     if (!registry) return undefined;
 
-    const comp = registry.getComponent(activeId);
-    if (!comp?.sidebar) return undefined;
-    // Don't render sidebar content for fullScreen components
-    if (comp.sidebar.fullScreen) return undefined;
-    return <Dynamic component={comp.component} />;
+    return <KeepAliveStack views={sidebarViews()} activeId={activeId} />;
   };
 
   // Check if active component is fullScreen (should hide sidebar)

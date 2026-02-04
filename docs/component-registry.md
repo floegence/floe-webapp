@@ -82,6 +82,33 @@ export function AppContent() {
 }
 ```
 
+### Keep-alive behavior (recommended)
+
+Floe provides keep-alive utilities so switching activity tabs can preserve UI state and avoid remount thrash.
+
+Notes:
+
+- Desktop sidebar panels are kept mounted after first activation by default (Shell uses `KeepAliveStack`).
+- FullScreen pages should be rendered via `ActivityAppsMain` (also keep-alive).
+- If you want the activity tab selection to drive your own main views (for non-fullScreen tabs), use `KeepAliveStack`
+  keyed by `useLayout().sidebarActiveTab()`.
+
+```tsx
+import { useLayout } from '@floegence/floe-webapp-core';
+import { KeepAliveStack, type KeepAliveView } from '@floegence/floe-webapp-core/layout';
+
+const views: KeepAliveView[] = [
+  { id: 'files', render: () => <FilesPage /> },
+  { id: 'search', render: () => <SearchPage /> },
+  { id: 'showcase', render: () => <ShowcasePage /> },
+];
+
+export function AppMain() {
+  const layout = useLayout();
+  return <KeepAliveStack views={views} activeId={layout.sidebarActiveTab()} />;
+}
+```
+
 ## Commands
 
 Commands are contributed through `FloeComponent.commands`.
