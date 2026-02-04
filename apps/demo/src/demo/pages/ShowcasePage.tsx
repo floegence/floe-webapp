@@ -38,6 +38,9 @@ import {
   stepperDoc,
   wizardDoc,
   useWizardDoc,
+  // Radio & Switch
+  radioDoc,
+  switchDoc,
 } from '../data/componentDocs';
 import {
   AnimatedBorderCard,
@@ -117,6 +120,11 @@ import {
   Stepper,
   useWizard,
   type StepItem,
+  // Radio & Switch
+  RadioGroup,
+  RadioOption,
+  RadioList,
+  Switch,
   // More icons
   ArrowUp,
   ArrowDown,
@@ -465,6 +473,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [protocol, setProtocol] = createSignal('https');
   const [unit, setUnit] = createSignal('px');
   const [tld, setTld] = createSignal('com');
+
+  // Radio demo state
+  const [radioValue, setRadioValue] = createSignal('option1');
+  const [planValue, setPlanValue] = createSignal('free');
+
+  // Switch demo state
+  const [switchValue, setSwitchValue] = createSignal(false);
+  const [darkModeSwitch, setDarkModeSwitch] = createSignal(true);
 
   // Dropdown with custom content state
   const [dropdownQuantity, setDropdownQuantity] = createSignal(5);
@@ -1402,6 +1418,240 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <PropsTable props={affixInputDoc.props} componentName="AffixInput" />
           </div>
         </div>
+      </div>
+
+      {/* Radio Button */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-radio"
+          title="Radio"
+          description="Radio button group for selecting a single option from a list."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.radio')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Basic RadioGroup */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Basic RadioGroup</h4>
+              <RadioGroup
+                value={radioValue()}
+                onChange={(v) => {
+                  setRadioValue(v);
+                  notifications.info('Radio Selected', `Selected: ${v}`);
+                }}
+              >
+                <RadioOption value="option1" label="Option 1" />
+                <RadioOption value="option2" label="Option 2" />
+                <RadioOption value="option3" label="Option 3" />
+              </RadioGroup>
+            </div>
+
+            {/* Horizontal orientation */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Horizontal Layout</h4>
+              <RadioGroup
+                value={radioValue()}
+                onChange={setRadioValue}
+                orientation="horizontal"
+              >
+                <RadioOption value="option1" label="Option 1" />
+                <RadioOption value="option2" label="Option 2" />
+                <RadioOption value="option3" label="Option 3" />
+              </RadioGroup>
+            </div>
+
+            {/* With descriptions */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">With Descriptions</h4>
+              <RadioList
+                value={planValue()}
+                onChange={(v) => {
+                  setPlanValue(v);
+                  notifications.info('Plan Selected', `Selected: ${v}`);
+                }}
+                options={[
+                  { value: 'free', label: 'Free', description: 'For personal use, limited features' },
+                  { value: 'pro', label: 'Pro', description: 'For professionals, all features' },
+                  { value: 'team', label: 'Team', description: 'For teams, unlimited users' },
+                ]}
+              />
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Small</label>
+                  <RadioGroup value="a" onChange={() => {}} size="sm">
+                    <RadioOption value="a" label="Small A" />
+                    <RadioOption value="b" label="Small B" />
+                  </RadioGroup>
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Medium</label>
+                  <RadioGroup value="a" onChange={() => {}} size="md">
+                    <RadioOption value="a" label="Medium A" />
+                    <RadioOption value="b" label="Medium B" />
+                  </RadioGroup>
+                </div>
+                <div>
+                  <label class="text-[10px] text-muted-foreground mb-2 block">Large</label>
+                  <RadioGroup value="a" onChange={() => {}} size="lg">
+                    <RadioOption value="a" label="Large A" />
+                    <RadioOption value="b" label="Large B" />
+                  </RadioGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* Disabled */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Disabled</h4>
+              <RadioGroup value="option1" onChange={() => {}} disabled>
+                <RadioOption value="option1" label="Disabled option 1" />
+                <RadioOption value="option2" label="Disabled option 2" />
+              </RadioGroup>
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={radioDoc.usage.whenToUse}
+          bestPractices={radioDoc.usage.bestPractices}
+          avoid={radioDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Radio.tsx"
+          code={radioDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={radioDoc.props} componentName="RadioGroup" />
+      </div>
+
+      {/* Switch */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-switch"
+          title="Switch"
+          description="Toggle switch for binary on/off states."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.switch')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Basic Switch */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Basic Switch</h4>
+              <div class="flex flex-col gap-3">
+                <Switch
+                  checked={switchValue()}
+                  onChange={(v) => {
+                    setSwitchValue(v);
+                    notifications.info('Switch Toggled', v ? 'Enabled' : 'Disabled');
+                  }}
+                  label="Enable notifications"
+                />
+                <Switch
+                  checked={darkModeSwitch()}
+                  onChange={setDarkModeSwitch}
+                  label="Dark mode"
+                  description="Use dark theme for the interface"
+                />
+              </div>
+            </div>
+
+            {/* Label positions */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Label Positions</h4>
+              <div class="flex flex-col gap-3">
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Label on right (default)"
+                  labelPosition="right"
+                />
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Label on left"
+                  labelPosition="left"
+                />
+              </div>
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Small"
+                  size="sm"
+                />
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Medium"
+                  size="md"
+                />
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Large"
+                  size="lg"
+                />
+              </div>
+            </div>
+
+            {/* States */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">States</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Switch
+                  checked={false}
+                  onChange={() => {}}
+                  label="Unchecked"
+                />
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Checked"
+                />
+                <Switch
+                  checked={false}
+                  onChange={() => {}}
+                  label="Disabled unchecked"
+                  disabled
+                />
+                <Switch
+                  checked={true}
+                  onChange={() => {}}
+                  label="Disabled checked"
+                  disabled
+                />
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={switchDoc.usage.whenToUse}
+          bestPractices={switchDoc.usage.bestPractices}
+          avoid={switchDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="Switch.tsx"
+          code={switchDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={switchDoc.props} componentName="Switch" />
       </div>
 
       {/* Form Components */}

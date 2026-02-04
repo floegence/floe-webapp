@@ -2816,6 +2816,205 @@ function SetupWizard() {
 };
 
 // ===========================
+// Radio Component
+// ===========================
+export const radioDoc: ComponentDoc = {
+  name: 'Radio',
+  description: 'Radio button group for selecting a single option from a list. Includes RadioGroup, RadioOption, and RadioList components.',
+  props: [
+    {
+      name: 'value',
+      type: 'string',
+      description: 'Currently selected value.',
+    },
+    {
+      name: 'onChange',
+      type: '(value: string) => void',
+      description: 'Callback when selection changes.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of the radio buttons.',
+    },
+    {
+      name: 'orientation',
+      type: "'horizontal' | 'vertical'",
+      default: "'vertical'",
+      description: 'Layout direction of the radio group.',
+    },
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Disables all radio options.',
+    },
+    {
+      name: 'name',
+      type: 'string',
+      description: 'Name attribute for form submission.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Selecting a single option from 2-5 choices',
+      'When options need to be visible at all times',
+      'Form fields requiring exclusive selection',
+    ],
+    bestPractices: [
+      'Use clear, concise labels for each option',
+      'Provide a default selection when appropriate',
+      'Use vertical orientation for better readability',
+    ],
+    avoid: [
+      'Using for more than 5 options (use Select instead)',
+      'Using for binary choices (use Switch instead)',
+      'Leaving required radio groups without a default',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic RadioGroup',
+      code: `import { RadioGroup, RadioOption } from '@floegence/floe-webapp-core/full';
+
+function Example() {
+  const [value, setValue] = createSignal('option1');
+
+  return (
+    <RadioGroup value={value()} onChange={setValue}>
+      <RadioOption value="option1" label="Option 1" />
+      <RadioOption value="option2" label="Option 2" />
+      <RadioOption value="option3" label="Option 3" />
+    </RadioGroup>
+  );
+}`,
+    },
+    {
+      title: 'RadioList Shorthand',
+      code: `import { RadioList } from '@floegence/floe-webapp-core/full';
+
+function Example() {
+  const [value, setValue] = createSignal('small');
+
+  return (
+    <RadioList
+      value={value()}
+      onChange={setValue}
+      options={[
+        { value: 'small', label: 'Small', description: 'For personal use' },
+        { value: 'medium', label: 'Medium', description: 'For small teams' },
+        { value: 'large', label: 'Large', description: 'For enterprises' },
+      ]}
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
+// Switch Component
+// ===========================
+export const switchDoc: ComponentDoc = {
+  name: 'Switch',
+  description: 'Toggle switch for binary on/off states. Supports labels, descriptions, and multiple sizes.',
+  props: [
+    {
+      name: 'checked',
+      type: 'boolean',
+      description: 'Whether the switch is on.',
+    },
+    {
+      name: 'onChange',
+      type: '(checked: boolean) => void',
+      description: 'Callback when state changes.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of the switch.',
+    },
+    {
+      name: 'label',
+      type: 'string',
+      description: 'Label text displayed next to the switch.',
+    },
+    {
+      name: 'description',
+      type: 'string',
+      description: 'Description text below the label.',
+    },
+    {
+      name: 'labelPosition',
+      type: "'left' | 'right'",
+      default: "'right'",
+      description: 'Position of the label relative to the switch.',
+    },
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Disables the switch.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Binary on/off settings',
+      'Feature toggles',
+      'Enabling/disabling options',
+    ],
+    bestPractices: [
+      'Use clear labels that describe the "on" state',
+      'Provide immediate visual feedback on toggle',
+      'Consider default state carefully',
+    ],
+    avoid: [
+      'Using for non-binary choices (use Radio instead)',
+      'Using without a label in forms',
+      'Grouping too many switches together',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Switch',
+      code: `import { Switch } from '@floegence/floe-webapp-core/full';
+
+function Example() {
+  const [enabled, setEnabled] = createSignal(false);
+
+  return (
+    <Switch
+      checked={enabled()}
+      onChange={setEnabled}
+      label="Enable notifications"
+    />
+  );
+}`,
+    },
+    {
+      title: 'Switch with Description',
+      code: `import { Switch } from '@floegence/floe-webapp-core/full';
+
+function Example() {
+  const [darkMode, setDarkMode] = createSignal(true);
+
+  return (
+    <Switch
+      checked={darkMode()}
+      onChange={setDarkMode}
+      label="Dark mode"
+      description="Use dark theme for the interface"
+      size="lg"
+    />
+  );
+}`,
+    },
+  ],
+};
+
+// ===========================
 // useWizard Hook
 // ===========================
 export const useWizardDoc: ComponentDoc = {
