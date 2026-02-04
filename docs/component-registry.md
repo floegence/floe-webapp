@@ -69,7 +69,8 @@ This means the app should render fullScreen pages in the main content area, base
 Recommended: use `ActivityAppsMain` to render fullScreen pages with keep-alive semantics (pages stay mounted after first activation):
 
 ```tsx
-import { ActivityAppsMain, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
 
 const components: FloeComponent[] = [
   { id: 'home', name: 'Home', icon: HomeIcon, component: HomePage, sidebar: { fullScreen: true } },

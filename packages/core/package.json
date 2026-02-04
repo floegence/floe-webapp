@@ -1,14 +1,59 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./app": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.js"
+    },
+    "./full": {
+      "types": "./dist/full.d.ts",
+      "import": "./dist/full.js"
+    },
+    "./layout": {
+      "types": "./dist/layout.d.ts",
+      "import": "./dist/layout.js"
+    },
+    "./deck": {
+      "types": "./dist/deck.d.ts",
+      "import": "./dist/deck.js"
+    },
+    "./ui": {
+      "types": "./dist/ui.d.ts",
+      "import": "./dist/ui.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "import": "./dist/icons.js"
+    },
+    "./loading": {
+      "types": "./dist/loading.d.ts",
+      "import": "./dist/loading.js"
+    },
+    "./launchpad": {
+      "types": "./dist/launchpad.d.ts",
+      "import": "./dist/launchpad.js"
+    },
+    "./file-browser": {
+      "types": "./dist/file-browser.d.ts",
+      "import": "./dist/file-browser.js"
+    },
+    "./chat": {
+      "types": "./dist/chat.d.ts",
+      "import": "./dist/chat.js"
+    },
+    "./widgets": {
+      "types": "./dist/widgets.d.ts",
+      "import": "./dist/widgets.js"
     },
     "./styles": "./dist/styles.css",
     "./tailwind": "./dist/tailwind.css"

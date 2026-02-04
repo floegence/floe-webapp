@@ -1,5 +1,6 @@
 import { For, Show } from 'solid-js';
-import { cn, InfoBlock, TipBlock, WarningBlock } from '@floegence/floe-webapp-core';
+import { cn } from '@floegence/floe-webapp-core';
+import { InfoBlock, TipBlock, WarningBlock } from '@floegence/floe-webapp-core/ui';
 
 export interface UsageGuidelinesProps {
   whenToUse?: string[];

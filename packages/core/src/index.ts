@@ -1,11 +1,10 @@
-// Core package entry point
-// Export all components, contexts, hooks, and utilities
+// Core public entrypoint (kernel).
+//
+// Keep this file lightweight so downstream apps can selectively opt into
+// heavier modules (e.g. chat/file-browser) via explicit subpath exports.
 
-// Components
-export * from './components';
-
-// App helpers
-export * from './app';
+// Provider/runtime (keep minimal; do not export FloeApp here).
+export { FloeProvider, type FloeProviderProps } from './app/FloeProvider';
 
 // Context providers
 export * from './context';
@@ -18,6 +17,3 @@ export * from './utils';
 
 // Theme system
 export * from './styles/themes';
-
-// Widgets
-export * from './widgets';

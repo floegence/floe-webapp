@@ -98,6 +98,28 @@ function main() {
   // Build outputs
   assertFile('packages/core/dist/index.js');
   assertFile('packages/core/dist/index.d.ts');
+  assertFile('packages/core/dist/app.js');
+  assertFile('packages/core/dist/app.d.ts');
+  assertFile('packages/core/dist/full.js');
+  assertFile('packages/core/dist/full.d.ts');
+  assertFile('packages/core/dist/layout.js');
+  assertFile('packages/core/dist/layout.d.ts');
+  assertFile('packages/core/dist/deck.js');
+  assertFile('packages/core/dist/deck.d.ts');
+  assertFile('packages/core/dist/ui.js');
+  assertFile('packages/core/dist/ui.d.ts');
+  assertFile('packages/core/dist/icons.js');
+  assertFile('packages/core/dist/icons.d.ts');
+  assertFile('packages/core/dist/loading.js');
+  assertFile('packages/core/dist/loading.d.ts');
+  assertFile('packages/core/dist/launchpad.js');
+  assertFile('packages/core/dist/launchpad.d.ts');
+  assertFile('packages/core/dist/file-browser.js');
+  assertFile('packages/core/dist/file-browser.d.ts');
+  assertFile('packages/core/dist/chat.js');
+  assertFile('packages/core/dist/chat.d.ts');
+  assertFile('packages/core/dist/widgets.js');
+  assertFile('packages/core/dist/widgets.d.ts');
   assertFile('packages/core/dist/styles.css');
   assertFile('packages/core/dist/tailwind.css');
   assertFile('packages/core/dist/floe.css');
@@ -131,6 +153,30 @@ function main() {
     corePkg.exports?.['./tailwind'] === './dist/tailwind.css',
     '@floegence/floe-webapp-core exports["./tailwind"] must be ./dist/tailwind.css'
   );
+
+  const coreSubpaths = [
+    'app',
+    'full',
+    'layout',
+    'deck',
+    'ui',
+    'icons',
+    'loading',
+    'launchpad',
+    'file-browser',
+    'chat',
+    'widgets',
+  ];
+  for (const key of coreSubpaths) {
+    assert(
+      corePkg.exports?.[`./${key}`]?.import === `./dist/${key}.js`,
+      `@floegence/floe-webapp-core exports["./${key}"].import must be ./dist/${key}.js`
+    );
+    assert(
+      corePkg.exports?.[`./${key}`]?.types === `./dist/${key}.d.ts`,
+      `@floegence/floe-webapp-core exports["./${key}"].types must be ./dist/${key}.d.ts`
+    );
+  }
 
   assert(
     protocolPkg.name === '@floegence/floe-webapp-protocol',

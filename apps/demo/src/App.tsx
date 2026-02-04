@@ -1,14 +1,21 @@
 import { Match, Show, Switch, createMemo, createSignal, createEffect, onMount, type Component } from 'solid-js';
 import { createHighlighter } from 'shiki';
 import {
-  ActivityAppsMain,
-  BottomBarItem,
-  Button,
-  CommandPalette,
-  configureSyncHighlighter,
   FileBrowserDragProvider,
   FloeProvider,
+  NotificationContainer,
+  deferAfterPaint,
+  useComponentContextFactory,
+  useComponentRegistry,
+  useLayout,
+  useTheme,
   type FloeComponent,
+} from '@floegence/floe-webapp-core';
+import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
+import { configureSyncHighlighter } from '@floegence/floe-webapp-core/chat';
+import { BottomBarItem, Shell, StatusIndicator } from '@floegence/floe-webapp-core/layout';
+import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
+import {
   Files,
   GitBranch,
   Grid3x3,
@@ -16,20 +23,11 @@ import {
   LayoutDashboard,
   MessageSquare,
   Moon,
-  NotificationContainer,
-  Select,
   Search,
   Settings,
-  Shell,
-  StatusIndicator,
   Sun,
   Terminal,
-  deferAfterPaint,
-  useComponentContextFactory,
-  useComponentRegistry,
-  useLayout,
-  useTheme,
-} from '@floegence/floe-webapp-core';
+} from '@floegence/floe-webapp-core/icons';
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 
 import { demoFiles } from './demo/workspace';

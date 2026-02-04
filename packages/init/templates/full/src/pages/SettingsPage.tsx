@@ -1,4 +1,6 @@
-import { Button, useTheme, Sun, Moon } from '@floegence/floe-webapp-core';
+import { useTheme } from '@floegence/floe-webapp-core';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { Sun, Moon } from '@floegence/floe-webapp-core/icons';
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();

@@ -14,7 +14,7 @@ The source of truth for the schema + defaults is:
 ## Example
 
 ```tsx
-import { FloeApp } from '@floegence/floe-webapp-core';
+import { FloeApp } from '@floegence/floe-webapp-core/app';
 
 export function App() {
   return (

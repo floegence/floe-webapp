@@ -1,5 +1,6 @@
 import { For, Show, type Accessor } from 'solid-js';
-import { Panel, PanelContent, PanelHeader, type ButtonProps, Button } from '@floegence/floe-webapp-core';
+import { Panel, PanelContent, PanelHeader } from '@floegence/floe-webapp-core/layout';
+import { Button, type ButtonProps } from '@floegence/floe-webapp-core/ui';
 import type { DemoFile } from '../workspace';
 
 export interface SearchPageProps {
@@ -96,4 +97,3 @@ export function SearchPage(props: SearchPageProps) {
     </div>
   );
 }
-

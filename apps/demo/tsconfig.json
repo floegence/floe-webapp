@@ -5,6 +5,17 @@
     "paths": {
       "@/*": ["./src/*"],
       "@floegence/floe-webapp-core": ["../../packages/core/src/index.ts"],
+      "@floegence/floe-webapp-core/app": ["../../packages/core/src/app.ts"],
+      "@floegence/floe-webapp-core/full": ["../../packages/core/src/full.ts"],
+      "@floegence/floe-webapp-core/layout": ["../../packages/core/src/layout.ts"],
+      "@floegence/floe-webapp-core/deck": ["../../packages/core/src/deck.ts"],
+      "@floegence/floe-webapp-core/ui": ["../../packages/core/src/ui.ts"],
+      "@floegence/floe-webapp-core/icons": ["../../packages/core/src/icons.ts"],
+      "@floegence/floe-webapp-core/loading": ["../../packages/core/src/loading.ts"],
+      "@floegence/floe-webapp-core/launchpad": ["../../packages/core/src/launchpad.ts"],
+      "@floegence/floe-webapp-core/file-browser": ["../../packages/core/src/file-browser.ts"],
+      "@floegence/floe-webapp-core/chat": ["../../packages/core/src/chat.ts"],
+      "@floegence/floe-webapp-core/widgets": ["../../packages/core/src/widgets.ts"],
       "@floegence/floe-webapp-protocol": ["../../packages/protocol/src/index.ts"]
     }
   },

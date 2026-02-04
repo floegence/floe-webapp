@@ -1,5 +1,6 @@
 import { For, type Accessor } from 'solid-js';
-import { SidebarContent, SidebarItemList, SidebarSection, SidebarItem, Files } from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarItem, SidebarItemList, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import { Files } from '@floegence/floe-webapp-core/icons';
 import type { DemoFile } from '../workspace';
 
 export interface FileExplorerProps {
@@ -44,4 +45,3 @@ export function FileExplorer(props: FileExplorerProps) {
     </SidebarContent>
   );
 }
-

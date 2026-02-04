@@ -1,19 +1,9 @@
 import { onMount, type Component } from 'solid-js';
-import {
-  DeckGrid,
-  DeckTopBar,
-  FileBrowser,
-  Files,
-  useDeckDrag,
-  useWidgetRegistry,
-  type FileItem,
-  type WidgetDefinition,
-  MetricsWidget,
-  TerminalWidget,
-  Terminal,
-  LayoutDashboard,
-  type WidgetProps,
-} from '@floegence/floe-webapp-core';
+import { useDeckDrag, useWidgetRegistry, type WidgetDefinition, type WidgetProps } from '@floegence/floe-webapp-core';
+import { DeckGrid, DeckTopBar } from '@floegence/floe-webapp-core/deck';
+import { FileBrowser, type FileItem } from '@floegence/floe-webapp-core/file-browser';
+import { MetricsWidget, TerminalWidget } from '@floegence/floe-webapp-core/widgets';
+import { Files, LayoutDashboard, Terminal } from '@floegence/floe-webapp-core/icons';
 
 const now = Date.now();
 const demoFileTree: FileItem[] = [

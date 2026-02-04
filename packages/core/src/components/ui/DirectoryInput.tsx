@@ -103,8 +103,8 @@ export function DirectoryInput(props: DirectoryInputProps) {
     open: () => true,
     files: () => local.files,
     onExpand: (path) => local.onExpand?.(path),
-    homeLabel: local.homeLabel,
-    homePath: local.homePath,
+    homeLabel: () => local.homeLabel,
+    homePath: () => local.homePath,
   });
 
   // When user selects a folder in the tree, propagate to parent via onChange

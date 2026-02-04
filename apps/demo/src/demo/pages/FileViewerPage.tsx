@@ -1,5 +1,8 @@
 import { Show, Suspense, createEffect, createMemo, createResource, createSignal, lazy, on, type Accessor, onCleanup } from 'solid-js';
-import { Button, Panel, PanelContent, PanelHeader, Skeleton, deferNonBlocking, useCommand, useNotification, useResolvedFloeConfig } from '@floegence/floe-webapp-core';
+import { deferNonBlocking, useCommand, useNotification, useResolvedFloeConfig } from '@floegence/floe-webapp-core';
+import { Panel, PanelContent, PanelHeader } from '@floegence/floe-webapp-core/layout';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { Skeleton } from '@floegence/floe-webapp-core/loading';
 import type { DemoFile } from '../workspace';
 import type { MonacoViewerApi } from '../components/MonacoViewer';
 
