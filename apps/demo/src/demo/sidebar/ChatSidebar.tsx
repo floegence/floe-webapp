@@ -1,12 +1,7 @@
 import { type Component, createSignal, For, Show } from 'solid-js';
-import {
-  SidebarContent,
-  SidebarSection,
-  SidebarItemList,
-  Button,
-  MessageSquare,
-  Plus,
-} from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarItemList, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { MessageSquare, Plus } from '@floegence/floe-webapp-core/icons';
 
 interface Thread {
   id: string;

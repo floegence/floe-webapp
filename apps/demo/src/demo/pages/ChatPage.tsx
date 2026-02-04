@@ -1,15 +1,9 @@
 import { createSignal, onMount, type Component } from 'solid-js';
 import { createHighlighter } from 'shiki';
 import mermaid from 'mermaid';
-import {
-  Button,
-  useNotification,
-  type Message,
-  type Attachment,
-  ChatContainer,
-  configureSyncHighlighter,
-  configureSyncMermaid,
-} from '@floegence/floe-webapp-core';
+import { useNotification } from '@floegence/floe-webapp-core';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { ChatContainer, configureSyncHighlighter, configureSyncMermaid, type Attachment, type Message } from '@floegence/floe-webapp-core/chat';
 
 // Demo messages showcasing ALL block types with rich content
 const createDemoMessages = (): Message[] => [

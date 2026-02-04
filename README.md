@@ -168,10 +168,8 @@ Create a CSS entry (e.g. `src/index.css`):
 ```
 
 ```tsx
-import {
-  FloeApp,
-  type FloeComponent,
-} from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { FloeApp } from '@floegence/floe-webapp-core/app';
 import './index.css';
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 

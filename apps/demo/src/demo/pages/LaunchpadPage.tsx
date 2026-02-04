@@ -1,19 +1,7 @@
 import { createSignal, type Component } from 'solid-js';
-import {
-  Launchpad,
-  type LaunchpadItemData,
-  Files,
-  Search,
-  Settings,
-  Terminal,
-  Grid,
-  Bell,
-  Moon,
-  Sun,
-  GitBranch,
-  useLayout,
-  useNotification,
-} from '@floegence/floe-webapp-core';
+import { useLayout, useNotification } from '@floegence/floe-webapp-core';
+import { Launchpad, type LaunchpadItemData } from '@floegence/floe-webapp-core/launchpad';
+import { Bell, Files, GitBranch, Grid, Moon, Search, Settings, Sun, Terminal } from '@floegence/floe-webapp-core/icons';
 
 export interface LaunchpadPageProps {
   onClose?: () => void;

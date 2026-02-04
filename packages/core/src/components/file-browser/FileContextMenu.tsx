@@ -91,54 +91,64 @@ export interface FileContextMenuProps {
 export function FileContextMenu(props: FileContextMenuProps) {
   const ctx = useFileBrowser();
   let menuRef: HTMLDivElement | undefined;
+  const isServer = typeof window === 'undefined' || typeof document === 'undefined';
 
   // Track the menu position. Start off-screen, then adjust after the first render.
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
 
-  // Default menu items
-  const defaultItems: ContextMenuItem[] = [
-    {
-      id: 'duplicate',
-      label: 'Duplicate',
-      type: 'duplicate',
-      icon: CopyIcon,
-      shortcut: 'Cmd+D',
-    },
-    {
-      id: 'ask-agent',
-      label: 'Ask Agent',
-      type: 'ask-agent',
-      icon: SparklesIcon,
-      separator: true,
-    },
-    {
-      id: 'copy-to',
-      label: 'Copy to...',
-      type: 'copy-to',
-      icon: FolderCopyIcon,
-    },
-    {
-      id: 'move-to',
-      label: 'Move to...',
-      type: 'move-to',
-      icon: MoveIcon,
-      separator: true,
-    },
-    {
-      id: 'rename',
-      label: 'Rename',
-      type: 'rename',
-      icon: PencilIcon,
-      shortcut: 'Enter',
-    },
-    {
-      id: 'delete',
-      label: 'Delete',
-      type: 'delete',
-      icon: TrashIcon,
-      shortcut: 'Del',
-    },
-  ];
+  const defaultItems = (): ContextMenuItem[] => {
+    // Keep the menu business-neutral: only show "Ask Agent" when the host binds a handler.
+    const hasAskAgent = !!props.callbacks?.onAskAgent;
+
+    return [
+      {
+        id: 'duplicate',
+        label: 'Duplicate',
+        type: 'duplicate',
+        icon: CopyIcon,
+        shortcut: 'Cmd+D',
+        separator: !hasAskAgent,
+      },
+      ...(hasAskAgent
+        ? ([
+            {
+              id: 'ask-agent',
+              label: 'Ask Agent',
+              type: 'ask-agent',
+              icon: SparklesIcon,
+              separator: true,
+            },
+          ] satisfies ContextMenuItem[])
+        : []),
+      {
+        id: 'copy-to',
+        label: 'Copy to...',
+        type: 'copy-to',
+        icon: FolderCopyIcon,
+      },
+      {
+        id: 'move-to',
+        label: 'Move to...',
+        type: 'move-to',
+        icon: MoveIcon,
+        separator: true,
+      },
+      {
+        id: 'rename',
+        label: 'Rename',
+        type: 'rename',
+        icon: PencilIcon,
+        shortcut: 'Enter',
+      },
+      {
+        id: 'delete',
+        label: 'Delete',
+        type: 'delete',
+        icon: TrashIcon,
+        shortcut: 'Del',
+      },
+    ];
+  };
 
   // Build final menu items
   const menuItems = () => {
@@ -159,7 +169,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
     };
 
     // Filter out hidden items
-    let items = defaultItems;
+    let items = defaultItems();
     const hiddenTypes = resolveHideItems();
     if (hiddenTypes.length > 0) {
       items = items.filter((item) => !hiddenTypes.includes(item.type as BuiltinContextMenuAction));
@@ -287,58 +297,66 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   });
 
+  const MenuPanel = (p: { menu: () => { items: FileItem[] } }) => (
+    <div
+      ref={menuRef}
+      class={cn(
+        'fixed z-50 min-w-[180px] py-1',
+        'bg-popover border border-border rounded-lg shadow-lg',
+        'animate-in fade-in zoom-in-95 duration-100'
+      )}
+      style={{
+        left: `${position().x}px`,
+        top: `${position().y}px`,
+      }}
+      role="menu"
+      aria-orientation="vertical"
+    >
+      <For each={menuItems()}>
+        {(item) => (
+          <>
+            <button
+              type="button"
+              onClick={() => handleItemClick(item, p.menu().items)}
+              disabled={item.disabled || (item.type === 'rename' && p.menu().items.length > 1)}
+              class={cn(
+                'w-full flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer',
+                'transition-colors duration-75',
+                'hover:bg-accent hover:text-accent-foreground',
+                'focus:outline-none focus-visible:bg-accent focus-visible:text-accent-foreground',
+                'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent',
+                item.type === 'delete' && 'text-error hover:bg-error/10 hover:text-error'
+              )}
+              role="menuitem"
+            >
+              <Show when={item.icon}>
+                {(Icon) => <Dynamic component={Icon()} class="w-3.5 h-3.5 opacity-60" />}
+              </Show>
+              <span class="flex-1 text-left">{item.label}</span>
+              <Show when={item.shortcut}>
+                <span class="text-[10px] text-muted-foreground opacity-60">{item.shortcut}</span>
+              </Show>
+            </button>
+            <Show when={item.separator}>
+              <div class="my-1 h-px bg-border" />
+            </Show>
+          </>
+        )}
+      </For>
+    </div>
+  );
+
   return (
     <Show when={ctx.contextMenu()}>
-      {(menu) => (
-        <Portal>
-          <div
-            ref={menuRef}
-            class={cn(
-              'fixed z-50 min-w-[180px] py-1',
-              'bg-popover border border-border rounded-lg shadow-lg',
-              'animate-in fade-in zoom-in-95 duration-100'
-            )}
-            style={{
-              left: `${position().x}px`,
-              top: `${position().y}px`,
-            }}
-            role="menu"
-            aria-orientation="vertical"
-          >
-            <For each={menuItems()}>
-              {(item) => (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleItemClick(item, menu().items)}
-                    disabled={item.disabled || (item.type === 'rename' && menu().items.length > 1)}
-                    class={cn(
-                      'w-full flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer',
-                      'transition-colors duration-75',
-                      'hover:bg-accent hover:text-accent-foreground',
-                      'focus:outline-none focus-visible:bg-accent focus-visible:text-accent-foreground',
-                      'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent',
-                      item.type === 'delete' && 'text-error hover:bg-error/10 hover:text-error'
-                    )}
-                    role="menuitem"
-                  >
-                    <Show when={item.icon}>
-                      {(Icon) => <Dynamic component={Icon()} class="w-3.5 h-3.5 opacity-60" />}
-                    </Show>
-                    <span class="flex-1 text-left">{item.label}</span>
-                    <Show when={item.shortcut}>
-                      <span class="text-[10px] text-muted-foreground opacity-60">{item.shortcut}</span>
-                    </Show>
-                  </button>
-                  <Show when={item.separator}>
-                    <div class="my-1 h-px bg-border" />
-                  </Show>
-                </>
-              )}
-            </For>
-          </div>
-        </Portal>
-      )}
+      {(menu) =>
+        isServer ? (
+          <MenuPanel menu={menu} />
+        ) : (
+          <Portal>
+            <MenuPanel menu={menu} />
+          </Portal>
+        )
+      }
     </Show>
   );
 }

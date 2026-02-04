@@ -1,10 +1,6 @@
-import {
-  ActivityAppsMain,
-  FloeApp,
-  Files,
-  Settings,
-  type FloeComponent,
-} from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain, FloeApp } from '@floegence/floe-webapp-core/app';
+import { Files, Settings } from '@floegence/floe-webapp-core/icons';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
 

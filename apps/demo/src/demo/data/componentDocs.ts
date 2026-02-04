@@ -78,7 +78,7 @@ export const buttonDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Usage',
-      code: `import { Button } from '@floegence/floe-webapp-core';
+      code: `import { Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -159,7 +159,7 @@ export const inputDoc: ComponentDoc = {
   examples: [
     {
       title: 'With Icon and Error',
-      code: `import { Input, Search } from '@floegence/floe-webapp-core';
+      code: `import { Input, Search } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -252,7 +252,7 @@ export const numberInputDoc: ComponentDoc = {
   examples: [
     {
       title: 'NumberInput with Range',
-      code: `import { NumberInput } from '@floegence/floe-webapp-core';
+      code: `import { NumberInput } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [count, setCount] = createSignal(5);
@@ -351,7 +351,7 @@ export const affixInputDoc: ComponentDoc = {
   examples: [
     {
       title: 'URL Input with Protocol',
-      code: `import { AffixInput } from '@floegence/floe-webapp-core';
+      code: `import { AffixInput } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [protocol, setProtocol] = createSignal('https');
@@ -451,7 +451,7 @@ export const tabsDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Tabs with Variants',
-      code: `import { Tabs, TabPanel } from '@floegence/floe-webapp-core';
+      code: `import { Tabs, TabPanel } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [active, setActive] = createSignal('tab1');
@@ -528,7 +528,7 @@ export const cardDoc: ComponentDoc = {
   examples: [
     {
       title: 'Card with Header and Footer',
-      code: `import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button } from '@floegence/floe-webapp-core';
+      code: `import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -611,7 +611,7 @@ export const dialogDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Dialog',
-      code: `import { Dialog, Button } from '@floegence/floe-webapp-core';
+      code: `import { Dialog, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [open, setOpen] = createSignal(false);
@@ -697,7 +697,7 @@ export const dropdownDoc: ComponentDoc = {
   examples: [
     {
       title: 'Dropdown with Separators',
-      code: `import { Dropdown, Button } from '@floegence/floe-webapp-core';
+      code: `import { Dropdown, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [value, setValue] = createSignal('profile');
@@ -777,7 +777,7 @@ export const selectDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Select',
-      code: `import { Select } from '@floegence/floe-webapp-core';
+      code: `import { Select } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [value, setValue] = createSignal('system');
@@ -851,7 +851,7 @@ export const tooltipDoc: ComponentDoc = {
   examples: [
     {
       title: 'Tooltip with Different Placements',
-      code: `import { Tooltip, Button } from '@floegence/floe-webapp-core';
+      code: `import { Tooltip, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -916,7 +916,7 @@ export const skeletonDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Skeleton',
-      code: `import { Skeleton } from '@floegence/floe-webapp-core';
+      code: `import { Skeleton } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -966,7 +966,7 @@ export const snakeLoaderDoc: ComponentDoc = {
   examples: [
     {
       title: 'SnakeLoader Sizes',
-      code: `import { SnakeLoader } from '@floegence/floe-webapp-core';
+      code: `import { SnakeLoader } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1023,7 +1023,7 @@ export const loadingOverlayDoc: ComponentDoc = {
   examples: [
     {
       title: 'LoadingOverlay with Message',
-      code: `import { LoadingOverlay, Button } from '@floegence/floe-webapp-core';
+      code: `import { LoadingOverlay, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [loading, setLoading] = createSignal(false);
@@ -1090,7 +1090,7 @@ export const highlightBlockDoc: ComponentDoc = {
   examples: [
     {
       title: 'Highlight Block Variants',
-      code: `import { InfoBlock, WarningBlock, SuccessBlock, ErrorBlock, NoteBlock, TipBlock } from '@floegence/floe-webapp-core';
+      code: `import { InfoBlock, WarningBlock, SuccessBlock, ErrorBlock, NoteBlock, TipBlock } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1170,7 +1170,7 @@ export const quoteBlockDoc: ComponentDoc = {
   examples: [
     {
       title: 'QuoteBlock Variants',
-      code: `import { QuoteBlock } from '@floegence/floe-webapp-core';
+      code: `import { QuoteBlock } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1235,7 +1235,7 @@ export const textareaDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Textarea',
-      code: `import { Textarea } from '@floegence/floe-webapp-core';
+      code: `import { Textarea } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1324,7 +1324,7 @@ export const confirmDialogDoc: ComponentDoc = {
   examples: [
     {
       title: 'ConfirmDialog with Async',
-      code: `import { ConfirmDialog, Button } from '@floegence/floe-webapp-core';
+      code: `import { ConfirmDialog, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [open, setOpen] = createSignal(false);
@@ -1394,7 +1394,7 @@ export const panelDoc: ComponentDoc = {
   examples: [
     {
       title: 'Panel with Content',
-      code: `import { Panel, PanelContent } from '@floegence/floe-webapp-core';
+      code: `import { Panel, PanelContent } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1449,7 +1449,7 @@ export const tabPanelDoc: ComponentDoc = {
   examples: [
     {
       title: 'TabPanel with Tabs',
-      code: `import { Tabs, TabPanel } from '@floegence/floe-webapp-core';
+      code: `import { Tabs, TabPanel } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [active, setActive] = createSignal('tab1');
@@ -1538,7 +1538,7 @@ export const directoryPickerDoc: ComponentDoc = {
   examples: [
     {
       title: 'DirectoryPicker',
-      code: `import { DirectoryPicker, Button } from '@floegence/floe-webapp-core';
+      code: `import { DirectoryPicker, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [open, setOpen] = createSignal(false);
@@ -1649,7 +1649,7 @@ export const directoryInputDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Usage',
-      code: `import { DirectoryInput } from '@floegence/floe-webapp-core';
+      code: `import { DirectoryInput } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [path, setPath] = createSignal('');
@@ -1672,7 +1672,7 @@ function Example() {
       code: `import {
   DirectoryInput, Form, FormField, FormLabel,
   FormDescription, FormActions, Button
-} from '@floegence/floe-webapp-core';
+} from '@floegence/floe-webapp-core/full';
 
 function ProjectForm() {
   const [projectDir, setProjectDir] = createSignal('');
@@ -1775,7 +1775,7 @@ export const fileSavePickerDoc: ComponentDoc = {
   examples: [
     {
       title: 'FileSavePicker',
-      code: `import { FileSavePicker, Button } from '@floegence/floe-webapp-core';
+      code: `import { FileSavePicker, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [open, setOpen] = createSignal(false);
@@ -1860,7 +1860,7 @@ export const fileBrowserDoc: ComponentDoc = {
   examples: [
     {
       title: 'FileBrowser',
-      code: `import { FileBrowser } from '@floegence/floe-webapp-core';
+      code: `import { FileBrowser } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -1947,7 +1947,7 @@ export const floatingWindowDoc: ComponentDoc = {
   examples: [
     {
       title: 'FloatingWindow',
-      code: `import { FloatingWindow, Button } from '@floegence/floe-webapp-core';
+      code: `import { FloatingWindow, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   const [open, setOpen] = createSignal(false);
@@ -2025,7 +2025,7 @@ export const processingIndicatorDoc: ComponentDoc = {
   examples: [
     {
       title: 'ProcessingIndicator Variants',
-      code: `import { ProcessingIndicator } from '@floegence/floe-webapp-core';
+      code: `import { ProcessingIndicator } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2107,7 +2107,7 @@ export const lineChartDoc: ComponentDoc = {
   examples: [
     {
       title: 'LineChart',
-      code: `import { LineChart } from '@floegence/floe-webapp-core';
+      code: `import { LineChart } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2173,7 +2173,7 @@ export const areaChartDoc: ComponentDoc = {
   examples: [
     {
       title: 'AreaChart',
-      code: `import { AreaChart } from '@floegence/floe-webapp-core';
+      code: `import { AreaChart } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2238,7 +2238,7 @@ export const barChartDoc: ComponentDoc = {
   examples: [
     {
       title: 'DataBarChart',
-      code: `import { DataBarChart } from '@floegence/floe-webapp-core';
+      code: `import { DataBarChart } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2306,7 +2306,7 @@ export const pieChartDoc: ComponentDoc = {
   examples: [
     {
       title: 'DataPieChart',
-      code: `import { DataPieChart } from '@floegence/floe-webapp-core';
+      code: `import { DataPieChart } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2403,7 +2403,7 @@ export const monitoringChartDoc: ComponentDoc = {
   examples: [
     {
       title: 'MonitoringChart',
-      code: `import { MonitoringChart } from '@floegence/floe-webapp-core';
+      code: `import { MonitoringChart } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
@@ -2461,7 +2461,7 @@ export const commandPaletteDoc: ComponentDoc = {
   examples: [
     {
       title: 'CommandPalette Setup',
-      code: `import { CommandPalette, useCommand } from '@floegence/floe-webapp-core';
+      code: `import { CommandPalette, useCommand } from '@floegence/floe-webapp-core/full';
 
 function App() {
   const command = useCommand();
@@ -2521,7 +2521,7 @@ export const formDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Form',
-      code: `import { Form, FormField, FormLabel, FormMessage, FormActions, Input, Button } from '@floegence/floe-webapp-core';
+      code: `import { Form, FormField, FormLabel, FormMessage, FormActions, Input, Button } from '@floegence/floe-webapp-core/full';
 
 function LoginForm() {
   const handleSubmit = async () => {
@@ -2663,7 +2663,7 @@ export const stepperDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Horizontal Stepper',
-      code: `import { Stepper, type StepItem } from '@floegence/floe-webapp-core';
+      code: `import { Stepper, type StepItem } from '@floegence/floe-webapp-core/full';
 import { createSignal } from 'solid-js';
 
 const steps: StepItem[] = [
@@ -2767,7 +2767,7 @@ export const wizardDoc: ComponentDoc = {
   examples: [
     {
       title: 'Complete Wizard with useWizard Hook',
-      code: `import { Wizard, useWizard, Button, type StepItem } from '@floegence/floe-webapp-core';
+      code: `import { Wizard, useWizard, Button, type StepItem } from '@floegence/floe-webapp-core/full';
 
 function SetupWizard() {
   const wizard = useWizard({ totalSteps: 3 });
@@ -2855,7 +2855,7 @@ export const useWizardDoc: ComponentDoc = {
   examples: [
     {
       title: 'Basic Usage',
-      code: `import { useWizard } from '@floegence/floe-webapp-core';
+      code: `import { useWizard } from '@floegence/floe-webapp-core/full';
 
 function MyWizard() {
   const {

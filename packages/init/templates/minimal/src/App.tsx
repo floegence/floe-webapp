@@ -1,4 +1,6 @@
-import { ActivityAppsMain, FloeApp, Files, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain, FloeApp } from '@floegence/floe-webapp-core/app';
+import { Files } from '@floegence/floe-webapp-core/icons';
 
 const HomePage = () => (
   <div class="flex h-full items-center justify-center">

@@ -235,7 +235,7 @@ import {
   DocumentFileIcon,
   ConfigFileIcon,
   StyleFileIcon,
-} from '@floegence/floe-webapp-core';
+} from '@floegence/floe-webapp-core/full';
 
 export interface ShowcasePageProps {
   onOpenFile: (id: string) => void;

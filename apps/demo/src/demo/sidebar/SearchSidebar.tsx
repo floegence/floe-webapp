@@ -1,5 +1,7 @@
 import { For, Show, type Accessor } from 'solid-js';
-import { Input, SidebarContent, SidebarItemList, SidebarSection, SidebarItem, Search } from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarItem, SidebarItemList, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import { Input } from '@floegence/floe-webapp-core/ui';
+import { Search } from '@floegence/floe-webapp-core/icons';
 import type { DemoFile } from '../workspace';
 
 export interface SearchSidebarProps {
@@ -46,4 +48,3 @@ export function SearchSidebar(props: SearchSidebarProps) {
     </SidebarContent>
   );
 }
-

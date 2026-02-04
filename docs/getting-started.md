@@ -133,7 +133,8 @@ import '@floegence/floe-webapp-core/styles';
 - `<Shell />` + `<CommandPalette />` + `<NotificationContainer />`
 
 ```tsx
-import { ActivityAppsMain, FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { ActivityAppsMain, FloeApp } from '@floegence/floe-webapp-core/app';
 
 const components: FloeComponent[] = [
   // Register your sidebar/commands/status contributions here.
@@ -162,7 +163,8 @@ If you want `commands.execute(ctx)` / `onMount(ctx)` to receive your protocol ob
 - `getProtocol` to inject `useProtocol()` result into `ctx.protocol`
 
 ```tsx
-import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { FloeApp } from '@floegence/floe-webapp-core/app';
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 
 const appContract: ProtocolContract = {
@@ -192,7 +194,7 @@ export function App() {
 Use `config` to override defaults (storage namespace, keybinds, strings, layout defaults, etc):
 
 ```tsx
-import { FloeApp } from '@floegence/floe-webapp-core';
+import { FloeApp } from '@floegence/floe-webapp-core/app';
 
 export function App() {
   return (
@@ -235,12 +237,12 @@ If you want full control, you can still wire providers and the registry manually
 ```tsx
 import {
   FloeProvider,
-  FloeRegistryRuntime,
-  Shell,
-  CommandPalette,
   NotificationContainer,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
+import { FloeRegistryRuntime } from '@floegence/floe-webapp-core/app';
+import { Shell } from '@floegence/floe-webapp-core/layout';
+import { CommandPalette } from '@floegence/floe-webapp-core/ui';
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 
 const appContract: ProtocolContract = {
@@ -281,7 +283,8 @@ Notes:
 ### Example: a minimal sidebar component
 
 ```tsx
-import { Files, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { Files } from '@floegence/floe-webapp-core/icons';
 
 export const filesComponent: FloeComponent = {
   id: 'files',

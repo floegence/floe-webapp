@@ -43,7 +43,8 @@ export const appContract: ProtocolContract<AppRpc> = {
 ## Use With FloeApp (recommended)
 
 ```tsx
-import { FloeApp, type FloeComponent } from '@floegence/floe-webapp-core';
+import type { FloeComponent } from '@floegence/floe-webapp-core';
+import { FloeApp } from '@floegence/floe-webapp-core/app';
 import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
 import { appContract } from './protocol/contract';
 
@@ -81,6 +82,7 @@ Implementation references:
 - `client(): Client | null`
 - `contract(): ProtocolContract`
 - `connect(config): Promise<void>`
+- `reconnect(config?): Promise<void>` (hard reconnect)
 - `disconnect(): void`
 
 Type reference:
@@ -91,6 +93,11 @@ Best practice:
 
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
+
+Notes:
+
+- `connect()` is intentionally idempotent: it should not tear down a healthy connection.
+- Use `reconnect()` when you need to force a hard restart (e.g. token rotation, suspected half-open state, manual retry).
 
 ### Tunnel mode (controlplane)
 

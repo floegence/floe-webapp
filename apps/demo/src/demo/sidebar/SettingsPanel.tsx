@@ -1,5 +1,8 @@
 import { Show } from 'solid-js';
-import { Button, SidebarContent, SidebarSection, useTheme, useNotification, Sun, Moon } from '@floegence/floe-webapp-core';
+import { useNotification, useTheme } from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { Moon, Sun } from '@floegence/floe-webapp-core/icons';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 
 export function SettingsPanel() {
@@ -84,4 +87,3 @@ export function SettingsPanel() {
     </SidebarContent>
   );
 }
-

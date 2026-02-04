@@ -29,6 +29,8 @@ interface ProtocolContextValue {
   client: () => Client | null;
   contract: () => ProtocolContract;
   connect: (config: ConnectConfig) => Promise<void>;
+  /** Force a hard reconnect (disconnect old client and build a new one). */
+  reconnect: (config?: ConnectConfig) => Promise<void>;
   disconnect: () => void;
 }
 
@@ -74,7 +76,11 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     setState({ status: s.status, error: s.error, client: s.client });
   });
 
-  const connect = async (config: ConnectConfig) => {
+  // Last desired config (used by reconnect()).
+  let lastConfig: ConnectConfig | null = null;
+  let connectInFlight: Promise<void> | null = null;
+
+  const connectWithConfig = async (config: ConnectConfig) => {
     await mgr.connect({
       autoReconnect: config.autoReconnect,
       observer: config.observer,
@@ -112,6 +118,37 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     });
   };
 
+  const reconnect = async (config?: ConnectConfig) => {
+    const effective = config ?? lastConfig;
+    if (!effective) {
+      throw new Error('reconnect() requires a config before the first connect() call');
+    }
+
+    // Deduplicate calls from multiple lifecycle events (focus/visibility/online).
+    if (connectInFlight) return connectInFlight;
+
+    lastConfig = effective;
+    connectInFlight = connectWithConfig(effective).finally(() => {
+      connectInFlight = null;
+    });
+    return connectInFlight;
+  };
+
+  // connect() is intentionally idempotent: it should not tear down a healthy connection.
+  // Consumers that need a hard restart must call reconnect().
+  const connect = async (config: ConnectConfig) => {
+    lastConfig = config;
+
+    const st = mgr.state();
+    if (st.status === 'connected' && st.client) return;
+
+    // If the reconnect manager is already connecting (e.g. autoReconnect),
+    // avoid interfering with a hard reconnect when we don't have an in-flight handle.
+    if (st.status === 'connecting' && !connectInFlight) return;
+
+    await reconnect(config);
+  };
+
   const disconnect = () => {
     mgr.disconnect();
   };
@@ -122,6 +159,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     client: () => state.client,
     contract: () => contract,
     connect,
+    reconnect,
     disconnect,
   };
 

@@ -1,5 +1,9 @@
 import { createSignal, onMount, Show, createMemo, createEffect, on } from 'solid-js';
-import { cn, highlightCode, Button, CopyIcon, CheckIcon, Skeleton } from '@floegence/floe-webapp-core';
+import { cn } from '@floegence/floe-webapp-core';
+import { highlightCode } from '@floegence/floe-webapp-core/chat';
+import { Button } from '@floegence/floe-webapp-core/ui';
+import { CheckIcon, CopyIcon } from '@floegence/floe-webapp-core/icons';
+import { Skeleton } from '@floegence/floe-webapp-core/loading';
 
 export interface CodeSnippetProps {
   code: string;

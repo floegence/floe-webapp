@@ -13,6 +13,7 @@ describe('@floegence/floe-webapp-protocol package config', () => {
     expect(pkg.main).toBe('./dist/index.js');
     expect(pkg.module).toBe('./dist/index.js');
     expect(pkg.types).toBe('./dist/index.d.ts');
+    expect(pkg.sideEffects).toBe(false);
 
     expect(pkg.exports).toEqual({
       '.': {

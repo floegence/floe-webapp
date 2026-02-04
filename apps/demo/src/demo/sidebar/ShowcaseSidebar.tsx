@@ -1,5 +1,6 @@
 import { For } from 'solid-js';
-import { SidebarContent, SidebarItemList, SidebarSection, SidebarItem, Button } from '@floegence/floe-webapp-core';
+import { SidebarContent, SidebarItem, SidebarItemList, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import { Button } from '@floegence/floe-webapp-core/ui';
 
 export interface ShowcaseSidebarProps {
   onJumpTo: (id: string) => void;
@@ -57,4 +58,3 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
     </SidebarContent>
   );
 }
-

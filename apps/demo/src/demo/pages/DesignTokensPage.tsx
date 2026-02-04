@@ -1,9 +1,6 @@
 import { For } from 'solid-js';
-import {
-  Panel,
-  PanelContent,
-  useTheme,
-} from '@floegence/floe-webapp-core';
+import { useTheme } from '@floegence/floe-webapp-core';
+import { Panel, PanelContent } from '@floegence/floe-webapp-core/layout';
 import {
   colorTokens,
   typographyTokens,
