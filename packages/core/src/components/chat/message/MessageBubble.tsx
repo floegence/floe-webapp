@@ -28,6 +28,7 @@ export const MessageBubble: Component<MessageBubbleProps> = (props) => {
             block={block}
             messageId={props.message.id}
             blockIndex={index()}
+            isStreaming={props.message.status === 'streaming'}
           />
         )}
       </For>

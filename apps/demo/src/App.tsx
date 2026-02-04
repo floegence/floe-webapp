@@ -12,7 +12,13 @@ import {
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
-import { configureSyncHighlighter } from '@floegence/floe-webapp-core/chat';
+import {
+  configureSyncHighlighter,
+  createMarkdownWorker,
+  configureMarkdownWorker,
+  createDiffWorker,
+  configureDiffWorker,
+} from '@floegence/floe-webapp-core/chat';
 import { BottomBarItem, KeepAliveStack, Shell, StatusIndicator, type KeepAliveView } from '@floegence/floe-webapp-core/layout';
 import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
 import {
@@ -353,6 +359,15 @@ function AppContent() {
   onMount(() => {
     // UI-first: allow the initial frame to paint before initializing the syntax highlighter.
     deferAfterPaint(() => void initShiki());
+
+    // Configure workers for non-blocking large markdown/diff rendering in chat.
+    deferAfterPaint(() => {
+      const md = createMarkdownWorker();
+      if (md) void configureMarkdownWorker(md);
+      const diff = createDiffWorker();
+      if (diff) void configureDiffWorker(diff);
+    });
+
     void registry.mountAll((id) => createCtx(id, { protocol }));
   });
 

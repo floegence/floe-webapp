@@ -1,6 +1,9 @@
-import { type Component, createSignal, createMemo, Show, For } from 'solid-js';
-import { diffLines, type Change } from 'diff';
+import { type Component, createSignal, createEffect, createMemo, Show, For, onCleanup } from 'solid-js';
 import { cn } from '../../../utils/cn';
+import { deferAfterPaint } from '../../../utils/defer';
+import { useVirtualWindow } from '../../../hooks/useVirtualWindow';
+import { computeCodeDiff, computeCodeDiffSync, hasDiffWorker } from '../hooks/useCodeDiff';
+import type { CodeDiffRenderModel, SplitDiffLine, UnifiedDiffLine } from '../types';
 
 export interface CodeDiffBlockProps {
   language: string;
@@ -10,29 +13,66 @@ export interface CodeDiffBlockProps {
   class?: string;
 }
 
+const LARGE_DIFF_CHARS = 80_000;
+const DIFF_ROW_HEIGHT_PX = 18;
+
 export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
   const [viewMode, setViewMode] = createSignal<'unified' | 'split'>('unified');
   const [copied, setCopied] = createSignal(false);
 
-  // Compute diff
-  const diffResult = createMemo(() => {
-    return diffLines(props.oldCode, props.newCode);
+  const [model, setModel] = createSignal<CodeDiffRenderModel | null>(null);
+  const [isLoading, setIsLoading] = createSignal(true);
+  let runId = 0;
+
+  onCleanup(() => {
+    runId += 1;
   });
 
-  // Compute stats
-  const stats = createMemo(() => {
-    const changes = diffResult();
-    let added = 0;
-    let removed = 0;
+  createEffect(() => {
+    const oldCode = props.oldCode ?? '';
+    const newCode = props.newCode ?? '';
 
-    for (const change of changes) {
-      const lines = change.value.split('\n').filter((l) => l !== '').length;
-      if (change.added) added += lines;
-      if (change.removed) removed += lines;
-    }
+    const currentRun = ++runId;
+    setIsLoading(true);
+    setModel(null);
 
-    return { added, removed };
+    const snapshotOld = oldCode;
+    const snapshotNew = newCode;
+
+    // UI-first: let the header paint first, then compute diff.
+    deferAfterPaint(() => {
+      if (currentRun !== runId) return;
+
+      const totalChars = snapshotOld.length + snapshotNew.length;
+      const isLarge = totalChars > LARGE_DIFF_CHARS;
+
+      // Large diffs must not block the main thread; require a worker.
+      if (isLarge && !hasDiffWorker()) {
+        setIsLoading(false);
+        return;
+      }
+
+      const task = hasDiffWorker()
+        ? computeCodeDiff(snapshotOld, snapshotNew)
+        : Promise.resolve(computeCodeDiffSync(snapshotOld, snapshotNew));
+
+      void task
+        .then((m) => {
+          if (currentRun !== runId) return;
+          setModel(m);
+        })
+        .catch((e) => {
+          console.error('Diff compute error:', e);
+          if (currentRun !== runId) return;
+          setModel(null);
+        })
+        .finally(() => {
+          if (currentRun === runId) setIsLoading(false);
+        });
+    });
   });
+
+  const stats = createMemo(() => model()?.stats);
 
   // Copy new code
   const handleCopy = async () => {
@@ -53,30 +93,29 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
           <Show when={props.filename}>
             <span class="chat-code-diff-filename">{props.filename}</span>
           </Show>
-          <span class="chat-code-diff-stats">
-            <span style={{ color: 'rgb(34 197 94)' }}>+{stats().added}</span>
-            <span style={{ color: 'rgb(239 68 68)', 'margin-left': '0.5rem' }}>-{stats().removed}</span>
-          </span>
+          <Show
+            when={stats()}
+            fallback={<span class="chat-code-diff-stats text-muted-foreground">...</span>}
+          >
+            <span class="chat-code-diff-stats">
+              <span style={{ color: 'rgb(34 197 94)' }}>+{stats()!.added}</span>
+              <span style={{ color: 'rgb(239 68 68)', 'margin-left': '0.5rem' }}>-{stats()!.removed}</span>
+            </span>
+          </Show>
         </div>
         <div class="chat-code-diff-actions">
           {/* View toggle */}
           <div class="chat-code-diff-view-toggle">
             <button
               type="button"
-              class={cn(
-                'chat-code-diff-view-btn',
-                viewMode() === 'unified' && 'active'
-              )}
+              class={cn('chat-code-diff-view-btn', viewMode() === 'unified' && 'active')}
               onClick={() => setViewMode('unified')}
             >
               Unified
             </button>
             <button
               type="button"
-              class={cn(
-                'chat-code-diff-view-btn',
-                viewMode() === 'split' && 'active'
-              )}
+              class={cn('chat-code-diff-view-btn', viewMode() === 'split' && 'active')}
               onClick={() => setViewMode('split')}
             >
               Split
@@ -96,140 +135,138 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
         </div>
       </div>
 
-      {/* Diff content */}
-      <div class="chat-code-diff-content">
-        <Show
-          when={viewMode() === 'unified'}
-          fallback={<SplitView changes={diffResult()} />}
-        >
-          <UnifiedView changes={diffResult()} />
+      <Show
+        when={model()}
+        fallback={
+          <div class="chat-code-diff-content">
+            <Show when={isLoading()}>
+              <div class="p-3 text-xs text-muted-foreground">Computing diff...</div>
+            </Show>
+            <Show when={!isLoading()}>
+              <div class="p-3 text-xs text-muted-foreground">
+                Diff is too large to render without a worker. Configure `configureDiffWorker(createDiffWorker())`.
+              </div>
+            </Show>
+          </div>
+        }
+      >
+        <Show when={viewMode() === 'unified'} fallback={<SplitDiffView model={model()!} />}>
+          <UnifiedDiffView model={model()!} />
         </Show>
-      </div>
+      </Show>
     </div>
   );
 };
 
-// Unified view
-const UnifiedView: Component<{ changes: Change[] }> = (props) => {
-  let lineNumber = 0;
+function UnifiedDiffView(props: { model: CodeDiffRenderModel }) {
+  const lines = () => props.model.unifiedLines;
+
+  const v = useVirtualWindow({
+    count: () => lines().length,
+    itemSize: () => DIFF_ROW_HEIGHT_PX,
+    overscan: 12,
+  });
+
+  const visibleIndices = createMemo(() => {
+    const { start, end } = v.range();
+    const out: number[] = [];
+    for (let i = start; i < end; i += 1) out.push(i);
+    return out;
+  });
 
   return (
-    <div class="chat-diff-unified">
-      <For each={props.changes}>
-        {(change) => {
-          const lines = change.value.split('\n');
-          // Remove trailing empty line
-          if (lines[lines.length - 1] === '') lines.pop();
+    <div
+      ref={(el) => v.scrollRef(el)}
+      class="chat-code-diff-content"
+      onScroll={v.onScroll}
+    >
+      <div style={{ 'padding-top': `${v.paddingTop()}px`, 'padding-bottom': `${v.paddingBottom()}px` }}>
+        <div class="chat-diff-unified">
+          <For each={visibleIndices()}>
+            {(idx) => <UnifiedLineRow line={lines()[idx]} />}
+          </For>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          return (
-            <For each={lines}>
-              {(line) => {
-                if (!change.added && !change.removed) {
-                  lineNumber++;
-                }
-                const ln = change.added || change.removed ? '' : lineNumber;
+function UnifiedLineRow(props: { line: UnifiedDiffLine | undefined }) {
+  const line = () => props.line;
+  return (
+    <div
+      class={cn(
+        'chat-diff-line',
+        line()?.type === 'added' && 'chat-diff-line-added',
+        line()?.type === 'removed' && 'chat-diff-line-removed'
+      )}
+      style={{ height: `${DIFF_ROW_HEIGHT_PX}px` }}
+    >
+      <span class="chat-diff-line-number">{line()?.lineNumber ?? ''}</span>
+      <span class="chat-diff-line-sign">{line()?.sign ?? ' '}</span>
+      <span class="chat-diff-line-content">{line()?.content ?? ' '}</span>
+    </div>
+  );
+}
 
-                return (
-                  <div
-                    class={cn(
-                      'chat-diff-line',
-                      change.added && 'chat-diff-line-added',
-                      change.removed && 'chat-diff-line-removed'
-                    )}
-                  >
-                    <span class="chat-diff-line-number">{ln}</span>
-                    <span class="chat-diff-line-sign">
-                      {change.added ? '+' : change.removed ? '-' : ' '}
-                    </span>
-                    <span class="chat-diff-line-content">{line || ' '}</span>
-                  </div>
-                );
-              }}
+function SplitDiffView(props: { model: CodeDiffRenderModel }) {
+  const left = () => props.model.split.left;
+  const right = () => props.model.split.right;
+
+  const v = useVirtualWindow({
+    count: () => left().length,
+    itemSize: () => DIFF_ROW_HEIGHT_PX,
+    overscan: 12,
+  });
+
+  const visibleIndices = createMemo(() => {
+    const { start, end } = v.range();
+    const out: number[] = [];
+    for (let i = start; i < end; i += 1) out.push(i);
+    return out;
+  });
+
+  return (
+    <div
+      ref={(el) => v.scrollRef(el)}
+      class="chat-code-diff-content"
+      onScroll={v.onScroll}
+    >
+      <div style={{ 'padding-top': `${v.paddingTop()}px`, 'padding-bottom': `${v.paddingBottom()}px` }}>
+        <div class="chat-diff-split">
+          <div class="chat-diff-split-side">
+            <For each={visibleIndices()}>
+              {(idx) => <SplitLineRow line={left()[idx]} />}
             </For>
-          );
-        }}
-      </For>
+          </div>
+          <div class="chat-diff-split-side">
+            <For each={visibleIndices()}>
+              {(idx) => <SplitLineRow line={right()[idx]} />}
+            </For>
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
-// Split view
-const SplitView: Component<{ changes: Change[] }> = (props) => {
-  // Build left/right lines
-  const buildSides = () => {
-    const left: Array<{ content: string; type: 'removed' | 'context' | 'empty' }> = [];
-    const right: Array<{ content: string; type: 'added' | 'context' | 'empty' }> = [];
-
-    for (const change of props.changes) {
-      const lines = change.value.split('\n');
-      if (lines[lines.length - 1] === '') lines.pop();
-
-      if (change.added) {
-        for (const line of lines) {
-          left.push({ content: '', type: 'empty' });
-          right.push({ content: line, type: 'added' });
-        }
-      } else if (change.removed) {
-        for (const line of lines) {
-          left.push({ content: line, type: 'removed' });
-          right.push({ content: '', type: 'empty' });
-        }
-      } else {
-        for (const line of lines) {
-          left.push({ content: line, type: 'context' });
-          right.push({ content: line, type: 'context' });
-        }
-      }
-    }
-
-    return { left, right };
-  };
-
-  const sides = createMemo(buildSides);
-
+function SplitLineRow(props: { line: SplitDiffLine | undefined }) {
+  const line = () => props.line;
   return (
-    <div class="chat-diff-split">
-      {/* Left - old code */}
-      <div class="chat-diff-split-side">
-        <For each={sides().left}>
-          {(line, i) => (
-            <div
-              class={cn(
-                'chat-diff-line',
-                line.type === 'removed' && 'chat-diff-line-removed',
-                line.type === 'empty' && 'chat-diff-line-empty'
-              )}
-            >
-              <span class="chat-diff-line-number">
-                {line.type !== 'empty' ? i() + 1 : ''}
-              </span>
-              <span class="chat-diff-line-content">{line.content || ' '}</span>
-            </div>
-          )}
-        </For>
-      </div>
-      {/* Right - new code */}
-      <div class="chat-diff-split-side">
-        <For each={sides().right}>
-          {(line, i) => (
-            <div
-              class={cn(
-                'chat-diff-line',
-                line.type === 'added' && 'chat-diff-line-added',
-                line.type === 'empty' && 'chat-diff-line-empty'
-              )}
-            >
-              <span class="chat-diff-line-number">
-                {line.type !== 'empty' ? i() + 1 : ''}
-              </span>
-              <span class="chat-diff-line-content">{line.content || ' '}</span>
-            </div>
-          )}
-        </For>
-      </div>
+    <div
+      class={cn(
+        'chat-diff-line',
+        line()?.type === 'added' && 'chat-diff-line-added',
+        line()?.type === 'removed' && 'chat-diff-line-removed',
+        line()?.type === 'empty' && 'chat-diff-line-empty'
+      )}
+      style={{ height: `${DIFF_ROW_HEIGHT_PX}px` }}
+    >
+      <span class="chat-diff-line-number">{line()?.lineNumber ?? ''}</span>
+      <span class="chat-diff-line-content">{line()?.content ?? ' '}</span>
     </div>
   );
-};
+}
 
 // Icons
 const CopyIcon: Component = () => (
@@ -244,3 +281,4 @@ const CheckIcon: Component = () => (
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
+

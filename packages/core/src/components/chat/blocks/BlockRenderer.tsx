@@ -20,6 +20,8 @@ export interface BlockRendererProps {
   block: MessageBlock;
   messageId: string;
   blockIndex: number;
+  /** Whether the parent message is currently streaming (UI-first plain rendering). */
+  isStreaming?: boolean;
 }
 
 export const BlockRenderer: Component<BlockRendererProps> = (props) => {
@@ -36,7 +38,10 @@ export const BlockRenderer: Component<BlockRendererProps> = (props) => {
       </Match>
 
       <Match when={props.block.type === 'markdown'}>
-        <MarkdownBlock content={(props.block as { content: string }).content} />
+        <MarkdownBlock
+          content={(props.block as { content: string }).content}
+          streaming={props.isStreaming === true}
+        />
       </Match>
 
       <Match when={props.block.type === 'code'}>

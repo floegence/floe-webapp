@@ -1,79 +1,100 @@
-import { type Component, createSignal, createEffect } from 'solid-js';
-import { marked } from 'marked';
+import { type Component, createSignal, createEffect, Show, onCleanup } from 'solid-js';
 import { cn } from '../../../utils/cn';
+import { deferAfterPaint } from '../../../utils/defer';
+import { hasMarkdownWorker, renderMarkdown, renderMarkdownSync } from '../hooks/useMarkdown';
 
 export interface MarkdownBlockProps {
   content: string;
+  /**
+   * When true, render as plain text and skip markdown parsing.
+   * Used for "streaming UI-first" so block-delta never blocks input/scroll.
+   */
+  streaming?: boolean;
   class?: string;
 }
 
-// Configure marked
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-});
-
-// Custom renderer
-const renderer = new marked.Renderer();
-
-// Code blocks: return a placeholder; handled by the outer layer
-renderer.code = function (this: unknown, token: { text: string; lang?: string }) {
-  const language = token.lang || 'text';
-  const escaped = token.text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-  return `<pre class="chat-md-code-block" data-language="${language}"><code>${escaped}</code></pre>`;
-};
-
-// Inline code
-renderer.codespan = function (this: unknown, token: { text: string }) {
-  return `<code class="chat-md-inline-code">${token.text}</code>`;
-};
-
-// Links: open in a new tab
-renderer.link = function (this: unknown, token: { href: string; title?: string | null; text: string }) {
-  const titleAttr = token.title ? ` title="${token.title}"` : '';
-  return `<a href="${token.href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="chat-md-link">${token.text}</a>`;
-};
-
-// Images
-renderer.image = function (this: unknown, token: { href: string; title?: string | null; text: string }) {
-  const titleAttr = token.title ? ` title="${token.title}"` : '';
-  return `<img src="${token.href}" alt="${token.text}"${titleAttr} class="chat-md-image" loading="lazy" />`;
-};
-
-// Blockquote
-renderer.blockquote = function (this: unknown, token: { text: string }) {
-  return `<blockquote class="chat-md-blockquote">${token.text}</blockquote>`;
-};
-
-marked.use({ renderer });
+const LARGE_MARKDOWN_CHARS = 20_000;
 
 export const MarkdownBlock: Component<MarkdownBlockProps> = (props) => {
-  const [html, setHtml] = createSignal('');
+  const [html, setHtml] = createSignal<string | null>(null);
+  let runId = 0;
+
+  onCleanup(() => {
+    runId += 1;
+  });
 
   createEffect(() => {
-    const content = props.content;
+    const content = props.content ?? '';
+    const streaming = props.streaming === true;
     if (!content) {
       setHtml('');
       return;
     }
 
-    try {
-      const result = marked.parse(content, { async: false }) as string;
-      setHtml(result);
-    } catch (error) {
-      console.error('Markdown parse error:', error);
-      setHtml(`<pre>${props.content}</pre>`);
+    // Streaming UI-first: never run markdown parsing while content is being streamed.
+    if (streaming) {
+      setHtml(null);
+      return;
     }
+
+    const currentRun = ++runId;
+    setHtml(null);
+
+    const snapshot = content;
+
+    // Small markdown is safe to render on the main thread (still deferred until after a paint).
+    if (snapshot.length <= LARGE_MARKDOWN_CHARS) {
+      deferAfterPaint(() => {
+        if (currentRun !== runId) return;
+        try {
+          const result = renderMarkdownSync(snapshot);
+          if (currentRun !== runId) return;
+          setHtml(result);
+        } catch (e) {
+          console.error('Markdown parse error:', e);
+          if (currentRun !== runId) return;
+          setHtml(null);
+        }
+      });
+      return;
+    }
+
+    // Large markdown: require a worker to avoid blocking the main thread.
+    if (!hasMarkdownWorker()) {
+      // Keep plain text mode; we do not auto-render large markdown without a worker.
+      return;
+    }
+
+    deferAfterPaint(() => {
+      void renderMarkdown(snapshot)
+        .then((result) => {
+          if (currentRun !== runId) return;
+          setHtml(result);
+        })
+        .catch((e) => {
+          console.error('Markdown render error:', e);
+          if (currentRun !== runId) return;
+          setHtml(null);
+        });
+    });
   });
 
+  const shouldShowPlain = () => html() === null;
+
   return (
-    <div
-      class={cn('chat-markdown-block', props.class)}
-      // eslint-disable-next-line solid/no-innerhtml -- Marked output is trusted
-      innerHTML={html()}
-    />
+    <Show
+      when={!shouldShowPlain()}
+      fallback={
+        <div class={cn('chat-markdown-block chat-text-block', props.class)}>
+          {props.content}
+        </div>
+      }
+    >
+      <div
+        class={cn('chat-markdown-block', props.class)}
+        // eslint-disable-next-line solid/no-innerhtml -- Marked output is trusted
+        innerHTML={html() ?? ''}
+      />
+    </Show>
   );
 };

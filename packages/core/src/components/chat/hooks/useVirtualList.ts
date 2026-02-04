@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount, onCleanup, type Accessor } from 'solid-js';
+import { createSignal, createMemo, onMount, onCleanup, createEffect, untrack, type Accessor } from 'solid-js';
 import type { VirtualListConfig } from '../types';
 
 export interface VirtualItem {
@@ -22,10 +22,17 @@ export interface UseVirtualListReturn {
   onScroll: () => void;
   virtualItems: Accessor<VirtualItem[]>;
   totalHeight: Accessor<number>;
+  paddingTop: Accessor<number>;
+  paddingBottom: Accessor<number>;
   scrollToIndex: (index: number, align?: 'start' | 'center' | 'end') => void;
   scrollToBottom: () => void;
   isAtBottom: Accessor<boolean>;
   visibleRange: Accessor<{ start: number; end: number }>;
+  /**
+   * Update an item's measured height (variable-height virtualization).
+   * Call this from a ResizeObserver for visible items.
+   */
+  setItemHeight: (index: number, height: number) => void;
 }
 
 export function useVirtualList(options: UseVirtualListOptions): UseVirtualListReturn {
@@ -40,68 +47,124 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
 
   let rafId: number | null = null;
 
-  // Measure positions for all items
-  const measurements = createMemo(() => {
-    const result: { start: number; size: number; end: number }[] = [];
-    let offset = 0;
+  // Variable-height measurements.
+  // We use a Fenwick tree (Binary Indexed Tree) for:
+  // - O(log n) height updates when an item is measured
+  // - O(log n) prefix-sum queries
+  // - O(log n) lowerBound (find first item whose end >= scrollTop)
+  //
+  // This avoids O(n) rebuild work on every measurement update.
+  let sizeByIndex: number[] = [];
+  let bit: number[] = [];
 
-    for (let i = 0; i < count(); i++) {
-      const size = getItemHeight(i);
-      result.push({
-        start: offset,
-        size,
-        end: offset + size,
-      });
-      offset += size;
+  const normalizeHeight = (h: number): number => {
+    if (!Number.isFinite(h) || h <= 0) return config.defaultItemHeight;
+    return Math.max(1, Math.round(h));
+  };
+
+  const bitInit = (n: number) => {
+    sizeByIndex = new Array(n);
+    bit = new Array(n + 1).fill(0);
+  };
+
+  const bitAdd = (idx1: number, delta: number) => {
+    // idx1 is 1-based.
+    for (let i = idx1; i < bit.length; i += i & -i) {
+      bit[i] += delta;
     }
+  };
 
-    return result;
-  });
+  const bitSum = (idx1: number): number => {
+    // Sum of first idx1 items (idx1 is 0..n).
+    let out = 0;
+    for (let i = idx1; i > 0; i -= i & -i) {
+      out += bit[i];
+    }
+    return out;
+  };
 
-  // Total height
-  const totalHeight = createMemo(() => {
-    const m = measurements();
-    return m.length > 0 ? m[m.length - 1].end : 0;
-  });
+  const highestPowerOfTwoLE = (n: number): number => {
+    let p = 1;
+    while ((p << 1) <= n) p <<= 1;
+    return p;
+  };
 
-  // Binary search for the start index
-  const findStartIndex = (scrollTop: number) => {
-    const m = measurements();
-    let low = 0;
-    let high = m.length - 1;
+  const lowerBound = (target: number, n: number): number => {
+    // Returns the first index (0-based) such that prefixSum(index+1) >= target.
+    // Clamped to [0, n-1].
+    if (n <= 0) return 0;
+    if (target <= 0) return 0;
+    const total = bitSum(n);
+    if (target >= total) return n - 1;
 
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      if (m[mid].end < scrollTop) {
-        low = mid + 1;
-      } else if (m[mid].start > scrollTop) {
-        high = mid - 1;
-      } else {
-        return mid;
+    let idx = 0; // 1-based index accumulator (0 means "before first element")
+    let acc = 0;
+    for (let step = highestPowerOfTwoLE(n); step !== 0; step >>= 1) {
+      const next = idx + step;
+      if (next <= n && acc + bit[next] < target) {
+        acc += bit[next];
+        idx = next;
       }
     }
-
-    return Math.max(0, low);
+    // idx is the largest 1-based index with prefixSum(idx) < target.
+    // Desired 1-based position is idx+1. Convert to 0-based index: idx.
+    return Math.max(0, Math.min(n - 1, idx));
   };
+
+  // A version signal to trigger reactive recomputation when sizes change.
+  const [measureVersion, setMeasureVersion] = createSignal(0);
+  let pendingMeasureTick = false;
+  const bumpMeasureVersion = () => {
+    if (pendingMeasureTick) return;
+    pendingMeasureTick = true;
+    const commit = () => {
+      pendingMeasureTick = false;
+      setMeasureVersion((v) => v + 1);
+    };
+    if (typeof requestAnimationFrame === 'undefined') {
+      setTimeout(commit, 0);
+      return;
+    }
+    requestAnimationFrame(commit);
+  };
+
+  const rebuild = (n: number) => {
+    bitInit(n);
+    // Avoid tracking getItemKey/getItemHeight dependencies: rebuild is keyed by count().
+    untrack(() => {
+      for (let i = 0; i < n; i += 1) {
+        // Ensure stable key evaluation so host stores can map ids -> cached heights.
+        void getItemKey(i);
+        const h = normalizeHeight(getItemHeight(i));
+        sizeByIndex[i] = h;
+        bitAdd(i + 1, h);
+      }
+    });
+    bumpMeasureVersion();
+  };
+
+  createEffect(() => {
+    rebuild(count());
+  });
 
   // Visible range
   const visibleRange = createMemo(() => {
-    const m = measurements();
-    if (m.length === 0) {
+    // Depend on measurement updates.
+    measureVersion();
+
+    const n = count();
+    if (n <= 0) {
       return { start: 0, end: 0 };
     }
 
     const viewportStart = scrollTop();
-    const viewportEnd = scrollTop() + containerHeight();
+    const viewportEnd = viewportStart + containerHeight();
 
-    const start = Math.max(0, findStartIndex(viewportStart) - config.overscan);
-    let end = start;
+    const startBase = lowerBound(viewportStart, n);
+    const endBase = lowerBound(viewportEnd, n);
 
-    while (end < m.length && m[end].start < viewportEnd) {
-      end++;
-    }
-
-    end = Math.min(m.length, end + config.overscan);
+    const start = Math.max(0, startBase - config.overscan);
+    const end = Math.min(n, endBase + 1 + config.overscan);
 
     return { start, end };
   });
@@ -109,19 +172,40 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   // Virtual items
   const virtualItems = createMemo(() => {
     const { start, end } = visibleRange();
-    const m = measurements();
     const items: VirtualItem[] = [];
 
-    for (let i = start; i < end; i++) {
+    // Start offset is the sum of the first `start` items.
+    let offset = bitSum(start);
+
+    for (let i = start; i < end; i += 1) {
+      const size = sizeByIndex[i] ?? config.defaultItemHeight;
       items.push({
         index: i,
-        start: m[i].start,
-        size: m[i].size,
+        start: offset,
+        size,
         key: getItemKey(i),
       });
+      offset += size;
     }
 
     return items;
+  });
+
+  const totalHeight = createMemo(() => {
+    measureVersion();
+    return bitSum(count());
+  });
+
+  const paddingTop = createMemo(() => {
+    measureVersion();
+    return bitSum(visibleRange().start);
+  });
+
+  const paddingBottom = createMemo(() => {
+    measureVersion();
+    const n = count();
+    const end = visibleRange().end;
+    return Math.max(0, bitSum(n) - bitSum(Math.min(n, end)));
   });
 
   // Scroll handler (high-frequency): rAF throttled to avoid sync work on every scroll event.
@@ -175,21 +259,20 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   const scrollToIndex = (index: number, align: 'start' | 'center' | 'end' = 'start') => {
     if (!scrollEl) return;
 
-    const m = measurements();
-    if (index < 0 || index >= m.length) return;
-
-    const item = m[index];
+    const n = count();
+    if (index < 0 || index >= n) return;
+    const size = sizeByIndex[index] ?? config.defaultItemHeight;
     let targetScroll: number;
 
     switch (align) {
       case 'start':
-        targetScroll = item.start;
+        targetScroll = bitSum(index);
         break;
       case 'center':
-        targetScroll = item.start - containerHeight() / 2 + item.size / 2;
+        targetScroll = bitSum(index) - containerHeight() / 2 + size / 2;
         break;
       case 'end':
-        targetScroll = item.end - containerHeight();
+        targetScroll = bitSum(index + 1) - containerHeight();
         break;
     }
 
@@ -200,6 +283,19 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   const scrollToBottom = () => {
     if (!scrollEl) return;
     scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
+  };
+
+  const setItemHeight = (index: number, height: number) => {
+    const n = count();
+    if (index < 0 || index >= n) return;
+
+    const next = normalizeHeight(height);
+    const prev = sizeByIndex[index] ?? config.defaultItemHeight;
+    if (next === prev) return;
+
+    sizeByIndex[index] = next;
+    bitAdd(index + 1, next - prev);
+    bumpMeasureVersion();
   };
 
   return {
@@ -213,9 +309,12 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     onScroll,
     virtualItems,
     totalHeight,
+    paddingTop,
+    paddingBottom,
     scrollToIndex,
     scrollToBottom,
     isAtBottom,
     visibleRange,
+    setItemHeight,
   };
 }

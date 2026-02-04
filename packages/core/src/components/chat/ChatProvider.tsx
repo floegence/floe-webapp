@@ -351,7 +351,16 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   };
 
   const retryMessage = (messageId: string) => {
-    props.callbacks?.onRetry?.(messageId);
+    const onRetry = props.callbacks?.onRetry;
+    if (!onRetry) return;
+    // UI-first: host callback must not block the click handler.
+    deferNonBlocking(() => {
+      try {
+        onRetry(messageId);
+      } catch (error) {
+        console.error('Failed to retry message:', error);
+      }
+    });
   };
 
   // ============ Tool Call Collapse ============
@@ -410,19 +419,34 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   // ============ Checklist ============
 
   const toggleChecklistItem = (messageId: string, blockIndex: number, itemId: string) => {
+    let nextChecked: boolean | null = null;
     updateMessage(messageId, (msg) => {
       const blocks = [...msg.blocks];
       const block = blocks[blockIndex];
       if (block && block.type === 'checklist') {
         const items = block.items.map((item) =>
-          item.id === itemId ? { ...item, checked: !item.checked } : item
+          item.id === itemId
+            ? (() => {
+                nextChecked = !item.checked;
+                return { ...item, checked: nextChecked };
+              })()
+            : item
         );
         blocks[blockIndex] = { ...block, items };
       }
       return { ...msg, blocks };
     });
 
-    props.callbacks?.onChecklistChange?.(messageId, blockIndex, itemId, true);
+    const onChecklistChange = props.callbacks?.onChecklistChange;
+    if (!onChecklistChange || nextChecked === null) return;
+    // UI-first: host callback must not block the toggle interaction.
+    deferNonBlocking(() => {
+      try {
+        onChecklistChange(messageId, blockIndex, itemId, nextChecked!);
+      } catch (error) {
+        console.error('Failed to handle checklist change:', error);
+      }
+    });
   };
 
   // ============ Context Value ============

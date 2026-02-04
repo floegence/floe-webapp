@@ -5,6 +5,10 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [solid(), tailwindcss()],
+  // Library build outputs must be self-contained and embeddable as a dependency.
+  // Using a relative base ensures worker assets referenced via `new URL(..., import.meta.url)`
+  // resolve within the package instead of assuming the host app serves them from `/assets`.
+  base: './',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
