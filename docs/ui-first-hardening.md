@@ -10,7 +10,7 @@ Scope: `packages/core` (components + hooks). Demo apps are only touched when nee
 - Ensure global listeners (document/window) are scoped and always cleaned up.
 - Ensure mobile and desktop are both usable (mouse + touch + keyboard).
 
-## Findings And Planned Fixes
+## Findings And Fixes
 
 ### 1) `AffixInput` / `AffixSelect`: document listeners can leak
 
@@ -25,6 +25,9 @@ Source:
 Fix:
 - Drive listener registration from a reactive `createEffect(() => open())` with `onCleanup` removal.
 - Ensure all close paths only flip `open` and let the effect cleanup handle listener removal.
+
+Status:
+- Implemented.
 
 Acceptance:
 - No `document` listeners remain after closing the affix dropdown (any close path).
@@ -46,6 +49,9 @@ Source:
 Fix:
 - Add `onCleanup` per item to cancel any active drag and always remove global listeners/timers.
 
+Status:
+- Implemented.
+
 Acceptance:
 - No stuck “dragging” state after list/grid re-renders or virtual window changes mid-drag.
 - No leaked `document` pointer listeners after unmount.
@@ -66,6 +72,9 @@ Fix:
   - a new ref is set, or
   - the hook owner is disposed (`onCleanup`).
 
+Status:
+- Implemented.
+
 Acceptance:
 - No leaked `scroll` listeners after unmount or ref changes.
 
@@ -84,6 +93,9 @@ Fix:
 - Ignore ArrowLeft/ArrowRight while the event target (or `document.activeElement`) is a typing element
   (`input/textarea/select/[contenteditable]/role="textbox"`).
 - Keep `Escape` working even while typing.
+
+Status:
+- Implemented.
 
 Acceptance:
 - With the search input focused, Arrow keys do not change pages.
@@ -107,6 +119,9 @@ Fix:
 - Add pointer-based pan for all pointer types, and pinch-to-zoom for touch (2 pointers).
 - Add safe-area aware offsets for toolbar/hint in CSS (use `env(safe-area-inset-*)`).
 
+Status:
+- Implemented.
+
 Acceptance:
 - Touch: drag to pan when zoomed; pinch to zoom in/out; tap backdrop to close.
 - Desktop: wheel zoom and drag pan still work.
@@ -127,6 +142,9 @@ Fix:
 - Add an options parameter (e.g. `ignoreWhenTyping?: boolean`, `allowWhenTypingWithin?: string`).
 - Default to ignoring while typing, mirroring `CommandContext` behavior.
 
+Status:
+- Implemented.
+
 Acceptance:
 - Using `useKeybind()` does not interfere with inputs by default.
 
@@ -135,4 +153,3 @@ Acceptance:
 Run the repo gate locally:
 
 - `make check`
-
