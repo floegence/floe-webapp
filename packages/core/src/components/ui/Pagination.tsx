@@ -202,7 +202,7 @@ export function Pagination(props: PaginationProps) {
         onClick={handleClick}
         title={buttonProps.title}
         class={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150',
+          'inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150 cursor-pointer',
           styles().button,
           buttonProps.isActive
             ? 'bg-primary text-primary-foreground'

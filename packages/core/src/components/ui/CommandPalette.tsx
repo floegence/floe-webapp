@@ -148,7 +148,7 @@ export function CommandPalette() {
                           <button
                             type="button"
                             class={cn(
-                              'w-full flex items-center gap-3 px-4 py-2 text-sm',
+                              'w-full flex items-center gap-3 px-4 py-2 text-sm cursor-pointer',
                               'transition-colors duration-75',
                               'focus:outline-none',
                               selectedIndex() === entry.index
