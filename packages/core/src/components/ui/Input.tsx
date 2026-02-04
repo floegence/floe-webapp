@@ -258,7 +258,7 @@ export function NumberInput(props: NumberInputProps) {
           onClick={handleDecrement}
           disabled={!canDecrement()}
           class={cn(
-            'flex items-center justify-center border-r border-input',
+            'flex items-center justify-center border-r border-input cursor-pointer',
             'text-muted-foreground transition-colors',
             'hover:bg-accent hover:text-foreground',
             'focus:outline-none',
@@ -300,7 +300,7 @@ export function NumberInput(props: NumberInputProps) {
           onClick={handleIncrement}
           disabled={!canIncrement()}
           class={cn(
-            'flex items-center justify-center border-l border-input',
+            'flex items-center justify-center border-l border-input cursor-pointer',
             'text-muted-foreground transition-colors',
             'hover:bg-accent hover:text-foreground',
             'focus:outline-none',
@@ -616,7 +616,7 @@ function AffixSelect(props: AffixSelectProps) {
           setOpen((v) => !v);
         }}
         class={cn(
-          'flex items-center gap-1 bg-muted/50 text-muted-foreground',
+          'flex items-center gap-1 bg-muted/50 text-muted-foreground cursor-pointer',
           'hover:bg-muted hover:text-foreground transition-colors',
           'focus:outline-none',
           'disabled:cursor-not-allowed disabled:hover:bg-muted/50 disabled:hover:text-muted-foreground',
