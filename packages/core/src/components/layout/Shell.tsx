@@ -4,9 +4,11 @@ import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { cn } from '../../utils/cn';
+import { deferNonBlocking } from '../../utils/defer';
 import { useComponentRegistry } from '../../context/ComponentRegistry';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { TopBarIconButton } from './TopBarIconButton';
 import { BottomBar } from './BottomBar';
 import { MobileTabBar } from './MobileTabBar';
 import { ActivityBar, type ActivityBarItem } from './ActivityBar';
@@ -19,6 +21,16 @@ export interface ShellProps {
   logo?: JSX.Element;
   activityItems?: ActivityBarItem[];
   activityBottomItems?: ActivityBarItem[];
+  /**
+   * Where to render `activityBottomItems` on mobile.
+   *
+   * The ActivityBar isn't rendered on mobile (MobileTabBar is used instead),
+   * so bottom items are hidden unless explicitly enabled.
+   *
+   * - `hidden` (default): do not render bottom items on mobile.
+   * - `topBar`: render them as icon buttons in the TopBar actions area.
+   */
+  activityBottomItemsMobileMode?: 'hidden' | 'topBar';
   topBarActions?: JSX.Element;
   bottomBarItems?: JSX.Element;
   sidebarContent?: (activeTab: string) => JSX.Element;
@@ -194,6 +206,39 @@ export function Shell(props: ShellProps) {
     setMobileSidebarOpen(nextMobileSidebarOpen);
   };
 
+  const handleMobileBottomItemClick = (item: ActivityBarItem) => {
+    if (item.onClick) {
+      // UI response first: defer to avoid blocking paint.
+      deferNonBlocking(() => item.onClick!());
+      return;
+    }
+    handleMobileTabSelect(item.id);
+  };
+
+  const effectiveTopBarActions = createMemo<JSX.Element | undefined>(() => {
+    const base = props.topBarActions;
+    if (!isMobile()) return base;
+
+    const mode = props.activityBottomItemsMobileMode ?? 'hidden';
+    if (mode !== 'topBar') return base;
+
+    const items = props.activityBottomItems ?? [];
+    if (!items.length) return base;
+
+    return (
+      <>
+        <For each={items}>
+          {(item) => (
+            <TopBarIconButton label={item.label} onClick={() => handleMobileBottomItemClick(item)}>
+              <Dynamic component={item.icon} class="w-4 h-4" />
+            </TopBarIconButton>
+          )}
+        </For>
+        {base}
+      </>
+    );
+  });
+
   const effectiveSidebarCollapsed = () => (sidebarHidden() ? true : layout.sidebarCollapsed());
 
   return (
@@ -208,7 +253,7 @@ export function Shell(props: ShellProps) {
       )}
     >
       {/* Top Bar */}
-      <TopBar logo={props.logo} actions={props.topBarActions} />
+      <TopBar logo={props.logo} actions={effectiveTopBarActions()} />
 
       {/* Main area */}
       <div class="flex-1 min-h-0 flex overflow-hidden relative">
