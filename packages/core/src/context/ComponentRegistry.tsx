@@ -68,6 +68,15 @@ export interface FloeComponent<TProtocol = unknown> {
   sidebar?: {
     order?: number;
     badge?: () => number | string | undefined;
+    /**
+     * Where this component should render when active.
+     *
+     * - `sidebar` (default): render inside Shell's sidebar panel.
+     * - `main`: render in the main content area (typically via ActivityAppsMain).
+     *
+     * Note: `fullScreen: true` implies `renderIn: 'main'` and also hides the sidebar.
+     */
+    renderIn?: 'sidebar' | 'main';
     /** When true, this component uses the full content area without sidebar */
     fullScreen?: boolean;
     /** When true, this component is hidden in the activity bar on mobile */
