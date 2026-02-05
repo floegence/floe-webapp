@@ -1434,21 +1434,12 @@ pre.chat-md-code-block code {
   background: transparent;
   font-size: 0.75rem;
   color: var(--foreground);
-  border-width: 0;
-  border-style: none;
+  border: none;
   outline: none;
   min-height: 36px;
   max-height: 200px;
   padding: 0.5rem 0;
   line-height: 1.5;
-}
-
-/* Disable global :focus-visible box-shadow on textarea.
-   The container handles focus indication via .chat-input-container-focused. */
-.chat-input-textarea:focus,
-.chat-input-textarea:focus-visible {
-  outline: none;
-  box-shadow: none;
 }
 
 .chat-input-textarea::placeholder {
