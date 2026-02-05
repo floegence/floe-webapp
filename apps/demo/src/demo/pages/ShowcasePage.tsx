@@ -41,6 +41,8 @@ import {
   // Radio & Switch
   radioDoc,
   switchDoc,
+  // SegmentedControl
+  segmentedControlDoc,
   // Checkbox
   checkboxDoc,
   // Pagination
@@ -130,6 +132,8 @@ import {
   RadioGroup,
   RadioOption,
   Switch,
+  // SegmentedControl
+  SegmentedControl,
   // Checkbox
   Checkbox,
   CheckboxGroup,
@@ -1694,6 +1698,132 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={switchDoc.props} componentName="Switch" />
+      </div>
+
+      {/* SegmentedControl */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-segmented-control"
+          title="SegmentedControl"
+          description="A toggle button group for switching between mutually exclusive options like view modes (UI/JSON) or filters."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.segmented-control')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            {/* Basic */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Basic Usage</h4>
+              <SegmentedControl
+                value="ui"
+                onChange={() => {}}
+                options={[
+                  { value: 'ui', label: 'UI' },
+                  { value: 'json', label: 'JSON' },
+                ]}
+              />
+            </div>
+
+            {/* Multiple Options */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Multiple Options</h4>
+              <SegmentedControl
+                value="list"
+                onChange={() => {}}
+                options={[
+                  { value: 'list', label: 'List' },
+                  { value: 'grid', label: 'Grid' },
+                  { value: 'gallery', label: 'Gallery' },
+                ]}
+              />
+            </div>
+
+            {/* Sizes */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
+              <div class="flex flex-col gap-3">
+                <SegmentedControl
+                  value="a"
+                  onChange={() => {}}
+                  size="sm"
+                  options={[
+                    { value: 'a', label: 'Small' },
+                    { value: 'b', label: 'Option' },
+                  ]}
+                />
+                <SegmentedControl
+                  value="a"
+                  onChange={() => {}}
+                  size="md"
+                  options={[
+                    { value: 'a', label: 'Medium' },
+                    { value: 'b', label: 'Option' },
+                  ]}
+                />
+                <SegmentedControl
+                  value="a"
+                  onChange={() => {}}
+                  size="lg"
+                  options={[
+                    { value: 'a', label: 'Large' },
+                    { value: 'b', label: 'Option' },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* With Icons */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">With Icons</h4>
+              <SegmentedControl
+                value="code"
+                onChange={() => {}}
+                options={[
+                  { value: 'code', label: 'Code', icon: Code },
+                  { value: 'preview', label: 'Preview', icon: Eye },
+                ]}
+              />
+            </div>
+
+            {/* Disabled */}
+            <div class="space-y-3">
+              <h4 class="text-xs font-medium text-muted-foreground">States</h4>
+              <div class="flex flex-col gap-3">
+                <SegmentedControl
+                  value="a"
+                  onChange={() => {}}
+                  disabled
+                  options={[
+                    { value: 'a', label: 'Disabled' },
+                    { value: 'b', label: 'Control' },
+                  ]}
+                />
+                <SegmentedControl
+                  value="a"
+                  onChange={() => {}}
+                  options={[
+                    { value: 'a', label: 'Normal' },
+                    { value: 'b', label: 'Disabled Option', disabled: true },
+                  ]}
+                />
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+        <UsageGuidelines
+          whenToUse={segmentedControlDoc.usage.whenToUse}
+          bestPractices={segmentedControlDoc.usage.bestPractices}
+          avoid={segmentedControlDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="SegmentedControl.tsx"
+          code={segmentedControlDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={segmentedControlDoc.props} componentName="SegmentedControl" />
       </div>
 
       {/* Checkbox */}

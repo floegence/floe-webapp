@@ -3367,3 +3367,113 @@ export const stepsProgressDoc: ComponentDoc = {
     },
   ],
 };
+
+// ===========================
+// SegmentedControl Component
+// ===========================
+export const segmentedControlDoc: ComponentDoc = {
+  name: 'SegmentedControl',
+  description: 'A toggle button group for switching between mutually exclusive options. Perfect for view mode switching (UI/JSON), filter toggles, or tab-like navigation within a section.',
+  props: [
+    {
+      name: 'value',
+      type: 'string',
+      required: true,
+      description: 'Currently selected value.',
+    },
+    {
+      name: 'onChange',
+      type: '(value: string) => void',
+      required: true,
+      description: 'Callback when selection changes.',
+    },
+    {
+      name: 'options',
+      type: 'SegmentedControlOption[]',
+      required: true,
+      description: 'Array of options to display. Each option has: value (string), label (string), icon? (Component), disabled? (boolean).',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size variant of the control.',
+    },
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Disables the entire control.',
+    },
+    {
+      name: 'class',
+      type: 'string',
+      description: 'Additional CSS classes to apply.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'View mode switching (e.g., UI/JSON, List/Grid, Code/Preview)',
+      'Filter toggles with 2-4 options',
+      'Tab-like navigation within a compact section',
+      'Binary or ternary choices that need visual prominence',
+    ],
+    bestPractices: [
+      'Keep options to 2-4 items for clarity',
+      'Use short, concise labels',
+      'Consider icons for commonly understood options',
+      'Place prominently where the view change occurs',
+    ],
+    avoid: [
+      'More than 5 options (use Tabs or Dropdown instead)',
+      'Long labels that cause wrapping',
+      'Mixing with other form controls in the same row',
+      'Using for non-mutually-exclusive selections (use Checkbox instead)',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Usage',
+      code: `import { SegmentedControl } from '@floegence/floe-webapp-core/ui';
+import { createSignal } from 'solid-js';
+
+function Example() {
+  const [view, setView] = createSignal('ui');
+
+  return (
+    <SegmentedControl
+      value={view()}
+      onChange={setView}
+      options={[
+        { value: 'ui', label: 'UI' },
+        { value: 'json', label: 'JSON' },
+      ]}
+    />
+  );
+}`,
+    },
+    {
+      title: 'With Icons',
+      code: `import { SegmentedControl } from '@floegence/floe-webapp-core/ui';
+import { Grid, List, LayoutGrid } from '@floegence/floe-webapp-core/icons';
+
+<SegmentedControl
+  value={viewMode()}
+  onChange={setViewMode}
+  options={[
+    { value: 'list', label: 'List', icon: List },
+    { value: 'grid', label: 'Grid', icon: Grid },
+    { value: 'gallery', label: 'Gallery', icon: LayoutGrid },
+  ]}
+/>`,
+    },
+    {
+      title: 'Different Sizes',
+      code: `<div class="flex flex-col gap-4">
+  <SegmentedControl size="sm" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Small' }, { value: 'b', label: 'Option' }]} />
+  <SegmentedControl size="md" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Medium' }, { value: 'b', label: 'Option' }]} />
+  <SegmentedControl size="lg" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Large' }, { value: 'b', label: 'Option' }]} />
+</div>`,
+    },
+  ],
+};
