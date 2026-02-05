@@ -263,7 +263,6 @@ function AppContent() {
     {
       id: 'settings',
       name: 'Settings',
-      icon: Settings,
       description: 'Protocol connection + theme',
       component: SettingsView,
       sidebar: { order: 4 },
@@ -444,6 +443,15 @@ function AppContent() {
         logo={
           <img src="/logo.svg" alt="Floe" class="w-7 h-7" />
         }
+        activityBottomItemsMobileMode="topBar"
+        activityBottomItems={[
+          {
+            id: 'settings',
+            icon: Settings,
+            label: 'Settings',
+            onClick: () => layout.setSidebarActiveTab('settings'),
+          },
+        ]}
         topBarActions={
           <div class="flex items-center gap-1">
             <Button
