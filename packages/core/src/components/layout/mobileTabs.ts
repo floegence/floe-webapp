@@ -5,6 +5,12 @@ export interface ResolveMobileTabActiveIdArgs {
   mobileSidebarOpen: boolean;
   /** Whether the active component is marked as fullScreen. */
   activeIsFullScreen: boolean;
+  /**
+   * Whether the active tab should be treated as a page, even if it isn't fullScreen.
+   *
+   * This is useful for "main view + sidebar panel" tabs.
+   */
+  activeIsPage?: boolean;
 }
 
 /**
@@ -13,7 +19,7 @@ export interface ResolveMobileTabActiveIdArgs {
  * - For sidebar components: show as active only when sidebar is open
  */
 export function resolveMobileTabActiveId(args: ResolveMobileTabActiveIdArgs): string {
-  if (args.activeIsFullScreen) return args.activeId;
+  if (args.activeIsFullScreen || args.activeIsPage) return args.activeId;
   return args.mobileSidebarOpen ? args.activeId : '';
 }
 
@@ -48,4 +54,3 @@ export function resolveMobileTabSelect(args: ResolveMobileTabSelectArgs): Resolv
   // Different tab or sidebar is closed: open sidebar with new tab
   return { nextActiveId: args.clickedId, nextMobileSidebarOpen: true };
 }
-

@@ -13,6 +13,17 @@ describe('mobileTabs', () => {
       ).toBe('home');
     });
 
+    it('highlights the active tab when the active tab is treated as a page (even if it is not fullScreen)', () => {
+      expect(
+        resolveMobileTabActiveId({
+          activeId: 'chat',
+          mobileSidebarOpen: false,
+          activeIsFullScreen: false,
+          activeIsPage: true,
+        })
+      ).toBe('chat');
+    });
+
     it('only highlights the active tab while the overlay is open (sidebar overlay mode)', () => {
       expect(
         resolveMobileTabActiveId({
@@ -66,4 +77,3 @@ describe('mobileTabs', () => {
     });
   });
 });
-

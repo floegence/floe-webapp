@@ -17,7 +17,7 @@ export interface ActivityAppsMainProps<TProtocol = unknown> {
   views?: KeepAliveView[];
 
   /**
-   * Registry-driven filter (default: sidebar.fullScreen === true).
+   * Registry-driven filter (default: sidebar.fullScreen === true OR sidebar.renderIn === 'main').
    * Only used when `views` is not provided.
    */
   include?: (component: FloeComponent<TProtocol>) => boolean;
@@ -30,7 +30,7 @@ export interface ActivityAppsMainProps<TProtocol = unknown> {
 }
 
 function defaultInclude<TProtocol>(component: FloeComponent<TProtocol>): boolean {
-  return component.sidebar?.fullScreen === true;
+  return component.sidebar?.fullScreen === true || component.sidebar?.renderIn === 'main';
 }
 
 export function ActivityAppsMain<TProtocol = unknown>(props: ActivityAppsMainProps<TProtocol>) {

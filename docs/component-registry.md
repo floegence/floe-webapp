@@ -66,7 +66,7 @@ This means the app should render fullScreen pages in the main content area, base
 
 - `useLayout().sidebarActiveTab()` (`packages/core/src/context/LayoutContext.tsx`)
 
-Recommended: use `ActivityAppsMain` to render fullScreen pages with keep-alive semantics (pages stay mounted after first activation):
+Recommended: use `ActivityAppsMain` to render main-view tabs with keep-alive semantics (pages stay mounted after first activation):
 
 ```tsx
 import type { FloeComponent } from '@floegence/floe-webapp-core';
@@ -81,6 +81,16 @@ export function AppContent() {
   return <ActivityAppsMain />;
 }
 ```
+
+### Main view + sidebar (renderIn)
+
+By default, non-`fullScreen` tabs render their component inside Shell's sidebar panel.
+
+If you want a tab to render in the **main content area** while keeping the sidebar available, set:
+
+- `sidebar.renderIn: 'main'`
+
+This is useful for "page + sidebar panel" layouts (for example, a chat page with a thread list in the sidebar).
 
 ### Keep-alive behavior (recommended)
 

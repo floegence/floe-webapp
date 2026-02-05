@@ -120,8 +120,8 @@ export function Shell(props: ShellProps) {
     return registry.sidebarItems()
       // Keep behavior consistent with activity items: hide panels marked as hiddenOnMobile.
       .filter((c) => !(isMobile() && c.sidebar?.hiddenOnMobile))
-      // FullScreen tabs are pages and should not render inside the sidebar.
-      .filter((c) => !c.sidebar?.fullScreen)
+      // Tabs rendered in the main content area should not render inside the sidebar.
+      .filter((c) => c.sidebar?.fullScreen !== true && c.sidebar?.renderIn !== 'main')
       .map((c) => ({
         id: c.id,
         render: () => <Dynamic component={c.component} />,
@@ -142,6 +142,16 @@ export function Shell(props: ShellProps) {
     if (!registry) return false;
     const comp = registry.getComponent(layout.sidebarActiveTab());
     return comp?.sidebar?.fullScreen ?? false;
+  });
+
+  // Main-view tabs should appear as active on mobile even when the overlay is closed.
+  // (Example: a page tab that also has a sidebar panel.)
+  const activeIsPage = createMemo(() => {
+    if (sidebarHidden()) return true;
+    if (!registry) return false;
+    const comp = registry.getComponent(layout.sidebarActiveTab());
+    if (!comp?.sidebar) return false;
+    return comp.sidebar.fullScreen === true || comp.sidebar.renderIn === 'main';
   });
 
   // FullScreen components are navigated as pages on mobile (no overlay).
@@ -345,6 +355,7 @@ export function Shell(props: ShellProps) {
             activeId: layout.sidebarActiveTab(),
             mobileSidebarOpen: mobileSidebarOpen(),
             activeIsFullScreen: isFullScreen(),
+            activeIsPage: activeIsPage(),
           })}
           onSelect={handleMobileTabSelect}
         />
