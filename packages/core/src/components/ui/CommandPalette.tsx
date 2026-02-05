@@ -1,10 +1,11 @@
-import { Show, For, createEffect, onCleanup, createMemo, createSignal } from 'solid-js';
+import { Show, For, createEffect, createMemo, createSignal } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useCommand, type Command } from '../../context/CommandContext';
 import { Search } from '../icons';
-import { lockBodyStyle } from '../../utils/bodyStyleLock';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { useOverlayMask } from '../../hooks/useOverlayMask';
+import { matchKeybind } from '../../utils/keybind';
 
 /**
  * Command palette / search modal
@@ -13,7 +14,22 @@ export function CommandPalette() {
   const command = useCommand();
   const floe = useResolvedFloeConfig();
   let inputRef: HTMLInputElement | undefined;
+  let rootRef: HTMLDivElement | undefined;
   const [selectedIndex, setSelectedIndex] = createSignal(0);
+
+  useOverlayMask({
+    open: command.isOpen,
+    root: () => rootRef,
+    onClose: () => command.close(),
+    lockBodyScroll: true,
+    trapFocus: true,
+    closeOnEscape: true,
+    blockHotkeys: true,
+    // Prevent scroll bleed on the backdrop while keeping the results list scrollable.
+    blockWheel: 'outside',
+    blockTouchMove: 'outside',
+    restoreFocus: true,
+  });
 
   // Focus input when opened
   createEffect(() => {
@@ -29,45 +45,39 @@ export function CommandPalette() {
     setSelectedIndex(0);
   });
 
-  // Keyboard navigation
-  createEffect(() => {
-    if (!command.isOpen()) return;
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Mirror CommandContext behavior: allow the palette keybind to toggle/close while open.
+    if (matchKeybind(e, floe.config.commands.palette.keybind)) {
+      e.preventDefault();
+      command.close();
+      return;
+    }
 
-    const handleKeydown = (e: KeyboardEvent) => {
-      const filtered = command.filteredCommands();
+    const filtered = command.filteredCommands();
 
-      switch (e.key) {
-        case 'Escape':
-          e.preventDefault();
-          command.close();
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setSelectedIndex((i) => Math.max(i - 1, 0));
-          break;
-        case 'Enter':
-          e.preventDefault();
-          if (filtered[selectedIndex()]) {
-            command.execute(filtered[selectedIndex()].id);
-          }
-          break;
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const len = filtered.length;
+        if (len <= 0) return;
+        setSelectedIndex((i) => Math.max(0, Math.min(i + 1, len - 1)));
+        break;
       }
-    };
-
-    window.addEventListener('keydown', handleKeydown);
-    onCleanup(() => window.removeEventListener('keydown', handleKeydown));
-  });
-
-  // Prevent body scroll
-  createEffect(() => {
-    if (!command.isOpen()) return;
-    const unlock = lockBodyStyle({ overflow: 'hidden' });
-    onCleanup(unlock);
-  });
+      case 'ArrowUp': {
+        e.preventDefault();
+        const len = filtered.length;
+        if (len <= 0) return;
+        setSelectedIndex((i) => Math.max(0, Math.min(i - 1, len - 1)));
+        break;
+      }
+      case 'Enter':
+        e.preventDefault();
+        if (filtered[selectedIndex()]) {
+          command.execute(filtered[selectedIndex()].id);
+        }
+        break;
+    }
+  };
 
   const groupedCommands = createMemo(() => {
     const filtered = command.filteredCommands();
@@ -97,6 +107,7 @@ export function CommandPalette() {
 
         {/* Palette */}
         <div
+          ref={rootRef}
           class={cn(
             'fixed left-1/2 top-[20%] z-50 -translate-x-1/2',
             'w-full max-w-xl',
@@ -105,6 +116,7 @@ export function CommandPalette() {
             'animate-in fade-in slide-in-from-top-4',
             'overflow-hidden'
           )}
+          onKeyDown={handleKeyDown}
         >
           {/* Search input */}
           <div class="flex items-center gap-3 px-4 pt-1 border-b border-border">
@@ -127,7 +139,7 @@ export function CommandPalette() {
           </div>
 
           {/* Results */}
-          <div class="max-h-80 overflow-y-auto py-2">
+          <div class="max-h-80 overflow-y-auto overscroll-contain py-2">
             <Show
               when={command.filteredCommands().length > 0}
               fallback={

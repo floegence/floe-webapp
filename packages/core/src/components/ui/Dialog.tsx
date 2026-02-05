@@ -1,10 +1,10 @@
-import { Show, createUniqueId, type JSX, createEffect, onCleanup } from 'solid-js';
+import { Show, createUniqueId, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Button } from './Button';
 import { X } from '../icons';
-import { lockBodyStyle } from '../../utils/bodyStyleLock';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { useOverlayMask } from '../../hooks/useOverlayMask';
 
 export interface DialogProps {
   open: boolean;
@@ -17,20 +17,6 @@ export interface DialogProps {
   class?: string;
 }
 
-function getFocusableElements(root: HTMLElement): HTMLElement[] {
-  const selector = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
-    '[contenteditable="true"]',
-  ].join(',');
-
-  return Array.from(root.querySelectorAll(selector)).filter((el): el is HTMLElement => el instanceof HTMLElement);
-}
-
 /**
  * Modal dialog component
  */
@@ -40,71 +26,18 @@ export function Dialog(props: DialogProps) {
   const descriptionId = () => `dialog-${baseId}-description`;
   let dialogRef: HTMLDivElement | undefined;
 
-  // Close on escape + basic focus management (trap within dialog while open).
-  createEffect(() => {
-    if (!props.open) return;
-    if (typeof document === 'undefined') return;
-
-    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const focusFirst = () => {
-      const root = dialogRef;
-      if (!root) return;
-
-      const focusables = getFocusableElements(root);
-      const target = focusables[0] ?? root;
-      target.focus();
-    };
-
-    // Defer focus to ensure DOM nodes are mounted.
-    setTimeout(focusFirst, 0);
-
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        props.onOpenChange(false);
-        return;
-      }
-
-      if (e.key !== 'Tab') return;
-
-      const root = dialogRef;
-      if (!root) return;
-
-      const focusables = getFocusableElements(root);
-      if (!focusables.length) {
-        e.preventDefault();
-        root.focus();
-        return;
-      }
-
-      const first = focusables[0]!;
-      const last = focusables[focusables.length - 1]!;
-      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-      // Keep tabbing within the dialog.
-      if (e.shiftKey) {
-        if (active === first || !active || !root.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeydown, true);
-    onCleanup(() => document.removeEventListener('keydown', handleKeydown, true));
-    onCleanup(() => prevActive?.focus());
-  });
-
-  // Prevent body scroll when open
-  createEffect(() => {
-    if (!props.open) return;
-    const unlock = lockBodyStyle({ overflow: 'hidden' });
-    onCleanup(unlock);
+  useOverlayMask({
+    open: () => props.open,
+    root: () => dialogRef,
+    onClose: () => props.onOpenChange(false),
+    lockBodyScroll: true,
+    trapFocus: true,
+    closeOnEscape: true,
+    blockHotkeys: true,
+    // Block scroll bleed outside the dialog while keeping the dialog content scrollable.
+    blockWheel: 'outside',
+    blockTouchMove: 'outside',
+    restoreFocus: true,
   });
 
   return (
@@ -162,7 +95,7 @@ export function Dialog(props: DialogProps) {
           </Show>
 
           {/* Content */}
-          <div class="flex-1 overflow-auto p-3">{props.children}</div>
+          <div class="flex-1 overflow-auto overscroll-contain p-3">{props.children}</div>
 
           {/* Footer */}
           <Show when={props.footer}>

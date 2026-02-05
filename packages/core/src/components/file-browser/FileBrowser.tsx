@@ -2,6 +2,7 @@ import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
 import { useFileBrowserDrag, type FileBrowserDragInstance } from '../../context/FileBrowserDragContext';
+import { deferAfterPaint } from '../../utils/defer';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
 import { ResizeHandle } from '../layout/ResizeHandle';
 import { DirectoryTree } from './DirectoryTree';
@@ -172,13 +173,13 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   });
 
   // Keyboard shortcut for filter (Ctrl/Cmd + F) – scoped to this FileBrowser instance.
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (!(e.metaKey || e.ctrlKey)) return;
-    if (e.key.toLowerCase() !== 'f') return;
-    e.preventDefault();
-    ctx.setFilterActive(true);
-    setTimeout(() => filterInputRef?.focus(), 50);
-  };
+	  const handleKeyDown = (e: KeyboardEvent) => {
+	    if (!(e.metaKey || e.ctrlKey)) return;
+	    if (e.key.toLowerCase() !== 'f') return;
+	    e.preventDefault();
+	    ctx.setFilterActive(true);
+	    deferAfterPaint(() => filterInputRef?.focus());
+	  };
 
   const showSidebar = () => !ctx.sidebarCollapsed() || !isMobile();
 

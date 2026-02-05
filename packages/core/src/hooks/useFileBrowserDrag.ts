@@ -71,6 +71,7 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
   let isLongPressActivated = false;
   let pointerType: string = 'mouse';
+  let scrollRectCache: Map<HTMLElement, DOMRect> | null = null;
 
   const isEnabled = () => (options.enabled?.() ?? true) && !!dragContext;
 
@@ -100,6 +101,7 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
     activePointerId = null;
     draggedItem = null;
     isLongPressActivated = false;
+    scrollRectCache = null;
     setGlobalStyles(false);
     setIsDragging(false);
   };
@@ -127,7 +129,8 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
   };
 
   const autoScrollElement = (el: HTMLElement, clientX: number, clientY: number) => {
-    const rect = el.getBoundingClientRect();
+    const rect = scrollRectCache?.get(el) ?? el.getBoundingClientRect();
+    scrollRectCache?.set(el, rect);
 
     // Check if pointer is within the element bounds
     if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
@@ -184,6 +187,9 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
 
   const initiateActualDrag = () => {
     if (!dragContext || !draggedItem) return;
+
+    // Cache scroll container rects for the duration of this drag to avoid per-frame layout reads.
+    scrollRectCache = new Map();
 
     // If the item isn't selected, select it
     if (!options.isSelected(draggedItem.id)) {

@@ -1,4 +1,4 @@
-import { type Component, createSignal, Show } from 'solid-js';
+import { type Component, createSignal, onCleanup, Show } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { useChatContext } from '../ChatProvider';
 import { useAttachments } from '../hooks/useAttachments';
@@ -16,6 +16,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   const [isFocused, setIsFocused] = createSignal(false);
 
   let textareaRef: HTMLTextAreaElement | undefined;
+  let rafId: number | null = null;
 
   const attachments = useAttachments({
     maxAttachments: ctx.config().maxAttachments,
@@ -34,14 +35,28 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
 
   // Auto-resize textarea height
   const adjustHeight = () => {
-    if (!textareaRef) return;
-    textareaRef.style.height = 'auto';
-    textareaRef.style.height = `${Math.min(textareaRef.scrollHeight, 200)}px`;
+    const el = textareaRef;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  };
+
+  const scheduleAdjustHeight = () => {
+    if (rafId !== null) return;
+    if (typeof requestAnimationFrame === 'undefined') {
+      adjustHeight();
+      return;
+    }
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      adjustHeight();
+    });
   };
 
   const handleInput = (e: InputEvent & { currentTarget: HTMLTextAreaElement }) => {
     setText(e.currentTarget.value);
-    adjustHeight();
+    // Avoid layout work on every keystroke; coalesce resize to at most once per frame.
+    scheduleAdjustHeight();
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,6 +87,13 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
     if (!ctx.config().allowAttachments) return;
     await attachments.handlePaste(e);
   };
+
+  onCleanup(() => {
+    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  });
 
   return (
     <div

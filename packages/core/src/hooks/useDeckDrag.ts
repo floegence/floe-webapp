@@ -27,6 +27,7 @@ export function useDeckDrag() {
   let handleEl: HTMLElement | null = null;
   let unlockBody: (() => void) | null = null;
   let gridEl: HTMLElement | null = null;
+  let gridRect: DOMRect | null = null;
   let gridPaddingLeft = 0;
   let gridPaddingRight = 0;
   let originalPosition: GridPosition | null = null;
@@ -52,6 +53,7 @@ export function useDeckDrag() {
     currentWidgetId = null;
     handleEl = null;
     gridEl = null;
+    gridRect = null;
     originalPosition = null;
     setGlobalStyles(false);
     deck.endDrag(true);
@@ -60,7 +62,7 @@ export function useDeckDrag() {
   const maybeAutoScroll = (): void => {
     if (!gridEl) return;
     // Only vertical auto-scroll is needed (rows are unbounded).
-    const rect = gridEl.getBoundingClientRect();
+    const rect = gridRect ?? gridEl.getBoundingClientRect();
     const threshold = 48;
     const maxSpeed = 24;
 
@@ -133,6 +135,8 @@ export function useDeckDrag() {
     currentWidgetId = widgetId;
     handleEl = handle;
     gridEl = nearestGrid;
+    // Cache the grid rect once per interaction to avoid per-frame layout reads.
+    gridRect = nearestGrid.getBoundingClientRect();
     startScrollTop = nearestGrid.scrollTop;
     lastAppliedScrollTop = startScrollTop;
     setGlobalStyles(true);

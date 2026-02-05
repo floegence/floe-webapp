@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import { Show, onMount } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { deferAfterPaint } from '../../utils/defer';
 import { useFileBrowser } from './FileBrowserContext';
 import { Breadcrumb } from './Breadcrumb';
 import type { ViewMode } from './types';
@@ -114,18 +115,18 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
     return path !== '/' && path !== '';
   };
 
-  const handleFilterToggle = () => {
-    if (ctx.isFilterActive()) {
+	  const handleFilterToggle = () => {
+	    if (ctx.isFilterActive()) {
       // Close filter: clear query and collapse
       ctx.setFilterQuery('');
       ctx.setFilterActive(false);
-    } else {
-      // Open filter
-      ctx.setFilterActive(true);
-      // Focus input after expansion animation
-      setTimeout(() => inputRef?.focus(), 50);
-    }
-  };
+	    } else {
+	      // Open filter
+	      ctx.setFilterActive(true);
+	      // Defer focus so the input is mounted and the UI update can paint first.
+	      deferAfterPaint(() => inputRef?.focus());
+	    }
+	  };
 
   const handleClearFilter = () => {
     ctx.setFilterQuery('');

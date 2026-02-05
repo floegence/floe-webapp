@@ -52,6 +52,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   let rafId: number | null = null;
   let unlockBody: (() => void) | null = null;
   let gridEl: HTMLElement | null = null;
+  let gridRect: DOMRect | null = null;
   let gridPaddingLeft = 0;
   let gridPaddingRight = 0;
 
@@ -75,13 +76,14 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     setIsActive(false);
     activePointerId = null;
     gridEl = null;
+    gridRect = null;
     setGlobalStyles(false);
     deck.endResize(true);
   };
 
   const maybeAutoScroll = (): void => {
     if (!gridEl) return;
-    const rect = gridEl.getBoundingClientRect();
+    const rect = gridRect ?? gridEl.getBoundingClientRect();
     const threshold = 48;
     const maxSpeed = 24;
 
@@ -135,6 +137,8 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
     setIsActive(true);
     setGlobalStyles(true);
     gridEl = nearestGrid;
+    // Cache the grid rect once per interaction to avoid per-frame layout reads.
+    gridRect = nearestGrid.getBoundingClientRect();
     startScrollTop = nearestGrid.scrollTop;
     lastAppliedScrollTop = startScrollTop;
 

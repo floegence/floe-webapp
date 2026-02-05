@@ -1,7 +1,7 @@
-import { Show, createEffect, createMemo, onCleanup, type JSX } from 'solid-js';
+import { Show, createMemo, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { lockBodyStyle } from '../../utils/bodyStyleLock';
 import { deferNonBlocking } from '../../utils/defer';
+import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { Launchpad, type LaunchpadItemData } from './Launchpad';
 
 export interface LaunchpadModalProps {
@@ -26,20 +26,6 @@ export interface LaunchpadModalProps {
   closeOnSelect?: boolean | ((item: LaunchpadItemData) => boolean);
 }
 
-function getFocusableElements(root: HTMLElement): HTMLElement[] {
-  const selector = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
-    '[contenteditable="true"]',
-  ].join(',');
-
-  return Array.from(root.querySelectorAll(selector)).filter((el): el is HTMLElement => el instanceof HTMLElement);
-}
-
 /**
  * Modal wrapper for Launchpad.
  *
@@ -54,6 +40,22 @@ export function LaunchpadModal(props: LaunchpadModalProps) {
   const onSelect = createMemo(() => props.onSelect);
 
   const close = () => onOpenChange()(false);
+
+  useOverlayMask({
+    open: () => props.open,
+    root: () => rootRef,
+    onClose: close,
+    lockBodyScroll: true,
+    trapFocus: true,
+    closeOnEscape: true,
+    blockHotkeys: true,
+    // Launchpad uses wheel deltas for pagination, so we block default scrolling unconditionally.
+    blockWheel: 'all',
+    // iOS: prevent touch scroll bleed (Launchpad is full-screen and does not need native scrolling).
+    blockTouchMove: 'all',
+    autoFocus: { selector: '.launchpad-search input' },
+    restoreFocus: true,
+  });
 
   // Enforce a single side-effect channel: LaunchpadItemData.onClick is ignored in modal mode.
   const items = createMemo<LaunchpadItemData[]>(() => props.items.map((item) => ({ ...item, onClick: undefined })));
@@ -74,113 +76,6 @@ export function LaunchpadModal(props: LaunchpadModalProps) {
     // UI-first: let the close paint first, then run user logic.
     deferNonBlocking(() => cb(item));
   };
-
-  createEffect(() => {
-    if (!props.open) return;
-    if (typeof document === 'undefined') return;
-
-    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    // Prevent body scroll (helps on iOS). Note: Shell's main scroller is not body,
-    // so we also block wheel/touchmove below.
-    const unlockBody = lockBodyStyle({ overflow: 'hidden' });
-
-    const focusFirst = () => {
-      const root = rootRef;
-      if (!root) return;
-
-      const search = root.querySelector<HTMLInputElement>('.launchpad-search input');
-      if (search) {
-        search.focus();
-        return;
-      }
-
-      const focusables = getFocusableElements(root);
-      const target = focusables[0] ?? root;
-      target.focus();
-    };
-
-    // Defer focus so Portal content is mounted.
-    setTimeout(focusFirst, 0);
-
-    // Trap Tab within the modal (mirrors Dialog behavior).
-    const handleTabTrap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      const root = rootRef;
-      if (!root) return;
-
-      const focusables = getFocusableElements(root);
-      if (!focusables.length) {
-        e.preventDefault();
-        root.focus();
-        return;
-      }
-
-      const first = focusables[0]!;
-      const last = focusables[focusables.length - 1]!;
-      const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-      if (e.shiftKey) {
-        if (active === first || !active || !root.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (active === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    // Escape should close only the modal and never reach underlying document/window handlers.
-    const handleEscapeCapture = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      close();
-    };
-
-    // Block global shortcuts registered on window (bubble) without breaking typing.
-    // This runs after the target has handled the keydown.
-    const handleKeydownBubble = (e: KeyboardEvent) => {
-      e.stopPropagation();
-    };
-
-    // Prevent background scroll while allowing Launchpad to consume wheel deltas for pagination.
-    const handleWheelCapture = (e: WheelEvent) => {
-      if (e.cancelable) e.preventDefault();
-    };
-    const handleWheelBubble = (e: WheelEvent) => {
-      e.stopPropagation();
-    };
-
-    // iOS: prevent touch scroll bleed.
-    const handleTouchMoveCapture = (e: TouchEvent) => {
-      if (e.cancelable) e.preventDefault();
-    };
-
-    document.addEventListener('keydown', handleTabTrap, true);
-    window.addEventListener('keydown', handleEscapeCapture, true);
-    document.addEventListener('keydown', handleKeydownBubble);
-
-    document.addEventListener('wheel', handleWheelCapture, { capture: true, passive: false });
-    document.addEventListener('wheel', handleWheelBubble);
-    document.addEventListener('touchmove', handleTouchMoveCapture, { capture: true, passive: false });
-
-    onCleanup(() => {
-      document.removeEventListener('keydown', handleTabTrap, true);
-      window.removeEventListener('keydown', handleEscapeCapture, true);
-      document.removeEventListener('keydown', handleKeydownBubble);
-
-      document.removeEventListener('wheel', handleWheelCapture, true);
-      document.removeEventListener('wheel', handleWheelBubble);
-      document.removeEventListener('touchmove', handleTouchMoveCapture, true);
-
-      unlockBody();
-      prevActive?.focus();
-    });
-  });
 
   return (
     <Show when={props.open}>
