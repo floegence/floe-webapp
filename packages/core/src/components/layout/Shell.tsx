@@ -196,7 +196,10 @@ export function Shell(props: ShellProps) {
     const active = layout.sidebarActiveTab();
     // Only auto-select first item if no active tab is set
     if (!active) {
-      setSidebarActiveTab(items[0].id);
+      // Skip "action" items that provide a custom click handler (e.g. opening a modal).
+      const firstTab = items.find((item) => !item.onClick);
+      if (!firstTab) return;
+      setSidebarActiveTab(firstTab.id);
     }
   });
 
