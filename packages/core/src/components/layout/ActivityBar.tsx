@@ -3,6 +3,7 @@ import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { Tooltip } from '../ui/Tooltip';
+import { resolveActivityBarClick, type ActivityBarCollapseBehavior } from './activityBarBehavior';
 
 export interface ActivityBarItem {
   id: string;
@@ -10,13 +11,20 @@ export interface ActivityBarItem {
   label: string;
   badge?: number | string | (() => number | string | undefined);
   onClick?: () => void;
+  /**
+   * How this item should affect the sidebar collapsed state when clicked.
+   *
+   * - `toggle` (default): VSCode-style behavior (change tab, open sidebar; click active tab to collapse).
+   * - `preserve`: change tab without mutating the collapsed state (useful for fullScreen pages).
+   */
+  collapseBehavior?: ActivityBarCollapseBehavior;
 }
 
 export interface ActivityBarProps {
   items: ActivityBarItem[];
   bottomItems?: ActivityBarItem[];
   activeId: string;
-  onActiveChange: (id: string) => void;
+  onActiveChange: (id: string, opts?: { openSidebar?: boolean }) => void;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
   class?: string;
@@ -41,17 +49,26 @@ export function ActivityBar(props: ActivityBarProps) {
       return;
     }
 
-    // Default behavior: toggle sidebar collapse or change active tab (lightweight, keep synchronous)
-    const isActive = activeId() === item.id;
-    const isCollapsed = collapsed();
+    const res = resolveActivityBarClick({
+      clickedId: item.id,
+      activeId: activeId(),
+      collapsed: collapsed(),
+      behavior: item.collapseBehavior,
+    });
 
-    if (isActive && !isCollapsed) {
-      onCollapsedChange()?.(true);
-      return;
+    // Tab switch (or page navigation)
+    if (res.nextActiveId !== activeId()) {
+      if (typeof res.openSidebar === 'boolean') {
+        onActiveChange()(res.nextActiveId, { openSidebar: res.openSidebar });
+      } else {
+        onActiveChange()(res.nextActiveId);
+      }
     }
 
-    onActiveChange()(item.id);
-    onCollapsedChange()?.(false);
+    // Collapse/expand updates
+    if (typeof res.nextCollapsed === 'boolean') {
+      onCollapsedChange()?.(res.nextCollapsed);
+    }
   };
 
   return (
