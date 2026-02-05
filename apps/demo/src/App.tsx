@@ -8,6 +8,7 @@ import {
   useComponentContextFactory,
   useComponentRegistry,
   useLayout,
+  useNotification,
   useTheme,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
@@ -34,6 +35,7 @@ import {
   Sun,
   Terminal,
 } from '@floegence/floe-webapp-core/icons';
+import { LaunchpadModal, type LaunchpadItemData } from '@floegence/floe-webapp-core/launchpad';
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 
 import { demoFiles } from './demo/workspace';
@@ -41,7 +43,6 @@ import { FileViewerPage } from './demo/pages/FileViewerPage';
 import { SearchPage } from './demo/pages/SearchPage';
 import { ShowcasePage } from './demo/pages/ShowcasePage';
 import { DeckPage } from './demo/pages/DeckPage';
-import { LaunchpadPage } from './demo/pages/LaunchpadPage';
 import { ChatPage } from './demo/pages/ChatPage';
 import { DesignTokensPage } from './demo/pages/DesignTokensPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
@@ -57,6 +58,7 @@ const demoProtocolContract: ProtocolContract = {
 
 function AppContent() {
   const theme = useTheme();
+  const notifications = useNotification();
   const registry = useComponentRegistry();
   const createCtx = useComponentContextFactory();
   const protocol = useProtocol();
@@ -104,6 +106,125 @@ function AppContent() {
     layout.setSidebarActiveTab('files');
   };
 
+  const [launchpadOpen, setLaunchpadOpen] = createSignal(false);
+
+  const demoLaunchpadItems: LaunchpadItemData[] = [
+    {
+      id: 'showcase',
+      name: 'Showcase',
+      icon: Terminal,
+      description: 'View all UI components',
+      color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    },
+    {
+      id: 'files',
+      name: 'Files',
+      icon: Files,
+      description: 'Browse project files',
+      color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+    },
+    {
+      id: 'search',
+      name: 'Search',
+      icon: Search,
+      description: 'Search the workspace',
+      color: 'linear-gradient(135deg, #fc4a1a 0%, #f7b733 100%)',
+    },
+    {
+      id: 'settings',
+      name: 'Settings',
+      icon: Settings,
+      description: 'Configure preferences',
+      color: 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)',
+    },
+    {
+      id: 'chat',
+      name: 'Chat',
+      icon: MessageSquare,
+      description: 'AI chat interface demo',
+      color: 'linear-gradient(135deg, #1d2671 0%, #c33764 100%)',
+    },
+    {
+      id: 'deck',
+      name: 'Deck',
+      icon: LayoutDashboard,
+      description: 'Grafana-style deck layout editor',
+      color: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
+    },
+    {
+      id: 'design-tokens',
+      name: 'Design Tokens',
+      icon: Layers,
+      description: 'Design system tokens reference',
+      color: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+    },
+    {
+      id: 'theme-light',
+      name: 'Light Mode',
+      icon: Sun,
+      description: 'Switch to light theme',
+      color: 'linear-gradient(135deg, #f5af19 0%, #f12711 100%)',
+    },
+    {
+      id: 'theme-dark',
+      name: 'Dark Mode',
+      icon: Moon,
+      description: 'Switch to dark theme',
+      color: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
+    },
+  ];
+
+  const setSidebarActiveTab = (id: string) => {
+    const comp = registry.getComponent(id);
+    const fullScreen = comp?.sidebar?.fullScreen ?? false;
+    const renderInMain = comp?.sidebar?.renderIn === 'main';
+    layout.setSidebarActiveTab(id, { openSidebar: !(fullScreen || renderInMain) });
+  };
+
+  const handleLaunchpadSelect = (item: LaunchpadItemData) => {
+    switch (item.id) {
+      case 'theme-light':
+        theme.setTheme('light');
+        notifications.success('Theme', 'Switched to light mode');
+        return;
+      case 'theme-dark':
+        theme.setTheme('dark');
+        notifications.success('Theme', 'Switched to dark mode');
+        return;
+    }
+
+    const comp = registry.getComponent(item.id);
+    if (comp) {
+      notifications.success('Launched', `Opening ${item.name}`);
+      setSidebarActiveTab(item.id);
+      return;
+    }
+
+    notifications.info('Not implemented', `${item.name} is a demo item`);
+  };
+
+  const shellActivityItems = createMemo(() => {
+    const base = [
+      { id: 'launchpad-modal', icon: Grid3x3, label: 'Launchpad', onClick: () => setLaunchpadOpen(true) },
+      { id: 'deck', icon: LayoutDashboard, label: 'Deck', collapseBehavior: 'preserve' as const },
+      { id: 'showcase', icon: Terminal, label: 'Showcase' },
+      { id: 'files', icon: Files, label: 'Files' },
+      { id: 'search', icon: Search, label: 'Search' },
+      { id: 'settings', icon: Settings, label: 'Settings' },
+      { id: 'chat', icon: MessageSquare, label: 'Chat' },
+      { id: 'design-tokens', icon: Layers, label: 'Design Tokens', collapseBehavior: 'preserve' as const },
+    ];
+
+    // Match registry-driven behavior: hide Deck tab on mobile.
+    return layout.isMobile() ? base.filter((item) => item.id !== 'deck') : base;
+  });
+
+  // Demo state migration: Launchpad is now a modal, not an activity tab.
+  createEffect(() => {
+    if (layout.sidebarActiveTab() !== 'launchpad') return;
+    layout.setSidebarActiveTab('showcase', { openSidebar: false });
+  });
+
   const DemoBranchItem: Component = () => (
     <BottomBarItem icon={<GitBranch class="w-3 h-3" />}>main</BottomBarItem>
   );
@@ -143,31 +264,7 @@ function AppContent() {
 
   const DesignTokensView: Component = () => <DesignTokensPage />;
 
-  const LaunchpadView: Component = () => (
-    <LaunchpadPage
-      onClose={() => layout.setSidebarActiveTab('showcase')}
-      onNavigate={(id) => layout.setSidebarActiveTab(id)}
-    />
-  );
-
   const demoComponents: FloeComponent[] = [
-    {
-      id: 'launchpad',
-      name: 'Launchpad',
-      icon: Grid3x3,
-      description: 'macOS-style app launcher',
-      component: LaunchpadView,
-      sidebar: { order: -1, fullScreen: true },
-      commands: [
-        {
-          id: 'demo.open.launchpad',
-          title: 'Demo: Open Launchpad',
-          keybind: 'mod+0',
-          category: 'Demo',
-          execute: () => layout.setSidebarActiveTab('launchpad'),
-        },
-      ],
-    },
     {
       id: 'deck',
       name: 'Deck',
@@ -193,6 +290,13 @@ function AppContent() {
       component: ShowcaseView,
       sidebar: { order: 1 },
       commands: [
+        {
+          id: 'demo.open.launchpad',
+          title: 'Demo: Open Launchpad',
+          keybind: 'mod+0',
+          category: 'Demo',
+          execute: () => setLaunchpadOpen(true),
+        },
         {
           id: 'demo.open.showcase',
           title: 'Demo: Open Showcase',
@@ -443,6 +547,7 @@ function AppContent() {
         logo={
           <img src="/logo.svg" alt="Floe" class="w-7 h-7" />
         }
+        activityItems={shellActivityItems()}
         activityBottomItemsMobileMode="topBar"
         activityBottomItems={[
           {
@@ -481,6 +586,16 @@ function AppContent() {
 
       <CommandPalette />
       <NotificationContainer />
+
+      <LaunchpadModal
+        open={launchpadOpen()}
+        onOpenChange={setLaunchpadOpen}
+        items={demoLaunchpadItems}
+        onSelect={handleLaunchpadSelect}
+        itemsPerPage={12}
+        columns={4}
+        showSearch={true}
+      />
     </>
   );
 }
@@ -488,6 +603,9 @@ function AppContent() {
 export function App() {
   const demoFloeConfig = {
     storage: { namespace: 'floe-demo' },
+    layout: {
+      sidebar: { defaultActiveTab: 'showcase' },
+    },
     deck: {
       storageKey: 'deck',
       defaultActiveLayoutId: 'demo-layout-files-terminal',
