@@ -1,7 +1,7 @@
-import { For, Show, untrack, createMemo, createSignal, onCleanup } from 'solid-js';
+import { For, Show, untrack, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
@@ -73,15 +73,24 @@ export function FileGridView(props: FileGridViewProps) {
   const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
   const instanceId = () => props.instanceId ?? 'default';
 
-  const isSmUp = useMediaQuery('(min-width: 640px)');
-  const isMdUp = useMediaQuery('(min-width: 768px)');
-  const isLgUp = useMediaQuery('(min-width: 1024px)');
-  const isXlUp = useMediaQuery('(min-width: 1280px)');
-
-  const columns = () => (isXlUp() ? 6 : isLgUp() ? 5 : isMdUp() ? 4 : isSmUp() ? 3 : 2);
-
   const TILE_HEIGHT_PX = 112; // h-28
   const GRID_GAP_PX = 8; // gap-2
+
+  // Width-based column count (container query-like) so the grid adapts to the FileBrowser panel width,
+  // not the viewport width. This avoids "always 6 columns" when the panel is narrow (e.g. sidebar open).
+  const MIN_TILE_WIDTH_PX = 180;
+  const MIN_COLUMNS = 2;
+  const MAX_COLUMNS = 6;
+  const [measureEl, setMeasureEl] = createSignal<HTMLDivElement | null>(null);
+  const measureSize = useResizeObserver(measureEl);
+  const columns = createMemo(() => {
+    const width = measureSize()?.width ?? 0;
+    if (width <= 0) return MIN_COLUMNS;
+
+    const computed = Math.floor((width + GRID_GAP_PX) / (MIN_TILE_WIDTH_PX + GRID_GAP_PX));
+    return Math.max(MIN_COLUMNS, Math.min(MAX_COLUMNS, computed));
+  });
+
   const rowHeightPx = () => TILE_HEIGHT_PX + GRID_GAP_PX;
   const rowCount = () => Math.ceil(ctx.currentFiles().length / Math.max(1, columns()));
 
@@ -96,9 +105,32 @@ export function FileGridView(props: FileGridViewProps) {
 
   const visibleFiles = createMemo(() => ctx.currentFiles().slice(startIndex(), endIndex()));
 
+  // When the column count changes (panel resize), keep the top row's first item stable.
+  // Without this, the same scrollTop would map to a different item index, which feels like an "offset jump".
+  let scrollEl: HTMLDivElement | null = null;
+  let lastColumns = MIN_COLUMNS;
+  createEffect(() => {
+    const nextColumns = columns();
+    if (!scrollEl) {
+      lastColumns = nextColumns;
+      return;
+    }
+    if (nextColumns === lastColumns) return;
+
+    const rowHeight = rowHeightPx();
+    const anchorRow = Math.floor(scrollEl.scrollTop / Math.max(1, rowHeight));
+    const anchorIndex = anchorRow * Math.max(1, lastColumns);
+    const nextAnchorRow = Math.floor(anchorIndex / Math.max(1, nextColumns));
+    scrollEl.scrollTop = nextAnchorRow * rowHeight;
+    virtualRows.onScroll();
+
+    lastColumns = nextColumns;
+  });
+
   return (
     <div
       ref={(el) => {
+        scrollEl = el;
         virtualRows.scrollRef(el);
         ctx.setScrollContainer(el);
       }}
@@ -106,6 +138,8 @@ export function FileGridView(props: FileGridViewProps) {
       onScroll={virtualRows.onScroll}
     >
       <div class="p-3">
+        {/* A 0-height element used to measure available content width without observing height changes during virtualization. */}
+        <div ref={(el) => setMeasureEl(el)} class="w-full h-0" aria-hidden="true" />
         <Show
           when={ctx.currentFiles().length > 0}
           fallback={
@@ -127,8 +161,9 @@ export function FileGridView(props: FileGridViewProps) {
           }
         >
           <div
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2"
+            class="grid gap-2"
             style={{
+              'grid-template-columns': `repeat(${columns()}, minmax(0, 1fr))`,
               'padding-top': `${virtualRows.paddingTop()}px`,
               'padding-bottom': `${virtualRows.paddingBottom()}px`,
             }}
