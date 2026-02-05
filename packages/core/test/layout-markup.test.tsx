@@ -3,6 +3,7 @@ import { renderToString } from 'solid-js/web';
 import { CommandProvider } from '../src/context/CommandContext';
 import { LayoutProvider } from '../src/context/LayoutContext';
 import { TopBar } from '../src/components/layout/TopBar';
+import { TopBarIconButton } from '../src/components/layout/TopBarIconButton';
 import { MobileTabBar } from '../src/components/layout/MobileTabBar';
 import { Shell } from '../src/components/layout/Shell';
 
@@ -36,6 +37,17 @@ describe('layout markup', () => {
 
     expect(html).toContain('safe-bottom');
     expect(html).toContain('h-14');
+  });
+
+  it('TopBarIconButton should provide a stable 32px hit area with muted hover feedback', () => {
+    const html = renderWithCoreProviders(() => (
+      <TopBarIconButton label="Settings">
+        <span class="w-4 h-4" />
+      </TopBarIconButton>
+    ));
+
+    expect(html).toContain('w-8 h-8');
+    expect(html).toContain('hover:bg-muted/60');
   });
 
   it('Shell should include dvh + min-* utilities to avoid flex overflow and layout jumps', () => {
