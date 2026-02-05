@@ -48,7 +48,6 @@ export function Shell(props: ShellProps) {
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
   const sidebarHidden = () => props.sidebarMode === 'hidden';
-  const setSidebarActiveTab = (id: string) => layout.setSidebarActiveTab(id, { openSidebar: !sidebarHidden() });
   const registry = (() => {
     try {
       return useComponentRegistry();
@@ -56,6 +55,11 @@ export function Shell(props: ShellProps) {
       return null;
     }
   })();
+  const setSidebarActiveTab = (id: string, opts?: { openSidebar?: boolean }) => {
+    const fullScreen = registry?.getComponent(id)?.sidebar?.fullScreen ?? false;
+    const openSidebar = sidebarHidden() ? false : (opts?.openSidebar ?? !fullScreen);
+    layout.setSidebarActiveTab(id, { openSidebar });
+  };
 
   // Sidebar is a structural part of the layout. When disabled, force-close the mobile drawer.
   createEffect(() => {
@@ -90,6 +94,7 @@ export function Shell(props: ShellProps) {
         icon: c.icon!,
         label: c.name,
         badge: c.sidebar?.badge,
+        collapseBehavior: c.sidebar?.fullScreen ? 'preserve' : 'toggle',
       }));
   });
 
