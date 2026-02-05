@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-boot",
-  "version": "0.24.4",
+  "version": "0.25.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

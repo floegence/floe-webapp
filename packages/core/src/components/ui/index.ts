@@ -127,6 +127,12 @@ export {
 } from './Radio';
 export { Switch, type SwitchProps, type SwitchSize } from './Switch';
 export {
+  SegmentedControl,
+  type SegmentedControlProps,
+  type SegmentedControlOption,
+  type SegmentedControlSize,
+} from './SegmentedControl';
+export {
   Checkbox,
   CheckboxGroup,
   CheckboxList,
