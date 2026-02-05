@@ -1,5 +1,7 @@
 export { Launchpad } from './Launchpad';
 export type { LaunchpadProps, LaunchpadItemData } from './Launchpad';
+export { LaunchpadModal } from './LaunchpadModal';
+export type { LaunchpadModalProps } from './LaunchpadModal';
 export { LaunchpadItem } from './LaunchpadItem';
 export type { LaunchpadItemProps } from './LaunchpadItem';
 export { LaunchpadGrid } from './LaunchpadGrid';
