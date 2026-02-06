@@ -3,6 +3,7 @@ import { renderToString } from 'solid-js/web';
 import { FloeProvider } from '../src/app/FloeProvider';
 import { FloeRegistryRuntime } from '../src/app/FloeRegistryRuntime';
 import { ActivityAppsMain } from '../src/app/ActivityAppsMain';
+import { LayoutProvider } from '../src/context/LayoutContext';
 import type { FloeComponent } from '../src/context/ComponentRegistry';
 
 describe('ActivityAppsMain', () => {
@@ -26,5 +27,27 @@ describe('ActivityAppsMain', () => {
 
     expect(html).toContain('AI_MAIN');
   });
-});
 
+  it('renders with explicit views without ComponentRegistryProvider', () => {
+    const html = renderToString(() => (
+      <LayoutProvider>
+        <ActivityAppsMain
+          activeId={() => 'v1'}
+          views={[{ id: 'v1', render: () => <div>EXPLICIT_VIEW</div> }]}
+        />
+      </LayoutProvider>
+    ));
+
+    expect(html).toContain('EXPLICIT_VIEW');
+  });
+
+  it('throws when used without registry and without explicit views', () => {
+    expect(() =>
+      renderToString(() => (
+        <LayoutProvider>
+          <ActivityAppsMain activeId={() => 'missing'} />
+        </LayoutProvider>
+      ))
+    ).toThrow(/ComponentRegistryProvider/);
+  });
+});

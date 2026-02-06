@@ -12,13 +12,21 @@ export function createSimpleContext<T>(options: { name: string; init: () => T })
     return <Context.Provider value={value}>{props.children}</Context.Provider>;
   }
 
+  function useOptional(): T | undefined {
+    return useContext(Context);
+  }
+
   function use(): T {
-    const ctx = useContext(Context);
+    const ctx = useOptional();
     if (!ctx) {
       throw new Error(`${options.name}Context not found. Make sure to wrap your component with ${options.name}Provider.`);
     }
     return ctx;
   }
 
-  return { Provider, use, Context };
+  function has(): boolean {
+    return useOptional() !== undefined;
+  }
+
+  return { Provider, use, useOptional, has, Context };
 }

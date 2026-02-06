@@ -1,4 +1,4 @@
-import { createContext, createMemo, useContext, type JSX } from 'solid-js';
+import { createContext, createEffect, createMemo, onCleanup, useContext, type JSX } from 'solid-js';
 
 export interface FloeStorageAdapter {
   getItem: (key: string) => string | null;
@@ -158,6 +158,8 @@ export interface PersistApi {
    * while keeping debounced persistence in the hot interaction path.
    */
   flush?: () => void;
+  /** Cleanup pending timers (best-effort). */
+  dispose?: () => void;
 }
 
 export interface FloeConfigValue {
@@ -268,21 +270,16 @@ function createPersist(storage: FloeStorageConfig): PersistApi {
     pending.clear();
   };
 
-  // Ensure pending debounced saves are not lost when the page is refreshed/closed.
-  // We intentionally do not remove listeners: PersistApi is expected to be app-lifetime.
-  if (typeof window !== 'undefined') {
+  const dispose = () => {
     try {
-      window.addEventListener('pagehide', flush);
-      window.addEventListener('beforeunload', flush);
-      if (typeof document !== 'undefined') {
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'hidden') flush();
-        });
+      flush();
+    } finally {
+      for (const entry of pending.values()) {
+        clearTimeout(entry.timer);
       }
-    } catch {
-      // ignore
+      pending.clear();
     }
-  }
+  };
 
   return {
     key,
@@ -344,6 +341,58 @@ function createPersist(storage: FloeStorageConfig): PersistApi {
       }
     },
     flush,
+    dispose,
+  };
+}
+
+/**
+ * Install page lifecycle listeners that flush pending debounced saves.
+ *
+ * Keep this side-effect separate from createPersist() so importing the module does not
+ * register global listeners (important for testability and predictable composition).
+ */
+export function installPersistFlushListeners(persist: Pick<PersistApi, 'flush'>): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  const safeFlush = () => {
+    try {
+      persist.flush?.();
+    } catch {
+      // ignore
+    }
+  };
+
+  const onPageHide = () => safeFlush();
+  const onBeforeUnload = () => safeFlush();
+  const onVisibilityChange = () => {
+    try {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') safeFlush();
+    } catch {
+      // ignore
+    }
+  };
+
+  try {
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
+  } catch {
+    // ignore
+    return () => {};
+  }
+
+  return () => {
+    try {
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
+    } catch {
+      // ignore
+    }
   };
 }
 
@@ -375,6 +424,19 @@ export interface FloeConfigProviderProps {
 export function FloeConfigProvider(props: FloeConfigProviderProps) {
   const merged = createMemo<FloeConfig>(() => mergeDeep<FloeConfig>(DEFAULT_FLOE_CONFIG, props.config));
   const persist = createMemo(() => createPersist(merged().storage));
+
+  // Ensure pending debounced saves are not lost when the page is refreshed/closed.
+  // Also keep global listeners scoped to the provider lifecycle.
+  createEffect(() => {
+    const p = persist();
+    const enabled = merged().storage.enabled;
+    const uninstall = enabled ? installPersistFlushListeners(p) : () => {};
+    onCleanup(() => {
+      uninstall();
+      p.dispose?.();
+    });
+  });
+
   const value = createMemo<FloeConfigValue>(() => ({ config: merged(), persist: persist() }));
   // eslint-disable-next-line solid/reactivity -- context values are expected to be static for the app lifetime.
   return <FloeConfigContext.Provider value={value()}>{props.children}</FloeConfigContext.Provider>;
