@@ -1,7 +1,7 @@
 import { createMemo, untrack, type Accessor } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../context/LayoutContext';
-import { useComponentRegistry, type FloeComponent } from '../context/ComponentRegistry';
+import { useOptionalComponentRegistry, type FloeComponent } from '../context/ComponentRegistry';
 import { KeepAliveStack, type KeepAliveStackProps, type KeepAliveView } from '../components/layout/KeepAliveStack';
 
 export interface ActivityAppsMainProps<TProtocol = unknown> {
@@ -35,13 +35,7 @@ function defaultInclude<TProtocol>(component: FloeComponent<TProtocol>): boolean
 
 export function ActivityAppsMain<TProtocol = unknown>(props: ActivityAppsMainProps<TProtocol>) {
   const layout = useLayout();
-  const registry = (() => {
-    try {
-      return useComponentRegistry<TProtocol>();
-    } catch {
-      return null;
-    }
-  })();
+  const registry = useOptionalComponentRegistry<TProtocol>();
 
   const hasExplicitViews = untrack(() => Boolean(props.views));
   if (!hasExplicitViews && !registry) {

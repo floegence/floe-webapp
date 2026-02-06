@@ -160,6 +160,14 @@ export function useComponentRegistry<TProtocol = unknown>(): ComponentRegistryVa
   return ComponentRegistryContext.use() as ComponentRegistryValue<TProtocol>;
 }
 
+export function useOptionalComponentRegistry<TProtocol = unknown>(): ComponentRegistryValue<TProtocol> | undefined {
+  return ComponentRegistryContext.useOptional() as ComponentRegistryValue<TProtocol> | undefined;
+}
+
+export function hasComponentRegistryContext(): boolean {
+  return ComponentRegistryContext.has();
+}
+
 export function createComponentRegistry(): ComponentRegistryValue<unknown> {
   const [components, setComponents] = createSignal<Map<string, FloeComponent<unknown>>>(new Map());
   const [mountedComponents, setMountedComponents] = createSignal<Set<string>>(new Set());

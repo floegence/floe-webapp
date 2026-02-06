@@ -25,6 +25,8 @@ export {
 export {
   ComponentRegistryProvider,
   useComponentRegistry,
+  useOptionalComponentRegistry,
+  hasComponentRegistryContext,
   useComponentContextFactory,
   createComponentRegistry,
   type FloeComponent,
