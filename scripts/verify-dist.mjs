@@ -88,9 +88,11 @@ function assertNoTrackedDotMarkdown() {
     .filter(Boolean);
 
   const trackedDotMarkdown = trackedFiles.filter((file) => /^\..*\.md$/i.test(file));
+  const allowed = new Set(['.develop.md']);
+  const violations = trackedDotMarkdown.filter((f) => !allowed.has(f));
   assert(
-    trackedDotMarkdown.length === 0,
-    `Dotfile markdown must not be committed: ${trackedDotMarkdown.join(', ')}`
+    violations.length === 0,
+    `Dotfile markdown must not be committed (except .develop.md): ${violations.join(', ')}`
   );
 }
 

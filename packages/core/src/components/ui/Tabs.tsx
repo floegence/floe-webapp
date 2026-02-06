@@ -112,6 +112,62 @@ export function Tabs(props: TabsProps) {
   // block UI interactions (e.g. switching ActivityBar tabs).
   let scrollStateScheduled = false;
 
+  // Underline variant: shared moving indicator (smooth underline slide).
+  const [underlineX, setUnderlineX] = createSignal(0);
+  const [underlineW, setUnderlineW] = createSignal(0);
+  const [underlineVisible, setUnderlineVisible] = createSignal(false);
+
+  // Track tab elements by id for indicator measurements.
+  const tabEls = new Map<string, HTMLDivElement>();
+
+  let underlineScheduled = false;
+
+  const isUnderlineVariant = () => (local.variant ?? 'default') === 'underline';
+
+  const updateUnderlineIndicatorForId = (id: string): boolean => {
+    if (!scrollContainerRef) return false;
+    if (!isUnderlineVariant()) return false;
+
+    const el = tabEls.get(id);
+    if (!el) return false;
+
+    const containerRect = scrollContainerRef.getBoundingClientRect();
+    const tabRect = el.getBoundingClientRect();
+
+    // Translate into scroll-content coordinates so the indicator stays aligned
+    // even when the tab row is horizontally scrolled.
+    const x = tabRect.left - containerRect.left + scrollContainerRef.scrollLeft;
+    const w = tabRect.width;
+
+    setUnderlineX(x);
+    setUnderlineW(w);
+    setUnderlineVisible(w > 0);
+    return w > 0;
+  };
+
+  const updateUnderlineIndicator = () => {
+    if (!isUnderlineVariant()) {
+      setUnderlineVisible(false);
+      return;
+    }
+
+    const ok = updateUnderlineIndicatorForId(optimisticActiveId());
+    if (!ok) setUnderlineVisible(false);
+  };
+
+  const scheduleUpdateUnderlineIndicator = () => {
+    if (underlineScheduled) return;
+    underlineScheduled = true;
+    deferAfterPaint(() => {
+      underlineScheduled = false;
+      // Intentionally untracked: this is a one-shot post-paint measurement.
+      untrack(() => {
+        if (!isActive()) return;
+        updateUnderlineIndicator();
+      });
+    });
+  };
+
   // Determine if controlled or uncontrolled
   const isControlled = () => local.activeId !== undefined;
   const changeHandler = () => local.onChange ?? local.onActiveIdChange;
@@ -129,6 +185,14 @@ export function Tabs(props: TabsProps) {
 
   createEffect(() => {
     setOptimisticActiveId(currentActiveId());
+  });
+
+  // Keep underline indicator aligned with the optimistic active tab.
+  createEffect(() => {
+    if (!isActive()) return;
+    void local.variant;
+    void optimisticActiveId();
+    scheduleUpdateUnderlineIndicator();
   });
 
   // Scroll state
@@ -175,13 +239,17 @@ export function Tabs(props: TabsProps) {
 
     // Initial check: defer until after paint to avoid forced reflow during view switches.
     scheduleUpdateScrollState();
+    scheduleUpdateUnderlineIndicator();
 
     // Listen for scroll events
     const handleScroll = () => scheduleUpdateScrollState();
     scrollContainerRef.addEventListener('scroll', handleScroll);
 
     // Listen for resize events (ResizeObserver when available, otherwise fall back to window resize).
-    const handleResize = () => scheduleUpdateScrollState();
+    const handleResize = () => {
+      scheduleUpdateScrollState();
+      scheduleUpdateUnderlineIndicator();
+    };
     let resizeObserver: ResizeObserver | undefined;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(handleResize);
@@ -206,6 +274,7 @@ export function Tabs(props: TabsProps) {
     void local.items.length;
     // Defer to ensure DOM is updated
     scheduleUpdateScrollState();
+    scheduleUpdateUnderlineIndicator();
   });
 
   // Handle tab click with UI-first response
@@ -215,6 +284,11 @@ export function Tabs(props: TabsProps) {
 
     // UI first: highlight immediately.
     setOptimisticActiveId(id);
+    // Keep the underline indicator in sync with the optimistic highlight.
+    // Do it synchronously for snappy feedback.
+    if (isUnderlineVariant()) {
+      updateUnderlineIndicatorForId(id);
+    }
 
     // Update internal state for uncontrolled mode
     if (!isControlled()) {
@@ -275,7 +349,9 @@ export function Tabs(props: TabsProps) {
         sizeStyles[local.size ?? 'md'],
         'border-b-2 -mb-px',
         isActive
-          ? 'border-primary text-foreground'
+          ? underlineVisible()
+            ? 'border-transparent text-foreground'
+            : 'border-primary text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50',
         disabled && 'hover:border-transparent hover:text-muted-foreground'
       ),
@@ -324,12 +400,22 @@ export function Tabs(props: TabsProps) {
       <div
         ref={scrollContainerRef}
         class={cn(
-          'flex-1 flex items-end gap-0.5 overflow-x-auto',
+          'relative flex-1 flex items-end gap-0.5 overflow-x-auto',
           'scrollbar-none',
           // Hide scrollbar for all browsers
           '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
         )}
       >
+        {/* Shared moving underline indicator (underline variant only) */}
+        <Show when={isUnderlineVariant() && underlineVisible()}>
+          <div
+            class="pointer-events-none absolute bottom-0 left-0 z-10 h-0.5 bg-primary transition-[transform,width] duration-200 ease-out will-change-transform motion-reduce:transition-none"
+            style={{
+              transform: `translate3d(${underlineX()}px, 0, 0)`,
+              width: `${underlineW()}px`,
+            }}
+          />
+        </Show>
         <For each={local.items}>
           {(item) => {
             const isActive = () => item.id === optimisticActiveId();
@@ -337,6 +423,10 @@ export function Tabs(props: TabsProps) {
 
             return (
               <div
+                ref={(el) => {
+                  tabEls.set(item.id, el);
+                  onCleanup(() => tabEls.delete(item.id));
+                }}
                 class={getTabStyles(isActive(), item.disabled)}
                 onClick={() => handleTabClick(item.id, item.disabled)}
                 role="tab"
