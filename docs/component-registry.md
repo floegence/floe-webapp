@@ -145,6 +145,31 @@ Notes:
 - `execute(ctx)` receives a `ComponentContext` with `layout/theme/commands/notifications/storage/logger` and an optional `protocol`.
 - Command execution is intentionally non-blocking (palette UI closes first): `packages/core/src/context/CommandContext.tsx`.
 
+### Declarative command lifecycle (without registry)
+
+For app-level command groups that are not tied to a `FloeComponent`, use:
+
+```ts
+import { useCommandContributions, type Command } from '@floegence/floe-webapp-core';
+
+const commands: Command[] = [
+  {
+    id: 'portal.openPalette',
+    title: 'Open Command Palette',
+    keybind: 'mod+k',
+    execute: () => {
+      // ...
+    },
+  },
+];
+
+export function usePortalCommands() {
+  useCommandContributions(commands);
+}
+```
+
+`useCommandContributions()` registers commands on mount and automatically unregisters them on cleanup.
+
 ## Status Bar
 
 Status bar items are contributed through `FloeComponent.statusBar`.

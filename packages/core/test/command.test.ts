@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createCommandService } from '../src/context/CommandContext';
+import { registerCommandContributions } from '../src/hooks/useCommandContributions';
 import { withSolidRoot } from './withSolidRoot';
 
 describe('createCommandService', () => {
@@ -29,6 +30,24 @@ describe('createCommandService', () => {
       expect(service.commands().map((c) => c.id)).toEqual(['cmd.single']);
 
       disposeSingle();
+      expect(service.commands()).toEqual([]);
+    });
+  });
+
+  it('registerCommandContributions should dedupe duplicate command ids', async () => {
+    await withSolidRoot(() => {
+      const service = createCommandService();
+
+      const dispose = registerCommandContributions(service, [
+        { id: 'cmd.toggle', title: 'Toggle #1', execute: vi.fn() },
+        { id: 'cmd.toggle', title: 'Toggle #2', execute: vi.fn() },
+        { id: '   ', title: 'Invalid', execute: vi.fn() },
+      ]);
+
+      expect(service.commands().map((c) => c.id)).toEqual(['cmd.toggle']);
+      expect(service.commands()[0]?.title).toBe('Toggle #2');
+
+      dispose();
       expect(service.commands()).toEqual([]);
     });
   });
