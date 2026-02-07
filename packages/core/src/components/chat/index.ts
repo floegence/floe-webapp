@@ -4,6 +4,7 @@ export { ChatProvider, useChatContext, type ChatProviderProps, type ChatContextV
 
 // Types
 export * from './types';
+export { createStreamEventBuilder, buildAssistantNoticeEvents, isStreamEvent, type StreamEventBuilder } from './streamEvents';
 
 // Message list
 export { VirtualMessageList, type VirtualMessageListProps } from './message-list';
