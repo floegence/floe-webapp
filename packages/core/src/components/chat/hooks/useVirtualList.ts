@@ -111,22 +111,15 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     return Math.max(0, Math.min(n - 1, idx));
   };
 
-  // A version signal to trigger reactive recomputation when sizes change.
+  // 版本信号：尺寸变更时触发响应式重算（visibleRange、paddingTop 等）。
+  // 使用 rAF 合并同一帧内的多次 setItemHeight 调用，避免过多同步更新。
   const [measureVersion, setMeasureVersion] = createSignal(0);
   let pendingMeasureTick = false;
-  // 累计滚动补偿量：当视口上方的元素高度变化时需要调整 scrollTop
-  let pendingScrollCompensation = 0;
   const bumpMeasureVersion = () => {
     if (pendingMeasureTick) return;
     pendingMeasureTick = true;
     const commit = () => {
       pendingMeasureTick = false;
-      // 在 Solid 响应式更新 paddingTop 之前补偿 scrollTop，两个变化
-      // 会在同一帧布局中生效，从而保持可见内容位置不变。
-      if (scrollEl && pendingScrollCompensation !== 0) {
-        scrollEl.scrollTop += pendingScrollCompensation;
-        pendingScrollCompensation = 0;
-      }
       setMeasureVersion((v) => v + 1);
     };
     if (typeof requestAnimationFrame === 'undefined') {
@@ -301,17 +294,8 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     const prev = sizeByIndex[index] ?? config.defaultItemHeight;
     if (next === prev) return;
 
-    const delta = next - prev;
     sizeByIndex[index] = next;
-    bitAdd(index + 1, delta);
-
-    // 如果变化的元素在可见范围上方，paddingTop 会随之变化。
-    // 累计 delta 以便在下一帧统一补偿 scrollTop，防止视口跳动。
-    const range = untrack(visibleRange);
-    if (index < range.start) {
-      pendingScrollCompensation += delta;
-    }
-
+    bitAdd(index + 1, next - prev);
     bumpMeasureVersion();
   };
 

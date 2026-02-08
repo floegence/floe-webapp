@@ -64,11 +64,20 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  overflow-anchor: none;
+  /* 启用浏览器原生 scroll anchoring：当 spacer 高度变化时，
+     浏览器会自动补偿 scrollTop，保持可见消息位置不变。 */
+  overflow-anchor: auto;
 }
 
 .chat-message-list-inner {
   width: 100%;
+}
+
+/* 虚拟列表 spacer：用实际 DOM 元素代替 padding 来占位。
+   标记 overflow-anchor: none 使浏览器不会将其作为 scroll anchor，
+   而是锚定到真正的消息元素上。 */
+.chat-vlist-spacer {
+  overflow-anchor: none;
 }
 
 /* Simple (non-virtualized) message list */
