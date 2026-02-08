@@ -64,6 +64,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
+  overflow-anchor: none;
 }
 
 .chat-message-list-inner {
@@ -80,6 +81,10 @@
 .chat-message-list-item {
   width: 100%;
   padding: 0.75rem 1rem;
+}
+
+/* 入场动画仅用于非虚拟列表，避免虚拟列表滚动时元素反复进出 DOM 导致跳动 */
+.chat-message-list-simple > .chat-message-list-item {
   animation: chatMessageFadeIn 250ms ease-out both;
 }
 
