@@ -60,6 +60,8 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    // IME composition in progress (e.g. CJK input) — let the IME handle Enter
+    if (e.isComposing) return;
     // Enter to send (Shift+Enter for newline)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
