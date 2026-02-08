@@ -38,7 +38,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
     const el = textareaRef;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
   };
 
   const scheduleAdjustHeight = () => {
@@ -124,21 +124,8 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
         />
       </Show>
 
-      {/* Input row */}
-      <div class="chat-input-row">
-        {/* Attachment button */}
-        <Show when={ctx.config().allowAttachments}>
-          <button
-            type="button"
-            class="chat-input-attachment-btn"
-            onClick={attachments.openFilePicker}
-            title="Add attachments"
-          >
-            <PaperclipIcon />
-          </button>
-        </Show>
-
-        {/* Text input */}
+      {/* Body: textarea occupies full width */}
+      <div class="chat-input-body">
         <textarea
           ref={textareaRef}
           class="chat-input-textarea"
@@ -150,19 +137,43 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
           onBlur={() => setIsFocused(false)}
           placeholder={placeholder()}
           disabled={props.disabled}
-          rows={1}
+          rows={2}
         />
+      </div>
 
-        {/* Send button */}
-        <button
-          type="button"
-          class={cn('chat-input-send-btn', canSend() && 'chat-input-send-btn-active')}
-          onClick={handleSend}
-          disabled={!canSend()}
-          title="Send message"
-        >
-          <SendIcon />
-        </button>
+      {/* Toolbar */}
+      <div class="chat-input-toolbar">
+        <div class="chat-input-toolbar-left">
+          {/* Attachment button */}
+          <Show when={ctx.config().allowAttachments}>
+            <button
+              type="button"
+              class="chat-input-attachment-btn"
+              onClick={attachments.openFilePicker}
+              title="Add attachments"
+            >
+              <PaperclipIcon />
+            </button>
+          </Show>
+        </div>
+
+        <div class="chat-input-toolbar-right">
+          {/* Keyboard hints */}
+          <span class="chat-input-hint">
+            <kbd>Enter</kbd> send &nbsp; <kbd>Shift+Enter</kbd> newline
+          </span>
+
+          {/* Send button */}
+          <button
+            type="button"
+            class={cn('chat-input-send-btn', canSend() && 'chat-input-send-btn-active')}
+            onClick={handleSend}
+            disabled={!canSend()}
+            title="Send message"
+          >
+            <SendIcon />
+          </button>
+        </div>
       </div>
     </div>
   );
