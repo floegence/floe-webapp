@@ -80,6 +80,7 @@
 .chat-message-list-item {
   width: 100%;
   padding: 0.75rem 1rem;
+  animation: chatMessageFadeIn 250ms ease-out both;
 }
 
 .chat-loading-more {
@@ -95,19 +96,22 @@
 .chat-scroll-to-bottom-btn {
   position: absolute;
   bottom: 1rem;
-  right: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
   padding: 0.5rem;
   border-radius: 9999px;
-  background-color: var(--background);
+  background-color: color-mix(in srgb, var(--background) 80%, transparent);
   border: 1px solid var(--border);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
   cursor: pointer;
-  transition: all 150ms;
+  transition: all 200ms ease;
+  backdrop-filter: blur(8px);
 }
 
 .chat-scroll-to-bottom-btn:hover {
   background-color: var(--accent);
-  transform: translateY(-1px);
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
 }
 
 .chat-working-indicator-wrapper {
@@ -918,8 +922,10 @@ pre.chat-md-code-block code {
   margin: 0.5rem 0;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  background-color: color-mix(in srgb, var(--muted) 30%, transparent);
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--primary) 5%, transparent),
+    color-mix(in srgb, var(--muted) 30%, transparent));
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
   border-left: 3px solid var(--primary);
 }
 
@@ -932,7 +938,7 @@ pre.chat-md-code-block code {
 }
 
 .chat-thinking-icon {
-  animation: spin 1s linear infinite;
+  animation: thinkingPulse 2s ease-in-out infinite;
 }
 
 .chat-thinking-duration {
@@ -956,10 +962,15 @@ pre.chat-md-code-block code {
 
 .chat-tool-call-block {
   margin: 0.5rem 0;
-  border-radius: 0.5rem;
+  border-radius: 0.625rem;
   border: 1px solid var(--border);
   overflow: hidden;
   background-color: var(--card);
+  transition: border-color 200ms ease;
+}
+
+.chat-tool-call-block:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
 }
 
 .chat-tool-call-header {
@@ -1379,12 +1390,19 @@ pre.chat-md-code-block code {
 
 .chat-input-container {
   position: relative;
-  padding: 0.75rem 1rem;
-  background-color: var(--background);
+  margin: 0.75rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px rgb(0 0 0 / 0.04);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  overflow: hidden;
 }
 
 .chat-input-container-focused {
-  box-shadow: inset 0 1px 0 var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent),
+              0 1px 3px rgb(0 0 0 / 0.06);
 }
 
 .chat-input-container-dragging {
@@ -1429,17 +1447,18 @@ pre.chat-md-code-block code {
 }
 
 .chat-input-textarea {
-  flex: 1;
+  display: block;
+  width: 100%;
   resize: none;
   background: transparent;
-  font-size: 0.75rem;
-  color: var(--foreground);
   border: none;
   outline: none;
-  min-height: 36px;
-  max-height: 200px;
-  padding: 0.5rem 0;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  min-height: 56px;
+  max-height: 320px;
+  padding: 0.75rem 1rem;
+  line-height: 1.6;
 }
 
 .chat-input-textarea::placeholder {
@@ -1462,12 +1481,36 @@ pre.chat-md-code-block code {
 }
 
 .chat-input-send-btn-active:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .chat-input-send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.chat-input-body { display: flex; flex-direction: column; }
+
+.chat-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background-color: color-mix(in srgb, var(--muted) 20%, transparent);
+}
+.chat-input-toolbar-left,
+.chat-input-toolbar-right { display: flex; align-items: center; gap: 0.5rem; }
+
+.chat-input-hint { font-size: 0.625rem; color: var(--muted-foreground); opacity: 0.7; }
+.chat-input-hint kbd {
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.5625rem;
 }
 
 /* ============================================
@@ -1622,6 +1665,16 @@ pre.chat-md-code-block code {
   50% {
     opacity: 0.5;
   }
+}
+
+@keyframes chatMessageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thinkingPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* ============================================
