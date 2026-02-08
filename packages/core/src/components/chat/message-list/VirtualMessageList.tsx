@@ -173,13 +173,11 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
         class="chat-message-list-scroll"
         onScroll={handleScroll}
       >
-        <div
-          class="chat-message-list-inner"
-          style={{
-            'padding-top': `${virtualList.paddingTop()}px`,
-            'padding-bottom': `${virtualList.paddingBottom()}px`,
-          }}
-        >
+        <div class="chat-message-list-inner">
+          {/* 上方 spacer：用实际 DOM 元素代替 padding-top，配合 overflow-anchor: none
+              让浏览器原生 scroll anchoring 锚定到真实的消息元素而非 spacer，
+              从而在高度变化时自动补偿 scrollTop，彻底消除滚动跳动。 */}
+          <div class="chat-vlist-spacer" style={{ height: `${virtualList.paddingTop()}px` }} />
           <For each={visibleIndices()}>
             {(index) => {
               const message = () => messages()[index];
@@ -195,6 +193,8 @@ export const VirtualMessageList: Component<VirtualMessageListProps> = (props) =>
               );
             }}
           </For>
+          {/* 下方 spacer */}
+          <div class="chat-vlist-spacer" style={{ height: `${virtualList.paddingBottom()}px` }} />
         </div>
 
         {/* Working state */}
