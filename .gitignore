@@ -35,4 +35,3 @@ venv/
 
 # Local/private markdown docs (dotfiles)
 .*.md
-!/.develop.md
