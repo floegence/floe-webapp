@@ -307,6 +307,14 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
       }));
     });
 
+    // Synchronous hook: let the host react immediately (e.g. show a working
+    // indicator) before the async callback is deferred to the next macrotask.
+    try {
+      props.callbacks?.onWillSend?.(content, attachments);
+    } catch (error) {
+      console.error('onWillSend error:', error);
+    }
+
     const onSendMessage = props.callbacks?.onSendMessage;
     if (!onSendMessage) return;
 
