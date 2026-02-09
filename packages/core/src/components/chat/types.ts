@@ -215,8 +215,9 @@ export interface ChatConfig {
 
 export interface ChatCallbacks {
   // Synchronous hook fired right after the optimistic user message is rendered,
-  // before the async onSendMessage callback is deferred. Use this to update UI
-  // state (e.g. show a working indicator) without the setTimeout(0) delay.
+  // before the async onSendMessage callback is deferred. Use this for immediate
+  // UI side effects (e.g. scroll/telemetry). Working state should rely on
+  // ChatContext.isWorking / isPreparing instead of this callback.
   onWillSend?: (content: string, attachments: Attachment[]) => void;
   // Send message - addMessage allows the host to append assistant messages.
   onSendMessage?: (content: string, attachments: Attachment[], addMessage: (msg: Message) => void) => Promise<void>;

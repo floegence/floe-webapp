@@ -36,6 +36,7 @@ export interface ChatContextValue {
 
   // Streaming state
   streamingMessageId: Accessor<string | null>;
+  isPreparing: Accessor<boolean>;
   isWorking: Accessor<boolean>;
 
   // Configuration
@@ -135,13 +136,48 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
 
   // Streaming state
   const [streamingMessageId, setStreamingMessageId] = createSignal<string | null>(null);
+  const [pendingSendCount, setPendingSendCount] = createSignal(0);
+
+  let nextPendingSendToken = 0;
+  const pendingSendTokens = new Set<number>();
+  const pendingSendQueue: number[] = [];
 
   // Height cache
   const heightCache = new Map<string, number>();
 
-  // Compute whether we're working (streaming)
+  const clearPendingSendToken = (token: number): void => {
+    if (!pendingSendTokens.delete(token)) return;
+    const idx = pendingSendQueue.indexOf(token);
+    if (idx >= 0) pendingSendQueue.splice(idx, 1);
+    setPendingSendCount(pendingSendTokens.size);
+  };
+
+  const markPendingSend = (): number => {
+    const token = ++nextPendingSendToken;
+    pendingSendTokens.add(token);
+    pendingSendQueue.push(token);
+    setPendingSendCount(pendingSendTokens.size);
+    return token;
+  };
+
+  const clearOldestPendingSend = (): void => {
+    while (pendingSendQueue.length > 0) {
+      const token = pendingSendQueue.shift();
+      if (token === undefined) return;
+      if (!pendingSendTokens.has(token)) continue;
+      pendingSendTokens.delete(token);
+      setPendingSendCount(pendingSendTokens.size);
+      return;
+    }
+  };
+
+  const isPreparing = createMemo(() => {
+    return pendingSendCount() > 0;
+  });
+
+  // Compute whether we're working (preparing or streaming)
   const isWorking = createMemo(() => {
-    return streamingMessageId() !== null;
+    return isPreparing() || streamingMessageId() !== null;
   });
 
   // ============ Message Operations ============
@@ -199,6 +235,7 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   const processStreamEvent = (event: StreamEvent) => {
     switch (event.type) {
       case 'message-start': {
+        clearOldestPendingSend();
         const newMessage: Message = {
           id: event.messageId,
           role: 'assistant',
@@ -318,13 +355,20 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     const onSendMessage = props.callbacks?.onSendMessage;
     if (!onSendMessage) return;
 
+    const pendingToken = markPendingSend();
+
     // UI-first: enqueue + render first, then invoke the external callback in the next macrotask.
     const contentSnapshot = content;
     const attachmentsSnapshot = [...attachments];
     deferNonBlocking(() => {
-      void Promise.resolve(onSendMessage(contentSnapshot, attachmentsSnapshot, addMessage)).catch((error) => {
-        console.error('Failed to send message:', error);
-      });
+      void Promise.resolve()
+        .then(() => onSendMessage(contentSnapshot, attachmentsSnapshot, addMessage))
+        .catch((error) => {
+          console.error('Failed to send message:', error);
+        })
+        .finally(() => {
+          clearPendingSendToken(pendingToken);
+        });
     });
   };
 
@@ -465,6 +509,7 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
     isLoadingHistory,
     hasMoreHistory,
     streamingMessageId,
+    isPreparing,
     isWorking,
     config,
     virtualListConfig,
