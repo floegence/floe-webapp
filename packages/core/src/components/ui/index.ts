@@ -39,7 +39,17 @@ export {
   type NeonCardProps,
   type MorphCardProps,
 } from './Card';
-export { Tabs, TabPanel, type TabsProps, type TabPanelProps, type TabItem } from './Tabs';
+export {
+  Tabs,
+  TabPanel,
+  type TabsProps,
+  type TabPanelProps,
+  type TabItem,
+  type TabsFeatures,
+  type TabsSlotClassNames,
+  type TabsIndicatorMode,
+  type TabsIndicatorColorToken,
+} from './Tabs';
 export { DirectoryPicker, type DirectoryPickerProps } from './DirectoryPicker';
 export { DirectoryInput, type DirectoryInputProps, type DirectoryInputSize } from './DirectoryInput';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';

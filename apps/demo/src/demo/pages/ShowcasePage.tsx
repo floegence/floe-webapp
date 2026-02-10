@@ -883,7 +883,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-tabs"
           title="Tabs"
-          description="Scrollable tabs with add/close functionality, multiple variants, mobile-friendly."
+          description="Composable tabs with configurable indicator/add/close/overflow behaviors."
           actions={
             <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.tabs')}>
               View Source
@@ -916,11 +916,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </TabPanel>
             </div>
 
-            {/* Card Variant */}
+            {/* Card-like Composition */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Card Variant</p>
+              <p class="text-[11px] text-muted-foreground font-medium">Card-style Composition</p>
               <Tabs
-                variant="card"
                 items={[
                   { id: 'home', label: 'Home', icon: <Files class="w-3 h-3" /> },
                   { id: 'settings', label: 'Settings', icon: <Settings class="w-3 h-3" /> },
@@ -928,17 +927,22 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 ]}
                 activeId={cardTabsActive()}
                 onChange={setCardTabsActive}
+                features={{ indicator: { mode: 'none' } }}
+                slotClassNames={{
+                  tab: 'rounded-t border border-b-0',
+                  tabActive: 'border-border -mb-px z-10',
+                  tabInactive: 'border-transparent',
+                }}
               />
               <div class="p-3 text-xs text-muted-foreground border border-border border-t-0 rounded-b bg-background">
                 Active: {cardTabsActive()}
               </div>
             </div>
 
-            {/* Underline Variant */}
+            {/* Slider Indicator */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Underline Variant (Small Size)</p>
+              <p class="text-[11px] text-muted-foreground font-medium">Slider Indicator (Small Size)</p>
               <Tabs
-                variant="underline"
                 size="sm"
                 items={[
                   { id: 'all', label: 'All' },
@@ -947,6 +951,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 ]}
                 activeId="all"
                 onChange={(id) => notifications.info('Tab Changed', `Selected: ${id}`)}
+                features={{ indicator: { mode: 'slider' } }}
+                slotClassNames={{
+                  tab: 'rounded-none',
+                  tabActive: 'bg-transparent',
+                  tabInactive: 'hover:bg-transparent',
+                }}
               />
             </div>
 

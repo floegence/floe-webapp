@@ -378,7 +378,7 @@ function Example() {
 // ===========================
 export const tabsDoc: ComponentDoc = {
   name: 'Tabs',
-  description: 'Tabbed navigation with scrollable overflow, add/close functionality, and multiple style variants.',
+  description: 'Tabbed navigation with composable features for indicator, add/close actions, and overflow controls.',
   props: [
     {
       name: 'items',
@@ -410,13 +410,13 @@ export const tabsDoc: ComponentDoc = {
       name: 'showAdd',
       type: 'boolean',
       default: 'false',
-      description: 'Whether to show the add tab button.',
+      description: 'Legacy alias for enabling the add button by default.',
     },
     {
       name: 'closable',
       type: 'boolean',
       default: 'false',
-      description: 'Whether tabs are closable by default.',
+      description: 'Legacy alias for enabling tab close buttons by default.',
     },
     {
       name: 'size',
@@ -425,10 +425,14 @@ export const tabsDoc: ComponentDoc = {
       description: 'Size variant of the tabs.',
     },
     {
-      name: 'variant',
-      type: "'default' | 'card' | 'underline'",
-      default: "'default'",
-      description: 'Visual style variant.',
+      name: 'features',
+      type: 'TabsFeatures',
+      description: 'Composable behavior config for indicator/container border/overflow/add/close.',
+    },
+    {
+      name: 'slotClassNames',
+      type: 'TabsSlotClassNames',
+      description: 'Class overrides for root/tab/indicator/buttons without adding new variants.',
     },
   ],
   usage: {
@@ -439,7 +443,7 @@ export const tabsDoc: ComponentDoc = {
     ],
     bestPractices: [
       'Keep tab labels concise (1-2 words)',
-      'Use icons to enhance recognition',
+      'Use features + slotClassNames to compose visuals instead of forking components',
       'Limit visible tabs to avoid overwhelming users',
     ],
     avoid: [
@@ -450,7 +454,7 @@ export const tabsDoc: ComponentDoc = {
   },
   examples: [
     {
-      title: 'Basic Tabs with Variants',
+      title: 'Composable Tabs with Slider Indicator',
       code: `import { Tabs, TabPanel } from '@floegence/floe-webapp-core/full';
 
 function Example() {
@@ -466,7 +470,13 @@ function Example() {
         ]}
         activeId={active()}
         onChange={setActive}
-        variant="underline"
+        onClose={(id) => console.log('close', id)}
+        onAdd={() => console.log('add')}
+        features={{
+          indicator: { mode: 'slider', thicknessPx: 2 },
+          closeButton: { enabledByDefault: true, dangerHover: true },
+          addButton: { enabled: true },
+        }}
       />
       <TabPanel active={active() === 'tab1'}>
         Overview content
@@ -477,6 +487,7 @@ function Example() {
     },
   ],
 };
+
 
 // ===========================
 // Card Component
