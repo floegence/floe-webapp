@@ -80,11 +80,11 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   let lastConfig: ConnectConfig | null = null;
   let connectInFlight: Promise<void> | null = null;
 
-  const connectWithConfig = async (config: ConnectConfig) => {
-    await mgr.connect({
+  const connectWithConfig = async (config: ConnectConfig, mode: 'hard' | 'if_needed') => {
+    const connectArgs = {
       autoReconnect: config.autoReconnect,
       observer: config.observer,
-      connectOnce: async ({ signal, observer }) => {
+      connectOnce: async ({ signal, observer }: Readonly<{ signal: AbortSignal; observer: ClientObserverLike }>) => {
         // Dynamic import to avoid bundling issues
         const { connectTunnelBrowser, connectDirectBrowser } = await import('@floegence/flowersec-core/browser');
 
@@ -115,7 +115,13 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
         return connectDirectBrowser(config.directInfo, connectOptions);
       },
-    });
+    } satisfies Parameters<typeof mgr.connect>[0];
+
+    if (mode === 'hard') {
+      await mgr.connect(connectArgs);
+      return;
+    }
+    await mgr.connectIfNeeded(connectArgs);
   };
 
   const reconnect = async (config?: ConnectConfig) => {
@@ -128,7 +134,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     if (connectInFlight) return connectInFlight;
 
     lastConfig = effective;
-    connectInFlight = connectWithConfig(effective).finally(() => {
+    connectInFlight = connectWithConfig(effective, 'hard').finally(() => {
       connectInFlight = null;
     });
     return connectInFlight;
@@ -146,7 +152,15 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     // avoid interfering with a hard reconnect when we don't have an in-flight handle.
     if (st.status === 'connecting' && !connectInFlight) return;
 
-    await reconnect(config);
+    if (connectInFlight) {
+      await connectInFlight;
+      return;
+    }
+
+    connectInFlight = connectWithConfig(config, 'if_needed').finally(() => {
+      connectInFlight = null;
+    });
+    await connectInFlight;
   };
 
   const disconnect = () => {
