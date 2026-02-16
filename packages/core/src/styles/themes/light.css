@@ -3,8 +3,8 @@
 .light {
   color-scheme: light;
 
-  /* Base - Warm creamy paper */
-  --background: hsl(38 20% 98%);
+  /* Base - Warm beige paper (aligned with Console light theme) */
+  --background: hsl(36 15% 93%);
   --foreground: hsl(215 40% 13%);
 
   /* Primary - Deep blue-black ink */
@@ -12,28 +12,28 @@
   --primary-foreground: hsl(0 0% 98%);
 
   /* Secondary - Warm muted */
-  --secondary: hsl(38 10% 94%);
+  --secondary: hsl(36 10% 88%);
   --secondary-foreground: hsl(215 30% 26%);
 
   /* Muted - Warm gray */
-  --muted: hsl(38 10% 94%);
+  --muted: hsl(36 10% 88%);
   --muted-foreground: hsl(215 20% 46%);
 
   /* Accent - Subtle warm highlight */
-  --accent: hsl(38 15% 94%);
+  --accent: hsl(36 10% 88%);
   --accent-foreground: hsl(215 40% 13%);
 
   /* Border - Warm gray */
-  --border: hsl(38 8% 88%);
-  --input: hsl(38 8% 88%);
+  --border: hsl(36 10% 82%);
+  --input: hsl(36 10% 82%);
   --ring: hsl(215 40% 13%);
 
   /* Card */
-  --card: hsl(38 15% 99%);
+  --card: hsl(36 12% 96%);
   --card-foreground: hsl(215 40% 13%);
 
   /* Popover */
-  --popover: hsl(38 15% 99%);
+  --popover: hsl(36 12% 96%);
   --popover-foreground: hsl(215 40% 13%);
 
   /* Status colors - Using OKLCH for perceptual consistency */
@@ -47,17 +47,17 @@
   --info-foreground: hsl(0 0% 100%);
 
   /* Sidebar - Slightly warmer */
-  --sidebar: hsl(38 15% 97.5%);
+  --sidebar: hsl(36 12% 91%);
   --sidebar-foreground: hsl(215 40% 13%);
   --sidebar-primary: hsl(215 40% 13%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(38 15% 94%);
+  --sidebar-accent: hsl(36 12% 86%);
   --sidebar-accent-foreground: hsl(215 40% 13%);
-  --sidebar-border: hsl(38 8% 90%);
+  --sidebar-border: hsl(36 8% 84%);
   --sidebar-ring: hsl(215 40% 13%);
 
   /* Activity bar */
-  --activity-bar: hsl(38 10% 96%);
+  --activity-bar: hsl(36 10% 90%);
   --activity-bar-foreground: hsl(215 20% 46%);
   --activity-bar-foreground-active: hsl(215 40% 13%);
   --activity-bar-badge: hsl(215 40% 13%);
@@ -69,7 +69,7 @@
 
   /* Chart colors */
   --chart-1: hsl(215 40% 13%);
-  --chart-2: hsl(38 15% 60%);
+  --chart-2: hsl(36 15% 60%);
   --chart-3: oklch(0.65 0.13 250);
   --chart-4: oklch(0.68 0.16 150);
   --chart-5: oklch(0.78 0.14 80);
