@@ -11,7 +11,7 @@ export interface LoadingOverlayProps {
 }
 
 /**
- * Full screen or container loading overlay
+ * Full screen or container loading overlay with ambient glow
  */
 export function LoadingOverlay(props: LoadingOverlayProps) {
   const content = (
@@ -24,9 +24,18 @@ export function LoadingOverlay(props: LoadingOverlayProps) {
         props.class
       )}
     >
-      <SnakeLoader size="lg" />
+      <div class="relative">
+        {/* Ambient radial glow behind the loader */}
+        <div
+          class="absolute -inset-8 rounded-full floe-loader-ambient"
+          style={{
+            background: 'radial-gradient(circle, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 70%)',
+          }}
+        />
+        <SnakeLoader size="lg" />
+      </div>
       <Show when={props.message}>
-        <p class="text-sm text-muted-foreground">{props.message}</p>
+        <p class="text-sm text-muted-foreground processing-text-glow">{props.message}</p>
       </Show>
     </div>
   );
