@@ -16,6 +16,11 @@ import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem, FileLis
 export interface FileBrowserProps {
   /** File tree data */
   files: FileItem[];
+  /**
+   * Controlled current path.
+   * When provided, the browser path follows this value and user navigation is emitted via onPathChange.
+   */
+  path?: string;
   /** Initial path to display */
   initialPath?: string;
   /** Initial view mode */
@@ -24,6 +29,11 @@ export interface FileBrowserProps {
   initialListColumnRatios?: FileListColumnRatios;
   /** Callback when navigation occurs */
   onNavigate?: (path: string) => void;
+  /**
+   * Callback when the user changes path from inside FileBrowser.
+   * Use with `path` for controlled mode.
+   */
+  onPathChange?: (path: string, source: 'user' | 'programmatic') => void;
   /** Callback when selection changes */
   onSelect?: (items: FileItem[]) => void;
   /** Callback when a file is opened */
@@ -71,6 +81,7 @@ export function FileBrowser(props: FileBrowserProps) {
   return (
     <FileBrowserProvider
       files={props.files}
+      path={props.path}
       initialPath={props.initialPath}
       initialViewMode={props.initialViewMode}
       initialListColumnRatios={props.initialListColumnRatios}
@@ -79,6 +90,7 @@ export function FileBrowser(props: FileBrowserProps) {
       persistenceKey={props.persistenceKey}
       homeLabel={props.homeLabel}
       onNavigate={props.onNavigate}
+      onPathChange={props.onPathChange}
       onSelect={props.onSelect}
       onOpen={props.onOpen}
     >
