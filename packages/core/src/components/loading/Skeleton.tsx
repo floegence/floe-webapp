@@ -6,13 +6,13 @@ export interface SkeletonProps {
 }
 
 /**
- * Skeleton placeholder for loading content
+ * Skeleton placeholder with shimmer sweep effect
  */
 export function Skeleton(props: SkeletonProps) {
   return (
     <div
       class={cn(
-        'animate-pulse rounded-md bg-muted',
+        'rounded-md floe-skeleton',
         props.class
       )}
     />

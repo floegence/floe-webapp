@@ -342,6 +342,63 @@
   }
 
   /* =============================================================================
+     Floe Grid Loader - Diagonal Light Wave
+     ============================================================================= */
+
+  @keyframes floe-grid-pulse {
+    0%, 100% {
+      opacity: 0.08;
+      transform: scale(0.78);
+    }
+    40%, 50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .floe-grid-cell {
+    border-radius: 25%;
+    animation: floe-grid-pulse var(--floe-grid-dur, 1.8s) ease-in-out infinite;
+    animation-delay: var(--floe-grid-delay, 0s);
+    will-change: transform, opacity;
+  }
+
+  @keyframes floe-loader-ambient-pulse {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(0.95);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+
+  .floe-loader-ambient {
+    animation: floe-loader-ambient-pulse 3s ease-in-out infinite;
+  }
+
+  /* =============================================================================
+     Skeleton Shimmer
+     ============================================================================= */
+
+  @keyframes floe-skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .floe-skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      color-mix(in srgb, var(--muted-foreground) 8%, var(--muted)) 50%,
+      var(--muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: floe-skeleton-shimmer 2s ease-in-out infinite;
+  }
+
+  /* =============================================================================
      Text Animation Effects - Minimal and Professional
      ============================================================================= */
 
