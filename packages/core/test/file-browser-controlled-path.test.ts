@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+function read(relPath: string): string {
+  const here = fileURLToPath(import.meta.url);
+  const dir = path.dirname(here);
+  const target = path.resolve(dir, relPath);
+  return fs.readFileSync(target, 'utf8');
+}
+
+describe('FileBrowser controlled path wiring', () => {
+  it('should expose controlled path props on FileBrowser and forward them to provider', () => {
+    const src = read('../src/components/file-browser/FileBrowser.tsx');
+
+    expect(src).toContain('path?: string;');
+    expect(src).toContain("onPathChange?: (path: string, source: 'user' | 'programmatic') => void;");
+    expect(src).toContain('path={props.path}');
+    expect(src).toContain('onPathChange={props.onPathChange}');
+  });
+
+  it('should sync controlled path and keep user callbacks explicit', () => {
+    const src = read('../src/components/file-browser/FileBrowserContext.tsx');
+
+    expect(src).toContain("if (typeof props.path !== 'string') return;");
+    expect(src).toContain('const nextPath = normalizePath(props.path);');
+    expect(src).toContain("deferNonBlocking(() => onPathChange?.(nextPath, 'user'));");
+    expect(src).toContain('deferNonBlocking(() => onNavigate?.(nextPath));');
+  });
+});

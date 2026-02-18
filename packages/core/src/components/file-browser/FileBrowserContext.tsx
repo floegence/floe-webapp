@@ -114,6 +114,10 @@ function fuzzyMatchLower(textLower: string, patternLower: string): number[] | nu
 export interface FileBrowserProviderProps {
   children: JSX.Element;
   files: FileItem[];
+  /**
+   * Controlled current path. When provided, FileBrowser follows this value.
+   */
+  path?: string;
   initialPath?: string;
   initialViewMode?: ViewMode;
   /** Initial list view column ratios (for resizable columns) */
@@ -134,6 +138,7 @@ export interface FileBrowserProviderProps {
   /** Label for the root/home directory in breadcrumb (default: 'Root') */
   homeLabel?: string;
   onNavigate?: (path: string) => void;
+  onPathChange?: (path: string, source: 'user' | 'programmatic') => void;
   onSelect?: (items: FileItem[]) => void;
   onOpen?: (item: FileItem) => void;
 }
@@ -185,7 +190,12 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     ? floe.persist.load<boolean>(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), false) === true
     : false;
 
-  const [currentPath, setCurrentPathInternal] = createSignal(normalizePath(props.initialPath ?? '/'));
+  const resolveInitialPath = () => {
+    if (typeof props.path === 'string') return normalizePath(props.path);
+    return normalizePath(props.initialPath ?? '/');
+  };
+
+  const [currentPath, setCurrentPathInternal] = createSignal(resolveInitialPath());
   const [selectedIds, setSelectedIds] = createSignal<Set<string>>(new Set());
   const [viewMode, setViewModeInternal] = createSignal<ViewMode>(initialViewMode);
   const [sortConfig, setSortConfigInternal] = createSignal<SortConfig>(initialSortConfig);
@@ -463,20 +473,38 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return out.map((e) => e.item);
   };
 
+  const clearPathScopedUiState = () => {
+    // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
+    setSelectedIds(new Set<string>());
+    // Clear filter when navigating to a different directory.
+    setFilterQueryInternal('');
+    setFilterQueryApplied('');
+    setFilterActive(false);
+
+    const onSelect = props.onSelect;
+    deferNonBlocking(() => onSelect?.([]));
+  };
+
+  // Controlled-path sync: external path changes should update view state without
+  // triggering navigation callbacks (to avoid controlled loops).
+  createEffect(() => {
+    if (typeof props.path !== 'string') return;
+    const nextPath = normalizePath(props.path);
+    if (nextPath === currentPath()) return;
+
+    setCurrentPathInternal(nextPath);
+    clearPathScopedUiState();
+  });
+
   const setCurrentPath = (path: string) => {
     const nextPath = normalizePath(path);
     if (nextPath === currentPath()) return;
     setCurrentPathInternal(nextPath);
-    // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
-    setSelectedIds(new Set<string>());
-    // Clear filter when navigating to a different directory
-    setFilterQueryInternal('');
-    setFilterQueryApplied('');
-    setFilterActive(false);
-    const onSelect = props.onSelect;
-    deferNonBlocking(() => onSelect?.([]));
+    clearPathScopedUiState();
     const onNavigate = props.onNavigate;
     deferNonBlocking(() => onNavigate?.(nextPath));
+    const onPathChange = props.onPathChange;
+    deferNonBlocking(() => onPathChange?.(nextPath, 'user'));
   };
 
   const setListColumnRatios = (ratios: FileListColumnRatios) => {

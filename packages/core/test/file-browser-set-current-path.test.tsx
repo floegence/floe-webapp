@@ -10,6 +10,7 @@ describe('FileBrowserContext.setCurrentPath', () => {
     ];
 
     const onNavigate = vi.fn();
+    const onPathChange = vi.fn();
 
     function Harness() {
       const ctx = useFileBrowser();
@@ -27,15 +28,15 @@ describe('FileBrowserContext.setCurrentPath', () => {
       expect(ctx.filterQuery()).toBe('abc');
       expect(ctx.selectedItems().has('f1')).toBe(true);
       expect(onNavigate).not.toHaveBeenCalled();
+      expect(onPathChange).not.toHaveBeenCalled();
 
       return null;
     }
 
     renderToString(() => (
-      <FileBrowserProvider files={files} initialPath="/" onNavigate={onNavigate}>
+      <FileBrowserProvider files={files} initialPath="/" onNavigate={onNavigate} onPathChange={onPathChange}>
         <Harness />
       </FileBrowserProvider>
     ));
   });
 });
-
