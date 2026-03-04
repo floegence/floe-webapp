@@ -42,6 +42,30 @@ pnpm build
 - Prefer Solid control flow in JSX (`<For>`, `<Show>`, `<Switch>/<Match>`).
 - If API behavior is unclear, inspect installed type declarations before guessing.
 
+## Mobile Compatibility
+
+- Treat mobile as first-class behavior, not a fallback.
+- For sidebar components that should not appear on small screens, set `sidebar.hiddenOnMobile: true`.
+- Ensure primary navigation actions remain reachable on small screens (top bar or mobile tab bar paths).
+- Avoid hover-only interactions; provide click/tap equivalent behavior.
+- Avoid fixed-width layouts that can overflow narrow viewports.
+- Keep interactive targets comfortably tappable (buttons, menu items, toggles).
+- Validate behavior at common widths before finishing:
+  - Small phone: `390x844`
+  - Large phone: `430x932`
+  - Tablet: `768x1024`
+  - Desktop: `>=1280px`
+
+## Styling Guidelines
+
+- Use design tokens for color, border, and background (`text-*`, `bg-*`, `border-*` token classes).
+- Avoid raw hex colors and ad-hoc opacity values unless product requirements explicitly demand them.
+- Keep spacing and sizing on a consistent scale (`gap-*`, `p-*`, `m-*`, `rounded-*`).
+- Ensure readable contrast in both light and dark themes.
+- Define clear interactive states for controls (default, hover, active, focus, disabled).
+- Keep motion subtle and optional; avoid animations that block core interaction.
+- When introducing new visual patterns, keep them consistent across pages and components.
+
 ## Failure Handling
 
 - If checks fail, report the exact failing command and first actionable error.
