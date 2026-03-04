@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-init",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "type": "module",
   "description": "Scaffolding tool for Floe Webapp applications",
   "repository": {
@@ -14,7 +14,8 @@
   "main": "./dist/index.mjs",
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "skills"
   ],
   "scripts": {
     "build": "unbuild",

@@ -5,6 +5,16 @@
 - Node.js `>= 20`
 - pnpm `>= 9`
 
+## Skill First (required)
+
+Load the Floe skill before coding:
+
+- `skills/floe-webapp/SKILL.md`
+- `skills/floe-webapp/references/playbooks.md`
+
+If your agent runtime supports repo-local skills, point it to `./skills/floe-webapp`.
+If your runtime uses a global skills directory, copy `skills/floe-webapp` there first.
+
 ## Create a new project (recommended)
 
 The fastest way to get started is using the CLI scaffolding tool:
@@ -32,6 +42,8 @@ cd my-app
 pnpm install
 pnpm dev
 ```
+
+Each scaffolded project includes `./skills/floe-webapp` at project root.
 
 ## Development (this repo)
 
@@ -82,6 +94,11 @@ Tips:
 - Use “View Source” buttons in Showcase to open the source file in the Monaco viewer.
 
 ## Use Floe in your own app
+
+Before implementation, import this repo skill package first:
+
+- `skills/floe-webapp/SKILL.md`
+- `skills/floe-webapp/references/playbooks.md`
 
 Install the packages:
 

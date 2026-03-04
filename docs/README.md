@@ -2,6 +2,7 @@
 
 This folder contains **public, version-controlled** documentation for downstream users.
 
+- Skill Package (import first): `skills/floe-webapp/SKILL.md`
 - Getting Started: `docs/getting-started.md`
 - Configuration (FloeConfig): `docs/configuration.md`
 - Component Registry & Contributions: `docs/component-registry.md`
