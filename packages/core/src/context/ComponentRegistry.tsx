@@ -57,6 +57,8 @@ export interface StatusBarContribution {
   component: Component;
 }
 
+export type SidebarCollapseBehavior = 'toggle' | 'preserve';
+
 export interface FloeComponent<TProtocol = unknown> {
   id: string;
   name: string;
@@ -81,6 +83,17 @@ export interface FloeComponent<TProtocol = unknown> {
     fullScreen?: boolean;
     /** When true, this component is hidden in the activity bar on mobile */
     hiddenOnMobile?: boolean;
+    /**
+     * Optional activity-bar collapse behavior override.
+     *
+     * - `toggle`: click active tab to collapse, click again to reopen (VSCode-like).
+     * - `preserve`: tab switching does not mutate collapsed state.
+     *
+     * Default:
+     * - `fullScreen: true` -> `preserve`
+     * - otherwise -> `toggle`
+     */
+    collapseBehavior?: SidebarCollapseBehavior;
   };
 
   commands?: CommandContribution<TProtocol>[];

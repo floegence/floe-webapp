@@ -79,9 +79,17 @@ export function createLayoutService(): LayoutContextValue {
 
   // Persist layout changes
   createEffect(() => {
-    const state = {
-      sidebar: store.sidebar,
-      terminal: store.terminal,
+    // Persist a plain snapshot to avoid proxy references leaking into storage.
+    const state: PersistedLayoutStore = {
+      sidebar: {
+        width: store.sidebar.width,
+        activeTab: store.sidebar.activeTab,
+        collapsed: store.sidebar.collapsed,
+      },
+      terminal: {
+        opened: store.terminal.opened,
+        height: store.terminal.height,
+      },
     };
     floe.persist.debouncedSave(cfg().storageKey, state);
   });
