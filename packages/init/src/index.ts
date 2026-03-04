@@ -20,6 +20,7 @@ const RENAME_MAP: Record<string, string> = {
   '_package.json': 'package.json',
   '_gitignore': '.gitignore',
   '_env.example': '.env.example',
+  '_claude': '.claude',
 };
 
 async function main() {
