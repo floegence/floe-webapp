@@ -17,9 +17,19 @@ A professional VSCode-style web application framework built with Solid.js.
 
 https://webapp-demo.floegence.io
 
-## Quick Start
+## Quick Start (Skill First)
 
-### Create a new project
+### 0. Import the Floe skill first
+
+Always load the Floe skill before coding:
+
+- Main skill entry: `skills/floe-webapp/SKILL.md`
+- Workflow references: `skills/floe-webapp/references/playbooks.md`
+
+If your agent runtime supports repo-local skills, point it to this folder directly.
+If your runtime uses a global skills directory, copy `skills/floe-webapp/` into that directory first.
+
+### 1. Create a new project
 
 ```bash
 # Interactive mode
@@ -32,7 +42,9 @@ npx @floegence/floe-webapp-init my-app
 npx @floegence/floe-webapp-init my-app --template full
 ```
 
-### Development (this repo)
+The generated project includes the same `./skills/floe-webapp/` package at project root.
+
+### 2. Development (this repo)
 
 ```bash
 # Install dependencies
@@ -87,6 +99,12 @@ VITE_FLOE_ENDPOINT_ID=...
 
 ```
 floe-webapp/
+├── skills/                # Root-level agent skill package (import this first)
+│   └── floe-webapp/
+│       ├── SKILL.md
+│       └── references/
+│           └── playbooks.md
+│
 ├── packages/
 │   ├── core/              # Core UI components and utilities
 │   │   ├── components/    # Layout, UI, and loading components
@@ -102,7 +120,8 @@ floe-webapp/
 │   │
 │   └── init/              # CLI scaffolding tool
 │       ├── src/           # CLI entry point
-│       └── templates/     # Project templates (minimal, full)
+│       ├── templates/     # Project templates (minimal, full)
+│       └── skills/        # Skill package copied into new projects as ./skills
 │
 └── apps/
     └── demo/              # Demo application
@@ -159,6 +178,11 @@ npx @floegence/floe-webapp-init [project-name] [options]
 
 - `minimal` (default) - Basic setup with FloeApp and a single page
 - `full` - Full setup with multiple pages, settings, and theme toggle
+
+Skill package behavior:
+
+- Every scaffolded project gets `./skills/floe-webapp/` in project root.
+- Use this skill package before implementing app features.
 
 ## Usage
 

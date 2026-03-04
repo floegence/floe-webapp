@@ -21,6 +21,14 @@ function assertFile(path) {
   assert(fileExists(path), `Missing build output: ${path}`);
 }
 
+function assertFileEquals(pathA, pathB) {
+  const absA = resolve(process.cwd(), pathA);
+  const absB = resolve(process.cwd(), pathB);
+  const contentA = readFileSync(absA, 'utf-8');
+  const contentB = readFileSync(absB, 'utf-8');
+  assert(contentA === contentB, `Skill mirror mismatch: ${pathA} != ${pathB}`);
+}
+
 function walkFiles(rootDir) {
   const out = [];
   const stack = [rootDir];
@@ -199,6 +207,43 @@ function main() {
   assert(initPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-init main must point to ./dist/*');
   assert(initPkg.bin?.['floe-webapp-init']?.startsWith('./dist/'), '@floegence/floe-webapp-init bin must point to ./dist/*');
   assert(initPkg.files?.includes('templates'), '@floegence/floe-webapp-init must include templates in files');
+  assert(initPkg.files?.includes('skills'), '@floegence/floe-webapp-init must include skills in files');
+
+  // Skill package must remain in sync across root + init + templates.
+  assert(fileExists('skills/floe-webapp/SKILL.md'), 'Missing root skill file: skills/floe-webapp/SKILL.md');
+  assert(
+    fileExists('skills/floe-webapp/references/playbooks.md'),
+    'Missing root skill reference: skills/floe-webapp/references/playbooks.md'
+  );
+  assert(fileExists('packages/init/skills/floe-webapp/SKILL.md'), 'Missing init skill file: packages/init/skills/floe-webapp/SKILL.md');
+  assert(
+    fileExists('packages/init/skills/floe-webapp/references/playbooks.md'),
+    'Missing init skill reference: packages/init/skills/floe-webapp/references/playbooks.md'
+  );
+  assert(
+    fileExists('packages/init/templates/full/skills/floe-webapp/SKILL.md'),
+    'Missing full template skill file: packages/init/templates/full/skills/floe-webapp/SKILL.md'
+  );
+  assert(
+    fileExists('packages/init/templates/minimal/skills/floe-webapp/SKILL.md'),
+    'Missing minimal template skill file: packages/init/templates/minimal/skills/floe-webapp/SKILL.md'
+  );
+
+  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/skills/floe-webapp/SKILL.md');
+  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/templates/full/skills/floe-webapp/SKILL.md');
+  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/templates/minimal/skills/floe-webapp/SKILL.md');
+  assertFileEquals(
+    'skills/floe-webapp/references/playbooks.md',
+    'packages/init/skills/floe-webapp/references/playbooks.md'
+  );
+  assertFileEquals(
+    'skills/floe-webapp/references/playbooks.md',
+    'packages/init/templates/full/skills/floe-webapp/references/playbooks.md'
+  );
+  assertFileEquals(
+    'skills/floe-webapp/references/playbooks.md',
+    'packages/init/templates/minimal/skills/floe-webapp/references/playbooks.md'
+  );
 
   // Repo rule: hidden markdown should never be committed
   const gitignore = readFileSync(resolve(process.cwd(), '.gitignore'), 'utf-8');

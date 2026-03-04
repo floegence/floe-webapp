@@ -13,7 +13,8 @@ description: Implement, refactor, and debug Floe-Webapp Solid.js applications wi
 
 ## Required Inputs
 
-- Read project-root `AGENTS.md` before editing code.
+- Read project-root `AGENTS.md` first when available.
+- If `AGENTS.md` is absent, read `README.md` and `docs/getting-started.md`.
 - Load [references/playbooks.md](references/playbooks.md) and pick the closest playbook for the task.
 
 ## Execution Protocol
