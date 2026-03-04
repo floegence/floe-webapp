@@ -1,9 +1,9 @@
 ---
-name: floe-webapp-development
-description: Build and modify Floe-Webapp Solid.js applications with @floegence/floe-webapp-core public exports, component registration, and token-based styling.
+name: floe-webapp
+description: Build and modify Floe-Webapp Solid.js applications with public package exports, component registration, and design-token-first styling.
 ---
 
-# Floe-Webapp Development Skill
+# Floe-Webapp Skill
 
 ## When To Use
 

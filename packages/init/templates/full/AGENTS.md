@@ -1,7 +1,18 @@
 # Floe-Webapp AI Coding Skill
 
-> Tool-agnostic framework guidance for AI coding tools (Claude Code, Codex, Cursor, Copilot, etc.)
+> Tool-agnostic framework guidance for AI coding tools
 > to generate maintainable floe-webapp applications.
+
+---
+
+## 0. Open Agent Skill Package
+
+This template includes a portable skill package at:
+
+- `skills/floe-webapp/SKILL.md`
+
+The `SKILL.md` format follows the open Agent Skills shape (frontmatter + structured sections).
+Agent runtimes may use different discovery paths, but this project stores the skill in a neutral location for reuse.
 
 ---
 
