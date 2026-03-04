@@ -10,6 +10,7 @@
 This template includes a portable skill package at:
 
 - `skills/floe-webapp/SKILL.md`
+- `skills/floe-webapp/references/playbooks.md`
 
 The `SKILL.md` format follows the open Agent Skills shape (frontmatter + structured sections).
 Agent runtimes may use different discovery paths, but this project stores the skill in a neutral location for reuse.
