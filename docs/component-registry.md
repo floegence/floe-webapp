@@ -50,6 +50,10 @@ Rules:
 - Only components with both `sidebar` and `icon` appear as tabs.
 - `sidebar.hiddenOnMobile` hides a tab on mobile.
 - `sidebar.badge` can render counts/labels in the tab UI.
+- `sidebar.collapseBehavior` can override activity-bar collapse semantics:
+  - `toggle`: clicking the active tab collapses/expands the sidebar.
+  - `preserve`: tab switching does not mutate collapsed state.
+  - default: `fullScreen` tabs use `preserve`, others use `toggle`.
 
 ### fullScreen semantics
 

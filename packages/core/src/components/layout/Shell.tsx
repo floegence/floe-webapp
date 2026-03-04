@@ -106,7 +106,7 @@ export function Shell(props: ShellProps) {
         icon: c.icon!,
         label: c.name,
         badge: c.sidebar?.badge,
-        collapseBehavior: c.sidebar?.fullScreen ? 'preserve' : 'toggle',
+        collapseBehavior: c.sidebar?.collapseBehavior ?? (c.sidebar?.fullScreen ? 'preserve' : 'toggle'),
       }));
   });
 
