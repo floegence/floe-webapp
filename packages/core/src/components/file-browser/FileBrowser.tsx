@@ -42,6 +42,8 @@ export interface FileBrowserProps {
   class?: string;
   /** Custom header content */
   header?: JSX.Element;
+  /** Actions rendered on the right side of the Explorer sidebar header */
+  sidebarHeaderActions?: JSX.Element;
   /** Sidebar width in pixels */
   sidebarWidth?: number;
   /** Persisted sidebar width storage key (defaults to a shared user preference key) */
@@ -97,6 +99,7 @@ export function FileBrowser(props: FileBrowserProps) {
       <FileBrowserInner
         class={props.class}
         header={props.header}
+        sidebarHeaderActions={props.sidebarHeaderActions}
         sidebarResizable={props.sidebarResizable}
         hideSidebarOnMobile={props.hideSidebarOnMobile}
         contextMenuCallbacks={props.contextMenuCallbacks}
@@ -114,6 +117,7 @@ export function FileBrowser(props: FileBrowserProps) {
 interface FileBrowserInnerProps {
   class?: string;
   header?: JSX.Element;
+  sidebarHeaderActions?: JSX.Element;
   sidebarResizable?: boolean;
   hideSidebarOnMobile?: boolean;
   contextMenuCallbacks?: ContextMenuCallbacks;
@@ -234,27 +238,34 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
               <span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 Explorer
               </span>
-              <Show when={isMobile()}>
-                <button
-                  type="button"
-                  onClick={ctx.toggleSidebar}
-                  class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
-                  aria-label="Close sidebar"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="w-3.5 h-3.5"
-                  >
-                    <path d="M18 6 6 18" />
-                    <path d="m6 6 12 12" />
-                  </svg>
-                </button>
+              <Show when={props.sidebarHeaderActions || isMobile()}>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <Show when={props.sidebarHeaderActions}>
+                    <div class="min-w-0 flex items-center gap-1.5">{props.sidebarHeaderActions}</div>
+                  </Show>
+                  <Show when={isMobile()}>
+                    <button
+                      type="button"
+                      onClick={ctx.toggleSidebar}
+                      class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
+                      aria-label="Close sidebar"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="w-3.5 h-3.5"
+                      >
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
+                    </button>
+                  </Show>
+                </div>
               </Show>
             </div>
 

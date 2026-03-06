@@ -11,13 +11,16 @@ function read(relPath: string): string {
 }
 
 describe('FileBrowser controlled path wiring', () => {
-  it('should expose controlled path props on FileBrowser and forward them to provider', () => {
+  it('should expose controlled path and sidebar action props on FileBrowser and forward them to provider', () => {
     const src = read('../src/components/file-browser/FileBrowser.tsx');
 
     expect(src).toContain('path?: string;');
     expect(src).toContain("onPathChange?: (path: string, source: 'user' | 'programmatic') => void;");
+    expect(src).toContain('sidebarHeaderActions?: JSX.Element;');
     expect(src).toContain('path={props.path}');
     expect(src).toContain('onPathChange={props.onPathChange}');
+    expect(src).toContain('sidebarHeaderActions={props.sidebarHeaderActions}');
+    expect(src).toContain('props.sidebarHeaderActions || isMobile()');
   });
 
   it('should sync controlled path and keep user callbacks explicit', () => {
