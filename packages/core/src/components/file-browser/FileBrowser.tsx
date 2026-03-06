@@ -4,7 +4,7 @@ import { useLayout } from '../../context/LayoutContext';
 import { useFileBrowserDrag, type FileBrowserDragInstance } from '../../context/FileBrowserDragContext';
 import { deferAfterPaint } from '../../utils/defer';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
-import { ResizeHandle } from '../layout/ResizeHandle';
+import { SidebarPane } from '../layout/SidebarPane';
 import { DirectoryTree } from './DirectoryTree';
 import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
@@ -217,87 +217,24 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
       {/* Main content area */}
       <div class="flex flex-1 min-h-0 relative">
         {/* Sidebar with directory tree */}
-        <aside
-          class={cn(
-            'flex-shrink-0 border-r border-border bg-sidebar relative',
-            'transition-all duration-200 ease-out',
-            'overflow-hidden',
-            // Mobile overlay
-            isMobile() && !ctx.sidebarCollapsed() && 'absolute inset-y-0 left-0 z-10 shadow-lg'
-          )}
-          style={{
-            width: showSidebar() ? `${sidebarWidth()}px` : '0px',
+        <SidebarPane
+          title="Explorer"
+          width={sidebarWidth()}
+          open={showSidebar()}
+          headerActions={props.sidebarHeaderActions}
+          resizable={sidebarResizable()}
+          onResize={(delta) => {
+            ctx.setSidebarWidth(ctx.sidebarWidth() + delta);
           }}
+          onClose={ctx.toggleSidebar}
+          bodyRef={(el) => { sidebarScrollContainerRef = el; }}
+          bodyClass="py-1"
         >
-          <div
-            class="h-full flex flex-col"
-            style={{ width: `${sidebarWidth()}px` }}
-          >
-            {/* Sidebar header */}
-            <div class="flex items-center justify-between px-3 py-2 border-b border-sidebar-border">
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                Explorer
-              </span>
-              <Show when={props.sidebarHeaderActions || isMobile()}>
-                <div class="flex min-w-0 items-center gap-1.5">
-                  <Show when={props.sidebarHeaderActions}>
-                    <div class="min-w-0 flex items-center gap-1.5">{props.sidebarHeaderActions}</div>
-                  </Show>
-                  <Show when={isMobile()}>
-                    <button
-                      type="button"
-                      onClick={ctx.toggleSidebar}
-                      class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
-                      aria-label="Close sidebar"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="w-3.5 h-3.5"
-                      >
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                      </svg>
-                    </button>
-                  </Show>
-                </div>
-              </Show>
-            </div>
-
-            {/* Directory tree */}
-            <div
-              ref={(el) => { sidebarScrollContainerRef = el; }}
-              class="flex-1 min-h-0 overflow-auto py-1"
-            >
-              <DirectoryTree
-                instanceId={instanceId()}
-                enableDragDrop={isDragEnabled()}
-              />
-            </div>
-          </div>
-
-          <Show when={sidebarResizable() && showSidebar() && !isMobile()}>
-            <ResizeHandle
-              direction="horizontal"
-              onResize={(delta) => {
-                ctx.setSidebarWidth(ctx.sidebarWidth() + delta);
-              }}
-            />
-          </Show>
-        </aside>
-
-        {/* Mobile overlay backdrop */}
-        <Show when={isMobile() && !ctx.sidebarCollapsed()}>
-          <div
-            class="absolute inset-0 bg-background/60 backdrop-blur-sm z-[9]"
-            onClick={ctx.toggleSidebar}
+          <DirectoryTree
+            instanceId={instanceId()}
+            enableDragDrop={isDragEnabled()}
           />
-        </Show>
+        </SidebarPane>
 
         {/* Main file view area */}
         <div class="flex-1 min-w-0 flex flex-col">

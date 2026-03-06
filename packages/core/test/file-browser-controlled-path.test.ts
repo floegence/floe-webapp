@@ -19,8 +19,9 @@ describe('FileBrowser controlled path wiring', () => {
     expect(src).toContain('sidebarHeaderActions?: JSX.Element;');
     expect(src).toContain('path={props.path}');
     expect(src).toContain('onPathChange={props.onPathChange}');
-    expect(src).toContain('sidebarHeaderActions={props.sidebarHeaderActions}');
-    expect(src).toContain('props.sidebarHeaderActions || isMobile()');
+    expect(src).toContain("import { SidebarPane } from '../layout/SidebarPane';");
+    expect(src).toContain('headerActions={props.sidebarHeaderActions}');
+    expect(src).toContain('title="Explorer"');
   });
 
   it('should sync controlled path and keep user callbacks explicit', () => {
