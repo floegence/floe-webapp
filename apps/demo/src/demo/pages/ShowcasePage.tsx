@@ -424,6 +424,7 @@ const demoFileBrowserData: FileItem[] = [
         ],
       },
       { id: 'src-app', name: 'App.tsx', type: 'file', path: '/src/App.tsx', extension: 'tsx', size: 5120, modifiedAt: new Date('2025-01-20') },
+      { id: 'src-bootstrap', name: 'bootstrap.sh', type: 'file', path: '/src/bootstrap.sh', extension: 'sh', size: 768, modifiedAt: new Date('2025-01-20') },
       { id: 'src-index', name: 'index.ts', type: 'file', path: '/src/index.ts', extension: 'ts', size: 256, modifiedAt: new Date('2025-01-14') },
       { id: 'src-styles', name: 'styles.css', type: 'file', path: '/src/styles.css', extension: 'css', size: 8192, modifiedAt: new Date('2025-01-19') },
     ],

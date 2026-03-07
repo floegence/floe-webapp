@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
-import { FolderIcon, FolderOpenIcon } from '../src/components/file-browser/FileIcons';
+import { FolderIcon, FolderOpenIcon, ShellScriptFileIcon, getFileIcon } from '../src/components/file-browser/FileIcons';
 
 function extractAll(re: RegExp, input: string): string[] {
   return Array.from(input.matchAll(re), (m) => m[1] ?? '');
@@ -48,5 +48,21 @@ describe('file icons', () => {
     expect(fills.length).toBe(2);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of fills) expect(ids).toContain(id);
+  });
+
+  it('getFileIcon should return the dedicated shell script icon for shell extensions', () => {
+    expect(getFileIcon('sh')).toBe(ShellScriptFileIcon);
+    expect(getFileIcon('bash')).toBe(ShellScriptFileIcon);
+    expect(getFileIcon('zsh')).toBe(ShellScriptFileIcon);
+    expect(getFileIcon('fish')).toBe(ShellScriptFileIcon);
+  });
+
+  it('ShellScriptFileIcon should render a terminal-style glyph', () => {
+    const html = renderToString(() => <ShellScriptFileIcon class="w-4 h-4" />);
+
+    expect(html).toContain('var(--success)');
+    expect(html).toContain('points="8 13 11 15 8 17"');
+    expect(html).toContain('x1="13"');
+    expect(html).toContain('x2="16.5"');
   });
 });
