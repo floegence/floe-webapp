@@ -129,6 +129,46 @@ export const CodeFileIcon = (props: FileIconProps) => (
   </svg>
 );
 
+// Shell script file icon (.sh, .bash, .zsh, etc.)
+export const ShellScriptFileIcon = (props: FileIconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    class={props.class}
+  >
+    <path
+      fill="var(--success)"
+      opacity="0.2"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+    />
+    <path
+      fill="none"
+      stroke="var(--success)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+    />
+    <polyline
+      fill="none"
+      stroke="var(--success)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      points="14 2 14 8 20 8"
+    />
+    <polyline
+      fill="none"
+      stroke="var(--success)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      points="8 13 11 15 8 17"
+    />
+    <line x1="13" y1="17" x2="16.5" y2="17" stroke="var(--success)" stroke-width="1.5" stroke-linecap="round" />
+  </svg>
+);
+
 // Image file icon
 export const ImageFileIcon = (props: FileIconProps) => (
   <svg
@@ -283,6 +323,11 @@ export const StyleFileIcon = (props: FileIconProps) => (
 // Get appropriate icon based on file extension
 export function getFileIcon(extension?: string): (props: FileIconProps) => JSX.Element {
   const ext = extension?.toLowerCase();
+
+  // Shell scripts
+  if (['sh', 'bash', 'zsh', 'fish', 'ksh', 'csh'].includes(ext ?? '')) {
+    return ShellScriptFileIcon;
+  }
 
   // Code files
   if (['ts', 'tsx', 'js', 'jsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'hpp', 'vue', 'svelte'].includes(ext ?? '')) {

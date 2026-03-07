@@ -15,6 +15,7 @@ const demoFileTree: FileItem[] = [
     children: [
       { id: '/src/main.tsx', name: 'main.tsx', type: 'file', path: '/src/main.tsx', extension: 'tsx', size: 1423, modifiedAt: new Date(now - 1 * 3600_000) },
       { id: '/src/App.tsx', name: 'App.tsx', type: 'file', path: '/src/App.tsx', extension: 'tsx', size: 3921, modifiedAt: new Date(now - 2 * 3600_000) },
+      { id: '/src/bootstrap.sh', name: 'bootstrap.sh', type: 'file', path: '/src/bootstrap.sh', extension: 'sh', size: 612, modifiedAt: new Date(now - 90 * 60_000) },
       {
         id: '/src/components',
         name: 'components',

@@ -12,6 +12,7 @@ export {
   FolderOpenIcon,
   FileIcon,
   CodeFileIcon,
+  ShellScriptFileIcon,
   ImageFileIcon,
   DocumentFileIcon,
   ConfigFileIcon,
