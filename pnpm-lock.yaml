@@ -150,8 +150,8 @@ importers:
   packages/protocol:
     dependencies:
       '@floegence/flowersec-core':
-        specifier: ^0.13.0
-        version: 0.13.0
+        specifier: ^0.14.0
+        version: 0.14.0
     devDependencies:
       solid-js:
         specifier: ^1.9.11
@@ -620,8 +620,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@floegence/flowersec-core@0.13.0':
-    resolution: {integrity: sha512-5Ls3g0l6QODUQY2C2gd58XhFkffuczfF8F3DkBrcwBSzwXCGYwNcwWHjC9UC5yv0J6KTji44u8hfDsY0B+K65A==}
+  '@floegence/flowersec-core@0.14.0':
+    resolution: {integrity: sha512-/Esj5NbADvqQ3lTVRV4ADDxLXG8ZSDJyKnceZ2jroxIdZ/H/ZErLB3quXYbztItJ1Vt8o/7fg451eJ7X6xm5bg==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   '@humanfs/core@0.19.1':
@@ -3199,7 +3199,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@floegence/flowersec-core@0.13.0':
+  '@floegence/flowersec-core@0.14.0':
     dependencies:
       '@noble/ciphers': 0.6.0
       '@noble/curves': 1.9.7
