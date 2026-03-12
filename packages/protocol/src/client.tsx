@@ -6,13 +6,14 @@ import type {
   ClientObserverLike,
   DirectConnectInfo,
 } from '@floegence/flowersec-core';
+import { RpcProxy } from '@floegence/flowersec-core/rpc';
 import {
   createReconnectManager,
   type AutoReconnectConfig,
   type ConnectionStatus,
 } from '@floegence/flowersec-core/reconnect';
 import { requestChannelGrant, type ControlplaneConfig } from './controlplane';
-import type { ProtocolContract } from './contract';
+import type { ProtocolContract, RpcClientLike } from './contract';
 
 /**
  * Protocol context state
@@ -27,6 +28,7 @@ interface ProtocolContextValue {
   status: () => ConnectionStatus;
   error: () => Error | null;
   client: () => Client | null;
+  rpcTransport: () => RpcClientLike;
   contract: () => ProtocolContract;
   connect: (config: ConnectConfig) => Promise<void>;
   /** Force a hard reconnect (disconnect old client and build a new one). */
@@ -63,16 +65,34 @@ const ProtocolContext = createContext<ProtocolContextValue>();
 
 export function ProtocolProvider(props: { children: JSX.Element; contract: ProtocolContract }) {
   const mgr = createReconnectManager();
+  const initialState = mgr.state();
   const [state, setState] = createStore<ProtocolState>({
-    status: mgr.state().status,
-    error: mgr.state().error,
-    client: mgr.state().client,
+    status: initialState.status,
+    error: initialState.error,
+    client: initialState.client,
   });
 
   // eslint-disable-next-line solid/reactivity -- contract is expected to be static for the provider lifetime.
   const contract = props.contract;
+  const rpcProxy = new RpcProxy();
+  const rpcTransport: RpcClientLike = {
+    rpc: {
+      call: (typeId, payload) => rpcProxy.call(typeId, payload),
+      notify: (typeId, payload) => rpcProxy.notify(typeId, payload),
+      onNotify: (typeId, handler) => rpcProxy.onNotify(typeId, handler),
+    },
+  };
+
+  if (initialState.client) {
+    rpcProxy.attach(initialState.client.rpc);
+  }
 
   const unsubscribe = mgr.subscribe((s) => {
+    if (s.client) {
+      rpcProxy.attach(s.client.rpc);
+    } else {
+      rpcProxy.detach();
+    }
     setState({ status: s.status, error: s.error, client: s.client });
   });
 
@@ -164,6 +184,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   };
 
   const disconnect = () => {
+    rpcProxy.detach();
     mgr.disconnect();
   };
 
@@ -171,6 +192,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     status: () => state.status,
     error: () => state.error,
     client: () => state.client,
+    rpcTransport: () => rpcTransport,
     contract: () => contract,
     connect,
     reconnect,
@@ -179,6 +201,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
   onCleanup(() => {
     unsubscribe();
+    rpcProxy.detach();
     mgr.disconnect();
   });
 

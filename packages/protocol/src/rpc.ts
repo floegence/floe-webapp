@@ -1,5 +1,6 @@
 import { useProtocol } from './client';
 import type { ProtocolContract, RpcHelpers } from './contract';
+import { RpcProxyDetachedError } from '@floegence/flowersec-core/rpc';
 
 /**
  * RPC wrapper for typed remote calls.
@@ -27,13 +28,15 @@ export class RpcError extends Error {
 
 function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
   const call: RpcHelpers['call'] = async <Req, Res>(typeId: number, payload: Req): Promise<Res> => {
-    const client = protocol.client();
-    if (!client) throw new ProtocolNotConnectedError();
+    const transport = protocol.rpcTransport();
 
-    let response: Awaited<ReturnType<typeof client.rpc.call>>;
+    let response: Awaited<ReturnType<typeof transport.rpc.call>>;
     try {
-      response = await client.rpc.call(typeId, payload);
+      response = await transport.rpc.call(typeId, payload);
     } catch (err) {
+      if (err instanceof RpcProxyDetachedError) {
+        throw new ProtocolNotConnectedError();
+      }
       throw new RpcError({ typeId, code: -1, message: 'RPC transport error', cause: err });
     }
 
@@ -50,11 +53,11 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
   };
 
   const notify: RpcHelpers['notify'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
-    const client = protocol.client();
-    if (!client) return;
+    const transport = protocol.rpcTransport();
     try {
-      await client.rpc.notify(typeId, payload);
+      await transport.rpc.notify(typeId, payload);
     } catch (err) {
+      if (err instanceof RpcProxyDetachedError) return;
       throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
     }
   };
@@ -63,10 +66,9 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     typeId: number,
     handler: (payload: Payload) => void
   ) => {
-    const client = protocol.client();
-    if (!client) return () => {};
+    const transport = protocol.rpcTransport();
 
-    return client.rpc.onNotify(typeId, (payload) => {
+    return transport.rpc.onNotify(typeId, (payload) => {
       handler(payload as Payload);
     });
   };
