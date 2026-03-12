@@ -29,6 +29,13 @@ export function App() {
           palette: { keybind: 'mod+p' },
           save: { enabled: false },
         },
+        theme: {
+          tokens: {
+            dark: {
+              '--chrome-border': 'hsl(220 16% 24%)',
+            },
+          },
+        },
         strings: {
           topBar: { searchPlaceholder: 'Search...' },
         },
@@ -90,17 +97,79 @@ Implementation references:
 - `packages/core/src/components/layout/Shell.tsx` reads `layout.mobileQuery`
 - `packages/core/src/context/LayoutContext.tsx` persists sidebar + terminal state
 
+### Shell chrome styling
+
+`Shell` also exposes stable chrome styling hooks through `slotClassNames` and `data-floe-shell-slot`.
+
+```tsx
+import { Shell } from '@floegence/floe-webapp-core/layout';
+
+<Shell
+  slotClassNames={{
+    topBar: 'backdrop-blur-md',
+    bottomBar: 'text-[11px]',
+  }}
+>
+  <div />
+</Shell>
+```
+
+Stable selectors:
+
+- `[data-floe-shell]`
+- `[data-floe-shell-slot="top-bar"]`
+- `[data-floe-shell-slot="activity-bar"]`
+- `[data-floe-shell-slot="sidebar"]`
+- `[data-floe-shell-slot="content-area"]`
+- `[data-floe-shell-slot="main"]`
+- `[data-floe-shell-slot="terminal-panel"]`
+- `[data-floe-shell-slot="bottom-bar"]`
+- `[data-floe-shell-slot="mobile-tab-bar"]`
+
 ## Theme
 
 Configuration: `FloeConfig.theme` (`packages/core/src/context/FloeConfigContext.tsx`)
 
 - `defaultTheme`: `'light' | 'dark' | 'system'`
 - `storageKey`: persistence key for theme choice
+- `tokens.shared`: applied in both themes
+- `tokens.light`: applied only when the resolved theme is `light`
+- `tokens.dark`: applied only when the resolved theme is `dark`
+
+Example:
+
+```tsx
+config={{
+  theme: {
+    tokens: {
+      shared: {
+        '--chrome-border': 'color-mix(in srgb, var(--border) 85%, var(--foreground) 15%)',
+      },
+      dark: {
+        '--bottom-bar-border': 'hsl(220 18% 26%)',
+      },
+    },
+  },
+}}
+```
+
+Recommended token-first shell chrome variables:
+
+- `--chrome-border`
+- `--top-bar-border`
+- `--activity-bar-border`
+- `--bottom-bar-border`
+- `--terminal-panel-border`
 
 Implementation references:
 
 - `packages/core/src/context/ThemeContext.tsx`
 - `packages/core/src/styles/themes/*`
+
+Guidance:
+
+- Prefer `theme.tokens` for chrome colors and `slotClassNames` for local layout styling.
+- Avoid global resets such as `* { border-width: 0; }`, which can silently break shell chrome defaults.
 
 ## Strings
 

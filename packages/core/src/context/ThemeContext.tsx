@@ -1,7 +1,13 @@
 import { createSignal, createEffect, onCleanup, type Accessor } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
-import { applyTheme, getSystemTheme, type ThemeType } from '../styles/themes';
+import {
+  applyTheme,
+  getSystemTheme,
+  resolveThemeTokenOverrides,
+  syncThemeTokenOverrides,
+  type ThemeType,
+} from '../styles/themes';
 
 export interface ThemeContextValue {
   theme: Accessor<ThemeType>;
@@ -14,10 +20,12 @@ export function createThemeService(): ThemeContextValue {
   const floe = useResolvedFloeConfig();
   const storageKey = () => floe.config.theme.storageKey;
   const defaultTheme = () => floe.config.theme.defaultTheme;
+  const themeTokens = () => floe.config.theme.tokens;
 
   const storedTheme = floe.persist.load<ThemeType>(storageKey(), defaultTheme());
   const [theme, setThemeSignal] = createSignal<ThemeType>(storedTheme);
   const [systemTheme, setSystemTheme] = createSignal<'light' | 'dark'>(getSystemTheme());
+  let appliedTokenNames: string[] = [];
 
   // Resolved theme (actual light/dark value)
   const resolvedTheme = (): 'light' | 'dark' => {
@@ -41,7 +49,17 @@ export function createThemeService(): ThemeContextValue {
 
   // Apply theme when it changes
   createEffect(() => {
-    applyTheme(theme());
+    const currentTheme = theme();
+    const resolved = resolvedTheme();
+    applyTheme(currentTheme);
+    appliedTokenNames = syncThemeTokenOverrides(
+      resolveThemeTokenOverrides(themeTokens(), resolved),
+      appliedTokenNames
+    );
+  });
+
+  onCleanup(() => {
+    appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames);
   });
 
   const setTheme = (newTheme: ThemeType) => {

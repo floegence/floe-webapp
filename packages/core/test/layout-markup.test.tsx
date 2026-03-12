@@ -66,4 +66,41 @@ describe('layout markup', () => {
     expect(html).toContain('min-h-0');
     expect(html).toContain('min-w-0');
   });
+
+  it('Shell should expose stable data-* hooks and slotClassNames for shell chrome containers', () => {
+    const DummyIcon = (p: { class?: string }) => <span class={p.class} />;
+
+    const html = renderWithCoreProviders(() => (
+      <Shell
+        activityItems={[{ id: 'files', icon: DummyIcon, label: 'Files' }]}
+        sidebarContent={() => <div>Sidebar</div>}
+        slotClassNames={{
+          root: 'shell-root-class',
+          topBar: 'shell-top-bar-class',
+          activityBar: 'shell-activity-bar-class',
+          sidebar: 'shell-sidebar-class',
+          contentArea: 'shell-content-area-class',
+          main: 'shell-main-class',
+          bottomBar: 'shell-bottom-bar-class',
+        }}
+      >
+        <div>Main</div>
+      </Shell>
+    ));
+
+    expect(html).toContain('data-floe-shell');
+    expect(html).toContain('data-floe-shell-slot="top-bar"');
+    expect(html).toContain('data-floe-shell-slot="activity-bar"');
+    expect(html).toContain('data-floe-shell-slot="sidebar"');
+    expect(html).toContain('data-floe-shell-slot="content-area"');
+    expect(html).toContain('data-floe-shell-slot="main"');
+    expect(html).toContain('data-floe-shell-slot="bottom-bar"');
+    expect(html).toContain('shell-root-class');
+    expect(html).toContain('shell-top-bar-class');
+    expect(html).toContain('shell-activity-bar-class');
+    expect(html).toContain('shell-sidebar-class');
+    expect(html).toContain('shell-content-area-class');
+    expect(html).toContain('shell-main-class');
+    expect(html).toContain('shell-bottom-bar-class');
+  });
 });
