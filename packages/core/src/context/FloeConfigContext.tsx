@@ -1,4 +1,5 @@
 import { createContext, createEffect, createMemo, onCleanup, useContext, type JSX } from 'solid-js';
+import type { FloeThemeTokenOverrides, ThemeType } from '../styles/themes';
 
 export interface FloeStorageAdapter {
   getItem: (key: string) => string | null;
@@ -72,7 +73,13 @@ export interface FloeLayoutConfig {
 
 export interface FloeThemeConfig {
   storageKey: string;
-  defaultTheme: 'light' | 'dark' | 'system';
+  defaultTheme: ThemeType;
+  /**
+   * Optional CSS variable overrides applied at the document root.
+   * `shared` applies to both themes, while `light` / `dark` only apply
+   * when that resolved theme is active.
+   */
+  tokens?: FloeThemeTokenOverrides;
 }
 
 export interface FloeDeckConfig {

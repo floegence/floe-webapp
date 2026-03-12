@@ -1,4 +1,23 @@
 export type ThemeType = 'light' | 'dark' | 'system';
+export type FloeThemeTokenMap = Partial<Record<`--${string}`, string>>;
+
+export interface FloeThemeTokenOverrides {
+  shared?: FloeThemeTokenMap;
+  light?: FloeThemeTokenMap;
+  dark?: FloeThemeTokenMap;
+}
+
+export interface ThemeTarget {
+  classList: {
+    add: (...tokens: string[]) => void;
+    remove: (...tokens: string[]) => void;
+  };
+  style: {
+    colorScheme?: string;
+    setProperty: (property: string, value: string) => void;
+    removeProperty: (property: string) => void;
+  };
+}
 
 export interface FloeTheme {
   name: string;
@@ -16,13 +35,56 @@ export function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-export function applyTheme(theme: ThemeType): void {
-  if (typeof document === 'undefined') return;
+function resolveThemeTarget(target?: ThemeTarget): ThemeTarget | undefined {
+  if (target) return target;
+  if (typeof document === 'undefined') return undefined;
+  return document.documentElement as ThemeTarget;
+}
 
-  const root = document.documentElement;
+export function resolveThemeTokenOverrides(
+  tokens: FloeThemeTokenOverrides | undefined,
+  resolvedTheme: 'light' | 'dark'
+): FloeThemeTokenMap {
+  return {
+    ...(tokens?.shared ?? {}),
+    ...(resolvedTheme === 'light' ? (tokens?.light ?? {}) : (tokens?.dark ?? {})),
+  };
+}
+
+export function applyTheme(theme: ThemeType, target?: ThemeTarget): void {
+  const root = resolveThemeTarget(target);
+  if (!root) return;
+
   const resolved = theme === 'system' ? getSystemTheme() : theme;
 
   root.classList.remove('light', 'dark');
   root.classList.add(resolved);
   root.style.colorScheme = resolved;
+}
+
+export function syncThemeTokenOverrides(
+  tokens: FloeThemeTokenMap | undefined,
+  previousTokenNames: Iterable<string> = [],
+  target?: ThemeTarget
+): string[] {
+  const root = resolveThemeTarget(target);
+  if (!root) return [];
+
+  const nextEntries = Object.entries(tokens ?? {}).filter((entry): entry is [string, string] => {
+    const [, value] = entry;
+    return typeof value === 'string' && value.length > 0;
+  });
+  const nextTokenNames = new Set(nextEntries.map(([name]) => name));
+
+  for (const tokenName of previousTokenNames) {
+    if (!nextTokenNames.has(tokenName)) {
+      root.style.removeProperty(tokenName);
+    }
+  }
+
+  for (const [tokenName, value] of nextEntries) {
+    root.style.setProperty(tokenName, value);
+  }
+
+  return [...nextTokenNames];
 }

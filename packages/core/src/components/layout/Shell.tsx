@@ -16,6 +16,20 @@ import { ResizeHandle } from './ResizeHandle';
 import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
 import { KeepAliveStack, type KeepAliveView } from './KeepAliveStack';
 
+export interface ShellSlotClassNames {
+  root?: string;
+  topBar?: string;
+  activityBar?: string;
+  sidebar?: string;
+  mobileSidebarBackdrop?: string;
+  mobileSidebarDrawer?: string;
+  contentArea?: string;
+  main?: string;
+  terminalPanel?: string;
+  bottomBar?: string;
+  mobileTabBar?: string;
+}
+
 export interface ShellProps {
   children: JSX.Element;
   logo?: JSX.Element;
@@ -42,6 +56,7 @@ export interface ShellProps {
    */
   sidebarMode?: 'auto' | 'hidden';
   terminalPanel?: JSX.Element;
+  slotClassNames?: ShellSlotClassNames;
   class?: string;
 }
 
@@ -256,20 +271,29 @@ export function Shell(props: ShellProps) {
 
   return (
     <div
+      data-floe-shell=""
       class={cn(
         // Use dvh when supported to avoid mobile browser UI causing layout jumps.
         'h-screen h-[100dvh] w-full flex flex-col overflow-hidden',
         'bg-background text-foreground',
         // Prevent overscroll on the shell container
         'overscroll-none',
+        props.slotClassNames?.root,
         props.class
       )}
     >
       {/* Top Bar */}
-      <TopBar logo={props.logo} actions={effectiveTopBarActions()} />
+      <TopBar
+        logo={props.logo}
+        actions={effectiveTopBarActions()}
+        class={props.slotClassNames?.topBar}
+      />
 
       {/* Main area */}
-      <div class="flex-1 min-h-0 flex overflow-hidden relative">
+      <div
+        data-floe-shell-slot="main-layout"
+        class="flex-1 min-h-0 flex overflow-hidden relative"
+      >
         {/* Desktop: Activity Bar + Sidebar */}
         <Show when={!isMobile()}>
           {/* Activity Bar */}
@@ -281,6 +305,7 @@ export function Shell(props: ShellProps) {
               onActiveChange={setSidebarActiveTab}
               collapsed={effectiveSidebarCollapsed()}
               onCollapsedChange={sidebarHidden() ? undefined : layout.setSidebarCollapsed}
+              class={props.slotClassNames?.activityBar}
             />
           </Show>
 
@@ -295,6 +320,7 @@ export function Shell(props: ShellProps) {
                   onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
                 />
               }
+              class={props.slotClassNames?.sidebar}
             >
               {renderSidebarContent(layout.sidebarActiveTab())}
             </Sidebar>
@@ -305,17 +331,23 @@ export function Shell(props: ShellProps) {
         <Show when={isMobile() && mobileSidebarOpen() && !sidebarHidden()}>
           {/* Backdrop - semi-transparent to show content behind */}
           <div
-            class="absolute inset-0 z-40 bg-black/30 cursor-pointer"
+            data-floe-shell-slot="mobile-sidebar-backdrop"
+            class={cn(
+              'absolute inset-0 z-40 bg-black/30 cursor-pointer',
+              props.slotClassNames?.mobileSidebarBackdrop
+            )}
             onClick={() => setMobileSidebarOpen(false)}
           />
           {/* Sidebar drawer - narrower width, drawer style */}
           <div
+            data-floe-shell-slot="mobile-sidebar-drawer"
             class={cn(
               'absolute left-0 top-0 bottom-0 z-50',
               'w-72 max-w-[80vw]',
               'bg-sidebar border-r border-sidebar-border',
               'shadow-xl',
-              'animate-in slide-in-from-left duration-200'
+              'animate-in slide-in-from-left duration-200',
+              props.slotClassNames?.mobileSidebarDrawer
             )}
           >
             <div class="h-full overflow-auto overscroll-contain">
@@ -325,17 +357,30 @@ export function Shell(props: ShellProps) {
         </Show>
 
         {/* Content area */}
-        <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <div
+          data-floe-shell-slot="content-area"
+          class={cn('flex-1 min-w-0 flex flex-col overflow-hidden', props.slotClassNames?.contentArea)}
+        >
           {/* Main content - always visible, allows overscroll bounce */}
-          <main class="flex-1 min-h-0 overflow-auto overscroll-contain">
+          <main
+            data-floe-shell-slot="main"
+            class={cn('flex-1 min-h-0 overflow-auto overscroll-contain', props.slotClassNames?.main)}
+          >
             {props.children}
           </main>
 
           {/* Terminal panel (desktop only) */}
           <Show when={!isMobile() && layout.terminalOpened() && props.terminalPanel}>
             <div
-              class="relative shrink-0 border-t border-border bg-terminal-background overflow-hidden"
-              style={{ height: `${layout.terminalHeight()}px` }}
+              data-floe-shell-slot="terminal-panel"
+              class={cn(
+                'relative shrink-0 border-t border-border bg-terminal-background overflow-hidden',
+                props.slotClassNames?.terminalPanel
+              )}
+              style={{
+                height: `${layout.terminalHeight()}px`,
+                'border-top-color': 'var(--terminal-panel-border)',
+              }}
             >
               <ResizeHandle
                 direction="vertical"
@@ -349,7 +394,7 @@ export function Shell(props: ShellProps) {
 
       {/* Bottom Bar / Mobile Tab Bar */}
       <Show when={!isMobile()}>
-        <BottomBar>{bottomBarContent()}</BottomBar>
+        <BottomBar class={props.slotClassNames?.bottomBar}>{bottomBarContent()}</BottomBar>
       </Show>
       <Show when={isMobile() && activityItems().length > 0}>
         <MobileTabBar
@@ -361,6 +406,7 @@ export function Shell(props: ShellProps) {
             activeIsPage: activeIsPage(),
           })}
           onSelect={handleMobileTabSelect}
+          class={props.slotClassNames?.mobileTabBar}
         />
       </Show>
     </div>

@@ -21,12 +21,14 @@ export function TopBar(props: TopBarProps) {
 
   return (
     <header
+      data-floe-shell-slot="top-bar"
       class={cn(
         // Safe-area padding must not be applied on a fixed-height element (border-box),
         // otherwise the content gets squeezed on iOS notch devices.
         'shrink-0 bg-background border-b border-border safe-top safe-left safe-right',
         props.class
       )}
+      style={{ 'border-bottom-color': 'var(--top-bar-border)' }}
     >
       <div class="h-10 flex items-center gap-3 px-3">
         {/* Logo */}

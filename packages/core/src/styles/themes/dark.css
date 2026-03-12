@@ -26,6 +26,11 @@
   --border: hsl(220 20% 18%);
   --input: hsl(220 25% 14%);
   --ring: hsl(215 25% 70%);
+  --chrome-border: var(--border);
+  --top-bar-border: var(--chrome-border);
+  --activity-bar-border: var(--chrome-border);
+  --bottom-bar-border: var(--chrome-border);
+  --terminal-panel-border: var(--chrome-border);
 
   /* Card */
   --card: hsl(222 28% 10%);

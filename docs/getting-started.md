@@ -243,6 +243,43 @@ Notes:
 - By default, global hotkeys are ignored while typing in form fields/contenteditable (except save).
 - To allow global hotkeys inside an editor, add `data-floe-hotkeys="allow"` on an ancestor element.
 
+### Optional: customize shell chrome without global CSS hacks
+
+Prefer `theme.tokens` for border colors and `slotClassNames` for local shell container classes:
+
+```tsx
+import { Shell } from '@floegence/floe-webapp-core/layout';
+
+<Shell
+  slotClassNames={{
+    topBar: 'backdrop-blur-md',
+    bottomBar: 'text-[11px]',
+  }}
+/>
+```
+
+```tsx
+config={{
+  theme: {
+    tokens: {
+      dark: {
+        '--chrome-border': 'hsl(220 16% 24%)',
+      },
+    },
+  },
+}}
+```
+
+If you need scoped CSS, target the stable shell anchors instead of framework implementation classes:
+
+```css
+[data-floe-shell-slot='top-bar'] {
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--top-bar-border) 100%, transparent);
+}
+```
+
+Avoid broad resets such as `* { border-width: 0; }`, which can remove the default shell dividers entirely.
+
 ---
 
 ## Next docs

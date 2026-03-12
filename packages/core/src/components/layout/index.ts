@@ -1,4 +1,4 @@
-export { Shell, type ShellProps } from './Shell';
+export { Shell, type ShellProps, type ShellSlotClassNames } from './Shell';
 export { ActivityBar, type ActivityBarItem, type ActivityBarProps } from './ActivityBar';
 export {
   Sidebar,

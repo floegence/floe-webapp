@@ -13,12 +13,14 @@ export interface BottomBarProps {
 export function BottomBar(props: BottomBarProps) {
   return (
     <footer
+      data-floe-shell-slot="bottom-bar"
       class={cn(
         'h-5 shrink-0 flex items-center justify-between px-1.5',
         'bg-background border-t border-border',
         'text-[10px] text-muted-foreground font-mono',
         props.class
       )}
+      style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
     >
       {props.children}
     </footer>

@@ -65,12 +65,14 @@ export function MobileTabBar(props: MobileTabBarProps) {
 
   return (
     <nav
+      data-floe-shell-slot="mobile-tab-bar"
       class={cn(
         // Same safe-area rule as TopBar: keep the visual bar height stable, and
         // add safe-area padding on an outer wrapper (avoid squeezing content).
         'relative shrink-0 bg-background border-t border-border safe-bottom safe-left safe-right',
         props.class
       )}
+      style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
     >
       <div class="relative h-14">
         {/* Scroll indicators */}

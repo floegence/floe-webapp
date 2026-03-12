@@ -6,9 +6,10 @@ A professional VSCode-style web application framework built with Solid.js.
 
 - **VSCode Layout**: Activity bar, sidebar, top bar, bottom bar, and resizable panels
 - **Mobile First**: Responsive design with mobile tab bar for small screens
-- **Theme System**: Light and dark themes with CSS variables
+- **Theme System**: Light and dark themes with CSS variables plus token overrides
 - **Command Palette**: Global command search with keyboard shortcuts
 - **Plugin Registry**: Register components to drive navigation and status bar
+- **Shell Extensibility**: Stable `slotClassNames` and `data-floe-shell-slot` hooks for chrome styling
 - **Protocol Layer**: Flowersec WebSocket integration for secure communication
 - **Non-blocking UI**: Smooth animations and async operations
 - **Demo Playground**: Component showcase + Monaco source viewer
@@ -227,6 +228,8 @@ Notes:
 
 - Recommended: run Tailwind v4 in your app and import `@floegence/floe-webapp-core/tailwind` from your CSS entry.
 - Fallback (no Tailwind build): import `@floegence/floe-webapp-core/styles` once at your app entry, and do not rely on arbitrary Tailwind utility classes in your own components.
+- Prefer `theme.tokens` for shell chrome colors and `slotClassNames` / `data-floe-shell-slot` for local shell styling.
+- Avoid broad resets such as `* { border-width: 0; }`, which can remove the framework's default shell dividers.
 
 ## Tech Stack
 

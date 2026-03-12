@@ -73,11 +73,13 @@ export function ActivityBar(props: ActivityBarProps) {
 
   return (
     <div
+      data-floe-shell-slot="activity-bar"
       class={cn(
         'w-10 md:w-12 flex flex-col justify-between shrink-0 min-h-0',
         'bg-activity-bar border-r border-border',
         props.class
       )}
+      style={{ 'border-right-color': 'var(--activity-bar-border)' }}
     >
       {/* Top items */}
       <div class="flex flex-col">
