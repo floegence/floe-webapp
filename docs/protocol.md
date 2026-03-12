@@ -163,8 +163,14 @@ Implementation reference:
 
 Errors:
 
-- `ProtocolNotConnectedError` when `protocol.client()` is missing
+- `ProtocolNotConnectedError` when the provider is currently detached from a live RPC client
 - `RpcError` for transport errors and remote errors
+
+Reconnect behavior:
+
+- `ProtocolProvider` keeps a stable RPC transport proxy under the hood.
+- `useRpc().onNotify()` subscriptions survive reconnects and rebind to the latest client automatically.
+- `useRpc().call()` still fails fast with `ProtocolNotConnectedError` while no client is attached.
 
 This SDK is contract-driven: it uses the provider contract by default, and you can override it per-hook.
 
