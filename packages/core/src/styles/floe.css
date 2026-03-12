@@ -10,6 +10,7 @@
  * - any `@source` directives (owned by the entry that imports this file)
  */
 
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Import theme definitions - they define the CSS variables */
 @import './themes/light.css';
