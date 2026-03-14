@@ -1,18 +1,13 @@
 import { createContext, useContext, onCleanup, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import type {
-  ChannelInitGrant,
-  Client,
-  ClientObserverLike,
-  DirectConnectInfo,
-} from '@floegence/flowersec-core';
+import type { Client } from '@floegence/flowersec-core';
+import { createBrowserReconnectConfig, type BrowserReconnectConfig } from '@floegence/flowersec-core/browser';
 import { RpcProxy } from '@floegence/flowersec-core/rpc';
 import {
   createReconnectManager,
   type AutoReconnectConfig,
   type ConnectionStatus,
 } from '@floegence/flowersec-core/reconnect';
-import { requestChannelGrant, type ControlplaneConfig } from './controlplane';
 import type { ProtocolContract, RpcClientLike } from './contract';
 
 /**
@@ -37,29 +32,7 @@ interface ProtocolContextValue {
 }
 
 export type { AutoReconnectConfig, ConnectionStatus };
-
-export interface ConnectConfig {
-  mode?: 'tunnel' | 'direct'; // default: tunnel
-  observer?: ClientObserverLike;
-  keepaliveIntervalMs?: number;
-  connectTimeoutMs?: number;
-  handshakeTimeoutMs?: number;
-  autoReconnect?: AutoReconnectConfig;
-
-  // Tunnel mode
-  controlplane?: ControlplaneConfig;
-  /**
-   * Provide a fresh grant for each connection attempt.
-   *
-   * This is the recommended way to support "reconnect requires new ticket/grant"
-   * flows (e.g. entry_ticket -> channel_init -> grant_client).
-   */
-  getGrant?: () => Promise<ChannelInitGrant>;
-  grant?: ChannelInitGrant;
-
-  // Direct mode
-  directInfo?: DirectConnectInfo;
-}
+export type ConnectConfig = BrowserReconnectConfig;
 
 const ProtocolContext = createContext<ProtocolContextValue>();
 
@@ -101,41 +74,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   let connectInFlight: Promise<void> | null = null;
 
   const connectWithConfig = async (config: ConnectConfig, mode: 'hard' | 'if_needed') => {
-    const connectArgs = {
-      autoReconnect: config.autoReconnect,
-      observer: config.observer,
-      connectOnce: async ({ signal, observer }: Readonly<{ signal: AbortSignal; observer: ClientObserverLike }>) => {
-        // Dynamic import to avoid bundling issues
-        const { connectTunnelBrowser, connectDirectBrowser } = await import('@floegence/flowersec-core/browser');
-
-        const connectOptions = {
-          observer,
-          signal,
-          keepaliveIntervalMs: config.keepaliveIntervalMs ?? 15000,
-          connectTimeoutMs: config.connectTimeoutMs ?? 10000,
-          handshakeTimeoutMs: config.handshakeTimeoutMs ?? 10000,
-        };
-
-        const mode = config.mode ?? 'tunnel';
-
-        if (mode === 'tunnel') {
-          const grant =
-            (config.getGrant ? await config.getGrant() : null) ??
-            config.grant ??
-            (config.controlplane ? await requestChannelGrant(config.controlplane) : null);
-          if (!grant) {
-            throw new Error('Tunnel mode requires `getGrant`, `grant`, or `controlplane` config');
-          }
-          return connectTunnelBrowser(grant, connectOptions);
-        }
-
-        if (!config.directInfo) {
-          throw new Error('Direct mode requires `directInfo`');
-        }
-
-        return connectDirectBrowser(config.directInfo, connectOptions);
-      },
-    } satisfies Parameters<typeof mgr.connect>[0];
+    const connectArgs = createBrowserReconnectConfig(config);
 
     if (mode === 'hard') {
       await mgr.connect(connectArgs);
