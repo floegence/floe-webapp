@@ -126,6 +126,7 @@ Controlplane contract (used by `requestChannelGrant`):
 - `POST ${baseUrl}/v1/channel/init`
 - body: `{ "endpoint_id": "<endpointId>" }`
 - response: `{ "grant_client": <ChannelInitGrant> }`
+- non-2xx failures surface as `ControlplaneRequestError`, preserving `status`, `code`, and the server message from Flowersec
 
 Implementation reference:
 

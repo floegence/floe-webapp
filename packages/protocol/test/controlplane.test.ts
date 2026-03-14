@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { requestChannelGrant, requestEntryChannelGrant } from '../src/controlplane';
+import { ControlplaneRequestError, requestChannelGrant, requestEntryChannelGrant } from '../src/controlplane';
 
 describe('requestChannelGrant', () => {
   it('should POST to /v1/channel/init and return validated grant', async () => {
@@ -41,9 +41,19 @@ describe('requestChannelGrant', () => {
       new Response('nope', { status: 500 })
     );
 
-    await expect(
-      requestChannelGrant({ baseUrl: 'https://cp.example.com', endpointId: 'endpoint-1' })
-    ).rejects.toThrow('Failed to get channel grant: 500');
+    let error: unknown = null;
+    try {
+      await requestChannelGrant({ baseUrl: 'https://cp.example.com', endpointId: 'endpoint-1' });
+    } catch (nextError) {
+      error = nextError;
+    }
+
+    expect(error).toBeInstanceOf(ControlplaneRequestError);
+    expect(error).toMatchObject({
+      status: 500,
+      message: 'nope',
+      responseBody: 'nope',
+    });
 
     spy.mockRestore();
   });
