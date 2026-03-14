@@ -1,4 +1,5 @@
 export {
+  ControlplaneRequestError,
   requestChannelGrant,
   requestEntryChannelGrant,
   type ControlplaneConfig,
