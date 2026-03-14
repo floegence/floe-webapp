@@ -89,6 +89,12 @@ Type reference:
 
 - `packages/protocol/src/client.tsx` (`ConnectConfig`, `AutoReconnectConfig`)
 
+`ConnectConfig` directly reuses the Flowersec browser reconnect shape:
+
+- `ConnectConfig = BrowserReconnectConfig`
+- connection timeouts / keepalive live under `connect`
+- tunnel grant helpers (`controlplane`, `getGrant`, `grant`) and direct helpers (`directInfo`, `getDirectInfo`) come from `@floegence/flowersec-core/browser`
+
 Best practice:
 
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
@@ -107,6 +113,9 @@ await protocol.connect({
   controlplane: {
     baseUrl: 'https://<controlplane>',
     endpointId: '<endpoint-id>',
+  },
+  connect: {
+    handshakeTimeoutMs: 10_000,
   },
   autoReconnect: { enabled: true },
 });
@@ -146,8 +155,12 @@ await protocol.connect({
 ```ts
 await protocol.connect({
   mode: 'direct',
-  directInfo: {
-    // See flowersec-core DirectConnectInfo
+  getDirectInfo: async () => {
+    // Re-mint a fresh direct connect payload when needed.
+    return directInfo;
+  },
+  connect: {
+    connectTimeoutMs: 10_000,
   },
   autoReconnect: { enabled: true },
 });

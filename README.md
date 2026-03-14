@@ -147,7 +147,7 @@ Protocol layer for communication:
 
 - Flowersec WebSocket integration
 - Contract-driven RPC SDK (`useRpc()`) via injected `ProtocolContract` (no built-in business contract)
-- Connection state management with dynamic `getGrant()` reconnect support
+- Connection state management with dynamic `getGrant()` / `getDirectInfo()` reconnect support
 
 Best practice:
 
