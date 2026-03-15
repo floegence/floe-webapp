@@ -46,6 +46,7 @@ export interface FileListColumnRatios {
  */
 export type ContextMenuActionType =
   | 'duplicate'
+  | 'copy-name'
   | 'ask-agent'
   | 'copy-to'
   | 'move-to'
@@ -92,6 +93,7 @@ export interface ContextMenuEvent {
  */
 export interface ContextMenuCallbacks {
   onDuplicate?: (items: FileItem[]) => void;
+  onCopyName?: (items: FileItem[]) => void;
   onAskAgent?: (items: FileItem[]) => void;
   onCopyTo?: (items: FileItem[]) => void;
   onMoveTo?: (items: FileItem[]) => void;
