@@ -17,10 +17,13 @@ describe('FileBrowser controlled path wiring', () => {
     expect(src).toContain('path?: string;');
     expect(src).toContain("onPathChange?: (path: string, source: 'user' | 'programmatic') => void;");
     expect(src).toContain('sidebarHeaderActions?: JSX.Element;');
+    expect(src).toContain('toolbarEndActions?: JSX.Element;');
     expect(src).toContain('path={props.path}');
     expect(src).toContain('onPathChange={props.onPathChange}');
     expect(src).toContain("import { SidebarPane } from '../layout/SidebarPane';");
     expect(src).toContain('headerActions={props.sidebarHeaderActions}');
+    expect(src).toContain('toolbarEndActions={props.toolbarEndActions}');
+    expect(src).toContain('endActions={props.toolbarEndActions}');
     expect(src).toContain('title="Explorer"');
   });
 
@@ -31,5 +34,13 @@ describe('FileBrowser controlled path wiring', () => {
     expect(src).toContain('const nextPath = normalizePath(props.path);');
     expect(src).toContain("deferNonBlocking(() => onPathChange?.(nextPath, 'user'));");
     expect(src).toContain('deferNonBlocking(() => onNavigate?.(nextPath));');
+  });
+
+  it('should expose a toolbar end-actions slot on FileBrowserToolbar without coupling business-specific controls into core', () => {
+    const src = read('../src/components/file-browser/FileBrowserToolbar.tsx');
+
+    expect(src).toContain('endActions?: JSX.Element;');
+    expect(src).toContain('<Show when={props.endActions}>');
+    expect(src).toContain('{props.endActions}');
   });
 });
