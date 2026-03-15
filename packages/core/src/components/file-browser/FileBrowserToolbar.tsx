@@ -11,6 +11,8 @@ export interface FileBrowserToolbarProps {
   class?: string;
   /** Reference to focus the filter input */
   filterInputRef?: (el: HTMLInputElement) => void;
+  /** Actions rendered at the end of the toolbar */
+  endActions?: JSX.Element;
 }
 
 // List icon
@@ -115,18 +117,18 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
     return path !== '/' && path !== '';
   };
 
-	  const handleFilterToggle = () => {
-	    if (ctx.isFilterActive()) {
+  const handleFilterToggle = () => {
+    if (ctx.isFilterActive()) {
       // Close filter: clear query and collapse
       ctx.setFilterQuery('');
       ctx.setFilterActive(false);
-	    } else {
-	      // Open filter
-	      ctx.setFilterActive(true);
-	      // Defer focus so the input is mounted and the UI update can paint first.
-	      deferAfterPaint(() => inputRef?.focus());
-	    }
-	  };
+    } else {
+      // Open filter
+      ctx.setFilterActive(true);
+      // Defer focus so the input is mounted and the UI update can paint first.
+      deferAfterPaint(() => inputRef?.focus());
+    }
+  };
 
   const handleClearFilter = () => {
     ctx.setFilterQuery('');
@@ -288,6 +290,12 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
           label="Grid view"
         />
       </div>
+
+      <Show when={props.endActions}>
+        <div class="ml-0.5 flex shrink-0 items-center gap-1">
+          {props.endActions}
+        </div>
+      </Show>
     </div>
   );
 }

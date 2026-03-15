@@ -44,6 +44,8 @@ export interface FileBrowserProps {
   header?: JSX.Element;
   /** Actions rendered on the right side of the Explorer sidebar header */
   sidebarHeaderActions?: JSX.Element;
+  /** Actions rendered at the end of the main file browser toolbar */
+  toolbarEndActions?: JSX.Element;
   /** Sidebar width in pixels */
   sidebarWidth?: number;
   /** Persisted sidebar width storage key (defaults to a shared user preference key) */
@@ -100,6 +102,7 @@ export function FileBrowser(props: FileBrowserProps) {
         class={props.class}
         header={props.header}
         sidebarHeaderActions={props.sidebarHeaderActions}
+        toolbarEndActions={props.toolbarEndActions}
         sidebarResizable={props.sidebarResizable}
         hideSidebarOnMobile={props.hideSidebarOnMobile}
         contextMenuCallbacks={props.contextMenuCallbacks}
@@ -118,6 +121,7 @@ interface FileBrowserInnerProps {
   class?: string;
   header?: JSX.Element;
   sidebarHeaderActions?: JSX.Element;
+  toolbarEndActions?: JSX.Element;
   sidebarResizable?: boolean;
   hideSidebarOnMobile?: boolean;
   contextMenuCallbacks?: ContextMenuCallbacks;
@@ -189,13 +193,13 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   });
 
   // Keyboard shortcut for filter (Ctrl/Cmd + F) – scoped to this FileBrowser instance.
-	  const handleKeyDown = (e: KeyboardEvent) => {
-	    if (!(e.metaKey || e.ctrlKey)) return;
-	    if (e.key.toLowerCase() !== 'f') return;
-	    e.preventDefault();
-	    ctx.setFilterActive(true);
-	    deferAfterPaint(() => filterInputRef?.focus());
-	  };
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    if (e.key.toLowerCase() !== 'f') return;
+    e.preventDefault();
+    ctx.setFilterActive(true);
+    deferAfterPaint(() => filterInputRef?.focus());
+  };
 
   const showSidebar = () => !ctx.sidebarCollapsed() || !isMobile();
 
@@ -239,7 +243,10 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
         {/* Main file view area */}
         <div class="flex-1 min-w-0 flex flex-col">
           {/* Toolbar */}
-          <FileBrowserToolbar filterInputRef={(el) => (filterInputRef = el)} />
+          <FileBrowserToolbar
+            filterInputRef={(el) => (filterInputRef = el)}
+            endActions={props.toolbarEndActions}
+          />
 
           {/* File view (list or grid) */}
           <div

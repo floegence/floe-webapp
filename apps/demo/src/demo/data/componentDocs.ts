@@ -1851,6 +1851,11 @@ export const fileBrowserDoc: ComponentDoc = {
       type: '(item: FileItem) => void',
       description: 'Callback when an item is opened.',
     },
+    {
+      name: 'toolbarEndActions',
+      type: 'JSX.Element',
+      description: 'Optional actions rendered at the end of the main toolbar.',
+    },
   ],
   usage: {
     whenToUse: [
@@ -1880,6 +1885,7 @@ function Example() {
         files={fileTree}
         initialPath="/src"
         initialViewMode="list"
+        toolbarEndActions={<button type="button">Refresh</button>}
         onNavigate={(path) => console.log('Navigate:', path)}
         onSelect={(items) => console.log('Selected:', items)}
         onOpen={(item) => console.log('Open:', item.name)}
