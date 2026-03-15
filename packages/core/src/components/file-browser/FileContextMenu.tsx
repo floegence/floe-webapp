@@ -27,6 +27,13 @@ const CopyIcon = (props: { class?: string }) => (
   </svg>
 );
 
+const ClipboardIcon = (props: { class?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+    <rect width="14" height="16" x="5" y="4" rx="2" />
+    <path d="M9 4.5h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v.5a1 1 0 0 0 1 1Z" />
+  </svg>
+);
+
 const SparklesIcon = (props: { class?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
     <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
@@ -85,6 +92,103 @@ export interface FileContextMenuProps {
   hideItems?: HideItemsValue;
 }
 
+export function createDefaultContextMenuItems(callbacks?: ContextMenuCallbacks): ContextMenuItem[] {
+  // Keep the menu business-neutral: only show optional actions when the host binds a handler.
+  const hasAskAgent = !!callbacks?.onAskAgent;
+  const hasCopyName = !!callbacks?.onCopyName;
+
+  return [
+    {
+      id: 'duplicate',
+      label: 'Duplicate',
+      type: 'duplicate',
+      icon: CopyIcon,
+      shortcut: 'Cmd+D',
+      separator: !hasCopyName && !hasAskAgent,
+    },
+    ...(hasCopyName
+      ? ([
+          {
+            id: 'copy-name',
+            label: 'Copy Name',
+            type: 'copy-name',
+            icon: ClipboardIcon,
+            separator: !hasAskAgent,
+          },
+        ] satisfies ContextMenuItem[])
+      : []),
+    ...(hasAskAgent
+      ? ([
+          {
+            id: 'ask-agent',
+            label: 'Ask Agent',
+            type: 'ask-agent',
+            icon: SparklesIcon,
+            separator: true,
+          },
+        ] satisfies ContextMenuItem[])
+      : []),
+    {
+      id: 'copy-to',
+      label: 'Copy to...',
+      type: 'copy-to',
+      icon: FolderCopyIcon,
+    },
+    {
+      id: 'move-to',
+      label: 'Move to...',
+      type: 'move-to',
+      icon: MoveIcon,
+      separator: true,
+    },
+    {
+      id: 'rename',
+      label: 'Rename',
+      type: 'rename',
+      icon: PencilIcon,
+      shortcut: 'Enter',
+    },
+    {
+      id: 'delete',
+      label: 'Delete',
+      type: 'delete',
+      icon: TrashIcon,
+      shortcut: 'Del',
+    },
+  ];
+}
+
+export function dispatchContextMenuAction(item: ContextMenuItem, items: FileItem[], callbacks?: ContextMenuCallbacks) {
+  switch (item.type) {
+    case 'duplicate':
+      callbacks?.onDuplicate?.(items);
+      break;
+    case 'copy-name':
+      callbacks?.onCopyName?.(items);
+      break;
+    case 'ask-agent':
+      callbacks?.onAskAgent?.(items);
+      break;
+    case 'copy-to':
+      callbacks?.onCopyTo?.(items);
+      break;
+    case 'move-to':
+      callbacks?.onMoveTo?.(items);
+      break;
+    case 'delete':
+      callbacks?.onDelete?.(items);
+      break;
+    case 'rename':
+      if (items.length === 1) {
+        callbacks?.onRename?.(items[0]!);
+      }
+      break;
+    case 'custom':
+      item.onAction?.(items);
+      break;
+  }
+}
+
 /**
  * Context menu for file browser items
  */
@@ -95,60 +199,6 @@ export function FileContextMenu(props: FileContextMenuProps) {
 
   // Track the menu position. Start off-screen, then adjust after the first render.
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
-
-  const defaultItems = (): ContextMenuItem[] => {
-    // Keep the menu business-neutral: only show "Ask Agent" when the host binds a handler.
-    const hasAskAgent = !!props.callbacks?.onAskAgent;
-
-    return [
-      {
-        id: 'duplicate',
-        label: 'Duplicate',
-        type: 'duplicate',
-        icon: CopyIcon,
-        shortcut: 'Cmd+D',
-        separator: !hasAskAgent,
-      },
-      ...(hasAskAgent
-        ? ([
-            {
-              id: 'ask-agent',
-              label: 'Ask Agent',
-              type: 'ask-agent',
-              icon: SparklesIcon,
-              separator: true,
-            },
-          ] satisfies ContextMenuItem[])
-        : []),
-      {
-        id: 'copy-to',
-        label: 'Copy to...',
-        type: 'copy-to',
-        icon: FolderCopyIcon,
-      },
-      {
-        id: 'move-to',
-        label: 'Move to...',
-        type: 'move-to',
-        icon: MoveIcon,
-        separator: true,
-      },
-      {
-        id: 'rename',
-        label: 'Rename',
-        type: 'rename',
-        icon: PencilIcon,
-        shortcut: 'Enter',
-      },
-      {
-        id: 'delete',
-        label: 'Delete',
-        type: 'delete',
-        icon: TrashIcon,
-        shortcut: 'Del',
-      },
-    ];
-  };
 
   // Build final menu items
   const menuItems = () => {
@@ -169,7 +219,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
     };
 
     // Filter out hidden items
-    let items = defaultItems();
+    let items = createDefaultContextMenuItems(props.callbacks);
     const hiddenTypes = resolveHideItems();
     if (hiddenTypes.length > 0) {
       items = items.filter((item) => !hiddenTypes.includes(item.type as BuiltinContextMenuAction));
@@ -189,36 +239,10 @@ export function FileContextMenu(props: FileContextMenuProps) {
     ctx.hideContextMenu();
 
     // Defer action execution so the close animation can paint first.
-    const type = item.type;
     const items = [...targetItems];
     const callbacks = props.callbacks;
-    const onAction = item.onAction;
     deferAfterPaint(() => {
-      switch (type) {
-        case 'duplicate':
-          callbacks?.onDuplicate?.(items);
-          break;
-        case 'ask-agent':
-          callbacks?.onAskAgent?.(items);
-          break;
-        case 'copy-to':
-          callbacks?.onCopyTo?.(items);
-          break;
-        case 'move-to':
-          callbacks?.onMoveTo?.(items);
-          break;
-        case 'delete':
-          callbacks?.onDelete?.(items);
-          break;
-        case 'rename':
-          if (items.length === 1) {
-            callbacks?.onRename?.(items[0]!);
-          }
-          break;
-        case 'custom':
-          onAction?.(items);
-          break;
-      }
+      dispatchContextMenuAction(item, items, callbacks);
     });
   };
 
