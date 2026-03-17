@@ -11,6 +11,7 @@ import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { ResizeHandle } from '../layout/ResizeHandle';
+import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 
 export interface FileListViewProps {
   class?: string;
@@ -732,6 +733,7 @@ function FileListItem(props: FileListItemProps) {
   return (
     <button
       type="button"
+      {...fileBrowserTouchTargetAttrs}
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}

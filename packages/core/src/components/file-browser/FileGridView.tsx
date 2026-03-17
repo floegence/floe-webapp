@@ -8,6 +8,7 @@ import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../cont
 import { FolderIcon, getFileIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
+import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 
 export interface FileGridViewProps {
   class?: string;
@@ -479,6 +480,7 @@ function FileGridItem(props: FileGridItemProps) {
   return (
     <button
       type="button"
+      {...fileBrowserTouchTargetAttrs}
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
