@@ -29,6 +29,7 @@ const sections = [
   { id: 'ui-floating-window', label: 'Floating Window' },
   { id: 'ui-command-palette', label: 'Command Palette' },
   { id: 'ui-file-browser', label: 'File Browser' },
+  { id: 'ui-mobile-keyboard', label: 'Mobile Keyboard' },
   { id: 'ui-quote-block', label: 'Quote Block' },
   { id: 'ui-highlight-block', label: 'Highlight Block' },
   { id: 'ui-processing-indicator', label: 'Processing Indicator' },

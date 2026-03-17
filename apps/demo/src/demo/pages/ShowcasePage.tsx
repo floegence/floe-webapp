@@ -34,6 +34,7 @@ import {
   pieChartDoc,
   // Command
   commandPaletteDoc,
+  mobileKeyboardDoc,
   // Stepper & Wizard
   stepperDoc,
   wizardDoc,
@@ -124,6 +125,7 @@ import {
   DataBarChart,
   DataPieChart,
   MonitoringChart,
+  MobileKeyboard,
   // Stepper & Wizard
   Stepper,
   useWizard,
@@ -3664,6 +3666,241 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PropsTable props={barChartDoc.props} componentName="DataBarChart" />
           <PropsTable props={pieChartDoc.props} componentName="DataPieChart" />
         </div>
+      </div>
+
+      {/* ================================================================
+          Mobile Keyboard
+          ================================================================ */}
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-mobile-keyboard"
+          title="Mobile Keyboard"
+          description="Terminal-oriented full web keyboard that owns the whole touch input session without relying on the mobile system keyboard."
+        />
+
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-3">
+            <p class="text-[11px] text-muted-foreground">
+              This version is intentionally a full web keyboard instead of an accessory dock. It
+              keeps terminal actions, punctuation, letters, symbols, and arrows inside one touch
+              surface, so the host no longer competes with the mobile IME for focus or key events.
+            </p>
+
+            {(() => {
+              const [visible, setVisible] = createSignal(false);
+              const [inputLine, setInputLine] = createSignal('');
+              const [history, setHistory] = createSignal<string[]>([
+                '$ Terminal keyboard demo',
+              ]);
+              const commandSuggestions = [
+                'help',
+                'pwd',
+                'ls -la',
+                'git status',
+                'cat README.md',
+                'clear',
+                'date',
+                'git diff',
+                'echo hello',
+                'echo $PATH',
+              ] as const;
+              let terminalRef: HTMLDivElement | undefined;
+
+              const suggestionItems = createMemo(() => {
+                const normalized = inputLine().trim().toLowerCase();
+                const historyMatches = history()
+                  .filter((line) => line.startsWith('$ '))
+                  .map((line) => line.slice(2))
+                  .reverse()
+                  .filter((line) => line && (!normalized || line.toLowerCase().startsWith(normalized)));
+                const builtins = [...commandSuggestions].filter(
+                  (line) => !normalized || line.startsWith(normalized),
+                );
+
+                return [...new Set([...historyMatches, ...builtins])].slice(0, 4);
+              });
+
+              const scrollToBottom = () => {
+                if (terminalRef) terminalRef.scrollTop = terminalRef.scrollHeight;
+              };
+
+              const handleKey = (key: string) => {
+                if (key === '\r') {
+                  const cmd = inputLine();
+                  const trimmed = cmd.trim();
+                  if (!trimmed) return;
+
+                  setHistory((prev) => [...prev, `$ ${cmd}`]);
+
+                  if (trimmed === 'help') {
+                    setHistory((prev) => [
+                      ...prev,
+                      'available commands: help, pwd, ls, clear, date, echo <text>, git status, git diff, git log --oneline, cat README.md',
+                    ]);
+                  } else if (trimmed === 'pwd') {
+                    setHistory((prev) => [...prev, '/workspace/demo']);
+                  } else if (trimmed === 'ls' || trimmed === 'ls -la') {
+                    setHistory((prev) => [
+                      ...prev,
+                      trimmed === 'ls'
+                        ? 'README.md  package.json  src  scripts'
+                        : 'drwxr-xr-x  src\n-rw-r--r--  README.md\n-rw-r--r--  package.json\n-rwxr-xr-x  scripts',
+                    ]);
+                  } else if (trimmed === 'clear') {
+                    setHistory([]);
+                  } else if (trimmed === 'date') {
+                    setHistory((prev) => [...prev, new Date().toString()]);
+                  } else if (trimmed === 'git status') {
+                    setHistory((prev) => [
+                      ...prev,
+                      'On branch main\nnothing to commit, working tree clean',
+                    ]);
+                  } else if (trimmed === 'git diff') {
+                    setHistory((prev) => [
+                      ...prev,
+                      'diff --git a/src/app.ts b/src/app.ts\nindex 1234567..89abcde 100644',
+                    ]);
+                  } else if (trimmed === 'git log --oneline') {
+                    setHistory((prev) => [
+                      ...prev,
+                      '89abcde refine mobile keyboard\n1234567 initial terminal widget',
+                    ]);
+                  } else if (trimmed === 'cat README.md') {
+                    setHistory((prev) => [
+                      ...prev,
+                      '# Floe Webapp\nA terminal-first demo workspace.',
+                    ]);
+                  } else if (trimmed.startsWith('echo ')) {
+                    setHistory((prev) => [...prev, trimmed.slice(5)]);
+                  } else {
+                    setHistory((prev) => [
+                      ...prev,
+                      `command not found: ${trimmed.split(' ')[0]}`,
+                    ]);
+                  }
+
+                  setInputLine('');
+                  queueMicrotask(scrollToBottom);
+                  return;
+                }
+
+                if (key === '\x7f') {
+                  setInputLine((prev) => prev.slice(0, -1));
+                  return;
+                }
+
+                if (key === '\t') {
+                  setInputLine((prev) => `${prev}  `);
+                  return;
+                }
+
+                if (key === '\x1b' || key.startsWith('\x1b[')) {
+                  setHistory((prev) => [...prev, `navigation: ${JSON.stringify(key)}`]);
+                  queueMicrotask(scrollToBottom);
+                  return;
+                }
+
+                if (key.charCodeAt(0) < 32) {
+                  const letter = String.fromCharCode(key.charCodeAt(0) + 64);
+                  setHistory((prev) => [...prev, `control: ^${letter}`]);
+                  queueMicrotask(scrollToBottom);
+                  return;
+                }
+
+                setInputLine((prev) => prev + key);
+              };
+
+              return (
+                <>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={visible() ? 'primary' : 'outline'}
+                      onClick={() => setVisible((value) => !value)}
+                    >
+                      {visible() ? 'Hide Keyboard' : 'Show Keyboard'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setHistory([
+                          '$ Terminal keyboard demo',
+                        ]);
+                        setInputLine('');
+                      }}
+                    >
+                      Clear
+                    </Button>
+                    <span class="text-[11px] text-muted-foreground">
+                      Full web keyboard:
+                      {' '}
+                      <code class="font-mono">{visible() ? 'active' : 'hidden'}</code>
+                    </span>
+                  </div>
+
+                  <div
+                    ref={terminalRef}
+                    class="bg-black/80 rounded-md p-3 min-h-[120px] max-h-[220px] overflow-y-auto font-mono text-xs text-green-400 leading-relaxed"
+                  >
+                    <For each={history()}>{(line) => <div>{line}</div>}</For>
+                    <div>
+                      <span class="text-green-300">$ </span>
+                      <span>{inputLine()}</span>
+                      <span class="inline-block w-[7px] h-[14px] bg-green-400 ml-px animate-pulse" />
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="rounded-md border border-border bg-muted/20 p-3">
+                      <p class="text-[11px] font-semibold">Terminal Actions First</p>
+                      <p class="mt-1 text-[11px] text-muted-foreground">
+                        Esc, Tab, Ctrl, Alt, Backspace, Enter, and terminal punctuation stay in a
+                        dedicated utility strip instead of hiding behind system keyboard modes.
+                      </p>
+                    </div>
+                    <div class="rounded-md border border-border bg-muted/20 p-3">
+                      <p class="text-[11px] font-semibold">Smart Suggestions</p>
+                      <p class="mt-1 text-[11px] text-muted-foreground">
+                        Candidate commands sit in a dedicated suggestion rail, separate from the
+                        keycaps, and update from the current terminal input instead of mimicking a
+                        system IME bar.
+                      </p>
+                    </div>
+                    <div class="rounded-md border border-border bg-muted/20 p-3">
+                      <p class="text-[11px] font-semibold">Owns The Input Session</p>
+                      <p class="mt-1 text-[11px] text-muted-foreground">
+                        The component emits terminal payloads directly, so there is no focus tug of
+                        war with the mobile browser&apos;s native IME.
+                      </p>
+                    </div>
+                  </div>
+
+                  <MobileKeyboard
+                    visible={visible()}
+                    quickInserts={['|', '/', '-', '_', '~', '$']}
+                    suggestions={suggestionItems()}
+                    onKey={handleKey}
+                    onDismiss={() => setVisible(false)}
+                    onSuggestionSelect={setInputLine}
+                  />
+                </>
+              );
+            })()}
+          </PanelContent>
+        </Panel>
+
+        <UsageGuidelines
+          whenToUse={mobileKeyboardDoc.usage.whenToUse}
+          bestPractices={mobileKeyboardDoc.usage.bestPractices}
+          avoid={mobileKeyboardDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="MobileKeyboard"
+          code={mobileKeyboardDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={mobileKeyboardDoc.props} componentName="MobileKeyboard" />
       </div>
     </div>
   );

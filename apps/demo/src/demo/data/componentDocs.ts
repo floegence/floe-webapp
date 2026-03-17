@@ -3494,3 +3494,129 @@ import { Grid, List, LayoutGrid } from '@floegence/floe-webapp-core/icons';
     },
   ],
 };
+
+// ===========================
+// MobileKeyboard Component
+// ===========================
+export const mobileKeyboardDoc: ComponentDoc = {
+  name: 'MobileKeyboard',
+  description:
+    'Terminal-oriented web full keyboard for touch devices. It owns the whole input session inside the component, exposes terminal-safe key payloads, renders candidates in a dedicated suggestion rail, keeps arrows in a dedicated direction pad, provides an explicit dismiss control, and avoids conflicts with the mobile system keyboard.',
+  props: [
+    {
+      name: 'visible',
+      type: 'boolean',
+      description: 'Whether the keyboard is visible.',
+    },
+    {
+      name: 'onKey',
+      type: '(key: string) => void',
+      description:
+        'Called whenever a key resolves to terminal output, such as "\\r", "\\x7f", "\\x1b[A", or printable text.',
+    },
+    {
+      name: 'onDismiss',
+      type: '() => void',
+      description:
+        'Optional callback for the built-in top-right keyboard dismiss button.',
+    },
+    {
+      name: 'quickInserts',
+      type: 'string[]',
+      description:
+        'Additional terminal-friendly quick insert keys shown in the utility strip. Defaults to "|", "/", "-", "_", and "~".',
+    },
+    {
+      name: 'suggestions',
+      type: 'readonly string[]',
+      description:
+        'Optional terminal suggestions rendered in a dedicated candidate rail above the utility strip.',
+    },
+    {
+      name: 'onSuggestionSelect',
+      type: '(suggestion: string) => void',
+      description:
+        'Called when the user taps one of the suggested terminal candidates so the host can update the current prompt value.',
+    },
+    {
+      name: 'class',
+      type: 'string',
+      description: 'Additional CSS class on the root container.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Mobile terminal / SSH interfaces where you need a stable touch keyboard without relying on the system IME',
+      'Touch-first command surfaces that need Esc, Tab, arrows, Ctrl, Alt, and terminal punctuation in one place',
+      'Embedded terminal views where the host wants full control over the input session',
+    ],
+    bestPractices: [
+      'Treat `visible` as the terminal input session toggle',
+      'Provide `onDismiss` in mobile terminal layouts so users can collapse the keyboard without leaving the terminal surface',
+      'Keep the host terminal buffer as the single source of truth and append the emitted payloads there',
+      'Compute command candidates in the host terminal layer and pass them through `suggestions` instead of mixing them into the keycap layout',
+      'Use the dedicated direction pad for cursor navigation instead of crowding arrows into the main alpha rows',
+      'Reserve this component for terminal-style ASCII input rather than general multilingual text entry',
+    ],
+    avoid: [
+      'Using it as a generic form keyboard for arbitrary text fields',
+      'Combining it with a focused native textarea that also tries to own the same input session',
+    ],
+  },
+  examples: [
+    {
+      title: 'Basic Usage',
+      code: `import { MobileKeyboard } from '@floegence/floe-webapp-core/ui';
+import { createSignal } from 'solid-js';
+
+function TerminalView() {
+  const [visible, setVisible] = createSignal(false);
+  const [line, setLine] = createSignal('');
+  const [suggestions, setSuggestions] = createSignal([
+    'help',
+    'pwd',
+    'ls -la',
+    'git status',
+  ]);
+
+  return (
+    <MobileKeyboard
+      visible={visible()}
+      suggestions={suggestions()}
+      onDismiss={() => setVisible(false)}
+      onSuggestionSelect={(suggestion) => setLine(suggestion)}
+      onKey={(chunk) => {
+        if (chunk === '\\r') {
+          terminal.write('\\r');
+          setLine('');
+          return;
+        }
+
+        if (chunk === '\\x7f') {
+          setLine((prev) => prev.slice(0, -1));
+          terminal.write(chunk);
+          return;
+        }
+
+        setLine((prev) => prev + chunk);
+        terminal.write(chunk);
+      }}
+    />
+  );
+}`,
+      language: 'tsx',
+    },
+    {
+      title: 'Custom Quick Inserts',
+      code: `<MobileKeyboard
+  visible={visible()}
+  quickInserts={['|', '/', '-', '_', '~', '$']}
+  suggestions={['pwd', 'ls -la', 'git status', 'git diff']}
+  onDismiss={() => setVisible(false)}
+  onSuggestionSelect={setPrompt}
+  onKey={handleKey}
+/>`,
+      language: 'tsx',
+    },
+  ],
+};

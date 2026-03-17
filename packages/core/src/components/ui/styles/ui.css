@@ -1005,4 +1005,471 @@
       font-size: 10px;
     }
   }
+
+  /* ============================================
+     Mobile Keyboard
+     ============================================ */
+
+  .mobile-keyboard-root {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px)));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 0.22s cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 0.18s ease;
+  }
+
+  .mobile-keyboard-root.mobile-keyboard-visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-keyboard-panel {
+    position: relative;
+    --mobile-keyboard-panel-bg: color-mix(in srgb, var(--sidebar) 88%, var(--background));
+    --mobile-keyboard-panel-border: color-mix(in srgb, var(--border) 88%, transparent);
+    --mobile-keyboard-key-bg: color-mix(in srgb, var(--background) 94%, var(--sidebar));
+    --mobile-keyboard-key-fg: color-mix(in srgb, var(--foreground) 96%, black);
+    --mobile-keyboard-key-border: color-mix(in srgb, var(--border) 94%, black 6%);
+    --mobile-keyboard-key-utility-bg: color-mix(in srgb, var(--secondary) 72%, var(--background));
+    --mobile-keyboard-key-utility-fg: color-mix(in srgb, var(--foreground) 88%, black);
+    --mobile-keyboard-key-terminal-bg: color-mix(
+      in srgb,
+      var(--terminal-background) 92%,
+      black
+    );
+    --mobile-keyboard-key-terminal-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 26%,
+      transparent
+    );
+    --mobile-keyboard-key-terminal-fg: var(--terminal-foreground);
+    --mobile-keyboard-key-active-bg: var(--terminal-background);
+    --mobile-keyboard-key-active-fg: var(--terminal-foreground);
+    --mobile-keyboard-key-active-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 32%,
+      transparent
+    );
+    --mobile-keyboard-popup-bg: var(--mobile-keyboard-key-active-bg);
+    --mobile-keyboard-popup-fg: var(--mobile-keyboard-key-active-fg);
+    --mobile-keyboard-popup-border: var(--mobile-keyboard-key-active-border);
+    --mobile-keyboard-suggestion-bg: color-mix(in srgb, var(--background) 92%, transparent);
+    --mobile-keyboard-suggestion-border: color-mix(in srgb, var(--primary) 22%, var(--border));
+    --mobile-keyboard-suggestion-fg: color-mix(in srgb, var(--foreground) 88%, black);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mobile-keyboard-panel-bg) 96%, transparent) 0%,
+      var(--mobile-keyboard-panel-bg) 100%
+    );
+    border-top: 1px solid var(--mobile-keyboard-panel-border);
+    box-shadow:
+      0 -12px 28px rgb(0 0 0 / 0.18),
+      inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    backdrop-filter: blur(14px);
+    overflow: visible;
+  }
+
+  .dark .mobile-keyboard-panel {
+    --mobile-keyboard-panel-bg: color-mix(
+      in srgb,
+      var(--activity-bar) 88%,
+      var(--terminal-background)
+    );
+    --mobile-keyboard-panel-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 14%,
+      transparent
+    );
+    --mobile-keyboard-key-bg: color-mix(in srgb, var(--card) 72%, white 7%);
+    --mobile-keyboard-key-fg: color-mix(in srgb, var(--foreground) 98%, white 2%);
+    --mobile-keyboard-key-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 22%,
+      transparent
+    );
+    --mobile-keyboard-key-utility-bg: color-mix(
+      in srgb,
+      var(--activity-bar) 52%,
+      var(--card)
+    );
+    --mobile-keyboard-key-utility-fg: color-mix(
+      in srgb,
+      var(--terminal-foreground) 88%,
+      white
+    );
+    --mobile-keyboard-key-terminal-bg: color-mix(
+      in srgb,
+      var(--terminal-background) 90%,
+      white 4%
+    );
+    --mobile-keyboard-key-terminal-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 28%,
+      transparent
+    );
+    --mobile-keyboard-key-active-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 40%,
+      transparent
+    );
+    --mobile-keyboard-popup-bg: color-mix(
+      in srgb,
+      var(--terminal-foreground) 92%,
+      white 8%
+    );
+    --mobile-keyboard-popup-fg: color-mix(
+      in srgb,
+      var(--terminal-background) 92%,
+      black
+    );
+    --mobile-keyboard-popup-border: color-mix(
+      in srgb,
+      var(--terminal-background) 24%,
+      transparent
+    );
+    --mobile-keyboard-suggestion-bg: color-mix(
+      in srgb,
+      var(--card) 68%,
+      transparent
+    );
+    --mobile-keyboard-suggestion-border: color-mix(
+      in srgb,
+      var(--terminal-foreground) 20%,
+      transparent
+    );
+    --mobile-keyboard-suggestion-fg: color-mix(
+      in srgb,
+      var(--terminal-foreground) 94%,
+      white
+    );
+  }
+
+  .mobile-keyboard-rail-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem;
+  }
+
+  .mobile-keyboard-dismiss {
+    flex: 0 0 auto;
+    min-height: 1.875rem;
+    padding: 0 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--error) 68%, black 8%);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--error) 86%, var(--terminal-background));
+    color: var(--error-foreground);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow:
+      0 8px 18px rgb(0 0 0 / 0.18),
+      inset 0 1px 0 color-mix(in srgb, white 14%, transparent);
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      transform 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .mobile-keyboard-dismiss:hover,
+  .mobile-keyboard-dismiss:active {
+    background: color-mix(in srgb, var(--error) 92%, var(--terminal-background));
+    border-color: color-mix(in srgb, var(--error) 80%, black 12%);
+    transform: translateY(1px);
+    box-shadow:
+      0 6px 14px rgb(0 0 0 / 0.16),
+      inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  }
+
+  .mobile-keyboard-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    max-height: min(18rem, 56vh);
+    padding: 0.5rem 0.5rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+
+  .mobile-keyboard-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-keyboard-suggestion-rail,
+  .mobile-keyboard-top-strip {
+    display: flex;
+    gap: 0.3125rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.0625rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .mobile-keyboard-suggestion-rail::-webkit-scrollbar,
+  .mobile-keyboard-top-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-keyboard-suggestion {
+    min-height: 1.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--mobile-keyboard-suggestion-border);
+    border-left-width: 0.1875rem;
+    border-radius: 0;
+    background: var(--mobile-keyboard-suggestion-bg);
+    color: var(--mobile-keyboard-suggestion-fg);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .mobile-keyboard-suggestion:hover,
+  .mobile-keyboard-suggestion:active {
+    background: color-mix(in srgb, var(--mobile-keyboard-suggestion-bg) 76%, var(--primary));
+    border-color: color-mix(in srgb, var(--primary) 36%, var(--mobile-keyboard-suggestion-border));
+  }
+
+  .mobile-keyboard-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .mobile-keyboard-row {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .mobile-keyboard-bottom-zone {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .mobile-keyboard-direction-pad {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.25rem;
+  }
+
+  .mobile-keyboard-key {
+    min-height: 2.25rem;
+    padding: 0 0.375rem;
+    border: 1px solid var(--mobile-keyboard-key-border);
+    border-radius: 0;
+    background: var(--mobile-keyboard-key-bg);
+    color: var(--mobile-keyboard-key-fg);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 10%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, black 18%, transparent);
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      color 120ms ease,
+      transform 120ms ease,
+      box-shadow 120ms ease;
+    flex: 1 1 0;
+  }
+
+  .mobile-keyboard-key:hover {
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--mobile-keyboard-key-border));
+  }
+
+  .mobile-keyboard-key-terminal {
+    background: var(--mobile-keyboard-key-terminal-bg);
+    border-color: var(--mobile-keyboard-key-terminal-border);
+    color: var(--mobile-keyboard-key-terminal-fg);
+  }
+
+  .mobile-keyboard-key-modifier,
+  .mobile-keyboard-key-mode,
+  .mobile-keyboard-key-utility {
+    background: var(--mobile-keyboard-key-utility-bg);
+    color: var(--mobile-keyboard-key-utility-fg);
+  }
+
+  .mobile-keyboard-key-mode {
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-keyboard-key-wide {
+    flex-grow: 1.35;
+  }
+
+  .mobile-keyboard-key-space {
+    flex-grow: 4.1;
+    letter-spacing: 0.06em;
+  }
+
+  .mobile-keyboard-key-compact {
+    min-height: 2rem;
+    min-width: 2.75rem;
+    padding: 0 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex: 0 0 auto;
+  }
+
+  .mobile-keyboard-key-backspace {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  .mobile-keyboard-key-active,
+  .mobile-keyboard-key-pressed,
+  .mobile-keyboard-key[aria-pressed='true'] {
+    background: var(--mobile-keyboard-key-active-bg);
+    border-color: var(--mobile-keyboard-key-active-border);
+    color: var(--mobile-keyboard-key-active-fg);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--terminal-foreground) 12%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--terminal-background) 16%, transparent);
+    transform: translateY(1px);
+  }
+
+  .mobile-keyboard-direction-key {
+    min-width: 2.05rem;
+    flex: 0 0 2.05rem;
+    padding-inline: 0;
+    font-size: 0.875rem;
+  }
+
+  .mobile-keyboard-key-bottom-mode {
+    flex: 0 0 3.5rem;
+    padding-inline: 0.5rem;
+  }
+
+  .mobile-keyboard-key-bottom-space {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mobile-keyboard-key-bottom-enter {
+    flex: 0 0 4.25rem;
+    padding-inline: 0.625rem;
+  }
+
+  .mobile-keyboard-popup {
+    position: absolute;
+    z-index: 2;
+    min-width: 2.375rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--mobile-keyboard-popup-border);
+    border-radius: 0;
+    background: var(--mobile-keyboard-popup-bg);
+    color: var(--mobile-keyboard-popup-fg);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translate(-50%, calc(-100% - 0.5rem)) scale(0.96);
+    transform-origin: center bottom;
+    box-shadow:
+      0 10px 24px rgb(0 0 0 / 0.18),
+      inset 0 1px 0 color-mix(in srgb, var(--mobile-keyboard-popup-fg) 10%, transparent);
+    opacity: 0;
+    transition:
+      opacity 90ms ease,
+      transform 90ms ease;
+  }
+
+  .mobile-keyboard-popup-visible {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 0.625rem)) scale(1);
+  }
+
+  @media (max-width: 640px) {
+    .mobile-keyboard-scroll {
+      gap: 0.3125rem;
+      max-height: min(15.5rem, 48vh);
+      padding-inline: 0.4375rem;
+      padding-top: 0.4375rem;
+    }
+
+    .mobile-keyboard-suggestion-rail,
+    .mobile-keyboard-top-strip,
+    .mobile-keyboard-rail-shell,
+    .mobile-keyboard-main,
+    .mobile-keyboard-row,
+    .mobile-keyboard-direction-pad {
+      gap: 0.25rem;
+    }
+
+    .mobile-keyboard-suggestion {
+      min-height: 1.5rem;
+      padding-inline: 0.625rem;
+      font-size: 0.625rem;
+    }
+
+    .mobile-keyboard-key {
+      min-height: 2rem;
+      font-size: 0.75rem;
+    }
+
+    .mobile-keyboard-key-compact {
+      min-height: 1.875rem;
+      min-width: 2.5rem;
+      padding-inline: 0.625rem;
+      font-size: 0.625rem;
+    }
+
+    .mobile-keyboard-key-backspace {
+      font-size: 1rem;
+    }
+
+    .mobile-keyboard-dismiss {
+      min-height: 1.75rem;
+      padding-inline: 0.625rem;
+      font-size: 0.5625rem;
+    }
+
+    .mobile-keyboard-direction-key {
+      min-width: 1.875rem;
+      flex-basis: 1.875rem;
+      font-size: 0.8125rem;
+    }
+
+    .mobile-keyboard-key-bottom-mode {
+      flex-basis: 3rem;
+    }
+
+    .mobile-keyboard-key-bottom-enter {
+      flex-basis: 3.75rem;
+    }
+  }
 }

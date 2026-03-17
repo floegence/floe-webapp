@@ -1,6 +1,39 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 
+function splitRootArgs(argv) {
+  const passthroughArgs = [];
+  let useDist = false;
+
+  for (const arg of argv) {
+    if (arg === '--') {
+      continue;
+    }
+
+    if (arg === '--dist') {
+      useDist = true;
+      continue;
+    }
+
+    passthroughArgs.push(arg);
+  }
+
+  return {
+    passthroughArgs,
+    useDist,
+  };
+}
+
+function createPnpmScriptArgs(filter, script, passthroughArgs = []) {
+  return [
+    '--filter',
+    filter,
+    'run',
+    script,
+    ...passthroughArgs,
+  ];
+}
+
 function run(command, args, options = {}) {
   const child = spawn(command, args, {
     stdio: 'inherit',
@@ -24,7 +57,7 @@ function runOnce(command, args) {
 // This prevents confusing build-time missing-module errors when node_modules is stale.
 await runOnce('pnpm', ['install', '--frozen-lockfile']);
 
-const useDist = process.argv.includes('--dist');
+const { passthroughArgs, useDist } = splitRootArgs(process.argv.slice(2));
 
 if (useDist) {
   // Dist mode: demo consumes packages via dist outputs (same shape as downstream apps).
@@ -38,15 +71,15 @@ if (useDist) {
 const children = [
   ...(useDist
     ? [
-        run('pnpm', ['--filter', '@floegence/floe-webapp-core', 'dev']),
-        run('pnpm', ['--filter', '@floegence/floe-webapp-protocol', 'dev']),
-        run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev'], {
+        run('pnpm', createPnpmScriptArgs('@floegence/floe-webapp-core', 'dev')),
+        run('pnpm', createPnpmScriptArgs('@floegence/floe-webapp-protocol', 'dev')),
+        run('pnpm', createPnpmScriptArgs('@floegence/floe-webapp-demo', 'dev', passthroughArgs), {
           env: { ...process.env, FLOE_DEMO_DEV_MODE: 'dist' },
         }),
       ]
     : [
         // Workspace mode (default): demo imports packages/* sources directly for instant HMR.
-        run('pnpm', ['--filter', '@floegence/floe-webapp-demo', 'dev'], {
+        run('pnpm', createPnpmScriptArgs('@floegence/floe-webapp-demo', 'dev', passthroughArgs), {
           env: { ...process.env, FLOE_DEMO_DEV_MODE: 'workspace' },
         }),
       ]),

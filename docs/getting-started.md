@@ -64,10 +64,22 @@ pnpm dev
 - The demo imports `packages/*` sources directly (fast startup + proper HMR, no dist rebuild loops)
 - Dist rebuilds (e.g. `make check`) won't spam HMR
 
+To expose the dev server to other devices on your LAN, pass the Vite host and port through the root script:
+
+```bash
+pnpm dev -- --host 0.0.0.0 --port 5173
+```
+
 If you want to emulate downstream consumption (demo imports packages via `dist/` outputs), run:
 
 ```bash
 pnpm dev:dist
+```
+
+The same passthrough works in dist mode:
+
+```bash
+pnpm dev:dist -- --host 0.0.0.0 --port 5173
 ```
 
 The demo uses the VSCode-style Shell layout from `@floegence/floe-webapp-core`:
