@@ -270,6 +270,24 @@ import {
   ConfigFileIcon,
   StyleFileIcon,
 } from '@floegence/floe-webapp-core/full';
+import {
+  DEFAULT_TERMINAL_SUGGESTION_PROVIDERS,
+  applyTerminalSessionSuggestion,
+  createTerminalSessionState,
+  createTerminalFullLineSuggestion,
+  createTerminalTokenSuggestion,
+  DEFAULT_TERMINAL_WORKSPACE_PROFILE,
+  dispatchTerminalSessionKey,
+  getTerminalPromptPreview,
+  getTerminalSessionSuggestions,
+  matchesTerminalSuggestionPrefix,
+  runTerminalMockCommand,
+  type TerminalCommandResult,
+  type TerminalRuntimeAdapter,
+  type TerminalSessionEffect,
+  type TerminalSessionTransition,
+  type TerminalSuggestionProvider,
+} from '@floegence/floe-webapp-core/terminal';
 
 export interface ShowcasePageProps {
   onOpenFile: (id: string) => void;
@@ -298,6 +316,209 @@ function SectionHeader(props: {
     </div>
   );
 }
+
+function createTerminalOutput(content: string): TerminalCommandResult {
+  return {
+    clear: false,
+    lines: [
+      {
+        type: 'output',
+        content,
+      },
+    ],
+  };
+}
+
+const SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS: readonly TerminalSuggestionProvider[] = [
+  ({ context }) => {
+    if (context.activeTokenIndex === 0 && context.tokens.length <= 1) {
+      return [
+        {
+          id: 'showcase-docker-ps',
+          label: 'docker ps',
+          detail: 'docker',
+          score: 127,
+        },
+        {
+          id: 'showcase-docker-build',
+          label: 'docker build .',
+          detail: 'docker',
+          score: 125,
+        },
+        {
+          id: 'showcase-ssh-prod',
+          label: 'ssh deploy@prod',
+          detail: 'ssh',
+          score: 123,
+        },
+        {
+          id: 'showcase-tmux-ls',
+          label: 'tmux ls',
+          detail: 'tmux',
+          score: 121,
+        },
+      ]
+        .filter((item) => matchesTerminalSuggestionPrefix(context, item))
+        .map((item) =>
+          createTerminalFullLineSuggestion(context, {
+            id: item.id,
+            kind: 'command',
+            label: item.label,
+            detail: item.detail,
+            score: item.score,
+          }),
+        );
+    }
+
+    if (context.command === 'docker' && context.activeTokenIndex > 0) {
+      return [
+        {
+          id: 'showcase-docker-token-ps',
+          label: 'docker ps',
+          insertText: 'ps',
+          matchText: 'ps',
+          detail: 'docker',
+          score: 132,
+        },
+        {
+          id: 'showcase-docker-token-build',
+          label: 'docker build .',
+          insertText: 'build .',
+          matchText: 'build',
+          detail: 'docker',
+          score: 128,
+        },
+        {
+          id: 'showcase-docker-token-logs',
+          label: 'docker logs --tail 100 app',
+          insertText: 'logs --tail 100 app',
+          matchText: 'logs',
+          detail: 'docker',
+          score: 124,
+        },
+      ]
+        .filter((item) => matchesTerminalSuggestionPrefix(context, item))
+        .map((item) =>
+          createTerminalTokenSuggestion(context, {
+            id: item.id,
+            kind: 'subcommand',
+            label: item.label,
+            insertText: item.insertText,
+            detail: item.detail,
+            score: item.score,
+          }),
+        );
+    }
+
+    if (context.command === 'ssh' && context.activeTokenIndex > 0) {
+      return [
+        {
+          id: 'showcase-ssh-token-prod',
+          label: 'ssh deploy@prod',
+          insertText: 'deploy@prod',
+          matchText: 'deploy@prod',
+          detail: 'ssh',
+          score: 130,
+        },
+        {
+          id: 'showcase-ssh-token-db',
+          label: 'ssh db-admin@staging',
+          insertText: 'db-admin@staging',
+          matchText: 'db-admin@staging',
+          detail: 'ssh',
+          score: 126,
+        },
+      ]
+        .filter((item) => matchesTerminalSuggestionPrefix(context, item))
+        .map((item) =>
+          createTerminalTokenSuggestion(context, {
+            id: item.id,
+            kind: 'subcommand',
+            label: item.label,
+            insertText: item.insertText,
+            detail: item.detail,
+            score: item.score,
+          }),
+        );
+    }
+
+    if (context.command === 'tmux' && context.activeTokenIndex > 0) {
+      return [
+        {
+          id: 'showcase-tmux-token-ls',
+          label: 'tmux ls',
+          insertText: 'ls',
+          matchText: 'ls',
+          detail: 'tmux',
+          score: 130,
+        },
+        {
+          id: 'showcase-tmux-token-attach',
+          label: 'tmux attach -t dev',
+          insertText: 'attach -t dev',
+          matchText: 'attach',
+          detail: 'tmux',
+          score: 128,
+        },
+        {
+          id: 'showcase-tmux-token-new',
+          label: 'tmux new -s dev',
+          insertText: 'new -s dev',
+          matchText: 'new',
+          detail: 'tmux',
+          score: 126,
+        },
+      ]
+        .filter((item) => matchesTerminalSuggestionPrefix(context, item))
+        .map((item) =>
+          createTerminalTokenSuggestion(context, {
+            id: item.id,
+            kind: 'subcommand',
+            label: item.label,
+            insertText: item.insertText,
+            detail: item.detail,
+            score: item.score,
+          }),
+        );
+    }
+
+    return [];
+  },
+  ...DEFAULT_TERMINAL_SUGGESTION_PROVIDERS,
+];
+
+const SHOWCASE_TERMINAL_COMMAND_EXECUTOR: TerminalRuntimeAdapter = (input, options) => {
+  const value = input.trim();
+
+  if (value === 'docker ps') {
+    return createTerminalOutput(
+      [
+        'CONTAINER ID   IMAGE               STATUS          NAMES',
+        '7fa31b0a91d2   floe/demo:latest    Up 18 minutes   floe-demo',
+      ].join('\n'),
+    );
+  }
+
+  if (value === 'docker build .') {
+    return createTerminalOutput(
+      [
+        '#1 [internal] load build definition from Dockerfile',
+        '#7 exporting to image',
+        'Successfully tagged floe/demo:latest',
+      ].join('\n'),
+    );
+  }
+
+  if (value === 'ssh deploy@prod') {
+    return createTerminalOutput('Connected to deploy@prod\nLast login: Tue Mar 17 20:30:00 2026');
+  }
+
+  if (value === 'tmux ls') {
+    return createTerminalOutput('dev: 1 windows (created Tue Mar 17 20:12:00 2026)');
+  }
+
+  return runTerminalMockCommand(input, options);
+};
 
 // Interactive Wizard Demo Component
 function WizardDemo() {
@@ -3681,133 +3902,85 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="space-y-3">
             <p class="text-[11px] text-muted-foreground">
-              This version is intentionally a full web keyboard instead of an accessory dock. It
-              keeps terminal actions, punctuation, letters, symbols, and arrows inside one touch
-              surface, so the host no longer competes with the mobile IME for focus or key events.
+              This version is intentionally a full web keyboard instead of an accessory dock. The
+              demo also injects app-level terminal extensions through the public terminal API, so
+              docker, ssh, and tmux suggestions/runtime live in the host app instead of being baked
+              into the core keyboard component.
             </p>
 
             {(() => {
               const [visible, setVisible] = createSignal(false);
-              const [inputLine, setInputLine] = createSignal('');
-              const [history, setHistory] = createSignal<string[]>([
-                '$ Terminal keyboard demo',
+              const [session, setSession] = createSignal(createTerminalSessionState());
+              const [lines, setLines] = createSignal<string[]>([
+                'Terminal keyboard demo ready.',
               ]);
-              const commandSuggestions = [
-                'help',
-                'pwd',
-                'ls -la',
-                'git status',
-                'cat README.md',
-                'clear',
-                'date',
-                'git diff',
-                'echo hello',
-                'echo $PATH',
-              ] as const;
+              const terminalProfile = DEFAULT_TERMINAL_WORKSPACE_PROFILE;
+              const terminalSuggestionProviders = SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS;
+              const terminalCommandExecutor = SHOWCASE_TERMINAL_COMMAND_EXECUTOR;
               let terminalRef: HTMLDivElement | undefined;
 
-              const suggestionItems = createMemo(() => {
-                const normalized = inputLine().trim().toLowerCase();
-                const historyMatches = history()
-                  .filter((line) => line.startsWith('$ '))
-                  .map((line) => line.slice(2))
-                  .reverse()
-                  .filter((line) => line && (!normalized || line.toLowerCase().startsWith(normalized)));
-                const builtins = [...commandSuggestions].filter(
-                  (line) => !normalized || line.startsWith(normalized),
-                );
-
-                return [...new Set([...historyMatches, ...builtins])].slice(0, 4);
-              });
+              const promptPreview = createMemo(() =>
+                getTerminalPromptPreview(session().editor),
+              );
+              const suggestionItems = createMemo(() =>
+                getTerminalSessionSuggestions(session(), {
+                  profile: terminalProfile,
+                  providers: terminalSuggestionProviders,
+                }),
+              );
 
               const scrollToBottom = () => {
                 if (terminalRef) terminalRef.scrollTop = terminalRef.scrollHeight;
               };
 
-              const handleKey = (key: string) => {
-                if (key === '\r') {
-                  const cmd = inputLine();
-                  const trimmed = cmd.trim();
-                  if (!trimmed) return;
+              const appendLines = (nextLines: string[]) => {
+                if (!nextLines.length) return;
+                setLines((prev) => [...prev, ...nextLines]);
+              };
 
-                  setHistory((prev) => [...prev, `$ ${cmd}`]);
+              const applySessionEffect = (effect: TerminalSessionEffect) => {
+                if (effect.type === 'none') return;
 
-                  if (trimmed === 'help') {
-                    setHistory((prev) => [
-                      ...prev,
-                      'available commands: help, pwd, ls, clear, date, echo <text>, git status, git diff, git log --oneline, cat README.md',
-                    ]);
-                  } else if (trimmed === 'pwd') {
-                    setHistory((prev) => [...prev, '/workspace/demo']);
-                  } else if (trimmed === 'ls' || trimmed === 'ls -la') {
-                    setHistory((prev) => [
-                      ...prev,
-                      trimmed === 'ls'
-                        ? 'README.md  package.json  src  scripts'
-                        : 'drwxr-xr-x  src\n-rw-r--r--  README.md\n-rw-r--r--  package.json\n-rwxr-xr-x  scripts',
-                    ]);
-                  } else if (trimmed === 'clear') {
-                    setHistory([]);
-                  } else if (trimmed === 'date') {
-                    setHistory((prev) => [...prev, new Date().toString()]);
-                  } else if (trimmed === 'git status') {
-                    setHistory((prev) => [
-                      ...prev,
-                      'On branch main\nnothing to commit, working tree clean',
-                    ]);
-                  } else if (trimmed === 'git diff') {
-                    setHistory((prev) => [
-                      ...prev,
-                      'diff --git a/src/app.ts b/src/app.ts\nindex 1234567..89abcde 100644',
-                    ]);
-                  } else if (trimmed === 'git log --oneline') {
-                    setHistory((prev) => [
-                      ...prev,
-                      '89abcde refine mobile keyboard\n1234567 initial terminal widget',
-                    ]);
-                  } else if (trimmed === 'cat README.md') {
-                    setHistory((prev) => [
-                      ...prev,
-                      '# Floe Webapp\nA terminal-first demo workspace.',
-                    ]);
-                  } else if (trimmed.startsWith('echo ')) {
-                    setHistory((prev) => [...prev, trimmed.slice(5)]);
+                if (effect.type === 'submit') {
+                  const result = terminalCommandExecutor(effect.command, {
+                    profile: terminalProfile,
+                  });
+                  const outputLines = result.lines.map((line) => line.content);
+
+                  if (result.clear) {
+                    setLines([]);
                   } else {
-                    setHistory((prev) => [
-                      ...prev,
-                      `command not found: ${trimmed.split(' ')[0]}`,
-                    ]);
+                    appendLines([`$ ${effect.command}`, ...outputLines]);
+                    queueMicrotask(scrollToBottom);
                   }
+                  return;
+                }
 
-                  setInputLine('');
+                if (effect.type === 'interrupt') {
+                  if (effect.command) {
+                    appendLines([`$ ${effect.command}`, '^C']);
+                  } else {
+                    appendLines(['^C']);
+                  }
                   queueMicrotask(scrollToBottom);
                   return;
                 }
 
-                if (key === '\x7f') {
-                  setInputLine((prev) => prev.slice(0, -1));
-                  return;
-                }
+                setLines([]);
+              };
 
-                if (key === '\t') {
-                  setInputLine((prev) => `${prev}  `);
-                  return;
-                }
+              const applySessionTransition = (transition: TerminalSessionTransition) => {
+                setSession(transition.state);
+                applySessionEffect(transition.effect);
+              };
 
-                if (key === '\x1b' || key.startsWith('\x1b[')) {
-                  setHistory((prev) => [...prev, `navigation: ${JSON.stringify(key)}`]);
-                  queueMicrotask(scrollToBottom);
-                  return;
-                }
-
-                if (key.charCodeAt(0) < 32) {
-                  const letter = String.fromCharCode(key.charCodeAt(0) + 64);
-                  setHistory((prev) => [...prev, `control: ^${letter}`]);
-                  queueMicrotask(scrollToBottom);
-                  return;
-                }
-
-                setInputLine((prev) => prev + key);
+              const handleKey = (key: string) => {
+                applySessionTransition(
+                  dispatchTerminalSessionKey(session(), key, {
+                    profile: terminalProfile,
+                    providers: terminalSuggestionProviders,
+                  }),
+                );
               };
 
               return (
@@ -3824,10 +3997,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                       size="sm"
                       variant="ghost"
                       onClick={() => {
-                        setHistory([
-                          '$ Terminal keyboard demo',
-                        ]);
-                        setInputLine('');
+                        setLines(['Terminal keyboard demo ready.']);
+                        setSession(createTerminalSessionState());
                       }}
                     >
                       Clear
@@ -3843,11 +4014,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     ref={terminalRef}
                     class="bg-black/80 rounded-md p-3 min-h-[120px] max-h-[220px] overflow-y-auto font-mono text-xs text-green-400 leading-relaxed"
                   >
-                    <For each={history()}>{(line) => <div>{line}</div>}</For>
+                    <For each={lines()}>{(line) => <div>{line}</div>}</For>
                     <div>
                       <span class="text-green-300">$ </span>
-                      <span>{inputLine()}</span>
-                      <span class="inline-block w-[7px] h-[14px] bg-green-400 ml-px animate-pulse" />
+                      <span>{promptPreview().before}</span>
+                      <span class="inline-block min-w-[7px] h-[14px] bg-green-400 text-black ml-px">
+                        {promptPreview().cursor}
+                      </span>
+                      <span>{promptPreview().after}</span>
                     </div>
                   </div>
 
@@ -3868,10 +4042,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
                       </p>
                     </div>
                     <div class="rounded-md border border-border bg-muted/20 p-3">
-                      <p class="text-[11px] font-semibold">Owns The Input Session</p>
+                      <p class="text-[11px] font-semibold">Host-Level Extensions</p>
                       <p class="mt-1 text-[11px] text-muted-foreground">
-                        The component emits terminal payloads directly, so there is no focus tug of
-                        war with the mobile browser&apos;s native IME.
+                        The host app extends the shared terminal model with docker, ssh, and tmux
+                        providers plus a custom runtime adapter, without forking the keyboard UI.
                       </p>
                     </div>
                   </div>
@@ -3882,7 +4056,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     suggestions={suggestionItems()}
                     onKey={handleKey}
                     onDismiss={() => setVisible(false)}
-                    onSuggestionSelect={setInputLine}
+                    onSuggestionSelect={(suggestion) =>
+                      setSession((current) => applyTerminalSessionSuggestion(current, suggestion))}
                   />
                 </>
               );

@@ -158,7 +158,11 @@ export {
   type PaginationSize,
   type PaginationVariant,
 } from './Pagination';
-export { MobileKeyboard, type MobileKeyboardProps } from './MobileKeyboard';
+export {
+  MobileKeyboard,
+  type MobileKeyboardProps,
+  type MobileKeyboardSuggestionItem,
+} from './MobileKeyboard';
 export {
   LinearProgress,
   CircularProgress,

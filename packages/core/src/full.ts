@@ -11,3 +11,4 @@ export * from './launchpad';
 export * from './file-browser';
 export * from './chat';
 export * from './widgets';
+export * from './terminal';

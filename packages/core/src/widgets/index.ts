@@ -6,4 +6,10 @@ export {
   ShowcaseSidebarWidget,
 } from './SidebarWidget';
 export { MetricsWidget } from './MetricsWidget';
-export { TerminalWidget } from './TerminalWidget';
+export {
+  TerminalWidget,
+  createTerminalWidget,
+  type TerminalWidgetLine,
+  type TerminalWidgetProps,
+  type CreateTerminalWidgetOptions,
+} from './TerminalWidget';

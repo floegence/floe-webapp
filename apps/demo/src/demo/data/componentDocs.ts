@@ -3522,21 +3522,21 @@ export const mobileKeyboardDoc: ComponentDoc = {
     },
     {
       name: 'quickInserts',
-      type: 'string[]',
+      type: 'readonly string[]',
       description:
         'Additional terminal-friendly quick insert keys shown in the utility strip. Defaults to "|", "/", "-", "_", and "~".',
     },
     {
       name: 'suggestions',
-      type: 'readonly string[]',
+      type: 'readonly MobileKeyboardSuggestionItem[]',
       description:
-        'Optional terminal suggestions rendered in a dedicated candidate rail above the utility strip.',
+        'Optional structured terminal suggestions rendered in a dedicated candidate rail above the utility strip.',
     },
     {
       name: 'onSuggestionSelect',
-      type: '(suggestion: string) => void',
+      type: '(suggestion: MobileKeyboardSuggestionItem) => void',
       description:
-        'Called when the user taps one of the suggested terminal candidates so the host can update the current prompt value.',
+        'Called when the user taps one structured terminal suggestion so the host can apply token replacement or cursor placement.',
     },
     {
       name: 'class',
@@ -3554,7 +3554,7 @@ export const mobileKeyboardDoc: ComponentDoc = {
       'Treat `visible` as the terminal input session toggle',
       'Provide `onDismiss` in mobile terminal layouts so users can collapse the keyboard without leaving the terminal surface',
       'Keep the host terminal buffer as the single source of truth and append the emitted payloads there',
-      'Compute command candidates in the host terminal layer and pass them through `suggestions` instead of mixing them into the keycap layout',
+      'Compute command candidates in the host terminal layer, preferably by extending `DEFAULT_TERMINAL_SUGGESTION_PROVIDERS`, and pass them through `suggestions` instead of mixing them into the keycap layout',
       'Use the dedicated direction pad for cursor navigation instead of crowding arrows into the main alpha rows',
       'Reserve this component for terminal-style ASCII input rather than general multilingual text entry',
     ],
@@ -3567,39 +3567,86 @@ export const mobileKeyboardDoc: ComponentDoc = {
     {
       title: 'Basic Usage',
       code: `import { MobileKeyboard } from '@floegence/floe-webapp-core/ui';
-import { createSignal } from 'solid-js';
+import {
+  DEFAULT_TERMINAL_SUGGESTION_PROVIDERS,
+  applyTerminalSessionSuggestion,
+  createTerminalSessionState,
+  createTerminalFullLineSuggestion,
+  dispatchTerminalSessionKey,
+  getTerminalSessionSuggestions,
+  matchesTerminalSuggestionPrefix,
+  runTerminalMockCommand,
+  type TerminalRuntimeAdapter,
+  type TerminalSuggestionProvider,
+} from '@floegence/floe-webapp-core/terminal';
+import { createMemo, createSignal } from 'solid-js';
+
+const customProviders: readonly TerminalSuggestionProvider[] = [
+  ({ context }) =>
+    [
+      { id: 'docker-ps', label: 'docker ps', detail: 'docker', score: 126 },
+      { id: 'ssh-prod', label: 'ssh deploy@prod', detail: 'ssh', score: 124 },
+    ]
+      .filter((item) => matchesTerminalSuggestionPrefix(context, item))
+      .map((item) =>
+        createTerminalFullLineSuggestion(context, {
+          id: item.id,
+          kind: 'command',
+          label: item.label,
+          detail: item.detail,
+          score: item.score,
+        }),
+      ),
+  ...DEFAULT_TERMINAL_SUGGESTION_PROVIDERS,
+];
+
+const customRuntime: TerminalRuntimeAdapter = (input, options) => {
+  if (input.trim() === 'docker ps') {
+    return {
+      clear: false,
+      lines: [{ type: 'output', content: 'CONTAINER ID   IMAGE   STATUS   NAMES' }],
+    };
+  }
+
+  return runTerminalMockCommand(input, options);
+};
 
 function TerminalView() {
   const [visible, setVisible] = createSignal(false);
-  const [line, setLine] = createSignal('');
-  const [suggestions, setSuggestions] = createSignal([
-    'help',
-    'pwd',
-    'ls -la',
-    'git status',
-  ]);
+  const [session, setSession] = createSignal(createTerminalSessionState());
+  const suggestions = createMemo(() =>
+    getTerminalSessionSuggestions(session(), {
+      providers: customProviders,
+    }),
+  );
 
   return (
     <MobileKeyboard
       visible={visible()}
       suggestions={suggestions()}
       onDismiss={() => setVisible(false)}
-      onSuggestionSelect={(suggestion) => setLine(suggestion)}
+      onSuggestionSelect={(suggestion) =>
+        setSession((current) => applyTerminalSessionSuggestion(current, suggestion))
+      }
       onKey={(chunk) => {
-        if (chunk === '\\r') {
-          terminal.write('\\r');
-          setLine('');
+        const transition = dispatchTerminalSessionKey(session(), chunk, {
+          providers: customProviders,
+        });
+        setSession(transition.state);
+
+        if (transition.effect.type === 'submit') {
+          console.log(customRuntime(transition.effect.command).lines);
           return;
         }
 
-        if (chunk === '\\x7f') {
-          setLine((prev) => prev.slice(0, -1));
-          terminal.write(chunk);
+        if (transition.effect.type === 'interrupt') {
+          console.log('^C');
           return;
         }
 
-        setLine((prev) => prev + chunk);
-        terminal.write(chunk);
+        if (transition.effect.type === 'clear-screen') {
+          console.clear();
+        }
       }}
     />
   );
@@ -3611,9 +3658,13 @@ function TerminalView() {
       code: `<MobileKeyboard
   visible={visible()}
   quickInserts={['|', '/', '-', '_', '~', '$']}
-  suggestions={['pwd', 'ls -la', 'git status', 'git diff']}
+  suggestions={[
+    { id: 'pwd', label: 'pwd', kind: 'command', detail: 'shell' },
+    { id: 'git-status', label: 'git status', kind: 'command', detail: 'git' },
+    { id: 'git-diff', label: 'git diff', kind: 'command', detail: 'git' },
+  ]}
   onDismiss={() => setVisible(false)}
-  onSuggestionSelect={setPrompt}
+  onSuggestionSelect={(suggestion) => setPrompt(suggestion.label)}
   onKey={handleKey}
 />`,
       language: 'tsx',
