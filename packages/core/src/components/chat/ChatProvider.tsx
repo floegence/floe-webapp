@@ -116,6 +116,22 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   // Message state
   const [messages, setMessagesStore] = createStore<Message[]>(props.initialMessages || []);
   const coldMessages = new Map<string, ColdMessage>();
+  const messageIndexById = createMemo(() => {
+    const byId = new Map<string, number>();
+    for (let i = 0; i < messages.length; i += 1) {
+      const messageId = messages[i]?.id;
+      if (!messageId) continue;
+      byId.set(messageId, i);
+    }
+    return byId;
+  });
+  const getMessageIndex = (messageId: string): number | undefined => {
+    const cached = messageIndexById().get(messageId);
+    if (cached !== undefined) return cached;
+
+    const fallback = messages.findIndex((message) => message.id === messageId);
+    return fallback >= 0 ? fallback : undefined;
+  };
 
   // Sync external initialMessages changes
   createEffect(
@@ -189,20 +205,16 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   };
 
   const updateMessage = (messageId: string, updater: (message: Message) => Message) => {
-    setMessagesStore(produce((msgs) => {
-      const index = msgs.findIndex((m) => m.id === messageId);
-      if (index !== -1) {
-        msgs[index] = updater(msgs[index]);
-      }
-    }));
+    const index = getMessageIndex(messageId);
+    if (index === undefined) return;
+    setMessagesStore(index, (message) => updater(message));
   };
 
   const deleteMessage = (messageId: string) => {
+    const index = getMessageIndex(messageId);
+    if (index === undefined) return;
     setMessagesStore(produce((msgs) => {
-      const index = msgs.findIndex((m) => m.id === messageId);
-      if (index !== -1) {
-        msgs.splice(index, 1);
-      }
+      msgs.splice(index, 1);
     }));
     heightCache.delete(messageId);
   };
@@ -214,6 +226,14 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
 
   const setMessages = (newMessages: Message[]) => {
     setMessagesStore(reconcile(newMessages));
+  };
+
+  const mutateMessage = (messageId: string, updater: (message: Message) => void) => {
+    const index = getMessageIndex(messageId);
+    if (index === undefined) return;
+    setMessagesStore(index, produce((message) => {
+      updater(message);
+    }));
   };
 
   // ============ Streaming ============
@@ -249,34 +269,29 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
       }
 
       case 'block-start': {
-        updateMessage(event.messageId, (msg) => ({
-          ...msg,
-          blocks: [...msg.blocks, createEmptyBlock(event.blockType)],
-        }));
+        mutateMessage(event.messageId, (msg) => {
+          msg.blocks.push(createEmptyBlock(event.blockType));
+        });
         break;
       }
 
       case 'block-delta': {
-        updateMessage(event.messageId, (msg) => {
-          const blocks = [...msg.blocks];
-          const block = blocks[event.blockIndex];
+        mutateMessage(event.messageId, (msg) => {
+          const block = msg.blocks[event.blockIndex];
           if (block && 'content' in block && typeof block.content === 'string') {
             (block as { content: string }).content += event.delta;
           }
-          return { ...msg, blocks };
         });
         break;
       }
 
       case 'block-set': {
-        updateMessage(event.messageId, (msg) => {
-          const blocks = [...msg.blocks];
-          if (event.blockIndex === blocks.length) {
-            blocks.push(event.block);
-          } else if (event.blockIndex >= 0 && event.blockIndex < blocks.length) {
-            blocks[event.blockIndex] = event.block;
+        mutateMessage(event.messageId, (msg) => {
+          if (event.blockIndex === msg.blocks.length) {
+            msg.blocks.push(event.block);
+          } else if (event.blockIndex >= 0 && event.blockIndex < msg.blocks.length) {
+            msg.blocks[event.blockIndex] = event.block;
           }
-          return { ...msg, blocks };
         });
         break;
       }
@@ -287,20 +302,18 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
       }
 
       case 'message-end': {
-        updateMessage(event.messageId, (msg) => ({
-          ...msg,
-          status: 'complete',
-        }));
+        mutateMessage(event.messageId, (msg) => {
+          msg.status = 'complete';
+        });
         setStreamingMessageId(null);
         break;
       }
 
       case 'error': {
-        updateMessage(event.messageId, (msg) => ({
-          ...msg,
-          status: 'error',
-          error: event.error,
-        }));
+        mutateMessage(event.messageId, (msg) => {
+          msg.status = 'error';
+          msg.error = event.error;
+        });
         setStreamingMessageId(null);
         break;
       }
@@ -418,35 +431,37 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   // ============ Tool Call Collapse ============
 
   const toggleToolCollapse = (messageId: string, toolId: string) => {
-    updateMessage(messageId, (msg) => ({
-      ...msg,
-      blocks: msg.blocks.map((block) => {
+    mutateMessage(messageId, (msg) => {
+      for (const block of msg.blocks) {
         if (block.type === 'tool-call' && block.toolId === toolId) {
           // Default collapsed is true; first toggle should open (collapsed=false).
-          const nextCollapsed = block.collapsed === undefined ? false : !block.collapsed;
-          return { ...block, collapsed: nextCollapsed };
+          block.collapsed = block.collapsed === undefined ? false : !block.collapsed;
+          break;
         }
-        return block;
-      }),
-    }));
+      }
+    });
   };
 
   // ============ Tool Approval ============
 
   const approveToolCall = (messageId: string, toolId: string, approved: boolean) => {
     // UI-first: update the message store synchronously so users get immediate feedback.
-    updateMessage(messageId, (msg) => ({
-      ...msg,
-      blocks: msg.blocks.map((block) => {
-        if (block.type !== 'tool-call' || block.toolId !== toolId) return block;
-        if (block.requiresApproval !== true || block.approvalState !== 'required') return block;
+    mutateMessage(messageId, (msg) => {
+      for (const block of msg.blocks) {
+        if (block.type !== 'tool-call' || block.toolId !== toolId) continue;
+        if (block.requiresApproval !== true || block.approvalState !== 'required') continue;
 
         if (approved) {
-          return { ...block, approvalState: 'approved', status: 'running' };
+          block.approvalState = 'approved';
+          block.status = 'running';
+        } else {
+          block.approvalState = 'rejected';
+          block.status = 'error';
+          block.error = block.error || 'Rejected by user';
         }
-        return { ...block, approvalState: 'rejected', status: 'error', error: block.error || 'Rejected by user' };
-      }),
-    }));
+        break;
+      }
+    });
 
     const onToolApproval = props.callbacks?.onToolApproval;
     if (!onToolApproval) return;
@@ -472,21 +487,16 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
 
   const toggleChecklistItem = (messageId: string, blockIndex: number, itemId: string) => {
     let nextChecked: boolean | null = null;
-    updateMessage(messageId, (msg) => {
-      const blocks = [...msg.blocks];
-      const block = blocks[blockIndex];
+    mutateMessage(messageId, (msg) => {
+      const block = msg.blocks[blockIndex];
       if (block && block.type === 'checklist') {
-        const items = block.items.map((item) =>
-          item.id === itemId
-            ? (() => {
-                nextChecked = !item.checked;
-                return { ...item, checked: nextChecked };
-              })()
-            : item
-        );
-        blocks[blockIndex] = { ...block, items };
+        for (const item of block.items) {
+          if (item.id !== itemId) continue;
+          nextChecked = !item.checked;
+          item.checked = nextChecked;
+          break;
+        }
       }
-      return { ...msg, blocks };
     });
 
     const onChecklistChange = props.callbacks?.onChecklistChange;

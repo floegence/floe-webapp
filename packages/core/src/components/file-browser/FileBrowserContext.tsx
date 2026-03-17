@@ -1,4 +1,5 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, createMemo, createEffect, untrack } from 'solid-js';
+import { createStore, produce } from 'solid-js/store';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { deferAfterPaint, deferNonBlocking } from '../../utils/defer';
 import type {
@@ -69,6 +70,37 @@ function normalizeExpandedFolders(folders: unknown): string[] {
   // The root folder is always expanded.
   if (!seen.has('/')) result.unshift('/');
   return result;
+}
+
+function normalizeUniqueStrings(values: Iterable<string>): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    if (typeof value !== 'string') continue;
+    const next = value.trim();
+    if (!next || seen.has(next)) continue;
+    seen.add(next);
+    result.push(next);
+  }
+
+  return result;
+}
+
+function createFlagRecord(values: Iterable<string>): Record<string, true> {
+  const result: Record<string, true> = {};
+  for (const value of values) {
+    result[value] = true;
+  }
+  return result;
+}
+
+function isSameStringList(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 function normalizeListColumnRatios(ratios: FileListColumnRatios): FileListColumnRatios {
@@ -196,7 +228,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   };
 
   const [currentPath, setCurrentPathInternal] = createSignal(resolveInitialPath());
-  const [selectedIds, setSelectedIds] = createSignal<Set<string>>(new Set());
+  const [selectedById, setSelectedById] = createStore<Record<string, true>>({});
+  const [selectedIdList, setSelectedIdList] = createSignal<string[]>([]);
   const [viewMode, setViewModeInternal] = createSignal<ViewMode>(initialViewMode);
   const [sortConfig, setSortConfigInternal] = createSignal<SortConfig>(initialSortConfig);
 
@@ -218,7 +251,10 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     props.initialSidebarWidth ?? DEFAULT_SIDEBAR_WIDTH_PX
   );
   const [sidebarWidth, setSidebarWidthInternal] = createSignal<number>(initialSidebarWidthPx);
-  const [expandedFolders, setExpandedFolders] = createSignal<Set<string>>(new Set(initialExpandedFolders));
+  const [expandedByPath, setExpandedByPath] = createStore<Record<string, true>>(
+    createFlagRecord(initialExpandedFolders)
+  );
+  const [expandedPathList, setExpandedPathList] = createSignal<string[]>(initialExpandedFolders);
   const [sidebarCollapsed, setSidebarCollapsed] = createSignal(initialSidebarCollapsed);
   const [contextMenu, setContextMenu] = createSignal<ContextMenuEvent | null>(null);
   const [filterQuery, setFilterQueryInternal] = createSignal('');
@@ -269,7 +305,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Persist expandedFolders.
   createEffect(() => {
     if (!shouldPersist) return;
-    const folders = [...expandedFolders()].sort((a, b) => a.localeCompare(b));
+    const folders = [...expandedPathList()].sort((a, b) => a.localeCompare(b));
     floe.persist.debouncedSave(getStorageKey(EXPANDED_FOLDERS_STORAGE_KEY), folders);
   });
 
@@ -285,6 +321,49 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   // Home label accessor (reactive)
   const homeLabel = () => props.homeLabel ?? 'Root';
+
+  const selectedItems: Accessor<Set<string>> = () => new Set(selectedIdList());
+  const expandedFolders: Accessor<Set<string>> = () => new Set(expandedPathList());
+
+  const replaceSelectedIds = (nextIds: Iterable<string>) => {
+    const normalized = normalizeUniqueStrings(nextIds);
+    const nextRecord = createFlagRecord(normalized);
+
+    setSelectedById(
+      produce((state) => {
+        for (const key of Object.keys(state)) {
+          if (!(key in nextRecord)) delete state[key];
+        }
+        for (const key of normalized) {
+          state[key] = true;
+        }
+      })
+    );
+    setSelectedIdList((prev) => isSameStringList(prev, normalized) ? prev : normalized);
+  };
+
+  const ensureExpandedPath = (path: string) => {
+    if (expandedByPath[path] === true) return;
+    setExpandedByPath(path, true);
+    setExpandedPathList((prev) => {
+      if (prev.includes(path)) return prev;
+      return [...prev, path];
+    });
+  };
+
+  const toggleExpandedPath = (path: string) => {
+    if (expandedByPath[path] === true) {
+      setExpandedByPath(
+        produce((state) => {
+          delete state[path];
+        })
+      );
+      setExpandedPathList((prev) => prev.filter((item) => item !== path));
+      return;
+    }
+
+    ensureExpandedPath(path);
+  };
 
   // Optimistic updates state
   const [optimisticOps, setOptimisticOps] = createSignal<OptimisticOperation[]>([]);
@@ -460,7 +539,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Public accessor required by FileBrowserContextValue
   const currentFiles: Accessor<FileItem[]> = () => filterState().items;
 
-  const getSelectedItemsFromIds = (ids: Set<string>): FileItem[] => {
+  const getSelectedItemsFromIds = (ids: Iterable<string>): FileItem[] => {
     const state = filterState();
     const out: Array<{ index: number; item: FileItem }> = [];
     for (const id of ids) {
@@ -475,7 +554,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   const clearPathScopedUiState = () => {
     // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
-    setSelectedIds(new Set<string>());
+    replaceSelectedIds([]);
     // Clear filter when navigating to a different directory.
     setFilterQueryInternal('');
     setFilterQueryApplied('');
@@ -524,35 +603,29 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     if (item.type === 'folder') {
       setCurrentPath(item.path);
       // Auto-expand in tree
-      setExpandedFolders((prev) => {
-        const next = new Set(prev);
-        next.add(item.path);
-        return next;
-      });
+      ensureExpandedPath(item.path);
     }
   };
 
   const selectItem = (id: string, multi = false) => {
-    const prev = selectedIds();
-    const next = multi ? new Set(prev) : new Set<string>();
+    const nextSelectedIds = multi
+      ? (selectedById[id] === true
+          ? selectedIdList().filter((itemId) => itemId !== id)
+          : [...selectedIdList(), id])
+      : [id];
 
     if (multi) {
-      // Ctrl/Cmd: toggle membership.
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      replaceSelectedIds(nextSelectedIds);
     } else {
       // Single click: always select the item (do not toggle-off).
-      next.clear();
-      next.add(id);
+      replaceSelectedIds(nextSelectedIds);
     }
-
-    setSelectedIds(next);
 
     // Notify parent after paint to keep selection highlight responsive.
     // Also compute the selected list outside the click handler hot-path.
     const onSelect = props.onSelect;
     if (onSelect) {
-      const selectedIdsSnapshot = new Set(next);
+      const selectedIdsSnapshot = [...nextSelectedIds];
       deferNonBlocking(() => {
         const selected = untrack(() => getSelectedItemsFromIds(selectedIdsSnapshot));
         onSelect(selected);
@@ -561,26 +634,16 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   };
 
   const clearSelection = () => {
-    setSelectedIds(new Set<string>());
+    replaceSelectedIds([]);
     const onSelect = props.onSelect;
     deferNonBlocking(() => onSelect?.([]));
   };
 
-  const isSelected = (id: string) => selectedIds().has(id);
+  const isSelected = (id: string) => selectedById[id] === true;
 
-  const toggleFolder = (path: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) {
-        next.delete(path);
-      } else {
-        next.add(path);
-      }
-      return next;
-    });
-  };
+  const toggleFolder = (path: string) => toggleExpandedPath(path);
 
-  const isExpanded = (path: string) => expandedFolders().has(path);
+  const isExpanded = (path: string) => expandedByPath[path] === true;
 
   const toggleSidebar = () => setSidebarCollapsed((prev) => !prev);
 
@@ -607,7 +670,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return filterState().matchById.get(id) ?? null;
   };
 
-  const getSelectedItemsList = () => getSelectedItemsFromIds(selectedIds());
+  const getSelectedItemsList = () => getSelectedItemsFromIds(selectedIdList());
 
   const openItem = (item: FileItem) => {
     if (item.type === 'folder') {
@@ -679,7 +742,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     navigateUp,
     navigateTo,
     homeLabel,
-    selectedItems: () => selectedIds(),
+    selectedItems,
     selectItem,
     clearSelection,
     isSelected,
