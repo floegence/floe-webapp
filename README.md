@@ -54,8 +54,14 @@ pnpm install
 # Start dev (workspace mode: demo imports packages/* sources directly for instant HMR)
 pnpm dev
 
+# Expose the demo to your LAN
+pnpm dev -- --host 0.0.0.0 --port 5173
+
 # Optional: dist mode (demo consumes packages via dist outputs + watch rebuild)
 pnpm dev:dist
+
+# Dist mode with explicit host/port
+pnpm dev:dist -- --host 0.0.0.0 --port 5173
 
 # Run local CI (lint + typecheck + test + build + verify)
 make check

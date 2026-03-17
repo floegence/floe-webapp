@@ -321,6 +321,18 @@
     user-select: none;
     -webkit-touch-callout: none;
   }
+
+  [data-floe-touch-surface='true'],
+  [data-floe-touch-surface='true'] * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  [data-floe-touch-surface='true'] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }
 
 /* Animation utilities */
