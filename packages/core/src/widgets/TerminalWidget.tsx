@@ -1,77 +1,96 @@
-import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Show,
+  type Component,
+} from 'solid-js';
 import { useResolvedFloeConfig } from '../context/FloeConfigContext';
-import { useMediaQuery } from '../hooks/useMediaQuery';
-import { MobileKeyboard } from '../components/ui/MobileKeyboard';
 import type { WidgetProps } from '../context/WidgetRegistry';
+import { MobileKeyboard } from '../components/ui/MobileKeyboard';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { cn } from '../utils/cn';
 import {
   floeTouchSurfaceAttrs,
   preventTouchSurfacePointerDown,
 } from '../utils/touchSurfaceGuard';
 import {
-  autocompleteTerminalCommand,
-  createTerminalEditorState,
-  DEFAULT_TERMINAL_SUGGESTIONS,
-  deleteTerminalTextBackward,
-  getTerminalSuggestions,
-  insertTerminalText,
-  moveTerminalCursor,
-  navigateTerminalHistory,
-  runTerminalCommand,
-  type TerminalEditorState,
-} from './terminalWidgetModel';
+  applyTerminalSessionSuggestion,
+  createTerminalSessionState,
+  dispatchTerminalSessionKey,
+  getTerminalPromptPreview,
+  getTerminalSessionSuggestions,
+  normalizeTerminalWorkspaceProfile,
+  runTerminalMockCommand,
+  setTerminalSessionInputValue,
+  submitTerminalSession,
+  type TerminalCommandResult,
+  type TerminalRuntimeAdapter,
+  type TerminalSessionEffect,
+  type TerminalSessionTransition,
+  type TerminalSuggestionProvider,
+  type TerminalWorkspaceProfile,
+} from '../terminal';
 
-interface TerminalLine {
+export interface TerminalWidgetLine {
   id: number;
   type: 'input' | 'output' | 'error';
   content: string;
 }
 
+export interface TerminalWidgetProps extends WidgetProps {
+  profile?: Partial<TerminalWorkspaceProfile>;
+  runtime?: TerminalRuntimeAdapter;
+  resolveNow?: () => string;
+  suggestionProviders?: readonly TerminalSuggestionProvider[];
+  quickInserts?: readonly string[];
+}
+
+export type CreateTerminalWidgetOptions =
+  Omit<TerminalWidgetProps, 'widgetId' | 'config' | 'isEditMode'>;
+
+export function createTerminalWidget(
+  options: CreateTerminalWidgetOptions = {},
+): Component<WidgetProps> {
+  return (props) => <TerminalWidget {...props} {...options} />;
+}
+
 /**
  * Terminal widget
  */
-export function TerminalWidget(props: WidgetProps) {
+export function TerminalWidget(props: TerminalWidgetProps) {
   const floe = useResolvedFloeConfig();
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
-  const [lines, setLines] = createSignal<TerminalLine[]>([
+  const [lines, setLines] = createSignal<TerminalWidgetLine[]>([
     { id: 1, type: 'output', content: 'Welcome to Floe Terminal' },
     { id: 2, type: 'output', content: 'Type "help" for available commands' },
   ]);
-  const [editor, setEditor] = createSignal<TerminalEditorState>(
-    createTerminalEditorState(),
-  );
-  const [history, setHistory] = createSignal<string[]>([]);
+  const [session, setSession] = createSignal(createTerminalSessionState());
   const [mobileKeyboardVisible, setMobileKeyboardVisible] = createSignal(false);
   let inputRef: HTMLInputElement | undefined;
   let outputRef: HTMLDivElement | undefined;
   let nextId = 3;
 
-  const inputValue = () => editor().value;
-  const cursorIndex = () => editor().cursor;
-  const promptPreview = createMemo(() => {
-    const value = inputValue();
-    const cursor = Math.max(0, Math.min(cursorIndex(), value.length));
-
-    return {
-      before: value.slice(0, cursor),
-      cursor: cursor < value.length ? value[cursor] ?? ' ' : ' ',
-      after: cursor < value.length ? value.slice(cursor + 1) : '',
-    };
-  });
+  const inputValue = () => session().editor.value;
+  const terminalProfile = createMemo(() =>
+    normalizeTerminalWorkspaceProfile(props.profile),
+  );
+  const terminalRuntime = () => props.runtime ?? runTerminalMockCommand;
+  const promptPreview = createMemo(() => getTerminalPromptPreview(session().editor));
   const suggestionItems = createMemo(() =>
-    getTerminalSuggestions(inputValue(), history(), DEFAULT_TERMINAL_SUGGESTIONS),
+    getTerminalSessionSuggestions(session(), {
+      profile: terminalProfile(),
+      providers: props.suggestionProviders,
+    }),
   );
 
-  const resetEditor = () => {
-    setEditor(createTerminalEditorState());
-  };
-
   const setEditorValue = (value: string) => {
-    setEditor(createTerminalEditorState(value));
+    setSession((current) => setTerminalSessionInputValue(current, value));
   };
 
-  const handleSubmit = (e: Event) => {
-    e.preventDefault();
+  const handleSubmit = (event: Event) => {
+    event.preventDefault();
     submitCurrentInput();
   };
 
@@ -86,23 +105,19 @@ export function TerminalWidget(props: WidgetProps) {
     inputRef?.focus();
   };
 
-  const appendLines = (newLines: TerminalLine[]) => {
+  const appendLines = (newLines: TerminalWidgetLine[]) => {
     if (!newLines.length) return;
     setLines((prev) => [...prev, ...newLines]);
   };
 
-  const submitCurrentInput = () => {
-    const rawValue = inputValue();
-    const command = rawValue.trim();
-    if (!command) return;
-
-    setHistory((prev) => [...prev, rawValue]);
-
-    const result = runTerminalCommand(rawValue);
-    const inputLine: TerminalLine = {
+  const appendCommandResult = (
+    command: string,
+    result: TerminalCommandResult,
+  ) => {
+    const inputLine: TerminalWidgetLine = {
       id: nextId++,
       type: 'input',
-      content: `$ ${rawValue}`,
+      content: `$ ${command}`,
     };
     const outputLines = result.lines.map((line) => ({
       id: nextId++,
@@ -112,86 +127,58 @@ export function TerminalWidget(props: WidgetProps) {
 
     if (result.clear) {
       setLines([]);
-    } else {
-      appendLines([inputLine, ...outputLines]);
+      return;
     }
 
-    resetEditor();
+    appendLines([inputLine, ...outputLines]);
   };
 
-  const handleMobilePayload = (payload: string) => {
-    if (!payload || props.isEditMode) return;
+  const applySessionEffect = (effect: TerminalSessionEffect) => {
+    if (effect.type === 'none') return;
 
-    if (payload === '\r') {
-      submitCurrentInput();
-      return;
-    }
-
-    if (payload === '\x7f') {
-      setEditor((current) => deleteTerminalTextBackward(current));
-      return;
-    }
-
-    if (payload === '\t') {
-      setEditor((current) => {
-        const nextValue = autocompleteTerminalCommand(
-          current.value,
-          history(),
-          DEFAULT_TERMINAL_SUGGESTIONS,
-        );
-        return createTerminalEditorState(nextValue);
-      });
-      return;
-    }
-
-    if (payload === '\x1b[A') {
-      setEditor((current) =>
-        navigateTerminalHistory(current, history(), 'up'),
+    if (effect.type === 'submit') {
+      appendCommandResult(
+        effect.command,
+        terminalRuntime()(effect.command, {
+          profile: terminalProfile(),
+          resolveNow: props.resolveNow,
+        }),
       );
       return;
     }
 
-    if (payload === '\x1b[B') {
-      setEditor((current) =>
-        navigateTerminalHistory(current, history(), 'down'),
-      );
-      return;
-    }
-
-    if (payload === '\x1b[D') {
-      setEditor((current) => moveTerminalCursor(current, 'left'));
-      return;
-    }
-
-    if (payload === '\x1b[C') {
-      setEditor((current) => moveTerminalCursor(current, 'right'));
-      return;
-    }
-
-    if (payload === '\x03') {
-      if (inputValue()) {
+    if (effect.type === 'interrupt') {
+      if (effect.command) {
         appendLines([
-          { id: nextId++, type: 'input', content: `$ ${inputValue()}` },
+          { id: nextId++, type: 'input', content: `$ ${effect.command}` },
           { id: nextId++, type: 'error', content: '^C' },
         ]);
       } else {
         appendLines([{ id: nextId++, type: 'error', content: '^C' }]);
       }
-      resetEditor();
       return;
     }
 
-    if (payload === '\x0c') {
-      setLines([]);
-      resetEditor();
-      return;
-    }
+    setLines([]);
+  };
 
-    if (payload.startsWith('\x1b')) {
-      return;
-    }
+  const applySessionTransition = (transition: TerminalSessionTransition) => {
+    setSession(transition.state);
+    applySessionEffect(transition.effect);
+  };
 
-    setEditor((current) => insertTerminalText(current, payload));
+  const submitCurrentInput = () => {
+    applySessionTransition(submitTerminalSession(session()));
+  };
+
+  const handleMobilePayload = (payload: string) => {
+    if (!payload || props.isEditMode) return;
+    applySessionTransition(
+      dispatchTerminalSessionKey(session(), payload, {
+        profile: terminalProfile(),
+        providers: props.suggestionProviders,
+      }),
+    );
   };
 
   createEffect(() => {
@@ -263,18 +250,18 @@ export function TerminalWidget(props: WidgetProps) {
           }}
         >
           <For each={lines()}>
-          {(line) => (
-            <div
-              class={cn(
-                'whitespace-pre-wrap break-all leading-6',
-                line.type === 'error' && 'text-rose-300',
-                line.type === 'input' && 'text-emerald-300',
-              )}
-            >
-              {line.content}
-            </div>
-          )}
-        </For>
+            {(line) => (
+              <div
+                class={cn(
+                  'whitespace-pre-wrap break-all leading-6',
+                  line.type === 'error' && 'text-rose-300',
+                  line.type === 'input' && 'text-emerald-300',
+                )}
+              >
+                {line.content}
+              </div>
+            )}
+          </For>
 
           <div
             class="mt-2 rounded-xl px-3 py-2"
@@ -334,11 +321,12 @@ export function TerminalWidget(props: WidgetProps) {
       <Show when={isMobile() && !props.isEditMode}>
         <MobileKeyboard
           visible={mobileKeyboardVisible()}
-          quickInserts={['|', '/', '-', '_', '.', '$']}
+          quickInserts={props.quickInserts}
           suggestions={suggestionItems()}
           onKey={handleMobilePayload}
           onDismiss={() => setMobileKeyboardVisible(false)}
-          onSuggestionSelect={(suggestion) => setEditor(createTerminalEditorState(suggestion))}
+          onSuggestionSelect={(suggestion) =>
+            setSession((current) => applyTerminalSessionSuggestion(current, suggestion))}
         />
       </Show>
     </div>

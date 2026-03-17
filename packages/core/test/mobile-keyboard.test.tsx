@@ -87,7 +87,10 @@ describe('MobileKeyboard markup', () => {
     const html = renderToString(() => (
       <MobileKeyboard
         visible
-        suggestions={['git status', 'git diff']}
+        suggestions={[
+          { id: 'git-status', label: 'git status', kind: 'command', detail: 'git' },
+          { id: 'git-diff', label: 'git diff', kind: 'command', detail: 'git' },
+        ]}
         onKey={() => {}}
         onDismiss={() => {}}
       />
@@ -104,6 +107,7 @@ describe('MobileKeyboard markup', () => {
     expect(html).toContain('Close keyboard');
     expect(html).toContain('Hide');
     expect(html).toContain('git status');
+    expect(html).toContain('data-kind="command"');
     expect(html).toContain('Esc');
     expect(html).toContain('Ctrl');
     expect(html).toContain('Shift');

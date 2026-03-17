@@ -32,6 +32,7 @@ export default defineConfig({
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),
         widgets: resolve(__dirname, 'src/widgets.ts'),
+        terminal: resolve(__dirname, 'src/terminal.ts'),
       },
       name: 'FloeCore',
       formats: ['es'],

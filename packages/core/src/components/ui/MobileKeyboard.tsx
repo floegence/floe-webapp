@@ -23,7 +23,16 @@ import {
   preventTouchSurfacePointerDown,
 } from '../../utils/touchSurfaceGuard';
 
-export interface MobileKeyboardProps extends JSX.HTMLAttributes<HTMLDivElement> {
+export interface MobileKeyboardSuggestionItem {
+  id: string;
+  label: string;
+  detail?: string;
+  kind?: string;
+}
+
+export interface MobileKeyboardProps<
+  TSuggestion extends MobileKeyboardSuggestionItem = MobileKeyboardSuggestionItem,
+> extends JSX.HTMLAttributes<HTMLDivElement> {
   /** Whether the keyboard is visible */
   visible: boolean;
   /** Called whenever a key resolves to a terminal payload */
@@ -31,11 +40,11 @@ export interface MobileKeyboardProps extends JSX.HTMLAttributes<HTMLDivElement> 
   /** Called when the user dismisses the keyboard from the built-in control */
   onDismiss?: () => void;
   /** Additional terminal-friendly quick insert keys shown in the utility strip */
-  quickInserts?: string[];
+  quickInserts?: readonly string[];
   /** Optional terminal suggestions shown in a dedicated candidate rail */
-  suggestions?: readonly string[];
+  suggestions?: readonly TSuggestion[];
   /** Called when the user picks one of the terminal suggestions */
-  onSuggestionSelect?: (suggestion: string) => void;
+  onSuggestionSelect?: (suggestion: TSuggestion) => void;
 }
 
 type ModifierKey = 'ctrl' | 'alt' | 'shift';
@@ -88,7 +97,9 @@ const DIRECTION_PAD_ACTIONS: ReadonlyArray<{
 const HOLD_REPEAT_DELAY_MS = 320;
 const HOLD_REPEAT_INTERVAL_MS = 68;
 
-export function MobileKeyboard(props: MobileKeyboardProps) {
+export function MobileKeyboard<
+  TSuggestion extends MobileKeyboardSuggestionItem = MobileKeyboardSuggestionItem,
+>(props: MobileKeyboardProps<TSuggestion>) {
   const [local, rest] = splitProps(props, [
     'visible',
     'onKey',
@@ -119,9 +130,7 @@ export function MobileKeyboard(props: MobileKeyboardProps) {
   >();
 
   const quickInsertItems = () => local.quickInserts ?? DEFAULT_MOBILE_KEYBOARD_QUICK_INSERTS;
-  const suggestionItems = createMemo(() =>
-    (local.suggestions ?? []).map((item) => item.trim()).filter(Boolean).slice(0, 4),
-  );
+  const suggestionItems = createMemo(() => local.suggestions ?? []);
 
   const clearOneShotModifiers = () => {
     setCtrlActive(false);
@@ -538,10 +547,15 @@ export function MobileKeyboard(props: MobileKeyboardProps) {
                       {...floeTouchSurfaceAttrs}
                       type="button"
                       class="mobile-keyboard-suggestion"
+                      data-kind={suggestion.kind}
+                      title={suggestion.detail ?? suggestion.label}
+                      aria-label={suggestion.detail
+                        ? `${suggestion.label} (${suggestion.detail})`
+                        : suggestion.label}
                       onPointerDown={preventTouchSurfacePointerDown}
                       onClick={() => local.onSuggestionSelect?.(suggestion)}
                     >
-                      {suggestion}
+                      {suggestion.label}
                     </button>
                   )}
                 </For>

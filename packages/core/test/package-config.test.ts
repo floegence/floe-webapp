@@ -64,6 +64,10 @@ describe('@floegence/floe-webapp-core package config', () => {
         types: './dist/widgets.d.ts',
         import: './dist/widgets.js',
       },
+      './terminal': {
+        types: './dist/terminal.d.ts',
+        import: './dist/terminal.js',
+      },
       './styles': './dist/styles.css',
       './tailwind': './dist/tailwind.css',
     });

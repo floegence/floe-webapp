@@ -28,6 +28,7 @@ export default defineConfig(({ command }) => {
         { find: '@floegence/floe-webapp-core/file-browser', replacement: resolve(repoRoot, 'packages/core/src/file-browser.ts') },
         { find: '@floegence/floe-webapp-core/chat', replacement: resolve(repoRoot, 'packages/core/src/chat.ts') },
         { find: '@floegence/floe-webapp-core/widgets', replacement: resolve(repoRoot, 'packages/core/src/widgets.ts') },
+        { find: '@floegence/floe-webapp-core/terminal', replacement: resolve(repoRoot, 'packages/core/src/terminal.ts') },
         { find: '@floegence/floe-webapp-core', replacement: resolve(repoRoot, 'packages/core/src/index.ts') },
 
         // Protocol entrypoint: import sources directly for HMR.

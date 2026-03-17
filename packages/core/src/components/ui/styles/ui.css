@@ -1249,6 +1249,27 @@
     border-color: color-mix(in srgb, var(--primary) 36%, var(--mobile-keyboard-suggestion-border));
   }
 
+  .mobile-keyboard-suggestion[data-kind='history'] {
+    border-left-color: color-mix(in srgb, var(--foreground) 28%, var(--mobile-keyboard-suggestion-border));
+  }
+
+  .mobile-keyboard-suggestion[data-kind='command'],
+  .mobile-keyboard-suggestion[data-kind='subcommand'] {
+    border-left-color: color-mix(in srgb, var(--primary) 58%, var(--mobile-keyboard-suggestion-border));
+  }
+
+  .mobile-keyboard-suggestion[data-kind='script'] {
+    border-left-color: color-mix(in srgb, #22c55e 56%, var(--mobile-keyboard-suggestion-border));
+  }
+
+  .mobile-keyboard-suggestion[data-kind='path'] {
+    border-left-color: color-mix(in srgb, #38bdf8 56%, var(--mobile-keyboard-suggestion-border));
+  }
+
+  .mobile-keyboard-suggestion[data-kind='snippet'] {
+    border-left-color: color-mix(in srgb, #f59e0b 56%, var(--mobile-keyboard-suggestion-border));
+  }
+
   .mobile-keyboard-main {
     display: flex;
     flex-direction: column;
