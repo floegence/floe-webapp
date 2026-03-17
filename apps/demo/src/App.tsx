@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal, createEffect, onMount, type Component } from 'solid-js';
+import { Show, Suspense, createMemo, createSignal, createEffect, onMount, lazy, type Component, type JSX } from 'solid-js';
 import { createHighlighter } from 'shiki';
 import {
   FileBrowserDragProvider,
@@ -39,12 +39,6 @@ import { LaunchpadModal, type LaunchpadItemData } from '@floegence/floe-webapp-c
 import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
 
 import { demoFiles } from './demo/workspace';
-import { FileViewerPage } from './demo/pages/FileViewerPage';
-import { SearchPage } from './demo/pages/SearchPage';
-import { ShowcasePage } from './demo/pages/ShowcasePage';
-import { DeckPage } from './demo/pages/DeckPage';
-import { ChatPage } from './demo/pages/ChatPage';
-import { DesignTokensPage } from './demo/pages/DesignTokensPage';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
@@ -55,6 +49,25 @@ const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',
   createRpc: () => ({}),
 };
+
+const FileViewerPage = lazy(() => import('./demo/pages/FileViewerPage').then((m) => ({ default: m.FileViewerPage })));
+const SearchPage = lazy(() => import('./demo/pages/SearchPage').then((m) => ({ default: m.SearchPage })));
+const ShowcasePage = lazy(() => import('./demo/pages/ShowcasePage').then((m) => ({ default: m.ShowcasePage })));
+const DeckPage = lazy(() => import('./demo/pages/DeckPage').then((m) => ({ default: m.DeckPage })));
+const ChatPage = lazy(() => import('./demo/pages/ChatPage').then((m) => ({ default: m.ChatPage })));
+const DesignTokensPage = lazy(() => import('./demo/pages/DesignTokensPage').then((m) => ({ default: m.DesignTokensPage })));
+
+const renderLazyPage = (view: JSX.Element, label: string): JSX.Element => (
+  <Suspense
+    fallback={
+      <div class="h-full min-h-[240px] w-full flex items-center justify-center text-xs text-muted-foreground">
+        Loading {label}...
+      </div>
+    }
+  >
+    {view}
+  </Suspense>
+);
 
 function AppContent() {
   const theme = useTheme();
@@ -260,9 +273,9 @@ function AppContent() {
 
   const ChatView: Component = () => <ChatSidebar />;
 
-  const DeckView: Component = () => <DeckPage />;
+  const DeckView: Component = () => renderLazyPage(<DeckPage />, 'deck');
 
-  const DesignTokensView: Component = () => <DesignTokensPage />;
+  const DesignTokensView: Component = () => renderLazyPage(<DesignTokensPage />, 'design tokens');
 
   const demoComponents: FloeComponent[] = [
     {
@@ -475,9 +488,9 @@ function AppContent() {
   });
 
   const desktopMainViews: KeepAliveView[] = [
-    { id: 'showcase', render: () => <ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} /> },
-    { id: 'files', render: () => <FileViewerPage file={activeFile} /> },
-    { id: 'search', render: () => <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} /> },
+    { id: 'showcase', render: () => renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase') },
+    { id: 'files', render: () => renderLazyPage(<FileViewerPage file={activeFile} />, 'file viewer') },
+    { id: 'search', render: () => renderLazyPage(<SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />, 'search') },
     {
       id: 'settings',
       render: () => (
@@ -492,14 +505,14 @@ function AppContent() {
         </div>
       ),
     },
-    { id: 'chat', render: () => <ChatPage /> },
+    { id: 'chat', render: () => renderLazyPage(<ChatPage />, 'chat') },
   ];
 
   const mobileMainViews: KeepAliveView[] = [
-    { id: 'showcase', render: () => <ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} /> },
+    { id: 'showcase', render: () => renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase') },
     {
       id: 'files',
-      render: () => (
+      render: () => renderLazyPage(
         <>
           <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
             <Select
@@ -511,10 +524,11 @@ function AppContent() {
           <div class="p-4" style={{ height: 'calc(100vh - 180px)', "min-height": '300px' }}>
             <FileViewerPage file={activeFile} />
           </div>
-        </>
+        </>,
+        'file viewer'
       ),
     },
-    { id: 'search', render: () => <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} /> },
+    { id: 'search', render: () => renderLazyPage(<SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />, 'search') },
     {
       id: 'settings',
       render: () => (
@@ -524,7 +538,7 @@ function AppContent() {
         </div>
       ),
     },
-    { id: 'chat', render: () => <ChatPage /> },
+    { id: 'chat', render: () => renderLazyPage(<ChatPage />, 'chat') },
   ];
 
   const DesktopMain: Component = () => (
