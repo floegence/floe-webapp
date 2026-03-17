@@ -315,6 +315,14 @@
   }
 }
 
+@layer components {
+  [data-file-browser-touch-target='true'] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
 /* Animation utilities */
 @layer utilities {
   .animate-in {

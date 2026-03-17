@@ -6,6 +6,7 @@ import { FolderIcon, FolderOpenIcon } from './FileIcons';
 import type { FileItem } from './types';
 import { ChevronRight } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
+import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 
 export interface DirectoryTreeProps {
   class?: string;
@@ -245,6 +246,7 @@ function FolderTreeItem(props: TreeItemProps) {
 
         <button
           type="button"
+          {...fileBrowserTouchTargetAttrs}
           onClick={handleNavigate}
           onContextMenu={handleContextMenu}
           onPointerDown={handlePointerDown}
