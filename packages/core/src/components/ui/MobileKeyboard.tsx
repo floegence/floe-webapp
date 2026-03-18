@@ -22,6 +22,10 @@ import {
   floeTouchSurfaceAttrs,
   preventTouchSurfacePointerDown,
 } from '../../utils/touchSurfaceGuard';
+import {
+  buildMobileKeyboardViewportStyle,
+  resolveMobileKeyboardViewportMetrics,
+} from './mobileKeyboardViewport';
 
 export interface MobileKeyboardSuggestionItem {
   id: string;
@@ -70,6 +74,24 @@ interface KeyPopupState {
   visible: boolean;
 }
 
+function mergeInlineStyle(
+  base: Record<string, string>,
+  style: JSX.CSSProperties | string | undefined,
+): JSX.CSSProperties | string | undefined {
+  if (typeof style === 'string') {
+    const baseEntries = Object.entries(base)
+      .filter(([, value]) => value)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('; ');
+    return baseEntries ? `${style}; ${baseEntries}` : style;
+  }
+
+  return {
+    ...(style ?? {}),
+    ...base,
+  };
+}
+
 const LETTER_ROW_ONE = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'] as const;
 const LETTER_ROW_TWO = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'] as const;
 const LETTER_ROW_THREE = ['z', 'x', 'c', 'v', 'b', 'n', 'm'] as const;
@@ -108,6 +130,7 @@ export function MobileKeyboard<
     'suggestions',
     'onSuggestionSelect',
     'class',
+    'style',
   ]);
 
   const [layout, setLayout] = createSignal<MobileKeyboardLayout>('letters');
@@ -116,6 +139,7 @@ export function MobileKeyboard<
   const [shiftActive, setShiftActive] = createSignal(false);
   const [pressedKeyIds, setPressedKeyIds] = createSignal<string[]>([]);
   const [popupState, setPopupState] = createSignal<KeyPopupState | null>(null);
+  const [viewportStyle, setViewportStyle] = createSignal<Record<string, string>>({});
   const pressedKeySet = createMemo(() => new Set(pressedKeyIds()));
 
   let panelRef: HTMLDivElement | undefined;
@@ -131,6 +155,7 @@ export function MobileKeyboard<
 
   const quickInsertItems = () => local.quickInserts ?? DEFAULT_MOBILE_KEYBOARD_QUICK_INSERTS;
   const suggestionItems = createMemo(() => local.suggestions ?? []);
+  const rootStyle = createMemo(() => mergeInlineStyle(viewportStyle(), local.style));
 
   const clearOneShotModifiers = () => {
     setCtrlActive(false);
@@ -505,6 +530,40 @@ export function MobileKeyboard<
     resetKeyboardState();
   });
 
+  createEffect(() => {
+    if (typeof window === 'undefined' || !local.visible) {
+      setViewportStyle({});
+      return;
+    }
+
+    const syncViewportStyle = () => {
+      setViewportStyle(
+        buildMobileKeyboardViewportStyle(
+          resolveMobileKeyboardViewportMetrics({
+            innerWidth: window.innerWidth,
+            innerHeight: window.innerHeight,
+            visualViewport: window.visualViewport,
+          }),
+        ),
+      );
+    };
+
+    syncViewportStyle();
+
+    const visualViewport = window.visualViewport;
+    window.addEventListener('resize', syncViewportStyle);
+    window.addEventListener('orientationchange', syncViewportStyle);
+    visualViewport?.addEventListener('resize', syncViewportStyle);
+    visualViewport?.addEventListener('scroll', syncViewportStyle);
+
+    onCleanup(() => {
+      window.removeEventListener('resize', syncViewportStyle);
+      window.removeEventListener('orientationchange', syncViewportStyle);
+      visualViewport?.removeEventListener('resize', syncViewportStyle);
+      visualViewport?.removeEventListener('scroll', syncViewportStyle);
+    });
+  });
+
   onCleanup(() => {
     clearPopupHideTimer();
     clearAllRepeatPresses();
@@ -514,6 +573,7 @@ export function MobileKeyboard<
     <div
       {...floeTouchSurfaceAttrs}
       class={cn('mobile-keyboard-root', local.visible && 'mobile-keyboard-visible', local.class)}
+      style={rootStyle()}
       aria-hidden={!local.visible}
       role="group"
       aria-label="Mobile terminal keyboard"

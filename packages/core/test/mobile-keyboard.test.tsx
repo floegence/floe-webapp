@@ -8,6 +8,10 @@ import {
   isRepeatableTerminalAction,
   mapTerminalActionToKey,
 } from '../src/components/ui/mobileKeyboardModel';
+import {
+  buildMobileKeyboardViewportStyle,
+  resolveMobileKeyboardViewportMetrics,
+} from '../src/components/ui/mobileKeyboardViewport';
 
 describe('mobile keyboard model', () => {
   it('should apply ctrl and alt modifiers to text input', () => {
@@ -79,6 +83,64 @@ describe('mobile keyboard model', () => {
     expect(tracker.isPressed('letter-a')).toBe(true);
     tracker.finishPress(2, 'letter-a');
     expect(tracker.isPressed('letter-a')).toBe(false);
+  });
+});
+
+describe('mobile keyboard viewport', () => {
+  it('should follow the visual viewport width and bottom offset when the page is zoomed', () => {
+    expect(
+      resolveMobileKeyboardViewportMetrics({
+        innerWidth: 1024,
+        innerHeight: 768,
+        visualViewport: {
+          width: 480,
+          height: 320,
+          offsetLeft: 120,
+          offsetTop: 180,
+        },
+      }),
+    ).toEqual({
+      leftPx: 120,
+      bottomPx: 268,
+      widthPx: 480,
+      heightPx: 320,
+    });
+  });
+
+  it('should clamp invalid viewport metrics back to the layout viewport', () => {
+    expect(
+      resolveMobileKeyboardViewportMetrics({
+        innerWidth: 390,
+        innerHeight: 844,
+        visualViewport: {
+          width: 999,
+          height: 1200,
+          offsetLeft: -24,
+          offsetTop: -30,
+        },
+      }),
+    ).toEqual({
+      leftPx: 0,
+      bottomPx: 0,
+      widthPx: 390,
+      heightPx: 844,
+    });
+  });
+
+  it('should serialize viewport metrics into css custom properties', () => {
+    expect(
+      buildMobileKeyboardViewportStyle({
+        leftPx: 18.5,
+        bottomPx: 24,
+        widthPx: 375,
+        heightPx: 640,
+      }),
+    ).toEqual({
+      '--mobile-keyboard-viewport-left': '18.5px',
+      '--mobile-keyboard-viewport-bottom': '24px',
+      '--mobile-keyboard-viewport-width': '375px',
+      '--mobile-keyboard-viewport-height': '640px',
+    });
   });
 });
 
