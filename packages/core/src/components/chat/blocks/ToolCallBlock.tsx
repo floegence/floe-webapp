@@ -34,11 +34,11 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
       case 'pending':
         return 'text-muted-foreground';
       case 'running':
-        return 'text-blue-500';
+        return 'text-info';
       case 'success':
-        return 'text-green-500';
+        return 'text-success';
       case 'error':
-        return 'text-red-500';
+        return 'text-error';
       default:
         return 'text-muted-foreground';
     }

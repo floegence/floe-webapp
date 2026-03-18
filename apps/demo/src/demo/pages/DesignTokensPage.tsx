@@ -1,20 +1,21 @@
 import { For } from 'solid-js';
-import { useTheme } from '@floegence/floe-webapp-core';
-import { Panel, PanelContent } from '@floegence/floe-webapp-core/layout';
 import {
-  colorTokens,
-  typographyTokens,
-  fontFamilies,
-  spacingTokens,
-  radiusTokens,
-  animationTokens,
-  type ColorToken,
-  type TokenCategory,
-} from '../data/designTokens';
+  floeColorTokenCategories,
+  floeFontFamilyTokens,
+  floeMotionTokens,
+  floeRadiusTokens,
+  floeSpacingTokens,
+  floeTypographyTokens,
+  useTheme,
+  type FloeColorToken,
+  type FloeColorTokenCategory,
+  type FloeResolvedTheme,
+} from '@floegence/floe-webapp-core';
+import { Panel, PanelContent } from '@floegence/floe-webapp-core/layout';
 
 interface ColorSwatchProps {
-  token: ColorToken;
-  theme: 'light' | 'dark';
+  token: FloeColorToken;
+  theme: FloeResolvedTheme;
 }
 
 function ColorSwatch(props: ColorSwatchProps) {
@@ -44,8 +45,8 @@ function ColorSwatch(props: ColorSwatchProps) {
 }
 
 interface TokenCategoryCardProps {
-  category: TokenCategory;
-  theme: 'light' | 'dark';
+  category: FloeColorTokenCategory;
+  theme: FloeResolvedTheme;
 }
 
 function TokenCategoryCard(props: TokenCategoryCardProps) {
@@ -66,7 +67,7 @@ function TokenCategoryCard(props: TokenCategoryCardProps) {
 
 export function DesignTokensPage() {
   const theme = useTheme();
-  const resolvedTheme = () => theme.resolvedTheme() as 'light' | 'dark';
+  const resolvedTheme = () => theme.resolvedTheme() as FloeResolvedTheme;
 
   return (
     <div class="p-4 max-w-5xl mx-auto space-y-6">
@@ -86,7 +87,7 @@ export function DesignTokensPage() {
           <h2 class="text-sm font-semibold">Colors</h2>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <For each={colorTokens}>
+          <For each={floeColorTokenCategories}>
             {(category) => <TokenCategoryCard category={category} theme={resolvedTheme()} />}
           </For>
         </div>
@@ -105,7 +106,7 @@ export function DesignTokensPage() {
             <div>
               <h3 class="text-xs font-medium mb-2">Font Families</h3>
               <div class="space-y-2">
-                <For each={fontFamilies}>
+                <For each={floeFontFamilyTokens}>
                   {(font) => (
                     <div class="flex items-center justify-between py-2 px-3 rounded-md border border-border">
                       <div>
@@ -140,8 +141,8 @@ export function DesignTokensPage() {
                       <th class="px-3 py-2 text-left font-medium text-muted-foreground">Preview</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <For each={typographyTokens}>
+                <tbody>
+                    <For each={floeTypographyTokens}>
                       {(token) => (
                         <tr class="border-b border-border last:border-b-0">
                           <td class="px-3 py-2 font-medium">{token.name}</td>
@@ -188,7 +189,7 @@ export function DesignTokensPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <For each={spacingTokens}>
+                  <For each={floeSpacingTokens}>
                     {(token) => (
                       <tr class="border-b border-border last:border-b-0">
                         <td class="px-3 py-2 font-medium">{token.name}</td>
@@ -224,7 +225,7 @@ export function DesignTokensPage() {
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent>
             <div class="flex flex-wrap gap-4">
-              <For each={radiusTokens}>
+              <For each={floeRadiusTokens}>
                 {(token) => (
                   <div class="flex flex-col items-center gap-2">
                     <div
@@ -264,7 +265,7 @@ export function DesignTokensPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <For each={animationTokens}>
+                  <For each={floeMotionTokens}>
                     {(token) => (
                       <tr class="border-b border-border last:border-b-0">
                         <td class="px-3 py-2 font-medium">{token.name}</td>

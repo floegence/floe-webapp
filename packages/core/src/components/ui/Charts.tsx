@@ -83,11 +83,11 @@ export interface LineChartProps {
 }
 
 const defaultColors = [
-  'var(--primary)',
-  'oklch(0.65 0.18 160)', // teal
-  'oklch(0.65 0.18 280)', // purple
-  'oklch(0.65 0.18 45)',  // orange
-  'oklch(0.65 0.18 340)', // pink
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
 ];
 
 function clampFiniteNumber(v: unknown): number | undefined {

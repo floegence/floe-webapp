@@ -36,12 +36,12 @@ const linearSizeStyles: Record<ProgressSize, { track: string; label: string }> =
   lg: { track: 'h-3', label: 'text-xs' },
 };
 
-const colorStyles: Record<ProgressColor, { bar: string; text: string }> = {
-  primary: { bar: 'bg-primary', text: 'text-primary' },
-  success: { bar: 'bg-emerald-500', text: 'text-emerald-500' },
-  warning: { bar: 'bg-amber-500', text: 'text-amber-500' },
-  error: { bar: 'bg-red-500', text: 'text-red-500' },
-  info: { bar: 'bg-sky-500', text: 'text-sky-500' },
+const colorStyles: Record<ProgressColor, { bar: string; label: string }> = {
+  primary: { bar: 'bg-primary text-primary-foreground', label: 'text-primary' },
+  success: { bar: 'bg-success text-success-foreground', label: 'text-success' },
+  warning: { bar: 'bg-warning text-warning-foreground', label: 'text-warning' },
+  error: { bar: 'bg-error text-error-foreground', label: 'text-error' },
+  info: { bar: 'bg-info text-info-foreground', label: 'text-info' },
 };
 
 export function LinearProgress(props: LinearProgressProps) {
@@ -80,7 +80,7 @@ export function LinearProgress(props: LinearProgressProps) {
           <span class={cn('text-muted-foreground', linearSizeStyles[size()].label)}>
             Progress
           </span>
-          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].text)}>
+          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].label)}>
             {label()}
           </span>
         </div>
@@ -117,15 +117,15 @@ export function LinearProgress(props: LinearProgressProps) {
       </div>
 
       {/* Inline styles for animations */}
-      <style>{`
+        <style>{`
         .bg-striped {
           background-image: linear-gradient(
             45deg,
-            rgba(255, 255, 255, 0.15) 25%,
+            color-mix(in srgb, currentColor 15%, transparent) 25%,
             transparent 25%,
             transparent 50%,
-            rgba(255, 255, 255, 0.15) 50%,
-            rgba(255, 255, 255, 0.15) 75%,
+            color-mix(in srgb, currentColor 15%, transparent) 50%,
+            color-mix(in srgb, currentColor 15%, transparent) 75%,
             transparent 75%,
             transparent
           );
@@ -265,7 +265,7 @@ export function CircularProgress(props: CircularProgressProps) {
           stroke-dashoffset={local.indeterminate ? circumference() * 0.75 : strokeDashoffset()}
           class={cn(
             'transition-all duration-300',
-            colorStyles[color()].text
+            colorStyles[color()].label
           )}
         />
       </svg>
@@ -275,7 +275,7 @@ export function CircularProgress(props: CircularProgressProps) {
         <span class={cn(
           'absolute font-medium tabular-nums',
           labelSize(),
-          colorStyles[color()].text
+          colorStyles[color()].label
         )}>
           {label()}
         </span>
@@ -333,7 +333,7 @@ export function SegmentedProgress(props: SegmentedProgressProps) {
           <span class={cn('text-muted-foreground', linearSizeStyles[size()].label)}>
             Progress
           </span>
-          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].text)}>
+          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].label)}>
             {Math.round(percentage())}%
           </span>
         </div>
@@ -433,7 +433,7 @@ export function StepsProgress(props: StepsProgressProps) {
                   'flex items-center justify-center rounded-full font-medium transition-colors duration-200 shrink-0',
                   stepSizeStyles[size()].dot,
                   state() === 'completed' && cn(colorStyles[color()].bar, 'text-primary-foreground'),
-                  state() === 'current' && cn('border-2', `border-current ${colorStyles[color()].text}`, 'bg-background'),
+                  state() === 'current' && cn('border-2', `border-current ${colorStyles[color()].label}`, 'bg-background'),
                   state() === 'pending' && 'bg-muted text-muted-foreground'
                 )}>
                   {state() === 'completed' ? (

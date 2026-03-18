@@ -236,6 +236,7 @@ Notes:
 - Recommended: run Tailwind v4 in your app and import `@floegence/floe-webapp-core/tailwind` from your CSS entry.
 - Fallback (no Tailwind build): import `@floegence/floe-webapp-core/styles` once at your app entry, and do not rely on arbitrary Tailwind utility classes in your own components.
 - Prefer `theme.tokens` for shell chrome colors and `slotClassNames` / `data-floe-shell-slot` for local shell styling.
+- When you need token metadata for docs, inspectors, or custom tooling, import `floeDesignTokens`, `floeColorTokenCategories`, `floeThemeColorVariables`, or `floeSharedCssVariables` from `@floegence/floe-webapp-core` instead of duplicating theme values.
 - Avoid broad resets such as `* { border-width: 0; }`, which can remove the framework's default shell dividers.
 
 ## Tech Stack

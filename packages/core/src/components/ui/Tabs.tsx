@@ -543,7 +543,7 @@ export function Tabs(props: TabsProps) {
                       'flex-shrink-0 flex items-center justify-center',
                       'w-5 h-5 rounded cursor-pointer',
                       'bg-transparent text-muted-foreground',
-                      closeDangerHover() ? 'hover:bg-red-500 hover:text-white' : 'hover:bg-muted/80 hover:text-foreground',
+                      closeDangerHover() ? 'hover:bg-error hover:text-error-foreground' : 'hover:bg-muted/80 hover:text-foreground',
                       'transition-colors duration-150',
                       'ml-1.5',
                       local.slotClassNames?.closeButton

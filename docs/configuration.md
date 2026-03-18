@@ -171,6 +171,24 @@ Guidance:
 - Prefer `theme.tokens` for chrome colors and `slotClassNames` for local layout styling.
 - Avoid global resets such as `* { border-width: 0; }`, which can silently break shell chrome defaults.
 
+### Built-in design token contract
+
+If you need read-only token metadata for a token inspector, docs page, or external tooling, consume the public contract from `@floegence/floe-webapp-core` instead of copying values into app code.
+
+```ts
+import {
+  floeColorTokenCategories,
+  floeDesignTokens,
+  floeSharedCssVariables,
+  floeThemeColorVariables,
+} from '@floegence/floe-webapp-core';
+```
+
+- `floeColorTokenCategories`: semantic color groups with light/dark values
+- `floeThemeColorVariables`: flattened `light` / `dark` CSS variable maps
+- `floeSharedCssVariables`: shared variables such as `--radius`, `--font-sans`, `--font-mono`
+- `floeDesignTokens`: combined color, typography, spacing, radius, motion, and shared token metadata
+
 ## Strings
 
 Configuration: `FloeConfig.strings` (`packages/core/src/context/FloeConfigContext.tsx`)

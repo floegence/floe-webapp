@@ -103,7 +103,7 @@ export function Card(props: CardProps) {
     default: 'bg-card border border-border shadow-sm hover:shadow-md',
     'hover-lift': 'bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1',
     'gradient-border': 'relative bg-card overflow-hidden',
-    glass: 'backdrop-blur-xl bg-card/30 border border-white/10 shadow-lg',
+    glass: 'backdrop-blur-xl bg-card/30 border border-border/50 shadow-lg',
     spotlight: 'relative bg-card border border-border overflow-hidden',
     shimmer: 'relative bg-card border border-border overflow-hidden',
     glow: 'bg-card border border-border shadow-sm',
@@ -138,7 +138,11 @@ export function Card(props: CardProps) {
       <div
         class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(400px circle at ${spotlightPos().x}px ${spotlightPos().y}px, rgba(var(--primary-rgb, 99, 102, 241), 0.15), transparent 40%)`,
+          background: `radial-gradient(
+            400px circle at ${spotlightPos().x}px ${spotlightPos().y}px,
+            color-mix(in srgb, var(--primary) 18%, transparent),
+            transparent 40%
+          )`,
         }}
       />
     );
@@ -148,7 +152,10 @@ export function Card(props: CardProps) {
     if (variant() !== 'shimmer') return null;
     return (
       <div
-        class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite]"
+        style={{
+          background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 12%, transparent), transparent)',
+        }}
       />
     );
   };
@@ -370,7 +377,11 @@ export function Interactive3DCard(props: Interactive3DCardProps) {
           class="pointer-events-none absolute inset-0 z-20 opacity-0 transition-opacity duration-300"
           classList={{ 'opacity-100': isHovered() }}
           style={{
-            background: `radial-gradient(circle at ${shinePos().x}% ${shinePos().y}%, rgba(255,255,255,0.2) 0%, transparent 50%)`,
+            background: `radial-gradient(
+              circle at ${shinePos().x}% ${shinePos().y}%,
+              color-mix(in srgb, var(--primary) 18%, transparent) 0%,
+              transparent 50%
+            )`,
           }}
         />
       )}
@@ -456,7 +467,7 @@ export function NeonCard(props: NeonCardProps) {
       style={{
         ...(typeof local.style === 'object' ? local.style : {}),
         'border-color': color(),
-        'box-shadow': `0 0 5px ${color()}, 0 0 20px ${color()}, 0 0 40px ${color()}, inset 0 0 20px ${color()}20`,
+        'box-shadow': `0 0 5px ${color()}, 0 0 20px color-mix(in srgb, ${color()} 72%, transparent), 0 0 40px color-mix(in srgb, ${color()} 45%, transparent), inset 0 0 20px color-mix(in srgb, ${color()} 15%, transparent)`,
       }}
       {...rest}
     >

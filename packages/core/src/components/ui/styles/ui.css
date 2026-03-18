@@ -558,17 +558,17 @@
      ============================================================================= */
 
   .highlight-block {
-    --hb-accent: oklch(0.5 0.1 240);
-    --hb-header-bg: oklch(0.5 0.1 240 / 0.06);
-    --hb-content-bg: oklch(0.5 0.1 240 / 0.04);
-    --hb-border: oklch(0.5 0.1 240 / 0.12);
+    --hb-accent: var(--primary);
+    --hb-border: color-mix(in srgb, var(--hb-accent) 22%, var(--border));
+    --hb-header-bg: color-mix(in srgb, var(--hb-accent) 10%, var(--card));
+    --hb-content-bg: color-mix(in srgb, var(--hb-accent) 5%, var(--card));
+    --hb-title: color-mix(in srgb, var(--hb-accent) 64%, var(--foreground));
 
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--hb-border);
   }
 
-  /* Header: left accent bar + light background */
   .highlight-block-header {
     display: flex;
     align-items: center;
@@ -581,7 +581,8 @@
 
   .highlight-block-icon {
     flex-shrink: 0;
-    opacity: 0.9;
+    opacity: 0.95;
+    color: var(--hb-title);
   }
 
   .highlight-block-title {
@@ -589,9 +590,9 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    color: var(--hb-title);
   }
 
-  /* Content: light colored background */
   .highlight-block-content {
     padding: 10px 14px 12px 17px;
     background: var(--hb-content-bg);
@@ -599,7 +600,7 @@
     margin-left: -1px;
     font-size: 12px;
     line-height: 1.65;
-    color: color-mix(in srgb, var(--foreground) 85%, transparent);
+    color: color-mix(in srgb, var(--foreground) 90%, transparent);
   }
 
   .highlight-block-content > p { margin-bottom: 6px; }
@@ -614,131 +615,29 @@
   .highlight-block-content > ul { list-style-type: disc; }
   .highlight-block-content > ol { list-style-type: decimal; }
 
-  /* ============ Info Variant ============ */
   .highlight-block-info {
-    --hb-accent: oklch(0.52 0.14 245);
-    --hb-header-bg: oklch(0.92 0.025 245);
-    --hb-content-bg: oklch(0.97 0.012 245);
-    --hb-border: oklch(0.86 0.04 245);
+    --hb-accent: var(--info);
   }
 
-  :is(.dark) .highlight-block-info {
-    --hb-accent: oklch(0.62 0.12 240);
-    --hb-header-bg: oklch(0.25 0.035 240);
-    --hb-content-bg: oklch(0.19 0.02 240);
-    --hb-border: oklch(0.35 0.05 240);
-  }
-
-  .highlight-icon-info { color: oklch(0.50 0.14 245); }
-  .highlight-title-info { color: oklch(0.40 0.10 245); }
-
-  :is(.dark) .highlight-icon-info { color: oklch(0.70 0.12 240); }
-  :is(.dark) .highlight-title-info { color: oklch(0.78 0.08 240); }
-
-  /* ============ Warning Variant ============ */
   .highlight-block-warning {
-    --hb-accent: oklch(0.62 0.16 65);
-    --hb-header-bg: oklch(0.93 0.035 70);
-    --hb-content-bg: oklch(0.97 0.018 70);
-    --hb-border: oklch(0.88 0.05 70);
+    --hb-accent: var(--warning);
   }
 
-  :is(.dark) .highlight-block-warning {
-    --hb-accent: oklch(0.70 0.14 65);
-    --hb-header-bg: oklch(0.25 0.04 65);
-    --hb-content-bg: oklch(0.19 0.025 65);
-    --hb-border: oklch(0.35 0.06 65);
-  }
-
-  .highlight-icon-warning { color: oklch(0.58 0.16 65); }
-  .highlight-title-warning { color: oklch(0.45 0.12 65); }
-
-  :is(.dark) .highlight-icon-warning { color: oklch(0.75 0.14 65); }
-  :is(.dark) .highlight-title-warning { color: oklch(0.80 0.10 65); }
-
-  /* ============ Success Variant ============ */
   .highlight-block-success {
-    --hb-accent: oklch(0.55 0.14 155);
-    --hb-header-bg: oklch(0.93 0.03 155);
-    --hb-content-bg: oklch(0.97 0.015 155);
-    --hb-border: oklch(0.88 0.045 155);
+    --hb-accent: var(--success);
   }
 
-  :is(.dark) .highlight-block-success {
-    --hb-accent: oklch(0.62 0.12 155);
-    --hb-header-bg: oklch(0.24 0.035 155);
-    --hb-content-bg: oklch(0.18 0.02 155);
-    --hb-border: oklch(0.34 0.05 155);
-  }
-
-  .highlight-icon-success { color: oklch(0.52 0.14 155); }
-  .highlight-title-success { color: oklch(0.40 0.10 155); }
-
-  :is(.dark) .highlight-icon-success { color: oklch(0.68 0.12 155); }
-  :is(.dark) .highlight-title-success { color: oklch(0.75 0.08 155); }
-
-  /* ============ Error Variant ============ */
   .highlight-block-error {
-    --hb-accent: oklch(0.55 0.16 25);
-    --hb-header-bg: oklch(0.93 0.025 20);
-    --hb-content-bg: oklch(0.97 0.012 20);
-    --hb-border: oklch(0.88 0.04 20);
+    --hb-accent: var(--error);
   }
 
-  :is(.dark) .highlight-block-error {
-    --hb-accent: oklch(0.60 0.14 25);
-    --hb-header-bg: oklch(0.24 0.035 25);
-    --hb-content-bg: oklch(0.18 0.02 25);
-    --hb-border: oklch(0.34 0.05 25);
-  }
-
-  .highlight-icon-error { color: oklch(0.52 0.16 25); }
-  .highlight-title-error { color: oklch(0.42 0.12 25); }
-
-  :is(.dark) .highlight-icon-error { color: oklch(0.68 0.14 25); }
-  :is(.dark) .highlight-title-error { color: oklch(0.75 0.10 25); }
-
-  /* ============ Note Variant ============ */
   .highlight-block-note {
-    --hb-accent: oklch(0.52 0.16 285);
-    --hb-header-bg: oklch(0.93 0.025 285);
-    --hb-content-bg: oklch(0.97 0.012 285);
-    --hb-border: oklch(0.88 0.04 285);
+    --hb-accent: color-mix(in srgb, var(--primary) 72%, var(--info) 28%);
   }
 
-  :is(.dark) .highlight-block-note {
-    --hb-accent: oklch(0.62 0.14 285);
-    --hb-header-bg: oklch(0.24 0.035 285);
-    --hb-content-bg: oklch(0.18 0.02 285);
-    --hb-border: oklch(0.34 0.05 285);
-  }
-
-  .highlight-icon-note { color: oklch(0.50 0.16 285); }
-  .highlight-title-note { color: oklch(0.40 0.12 285); }
-
-  :is(.dark) .highlight-icon-note { color: oklch(0.68 0.14 285); }
-  :is(.dark) .highlight-title-note { color: oklch(0.75 0.10 285); }
-
-  /* ============ Tip Variant ============ */
   .highlight-block-tip {
-    --hb-accent: oklch(0.52 0.12 175);
-    --hb-header-bg: oklch(0.93 0.02 175);
-    --hb-content-bg: oklch(0.97 0.01 175);
-    --hb-border: oklch(0.88 0.03 175);
+    --hb-accent: color-mix(in srgb, var(--success) 72%, var(--info) 28%);
   }
-
-  :is(.dark) .highlight-block-tip {
-    --hb-accent: oklch(0.60 0.10 175);
-    --hb-header-bg: oklch(0.24 0.025 175);
-    --hb-content-bg: oklch(0.18 0.015 175);
-    --hb-border: oklch(0.34 0.04 175);
-  }
-
-  .highlight-icon-tip { color: oklch(0.48 0.12 175); }
-  .highlight-title-tip { color: oklch(0.38 0.08 175); }
-
-  :is(.dark) .highlight-icon-tip { color: oklch(0.66 0.10 175); }
-  :is(.dark) .highlight-title-tip { color: oklch(0.72 0.06 175); }
 
   /* =============================================================================
      Charts - Professional Data Visualization
@@ -774,7 +673,7 @@
   .chart-axis-label {
     font-size: 10px;
     fill: var(--muted-foreground);
-    font-family: var(--font-sans, system-ui);
+    font-family: var(--font-sans);
   }
 
   /* Line chart */
@@ -815,7 +714,7 @@
     fill: var(--popover);
     stroke: var(--border);
     stroke-width: 1;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--foreground) 12%, transparent));
     pointer-events: none;
   }
 
@@ -823,14 +722,14 @@
     font-size: 9px;
     font-weight: 600;
     fill: var(--foreground);
-    font-family: var(--font-sans, system-ui);
+    font-family: var(--font-sans);
     pointer-events: none;
   }
 
   .chart-tooltip-value {
     font-size: 8px;
     fill: var(--muted-foreground);
-    font-family: var(--font-mono, monospace);
+    font-family: var(--font-mono);
     pointer-events: none;
   }
 
@@ -852,7 +751,7 @@
     font-size: 10px;
     fill: var(--foreground);
     font-weight: 500;
-    font-family: var(--font-mono, monospace);
+    font-family: var(--font-mono);
   }
 
   /* Pie chart */
@@ -889,13 +788,13 @@
     font-size: 18px;
     font-weight: 700;
     fill: var(--foreground);
-    font-family: var(--font-sans, system-ui);
+    font-family: var(--font-sans);
   }
 
   .chart-pie-center-sublabel {
     font-size: 8px;
     fill: var(--muted-foreground);
-    font-family: var(--font-sans, system-ui);
+    font-family: var(--font-sans);
   }
 
   .chart-pie-legend {
@@ -935,7 +834,7 @@
     font-size: 11px;
     font-weight: 500;
     color: var(--foreground);
-    font-family: var(--font-mono, monospace);
+    font-family: var(--font-mono);
     margin-left: 4px;
   }
 
@@ -965,18 +864,18 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: oklch(0.65 0.18 145);
+    background: var(--success);
     animation: chart-monitoring-pulse 1.5s ease-in-out infinite;
   }
 
   @keyframes chart-monitoring-pulse {
     0%, 100% {
       opacity: 1;
-      box-shadow: 0 0 0 0 oklch(0.65 0.18 145 / 0.5);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent);
     }
     50% {
       opacity: 0.8;
-      box-shadow: 0 0 0 4px oklch(0.65 0.18 145 / 0);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 0%, transparent);
     }
   }
 
@@ -1170,7 +1069,7 @@
     border-radius: 0;
     background: color-mix(in srgb, var(--error) 86%, var(--terminal-background));
     color: var(--error-foreground);
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-mono);
     font-size: 0.625rem;
     font-weight: 700;
     line-height: 1;
@@ -1236,7 +1135,7 @@
     border-radius: 0;
     background: var(--mobile-keyboard-suggestion-bg);
     color: var(--mobile-keyboard-suggestion-fg);
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     font-weight: 600;
     line-height: 1;
@@ -1265,15 +1164,15 @@
   }
 
   .mobile-keyboard-suggestion[data-kind='script'] {
-    border-left-color: color-mix(in srgb, #22c55e 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(in srgb, var(--success) 56%, var(--mobile-keyboard-suggestion-border));
   }
 
   .mobile-keyboard-suggestion[data-kind='path'] {
-    border-left-color: color-mix(in srgb, #38bdf8 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(in srgb, var(--info) 56%, var(--mobile-keyboard-suggestion-border));
   }
 
   .mobile-keyboard-suggestion[data-kind='snippet'] {
-    border-left-color: color-mix(in srgb, #f59e0b 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(in srgb, var(--warning) 56%, var(--mobile-keyboard-suggestion-border));
   }
 
   .mobile-keyboard-main {
@@ -1306,7 +1205,7 @@
     border-radius: 0;
     background: var(--mobile-keyboard-key-bg);
     color: var(--mobile-keyboard-key-fg);
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-mono);
     font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1;
@@ -1418,7 +1317,7 @@
     border-radius: 0;
     background: var(--mobile-keyboard-popup-bg);
     color: var(--mobile-keyboard-popup-fg);
-    font-family: var(--font-mono, ui-monospace, monospace);
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1;

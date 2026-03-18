@@ -16,7 +16,7 @@ export function LaunchpadGrid(props: LaunchpadGridProps) {
       <Show
         when={props.items.length > 0}
         fallback={
-          <div class="text-white/50 text-xs">No apps found</div>
+          <div class="text-muted-foreground text-xs">No apps found</div>
         }
       >
         <div
