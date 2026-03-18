@@ -32,8 +32,8 @@ export function MetricsWidget(props: WidgetProps) {
 
   const getColorClass = (value: number, thresholds: { warning: number; danger: number }) => {
     if (value >= thresholds.danger) return 'text-destructive';
-    if (value >= thresholds.warning) return 'text-yellow-500';
-    return 'text-green-500';
+    if (value >= thresholds.warning) return 'text-warning';
+    return 'text-success';
   };
 
   return (
@@ -60,7 +60,7 @@ export function MetricsWidget(props: WidgetProps) {
           label="Network In"
           value={networkIn().toFixed(0)}
           unit="KB/s"
-          colorClass="text-blue-500"
+          colorClass="text-info"
         />
 
         {/* Network Out */}
@@ -68,7 +68,7 @@ export function MetricsWidget(props: WidgetProps) {
           label="Network Out"
           value={networkOut().toFixed(0)}
           unit="KB/s"
-          colorClass="text-purple-500"
+          colorClass="text-primary"
         />
       </div>
     </div>

@@ -16,6 +16,12 @@
 @import './themes/light.css';
 @import './themes/dark.css';
 
+:root {
+  --radius: 0.375rem;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+}
+
 /*
  * TailwindCSS v4 requires @theme for utilities. However, CSS variable
  * references don't work properly for background/text color utilities.
@@ -269,13 +275,7 @@
     overscroll-behavior: none;
     background-color: var(--background);
     color: var(--foreground);
-    font-family:
-      'Inter',
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      Roboto,
-      sans-serif;
+    font-family: var(--font-sans);
   }
 
   #root {
@@ -286,14 +286,7 @@
   code,
   pre,
   .font-mono {
-    font-family:
-      'JetBrains Mono',
-      'Fira Code',
-      'SF Mono',
-      Menlo,
-      Monaco,
-      Consolas,
-      monospace;
+    font-family: var(--font-mono);
   }
 
   /* Focus styles */

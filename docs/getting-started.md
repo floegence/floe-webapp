@@ -292,6 +292,8 @@ If you need scoped CSS, target the stable shell anchors instead of framework imp
 
 Avoid broad resets such as `* { border-width: 0; }`, which can remove the default shell dividers entirely.
 
+If you are building a token viewer or docs surface, import the public token contract from `@floegence/floe-webapp-core` (`floeDesignTokens`, `floeColorTokenCategories`, `floeThemeColorVariables`, `floeSharedCssVariables`) instead of duplicating theme values in your app.
+
 ---
 
 ## Next docs

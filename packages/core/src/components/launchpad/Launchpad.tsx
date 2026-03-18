@@ -6,6 +6,7 @@ import type { LaunchpadItemData } from './LaunchpadItem';
 import { deferAfterPaint } from '../../utils/defer';
 import { shouldIgnoreHotkeys } from '../../utils/dom';
 import { useViewActivation } from '../../context/ViewActivationContext';
+import { cn } from '../../utils/cn';
 
 export interface LaunchpadProps {
   items: LaunchpadItemData[];
@@ -207,12 +208,27 @@ export function Launchpad(props: LaunchpadProps) {
     if (animationRestoreTimer !== null) clearTimeout(animationRestoreTimer);
   });
 
+  const containerStyle = () => ({
+    background: `
+      radial-gradient(
+        circle at top,
+        color-mix(in srgb, var(--primary) 16%, transparent) 0%,
+        transparent 48%
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--background) 76%, transparent) 0%,
+        color-mix(in srgb, var(--card) 88%, transparent) 100%
+      )
+    `,
+    ...(props.style ?? {}),
+  });
+
   return (
     <div
       ref={container}
-      class={`launchpad fixed inset-0 z-50 flex flex-col select-none
-              bg-black/70 backdrop-blur-xl ${props.class ?? ''}`}
-      style={props.style}
+      class={cn('launchpad fixed inset-0 z-50 flex flex-col select-none backdrop-blur-xl', props.class)}
+      style={containerStyle()}
       onClick={handleBackgroundClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -288,11 +304,11 @@ export function Launchpad(props: LaunchpadProps) {
       </Show>
 
       {/* Keyboard hints */}
-      <div class="absolute bottom-4 right-4 text-white/30 text-xs hidden md:block">
-        <kbd class="px-1.5 py-0.5 rounded bg-white/10 mr-1">ESC</kbd> to close
+      <div class="absolute bottom-4 right-4 text-muted-foreground/60 text-xs hidden md:block">
+        <kbd class="px-1.5 py-0.5 rounded border border-border/50 bg-card/80 text-foreground/80 font-mono mr-1">ESC</kbd> to close
         <span class="mx-2">|</span>
-        <kbd class="px-1.5 py-0.5 rounded bg-white/10 mr-1">\u2190</kbd>
-        <kbd class="px-1.5 py-0.5 rounded bg-white/10">→</kbd> to navigate
+        <kbd class="px-1.5 py-0.5 rounded border border-border/50 bg-card/80 text-foreground/80 font-mono mr-1">\u2190</kbd>
+        <kbd class="px-1.5 py-0.5 rounded border border-border/50 bg-card/80 text-foreground/80 font-mono">→</kbd> to navigate
       </div>
     </div>
   );

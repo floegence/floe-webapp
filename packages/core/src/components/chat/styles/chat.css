@@ -246,8 +246,8 @@
 }
 
 .chat-message-bubble-error {
-  border-color: rgb(239 68 68 / 0.3);
-  background-color: rgb(239 68 68 / 0.05);
+  border-color: color-mix(in srgb, var(--error) 30%, transparent);
+  background-color: color-mix(in srgb, var(--error) 5%, transparent);
 }
 
 .chat-message-error {
@@ -256,7 +256,7 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: rgb(239 68 68);
+  color: var(--error);
 }
 
 /* ============================================
@@ -368,7 +368,7 @@
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   background-color: color-mix(in srgb, var(--muted) 70%, transparent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--primary);
 }
@@ -486,7 +486,7 @@ pre.chat-md-code-block code {
   font-size: 0.75rem;
   font-weight: 500;
   color: #e6edf3;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .chat-code-language {
@@ -526,7 +526,7 @@ pre.chat-md-code-block code {
 
 .chat-code-content code {
   font-size: 0.6875rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   line-height: 1.5;
   color: #e6edf3;
 }
@@ -539,7 +539,7 @@ pre.chat-md-code-block code {
   padding: 0.875rem 1rem;
   background-color: #0d1117;
   font-size: 0.6875rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   overflow-x: auto;
   color: #e6edf3;
 }
@@ -581,12 +581,12 @@ pre.chat-md-code-block code {
   font-size: 0.75rem;
   font-weight: 500;
   color: #e6edf3;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .chat-code-diff-stats {
   font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   color: #e6edf3;
 }
 
@@ -630,7 +630,7 @@ pre.chat-md-code-block code {
 .chat-code-diff-content {
   overflow-x: auto;
   font-size: 0.6875rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   line-height: 1.5;
   color: #e6edf3;
   background-color: #0d1117;
@@ -759,14 +759,14 @@ pre.chat-md-code-block code {
 
 .chat-shell-prompt {
   color: #58a6ff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
 }
 
 .chat-shell-command-text {
   flex: 1;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: #e6edf3;
 }
@@ -778,7 +778,7 @@ pre.chat-md-code-block code {
 .chat-shell-output {
   padding: 0.75rem 0.875rem;
   font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   overflow-x: auto;
   max-height: 16rem;
   overflow-y: auto;
@@ -797,7 +797,7 @@ pre.chat-md-code-block code {
 .chat-shell-exit-code {
   padding: 0.375rem 0.875rem;
   font-size: 0.6875rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   border-top: 1px solid #30363d;
   background-color: #161b22;
 }
@@ -833,7 +833,7 @@ pre.chat-md-code-block code {
 }
 
 .chat-mermaid-error {
-  color: rgb(239 68 68);
+  color: var(--error);
 }
 
 .chat-mermaid-content {
@@ -965,7 +965,7 @@ pre.chat-md-code-block code {
   margin-top: 0.5rem;
   font-size: 0.6875rem;
   color: var(--muted-foreground);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   white-space: pre-wrap;
   font-style: italic;
 }
@@ -1022,7 +1022,7 @@ pre.chat-md-code-block code {
 .chat-tool-name {
   font-size: 0.6875rem;
   font-weight: 600;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .chat-tool-approval-actions {
@@ -1052,8 +1052,8 @@ pre.chat-md-code-block code {
 }
 
 .chat-tool-approval-btn-reject {
-  color: rgb(239 68 68);
-  border-color: color-mix(in srgb, rgb(239 68 68) 40%, var(--border));
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 40%, var(--border));
 }
 
 .chat-tool-summary {
@@ -1137,7 +1137,7 @@ pre.chat-md-code-block code {
 .chat-tool-args,
 .chat-tool-result {
   font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   background-color: color-mix(in srgb, var(--muted) 30%, transparent);
   border-radius: 0.375rem;
   padding: 0.625rem 0.75rem;
@@ -1149,12 +1149,12 @@ pre.chat-md-code-block code {
 }
 
 .chat-tool-error-section {
-  background-color: rgb(239 68 68 / 0.05);
+  background-color: color-mix(in srgb, var(--error) 5%, transparent);
 }
 
 .chat-tool-error {
   font-size: 0.6875rem;
-  color: rgb(239 68 68);
+  color: var(--error);
 }
 
 .chat-tool-children {
@@ -1523,7 +1523,7 @@ pre.chat-md-code-block code {
   border-radius: 0.25rem;
   background-color: color-mix(in srgb, var(--muted) 60%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.5625rem;
 }
 
@@ -1610,7 +1610,7 @@ pre.chat-md-code-block code {
 }
 
 .chat-attachment-error {
-  color: rgb(239 68 68);
+  color: var(--error);
 }
 
 .chat-attachment-remove-btn {
@@ -1627,9 +1627,9 @@ pre.chat-md-code-block code {
 }
 
 .chat-attachment-remove-btn:hover {
-  background-color: rgb(239 68 68);
-  border-color: rgb(239 68 68);
-  color: white;
+  background-color: var(--error);
+  border-color: var(--error);
+  color: var(--error-foreground);
 }
 
 /* ============================================
@@ -1718,11 +1718,11 @@ pre.chat-md-code-block code {
 
    Design notes:
    1. These rules live in @layer components so they can override the global @layer base selection styles in floe.css.
-   2. Code blocks use hard-coded colors because they always have a fixed dark background (#0d1117).
+   2. Code blocks consume dedicated selection tokens because they always sit on a fixed dark surface.
    3. User message bubbles use theme variables because bubble colors vary by theme.
 
    Color scheme:
-   - Code blocks: bright blue background (#57a5ff) + dark text (#0d1117)
+   - Code blocks: dedicated code selection tokens
    - User bubbles (light theme): yellow background + black text (bubble background is dark)
    - User bubbles (dark theme): dark blue background + white text (bubble background is light)
 */
@@ -1734,8 +1734,7 @@ pre.chat-md-code-block code {
 }
 
 /* Code-block selection
-   Code blocks always use a dark background (#0d1117), so we use a fixed bright selection style.
-   Hard-coded colors ensure visibility in all cases. */
+   Code blocks always use a dark background, so they consume dedicated selection tokens. */
 .chat-code-block ::selection,
 .chat-code-block *::selection,
 .chat-code-diff-block ::selection,
@@ -1744,8 +1743,8 @@ pre.chat-md-code-block ::selection,
 pre.chat-md-code-block *::selection,
 .chat-shell-block ::selection,
 .chat-shell-block *::selection {
-  background-color: #57a5ff;
-  color: #0d1117;
+  background-color: var(--selection-code-bg);
+  color: var(--selection-code-fg);
 }
 
 /* User message bubble selection

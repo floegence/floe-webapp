@@ -12,13 +12,13 @@ export const ConnectionStatus: Component<ConnectionStatusProps> = (props) => {
   const getStatusInfo = () => {
     switch (props.state) {
       case 'connecting':
-        return { label: 'Connecting...', color: 'text-yellow-500' };
+        return { label: 'Connecting...', color: 'text-warning' };
       case 'connected':
-        return { label: 'Connected', color: 'text-green-500' };
+        return { label: 'Connected', color: 'text-success' };
       case 'disconnected':
         return { label: 'Disconnected', color: 'text-muted-foreground' };
       case 'error':
-        return { label: 'Connection Error', color: 'text-red-500' };
+        return { label: 'Connection Error', color: 'text-error' };
       default:
         return { label: 'Unknown', color: 'text-muted-foreground' };
     }

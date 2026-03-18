@@ -98,8 +98,8 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
             fallback={<span class="chat-code-diff-stats text-muted-foreground">...</span>}
           >
             <span class="chat-code-diff-stats">
-              <span style={{ color: 'rgb(34 197 94)' }}>+{stats()!.added}</span>
-              <span style={{ color: 'rgb(239 68 68)', 'margin-left': '0.5rem' }}>-{stats()!.removed}</span>
+              <span class="text-success">+{stats()!.added}</span>
+              <span class="text-error" style={{ 'margin-left': '0.5rem' }}>-{stats()!.removed}</span>
             </span>
           </Show>
         </div>
@@ -281,4 +281,3 @@ const CheckIcon: Component = () => (
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
-
