@@ -468,9 +468,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
               {/* Close button */}
               <Button
-                variant="ghost"
+                variant="ghost-destructive"
                 size="icon"
-                class="h-6 w-6 bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground"
+                class="h-6 w-6"
                 onClick={(e: MouseEvent) => {
                   e.stopPropagation();
                   props.onOpenChange(false);

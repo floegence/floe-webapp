@@ -3,7 +3,14 @@ import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Loader2 } from '../icons';
 
-export type ButtonVariant = 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+export type ButtonVariant =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'ghost-destructive'
+  | 'destructive';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -19,6 +26,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:scale-[0.98]',
   outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:scale-[0.98]',
   ghost: 'hover:bg-accent hover:text-accent-foreground active:scale-[0.98]',
+  'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:scale-[0.98]',
   destructive: 'bg-error text-error-foreground shadow-sm hover:bg-error/90 active:scale-[0.98]',
 };
 
