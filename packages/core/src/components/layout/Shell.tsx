@@ -3,6 +3,7 @@ import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { useComponentRegistry } from '../../context/ComponentRegistry';
@@ -74,6 +75,8 @@ export function Shell(props: ShellProps) {
   const floe = useResolvedFloeConfig();
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
+  const [sidebarPreviewWidth, setSidebarPreviewWidth] = createSignal<number | null>(null);
+  let mobileSidebarDrawerRef: HTMLDivElement | undefined;
   const sidebarHidden = () => props.sidebarMode === 'hidden';
   const registry = (() => {
     try {
@@ -268,6 +271,37 @@ export function Shell(props: ShellProps) {
   });
 
   const effectiveSidebarCollapsed = () => (sidebarHidden() ? true : layout.sidebarCollapsed());
+  const effectiveSidebarWidth = () => sidebarPreviewWidth() ?? layout.sidebarWidth();
+
+  const beginSidebarResize = () => {
+    setSidebarPreviewWidth(layout.sidebarWidth());
+  };
+
+  const updateSidebarPreviewWidth = (delta: number) => {
+    setSidebarPreviewWidth((prev) => layout.clampSidebarWidth((prev ?? layout.sidebarWidth()) + delta));
+  };
+
+  const commitSidebarResize = () => {
+    const preview = sidebarPreviewWidth();
+    if (preview !== null) {
+      layout.setSidebarWidth(preview);
+      setSidebarPreviewWidth(null);
+    }
+  };
+
+  useOverlayMask({
+    open: () => isMobile() && mobileSidebarOpen() && !sidebarHidden(),
+    root: () => mobileSidebarDrawerRef,
+    onClose: () => setMobileSidebarOpen(false),
+    lockBodyScroll: true,
+    trapFocus: true,
+    closeOnEscape: true,
+    blockHotkeys: true,
+    blockWheel: 'outside',
+    blockTouchMove: 'outside',
+    autoFocus: false,
+    restoreFocus: true,
+  });
 
   return (
     <div
@@ -312,12 +346,14 @@ export function Shell(props: ShellProps) {
           {/* Sidebar - CSS-hidden when collapsed or when fullScreen component is active, DOM stays mounted */}
           <Show when={!sidebarHidden()}>
             <Sidebar
-              width={layout.sidebarWidth()}
+              width={effectiveSidebarWidth()}
               collapsed={layout.sidebarCollapsed() || isFullScreen()}
               resizer={
                 <ResizeHandle
                   direction="horizontal"
-                  onResize={(delta) => layout.setSidebarWidth(layout.sidebarWidth() + delta)}
+                  onResize={updateSidebarPreviewWidth}
+                  onResizeStart={beginSidebarResize}
+                  onResizeEnd={commitSidebarResize}
                 />
               }
               class={props.slotClassNames?.sidebar}
@@ -340,6 +376,7 @@ export function Shell(props: ShellProps) {
           />
           {/* Sidebar drawer - narrower width, drawer style */}
           <div
+            ref={mobileSidebarDrawerRef}
             data-floe-shell-slot="mobile-sidebar-drawer"
             class={cn(
               'absolute left-0 top-0 bottom-0 z-50',
@@ -349,6 +386,7 @@ export function Shell(props: ShellProps) {
               'animate-in slide-in-from-left duration-200',
               props.slotClassNames?.mobileSidebarDrawer
             )}
+            tabIndex={-1}
           >
             <div class="h-full overflow-auto overscroll-contain">
               {renderSidebarContent(layout.sidebarActiveTab())}

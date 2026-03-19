@@ -85,6 +85,7 @@ make check
 - `docs/getting-started.md`
 - `docs/configuration.md`
 - `docs/component-registry.md`
+- `docs/interaction-architecture.md`
 - `docs/protocol.md`
 
 ## Demo protocol config (optional)

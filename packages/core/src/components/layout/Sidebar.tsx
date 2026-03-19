@@ -19,6 +19,7 @@ export function Sidebar(props: SidebarProps) {
   return (
     <aside
       data-floe-shell-slot="sidebar"
+      data-floe-geometry-surface="shell-sidebar"
       class={cn(
         'relative h-full flex flex-col shrink-0 min-h-0',
         'bg-sidebar text-sidebar-foreground',

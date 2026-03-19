@@ -318,6 +318,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Wrap setViewMode and setSortConfig for external usage.
   const setViewMode = (mode: ViewMode) => setViewModeInternal(mode);
   const setSortConfig = (config: SortConfig) => setSortConfigInternal(config);
+  const clampSidebarWidth = (widthPx: number) => normalizeSidebarWidthPx(widthPx, sidebarWidth());
 
   // Home label accessor (reactive)
   const homeLabel = () => props.homeLabel ?? 'Root';
@@ -768,6 +769,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     sidebarCollapsed,
     toggleSidebar,
     sidebarWidth,
+    clampSidebarWidth,
     setSidebarWidth,
     contextMenu,
     showContextMenu,

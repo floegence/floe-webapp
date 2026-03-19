@@ -25,6 +25,7 @@ export interface LayoutContextValue {
   sidebarWidth: Accessor<number>;
   sidebarActiveTab: Accessor<string>;
   sidebarCollapsed: Accessor<boolean>;
+  clampSidebarWidth: (width: number) => number;
   setSidebarWidth: (width: number) => void;
   setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -76,6 +77,8 @@ export function createLayoutService(): LayoutContextValue {
   };
 
   const [store, setStore] = createStore<LayoutStore>(initialState);
+  const clampSidebarWidth = (width: number) =>
+    Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
 
   // Persist layout changes
   createEffect(() => {
@@ -99,12 +102,13 @@ export function createLayoutService(): LayoutContextValue {
     sidebarWidth: () => store.sidebar.width,
     sidebarActiveTab: () => store.sidebar.activeTab,
     sidebarCollapsed: () => store.sidebar.collapsed,
+    clampSidebarWidth,
 
     // Sidebar actions
     setSidebarWidth: (width: number) =>
       setStore(
         produce((s) => {
-          s.sidebar.width = Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
+          s.sidebar.width = clampSidebarWidth(width);
         })
       ),
     setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) =>

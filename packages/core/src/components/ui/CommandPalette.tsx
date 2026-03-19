@@ -28,19 +28,13 @@ export function CommandPalette() {
     // Prevent scroll bleed on the backdrop while keeping the results list scrollable.
     blockWheel: 'outside',
     blockTouchMove: 'outside',
+    autoFocus: { selector: 'input' },
     restoreFocus: true,
-  });
-
-  // Focus input when opened
-  createEffect(() => {
-    if (command.isOpen() && inputRef) {
-      inputRef.focus();
-      setSelectedIndex(0);
-    }
   });
 
   // Reset selection when search changes
   createEffect(() => {
+    if (!command.isOpen()) return;
     command.search();
     setSelectedIndex(0);
   });

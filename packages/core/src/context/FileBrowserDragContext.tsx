@@ -1,6 +1,7 @@
 import { createContext, useContext, type JSX, type Accessor, createSignal, onCleanup } from 'solid-js';
 import type { FileItem } from '../components/file-browser/types';
-import { lockBodyStyle } from '../utils/bodyStyleLock';
+import { deferNonBlocking } from '../utils/defer';
+import { startHotInteraction } from '../utils/hotInteraction';
 
 /**
  * Represents an item being dragged
@@ -134,7 +135,7 @@ export interface FileBrowserDragProviderProps {
 export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
   const [dragState, setDragState] = createSignal<FileBrowserDragState>(initialDragState);
   const instances = new Map<string, FileBrowserDragInstance>();
-  let unlockBody: (() => void) | null = null;
+  let stopHotInteraction: (() => void) | null = null;
 
   const registerInstance = (instance: FileBrowserDragInstance) => {
     instances.set(instance.instanceId, instance);
@@ -152,8 +153,12 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
     if (items.length === 0) return;
 
     // Lock body styles for visual feedback
-    unlockBody?.();
-    unlockBody = lockBodyStyle({ cursor: 'grabbing', 'user-select': 'none' });
+    stopHotInteraction?.();
+    stopHotInteraction = startHotInteraction({
+      kind: 'drag',
+      cursor: 'grabbing',
+      lockUserSelect: true,
+    });
 
     setDragState({
       isDragging: true,
@@ -227,8 +232,8 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
     if (!state.isDragging) return;
 
     // Release body style lock
-    unlockBody?.();
-    unlockBody = null;
+    stopHotInteraction?.();
+    stopHotInteraction = null;
 
     const shouldCommit = !!(commit && state.dropTarget && state.isValidDrop);
 
@@ -280,9 +285,9 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
         }
 
         // Execute the actual move callback (deferred to allow UI to update first)
-        setTimeout(() => {
+        deferNonBlocking(() => {
           targetInstance.onDragMove!(items, targetPath, sourceInstanceId || '');
-        }, 0);
+        });
       }
     }
 
@@ -294,8 +299,8 @@ export function FileBrowserDragProvider(props: FileBrowserDragProviderProps) {
 
   // Cleanup on unmount
   onCleanup(() => {
-    unlockBody?.();
-    unlockBody = null;
+    stopHotInteraction?.();
+    stopHotInteraction = null;
     instances.clear();
   });
 

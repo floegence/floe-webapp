@@ -1,4 +1,4 @@
-import { Show, type JSX, createEffect, onMount, onCleanup } from 'solid-js';
+import { Show, type JSX, createEffect, createSignal, onMount, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
 import { useFileBrowserDrag, type FileBrowserDragInstance } from '../../context/FileBrowserDragContext';
@@ -138,7 +138,8 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   const layout = useLayout();
   const dragContext = useFileBrowserDrag();
   const isMobile = () => layout.isMobile();
-  const sidebarWidth = () => ctx.sidebarWidth();
+  const [sidebarPreviewWidth, setSidebarPreviewWidth] = createSignal<number | null>(null);
+  const sidebarWidth = () => sidebarPreviewWidth() ?? ctx.sidebarWidth();
   const sidebarResizable = () => props.sidebarResizable ?? true;
   const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
   const instanceId = () => props.instanceId ?? `filebrowser-${Math.random().toString(36).slice(2, 9)}`;
@@ -202,6 +203,21 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
   };
 
   const showSidebar = () => !ctx.sidebarCollapsed() || !isMobile();
+  const beginSidebarResize = () => {
+    setSidebarPreviewWidth(ctx.sidebarWidth());
+  };
+
+  const updateSidebarPreviewWidth = (delta: number) => {
+    setSidebarPreviewWidth((prev) => ctx.clampSidebarWidth((prev ?? ctx.sidebarWidth()) + delta));
+  };
+
+  const commitSidebarResize = () => {
+    const preview = sidebarPreviewWidth();
+    if (preview !== null) {
+      ctx.setSidebarWidth(preview);
+      setSidebarPreviewWidth(null);
+    }
+  };
 
   return (
     <div
@@ -227,10 +243,10 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
           open={showSidebar()}
           headerActions={props.sidebarHeaderActions}
           resizable={sidebarResizable()}
-          onResize={(delta) => {
-            ctx.setSidebarWidth(ctx.sidebarWidth() + delta);
-          }}
+          onResize={updateSidebarPreviewWidth}
           onClose={ctx.toggleSidebar}
+          onResizeStart={beginSidebarResize}
+          onResizeEnd={commitSidebarResize}
           bodyRef={(el) => { sidebarScrollContainerRef = el; }}
           bodyClass="py-1"
         >

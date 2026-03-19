@@ -129,7 +129,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         type="button"
         class={cn(
           'relative w-full aspect-square flex items-center justify-center cursor-pointer',
-          'transition-all duration-100',
+          'transition-[color,background-color] duration-100',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
           props.isActive
             ? 'text-activity-bar-foreground-active bg-accent/80'

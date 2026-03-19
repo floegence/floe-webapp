@@ -328,6 +328,18 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+
+  [data-floe-geometry-surface='floating-window'] {
+    contain: layout paint style;
+  }
+
+  [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='shell-sidebar'],
+  [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='sidebar-pane'],
+  [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='floating-window'],
+  [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='floating-window'] {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Animation utilities */

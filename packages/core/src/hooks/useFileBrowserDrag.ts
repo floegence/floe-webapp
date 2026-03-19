@@ -1,5 +1,4 @@
 import { createEffect, onCleanup, createSignal, type Accessor } from 'solid-js';
-import { lockBodyStyle } from '../utils/bodyStyleLock';
 import { useFileBrowserDrag, type DraggedItem } from '../context/FileBrowserDragContext';
 import type { FileItem } from '../components/file-browser/types';
 
@@ -66,7 +65,6 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
   let lastX = 0;
   let lastY = 0;
   let draggedItem: FileItem | null = null;
-  let unlockBody: (() => void) | null = null;
   let rafId: number | null = null;
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
   let isLongPressActivated = false;
@@ -82,16 +80,6 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
     }
   };
 
-  const setGlobalStyles = (active: boolean) => {
-    if (!active) {
-      unlockBody?.();
-      unlockBody = null;
-      return;
-    }
-    unlockBody?.();
-    unlockBody = lockBodyStyle({ cursor: 'grabbing', 'user-select': 'none' });
-  };
-
   const stopDragging = () => {
     if (rafId !== null) {
       cancelAnimationFrame(rafId);
@@ -102,7 +90,6 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
     draggedItem = null;
     isLongPressActivated = false;
     scrollRectCache = null;
-    setGlobalStyles(false);
     setIsDragging(false);
   };
 
@@ -210,7 +197,6 @@ export function useFileBrowserItemDrag(options: UseFileBrowserItemDragOptions): 
     }));
 
     // Start the drag operation
-    setGlobalStyles(true);
     setIsDragging(true);
     dragContext.startDrag(draggedItems, lastX, lastY);
     options.onDragStart?.();

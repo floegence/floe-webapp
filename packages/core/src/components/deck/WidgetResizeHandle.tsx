@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget, type ResizeState } from '../../context/DeckContext';
 import { applyResizeDelta } from '../../utils/gridLayout';
 import { getGridConfigFromElement } from './DeckGrid';
-import { lockBodyStyle } from '../../utils/bodyStyleLock';
+import { startHotInteraction } from '../../utils/hotInteraction';
 
 export interface WidgetResizeHandleProps {
   widget: DeckWidget;
@@ -50,7 +50,7 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   let lastAppliedY = 0;
   let lastAppliedScrollTop = 0;
   let rafId: number | null = null;
-  let unlockBody: (() => void) | null = null;
+  let stopHotInteraction: (() => void) | null = null;
   let gridEl: HTMLElement | null = null;
   let gridRect: DOMRect | null = null;
   let gridPaddingLeft = 0;
@@ -58,13 +58,17 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
 
   const setGlobalStyles = (active: boolean) => {
     if (!active) {
-      unlockBody?.();
-      unlockBody = null;
+      stopHotInteraction?.();
+      stopHotInteraction = null;
       return;
     }
 
-    unlockBody?.();
-    unlockBody = lockBodyStyle({ cursor: EDGE_CURSORS[props.edge], 'user-select': 'none' });
+    stopHotInteraction?.();
+    stopHotInteraction = startHotInteraction({
+      kind: 'resize',
+      cursor: EDGE_CURSORS[props.edge],
+      lockUserSelect: true,
+    });
   };
 
   const stopResizing = () => {

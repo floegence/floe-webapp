@@ -255,6 +255,7 @@ export interface FileBrowserContextValue {
   sidebarCollapsed: Accessor<boolean>;
   toggleSidebar: () => void;
   sidebarWidth: Accessor<number>;
+  clampSidebarWidth: (width: number) => number;
   setSidebarWidth: (width: number) => void;
 
   // Context menu

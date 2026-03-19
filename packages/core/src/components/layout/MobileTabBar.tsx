@@ -101,14 +101,14 @@ export function MobileTabBar(props: MobileTabBarProps) {
                     navigator.vibrate(10);
                   }
 
-                  // Defer callback execution to let UI update first (consistent with CommandContext.execute)
+                  // UI-owned selection state should update synchronously.
                   const onClick = item.onClick;
                   const onSelect = props.onSelect;
                   const id = item.id;
                   if (item.onClick) {
                     deferNonBlocking(() => onClick!());
                   } else {
-                    deferNonBlocking(() => onSelect(id));
+                    onSelect(id);
                   }
                 }}
               />
@@ -137,7 +137,7 @@ function MobileTabItem(props: MobileTabItemProps) {
       class={cn(
         'relative flex-shrink-0 flex flex-col items-center justify-center',
         'min-w-16 h-full px-4 snap-center',
-        'transition-all duration-150',
+        'transition-[color] duration-150',
         'focus:outline-none focus-visible:bg-muted',
         props.isActive
           ? 'text-primary'
