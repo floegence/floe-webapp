@@ -83,9 +83,9 @@ export function Dialog(props: DialogProps) {
                 </Show>
               </div>
               <Button
-                variant="ghost"
+                variant="ghost-destructive"
                 size="icon"
-                class="h-6 w-6 -mr-1 bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground"
+                class="h-6 w-6 -mr-1"
                 onClick={() => props.onOpenChange(false)}
                 aria-label="Close"
               >
