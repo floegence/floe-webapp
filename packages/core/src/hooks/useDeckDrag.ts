@@ -2,7 +2,7 @@ import { createEffect, onCleanup } from 'solid-js';
 import { useDeck } from '../context/DeckContext';
 import { applyDragDelta } from '../utils/gridLayout';
 import { getGridConfigFromElement } from '../components/deck/DeckGrid';
-import { lockBodyStyle } from '../utils/bodyStyleLock';
+import { startHotInteraction } from '../utils/hotInteraction';
 import type { GridPosition } from '../utils/gridCollision';
 
 /**
@@ -25,7 +25,7 @@ export function useDeckDrag() {
   let rafId: number | null = null;
   let currentWidgetId: string | null = null;
   let handleEl: HTMLElement | null = null;
-  let unlockBody: (() => void) | null = null;
+  let stopHotInteraction: (() => void) | null = null;
   let gridEl: HTMLElement | null = null;
   let gridRect: DOMRect | null = null;
   let gridPaddingLeft = 0;
@@ -34,13 +34,17 @@ export function useDeckDrag() {
 
   const setGlobalStyles = (active: boolean) => {
     if (!active) {
-      unlockBody?.();
-      unlockBody = null;
+      stopHotInteraction?.();
+      stopHotInteraction = null;
       return;
     }
 
-    unlockBody?.();
-    unlockBody = lockBodyStyle({ cursor: 'grabbing', 'user-select': 'none' });
+    stopHotInteraction?.();
+    stopHotInteraction = startHotInteraction({
+      kind: 'drag',
+      cursor: 'grabbing',
+      lockUserSelect: true,
+    });
   };
 
   const stopDragging = () => {

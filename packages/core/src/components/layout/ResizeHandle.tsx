@@ -1,10 +1,12 @@
 import { createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
-import { lockBodyStyle } from '../../utils/bodyStyleLock';
+import { startHotInteraction } from '../../utils/hotInteraction';
 
 export interface ResizeHandleProps {
   direction: 'horizontal' | 'vertical';
   onResize: (delta: number) => void;
+  onResizeStart?: () => void;
+  onResizeEnd?: () => void;
   class?: string;
 }
 
@@ -18,19 +20,20 @@ export function ResizeHandle(props: ResizeHandleProps) {
   let activePointerId: number | null = null;
   let handleRef: HTMLDivElement | undefined;
   let rafId: number | null = null;
-  let unlockBody: (() => void) | null = null;
+  let stopHotInteraction: (() => void) | null = null;
 
   const setGlobalDraggingStyles = (dragging: boolean) => {
     if (!dragging) {
-      unlockBody?.();
-      unlockBody = null;
+      stopHotInteraction?.();
+      stopHotInteraction = null;
       return;
     }
 
-    unlockBody?.();
-    unlockBody = lockBodyStyle({
+    stopHotInteraction?.();
+    stopHotInteraction = startHotInteraction({
+      kind: 'resize',
       cursor: props.direction === 'horizontal' ? 'col-resize' : 'row-resize',
-      'user-select': 'none',
+      lockUserSelect: true,
     });
   };
 
@@ -50,6 +53,7 @@ export function ResizeHandle(props: ResizeHandleProps) {
     setIsDragging(false);
     activePointerId = null;
     setGlobalDraggingStyles(false);
+    props.onResizeEnd?.();
   };
 
   const getPos = (e: PointerEvent) => (props.direction === 'horizontal' ? e.clientX : e.clientY);
@@ -64,6 +68,7 @@ export function ResizeHandle(props: ResizeHandleProps) {
     startPos = getPos(e);
     lastPos = startPos;
     setGlobalDraggingStyles(true);
+    props.onResizeStart?.();
 
     handleRef?.setPointerCapture(e.pointerId);
   };
@@ -114,9 +119,8 @@ export function ResizeHandle(props: ResizeHandleProps) {
       class={cn(
         'absolute z-20 group',
         isHorizontal()
-          ? 'top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5'
-          : 'left-0 top-0 h-1 w-full cursor-row-resize hover:h-1.5',
-        'transition-all duration-100',
+          ? 'top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5 transition-[background-color,width] duration-100'
+          : 'left-0 top-0 h-1 w-full cursor-row-resize hover:h-1.5 transition-[background-color,height] duration-100',
         isDragging() && 'bg-primary',
         !isDragging() && 'hover:bg-primary/50',
         props.class

@@ -11,6 +11,8 @@ export interface SidebarPaneProps {
   open?: boolean;
   resizable?: boolean;
   onResize?: (delta: number) => void;
+  onResizeStart?: () => void;
+  onResizeEnd?: () => void;
   onClose?: () => void;
   mobileOverlay?: boolean;
   mobileBackdrop?: boolean;
@@ -35,9 +37,10 @@ export function SidebarPane(props: SidebarPaneProps) {
   return (
     <>
       <aside
+        data-floe-geometry-surface="sidebar-pane"
         class={cn(
           'flex-shrink-0 border-r border-border bg-sidebar relative',
-          'transition-all duration-200 ease-out',
+          'transition-[width,transform,box-shadow] duration-200 ease-out',
           'overflow-hidden',
           showMobileOverlay() && 'absolute inset-y-0 left-0 z-10 shadow-lg',
           props.class
@@ -90,7 +93,12 @@ export function SidebarPane(props: SidebarPaneProps) {
         </div>
 
         <Show when={showResizer()}>
-          <ResizeHandle direction="horizontal" onResize={(delta) => props.onResize?.(delta)} />
+          <ResizeHandle
+            direction="horizontal"
+            onResize={(delta) => props.onResize?.(delta)}
+            onResizeStart={props.onResizeStart}
+            onResizeEnd={props.onResizeEnd}
+          />
         </Show>
       </aside>
 
