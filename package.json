@@ -10,6 +10,7 @@
     "build": "pnpm -r build",
     "build:demo": "pnpm --filter @floegence/floe-webapp-core build && pnpm --filter @floegence/floe-webapp-protocol build && NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @floegence/floe-webapp-demo build",
     "verify": "node scripts/verify-dist.mjs",
+    "sync:skills": "node scripts/sync-skills.mjs",
     "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "typecheck": "pnpm -r typecheck",
