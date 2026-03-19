@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyTheme,
+  resolveThemeTokens,
   resolveThemeTokenOverrides,
   syncThemeTokenOverrides,
   type ThemeTarget,
@@ -42,6 +43,24 @@ describe('theme token overrides', () => {
     }, 'dark')).toEqual({
       '--chrome-border': 'shared',
       '--top-bar-border': 'dark',
+    });
+  });
+
+  it('should layer base theme tokens with the active preset tokens', () => {
+    expect(resolveThemeTokens(
+      'dark',
+      {
+        shared: { '--chrome-border': 'shared' },
+        dark: { '--top-bar-border': 'base-dark' },
+      },
+      {
+        shared: { '--top-bar-border': 'preset-shared' },
+        dark: { '--chart-1': 'preset-dark' },
+      },
+    )).toEqual({
+      '--chrome-border': 'shared',
+      '--top-bar-border': 'preset-shared',
+      '--chart-1': 'preset-dark',
     });
   });
 

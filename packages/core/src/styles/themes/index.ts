@@ -7,6 +7,13 @@ export interface FloeThemeTokenOverrides {
   dark?: FloeThemeTokenMap;
 }
 
+export interface FloeThemePreset {
+  name: string;
+  displayName: string;
+  description?: string;
+  tokens?: FloeThemeTokenOverrides;
+}
+
 export interface ThemeTarget {
   classList: {
     add: (...tokens: string[]) => void;
@@ -49,6 +56,17 @@ export function resolveThemeTokenOverrides(
     ...(tokens?.shared ?? {}),
     ...(resolvedTheme === 'light' ? (tokens?.light ?? {}) : (tokens?.dark ?? {})),
   };
+}
+
+export function mergeThemeTokenMaps(...maps: Array<FloeThemeTokenMap | undefined>): FloeThemeTokenMap {
+  return Object.assign({}, ...maps.filter(Boolean));
+}
+
+export function resolveThemeTokens(
+  resolvedTheme: 'light' | 'dark',
+  ...tokenSources: Array<FloeThemeTokenOverrides | undefined>
+): FloeThemeTokenMap {
+  return mergeThemeTokenMaps(...tokenSources.map((tokens) => resolveThemeTokenOverrides(tokens, resolvedTheme)));
 }
 
 export function applyTheme(theme: ThemeType, target?: ThemeTarget): void {

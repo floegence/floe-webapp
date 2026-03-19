@@ -111,7 +111,7 @@ import { Shell } from '@floegence/floe-webapp-core/layout';
   }}
 >
   <div />
-</Shell>
+</Shell>;
 ```
 
 Stable selectors:
@@ -132,6 +132,9 @@ Configuration: `FloeConfig.theme` (`packages/core/src/context/FloeConfigContext.
 
 - `defaultTheme`: `'light' | 'dark' | 'system'`
 - `storageKey`: persistence key for theme choice
+- `presetStorageKey`: persistence key for the active named token preset (defaults to `${storageKey}-preset`)
+- `defaultPreset`: default named token preset
+- `presets`: named token presets for switching palettes without changing light/dark mode
 - `tokens.shared`: applied in both themes
 - `tokens.light`: applied only when the resolved theme is `light`
 - `tokens.dark`: applied only when the resolved theme is `dark`
@@ -141,6 +144,20 @@ Example:
 ```tsx
 config={{
   theme: {
+    defaultPreset: 'default',
+    presets: [
+      { name: 'default', displayName: 'Default' },
+      {
+        name: 'nord',
+        displayName: 'Nord',
+        tokens: {
+          dark: {
+            '--chart-1': 'oklch(0.88 0.06 235)',
+            '--chart-2': 'oklch(0.76 0.12 210)',
+          },
+        },
+      },
+    ],
     tokens: {
       shared: {
         '--chrome-border': 'color-mix(in srgb, var(--border) 85%, var(--foreground) 15%)',
@@ -169,7 +186,18 @@ Implementation references:
 Guidance:
 
 - Prefer `theme.tokens` for chrome colors and `slotClassNames` for local layout styling.
+- Prefer `theme.presets` when you want the app to switch between named visual palettes such as chart themes or brand accents.
 - Avoid global resets such as `* { border-width: 0; }`, which can silently break shell chrome defaults.
+
+Runtime access:
+
+```ts
+const theme = useTheme();
+
+theme.themePresets(); // readonly preset list
+theme.themePreset(); // active preset
+theme.setThemePreset('nord');
+```
 
 ### Built-in design token contract
 

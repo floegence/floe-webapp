@@ -1,5 +1,5 @@
 import { createContext, createEffect, createMemo, onCleanup, useContext, type JSX } from 'solid-js';
-import type { FloeThemeTokenOverrides, ThemeType } from '../styles/themes';
+import type { FloeThemePreset, FloeThemeTokenOverrides, ThemeType } from '../styles/themes';
 
 export interface FloeStorageAdapter {
   getItem: (key: string) => string | null;
@@ -74,6 +74,12 @@ export interface FloeLayoutConfig {
 export interface FloeThemeConfig {
   storageKey: string;
   defaultTheme: ThemeType;
+  /** Optional storage key for the active named token preset. Defaults to `${storageKey}-preset`. */
+  presetStorageKey?: string;
+  /** Optional default named token preset. Falls back to the first preset when omitted. */
+  defaultPreset?: string;
+  /** Optional named token presets for switching visual palettes without changing light/dark mode. */
+  presets?: readonly FloeThemePreset[];
   /**
    * Optional CSS variable overrides applied at the document root.
    * `shared` applies to both themes, while `light` / `dark` only apply
