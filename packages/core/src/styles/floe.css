@@ -212,8 +212,11 @@
   .hover\:bg-primary\/50:hover { background-color: color-mix(in srgb, var(--primary) 50%, transparent); }
   .hover\:bg-primary\/30:hover { background-color: color-mix(in srgb, var(--primary) 30%, transparent); }
   .hover\:ring-primary\/50:hover { --tw-ring-color: color-mix(in srgb, var(--primary) 50%, transparent); }
+  .hover\:bg-background:hover { background-color: var(--background); }
+  .hover\:bg-card\/20:hover { background-color: color-mix(in srgb, var(--card) 20%, transparent); }
   .hover\:bg-muted\/40:hover { background-color: color-mix(in srgb, var(--muted) 40%, transparent); }
   .hover\:bg-muted\/50:hover { background-color: color-mix(in srgb, var(--muted) 50%, transparent); }
+  .hover\:bg-muted\/60:hover { background-color: color-mix(in srgb, var(--muted) 60%, transparent); }
   .hover\:bg-muted\/70:hover { background-color: color-mix(in srgb, var(--muted) 70%, transparent); }
   .hover\:bg-muted\/80:hover { background-color: color-mix(in srgb, var(--muted) 80%, transparent); }
   .hover\:bg-accent\/40:hover { background-color: color-mix(in srgb, var(--accent) 40%, transparent); }
@@ -222,8 +225,12 @@
   .hover\:bg-sidebar-accent\/60:hover { background-color: color-mix(in srgb, var(--sidebar-accent) 60%, transparent); }
   .hover\:bg-error\/10:hover { background-color: color-mix(in srgb, var(--error) 10%, transparent); }
   .hover\:border-border\/50:hover { border-color: color-mix(in srgb, var(--border) 50%, transparent); }
+  .hover\:border-primary\/50:hover { border-color: color-mix(in srgb, var(--primary) 50%, transparent); }
   .hover\:border-muted-foreground\/50:hover { border-color: color-mix(in srgb, var(--muted-foreground) 50%, transparent); }
+  .hover\:text-primary:hover { color: var(--primary); }
   .border-border\/50 { border-color: color-mix(in srgb, var(--border) 50%, transparent); }
+  .disabled\:hover\:bg-muted\/50:disabled:hover { background-color: color-mix(in srgb, var(--muted) 50%, transparent); }
+  .disabled\:hover\:text-muted-foreground:disabled:hover { color: var(--muted-foreground); }
 
   /* Gradient utilities with CSS variables */
   .from-primary {

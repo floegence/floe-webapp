@@ -2,6 +2,7 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
+import { auditInteractionUtilities, formatInteractionUtilityAudit } from '../packages/core/scripts/interactionUtilityAudit.mjs';
 
 function assert(condition, message) {
   if (!condition) {
@@ -151,6 +152,12 @@ function main() {
   assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
+  const distInteractionAudit = auditInteractionUtilities({
+    sourceRoot: 'packages/core/dist',
+    cssPath: 'packages/core/dist/floe.css',
+    extensions: ['.js'],
+  });
+  assert(distInteractionAudit.missing.length === 0, formatInteractionUtilityAudit(distInteractionAudit, 'dist interaction utility audit'));
 
   // Package entrypoints must point to dist
   const corePkg = readJson('packages/core/package.json');
