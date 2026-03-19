@@ -25,7 +25,7 @@ export const buttonDoc: ComponentDoc = {
   props: [
     {
       name: 'variant',
-      type: "'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'",
+      type: "'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'ghost-destructive' | 'destructive'",
       default: "'default'",
       description: 'Visual style variant of the button.',
     },
@@ -87,6 +87,7 @@ function Example() {
       <Button variant="primary">Primary</Button>
       <Button variant="outline">Outline</Button>
       <Button variant="ghost">Ghost</Button>
+      <Button variant="ghost-destructive" size="icon" aria-label="Close">X</Button>
       <Button variant="destructive">Delete</Button>
     </div>
   );

@@ -26,6 +26,13 @@ describe('close button polish', () => {
     expect(html).not.toContain('hover:bg-accent');
   });
 
+  it('defines the danger hover utility consumed by close affordances', () => {
+    const styles = read('packages/core/src/styles/floe.css');
+
+    expect(styles).toContain('.hover\\:bg-error:hover');
+    expect(styles).toContain('.hover\\:text-error-foreground:hover');
+  });
+
   it('routes dialog-like close controls through the shared variant', () => {
     expect(read('packages/core/src/components/ui/Dialog.tsx')).toContain('variant="ghost-destructive"');
     expect(read('packages/core/src/components/ui/FloatingWindow.tsx')).toContain('variant="ghost-destructive"');

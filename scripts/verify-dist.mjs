@@ -29,6 +29,12 @@ function assertFileEquals(pathA, pathB) {
   assert(contentA === contentB, `Skill mirror mismatch: ${pathA} != ${pathB}`);
 }
 
+function assertFileContains(path, snippet) {
+  const abs = resolve(process.cwd(), path);
+  const content = readFileSync(abs, 'utf-8');
+  assert(content.includes(snippet), `Expected build output ${path} to contain: ${snippet}`);
+}
+
 function walkFiles(rootDir) {
   const out = [];
   const stack = [rootDir];
@@ -135,9 +141,16 @@ function main() {
   assertFile('packages/core/dist/floe.css');
   assertFile('packages/core/dist/themes/light.css');
   assertFile('packages/core/dist/themes/dark.css');
+  assertFile('packages/core/dist/components/ui/Button.js');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
   assertFile('packages/init/dist/index.mjs');
+
+  // Release artifacts must include the latest close-button hover behavior.
+  assertFileContains('packages/core/dist/components/ui/Button.js', 'ghost-destructive');
+  assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
+  assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
+  assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
 
   // Package entrypoints must point to dist
   const corePkg = readJson('packages/core/package.json');
