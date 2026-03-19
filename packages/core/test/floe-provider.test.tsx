@@ -9,6 +9,11 @@ function ThemeConsumer() {
   return <div>{theme.resolvedTheme()}</div>;
 }
 
+function ThemePresetConsumer() {
+  const theme = useTheme();
+  return <div>{theme.themePreset()?.name ?? 'none'}</div>;
+}
+
 const WrapperContext = createContext<string>();
 
 function WrapperProvider(props: { children: JSX.Element }) {
@@ -44,5 +49,25 @@ describe('FloeProvider', () => {
     ));
 
     expect(html).toContain('wrapped');
+  });
+
+  it('should expose the configured default theme preset to children', () => {
+    const html = renderToString(() => (
+      <FloeProvider
+        config={{
+          theme: {
+            defaultPreset: 'ocean',
+            presets: [
+              { name: 'default', displayName: 'Default' },
+              { name: 'ocean', displayName: 'Ocean' },
+            ],
+          },
+        }}
+      >
+        <ThemePresetConsumer />
+      </FloeProvider>
+    ));
+
+    expect(html).toContain('ocean');
   });
 });

@@ -97,7 +97,7 @@ The demo is intentionally “batteries-included” so downstream apps can copy p
 - **Showcase tab**: interactive examples for all core UI components (Button/Input/Dropdown/Dialog/Tooltip/CommandPalette, layout primitives, and loading states).
 - **Files tab**: Monaco-powered file viewer for real workspace sources (core components, protocol client, docs).
 - **Search tab**: simple workspace search that can jump into the file viewer.
-- **Settings tab**: protocol connect/disconnect + theme controls.
+- **Settings tab**: protocol connect/disconnect + shell theme + chart theme presets.
 
 Tips:
 
@@ -122,13 +122,13 @@ pnpm add @floegence/floe-webapp-core @floegence/floe-webapp-protocol solid-js
 
 Recommended: run Tailwind v4 in your app and import the Floe Tailwind entry from your CSS entry file.
 
-1) Install Tailwind v4 + the Vite plugin:
+1. Install Tailwind v4 + the Vite plugin:
 
 ```bash
 pnpm add -D tailwindcss @tailwindcss/vite
 ```
 
-2) Enable the plugin in `vite.config.ts`:
+2. Enable the plugin in `vite.config.ts`:
 
 ```ts
 import tailwindcss from '@tailwindcss/vite';
@@ -138,7 +138,7 @@ export default defineConfig({
 });
 ```
 
-3) In your CSS entry (e.g. `src/index.css`):
+3. In your CSS entry (e.g. `src/index.css`):
 
 ```css
 @import 'tailwindcss';
@@ -199,7 +199,11 @@ If you want `commands.execute(ctx)` / `onMount(ctx)` to receive your protocol ob
 ```tsx
 import type { FloeComponent } from '@floegence/floe-webapp-core';
 import { FloeApp } from '@floegence/floe-webapp-core/app';
-import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+import {
+  ProtocolProvider,
+  useProtocol,
+  type ProtocolContract,
+} from '@floegence/floe-webapp-protocol';
 
 const appContract: ProtocolContract = {
   id: 'app_v1',
@@ -213,7 +217,9 @@ const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
 export function App() {
   return (
     <FloeApp
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => (
+        <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>
+      )}
       getProtocol={useProtocol}
       components={components}
     >
@@ -267,12 +273,26 @@ import { Shell } from '@floegence/floe-webapp-core/layout';
     topBar: 'backdrop-blur-md',
     bottomBar: 'text-[11px]',
   }}
-/>
+/>;
 ```
 
 ```tsx
 config={{
   theme: {
+    defaultPreset: 'default',
+    presets: [
+      { name: 'default', displayName: 'Default' },
+      {
+        name: 'nord',
+        displayName: 'Nord',
+        tokens: {
+          dark: {
+            '--chart-1': 'oklch(0.88 0.06 235)',
+            '--chart-2': 'oklch(0.76 0.12 210)',
+          },
+        },
+      },
+    ],
     tokens: {
       dark: {
         '--chrome-border': 'hsl(220 16% 24%)',
@@ -291,6 +311,8 @@ If you need scoped CSS, target the stable shell anchors instead of framework imp
 ```
 
 Avoid broad resets such as `* { border-width: 0; }`, which can remove the default shell dividers entirely.
+
+Named theme presets are a good fit for chart palettes and brand accents because they can switch token groups without forcing the whole app between light and dark mode.
 
 If you are building a token viewer or docs surface, import the public token contract from `@floegence/floe-webapp-core` (`floeDesignTokens`, `floeColorTokenCategories`, `floeThemeColorVariables`, `floeSharedCssVariables`) instead of duplicating theme values in your app.
 
@@ -316,7 +338,11 @@ import {
 import { FloeRegistryRuntime } from '@floegence/floe-webapp-core/app';
 import { Shell } from '@floegence/floe-webapp-core/layout';
 import { CommandPalette } from '@floegence/floe-webapp-core/ui';
-import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+import {
+  ProtocolProvider,
+  useProtocol,
+  type ProtocolContract,
+} from '@floegence/floe-webapp-protocol';
 
 const appContract: ProtocolContract = {
   id: 'app_v1',
@@ -339,7 +365,11 @@ function AppContent() {
 
 export function App() {
   return (
-    <FloeProvider wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}>
+    <FloeProvider
+      wrapAfterTheme={(renderChildren) => (
+        <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>
+      )}
+    >
       <FloeRegistryRuntime components={components} getProtocol={useProtocol}>
         <AppContent />
       </FloeRegistryRuntime>

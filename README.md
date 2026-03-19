@@ -6,7 +6,7 @@ A professional VSCode-style web application framework built with Solid.js.
 
 - **VSCode Layout**: Activity bar, sidebar, top bar, bottom bar, and resizable panels
 - **Mobile First**: Responsive design with mobile tab bar for small screens
-- **Theme System**: Light and dark themes with CSS variables plus token overrides
+- **Theme System**: Light/dark themes with CSS variables, token overrides, and named token presets
 - **Command Palette**: Global command search with keyboard shortcuts
 - **Plugin Registry**: Register components to drive navigation and status bar
 - **Shell Extensibility**: Stable `slotClassNames` and `data-floe-shell-slot` hooks for chrome styling

@@ -288,6 +288,7 @@ import {
   type TerminalSessionTransition,
   type TerminalSuggestionProvider,
 } from '@floegence/floe-webapp-core/terminal';
+import { ChartThemePicker } from '../components/ChartThemePicker';
 
 export interface ShowcasePageProps {
   onOpenFile: (id: string) => void;
@@ -366,7 +367,7 @@ const SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS: readonly TerminalSuggestionProvide
             label: item.label,
             detail: item.detail,
             score: item.score,
-          }),
+          })
         );
     }
 
@@ -406,7 +407,7 @@ const SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS: readonly TerminalSuggestionProvide
             insertText: item.insertText,
             detail: item.detail,
             score: item.score,
-          }),
+          })
         );
     }
 
@@ -438,7 +439,7 @@ const SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS: readonly TerminalSuggestionProvide
             insertText: item.insertText,
             detail: item.detail,
             score: item.score,
-          }),
+          })
         );
     }
 
@@ -478,7 +479,7 @@ const SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS: readonly TerminalSuggestionProvide
             insertText: item.insertText,
             detail: item.detail,
             score: item.score,
-          }),
+          })
         );
     }
 
@@ -495,7 +496,7 @@ const SHOWCASE_TERMINAL_COMMAND_EXECUTOR: TerminalRuntimeAdapter = (input, optio
       [
         'CONTAINER ID   IMAGE               STATUS          NAMES',
         '7fa31b0a91d2   floe/demo:latest    Up 18 minutes   floe-demo',
-      ].join('\n'),
+      ].join('\n')
     );
   }
 
@@ -505,7 +506,7 @@ const SHOWCASE_TERMINAL_COMMAND_EXECUTOR: TerminalRuntimeAdapter = (input, optio
         '#1 [internal] load build definition from Dockerfile',
         '#7 exporting to image',
         'Successfully tagged floe/demo:latest',
-      ].join('\n'),
+      ].join('\n')
     );
   }
 
@@ -571,11 +572,7 @@ function WizardDemo() {
         >
           Previous
         </Button>
-        <Button
-          size="sm"
-          onClick={wizard.nextStep}
-          disabled={wizard.isLastStep()}
-        >
+        <Button size="sm" onClick={wizard.nextStep} disabled={wizard.isLastStep()}>
           Next
         </Button>
         <Show when={wizard.isLastStep()}>
@@ -621,18 +618,82 @@ const demoFileBrowserData: FileItem[] = [
                 path: '/src/components/ui/primitives',
                 modifiedAt: new Date('2025-01-18'),
                 children: [
-                  { id: 'ui-button', name: 'Button.tsx', type: 'file', path: '/src/components/ui/primitives/Button.tsx', extension: 'tsx', size: 2048, modifiedAt: new Date('2025-01-18') },
-                  { id: 'ui-input', name: 'Input.tsx', type: 'file', path: '/src/components/ui/primitives/Input.tsx', extension: 'tsx', size: 1824, modifiedAt: new Date('2025-01-17') },
-                  { id: 'ui-checkbox', name: 'Checkbox.tsx', type: 'file', path: '/src/components/ui/primitives/Checkbox.tsx', extension: 'tsx', size: 1536, modifiedAt: new Date('2025-01-16') },
+                  {
+                    id: 'ui-button',
+                    name: 'Button.tsx',
+                    type: 'file',
+                    path: '/src/components/ui/primitives/Button.tsx',
+                    extension: 'tsx',
+                    size: 2048,
+                    modifiedAt: new Date('2025-01-18'),
+                  },
+                  {
+                    id: 'ui-input',
+                    name: 'Input.tsx',
+                    type: 'file',
+                    path: '/src/components/ui/primitives/Input.tsx',
+                    extension: 'tsx',
+                    size: 1824,
+                    modifiedAt: new Date('2025-01-17'),
+                  },
+                  {
+                    id: 'ui-checkbox',
+                    name: 'Checkbox.tsx',
+                    type: 'file',
+                    path: '/src/components/ui/primitives/Checkbox.tsx',
+                    extension: 'tsx',
+                    size: 1536,
+                    modifiedAt: new Date('2025-01-16'),
+                  },
                 ],
               },
-              { id: 'ui-index', name: 'index.ts', type: 'file', path: '/src/components/ui/index.ts', extension: 'ts', size: 512, modifiedAt: new Date('2025-01-18') },
+              {
+                id: 'ui-index',
+                name: 'index.ts',
+                type: 'file',
+                path: '/src/components/ui/index.ts',
+                extension: 'ts',
+                size: 512,
+                modifiedAt: new Date('2025-01-18'),
+              },
             ],
           },
-          { id: 'src-button', name: 'Button.tsx', type: 'file', path: '/src/components/Button.tsx', extension: 'tsx', size: 2048, modifiedAt: new Date('2025-01-18') },
-          { id: 'src-card', name: 'Card.tsx', type: 'file', path: '/src/components/Card.tsx', extension: 'tsx', size: 3512, modifiedAt: new Date('2025-01-17') },
-          { id: 'src-dialog', name: 'Dialog.tsx', type: 'file', path: '/src/components/Dialog.tsx', extension: 'tsx', size: 4096, modifiedAt: new Date('2025-01-16') },
-          { id: 'src-input', name: 'Input.tsx', type: 'file', path: '/src/components/Input.tsx', extension: 'tsx', size: 1824, modifiedAt: new Date('2025-01-15') },
+          {
+            id: 'src-button',
+            name: 'Button.tsx',
+            type: 'file',
+            path: '/src/components/Button.tsx',
+            extension: 'tsx',
+            size: 2048,
+            modifiedAt: new Date('2025-01-18'),
+          },
+          {
+            id: 'src-card',
+            name: 'Card.tsx',
+            type: 'file',
+            path: '/src/components/Card.tsx',
+            extension: 'tsx',
+            size: 3512,
+            modifiedAt: new Date('2025-01-17'),
+          },
+          {
+            id: 'src-dialog',
+            name: 'Dialog.tsx',
+            type: 'file',
+            path: '/src/components/Dialog.tsx',
+            extension: 'tsx',
+            size: 4096,
+            modifiedAt: new Date('2025-01-16'),
+          },
+          {
+            id: 'src-input',
+            name: 'Input.tsx',
+            type: 'file',
+            path: '/src/components/Input.tsx',
+            extension: 'tsx',
+            size: 1824,
+            modifiedAt: new Date('2025-01-15'),
+          },
         ],
       },
       {
@@ -642,14 +703,62 @@ const demoFileBrowserData: FileItem[] = [
         path: '/src/hooks',
         modifiedAt: new Date('2025-01-18'),
         children: [
-          { id: 'src-use-theme', name: 'useTheme.ts', type: 'file', path: '/src/hooks/useTheme.ts', extension: 'ts', size: 1024, modifiedAt: new Date('2025-01-17') },
-          { id: 'src-use-media', name: 'useMediaQuery.ts', type: 'file', path: '/src/hooks/useMediaQuery.ts', extension: 'ts', size: 768, modifiedAt: new Date('2025-01-16') },
+          {
+            id: 'src-use-theme',
+            name: 'useTheme.ts',
+            type: 'file',
+            path: '/src/hooks/useTheme.ts',
+            extension: 'ts',
+            size: 1024,
+            modifiedAt: new Date('2025-01-17'),
+          },
+          {
+            id: 'src-use-media',
+            name: 'useMediaQuery.ts',
+            type: 'file',
+            path: '/src/hooks/useMediaQuery.ts',
+            extension: 'ts',
+            size: 768,
+            modifiedAt: new Date('2025-01-16'),
+          },
         ],
       },
-      { id: 'src-app', name: 'App.tsx', type: 'file', path: '/src/App.tsx', extension: 'tsx', size: 5120, modifiedAt: new Date('2025-01-20') },
-      { id: 'src-bootstrap', name: 'bootstrap.sh', type: 'file', path: '/src/bootstrap.sh', extension: 'sh', size: 768, modifiedAt: new Date('2025-01-20') },
-      { id: 'src-index', name: 'index.ts', type: 'file', path: '/src/index.ts', extension: 'ts', size: 256, modifiedAt: new Date('2025-01-14') },
-      { id: 'src-styles', name: 'styles.css', type: 'file', path: '/src/styles.css', extension: 'css', size: 8192, modifiedAt: new Date('2025-01-19') },
+      {
+        id: 'src-app',
+        name: 'App.tsx',
+        type: 'file',
+        path: '/src/App.tsx',
+        extension: 'tsx',
+        size: 5120,
+        modifiedAt: new Date('2025-01-20'),
+      },
+      {
+        id: 'src-bootstrap',
+        name: 'bootstrap.sh',
+        type: 'file',
+        path: '/src/bootstrap.sh',
+        extension: 'sh',
+        size: 768,
+        modifiedAt: new Date('2025-01-20'),
+      },
+      {
+        id: 'src-index',
+        name: 'index.ts',
+        type: 'file',
+        path: '/src/index.ts',
+        extension: 'ts',
+        size: 256,
+        modifiedAt: new Date('2025-01-14'),
+      },
+      {
+        id: 'src-styles',
+        name: 'styles.css',
+        type: 'file',
+        path: '/src/styles.css',
+        extension: 'css',
+        size: 8192,
+        modifiedAt: new Date('2025-01-19'),
+      },
     ],
   },
   {
@@ -659,9 +768,33 @@ const demoFileBrowserData: FileItem[] = [
     path: '/docs',
     modifiedAt: new Date('2025-01-15'),
     children: [
-      { id: 'docs-readme', name: 'README.md', type: 'file', path: '/docs/README.md', extension: 'md', size: 4096, modifiedAt: new Date('2025-01-15') },
-      { id: 'docs-api', name: 'API.md', type: 'file', path: '/docs/API.md', extension: 'md', size: 8192, modifiedAt: new Date('2025-01-14') },
-      { id: 'docs-guide', name: 'getting-started.md', type: 'file', path: '/docs/getting-started.md', extension: 'md', size: 6144, modifiedAt: new Date('2025-01-13') },
+      {
+        id: 'docs-readme',
+        name: 'README.md',
+        type: 'file',
+        path: '/docs/README.md',
+        extension: 'md',
+        size: 4096,
+        modifiedAt: new Date('2025-01-15'),
+      },
+      {
+        id: 'docs-api',
+        name: 'API.md',
+        type: 'file',
+        path: '/docs/API.md',
+        extension: 'md',
+        size: 8192,
+        modifiedAt: new Date('2025-01-14'),
+      },
+      {
+        id: 'docs-guide',
+        name: 'getting-started.md',
+        type: 'file',
+        path: '/docs/getting-started.md',
+        extension: 'md',
+        size: 6144,
+        modifiedAt: new Date('2025-01-13'),
+      },
     ],
   },
   {
@@ -671,14 +804,62 @@ const demoFileBrowserData: FileItem[] = [
     path: '/public',
     modifiedAt: new Date('2025-01-10'),
     children: [
-      { id: 'public-logo', name: 'logo.svg', type: 'file', path: '/public/logo.svg', extension: 'svg', size: 2048, modifiedAt: new Date('2025-01-10') },
-      { id: 'public-favicon', name: 'favicon.ico', type: 'file', path: '/public/favicon.ico', extension: 'ico', size: 1024, modifiedAt: new Date('2025-01-09') },
+      {
+        id: 'public-logo',
+        name: 'logo.svg',
+        type: 'file',
+        path: '/public/logo.svg',
+        extension: 'svg',
+        size: 2048,
+        modifiedAt: new Date('2025-01-10'),
+      },
+      {
+        id: 'public-favicon',
+        name: 'favicon.ico',
+        type: 'file',
+        path: '/public/favicon.ico',
+        extension: 'ico',
+        size: 1024,
+        modifiedAt: new Date('2025-01-09'),
+      },
     ],
   },
-  { id: 'root-readme', name: 'README.md', type: 'file', path: '/README.md', extension: 'md', size: 2048, modifiedAt: new Date('2025-01-20') },
-  { id: 'root-package', name: 'package.json', type: 'file', path: '/package.json', extension: 'json', size: 1536, modifiedAt: new Date('2025-01-19') },
-  { id: 'root-tsconfig', name: 'tsconfig.json', type: 'file', path: '/tsconfig.json', extension: 'json', size: 512, modifiedAt: new Date('2025-01-18') },
-  { id: 'root-vite', name: 'vite.config.ts', type: 'file', path: '/vite.config.ts', extension: 'ts', size: 1024, modifiedAt: new Date('2025-01-17') },
+  {
+    id: 'root-readme',
+    name: 'README.md',
+    type: 'file',
+    path: '/README.md',
+    extension: 'md',
+    size: 2048,
+    modifiedAt: new Date('2025-01-20'),
+  },
+  {
+    id: 'root-package',
+    name: 'package.json',
+    type: 'file',
+    path: '/package.json',
+    extension: 'json',
+    size: 1536,
+    modifiedAt: new Date('2025-01-19'),
+  },
+  {
+    id: 'root-tsconfig',
+    name: 'tsconfig.json',
+    type: 'file',
+    path: '/tsconfig.json',
+    extension: 'json',
+    size: 512,
+    modifiedAt: new Date('2025-01-18'),
+  },
+  {
+    id: 'root-vite',
+    name: 'vite.config.ts',
+    type: 'file',
+    path: '/vite.config.ts',
+    extension: 'ts',
+    size: 1024,
+    modifiedAt: new Date('2025-01-17'),
+  },
 ];
 
 export function ShowcasePage(props: ShowcasePageProps) {
@@ -1095,11 +1276,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={buttonDoc.usage.bestPractices}
           avoid={buttonDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Button.tsx"
-          code={buttonDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Button.tsx" code={buttonDoc.examples[0].code} language="tsx" />
         <PropsTable props={buttonDoc.props} componentName="Button" />
       </div>
 
@@ -1129,13 +1306,22 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 activeId={basicTabsActive()}
                 onChange={setBasicTabsActive}
               />
-              <TabPanel active={basicTabsActive() === 'tab1'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+              <TabPanel
+                active={basicTabsActive() === 'tab1'}
+                class="p-3 text-xs text-muted-foreground bg-muted/30 rounded"
+              >
                 Overview content - This is the first tab panel.
               </TabPanel>
-              <TabPanel active={basicTabsActive() === 'tab2'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+              <TabPanel
+                active={basicTabsActive() === 'tab2'}
+                class="p-3 text-xs text-muted-foreground bg-muted/30 rounded"
+              >
                 Analytics content - View your metrics here.
               </TabPanel>
-              <TabPanel active={basicTabsActive() === 'tab3'} class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
+              <TabPanel
+                active={basicTabsActive() === 'tab3'}
+                class="p-3 text-xs text-muted-foreground bg-muted/30 rounded"
+              >
                 Reports content - Generate and export reports.
               </TabPanel>
             </div>
@@ -1165,7 +1351,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Slider Indicator */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Slider Indicator (Small Size)</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Slider Indicator (Small Size)
+              </p>
               <Tabs
                 size="sm"
                 items={[
@@ -1200,7 +1388,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 closable
               />
               <TabPanel active class="p-3 text-xs text-muted-foreground bg-muted/30 rounded">
-                Currently editing: {dynamicTabs().find((t) => t.id === dynamicActiveTab())?.label || 'None'}
+                Currently editing:{' '}
+                {dynamicTabs().find((t) => t.id === dynamicActiveTab())?.label || 'None'}
               </TabPanel>
             </div>
 
@@ -1228,11 +1417,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={tabsDoc.usage.bestPractices}
           avoid={tabsDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Tabs.tsx"
-          code={tabsDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Tabs.tsx" code={tabsDoc.examples[0].code} language="tsx" />
         <PropsTable props={tabsDoc.props} componentName="Tabs" />
       </div>
 
@@ -1331,13 +1516,17 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </CardHeader>
               <CardContent>
                 <p class="text-xs text-muted-foreground">
-                  Move your mouse over this card to see the 3D perspective effect.
-                  The card follows your cursor with realistic depth.
+                  Move your mouse over this card to see the 3D perspective effect. The card follows
+                  your cursor with realistic depth.
                 </p>
               </CardContent>
               <CardFooter class="gap-2">
-                <Button size="sm" variant="primary">Action</Button>
-                <Button size="sm" variant="ghost">Learn More</Button>
+                <Button size="sm" variant="primary">
+                  Action
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Learn More
+                </Button>
               </CardFooter>
             </Interactive3DCard>
 
@@ -1352,7 +1541,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </p>
               </CardContent>
               <CardFooter class="gap-2">
-                <Button size="sm" variant="outline">Details</Button>
+                <Button size="sm" variant="outline">
+                  Details
+                </Button>
               </CardFooter>
             </Card>
           </div>
@@ -1405,13 +1596,17 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <div class="space-y-2">
                 <h3 class="text-base font-bold">Terminal Integration</h3>
                 <p class="text-xs text-muted-foreground leading-relaxed">
-                  Powerful terminal integration with syntax highlighting,
-                  command history, and multi-tab support for seamless development workflow.
+                  Powerful terminal integration with syntax highlighting, command history, and
+                  multi-tab support for seamless development workflow.
                 </p>
               </div>
               <div class="flex items-center gap-3 pt-2">
-                <Button size="sm" variant="primary">Get Started</Button>
-                <Button size="sm" variant="ghost">Documentation</Button>
+                <Button size="sm" variant="primary">
+                  Get Started
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Documentation
+                </Button>
               </div>
             </div>
           </Interactive3DCard>
@@ -1423,11 +1618,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={cardDoc.usage.bestPractices}
           avoid={cardDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Card.tsx"
-          code={cardDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Card.tsx" code={cardDoc.examples[0].code} language="tsx" />
         <PropsTable props={cardDoc.props} componentName="Card" />
       </div>
 
@@ -1455,10 +1646,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Input size="lg" placeholder="Large input" />
             </div>
             <div class="space-y-2">
-              <Input
-                placeholder="Search with icon"
-                leftIcon={<Search class="w-3.5 h-3.5" />}
-              />
+              <Input placeholder="Search with icon" leftIcon={<Search class="w-3.5 h-3.5" />} />
               <Input placeholder="Error state" error="Something went wrong" />
               <Textarea placeholder="Textarea (resizable)" />
             </div>
@@ -1471,11 +1659,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={inputDoc.usage.bestPractices}
           avoid={inputDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Input.tsx"
-          code={inputDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Input.tsx" code={inputDoc.examples[0].code} language="tsx" />
         <PropsTable props={inputDoc.props} componentName="Input" />
 
         {/* NumberInput */}
@@ -1538,11 +1722,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
                 <div class="space-y-1">
                   <label class="text-xs text-muted-foreground">Disabled</label>
-                  <NumberInput
-                    value={10}
-                    onChange={() => {}}
-                    disabled
-                  />
+                  <NumberInput value={10} onChange={() => {}} disabled />
                 </div>
               </div>
             </PanelContent>
@@ -1658,11 +1838,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
                 <div class="space-y-1">
                   <label class="text-xs text-muted-foreground">Disabled</label>
-                  <AffixInput
-                    prefix="@"
-                    placeholder="username"
-                    disabled
-                  />
+                  <AffixInput prefix="@" placeholder="username" disabled />
                 </div>
               </div>
             </PanelContent>
@@ -1716,7 +1892,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Button Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-muted-foreground">Button Variant (Segmented Control)</h4>
+              <h4 class="text-xs font-medium text-muted-foreground">
+                Button Variant (Segmented Control)
+              </h4>
               <RadioGroup
                 value={radioValue()}
                 onChange={setRadioValue}
@@ -1740,8 +1918,16 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 }}
                 variant="card"
               >
-                <RadioOption value="free" label="Free" description="For personal use, limited features" />
-                <RadioOption value="pro" label="Pro" description="For professionals, all features" />
+                <RadioOption
+                  value="free"
+                  label="Free"
+                  description="For personal use, limited features"
+                />
+                <RadioOption
+                  value="pro"
+                  label="Pro"
+                  description="For professionals, all features"
+                />
                 <RadioOption value="team" label="Team" description="For teams, unlimited users" />
               </RadioGroup>
             </div>
@@ -1804,11 +1990,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={radioDoc.usage.bestPractices}
           avoid={radioDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Radio.tsx"
-          code={radioDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Radio.tsx" code={radioDoc.examples[0].code} language="tsx" />
         <PropsTable props={radioDoc.props} componentName="RadioGroup" />
       </div>
 
@@ -1870,24 +2052,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <div class="space-y-3">
               <h4 class="text-xs font-medium text-muted-foreground">Sizes</h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Switch
-                  checked={true}
-                  onChange={() => {}}
-                  label="Small"
-                  size="sm"
-                />
-                <Switch
-                  checked={true}
-                  onChange={() => {}}
-                  label="Medium"
-                  size="md"
-                />
-                <Switch
-                  checked={true}
-                  onChange={() => {}}
-                  label="Large"
-                  size="lg"
-                />
+                <Switch checked={true} onChange={() => {}} label="Small" size="sm" />
+                <Switch checked={true} onChange={() => {}} label="Medium" size="md" />
+                <Switch checked={true} onChange={() => {}} label="Large" size="lg" />
               </div>
             </div>
 
@@ -1895,28 +2062,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <div class="space-y-3">
               <h4 class="text-xs font-medium text-muted-foreground">States</h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Switch
-                  checked={false}
-                  onChange={() => {}}
-                  label="Unchecked"
-                />
-                <Switch
-                  checked={true}
-                  onChange={() => {}}
-                  label="Checked"
-                />
-                <Switch
-                  checked={false}
-                  onChange={() => {}}
-                  label="Disabled unchecked"
-                  disabled
-                />
-                <Switch
-                  checked={true}
-                  onChange={() => {}}
-                  label="Disabled checked"
-                  disabled
-                />
+                <Switch checked={false} onChange={() => {}} label="Unchecked" />
+                <Switch checked={true} onChange={() => {}} label="Checked" />
+                <Switch checked={false} onChange={() => {}} label="Disabled unchecked" disabled />
+                <Switch checked={true} onChange={() => {}} label="Disabled checked" disabled />
               </div>
             </div>
           </PanelContent>
@@ -1926,11 +2075,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={switchDoc.usage.bestPractices}
           avoid={switchDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Switch.tsx"
-          code={switchDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Switch.tsx" code={switchDoc.examples[0].code} language="tsx" />
         <PropsTable props={switchDoc.props} componentName="Switch" />
       </div>
 
@@ -1941,7 +2086,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="SegmentedControl"
           description="A toggle button group for switching between mutually exclusive options like view modes (UI/JSON) or filters."
           actions={
-            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.segmented-control')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => props.onOpenFile('core.segmented-control')}
+            >
               View Source
             </Button>
           }
@@ -2092,10 +2241,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   label="With description"
                   description="This option has additional information"
                 />
-                <Checkbox
-                  indeterminate
-                  label="Indeterminate state"
-                />
+                <Checkbox indeterminate label="Indeterminate state" />
               </div>
             </div>
 
@@ -2117,7 +2263,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* CheckboxGroup - Button Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-muted-foreground">Button Variant (Multi-select)</h4>
+              <h4 class="text-xs font-medium text-muted-foreground">
+                Button Variant (Multi-select)
+              </h4>
               <CheckboxGroup
                 value={checkboxValues()}
                 onChange={setCheckboxValues}
@@ -2133,14 +2281,18 @@ export function ShowcasePage(props: ShowcasePageProps) {
             {/* CheckboxGroup - Card Variant */}
             <div class="space-y-3">
               <h4 class="text-xs font-medium text-muted-foreground">Card Variant</h4>
-              <CheckboxGroup
-                value={checkboxValues()}
-                onChange={setCheckboxValues}
-                variant="card"
-              >
-                <Checkbox value="option1" label="Notifications" description="Receive email notifications" />
+              <CheckboxGroup value={checkboxValues()} onChange={setCheckboxValues} variant="card">
+                <Checkbox
+                  value="option1"
+                  label="Notifications"
+                  description="Receive email notifications"
+                />
                 <Checkbox value="option2" label="Updates" description="Get product updates" />
-                <Checkbox value="option3" label="Marketing" description="Receive marketing emails" />
+                <Checkbox
+                  value="option3"
+                  label="Marketing"
+                  description="Receive marketing emails"
+                />
               </CheckboxGroup>
             </div>
 
@@ -2184,11 +2336,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={checkboxDoc.usage.bestPractices}
           avoid={checkboxDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Checkbox.tsx"
-          code={checkboxDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Checkbox.tsx" code={checkboxDoc.examples[0].code} language="tsx" />
         <PropsTable props={checkboxDoc.props} componentName="Checkbox" />
       </div>
 
@@ -2297,11 +2445,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={paginationDoc.usage.bestPractices}
           avoid={paginationDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Pagination.tsx"
-          code={paginationDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Pagination.tsx" code={paginationDoc.examples[0].code} language="tsx" />
         <PropsTable props={paginationDoc.props} componentName="Pagination" />
       </div>
 
@@ -2325,8 +2469,18 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <div class="space-y-4">
                 <LinearProgress value={progressValue()} showLabel />
                 <div class="flex gap-2">
-                  <Button size="xs" onClick={() => setProgressValue(Math.max(0, progressValue() - 10))}>-10%</Button>
-                  <Button size="xs" onClick={() => setProgressValue(Math.min(100, progressValue() + 10))}>+10%</Button>
+                  <Button
+                    size="xs"
+                    onClick={() => setProgressValue(Math.max(0, progressValue() - 10))}
+                  >
+                    -10%
+                  </Button>
+                  <Button
+                    size="xs"
+                    onClick={() => setProgressValue(Math.min(100, progressValue() + 10))}
+                  >
+                    +10%
+                  </Button>
                 </div>
               </div>
             </div>
@@ -2419,10 +2573,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             {/* Steps Progress */}
             <div class="space-y-3">
               <h4 class="text-xs font-medium text-muted-foreground">Steps Progress</h4>
-              <StepsProgress
-                current={2}
-                steps={['Account', 'Profile', 'Review', 'Complete']}
-              />
+              <StepsProgress current={2} steps={['Account', 'Profile', 'Review', 'Complete']} />
             </div>
           </PanelContent>
         </Panel>
@@ -2453,13 +2604,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent>
-            <Form class="max-w-md" onSubmit={() => {
-              setTimeout(async () => {
-                await new Promise(r => setTimeout(r, 1000));
-                notifications.success('Form submitted', 'Your data has been saved.');
-              }, 0);
-            }}>
-              <FormSection title="Account Information" description="Create your account credentials">
+            <Form
+              class="max-w-md"
+              onSubmit={() => {
+                setTimeout(async () => {
+                  await new Promise((r) => setTimeout(r, 1000));
+                  notifications.success('Form submitted', 'Your data has been saved.');
+                }, 0);
+              }}
+            >
+              <FormSection
+                title="Account Information"
+                description="Create your account credentials"
+              >
                 <FormField>
                   <FormLabel required>Email</FormLabel>
                   <Input type="email" placeholder="you@example.com" autocomplete="email" />
@@ -2468,7 +2625,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
                 <FormField>
                   <FormLabel required>Password</FormLabel>
-                  <Input type="password" placeholder="Enter a strong password" autocomplete="new-password" />
+                  <Input
+                    type="password"
+                    placeholder="Enter a strong password"
+                    autocomplete="new-password"
+                  />
                 </FormField>
               </FormSection>
 
@@ -2493,7 +2654,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </FormSection>
 
               <FormActions align="end">
-                <Button variant="outline" type="button">Cancel</Button>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
                 <Button type="submit">Create Account</Button>
               </FormActions>
             </Form>
@@ -2514,12 +2677,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
                 <FormField>
                   <FormLabel required>Email</FormLabel>
-                  <Input type="email" value="invalid-email" class="border-error" autocomplete="email" />
+                  <Input
+                    type="email"
+                    value="invalid-email"
+                    class="border-error"
+                    autocomplete="email"
+                  />
                   <FormMessage error="Please enter a valid email address" />
                 </FormField>
 
                 <FormActions>
-                  <Button type="submit" disabled>Submit</Button>
+                  <Button type="submit" disabled>
+                    Submit
+                  </Button>
                 </FormActions>
               </Form>
             </PanelContent>
@@ -2532,11 +2702,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={formDoc.usage.bestPractices}
           avoid={formDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Form.tsx"
-          code={formDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Form.tsx" code={formDoc.examples[0].code} language="tsx" />
         <PropsTable props={formDoc.props} componentName="Form" />
       </div>
 
@@ -2613,7 +2779,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <p class="text-[11px] text-muted-foreground">Small</p>
                 <Stepper
                   size="sm"
-                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  steps={[
+                    { id: 'a', label: 'A' },
+                    { id: 'b', label: 'B' },
+                    { id: 'c', label: 'C' },
+                  ]}
                   currentStep={1}
                 />
               </div>
@@ -2621,7 +2791,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <p class="text-[11px] text-muted-foreground">Medium (default)</p>
                 <Stepper
                   size="md"
-                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  steps={[
+                    { id: 'a', label: 'A' },
+                    { id: 'b', label: 'B' },
+                    { id: 'c', label: 'C' },
+                  ]}
                   currentStep={1}
                 />
               </div>
@@ -2629,7 +2803,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <p class="text-[11px] text-muted-foreground">Large</p>
                 <Stepper
                   size="lg"
-                  steps={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }]}
+                  steps={[
+                    { id: 'a', label: 'A' },
+                    { id: 'b', label: 'B' },
+                    { id: 'c', label: 'C' },
+                  ]}
                   currentStep={1}
                 />
               </div>
@@ -2653,29 +2831,17 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={stepperDoc.usage.bestPractices}
           avoid={stepperDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Stepper.tsx"
-          code={stepperDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Stepper.tsx" code={stepperDoc.examples[0].code} language="tsx" />
         <PropsTable props={stepperDoc.props} componentName="Stepper" />
 
         {/* Wizard Documentation */}
         <h3 class="text-xs font-medium text-muted-foreground mt-6">Wizard Component</h3>
-        <CodeSnippet
-          title="Wizard.tsx"
-          code={wizardDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Wizard.tsx" code={wizardDoc.examples[0].code} language="tsx" />
         <PropsTable props={wizardDoc.props} componentName="Wizard" />
 
         {/* useWizard Hook Documentation */}
         <h3 class="text-xs font-medium text-muted-foreground mt-6">useWizard Hook</h3>
-        <CodeSnippet
-          title="useWizard.ts"
-          code={useWizardDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="useWizard.ts" code={useWizardDoc.examples[0].code} language="tsx" />
         <PropsTable props={useWizardDoc.props} componentName="useWizard" />
       </div>
 
@@ -2704,11 +2870,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   notifications.info('Selection Changed', `Selected: ${id}`);
                 }}
                 items={dropdownItems}
-                trigger={
-                  <Button variant="outline">
-                    Menu ({dropdownValue()})
-                  </Button>
-                }
+                trigger={<Button variant="outline">Menu ({dropdownValue()})</Button>}
               />
             </div>
             <div class="space-y-1.5 w-56">
@@ -2743,11 +2905,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     notifications.info('Action Selected', `You clicked: ${id}`);
                   }}
                   items={cascadeItems}
-                  trigger={
-                    <Button variant="outline">
-                      Actions
-                    </Button>
-                  }
+                  trigger={<Button variant="outline">Actions</Button>}
                 />
               </div>
               <div class="space-y-1.5">
@@ -2757,11 +2915,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     notifications.info('File Action', `Action: ${id}`);
                   }}
                   items={fileMenuItems}
-                  trigger={
-                    <Button variant="outline">
-                      File
-                    </Button>
-                  }
+                  trigger={<Button variant="outline">File</Button>}
                 />
               </div>
             </PanelContent>
@@ -2803,11 +2957,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'apply', label: 'Apply' },
                     { id: 'reset', label: 'Reset to Default' },
                   ]}
-                  trigger={
-                    <Button variant="outline">
-                      Settings ({dropdownQuantity()})
-                    </Button>
-                  }
+                  trigger={<Button variant="outline">Settings ({dropdownQuantity()})</Button>}
                 />
               </div>
               <div class="space-y-1.5">
@@ -2845,11 +2995,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'sep', label: '', separator: true },
                     { id: 'fit', label: 'Fit to Window' },
                   ]}
-                  trigger={
-                    <Button variant="outline">
-                      Zoom: {zoomLevel()}%
-                    </Button>
-                  }
+                  trigger={<Button variant="outline">Zoom: {zoomLevel()}%</Button>}
                 />
               </div>
             </PanelContent>
@@ -2862,11 +3008,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={dropdownDoc.usage.bestPractices}
           avoid={dropdownDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Dropdown.tsx"
-          code={dropdownDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Dropdown.tsx" code={dropdownDoc.examples[0].code} language="tsx" />
         <PropsTable props={dropdownDoc.props} componentName="Dropdown" />
 
         {/* Select Documentation */}
@@ -2909,7 +3051,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <Tooltip content="Left tooltip" placement="left">
               <Button variant="outline">Left</Button>
             </Tooltip>
-            <Tooltip content={<span class="font-mono text-[10px]">Custom JSX content</span>} placement="right">
+            <Tooltip
+              content={<span class="font-mono text-[10px]">Custom JSX content</span>}
+              placement="right"
+            >
               <Button variant="outline">Right</Button>
             </Tooltip>
           </PanelContent>
@@ -2921,11 +3066,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={tooltipDoc.usage.bestPractices}
           avoid={tooltipDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Tooltip.tsx"
-          code={tooltipDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Tooltip.tsx" code={tooltipDoc.examples[0].code} language="tsx" />
         <PropsTable props={tooltipDoc.props} componentName="Tooltip" />
       </div>
 
@@ -2943,7 +3084,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
-            <Button variant="outline" onClick={openConfirm}>Open Confirm Dialog</Button>
+            <Button variant="outline" onClick={openConfirm}>
+              Open Confirm Dialog
+            </Button>
             <Button
               variant="outline"
               onClick={() => {
@@ -2982,7 +3125,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <Textarea placeholder="Longer content..." />
             <div class="space-y-1.5">
               <p class="text-[11px] text-muted-foreground">
-                Tip: press <kbd class="font-mono text-[10px] px-1 py-0.5 rounded bg-muted border border-border">Esc</kbd>{' '}
+                Tip: press{' '}
+                <kbd class="font-mono text-[10px] px-1 py-0.5 rounded bg-muted border border-border">
+                  Esc
+                </kbd>{' '}
                 to close.
               </p>
               <div class="h-32 rounded border border-border bg-muted/30" />
@@ -3007,11 +3153,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={dialogDoc.usage.bestPractices}
           avoid={dialogDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Dialog.tsx"
-          code={dialogDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Dialog.tsx" code={dialogDoc.examples[0].code} language="tsx" />
         <PropsTable props={dialogDoc.props} componentName="Dialog" />
       </div>
 
@@ -3089,11 +3231,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 size="lg"
                 placeholder="Large size"
               />
-              <DirectoryInput
-                files={demoFileBrowserData}
-                disabled
-                placeholder="Disabled input"
-              />
+              <DirectoryInput files={demoFileBrowserData} disabled placeholder="Disabled input" />
               <DirectoryInput
                 files={demoFileBrowserData}
                 error="Directory is required"
@@ -3111,9 +3249,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <h3 class="text-xs font-medium mb-3">Form Integration</h3>
           <Panel class="border border-border rounded-md overflow-hidden">
             <PanelContent>
-              <Form class="max-w-md" onSubmit={() => {
-                notifications.success('Project Created', `Created project at ${directoryInputValue()}`);
-              }}>
+              <Form
+                class="max-w-md"
+                onSubmit={() => {
+                  notifications.success(
+                    'Project Created',
+                    `Created project at ${directoryInputValue()}`
+                  );
+                }}
+              >
                 <FormSection title="Project Settings" description="Configure your new project">
                   <FormField>
                     <FormLabel required>Project Name</FormLabel>
@@ -3160,8 +3304,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </FormSection>
 
                 <FormActions align="end">
-                  <Button variant="outline" type="button">Cancel</Button>
-                  <Button type="submit" disabled={!directoryInputValue()}>Create Project</Button>
+                  <Button variant="outline" type="button">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={!directoryInputValue()}>
+                    Create Project
+                  </Button>
                 </FormActions>
               </Form>
             </PanelContent>
@@ -3192,7 +3340,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFileSavePickerOpen(true)}>Open File Save Picker</Button>
             <p class="text-[11px] text-muted-foreground">
-              Features: split view (folder tree + file list), click file to fill name, filename validation, new folder
+              Features: split view (folder tree + file list), click file to fill name, filename
+              validation, new folder
             </p>
           </PanelContent>
         </Panel>
@@ -3233,7 +3382,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Floating Window"
           description="Draggable, resizable window with maximize/restore and close buttons."
           actions={
-            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.floating-window')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => props.onOpenFile('core.floating-window')}
+            >
               View Source
             </Button>
           }
@@ -3307,7 +3460,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Command Palette"
           description="Press Mod+K (or click the top search bar) to open it."
           actions={
-            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.command-palette')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => props.onOpenFile('core.command-palette')}
+            >
               View Source
             </Button>
           }
@@ -3344,7 +3501,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="File Browser"
           description="Professional file browser with list/grid views, directory tree, and breadcrumb navigation."
           actions={
-            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.file-browser')}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => props.onOpenFile('core.file-browser')}
+            >
               View Source
             </Button>
           }
@@ -3364,7 +3525,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           />
         </div>
         <p class="text-[11px] text-muted-foreground">
-          Features: List/Grid view toggle, collapsible sidebar tree, <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments), sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
+          Features: List/Grid view toggle, collapsible sidebar tree,{' '}
+          <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments),
+          sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
         </p>
 
         {/* FileBrowser Documentation */}
@@ -3388,7 +3551,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           description="SnakeLoader + Skeleton + LoadingOverlay."
           actions={
             <div class="flex items-center gap-1.5">
-              <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.loading-overlay')}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => props.onOpenFile('core.loading-overlay')}
+              >
                 View Overlay Source
               </Button>
             </div>
@@ -3419,7 +3586,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="flex flex-wrap items-center gap-2">
               <Button onClick={() => setOverlayVisible(true)}>Show fullscreen overlay</Button>
-              <Button variant="outline" onClick={() => setOverlayVisible(false)}>Hide</Button>
+              <Button variant="outline" onClick={() => setOverlayVisible(false)}>
+                Hide
+              </Button>
             </div>
           </PanelContent>
         </Panel>
@@ -3466,7 +3635,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
             </div>
             <div>
-              <p class="text-[11px] text-muted-foreground font-medium mb-2">Colored Icons (Status, Files, UI)</p>
+              <p class="text-[11px] text-muted-foreground font-medium mb-2">
+                Colored Icons (Status, Files, UI)
+              </p>
               <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 <For each={coloredIcons()}>
                   {(item) => (
@@ -3492,28 +3663,40 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PanelContent class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-1.5">
-                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Default</p>
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">
+                  Default
+                </p>
                 <QuoteBlock>
                   Functions should do one thing. They should do it well. They should do it only.
                 </QuoteBlock>
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Subtle</p>
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">
+                  Subtle
+                </p>
                 <QuoteBlock variant="subtle" author="Rob Pike">
                   Simplicity is complicated.
                 </QuoteBlock>
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Bordered</p>
-                <QuoteBlock variant="bordered" author="Donald Knuth" citation="The Art of Programming">
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">
+                  Bordered
+                </p>
+                <QuoteBlock
+                  variant="bordered"
+                  author="Donald Knuth"
+                  citation="The Art of Programming"
+                >
                   Premature optimization is the root of all evil.
                 </QuoteBlock>
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Code</p>
+                <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">
+                  Code
+                </p>
                 <QuoteBlock variant="code">
                   // TODO: Refactor this function to use async/await
                 </QuoteBlock>
@@ -3521,10 +3704,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-1.5">
-              <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">Inline</p>
+              <p class="text-[10px] text-muted-foreground/60 font-medium uppercase tracking-wide">
+                Inline
+              </p>
               <div class="flex flex-wrap gap-2 items-center text-xs text-muted-foreground">
                 <span>See the documentation:</span>
-                <QuoteBlock variant="inline" class="my-0">Returns undefined if key not found</QuoteBlock>
+                <QuoteBlock variant="inline" class="my-0">
+                  Returns undefined if key not found
+                </QuoteBlock>
               </div>
             </div>
           </PanelContent>
@@ -3536,11 +3723,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={quoteBlockDoc.usage.bestPractices}
           avoid={quoteBlockDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="QuoteBlock.tsx"
-          code={quoteBlockDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="QuoteBlock.tsx" code={quoteBlockDoc.examples[0].code} language="tsx" />
         <PropsTable props={quoteBlockDoc.props} componentName="QuoteBlock" />
       </div>
 
@@ -3553,7 +3736,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="space-y-3">
             <InfoBlock title="Information">
-              This is an informational callout. Use it to provide additional context or helpful tips.
+              This is an informational callout. Use it to provide additional context or helpful
+              tips.
             </InfoBlock>
 
             <WarningBlock title="Warning">
@@ -3602,7 +3786,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PanelContent class="space-y-6">
             {/* Premium Variants */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Aurora Variant - Flowing Northern Lights</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Aurora Variant - Flowing Northern Lights
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="aurora" status="thinking" />
                 <ProcessingIndicator
@@ -3615,7 +3801,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Neural Variant - AI Network Visualization</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Neural Variant - AI Network Visualization
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="neural" status="thinking" />
                 <ProcessingIndicator
@@ -3628,7 +3816,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Orbit Variant - Multi-layer Orbital System</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Orbit Variant - Multi-layer Orbital System
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="orbit" status="working" />
                 <ProcessingIndicator
@@ -3641,7 +3831,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Quantum Variant - Dot Grid Wave</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Quantum Variant - Dot Grid Wave
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="quantum" status="thinking" />
                 <ProcessingIndicator
@@ -3654,7 +3846,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Pulse Variant - Expanding Rings</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Pulse Variant - Expanding Rings
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="pulse" status="thinking" />
                 <ProcessingIndicator
@@ -3667,7 +3861,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Atom Variant - 3D Electron Orbits</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Atom Variant - 3D Electron Orbits
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="atom" status="thinking" />
                 <ProcessingIndicator
@@ -3681,7 +3877,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Classic Variants */}
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Elegant Variant - Layered Orb</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Elegant Variant - Layered Orb
+              </p>
               <div class="flex flex-wrap gap-6">
                 <ProcessingIndicator variant="elegant" status="thinking" />
                 <ProcessingIndicator
@@ -3694,7 +3892,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Card Variant - Glassmorphism</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Card Variant - Glassmorphism
+              </p>
               <div class="max-w-md">
                 <ProcessingIndicator
                   variant="card"
@@ -3706,7 +3906,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Pill Variant - Gradient Border</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Pill Variant - Gradient Border
+              </p>
               <div class="flex flex-wrap gap-3">
                 <ProcessingIndicator variant="pill" status="thinking" />
                 <ProcessingIndicator variant="pill" status="working" showElapsed />
@@ -3715,7 +3917,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-muted-foreground font-medium">Minimal Variant - Inline Waveform</p>
+              <p class="text-[11px] text-muted-foreground font-medium">
+                Minimal Variant - Inline Waveform
+              </p>
               <div class="flex flex-wrap gap-4">
                 <ProcessingIndicator variant="minimal" status="thinking" />
                 <ProcessingIndicator variant="minimal" status="processing" showElapsed />
@@ -3743,12 +3947,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-charts"
           title="Charts"
-          description="Professional data visualization components with animations and responsive design."
+          description="Compare named chart themes against the same sample data without changing the shell light or dark mode."
+          actions={<ChartThemePicker compact class="justify-end" />}
         />
 
         {/* Line Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-muted-foreground font-medium">Line Chart - Trend Visualization</p>
+          <p class="text-[11px] text-muted-foreground font-medium">
+            Line Chart - Trend Visualization
+          </p>
           <Panel class="border border-border rounded-md overflow-hidden">
             <PanelContent>
               <LineChart
@@ -3774,9 +3981,25 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <AreaChart
                 title="Traffic Overview"
                 series={[
-                  { name: 'Page Views', data: [450, 520, 480, 610, 580, 720, 680, 750, 800, 720, 680, 640] },
+                  {
+                    name: 'Page Views',
+                    data: [450, 520, 480, 610, 580, 720, 680, 750, 800, 720, 680, 640],
+                  },
                 ]}
-                labels={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+                labels={[
+                  'Jan',
+                  'Feb',
+                  'Mar',
+                  'Apr',
+                  'May',
+                  'Jun',
+                  'Jul',
+                  'Aug',
+                  'Sep',
+                  'Oct',
+                  'Nov',
+                  'Dec',
+                ]}
                 height={200}
               />
             </PanelContent>
@@ -3785,7 +4008,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Bar Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-muted-foreground font-medium">Bar Chart - Categorical Comparison</p>
+          <p class="text-[11px] text-muted-foreground font-medium">
+            Bar Chart - Categorical Comparison
+          </p>
           <Panel class="border border-border rounded-md overflow-hidden">
             <PanelContent>
               <DataBarChart
@@ -3806,7 +4031,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Pie Charts */}
         <div class="space-y-2">
-          <p class="text-[11px] text-muted-foreground font-medium">Pie & Donut Charts - Proportions</p>
+          <p class="text-[11px] text-muted-foreground font-medium">
+            Pie & Donut Charts - Proportions
+          </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Panel class="border border-border rounded-md overflow-hidden">
               <PanelContent>
@@ -3842,9 +4069,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Monitoring Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-muted-foreground font-medium">Monitoring Chart - Real-time Dashboard</p>
+          <p class="text-[11px] text-muted-foreground font-medium">
+            Monitoring Chart - Real-time Dashboard
+          </p>
           <p class="text-[10px] text-muted-foreground">
-            Live updating chart for monitoring metrics. The chart updates automatically with simulated data.
+            Live updating chart for monitoring metrics. The chart updates automatically with
+            simulated data.
           </p>
           <Panel class="border border-border rounded-md overflow-hidden">
             <PanelContent>
@@ -3877,11 +4107,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           bestPractices={lineChartDoc.usage.bestPractices}
           avoid={lineChartDoc.usage.avoid}
         />
-        <CodeSnippet
-          title="Charts"
-          code={lineChartDoc.examples[0].code}
-          language="tsx"
-        />
+        <CodeSnippet title="Charts" code={lineChartDoc.examples[0].code} language="tsx" />
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <PropsTable props={lineChartDoc.props} componentName="LineChart" />
           <PropsTable props={barChartDoc.props} componentName="DataBarChart" />
@@ -3911,22 +4137,18 @@ export function ShowcasePage(props: ShowcasePageProps) {
             {(() => {
               const [visible, setVisible] = createSignal(false);
               const [session, setSession] = createSignal(createTerminalSessionState());
-              const [lines, setLines] = createSignal<string[]>([
-                'Terminal keyboard demo ready.',
-              ]);
+              const [lines, setLines] = createSignal<string[]>(['Terminal keyboard demo ready.']);
               const terminalProfile = DEFAULT_TERMINAL_WORKSPACE_PROFILE;
               const terminalSuggestionProviders = SHOWCASE_TERMINAL_SUGGESTION_PROVIDERS;
               const terminalCommandExecutor = SHOWCASE_TERMINAL_COMMAND_EXECUTOR;
               let terminalRef: HTMLDivElement | undefined;
 
-              const promptPreview = createMemo(() =>
-                getTerminalPromptPreview(session().editor),
-              );
+              const promptPreview = createMemo(() => getTerminalPromptPreview(session().editor));
               const suggestionItems = createMemo(() =>
                 getTerminalSessionSuggestions(session(), {
                   profile: terminalProfile,
                   providers: terminalSuggestionProviders,
-                }),
+                })
               );
 
               const scrollToBottom = () => {
@@ -3979,7 +4201,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   dispatchTerminalSessionKey(session(), key, {
                     profile: terminalProfile,
                     providers: terminalSuggestionProviders,
-                  }),
+                  })
                 );
               };
 
@@ -4004,8 +4226,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                       Clear
                     </Button>
                     <span class="text-[11px] text-muted-foreground">
-                      Full web keyboard:
-                      {' '}
+                      Full web keyboard:{' '}
                       <code class="font-mono">{visible() ? 'active' : 'hidden'}</code>
                     </span>
                   </div>
@@ -4057,7 +4278,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     onKey={handleKey}
                     onDismiss={() => setVisible(false)}
                     onSuggestionSelect={(suggestion) =>
-                      setSession((current) => applyTerminalSessionSuggestion(current, suggestion))}
+                      setSession((current) => applyTerminalSessionSuggestion(current, suggestion))
+                    }
                   />
                 </>
               );

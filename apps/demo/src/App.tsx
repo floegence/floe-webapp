@@ -1,4 +1,14 @@
-import { Show, Suspense, createMemo, createSignal, createEffect, onMount, lazy, type Component, type JSX } from 'solid-js';
+import {
+  Show,
+  Suspense,
+  createMemo,
+  createSignal,
+  createEffect,
+  onMount,
+  lazy,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { createHighlighter } from 'shiki';
 import {
   FileBrowserDragProvider,
@@ -20,7 +30,13 @@ import {
   createDiffWorker,
   configureDiffWorker,
 } from '@floegence/floe-webapp-core/chat';
-import { BottomBarItem, KeepAliveStack, Shell, StatusIndicator, type KeepAliveView } from '@floegence/floe-webapp-core/layout';
+import {
+  BottomBarItem,
+  KeepAliveStack,
+  Shell,
+  StatusIndicator,
+  type KeepAliveView,
+} from '@floegence/floe-webapp-core/layout';
 import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
 import {
   Files,
@@ -36,7 +52,11 @@ import {
   Terminal,
 } from '@floegence/floe-webapp-core/icons';
 import { LaunchpadModal, type LaunchpadItemData } from '@floegence/floe-webapp-core/launchpad';
-import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+import {
+  ProtocolProvider,
+  useProtocol,
+  type ProtocolContract,
+} from '@floegence/floe-webapp-protocol';
 
 import { demoFiles } from './demo/workspace';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
@@ -44,18 +64,27 @@ import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
+import { demoChartThemePresets } from './demo/chartThemePresets';
 
 const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',
   createRpc: () => ({}),
 };
 
-const FileViewerPage = lazy(() => import('./demo/pages/FileViewerPage').then((m) => ({ default: m.FileViewerPage })));
-const SearchPage = lazy(() => import('./demo/pages/SearchPage').then((m) => ({ default: m.SearchPage })));
-const ShowcasePage = lazy(() => import('./demo/pages/ShowcasePage').then((m) => ({ default: m.ShowcasePage })));
+const FileViewerPage = lazy(() =>
+  import('./demo/pages/FileViewerPage').then((m) => ({ default: m.FileViewerPage }))
+);
+const SearchPage = lazy(() =>
+  import('./demo/pages/SearchPage').then((m) => ({ default: m.SearchPage }))
+);
+const ShowcasePage = lazy(() =>
+  import('./demo/pages/ShowcasePage').then((m) => ({ default: m.ShowcasePage }))
+);
 const DeckPage = lazy(() => import('./demo/pages/DeckPage').then((m) => ({ default: m.DeckPage })));
 const ChatPage = lazy(() => import('./demo/pages/ChatPage').then((m) => ({ default: m.ChatPage })));
-const DesignTokensPage = lazy(() => import('./demo/pages/DesignTokensPage').then((m) => ({ default: m.DesignTokensPage })));
+const DesignTokensPage = lazy(() =>
+  import('./demo/pages/DesignTokensPage').then((m) => ({ default: m.DesignTokensPage }))
+);
 
 const renderLazyPage = (view: JSX.Element, label: string): JSX.Element => (
   <Suspense
@@ -78,7 +107,9 @@ function AppContent() {
   const layout = useLayout();
 
   const [activeFileId, setActiveFileId] = createSignal(demoFiles[0]?.id ?? 'readme');
-  const activeFile = createMemo(() => demoFiles.find((f) => f.id === activeFileId()) ?? demoFiles[0]!);
+  const activeFile = createMemo(
+    () => demoFiles.find((f) => f.id === activeFileId()) ?? demoFiles[0]!
+  );
 
   const [searchQuery, setSearchQuery] = createSignal('');
   const [searchQueryApplied, setSearchQueryApplied] = createSignal('');
@@ -103,9 +134,7 @@ function AppContent() {
   const searchResults = createMemo(() => {
     const q = searchQueryApplied();
     if (!q) return [];
-    return demoFiles
-      .filter((f) => f.path.toLowerCase().includes(q))
-      .slice(0, 50);
+    return demoFiles.filter((f) => f.path.toLowerCase().includes(q)).slice(0, 50);
   });
 
   const jumpTo = (id: string) => {
@@ -218,14 +247,24 @@ function AppContent() {
 
   const shellActivityItems = createMemo(() => {
     const base = [
-      { id: 'launchpad-modal', icon: Grid3x3, label: 'Launchpad', onClick: () => setLaunchpadOpen(true) },
+      {
+        id: 'launchpad-modal',
+        icon: Grid3x3,
+        label: 'Launchpad',
+        onClick: () => setLaunchpadOpen(true),
+      },
       { id: 'deck', icon: LayoutDashboard, label: 'Deck', collapseBehavior: 'preserve' as const },
       { id: 'showcase', icon: Terminal, label: 'Showcase' },
       { id: 'files', icon: Files, label: 'Files' },
       { id: 'search', icon: Search, label: 'Search' },
       { id: 'settings', icon: Settings, label: 'Settings' },
       { id: 'chat', icon: MessageSquare, label: 'Chat' },
-      { id: 'design-tokens', icon: Layers, label: 'Design Tokens', collapseBehavior: 'preserve' as const },
+      {
+        id: 'design-tokens',
+        icon: Layers,
+        label: 'Design Tokens',
+        collapseBehavior: 'preserve' as const,
+      },
     ];
 
     // Match registry-driven behavior: hide Deck tab on mobile.
@@ -248,13 +287,9 @@ function AppContent() {
     <BottomBarItem>{activeFile().path.split('/').slice(-1)[0]}</BottomBarItem>
   );
 
-  const DemoLanguageItem: Component = () => (
-    <BottomBarItem>{activeFile().language}</BottomBarItem>
-  );
+  const DemoLanguageItem: Component = () => <BottomBarItem>{activeFile().language}</BottomBarItem>;
 
-  const ShowcaseView: Component = () => (
-    <ShowcaseSidebar onJumpTo={jumpTo} onOpenFile={openFile} />
-  );
+  const ShowcaseView: Component = () => <ShowcaseSidebar onJumpTo={jumpTo} onOpenFile={openFile} />;
 
   const FilesView: Component = () => (
     <FileExplorer files={demoFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId} />
@@ -380,7 +415,7 @@ function AppContent() {
     {
       id: 'settings',
       name: 'Settings',
-      description: 'Protocol connection + theme',
+      description: 'Protocol connection + shell theme + chart themes',
       component: SettingsView,
       sidebar: { order: 4 },
       commands: [
@@ -443,7 +478,19 @@ function AppContent() {
     try {
       const highlighter = await createHighlighter({
         themes: ['github-dark', 'github-light'],
-        langs: ['typescript', 'javascript', 'tsx', 'jsx', 'python', 'json', 'html', 'css', 'bash', 'text', 'shell'],
+        langs: [
+          'typescript',
+          'javascript',
+          'tsx',
+          'jsx',
+          'python',
+          'json',
+          'html',
+          'css',
+          'bash',
+          'text',
+          'shell',
+        ],
       });
 
       configureSyncHighlighter({
@@ -488,9 +535,23 @@ function AppContent() {
   });
 
   const desktopMainViews: KeepAliveView[] = [
-    { id: 'showcase', render: () => renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase') },
-    { id: 'files', render: () => renderLazyPage(<FileViewerPage file={activeFile} />, 'file viewer') },
-    { id: 'search', render: () => renderLazyPage(<SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />, 'search') },
+    {
+      id: 'showcase',
+      render: () =>
+        renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
+    },
+    {
+      id: 'files',
+      render: () => renderLazyPage(<FileViewerPage file={activeFile} />, 'file viewer'),
+    },
+    {
+      id: 'search',
+      render: () =>
+        renderLazyPage(
+          <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />,
+          'search'
+        ),
+    },
     {
       id: 'settings',
       render: () => (
@@ -509,26 +570,38 @@ function AppContent() {
   ];
 
   const mobileMainViews: KeepAliveView[] = [
-    { id: 'showcase', render: () => renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase') },
+    {
+      id: 'showcase',
+      render: () =>
+        renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
+    },
     {
       id: 'files',
-      render: () => renderLazyPage(
-        <>
-          <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
-            <Select
-              value={activeFileId()}
-              onChange={setActiveFileId}
-              options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
-            />
-          </div>
-          <div class="p-4" style={{ height: 'calc(100vh - 180px)', "min-height": '300px' }}>
-            <FileViewerPage file={activeFile} />
-          </div>
-        </>,
-        'file viewer'
-      ),
+      render: () =>
+        renderLazyPage(
+          <>
+            <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
+              <Select
+                value={activeFileId()}
+                onChange={setActiveFileId}
+                options={demoFiles.map((f) => ({ value: f.id, label: f.path }))}
+              />
+            </div>
+            <div class="p-4" style={{ height: 'calc(100vh - 180px)', 'min-height': '300px' }}>
+              <FileViewerPage file={activeFile} />
+            </div>
+          </>,
+          'file viewer'
+        ),
     },
-    { id: 'search', render: () => renderLazyPage(<SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />, 'search') },
+    {
+      id: 'search',
+      render: () =>
+        renderLazyPage(
+          <SearchPage query={searchQuery} results={searchResults} onOpenFile={openFile} />,
+          'search'
+        ),
+    },
     {
       id: 'settings',
       render: () => (
@@ -558,9 +631,7 @@ function AppContent() {
   return (
     <>
       <Shell
-        logo={
-          <img src="/logo.svg" alt="Floe" class="w-7 h-7" />
-        }
+        logo={<img src="/logo.svg" alt="Floe" class="w-7 h-7" />}
         activityItems={shellActivityItems()}
         activityBottomItemsMobileMode="topBar"
         activityBottomItems={[
@@ -579,7 +650,11 @@ function AppContent() {
               onClick={() => theme.toggleTheme()}
               title="Toggle theme"
             >
-              {theme.resolvedTheme() === 'light' ? <Moon class="w-4 h-4" /> : <Sun class="w-4 h-4" />}
+              {theme.resolvedTheme() === 'light' ? (
+                <Moon class="w-4 h-4" />
+              ) : (
+                <Sun class="w-4 h-4" />
+              )}
             </Button>
           </div>
         }
@@ -620,6 +695,10 @@ export function App() {
     layout: {
       sidebar: { defaultActiveTab: 'showcase' },
     },
+    theme: {
+      defaultPreset: 'default',
+      presets: demoChartThemePresets,
+    },
     deck: {
       storageKey: 'deck',
       defaultActiveLayoutId: 'demo-layout-files-terminal',
@@ -630,8 +709,16 @@ export function App() {
           // Allow users to rename/delete the default demo layout for experimentation.
           isPreset: false,
           widgets: [
-            { id: 'w-files', type: 'file-browser', position: { col: 0, row: 0, colSpan: 12, rowSpan: 12 } },
-            { id: 'w-terminal', type: 'terminal', position: { col: 12, row: 0, colSpan: 12, rowSpan: 12 } },
+            {
+              id: 'w-files',
+              type: 'file-browser',
+              position: { col: 0, row: 0, colSpan: 12, rowSpan: 12 },
+            },
+            {
+              id: 'w-terminal',
+              type: 'terminal',
+              position: { col: 12, row: 0, colSpan: 12, rowSpan: 12 },
+            },
           ],
         },
         {
@@ -639,9 +726,21 @@ export function App() {
           name: 'Monitoring',
           isPreset: true,
           widgets: [
-            { id: 'w-metrics-1', type: 'metrics', position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 } },
-            { id: 'w-metrics-2', type: 'metrics', position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 } },
-            { id: 'w-terminal', type: 'terminal', position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 } },
+            {
+              id: 'w-metrics-1',
+              type: 'metrics',
+              position: { col: 0, row: 0, colSpan: 12, rowSpan: 6 },
+            },
+            {
+              id: 'w-metrics-2',
+              type: 'metrics',
+              position: { col: 12, row: 0, colSpan: 12, rowSpan: 6 },
+            },
+            {
+              id: 'w-terminal',
+              type: 'terminal',
+              position: { col: 0, row: 6, colSpan: 24, rowSpan: 6 },
+            },
           ],
         },
       ],
@@ -651,7 +750,9 @@ export function App() {
   return (
     <FloeProvider
       config={demoFloeConfig}
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={demoProtocolContract}>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => (
+        <ProtocolProvider contract={demoProtocolContract}>{renderChildren()}</ProtocolProvider>
+      )}
     >
       <FileBrowserDragProvider>
         <AppContent />

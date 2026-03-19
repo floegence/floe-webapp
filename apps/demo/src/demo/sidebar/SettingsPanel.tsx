@@ -4,6 +4,7 @@ import { SidebarContent, SidebarSection } from '@floegence/floe-webapp-core/layo
 import { Button } from '@floegence/floe-webapp-core/ui';
 import { Moon, Sun } from '@floegence/floe-webapp-core/icons';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
+import { ChartThemePicker } from '../components/ChartThemePicker';
 
 export function SettingsPanel() {
   const theme = useTheme();
@@ -64,7 +65,7 @@ export function SettingsPanel() {
         </Show>
       </SidebarSection>
 
-      <SidebarSection title="Appearance">
+      <SidebarSection title="Shell Theme">
         <div class="flex gap-1.5">
           <Button
             variant={theme.resolvedTheme() === 'light' ? 'default' : 'outline'}
@@ -83,6 +84,14 @@ export function SettingsPanel() {
             Dark
           </Button>
         </div>
+      </SidebarSection>
+
+      <SidebarSection title="Chart Theme">
+        <p class="mb-2 text-[11px] text-muted-foreground">
+          Compare named chart themes live. The sample charts update instantly without changing the
+          shell light or dark mode.
+        </p>
+        <ChartThemePicker />
       </SidebarSection>
     </SidebarContent>
   );

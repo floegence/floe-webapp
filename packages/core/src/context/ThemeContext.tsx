@@ -1,11 +1,12 @@
-import { createSignal, createEffect, onCleanup, type Accessor } from 'solid-js';
+import { createMemo, createSignal, createEffect, onCleanup, type Accessor } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import {
   applyTheme,
   getSystemTheme,
-  resolveThemeTokenOverrides,
+  resolveThemeTokens,
   syncThemeTokenOverrides,
+  type FloeThemePreset,
   type ThemeType,
 } from '../styles/themes';
 
@@ -14,6 +15,20 @@ export interface ThemeContextValue {
   resolvedTheme: Accessor<'light' | 'dark'>;
   setTheme: (theme: ThemeType) => void;
   toggleTheme: () => void;
+  themePresets: Accessor<readonly FloeThemePreset[]>;
+  themePreset: Accessor<FloeThemePreset | undefined>;
+  setThemePreset: (presetName: string | undefined) => void;
+}
+
+function resolvePresetName(
+  presetName: string | undefined,
+  presets: readonly FloeThemePreset[],
+  fallbackPresetName?: string
+): string | undefined {
+  if (presets.length === 0) return undefined;
+  if (presetName && presets.some((preset) => preset.name === presetName)) return presetName;
+  if (fallbackPresetName && presets.some((preset) => preset.name === fallbackPresetName)) return fallbackPresetName;
+  return presets[0]?.name;
 }
 
 export function createThemeService(): ThemeContextValue {
@@ -21,11 +36,24 @@ export function createThemeService(): ThemeContextValue {
   const storageKey = () => floe.config.theme.storageKey;
   const defaultTheme = () => floe.config.theme.defaultTheme;
   const themeTokens = () => floe.config.theme.tokens;
+  const themePresets = () => floe.config.theme.presets ?? [];
+  const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
+  const defaultPresetName = () => resolvePresetName(floe.config.theme.defaultPreset, themePresets());
 
   const storedTheme = floe.persist.load<ThemeType>(storageKey(), defaultTheme());
   const [theme, setThemeSignal] = createSignal<ThemeType>(storedTheme);
+  const storedPreset = floe.persist.load<string | undefined>(presetStorageKey(), defaultPresetName());
+  const [themePresetName, setThemePresetSignal] = createSignal<string | undefined>(
+    resolvePresetName(storedPreset, themePresets(), defaultPresetName())
+  );
   const [systemTheme, setSystemTheme] = createSignal<'light' | 'dark'>(getSystemTheme());
   let appliedTokenNames: string[] = [];
+
+  const themePreset = createMemo(() => {
+    const resolvedPresetName = resolvePresetName(themePresetName(), themePresets(), defaultPresetName());
+    if (!resolvedPresetName) return undefined;
+    return themePresets().find((preset) => preset.name === resolvedPresetName);
+  });
 
   // Resolved theme (actual light/dark value)
   const resolvedTheme = (): 'light' | 'dark' => {
@@ -35,6 +63,13 @@ export function createThemeService(): ThemeContextValue {
     }
     return current;
   };
+
+  createEffect(() => {
+    const nextPresetName = resolvePresetName(themePresetName(), themePresets(), defaultPresetName());
+    if (themePresetName() !== nextPresetName) {
+      setThemePresetSignal(nextPresetName);
+    }
+  });
 
   // Listen for system theme changes
   if (typeof window !== 'undefined') {
@@ -53,7 +88,7 @@ export function createThemeService(): ThemeContextValue {
     const resolved = resolvedTheme();
     applyTheme(currentTheme);
     appliedTokenNames = syncThemeTokenOverrides(
-      resolveThemeTokenOverrides(themeTokens(), resolved),
+      resolveThemeTokens(resolved, themeTokens(), themePreset()?.tokens),
       appliedTokenNames
     );
   });
@@ -72,11 +107,24 @@ export function createThemeService(): ThemeContextValue {
     setTheme(current === 'light' ? 'dark' : 'light');
   };
 
+  const setThemePreset = (presetName: string | undefined) => {
+    const nextPresetName = resolvePresetName(presetName, themePresets(), defaultPresetName());
+    setThemePresetSignal(nextPresetName);
+    if (!nextPresetName) {
+      floe.persist.remove(presetStorageKey());
+      return;
+    }
+    floe.persist.debouncedSave(presetStorageKey(), nextPresetName);
+  };
+
   return {
     theme,
     resolvedTheme,
     setTheme,
     toggleTheme,
+    themePresets,
+    themePreset,
+    setThemePreset,
   };
 }
 
