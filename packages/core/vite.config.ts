@@ -31,6 +31,7 @@ export default defineConfig({
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),
+        editor: resolve(__dirname, 'src/editor.ts'),
         widgets: resolve(__dirname, 'src/widgets.ts'),
         terminal: resolve(__dirname, 'src/terminal.ts'),
       },
@@ -39,7 +40,13 @@ export default defineConfig({
       fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      external: ['solid-js', 'solid-js/web', 'solid-js/store'],
+      external: [
+        'solid-js',
+        'solid-js/web',
+        'solid-js/store',
+        'monaco-editor',
+        /^monaco-editor\//,
+      ],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',

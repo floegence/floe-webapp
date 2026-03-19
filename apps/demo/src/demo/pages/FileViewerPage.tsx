@@ -1,16 +1,16 @@
 import { Show, Suspense, createEffect, createMemo, createResource, createSignal, lazy, on, type Accessor, onCleanup } from 'solid-js';
 import { deferNonBlocking, useCommand, useNotification, useResolvedFloeConfig } from '@floegence/floe-webapp-core';
+import type { CodeEditorApi } from '@floegence/floe-webapp-core/editor';
 import { Panel, PanelContent, PanelHeader } from '@floegence/floe-webapp-core/layout';
 import { Button } from '@floegence/floe-webapp-core/ui';
 import { Skeleton } from '@floegence/floe-webapp-core/loading';
 import type { DemoFile } from '../workspace';
-import type { MonacoViewerApi } from '../components/MonacoViewer';
 
 export interface FileViewerPageProps {
   file: Accessor<DemoFile>;
 }
 
-const MonacoViewer = lazy(() => import('../components/MonacoViewer'));
+const CodeEditor = lazy(() => import('@floegence/floe-webapp-core/editor').then((m) => ({ default: m.CodeEditor })));
 
 export function FileViewerPage(props: FileViewerPageProps) {
   const command = useCommand();
@@ -24,7 +24,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
   const [isDirty, setIsDirty] = createSignal(false);
   const [isSaving, setIsSaving] = createSignal(false);
   const [cleanAltVersionId, setCleanAltVersionId] = createSignal<number | null>(null);
-  let editorApi: MonacoViewerApi | null = null;
+  let editorApi: CodeEditorApi | null = null;
 
   // Get storage key for this file
   const getStorageKey = () => `file-content:${props.file().id}`;
@@ -42,13 +42,13 @@ export function FileViewerPage(props: FileViewerPageProps) {
     )
   );
 
-  const handleEditorReady = (api: MonacoViewerApi) => {
+  const handleEditorReady = (api: CodeEditorApi) => {
     editorApi = api;
     setCleanAltVersionId(api.model.getAlternativeVersionId());
     setIsDirty(false);
   };
 
-  const handleEditorContentChange = (_e: unknown, api: MonacoViewerApi) => {
+  const handleEditorContentChange = (_e: unknown, api: CodeEditorApi) => {
     const clean = cleanAltVersionId();
     const current = api.model.getAlternativeVersionId();
     if (clean === null) {
@@ -182,7 +182,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
                 </div>
               }
             >
-              <MonacoViewer
+              <CodeEditor
                 path={props.file().path}
                 language={props.file().language}
                 value={content() ?? ''}
