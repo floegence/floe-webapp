@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/triple-slash-reference -- ambient Monaco shims must load for direct source consumers. */
+/// <reference path="../../monaco-internals.d.ts" />
+
 type MonacoStandaloneRuntimeLoader = () => Promise<unknown>;
 
 export function createMonacoStandaloneRuntime(loader: MonacoStandaloneRuntimeLoader): () => Promise<void> {
