@@ -53,8 +53,8 @@ const LANGUAGE_ALIASES: Record<string, string> = {
 };
 
 const LANGUAGE_LOADERS: Record<string, Loader> = {
-  javascript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js'),
-  typescript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js'),
+  javascript: () => import('monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js'),
+  typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js'),
   json: () => import('monaco-editor/esm/vs/language/json/monaco.contribution.js'),
   html: () => import('monaco-editor/esm/vs/language/html/monaco.contribution.js'),
   css: () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),

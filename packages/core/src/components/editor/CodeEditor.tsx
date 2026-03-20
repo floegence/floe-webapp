@@ -7,6 +7,7 @@ import 'monaco-editor/min/vs/editor/editor.main.css';
 
 import { resolveCodeEditorLanguageSpec } from './languages';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
+import { ensureMonacoStandaloneRuntime } from './monacoStandaloneRuntime';
 
 const DEFAULT_EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   readOnly: true,
@@ -138,39 +139,53 @@ export function CodeEditor(props: CodeEditorProps) {
   };
 
   onMount(() => {
-    if (!container) return;
+    let cancelled = false;
+    let contentDisposable: monaco.IDisposable | undefined;
+    let selectionDisposable: monaco.IDisposable | undefined;
 
-    ensureMonacoEnvironment();
+    const initializeEditor = async () => {
+      if (!container) return;
 
-    editor = monaco.editor.create(container, {
-      model: null,
-      ...DEFAULT_EDITOR_OPTIONS,
-      ...(props.options ?? {}),
-    });
+      ensureMonacoEnvironment();
+      await ensureMonacoStandaloneRuntime();
+      if (cancelled || !container) return;
 
-    applyTheme();
-    void ensureModel();
+      editor = monaco.editor.create(container, {
+        model: null,
+        ...DEFAULT_EDITOR_OPTIONS,
+        ...(props.options ?? {}),
+      });
 
-    const onContentChange = props.onContentChange;
-    const onChange = props.onChange;
-    const onSelectionChange = props.onSelectionChange;
-    const contentDisposable = editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
-      const api = getApi();
-      if (!api) return;
-      onContentChange?.(event, api);
-      if (onChange) {
-        onChange(api.getValue());
-      }
-    });
-    const selectionDisposable = editor.onDidChangeCursorSelection(() => {
-      const api = getApi();
-      if (!api) return;
-      onSelectionChange?.(api.getSelectedText(), api);
+      applyTheme();
+      await ensureModel();
+      if (cancelled || !editor) return;
+
+      const onContentChange = props.onContentChange;
+      const onChange = props.onChange;
+      const onSelectionChange = props.onSelectionChange;
+      contentDisposable = editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
+        const api = getApi();
+        if (!api) return;
+        onContentChange?.(event, api);
+        if (onChange) {
+          onChange(api.getValue());
+        }
+      });
+      selectionDisposable = editor.onDidChangeCursorSelection(() => {
+        const api = getApi();
+        if (!api) return;
+        onSelectionChange?.(api.getSelectedText(), api);
+      });
+    };
+
+    void initializeEditor().catch((error) => {
+      console.error('Failed to initialize Monaco editor runtime', error);
     });
 
     onCleanup(() => {
-      contentDisposable.dispose();
-      selectionDisposable.dispose();
+      cancelled = true;
+      contentDisposable?.dispose();
+      selectionDisposable?.dispose();
       if (rafId) cancelAnimationFrame(rafId);
       editor?.dispose();
       model?.dispose();
