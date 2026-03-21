@@ -1,11 +1,10 @@
 import { For, Show, untrack, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
-import { FolderIcon, getFileIcon } from './FileIcons';
+import { FileItemIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
@@ -466,11 +465,6 @@ function FileGridItem(props: FileGridItemProps) {
     });
   };
 
-  const fileIcon = () =>
-    props.item.type === 'folder'
-      ? FolderIcon
-      : getFileIcon(props.item.extension);
-
   // Get drag state for styling
   const dragState = () => props.dragContext?.dragState();
   const isGlobalDragging = () => dragState()?.isDragging ?? false;
@@ -536,7 +530,7 @@ function FileGridItem(props: FileGridItemProps) {
             : 'bg-muted/50'
         )}
       >
-        <Dynamic component={fileIcon()} class="w-8 h-8" />
+        <FileItemIcon item={props.item} class="w-8 h-8" />
       </div>
 
       {/* Name */}

@@ -4,7 +4,7 @@ import { Dialog } from './Dialog';
 import { Button } from './Button';
 import { Input } from './Input';
 import type { FileItem } from '../file-browser/types';
-import { getFileIcon } from '../file-browser/FileIcons';
+import { FileItemIcon } from '../file-browser/FileIcons';
 import { deferNonBlocking } from '../../utils/defer';
 import {
   usePickerTree,
@@ -204,30 +204,27 @@ export function FileSavePicker(props: FileSavePickerProps) {
               }
             >
               <For each={currentFiles()}>
-                {(file) => {
-                  const FileIconComponent = getFileIcon(file.extension);
-                  return (
-                    <button
-                      type="button"
-                      onClick={() => handleFileClick(file)}
-                      class={cn(
-                        'flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 cursor-pointer',
-                        'transition-colors duration-100',
-                        'hover:bg-accent/60',
-                        'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-                        fileName() === file.name && 'bg-accent text-accent-foreground font-medium'
-                      )}
-                    >
-                      <FileIconComponent class="w-4 h-4 flex-shrink-0" />
-                      <span class="truncate">{file.name}</span>
-                      <Show when={file.size != null}>
-                        <span class="ml-auto text-[10px] text-muted-foreground/60 flex-shrink-0">
-                          {formatFileSize(file.size!)}
-                        </span>
-                      </Show>
-                    </button>
-                  );
-                }}
+                {(file) => (
+                  <button
+                    type="button"
+                    onClick={() => handleFileClick(file)}
+                    class={cn(
+                      'flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 cursor-pointer',
+                      'transition-colors duration-100',
+                      'hover:bg-accent/60',
+                      'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
+                      fileName() === file.name && 'bg-accent text-accent-foreground font-medium'
+                    )}
+                  >
+                    <FileItemIcon item={file} class="w-4 h-4 flex-shrink-0" />
+                    <span class="truncate">{file.name}</span>
+                    <Show when={file.size != null}>
+                      <span class="ml-auto text-[10px] text-muted-foreground/60 flex-shrink-0">
+                        {formatFileSize(file.size!)}
+                      </span>
+                    </Show>
+                  </button>
+                )}
               </For>
             </Show>
           </div>

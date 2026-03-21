@@ -1,9 +1,9 @@
 import { Show, For, createMemo, createSignal, createEffect } from 'solid-js';
-import { Portal, Dynamic } from 'solid-js/web';
+import { Portal } from 'solid-js/web';
 import { Motion, Presence } from 'solid-motionone';
 import { cn } from '../../utils/cn';
 import { useFileBrowserDrag } from '../../context/FileBrowserDragContext';
-import { FolderIcon, getFileIcon } from './FileIcons';
+import { FileItemIcon } from './FileIcons';
 import type { FileItem } from './types';
 
 /**
@@ -134,9 +134,6 @@ export function DragPreview() {
   const hasDropTarget = () => !!dragState()?.dropTarget;
   const showDropIndicator = () => hasDropTarget() && !frozenState();
 
-  const getIcon = (item: FileItem) =>
-    item.type === 'folder' ? FolderIcon : getFileIcon(item.extension);
-
   return (
     <Presence>
       <Show when={shouldShow() && displayItems().length > 0}>
@@ -190,7 +187,7 @@ export function DragPreview() {
                 {(item) => (
                   <div class="flex items-center gap-2.5 text-xs text-foreground">
                     <span class="flex-shrink-0 w-4 h-4">
-                      <Dynamic component={getIcon(item)} class="w-4 h-4" />
+                      <FileItemIcon item={item} class="w-4 h-4" />
                     </span>
                     <span class="truncate font-medium">{item.name}</span>
                   </div>
