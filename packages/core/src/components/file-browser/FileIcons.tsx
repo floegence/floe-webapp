@@ -1,8 +1,23 @@
-import { createUniqueId, type JSX } from 'solid-js';
+import { Show, createUniqueId, type Component, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import type { FileItem } from './types';
 
-interface FileIconProps {
+export interface FileIconProps {
   class?: string;
 }
+
+type FileIconComponent = Component<FileIconProps>;
+type ResolvableFileIcon = Pick<FileItem, 'type' | 'extension' | 'icon'>;
+export type FileItemIconRenderer = FileIconComponent | JSX.Element;
+
+const JAVASCRIPT_FILE_EXTENSIONS = new Set(['js', 'jsx', 'mjs', 'cjs']);
+const TYPESCRIPT_FILE_EXTENSIONS = new Set(['ts', 'tsx', 'mts', 'cts']);
+const SHELL_SCRIPT_FILE_EXTENSIONS = new Set(['sh', 'bash', 'zsh', 'fish', 'ksh', 'csh']);
+const CODE_FILE_EXTENSIONS = new Set(['py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'hpp', 'vue', 'svelte']);
+const IMAGE_FILE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp']);
+const DOCUMENT_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf']);
+const CONFIG_FILE_EXTENSIONS = new Set(['json', 'yaml', 'yml', 'toml', 'xml', 'ini', 'env', 'config']);
+const STYLE_FILE_EXTENSIONS = new Set(['css', 'scss', 'sass', 'less', 'styl']);
 
 // Folder icon with subtle gradient
 export const FolderIcon = (props: FileIconProps) => {
@@ -125,6 +140,98 @@ export const CodeFileIcon = (props: FileIconProps) => (
       stroke-linecap="round"
       stroke-linejoin="round"
       d="m10 13-2 2 2 2m4-4 2 2-2 2"
+    />
+  </svg>
+);
+
+export const JavaScriptFileIcon = (props: FileIconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    class={props.class}
+  >
+    <path
+      fill="var(--warning)"
+      opacity="0.2"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+    />
+    <path
+      fill="none"
+      stroke="var(--warning)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+    />
+    <polyline
+      fill="none"
+      stroke="var(--warning)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      points="14 2 14 8 20 8"
+    />
+    <path
+      fill="none"
+      stroke="var(--warning)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M10 12v4a1.5 1.5 0 0 1-3 0"
+    />
+    <path
+      fill="none"
+      stroke="var(--warning)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M17 12h-2.25a1.25 1.25 0 0 0 0 2.5h1.5a1.25 1.25 0 0 1 0 2.5H14a1.25 1.25 0 0 1-1.25-1.25"
+    />
+  </svg>
+);
+
+export const TypeScriptFileIcon = (props: FileIconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    class={props.class}
+  >
+    <path
+      fill="var(--primary)"
+      opacity="0.2"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+    />
+    <path
+      fill="none"
+      stroke="var(--primary)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+    />
+    <polyline
+      fill="none"
+      stroke="var(--primary)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      points="14 2 14 8 20 8"
+    />
+    <path
+      fill="none"
+      stroke="var(--primary)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M8 12h5m-2.5 0v5"
+    />
+    <path
+      fill="none"
+      stroke="var(--primary)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M17 12h-2.25a1.25 1.25 0 0 0 0 2.5h1.5a1.25 1.25 0 0 1 0 2.5H14a1.25 1.25 0 0 1-1.25-1.25"
     />
   </svg>
 );
@@ -321,38 +428,69 @@ export const StyleFileIcon = (props: FileIconProps) => (
 );
 
 // Get appropriate icon based on file extension
-export function getFileIcon(extension?: string): (props: FileIconProps) => JSX.Element {
+export function getFileIcon(extension?: string): FileIconComponent {
   const ext = extension?.toLowerCase();
 
-  // Shell scripts
-  if (['sh', 'bash', 'zsh', 'fish', 'ksh', 'csh'].includes(ext ?? '')) {
+  if (ext && JAVASCRIPT_FILE_EXTENSIONS.has(ext)) {
+    return JavaScriptFileIcon;
+  }
+
+  if (ext && TYPESCRIPT_FILE_EXTENSIONS.has(ext)) {
+    return TypeScriptFileIcon;
+  }
+
+  if (ext && SHELL_SCRIPT_FILE_EXTENSIONS.has(ext)) {
     return ShellScriptFileIcon;
   }
 
-  // Code files
-  if (['ts', 'tsx', 'js', 'jsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'hpp', 'vue', 'svelte'].includes(ext ?? '')) {
+  if (ext && CODE_FILE_EXTENSIONS.has(ext)) {
     return CodeFileIcon;
   }
 
-  // Image files
-  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp'].includes(ext ?? '')) {
+  if (ext && IMAGE_FILE_EXTENSIONS.has(ext)) {
     return ImageFileIcon;
   }
 
-  // Document files
-  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf'].includes(ext ?? '')) {
+  if (ext && DOCUMENT_FILE_EXTENSIONS.has(ext)) {
     return DocumentFileIcon;
   }
 
-  // Config files
-  if (['json', 'yaml', 'yml', 'toml', 'xml', 'ini', 'env', 'config'].includes(ext ?? '')) {
+  if (ext && CONFIG_FILE_EXTENSIONS.has(ext)) {
     return ConfigFileIcon;
   }
 
-  // Style files
-  if (['css', 'scss', 'sass', 'less', 'styl'].includes(ext ?? '')) {
+  if (ext && STYLE_FILE_EXTENSIONS.has(ext)) {
     return StyleFileIcon;
   }
 
   return FileIcon;
+}
+
+export function resolveFileItemIcon(item: ResolvableFileIcon): FileItemIconRenderer {
+  if (item.type === 'folder') {
+    return FolderIcon;
+  }
+
+  if (item.icon) {
+    return item.icon;
+  }
+
+  return getFileIcon(item.extension);
+}
+
+export function FileItemIcon(props: { item: ResolvableFileIcon; class?: string }) {
+  const icon = () => resolveFileItemIcon(props.item);
+
+  return (
+    <Show
+      when={typeof icon() === 'function'}
+      fallback={(
+        <span class={`inline-flex items-center justify-center ${props.class ?? ''}`.trim()}>
+          {icon() as JSX.Element}
+        </span>
+      )}
+    >
+      <Dynamic component={icon() as FileIconComponent} class={props.class} />
+    </Show>
+  );
 }

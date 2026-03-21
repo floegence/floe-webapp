@@ -1,12 +1,11 @@
 import { For, Show, untrack, createMemo, createSignal, onCleanup } from 'solid-js';
-import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
-import { FolderIcon, getFileIcon } from './FileIcons';
+import { FileItemIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
@@ -719,11 +718,6 @@ function FileListItem(props: FileListItemProps) {
     });
   };
 
-  const fileIcon = () =>
-    props.item.type === 'folder'
-      ? FolderIcon
-      : getFileIcon(props.item.extension);
-
   // Get drag state for styling
   const dragState = () => props.dragContext?.dragState();
   const isGlobalDragging = () => dragState()?.isDragging ?? false;
@@ -762,7 +756,7 @@ function FileListItem(props: FileListItemProps) {
       {/* Name column */}
       <div class="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5">
         <span class="flex-shrink-0 w-4 h-4">
-          <Dynamic component={fileIcon()} class="w-4 h-4" />
+          <FileItemIcon item={props.item} class="w-4 h-4" />
         </span>
         <HighlightedName name={props.item.name} match={filterMatch()} />
       </div>

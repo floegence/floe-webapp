@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
-import { FolderIcon, FolderOpenIcon, ShellScriptFileIcon, getFileIcon } from '../src/components/file-browser/FileIcons';
+import type { FileItem } from '../src/components/file-browser/types';
+import {
+  FileItemIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  JavaScriptFileIcon,
+  ShellScriptFileIcon,
+  TypeScriptFileIcon,
+  getFileIcon,
+  resolveFileItemIcon,
+} from '../src/components/file-browser/FileIcons';
 
 function extractAll(re: RegExp, input: string): string[] {
   return Array.from(input.matchAll(re), (m) => m[1] ?? '');
@@ -55,6 +65,42 @@ describe('file icons', () => {
     expect(getFileIcon('bash')).toBe(ShellScriptFileIcon);
     expect(getFileIcon('zsh')).toBe(ShellScriptFileIcon);
     expect(getFileIcon('fish')).toBe(ShellScriptFileIcon);
+  });
+
+  it('getFileIcon should return dedicated JavaScript and TypeScript icons for language families', () => {
+    expect(getFileIcon('js')).toBe(JavaScriptFileIcon);
+    expect(getFileIcon('mjs')).toBe(JavaScriptFileIcon);
+    expect(getFileIcon('ts')).toBe(TypeScriptFileIcon);
+    expect(getFileIcon('mts')).toBe(TypeScriptFileIcon);
+  });
+
+  it('resolveFileItemIcon should prefer item.icon for files before extension mapping', () => {
+    const CustomIcon = (props: { class?: string }) => <svg data-custom-component-icon="true" class={props.class} />;
+    const item: FileItem = {
+      id: 'custom.ts',
+      name: 'custom.ts',
+      type: 'file',
+      path: '/custom.ts',
+      extension: 'ts',
+      icon: CustomIcon,
+    };
+
+    expect(resolveFileItemIcon(item)).toBe(CustomIcon);
+  });
+
+  it('FileItemIcon should render JSX element icon overrides', () => {
+    const item: FileItem = {
+      id: 'custom.js',
+      name: 'custom.js',
+      type: 'file',
+      path: '/custom.js',
+      extension: 'js',
+      icon: <svg data-custom-element-icon="true" />,
+    };
+
+    const html = renderToString(() => <FileItemIcon item={item} class="w-4 h-4" />);
+
+    expect(html).toContain('data-custom-element-icon="true"');
   });
 
   it('ShellScriptFileIcon should render a terminal-style glyph', () => {

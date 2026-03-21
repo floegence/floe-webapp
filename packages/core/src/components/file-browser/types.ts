@@ -1,4 +1,6 @@
-import type { JSX, Accessor } from 'solid-js';
+import type { JSX, Accessor, Component } from 'solid-js';
+
+export type FileItemIconOverride = Component<{ class?: string }> | JSX.Element;
 
 /**
  * Represents a file or folder item in the browser
@@ -12,7 +14,7 @@ export interface FileItem {
   modifiedAt?: Date;
   extension?: string;
   children?: FileItem[];
-  icon?: JSX.Element;
+  icon?: FileItemIconOverride;
 }
 
 /**
