@@ -475,6 +475,7 @@ function FileGridItem(props: FileGridItemProps) {
     <button
       type="button"
       {...fileBrowserTouchTargetAttrs}
+      title={props.item.name}
       onClick={handleClick}
       onDblClick={handleDoubleClick}
       onContextMenu={handleContextMenu}
@@ -536,11 +537,10 @@ function FileGridItem(props: FileGridItemProps) {
       {/* Name */}
       <span
         class={cn(
-          'text-xs text-center line-clamp-2 w-full px-1',
+          'block w-full min-w-0 truncate px-1 text-xs text-center',
           'transition-colors duration-150',
           isSelected() && 'font-medium'
         )}
-        title={props.item.name}
       >
         <HighlightedName name={props.item.name} match={filterMatch()} />
       </span>
