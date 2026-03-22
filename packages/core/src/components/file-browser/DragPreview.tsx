@@ -33,12 +33,12 @@ interface FrozenDragState {
 }
 
 /**
- * Floating preview that follows the cursor during drag operations.
+ * Floating preview that follows the cursor during file-browser drag operations.
  * Shows dragged items with a count badge for multiple items.
  * Uses Motion library for smooth animations.
  * Includes fly-to-target animation when dropping onto a valid target.
  */
-export function DragPreview() {
+export function FileBrowserDragPreview() {
   const dragContext = useFileBrowserDrag();
 
   const dragState = () => dragContext?.dragState();
