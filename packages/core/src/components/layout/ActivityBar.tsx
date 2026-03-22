@@ -27,6 +27,7 @@ export interface ActivityBarProps {
   onActiveChange: (id: string, opts?: { openSidebar?: boolean }) => void;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  ariaLabel?: string;
   class?: string;
 }
 
@@ -72,7 +73,7 @@ export function ActivityBar(props: ActivityBarProps) {
   };
 
   return (
-    <div
+    <nav
       data-floe-shell-slot="activity-bar"
       class={cn(
         'w-10 md:w-12 flex flex-col justify-between shrink-0 min-h-0',
@@ -80,6 +81,7 @@ export function ActivityBar(props: ActivityBarProps) {
         props.class
       )}
       style={{ 'border-right-color': 'var(--activity-bar-border)' }}
+      aria-label={props.ariaLabel}
     >
       {/* Top items */}
       <div class="flex flex-col">
@@ -108,7 +110,7 @@ export function ActivityBar(props: ActivityBarProps) {
           </For>
         </div>
       </Show>
-    </div>
+    </nav>
   );
 }
 

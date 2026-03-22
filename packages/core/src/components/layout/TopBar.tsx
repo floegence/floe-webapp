@@ -8,6 +8,7 @@ export interface TopBarProps {
   logo?: JSX.Element;
   title?: string;
   actions?: JSX.Element;
+  ariaLabel?: string;
   class?: string;
 }
 
@@ -29,6 +30,7 @@ export function TopBar(props: TopBarProps) {
         props.class
       )}
       style={{ 'border-bottom-color': 'var(--top-bar-border)' }}
+      aria-label={props.ariaLabel}
     >
       <div class="h-10 flex items-center gap-3 px-3">
         {/* Logo */}

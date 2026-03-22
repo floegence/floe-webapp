@@ -16,6 +16,7 @@ export interface SidebarPaneProps {
   onClose?: () => void;
   mobileOverlay?: boolean;
   mobileBackdrop?: boolean;
+  ariaLabel?: string;
   class?: string;
   innerClass?: string;
   bodyClass?: string;
@@ -46,6 +47,9 @@ export function SidebarPane(props: SidebarPaneProps) {
           props.class
         )}
         style={{ width: open() ? `${width()}px` : '0px' }}
+        role={showMobileOverlay() ? 'dialog' : undefined}
+        aria-modal={showMobileOverlay() ? 'true' : undefined}
+        aria-label={props.ariaLabel}
       >
         <div
           class={cn('h-full flex flex-col', props.innerClass)}
@@ -62,7 +66,7 @@ export function SidebarPane(props: SidebarPaneProps) {
                   <button
                     type="button"
                     onClick={() => props.onClose?.()}
-                    class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
+                    class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring focus-visible:ring-inset"
                     aria-label="Close sidebar"
                   >
                     <svg

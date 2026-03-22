@@ -163,10 +163,7 @@ export function Breadcrumb(props: BreadcrumbProps) {
             </Show>
             {/* Insert the collapsed ellipsis dropdown after Root */}
             <Show when={collapsedInfo().shouldCollapse && index() === 1}>
-              <CollapsedSegments
-                segments={collapsedInfo().collapsed}
-                onSelect={handleClick}
-              />
+              <CollapsedSegments segments={collapsedInfo().collapsed} onSelect={handleClick} />
               <ChevronRight class="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
             </Show>
             <BreadcrumbItem
@@ -206,20 +203,13 @@ function CollapsedSegments(props: CollapsedSegmentsProps) {
 
   return (
     <Dropdown
-      trigger={
-        <button
-          type="button"
-          class={cn(
-            'text-xs px-1.5 py-0.5 rounded cursor-pointer flex-shrink-0',
-            'transition-all duration-100',
-            'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-          )}
-          title="Show hidden path segments"
-        >
-          …
-        </button>
-      }
+      trigger={<span>…</span>}
+      triggerClass={cn(
+        'inline-flex items-center text-xs px-1.5 py-0.5 rounded flex-shrink-0',
+        'transition-all duration-100',
+        'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+      )}
+      triggerAriaLabel="Show hidden path segments"
       items={items()}
       onSelect={handleSelect}
       align="start"

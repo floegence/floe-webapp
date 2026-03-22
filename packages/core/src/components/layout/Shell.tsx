@@ -272,6 +272,7 @@ export function Shell(props: ShellProps) {
 
   const effectiveSidebarCollapsed = () => (sidebarHidden() ? true : layout.sidebarCollapsed());
   const effectiveSidebarWidth = () => sidebarPreviewWidth() ?? layout.sidebarWidth();
+  const accessibility = () => floe.config.accessibility;
 
   const beginSidebarResize = () => {
     setSidebarPreviewWidth(layout.sidebarWidth());
@@ -303,6 +304,17 @@ export function Shell(props: ShellProps) {
     restoreFocus: true,
   });
 
+  const focusMainContent = () => {
+    if (typeof document === 'undefined') return;
+    const main = document.getElementById(accessibility().mainContentId);
+    if (!main || !(main instanceof HTMLElement)) return;
+    try {
+      main.focus();
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div
       data-floe-shell=""
@@ -316,10 +328,23 @@ export function Shell(props: ShellProps) {
         props.class
       )}
     >
+      <a
+        href={`#${accessibility().mainContentId}`}
+        class={cn(
+          'fixed left-3 top-3 z-[120] rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-md',
+          'transition-transform duration-150 motion-reduce:transition-none',
+          '-translate-y-[200%] focus:translate-y-0'
+        )}
+        onClick={() => focusMainContent()}
+      >
+        {accessibility().skipLinkLabel}
+      </a>
+
       {/* Top Bar */}
       <TopBar
         logo={props.logo}
         actions={effectiveTopBarActions()}
+        ariaLabel={accessibility().topBarLabel}
         class={props.slotClassNames?.topBar}
       />
 
@@ -339,6 +364,7 @@ export function Shell(props: ShellProps) {
               onActiveChange={setSidebarActiveTab}
               collapsed={effectiveSidebarCollapsed()}
               onCollapsedChange={sidebarHidden() ? undefined : layout.setSidebarCollapsed}
+              ariaLabel={accessibility().primaryNavigationLabel}
               class={props.slotClassNames?.activityBar}
             />
           </Show>
@@ -348,6 +374,7 @@ export function Shell(props: ShellProps) {
             <Sidebar
               width={effectiveSidebarWidth()}
               collapsed={layout.sidebarCollapsed() || isFullScreen()}
+              ariaLabel={accessibility().sidebarLabel}
               resizer={
                 <ResizeHandle
                   direction="horizontal"
@@ -387,6 +414,9 @@ export function Shell(props: ShellProps) {
               props.slotClassNames?.mobileSidebarDrawer
             )}
             tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={accessibility().sidebarLabel}
           >
             <div class="h-full overflow-auto overscroll-contain">
               {renderSidebarContent(layout.sidebarActiveTab())}
@@ -403,6 +433,9 @@ export function Shell(props: ShellProps) {
           <main
             data-floe-shell-slot="main"
             class={cn('flex-1 min-h-0 overflow-auto overscroll-contain', props.slotClassNames?.main)}
+            id={accessibility().mainContentId}
+            aria-label={accessibility().mainLabel}
+            tabIndex={-1}
           >
             {props.children}
           </main>
@@ -444,6 +477,7 @@ export function Shell(props: ShellProps) {
             activeIsPage: activeIsPage(),
           })}
           onSelect={handleMobileTabSelect}
+          ariaLabel={accessibility().mobileNavigationLabel}
           class={props.slotClassNames?.mobileTabBar}
         />
       </Show>

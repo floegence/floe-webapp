@@ -36,6 +36,15 @@ export function App() {
             },
           },
         },
+        accessibility: {
+          mainContentId: 'workspace-main',
+          skipLinkLabel: 'Skip to workspace',
+          topBarLabel: 'Workspace toolbar',
+          primaryNavigationLabel: 'Workspace navigation',
+          mobileNavigationLabel: 'Workspace navigation',
+          sidebarLabel: 'Workspace sidebar',
+          mainLabel: 'Workspace content',
+        },
         strings: {
           topBar: { searchPlaceholder: 'Search...' },
         },
@@ -125,6 +134,33 @@ Stable selectors:
 - `[data-floe-shell-slot="terminal-panel"]`
 - `[data-floe-shell-slot="bottom-bar"]`
 - `[data-floe-shell-slot="mobile-tab-bar"]`
+
+## Accessibility
+
+Configuration: `FloeConfig.accessibility` (`packages/core/src/context/FloeConfigContext.tsx`)
+
+- `mainContentId`: stable `id` for the primary `<main>` target (default: `floe-main-content`)
+- `skipLinkLabel`: visible-on-focus label for the shell skip link
+- `topBarLabel`: accessible name for the top bar landmark
+- `primaryNavigationLabel`: accessible name for the desktop activity/navigation landmark
+- `mobileNavigationLabel`: accessible name for the mobile tab navigation landmark
+- `sidebarLabel`: accessible name for the sidebar/complementary region
+- `mainLabel`: accessible name for the primary application content region
+
+Implementation references:
+
+- `packages/core/src/components/layout/Shell.tsx`
+- `packages/core/src/components/layout/TopBar.tsx`
+- `packages/core/src/components/layout/ActivityBar.tsx`
+- `packages/core/src/components/layout/MobileTabBar.tsx`
+- `packages/core/src/components/layout/Sidebar.tsx`
+- `packages/core/src/components/layout/SidebarPane.tsx`
+
+Guidance:
+
+- Localize these labels at the app boundary instead of hard-coding page-specific ARIA labels inside feature components.
+- Keep the main-content id stable so skip links and focus restoration remain deterministic.
+- For broader guidance on keyboard behavior, live regions, and downstream responsibilities, see `docs/accessibility.md`.
 
 ## Theme
 

@@ -16,6 +16,7 @@ export interface MobileTabBarProps {
   items: MobileTabBarItem[];
   activeId: string;
   onSelect: (id: string) => void;
+  ariaLabel?: string;
   class?: string;
 }
 
@@ -46,6 +47,18 @@ export function MobileTabBar(props: MobileTabBarProps) {
     });
   };
 
+  const enabledItems = () => props.items;
+
+  const selectItemAt = (index: number) => {
+    const item = enabledItems()[index];
+    if (!item) return;
+    if (item.onClick) {
+      deferNonBlocking(() => item.onClick!());
+      return;
+    }
+    props.onSelect(item.id);
+  };
+
   onMount(() => {
     checkScroll();
     // Scroll active item into view
@@ -73,6 +86,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
         props.class
       )}
       style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
+      aria-label={props.ariaLabel}
     >
       <div class="relative h-14">
         {/* Scroll indicators */}
@@ -89,12 +103,16 @@ export function MobileTabBar(props: MobileTabBarProps) {
           class="h-full flex items-center overflow-x-auto scrollbar-hide snap-x snap-mandatory"
           style={{ '-webkit-overflow-scrolling': 'touch' }}
           onScroll={scheduleCheckScroll}
+          role="tablist"
+          aria-orientation="horizontal"
         >
           <For each={props.items}>
-            {(item) => (
+            {(item, index) => (
               <MobileTabItem
                 item={item}
                 isActive={props.activeId === item.id}
+                index={index()}
+                itemCount={props.items.length}
                 onClick={() => {
                   // UI response first: trigger haptic feedback immediately
                   if ('vibrate' in navigator) {
@@ -111,6 +129,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
                     onSelect(id);
                   }
                 }}
+                onKeyboardSelect={(nextIndex) => selectItemAt(nextIndex)}
               />
             )}
           </For>
@@ -123,7 +142,10 @@ export function MobileTabBar(props: MobileTabBarProps) {
 interface MobileTabItemProps {
   item: MobileTabBarItem;
   isActive: boolean;
+  index: number;
+  itemCount: number;
   onClick: () => void;
+  onKeyboardSelect: (nextIndex: number) => void;
 }
 
 function MobileTabItem(props: MobileTabItemProps) {
@@ -147,6 +169,30 @@ function MobileTabItem(props: MobileTabItemProps) {
       aria-label={props.item.label}
       aria-selected={props.isActive}
       role="tab"
+      tabIndex={props.isActive ? 0 : -1}
+      onKeyDown={(event) => {
+        let nextIndex: number | null = null;
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+            nextIndex = (props.index + 1) % props.itemCount;
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+            nextIndex = (props.index - 1 + props.itemCount) % props.itemCount;
+            break;
+          case 'Home':
+            nextIndex = 0;
+            break;
+          case 'End':
+            nextIndex = props.itemCount - 1;
+            break;
+          default:
+            return;
+        }
+        event.preventDefault();
+        props.onKeyboardSelect(nextIndex);
+      }}
     >
       {/* Icon with scale animation */}
       <div

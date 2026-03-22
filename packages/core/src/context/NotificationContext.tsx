@@ -156,6 +156,9 @@ function NotificationToast(props: NotificationToastProps) {
     ),
   };
 
+  const liveRole = () => (props.notification.type === 'error' || props.notification.type === 'warning' ? 'alert' : 'status');
+  const liveMode = () => (liveRole() === 'alert' ? 'assertive' : 'polite');
+
   return (
     <div
       class={cn(
@@ -165,7 +168,8 @@ function NotificationToast(props: NotificationToastProps) {
         'bg-card text-card-foreground',
         typeStyles[props.notification.type]
       )}
-      role="alert"
+      role={liveRole()}
+      aria-live={liveMode()}
     >
       <div class="flex items-start gap-3">
         <span class="flex-shrink-0 mt-0.5">{typeIcons[props.notification.type]()}</span>
@@ -177,7 +181,7 @@ function NotificationToast(props: NotificationToastProps) {
           <Show when={props.notification.action}>
             <button
               type="button"
-              class="mt-2 text-sm font-medium text-foreground hover:underline"
+              class="mt-2 text-sm font-medium text-foreground hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={() => props.notification.action?.onClick()}
             >
               {props.notification.action!.label}
@@ -186,7 +190,7 @@ function NotificationToast(props: NotificationToastProps) {
         </div>
         <button
           type="button"
-          class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+          class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
           onClick={() => props.onDismiss()}
           aria-label="Dismiss"
         >

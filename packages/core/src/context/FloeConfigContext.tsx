@@ -88,6 +88,23 @@ export interface FloeThemeConfig {
   tokens?: FloeThemeTokenOverrides;
 }
 
+export interface FloeAccessibilityConfig {
+  /** Stable id applied to the primary `<main>` region for skip-link targeting. */
+  mainContentId: string;
+  /** Visible-on-focus label for the shell skip link. */
+  skipLinkLabel: string;
+  /** Accessible name for the shell top bar landmark. */
+  topBarLabel: string;
+  /** Accessible name for the desktop activity/navigation landmark. */
+  primaryNavigationLabel: string;
+  /** Accessible name for the mobile tab navigation landmark. */
+  mobileNavigationLabel: string;
+  /** Accessible name for the shared sidebar/complementary region. */
+  sidebarLabel: string;
+  /** Accessible name for the primary application content region. */
+  mainLabel: string;
+}
+
 export interface FloeDeckConfig {
   storageKey: string;
   /**
@@ -153,6 +170,7 @@ export interface FloeConfig {
   commands: FloeCommandsConfig;
   layout: FloeLayoutConfig;
   theme: FloeThemeConfig;
+  accessibility: FloeAccessibilityConfig;
   deck: FloeDeckConfig;
   strings: FloeStrings;
 }
@@ -224,6 +242,15 @@ export const DEFAULT_FLOE_CONFIG: FloeConfig = {
   theme: {
     storageKey: 'theme',
     defaultTheme: 'system',
+  },
+  accessibility: {
+    mainContentId: 'floe-main-content',
+    skipLinkLabel: 'Skip to main content',
+    topBarLabel: 'Application toolbar',
+    primaryNavigationLabel: 'Primary navigation',
+    mobileNavigationLabel: 'Primary navigation',
+    sidebarLabel: 'Sidebar',
+    mainLabel: 'Main content',
   },
   deck: {
     storageKey: 'deck',

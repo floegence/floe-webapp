@@ -1,4 +1,5 @@
 import { type Component, Show } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { cn } from '../../../utils/cn';
 
 export interface FileBlockProps {
@@ -36,7 +37,13 @@ export const FileBlock: Component<FileBlockProps> = (props) => {
   };
 
   return (
-    <div class={cn('chat-file-block', props.class)} onClick={handleDownload}>
+    <Dynamic
+      component={props.url ? 'button' : 'div'}
+      type={props.url ? 'button' : undefined}
+      class={cn('chat-file-block', props.class)}
+      onClick={props.url ? handleDownload : undefined}
+      aria-label={props.url ? `Download ${props.name}` : undefined}
+    >
       <div class="chat-file-icon">
         {getFileIcon(props.mimeType)}
       </div>
@@ -53,7 +60,7 @@ export const FileBlock: Component<FileBlockProps> = (props) => {
           <DownloadIcon />
         </div>
       </Show>
-    </div>
+    </Dynamic>
   );
 };
 

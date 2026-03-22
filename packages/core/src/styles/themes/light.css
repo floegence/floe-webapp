@@ -17,7 +17,7 @@
 
   /* Muted - Warm gray */
   --muted: hsl(36 10% 88%);
-  --muted-foreground: hsl(215 20% 46%);
+  --muted-foreground: hsl(215 20% 42%);
 
   /* Accent - Subtle warm highlight */
   --accent: hsl(36 10% 88%);
@@ -63,7 +63,7 @@
 
   /* Activity bar */
   --activity-bar: hsl(36 10% 90%);
-  --activity-bar-foreground: hsl(215 20% 46%);
+  --activity-bar-foreground: hsl(215 20% 42%);
   --activity-bar-foreground-active: hsl(215 40% 13%);
   --activity-bar-badge: hsl(215 40% 13%);
   --activity-bar-badge-foreground: hsl(0 0% 98%);

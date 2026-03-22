@@ -10,6 +10,7 @@ A professional VSCode-style web application framework built with Solid.js.
 - **Command Palette**: Global command search with keyboard shortcuts
 - **Plugin Registry**: Register components to drive navigation and status bar
 - **Shell Extensibility**: Stable `slotClassNames` and `data-floe-shell-slot` hooks for chrome styling
+- **Accessibility Foundations**: Shell landmarks, skip link targeting, keyboard-safe tabs/menus, live-region defaults, and contrast-safe tokens
 - **Protocol Layer**: Flowersec WebSocket integration for secure communication
 - **Non-blocking UI**: Smooth animations and async operations
 - **Demo Playground**: Component showcase + Monaco source viewer
@@ -84,6 +85,7 @@ make check
 - `docs/README.md`
 - `docs/getting-started.md`
 - `docs/configuration.md`
+- `docs/accessibility.md`
 - `docs/component-registry.md`
 - `docs/interaction-architecture.md`
 - `docs/protocol.md`
@@ -207,7 +209,11 @@ Create a CSS entry (e.g. `src/index.css`):
 import type { FloeComponent } from '@floegence/floe-webapp-core';
 import { FloeApp } from '@floegence/floe-webapp-core/app';
 import './index.css';
-import { ProtocolProvider, useProtocol, type ProtocolContract } from '@floegence/floe-webapp-protocol';
+import {
+  ProtocolProvider,
+  useProtocol,
+  type ProtocolContract,
+} from '@floegence/floe-webapp-protocol';
 
 const appContract: ProtocolContract = {
   id: 'app_v1',
@@ -221,7 +227,9 @@ const components: FloeComponent<ReturnType<typeof useProtocol>>[] = [
 export function App() {
   return (
     <FloeApp
-      wrapAfterTheme={(renderChildren) => <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>}
+      wrapAfterTheme={(renderChildren) => (
+        <ProtocolProvider contract={appContract}>{renderChildren()}</ProtocolProvider>
+      )}
       getProtocol={useProtocol}
       components={components}
     >
@@ -237,6 +245,8 @@ Notes:
 - Recommended: run Tailwind v4 in your app and import `@floegence/floe-webapp-core/tailwind` from your CSS entry.
 - Fallback (no Tailwind build): import `@floegence/floe-webapp-core/styles` once at your app entry, and do not rely on arbitrary Tailwind utility classes in your own components.
 - Prefer `theme.tokens` for shell chrome colors and `slotClassNames` / `data-floe-shell-slot` for local shell styling.
+- Prefer `config.accessibility` to name shell landmarks and skip-link targets instead of patching shell regions downstream.
+- For `Dropdown`, keep `trigger` presentational and style the interactive wrapper with `triggerClass`; use `triggerAriaLabel` when the visible trigger content is icon-only or ambiguous.
 - When you need token metadata for docs, inspectors, or custom tooling, import `floeDesignTokens`, `floeColorTokenCategories`, `floeThemeColorVariables`, or `floeSharedCssVariables` from `@floegence/floe-webapp-core` instead of duplicating theme values.
 - Avoid broad resets such as `* { border-width: 0; }`, which can remove the framework's default shell dividers.
 

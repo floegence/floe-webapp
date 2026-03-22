@@ -60,7 +60,10 @@ export interface TabsSlotClassNames {
   scrollButton?: string;
 }
 
-export interface TabsProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange' | 'onClose'> {
+export interface TabsProps extends Omit<
+  JSX.HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'onClose'
+> {
   /** Tab data items */
   items: TabItem[];
   /**
@@ -96,6 +99,42 @@ export interface TabsProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onC
   features?: TabsFeatures;
   /** Optional class overrides for each visual slot */
   slotClassNames?: TabsSlotClassNames;
+  /** Accessible name for the tablist container. */
+  ariaLabel?: string;
+}
+
+export function resolveTabNavigationTargetId(
+  items: Pick<TabItem, 'id' | 'disabled'>[],
+  currentId: string,
+  key: string
+): string | null {
+  const enabledItems = items.filter((item) => !item.disabled);
+  if (!enabledItems.length) return null;
+
+  const currentIndex = enabledItems.findIndex((item) => item.id === currentId);
+  if (currentIndex < 0) return null;
+
+  let nextIndex: number | null = null;
+  switch (key) {
+    case 'ArrowRight':
+    case 'ArrowDown':
+      nextIndex = (currentIndex + 1) % enabledItems.length;
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      nextIndex = (currentIndex - 1 + enabledItems.length) % enabledItems.length;
+      break;
+    case 'Home':
+      nextIndex = 0;
+      break;
+    case 'End':
+      nextIndex = enabledItems.length - 1;
+      break;
+    default:
+      return null;
+  }
+
+  return enabledItems[nextIndex]?.id ?? null;
 }
 
 function normalizeIndicatorThickness(px?: number): 1 | 2 | 3 | 4 {
@@ -103,7 +142,10 @@ function normalizeIndicatorThickness(px?: number): 1 | 2 | 3 | 4 {
   return 2;
 }
 
-function resolveIndicatorThicknessClasses(px: 1 | 2 | 3 | 4): { tabBorderClass: string; sliderHeightClass: string } {
+function resolveIndicatorThicknessClasses(px: 1 | 2 | 3 | 4): {
+  tabBorderClass: string;
+  sliderHeightClass: string;
+} {
   switch (px) {
     case 1:
       return { tabBorderClass: 'border-b', sliderHeightClass: 'h-px' };
@@ -168,18 +210,21 @@ export function Tabs(props: TabsProps) {
     'size',
     'features',
     'slotClassNames',
+    'ariaLabel',
     'class',
   ]);
 
   const indicatorMode = () => local.features?.indicator?.mode ?? 'activeBorder';
-  const indicatorThickness = () => normalizeIndicatorThickness(local.features?.indicator?.thicknessPx);
+  const indicatorThickness = () =>
+    normalizeIndicatorThickness(local.features?.indicator?.thicknessPx);
   const indicatorColorToken = () => local.features?.indicator?.colorToken ?? 'primary';
   const indicatorAnimated = () => local.features?.indicator?.animated ?? true;
   const showContainerBorder = () => local.features?.containerBorder ?? true;
   const scrollButtonsMode = () => local.features?.scrollButtons ?? 'auto';
   const closeDangerHover = () => local.features?.closeButton?.dangerHover ?? true;
-  const defaultClosable = () => local.features?.closeButton?.enabledByDefault ?? (local.closable ?? false);
-  const showAddButton = () => local.features?.addButton?.enabled ?? (local.showAdd ?? false);
+  const defaultClosable = () =>
+    local.features?.closeButton?.enabledByDefault ?? local.closable ?? false;
+  const showAddButton = () => local.features?.addButton?.enabled ?? local.showAdd ?? false;
 
   const indicatorThicknessClasses = () => resolveIndicatorThicknessClasses(indicatorThickness());
   const indicatorColorClasses = () => resolveIndicatorColorClasses(indicatorColorToken());
@@ -395,6 +440,24 @@ export function Tabs(props: TabsProps) {
     }
   };
 
+  const focusAndSelectById = (id: string) => {
+    const item = local.items.find((candidate) => candidate.id === id);
+    if (!item) return;
+    handleTabClick(item.id, item.disabled);
+    requestAnimationFrame(() => {
+      const el = tabEls.get(item.id);
+      el?.focus();
+      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+  };
+
+  const handleTabKeyNavigation = (event: KeyboardEvent, item: TabItem) => {
+    const nextId = resolveTabNavigationTargetId(local.items, item.id, event.key);
+    if (!nextId) return;
+    event.preventDefault();
+    focusAndSelectById(nextId);
+  };
+
   // Handle close with UI-first response
   const handleClose = (e: MouseEvent, id: string) => {
     e.stopPropagation();
@@ -412,7 +475,8 @@ export function Tabs(props: TabsProps) {
 
   // Styles for tab items
   const getTabStyles = (isCurrentActive: boolean, disabled?: boolean) => {
-    const base = 'inline-flex items-center gap-1.5 font-medium transition-colors duration-150 whitespace-nowrap';
+    const base =
+      'inline-flex items-center gap-1.5 font-medium transition-colors duration-150 whitespace-nowrap';
     const cursor = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
 
     const activeIndicatorClass = (() => {
@@ -482,6 +546,9 @@ export function Tabs(props: TabsProps) {
           '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
           local.slotClassNames?.scrollContainer
         )}
+        role="tablist"
+        aria-orientation="horizontal"
+        aria-label={local.ariaLabel}
       >
         {/* Shared moving slider indicator */}
         <Show when={isSliderIndicator() && sliderVisible()}>
@@ -518,12 +585,14 @@ export function Tabs(props: TabsProps) {
                 role="tab"
                 aria-selected={isCurrentActive()}
                 aria-disabled={item.disabled}
-                tabIndex={item.disabled ? -1 : 0}
+                tabIndex={item.disabled ? -1 : isCurrentActive() ? 0 : -1}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleTabClick(item.id, item.disabled);
+                    return;
                   }
+                  handleTabKeyNavigation(e, item);
                 }}
               >
                 {/* Tab icon */}
@@ -543,7 +612,9 @@ export function Tabs(props: TabsProps) {
                       'flex-shrink-0 flex items-center justify-center',
                       'w-5 h-5 rounded cursor-pointer',
                       'bg-transparent text-muted-foreground',
-                      closeDangerHover() ? 'hover:bg-error hover:text-error-foreground' : 'hover:bg-muted/80 hover:text-foreground',
+                      closeDangerHover()
+                        ? 'hover:bg-error hover:text-error-foreground'
+                        : 'hover:bg-muted/80 hover:text-foreground',
                       'transition-colors duration-150',
                       'ml-1.5',
                       local.slotClassNames?.closeButton
@@ -612,19 +683,27 @@ export interface TabPanelProps extends JSX.HTMLAttributes<HTMLDivElement> {
   active?: boolean;
   // Keep mounted when inactive (for preserving state)
   keepMounted?: boolean;
+  // Optional accessible name linkage to the controlling tab.
+  labelledBy?: string;
 }
 
 export function TabPanel(props: TabPanelProps) {
-  const [local, rest] = splitProps(props, ['active', 'keepMounted', 'class', 'children']);
+  const [local, rest] = splitProps(props, [
+    'active',
+    'keepMounted',
+    'labelledBy',
+    'class',
+    'children',
+  ]);
 
   return (
     <Show when={local.keepMounted || local.active}>
       <div
         role="tabpanel"
-        class={cn(
-          !local.active && local.keepMounted && 'hidden',
-          local.class
-        )}
+        aria-labelledby={local.labelledBy}
+        aria-hidden={!local.active && local.keepMounted ? 'true' : undefined}
+        tabIndex={local.active ? 0 : -1}
+        class={cn(!local.active && local.keepMounted && 'hidden', local.class)}
         {...rest}
       >
         {local.children}

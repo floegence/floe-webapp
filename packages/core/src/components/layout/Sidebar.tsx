@@ -6,6 +6,7 @@ export interface SidebarProps {
   resizer?: JSX.Element;
   width?: number;
   collapsed?: boolean;
+  ariaLabel?: string;
   class?: string;
 }
 
@@ -33,6 +34,8 @@ export function Sidebar(props: SidebarProps) {
         visibility: collapsed() ? 'hidden' : 'visible',
         'border-right-width': collapsed() ? '0px' : undefined,
       }}
+      aria-label={props.ariaLabel}
+      aria-hidden={collapsed() ? 'true' : undefined}
     >
       <div class="flex-1 overflow-auto overscroll-contain">{props.children}</div>
       {props.resizer}
