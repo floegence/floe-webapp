@@ -114,7 +114,7 @@ export const floeColorTokenCategories = [
       {
         name: 'Muted Foreground',
         variable: '--muted-foreground',
-        lightValue: 'hsl(215 20% 46%)',
+        lightValue: 'hsl(215 20% 42%)',
         darkValue: 'hsl(215 20% 60%)',
         description: 'Secondary text color for supporting copy.',
       },
@@ -368,7 +368,7 @@ export const floeColorTokenCategories = [
       {
         name: 'Activity Bar Foreground',
         variable: '--activity-bar-foreground',
-        lightValue: 'hsl(215 20% 46%)',
+        lightValue: 'hsl(215 20% 42%)',
         darkValue: 'hsl(215 20% 55%)',
         description: 'Default activity bar icon color.',
       },
@@ -507,12 +507,48 @@ export const floeColorTokenCategories = [
 ] as const satisfies readonly FloeColorTokenCategory[];
 
 export const floeTypographyTokens = [
-  { name: 'Text XS', size: '11px', lineHeight: '1.5', className: 'text-[11px]', description: 'Smallest text, captions and labels.' },
-  { name: 'Text SM', size: '12px', lineHeight: '1.5', className: 'text-xs', description: 'Small text, secondary content.' },
-  { name: 'Text Base', size: '14px', lineHeight: '1.5', className: 'text-sm', description: 'Default body text.' },
-  { name: 'Text LG', size: '16px', lineHeight: '1.5', className: 'text-base', description: 'Larger body text and card titles.' },
-  { name: 'Text XL', size: '18px', lineHeight: '1.4', className: 'text-lg', description: 'Section titles.' },
-  { name: 'Text 2XL', size: '20px', lineHeight: '1.3', className: 'text-xl', description: 'Page titles.' },
+  {
+    name: 'Text XS',
+    size: '11px',
+    lineHeight: '1.5',
+    className: 'text-[11px]',
+    description: 'Smallest text, captions and labels.',
+  },
+  {
+    name: 'Text SM',
+    size: '12px',
+    lineHeight: '1.5',
+    className: 'text-xs',
+    description: 'Small text, secondary content.',
+  },
+  {
+    name: 'Text Base',
+    size: '14px',
+    lineHeight: '1.5',
+    className: 'text-sm',
+    description: 'Default body text.',
+  },
+  {
+    name: 'Text LG',
+    size: '16px',
+    lineHeight: '1.5',
+    className: 'text-base',
+    description: 'Larger body text and card titles.',
+  },
+  {
+    name: 'Text XL',
+    size: '18px',
+    lineHeight: '1.4',
+    className: 'text-lg',
+    description: 'Section titles.',
+  },
+  {
+    name: 'Text 2XL',
+    size: '20px',
+    lineHeight: '1.3',
+    className: 'text-xl',
+    description: 'Page titles.',
+  },
 ] as const satisfies readonly FloeTypographyToken[];
 
 export const floeFontFamilyTokens = [
@@ -546,7 +582,12 @@ export const floeSpacingTokens = [
 export const floeRadiusTokens = [
   { name: 'None', value: '0', variable: '-', className: 'rounded-none' },
   { name: 'SM', value: '0.125rem', variable: '-', className: 'rounded-sm' },
-  { name: 'Default', value: floeSharedCssVariables['--radius'], variable: '--radius', className: 'rounded' },
+  {
+    name: 'Default',
+    value: floeSharedCssVariables['--radius'],
+    variable: '--radius',
+    className: 'rounded',
+  },
   { name: 'MD', value: '0.5rem', variable: '-', className: 'rounded-md' },
   { name: 'LG', value: '0.75rem', variable: '-', className: 'rounded-lg' },
   { name: 'XL', value: '1rem', variable: '-', className: 'rounded-xl' },
@@ -593,17 +634,19 @@ export const floeMotionTokens = [
   },
 ] as const satisfies readonly FloeMotionToken[];
 
-const floeColorTokens: readonly FloeColorToken[] = floeColorTokenCategories.reduce<FloeColorToken[]>(
-  (tokens, category) => {
-    tokens.push(...category.tokens);
-    return tokens;
-  },
-  []
-);
+const floeColorTokens: readonly FloeColorToken[] = floeColorTokenCategories.reduce<
+  FloeColorToken[]
+>((tokens, category) => {
+  tokens.push(...category.tokens);
+  return tokens;
+}, []);
 
 function buildThemeVariableMap(theme: FloeResolvedTheme): Record<FloeCssVariableName, string> {
   return Object.fromEntries(
-    floeColorTokens.map((token) => [token.variable, theme === 'light' ? token.lightValue : token.darkValue])
+    floeColorTokens.map((token) => [
+      token.variable,
+      theme === 'light' ? token.lightValue : token.darkValue,
+    ])
   ) as Record<FloeCssVariableName, string>;
 }
 

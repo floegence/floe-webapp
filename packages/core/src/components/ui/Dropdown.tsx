@@ -1,11 +1,4 @@
-import {
-  createSignal,
-  Show,
-  Index,
-  type JSX,
-  createEffect,
-  onCleanup,
-} from 'solid-js';
+import { createSignal, Show, Index, type JSX, createEffect, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -27,17 +20,63 @@ export interface DropdownItem {
 
 export interface DropdownProps {
   trigger: JSX.Element;
+  triggerClass?: string;
+  triggerAriaLabel?: string;
   items: DropdownItem[];
   value?: string;
   onSelect: (id: string) => void;
   align?: 'start' | 'center' | 'end';
+  disabled?: boolean;
   class?: string;
 }
 
 /** Viewport margin in pixels. */
 const VIEWPORT_MARGIN = 8;
+const MENU_ITEM_SELECTOR = '[role="menuitem"]:not([disabled]):not([aria-disabled="true"])';
 
 let dropdownIdSeq = 0;
+let dropdownMenuItemIdSeq = 0;
+
+export type DropdownFocusMode = 'first' | 'last' | 'selected';
+
+export interface DropdownTriggerAction {
+  nextOpen: boolean;
+  focusMode?: DropdownFocusMode;
+}
+
+export function resolveDropdownTriggerKeyAction(
+  key: string,
+  options: { open: boolean; hasSelection: boolean }
+): DropdownTriggerAction | null {
+  switch (key) {
+    case 'Enter':
+    case ' ':
+      if (options.open) return { nextOpen: false };
+      return {
+        nextOpen: true,
+        focusMode: options.hasSelection ? 'selected' : 'first',
+      };
+    case 'ArrowDown':
+      return {
+        nextOpen: true,
+        focusMode: options.hasSelection ? 'selected' : 'first',
+      };
+    case 'ArrowUp':
+      return { nextOpen: true, focusMode: 'last' };
+    default:
+      return null;
+  }
+}
+
+export function getWrappedMenuItemIndex(
+  length: number,
+  currentIndex: number,
+  delta: 1 | -1
+): number | null {
+  if (length <= 0) return null;
+  if (currentIndex < 0) return delta > 0 ? 0 : length - 1;
+  return (currentIndex + delta + length) % length;
+}
 
 /** Calculate menu position and keep it within the viewport. */
 function calculateMenuPosition(
@@ -127,6 +166,45 @@ function calculateSubmenuPosition(
   return { x, y };
 }
 
+function getMenuItems(root: ParentNode | null | undefined): HTMLElement[] {
+  if (!root || typeof HTMLElement === 'undefined') return [];
+  return Array.from(root.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)).filter(
+    (item) => item instanceof HTMLElement
+  );
+}
+
+function focusMenuItem(
+  root: ParentNode | null | undefined,
+  mode: 'first' | 'last' | 'selected' = 'first'
+): boolean {
+  const items = getMenuItems(root);
+  if (!items.length) return false;
+
+  let target = items[0]!;
+  if (mode === 'last') {
+    target = items[items.length - 1]!;
+  } else if (mode === 'selected') {
+    target = items.find((item) => item.getAttribute('data-floe-selected') === 'true') ?? items[0]!;
+  }
+
+  target.focus();
+  return true;
+}
+
+function moveMenuFocus(
+  root: ParentNode | null | undefined,
+  current: HTMLElement | null,
+  delta: 1 | -1
+): boolean {
+  const items = getMenuItems(root);
+  if (!items.length) return false;
+  const currentIndex = current ? items.indexOf(current) : -1;
+  const nextIndex = getWrappedMenuItemIndex(items.length, currentIndex, delta);
+  if (nextIndex === null) return false;
+  items[nextIndex]?.focus();
+  return true;
+}
+
 /**
  * Dropdown menu component with cascade submenu support
  */
@@ -136,6 +214,7 @@ export function Dropdown(props: DropdownProps) {
   let triggerRef: HTMLDivElement | undefined;
   let menuRef: HTMLDivElement | undefined;
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
+  const menuId = `${dropdownId}-menu`;
 
   // Update menu position
   const updateMenuPosition = () => {
@@ -162,14 +241,19 @@ export function Dropdown(props: DropdownProps) {
     };
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      requestAnimationFrame(() => triggerRef?.focus());
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
 
-    // Initial positioning (after mount)
-    requestAnimationFrame(updateMenuPosition);
+    // Initial positioning + focus after mount
+    requestAnimationFrame(() => {
+      updateMenuPosition();
+      focusMenuItem(menuRef, props.value ? 'selected' : 'first');
+    });
 
     onCleanup(() => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -183,10 +267,92 @@ export function Dropdown(props: DropdownProps) {
     deferNonBlocking(() => onSelect(item.id));
   };
 
+  const setOpenWithFocus = (
+    nextOpen: boolean,
+    focusMode: 'first' | 'last' | 'selected' = 'first'
+  ) => {
+    if (props.disabled) return;
+    setOpen(nextOpen);
+    if (!nextOpen) return;
+    requestAnimationFrame(() => {
+      updateMenuPosition();
+      focusMenuItem(menuRef, focusMode);
+    });
+  };
+
+  const handleTriggerKeyDown = (event: KeyboardEvent) => {
+    if (props.disabled) return;
+    const action = resolveDropdownTriggerKeyAction(event.key, {
+      open: open(),
+      hasSelection: Boolean(props.value),
+    });
+    if (!action) return;
+    event.preventDefault();
+    if (!action.nextOpen) {
+      setOpen(false);
+      return;
+    }
+    setOpenWithFocus(true, action.focusMode ?? 'first');
+  };
+
+  const handleMenuKeyDown = (event: KeyboardEvent) => {
+    const currentTarget = event.target as HTMLElement | null;
+    const menu = currentTarget?.closest('[role="menu"]');
+    const activeItem = currentTarget?.closest(MENU_ITEM_SELECTOR) as HTMLElement | null;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        moveMenuFocus(menu, activeItem, 1);
+        return;
+      case 'ArrowUp':
+        event.preventDefault();
+        moveMenuFocus(menu, activeItem, -1);
+        return;
+      case 'Home':
+        event.preventDefault();
+        focusMenuItem(menu, 'first');
+        return;
+      case 'End':
+        event.preventDefault();
+        focusMenuItem(menu, 'last');
+        return;
+      case 'Tab':
+        setOpen(false);
+        return;
+      default:
+        return;
+    }
+  };
+
   return (
     <div class={cn('relative inline-block', props.class)} data-floe-dropdown={dropdownId}>
       {/* Trigger */}
-      <div ref={triggerRef} onClick={() => setOpen((v) => !v)} class="cursor-pointer">
+      <div
+        ref={triggerRef}
+        onClick={() => {
+          if (props.disabled) return;
+          if (open()) {
+            setOpen(false);
+            return;
+          }
+          setOpenWithFocus(true, props.value ? 'selected' : 'first');
+        }}
+        onKeyDown={handleTriggerKeyDown}
+        class={cn(
+          'cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          props.triggerClass,
+          props.disabled && 'pointer-events-none opacity-50'
+        )}
+        role="button"
+        tabIndex={props.disabled ? -1 : 0}
+        aria-haspopup="menu"
+        aria-expanded={open()}
+        aria-controls={menuId}
+        aria-label={props.triggerAriaLabel}
+        aria-disabled={props.disabled ? 'true' : undefined}
+        data-floe-dropdown-trigger=""
+      >
         {props.trigger}
       </div>
 
@@ -207,6 +373,8 @@ export function Dropdown(props: DropdownProps) {
               top: `${menuPosition().y}px`,
             }}
             role="menu"
+            id={menuId}
+            onKeyDown={handleMenuKeyDown}
           >
             <Index each={props.items}>
               {(item) => (
@@ -243,8 +411,10 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const [submenuOpen, setSubmenuOpen] = createSignal(false);
   const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
   let itemRef: HTMLDivElement | undefined;
+  let buttonRef: HTMLButtonElement | undefined;
   let submenuRef: HTMLDivElement | undefined;
   let hoverTimeout: ReturnType<typeof setTimeout> | undefined;
+  const menuItemId = `floe-dropdown-item-${(dropdownMenuItemIdSeq += 1)}`;
 
   const hasChildren = () => props.item.children && props.item.children.length > 0;
 
@@ -297,6 +467,20 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     }
   };
 
+  const openSubmenu = (focusMode: 'first' | 'last' = 'first') => {
+    if (!hasChildren()) return;
+    setSubmenuOpen(true);
+    requestAnimationFrame(() => {
+      updateSubmenuPosition();
+      focusMenuItem(submenuRef, focusMode);
+    });
+  };
+
+  const closeSubmenu = () => {
+    setSubmenuOpen(false);
+    requestAnimationFrame(() => buttonRef?.focus());
+  };
+
   return (
     <div
       ref={itemRef}
@@ -307,10 +491,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       {/* Custom content */}
       <Show when={props.item.content}>
         <div
-          class={cn(
-            'w-full px-2 py-1.5',
-            props.item.disabled && 'opacity-50 pointer-events-none'
-          )}
+          class={cn('w-full px-2 py-1.5', props.item.disabled && 'opacity-50 pointer-events-none')}
           onClick={handleClick}
         >
           {props.item.content!()}
@@ -321,17 +502,32 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       <Show when={!props.item.content}>
         <button
           type="button"
+          ref={buttonRef}
           class={cn(
             'w-full flex items-center gap-1.5 px-2 py-1 text-xs',
             'transition-colors duration-75',
             'focus:outline-none focus:bg-accent',
-            props.item.disabled
-              ? 'opacity-50 cursor-not-allowed'
-              : 'hover:bg-accent cursor-pointer'
+            props.item.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent cursor-pointer'
           )}
           role="menuitem"
+          id={menuItemId}
           disabled={props.item.disabled}
+          aria-haspopup={hasChildren() ? 'menu' : undefined}
+          aria-expanded={hasChildren() ? submenuOpen() : undefined}
+          data-floe-selected={props.selected && !hasChildren() ? 'true' : undefined}
           onClick={handleClick}
+          onKeyDown={(event) => {
+            if (props.item.disabled) return;
+            if (!hasChildren()) return;
+            if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openSubmenu('first');
+            }
+            if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              closeSubmenu();
+            }
+          }}
         >
           <span class="w-3.5 h-3.5 flex items-center justify-center">
             <Show when={props.selected && !hasChildren()}>
@@ -339,11 +535,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
             </Show>
           </span>
           <Show when={props.item.icon} keyed>
-            {(Icon) => (
-              <span class="w-3.5 h-3.5 flex items-center justify-center">
-                {Icon()}
-              </span>
-            )}
+            {(Icon) => <span class="w-3.5 h-3.5 flex items-center justify-center">{Icon()}</span>}
           </Show>
           <span class="flex-1 text-left">{props.item.label}</span>
           <Show when={hasChildren()}>
@@ -355,24 +547,31 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       {/* Submenu */}
       <Show when={submenuOpen() && hasChildren()}>
         <Portal>
-	          <div
-	            ref={submenuRef}
-	            class={cn(
-	              'fixed z-50 min-w-36 py-0.5',
-	              'bg-popover text-popover-foreground',
-	              'rounded border border-border shadow-md',
-	              'animate-in fade-in slide-in-from-left-1'
-	            )}
-	            data-floe-dropdown={props.dropdownId}
-	            style={{
-	              left: `${submenuPosition().x}px`,
-	              top: `${submenuPosition().y}px`,
-	            }}
+          <div
+            ref={submenuRef}
+            class={cn(
+              'fixed z-50 min-w-36 py-0.5',
+              'bg-popover text-popover-foreground',
+              'rounded border border-border shadow-md',
+              'animate-in fade-in slide-in-from-left-1'
+            )}
+            data-floe-dropdown={props.dropdownId}
+            style={{
+              left: `${submenuPosition().x}px`,
+              top: `${submenuPosition().y}px`,
+            }}
             role="menu"
+            aria-labelledby={menuItemId}
             onMouseEnter={() => {
               clearTimeout(hoverTimeout);
             }}
             onMouseLeave={handleMouseLeave}
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowLeft' && event.key !== 'Escape') return;
+              event.preventDefault();
+              event.stopPropagation();
+              closeSubmenu();
+            }}
           >
             <Index each={props.item.children}>
               {(child) => (
@@ -380,13 +579,13 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                   when={!child().separator}
                   fallback={<div class="my-1 h-px bg-border" role="separator" />}
                 >
-	                  <DropdownMenuItem
-	                    item={child()}
-	                    selected={false}
-	                    onSelect={props.onSelect}
-	                    onCloseMenu={props.onCloseMenu}
-	                    dropdownId={props.dropdownId}
-	                  />
+                  <DropdownMenuItem
+                    item={child()}
+                    selected={false}
+                    onSelect={props.onSelect}
+                    onCloseMenu={props.onCloseMenu}
+                    dropdownId={props.dropdownId}
+                  />
                 </Show>
               )}
             </Index>
@@ -419,28 +618,24 @@ export function Select(props: SelectProps) {
 
   return (
     <Dropdown
+      triggerClass={cn(
+        'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
+        'rounded border border-input bg-background text-xs shadow-sm',
+        'transition-colors duration-100',
+        props.class
+      )}
       trigger={
-        <button
-          type="button"
-          class={cn(
-            'flex items-center justify-between gap-2 h-8 px-2.5 w-full cursor-pointer',
-            'rounded border border-input bg-background text-xs shadow-sm',
-            'transition-colors duration-100',
-            'focus:outline-none focus:ring-1 focus:ring-ring',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            props.class
-          )}
-          disabled={props.disabled}
-        >
-          <span class={cn(!selectedOption() && 'text-muted-foreground')}>
+        <>
+          <span class={cn('truncate', !selectedOption() && 'text-muted-foreground')}>
             {selectedOption()?.label ?? props.placeholder ?? 'Select...'}
           </span>
           <ChevronDown class="w-3.5 h-3.5 text-muted-foreground" />
-        </button>
+        </>
       }
       items={items()}
       value={props.value}
       onSelect={props.onChange}
+      disabled={props.disabled}
     />
   );
 }

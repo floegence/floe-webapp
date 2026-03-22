@@ -2870,7 +2870,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   notifications.info('Selection Changed', `Selected: ${id}`);
                 }}
                 items={dropdownItems}
-                trigger={<Button variant="outline">Menu ({dropdownValue()})</Button>}
+                trigger={<span>Menu ({dropdownValue()})</span>}
+                triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-150 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-md"
               />
             </div>
             <div class="space-y-1.5 w-56">
@@ -2905,7 +2906,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     notifications.info('Action Selected', `You clicked: ${id}`);
                   }}
                   items={cascadeItems}
-                  trigger={<Button variant="outline">Actions</Button>}
+                  trigger={<span>Actions</span>}
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-150 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
               <div class="space-y-1.5">
@@ -2915,7 +2917,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     notifications.info('File Action', `Action: ${id}`);
                   }}
                   items={fileMenuItems}
-                  trigger={<Button variant="outline">File</Button>}
+                  trigger={<span>File</span>}
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-150 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
             </PanelContent>
@@ -2957,7 +2960,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'apply', label: 'Apply' },
                     { id: 'reset', label: 'Reset to Default' },
                   ]}
-                  trigger={<Button variant="outline">Settings ({dropdownQuantity()})</Button>}
+                  trigger={<span>Settings ({dropdownQuantity()})</span>}
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-150 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
               <div class="space-y-1.5">
@@ -2995,7 +2999,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'sep', label: '', separator: true },
                     { id: 'fit', label: 'Fit to Window' },
                   ]}
-                  trigger={<Button variant="outline">Zoom: {zoomLevel()}%</Button>}
+                  trigger={<span>Zoom: {zoomLevel()}%</span>}
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-150 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
             </PanelContent>

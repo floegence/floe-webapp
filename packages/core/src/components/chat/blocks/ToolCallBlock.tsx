@@ -1,4 +1,4 @@
-import { type Component, type Accessor, createSignal, createEffect, createMemo, onCleanup, Show, For } from 'solid-js';
+import { type Component, type Accessor, createSignal, createEffect, createMemo, createUniqueId, onCleanup, Show, For } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { deferAfterPaint } from '../../../utils/defer';
 import { useChatContext } from '../ChatProvider';
@@ -15,6 +15,7 @@ export interface ToolCallBlockProps {
 export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
   const ctx = useChatContext();
   const [localCollapsed, setLocalCollapsed] = createSignal(true);
+  const bodyId = `chat-tool-call-body-${createUniqueId()}`;
 
   // Keep local state in sync with the message store (and provide a default when missing).
   createEffect(() => {
@@ -78,27 +79,39 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
   return (
     <div class={cn('chat-tool-call-block', props.class)}>
       {/* Header - always visible */}
-      <div class="chat-tool-call-header" onClick={toggleCollapse}>
-        <button type="button" class="chat-tool-collapse-btn">
-          <Show when={isCollapsed()} fallback={<ChevronDownIcon />}>
-            <ChevronRightIcon />
+      <div class="chat-tool-call-header">
+        <button
+          type="button"
+          class="chat-tool-call-header-button"
+          onClick={toggleCollapse}
+          aria-expanded={!isCollapsed()}
+          aria-controls={bodyId}
+        >
+          <span class="chat-tool-collapse-btn">
+            <Show when={isCollapsed()} fallback={<ChevronDownIcon />}>
+              <ChevronRightIcon />
+            </Show>
+          </span>
+
+          <span class={cn('chat-tool-status-icon', getStatusColor())}>
+            {getStatusIcon()}
+          </span>
+
+          <span class="chat-tool-name">{props.block.toolName}</span>
+
+          {/* Show summary when collapsed (avoid cluttering the header when awaiting approval). */}
+          <Show when={isCollapsed() && !(props.block.requiresApproval === true && props.block.approvalState === 'required')}>
+            <span class="chat-tool-summary">{getSummary()}</span>
           </Show>
         </button>
 
-        <span class={cn('chat-tool-status-icon', getStatusColor())}>
-          {getStatusIcon()}
-        </span>
-
-        <span class="chat-tool-name">{props.block.toolName}</span>
-
         {/* Approval actions (high-risk tools) */}
         <Show when={props.block.requiresApproval === true && props.block.approvalState === 'required'}>
-          <div class="chat-tool-approval-actions" onClick={(e) => e.stopPropagation()}>
+          <div class="chat-tool-approval-actions">
             <button
               type="button"
               class="chat-tool-approval-btn chat-tool-approval-btn-approve"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 ctx.approveToolCall(props.messageId, props.block.toolId, true);
               }}
             >
@@ -107,8 +120,7 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
             <button
               type="button"
               class="chat-tool-approval-btn chat-tool-approval-btn-reject"
-              onClick={(e) => {
-                e.stopPropagation();
+              onClick={() => {
                 ctx.approveToolCall(props.messageId, props.block.toolId, false);
               }}
             >
@@ -116,16 +128,11 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
             </button>
           </div>
         </Show>
-
-        {/* Show summary when collapsed (avoid cluttering the header when awaiting approval). */}
-        <Show when={isCollapsed() && !(props.block.requiresApproval === true && props.block.approvalState === 'required')}>
-          <span class="chat-tool-summary">{getSummary()}</span>
-        </Show>
       </div>
 
       {/* Details when expanded */}
       <Show when={!isCollapsed()}>
-        <div class="chat-tool-call-body">
+        <div class="chat-tool-call-body" id={bodyId}>
           {/* Arguments */}
           <div class="chat-tool-section">
             <ToolPayloadViewer label="Arguments" class="chat-tool-args" value={() => props.block.args} />

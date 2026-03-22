@@ -5,6 +5,7 @@ This folder contains **public, version-controlled** documentation for downstream
 - Skill Package (import first): `skills/floe-webapp/SKILL.md`
 - Getting Started: `docs/getting-started.md`
 - Configuration (FloeConfig): `docs/configuration.md`
+- Accessibility Contract: `docs/accessibility.md`
 - Component Registry & Contributions: `docs/component-registry.md`
 - Interaction Architecture & Guardrails: `docs/interaction-architecture.md`
 - Protocol Layer (Flowersec): `docs/protocol.md`

@@ -86,6 +86,28 @@
 - 新 overlay 自己重新拼 document 监听和 body lock。
 - 打开 overlay 后仍让背景滚动和全局快捷键穿透。
 
+### 2.5 可访问性也是共享交互契约的一部分
+
+交互实现不能只追求“能点开”，还必须保证键盘、焦点、landmark 与播报语义一致。
+
+共享层负责的内容：
+
+- Shell landmark 命名、skip link、主内容 focus target
+- Tabs / MobileTabBar 的 roving tabindex 与 Arrow/Home/End 导航
+- Dropdown 的 menu-button 语义与菜单内焦点遍历
+- notification / disclosure 等共享组件的 live-region 与展开语义
+
+下游业务层负责的内容：
+
+- 业务表单 label、help/error 关联
+- 业务自定义 widget 的可见焦点与键盘闭环
+- 领域语义命名，而不是在共享组件外层再包一层临时 `role` 补丁
+
+结论：
+
+- 优先把可访问性放进共享 primitive / contract。
+- 禁止在下游页面里用零散的 ARIA patch 掩盖基础组件缺陷。
+
 ## 3. 本次落地的统一约束
 
 ### 3.1 共享运行时
@@ -138,6 +160,7 @@
 
 - 对外文档新增本文件，作为交互实现的单一事实来源。
 - README / docs 索引同步收录，避免规范只存在于临时说明里。
+- 可访问性契约另见 `docs/accessibility.md`，作为 shared primitives 与 downstream 责任边界的正式说明。
 
 ### 4.3 API 约束
 
