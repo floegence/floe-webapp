@@ -145,6 +145,7 @@ Core UI framework with:
 
 - **Layout Components**: Shell, ActivityBar, Sidebar, TopBar, BottomBar, MobileTabBar
 - **UI Components**: Button, Input, Dialog, Dropdown, Tooltip, CommandPalette
+- **File Browser Surface**: `@floegence/floe-webapp-core/file-browser` exposes the standard `FileBrowser`, low-level composition primitives, and `FileBrowserDragPreview` for custom-composed browsers that still want the shared drag-preview behavior
 - **Terminal Extension Surface**: `@floegence/floe-webapp-core/terminal` exposes session models, suggestion providers, and runtime adapters; `createTerminalWidget(options)` lets apps register customized terminal widgets without forking core UI
 - **Loading Components**: SnakeLoader, LoadingOverlay, Skeleton
 - **Context Providers**: Theme, Layout, Command, Notification, ComponentRegistry

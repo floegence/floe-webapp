@@ -10,7 +10,7 @@ import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
 import { FileBrowserToolbar } from './FileBrowserToolbar';
 import { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
-import { DragPreview } from './DragPreview';
+import { FileBrowserDragPreview } from './DragPreview';
 import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem, FileListColumnRatios } from './types';
 
 export interface FileBrowserProps {
@@ -311,7 +311,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
 
       {/* Drag Preview */}
       <Show when={isDragEnabled()}>
-        <DragPreview />
+        <FileBrowserDragPreview />
       </Show>
     </div>
   );
