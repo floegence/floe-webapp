@@ -5,6 +5,10 @@ export type CodeEditorLanguageSpec = {
 
 type Loader = () => Promise<unknown>;
 
+function composeLoader(...loaders: Loader[]): Loader {
+  return () => Promise.all(loaders.map((loader) => loader()));
+}
+
 const LANGUAGE_ALIASES: Record<string, string> = {
   '': 'plaintext',
   text: 'plaintext',
@@ -56,10 +60,25 @@ const LANGUAGE_LOADERS: Record<string, Loader> = {
   javascript: () => import('monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js'),
   typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js'),
   json: () => import('monaco-editor/esm/vs/language/json/monaco.contribution.js'),
-  html: () => import('monaco-editor/esm/vs/language/html/monaco.contribution.js'),
-  css: () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
-  scss: () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
-  less: () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
+  // Monaco's HTML/CSS language-service contributions do not register standalone
+  // tokenizers by themselves, so editable syntax coloring must load the paired
+  // basic-language contribution alongside the rich language-service runtime.
+  html: composeLoader(
+    () => import('monaco-editor/esm/vs/basic-languages/html/html.contribution.js'),
+    () => import('monaco-editor/esm/vs/language/html/monaco.contribution.js'),
+  ),
+  css: composeLoader(
+    () => import('monaco-editor/esm/vs/basic-languages/css/css.contribution.js'),
+    () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
+  ),
+  scss: composeLoader(
+    () => import('monaco-editor/esm/vs/basic-languages/scss/scss.contribution.js'),
+    () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
+  ),
+  less: composeLoader(
+    () => import('monaco-editor/esm/vs/basic-languages/less/less.contribution.js'),
+    () => import('monaco-editor/esm/vs/language/css/monaco.contribution.js'),
+  ),
   markdown: () => import('monaco-editor/esm/vs/basic-languages/markdown/markdown.contribution.js'),
   yaml: () => import('monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution.js'),
   ini: () => import('monaco-editor/esm/vs/basic-languages/ini/ini.contribution.js'),

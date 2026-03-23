@@ -55,6 +55,24 @@ describe('Monaco standalone runtime', () => {
     expect(languagesSrc).toContain(
       "typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js')",
     );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/basic-languages/html/html.contribution.js')",
+    );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/language/html/monaco.contribution.js')",
+    );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/basic-languages/css/css.contribution.js')",
+    );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/basic-languages/scss/scss.contribution.js')",
+    );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/basic-languages/less/less.contribution.js')",
+    );
+    expect(languagesSrc).toContain(
+      "() => import('monaco-editor/esm/vs/language/css/monaco.contribution.js')",
+    );
     expect(languagesSrc).not.toContain(
       "javascript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')",
     );

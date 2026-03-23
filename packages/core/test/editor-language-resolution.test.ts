@@ -14,6 +14,10 @@ describe('resolveCodeEditorLanguageSpec', () => {
     expect(resolveCodeEditorLanguageSpec('markdown').load).toBeTypeOf('function');
     expect(resolveCodeEditorLanguageSpec('python').load).toBeTypeOf('function');
     expect(resolveCodeEditorLanguageSpec('json').load).toBeTypeOf('function');
+    expect(resolveCodeEditorLanguageSpec('css').load).toBeTypeOf('function');
+    expect(resolveCodeEditorLanguageSpec('scss').load).toBeTypeOf('function');
+    expect(resolveCodeEditorLanguageSpec('less').load).toBeTypeOf('function');
+    expect(resolveCodeEditorLanguageSpec('html').load).toBeTypeOf('function');
   });
 
   it('falls back to plaintext for unsupported languages', () => {
