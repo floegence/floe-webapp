@@ -104,6 +104,7 @@ Tips:
 - Press <kbd>Mod</kbd>+<kbd>K</kbd> to open the Command Palette and search for `Demo:` commands.
 - Use the Showcase sidebar to jump between sections.
 - Use “View Source” buttons in Showcase to open the source file in the Monaco viewer.
+- `CodeEditor` keeps editable syntax coloring for HTML and CSS-family files by loading Monaco's basic tokenizers together with the rich language-service contributions.
 
 ## Use Floe in your own app
 
