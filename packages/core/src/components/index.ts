@@ -5,3 +5,4 @@ export * from './icons';
 export * from './launchpad';
 export * from './file-browser';
 export * from './chat';
+export { Tag, type TagProps, type TagVariant, type TagSize } from './ui';

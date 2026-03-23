@@ -21,7 +21,8 @@ export interface ComponentDoc {
 // ===========================
 export const buttonDoc: ComponentDoc = {
   name: 'Button',
-  description: 'Primary interactive element for user actions. Supports multiple variants, sizes, and states.',
+  description:
+    'Primary interactive element for user actions. Supports multiple variants, sizes, and states.',
   props: [
     {
       name: 'variant',
@@ -96,6 +97,87 @@ function Example() {
     {
       title: 'Loading State',
       code: `<Button loading>Saving...</Button>`,
+    },
+  ],
+};
+
+// ===========================
+// Tag Component
+// ===========================
+export const tagDoc: ComponentDoc = {
+  name: 'Tag',
+  description:
+    'Compact metadata label with solid and soft tone systems, designed for restrained semantic emphasis.',
+  props: [
+    {
+      name: 'variant',
+      type: "'neutral' | 'primary' | 'success' | 'warning' | 'error' | 'info'",
+      default: "'neutral'",
+      description: 'Semantic tone for the tag background and border.',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Controls tag height, padding, and label density.',
+    },
+    {
+      name: 'tone',
+      type: "'solid' | 'soft'",
+      default: "'solid'",
+      description: 'Chooses between dark-surface tags or light-surface tags with same-hue text.',
+    },
+    {
+      name: 'icon',
+      type: 'Component<{ class?: string }>',
+      description: 'Optional icon rendered before the label.',
+    },
+    {
+      name: 'dot',
+      type: 'boolean',
+      default: 'false',
+      description: 'Shows a compact status dot before the content.',
+    },
+    {
+      name: 'class',
+      type: 'string',
+      description: 'Additional CSS classes to apply.',
+    },
+  ],
+  usage: {
+    whenToUse: [
+      'Categorizing records, environments, and domains in dense enterprise UIs',
+      'Showing compact review or release states without the weight of a full alert',
+      'Displaying short metadata alongside cards, tables, or headers',
+    ],
+    bestPractices: [
+      'Keep labels short and scannable, ideally one to three words',
+      'Use "solid" for higher emphasis and "soft" when tags need to sit more quietly inside content',
+      'Use semantic variants sparingly so the tone remains calm and professional',
+      'Prefer tags for metadata and status, not primary actions',
+    ],
+    avoid: [
+      'Long sentence-like content that should be body text instead',
+      'Using too many high-emphasis tags in the same cluster',
+      'Treating tags like buttons without adding explicit interaction affordances',
+    ],
+  },
+  examples: [
+    {
+      title: 'Metadata Tags',
+      code: `import { Tag, GitBranch, CheckCircle } from '@floegence/floe-webapp-core/full';
+
+function Example() {
+  return (
+    <div class="flex flex-wrap gap-2">
+      <Tag variant="neutral">Internal</Tag>
+      <Tag variant="primary" icon={GitBranch}>release/2026.03</Tag>
+      <Tag variant="success" dot icon={CheckCircle}>Approved</Tag>
+      <Tag tone="soft" variant="info">Observability</Tag>
+      <Tag variant="warning">Review</Tag>
+    </div>
+  );
+}`,
     },
   ],
 };
@@ -185,7 +267,8 @@ function Example() {
 // ===========================
 export const numberInputDoc: ComponentDoc = {
   name: 'NumberInput',
-  description: 'Number input with increment/decrement buttons and configurable min/max/step values.',
+  description:
+    'Number input with increment/decrement buttons and configurable min/max/step values.',
   props: [
     {
       name: 'value',
@@ -277,7 +360,8 @@ function Example() {
 // ===========================
 export const affixInputDoc: ComponentDoc = {
   name: 'AffixInput',
-  description: 'Input with fixed or selectable prefix/suffix for URLs, currencies, units, and more.',
+  description:
+    'Input with fixed or selectable prefix/suffix for URLs, currencies, units, and more.',
   props: [
     {
       name: 'prefix',
@@ -379,7 +463,8 @@ function Example() {
 // ===========================
 export const tabsDoc: ComponentDoc = {
   name: 'Tabs',
-  description: 'Tabbed navigation with composable features for indicator, add/close actions, and overflow controls.',
+  description:
+    'Tabbed navigation with composable features for indicator, add/close actions, and overflow controls.',
   props: [
     {
       name: 'items',
@@ -489,13 +574,13 @@ function Example() {
   ],
 };
 
-
 // ===========================
 // Card Component
 // ===========================
 export const cardDoc: ComponentDoc = {
   name: 'Card',
-  description: 'Container component with multiple visual variants including 3D effects, gradients, and glass morphism.',
+  description:
+    'Container component with multiple visual variants including 3D effects, gradients, and glass morphism.',
   props: [
     {
       name: 'variant',
@@ -567,7 +652,8 @@ function Example() {
 // ===========================
 export const dialogDoc: ComponentDoc = {
   name: 'Dialog',
-  description: 'Modal dialog with focus trapping, keyboard navigation, and customizable header/footer.',
+  description:
+    'Modal dialog with focus trapping, keyboard navigation, and customizable header/footer.',
   props: [
     {
       name: 'open',
@@ -657,7 +743,8 @@ function Example() {
 // ===========================
 export const dropdownDoc: ComponentDoc = {
   name: 'Dropdown',
-  description: 'Dropdown menu with keyboard navigation and support for separators and disabled items.',
+  description:
+    'Dropdown menu with keyboard navigation and support for separators and disabled items.',
   props: [
     {
       name: 'trigger',
@@ -886,6 +973,7 @@ function Example() {
 // ===========================
 export const componentDocs: Record<string, ComponentDoc> = {
   button: buttonDoc,
+  tag: tagDoc,
   input: inputDoc,
   tabs: tabsDoc,
   card: cardDoc,
@@ -970,10 +1058,7 @@ export const snakeLoaderDoc: ComponentDoc = {
       'Combine with text to explain what is loading',
       'Position centrally in the loading area',
     ],
-    avoid: [
-      'Multiple loaders visible at once',
-      'Using without context about what is loading',
-    ],
+    avoid: ['Multiple loaders visible at once', 'Using without context about what is loading'],
   },
   examples: [
     {
@@ -1062,7 +1147,8 @@ function Example() {
 // ===========================
 export const highlightBlockDoc: ComponentDoc = {
   name: 'HighlightBlock',
-  description: 'Callout/admonition components for highlighting important content with semantic variants (Info, Warning, Success, Error, Note, Tip).',
+  description:
+    'Callout/admonition components for highlighting important content with semantic variants (Info, Warning, Success, Error, Note, Tip).',
   props: [
     {
       name: 'title',
@@ -1137,7 +1223,8 @@ function Example() {
 // ===========================
 export const quoteBlockDoc: ComponentDoc = {
   name: 'QuoteBlock',
-  description: 'Blockquote component for documentation, citations, and code comments with multiple style variants.',
+  description:
+    'Blockquote component for documentation, citations, and code comments with multiple style variants.',
   props: [
     {
       name: 'variant',
@@ -1398,10 +1485,7 @@ export const panelDoc: ComponentDoc = {
       'Apply border and rounded classes for visibility',
       'Maintain consistent spacing between panels',
     ],
-    avoid: [
-      'Deeply nesting panels',
-      'Using without proper styling',
-    ],
+    avoid: ['Deeply nesting panels', 'Using without proper styling'],
   },
   examples: [
     {
@@ -1445,18 +1529,12 @@ export const tabPanelDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Displaying content for active tab',
-      'Tab-based navigation content areas',
-    ],
+    whenToUse: ['Displaying content for active tab', 'Tab-based navigation content areas'],
     bestPractices: [
       'Match TabPanel with corresponding Tabs item',
       'Use consistent padding and styling',
     ],
-    avoid: [
-      'Using without Tabs component',
-      'Multiple active TabPanels',
-    ],
+    avoid: ['Using without Tabs component', 'Multiple active TabPanels'],
   },
   examples: [
     {
@@ -1494,7 +1572,8 @@ function Example() {
 // ===========================
 export const directoryPickerDoc: ComponentDoc = {
   name: 'DirectoryPicker',
-  description: 'Modal directory selector with tree navigation, path input, breadcrumb, and folder creation.',
+  description:
+    'Modal directory selector with tree navigation, path input, breadcrumb, and folder creation.',
   props: [
     {
       name: 'open',
@@ -1579,7 +1658,8 @@ function Example() {
 // ===========================
 export const directoryInputDoc: ComponentDoc = {
   name: 'DirectoryInput',
-  description: 'Form-compatible input for selecting directories. Shows selected path and expands an inline folder tree panel when clicked.',
+  description:
+    'Form-compatible input for selecting directories. Shows selected path and expands an inline folder tree panel when clicked.',
   props: [
     {
       name: 'value',
@@ -1779,10 +1859,7 @@ export const fileSavePickerDoc: ComponentDoc = {
       'Show file list in current directory',
       'Support clicking existing files to use their name',
     ],
-    avoid: [
-      'Using for directory-only selection',
-      'Skipping filename validation',
-    ],
+    avoid: ['Using for directory-only selection', 'Skipping filename validation'],
   },
   examples: [
     {
@@ -1818,7 +1895,8 @@ function Example() {
 // ===========================
 export const fileBrowserDoc: ComponentDoc = {
   name: 'FileBrowser',
-  description: 'Professional file browser with list/grid views, directory tree, breadcrumb navigation, and multi-select.',
+  description:
+    'Professional file browser with list/grid views, directory tree, breadcrumb navigation, and multi-select.',
   props: [
     {
       name: 'files',
@@ -1859,20 +1937,13 @@ export const fileBrowserDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'File management interfaces',
-      'Project explorers',
-      'Document management systems',
-    ],
+    whenToUse: ['File management interfaces', 'Project explorers', 'Document management systems'],
     bestPractices: [
       'Support both list and grid views',
       'Implement keyboard navigation',
       'Show file metadata (size, date)',
     ],
-    avoid: [
-      'Very flat file structures without folders',
-      'Missing breadcrumb navigation',
-    ],
+    avoid: ['Very flat file structures without folders', 'Missing breadcrumb navigation'],
   },
   examples: [
     {
@@ -1946,11 +2017,7 @@ export const floatingWindowDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Multi-window applications',
-      'Tool palettes and inspectors',
-      'Non-modal dialogs',
-    ],
+    whenToUse: ['Multi-window applications', 'Tool palettes and inspectors', 'Non-modal dialogs'],
     bestPractices: [
       'Set reasonable default and minimum sizes',
       'Allow keyboard close (Escape)',
@@ -1997,7 +2064,8 @@ function Example() {
 // ===========================
 export const processingIndicatorDoc: ComponentDoc = {
   name: 'ProcessingIndicator',
-  description: 'Premium status indicators with sophisticated animations for AI states, workflows, and background tasks.',
+  description:
+    'Premium status indicators with sophisticated animations for AI states, workflows, and background tasks.',
   props: [
     {
       name: 'variant',
@@ -2107,20 +2175,13 @@ export const lineChartDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Showing trends over time',
-      'Comparing multiple metrics',
-      'Performance dashboards',
-    ],
+    whenToUse: ['Showing trends over time', 'Comparing multiple metrics', 'Performance dashboards'],
     bestPractices: [
       'Limit to 3-4 series for readability',
       'Use consistent colors across charts',
       'Include legend for multiple series',
     ],
-    avoid: [
-      'Too many data points without aggregation',
-      'Mixing incompatible scales',
-    ],
+    avoid: ['Too many data points without aggregation', 'Mixing incompatible scales'],
   },
   examples: [
     {
@@ -2180,13 +2241,8 @@ export const areaChartDoc: ComponentDoc = {
       'Cumulative data visualization',
       'Traffic or usage patterns',
     ],
-    bestPractices: [
-      'Use for single series or stacked data',
-      'Keep area fill semi-transparent',
-    ],
-    avoid: [
-      'Multiple overlapping series without stacking',
-    ],
+    bestPractices: ['Use for single series or stacked data', 'Keep area fill semi-transparent'],
+    avoid: ['Multiple overlapping series without stacking'],
   },
   examples: [
     {
@@ -2238,20 +2294,13 @@ export const barChartDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Comparing categories',
-      'Ranking data',
-      'Distribution visualization',
-    ],
+    whenToUse: ['Comparing categories', 'Ranking data', 'Distribution visualization'],
     bestPractices: [
       'Sort bars by value for easy comparison',
       'Use consistent colors',
       'Limit to 10-12 categories',
     ],
-    avoid: [
-      'Too many categories without scrolling',
-      'Misleading axis scales',
-    ],
+    avoid: ['Too many categories without scrolling', 'Misleading axis scales'],
   },
   examples: [
     {
@@ -2306,20 +2355,9 @@ export const pieChartDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Part-to-whole relationships',
-      'Market share visualization',
-      'Budget breakdowns',
-    ],
-    bestPractices: [
-      'Limit to 5-6 slices',
-      'Use donut for center labels',
-      'Sort by value',
-    ],
-    avoid: [
-      'Too many small slices',
-      'Comparing multiple pie charts',
-    ],
+    whenToUse: ['Part-to-whole relationships', 'Market share visualization', 'Budget breakdowns'],
+    bestPractices: ['Limit to 5-6 slices', 'Use donut for center labels', 'Sort by value'],
+    avoid: ['Too many small slices', 'Comparing multiple pie charts'],
   },
   examples: [
     {
@@ -2413,10 +2451,7 @@ export const monitoringChartDoc: ComponentDoc = {
       'Limit max points for performance',
       'Include legend for multiple series',
     ],
-    avoid: [
-      'Very fast update intervals',
-      'Too many concurrent charts',
-    ],
+    avoid: ['Very fast update intervals', 'Too many concurrent charts'],
   },
   examples: [
     {
@@ -2471,10 +2506,7 @@ export const commandPaletteDoc: ComponentDoc = {
       'Provide keyboard shortcuts for common actions',
       'Use fuzzy search for better UX',
     ],
-    avoid: [
-      'Too many commands without categories',
-      'Conflicting keyboard shortcuts',
-    ],
+    avoid: ['Too many commands without categories', 'Conflicting keyboard shortcuts'],
   },
   examples: [
     {
@@ -2602,7 +2634,8 @@ function LoginForm() {
 // ===========================
 export const stepperDoc: ComponentDoc = {
   name: 'Stepper',
-  description: 'Multi-step progress indicator for wizards and workflows. Shows users where they are in a multi-step process.',
+  description:
+    'Multi-step progress indicator for wizards and workflows. Shows users where they are in a multi-step process.',
   props: [
     {
       name: 'steps',
@@ -2736,7 +2769,8 @@ function Example() {
 // ===========================
 export const wizardDoc: ComponentDoc = {
   name: 'Wizard',
-  description: 'Complete wizard component combining Stepper with step content. Provides a full multi-step form experience.',
+  description:
+    'Complete wizard component combining Stepper with step content. Provides a full multi-step form experience.',
   props: [
     {
       name: 'steps',
@@ -2777,10 +2811,7 @@ export const wizardDoc: ComponentDoc = {
       'Provide clear navigation buttons in footer',
       'Validate each step before proceeding',
     ],
-    avoid: [
-      'Mixing with external stepper state',
-      'Complex nested wizards',
-    ],
+    avoid: ['Mixing with external stepper state', 'Complex nested wizards'],
   },
   examples: [
     {
@@ -2838,7 +2869,8 @@ function SetupWizard() {
 // ===========================
 export const radioDoc: ComponentDoc = {
   name: 'Radio',
-  description: 'Radio button group for selecting a single option from a list. Includes RadioGroup, RadioOption, and RadioList components. Supports multiple visual variants.',
+  description:
+    'Radio button group for selecting a single option from a list. Includes RadioGroup, RadioOption, and RadioList components. Supports multiple visual variants.',
   props: [
     {
       name: 'value',
@@ -2942,7 +2974,8 @@ function Example() {
 // ===========================
 export const switchDoc: ComponentDoc = {
   name: 'Switch',
-  description: 'Toggle switch for binary on/off states. Supports labels, descriptions, and multiple sizes.',
+  description:
+    'Toggle switch for binary on/off states. Supports labels, descriptions, and multiple sizes.',
   props: [
     {
       name: 'checked',
@@ -2984,11 +3017,7 @@ export const switchDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: [
-      'Binary on/off settings',
-      'Feature toggles',
-      'Enabling/disabling options',
-    ],
+    whenToUse: ['Binary on/off settings', 'Feature toggles', 'Enabling/disabling options'],
     bestPractices: [
       'Use clear labels that describe the "on" state',
       'Provide immediate visual feedback on toggle',
@@ -3109,14 +3138,32 @@ export const checkboxDoc: ComponentDoc = {
   description: 'A versatile checkbox component with multiple variants for different use cases.',
   props: [
     { name: 'checked', type: 'boolean', description: 'Whether the checkbox is checked' },
-    { name: 'onChange', type: '(checked: boolean) => void', description: 'Callback when state changes' },
+    {
+      name: 'onChange',
+      type: '(checked: boolean) => void',
+      description: 'Callback when state changes',
+    },
     { name: 'value', type: 'string', description: 'Value for use with CheckboxGroup' },
     { name: 'label', type: 'string', description: 'Label text' },
     { name: 'description', type: 'string', description: 'Description text shown below label' },
     { name: 'icon', type: 'Component', description: 'Icon component for tile variant' },
-    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of the checkbox' },
-    { name: 'variant', type: "'default' | 'card' | 'button' | 'tile'", default: "'default'", description: 'Visual style variant' },
-    { name: 'indeterminate', type: 'boolean', description: 'Show indeterminate state (partial selection)' },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of the checkbox',
+    },
+    {
+      name: 'variant',
+      type: "'default' | 'card' | 'button' | 'tile'",
+      default: "'default'",
+      description: 'Visual style variant',
+    },
+    {
+      name: 'indeterminate',
+      type: 'boolean',
+      description: 'Show indeterminate state (partial selection)',
+    },
     { name: 'disabled', type: 'boolean', description: 'Whether the checkbox is disabled' },
   ],
   usage: {
@@ -3131,10 +3178,7 @@ export const checkboxDoc: ComponentDoc = {
       'Group related checkboxes with CheckboxGroup',
       'Use card variant for options needing description',
     ],
-    avoid: [
-      'Using for mutually exclusive options (use Radio)',
-      'Too many checkboxes in one group',
-    ],
+    avoid: ['Using for mutually exclusive options (use Radio)', 'Too many checkboxes in one group'],
   },
   examples: [
     {
@@ -3166,22 +3210,37 @@ export const paginationDoc: ComponentDoc = {
     { name: 'page', type: 'number', required: true, description: 'Current page (1-indexed)' },
     { name: 'totalPages', type: 'number', required: true, description: 'Total number of pages' },
     { name: 'onChange', type: '(page: number) => void', description: 'Callback when page changes' },
-    { name: 'variant', type: "'default' | 'simple' | 'minimal'", default: "'default'", description: 'Visual style variant' },
-    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of pagination controls' },
+    {
+      name: 'variant',
+      type: "'default' | 'simple' | 'minimal'",
+      default: "'default'",
+      description: 'Visual style variant',
+    },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of pagination controls',
+    },
     { name: 'showFirstLast', type: 'boolean', description: 'Show first/last page buttons' },
     { name: 'showJumpTo', type: 'boolean', description: 'Show page jump input' },
     { name: 'showPageSize', type: 'boolean', description: 'Show page size selector' },
     { name: 'pageSize', type: 'number', description: 'Current page size' },
     { name: 'pageSizes', type: 'number[]', description: 'Available page size options' },
-    { name: 'onPageSizeChange', type: '(size: number) => void', description: 'Callback when page size changes' },
-    { name: 'siblingCount', type: 'number', default: '1', description: 'Number of siblings on each side of current page' },
+    {
+      name: 'onPageSizeChange',
+      type: '(size: number) => void',
+      description: 'Callback when page size changes',
+    },
+    {
+      name: 'siblingCount',
+      type: 'number',
+      default: '1',
+      description: 'Number of siblings on each side of current page',
+    },
   ],
   usage: {
-    whenToUse: [
-      'Navigating large datasets',
-      'Table pagination',
-      'Gallery or list navigation',
-    ],
+    whenToUse: ['Navigating large datasets', 'Table pagination', 'Gallery or list navigation'],
     bestPractices: [
       'Use simple variant for compact spaces',
       'Show total pages for context',
@@ -3215,14 +3274,29 @@ export const paginationDoc: ComponentDoc = {
 
 export const linearProgressDoc: ComponentDoc = {
   name: 'LinearProgress',
-  description: 'A horizontal progress bar with various styling options including stripes and animation.',
+  description:
+    'A horizontal progress bar with various styling options including stripes and animation.',
   props: [
     { name: 'value', type: 'number', description: 'Progress value (0-100)' },
     { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
-    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Height of the progress bar' },
-    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Height of the progress bar',
+    },
+    {
+      name: 'color',
+      type: "'primary' | 'success' | 'warning' | 'error' | 'info'",
+      default: "'primary'",
+      description: 'Color variant',
+    },
     { name: 'showLabel', type: 'boolean', description: 'Show percentage label above bar' },
-    { name: 'labelFormat', type: '(value: number, max: number) => string', description: 'Custom label format function' },
+    {
+      name: 'labelFormat',
+      type: '(value: number, max: number) => string',
+      description: 'Custom label format function',
+    },
     { name: 'striped', type: 'boolean', description: 'Show striped pattern' },
     { name: 'animated', type: 'boolean', description: 'Animate stripes (requires striped)' },
     { name: 'indeterminate', type: 'boolean', description: 'Indeterminate loading state' },
@@ -3240,10 +3314,7 @@ export const linearProgressDoc: ComponentDoc = {
       'Show label for important progress indicators',
       'Use indeterminate when duration is unknown',
     ],
-    avoid: [
-      'Showing 0% for extended periods',
-      'Jumping from low to 100% suddenly',
-    ],
+    avoid: ['Showing 0% for extended periods', 'Jumping from low to 100% suddenly'],
   },
   examples: [
     {
@@ -3263,11 +3334,25 @@ export const circularProgressDoc: ComponentDoc = {
   props: [
     { name: 'value', type: 'number', description: 'Progress value (0-100)' },
     { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
-    { name: 'size', type: "'sm' | 'md' | 'lg' | number", default: "'md'", description: 'Size of the circle' },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg' | number",
+      default: "'md'",
+      description: 'Size of the circle',
+    },
     { name: 'strokeWidth', type: 'number', description: 'Width of the progress stroke' },
-    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    {
+      name: 'color',
+      type: "'primary' | 'success' | 'warning' | 'error' | 'info'",
+      default: "'primary'",
+      description: 'Color variant',
+    },
     { name: 'showLabel', type: 'boolean', description: 'Show percentage in center' },
-    { name: 'labelFormat', type: '(value: number, max: number) => string', description: 'Custom label format function' },
+    {
+      name: 'labelFormat',
+      type: '(value: number, max: number) => string',
+      description: 'Custom label format function',
+    },
     { name: 'indeterminate', type: 'boolean', description: 'Spinning loading state' },
     { name: 'showTrack', type: 'boolean', default: 'true', description: 'Show background track' },
   ],
@@ -3308,7 +3393,12 @@ export const segmentedProgressDoc: ComponentDoc = {
     { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
     { name: 'segments', type: 'number', default: '5', description: 'Number of segments' },
     { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of segments' },
-    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
+    {
+      name: 'color',
+      type: "'primary' | 'success' | 'warning' | 'error' | 'info'",
+      default: "'primary'",
+      description: 'Color variant',
+    },
     { name: 'showLabel', type: 'boolean', description: 'Show percentage label' },
     { name: 'gap', type: 'number', default: '2', description: 'Gap between segments in pixels' },
   ],
@@ -3319,14 +3409,8 @@ export const segmentedProgressDoc: ComponentDoc = {
       'Rating displays',
       'Battery-style indicators',
     ],
-    bestPractices: [
-      'Match segment count to actual steps',
-      'Use meaningful segment numbers (3-10)',
-    ],
-    avoid: [
-      'Too many segments (becomes hard to distinguish)',
-      'Using for continuous values',
-    ],
+    bestPractices: ['Match segment count to actual steps', 'Use meaningful segment numbers (3-10)'],
+    avoid: ['Too many segments (becomes hard to distinguish)', 'Using for continuous values'],
   },
   examples: [
     {
@@ -3346,26 +3430,33 @@ export const stepsProgressDoc: ComponentDoc = {
   props: [
     { name: 'current', type: 'number', required: true, description: 'Current step (0-indexed)' },
     { name: 'steps', type: 'string[]', required: true, description: 'Array of step labels' },
-    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'md'", description: 'Size of step indicators' },
-    { name: 'color', type: "'primary' | 'success' | 'warning' | 'error' | 'info'", default: "'primary'", description: 'Color variant' },
-    { name: 'orientation', type: "'horizontal' | 'vertical'", default: "'horizontal'", description: 'Layout orientation' },
+    {
+      name: 'size',
+      type: "'sm' | 'md' | 'lg'",
+      default: "'md'",
+      description: 'Size of step indicators',
+    },
+    {
+      name: 'color',
+      type: "'primary' | 'success' | 'warning' | 'error' | 'info'",
+      default: "'primary'",
+      description: 'Color variant',
+    },
+    {
+      name: 'orientation',
+      type: "'horizontal' | 'vertical'",
+      default: "'horizontal'",
+      description: 'Layout orientation',
+    },
   ],
   usage: {
-    whenToUse: [
-      'Multi-step forms',
-      'Checkout flows',
-      'Onboarding processes',
-      'Tutorial progress',
-    ],
+    whenToUse: ['Multi-step forms', 'Checkout flows', 'Onboarding processes', 'Tutorial progress'],
     bestPractices: [
       'Keep step labels short and clear',
       'Use vertical for many steps or narrow spaces',
       'Indicate completed vs current vs pending states',
     ],
-    avoid: [
-      'Too many steps (consider grouping)',
-      'Very long step labels',
-    ],
+    avoid: ['Too many steps (consider grouping)', 'Very long step labels'],
   },
   examples: [
     {
@@ -3391,7 +3482,8 @@ export const stepsProgressDoc: ComponentDoc = {
 // ===========================
 export const segmentedControlDoc: ComponentDoc = {
   name: 'SegmentedControl',
-  description: 'A toggle button group for switching between mutually exclusive options. Perfect for view mode switching (UI/JSON), filter toggles, or tab-like navigation within a section.',
+  description:
+    'A toggle button group for switching between mutually exclusive options. Perfect for view mode switching (UI/JSON), filter toggles, or tab-like navigation within a section.',
   props: [
     {
       name: 'value',
@@ -3409,7 +3501,8 @@ export const segmentedControlDoc: ComponentDoc = {
       name: 'options',
       type: 'SegmentedControlOption[]',
       required: true,
-      description: 'Array of options to display. Each option has: value (string), label (string), icon? (Component), disabled? (boolean).',
+      description:
+        'Array of options to display. Each option has: value (string), label (string), icon? (Component), disabled? (boolean).',
     },
     {
       name: 'size',
@@ -3518,8 +3611,7 @@ export const mobileKeyboardDoc: ComponentDoc = {
     {
       name: 'onDismiss',
       type: '() => void',
-      description:
-        'Optional callback for the built-in top-right keyboard dismiss button.',
+      description: 'Optional callback for the built-in top-right keyboard dismiss button.',
     },
     {
       name: 'quickInserts',

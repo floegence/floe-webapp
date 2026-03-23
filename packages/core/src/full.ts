@@ -12,3 +12,4 @@ export * from './file-browser';
 export * from './chat';
 export * from './widgets';
 export * from './terminal';
+export { Tag, type TagProps, type TagVariant, type TagSize } from './ui';

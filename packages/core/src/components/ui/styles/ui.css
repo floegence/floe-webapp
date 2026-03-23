@@ -12,13 +12,18 @@
 
   /* Ring spin animation */
   @keyframes processing-ring-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Breathing/pulse animation */
   @keyframes processing-breathe {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       opacity: 1;
     }
@@ -30,21 +35,35 @@
 
   /* Waveform bar animation */
   @keyframes processing-bar {
-    0%, 100% { height: 20%; }
-    25% { height: 60%; }
-    50% { height: 100%; }
-    75% { height: 40%; }
+    0%,
+    100% {
+      height: 20%;
+    }
+    25% {
+      height: 60%;
+    }
+    50% {
+      height: 100%;
+    }
+    75% {
+      height: 40%;
+    }
   }
 
   /* Gradient border spin */
   @keyframes processing-gradient-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Card border glow */
   @keyframes processing-card-border {
-    0%, 100% {
+    0%,
+    100% {
       background: linear-gradient(
         90deg,
         var(--primary),
@@ -78,21 +97,37 @@
 
   /* Arc spin for card variant */
   @keyframes processing-arc-spin {
-    from { transform: rotate(0deg); transform-origin: 22px 22px; }
-    to { transform: rotate(360deg); transform-origin: 22px 22px; }
+    from {
+      transform: rotate(0deg);
+      transform-origin: 22px 22px;
+    }
+    to {
+      transform: rotate(360deg);
+      transform-origin: 22px 22px;
+    }
   }
 
   /* Icon morph animation */
   @keyframes processing-icon-morph {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(90deg) scale(0.9); }
-    50% { transform: rotate(180deg) scale(1); }
-    75% { transform: rotate(270deg) scale(0.9); }
+    0%,
+    100% {
+      transform: rotate(0deg) scale(1);
+    }
+    25% {
+      transform: rotate(90deg) scale(0.9);
+    }
+    50% {
+      transform: rotate(180deg) scale(1);
+    }
+    75% {
+      transform: rotate(270deg) scale(0.9);
+    }
   }
 
   /* Morphing circle */
   @keyframes processing-morph-circle {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       border-radius: 50%;
     }
@@ -115,7 +150,8 @@
     0% {
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(calc(var(--particle-index, 0) * 120deg)) translateX(14px);
+      transform: translate(-50%, -50%) rotate(calc(var(--particle-index, 0) * 120deg))
+        translateX(14px);
       opacity: 0.3;
     }
     50% {
@@ -124,20 +160,26 @@
     100% {
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(calc(var(--particle-index, 0) * 120deg + 360deg)) translateX(14px);
+      transform: translate(-50%, -50%) rotate(calc(var(--particle-index, 0) * 120deg + 360deg))
+        translateX(14px);
       opacity: 0.3;
     }
   }
 
   /* Aurora rotation */
   @keyframes processing-aurora-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Aurora pulse */
   @keyframes processing-aurora-pulse {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       opacity: 0.8;
     }
@@ -149,7 +191,8 @@
 
   /* Wave path animation */
   @keyframes processing-wave-path {
-    0%, 100% {
+    0%,
+    100% {
       stroke-dasharray: 0 100;
       stroke-dashoffset: 0;
     }
@@ -161,13 +204,19 @@
 
   /* Neural line pulse */
   @keyframes processing-neural-line {
-    0%, 100% { stroke-opacity: 0.2; }
-    50% { stroke-opacity: 0.6; }
+    0%,
+    100% {
+      stroke-opacity: 0.2;
+    }
+    50% {
+      stroke-opacity: 0.6;
+    }
   }
 
   /* Neural node pulse */
   @keyframes processing-neural-node {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       filter: brightness(1);
     }
@@ -179,8 +228,15 @@
 
   /* Waveform animation */
   @keyframes processing-waveform {
-    0%, 100% { height: 15%; opacity: 0.4; }
-    50% { height: 100%; opacity: 1; }
+    0%,
+    100% {
+      height: 15%;
+      opacity: 0.4;
+    }
+    50% {
+      height: 100%;
+      opacity: 1;
+    }
   }
 
   /* Flow dot animation */
@@ -201,7 +257,8 @@
 
   /* Neural dot cascade */
   @keyframes processing-neural-dot {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(0.6);
       opacity: 0.3;
     }
@@ -221,7 +278,8 @@
     100% {
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) rotate(calc(var(--orbit-index, 0) * 120deg + 360deg)) translateX(6px);
+      transform: translate(-50%, -50%) rotate(calc(var(--orbit-index, 0) * 120deg + 360deg))
+        translateX(6px);
     }
   }
 
@@ -233,9 +291,15 @@
       transform: translate(-50%, -50%) rotate(0deg) translateX(6px);
       opacity: 0.3;
     }
-    25% { opacity: 1; }
-    50% { opacity: 0.3; }
-    75% { opacity: 1; }
+    25% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    75% {
+      opacity: 1;
+    }
     100% {
       top: 50%;
       left: 50%;
@@ -246,8 +310,13 @@
 
   /* Ray pulse animation */
   @keyframes processing-ray {
-    0%, 100% { opacity: 0.05; }
-    50% { opacity: 0.2; }
+    0%,
+    100% {
+      opacity: 0.05;
+    }
+    50% {
+      opacity: 0.2;
+    }
   }
 
   .processing-ring-spin {
@@ -346,11 +415,13 @@
      ============================================================================= */
 
   @keyframes floe-grid-pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.08;
       transform: scale(0.78);
     }
-    40%, 50% {
+    40%,
+    50% {
       opacity: 1;
       transform: scale(1);
     }
@@ -364,7 +435,8 @@
   }
 
   @keyframes floe-loader-ambient-pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.6;
       transform: scale(0.95);
     }
@@ -383,8 +455,12 @@
      ============================================================================= */
 
   @keyframes floe-skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   .floe-skeleton {
@@ -404,8 +480,12 @@
 
   /* Shimmer - subtle light sweep effect */
   @keyframes text-shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
+    0% {
+      background-position: -200% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
   }
 
   .processing-text-shimmer {
@@ -426,8 +506,13 @@
 
   /* Glow - subtle pulsing text */
   @keyframes text-glow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
   }
 
   .processing-text-glow {
@@ -440,18 +525,30 @@
      ============================================================================= */
 
   @keyframes aurora-arc-1 {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @keyframes aurora-arc-2 {
-    from { transform: rotate(360deg); }
-    to { transform: rotate(0deg); }
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
   }
 
   @keyframes aurora-arc-3 {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .processing-aurora-arc-1 {
@@ -471,7 +568,8 @@
 
   /* Aurora center breathing effect */
   @keyframes aurora-center-breathe {
-    0%, 100% {
+    0%,
+    100% {
       transform: scale(1);
       opacity: 0.6;
     }
@@ -491,7 +589,8 @@
      ============================================================================= */
 
   @keyframes quantum-dot-wave {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.25;
     }
     50% {
@@ -521,8 +620,13 @@
   }
 
   @keyframes pulse-center {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(0.9); }
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(0.9);
+    }
   }
 
   .processing-pulse-ring {
@@ -539,7 +643,8 @@
      ============================================================================= */
 
   @keyframes sequential-dot {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.3;
       transform: scale(1);
     }
@@ -603,8 +708,12 @@
     color: color-mix(in srgb, var(--foreground) 90%, transparent);
   }
 
-  .highlight-block-content > p { margin-bottom: 6px; }
-  .highlight-block-content > p:last-child { margin-bottom: 0; }
+  .highlight-block-content > p {
+    margin-bottom: 6px;
+  }
+  .highlight-block-content > p:last-child {
+    margin-bottom: 0;
+  }
 
   .highlight-block-content > ul,
   .highlight-block-content > ol {
@@ -612,8 +721,12 @@
     margin-bottom: 6px;
   }
 
-  .highlight-block-content > ul { list-style-type: disc; }
-  .highlight-block-content > ol { list-style-type: decimal; }
+  .highlight-block-content > ul {
+    list-style-type: disc;
+  }
+  .highlight-block-content > ol {
+    list-style-type: decimal;
+  }
 
   .highlight-block-info {
     --hb-accent: var(--info);
@@ -637,6 +750,220 @@
 
   .highlight-block-tip {
     --hb-accent: color-mix(in srgb, var(--success) 72%, var(--info) 28%);
+  }
+
+  /* =============================================================================
+     Tag - Professional metadata labels
+     ============================================================================= */
+
+  .floe-tag {
+    --tag-bg: color-mix(in srgb, var(--muted-foreground) 30%, var(--foreground));
+    --tag-border: color-mix(in srgb, var(--muted-foreground) 44%, var(--foreground));
+    --tag-color: var(--primary-foreground);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    border-radius: 8px;
+    border: 1px solid var(--tag-border);
+    background-color: var(--tag-bg);
+    color: var(--tag-color);
+    font-weight: 600;
+    letter-spacing: 0.015em;
+  }
+
+  .dark .floe-tag {
+    --tag-color: var(--foreground);
+  }
+
+  .floe-tag--neutral {
+    --tag-bg: hsl(20 10% 24%);
+    --tag-border: hsl(20 10% 31%);
+  }
+
+  .floe-tag--primary {
+    --tag-bg: hsl(226 54% 34%);
+    --tag-border: hsl(226 48% 42%);
+  }
+
+  .floe-tag--success {
+    --tag-bg: color-mix(in srgb, var(--success) 72%, var(--foreground));
+    --tag-border: color-mix(in srgb, var(--success) 88%, var(--foreground));
+  }
+
+  .floe-tag--warning {
+    --tag-bg: color-mix(in srgb, var(--warning) 78%, var(--foreground));
+    --tag-border: color-mix(in srgb, var(--warning) 92%, var(--foreground));
+  }
+
+  .floe-tag--error {
+    --tag-bg: color-mix(in srgb, var(--error) 70%, var(--foreground));
+    --tag-border: color-mix(in srgb, var(--error) 86%, var(--foreground));
+  }
+
+  .floe-tag--info {
+    --tag-bg: hsl(188 56% 33%);
+    --tag-border: hsl(188 46% 41%);
+  }
+
+  .dark .floe-tag--neutral {
+    --tag-bg: hsl(20 10% 30%);
+    --tag-border: hsl(20 10% 38%);
+  }
+
+  .dark .floe-tag--primary {
+    --tag-bg: hsl(226 62% 42%);
+    --tag-border: hsl(226 58% 50%);
+  }
+
+  .dark .floe-tag--success {
+    --tag-bg: color-mix(in srgb, var(--success) 52%, var(--background));
+    --tag-border: color-mix(in srgb, var(--success) 68%, var(--border));
+  }
+
+  .dark .floe-tag--warning {
+    --tag-bg: color-mix(in srgb, var(--warning) 62%, var(--background));
+    --tag-border: color-mix(in srgb, var(--warning) 78%, var(--border));
+  }
+
+  .dark .floe-tag--error {
+    --tag-bg: color-mix(in srgb, var(--error) 48%, var(--background));
+    --tag-border: color-mix(in srgb, var(--error) 64%, var(--border));
+  }
+
+  .dark .floe-tag--info {
+    --tag-bg: hsl(188 58% 38%);
+    --tag-border: hsl(188 52% 46%);
+  }
+
+  .floe-tag--soft.floe-tag--neutral {
+    --tag-bg: hsl(30 18% 86%);
+    --tag-border: hsl(28 16% 76%);
+    --tag-color: hsl(24 18% 27%);
+  }
+
+  .floe-tag--soft.floe-tag--primary {
+    --tag-bg: hsl(226 58% 86%);
+    --tag-border: hsl(226 46% 76%);
+    --tag-color: hsl(226 52% 28%);
+  }
+
+  .floe-tag--soft.floe-tag--success {
+    --tag-bg: hsl(151 28% 84%);
+    --tag-border: hsl(151 24% 74%);
+    --tag-color: hsl(150 48% 26%);
+  }
+
+  .floe-tag--soft.floe-tag--warning {
+    --tag-bg: hsl(41 52% 82%);
+    --tag-border: hsl(39 42% 72%);
+    --tag-color: hsl(33 58% 27%);
+  }
+
+  .floe-tag--soft.floe-tag--error {
+    --tag-bg: hsl(14 58% 86%);
+    --tag-border: hsl(14 48% 75%);
+    --tag-color: hsl(12 58% 29%);
+  }
+
+  .floe-tag--soft.floe-tag--info {
+    --tag-bg: hsl(188 52% 84%);
+    --tag-border: hsl(188 42% 73%);
+    --tag-color: hsl(189 60% 28%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--neutral {
+    --tag-bg: hsl(30 14% 80%);
+    --tag-border: hsl(28 12% 70%);
+    --tag-color: hsl(22 18% 22%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--primary {
+    --tag-bg: hsl(226 54% 80%);
+    --tag-border: hsl(226 44% 70%);
+    --tag-color: hsl(226 52% 23%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--success {
+    --tag-bg: hsl(151 24% 78%);
+    --tag-border: hsl(151 20% 68%);
+    --tag-color: hsl(150 46% 22%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--warning {
+    --tag-bg: hsl(41 44% 78%);
+    --tag-border: hsl(39 34% 68%);
+    --tag-color: hsl(33 54% 23%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--error {
+    --tag-bg: hsl(14 48% 81%);
+    --tag-border: hsl(14 40% 69%);
+    --tag-color: hsl(12 54% 23%);
+  }
+
+  .dark .floe-tag--soft.floe-tag--info {
+    --tag-bg: hsl(188 44% 79%);
+    --tag-border: hsl(188 34% 68%);
+    --tag-color: hsl(189 56% 23%);
+  }
+
+  .floe-tag--sm {
+    min-height: 18px;
+    padding: 0 7px;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .floe-tag--md {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .floe-tag--lg {
+    min-height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .floe-tag__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .floe-tag__icon {
+    flex: none;
+    opacity: 0.92;
+  }
+
+  .floe-tag__dot {
+    width: 6px;
+    height: 6px;
+    flex: none;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.82;
+  }
+
+  .floe-tag--sm .floe-tag__icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .floe-tag--md .floe-tag__icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .floe-tag--lg .floe-tag__icon {
+    width: 13px;
+    height: 13px;
   }
 
   /* =============================================================================
@@ -686,7 +1013,9 @@
   }
 
   .chart-point {
-    transition: opacity 0.3s ease, r 0.15s ease;
+    transition:
+      opacity 0.3s ease,
+      r 0.15s ease;
     cursor: pointer;
   }
 
@@ -774,7 +1103,9 @@
   }
 
   .chart-pie-slice {
-    transition: transform 0.15s ease, filter 0.15s ease;
+    transition:
+      transform 0.15s ease,
+      filter 0.15s ease;
     transform-origin: center;
     cursor: pointer;
   }
@@ -869,7 +1200,8 @@
   }
 
   @keyframes chart-monitoring-pulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
       box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent);
     }
@@ -943,11 +1275,7 @@
     --mobile-keyboard-key-border: color-mix(in srgb, var(--border) 94%, black 6%);
     --mobile-keyboard-key-utility-bg: color-mix(in srgb, var(--secondary) 72%, var(--background));
     --mobile-keyboard-key-utility-fg: color-mix(in srgb, var(--foreground) 88%, black);
-    --mobile-keyboard-key-terminal-bg: color-mix(
-      in srgb,
-      var(--terminal-background) 92%,
-      black
-    );
+    --mobile-keyboard-key-terminal-bg: color-mix(in srgb, var(--terminal-background) 92%, black);
     --mobile-keyboard-key-terminal-border: color-mix(
       in srgb,
       var(--terminal-foreground) 26%,
@@ -986,33 +1314,13 @@
       var(--activity-bar) 88%,
       var(--terminal-background)
     );
-    --mobile-keyboard-panel-border: color-mix(
-      in srgb,
-      var(--terminal-foreground) 14%,
-      transparent
-    );
+    --mobile-keyboard-panel-border: color-mix(in srgb, var(--terminal-foreground) 14%, transparent);
     --mobile-keyboard-key-bg: color-mix(in srgb, var(--card) 72%, white 7%);
     --mobile-keyboard-key-fg: color-mix(in srgb, var(--foreground) 98%, white 2%);
-    --mobile-keyboard-key-border: color-mix(
-      in srgb,
-      var(--terminal-foreground) 22%,
-      transparent
-    );
-    --mobile-keyboard-key-utility-bg: color-mix(
-      in srgb,
-      var(--activity-bar) 52%,
-      var(--card)
-    );
-    --mobile-keyboard-key-utility-fg: color-mix(
-      in srgb,
-      var(--terminal-foreground) 88%,
-      white
-    );
-    --mobile-keyboard-key-terminal-bg: color-mix(
-      in srgb,
-      var(--terminal-background) 90%,
-      white 4%
-    );
+    --mobile-keyboard-key-border: color-mix(in srgb, var(--terminal-foreground) 22%, transparent);
+    --mobile-keyboard-key-utility-bg: color-mix(in srgb, var(--activity-bar) 52%, var(--card));
+    --mobile-keyboard-key-utility-fg: color-mix(in srgb, var(--terminal-foreground) 88%, white);
+    --mobile-keyboard-key-terminal-bg: color-mix(in srgb, var(--terminal-background) 90%, white 4%);
     --mobile-keyboard-key-terminal-border: color-mix(
       in srgb,
       var(--terminal-foreground) 28%,
@@ -1023,36 +1331,16 @@
       var(--terminal-foreground) 40%,
       transparent
     );
-    --mobile-keyboard-popup-bg: color-mix(
-      in srgb,
-      var(--terminal-foreground) 92%,
-      white 8%
-    );
-    --mobile-keyboard-popup-fg: color-mix(
-      in srgb,
-      var(--terminal-background) 92%,
-      black
-    );
-    --mobile-keyboard-popup-border: color-mix(
-      in srgb,
-      var(--terminal-background) 24%,
-      transparent
-    );
-    --mobile-keyboard-suggestion-bg: color-mix(
-      in srgb,
-      var(--card) 68%,
-      transparent
-    );
+    --mobile-keyboard-popup-bg: color-mix(in srgb, var(--terminal-foreground) 92%, white 8%);
+    --mobile-keyboard-popup-fg: color-mix(in srgb, var(--terminal-background) 92%, black);
+    --mobile-keyboard-popup-border: color-mix(in srgb, var(--terminal-background) 24%, transparent);
+    --mobile-keyboard-suggestion-bg: color-mix(in srgb, var(--card) 68%, transparent);
     --mobile-keyboard-suggestion-border: color-mix(
       in srgb,
       var(--terminal-foreground) 20%,
       transparent
     );
-    --mobile-keyboard-suggestion-fg: color-mix(
-      in srgb,
-      var(--terminal-foreground) 94%,
-      white
-    );
+    --mobile-keyboard-suggestion-fg: color-mix(in srgb, var(--terminal-foreground) 94%, white);
   }
 
   .mobile-keyboard-rail-shell {
@@ -1155,24 +1443,44 @@
   }
 
   .mobile-keyboard-suggestion[data-kind='history'] {
-    border-left-color: color-mix(in srgb, var(--foreground) 28%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(
+      in srgb,
+      var(--foreground) 28%,
+      var(--mobile-keyboard-suggestion-border)
+    );
   }
 
   .mobile-keyboard-suggestion[data-kind='command'],
   .mobile-keyboard-suggestion[data-kind='subcommand'] {
-    border-left-color: color-mix(in srgb, var(--primary) 58%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(
+      in srgb,
+      var(--primary) 58%,
+      var(--mobile-keyboard-suggestion-border)
+    );
   }
 
   .mobile-keyboard-suggestion[data-kind='script'] {
-    border-left-color: color-mix(in srgb, var(--success) 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(
+      in srgb,
+      var(--success) 56%,
+      var(--mobile-keyboard-suggestion-border)
+    );
   }
 
   .mobile-keyboard-suggestion[data-kind='path'] {
-    border-left-color: color-mix(in srgb, var(--info) 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(
+      in srgb,
+      var(--info) 56%,
+      var(--mobile-keyboard-suggestion-border)
+    );
   }
 
   .mobile-keyboard-suggestion[data-kind='snippet'] {
-    border-left-color: color-mix(in srgb, var(--warning) 56%, var(--mobile-keyboard-suggestion-border));
+    border-left-color: color-mix(
+      in srgb,
+      var(--warning) 56%,
+      var(--mobile-keyboard-suggestion-border)
+    );
   }
 
   .mobile-keyboard-main {

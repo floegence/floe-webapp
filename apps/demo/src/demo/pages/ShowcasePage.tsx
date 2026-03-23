@@ -2,6 +2,7 @@ import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
 import { PropsTable, CodeSnippet, UsageGuidelines } from '../components/docs';
 import {
   buttonDoc,
+  tagDoc,
   inputDoc,
   numberInputDoc,
   affixInputDoc,
@@ -91,6 +92,7 @@ import {
   SnakeLoader,
   Sun,
   Tabs,
+  Tag,
   type TabItem,
   TabPanel,
   Terminal,
@@ -1221,6 +1223,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-buttons')}>
             Jump: Buttons
           </Button>
+          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-tags')}>
+            Jump: Tags
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-tabs')}>
             Jump: Tabs
           </Button>
@@ -1278,6 +1283,141 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
         <CodeSnippet title="Button.tsx" code={buttonDoc.examples[0].code} language="tsx" />
         <PropsTable props={buttonDoc.props} componentName="Button" />
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-tags"
+          title="Tags"
+          description="Metadata labels with solid and soft semantic tones for professional UIs."
+          actions={
+            <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.tag')}>
+              View Source
+            </Button>
+          }
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="space-y-6">
+            <div class="space-y-2">
+              <p class="text-[11px] font-medium text-muted-foreground">Solid Tones</p>
+              <div class="flex flex-wrap gap-2">
+                <Tag variant="neutral">Internal</Tag>
+                <Tag variant="primary">Infrastructure</Tag>
+                <Tag variant="success">Stable</Tag>
+                <Tag variant="warning">Review</Tag>
+                <Tag variant="error">Blocked</Tag>
+                <Tag variant="info">Observability</Tag>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-medium text-muted-foreground">Soft Tones</p>
+              <div class="flex flex-wrap gap-2">
+                <Tag tone="soft" variant="neutral">
+                  Internal
+                </Tag>
+                <Tag tone="soft" variant="primary">
+                  Infrastructure
+                </Tag>
+                <Tag tone="soft" variant="success">
+                  Stable
+                </Tag>
+                <Tag tone="soft" variant="warning">
+                  Review
+                </Tag>
+                <Tag tone="soft" variant="error">
+                  Blocked
+                </Tag>
+                <Tag tone="soft" variant="info">
+                  Observability
+                </Tag>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-medium text-muted-foreground">Sizes & Density</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <Tag size="sm" variant="neutral">
+                  SOC 2
+                </Tag>
+                <Tag size="md" variant="primary">
+                  Production
+                </Tag>
+                <Tag size="lg" tone="soft" variant="info">
+                  Audit Window
+                </Tag>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="text-[11px] font-medium text-muted-foreground">Icons & Status Dots</p>
+              <div class="flex flex-wrap gap-2">
+                <Tag variant="primary" icon={GitBranch}>
+                  release/2026.03
+                </Tag>
+                <Tag variant="success" dot icon={CheckCircle}>
+                  Approved
+                </Tag>
+                <Tag variant="warning" icon={Clock}>
+                  Window 22:00-23:00
+                </Tag>
+                <Tag variant="neutral" icon={Lock}>
+                  Restricted
+                </Tag>
+                <Tag variant="info" icon={Database}>
+                  Telemetry
+                </Tag>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <div class="rounded-md border border-border bg-background p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="space-y-1">
+                    <p class="text-xs font-medium">Release Readiness</p>
+                    <p class="text-[11px] text-muted-foreground">
+                      Deep surfaces keep dense metadata calm inside operational panels.
+                    </p>
+                  </div>
+                  <Tag size="sm" variant="neutral">
+                    Audit Trail
+                  </Tag>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <Tag variant="primary">Core API</Tag>
+                  <Tag tone="soft" variant="info">Telemetry</Tag>
+                  <Tag tone="soft" variant="success" dot>
+                    Passed
+                  </Tag>
+                </div>
+              </div>
+
+              <div class="rounded-md border border-border bg-background p-4 space-y-3">
+                <div class="space-y-1">
+                  <p class="text-xs font-medium">Security Review</p>
+                  <p class="text-[11px] text-muted-foreground">
+                    Variants stay restrained instead of leaning on loud, saturated badges.
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <Tag tone="soft" variant="neutral" icon={Lock}>
+                    Least Privilege
+                  </Tag>
+                  <Tag tone="soft" variant="warning">Needs Follow-up</Tag>
+                  <Tag variant="error">Legacy Secret</Tag>
+                </div>
+              </div>
+            </div>
+          </PanelContent>
+        </Panel>
+
+        <UsageGuidelines
+          whenToUse={tagDoc.usage.whenToUse}
+          bestPractices={tagDoc.usage.bestPractices}
+          avoid={tagDoc.usage.avoid}
+        />
+        <CodeSnippet title="Tag.tsx" code={tagDoc.examples[0].code} language="tsx" />
+        <PropsTable props={tagDoc.props} componentName="Tag" />
       </div>
 
       <div class="space-y-4">

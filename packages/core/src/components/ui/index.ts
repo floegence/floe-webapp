@@ -1,4 +1,5 @@
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
+export { Tag, type TagProps, type TagVariant, type TagSize } from './Tag';
 export {
   Input,
   Textarea,
@@ -13,7 +14,13 @@ export {
 } from './Input';
 export { Dialog, ConfirmDialog, type DialogProps, type ConfirmDialogProps } from './Dialog';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
-export { Dropdown, Select, type DropdownProps, type DropdownItem, type SelectProps } from './Dropdown';
+export {
+  Dropdown,
+  Select,
+  type DropdownProps,
+  type DropdownItem,
+  type SelectProps,
+} from './Dropdown';
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { CommandPalette } from './CommandPalette';
 export {
@@ -51,7 +58,11 @@ export {
   type TabsIndicatorColorToken,
 } from './Tabs';
 export { DirectoryPicker, type DirectoryPickerProps } from './DirectoryPicker';
-export { DirectoryInput, type DirectoryInputProps, type DirectoryInputSize } from './DirectoryInput';
+export {
+  DirectoryInput,
+  type DirectoryInputProps,
+  type DirectoryInputSize,
+} from './DirectoryInput';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';
 export { type BasePickerProps } from './picker/PickerBase';
 export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';

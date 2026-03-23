@@ -1,5 +1,10 @@
 import { For } from 'solid-js';
-import { SidebarContent, SidebarItem, SidebarItemList, SidebarSection } from '@floegence/floe-webapp-core/layout';
+import {
+  SidebarContent,
+  SidebarItem,
+  SidebarItemList,
+  SidebarSection,
+} from '@floegence/floe-webapp-core/layout';
 import { Button } from '@floegence/floe-webapp-core/ui';
 
 export interface ShowcaseSidebarProps {
@@ -10,6 +15,7 @@ export interface ShowcaseSidebarProps {
 const sections = [
   { id: 'overview', label: 'Overview' },
   { id: 'ui-buttons', label: 'Buttons' },
+  { id: 'ui-tags', label: 'Tags' },
   { id: 'ui-tabs', label: 'Tabs' },
   { id: 'ui-cards', label: 'Cards' },
   { id: 'ui-inputs', label: 'Inputs' },
@@ -45,9 +51,7 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
         <SidebarItemList>
           <For each={sections}>
             {(item) => (
-              <SidebarItem onClick={() => props.onJumpTo(item.id)}>
-                {item.label}
-              </SidebarItem>
+              <SidebarItem onClick={() => props.onJumpTo(item.id)}>{item.label}</SidebarItem>
             )}
           </For>
         </SidebarItemList>
@@ -58,10 +62,18 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
           <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.shell')}>
             View Shell.tsx
           </Button>
-          <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.command-palette')}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => props.onOpenFile('core.command-palette')}
+          >
             View CommandPalette.tsx
           </Button>
-          <Button size="sm" variant="outline" onClick={() => props.onOpenFile('docs.getting-started')}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => props.onOpenFile('docs.getting-started')}
+          >
             View Getting Started
           </Button>
         </div>
