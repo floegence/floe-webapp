@@ -25,7 +25,10 @@ export function TopBarIconButton(props: TopBarIconButtonProps) {
     'disabled',
   ]);
 
-  const btn = (
+  // Create a fresh subtree for each branch. Reusing one DOM node across the
+  // plain-button and tooltip-wrapped branches can break when responsive callers
+  // toggle `tooltip` during mount.
+  const renderButton = () => (
     <button
       type="button"
       class={cn(
@@ -45,13 +48,13 @@ export function TopBarIconButton(props: TopBarIconButtonProps) {
   );
 
   return (
-    <Show when={local.tooltip !== false} fallback={btn}>
+    <Show when={local.tooltip !== false} fallback={renderButton()}>
       <Tooltip
         content={local.tooltip ?? local.label}
         placement={local.tooltipPlacement ?? 'bottom'}
         delay={local.tooltipDelay ?? 0}
       >
-        {btn}
+        {renderButton()}
       </Tooltip>
     </Show>
   );
