@@ -50,6 +50,17 @@ describe('layout markup', () => {
     expect(html).toContain('hover:bg-muted/60');
   });
 
+  it('TopBarIconButton should omit the tooltip host wrapper when tooltip={false}', () => {
+    const html = renderWithCoreProviders(() => (
+      <TopBarIconButton label="Settings" tooltip={false}>
+        <span class="w-4 h-4" />
+      </TopBarIconButton>
+    ));
+
+    expect(html).toContain('aria-label="Settings"');
+    expect(html).not.toContain('relative inline-block');
+  });
+
   it('Shell should include dvh + min-* utilities to avoid flex overflow and layout jumps', () => {
     const DummyIcon = (p: { class?: string }) => <span class={p.class} />;
 

@@ -135,6 +135,14 @@ Stable selectors:
 - `[data-floe-shell-slot="bottom-bar"]`
 - `[data-floe-shell-slot="mobile-tab-bar"]`
 
+### Top bar icon buttons
+
+`TopBarIconButton` keeps the visual button contract stable while letting apps opt out of hover/focus tooltip chrome on touch layouts.
+
+- Use `tooltip={false}` when a responsive caller needs a plain button without the tooltip host wrapper.
+- Use the default `tooltip` behavior (or custom tooltip content) for pointer/keyboard layouts.
+- Responsive callers may safely toggle tooltip enablement at runtime; the component will replace the branch subtree instead of reusing one DOM node across incompatible wrappers.
+
 ## Accessibility
 
 Configuration: `FloeConfig.accessibility` (`packages/core/src/context/FloeConfigContext.tsx`)
