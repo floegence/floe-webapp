@@ -753,6 +753,55 @@
   }
 
   /* =============================================================================
+     Segmented Control - clear selection contrast across light and dark themes
+     ============================================================================= */
+
+  .floe-segmented-control {
+    --segmented-control-bg: color-mix(in srgb, var(--muted) 74%, var(--background));
+    --segmented-control-border: color-mix(in srgb, var(--border) 82%, transparent);
+    --segmented-control-item-color: var(--muted-foreground);
+    --segmented-control-item-hover-bg: color-mix(in srgb, var(--background) 74%, var(--muted) 26%);
+    --segmented-control-item-hover-color: var(--foreground);
+    --segmented-control-item-active-bg: color-mix(in srgb, var(--background) 96%, white 4%);
+    --segmented-control-item-active-border: color-mix(in srgb, var(--border) 70%, var(--foreground) 30%);
+    --segmented-control-item-active-color: var(--foreground);
+    --segmented-control-item-active-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
+      0 1px 2px color-mix(in srgb, black 10%, transparent);
+
+    background-color: var(--segmented-control-bg);
+    border-color: var(--segmented-control-border);
+  }
+
+  .dark .floe-segmented-control {
+    --segmented-control-bg: color-mix(in srgb, var(--muted) 56%, var(--background) 44%);
+    --segmented-control-border: color-mix(in srgb, var(--border) 78%, var(--foreground) 22%);
+    --segmented-control-item-hover-bg: color-mix(in srgb, var(--foreground) 8%, var(--background) 92%);
+    --segmented-control-item-active-bg: color-mix(in srgb, var(--foreground) 14%, var(--background) 86%);
+    --segmented-control-item-active-border: color-mix(in srgb, var(--foreground) 28%, var(--border) 72%);
+    --segmented-control-item-active-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+      0 1px 2px color-mix(in srgb, black 30%, transparent);
+  }
+
+  .floe-segmented-control__item {
+    border-color: transparent;
+    color: var(--segmented-control-item-color);
+  }
+
+  .floe-segmented-control__item[aria-checked='false']:hover:not(:disabled) {
+    background-color: var(--segmented-control-item-hover-bg);
+    color: var(--segmented-control-item-hover-color);
+  }
+
+  .floe-segmented-control__item--active {
+    border-color: var(--segmented-control-item-active-border);
+    background-color: var(--segmented-control-item-active-bg);
+    color: var(--segmented-control-item-active-color);
+    box-shadow: var(--segmented-control-item-active-shadow);
+  }
+
+  /* =============================================================================
      Tag - Professional metadata labels
      ============================================================================= */
 
