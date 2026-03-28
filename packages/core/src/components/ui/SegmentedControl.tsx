@@ -89,7 +89,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
     <div
       role="group"
       class={cn(
-        'inline-flex items-center rounded-lg border border-border bg-muted/40',
+        'floe-segmented-control inline-flex items-center rounded-lg border',
         styles().container,
         local.disabled && 'opacity-50 pointer-events-none',
         local.class
@@ -109,12 +109,11 @@ export function SegmentedControl(props: SegmentedControlProps) {
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}
               class={cn(
-                'font-medium rounded-md transition-all duration-150 cursor-pointer',
+                'floe-segmented-control__item font-medium rounded-md transition-[background-color,border-color,color,box-shadow] duration-150 cursor-pointer',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 styles().button,
-                isSelected()
-                  ? 'bg-background text-foreground shadow-sm border border-border'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent',
+                'border',
+                isSelected() && 'floe-segmented-control__item--active',
                 isDisabled() && 'cursor-not-allowed opacity-50'
               )}
             >
