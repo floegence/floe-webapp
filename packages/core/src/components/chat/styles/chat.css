@@ -409,6 +409,73 @@ pre.chat-md-code-block code {
   border-bottom-color: var(--primary);
 }
 
+.chat-md-link.chat-md-file-ref {
+  display: inline-flex;
+  min-width: 0;
+  max-width: min(100%, 20rem);
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.5rem;
+  margin-inline: 0.125rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--muted) 68%, transparent);
+  color: var(--foreground);
+  vertical-align: baseline;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-decoration: none;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+  cursor: pointer;
+}
+
+.chat-md-link.chat-md-file-ref:hover {
+  border-bottom-color: transparent;
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+  background-color: color-mix(in srgb, var(--accent) 84%, transparent);
+  color: color-mix(in srgb, var(--primary) 78%, var(--foreground));
+}
+
+.chat-md-link.chat-md-file-ref:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.chat-md-file-ref-prefix,
+.chat-md-file-ref-name,
+.chat-md-file-ref-line {
+  min-width: 0;
+}
+
+.chat-md-file-ref-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.chat-md-file-ref-prefix {
+  flex: 0 1 auto;
+  max-width: 7.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 0.75em;
+  line-height: 1.2;
+}
+
+.chat-md-file-ref-line {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  font-size: 0.75em;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
 .chat-md-image {
   max-width: 100%;
   border-radius: 0.5rem;
