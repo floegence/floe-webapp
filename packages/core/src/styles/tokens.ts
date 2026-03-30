@@ -252,6 +252,54 @@ export const floeColorTokenCategories = [
     ],
   },
   {
+    name: 'Highlight Blocks',
+    description: 'Dedicated accent colors for HighlightBlock variants so callouts can diverge from shared status tokens.',
+    tokens: [
+      {
+        name: 'Highlight Block Info Accent',
+        variable: '--highlight-block-info-accent',
+        lightValue: 'oklch(0.52 0.14 245)',
+        darkValue: 'oklch(0.62 0.12 240)',
+        description: 'Info accent used by HighlightBlock surfaces and borders.',
+      },
+      {
+        name: 'Highlight Block Warning Accent',
+        variable: '--highlight-block-warning-accent',
+        lightValue: 'oklch(0.62 0.16 65)',
+        darkValue: 'oklch(0.7 0.14 65)',
+        description: 'Warning accent used by HighlightBlock surfaces and borders.',
+      },
+      {
+        name: 'Highlight Block Success Accent',
+        variable: '--highlight-block-success-accent',
+        lightValue: 'oklch(0.55 0.14 155)',
+        darkValue: 'oklch(0.62 0.12 155)',
+        description: 'Success accent used by HighlightBlock surfaces and borders.',
+      },
+      {
+        name: 'Highlight Block Error Accent',
+        variable: '--highlight-block-error-accent',
+        lightValue: 'oklch(0.55 0.16 25)',
+        darkValue: 'oklch(0.6 0.14 25)',
+        description: 'Error accent used by HighlightBlock surfaces and borders.',
+      },
+      {
+        name: 'Highlight Block Note Accent',
+        variable: '--highlight-block-note-accent',
+        lightValue: 'oklch(0.52 0.16 285)',
+        darkValue: 'oklch(0.62 0.14 285)',
+        description: 'Note accent used by HighlightBlock surfaces and borders.',
+      },
+      {
+        name: 'Highlight Block Tip Accent',
+        variable: '--highlight-block-tip-accent',
+        lightValue: 'oklch(0.52 0.12 175)',
+        darkValue: 'oklch(0.6 0.1 175)',
+        description: 'Tip accent used by HighlightBlock surfaces and borders.',
+      },
+    ],
+  },
+  {
     name: 'Shell Chrome',
     description: 'Stable shell chrome borders that can be overridden through theme.tokens.',
     tokens: [

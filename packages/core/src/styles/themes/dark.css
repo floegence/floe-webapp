@@ -50,6 +50,14 @@
   --info: oklch(0.7 0.15 250);
   --info-foreground: hsl(0 0% 100%);
 
+  /* Highlight block accents - deeper than shared status tokens */
+  --highlight-block-info-accent: oklch(0.62 0.12 240);
+  --highlight-block-warning-accent: oklch(0.7 0.14 65);
+  --highlight-block-success-accent: oklch(0.62 0.12 155);
+  --highlight-block-error-accent: oklch(0.6 0.14 25);
+  --highlight-block-note-accent: oklch(0.62 0.14 285);
+  --highlight-block-tip-accent: oklch(0.6 0.1 175);
+
   /* Sidebar */
   --sidebar: hsl(222 28% 10%);
   --sidebar-foreground: hsl(210 20% 98%);

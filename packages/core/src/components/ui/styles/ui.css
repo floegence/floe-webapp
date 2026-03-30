@@ -664,10 +664,10 @@
 
   .highlight-block {
     --hb-accent: var(--primary);
-    --hb-border: color-mix(in srgb, var(--hb-accent) 22%, var(--border));
-    --hb-header-bg: color-mix(in srgb, var(--hb-accent) 10%, var(--card));
-    --hb-content-bg: color-mix(in srgb, var(--hb-accent) 5%, var(--card));
-    --hb-title: color-mix(in srgb, var(--hb-accent) 64%, var(--foreground));
+    --hb-border: color-mix(in srgb, var(--hb-accent) 34%, var(--border));
+    --hb-header-bg: color-mix(in srgb, var(--hb-accent) 18%, var(--card));
+    --hb-content-bg: color-mix(in srgb, var(--hb-accent) 10%, var(--card));
+    --hb-title: color-mix(in srgb, var(--hb-accent) 78%, var(--foreground));
 
     border-radius: 6px;
     overflow: hidden;
@@ -729,27 +729,27 @@
   }
 
   .highlight-block-info {
-    --hb-accent: var(--info);
+    --hb-accent: var(--highlight-block-info-accent);
   }
 
   .highlight-block-warning {
-    --hb-accent: var(--warning);
+    --hb-accent: var(--highlight-block-warning-accent);
   }
 
   .highlight-block-success {
-    --hb-accent: var(--success);
+    --hb-accent: var(--highlight-block-success-accent);
   }
 
   .highlight-block-error {
-    --hb-accent: var(--error);
+    --hb-accent: var(--highlight-block-error-accent);
   }
 
   .highlight-block-note {
-    --hb-accent: color-mix(in srgb, var(--primary) 72%, var(--info) 28%);
+    --hb-accent: var(--highlight-block-note-accent);
   }
 
   .highlight-block-tip {
-    --hb-accent: color-mix(in srgb, var(--success) 72%, var(--info) 28%);
+    --hb-accent: var(--highlight-block-tip-accent);
   }
 
   /* =============================================================================
