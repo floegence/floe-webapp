@@ -75,6 +75,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [isMaximized, setIsMaximized] = createSignal(false);
   const [isDragging, setIsDragging] = createSignal(false);
   const [isResizing, setIsResizing] = createSignal(false);
+  const [isActive, setIsActive] = createSignal(false);
   const [preMaximizeState, setPreMaximizeState] = createSignal<{
     position: { x: number; y: number };
     size: { width: number; height: number };
@@ -150,6 +151,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setPosition({ x: rect.x, y: rect.y });
     setSize({ width: rect.width, height: rect.height });
   };
+
+  const isTargetInsideWindow = (target: EventTarget | null) =>
+    !!windowRef && target instanceof Node && windowRef.contains(target);
 
   const readLiveRectFromDom = (): FloatingWindowRect | null => {
     if (!windowRef) return null;
@@ -280,8 +284,34 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   createEffect(() => {
     if (!props.open) {
+      setIsActive(false);
       stopInteraction(activePointerId ?? undefined, false);
+      return;
     }
+    setIsActive(true);
+  });
+
+  createEffect(() => {
+    if (!props.open) return;
+
+    const syncActiveState = (target: EventTarget | null) => {
+      setIsActive(isTargetInsideWindow(target));
+    };
+
+    const handlePointerDown = (e: PointerEvent) => {
+      syncActiveState(e.target);
+    };
+
+    const handleFocusIn = (e: FocusEvent) => {
+      syncActiveState(e.target);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('focusin', handleFocusIn);
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('focusin', handleFocusIn);
+    });
   });
 
   createEffect(() => {
@@ -433,24 +463,26 @@ export function FloatingWindow(props: FloatingWindowProps) {
           onPointerUp={handlePointerUpOrCancel}
           onPointerCancel={handlePointerUpOrCancel}
           role="dialog"
-          aria-modal="true"
           aria-labelledby={props.title ? titleId() : undefined}
+          tabIndex={-1}
         >
           <div
+            data-floe-floating-window-surface="true"
+            data-floe-floating-window-state={isActive() ? 'active' : 'inactive'}
             class={cn(
               'relative flex h-full w-full flex-col overflow-hidden',
-              'bg-card text-card-foreground rounded-md shadow-xl',
-              'border border-border',
+              'text-card-foreground rounded-md',
+              'border',
               'animate-in fade-in duration-150',
               isMaximized() && 'rounded-none',
               props.class
             )}
           >
             <div
+              data-floe-floating-window-titlebar="true"
               class={cn(
                 'flex items-center justify-between h-9 px-3',
-                'border-b border-border',
-                'bg-muted/50',
+                'border-b',
                 isMaximized() ? 'rounded-none' : 'rounded-t-md',
                 draggable() && !isMaximized() && 'cursor-move'
               )}

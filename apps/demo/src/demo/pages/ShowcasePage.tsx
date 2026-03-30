@@ -3525,7 +3525,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-floating-window"
           title="Floating Window"
-          description="Draggable, resizable window with maximize/restore and close buttons."
+          description="Persistent modeless tool window with drag, resize, maximize/restore, and close buttons."
           actions={
             <Button
               size="sm"
@@ -3540,7 +3540,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFloatingWindowOpen(true)}>Open Floating Window</Button>
             <p class="text-[11px] text-muted-foreground">
-              Features: drag title bar, resize edges/corners, maximize/restore, close with X or Esc
+              Features: drag title bar, resize edges/corners, maximize/restore, stay open while the page remains interactive
             </p>
           </PanelContent>
         </Panel>

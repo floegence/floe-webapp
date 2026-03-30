@@ -36,6 +36,8 @@ describe('interaction architecture guard', () => {
     expect(stylesSrc).toContain("[data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='sidebar-pane']");
     expect(stylesSrc).toContain("[data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='floating-window']");
     expect(stylesSrc).toContain("[data-floe-geometry-surface='floating-window']");
+    expect(stylesSrc).toContain("[data-floe-floating-window-surface='true'][data-floe-floating-window-state='active']");
+    expect(stylesSrc).toContain("[data-floe-floating-window-titlebar='true']");
   });
 
   it('keeps hot geometry surfaces explicit and routes drag/resize through the shared runtime', () => {
@@ -60,6 +62,9 @@ describe('interaction architecture guard', () => {
     expect(floatingWindowSrc).toContain('setCommittedRect');
     expect(floatingWindowSrc).toContain('readLiveRectFromDom');
     expect(floatingWindowSrc).toContain('startHotInteraction({');
+    expect(floatingWindowSrc).toContain('data-floe-floating-window-state={isActive() ? \'active\' : \'inactive\'}');
+    expect(floatingWindowSrc).toContain('tabIndex={-1}');
+    expect(floatingWindowSrc).not.toContain('aria-modal="true"');
   });
 
   it('splits preview state from committed sidebar state for shell and file browser', () => {

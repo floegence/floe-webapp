@@ -1974,7 +1974,7 @@ function Example() {
 // ===========================
 export const floatingWindowDoc: ComponentDoc = {
   name: 'FloatingWindow',
-  description: 'Draggable, resizable window with maximize/restore and close functionality.',
+  description: 'Persistent modeless tool window with drag, resize, maximize/restore, and close functionality.',
   props: [
     {
       name: 'open',
@@ -2017,9 +2017,10 @@ export const floatingWindowDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: ['Multi-window applications', 'Tool palettes and inspectors', 'Non-modal dialogs'],
+    whenToUse: ['Multi-window applications', 'Tool palettes and inspectors', 'Modeless tool windows'],
     bestPractices: [
       'Set reasonable default and minimum sizes',
+      'Use active and inactive window states to keep the current tool window easy to find',
       'Allow keyboard close (Escape)',
       'Remember window position/size',
     ],
