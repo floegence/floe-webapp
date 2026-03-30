@@ -26,7 +26,7 @@ export interface DirectoryPickerProps extends BasePickerProps {
  */
 export function DirectoryPicker(props: DirectoryPickerProps) {
   const tree = usePickerTree({
-    initialPath: props.initialPath,
+    initialPath: () => props.initialPath,
     open: () => props.open,
     files: () => props.files,
     // eslint-disable-next-line solid/reactivity -- filter is a static callback

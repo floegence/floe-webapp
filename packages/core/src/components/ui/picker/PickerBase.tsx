@@ -120,7 +120,7 @@ export function useFolderIndex(files: Accessor<FileItem[]>) {
 // ─── Picker tree state hook ──────────────────────────────────────────────────
 
 export interface UsePickerTreeOptions {
-  initialPath?: string;
+  initialPath?: string | Accessor<string | undefined>;
   open: Accessor<boolean>;
   files: Accessor<FileItem[]>;
   filter?: (item: FileItem) => boolean;
@@ -167,9 +167,26 @@ export interface PickerTreeState {
   toDisplayPath: (internalPath: string) => string;
 }
 
-export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
-  const initial = opts.initialPath ?? '/';
+export function resolvePickerInitialPath(
+  initialPath: string | undefined,
+  homePath: string | undefined,
+): string {
+  const normalizedInitialPath = normalizePath(initialPath ?? '/');
+  const normalizedHomePath = homePath ? normalizePath(homePath) : undefined;
 
+  if (!normalizedHomePath || normalizedHomePath === '/') {
+    return normalizedInitialPath;
+  }
+  if (normalizedInitialPath === normalizedHomePath) {
+    return '/';
+  }
+  if (normalizedInitialPath.startsWith(normalizedHomePath + '/')) {
+    return normalizePath(normalizedInitialPath.slice(normalizedHomePath.length));
+  }
+  return normalizedInitialPath;
+}
+
+export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   // Reactive getters for homeLabel and homePath (support both string and accessor)
   const getHomeLabel = (): string => {
     const hl = typeof opts.homeLabel === 'function' ? opts.homeLabel() : opts.homeLabel;
@@ -178,6 +195,10 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   const getHomePath = (): string | undefined => {
     const hp = typeof opts.homePath === 'function' ? opts.homePath() : opts.homePath;
     return hp ? normalizePath(hp) : undefined;
+  };
+  const getInitialPath = (): string => {
+    const raw = typeof opts.initialPath === 'function' ? opts.initialPath() : opts.initialPath;
+    return resolvePickerInitialPath(raw, getHomePath());
   };
 
   /** Convert internal tree path (e.g. '/Documents') to display path (e.g. '/home/user/Documents') */
@@ -202,9 +223,9 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     return normalizePath(displayPath);
   };
 
-  const [selectedPath, setSelectedPath] = createSignal(initial);
+  const [selectedPath, setSelectedPath] = createSignal(getInitialPath());
   const [expandedPaths, setExpandedPaths] = createSignal<Set<string>>(new Set(['/']));
-  const [pathInput, setPathInput] = createSignal(toDisplayPath(initial));
+  const [pathInput, setPathInput] = createSignal(toDisplayPath(getInitialPath()));
   const [pathInputError, setPathInputError] = createSignal('');
 
   const folderIndex = useFolderIndex(opts.files);
@@ -214,7 +235,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   createEffect(
     on(opts.open, (open) => {
       if (open) {
-        const init = opts.initialPath ?? '/';
+        const init = getInitialPath();
         setSelectedPath(init);
         setPathInput(toDisplayPath(init));
         setPathInputError('');

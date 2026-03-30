@@ -99,7 +99,7 @@ export function DirectoryInput(props: DirectoryInputProps) {
 
   // Picker tree state — initialized once on mount (open is always true to skip reset behavior)
   const tree = usePickerTree({
-    initialPath: local.initialPath ?? '/',
+    initialPath: () => local.initialPath ?? '/',
     open: () => true,
     files: () => local.files,
     onExpand: (path) => local.onExpand?.(path),

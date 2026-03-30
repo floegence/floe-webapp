@@ -8,6 +8,7 @@ This folder contains **public, version-controlled** documentation for downstream
 - Accessibility Contract: `docs/accessibility.md`
 - Component Registry & Contributions: `docs/component-registry.md`
 - Interaction Architecture & Guardrails: `docs/interaction-architecture.md`
+- Picker Path Semantics: `docs/picker-paths.md`
 - Protocol Layer (Flowersec): `docs/protocol.md`
 - E2EE Boot Utilities & Flowersec Proxy Integration: `docs/runtime.md`
 
