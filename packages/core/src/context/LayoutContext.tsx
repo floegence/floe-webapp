@@ -20,16 +20,26 @@ interface LayoutStore {
   isMobile: boolean;
 }
 
+export type SidebarVisibilityMotion = 'animated' | 'instant';
+
+interface SidebarVisibilityTransitionState {
+  motion: SidebarVisibilityMotion;
+  revision: number;
+}
+
 export interface LayoutContextValue {
   // Sidebar
   sidebarWidth: Accessor<number>;
   sidebarActiveTab: Accessor<string>;
   sidebarCollapsed: Accessor<boolean>;
+  sidebarVisibilityMotion: Accessor<SidebarVisibilityMotion>;
+  sidebarVisibilityMotionRevision: Accessor<number>;
   clampSidebarWidth: (width: number) => number;
   setSidebarWidth: (width: number) => void;
-  setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) => void;
+  setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean; visibilityMotion?: SidebarVisibilityMotion }) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebarCollapse: () => void;
+  clearSidebarVisibilityMotion: (revision: number) => void;
 
   // Terminal
   terminalOpened: Accessor<boolean>;
@@ -77,6 +87,10 @@ export function createLayoutService(): LayoutContextValue {
   };
 
   const [store, setStore] = createStore<LayoutStore>(initialState);
+  const [sidebarVisibilityTransition, setSidebarVisibilityTransition] = createStore<SidebarVisibilityTransitionState>({
+    motion: 'animated',
+    revision: 0,
+  });
   const clampSidebarWidth = (width: number) =>
     Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
 
@@ -102,6 +116,8 @@ export function createLayoutService(): LayoutContextValue {
     sidebarWidth: () => store.sidebar.width,
     sidebarActiveTab: () => store.sidebar.activeTab,
     sidebarCollapsed: () => store.sidebar.collapsed,
+    sidebarVisibilityMotion: () => sidebarVisibilityTransition.motion,
+    sidebarVisibilityMotionRevision: () => sidebarVisibilityTransition.revision,
     clampSidebarWidth,
 
     // Sidebar actions
@@ -111,7 +127,7 @@ export function createLayoutService(): LayoutContextValue {
           s.sidebar.width = clampSidebarWidth(width);
         })
       ),
-    setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean }) =>
+    setSidebarActiveTab: (tab: string, opts?: { openSidebar?: boolean; visibilityMotion?: SidebarVisibilityMotion }) => {
       setStore(
         produce((s) => {
           s.sidebar.activeTab = tab;
@@ -119,7 +135,16 @@ export function createLayoutService(): LayoutContextValue {
           const open = opts?.openSidebar !== false;
           if (open) s.sidebar.collapsed = false;
         })
-      ),
+      );
+      if (opts?.visibilityMotion === 'instant') {
+        setSidebarVisibilityTransition(
+          produce((s) => {
+            s.motion = 'instant';
+            s.revision += 1;
+          })
+        );
+      }
+    },
     setSidebarCollapsed: (collapsed: boolean) =>
       setStore(
         produce((s) => {
@@ -132,6 +157,10 @@ export function createLayoutService(): LayoutContextValue {
           s.sidebar.collapsed = !s.sidebar.collapsed;
         })
       ),
+    clearSidebarVisibilityMotion: (revision: number) => {
+      if (sidebarVisibilityTransition.revision !== revision) return;
+      setSidebarVisibilityTransition('motion', 'animated');
+    },
 
     // Terminal accessors
     terminalOpened: () => store.terminal.opened,

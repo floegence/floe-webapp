@@ -1,11 +1,13 @@
 import { type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
+import type { SidebarVisibilityMotion } from '../../context/LayoutContext';
 
 export interface SidebarProps {
   children: JSX.Element;
   resizer?: JSX.Element;
   width?: number;
   collapsed?: boolean;
+  visibilityMotion?: SidebarVisibilityMotion;
   ariaLabel?: string;
   class?: string;
 }
@@ -16,17 +18,19 @@ export interface SidebarProps {
 export function Sidebar(props: SidebarProps) {
   const collapsed = () => props.collapsed ?? false;
   const width = () => props.width ?? 350;
+  const visibilityMotion = () => props.visibilityMotion ?? 'animated';
 
   return (
     <aside
       data-floe-shell-slot="sidebar"
       data-floe-geometry-surface="shell-sidebar"
+      data-floe-sidebar-visibility-motion={visibilityMotion()}
       class={cn(
         'relative h-full flex flex-col shrink-0 min-h-0',
         'bg-sidebar text-sidebar-foreground',
         'border-r border-sidebar-border',
         'overflow-hidden',
-        'transition-[width] duration-150 ease-out',
+        visibilityMotion() === 'animated' && 'transition-[width] duration-150 ease-out',
         props.class
       )}
       style={{

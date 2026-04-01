@@ -6,6 +6,7 @@ import { TopBar } from '../src/components/layout/TopBar';
 import { TopBarIconButton } from '../src/components/layout/TopBarIconButton';
 import { MobileTabBar } from '../src/components/layout/MobileTabBar';
 import { Shell } from '../src/components/layout/Shell';
+import { Sidebar } from '../src/components/layout/Sidebar';
 
 function renderWithCoreProviders(node: () => unknown): string {
   return renderToString(() => (
@@ -113,5 +114,16 @@ describe('layout markup', () => {
     expect(html).toContain('shell-content-area-class');
     expect(html).toContain('shell-main-class');
     expect(html).toContain('shell-bottom-bar-class');
+  });
+
+  it('Sidebar should expose visibility-motion markup and drop width transitions for instant motion', () => {
+    const html = renderWithCoreProviders(() => (
+      <Sidebar visibilityMotion="instant">
+        <div>Sidebar</div>
+      </Sidebar>
+    ));
+
+    expect(html).toContain('data-floe-sidebar-visibility-motion="instant"');
+    expect(html).not.toContain('transition-[width] duration-150 ease-out');
   });
 });

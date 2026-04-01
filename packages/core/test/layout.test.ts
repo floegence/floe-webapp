@@ -34,6 +34,28 @@ describe('createLayoutService', () => {
     });
   });
 
+  it('records instant sidebar visibility motion as transient state only', async () => {
+    await withSolidRoot(() => {
+      const layout = createLayoutService();
+
+      expect(layout.sidebarVisibilityMotion()).toBe('animated');
+      expect(layout.sidebarVisibilityMotionRevision()).toBe(0);
+
+      layout.setSidebarActiveTab('chat', { visibilityMotion: 'instant' });
+
+      expect(layout.sidebarActiveTab()).toBe('chat');
+      expect(layout.sidebarVisibilityMotion()).toBe('instant');
+      expect(layout.sidebarVisibilityMotionRevision()).toBe(1);
+
+      layout.clearSidebarVisibilityMotion(0);
+      expect(layout.sidebarVisibilityMotion()).toBe('instant');
+
+      layout.clearSidebarVisibilityMotion(1);
+      expect(layout.sidebarVisibilityMotion()).toBe('animated');
+      expect(layout.sidebarVisibilityMotionRevision()).toBe(1);
+    });
+  });
+
   it('toggleTerminal should flip terminal open state', async () => {
     await withSolidRoot(() => {
       const layout = createLayoutService();

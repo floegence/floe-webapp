@@ -5,7 +5,7 @@ import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { cn } from '../../utils/cn';
-import { deferNonBlocking } from '../../utils/defer';
+import { deferAfterPaint, deferNonBlocking } from '../../utils/defer';
 import { useComponentRegistry } from '../../context/ComponentRegistry';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -16,6 +16,8 @@ import { ActivityBar, type ActivityBarItem } from './ActivityBar';
 import { ResizeHandle } from './ResizeHandle';
 import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
 import { KeepAliveStack, type KeepAliveView } from './KeepAliveStack';
+import type { SidebarVisibilityMotion } from '../../context/LayoutContext';
+import { resolveShellSidebarActiveTabChange } from './sidebarVisibilityMotion';
 
 export interface ShellSlotClassNames {
   root?: string;
@@ -49,6 +51,13 @@ export interface ShellProps {
   topBarActions?: JSX.Element;
   bottomBarItems?: JSX.Element;
   sidebarContent?: (activeTab: string) => JSX.Element;
+  resolveSidebarVisibilityMotion?: (args: {
+    currentActiveId: string;
+    nextActiveId: string;
+    openSidebar: boolean;
+    source: 'activity-bar';
+    isMobile: boolean;
+  }) => SidebarVisibilityMotion | undefined;
   /**
    * Sidebar rendering mode.
    *
@@ -87,8 +96,16 @@ export function Shell(props: ShellProps) {
   })();
   const setSidebarActiveTab = (id: string, opts?: { openSidebar?: boolean }) => {
     const fullScreen = registry?.getComponent(id)?.sidebar?.fullScreen ?? false;
-    const openSidebar = sidebarHidden() ? false : (opts?.openSidebar ?? !fullScreen);
-    layout.setSidebarActiveTab(id, { openSidebar });
+    const { openSidebar, visibilityMotion } = resolveShellSidebarActiveTabChange({
+      currentActiveId: layout.sidebarActiveTab(),
+      nextActiveId: id,
+      requestedOpenSidebar: opts?.openSidebar,
+      sidebarHidden: sidebarHidden(),
+      nextActiveFullScreen: fullScreen,
+      isMobile: isMobile(),
+      resolveSidebarVisibilityMotion: props.resolveSidebarVisibilityMotion,
+    });
+    layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion });
   };
 
   // Sidebar is a structural part of the layout. When disabled, force-close the mobile drawer.
@@ -109,6 +126,13 @@ export function Shell(props: ShellProps) {
     if (!isMobile()) {
       setMobileSidebarOpen(false);
     }
+  });
+
+  createEffect(() => {
+    const motion = layout.sidebarVisibilityMotion();
+    const revision = layout.sidebarVisibilityMotionRevision();
+    if (motion !== 'instant') return;
+    deferAfterPaint(() => layout.clearSidebarVisibilityMotion(revision));
   });
 
   const activityItems = createMemo<ActivityBarItem[]>(() => {
@@ -374,6 +398,7 @@ export function Shell(props: ShellProps) {
             <Sidebar
               width={effectiveSidebarWidth()}
               collapsed={layout.sidebarCollapsed() || isFullScreen()}
+              visibilityMotion={layout.sidebarVisibilityMotion()}
               ariaLabel={accessibility().sidebarLabel}
               resizer={
                 <ResizeHandle

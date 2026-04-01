@@ -96,6 +96,13 @@ If you want a tab to render in the **main content area** while keeping the sideb
 
 This is useful for "page + sidebar panel" layouts (for example, a chat page with a thread list in the sidebar).
 
+When a product shell needs the main page and the shell-owned sidebar to switch together without a width animation, prefer the shared one-shot Shell capability instead of page-level CSS hacks:
+
+- `layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion: 'instant' })`
+- `Shell.resolveSidebarVisibilityMotion(...)`
+
+This capability is for system-owned page boundary changes. Explicit user disclosure toggles on the active sidebar tab should usually stay animated.
+
 ### Keep-alive behavior (recommended)
 
 Floe provides keep-alive utilities so switching activity tabs can preserve UI state and avoid remount thrash.

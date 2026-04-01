@@ -61,6 +61,7 @@
 - 几何属性（`width` / `height` / `left` / `top` / `transform`）在热交互期间不能再叠加 transition。
 - 允许保留颜色、阴影、透明度等低成本反馈动画。
 - 统一通过 `data-floe-hot-interaction` + `data-floe-geometry-surface` 约束热交互期间的 motion 行为。
+- 对于 shell-owned page boundary 切换，如果产品要求某一次 sidebar 显隐直接完成而不是播放宽度动画，应使用 shared one-shot `visibilityMotion` contract，而不是在下游页面里长期关闭 sidebar transition。
 
 禁止：
 
@@ -139,6 +140,7 @@
 4. 任何 UI-first 行为必须先更新视觉状态，再 defer 宿主逻辑
 5. 任何热路径组件禁止直接使用无约束的 `transition-all`
 6. 如果组件确实需要布局动画，必须证明该动画不会和热交互同时发生，或者必须受 `data-floe-hot-interaction` 保护
+7. 对于 shell-owned sidebar 的单次显隐切换，如果产品想禁用该次 width motion，必须通过 shared `visibilityMotion` contract，而不是添加产品私有 class hack
 
 ## 4. 工程化防回退手段
 
