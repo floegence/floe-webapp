@@ -12,12 +12,15 @@ function read(relPath: string): string {
 describe('file browser reveal contract', () => {
   it('exposes controlled reveal props on FileBrowser and consumes reveal requests inside core views', () => {
     const browserSrc = read('../src/components/file-browser/FileBrowser.tsx');
+    const indexSrc = read('../src/components/file-browser/index.ts');
     const listSrc = read('../src/components/file-browser/FileListView.tsx');
     const gridSrc = read('../src/components/file-browser/FileGridView.tsx');
     const typesSrc = read('../src/components/file-browser/types.ts');
 
     expect(typesSrc).toContain("export type FileBrowserRevealClearFilter = 'never' | 'if-needed';");
     expect(typesSrc).toContain('export interface FileBrowserRevealRequest {');
+    expect(indexSrc).toContain('FileBrowserRevealClearFilter,');
+    expect(indexSrc).toContain('FileBrowserRevealRequest,');
     expect(typesSrc).toContain('revealRequest: Accessor<FileBrowserRevealRequest | null>;');
     expect(typesSrc).toContain('consumeRevealRequest: (requestId: string) => void;');
 

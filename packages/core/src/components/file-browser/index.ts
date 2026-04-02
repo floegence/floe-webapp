@@ -34,6 +34,8 @@ export type {
   FileItemLinkKind,
   FileItemLinkTargetType,
   FileItemLinkMeta,
+  FileBrowserRevealClearFilter,
+  FileBrowserRevealRequest,
   ViewMode,
   SortField,
   SortDirection,
