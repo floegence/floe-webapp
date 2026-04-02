@@ -11,7 +11,14 @@ import { FileGridView } from './FileGridView';
 import { FileBrowserToolbar } from './FileBrowserToolbar';
 import { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
 import { FileBrowserDragPreview } from './DragPreview';
-import type { FileItem, ViewMode, ContextMenuCallbacks, ContextMenuItem, FileListColumnRatios } from './types';
+import type {
+  FileItem,
+  ViewMode,
+  ContextMenuCallbacks,
+  ContextMenuItem,
+  FileListColumnRatios,
+  FileBrowserRevealRequest,
+} from './types';
 
 export interface FileBrowserProps {
   /** File tree data */
@@ -38,6 +45,10 @@ export interface FileBrowserProps {
   onSelect?: (items: FileItem[]) => void;
   /** Callback when a file is opened */
   onOpen?: (item: FileItem) => void;
+  /** Controlled programmatic reveal request for a specific item in the current directory. */
+  revealRequest?: FileBrowserRevealRequest | null;
+  /** Callback fired after the current reveal request has been consumed. */
+  onRevealRequestConsumed?: (requestId: string) => void;
   /** Additional class names */
   class?: string;
   /** Custom header content */
@@ -97,6 +108,8 @@ export function FileBrowser(props: FileBrowserProps) {
       onPathChange={props.onPathChange}
       onSelect={props.onSelect}
       onOpen={props.onOpen}
+      revealRequest={props.revealRequest}
+      onRevealRequestConsumed={props.onRevealRequestConsumed}
     >
       <FileBrowserInner
         class={props.class}

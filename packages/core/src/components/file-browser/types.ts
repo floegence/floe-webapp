@@ -138,6 +138,27 @@ export interface FilterMatchInfo {
 }
 
 /**
+ * Strategy for handling an active filter before revealing an item.
+ */
+export type FileBrowserRevealClearFilter = 'never' | 'if-needed';
+
+/**
+ * Programmatic reveal request for a specific file-browser item.
+ */
+export interface FileBrowserRevealRequest {
+  /** Unique request id so repeated reveals for the same item can still be consumed distinctly. */
+  requestId: string;
+  /** Target item id (selection uses file-browser ids, not paths). */
+  targetId: string;
+  /** Target item path for diagnostics and higher-level routing. */
+  targetPath: string;
+  /** Parent directory path that should contain the target item. */
+  parentPath: string;
+  /** Whether core may clear the active filter if the target is currently filtered out. */
+  clearFilter: FileBrowserRevealClearFilter;
+}
+
+/**
  * Optimistic update operation types
  */
 export type OptimisticUpdateType = 'remove' | 'update' | 'insert';
@@ -278,6 +299,10 @@ export interface FileBrowserContextValue {
   getFilterMatchForId: (id: string) => FilterMatchInfo | null;
   /** Selected items in the current view, ordered by currentFiles order */
   getSelectedItemsList: () => FileItem[];
+
+  // Programmatic reveal
+  revealRequest: Accessor<FileBrowserRevealRequest | null>;
+  consumeRevealRequest: (requestId: string) => void;
 
   // Sidebar
   sidebarCollapsed: Accessor<boolean>;

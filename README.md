@@ -41,6 +41,8 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 
 The file browser keeps `FileItem.type` focused on interaction (`'file' | 'folder'`) and uses optional `FileItem.link` metadata to represent symbolic links separately. That means symlink-to-folder items can stay navigable while still rendering with dedicated link-aware icons, and downstream apps can distinguish symbolic links without forking the core file-browser behavior.
 
+The same file-browser surface now also accepts a controlled `revealRequest` flow, so downstream apps can clear a blocking filter when needed, scroll a newly created item into view, and reuse the built-in single-selection state instead of wiring product-specific DOM reveal logic.
+
 ## What you can build
 
 | Use case | Floe fit |

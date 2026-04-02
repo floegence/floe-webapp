@@ -121,6 +121,8 @@ pnpm add @floegence/floe-webapp-core @floegence/floe-webapp-protocol solid-js
 
 Shared `FileBrowser` menus now emit semantic context (`item` vs `directory-background`) and support nested `children` actions, so downstream apps can add product menus such as `New` without inventing placeholder `FileItem` values or reimplementing submenu rendering.
 
+When a downstream mutation needs to focus a newly created item, prefer the controlled `revealRequest` API on `FileBrowser` / `FileBrowserProvider`; it keeps filter clearing, scrolling, and single-selection behavior inside the shared file-browser implementation instead of pushing DOM-specific reveal code into the product layer.
+
 ### Styling (Tailwind v4)
 
 Recommended: run Tailwind v4 in your app and import the Floe Tailwind entry from your CSS entry file.

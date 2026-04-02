@@ -1,4 +1,4 @@
-import { For, Show, untrack, createMemo, createSignal, onCleanup } from 'solid-js';
+import { For, Show, untrack, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
@@ -87,6 +87,80 @@ export function FileListView(props: FileListViewProps) {
   const visibleFiles = createMemo(() => {
     const { start, end } = virtual.range();
     return ctx.currentFiles().slice(start, end);
+  });
+  const rowRefs = new Map<string, HTMLButtonElement>();
+  let scrollEl: HTMLDivElement | null = null;
+  let revealAnimationFrame = 0;
+
+  const registerRow = (id: string, el: HTMLButtonElement | null) => {
+    if (el) {
+      rowRefs.set(id, el);
+      return;
+    }
+    rowRefs.delete(id);
+  };
+
+  const revealRowAtIndex = (index: number) => {
+    if (!scrollEl) return;
+
+    const rowTop = index * ROW_HEIGHT_PX;
+    const rowBottom = rowTop + ROW_HEIGHT_PX;
+    const viewportTop = scrollEl.scrollTop;
+    const viewportBottom = viewportTop + scrollEl.clientHeight;
+
+    if (rowTop < viewportTop) {
+      scrollEl.scrollTop = rowTop;
+      virtual.onScroll();
+      return;
+    }
+    if (rowBottom > viewportBottom) {
+      scrollEl.scrollTop = Math.max(0, rowBottom - scrollEl.clientHeight);
+      virtual.onScroll();
+    }
+  };
+
+  createEffect(() => {
+    const request = ctx.revealRequest();
+    const files = ctx.currentFiles();
+    visibleFiles();
+    if (!request) return;
+
+    const targetIndex = files.findIndex((item) => item.id === request.targetId);
+    if (targetIndex < 0) return;
+
+    const targetRow = rowRefs.get(request.targetId);
+    if (!targetRow) {
+      revealRowAtIndex(targetIndex);
+      return;
+    }
+
+    if (typeof cancelAnimationFrame === 'function' && revealAnimationFrame) {
+      cancelAnimationFrame(revealAnimationFrame);
+      revealAnimationFrame = 0;
+    }
+
+    const consume = () => {
+      if (ctx.revealRequest()?.requestId !== request.requestId) return;
+      rowRefs.get(request.targetId)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      ctx.selectItem(request.targetId, false);
+      ctx.consumeRevealRequest(request.requestId);
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      revealAnimationFrame = requestAnimationFrame(() => {
+        revealAnimationFrame = 0;
+        consume();
+      });
+      return;
+    }
+
+    queueMicrotask(consume);
+  });
+
+  onCleanup(() => {
+    if (typeof cancelAnimationFrame === 'function' && revealAnimationFrame) {
+      cancelAnimationFrame(revealAnimationFrame);
+    }
   });
 
   const handleSort = (field: SortField) => {
@@ -378,6 +452,7 @@ export function FileListView(props: FileListViewProps) {
       {/* File list */}
       <div
         ref={(el) => {
+          scrollEl = el;
           virtual.scrollRef(el);
           ctx.setScrollContainer(el);
         }}
@@ -423,6 +498,7 @@ export function FileListView(props: FileListViewProps) {
                   instanceId={instanceId()}
                   enableDragDrop={isDragEnabled()}
                   dragContext={dragContext}
+                  registerRow={registerRow}
                 />
               )}
             </For>
@@ -444,6 +520,7 @@ interface FileListItemProps {
   instanceId: string;
   enableDragDrop: boolean;
   dragContext: FileBrowserDragContextValue | undefined;
+  registerRow: (id: string, el: HTMLButtonElement | null) => void;
 }
 
 function FileListItem(props: FileListItemProps) {
@@ -531,6 +608,7 @@ function FileListItem(props: FileListItemProps) {
 
   // If the row is virtualized out or unmounted mid-gesture, always clean up.
   onCleanup(() => {
+    props.registerRow(props.item.id, null);
     stopDragOperation(false);
   });
 
@@ -729,7 +807,12 @@ function FileListItem(props: FileListItemProps) {
 
   return (
     <button
+      ref={(el) => {
+        props.registerRow(props.item.id, el);
+      }}
       type="button"
+      data-file-browser-item-id={props.item.id}
+      data-file-browser-item-path={props.item.path}
       {...fileBrowserTouchTargetAttrs}
       onClick={handleClick}
       onDblClick={handleDoubleClick}

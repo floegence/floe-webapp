@@ -10,6 +10,7 @@ import type {
   FileBrowserContextValue,
   ContextMenuEvent,
   FilterMatchInfo,
+  FileBrowserRevealRequest,
   OptimisticOperation,
   ScrollPosition,
 } from './types';
@@ -173,6 +174,8 @@ export interface FileBrowserProviderProps {
   onPathChange?: (path: string, source: 'user' | 'programmatic') => void;
   onSelect?: (items: FileItem[]) => void;
   onOpen?: (item: FileItem) => void;
+  revealRequest?: FileBrowserRevealRequest | null;
+  onRevealRequestConsumed?: (requestId: string) => void;
 }
 
 /**
@@ -260,6 +263,7 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [filterQuery, setFilterQueryInternal] = createSignal('');
   const [filterQueryApplied, setFilterQueryApplied] = createSignal('');
   const [isFilterActive, setFilterActive] = createSignal(false);
+  const [activeRevealRequest, setActiveRevealRequest] = createSignal<FileBrowserRevealRequest | null>(null);
 
   // UI-first filtering: apply the query after a paint so typing never blocks the input event.
   // We also coalesce rapid updates and only apply the latest query.
@@ -313,6 +317,11 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   createEffect(() => {
     if (!shouldPersist) return;
     floe.persist.debouncedSave(getStorageKey(SIDEBAR_COLLAPSED_STORAGE_KEY), sidebarCollapsed());
+  });
+
+  createEffect(() => {
+    const request = props.revealRequest ?? null;
+    setActiveRevealRequest(request);
   });
 
   // Wrap setViewMode and setSortConfig for external usage.
@@ -540,6 +549,21 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   // Public accessor required by FileBrowserContextValue
   const currentFiles: Accessor<FileItem[]> = () => filterState().items;
 
+  createEffect(() => {
+    const request = activeRevealRequest();
+    if (!request || request.clearFilter !== 'if-needed') return;
+
+    const currentVisible = filterState().fileById.has(request.targetId);
+    if (currentVisible) return;
+
+    const hiddenByFilter = sortedState().items.some((item) => item.id === request.targetId);
+    if (!hiddenByFilter) return;
+
+    setFilterQueryInternal('');
+    setFilterQueryApplied('');
+    setFilterActive(false);
+  });
+
   const getSelectedItemsFromIds = (ids: Iterable<string>): FileItem[] => {
     const state = filterState();
     const out: Array<{ index: number; item: FileItem }> = [];
@@ -673,6 +697,15 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
 
   const getSelectedItemsList = () => getSelectedItemsFromIds(selectedIdList());
 
+  const consumeRevealRequest = (requestId: string) => {
+    const current = activeRevealRequest();
+    if (!current || current.requestId !== requestId) return;
+
+    setActiveRevealRequest(null);
+    const onRevealRequestConsumed = props.onRevealRequestConsumed;
+    deferNonBlocking(() => onRevealRequestConsumed?.(requestId));
+  };
+
   const openItem = (item: FileItem) => {
     if (item.type === 'folder') {
       navigateTo(item);
@@ -775,6 +808,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     showContextMenu,
     hideContextMenu,
     openItem,
+    revealRequest: activeRevealRequest,
+    consumeRevealRequest,
     // Optimistic updates
     optimisticRemove,
     optimisticUpdate,

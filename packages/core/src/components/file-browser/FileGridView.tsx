@@ -105,11 +105,21 @@ export function FileGridView(props: FileGridViewProps) {
   const endIndex = () => Math.min(ctx.currentFiles().length, virtualRows.range().end * columns());
 
   const visibleFiles = createMemo(() => ctx.currentFiles().slice(startIndex(), endIndex()));
+  const tileRefs = new Map<string, HTMLButtonElement>();
+
+  const registerTile = (id: string, el: HTMLButtonElement | null) => {
+    if (el) {
+      tileRefs.set(id, el);
+      return;
+    }
+    tileRefs.delete(id);
+  };
 
   // When the column count changes (panel resize), keep the top row's first item stable.
   // Without this, the same scrollTop would map to a different item index, which feels like an "offset jump".
   let scrollEl: HTMLDivElement | null = null;
   let lastColumns = MIN_COLUMNS;
+  let revealAnimationFrame = 0;
   createEffect(() => {
     const nextColumns = columns();
     if (!scrollEl) {
@@ -126,6 +136,71 @@ export function FileGridView(props: FileGridViewProps) {
     virtualRows.onScroll();
 
     lastColumns = nextColumns;
+  });
+
+  const revealRowAtIndex = (index: number) => {
+    if (!scrollEl) return;
+
+    const row = Math.floor(index / Math.max(1, columns()));
+    const itemTop = row * rowHeightPx();
+    const itemBottom = itemTop + rowHeightPx();
+    const viewportTop = scrollEl.scrollTop;
+    const viewportBottom = viewportTop + scrollEl.clientHeight;
+
+    if (itemTop < viewportTop) {
+      scrollEl.scrollTop = itemTop;
+      virtualRows.onScroll();
+      return;
+    }
+    if (itemBottom > viewportBottom) {
+      scrollEl.scrollTop = Math.max(0, itemBottom - scrollEl.clientHeight);
+      virtualRows.onScroll();
+    }
+  };
+
+  createEffect(() => {
+    const request = ctx.revealRequest();
+    const files = ctx.currentFiles();
+    columns();
+    visibleFiles();
+    if (!request) return;
+
+    const targetIndex = files.findIndex((item) => item.id === request.targetId);
+    if (targetIndex < 0) return;
+
+    const targetTile = tileRefs.get(request.targetId);
+    if (!targetTile) {
+      revealRowAtIndex(targetIndex);
+      return;
+    }
+
+    if (typeof cancelAnimationFrame === 'function' && revealAnimationFrame) {
+      cancelAnimationFrame(revealAnimationFrame);
+      revealAnimationFrame = 0;
+    }
+
+    const consume = () => {
+      if (ctx.revealRequest()?.requestId !== request.requestId) return;
+      tileRefs.get(request.targetId)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      ctx.selectItem(request.targetId, false);
+      ctx.consumeRevealRequest(request.requestId);
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      revealAnimationFrame = requestAnimationFrame(() => {
+        revealAnimationFrame = 0;
+        consume();
+      });
+      return;
+    }
+
+    queueMicrotask(consume);
+  });
+
+  onCleanup(() => {
+    if (typeof cancelAnimationFrame === 'function' && revealAnimationFrame) {
+      cancelAnimationFrame(revealAnimationFrame);
+    }
   });
 
   return (
@@ -176,6 +251,7 @@ export function FileGridView(props: FileGridViewProps) {
                   instanceId={instanceId()}
                   enableDragDrop={isDragEnabled()}
                   dragContext={dragContext}
+                  registerTile={registerTile}
                 />
               )}
             </For>
@@ -191,6 +267,7 @@ interface FileGridItemProps {
   instanceId: string;
   enableDragDrop: boolean;
   dragContext: FileBrowserDragContextValue | undefined;
+  registerTile: (id: string, el: HTMLButtonElement | null) => void;
 }
 
 function FileGridItem(props: FileGridItemProps) {
@@ -278,6 +355,7 @@ function FileGridItem(props: FileGridItemProps) {
 
   // If the tile is virtualized out or unmounted mid-gesture, always clean up.
   onCleanup(() => {
+    props.registerTile(props.item.id, null);
     stopDragOperation(false);
   });
 
@@ -476,7 +554,12 @@ function FileGridItem(props: FileGridItemProps) {
 
   return (
     <button
+      ref={(el) => {
+        props.registerTile(props.item.id, el);
+      }}
       type="button"
+      data-file-browser-item-id={props.item.id}
+      data-file-browser-item-path={props.item.path}
       {...fileBrowserTouchTargetAttrs}
       title={props.item.name}
       onClick={handleClick}
