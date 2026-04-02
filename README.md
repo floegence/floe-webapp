@@ -37,6 +37,10 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 | `Protocol Layer` | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring | Lets apps attach connection state and remote capabilities without baking business contracts into the framework | [`docs/protocol.md`](docs/protocol.md) |
 | `Boot Helpers` | Hash/session helpers and `postMessage` handshake utilities | Helps multi-window and sandbox-style launch flows stay consistent | [`docs/runtime.md`](docs/runtime.md) |
 
+### File browser link semantics
+
+The file browser keeps `FileItem.type` focused on interaction (`'file' | 'folder'`) and uses optional `FileItem.link` metadata to represent symbolic links separately. That means symlink-to-folder items can stay navigable while still rendering with dedicated link-aware icons, and downstream apps can distinguish symbolic links without forking the core file-browser behavior.
+
 ## What you can build
 
 | Use case | Floe fit |

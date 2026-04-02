@@ -11,7 +11,11 @@ export { FileBrowserDragPreview } from './DragPreview';
 export {
   FolderIcon,
   FolderOpenIcon,
+  SymlinkFolderIcon,
+  SymlinkFolderOpenIcon,
   FileIcon,
+  SymlinkFileIcon,
+  BrokenSymlinkIcon,
   CodeFileIcon,
   JavaScriptFileIcon,
   TypeScriptFileIcon,
@@ -27,6 +31,9 @@ export {
 export type {
   FileItem,
   FileItemIconOverride,
+  FileItemLinkKind,
+  FileItemLinkTargetType,
+  FileItemLinkMeta,
   ViewMode,
   SortField,
   SortDirection,

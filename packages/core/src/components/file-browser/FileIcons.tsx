@@ -12,8 +12,12 @@ type CodeBadgeSpec = {
   label: string;
   tone: CodeBadgeTone;
 };
-type ResolvableFileIcon = Pick<FileItem, 'name' | 'type' | 'extension' | 'icon'>;
+type ResolvableFileIcon = Pick<FileItem, 'name' | 'type' | 'extension' | 'icon' | 'link'>;
 export type FileItemIconRenderer = FileIconComponent | JSX.Element;
+
+export interface ResolveFileItemIconOptions {
+  open?: boolean;
+}
 
 const IMAGE_FILE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp']);
 const DOCUMENT_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf']);
@@ -260,6 +264,7 @@ interface FileShellIconProps extends FileIconProps {
   accent?: string;
   fillOpacity?: number | string;
   children?: JSX.Element;
+  linkTargetType?: NonNullable<FileItem['link']>['targetType'];
 }
 
 const FileShellIcon = (props: FileShellIconProps) => {
@@ -270,6 +275,8 @@ const FileShellIcon = (props: FileShellIconProps) => {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       class={props.class}
+      data-file-link-kind={props.linkTargetType ? 'symbolic' : undefined}
+      data-file-link-target-type={props.linkTargetType}
     >
       <Show when={props.accent}>
         <path fill={accent()} opacity={props.fillOpacity ?? 0.18} d={FILE_SHELL_PATH} />
@@ -295,78 +302,128 @@ const FileShellIcon = (props: FileShellIconProps) => {
   );
 };
 
-// Folder icon with subtle gradient
-export const FolderIcon = (props: FileIconProps) => {
+const LinkDecoration = (props: { targetType: NonNullable<FileItem['link']>['targetType'] }) => {
+  const stroke = () => props.targetType === 'broken'
+    ? 'var(--error)'
+    : 'color-mix(in srgb, var(--foreground) 82%, var(--background))';
+  const fill = () => props.targetType === 'broken'
+    ? 'color-mix(in srgb, var(--error) 18%, var(--background))'
+    : 'color-mix(in srgb, var(--background) 92%, var(--foreground) 8%)';
+
+  return (
+    <g data-file-link-kind="symbolic" data-file-link-target-type={props.targetType}>
+      <circle cx="18" cy="18" r="4" fill={fill()} stroke={stroke()} stroke-width="1" />
+      <path
+        fill="none"
+        stroke={stroke()}
+        stroke-width="1.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M15.8 18h3.4m0 0-1.4-1.4m1.4 1.4-1.4 1.4"
+      />
+      <Show when={props.targetType === 'broken'}>
+        <path
+          fill="none"
+          stroke="var(--error)"
+          stroke-width="1.35"
+          stroke-linecap="round"
+          d="M15.9 15.9 20.1 20.1"
+        />
+      </Show>
+    </g>
+  );
+};
+
+interface FolderGraphicProps extends FileIconProps {
+  open?: boolean;
+  linkTargetType?: NonNullable<FileItem['link']>['targetType'];
+}
+
+const FolderGraphic = (props: FolderGraphicProps) => {
   // Avoid duplicate DOM ids: `url(#...)` references break under repeated hardcoded ids.
   const baseId = createUniqueId();
-  const gradientId = `floe-folder-gradient-${baseId}`;
+  const isOpen = () => !!props.open;
+  const gradientId = () => `${isOpen() ? 'floe-folder-open-gradient' : 'floe-folder-gradient'}-${baseId}`;
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       class={props.class}
+      data-file-link-kind={props.linkTargetType ? 'symbolic' : undefined}
+      data-file-link-target-type={props.linkTargetType}
     >
       <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id={gradientId()} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
           <stop
             offset="100%"
             style={{
-              'stop-color': 'color-mix(in srgb, var(--warning) 80%, var(--foreground))',
+              'stop-color': isOpen()
+                ? 'color-mix(in srgb, var(--warning) 70%, var(--foreground))'
+                : 'color-mix(in srgb, var(--warning) 80%, var(--foreground))',
               'stop-opacity': 1,
             }}
           />
         </linearGradient>
       </defs>
       <path
-        fill={`url(#${gradientId})`}
-        d="M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"
+        fill={`url(#${gradientId()})`}
+        d={isOpen()
+          ? 'M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z'
+          : 'M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z'}
       />
+      <Show when={isOpen()}>
+        <path
+          fill="var(--background)"
+          opacity="0.3"
+          d="M3 8l4-3h14l-4 3H3z"
+        />
+      </Show>
+      <Show when={props.linkTargetType}>
+        <LinkDecoration targetType={props.linkTargetType!} />
+      </Show>
     </svg>
   );
 };
+
+// Folder icon with subtle gradient
+export const FolderIcon = (props: FileIconProps) => <FolderGraphic class={props.class} />;
 
 // Folder open icon
-export const FolderOpenIcon = (props: FileIconProps) => {
-  // Avoid duplicate DOM ids: `url(#...)` references break under repeated hardcoded ids.
-  const baseId = createUniqueId();
-  const gradientId = `floe-folder-open-gradient-${baseId}`;
+export const FolderOpenIcon = (props: FileIconProps) => <FolderGraphic class={props.class} open />;
 
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      class={props.class}
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
-          <stop
-            offset="100%"
-            style={{
-              'stop-color': 'color-mix(in srgb, var(--warning) 70%, var(--foreground))',
-              'stop-opacity': 1,
-            }}
-          />
-        </linearGradient>
-      </defs>
-      <path
-        fill={`url(#${gradientId})`}
-        d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z"
-      />
-      <path
-        fill="var(--background)"
-        opacity="0.3"
-        d="M3 8l4-3h14l-4 3H3z"
-      />
-    </svg>
-  );
-};
+export const SymlinkFolderIcon = (props: FileIconProps) => (
+  <FolderGraphic class={props.class} linkTargetType="folder" />
+);
+
+export const SymlinkFolderOpenIcon = (props: FileIconProps) => (
+  <FolderGraphic class={props.class} open linkTargetType="folder" />
+);
+
+const BrokenSymlinkFolderIcon = (props: FileIconProps) => (
+  <FolderGraphic class={props.class} linkTargetType="broken" />
+);
+
+const BrokenSymlinkFolderOpenIcon = (props: FileIconProps) => (
+  <FolderGraphic class={props.class} open linkTargetType="broken" />
+);
 
 // Generic file icon
 export const FileIcon = (props: FileIconProps) => (
   <FileShellIcon class={props.class} />
+);
+
+export const SymlinkFileIcon = (props: FileIconProps) => (
+  <FileShellIcon class={props.class} linkTargetType="file">
+    <LinkDecoration targetType="file" />
+  </FileShellIcon>
+);
+
+export const BrokenSymlinkIcon = (props: FileIconProps) => (
+  <FileShellIcon class={props.class} accent="var(--muted-foreground)" linkTargetType="broken">
+    <LinkDecoration targetType="broken" />
+  </FileShellIcon>
 );
 
 // Generic code file icon fallback for known code-like extensions without a dedicated badge.
@@ -514,13 +571,34 @@ export function getFileIcon(extension?: string): FileIconComponent {
   return FileIcon;
 }
 
-export function resolveFileItemIcon(item: ResolvableFileIcon): FileItemIconRenderer {
-  if (item.type === 'folder') {
-    return FolderIcon;
+function resolveFolderIcon(item: ResolvableFileIcon, options: ResolveFileItemIconOptions): FileIconComponent {
+  const linkTargetType = item.link?.kind === 'symbolic' ? item.link.targetType : undefined;
+  if (linkTargetType === 'broken') {
+    return options.open ? BrokenSymlinkFolderOpenIcon : BrokenSymlinkFolderIcon;
   }
+  if (linkTargetType) {
+    return options.open ? SymlinkFolderOpenIcon : SymlinkFolderIcon;
+  }
+  return options.open ? FolderOpenIcon : FolderIcon;
+}
 
+export function resolveFileItemIcon(
+  item: ResolvableFileIcon,
+  options: ResolveFileItemIconOptions = {},
+): FileItemIconRenderer {
   if (item.icon) {
     return item.icon;
+  }
+
+  if (item.type === 'folder') {
+    return resolveFolderIcon(item, options);
+  }
+
+  if (item.link?.kind === 'symbolic' && item.link.targetType === 'broken') {
+    return BrokenSymlinkIcon;
+  }
+  if (item.link?.kind === 'symbolic') {
+    return SymlinkFileIcon;
   }
 
   const codeBadgeSpec = resolveCodeBadgeSpec(item);
@@ -531,8 +609,8 @@ export function resolveFileItemIcon(item: ResolvableFileIcon): FileItemIconRende
   return getFileIcon(getResolvedExtension(item));
 }
 
-export function FileItemIcon(props: { item: ResolvableFileIcon; class?: string }) {
-  const icon = () => resolveFileItemIcon(props.item);
+export function FileItemIcon(props: { item: ResolvableFileIcon; class?: string; open?: boolean }) {
+  const icon = () => resolveFileItemIcon(props.item, { open: props.open });
 
   return (
     <Show

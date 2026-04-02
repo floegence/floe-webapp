@@ -31,6 +31,13 @@ describe('picker initial path state', () => {
     expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("initialPath: () => local.initialPath ?? '/',");
   });
 
+  it('renders picker tree folders through FileItemIcon so symlink metadata can flow into picker affordances too', () => {
+    const src = read('../src/components/ui/picker/PickerBase.tsx');
+
+    expect(src).toContain("import { FileItemIcon, FolderOpenIcon } from '../../file-browser/FileIcons';");
+    expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
+  });
+
   it('resolves picker initial paths into a single internal-path domain', () => {
     expect(resolvePickerInitialPath('/Users/demo', '/Users/demo')).toBe('/');
     expect(resolvePickerInitialPath('/Users/demo/workspace', '/Users/demo')).toBe('/workspace');

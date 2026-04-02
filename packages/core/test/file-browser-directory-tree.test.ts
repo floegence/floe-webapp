@@ -15,5 +15,14 @@ describe('DirectoryTree', () => {
     expect(m?.[0]).toContain('ctx.navigateTo(');
     expect(m?.[0]).not.toContain('ctx.setCurrentPath(');
   });
-});
 
+  it('should render tree folder rows through FileItemIcon so symlink-folder visuals stay aligned with list and grid views', () => {
+    const here = fileURLToPath(import.meta.url);
+    const dir = path.dirname(here);
+    const target = path.resolve(dir, '../src/components/file-browser/DirectoryTree.tsx');
+    const src = fs.readFileSync(target, 'utf8');
+
+    expect(src).toContain("import { FileItemIcon } from './FileIcons';");
+    expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
+  });
+});

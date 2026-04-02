@@ -4,6 +4,7 @@ import type { FileItem } from '../src/components/file-browser/types';
 import {
   CodeFileIcon,
   ConfigFileIcon,
+  BrokenSymlinkIcon,
   DocumentFileIcon,
   FileIcon,
   FileItemIcon,
@@ -13,6 +14,9 @@ import {
   JavaScriptFileIcon,
   ShellScriptFileIcon,
   StyleFileIcon,
+  SymlinkFileIcon,
+  SymlinkFolderIcon,
+  SymlinkFolderOpenIcon,
   TypeScriptFileIcon,
   getFileIcon,
   resolveFileItemIcon,
@@ -22,8 +26,8 @@ function extractAll(re: RegExp, input: string): string[] {
   return Array.from(input.matchAll(re), (m) => m[1] ?? '');
 }
 
-function renderItemIcon(item: FileItem): string {
-  return renderToString(() => <FileItemIcon item={item} class="w-4 h-4" />);
+function renderItemIcon(item: FileItem, options: { open?: boolean } = {}): string {
+  return renderToString(() => <FileItemIcon item={item} open={options.open} class="w-4 h-4" />);
 }
 
 function expectCodeBadge(html: string, label: string, tone: string): void {
@@ -109,6 +113,20 @@ describe('file icons', () => {
     expect(resolveFileItemIcon(item)).toBe(CustomIcon);
   });
 
+  it('resolveFileItemIcon should prefer item.icon for folders before symlink-aware folder fallback', () => {
+    const CustomIcon = (props: { class?: string }) => <svg data-custom-folder-icon="true" class={props.class} />;
+    const item: FileItem = {
+      id: 'linked-folder',
+      name: 'linked-folder',
+      type: 'folder',
+      path: '/linked-folder',
+      icon: CustomIcon,
+      link: { kind: 'symbolic', targetType: 'folder' },
+    };
+
+    expect(resolveFileItemIcon(item)).toBe(CustomIcon);
+  });
+
   it('FileItemIcon should render JSX element icon overrides', () => {
     const item: FileItem = {
       id: 'custom.js',
@@ -122,6 +140,69 @@ describe('file icons', () => {
     const html = renderItemIcon(item);
 
     expect(html).toContain('data-custom-element-icon="true"');
+  });
+
+  it('resolveFileItemIcon should return dedicated symbolic-link icons for folder targets', () => {
+    const folderLink: FileItem = {
+      id: '/linked-dir',
+      name: 'linked-dir',
+      type: 'folder',
+      path: '/linked-dir',
+      link: { kind: 'symbolic', targetType: 'folder' },
+    };
+
+    expect(resolveFileItemIcon(folderLink)).toBe(SymlinkFolderIcon);
+    expect(resolveFileItemIcon(folderLink, { open: true })).toBe(SymlinkFolderOpenIcon);
+  });
+
+  it('resolveFileItemIcon should return dedicated symbolic-link icons for file and broken targets', () => {
+    const linkedFile: FileItem = {
+      id: '/linked-file',
+      name: 'linked-file',
+      type: 'file',
+      path: '/linked-file',
+      link: { kind: 'symbolic', targetType: 'file' },
+    };
+    const brokenLink: FileItem = {
+      id: '/broken-link',
+      name: 'broken-link',
+      type: 'file',
+      path: '/broken-link',
+      link: { kind: 'symbolic', targetType: 'broken' },
+    };
+
+    expect(resolveFileItemIcon(linkedFile)).toBe(SymlinkFileIcon);
+    expect(resolveFileItemIcon(brokenLink)).toBe(BrokenSymlinkIcon);
+  });
+
+  it('FileItemIcon should expose symlink metadata in rendered markup for folder and file links', () => {
+    const symlinkFolderHtml = renderItemIcon({
+      id: '/linked-dir',
+      name: 'linked-dir',
+      type: 'folder',
+      path: '/linked-dir',
+      link: { kind: 'symbolic', targetType: 'folder' },
+    });
+    const openSymlinkFolderHtml = renderItemIcon({
+      id: '/linked-dir-open',
+      name: 'linked-dir-open',
+      type: 'folder',
+      path: '/linked-dir-open',
+      link: { kind: 'symbolic', targetType: 'folder' },
+    }, { open: true });
+    const brokenSymlinkHtml = renderItemIcon({
+      id: '/broken-link',
+      name: 'broken-link',
+      type: 'file',
+      path: '/broken-link',
+      link: { kind: 'symbolic', targetType: 'broken' },
+    });
+
+    expect(symlinkFolderHtml).toContain('data-file-link-kind="symbolic"');
+    expect(symlinkFolderHtml).toContain('data-file-link-target-type="folder"');
+    expect(openSymlinkFolderHtml).toContain('data-file-link-target-type="folder"');
+    expect(openSymlinkFolderHtml).toContain('floe-folder-open-gradient-');
+    expect(brokenSymlinkHtml).toContain('data-file-link-target-type="broken"');
   });
 
   it('FileItemIcon should render a JavaScript badge for module variants such as .mjs', () => {

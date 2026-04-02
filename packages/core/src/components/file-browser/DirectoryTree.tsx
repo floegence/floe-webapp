@@ -2,7 +2,7 @@ import { For, Show, createMemo, untrack, createSignal } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
-import { FolderIcon, FolderOpenIcon } from './FileIcons';
+import { FileItemIcon } from './FileIcons';
 import type { FileItem } from './types';
 import { ChevronRight } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
@@ -263,12 +263,7 @@ function FolderTreeItem(props: TreeItemProps) {
         >
           {/* Folder icon */}
           <span class="flex-shrink-0 w-4 h-4">
-            <Show
-              when={hasSubfolders() && isExpanded()}
-              fallback={<FolderIcon class="w-4 h-4" />}
-            >
-              <FolderOpenIcon class="w-4 h-4" />
-            </Show>
+            <FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />
           </span>
 
           {/* Folder name */}

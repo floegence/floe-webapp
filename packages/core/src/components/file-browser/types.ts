@@ -1,6 +1,13 @@
 import type { JSX, Accessor, Component } from 'solid-js';
 
 export type FileItemIconOverride = Component<{ class?: string }> | JSX.Element;
+export type FileItemLinkKind = 'symbolic';
+export type FileItemLinkTargetType = 'file' | 'folder' | 'broken' | 'unknown';
+
+export interface FileItemLinkMeta {
+  kind: FileItemLinkKind;
+  targetType: FileItemLinkTargetType;
+}
 
 /**
  * Represents a file or folder item in the browser
@@ -15,6 +22,8 @@ export interface FileItem {
   extension?: string;
   children?: FileItem[];
   icon?: FileItemIconOverride;
+  /** Optional link metadata for rendering symbolic links distinctly from plain entries. */
+  link?: FileItemLinkMeta;
 }
 
 /**

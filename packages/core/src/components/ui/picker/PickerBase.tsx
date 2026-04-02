@@ -17,7 +17,7 @@ import { deferAfterPaint } from '../../../utils/defer';
 import { Button } from '../Button';
 import { Input } from '../Input';
 import { ChevronRight, Plus, Check, X } from '../../icons';
-import { FolderIcon, FolderOpenIcon } from '../../file-browser/FileIcons';
+import { FileItemIcon, FolderOpenIcon } from '../../file-browser/FileIcons';
 import type { FileItem } from '../../file-browser/types';
 
 // ─── Common Picker Props Interface ────────────────────────────────────────────
@@ -691,12 +691,7 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
           )}
         >
           <span class="flex-shrink-0 w-4 h-4">
-            <Show
-              when={hasSubfolders() && isExpanded()}
-              fallback={<FolderIcon class="w-4 h-4" />}
-            >
-              <FolderOpenIcon class="w-4 h-4" />
-            </Show>
+            <FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />
           </span>
           <span class="truncate">{props.item.name}</span>
         </button>
