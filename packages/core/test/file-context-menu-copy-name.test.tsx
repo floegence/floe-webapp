@@ -2,15 +2,23 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderToString } from 'solid-js/web';
 import { FileBrowserProvider, useFileBrowser } from '../src/components/file-browser/FileBrowserContext';
 import { FileContextMenu, createDefaultContextMenuItems, dispatchContextMenuAction } from '../src/components/file-browser/FileContextMenu';
-import type { FileItem } from '../src/components/file-browser/types';
+import type { ContextMenuEvent, FileItem } from '../src/components/file-browser/types';
 
 describe('FileContextMenu copy-name behavior', () => {
   const files: FileItem[] = [{ id: 'f1', name: 'a.txt', type: 'file', path: '/a.txt' }];
+  const menuEvent: ContextMenuEvent = {
+    x: 8,
+    y: 8,
+    items: files,
+    targetKind: 'item',
+    source: 'list',
+    directory: null,
+  };
 
   it('should hide Copy Name when callbacks.onCopyName is not provided', () => {
     function Harness() {
       const ctx = useFileBrowser();
-      if (!ctx.contextMenu()) ctx.showContextMenu({ x: 8, y: 8, items: files });
+      if (!ctx.contextMenu()) ctx.showContextMenu(menuEvent);
       return <FileContextMenu callbacks={{}} />;
     }
 
@@ -26,7 +34,7 @@ describe('FileContextMenu copy-name behavior', () => {
   it('should show Copy Name when callbacks.onCopyName is provided', () => {
     function Harness() {
       const ctx = useFileBrowser();
-      if (!ctx.contextMenu()) ctx.showContextMenu({ x: 8, y: 8, items: files });
+      if (!ctx.contextMenu()) ctx.showContextMenu(menuEvent);
       return <FileContextMenu callbacks={{ onCopyName: () => {} }} />;
     }
 

@@ -11,6 +11,7 @@ import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { ResizeHandle } from '../layout/ResizeHandle';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
+import { createItemContextMenuEvent } from './contextMenuEvent';
 
 export interface FileListViewProps {
   class?: string;
@@ -450,7 +451,7 @@ function FileListItem(props: FileListItemProps) {
   const isSelected = () => ctx.isSelected(props.item.id);
   const filterMatch = () => ctx.getFilterMatchForId(props.item.id);
   const item = untrack(() => props.item);
-  const longPress = createLongPressContextMenuHandlers(ctx, item);
+  const longPress = createLongPressContextMenuHandlers(ctx, item, { source: 'list' });
   let lastPointerType: PointerEvent['pointerType'] | undefined;
 
   // Drag state
@@ -711,11 +712,13 @@ function FileListItem(props: FileListItemProps) {
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
-    ctx.showContextMenu({
+    ctx.showContextMenu(createItemContextMenuEvent({
       x: e.clientX,
       y: e.clientY,
+      triggerItem: props.item,
       items: selectedItems,
-    });
+      source: 'list',
+    }));
   };
 
   // Get drag state for styling

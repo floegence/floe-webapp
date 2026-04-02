@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
 import {
   Dropdown,
-  getWrappedMenuItemIndex,
   resolveDropdownTriggerKeyAction,
 } from '../src/components/ui/Dropdown';
+import { getWrappedMenuItemIndex } from '../src/components/ui/menuUtils';
 
 describe('Dropdown accessibility', () => {
   it('renders a semantic trigger wrapper with explicit labeling hooks', () => {

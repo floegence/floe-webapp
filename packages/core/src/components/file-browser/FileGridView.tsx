@@ -8,6 +8,7 @@ import { FileItemIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
+import { createItemContextMenuEvent } from './contextMenuEvent';
 
 export interface FileGridViewProps {
   class?: string;
@@ -197,7 +198,7 @@ function FileGridItem(props: FileGridItemProps) {
   const isSelected = () => ctx.isSelected(props.item.id);
   const filterMatch = () => ctx.getFilterMatchForId(props.item.id);
   const item = untrack(() => props.item);
-  const longPress = createLongPressContextMenuHandlers(ctx, item);
+  const longPress = createLongPressContextMenuHandlers(ctx, item, { source: 'grid' });
   let lastPointerType: PointerEvent['pointerType'] | undefined;
 
   // Drag state
@@ -458,11 +459,13 @@ function FileGridItem(props: FileGridItemProps) {
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
-    ctx.showContextMenu({
+    ctx.showContextMenu(createItemContextMenuEvent({
       x: e.clientX,
       y: e.clientY,
+      triggerItem: props.item,
       items: selectedItems,
-    });
+      source: 'grid',
+    }));
   };
 
   // Get drag state for styling

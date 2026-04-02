@@ -1,14 +1,21 @@
 import { onCleanup } from 'solid-js';
 import type { FileBrowserContextValue, FileItem } from './types';
+import { createItemContextMenuEvent } from './contextMenuEvent';
 
 export function createLongPressContextMenuHandlers(
   ctx: FileBrowserContextValue,
   item: FileItem,
-  options?: { delayMs?: number; moveTolerancePx?: number; selectOnOpen?: boolean }
+  options?: {
+    delayMs?: number;
+    moveTolerancePx?: number;
+    selectOnOpen?: boolean;
+    source?: 'list' | 'grid' | 'tree';
+  }
 ) {
   const delayMs = options?.delayMs ?? 500;
   const moveTolerancePx = options?.moveTolerancePx ?? 10;
   const selectOnOpen = options?.selectOnOpen ?? true;
+  const source = options?.source ?? 'list';
 
   let timer: number | null = null;
   let start: { x: number; y: number } | null = null;
@@ -28,7 +35,13 @@ export function createLongPressContextMenuHandlers(
 
   const openMenuAt = (x: number, y: number) => {
     if (!selectOnOpen) {
-      ctx.showContextMenu({ x, y, items: [item] });
+      ctx.showContextMenu(createItemContextMenuEvent({
+        x,
+        y,
+        triggerItem: item,
+        items: [item],
+        source,
+      }));
       armSuppressNextClick();
       return;
     }
@@ -41,7 +54,13 @@ export function createLongPressContextMenuHandlers(
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [item];
 
-    ctx.showContextMenu({ x, y, items: selectedItems });
+    ctx.showContextMenu(createItemContextMenuEvent({
+      x,
+      y,
+      triggerItem: item,
+      items: selectedItems,
+      source,
+    }));
     armSuppressNextClick();
   };
 

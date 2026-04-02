@@ -56,6 +56,15 @@ export type ContextMenuActionType =
   | 'rename'
   | 'custom';
 
+export type ContextMenuTargetKind = 'item' | 'directory-background';
+
+export type ContextMenuSource = 'list' | 'grid' | 'tree' | 'background' | 'custom';
+
+export interface ContextMenuDirectory {
+  path: string;
+  item?: FileItem;
+}
+
 /**
  * Context menu item definition
  */
@@ -75,7 +84,9 @@ export interface ContextMenuItem {
   /** Keyboard shortcut hint (display only) */
   shortcut?: string;
   /** Custom handler for 'custom' type actions */
-  onAction?: (items: FileItem[]) => void;
+  onAction?: (items: FileItem[], event?: ContextMenuEvent) => void;
+  /** Cascade submenu items */
+  children?: ContextMenuItem[];
 }
 
 /**
@@ -88,6 +99,12 @@ export interface ContextMenuEvent {
   y: number;
   /** Target file/folder items */
   items: FileItem[];
+  /** Semantic menu target category */
+  targetKind: ContextMenuTargetKind;
+  /** Source surface that opened the menu */
+  source: ContextMenuSource;
+  /** Resolved directory scope for directory-scoped actions */
+  directory: ContextMenuDirectory | null;
 }
 
 /**

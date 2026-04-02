@@ -7,6 +7,7 @@ import type { FileItem } from './types';
 import { ChevronRight } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
+import { createItemContextMenuEvent } from './contextMenuEvent';
 
 export interface DirectoryTreeProps {
   class?: string;
@@ -85,7 +86,7 @@ function FolderTreeItem(props: TreeItemProps) {
   const isExpanded = () => ctx.isExpanded(props.item.path);
   const isActive = () => ctx.currentPath() === props.item.path;
   const item = untrack(() => props.item);
-  const longPress = createLongPressContextMenuHandlers(ctx, item, { selectOnOpen: false });
+  const longPress = createLongPressContextMenuHandlers(ctx, item, { selectOnOpen: false, source: 'tree' });
   let lastPointerType: PointerEvent['pointerType'] | undefined;
 
   // Drop target state
@@ -191,11 +192,13 @@ function FolderTreeItem(props: TreeItemProps) {
     e.stopPropagation();
     if (isTouchLike()) return;
 
-    ctx.showContextMenu({
+    ctx.showContextMenu(createItemContextMenuEvent({
       x: e.clientX,
       y: e.clientY,
+      triggerItem: props.item,
       items: [props.item],
-    });
+      source: 'tree',
+    }));
   };
 
   const handleToggle = () => {
