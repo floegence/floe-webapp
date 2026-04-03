@@ -107,13 +107,14 @@ function Example() {
 export const tagDoc: ComponentDoc = {
   name: 'Tag',
   description:
-    'Compact metadata label with solid and soft tone systems, designed for restrained semantic emphasis.',
+    'Compact metadata label built from semantic variants and surface tones, designed for restrained emphasis in dense professional UIs.',
   props: [
     {
       name: 'variant',
       type: "'neutral' | 'primary' | 'success' | 'warning' | 'error' | 'info'",
       default: "'neutral'",
-      description: 'Semantic tone for the tag background and border.',
+      description:
+        'Semantic role of the tag: baseline metadata, active context, confirmed state, follow-up risk, blocking issue, or supporting signal.',
     },
     {
       name: 'size',
@@ -125,7 +126,8 @@ export const tagDoc: ComponentDoc = {
       name: 'tone',
       type: "'solid' | 'soft'",
       default: "'solid'",
-      description: 'Chooses between dark-surface tags or light-surface tags with same-hue text.',
+      description:
+        'Surface emphasis: solid for stronger chips, soft for quieter metadata. Soft adapts by theme with matte surfaces in light mode and translucent color film in dark mode.',
     },
     {
       name: 'icon',
@@ -152,12 +154,15 @@ export const tagDoc: ComponentDoc = {
     ],
     bestPractices: [
       'Keep labels short and scannable, ideally one to three words',
+      'Choose variant by meaning first: neutral for baseline metadata, primary for current context, success for confirmed states, warning for follow-up, error for blockers, info for supporting signals',
       'Use "solid" for higher emphasis and "soft" when tags need to sit more quietly inside content',
+      'Expect "soft" tags to read differently by theme: matte and paper-like in light mode, translucent and film-like in dark mode',
       'Use semantic variants sparingly so the tone remains calm and professional',
       'Prefer tags for metadata and status, not primary actions',
     ],
     avoid: [
       'Long sentence-like content that should be body text instead',
+      'Picking variants as decoration instead of semantic meaning',
       'Using too many high-emphasis tags in the same cluster',
       'Treating tags like buttons without adding explicit interaction affordances',
     ],
@@ -170,11 +175,11 @@ export const tagDoc: ComponentDoc = {
 function Example() {
   return (
     <div class="flex flex-wrap gap-2">
-      <Tag variant="neutral">Internal</Tag>
+      <Tag variant="neutral">2 files</Tag>
       <Tag variant="primary" icon={GitBranch}>release/2026.03</Tag>
       <Tag variant="success" dot icon={CheckCircle}>Approved</Tag>
-      <Tag tone="soft" variant="info">Observability</Tag>
-      <Tag variant="warning">Review</Tag>
+      <Tag tone="soft" variant="info">Telemetry</Tag>
+      <Tag variant="warning">Needs Review</Tag>
     </div>
   );
 }`,
@@ -1974,7 +1979,8 @@ function Example() {
 // ===========================
 export const floatingWindowDoc: ComponentDoc = {
   name: 'FloatingWindow',
-  description: 'Persistent modeless tool window with drag, resize, maximize/restore, and close functionality.',
+  description:
+    'Persistent modeless tool window with drag, resize, maximize/restore, and close functionality.',
   props: [
     {
       name: 'open',
@@ -2017,7 +2023,11 @@ export const floatingWindowDoc: ComponentDoc = {
     },
   ],
   usage: {
-    whenToUse: ['Multi-window applications', 'Tool palettes and inspectors', 'Modeless tool windows'],
+    whenToUse: [
+      'Multi-window applications',
+      'Tool palettes and inspectors',
+      'Modeless tool windows',
+    ],
     bestPractices: [
       'Set reasonable default and minimum sizes',
       'Use active and inactive window states to keep the current tool window easy to find',

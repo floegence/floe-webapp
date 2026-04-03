@@ -763,7 +763,11 @@
     --segmented-control-item-hover-bg: color-mix(in srgb, var(--background) 74%, var(--muted) 26%);
     --segmented-control-item-hover-color: var(--foreground);
     --segmented-control-item-active-bg: color-mix(in srgb, var(--background) 96%, white 4%);
-    --segmented-control-item-active-border: color-mix(in srgb, var(--border) 70%, var(--foreground) 30%);
+    --segmented-control-item-active-border: color-mix(
+      in srgb,
+      var(--border) 70%,
+      var(--foreground) 30%
+    );
     --segmented-control-item-active-color: var(--foreground);
     --segmented-control-item-active-shadow:
       inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
@@ -776,9 +780,21 @@
   .dark .floe-segmented-control {
     --segmented-control-bg: color-mix(in srgb, var(--muted) 56%, var(--background) 44%);
     --segmented-control-border: color-mix(in srgb, var(--border) 78%, var(--foreground) 22%);
-    --segmented-control-item-hover-bg: color-mix(in srgb, var(--foreground) 8%, var(--background) 92%);
-    --segmented-control-item-active-bg: color-mix(in srgb, var(--foreground) 14%, var(--background) 86%);
-    --segmented-control-item-active-border: color-mix(in srgb, var(--foreground) 28%, var(--border) 72%);
+    --segmented-control-item-hover-bg: color-mix(
+      in srgb,
+      var(--foreground) 8%,
+      var(--background) 92%
+    );
+    --segmented-control-item-active-bg: color-mix(
+      in srgb,
+      var(--foreground) 14%,
+      var(--background) 86%
+    );
+    --segmented-control-item-active-border: color-mix(
+      in srgb,
+      var(--foreground) 28%,
+      var(--border) 72%
+    );
     --segmented-control-item-active-shadow:
       inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
       0 1px 2px color-mix(in srgb, black 30%, transparent);
@@ -805,10 +821,83 @@
      Tag - Professional metadata labels
      ============================================================================= */
 
+  :root,
+  .light {
+    --tag-solid-ink-strong: var(--primary-foreground);
+    --tag-soft-surface-base: white;
+    --tag-soft-line-base: white;
+    --tag-soft-ink-base: var(--foreground);
+    --tag-soft-surface-strength: 84%;
+    --tag-soft-line-strength: 68%;
+    --tag-soft-ink-strength: 74%;
+
+    --tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 86%, var(--muted));
+    --tag-neutral-solid-line: color-mix(in srgb, var(--foreground) 72%, var(--border));
+    --tag-neutral-accent: color-mix(in srgb, var(--foreground) 44%, var(--muted-foreground));
+
+    --tag-primary-solid-surface: color-mix(in srgb, var(--info) 78%, var(--foreground));
+    --tag-primary-solid-line: color-mix(in srgb, var(--info) 88%, var(--foreground));
+    --tag-primary-accent: color-mix(in srgb, var(--info) 74%, var(--foreground));
+
+    --tag-success-solid-surface: color-mix(in srgb, var(--success) 72%, var(--foreground));
+    --tag-success-solid-line: color-mix(in srgb, var(--success) 88%, var(--foreground));
+    --tag-success-accent: color-mix(in srgb, var(--success) 70%, var(--foreground));
+
+    --tag-warning-solid-surface: color-mix(in srgb, var(--warning) 78%, var(--foreground));
+    --tag-warning-solid-line: color-mix(in srgb, var(--warning) 92%, var(--foreground));
+    --tag-warning-accent: color-mix(in srgb, var(--warning) 68%, var(--foreground));
+
+    --tag-error-solid-surface: color-mix(in srgb, var(--error) 70%, var(--foreground));
+    --tag-error-solid-line: color-mix(in srgb, var(--error) 86%, var(--foreground));
+    --tag-error-accent: color-mix(in srgb, var(--error) 70%, var(--foreground));
+
+    --tag-info-solid-surface: color-mix(in srgb, var(--info) 66%, var(--foreground));
+    --tag-info-solid-line: color-mix(in srgb, var(--info) 78%, var(--foreground));
+    --tag-info-accent: color-mix(in srgb, var(--info) 62%, var(--foreground));
+  }
+
+  .dark {
+    --tag-solid-ink-strong: var(--foreground);
+    --tag-soft-surface-base: transparent;
+    --tag-soft-line-base: transparent;
+    --tag-soft-ink-base: var(--foreground);
+    --tag-soft-surface-strength: 88%;
+    --tag-soft-line-strength: 76%;
+    --tag-soft-ink-strength: 82%;
+
+    --tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 20%, var(--background));
+    --tag-neutral-solid-line: color-mix(in srgb, var(--foreground) 28%, var(--border));
+    --tag-neutral-accent: color-mix(in srgb, var(--foreground) 58%, var(--muted-foreground));
+
+    --tag-primary-solid-surface: color-mix(in srgb, var(--info) 54%, var(--background));
+    --tag-primary-solid-line: color-mix(in srgb, var(--info) 70%, var(--border));
+    --tag-primary-accent: color-mix(in srgb, var(--info) 80%, white 20%);
+
+    --tag-success-solid-surface: color-mix(in srgb, var(--success) 52%, var(--background));
+    --tag-success-solid-line: color-mix(in srgb, var(--success) 68%, var(--border));
+    --tag-success-accent: color-mix(in srgb, var(--success) 80%, white 20%);
+
+    --tag-warning-solid-surface: color-mix(in srgb, var(--warning) 62%, var(--background));
+    --tag-warning-solid-line: color-mix(in srgb, var(--warning) 78%, var(--border));
+    --tag-warning-accent: color-mix(in srgb, var(--warning) 80%, white 20%);
+
+    --tag-error-solid-surface: color-mix(in srgb, var(--error) 48%, var(--background));
+    --tag-error-solid-line: color-mix(in srgb, var(--error) 64%, var(--border));
+    --tag-error-accent: color-mix(in srgb, var(--error) 80%, white 20%);
+
+    --tag-info-solid-surface: color-mix(in srgb, var(--info) 40%, var(--background));
+    --tag-info-solid-line: color-mix(in srgb, var(--info) 54%, var(--border));
+    --tag-info-accent: color-mix(in srgb, var(--info) 72%, white 28%);
+  }
+
   .floe-tag {
-    --tag-bg: color-mix(in srgb, var(--muted-foreground) 30%, var(--foreground));
-    --tag-border: color-mix(in srgb, var(--muted-foreground) 44%, var(--foreground));
-    --tag-color: var(--primary-foreground);
+    --tag-solid-surface: var(--tag-neutral-solid-surface);
+    --tag-solid-line: var(--tag-neutral-solid-line);
+    --tag-solid-ink: var(--tag-solid-ink-strong);
+    --tag-soft-accent: var(--tag-neutral-accent);
+    --tag-surface: var(--tag-solid-surface);
+    --tag-line: var(--tag-solid-line);
+    --tag-ink: var(--tag-solid-ink);
 
     display: inline-flex;
     align-items: center;
@@ -817,147 +906,71 @@
     min-width: 0;
     white-space: nowrap;
     border-radius: 8px;
-    border: 1px solid var(--tag-border);
-    background-color: var(--tag-bg);
-    color: var(--tag-color);
+    border: 1px solid var(--tag-line);
+    background-color: var(--tag-surface);
+    color: var(--tag-ink);
     font-weight: 600;
     letter-spacing: 0.015em;
   }
 
-  .dark .floe-tag {
-    --tag-color: var(--foreground);
+  .floe-tag--solid {
+    --tag-surface: var(--tag-solid-surface);
+    --tag-line: var(--tag-solid-line);
+    --tag-ink: var(--tag-solid-ink);
   }
 
   .floe-tag--neutral {
-    --tag-bg: hsl(20 10% 24%);
-    --tag-border: hsl(20 10% 31%);
+    --tag-solid-surface: var(--tag-neutral-solid-surface);
+    --tag-solid-line: var(--tag-neutral-solid-line);
+    --tag-soft-accent: var(--tag-neutral-accent);
   }
 
   .floe-tag--primary {
-    --tag-bg: hsl(226 54% 34%);
-    --tag-border: hsl(226 48% 42%);
+    --tag-solid-surface: var(--tag-primary-solid-surface);
+    --tag-solid-line: var(--tag-primary-solid-line);
+    --tag-soft-accent: var(--tag-primary-accent);
   }
 
   .floe-tag--success {
-    --tag-bg: color-mix(in srgb, var(--success) 72%, var(--foreground));
-    --tag-border: color-mix(in srgb, var(--success) 88%, var(--foreground));
+    --tag-solid-surface: var(--tag-success-solid-surface);
+    --tag-solid-line: var(--tag-success-solid-line);
+    --tag-soft-accent: var(--tag-success-accent);
   }
 
   .floe-tag--warning {
-    --tag-bg: color-mix(in srgb, var(--warning) 78%, var(--foreground));
-    --tag-border: color-mix(in srgb, var(--warning) 92%, var(--foreground));
+    --tag-solid-surface: var(--tag-warning-solid-surface);
+    --tag-solid-line: var(--tag-warning-solid-line);
+    --tag-soft-accent: var(--tag-warning-accent);
   }
 
   .floe-tag--error {
-    --tag-bg: color-mix(in srgb, var(--error) 70%, var(--foreground));
-    --tag-border: color-mix(in srgb, var(--error) 86%, var(--foreground));
+    --tag-solid-surface: var(--tag-error-solid-surface);
+    --tag-solid-line: var(--tag-error-solid-line);
+    --tag-soft-accent: var(--tag-error-accent);
   }
 
   .floe-tag--info {
-    --tag-bg: hsl(188 56% 33%);
-    --tag-border: hsl(188 46% 41%);
+    --tag-solid-surface: var(--tag-info-solid-surface);
+    --tag-solid-line: var(--tag-info-solid-line);
+    --tag-soft-accent: var(--tag-info-accent);
   }
 
-  .dark .floe-tag--neutral {
-    --tag-bg: hsl(20 10% 30%);
-    --tag-border: hsl(20 10% 38%);
-  }
-
-  .dark .floe-tag--primary {
-    --tag-bg: hsl(226 62% 42%);
-    --tag-border: hsl(226 58% 50%);
-  }
-
-  .dark .floe-tag--success {
-    --tag-bg: color-mix(in srgb, var(--success) 52%, var(--background));
-    --tag-border: color-mix(in srgb, var(--success) 68%, var(--border));
-  }
-
-  .dark .floe-tag--warning {
-    --tag-bg: color-mix(in srgb, var(--warning) 62%, var(--background));
-    --tag-border: color-mix(in srgb, var(--warning) 78%, var(--border));
-  }
-
-  .dark .floe-tag--error {
-    --tag-bg: color-mix(in srgb, var(--error) 48%, var(--background));
-    --tag-border: color-mix(in srgb, var(--error) 64%, var(--border));
-  }
-
-  .dark .floe-tag--info {
-    --tag-bg: hsl(188 58% 38%);
-    --tag-border: hsl(188 52% 46%);
-  }
-
-  .floe-tag--soft.floe-tag--neutral {
-    --tag-bg: hsl(30 18% 86%);
-    --tag-border: hsl(28 16% 76%);
-    --tag-color: hsl(24 18% 27%);
-  }
-
-  .floe-tag--soft.floe-tag--primary {
-    --tag-bg: hsl(226 58% 86%);
-    --tag-border: hsl(226 46% 76%);
-    --tag-color: hsl(226 52% 28%);
-  }
-
-  .floe-tag--soft.floe-tag--success {
-    --tag-bg: hsl(151 28% 84%);
-    --tag-border: hsl(151 24% 74%);
-    --tag-color: hsl(150 48% 26%);
-  }
-
-  .floe-tag--soft.floe-tag--warning {
-    --tag-bg: hsl(41 52% 82%);
-    --tag-border: hsl(39 42% 72%);
-    --tag-color: hsl(33 58% 27%);
-  }
-
-  .floe-tag--soft.floe-tag--error {
-    --tag-bg: hsl(14 58% 86%);
-    --tag-border: hsl(14 48% 75%);
-    --tag-color: hsl(12 58% 29%);
-  }
-
-  .floe-tag--soft.floe-tag--info {
-    --tag-bg: hsl(188 52% 84%);
-    --tag-border: hsl(188 42% 73%);
-    --tag-color: hsl(189 60% 28%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--neutral {
-    --tag-bg: hsl(30 14% 80%);
-    --tag-border: hsl(28 12% 70%);
-    --tag-color: hsl(22 18% 22%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--primary {
-    --tag-bg: hsl(226 54% 80%);
-    --tag-border: hsl(226 44% 70%);
-    --tag-color: hsl(226 52% 23%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--success {
-    --tag-bg: hsl(151 24% 78%);
-    --tag-border: hsl(151 20% 68%);
-    --tag-color: hsl(150 46% 22%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--warning {
-    --tag-bg: hsl(41 44% 78%);
-    --tag-border: hsl(39 34% 68%);
-    --tag-color: hsl(33 54% 23%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--error {
-    --tag-bg: hsl(14 48% 81%);
-    --tag-border: hsl(14 40% 69%);
-    --tag-color: hsl(12 54% 23%);
-  }
-
-  .dark .floe-tag--soft.floe-tag--info {
-    --tag-bg: hsl(188 44% 79%);
-    --tag-border: hsl(188 34% 68%);
-    --tag-color: hsl(189 56% 23%);
+  .floe-tag--soft {
+    --tag-surface: color-mix(
+      in srgb,
+      var(--tag-soft-surface-base) var(--tag-soft-surface-strength),
+      var(--tag-soft-accent)
+    );
+    --tag-line: color-mix(
+      in srgb,
+      var(--tag-soft-line-base) var(--tag-soft-line-strength),
+      var(--tag-soft-accent)
+    );
+    --tag-ink: color-mix(
+      in srgb,
+      var(--tag-soft-ink-base) var(--tag-soft-ink-strength),
+      var(--tag-soft-accent)
+    );
   }
 
   .floe-tag--sm {

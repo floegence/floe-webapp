@@ -45,9 +45,15 @@ describe('SegmentedControl', () => {
     expect(styles).toContain('.dark .floe-segmented-control {');
     expect(styles).toContain('--segmented-control-item-active-bg');
     expect(styles).toContain('--segmented-control-item-active-border');
-    expect(styles).toContain('.floe-segmented-control__item[aria-checked=\'false\']:hover:not(:disabled) {');
+    expect(styles).toContain(
+      ".floe-segmented-control__item[aria-checked='false']:hover:not(:disabled) {"
+    );
     expect(styles).toContain('.floe-segmented-control__item--active {');
-    expect(styles).toContain('color-mix(in srgb, var(--foreground) 14%, var(--background) 86%)');
-    expect(styles).not.toContain('.floe-segmented-control__item--active {\n    background: linear-gradient(');
+    expect(styles).toContain('--segmented-control-item-active-bg: color-mix(');
+    expect(styles).toContain('var(--foreground) 14%');
+    expect(styles).toContain('var(--background) 86%');
+    expect(styles).not.toContain(
+      '.floe-segmented-control__item--active {\n    background: linear-gradient('
+    );
   });
 });

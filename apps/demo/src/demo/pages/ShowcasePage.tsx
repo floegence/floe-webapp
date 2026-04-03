@@ -1289,7 +1289,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-tags"
           title="Tags"
-          description="Metadata labels with solid and soft semantic tones for professional UIs."
+          description="Metadata labels built from semantic roles and two surface tones for dense professional UIs."
           actions={
             <Button size="sm" variant="outline" onClick={() => props.onOpenFile('core.tag')}>
               View Source
@@ -1298,39 +1298,193 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
         <Panel class="border border-border rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
-            <div class="space-y-2">
-              <p class="text-[11px] font-medium text-muted-foreground">Solid Tones</p>
-              <div class="flex flex-wrap gap-2">
-                <Tag variant="neutral">Internal</Tag>
-                <Tag variant="primary">Infrastructure</Tag>
-                <Tag variant="success">Stable</Tag>
-                <Tag variant="warning">Review</Tag>
-                <Tag variant="error">Blocked</Tag>
-                <Tag variant="info">Observability</Tag>
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <p class="text-[11px] font-medium text-muted-foreground">Semantic Roles</p>
+                <p class="text-[11px] text-muted-foreground">
+                  Variants carry meaning before color: neutral for baseline metadata, primary for
+                  active context, success for confirmed state, warning for follow-up risk, error for
+                  blockers, and info for supporting signals.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="neutral">
+                    Neutral
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Counts, timestamps, ownership, repository facts.
+                  </p>
+                </div>
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="primary">
+                    Primary
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Current branch, active environment, selected domain.
+                  </p>
+                </div>
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="success">
+                    Success
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Confirmed readiness, passing checks, healthy state.
+                  </p>
+                </div>
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="warning">
+                    Warning
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Review needed, pending follow-up, elevated attention.
+                  </p>
+                </div>
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="error">
+                    Error
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Blocked release, failing requirement, hard issue.
+                  </p>
+                </div>
+                <div class="rounded-md border border-border bg-background p-3 flex items-center justify-between gap-3">
+                  <Tag tone="soft" variant="info">
+                    Info
+                  </Tag>
+                  <p class="text-[11px] text-right text-muted-foreground">
+                    Telemetry, ownership signal, operational context.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] font-medium text-muted-foreground">Soft Tones</p>
+              <div class="space-y-1">
+                <p class="text-[11px] font-medium text-muted-foreground">Tone Mapping · Solid</p>
+                <p class="text-[11px] text-muted-foreground">
+                  Use solid tags when the metadata needs stronger first-pass emphasis in a dense
+                  scan.
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <Tag variant="neutral">2 files</Tag>
+                <Tag variant="primary">release/2026.03</Tag>
+                <Tag variant="success">Ready</Tag>
+                <Tag variant="warning">Needs Review</Tag>
+                <Tag variant="error">Blocked</Tag>
+                <Tag variant="info">Telemetry</Tag>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="space-y-1">
+                <p class="text-[11px] font-medium text-muted-foreground">Tone Mapping · Soft</p>
+                <p class="text-[11px] text-muted-foreground">
+                  Use soft tags when metadata should stay ambient and merge into the surrounding
+                  surface language.
+                </p>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <Tag tone="soft" variant="neutral">
-                  Internal
+                  2 files
                 </Tag>
                 <Tag tone="soft" variant="primary">
-                  Infrastructure
+                  release/2026.03
                 </Tag>
                 <Tag tone="soft" variant="success">
-                  Stable
+                  Ready
                 </Tag>
                 <Tag tone="soft" variant="warning">
-                  Review
+                  Needs Review
                 </Tag>
                 <Tag tone="soft" variant="error">
                   Blocked
                 </Tag>
                 <Tag tone="soft" variant="info">
-                  Observability
+                  Telemetry
                 </Tag>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <p class="text-[11px] font-medium text-muted-foreground">Theme Surface Strategy</p>
+                <p class="text-[11px] text-muted-foreground">
+                  Soft tags now follow two theme-native surface languages: matte fog in light mode
+                  and translucent color film in dark mode.
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                <div class="light">
+                  <div class="rounded-md border border-border bg-background p-4 text-foreground space-y-3">
+                    <div class="space-y-1">
+                      <p class="text-xs font-medium">Light Theme · Matte Fog</p>
+                      <p class="text-[11px] text-muted-foreground">
+                        Soft tags read like lightly tinted paper labels with quiet borders and
+                        denser ink.
+                      </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        main
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="info">
+                        1 outgoing
+                      </Tag>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Tag tone="soft" size="sm" variant="info">
+                        jianyintang
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        2026/4/3 10:05:10
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        2 files
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        1 parent
+                      </Tag>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dark">
+                  <div class="rounded-md border border-border bg-background p-4 text-foreground space-y-3">
+                    <div class="space-y-1">
+                      <p class="text-xs font-medium">Dark Theme · Translucent Film</p>
+                      <p class="text-[11px] text-muted-foreground">
+                        Soft tags keep the same semantic accents, but they sit like a tinted film on
+                        top of the dark surface instead of a pasted light chip.
+                      </p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        main
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="info">
+                        1 outgoing
+                      </Tag>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <Tag tone="soft" size="sm" variant="info">
+                        jianyintang
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        2026/4/3 10:05:10
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        2 files
+                      </Tag>
+                      <Tag tone="soft" size="sm" variant="neutral">
+                        1 parent
+                      </Tag>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1385,7 +1539,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
                 <div class="flex flex-wrap gap-2">
                   <Tag variant="primary">Core API</Tag>
-                  <Tag tone="soft" variant="info">Telemetry</Tag>
+                  <Tag tone="soft" variant="info">
+                    Telemetry
+                  </Tag>
                   <Tag tone="soft" variant="success" dot>
                     Passed
                   </Tag>
@@ -1403,7 +1559,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   <Tag tone="soft" variant="neutral" icon={Lock}>
                     Least Privilege
                   </Tag>
-                  <Tag tone="soft" variant="warning">Needs Follow-up</Tag>
+                  <Tag tone="soft" variant="warning">
+                    Needs Follow-up
+                  </Tag>
                   <Tag variant="error">Legacy Secret</Tag>
                 </div>
               </div>
@@ -3540,7 +3698,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFloatingWindowOpen(true)}>Open Floating Window</Button>
             <p class="text-[11px] text-muted-foreground">
-              Features: drag title bar, resize edges/corners, maximize/restore, stay open while the page remains interactive
+              Features: drag title bar, resize edges/corners, maximize/restore, stay open while the
+              page remains interactive
             </p>
           </PanelContent>
         </Panel>
