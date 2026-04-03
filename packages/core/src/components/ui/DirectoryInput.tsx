@@ -8,6 +8,7 @@ import {
   usePickerTree,
   PickerFolderTree,
   PickerBreadcrumb,
+  type PickerEnsurePath,
 } from './picker/PickerBase';
 import { Folder, ChevronRight } from '../icons';
 import type { FileItem } from '../file-browser/types';
@@ -22,7 +23,9 @@ export interface DirectoryInputProps {
   /** File tree data for the picker */
   files: FileItem[];
   /** Callback to load directory contents (for lazy loading) */
-  onExpand?: (path: string) => void;
+  onExpand?: (path: string) => void | Promise<void>;
+  /** Async resolver that guarantees a target path exists in the current tree snapshot. */
+  ensurePath?: PickerEnsurePath;
   /** Placeholder text when no directory is selected */
   placeholder?: string;
   /** Optional home directory path for display */
@@ -71,6 +74,7 @@ export function DirectoryInput(props: DirectoryInputProps) {
     'onChange',
     'files',
     'onExpand',
+    'ensurePath',
     'placeholder',
     'homePath',
     'homeLabel',
@@ -103,6 +107,8 @@ export function DirectoryInput(props: DirectoryInputProps) {
     open: () => true,
     files: () => local.files,
     onExpand: (path) => local.onExpand?.(path),
+    // eslint-disable-next-line solid/reactivity -- ensurePath is a static callback
+    ensurePath: local.ensurePath,
     homeLabel: () => local.homeLabel,
     homePath: () => local.homePath,
   });
@@ -191,6 +197,7 @@ export function DirectoryInput(props: DirectoryInputProps) {
             rootFolders={tree.rootFolders}
             selectedPath={tree.selectedPath}
             expandedPaths={tree.expandedPaths}
+            revealNonce={tree.revealNonce}
             onToggle={tree.toggleExpand}
             onSelect={tree.handleSelectFolder}
             onSelectRoot={tree.handleSelectRoot}

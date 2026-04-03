@@ -27,8 +27,13 @@ describe('picker initial path state', () => {
 
   it('passes initialPath through accessors from picker entrypoints instead of snapshotting props at mount time', () => {
     expect(read('../src/components/ui/DirectoryPicker.tsx')).toContain('initialPath: () => props.initialPath,');
+    expect(read('../src/components/ui/DirectoryPicker.tsx')).toContain('ensurePath: props.ensurePath,');
     expect(read('../src/components/ui/FileSavePicker.tsx')).toContain('initialPath: () => props.initialPath,');
+    expect(read('../src/components/ui/FileSavePicker.tsx')).toContain('ensurePath: props.ensurePath,');
     expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("initialPath: () => local.initialPath ?? '/',");
+    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain('ensurePath: local.ensurePath,');
+    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("if (expanded() && local.files.length === 0 && local.onExpand) {");
+    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("if (!wasExpanded && local.files.length === 0 && local.onExpand) {");
   });
 
   it('renders picker tree folders through FileItemIcon so symlink metadata can flow into picker affordances too', () => {
@@ -36,6 +41,17 @@ describe('picker initial path state', () => {
 
     expect(src).toContain("import { FileItemIcon, FolderOpenIcon } from '../../file-browser/FileIcons';");
     expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
+  });
+
+  it('keeps async picker navigation and reveal behavior in the shared picker base layer', () => {
+    const src = read('../src/components/ui/picker/PickerBase.tsx');
+
+    expect(src).toContain("ensurePath?: PickerEnsurePath;");
+    expect(src).toContain("void navigateToPath(init, { reason: 'open' });");
+    expect(src).toContain("setPathPending(true);");
+    expect(src).toContain("data-picker-row-path={props.item.path}");
+    expect(src).toContain("const row = rowRefs.get(selectedPath);");
+    expect(src).toContain("row.scrollIntoView({ block: 'nearest', inline: 'nearest' });");
   });
 
   it('resolves picker initial paths into a single internal-path domain', () => {

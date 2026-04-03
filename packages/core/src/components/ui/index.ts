@@ -64,7 +64,14 @@ export {
   type DirectoryInputSize,
 } from './DirectoryInput';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';
-export { type BasePickerProps } from './picker/PickerBase';
+export {
+  type BasePickerProps,
+  type PickerEnsurePath,
+  type PickerEnsurePathOptions,
+  type PickerPathResolveResult,
+  type PickerPathResolveStatus,
+  type PickerPathNavigateReason,
+} from './picker/PickerBase';
 export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';
 export {
   HighlightBlock,

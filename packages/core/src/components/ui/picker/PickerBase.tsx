@@ -9,6 +9,8 @@ import {
   createMemo,
   createEffect,
   on,
+  onCleanup,
+  untrack,
   type Accessor,
   type JSX,
 } from 'solid-js';
@@ -51,7 +53,13 @@ export interface BasePickerProps {
    * Use this to dynamically load children for the expanded directory.
    * The path parameter is the internal tree path (not the display path).
    */
-  onExpand?: (path: string) => void;
+  onExpand?: (path: string) => void | Promise<void>;
+  /**
+   * Async resolver used when a navigation target may exist outside the current
+   * in-memory tree snapshot. A ready result guarantees the target path and its
+   * ancestor chain are now represented in `files`.
+   */
+  ensurePath?: PickerEnsurePath;
   /** Filter which directories are selectable (return false to grey-out) */
   filter?: (item: FileItem) => boolean;
   /** Label for the home/root directory (default: 'Root') */
@@ -130,7 +138,9 @@ export interface UsePickerTreeOptions {
    * Callback when user expands a directory.
    * Use this to dynamically load children for the expanded directory.
    */
-  onExpand?: (path: string) => void;
+  onExpand?: (path: string) => void | Promise<void>;
+  /** Async resolver that ensures a target path exists in the current tree snapshot. */
+  ensurePath?: PickerEnsurePath;
   /** Label for the home/root directory in tree and breadcrumb (default: 'Root'). Supports accessor for reactivity. */
   homeLabel?: string | Accessor<string | undefined>;
   /**
@@ -148,6 +158,7 @@ export interface PickerTreeState {
   toggleExpand: (path: string) => void;
   pathInput: Accessor<string>;
   setPathInput: (value: string) => void;
+  pathPending: Accessor<boolean>;
   pathInputError: Accessor<string>;
   setPathInputError: (value: string) => void;
   folderIndex: Accessor<Map<string, FileItem>>;
@@ -159,13 +170,43 @@ export interface PickerTreeState {
   handlePathInputGo: () => void;
   handlePathInputKeyDown: (e: KeyboardEvent) => void;
   expandToPath: (path: string) => void;
+  navigateToPath: (path: string, options: PickerEnsurePathOptions) => Promise<PickerPathResolveResult>;
   breadcrumbSegments: Accessor<{ name: string; path: string }[]>;
   handleBreadcrumbClick: (path: string) => void;
   /** Home label for display (reactive) */
   homeLabel: Accessor<string>;
   /** Convert internal tree path to display (real filesystem) path */
   toDisplayPath: (internalPath: string) => string;
+  /** Monotonic counter used to reveal the selected row after async navigation. */
+  revealNonce: Accessor<number>;
 }
+
+export type PickerPathResolveStatus =
+  | 'ready'
+  | 'missing'
+  | 'error';
+
+export type PickerPathNavigateReason =
+  | 'open'
+  | 'path-input'
+  | 'tree-expand'
+  | 'tree-select'
+  | 'breadcrumb';
+
+export interface PickerEnsurePathOptions {
+  reason: PickerPathNavigateReason;
+}
+
+export interface PickerPathResolveResult {
+  status: PickerPathResolveStatus;
+  resolvedPath: string;
+  message?: string;
+}
+
+export type PickerEnsurePath = (
+  path: string,
+  options: PickerEnsurePathOptions,
+) => PickerPathResolveResult | Promise<PickerPathResolveResult>;
 
 export function resolvePickerInitialPath(
   initialPath: string | undefined,
@@ -226,25 +267,13 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   const [selectedPath, setSelectedPath] = createSignal(getInitialPath());
   const [expandedPaths, setExpandedPaths] = createSignal<Set<string>>(new Set(['/']));
   const [pathInput, setPathInput] = createSignal(toDisplayPath(getInitialPath()));
+  const [pathPending, setPathPending] = createSignal(false);
   const [pathInputError, setPathInputError] = createSignal('');
+  const [revealNonce, setRevealNonce] = createSignal(0);
+  let navigationSeq = 0;
 
   const folderIndex = useFolderIndex(opts.files);
   const rootFolders = createMemo(() => opts.files().filter((f) => f.type === 'folder'));
-
-  // Reset when dialog opens
-  createEffect(
-    on(opts.open, (open) => {
-      if (open) {
-        const init = getInitialPath();
-        setSelectedPath(init);
-        setPathInput(toDisplayPath(init));
-        setPathInputError('');
-        const ancestors = getAncestorPaths(init);
-        setExpandedPaths(new Set(['/', ...ancestors]));
-        opts.onReset?.(init);
-      }
-    })
-  );
 
   // Sync path input when selection changes via tree click
   createEffect(
@@ -274,6 +303,83 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     });
   };
 
+  const requestReveal = () => {
+    setRevealNonce((prev) => prev + 1);
+  };
+
+  const requestExpandedChildren = (path: string) => {
+    if (!opts.onExpand) return;
+    try {
+      const maybePromise = opts.onExpand(path);
+      void Promise.resolve(maybePromise).catch(() => {});
+    } catch {
+      // Downstream loaders may fail independently; keep picker state usable.
+    }
+  };
+
+  const resolvePath = async (
+    path: string,
+    options: PickerEnsurePathOptions,
+  ): Promise<PickerPathResolveResult> => {
+    const normalizedPath = normalizePath(path);
+    if (normalizedPath === '/') {
+      return { status: 'ready', resolvedPath: '/' };
+    }
+    if (!opts.ensurePath) {
+      return isValidPath(normalizedPath)
+        ? { status: 'ready', resolvedPath: normalizedPath }
+        : { status: 'missing', resolvedPath: normalizedPath, message: 'Path not found' };
+    }
+    try {
+      const result = await opts.ensurePath(normalizedPath, options);
+      return {
+        status: result.status,
+        resolvedPath: normalizePath(result.resolvedPath || normalizedPath),
+        message: result.message?.trim() || undefined,
+      };
+    } catch {
+      return {
+        status: 'error',
+        resolvedPath: normalizedPath,
+        message: 'Could not load path',
+      };
+    }
+  };
+
+  const navigateToPath = async (
+    path: string,
+    options: PickerEnsurePathOptions,
+  ): Promise<PickerPathResolveResult> => {
+    const normalizedPath = normalizePath(path);
+    navigationSeq += 1;
+    const seq = navigationSeq;
+    setPathPending(true);
+    if (options.reason !== 'open') {
+      setPathInputError('');
+    }
+
+    try {
+      const result = await resolvePath(normalizedPath, options);
+      if (seq !== navigationSeq) return result;
+
+      if (result.status === 'ready') {
+        const resolvedPath = normalizePath(result.resolvedPath);
+        setSelectedPath(resolvedPath);
+        expandToPath(resolvedPath);
+        setPathInputError('');
+        requestReveal();
+      } else if (options.reason !== 'open') {
+        setPathInputError(result.message || (result.status === 'missing' ? 'Path not found' : 'Could not load path'));
+      }
+
+      return result;
+    } finally {
+      if (seq === navigationSeq) {
+        setPathPending(false);
+      }
+    }
+  };
+
   const toggleExpand = (path: string) => {
     const wasExpanded = expandedPaths().has(path);
     setExpandedPaths((prev) => {
@@ -282,40 +388,28 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
       else next.add(path);
       return next;
     });
-    // Call onExpand callback when expanding (not collapsing)
     if (!wasExpanded) {
-      opts.onExpand?.(path);
+      requestExpandedChildren(path);
     }
   };
 
   const handleSelectFolder = (item: FileItem) => {
     if (!isSelectable(item)) return;
-    setSelectedPath(item.path);
     const wasExpanded = expandedPaths().has(item.path);
-    setExpandedPaths((prev) => {
-      const next = new Set(prev);
-      next.add(item.path);
-      return next;
-    });
-    // Trigger lazy loading when selecting a previously unexpanded folder
-    if (!wasExpanded) {
-      opts.onExpand?.(item.path);
-    }
+    void navigateToPath(item.path, { reason: 'tree-select' })
+      .then((result) => {
+        if (result.status !== 'ready' || wasExpanded) return;
+        requestExpandedChildren(normalizePath(result.resolvedPath));
+      });
   };
 
   const handleSelectRoot = () => {
-    setSelectedPath('/');
+    void navigateToPath('/', { reason: 'tree-select' });
   };
 
   const handlePathInputGo = () => {
     const value = toInternalPath(pathInput().trim());
-    if (isValidPath(value)) {
-      setSelectedPath(value);
-      setPathInputError('');
-      expandToPath(value);
-    } else {
-      setPathInputError('Path not found');
-    }
+    void navigateToPath(value, { reason: 'path-input' });
   };
 
   const handlePathInputKeyDown = (e: KeyboardEvent) => {
@@ -340,9 +434,24 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
   });
 
   const handleBreadcrumbClick = (path: string) => {
-    setSelectedPath(path);
-    expandToPath(path);
+    void navigateToPath(path, { reason: 'breadcrumb' });
   };
+
+  createEffect(
+    on(opts.open, (open) => {
+      if (open) {
+        const init = getInitialPath();
+        setSelectedPath(init);
+        setPathInput(toDisplayPath(init));
+        setPathInputError('');
+        const ancestors = getAncestorPaths(init);
+        setExpandedPaths(new Set(['/', ...ancestors]));
+        requestReveal();
+        opts.onReset?.(init);
+        void navigateToPath(init, { reason: 'open' });
+      }
+    })
+  );
 
   return {
     selectedPath,
@@ -351,6 +460,7 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     toggleExpand,
     pathInput,
     setPathInput,
+    pathPending,
     pathInputError,
     setPathInputError,
     folderIndex,
@@ -362,10 +472,12 @@ export function usePickerTree(opts: UsePickerTreeOptions): PickerTreeState {
     handlePathInputGo,
     handlePathInputKeyDown,
     expandToPath,
+    navigateToPath,
     breadcrumbSegments,
     handleBreadcrumbClick,
     homeLabel: getHomeLabel,
     toDisplayPath,
+    revealNonce,
   };
 }
 
@@ -488,6 +600,7 @@ export function NewFolderSection(props: NewFolderSectionProps) {
 export interface PathInputBarProps {
   value: Accessor<string>;
   onInput: (value: string) => void;
+  pending?: Accessor<boolean>;
   error: Accessor<string>;
   onGo: () => void;
   onKeyDown: (e: KeyboardEvent) => void;
@@ -504,11 +617,12 @@ export function PathInputBar(props: PathInputBarProps) {
           onInput={(e) => props.onInput(e.currentTarget.value)}
           onKeyDown={props.onKeyDown}
           placeholder={props.placeholder ?? '/path/to/directory'}
+          disabled={props.pending?.() === true}
           error={props.error()}
         />
       </div>
-      <Button variant="outline" size="sm" onClick={props.onGo}>
-        Go
+      <Button variant="outline" size="sm" onClick={props.onGo} disabled={props.pending?.() === true}>
+        {props.pending?.() === true ? 'Opening…' : 'Go'}
       </Button>
     </div>
   );
@@ -557,6 +671,7 @@ export interface PickerFolderTreeProps {
   rootFolders: Accessor<FileItem[]>;
   selectedPath: Accessor<string>;
   expandedPaths: Accessor<Set<string>>;
+  revealNonce?: Accessor<number>;
   onToggle: (path: string) => void;
   onSelect: (item: FileItem) => void;
   onSelectRoot: () => void;
@@ -573,9 +688,55 @@ export function PickerFolderTree(props: PickerFolderTreeProps) {
     const hl = typeof props.homeLabel === 'function' ? props.homeLabel() : props.homeLabel;
     return hl ?? 'Root';
   };
+  let scrollContainerEl: HTMLDivElement | undefined;
+  const rowRefs = new Map<string, HTMLButtonElement>();
+  let handledRevealNonce = -1;
+
+  const registerRow = (path: string, el: HTMLButtonElement | null) => {
+    if (el) {
+      rowRefs.set(path, el);
+      return;
+    }
+    rowRefs.delete(path);
+  };
+
+  createEffect(() => {
+    const revealNonce = props.revealNonce?.() ?? 0;
+    const selectedPath = props.selectedPath();
+    props.expandedPaths();
+    props.rootFolders();
+
+    if (revealNonce <= handledRevealNonce) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      if (!scrollContainerEl) return;
+      const stillPendingReveal = untrack(() => (props.revealNonce?.() ?? 0) === revealNonce && revealNonce > handledRevealNonce);
+      if (!stillPendingReveal) {
+        return;
+      }
+
+      if (selectedPath === '/') {
+        scrollContainerEl.scrollTop = 0;
+        handledRevealNonce = revealNonce;
+        return;
+      }
+
+      const row = rowRefs.get(selectedPath);
+      if (!row) {
+        return;
+      }
+      row.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      handledRevealNonce = revealNonce;
+    });
+  });
 
   return (
     <div
+      ref={(el) => {
+        scrollContainerEl = el;
+      }}
       class={cn('border border-border rounded overflow-y-auto', props.class)}
       style={props.style}
     >
@@ -602,9 +763,11 @@ export function PickerFolderTree(props: PickerFolderTreeProps) {
             depth={1}
             selectedPath={props.selectedPath}
             expandedPaths={props.expandedPaths}
+            revealNonce={props.revealNonce}
             onToggle={props.onToggle}
             onSelect={props.onSelect}
             isSelectable={props.isSelectable}
+            registerRow={registerRow}
           />
         )}
       </For>
@@ -625,9 +788,11 @@ export interface PickerTreeNodeProps {
   depth: number;
   selectedPath: Accessor<string>;
   expandedPaths: Accessor<Set<string>>;
+  revealNonce?: Accessor<number>;
   onToggle: (path: string) => void;
   onSelect: (item: FileItem) => void;
   isSelectable: (item: FileItem) => boolean;
+  registerRow: (path: string, el: HTMLButtonElement | null) => void;
 }
 
 export function PickerTreeNode(props: PickerTreeNodeProps) {
@@ -649,6 +814,10 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
   const handleSelect = () => {
     props.onSelect(props.item);
   };
+
+  onCleanup(() => {
+    props.registerRow(props.item.path, null);
+  });
 
   return (
     <div class="flex flex-col">
@@ -681,7 +850,11 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
         </Show>
 
         <button
+          ref={(el) => {
+            props.registerRow(props.item.path, el);
+          }}
           type="button"
+          data-picker-row-path={props.item.path}
           onClick={handleSelect}
           disabled={!selectable()}
           class={cn(
@@ -706,9 +879,11 @@ export function PickerTreeNode(props: PickerTreeNodeProps) {
                 depth={props.depth + 1}
                 selectedPath={props.selectedPath}
                 expandedPaths={props.expandedPaths}
+                revealNonce={props.revealNonce}
                 onToggle={props.onToggle}
                 onSelect={props.onSelect}
                 isSelectable={props.isSelectable}
+                registerRow={props.registerRow}
               />
             )}
           </For>

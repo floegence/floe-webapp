@@ -46,6 +46,8 @@ export function FileSavePicker(props: FileSavePickerProps) {
     filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
     // eslint-disable-next-line solid/reactivity -- onExpand is a static callback
     onExpand: props.onExpand,
+    // eslint-disable-next-line solid/reactivity -- ensurePath is a static callback
+    ensurePath: props.ensurePath,
     homeLabel: () => props.homeLabel,
     homePath: () => props.homePath,
     onReset: () => {
@@ -153,7 +155,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
             <Button variant="ghost" size="sm" onClick={handleCancel}>
               {props.cancelText ?? 'Cancel'}
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim()}>
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim() || tree.pathPending()}>
               {props.confirmText ?? 'Save'}
             </Button>
           </div>
@@ -167,6 +169,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
             tree.setPathInput(v);
             tree.setPathInputError('');
           }}
+          pending={tree.pathPending}
           error={tree.pathInputError}
           onGo={tree.handlePathInputGo}
           onKeyDown={tree.handlePathInputKeyDown}
@@ -184,6 +187,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
             rootFolders={tree.rootFolders}
             selectedPath={tree.selectedPath}
             expandedPaths={tree.expandedPaths}
+            revealNonce={tree.revealNonce}
             onToggle={tree.toggleExpand}
             onSelect={tree.handleSelectFolder}
             onSelectRoot={tree.handleSelectRoot}
