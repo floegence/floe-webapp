@@ -39,6 +39,7 @@ import {
 } from '@floegence/floe-webapp-core/layout';
 import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
 import {
+  Bookmark,
   Files,
   GitBranch,
   Grid3x3,
@@ -65,6 +66,8 @@ import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
+import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
+import { NotesSidebar } from './demo/notes/NotesSidebar';
 
 const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',
@@ -84,6 +87,9 @@ const DeckPage = lazy(() => import('./demo/pages/DeckPage').then((m) => ({ defau
 const ChatPage = lazy(() => import('./demo/pages/ChatPage').then((m) => ({ default: m.ChatPage })));
 const DesignTokensPage = lazy(() =>
   import('./demo/pages/DesignTokensPage').then((m) => ({ default: m.DesignTokensPage }))
+);
+const NotesPage = lazy(() =>
+  import('./demo/notes/NotesPage').then((m) => ({ default: m.NotesPage }))
 );
 
 const renderLazyPage = (view: JSX.Element, label: string): JSX.Element => (
@@ -151,6 +157,13 @@ function AppContent() {
   const [launchpadOpen, setLaunchpadOpen] = createSignal(false);
 
   const demoLaunchpadItems: LaunchpadItemData[] = [
+    {
+      id: 'notes',
+      name: 'Notes',
+      icon: Bookmark,
+      description: 'Endless sticky-note canvas demo',
+      color: 'linear-gradient(135deg, #f2dfad 0%, #c98d55 100%)',
+    },
     {
       id: 'showcase',
       name: 'Showcase',
@@ -253,6 +266,7 @@ function AppContent() {
         label: 'Launchpad',
         onClick: () => setLaunchpadOpen(true),
       },
+      { id: 'notes', icon: Bookmark, label: 'Notes', collapseBehavior: 'preserve' as const },
       { id: 'deck', icon: LayoutDashboard, label: 'Deck', collapseBehavior: 'preserve' as const },
       { id: 'showcase', icon: Terminal, label: 'Showcase' },
       { id: 'files', icon: Files, label: 'Files' },
@@ -308,18 +322,37 @@ function AppContent() {
 
   const ChatView: Component = () => <ChatSidebar />;
 
+  const NotesView: Component = () => <NotesSidebar />;
+
   const DeckView: Component = () => renderLazyPage(<DeckPage />, 'deck');
 
   const DesignTokensView: Component = () => renderLazyPage(<DesignTokensPage />, 'design tokens');
 
   const demoComponents: FloeComponent[] = [
     {
+      id: 'notes',
+      name: 'Notes',
+      icon: Bookmark,
+      description: 'Infinite sticky-note capture board',
+      component: NotesView,
+      sidebar: { order: 0 },
+      commands: [
+        {
+          id: 'demo.open.notes',
+          title: 'Demo: Open Notes',
+          keybind: 'mod+7',
+          category: 'Demo',
+          execute: () => layout.setSidebarActiveTab('notes'),
+        },
+      ],
+    },
+    {
       id: 'deck',
       name: 'Deck',
       icon: LayoutDashboard,
       description: 'Grafana-style deck layout editor',
       component: DeckView,
-      sidebar: { order: 0, fullScreen: true, hiddenOnMobile: true },
+      sidebar: { order: 1, fullScreen: true, hiddenOnMobile: true },
       commands: [
         {
           id: 'demo.open.deck',
@@ -336,7 +369,7 @@ function AppContent() {
       icon: Terminal,
       description: 'All core UI components in one place',
       component: ShowcaseView,
-      sidebar: { order: 1 },
+      sidebar: { order: 2 },
       commands: [
         {
           id: 'demo.open.launchpad',
@@ -366,7 +399,7 @@ function AppContent() {
       icon: Files,
       description: 'File viewer (Monaco integration)',
       component: FilesView,
-      sidebar: { order: 2 },
+      sidebar: { order: 3 },
       commands: [
         {
           id: 'demo.open.files',
@@ -401,7 +434,7 @@ function AppContent() {
       icon: Search,
       description: 'Search the demo workspace',
       component: SearchView,
-      sidebar: { order: 3 },
+      sidebar: { order: 4 },
       commands: [
         {
           id: 'demo.open.search',
@@ -417,7 +450,7 @@ function AppContent() {
       name: 'Settings',
       description: 'Protocol connection + shell theme + chart themes',
       component: SettingsView,
-      sidebar: { order: 4 },
+      sidebar: { order: 5 },
       commands: [
         {
           id: 'demo.open.settings',
@@ -441,7 +474,7 @@ function AppContent() {
       icon: MessageSquare,
       description: 'AI chat interface demo',
       component: ChatView,
-      sidebar: { order: 5 },
+      sidebar: { order: 6 },
       commands: [
         {
           id: 'demo.open.chat',
@@ -458,7 +491,7 @@ function AppContent() {
       icon: Layers,
       description: 'Design system tokens reference',
       component: DesignTokensView,
-      sidebar: { order: 6, fullScreen: true },
+      sidebar: { order: 7, fullScreen: true },
       commands: [
         {
           id: 'demo.open.design-tokens',
@@ -536,6 +569,10 @@ function AppContent() {
 
   const desktopMainViews: KeepAliveView[] = [
     {
+      id: 'notes',
+      render: () => renderLazyPage(<NotesPage />, 'notes'),
+    },
+    {
       id: 'showcase',
       render: () =>
         renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
@@ -570,6 +607,10 @@ function AppContent() {
   ];
 
   const mobileMainViews: KeepAliveView[] = [
+    {
+      id: 'notes',
+      render: () => renderLazyPage(<NotesPage />, 'notes'),
+    },
     {
       id: 'showcase',
       render: () =>
@@ -691,9 +732,9 @@ function AppContent() {
 
 export function App() {
   const demoFloeConfig = {
-    storage: { namespace: 'floe-demo' },
+    storage: { namespace: 'floe-demo-notes' },
     layout: {
-      sidebar: { defaultActiveTab: 'showcase' },
+      sidebar: { defaultActiveTab: 'notes' },
     },
     theme: {
       defaultPreset: 'default',
@@ -755,7 +796,9 @@ export function App() {
       )}
     >
       <FileBrowserDragProvider>
-        <AppContent />
+        <NotesDemoProvider>
+          <AppContent />
+        </NotesDemoProvider>
       </FileBrowserDragProvider>
     </FloeProvider>
   );

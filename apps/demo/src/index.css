@@ -5,3 +5,6 @@
 
 /* Floe core provides a Tailwind entry that scans core dist + injects tokens/utilities. */
 @import '@floegence/floe-webapp-core/tailwind';
+
+/* Notes demo styles */
+@import './demo/notes/notes.css';

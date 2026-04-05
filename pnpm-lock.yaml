@@ -53,6 +53,9 @@ importers:
       solid-js:
         specifier: ^1.9.11
         version: 1.9.11
+      solid-motionone:
+        specifier: ^1.0.4
+        version: 1.0.4(solid-js@1.9.11)
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.18

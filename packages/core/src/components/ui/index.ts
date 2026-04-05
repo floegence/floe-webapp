@@ -24,6 +24,12 @@ export {
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { CommandPalette } from './CommandPalette';
 export {
+  InfiniteCanvas,
+  type InfiniteCanvasProps,
+  type InfiniteCanvasPoint,
+  type InfiniteCanvasContextMenuEvent,
+} from './InfiniteCanvas';
+export {
   Card,
   CardHeader,
   CardTitle,

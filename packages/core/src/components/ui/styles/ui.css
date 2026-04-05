@@ -1768,4 +1768,31 @@
       flex-basis: 3.75rem;
     }
   }
+
+  /* ============================================
+     Infinite Canvas
+     ============================================ */
+
+  .floe-infinite-canvas {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  .floe-infinite-canvas.is-panning {
+    cursor: grabbing;
+  }
+
+  .floe-infinite-canvas__viewport {
+    position: absolute;
+    inset: 0 auto auto 0;
+    min-width: 100%;
+    min-height: 100%;
+    will-change: transform;
+    transform-origin: 0 0;
+  }
 }

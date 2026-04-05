@@ -1,0 +1,634 @@
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  onCleanup,
+  useContext,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
+import { createStore, produce, unwrap } from 'solid-js/store';
+import { usePersisted } from '@floegence/floe-webapp-core';
+
+export const NOTES_TRASH_RETENTION_MS = 72 * 60 * 60 * 1000;
+export const NOTES_PREVIEW_LIMIT = 148;
+
+export type NotesColorId = 'butter' | 'blush' | 'moss' | 'mist' | 'sand' | 'coral';
+export type NotesSizeBucket = 0 | 1 | 2 | 3 | 4;
+
+export interface TopicViewport {
+  x: number;
+  y: number;
+  scale: number;
+}
+
+export interface NotesTopic {
+  id: string;
+  title: string;
+  createdAt: number;
+}
+
+export interface NotesNote {
+  id: string;
+  topicId: string;
+  text: string;
+  colorId: NotesColorId;
+  x: number;
+  y: number;
+  layer: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+export interface NotesDemoState {
+  version: 3;
+  activeTopicId: string;
+  topics: NotesTopic[];
+  notes: NotesNote[];
+  viewports: Record<string, TopicViewport>;
+}
+
+interface LegacyTopicViewport {
+  x: number;
+  y: number;
+  scale?: number;
+}
+
+interface LegacyNotesDemoState {
+  version: 1;
+  activeTopicId: string;
+  topics: NotesTopic[];
+  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  viewports: Record<string, LegacyTopicViewport>;
+}
+
+interface LegacyNotesDemoStateV2 {
+  version: 2;
+  activeTopicId: string;
+  topics: NotesTopic[];
+  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  viewports: Record<string, LegacyTopicViewport>;
+}
+
+export interface NotesColorOption {
+  id: NotesColorId;
+  name: string;
+}
+
+export const NOTES_COLOR_OPTIONS: NotesColorOption[] = [
+  { id: 'butter', name: 'Butter' },
+  { id: 'blush', name: 'Blush' },
+  { id: 'moss', name: 'Moss' },
+  { id: 'mist', name: 'Mist' },
+  { id: 'sand', name: 'Sand' },
+  { id: 'coral', name: 'Coral' },
+];
+
+export const NOTES_SIZE_DIMENSIONS: Record<
+  NotesSizeBucket,
+  { width: number; height: number; previewLimit: number }
+> = {
+  0: { width: 196, height: 134, previewLimit: 68 },
+  1: { width: 214, height: 148, previewLimit: 90 },
+  2: { width: 232, height: 164, previewLimit: 112 },
+  3: { width: 248, height: 182, previewLimit: 138 },
+  4: { width: 266, height: 202, previewLimit: 164 },
+};
+
+export interface CreateNoteInput {
+  topicId?: string;
+  x: number;
+  y: number;
+  text?: string;
+  colorId?: NotesColorId;
+}
+
+export interface UpdateNoteInput {
+  text?: string;
+  colorId?: NotesColorId;
+}
+
+export interface NotesDemoContextValue {
+  topics: Accessor<NotesTopic[]>;
+  activeTopicId: Accessor<string>;
+  activeTopic: Accessor<NotesTopic | undefined>;
+  activeViewport: Accessor<TopicViewport>;
+  trashedNotes: Accessor<NotesNote[]>;
+  trashCount: Accessor<number>;
+  colorOptions: typeof NOTES_COLOR_OPTIONS;
+  getTopic: (topicId: string) => NotesTopic | undefined;
+  getViewport: (topicId: string) => TopicViewport;
+  getNotesForTopic: (topicId: string, options?: { includeDeleted?: boolean }) => NotesNote[];
+  getNoteById: (noteId: string) => NotesNote | undefined;
+  getLiveNoteCount: (topicId: string) => number;
+  getTextPreview: (text: string, limit?: number) => string;
+  getNoteSize: (text: string) => NotesSizeBucket;
+  createTopic: (title: string) => string;
+  setActiveTopic: (topicId: string) => void;
+  setViewport: (topicId: string, viewport: TopicViewport) => void;
+  createNote: (input: CreateNoteInput) => NotesNote | undefined;
+  updateNote: (noteId: string, input: UpdateNoteInput) => void;
+  moveNote: (noteId: string, position: { x: number; y: number }) => void;
+  bringNoteToFront: (noteId: string) => void;
+  trashNote: (noteId: string) => void;
+  restoreNote: (noteId: string) => void;
+  deleteNotePermanently: (noteId: string) => void;
+  clearTrashForTopic: (topicId: string) => void;
+}
+
+const NotesDemoContext = createContext<NotesDemoContextValue>();
+
+const DEFAULT_VIEWPORT: TopicViewport = { x: 164, y: 112, scale: 1 };
+
+function createId(prefix: string): string {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return `${prefix}-${cryptoApi.randomUUID()}`;
+  }
+
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeText(text: string): string {
+  return text.replace(/\r\n/g, '\n').trim();
+}
+
+function getRandomColorId(): NotesColorId {
+  const index = Math.floor(Math.random() * NOTES_COLOR_OPTIONS.length);
+  return NOTES_COLOR_OPTIONS[index]?.id ?? 'butter';
+}
+
+function getNextLayer(notes: Array<{ layer?: number }>): number {
+  return (
+    notes.reduce((maxLayer, note) => {
+      const layer = typeof note.layer === 'number' && Number.isFinite(note.layer) ? note.layer : 0;
+      return Math.max(maxLayer, layer);
+    }, 0) + 1
+  );
+}
+
+export function getNoteTextWeight(text: string): number {
+  const normalized = normalizeText(text);
+  const lineBreaks = (normalized.match(/\n/g) ?? []).length;
+  return normalized.length + lineBreaks * 18;
+}
+
+export function getNoteSizeBucket(text: string): NotesSizeBucket {
+  const weight = getNoteTextWeight(text);
+
+  if (weight <= 28) return 0;
+  if (weight <= 86) return 1;
+  if (weight <= 168) return 2;
+  if (weight <= 300) return 3;
+  return 4;
+}
+
+export function getNotePreviewText(text: string, limit = NOTES_PREVIEW_LIMIT): string {
+  const normalized = normalizeText(text).replace(/\n{3,}/g, '\n\n');
+  if (!normalized) return 'Empty note';
+  if (normalized.length <= limit) return normalized;
+  return `${normalized.slice(0, Math.max(0, limit - 1)).trimEnd()}…`;
+}
+
+function createDefaultState(): NotesDemoState {
+  const now = Date.now();
+
+  const topics: NotesTopic[] = [
+    {
+      id: 'topic-research-threads',
+      title: 'Research Threads',
+      createdAt: now - 9 * 60 * 60 * 1000,
+    },
+    { id: 'topic-launch-wall', title: 'Launch Wall', createdAt: now - 5 * 60 * 60 * 1000 },
+    { id: 'topic-loose-fragments', title: 'Loose Fragments', createdAt: now - 2 * 60 * 60 * 1000 },
+  ];
+
+  return {
+    version: 3,
+    activeTopicId: topics[0].id,
+    topics,
+    viewports: {
+      [topics[0].id]: { x: 172, y: 120, scale: 1 },
+      [topics[1].id]: { x: 210, y: 116, scale: 1 },
+      [topics[2].id]: { x: 240, y: 108, scale: 1 },
+    },
+    notes: [
+      {
+        id: 'note-seed-1',
+        topicId: topics[0].id,
+        text: 'The board should feel like a quiet worktable, not a generic whiteboard. Keep the paper mood calm and useful.',
+        colorId: 'butter',
+        x: 88,
+        y: 96,
+        layer: 1,
+        createdAt: now - 7 * 60 * 60 * 1000,
+        updatedAt: now - 6 * 60 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-seed-2',
+        topicId: topics[0].id,
+        text: 'Paste Here needs to be fast. One gesture, one note, clipboard text already inside.',
+        colorId: 'mist',
+        x: 356,
+        y: 132,
+        layer: 2,
+        createdAt: now - 6 * 60 * 60 * 1000,
+        updatedAt: now - 4 * 60 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-seed-3',
+        topicId: topics[0].id,
+        text: 'Big notes should look slightly larger, but never explode into giant cards. Size is a signal, not a layout takeover.',
+        colorId: 'moss',
+        x: 246,
+        y: 342,
+        layer: 3,
+        createdAt: now - 5 * 60 * 60 * 1000,
+        updatedAt: now - 4 * 60 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-seed-4',
+        topicId: topics[1].id,
+        text: 'Review loop:\n1. capture\n2. cluster\n3. copy to spec\n4. archive loose scraps',
+        colorId: 'sand',
+        x: 120,
+        y: 118,
+        layer: 1,
+        createdAt: now - 4 * 60 * 60 * 1000,
+        updatedAt: now - 3 * 60 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-seed-5',
+        topicId: topics[1].id,
+        text: 'Right click should be enough. No toolbar hunting.',
+        colorId: 'coral',
+        x: 388,
+        y: 264,
+        layer: 2,
+        createdAt: now - 3 * 60 * 60 * 1000,
+        updatedAt: now - 2 * 60 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-seed-6',
+        topicId: topics[2].id,
+        text: 'Tiny scraps live here until they deserve a real topic.',
+        colorId: 'blush',
+        x: 148,
+        y: 148,
+        layer: 1,
+        createdAt: now - 70 * 60 * 1000,
+        updatedAt: now - 62 * 60 * 1000,
+        deletedAt: null,
+      },
+      {
+        id: 'note-trash-1',
+        topicId: topics[0].id,
+        text: 'Old direction that can disappear if nobody restores it.',
+        colorId: 'blush',
+        x: 522,
+        y: 220,
+        layer: 4,
+        createdAt: now - 13 * 60 * 60 * 1000,
+        updatedAt: now - 12 * 60 * 60 * 1000,
+        deletedAt: now - 8 * 60 * 60 * 1000,
+      },
+    ],
+  };
+}
+
+function purgeExpiredNotes(notes: NotesNote[], now = Date.now()): NotesNote[] {
+  return notes.filter(
+    (note) => note.deletedAt === null || now - note.deletedAt < NOTES_TRASH_RETENTION_MS
+  );
+}
+
+function sanitizeState(
+  input: NotesDemoState | LegacyNotesDemoState | LegacyNotesDemoStateV2 | undefined
+): NotesDemoState {
+  if (
+    !input ||
+    (input.version !== 1 && input.version !== 2 && input.version !== 3) ||
+    !Array.isArray(input.topics) ||
+    !Array.isArray(input.notes)
+  ) {
+    return createDefaultState();
+  }
+
+  const topics = input.topics
+    .filter((topic) => topic && typeof topic.id === 'string' && typeof topic.title === 'string')
+    .map((topic) => ({
+      id: topic.id,
+      title: topic.title.trim() || 'Untitled topic',
+      createdAt: Number.isFinite(topic.createdAt) ? topic.createdAt : Date.now(),
+    }));
+
+  if (topics.length === 0) {
+    return createDefaultState();
+  }
+
+  const topicIds = new Set(topics.map((topic) => topic.id));
+
+  const notes = purgeExpiredNotes(
+    input.notes
+      .filter((note) => note && typeof note.id === 'string' && topicIds.has(note.topicId))
+      .map((note, index) => ({
+        id: note.id,
+        topicId: note.topicId,
+        text: typeof note.text === 'string' ? note.text : '',
+        colorId: NOTES_COLOR_OPTIONS.some((option) => option.id === note.colorId)
+          ? note.colorId
+          : getRandomColorId(),
+        x: Number.isFinite(note.x) ? note.x : 0,
+        y: Number.isFinite(note.y) ? note.y : 0,
+        layer:
+          typeof note.layer === 'number' && Number.isFinite(note.layer) && note.layer > 0
+            ? note.layer
+            : index + 1,
+        createdAt: Number.isFinite(note.createdAt) ? note.createdAt : Date.now(),
+        updatedAt: Number.isFinite(note.updatedAt) ? note.updatedAt : Date.now(),
+        deletedAt:
+          note.deletedAt === null || Number.isFinite(note.deletedAt) ? note.deletedAt : null,
+      }))
+  );
+
+  const viewports: Record<string, TopicViewport> = {};
+  for (const topic of topics) {
+    const viewport = input.viewports?.[topic.id];
+    const rawScale = typeof viewport?.scale === 'number' ? viewport.scale : undefined;
+    const scale =
+      rawScale !== undefined && Number.isFinite(rawScale) && rawScale > 0
+        ? rawScale
+        : DEFAULT_VIEWPORT.scale;
+    viewports[topic.id] = {
+      x: Number.isFinite(viewport?.x) ? viewport.x : DEFAULT_VIEWPORT.x,
+      y: Number.isFinite(viewport?.y) ? viewport.y : DEFAULT_VIEWPORT.y,
+      scale,
+    };
+  }
+
+  return {
+    version: 3,
+    activeTopicId: topicIds.has(input.activeTopicId) ? input.activeTopicId : topics[0].id,
+    topics,
+    notes,
+    viewports,
+  };
+}
+
+export function NotesDemoProvider(props: { children: JSX.Element }) {
+  const [persistedState, setPersistedState] = usePersisted<
+    NotesDemoState | LegacyNotesDemoState | LegacyNotesDemoStateV2
+  >('demo.notes.state.v1', createDefaultState());
+  const [state, setState] = createStore<NotesDemoState>(sanitizeState(persistedState()));
+
+  createEffect(() => {
+    setPersistedState(sanitizeState(unwrap(state)));
+  });
+
+  createEffect(() => {
+    if (state.topics.some((topic) => topic.id === state.activeTopicId)) return;
+    const fallbackTopicId = state.topics[0]?.id;
+    if (!fallbackTopicId) return;
+    setState('activeTopicId', fallbackTopicId);
+  });
+
+  const purgeExpired = () => {
+    const now = Date.now();
+    setState(
+      produce((draft) => {
+        draft.notes = purgeExpiredNotes(draft.notes, now);
+      })
+    );
+  };
+
+  purgeExpired();
+
+  const purgeTimer =
+    typeof window === 'undefined' ? undefined : window.setInterval(purgeExpired, 60 * 1000);
+  onCleanup(() => {
+    if (purgeTimer !== undefined) {
+      window.clearInterval(purgeTimer);
+    }
+  });
+
+  const topics = createMemo(() => state.topics);
+  const activeTopicId = createMemo(() => state.activeTopicId);
+  const activeTopic = createMemo(() =>
+    state.topics.find((topic) => topic.id === state.activeTopicId)
+  );
+  const trashedNotes = createMemo(() =>
+    state.notes
+      .filter((note) => note.deletedAt !== null)
+      .slice()
+      .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0))
+  );
+  const trashCount = createMemo(() => trashedNotes().length);
+  const activeViewport = createMemo<TopicViewport>(() => {
+    const topicId = activeTopicId();
+    return state.viewports[topicId] ?? DEFAULT_VIEWPORT;
+  });
+
+  const getTopic = (topicId: string) => state.topics.find((topic) => topic.id === topicId);
+
+  const getViewport = (topicId: string): TopicViewport =>
+    state.viewports[topicId] ?? DEFAULT_VIEWPORT;
+
+  const getNotesForTopic = (topicId: string, options?: { includeDeleted?: boolean }) =>
+    state.notes.filter(
+      (note) =>
+        note.topicId === topicId && (options?.includeDeleted ? true : note.deletedAt === null)
+    );
+
+  const getLiveNoteCount = (topicId: string) =>
+    state.notes.filter((note) => note.topicId === topicId && note.deletedAt === null).length;
+
+  const getNoteById = (noteId: string) => state.notes.find((note) => note.id === noteId);
+
+  const createTopic = (title: string): string => {
+    const trimmed = title.trim();
+    const topicId = createId('topic');
+    const topicTitle = trimmed || `Topic ${state.topics.length + 1}`;
+    const createdAt = Date.now();
+
+    setState(
+      produce((draft) => {
+        draft.topics.push({
+          id: topicId,
+          title: topicTitle,
+          createdAt,
+        });
+        draft.viewports[topicId] = { ...DEFAULT_VIEWPORT };
+        draft.activeTopicId = topicId;
+      })
+    );
+
+    return topicId;
+  };
+
+  const setActiveTopic = (topicId: string) => {
+    if (!getTopic(topicId)) return;
+    setState('activeTopicId', topicId);
+  };
+
+  const setViewport = (topicId: string, viewport: TopicViewport) => {
+    if (!getTopic(topicId)) return;
+    setState(
+      produce((draft) => {
+        draft.viewports[topicId] = viewport;
+      })
+    );
+  };
+
+  const createNote = (input: CreateNoteInput): NotesNote | undefined => {
+    const topicId = input.topicId ?? state.activeTopicId;
+    if (!getTopic(topicId)) return undefined;
+
+    const now = Date.now();
+    const layer = getNextLayer(state.notes);
+    const note: NotesNote = {
+      id: createId('note'),
+      topicId,
+      text: input.text ?? '',
+      colorId: input.colorId ?? getRandomColorId(),
+      x: input.x,
+      y: input.y,
+      layer,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    };
+
+    setState(
+      produce((draft) => {
+        draft.notes.push(note);
+      })
+    );
+
+    return note;
+  };
+
+  const updateNote = (noteId: string, input: UpdateNoteInput) => {
+    setState(
+      produce((draft) => {
+        const note = draft.notes.find((item) => item.id === noteId);
+        if (!note) return;
+
+        if (typeof input.text === 'string') note.text = input.text;
+        if (input.colorId) note.colorId = input.colorId;
+        note.updatedAt = Date.now();
+      })
+    );
+  };
+
+  const moveNote = (noteId: string, position: { x: number; y: number }) => {
+    setState(
+      produce((draft) => {
+        const note = draft.notes.find((item) => item.id === noteId);
+        if (!note) return;
+        note.x = position.x;
+        note.y = position.y;
+        note.updatedAt = Date.now();
+      })
+    );
+  };
+
+  const bringNoteToFront = (noteId: string) => {
+    setState(
+      produce((draft) => {
+        const note = draft.notes.find((item) => item.id === noteId);
+        if (!note) return;
+
+        const topLayer = draft.notes.reduce((maxLayer, item) => Math.max(maxLayer, item.layer), 0);
+        if (note.layer >= topLayer) return;
+
+        note.layer = topLayer + 1;
+      })
+    );
+  };
+
+  const trashNote = (noteId: string) => {
+    setState(
+      produce((draft) => {
+        const note = draft.notes.find((item) => item.id === noteId);
+        if (!note || note.deletedAt !== null) return;
+        note.deletedAt = Date.now();
+        note.updatedAt = Date.now();
+      })
+    );
+  };
+
+  const restoreNote = (noteId: string) => {
+    setState(
+      produce((draft) => {
+        const note = draft.notes.find((item) => item.id === noteId);
+        if (!note || note.deletedAt === null) return;
+        note.deletedAt = null;
+        note.layer = getNextLayer(draft.notes);
+        note.updatedAt = Date.now();
+      })
+    );
+  };
+
+  const deleteNotePermanently = (noteId: string) => {
+    setState(
+      produce((draft) => {
+        draft.notes = draft.notes.filter((note) => note.id !== noteId);
+      })
+    );
+  };
+
+  const clearTrashForTopic = (topicId: string) => {
+    setState(
+      produce((draft) => {
+        draft.notes = draft.notes.filter(
+          (note) => !(note.topicId === topicId && note.deletedAt !== null)
+        );
+      })
+    );
+  };
+
+  const value: NotesDemoContextValue = {
+    topics,
+    activeTopicId,
+    activeTopic,
+    activeViewport,
+    trashedNotes,
+    trashCount,
+    colorOptions: NOTES_COLOR_OPTIONS,
+    getTopic,
+    getViewport,
+    getNotesForTopic,
+    getNoteById,
+    getLiveNoteCount,
+    getTextPreview: getNotePreviewText,
+    getNoteSize: getNoteSizeBucket,
+    createTopic,
+    setActiveTopic,
+    setViewport,
+    createNote,
+    updateNote,
+    moveNote,
+    bringNoteToFront,
+    trashNote,
+    restoreNote,
+    deleteNotePermanently,
+    clearTrashForTopic,
+  };
+
+  return <NotesDemoContext.Provider value={value}>{props.children}</NotesDemoContext.Provider>;
+}
+
+export function useNotesDemo(): NotesDemoContextValue {
+  const context = useContext(NotesDemoContext);
+  if (!context) {
+    throw new Error('useNotesDemo must be used within NotesDemoProvider');
+  }
+
+  return context;
+}
