@@ -60,6 +60,10 @@ describe('@floegence/floe-webapp-core package config', () => {
         types: './dist/chat.d.ts',
         import: './dist/chat.js',
       },
+      './notes': {
+        types: './dist/notes.d.ts',
+        import: './dist/notes.js',
+      },
       './editor': {
         types: './dist/editor.d.ts',
         import: './dist/editor.js',

@@ -33,7 +33,7 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 | --- | --- | --- | --- |
 | `App Shell` | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md) |
 | `UI Primitives` | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, theme tokens | Keeps core interactions and visual language consistent while leaving room for product-owned features | [`docs/getting-started.md`](docs/getting-started.md) |
-| `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, widget hooks, terminal extension helpers, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md) |
+| `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, terminal extension helpers, widget hooks, controller-driven Notes overlay primitives, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md), [`docs/getting-started.md`](docs/getting-started.md) |
 | `Protocol Layer` | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring | Lets apps attach connection state and remote capabilities without baking business contracts into the framework | [`docs/protocol.md`](docs/protocol.md) |
 | `Boot Helpers` | Hash/session helpers and `postMessage` handshake utilities | Helps multi-window and sandbox-style launch flows stay consistent | [`docs/runtime.md`](docs/runtime.md) |
 
@@ -85,7 +85,7 @@ The demo shows how Floe can host multiple product surfaces in one shell:
 - `Files`: Monaco-powered source viewing over demo workspace files
 - `Search`: workspace search that jumps into the file view
 - `Settings`: protocol connect/disconnect plus shell and chart theme controls
-- `Chat`, `Deck`, and `Design Tokens`: reference surfaces for richer app experiences
+- `Chat`, `Deck`, `Notes`, and `Design Tokens`: reference surfaces for richer app experiences
 
 Optional local variations:
 

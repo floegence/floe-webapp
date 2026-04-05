@@ -30,6 +30,10 @@ const copies = [
     dest: resolve(pkgRoot, 'dist/chat.css'),
   },
   {
+    src: resolve(pkgRoot, 'src/components/notes/notes.css'),
+    dest: resolve(pkgRoot, 'dist/notes.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/components/ui/styles/ui.css'),
     dest: resolve(pkgRoot, 'dist/ui.css'),
   },

@@ -15,6 +15,7 @@
       "@floegence/floe-webapp-core/launchpad": ["../../packages/core/src/launchpad.ts"],
       "@floegence/floe-webapp-core/file-browser": ["../../packages/core/src/file-browser.ts"],
       "@floegence/floe-webapp-core/chat": ["../../packages/core/src/chat.ts"],
+      "@floegence/floe-webapp-core/notes": ["../../packages/core/src/notes.ts"],
       "@floegence/floe-webapp-core/editor": ["../../packages/core/src/editor.ts"],
       "@floegence/floe-webapp-core/widgets": ["../../packages/core/src/widgets.ts"],
       "@floegence/floe-webapp-core/terminal": ["../../packages/core/src/terminal.ts"],

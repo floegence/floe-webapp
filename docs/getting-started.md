@@ -123,6 +123,45 @@ Shared `FileBrowser` menus now emit semantic context (`item` vs `directory-backg
 
 When a downstream mutation needs to focus a newly created item, prefer the controlled `revealRequest` API on `FileBrowser` / `FileBrowserProvider`; it keeps filter clearing, scrolling, and single-selection behavior inside the shared file-browser implementation instead of pushing DOM-specific reveal code into the product layer.
 
+### Shared Notes overlay
+
+Floe also ships a controller-driven Notes overlay from the dedicated `@floegence/floe-webapp-core/notes` subpath.
+
+Use this when you want the shared infinite-board UI, card styling, trash/minimap behavior, and mobile affordances, while keeping your own product runtime in charge of persistence and live updates.
+
+```tsx
+import { NotesOverlay, type NotesController } from '@floegence/floe-webapp-core/notes';
+
+const controller: NotesController = {
+  snapshot: () => snapshot(),
+  activeTopicID: () => activeTopicID(),
+  setActiveTopicID: (topicID) => setActiveTopicID(topicID),
+  viewport: () => viewport(),
+  setViewport: (nextViewport) => setViewport(nextViewport),
+  loading: () => false,
+  connectionState: () => 'live',
+  createTopic: async (input) => createTopic(input),
+  updateTopic: async (topicID, input) => updateTopic(topicID, input),
+  deleteTopic: async (topicID) => deleteTopic(topicID),
+  createNote: async (input) => createNote(input),
+  updateNote: async (noteID, input) => updateNote(noteID, input),
+  bringNoteToFront: async (noteID) => bringNoteToFront(noteID),
+  deleteNote: async (noteID) => deleteNote(noteID),
+  restoreNote: async (noteID) => restoreNote(noteID),
+  clearTrashTopic: async (topicID) => clearTrashTopic(topicID),
+};
+
+export function ProductNotes() {
+  return <NotesOverlay open controller={controller} onClose={() => setNotesOpen(false)} />;
+}
+```
+
+Notes on the contract:
+
+- The controller owns runtime authority. Floe owns rendering, gesture handling, and shared visual language.
+- Keep your snapshot shape aligned with the exported canonical notes types so multiple products can share the same card DSL (`style_version`, `color_token`, `size_bucket`) and projection helpers.
+- Import `@floegence/floe-webapp-core/tailwind` or `@floegence/floe-webapp-core/styles` so the Notes surface CSS is present in your app bundle.
+
 ### Styling (Tailwind v4)
 
 Recommended: run Tailwind v4 in your app and import the Floe Tailwind entry from your CSS entry file.

@@ -8,4 +8,5 @@
 @source './**/*.{js}';
 @import './floe.css';
 @import './chat.css';
+@import './notes.css';
 @import './ui.css';

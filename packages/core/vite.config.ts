@@ -31,6 +31,7 @@ export default defineConfig({
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),
+        notes: resolve(__dirname, 'src/notes.ts'),
         editor: resolve(__dirname, 'src/editor.ts'),
         widgets: resolve(__dirname, 'src/widgets.ts'),
         terminal: resolve(__dirname, 'src/terminal.ts'),
