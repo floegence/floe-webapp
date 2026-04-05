@@ -29,13 +29,14 @@ import {
   Trash,
   X,
 } from '@floegence/floe-webapp-core/icons';
-import { Button, Dialog, InfiniteCanvas, Textarea } from '@floegence/floe-webapp-core/ui';
+import { Button, InfiniteCanvas, Input, Textarea } from '@floegence/floe-webapp-core/ui';
 import {
   NOTES_SIZE_DIMENSIONS,
   NOTES_TRASH_RETENTION_MS,
   useNotesDemo,
   type NotesColorId,
   type NotesNote,
+  type NotesTopicIconId,
   type NotesTopic,
 } from './NotesDemoContext';
 
@@ -55,6 +56,7 @@ interface CanvasMenuState {
   worldX: number;
   worldY: number;
   topicId: string;
+  noteId?: string | null;
 }
 
 interface DragState {
@@ -180,12 +182,143 @@ function formatDeletedTimestamp(timestamp: number | null): string {
   }).format(timestamp);
 }
 
-export const NotesPage: Component = () => {
+function NotesTopicAnimalIcon(props: { iconId: NotesTopicIconId; class?: string }) {
+  switch (props.iconId) {
+    case 'hare':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="M8.5 18.1c0-3.2 1.6-5.2 3.5-5.2s3.5 2 3.5 5.2" />
+          <path d="M9.5 12.2 8.3 5.3c-.2-1 .3-1.8 1.1-2 .8-.2 1.5.3 1.7 1.2l.8 4.9" />
+          <path d="m14.5 12.2 1.1-6.6c.2-.9.9-1.4 1.7-1.2.8.2 1.3 1 1.1 2l-1.1 5.8" />
+          <path d="M10 16.2h.01" />
+          <path d="M14 16.2h.01" />
+          <path d="M11.2 18.1c.3.4.7.6 1.2.6s.9-.2 1.2-.6" />
+        </svg>
+      );
+    case 'fox':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="m8.3 8-2.2-3.7 4.1 1.9" />
+          <path d="m15.7 8 2.2-3.7-4.1 1.9" />
+          <path d="M12 19.3c-3.7 0-6-2.7-6-6.3 0-1.7.6-3.3 2.3-5L12 10.9 15.7 8c1.7 1.7 2.3 3.3 2.3 5 0 3.6-2.3 6.3-6 6.3Z" />
+          <path d="M10 14.6h.01" />
+          <path d="M14 14.6h.01" />
+          <path d="M10.8 17c.4.3.8.5 1.2.5s.8-.2 1.2-.5" />
+        </svg>
+      );
+    case 'otter':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="M7.4 18.4c0-3.9 2-6.3 4.6-6.3s4.6 2.4 4.6 6.3" />
+          <path d="M9 11.2 7.7 8.4l2.7.7" />
+          <path d="m15 11.2 1.3-2.8-2.7.7" />
+          <path d="M10 15.1h.01" />
+          <path d="M14 15.1h.01" />
+          <path d="M12 16.2c.7 0 1.2-.4 1.2-1s-.5-1-1.2-1-1.2.4-1.2 1 .5 1 1.2 1Z" />
+          <path d="M7.3 15.7 5 15.1" />
+          <path d="m16.7 15.7 2.3-.6" />
+        </svg>
+      );
+    case 'koi':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="M5.5 12c2.2-3.2 5-4.8 8.3-4.8 3.2 0 4.7 2.1 4.7 4.8s-1.5 4.8-4.7 4.8c-3.3 0-6.1-1.6-8.3-4.8Z" />
+          <path d="m5.5 12-2.8-2.7v5.4Z" />
+          <path d="M15.9 10.1h.01" />
+          <path d="M11.7 12c1.1 0 2 .9 2 2" />
+          <path d="M11.7 12c1.1 0 2-.9 2-2" />
+        </svg>
+      );
+    case 'swallow':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="M4 12.8c2.7-3.6 5.6-5.4 8.5-5.4 1.8 0 3.4.6 4.9 1.8" />
+          <path d="M20 11.2c-2.7 3.6-5.6 5.4-8.5 5.4-1.8 0-3.4-.6-4.9-1.8" />
+          <path d="m13.4 11.2 6.1-.8-3.7 3.8" />
+          <path d="m10.6 12.8-6.1.8 3.7-3.8" />
+        </svg>
+      );
+    case 'crane':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class={props.class}
+          aria-hidden="true"
+        >
+          <path d="M8.5 18.6c0-3.8 1.8-5.9 4.2-5.9 2.6 0 3.8 2.1 3.8 5.9" />
+          <path d="M12.6 12.7V8.6c0-2.2 1.5-4.2 4.1-4.2h2" />
+          <path d="m18.7 4.4 2.2-1.5" />
+          <path d="M9 12.7 7.1 10" />
+          <path d="M10.2 15.5h.01" />
+          <path d="M14.1 15.5h.01" />
+        </svg>
+      );
+  }
+}
+
+export interface NotesPageProps {
+  onRequestClose?: () => void;
+}
+
+export const NotesPage: Component<NotesPageProps> = (props) => {
   const notes = useNotesDemo();
   const layout = useLayout();
   const notifications = useNotification();
 
   const [contextMenu, setContextMenu] = createSignal<CanvasMenuState | null>(null);
+  const [draftTopicTitle, setDraftTopicTitle] = createSignal('');
+  const [renamingTopicId, setRenamingTopicId] = createSignal<string | null>(null);
+  const [renamingTopicTitle, setRenamingTopicTitle] = createSignal('');
   const [editingNoteId, setEditingNoteId] = createSignal<string | null>(null);
   const [draftText, setDraftText] = createSignal('');
   const [draftColor, setDraftColor] = createSignal<NotesColorId>('butter');
@@ -224,6 +357,9 @@ export const NotesPage: Component = () => {
     const noteId = editingNoteId();
     return noteId ? notes.getNoteById(noteId) : undefined;
   });
+  const totalLiveNotes = createMemo(() =>
+    notes.topics().reduce((count, topic) => count + notes.getLiveNoteCount(topic.id), 0)
+  );
   const activeTopicLabel = createMemo(() => activeTopic()?.title ?? 'No topic');
   const boardScaleLabel = createMemo(() => `${Math.round(notes.activeViewport().scale * 100)}%`);
   const topActiveLayer = createMemo(() =>
@@ -395,8 +531,10 @@ export const NotesPage: Component = () => {
     const menu = contextMenu();
     if (!menu) return undefined;
 
-    const maxX = typeof window === 'undefined' ? menu.clientX : window.innerWidth - 248;
-    const maxY = typeof window === 'undefined' ? menu.clientY : window.innerHeight - 148;
+    const menuWidth = 224;
+    const menuHeight = menu.noteId ? 184 : 132;
+    const maxX = typeof window === 'undefined' ? menu.clientX : window.innerWidth - menuWidth;
+    const maxY = typeof window === 'undefined' ? menu.clientY : window.innerHeight - menuHeight;
 
     return {
       left: `${Math.max(16, Math.min(menu.clientX, maxX))}px`,
@@ -406,6 +544,17 @@ export const NotesPage: Component = () => {
 
   const closeContextMenu = () => setContextMenu(null);
   const closeTrashDock = () => setTrashOpen(false);
+  const closeOverlay = () => {
+    closeContextMenu();
+    closeTrashDock();
+    setOverviewOpen(false);
+    setRenamingTopicId(null);
+    setRenamingTopicTitle('');
+    setEditingNoteId(null);
+    setManualPasteTarget(null);
+    setManualPasteText('');
+    props.onRequestClose?.();
+  };
   const clearOverviewNavigation = () => {
     overviewAbortController?.abort();
     overviewAbortController = undefined;
@@ -434,6 +583,11 @@ export const NotesPage: Component = () => {
 
   createEffect(() => {
     activeTopicId();
+    closeContextMenu();
+  });
+
+  createEffect(() => {
+    if (!trashOpen()) return;
     closeContextMenu();
   });
 
@@ -536,6 +690,51 @@ export const NotesPage: Component = () => {
     notes.bringNoteToFront(noteId);
   };
 
+  const submitTopic: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (event) => {
+    event.preventDefault();
+    const topicId = notes.createTopic(draftTopicTitle());
+    setDraftTopicTitle('');
+    notes.setActiveTopic(topicId);
+  };
+
+  const beginTopicRename = (topic: NotesTopic) => {
+    setRenamingTopicId(topic.id);
+    setRenamingTopicTitle(topic.title);
+  };
+
+  const cancelTopicRename = () => {
+    setRenamingTopicId(null);
+    setRenamingTopicTitle('');
+  };
+
+  const saveTopicRename = () => {
+    const topicId = renamingTopicId();
+    if (!topicId) return;
+    notes.updateTopic(topicId, { title: renamingTopicTitle() });
+    cancelTopicRename();
+  };
+
+  const handleDeleteTopic = (topic: NotesTopic) => {
+    const notesForTopic = notes.getNotesForTopic(topic.id, { includeDeleted: true }).length;
+    if (renamingTopicId() === topic.id) {
+      cancelTopicRename();
+    }
+
+    const deleted = notes.deleteTopic(topic.id);
+    if (!deleted) {
+      notifications.info('Keep one topic', 'At least one topic needs to remain available.');
+      return;
+    }
+
+    if (notesForTopic > 0) {
+      setTrashOpen(true);
+      notifications.success('Topic deleted', 'Live notes moved into trash for this topic.');
+      return;
+    }
+
+    notifications.success('Topic deleted', 'The empty topic was removed.');
+  };
+
   const openEditor = (noteId: string) => {
     closeContextMenu();
     setEditingNoteId(noteId);
@@ -579,6 +778,60 @@ export const NotesPage: Component = () => {
 
     if (!created) return;
     notifications.success('Pasted', 'Created a new note from clipboard text.');
+  };
+
+  const getPlacementFromClientPoint = (
+    clientX: number,
+    clientY: number,
+    topicId = activeTopic()?.id
+  ): ManualPasteState | null => {
+    if (!topicId) return null;
+
+    const topic = notes.getTopic(topicId);
+    if (!topic || topic.deletedAt !== null) return null;
+
+    const frame = canvasFrameRef;
+    if (!frame) return getViewportCenterPlacement();
+
+    const rect = frame.getBoundingClientRect();
+    if (
+      rect.width <= 0 ||
+      rect.height <= 0 ||
+      clientX < rect.left ||
+      clientX > rect.right ||
+      clientY < rect.top ||
+      clientY > rect.bottom
+    ) {
+      return null;
+    }
+
+    const viewport = notes.getViewport(topic.id);
+
+    return {
+      topicId: topic.id,
+      worldX: (clientX - rect.left - viewport.x) / viewport.scale,
+      worldY: (clientY - rect.top - viewport.y) / viewport.scale,
+    };
+  };
+
+  const openContextMenuAtClientPoint = (
+    clientX: number,
+    clientY: number,
+    options?: { topicId?: string; noteId?: string | null }
+  ) => {
+    const placement = getPlacementFromClientPoint(clientX, clientY, options?.topicId);
+    if (!placement) return false;
+
+    setContextMenu({
+      clientX,
+      clientY,
+      worldX: placement.worldX,
+      worldY: placement.worldY,
+      topicId: placement.topicId,
+      noteId: options?.noteId ?? null,
+    });
+
+    return true;
   };
 
   const getViewportCenterPlacement = (): ManualPasteState | null => {
@@ -687,6 +940,17 @@ export const NotesPage: Component = () => {
 
     closeContextMenu();
     await pasteNoteAt(menu);
+  };
+
+  const handleDeleteFromMenu = () => {
+    const menu = contextMenu();
+    if (!menu?.noteId) return;
+
+    closeContextMenu();
+    notes.trashNote(menu.noteId);
+    resetCopiedNote();
+    setCopiedNoteId((current) => (current === menu.noteId ? null : current));
+    setTrashOpen(true);
   };
 
   const handleMobileNewNote = () => {
@@ -952,202 +1216,446 @@ export const NotesPage: Component = () => {
   );
 
   return (
-    <div class="notes-page">
-      <div class="notes-page__toolbar" data-floe-canvas-interactive="true">
-        <div class="notes-page__toolbar-copy">
-          <div class="notes-page__toolbar-topline">
-            <div class="notes-page__eyebrow">Active Topic</div>
-            <div class="notes-page__scale">{boardScaleLabel()}</div>
-          </div>
-          <div class="notes-page__title-row">
-            <div class="notes-page__title">{activeTopicLabel()}</div>
-          </div>
-          <div class="notes-page__meta">
-            <span>
-              {activeNotes().length} live note{activeNotes().length === 1 ? '' : 's'}
-            </span>
-            <span>{notes.trashCount()} in trash</span>
-          </div>
-        </div>
-
-        <Show when={layout.isMobile()}>
-          <div class="notes-page__mobile-toolbar">
-            <div class="notes-page__mobile-topics">
-              <For each={notes.topics()}>
-                {(topic) => (
-                  <button
-                    type="button"
-                    class="notes-page__mobile-topic"
-                    classList={{ 'is-active': topic.id === activeTopicId() }}
-                    onClick={() => notes.setActiveTopic(topic.id)}
-                  >
-                    {topic.title}
-                  </button>
-                )}
-              </For>
-            </div>
-          </div>
-        </Show>
-      </div>
-
-      <div class="notes-page__canvas" ref={canvasFrameRef}>
-        <InfiniteCanvas
-          ariaLabel={`Canvas for ${activeTopicLabel()}`}
-          class="notes-canvas"
-          viewport={notes.activeViewport()}
-          onViewportChange={(viewport) => {
-            const topic = activeTopic();
-            if (!topic) return;
-            notes.setViewport(topic.id, viewport);
-          }}
-          onCanvasContextMenu={(event) => {
-            const topic = activeTopic();
-            if (!topic) return;
-
-            setContextMenu({
-              clientX: event.clientX,
-              clientY: event.clientY,
-              worldX: event.worldX,
-              worldY: event.worldY,
-              topicId: topic.id,
-            });
-          }}
+    <>
+      <Portal>
+        <Motion.section
+          class="notes-overlay"
+          role="region"
+          aria-label="Notes overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: duration.fast }}
         >
-          <div class="notes-canvas__field">
-            <For each={activeNotes()}>
-              {(note) => {
-                const sizeBucket = createMemo(() => notes.getNoteSize(note.text));
-                const dimensions = createMemo(() => NOTES_SIZE_DIMENSIONS[sizeBucket()]);
-                const preview = createMemo(() =>
-                  notes.getTextPreview(note.text, dimensions().previewLimit)
-                );
-                const isCopied = () => copiedNoteId() === note.id;
-                const isEmpty = createMemo(() => !note.text.trim());
-                const isDragging = () => dragState()?.noteId === note.id;
-                const livePosition = () => {
-                  const currentDrag = dragState();
-                  if (currentDrag?.noteId === note.id) {
-                    return { x: currentDrag.currentX, y: currentDrag.currentY };
-                  }
+          <Motion.div
+            class="notes-overlay__frame"
+            initial={{ opacity: 0, y: 18, scale: 0.986 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: duration.normal, easing: easing.easeOut }}
+          >
+            <header class="notes-overlay__header" data-floe-canvas-interactive="true">
+              <div class="notes-overlay__header-brand">
+                <div class="notes-overlay__header-title">Notes</div>
+                <div class="notes-overlay__header-separator" />
+                <div class="notes-overlay__header-stat">{notes.topics().length} topics</div>
+                <div class="notes-overlay__header-stat">
+                  {totalLiveNotes()} live note{totalLiveNotes() === 1 ? '' : 's'}
+                </div>
+                <div class="notes-overlay__header-stat">{notes.trashCount()} trash</div>
+              </div>
 
-                  return { x: note.x, y: note.y };
-                };
+              <div class="notes-overlay__header-actions">
+                <button
+                  type="button"
+                  class="notes-overlay__close"
+                  aria-label="Close notes overlay"
+                  onClick={closeOverlay}
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+            </header>
 
-                return (
-                  <article
-                    class={`notes-note notes-note--${note.colorId} notes-note--size-${sizeBucket()}`}
-                    classList={{
-                      'is-copied': isCopied(),
-                      'is-dragging': isDragging(),
-                    }}
-                    onClick={() => promoteNote(note.id)}
-                    style={{
-                      transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
-                      '--note-width': `${dimensions().width}px`,
-                      '--note-height': `${dimensions().height}px`,
-                      'z-index': isDragging() ? `${topActiveLayer() + 1}` : `${note.layer}`,
-                    }}
-                  >
-                    <div class="notes-note__surface">
-                      <header class="notes-note__header">
-                        <button
-                          type="button"
-                          class="notes-note__drag"
-                          aria-label="Drag note"
-                          data-floe-canvas-interactive="true"
-                          onPointerDown={(event) => beginNoteDrag(note, event)}
+            <div class="notes-overlay__body">
+              <aside class="notes-overlay__rail" data-floe-canvas-interactive="true">
+                <section class="notes-overlay__rail-header">
+                  <div class="notes-overlay__rail-heading">Topics</div>
+                  <div class="notes-overlay__rail-total">{notes.topics().length}</div>
+                </section>
+
+                <form
+                  class="notes-topic-composer notes-overlay__topic-composer"
+                  onSubmit={submitTopic}
+                  data-floe-canvas-interactive="true"
+                >
+                  <Input
+                    size="sm"
+                    value={draftTopicTitle()}
+                    onInput={(event) => setDraftTopicTitle(event.currentTarget.value)}
+                    placeholder="Add topic"
+                  />
+                  <button type="submit" class="notes-topic-composer__button" aria-label="Add topic">
+                    <Plus class="w-3.5 h-3.5" />
+                  </button>
+                </form>
+
+                <div class="notes-topic-list" data-floe-canvas-interactive="true">
+                  <For each={notes.topics()}>
+                    {(topic) => {
+                      const liveCount = () => notes.getLiveNoteCount(topic.id);
+
+                      return (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          class={`notes-topic-row notes-topic-tone--${topic.toneId}`}
+                          classList={{ 'is-active': topic.id === notes.activeTopicId() }}
+                          onClick={() => notes.setActiveTopic(topic.id)}
+                          onKeyDown={(event) => {
+                            if (event.key !== 'Enter' && event.key !== ' ') return;
+                            event.preventDefault();
+                            notes.setActiveTopic(topic.id);
+                          }}
                         >
-                          <GripVertical class="w-3.5 h-3.5" />
-                        </button>
-
-                        <div class="notes-note__actions">
-                          <button
-                            type="button"
-                            class="notes-note__icon-button"
-                            data-floe-canvas-interactive="true"
-                            aria-label="Edit note"
-                            onClick={() => openEditor(note.id)}
-                          >
-                            <Pencil class="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            class="notes-note__icon-button is-danger"
-                            data-floe-canvas-interactive="true"
-                            aria-label="Move note to trash"
-                            onClick={() => {
-                              notes.trashNote(note.id);
-                              setTrashOpen(true);
-                            }}
-                          >
-                            <Trash class="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </header>
-
-                      <button
-                        type="button"
-                        class="notes-note__body"
-                        classList={{ 'is-empty': isEmpty() }}
-                        data-floe-canvas-interactive="true"
-                        data-floe-canvas-pan-surface="true"
-                        onClick={() => void copyNote(note)}
-                      >
-                        <span>{preview()}</span>
-                      </button>
-
-                      <Show when={isCopied()}>
-                        <div class="notes-note__copied-state" aria-hidden="true">
-                          <div class="notes-note__copied-pill">
-                            <span class="notes-note__copied-icon">
-                              <Check class="w-3.5 h-3.5" />
-                            </span>
-                            <span class="notes-note__copied-copy">Copied</span>
+                          <div class={`notes-topic-mark notes-topic-tone--${topic.toneId}`}>
+                            <NotesTopicAnimalIcon
+                              iconId={topic.iconId}
+                              class="notes-topic-mark__icon"
+                            />
+                          </div>
+                          <div class="notes-topic-row__copy">
+                            <Show
+                              when={renamingTopicId() === topic.id}
+                              fallback={
+                                <div class="notes-topic-row__title-line">
+                                  <div class="notes-topic-row__title">{topic.title}</div>
+                                </div>
+                              }
+                            >
+                              <form
+                                class="notes-topic-row__editor"
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  saveTopicRename();
+                                }}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <Input
+                                  size="sm"
+                                  value={renamingTopicTitle()}
+                                  onInput={(event) =>
+                                    setRenamingTopicTitle(event.currentTarget.value)
+                                  }
+                                  onKeyDown={(event) => {
+                                    if (event.key !== 'Escape') return;
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    cancelTopicRename();
+                                  }}
+                                  placeholder="Topic name"
+                                />
+                                <button
+                                  type="submit"
+                                  class="notes-topic-row__edit-button"
+                                  aria-label="Save topic name"
+                                >
+                                  <Check class="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  class="notes-topic-row__edit-button"
+                                  aria-label="Cancel topic edit"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    cancelTopicRename();
+                                  }}
+                                >
+                                  <X class="w-3.5 h-3.5" />
+                                </button>
+                              </form>
+                            </Show>
+                            <div class="notes-topic-row__meta">
+                              {liveCount()} live note{liveCount() === 1 ? '' : 's'}
+                            </div>
+                          </div>
+                          <div class="notes-topic-row__tail">
+                            <div class="notes-topic-row__count">{liveCount()}</div>
+                            <button
+                              type="button"
+                              class="notes-topic-row__edit"
+                              aria-label={`Edit topic ${topic.title}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                beginTopicRename(topic);
+                              }}
+                            >
+                              <Pencil class="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              class="notes-topic-row__edit notes-topic-row__delete"
+                              aria-label={`Delete topic ${topic.title}`}
+                              disabled={notes.topics().length <= 1}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDeleteTopic(topic);
+                              }}
+                            >
+                              <Trash class="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
-                      </Show>
+                      );
+                    }}
+                  </For>
+                </div>
+              </aside>
+
+              <section class="notes-page notes-overlay__board">
+                <div class="notes-overlay__board-head" data-floe-canvas-interactive="true">
+                  <div class="notes-overlay__board-topic">
+                    <Show when={activeTopic()}>
+                      {(topic) => (
+                        <>
+                          <div class={`notes-topic-mark notes-topic-mark--board notes-topic-tone--${topic().toneId}`}>
+                            <NotesTopicAnimalIcon
+                              iconId={topic().iconId}
+                              class="notes-topic-mark__icon"
+                            />
+                          </div>
+                          <div class="notes-overlay__board-topic-copy">
+                            <div class="notes-page__eyebrow">Active Topic</div>
+                            <div class="notes-overlay__board-title">{topic().title}</div>
+                            <div class="notes-overlay__board-meta">
+                              {activeNotes().length} live note{activeNotes().length === 1 ? '' : 's'}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </Show>
+                  </div>
+
+                  <div class="notes-overlay__board-actions">
+                    <button
+                      type="button"
+                      class="notes-overlay__hud-button"
+                      aria-label="Zoom out"
+                      onClick={() => adjustViewportScale('out')}
+                    >
+                      <Minus class="w-3.5 h-3.5" />
+                    </button>
+                    <div class="notes-overlay__hud-scale">{boardScaleLabel()}</div>
+                    <button
+                      type="button"
+                      class="notes-overlay__hud-button"
+                      aria-label="Zoom in"
+                      onClick={() => adjustViewportScale('in')}
+                    >
+                      <Plus class="w-3.5 h-3.5" />
+                    </button>
+                    <Show when={layout.isMobile()}>
+                      <button
+                        type="button"
+                        class="notes-overlay__hud-button"
+                        aria-label="Open overview map"
+                        onClick={() => setOverviewOpen(true)}
+                      >
+                        <Layers class="w-3.5 h-3.5" />
+                      </button>
+                    </Show>
+                  </div>
+                </div>
+
+                <Show when={layout.isMobile()}>
+                  <div class="notes-page__mobile-toolbar">
+                    <div class="notes-page__mobile-topics">
+                      <For each={notes.topics()}>
+                        {(topic) => (
+                          <button
+                            type="button"
+                            class="notes-page__mobile-topic"
+                            classList={{ 'is-active': topic.id === activeTopicId() }}
+                            onClick={() => notes.setActiveTopic(topic.id)}
+                          >
+                            {topic.title}
+                          </button>
+                        )}
+                      </For>
                     </div>
-                  </article>
-                );
-              }}
-            </For>
-          </div>
-        </InfiniteCanvas>
-      </div>
+                  </div>
+                </Show>
 
-      <Show when={!layout.isMobile()}>{overviewPanel('desktop')}</Show>
+                <div class="notes-page__canvas" ref={canvasFrameRef}>
+                  <InfiniteCanvas
+                    ariaLabel={`Canvas for ${activeTopicLabel()}`}
+                    class="notes-canvas"
+                    viewport={notes.activeViewport()}
+                    onViewportChange={(viewport) => {
+                      const topic = activeTopic();
+                      if (!topic) return;
+                      notes.setViewport(topic.id, viewport);
+                    }}
+                    onCanvasContextMenu={(event) => {
+                      const topic = activeTopic();
+                      if (!topic) return;
 
-      <Show when={layout.isMobile() && !overviewOpen()}>
-        <div class="notes-mobile-dock" data-floe-canvas-interactive="true">
-          <button
-            type="button"
-            class="notes-mobile-dock__action"
-            aria-label="Create note at canvas center"
-            onClick={handleMobileNewNote}
-          >
-            <Plus class="w-4 h-4" />
-            <span>New</span>
-          </button>
-          <button
-            type="button"
-            class="notes-mobile-dock__action"
-            aria-label="Paste note at canvas center"
-            onClick={() => void handleMobilePaste()}
-          >
-            <Paste class="w-4 h-4" />
-            <span>Paste</span>
-          </button>
-          <button
-            type="button"
-            class="notes-mobile-dock__action is-emphasis"
-            aria-label="Open overview map"
-            onClick={() => setOverviewOpen(true)}
-          >
-            <Layers class="w-4 h-4" />
-            <span>Map</span>
-          </button>
-        </div>
-      </Show>
+                      setContextMenu({
+                        clientX: event.clientX,
+                        clientY: event.clientY,
+                        worldX: event.worldX,
+                        worldY: event.worldY,
+                        topicId: topic.id,
+                      });
+                    }}
+                  >
+                    <div class="notes-canvas__field">
+                      <For each={activeNotes()}>
+                        {(note) => {
+                          const sizeBucket = createMemo(() => notes.getNoteSize(note.text));
+                          const dimensions = createMemo(() => NOTES_SIZE_DIMENSIONS[sizeBucket()]);
+                          const preview = createMemo(() =>
+                            notes.getTextPreview(note.text, dimensions().previewLimit)
+                          );
+                          const isCopied = () => copiedNoteId() === note.id;
+                          const isEmpty = createMemo(() => !note.text.trim());
+                          const isDragging = () => dragState()?.noteId === note.id;
+                          const livePosition = () => {
+                            const currentDrag = dragState();
+                            if (currentDrag?.noteId === note.id) {
+                              return { x: currentDrag.currentX, y: currentDrag.currentY };
+                            }
+
+                            return { x: note.x, y: note.y };
+                          };
+
+                      return (
+                            <article
+                              class={`notes-note notes-note--${note.colorId} notes-note--size-${sizeBucket()}`}
+                              classList={{
+                                'is-copied': isCopied(),
+                                'is-dragging': isDragging(),
+                              }}
+                              onContextMenu={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                promoteNote(note.id);
+                                openContextMenuAtClientPoint(event.clientX, event.clientY, {
+                                  topicId: note.topicId,
+                                  noteId: note.id,
+                                });
+                              }}
+                              onClick={() => promoteNote(note.id)}
+                              style={{
+                                transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
+                                '--note-width': `${dimensions().width}px`,
+                                '--note-height': `${dimensions().height}px`,
+                                'z-index': isDragging() ? `${topActiveLayer() + 1}` : `${note.layer}`,
+                              }}
+                            >
+                              <div class="notes-note__surface">
+                                <header class="notes-note__header">
+                                  <button
+                                    type="button"
+                                    class="notes-note__drag"
+                                    aria-label="Drag note"
+                                    data-floe-canvas-interactive="true"
+                                    onPointerDown={(event) => beginNoteDrag(note, event)}
+                                  >
+                                    <GripVertical class="w-3.5 h-3.5" />
+                                  </button>
+
+                                  <div class="notes-note__actions">
+                                    <button
+                                      type="button"
+                                      class="notes-note__icon-button"
+                                      data-floe-canvas-interactive="true"
+                                      aria-label="Edit note"
+                                      onClick={() => openEditor(note.id)}
+                                    >
+                                      <Pencil class="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      class="notes-note__icon-button is-danger"
+                                      data-floe-canvas-interactive="true"
+                                      aria-label="Move note to trash"
+                                      onClick={() => {
+                                        notes.trashNote(note.id);
+                                        setTrashOpen(true);
+                                      }}
+                                    >
+                                      <Trash class="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </header>
+
+                                <button
+                                  type="button"
+                                  class="notes-note__body"
+                                  classList={{ 'is-empty': isEmpty() }}
+                                  data-floe-canvas-interactive="true"
+                                  data-floe-canvas-pan-surface="true"
+                                  onClick={() => void copyNote(note)}
+                                >
+                                  <span>{preview()}</span>
+                                </button>
+
+                                <Show when={isCopied()}>
+                                  <div class="notes-note__copied-state" aria-hidden="true">
+                                    <div class="notes-note__copied-pill">
+                                      <span class="notes-note__copied-icon">
+                                        <Check class="w-3.5 h-3.5" />
+                                      </span>
+                                      <span class="notes-note__copied-copy">Copied</span>
+                                    </div>
+                                  </div>
+                                </Show>
+                              </div>
+                            </article>
+                          );
+                        }}
+                      </For>
+                    </div>
+                  </InfiniteCanvas>
+                </div>
+
+                <Show when={!layout.isMobile()}>{overviewPanel('desktop')}</Show>
+
+                <Show when={layout.isMobile() && !overviewOpen()}>
+                  <div class="notes-mobile-dock" data-floe-canvas-interactive="true">
+                    <button
+                      type="button"
+                      class="notes-mobile-dock__action"
+                      aria-label="Create note at canvas center"
+                      onClick={handleMobileNewNote}
+                    >
+                      <Plus class="w-4 h-4" />
+                      <span>New</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="notes-mobile-dock__action"
+                      aria-label="Paste note at canvas center"
+                      onClick={() => void handleMobilePaste()}
+                    >
+                      <Paste class="w-4 h-4" />
+                      <span>Paste</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="notes-mobile-dock__action is-emphasis"
+                      aria-label="Open overview map"
+                      onClick={() => setOverviewOpen(true)}
+                    >
+                      <Layers class="w-4 h-4" />
+                      <span>Map</span>
+                    </button>
+                  </div>
+                </Show>
+
+                <div
+                  class="notes-trash"
+                  classList={{ 'is-open': trashOpen() }}
+                  data-floe-canvas-interactive="true"
+                >
+                  <Show when={!trashOpen()}>
+                    <button
+                      type="button"
+                      class="notes-trash__toggle"
+                      aria-label={`Open trash dock${notes.trashCount() > 0 ? `, ${notes.trashCount()} items` : ''}`}
+                      onClick={() => setTrashOpen(true)}
+                    >
+                      <div class="notes-trash__toggle-mark">
+                        <NotesTrashDockIcon class="notes-trash__toggle-icon" />
+                      </div>
+                    </button>
+                  </Show>
+                </div>
+              </section>
+            </div>
+          </Motion.div>
+        </Motion.section>
+      </Portal>
 
       <Presence>
         <Show when={layout.isMobile() && overviewOpen()}>
@@ -1173,163 +1681,164 @@ export const NotesPage: Component = () => {
         </Show>
       </Presence>
 
-      <div
-        class="notes-trash"
-        classList={{ 'is-open': trashOpen() }}
-        data-floe-canvas-interactive="true"
-      >
-        <Show when={!trashOpen()}>
-          <button
-            type="button"
-            class="notes-trash__toggle"
-            aria-label={`Open trash dock${notes.trashCount() > 0 ? `, ${notes.trashCount()} items` : ''}`}
-            onClick={() => setTrashOpen(true)}
-          >
-            <div class="notes-trash__toggle-mark">
-              <NotesTrashDockIcon class="notes-trash__toggle-icon" />
-            </div>
-          </button>
-        </Show>
-
-        <Presence>
-          <Show when={trashOpen()}>
-            <Portal>
-              <Motion.div
-                class="notes-trash-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: duration.fast }}
-                onClick={closeTrashDock}
-              />
-              <Motion.div
-                class="notes-trash__flyout"
-                initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.98 }}
-                transition={{ duration: duration.normal, easing: easing.easeOut }}
+      <Presence>
+        <Show when={trashOpen()}>
+          <Portal>
+            <Motion.div
+              class="notes-trash-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: duration.fast }}
+              onContextMenu={(event: MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+                closeTrashDock();
+                openContextMenuAtClientPoint(event.clientX, event.clientY);
+              }}
+              onClick={closeTrashDock}
+            />
+            <Motion.div
+              class="notes-trash__flyout"
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.98 }}
+              transition={{ duration: duration.normal, easing: easing.easeOut }}
+            >
+              <div
+                class="notes-trash__panel"
+                onPointerDown={(event: PointerEvent) => event.stopPropagation()}
+                onContextMenu={(event: MouseEvent) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
               >
-                <div
-                  class="notes-trash__panel"
-                  onPointerDown={(event: PointerEvent) => event.stopPropagation()}
-                >
-                  <div class="notes-trash__panel-header">
-                    <div class="notes-trash__panel-title-group">
-                      <div class="notes-trash__panel-title-row">
-                        <div class="notes-trash__panel-title">Trash Dock</div>
-                        <div class="notes-trash__panel-header-actions">
-                          <div class="notes-trash__panel-count">{notes.trashCount()} items</div>
-                          <button
-                            type="button"
-                            class="notes-trash__panel-close"
-                            aria-label="Close trash dock"
-                            onClick={closeTrashDock}
-                          >
-                            <X class="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div class="notes-trash__panel-body">
-                        Grouped by topic, sorted by latest deletion, and recoverable for 72 hours.
+                <div class="notes-trash__panel-header">
+                  <div class="notes-trash__panel-title-group">
+                    <div class="notes-trash__panel-title-row">
+                      <div class="notes-trash__panel-title">Trash Dock</div>
+                      <div class="notes-trash__panel-header-actions">
+                        <div class="notes-trash__panel-count">{notes.trashCount()} items</div>
+                        <button
+                          type="button"
+                          class="notes-trash__panel-close"
+                          aria-label="Close trash dock"
+                          onClick={closeTrashDock}
+                        >
+                          <X class="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
+                    <div class="notes-trash__panel-body">
+                      Grouped by topic, sorted by latest deletion, and recoverable for 72 hours.
+                    </div>
                   </div>
+                </div>
 
-                  <Show
-                    when={trashSections().length > 0}
-                    fallback={
-                      <div class="notes-trash__empty">
-                        <NotesTrashDockIcon class="notes-trash__empty-icon" />
-                        <div>
-                          <strong>Trash is empty</strong>
-                          <span>Deleted notes from any topic will appear here.</span>
-                        </div>
+                <Show
+                  when={trashSections().length > 0}
+                  fallback={
+                    <div class="notes-trash__empty">
+                      <NotesTrashDockIcon class="notes-trash__empty-icon" />
+                      <div>
+                        <strong>Trash is empty</strong>
+                        <span>Deleted notes from any topic will appear here.</span>
                       </div>
-                    }
-                  >
-                    <div class="notes-trash__sections">
-                      <For each={trashSections()}>
-                        {(section) => (
+                    </div>
+                  }
+                >
+                  <div class="notes-trash__sections">
+                    <For each={trashSections()}>
+                      {(section) => (
                           <section class="notes-trash-section">
                             <div class="notes-trash-section__header">
                               <div class="notes-trash-section__title-group">
-                                <div class="notes-trash-section__title">{section.topic.title}</div>
+                                <div class="notes-trash-section__title-line">
+                                  <div
+                                    class={`notes-topic-mark notes-topic-mark--trash notes-topic-tone--${section.topic.toneId}`}
+                                  >
+                                    <NotesTopicAnimalIcon
+                                      iconId={section.topic.iconId}
+                                      class="notes-topic-mark__icon"
+                                    />
+                                  </div>
+                                  <div class="notes-trash-section__title">{section.topic.title}</div>
+                                </div>
                                 <div class="notes-trash-section__meta">
                                   {section.notes.length} deleted note
                                   {section.notes.length === 1 ? '' : 's'}
-                                </div>
                               </div>
-                              <button
-                                type="button"
-                                class="notes-trash-section__clear"
-                                onClick={() => notes.clearTrashForTopic(section.topic.id)}
-                              >
-                                Clear topic trash
-                              </button>
                             </div>
+                            <button
+                              type="button"
+                              class="notes-trash-section__clear"
+                              onClick={() => notes.clearTrashForTopic(section.topic.id)}
+                            >
+                              Clear topic trash
+                            </button>
+                          </div>
 
-                            <div class="notes-trash-section__grid">
-                              <For each={section.notes}>
-                                {(note) => {
-                                  const sizeBucket = notes.getNoteSize(note.text);
-                                  const dimensions = NOTES_SIZE_DIMENSIONS[sizeBucket];
-                                  const preview = notes.getTextPreview(
-                                    note.text,
-                                    dimensions.previewLimit
-                                  );
+                          <div class="notes-trash-section__grid">
+                            <For each={section.notes}>
+                              {(note) => {
+                                const sizeBucket = notes.getNoteSize(note.text);
+                                const dimensions = NOTES_SIZE_DIMENSIONS[sizeBucket];
+                                const preview = notes.getTextPreview(
+                                  note.text,
+                                  dimensions.previewLimit
+                                );
 
-                                  return (
-                                    <article
-                                      class={`notes-note notes-trash-note notes-note--${note.colorId} notes-note--size-${sizeBucket}`}
-                                      style={{
-                                        '--note-width': `${dimensions.width}px`,
-                                        '--note-height': `${dimensions.height}px`,
-                                      }}
-                                    >
-                                      <div class="notes-note__surface">
-                                        <div class="notes-trash-note__meta">
-                                          <span>{formatDeletedTimestamp(note.deletedAt)}</span>
-                                          <strong>
-                                            {formatRemainingTrashTime(note.deletedAt, clock())}
-                                          </strong>
-                                        </div>
-
-                                        <div class="notes-trash-note__body">
-                                          <span>{preview}</span>
-                                        </div>
-
-                                        <div class="notes-trash-note__actions">
-                                          <button
-                                            type="button"
-                                            onClick={() => notes.restoreNote(note.id)}
-                                          >
-                                            Restore
-                                          </button>
-                                          <button
-                                            type="button"
-                                            class="is-danger"
-                                            onClick={() => notes.deleteNotePermanently(note.id)}
-                                          >
-                                            Delete now
-                                          </button>
-                                        </div>
+                                return (
+                                  <article
+                                    class={`notes-note notes-trash-note notes-note--${note.colorId} notes-note--size-${sizeBucket}`}
+                                    style={{
+                                      '--note-width': `${dimensions.width}px`,
+                                      '--note-height': `${dimensions.height}px`,
+                                    }}
+                                  >
+                                    <div class="notes-note__surface">
+                                      <div class="notes-trash-note__meta">
+                                        <span>{formatDeletedTimestamp(note.deletedAt)}</span>
+                                        <strong>
+                                          {formatRemainingTrashTime(note.deletedAt, clock())}
+                                        </strong>
                                       </div>
-                                    </article>
-                                  );
-                                }}
-                              </For>
-                            </div>
-                          </section>
-                        )}
-                      </For>
-                    </div>
-                  </Show>
-                </div>
-              </Motion.div>
-            </Portal>
-          </Show>
-        </Presence>
-      </div>
+
+                                      <div class="notes-trash-note__body">
+                                        <span>{preview}</span>
+                                      </div>
+
+                                      <div class="notes-trash-note__actions">
+                                        <button
+                                          type="button"
+                                          onClick={() => notes.restoreNote(note.id)}
+                                        >
+                                          Restore
+                                        </button>
+                                        <button
+                                          type="button"
+                                          class="is-danger"
+                                          onClick={() => notes.deleteNotePermanently(note.id)}
+                                        >
+                                          Delete now
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </article>
+                                );
+                              }}
+                            </For>
+                          </div>
+                        </section>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+              </div>
+            </Motion.div>
+          </Portal>
+        </Show>
+      </Presence>
 
       <Presence>
         <Show when={contextMenu()}>
@@ -1363,98 +1872,150 @@ export const NotesPage: Component = () => {
                 <Plus class="w-4 h-4" />
                 <span>New note</span>
               </button>
+              <Show when={Boolean(contextMenu()?.noteId)}>
+                <button
+                  type="button"
+                  class="notes-menu__item is-danger"
+                  onClick={handleDeleteFromMenu}
+                >
+                  <Trash class="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </Show>
             </Motion.div>
           </Portal>
         </Show>
       </Presence>
 
-      <Dialog
-        open={Boolean(editingNote())}
-        onOpenChange={(open) => {
-          if (!open) closeEditor();
-        }}
-        title="Edit note"
-        description="Update note text or switch to another color."
-        footer={
-          <>
-            <Button variant="ghost" onClick={closeEditor}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={saveEditor}>
-              Save
-            </Button>
-          </>
-        }
-      >
-        <div class="notes-editor">
-          <div class="notes-editor__palette">
-            <div class="notes-editor__label">Color</div>
-            <div class="notes-editor__swatches">
-              <For each={notes.colorOptions}>
-                {(option) => (
-                  <button
-                    type="button"
-                    class={`notes-editor__swatch notes-note--${option.id}`}
-                    classList={{ 'is-active': draftColor() === option.id }}
-                    onClick={() => setDraftColor(option.id)}
-                  >
-                    <span>{option.name}</span>
-                  </button>
-                )}
-              </For>
-            </div>
-          </div>
-
-          <div class="notes-editor__field">
-            <div class="notes-editor__label">Text</div>
-            <Textarea
-              rows={9}
-              value={draftText()}
-              onInput={(event) => setDraftText(event.currentTarget.value)}
-              placeholder="Type or paste anything worth keeping..."
-            />
-          </div>
-        </div>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(manualPasteTarget())}
-        onOpenChange={(open) => {
-          if (!open) {
-            setManualPasteTarget(null);
-            setManualPasteText('');
-          }
-        }}
-        title="Paste text"
-        description="Clipboard access was unavailable, so you can paste the content manually here."
-        footer={
-          <>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setManualPasteTarget(null);
-                setManualPasteText('');
-              }}
+      <Presence>
+        <Show when={Boolean(editingNote())}>
+          <Portal>
+            <Motion.div
+              class="notes-flyout notes-flyout--editor"
+              initial={{ opacity: 0, x: 24, scale: 0.985 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.985 }}
+              transition={{ duration: duration.normal, easing: easing.easeOut }}
+              onPointerDown={(event: PointerEvent) => event.stopPropagation()}
             >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={!manualPasteText().trim()}
-              onClick={confirmManualPaste}
+              <div class="notes-flyout__header">
+                <div>
+                  <div class="notes-editor__label">Edit note</div>
+                  <div class="notes-flyout__title">{editingNote()?.text.trim() ? 'Refine note' : 'Compose note'}</div>
+                </div>
+                <button
+                  type="button"
+                  class="notes-flyout__close"
+                  aria-label="Close editor"
+                  onClick={closeEditor}
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
+              <div class="notes-editor">
+                <div class="notes-editor__palette">
+                  <div class="notes-editor__label">Color</div>
+                  <div class="notes-editor__swatches">
+                    <For each={notes.colorOptions}>
+                      {(option) => (
+                        <button
+                          type="button"
+                          class={`notes-editor__swatch notes-note--${option.id}`}
+                          classList={{ 'is-active': draftColor() === option.id }}
+                          onClick={() => setDraftColor(option.id)}
+                        >
+                          <span>{option.name}</span>
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </div>
+
+                <div class="notes-editor__field">
+                  <div class="notes-editor__label">Text</div>
+                  <Textarea
+                    rows={10}
+                    value={draftText()}
+                    onInput={(event) => setDraftText(event.currentTarget.value)}
+                    placeholder="Type or paste anything worth keeping..."
+                  />
+                </div>
+              </div>
+
+              <div class="notes-flyout__footer">
+                <Button variant="ghost" onClick={closeEditor}>
+                  Cancel
+                </Button>
+                <Button variant="primary" onClick={saveEditor}>
+                  Save
+                </Button>
+              </div>
+            </Motion.div>
+          </Portal>
+        </Show>
+      </Presence>
+
+      <Presence>
+        <Show when={Boolean(manualPasteTarget())}>
+          <Portal>
+            <Motion.div
+              class="notes-flyout notes-flyout--paste"
+              initial={{ opacity: 0, x: 24, scale: 0.985 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.985 }}
+              transition={{ duration: duration.normal, easing: easing.easeOut }}
+              onPointerDown={(event: PointerEvent) => event.stopPropagation()}
             >
-              Create note
-            </Button>
-          </>
-        }
-      >
-        <Textarea
-          rows={10}
-          value={manualPasteText()}
-          onInput={(event) => setManualPasteText(event.currentTarget.value)}
-          placeholder="Paste clipboard text here..."
-        />
-      </Dialog>
-    </div>
+              <div class="notes-flyout__header">
+                <div>
+                  <div class="notes-editor__label">Manual paste</div>
+                  <div class="notes-flyout__title">Clipboard access was unavailable</div>
+                </div>
+                <button
+                  type="button"
+                  class="notes-flyout__close"
+                  aria-label="Close paste panel"
+                  onClick={() => {
+                    setManualPasteTarget(null);
+                    setManualPasteText('');
+                  }}
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
+              <div class="notes-flyout__body">
+                <Textarea
+                  rows={12}
+                  value={manualPasteText()}
+                  onInput={(event) => setManualPasteText(event.currentTarget.value)}
+                  placeholder="Paste clipboard text here..."
+                />
+              </div>
+
+              <div class="notes-flyout__footer">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setManualPasteTarget(null);
+                    setManualPasteText('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={!manualPasteText().trim()}
+                  onClick={confirmManualPaste}
+                >
+                  Create note
+                </Button>
+              </div>
+            </Motion.div>
+          </Portal>
+        </Show>
+      </Presence>
+    </>
   );
 };

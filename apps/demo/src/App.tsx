@@ -67,7 +67,6 @@ import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
 import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
-import { NotesSidebar } from './demo/notes/NotesSidebar';
 
 const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',
@@ -155,6 +154,7 @@ function AppContent() {
   };
 
   const [launchpadOpen, setLaunchpadOpen] = createSignal(false);
+  const [notesOverlayOpen, setNotesOverlayOpen] = createSignal(false);
 
   const demoLaunchpadItems: LaunchpadItemData[] = [
     {
@@ -238,6 +238,10 @@ function AppContent() {
 
   const handleLaunchpadSelect = (item: LaunchpadItemData) => {
     switch (item.id) {
+      case 'notes':
+        setNotesOverlayOpen(true);
+        notifications.success('Launched', 'Opening Notes');
+        return;
       case 'theme-light':
         theme.setTheme('light');
         notifications.success('Theme', 'Switched to light mode');
@@ -266,7 +270,12 @@ function AppContent() {
         label: 'Launchpad',
         onClick: () => setLaunchpadOpen(true),
       },
-      { id: 'notes', icon: Bookmark, label: 'Notes', collapseBehavior: 'preserve' as const },
+      {
+        id: 'notes',
+        icon: Bookmark,
+        label: 'Notes',
+        onClick: () => setNotesOverlayOpen((open) => !open),
+      },
       { id: 'deck', icon: LayoutDashboard, label: 'Deck', collapseBehavior: 'preserve' as const },
       { id: 'showcase', icon: Terminal, label: 'Showcase' },
       { id: 'files', icon: Files, label: 'Files' },
@@ -289,6 +298,12 @@ function AppContent() {
   createEffect(() => {
     if (layout.sidebarActiveTab() !== 'launchpad') return;
     layout.setSidebarActiveTab('showcase', { openSidebar: false });
+  });
+
+  // Notes is now an overlay, not a main-content view.
+  createEffect(() => {
+    if (layout.sidebarActiveTab() !== 'notes') return;
+    setSidebarActiveTab('files');
   });
 
   const DemoBranchItem: Component = () => (
@@ -322,7 +337,7 @@ function AppContent() {
 
   const ChatView: Component = () => <ChatSidebar />;
 
-  const NotesView: Component = () => <NotesSidebar />;
+  const NotesRegistrationView: Component = () => null;
 
   const DeckView: Component = () => renderLazyPage(<DeckPage />, 'deck');
 
@@ -333,16 +348,17 @@ function AppContent() {
       id: 'notes',
       name: 'Notes',
       icon: Bookmark,
-      description: 'Infinite sticky-note capture board',
-      component: NotesView,
-      sidebar: { order: 0 },
+      description: 'Infinite sticky-note capture board overlay',
+      component: NotesRegistrationView,
       commands: [
         {
           id: 'demo.open.notes',
           title: 'Demo: Open Notes',
           keybind: 'mod+7',
           category: 'Demo',
-          execute: () => layout.setSidebarActiveTab('notes'),
+          execute: () => {
+            setNotesOverlayOpen(true);
+          },
         },
       ],
     },
@@ -569,10 +585,6 @@ function AppContent() {
 
   const desktopMainViews: KeepAliveView[] = [
     {
-      id: 'notes',
-      render: () => renderLazyPage(<NotesPage />, 'notes'),
-    },
-    {
       id: 'showcase',
       render: () =>
         renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
@@ -607,10 +619,6 @@ function AppContent() {
   ];
 
   const mobileMainViews: KeepAliveView[] = [
-    {
-      id: 'notes',
-      render: () => renderLazyPage(<NotesPage />, 'notes'),
-    },
     {
       id: 'showcase',
       render: () =>
@@ -726,6 +734,12 @@ function AppContent() {
         columns={4}
         showSearch={true}
       />
+      <Show when={notesOverlayOpen()}>
+        {renderLazyPage(
+          <NotesPage onRequestClose={() => setNotesOverlayOpen(false)} />,
+          'notes overlay'
+        )}
+      </Show>
     </>
   );
 }
@@ -734,7 +748,7 @@ export function App() {
   const demoFloeConfig = {
     storage: { namespace: 'floe-demo-notes' },
     layout: {
-      sidebar: { defaultActiveTab: 'notes' },
+      sidebar: { defaultActiveTab: 'files' },
     },
     theme: {
       defaultPreset: 'default',
