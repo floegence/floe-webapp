@@ -498,7 +498,9 @@ describe('NotesOverlay', () => {
     toggle!.click();
     await settle();
 
-    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+    const panel = document.body.querySelector('.notes-trash__panel') as HTMLDivElement | null;
+    expect(panel).toBeTruthy();
+    expect(host.contains(panel!)).toBe(false);
   });
 
   it('opens the custom context menu when right-clicking the canvas', async () => {
@@ -526,6 +528,7 @@ describe('NotesOverlay', () => {
 
     const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
     expect(menu).toBeTruthy();
+    expect(host.contains(menu!)).toBe(false);
     expect(menu?.textContent).toContain('Paste here');
     expect(menu?.textContent).toContain('New note');
     expect(menu?.textContent).not.toContain('Delete');
@@ -556,8 +559,29 @@ describe('NotesOverlay', () => {
 
     const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
     expect(menu).toBeTruthy();
+    expect(host.contains(menu!)).toBe(false);
     expect(menu?.textContent).toContain('Delete');
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
+  });
+
+  it('renders the editor flyout through a body portal so its controls stay interactive', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const editButton = host.querySelector('button[aria-label="Edit note"]') as HTMLButtonElement | null;
+    expect(editButton).toBeTruthy();
+
+    editButton!.click();
+    await settle();
+
+    const editor = document.body.querySelector('.notes-flyout--editor') as HTMLDivElement | null;
+    expect(editor).toBeTruthy();
+    expect(host.contains(editor!)).toBe(false);
   });
 
   it('treats dragging a note as canvas pan instead of copy', async () => {

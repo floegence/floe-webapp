@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
@@ -211,62 +212,72 @@ export function NotesOverlay(props: NotesOverlayProps) {
         </Motion.div>
 
         <Show when={model.board.isMobile() && model.board.overviewOpen()}>
-          <div class="notes-overview-backdrop" onClick={model.overview.close} />
-          <div class="notes-overview-flyout">
-            <NotesOverviewPanel
-              mode="mobile"
-              items={model.overview.items()}
-              boardScaleLabel={model.board.boardScaleLabel()}
-              viewportStyle={model.overview.viewportStyle()}
-              navigationState={model.overview.navigationState()}
-              onPointerDown={model.overview.beginNavigation}
-              onZoomOut={model.board.zoomOut}
-              onZoomIn={model.board.zoomIn}
-              onClose={model.overview.close}
-            />
-          </div>
+          <Portal>
+            <div class="notes-overview-backdrop" onClick={model.overview.close} />
+            <div class="notes-overview-flyout">
+              <NotesOverviewPanel
+                mode="mobile"
+                items={model.overview.items()}
+                boardScaleLabel={model.board.boardScaleLabel()}
+                viewportStyle={model.overview.viewportStyle()}
+                navigationState={model.overview.navigationState()}
+                onPointerDown={model.overview.beginNavigation}
+                onZoomOut={model.board.zoomOut}
+                onZoomIn={model.board.zoomIn}
+                onClose={model.overview.close}
+              />
+            </div>
+          </Portal>
         </Show>
 
-        <NotesTrashFlyout
-          open={model.trash.open()}
-          groups={model.trash.groups()}
-          now={model.trash.now()}
-          canDeleteNow={model.trash.canDeleteNow}
-          onClose={model.trash.close}
-          onBackdropContextMenu={model.trash.backdropContextMenu}
-          onRestore={(noteID) => void model.trash.restore(noteID)}
-          onDeleteNow={(noteID) => void model.trash.deleteNow(noteID)}
-          onClearTopicTrash={(topicID) => void model.trash.clearTopic(topicID)}
-        />
+        <Portal>
+          <NotesTrashFlyout
+            open={model.trash.open()}
+            groups={model.trash.groups()}
+            now={model.trash.now()}
+            canDeleteNow={model.trash.canDeleteNow}
+            onClose={model.trash.close}
+            onBackdropContextMenu={model.trash.backdropContextMenu}
+            onRestore={(noteID) => void model.trash.restore(noteID)}
+            onDeleteNow={(noteID) => void model.trash.deleteNow(noteID)}
+            onClearTopicTrash={(topicID) => void model.trash.clearTopic(topicID)}
+          />
+        </Portal>
 
         <Show when={model.contextMenu.state()}>
-          <div class="notes-menu-backdrop" onClick={model.contextMenu.close} />
-          <NotesContextMenu
-            x={model.contextMenu.position()?.left ?? 0}
-            y={model.contextMenu.position()?.top ?? 0}
-            items={model.contextMenu.items()}
-          />
+          <Portal>
+            <div class="notes-menu-backdrop" onClick={model.contextMenu.close} />
+            <NotesContextMenu
+              x={model.contextMenu.position()?.left ?? 0}
+              y={model.contextMenu.position()?.top ?? 0}
+              items={model.contextMenu.items()}
+            />
+          </Portal>
         </Show>
 
         <Show when={Boolean(model.editor.note())}>
-          <NotesEditorFlyout
-            note={model.editor.note()}
-            draftBody={model.editor.draftBody()}
-            draftColor={model.editor.draftColor()}
-            onDraftBodyChange={model.editor.setDraftBody}
-            onDraftColorChange={model.editor.setDraftColor}
-            onClose={model.editor.close}
-            onSave={() => void model.editor.save()}
-          />
+          <Portal>
+            <NotesEditorFlyout
+              note={model.editor.note()}
+              draftBody={model.editor.draftBody()}
+              draftColor={model.editor.draftColor()}
+              onDraftBodyChange={model.editor.setDraftBody}
+              onDraftColorChange={model.editor.setDraftColor}
+              onClose={model.editor.close}
+              onSave={() => void model.editor.save()}
+            />
+          </Portal>
         </Show>
 
-        <NotesManualPasteFlyout
-          open={model.manualPaste.open()}
-          text={model.manualPaste.text()}
-          onTextChange={model.manualPaste.setText}
-          onClose={model.manualPaste.close}
-          onConfirm={() => void model.manualPaste.confirm()}
-        />
+        <Portal>
+          <NotesManualPasteFlyout
+            open={model.manualPaste.open()}
+            text={model.manualPaste.text()}
+            onTextChange={model.manualPaste.setText}
+            onClose={model.manualPaste.close}
+            onConfirm={() => void model.manualPaste.confirm()}
+          />
+        </Portal>
       </Motion.section>
     </Show>
   );
