@@ -11,6 +11,8 @@ export interface Command {
   description?: string;
   icon?: Component<{ class?: string }>;
   keybind?: string;
+  /** Allow this keybind even while the user is typing in an input/editor. */
+  allowWhileTyping?: boolean;
   category?: string;
   execute: () => void | Promise<void>;
 }
@@ -52,6 +54,10 @@ export function createCommandService(): CommandContextValue {
   if (typeof window !== 'undefined' && cfg().enableGlobalKeybinds) {
     const handleKeydown = (e: KeyboardEvent) => {
       const c = cfg();
+      const typingBlocked = shouldIgnoreHotkeys(e, {
+        ignoreWhenTyping: c.ignoreWhenTyping,
+        allowWhenTypingWithin: c.allowWhenTypingWithin,
+      });
 
       // Save (Cmd/Ctrl+S) is expected to work even while typing.
       if (c.save.enabled && matchKeybind(e, c.save.keybind)) {
@@ -67,12 +73,8 @@ export function createCommandService(): CommandContextValue {
         return;
       }
 
-      if (shouldIgnoreHotkeys(e, { ignoreWhenTyping: c.ignoreWhenTyping, allowWhenTypingWithin: c.allowWhenTypingWithin })) {
-        return;
-      }
-
       // Command palette shortcut (Cmd/Ctrl + K)
-      if (c.palette.enabled && matchKeybind(e, c.palette.keybind)) {
+      if (!typingBlocked && c.palette.enabled && matchKeybind(e, c.palette.keybind)) {
         e.preventDefault();
         setIsOpen((v) => !v);
         return;
@@ -82,6 +84,7 @@ export function createCommandService(): CommandContextValue {
       if (!isOpen()) {
         for (const command of commandsMap.values()) {
           if (!command.keybind) continue;
+          if (typingBlocked && !command.allowWhileTyping) continue;
           const parsed = parsedKeybinds.get(command.id);
           if (parsed && matchKeybind(e, parsed)) {
             e.preventDefault();

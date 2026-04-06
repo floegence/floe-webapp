@@ -155,6 +155,7 @@ Notes:
 
 - `execute(ctx)` receives a `ComponentContext` with `layout/theme/commands/notifications/storage/logger` and an optional `protocol`.
 - Command execution is intentionally non-blocking (palette UI closes first): `packages/core/src/context/CommandContext.tsx`.
+- Commands that must remain reachable during typing can add `allowWhileTyping: true` next to their `keybind`.
 
 ### Declarative command lifecycle (without registry)
 

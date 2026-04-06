@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { createEffect, onCleanup, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
@@ -28,10 +28,26 @@ interface ResolvedNotesOverlayInteraction {
   ariaModal: true | undefined;
   lockBodyScroll: boolean;
   trapFocus: boolean;
-  closeOnEscape: true | 'inside';
+  closeOnEscape: boolean | 'inside';
   blockWheel: 'outside' | 'none';
   blockTouchMove: 'outside' | 'none';
   autoFocus: false | { selector: string };
+}
+
+const NOTES_BOUNDARY_SELECTOR = '[data-floe-notes-boundary="true"]';
+
+function resolveBoundaryElement(target: EventTarget | null): Element | null {
+  if (typeof Element !== 'undefined' && target instanceof Element) {
+    return target;
+  }
+  if (typeof Node !== 'undefined' && target instanceof Node) {
+    return target.parentElement;
+  }
+  return null;
+}
+
+function isWithinNotesBoundary(target: EventTarget | null): boolean {
+  return Boolean(resolveBoundaryElement(target)?.closest(NOTES_BOUNDARY_SELECTOR));
 }
 
 function resolveNotesOverlayInteraction(
@@ -66,11 +82,28 @@ export function NotesOverlay(props: NotesOverlayProps) {
   const model = useNotesOverlayModel(props);
   let rootRef: HTMLElement | undefined;
   const interaction = () => resolveNotesOverlayInteraction(props.interactionMode);
+  const requestOverlayClose = () => props.onClose();
+
+  createEffect(() => {
+    if (!props.open) return;
+    if (interaction().mode !== 'floating') return;
+    if (typeof document === 'undefined') return;
+
+    const handleOutsideClickCapture = (event: MouseEvent) => {
+      if (isWithinNotesBoundary(event.target)) return;
+      queueMicrotask(requestOverlayClose);
+    };
+
+    document.addEventListener('click', handleOutsideClickCapture, true);
+    onCleanup(() => document.removeEventListener('click', handleOutsideClickCapture, true));
+  });
 
   useOverlayMask({
     open: () => props.open,
     root: () => rootRef,
     onClose: () => model.handleCloseRequest(),
+    onEscapeOutside: interaction().mode === 'floating' ? requestOverlayClose : undefined,
+    containsTarget: isWithinNotesBoundary,
     lockBodyScroll: interaction().lockBodyScroll,
     trapFocus: interaction().trapFocus,
     closeOnEscape: interaction().closeOnEscape,
@@ -97,6 +130,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
       >
         <Motion.div
           class="notes-overlay__frame"
+          data-floe-notes-boundary="true"
           initial={{ opacity: 0, y: 18, scale: 0.986 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: duration.normal, easing: easing.easeOut }}
@@ -213,8 +247,8 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
         <Show when={model.board.isMobile() && model.board.overviewOpen()}>
           <Portal>
-            <div class="notes-overview-backdrop" onClick={model.overview.close} />
-            <div class="notes-overview-flyout">
+            <div class="notes-overview-backdrop" data-floe-notes-boundary="true" onClick={model.overview.close} />
+            <div class="notes-overview-flyout" data-floe-notes-boundary="true">
               <NotesOverviewPanel
                 mode="mobile"
                 items={model.overview.items()}
@@ -246,7 +280,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
         <Show when={model.contextMenu.state()}>
           <Portal>
-            <div class="notes-menu-backdrop" onClick={model.contextMenu.close} />
+            <div class="notes-menu-backdrop" data-floe-notes-boundary="true" onClick={model.contextMenu.close} />
             <NotesContextMenu
               x={model.contextMenu.position()?.left ?? 0}
               y={model.contextMenu.position()?.top ?? 0}

@@ -88,6 +88,7 @@ Configuration: `FloeConfig.commands` (`packages/core/src/context/FloeConfigConte
 - `allowWhenTypingWithin`: selector to opt-in hotkeys while typing (default: `[data-floe-hotkeys="allow"]`)
 - `palette`: command palette enable + keybind
 - `save`: intercept `Cmd/Ctrl+S` and optionally run a command (default command id: `file.save`)
+- Registered commands can also set `allowWhileTyping: true` when a specific keybind must remain available while typing (for example a launchpad-style overlay toggle).
 
 Implementation reference:
 

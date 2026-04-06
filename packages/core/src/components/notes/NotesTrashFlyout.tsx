@@ -28,6 +28,7 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
     <Show when={props.open}>
       <div
         class="notes-trash-backdrop"
+        data-floe-notes-boundary="true"
         onClick={() => props.onClose()}
         onContextMenu={(event) => {
           event.preventDefault();
@@ -35,7 +36,7 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
           props.onBackdropContextMenu?.(event);
         }}
       />
-      <div class="notes-trash__flyout">
+      <div class="notes-trash__flyout" data-floe-notes-boundary="true">
         <div
           class="notes-trash__panel"
           onPointerDown={(event) => event.stopPropagation()}

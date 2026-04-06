@@ -10,6 +10,10 @@ export interface UseOverlayMaskOptions {
   open: Accessor<boolean>;
   root: Accessor<HTMLElement | undefined>;
   onClose?: () => void;
+  /** Treat additional nodes as part of the overlay surface (e.g. portaled layers). */
+  containsTarget?: (target: EventTarget | null) => boolean;
+  /** Optional alternate close path for Escape pressed outside the overlay surface. */
+  onEscapeOutside?: () => void;
 
   /** Lock `document.body` scroll while the overlay is open (default: true). */
   lockBodyScroll?: boolean;
@@ -40,13 +44,27 @@ function isNode(target: unknown): target is Node {
   return typeof Node !== 'undefined' && target instanceof Node;
 }
 
-function shouldBlockByMode(root: HTMLElement | undefined, target: EventTarget | null, mode: OverlayScrollBlockMode): boolean {
+function isWithinOverlayTarget(
+  root: HTMLElement | undefined,
+  target: EventTarget | null,
+  containsTarget?: (target: EventTarget | null) => boolean,
+): boolean {
+  if (containsTarget) return containsTarget(target);
+  if (!root) return false;
+  if (!isNode(target)) return false;
+  return root.contains(target);
+}
+
+function shouldBlockByMode(
+  root: HTMLElement | undefined,
+  target: EventTarget | null,
+  mode: OverlayScrollBlockMode,
+  containsTarget?: (target: EventTarget | null) => boolean,
+): boolean {
   if (mode === 'none') return false;
   if (mode === 'all') return true;
   // mode === 'outside'
-  if (!root) return true;
-  if (!isNode(target)) return true;
-  return !root.contains(target);
+  return !isWithinOverlayTarget(root, target, containsTarget);
 }
 
 export function useOverlayMask(options: UseOverlayMaskOptions): void {
@@ -138,12 +156,23 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       if (e.key !== 'Escape') return;
       const closeMode = closeOnEscape();
       if (closeMode === 'none') return;
+      const root = options.root();
+      const inside = isWithinOverlayTarget(root, isNode(e.target) ? e.target : document.activeElement, options.containsTarget);
 
       if (closeMode === 'inside') {
-        const root = options.root();
-        if (!root) return;
-        const target = isNode(e.target) ? e.target : document.activeElement;
-        if (!target || !root.contains(target)) return;
+        if (inside) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          options.onClose?.();
+          return;
+        }
+
+        if (options.onEscapeOutside) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          options.onEscapeOutside();
+        }
+        return;
       }
 
       e.preventDefault();
@@ -157,15 +186,14 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       const root = options.root();
       if (!root) return;
       if (!blockHotkeys()) return;
-      if (!isNode(e.target)) return;
-      if (!root.contains(e.target)) return;
+      if (!isWithinOverlayTarget(root, e.target, options.containsTarget)) return;
       e.stopPropagation();
     };
 
     const handleWheelCapture = (e: WheelEvent) => {
       const mode = options.blockWheel ?? 'none';
       const root = options.root();
-      if (!shouldBlockByMode(root, e.target, mode)) return;
+      if (!shouldBlockByMode(root, e.target, mode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
     };
     const handleWheelBubble = (e: WheelEvent) => {
@@ -175,7 +203,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     const handleTouchMoveCapture = (e: TouchEvent) => {
       const mode = options.blockTouchMove ?? 'none';
       const root = options.root();
-      if (!shouldBlockByMode(root, e.target, mode)) return;
+      if (!shouldBlockByMode(root, e.target, mode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
     };
 

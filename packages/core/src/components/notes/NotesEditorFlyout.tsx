@@ -17,7 +17,11 @@ export interface NotesEditorFlyoutProps {
 
 export function NotesEditorFlyout(props: NotesEditorFlyoutProps) {
   return (
-    <div class="notes-flyout notes-flyout--editor" onPointerDown={(event) => event.stopPropagation()}>
+    <div
+      class="notes-flyout notes-flyout--editor"
+      data-floe-notes-boundary="true"
+      onPointerDown={(event) => event.stopPropagation()}
+    >
       <div class="notes-flyout__header">
         <div>
           <div class="notes-editor__label">Edit note</div>
@@ -89,7 +93,11 @@ export interface NotesManualPasteFlyoutProps {
 export function NotesManualPasteFlyout(props: NotesManualPasteFlyoutProps) {
   return (
     <Show when={props.open}>
-      <div class="notes-flyout notes-flyout--paste" onPointerDown={(event) => event.stopPropagation()}>
+      <div
+        class="notes-flyout notes-flyout--paste"
+        data-floe-notes-boundary="true"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
         <div class="notes-flyout__header">
           <div>
             <div class="notes-editor__label">Manual paste</div>

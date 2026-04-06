@@ -47,6 +47,7 @@ export function NotesContextMenu(props: NotesContextMenuProps) {
       ref={props.menuRef}
       role="menu"
       class="notes-context-menu notes-menu"
+      data-floe-notes-boundary="true"
       style={{ left: `${props.x}px`, top: `${props.y}px` }}
       onContextMenu={(event) => event.preventDefault()}
     >

@@ -46,6 +46,7 @@ export interface CommandContribution<TProtocol = unknown> {
   description?: string;
   icon?: Component<{ class?: string }>;
   keybind?: string;
+  allowWhileTyping?: boolean;
   category?: string;
   execute: (ctx: ComponentContext<TProtocol>) => void | Promise<void>;
 }
@@ -222,6 +223,7 @@ export function createComponentRegistry(): ComponentRegistryValue<unknown> {
           description: cmd.description,
           icon: cmd.icon,
           keybind: cmd.keybind,
+          allowWhileTyping: cmd.allowWhileTyping,
           category: cmd.category,
           execute: () => cmd.execute(context),
         }));

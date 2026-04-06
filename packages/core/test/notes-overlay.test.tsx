@@ -468,18 +468,9 @@ describe('NotesOverlay', () => {
     Object.defineProperty(outsideEscape, 'target', { configurable: true, value: externalInput });
     keydownTracker.dispatch(outsideEscape);
     await settle();
-    expect(onClose).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
 
     closeButton!.focus();
-    const insideEscape = new KeyboardEvent('keydown', {
-      key: 'Escape',
-      bubbles: true,
-      cancelable: true,
-    });
-    Object.defineProperty(insideEscape, 'target', { configurable: true, value: closeButton });
-    keydownTracker.dispatch(insideEscape);
-    await settle();
-    expect(onClose).toHaveBeenCalledTimes(1);
     keydownTracker.restore();
   });
 
@@ -582,6 +573,126 @@ describe('NotesOverlay', () => {
     const editor = document.body.querySelector('.notes-flyout--editor') as HTMLDivElement | null;
     expect(editor).toBeTruthy();
     expect(host.contains(editor!)).toBe(false);
+  });
+
+  it('treats portaled editor flyouts as inside the floating notes surface for Escape handling', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    const keydownTracker = trackWindowKeydownListeners();
+    disposers.push(state.dispose);
+
+    render(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={onClose}
+          interactionMode="floating"
+        />
+      ),
+      host,
+    );
+    await settle();
+
+    const editButton = host.querySelector('button[aria-label="Edit note"]') as HTMLButtonElement | null;
+    expect(editButton).toBeTruthy();
+
+    editButton!.click();
+    await settle();
+
+    const editorTextarea = document.body.querySelector('.notes-flyout--editor textarea') as HTMLTextAreaElement | null;
+    expect(editorTextarea).toBeTruthy();
+    editorTextarea!.focus();
+
+    const insideEscape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(insideEscape, 'target', { configurable: true, value: editorTextarea });
+    keydownTracker.dispatch(insideEscape);
+    await settle();
+
+    expect(document.body.querySelector('.notes-flyout--editor')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    keydownTracker.restore();
+  });
+
+  it('dismisses floating notes when clicking outside the notes surface', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    disposers.push(state.dispose);
+
+    const outsideButton = document.createElement('button');
+    outsideButton.type = 'button';
+    outsideButton.textContent = 'outside';
+    document.body.appendChild(outsideButton);
+
+    render(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={onClose}
+          interactionMode="floating"
+        />
+      ),
+      host,
+    );
+    await settle();
+
+    outsideButton.click();
+    await settle();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps notes open when clicking notes-owned backdrops in floating mode', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    disposers.push(state.dispose);
+
+    render(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={onClose}
+          interactionMode="floating"
+        />
+      ),
+      host,
+    );
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(canvas).toBeTruthy();
+
+    canvas!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 240,
+        clientY: 160,
+      }),
+    );
+    await settle();
+
+    const backdrop = document.body.querySelector('.notes-menu-backdrop') as HTMLDivElement | null;
+    expect(backdrop).toBeTruthy();
+
+    backdrop!.click();
+    await settle();
+
+    expect(document.body.querySelector('.notes-menu')).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('treats dragging a note as canvas pan instead of copy', async () => {

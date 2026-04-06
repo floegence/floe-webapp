@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest';
 import { createCommandService } from '../src/context/CommandContext';
 import { registerCommandContributions } from '../src/hooks/useCommandContributions';
@@ -97,6 +99,60 @@ describe('createCommandService', () => {
       expect(run).toHaveBeenCalledTimes(0);
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(run).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('allows specific command keybinds while typing without changing the default typing guard', async () => {
+    await withSolidRoot(async () => {
+      const service = createCommandService();
+      const blocked = vi.fn();
+      const allowed = vi.fn();
+
+      service.registerAll([
+        {
+          id: 'cmd.blocked',
+          title: 'Blocked while typing',
+          keybind: 'mod+.',
+          execute: blocked,
+        },
+        {
+          id: 'cmd.allowed',
+          title: 'Allowed while typing',
+          keybind: 'mod+/',
+          allowWhileTyping: true,
+          execute: allowed,
+        },
+      ]);
+
+      const input = document.createElement('input');
+      document.body.appendChild(input);
+      input.focus();
+
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: '.',
+          ctrlKey: true,
+          metaKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: '/',
+          ctrlKey: true,
+          metaKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(blocked).not.toHaveBeenCalled();
+      expect(allowed).toHaveBeenCalledTimes(1);
+
+      input.remove();
     });
   });
 });
