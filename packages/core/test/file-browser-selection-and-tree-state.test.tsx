@@ -40,6 +40,74 @@ describe('FileBrowserContext selection and tree state', () => {
     ));
   });
 
+  it('should keep range selection anchored to the first non-range selection until an explicit replacement happens', () => {
+    const files: FileItem[] = [
+      { id: 'f1', name: 'a.txt', type: 'file', path: '/a.txt' },
+      { id: 'f2', name: 'b.txt', type: 'file', path: '/b.txt' },
+      { id: 'f3', name: 'c.txt', type: 'file', path: '/c.txt' },
+      { id: 'f4', name: 'd.txt', type: 'file', path: '/d.txt' },
+    ];
+
+    function Harness() {
+      const ctx = useFileBrowser();
+
+      ctx.selectItem('f2');
+      ctx.selectRangeTo('f4');
+      expect(ctx.selectionAnchorId()).toBe('f2');
+      expect(ctx.lastInteractedId()).toBe('f4');
+      expect(ctx.getSelectedItemsList().map((item) => item.id)).toEqual(['f2', 'f3', 'f4']);
+
+      ctx.selectItem('f1', true);
+      ctx.selectRangeTo('f3', true);
+      expect(ctx.selectionAnchorId()).toBe('f1');
+      expect(ctx.lastInteractedId()).toBe('f3');
+      expect(ctx.getSelectedItemsList().map((item) => item.id)).toEqual(['f1', 'f2', 'f3', 'f4']);
+
+      ctx.selectItem('f4');
+      expect(ctx.selectionAnchorId()).toBe('f4');
+      expect(ctx.getSelectedItemsList().map((item) => item.id)).toEqual(['f4']);
+
+      return null;
+    }
+
+    renderToString(() => (
+      <FileBrowserProvider files={files} initialPath="/">
+        <Harness />
+      </FileBrowserProvider>
+    ));
+  });
+
+  it('should preserve an existing multi-selection for context menus and collapse to a single target when needed', () => {
+    const files: FileItem[] = [
+      { id: 'f1', name: 'a.txt', type: 'file', path: '/a.txt' },
+      { id: 'f2', name: 'b.txt', type: 'file', path: '/b.txt' },
+      { id: 'f3', name: 'c.txt', type: 'file', path: '/c.txt' },
+    ];
+
+    function Harness() {
+      const ctx = useFileBrowser();
+
+      ctx.selectItem('f1');
+      ctx.selectItem('f2', true);
+      ctx.ensureContextMenuSelection('f2');
+      expect(ctx.getSelectedItemsList().map((item) => item.id)).toEqual(['f1', 'f2']);
+      expect(ctx.lastInteractedId()).toBe('f2');
+
+      ctx.ensureContextMenuSelection('f3');
+      expect(ctx.getSelectedItemsList().map((item) => item.id)).toEqual(['f3']);
+      expect(ctx.selectionAnchorId()).toBe('f3');
+      expect(ctx.lastInteractedId()).toBe('f3');
+
+      return null;
+    }
+
+    renderToString(() => (
+      <FileBrowserProvider files={files} initialPath="/">
+        <Harness />
+      </FileBrowserProvider>
+    ));
+  });
+
   it('should keep folder toggle and navigateTo expansion behavior consistent', () => {
     const docsFolder: FileItem = {
       id: 'docs',

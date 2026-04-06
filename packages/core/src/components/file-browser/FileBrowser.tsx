@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn';
 import { useLayout } from '../../context/LayoutContext';
 import { useFileBrowserDrag, type FileBrowserDragInstance } from '../../context/FileBrowserDragContext';
 import { deferAfterPaint } from '../../utils/defer';
+import { isPrimaryModKeyPressed } from '../../utils/keybind';
 import { FileBrowserProvider, useFileBrowser } from './FileBrowserContext';
 import { SidebarPane } from '../layout/SidebarPane';
 import { DirectoryTree } from './DirectoryTree';
@@ -208,7 +209,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
 
   // Keyboard shortcut for filter (Ctrl/Cmd + F) – scoped to this FileBrowser instance.
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (!(e.metaKey || e.ctrlKey)) return;
+    if (!isPrimaryModKeyPressed(e)) return;
     if (e.key.toLowerCase() !== 'f') return;
     e.preventDefault();
     ctx.setFilterActive(true);

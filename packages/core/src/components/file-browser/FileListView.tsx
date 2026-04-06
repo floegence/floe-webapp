@@ -12,6 +12,8 @@ import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { ResizeHandle } from '../layout/ResizeHandle';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 import { createItemContextMenuEvent } from './contextMenuEvent';
+import { createFileBrowserMarqueeSelection } from './useFileBrowserMarqueeSelection';
+import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
 export interface FileListViewProps {
   class?: string;
@@ -186,6 +188,15 @@ export function FileListView(props: FileListViewProps) {
       year: 'numeric',
     });
   };
+
+  const marquee = createFileBrowserMarqueeSelection({
+    getContainer: () => scrollEl,
+    getVisibleItemIdsInOrder: () => ctx.currentFiles().map((item) => item.id),
+    getElementForId: (id) => rowRefs.get(id) ?? null,
+    getSelectedIds: () => [...ctx.selectedItems()],
+    replaceSelection: (ids, options) => ctx.replaceSelection(ids, options),
+    clearSelection: ctx.clearSelection,
+  });
 
   const SortIndicator = (fieldProp: { field: SortField }) => {
     const config = () => ctx.sortConfig();
@@ -456,8 +467,9 @@ export function FileListView(props: FileListViewProps) {
           virtual.scrollRef(el);
           ctx.setScrollContainer(el);
         }}
-        class="flex-1 min-h-0 overflow-auto"
+        class="relative flex-1 min-h-0 overflow-auto"
         onScroll={virtual.onScroll}
+        onPointerDown={marquee.onPointerDown}
       >
         <Show
           when={ctx.currentFiles().length > 0}
@@ -503,6 +515,14 @@ export function FileListView(props: FileListViewProps) {
               )}
             </For>
           </div>
+        </Show>
+        <Show when={marquee.overlayStyle()}>
+          {(style) => (
+            <div
+              class="pointer-events-none fixed z-40 rounded-md border border-primary/60 bg-primary/15 shadow-sm shadow-primary/10"
+              style={style()}
+            />
+          )}
         </Show>
       </div>
     </div>
@@ -768,7 +788,11 @@ function FileListItem(props: FileListItemProps) {
       ctx.openItem(props.item);
       return;
     }
-    ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
+    if (e.shiftKey) {
+      ctx.selectRangeTo(props.item.id, isPrimaryModKeyPressed(e));
+      return;
+    }
+    ctx.selectItem(props.item.id, isPrimaryModKeyPressed(e));
   };
 
   const handleDoubleClick = () => {
@@ -782,9 +806,7 @@ function FileListItem(props: FileListItemProps) {
     if (isTouchLike()) return;
 
     // If item is not selected, select it first
-    if (!isSelected()) {
-      ctx.selectItem(props.item.id, false);
-    }
+    ctx.ensureContextMenuSelection(props.item.id);
 
     // Get all selected items for the context menu
     const selectedFromCurrent = ctx.getSelectedItemsList();

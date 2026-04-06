@@ -54,5 +54,6 @@ export type {
   OptimisticUpdate,
   OptimisticInsert,
   OptimisticOperation,
+  ReplaceSelectionOptions,
   ScrollPosition,
 } from './types';

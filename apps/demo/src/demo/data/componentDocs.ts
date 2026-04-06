@@ -1901,7 +1901,7 @@ function Example() {
 export const fileBrowserDoc: ComponentDoc = {
   name: 'FileBrowser',
   description:
-    'Professional file browser with list/grid views, directory tree, breadcrumb navigation, and multi-select.',
+    'Professional file browser with list/grid views, directory tree, breadcrumb navigation, range selection, marquee selection, and context-aware multi-select.',
   props: [
     {
       name: 'files',

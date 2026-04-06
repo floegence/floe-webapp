@@ -9,6 +9,8 @@ import type { FileItem, FilterMatchInfo } from './types';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 import { createItemContextMenuEvent } from './contextMenuEvent';
+import { createFileBrowserMarqueeSelection } from './useFileBrowserMarqueeSelection';
+import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
 export interface FileGridViewProps {
   class?: string;
@@ -203,6 +205,15 @@ export function FileGridView(props: FileGridViewProps) {
     }
   });
 
+  const marquee = createFileBrowserMarqueeSelection({
+    getContainer: () => scrollEl,
+    getVisibleItemIdsInOrder: () => ctx.currentFiles().map((item) => item.id),
+    getElementForId: (id) => tileRefs.get(id) ?? null,
+    getSelectedIds: () => [...ctx.selectedItems()],
+    replaceSelection: (ids, options) => ctx.replaceSelection(ids, options),
+    clearSelection: ctx.clearSelection,
+  });
+
   return (
     <div
       ref={(el) => {
@@ -210,8 +221,9 @@ export function FileGridView(props: FileGridViewProps) {
         virtualRows.scrollRef(el);
         ctx.setScrollContainer(el);
       }}
-      class={cn('h-full min-h-0 overflow-auto', props.class)}
+      class={cn('relative h-full min-h-0 overflow-auto', props.class)}
       onScroll={virtualRows.onScroll}
+      onPointerDown={marquee.onPointerDown}
     >
       <div class="p-3">
         {/* A 0-height element used to measure available content width without observing height changes during virtualization. */}
@@ -258,6 +270,14 @@ export function FileGridView(props: FileGridViewProps) {
           </div>
         </Show>
       </div>
+      <Show when={marquee.overlayStyle()}>
+        {(style) => (
+          <div
+            class="pointer-events-none fixed z-40 rounded-md border border-primary/60 bg-primary/15 shadow-sm shadow-primary/10"
+            style={style()}
+          />
+        )}
+      </Show>
     </div>
   );
 }
@@ -515,7 +535,11 @@ function FileGridItem(props: FileGridItemProps) {
       ctx.openItem(props.item);
       return;
     }
-    ctx.selectItem(props.item.id, e.metaKey || e.ctrlKey);
+    if (e.shiftKey) {
+      ctx.selectRangeTo(props.item.id, isPrimaryModKeyPressed(e));
+      return;
+    }
+    ctx.selectItem(props.item.id, isPrimaryModKeyPressed(e));
   };
 
   const handleDoubleClick = () => {
@@ -529,9 +553,7 @@ function FileGridItem(props: FileGridItemProps) {
     if (isTouchLike()) return;
 
     // If item is not selected, select it first
-    if (!isSelected()) {
-      ctx.selectItem(props.item.id, false);
-    }
+    ctx.ensureContextMenuSelection(props.item.id);
 
     // Get all selected items for the context menu
     const selectedFromCurrent = ctx.getSelectedItemsList();

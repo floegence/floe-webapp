@@ -207,6 +207,12 @@ export interface ScrollPosition {
   left: number;
 }
 
+export interface ReplaceSelectionOptions {
+  anchorId?: string | null;
+  lastInteractedId?: string | null;
+  preserveAnchor?: boolean;
+}
+
 // =====================================================
 // Drag & Drop Types
 // =====================================================
@@ -262,7 +268,12 @@ export interface FileBrowserContextValue {
 
   // Selection
   selectedItems: Accessor<Set<string>>;
+  selectionAnchorId: Accessor<string | null>;
+  lastInteractedId: Accessor<string | null>;
   selectItem: (id: string, multi?: boolean) => void;
+  selectRangeTo: (id: string, additive?: boolean) => void;
+  replaceSelection: (ids: Iterable<string>, options?: ReplaceSelectionOptions) => void;
+  ensureContextMenuSelection: (id: string) => void;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
 

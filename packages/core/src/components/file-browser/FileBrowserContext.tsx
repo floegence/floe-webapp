@@ -12,6 +12,7 @@ import type {
   FilterMatchInfo,
   FileBrowserRevealRequest,
   OptimisticOperation,
+  ReplaceSelectionOptions,
   ScrollPosition,
 } from './types';
 
@@ -233,6 +234,8 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   const [currentPath, setCurrentPathInternal] = createSignal(resolveInitialPath());
   const [selectedById, setSelectedById] = createStore<Record<string, true>>({});
   const [selectedIdList, setSelectedIdList] = createSignal<string[]>([]);
+  const [selectionAnchorId, setSelectionAnchorId] = createSignal<string | null>(null);
+  const [lastInteractedId, setLastInteractedId] = createSignal<string | null>(null);
   const [viewMode, setViewModeInternal] = createSignal<ViewMode>(initialViewMode);
   const [sortConfig, setSortConfigInternal] = createSignal<SortConfig>(initialSortConfig);
 
@@ -577,16 +580,67 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return out.map((e) => e.item);
   };
 
+  const notifySelectionChange = (nextSelectedIds: string[]) => {
+    const onSelect = props.onSelect;
+    if (!onSelect) return;
+
+    const selectedIdsSnapshot = [...nextSelectedIds];
+    deferNonBlocking(() => {
+      const selected = untrack(() => getSelectedItemsFromIds(selectedIdsSnapshot));
+      onSelect(selected);
+    });
+  };
+
+  const commitSelection = (
+    nextIds: Iterable<string>,
+    options: ReplaceSelectionOptions = {},
+  ) => {
+    const normalized = normalizeUniqueStrings(nextIds);
+    const preservedAnchorId = options.preserveAnchor === true ? selectionAnchorId() : undefined;
+    const nextAnchorId = preservedAnchorId ?? (options.anchorId !== undefined ? options.anchorId : (normalized[0] ?? null));
+    const nextLastInteractedId = options.lastInteractedId !== undefined
+      ? options.lastInteractedId
+      : (normalized[normalized.length - 1] ?? null);
+    const selectionChanged = !isSameStringList(selectedIdList(), normalized);
+    const anchorChanged = selectionAnchorId() !== nextAnchorId;
+    const lastChanged = lastInteractedId() !== nextLastInteractedId;
+
+    if (!selectionChanged && !anchorChanged && !lastChanged) return;
+
+    replaceSelectedIds(normalized);
+    setSelectionAnchorId(nextAnchorId);
+    setLastInteractedId(nextLastInteractedId);
+
+    if (selectionChanged) {
+      notifySelectionChange(normalized);
+    }
+  };
+
+  const getVisibleRangeIds = (fromId: string, toId: string): string[] => {
+    const state = filterState();
+    const fromIndex = state.indexById.get(fromId);
+    const toIndex = state.indexById.get(toId);
+
+    if (fromIndex === undefined || toIndex === undefined) return [];
+
+    const start = Math.min(fromIndex, toIndex);
+    const end = Math.max(fromIndex, toIndex);
+    return state.items.slice(start, end + 1).map((item) => item.id);
+  };
+
+  const resolveVisibleSelectionAnchor = (): string | null => {
+    const anchor = selectionAnchorId();
+    if (!anchor) return null;
+    return filterState().indexById.has(anchor) ? anchor : null;
+  };
+
   const clearPathScopedUiState = () => {
     // VSCode-style: navigation clears selection to avoid cross-folder stale selection.
-    replaceSelectedIds([]);
+    commitSelection([], { anchorId: null, lastInteractedId: null });
     // Clear filter when navigating to a different directory.
     setFilterQueryInternal('');
     setFilterQueryApplied('');
     setFilterActive(false);
-
-    const onSelect = props.onSelect;
-    deferNonBlocking(() => onSelect?.([]));
   };
 
   // Controlled-path sync: external path changes should update view state without
@@ -639,29 +693,56 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
           : [...selectedIdList(), id])
       : [id];
 
-    if (multi) {
-      replaceSelectedIds(nextSelectedIds);
-    } else {
-      // Single click: always select the item (do not toggle-off).
-      replaceSelectedIds(nextSelectedIds);
+    commitSelection(nextSelectedIds, {
+      anchorId: id,
+      lastInteractedId: id,
+    });
+  };
+
+  const selectRangeTo = (id: string, additive = false) => {
+    const anchor = resolveVisibleSelectionAnchor();
+    if (!anchor) {
+      commitSelection([id], { anchorId: id, lastInteractedId: id });
+      return;
     }
 
-    // Notify parent after paint to keep selection highlight responsive.
-    // Also compute the selected list outside the click handler hot-path.
-    const onSelect = props.onSelect;
-    if (onSelect) {
-      const selectedIdsSnapshot = [...nextSelectedIds];
-      deferNonBlocking(() => {
-        const selected = untrack(() => getSelectedItemsFromIds(selectedIdsSnapshot));
-        onSelect(selected);
-      });
+    const rangeIds = getVisibleRangeIds(anchor, id);
+    if (rangeIds.length === 0) {
+      commitSelection([id], { anchorId: id, lastInteractedId: id });
+      return;
     }
+
+    const nextSelectedIds = additive
+      ? [...selectedIdList(), ...rangeIds]
+      : rangeIds;
+
+    commitSelection(nextSelectedIds, {
+      anchorId: anchor,
+      lastInteractedId: id,
+    });
+  };
+
+  const replaceSelection = (ids: Iterable<string>, options: ReplaceSelectionOptions = {}) => {
+    commitSelection(ids, options);
+  };
+
+  const ensureContextMenuSelection = (id: string) => {
+    if (selectedById[id] === true) {
+      setLastInteractedId(id);
+      return;
+    }
+
+    commitSelection([id], {
+      anchorId: id,
+      lastInteractedId: id,
+    });
   };
 
   const clearSelection = () => {
-    replaceSelectedIds([]);
-    const onSelect = props.onSelect;
-    deferNonBlocking(() => onSelect?.([]));
+    commitSelection([], {
+      anchorId: null,
+      lastInteractedId: null,
+    });
   };
 
   const isSelected = (id: string) => selectedById[id] === true;
@@ -696,6 +777,33 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
   };
 
   const getSelectedItemsList = () => getSelectedItemsFromIds(selectedIdList());
+
+  createEffect(() => {
+    const availableIds = new Set(sortedState().items.map((item) => item.id));
+    const currentSelectedIds = selectedIdList();
+    const nextSelectedIds = currentSelectedIds.filter((id) => availableIds.has(id));
+    const currentAnchorId = selectionAnchorId();
+    const currentLastInteractedId = lastInteractedId();
+    const nextAnchorId = currentAnchorId && availableIds.has(currentAnchorId)
+      ? currentAnchorId
+      : (nextSelectedIds[0] ?? null);
+    const nextLastInteractedId = currentLastInteractedId && availableIds.has(currentLastInteractedId)
+      ? currentLastInteractedId
+      : (nextSelectedIds[nextSelectedIds.length - 1] ?? null);
+
+    if (
+      isSameStringList(currentSelectedIds, nextSelectedIds)
+      && currentAnchorId === nextAnchorId
+      && currentLastInteractedId === nextLastInteractedId
+    ) {
+      return;
+    }
+
+    commitSelection(nextSelectedIds, {
+      anchorId: nextAnchorId,
+      lastInteractedId: nextLastInteractedId,
+    });
+  });
 
   const consumeRevealRequest = (requestId: string) => {
     const current = activeRevealRequest();
@@ -777,7 +885,12 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     navigateTo,
     homeLabel,
     selectedItems,
+    selectionAnchorId,
+    lastInteractedId,
     selectItem,
+    selectRangeTo,
+    replaceSelection,
+    ensureContextMenuSelection,
     clearSelection,
     isSelected,
     getSelectedItemsList,

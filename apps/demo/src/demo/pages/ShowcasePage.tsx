@@ -3803,7 +3803,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <SectionHeader
           id="ui-file-browser"
           title="File Browser"
-          description="Professional file browser with list/grid views, directory tree, and breadcrumb navigation."
+          description="Professional file browser with list/grid views, directory tree, breadcrumb navigation, and shared multi-selection semantics."
           actions={
             <Button
               size="sm"
@@ -3831,7 +3831,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         <p class="text-[11px] text-muted-foreground">
           Features: List/Grid view toggle, collapsible sidebar tree,{' '}
           <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments),
-          sortable columns, multi-select (Cmd/Ctrl+click), mobile responsive.
+          sortable columns, single/range/toggle selection, marquee selection, and context-aware right-click behavior.
         </p>
 
         {/* FileBrowser Documentation */}

@@ -10,7 +10,15 @@ export interface ParsedKeybind {
   key: string;
 }
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+const MAC_LIKE_PLATFORM_RE = /Mac|iPhone|iPad|iPod/;
+
+export function isMacLikePlatform(): boolean {
+  return typeof navigator !== 'undefined' && MAC_LIKE_PLATFORM_RE.test(navigator.userAgent);
+}
+
+export function isPrimaryModKeyPressed(event: Pick<KeyboardEvent | MouseEvent, 'metaKey' | 'ctrlKey'>): boolean {
+  return isMacLikePlatform() ? event.metaKey : event.ctrlKey;
+}
 
 /**
  * Parse a keybind string like "mod+k" or "ctrl+shift+p"
@@ -34,7 +42,7 @@ export function parseKeybind(keybind: string): ParsedKeybind {
 export function matchKeybind(event: KeyboardEvent, keybind: string | ParsedKeybind): boolean {
   const parsed = typeof keybind === 'string' ? parseKeybind(keybind) : keybind;
 
-  const modKey = isMac ? event.metaKey : event.ctrlKey;
+  const modKey = isPrimaryModKeyPressed(event);
   const key = event.key.toLowerCase();
 
   // Handle mod key (Cmd on Mac, Ctrl on Windows)
@@ -55,6 +63,7 @@ export function matchKeybind(event: KeyboardEvent, keybind: string | ParsedKeybi
 export function formatKeybind(keybind: string): string {
   const parsed = parseKeybind(keybind);
   const parts: string[] = [];
+  const isMac = isMacLikePlatform();
 
   if (parsed.mod) {
     parts.push(isMac ? '⌘' : 'Ctrl');

@@ -43,6 +43,8 @@ The file browser keeps `FileItem.type` focused on interaction (`'file' | 'folder
 
 The same file-browser surface now also accepts a controlled `revealRequest` flow, so downstream apps can clear a blocking filter when needed, scroll a newly created item into view, and reuse the built-in single-selection state instead of wiring product-specific DOM reveal logic.
 
+Selection behavior follows one shared contract across list and grid views: single-click replaces selection, `Shift+click` expands from the current anchor, `Cmd/Ctrl+click` toggles individual items, dragging across empty space performs marquee selection, and right-click keeps an existing selection when the target is already selected.
+
 ## What you can build
 
 | Use case | Floe fit |

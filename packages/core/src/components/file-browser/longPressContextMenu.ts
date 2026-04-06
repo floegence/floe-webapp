@@ -46,10 +46,7 @@ export function createLongPressContextMenuHandlers(
       return;
     }
 
-    const id = item.id;
-    if (!ctx.isSelected(id)) {
-      ctx.selectItem(id, false);
-    }
+    ctx.ensureContextMenuSelection(item.id);
 
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [item];
