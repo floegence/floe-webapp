@@ -25,6 +25,8 @@ export interface FileBrowserMarqueeSelectionResult {
 
 const MARQUEE_DRAG_THRESHOLD_PX = 4;
 
+export const FILE_BROWSER_MARQUEE_OVERLAY_CLASS = 'pointer-events-none fixed z-40 rounded-md floe-file-browser-marquee-overlay';
+
 function normalizeViewportRect(startX: number, startY: number, endX: number, endY: number): ViewportRect {
   const left = Math.min(startX, endX);
   const top = Math.min(startY, endY);

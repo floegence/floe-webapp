@@ -12,7 +12,7 @@ import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { ResizeHandle } from '../layout/ResizeHandle';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 import { createItemContextMenuEvent } from './contextMenuEvent';
-import { createFileBrowserMarqueeSelection } from './useFileBrowserMarqueeSelection';
+import { FILE_BROWSER_MARQUEE_OVERLAY_CLASS, createFileBrowserMarqueeSelection } from './useFileBrowserMarqueeSelection';
 import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
 export interface FileListViewProps {
@@ -519,7 +519,7 @@ export function FileListView(props: FileListViewProps) {
         <Show when={marquee.overlayStyle()}>
           {(style) => (
             <div
-              class="pointer-events-none fixed z-40 rounded-md border border-primary/60 bg-primary/15 shadow-sm shadow-primary/10"
+              class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}
               style={style()}
             />
           )}
