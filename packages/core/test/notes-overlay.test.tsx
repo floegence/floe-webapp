@@ -254,6 +254,26 @@ async function settle(): Promise<void> {
   await new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
+function mockCanvasFrameRect(host: HTMLElement): void {
+  const frame = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+  if (!frame) return;
+
+  Object.defineProperty(frame, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      left: 0,
+      top: 0,
+      right: 960,
+      bottom: 640,
+      width: 960,
+      height: 640,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }),
+  });
+}
+
 describe('NotesOverlay', () => {
   const disposers: Array<() => void> = [];
 
@@ -317,6 +337,83 @@ describe('NotesOverlay', () => {
     expect(host.textContent).toContain('Copied');
   });
 
+  it('opens the trash flyout from the dock toggle', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
+    expect(toggle).toBeTruthy();
+
+    toggle!.click();
+    await settle();
+
+    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+  });
+
+  it('opens the custom context menu when right-clicking the canvas', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(canvas).toBeTruthy();
+
+    canvas!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 240,
+        clientY: 160,
+      })
+    );
+    await settle();
+
+    const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
+    expect(menu).toBeTruthy();
+    expect(menu?.textContent).toContain('Paste here');
+    expect(menu?.textContent).toContain('New note');
+    expect(menu?.textContent).not.toContain('Delete');
+  });
+
+  it('opens the note context menu when right-clicking a note', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const note = host.querySelector('.notes-note') as HTMLElement | null;
+    expect(note).toBeTruthy();
+
+    note!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 260,
+        clientY: 180,
+      })
+    );
+    await settle();
+
+    const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
+    expect(menu).toBeTruthy();
+    expect(menu?.textContent).toContain('Delete');
+    expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
+  });
+
   it('treats dragging a note as canvas pan instead of copy', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -355,10 +452,10 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(state.deleteNote).toHaveBeenCalledWith('note-1');
-    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
-    expect(host.textContent).toContain('Research');
+    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+    expect(document.body.textContent).toContain('Research');
 
-    const restoreButton = [...host.querySelectorAll('.notes-trash-note__actions button')].find(
+    const restoreButton = [...document.body.querySelectorAll('.notes-trash-note__actions button')].find(
       (button) => button.textContent?.includes('Restore')
     ) as HTMLButtonElement | undefined;
     expect(restoreButton).toBeTruthy();
@@ -366,7 +463,7 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(state.restoreNote).toHaveBeenCalledWith('note-1');
-    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
+    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
   });
 
   it('shows the mobile topic chips and overview entry point on narrow screens', async () => {
@@ -439,9 +536,9 @@ describe('NotesOverlay', () => {
     const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
     deleteButton!.click();
     await settle();
-    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
+    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
 
-    const deleteNowButton = [...host.querySelectorAll('.notes-trash-note__actions button')].find(
+    const deleteNowButton = [...document.body.querySelectorAll('.notes-trash-note__actions button')].find(
       (button) => button.textContent?.includes('Delete now')
     ) as HTMLButtonElement | undefined;
     expect(deleteNowButton).toBeTruthy();

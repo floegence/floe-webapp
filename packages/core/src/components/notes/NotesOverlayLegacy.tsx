@@ -8,6 +8,7 @@ import {
   untrack,
   type JSX,
 } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import { Motion, Presence } from 'solid-motionone';
 import {
   duration,
@@ -2013,6 +2014,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
       <Presence>
         <Show when={isMobile() && overviewOpen()}>
+          <Portal>
             <Motion.div
               class="notes-overview-backdrop"
               initial={{ opacity: 0 }}
@@ -2030,11 +2032,13 @@ export function NotesOverlay(props: NotesOverlayProps) {
             >
               {overviewPanel('mobile')}
             </Motion.div>
+          </Portal>
         </Show>
       </Presence>
 
       <Presence>
         <Show when={trashOpen()}>
+          <Portal>
             <Motion.div
               class="notes-trash-backdrop"
               initial={{ opacity: 0 }}
@@ -2186,11 +2190,13 @@ export function NotesOverlay(props: NotesOverlayProps) {
                 </Show>
               </div>
             </Motion.div>
+          </Portal>
         </Show>
       </Presence>
 
       <Presence>
         <Show when={contextMenu()}>
+          <Portal>
             <Motion.div
               class="notes-menu-backdrop"
               initial={{ opacity: 0 }}
@@ -2231,11 +2237,13 @@ export function NotesOverlay(props: NotesOverlayProps) {
                 </button>
               </Show>
             </Motion.div>
+          </Portal>
         </Show>
       </Presence>
 
       <Presence>
         <Show when={Boolean(editingNote())}>
+          <Portal>
             <Motion.div
               class="notes-flyout notes-flyout--editor"
               initial={{ opacity: 0, x: 24, scale: 0.985 }}
@@ -2298,11 +2306,13 @@ export function NotesOverlay(props: NotesOverlayProps) {
                 </Button>
               </div>
             </Motion.div>
+          </Portal>
         </Show>
       </Presence>
 
       <Presence>
         <Show when={Boolean(manualPasteTarget())}>
+          <Portal>
             <Motion.div
               class="notes-flyout notes-flyout--paste"
               initial={{ opacity: 0, x: 24, scale: 0.985 }}
@@ -2357,6 +2367,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
                 </Button>
               </div>
             </Motion.div>
+          </Portal>
         </Show>
       </Presence>
       </Show>
