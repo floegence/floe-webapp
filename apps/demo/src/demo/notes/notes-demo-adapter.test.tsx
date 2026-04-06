@@ -9,6 +9,7 @@ import { useNotesDemoController } from './createNotesDemoController';
 
 const NOTES_PAGE_SOURCE = resolve(__dirname, 'NotesPage.tsx');
 const DEMO_VITE_CONFIG_SOURCE = resolve(__dirname, '../../../vite.config.ts');
+const DEMO_WORKSPACE_TAILWIND_SOURCE = resolve(__dirname, '../../core-workspace-tailwind.css');
 
 function DemoProviders(props: { children: JSX.Element }) {
   return (
@@ -71,5 +72,11 @@ describe('demo notes shared adapter', () => {
 
     expect(source).toContain("find: '@floegence/floe-webapp-core/notes'");
     expect(source).toContain("replacement: resolve(repoRoot, 'packages/core/src/notes.ts')");
+  });
+
+  it('loads notes overlay styles in workspace dev mode', () => {
+    const source = readFileSync(DEMO_WORKSPACE_TAILWIND_SOURCE, 'utf-8');
+
+    expect(source).toContain("@import '../../../packages/core/src/components/notes/notes.css';");
   });
 });
