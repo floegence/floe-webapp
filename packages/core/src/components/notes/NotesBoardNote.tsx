@@ -28,6 +28,7 @@ export interface NotesBoardNoteProps {
   optimisticFront: boolean;
   topZIndex: number;
   viewportScale: number;
+  onSeedMoveProjection: (noteID: string, position: NotesPoint) => void;
   onCopy: (item: NotesItem) => void;
   onOpenContextMenu: (event: MouseEvent, item: NotesItem) => void;
   onOpenEditor: (noteID: string) => void;
@@ -61,17 +62,21 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
     const current = untrack(dragState);
     if (!current) return;
 
+    const next = { x: current.worldX, y: current.worldY };
+    const start = { x: current.startWorldX, y: current.startWorldY };
+    const shouldCommitMove = commitMove && !samePoint(next, start);
+
+    if (shouldCommitMove) {
+      props.onSeedMoveProjection(props.item.note_id, next);
+    }
+
     current.stopInteraction();
     setDragState(null);
     dragAbortController?.abort();
     dragAbortController = undefined;
 
     props.onCommitFront(props.item.note_id);
-    if (!commitMove) return;
-
-    const next = { x: current.worldX, y: current.worldY };
-    const start = { x: current.startWorldX, y: current.startWorldY };
-    if (samePoint(next, start)) return;
+    if (!shouldCommitMove) return;
     void props.onCommitMove(props.item.note_id, next);
   };
 

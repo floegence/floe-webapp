@@ -96,6 +96,13 @@ function baseSnapshot(): NotesSnapshot {
   };
 }
 
+function baseItem(overrides: Partial<NotesItem> = {}): NotesItem {
+  return {
+    ...baseSnapshot().items[0]!,
+    ...overrides,
+  };
+}
+
 function toTrashItem(item: NotesItem): NotesTrashItem {
   return {
     ...item,
@@ -248,6 +255,94 @@ function createController(snapshot = baseSnapshot()) {
   });
 }
 
+function createDeferredMoveController(snapshot = baseSnapshot()) {
+  return createRoot((dispose) => {
+    const [currentSnapshot, setCurrentSnapshot] = createSignal(normalizeNotesSnapshot(snapshot));
+    const [activeTopicID, setActiveTopicID] = createSignal(snapshot.topics[0]?.topic_id ?? '');
+    const [viewport, setViewport] = createSignal<NotesViewport>({ x: 240, y: 120, scale: 1 });
+
+    let resolveMove!: () => void;
+    let rejectMove!: (error: unknown) => void;
+    const movePromise = new Promise<void>((resolve, reject) => {
+      resolveMove = resolve;
+      rejectMove = reject;
+    });
+
+    const bringNoteToFront = vi.fn(async (noteID: string) => {
+      setCurrentSnapshot((value) => normalizeNotesSnapshot(promoteLocalItem(value, noteID)));
+      return untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
+    });
+
+    const updateNote = vi.fn(async (noteID: string, input: { x?: number; y?: number }) => {
+      await movePromise;
+      const current = untrack(currentSnapshot).items.find((item) => item.note_id === noteID);
+      if (!current) {
+        throw new Error('Note missing');
+      }
+
+      const next: NotesItem = {
+        ...current,
+        x: input.x ?? current.x,
+        y: input.y ?? current.y,
+        updated_at_unix_ms: Date.now(),
+      };
+
+      setCurrentSnapshot((value) => normalizeNotesSnapshot(replaceSnapshotItem(value, next)));
+      return next;
+    });
+
+    const controller: NotesController = {
+      snapshot: currentSnapshot,
+      activeTopicID,
+      setActiveTopicID,
+      viewport,
+      setViewport,
+      loading: () => false,
+      connectionState: () => 'live',
+      createTopic: async () => snapshot.topics[0]!,
+      updateTopic: async (topicID, input) => {
+        const current = currentSnapshot().topics.find((topic) => topic.topic_id === topicID);
+        if (!current) {
+          throw new Error('Topic missing');
+        }
+        return { ...current, name: input.name, updated_at_unix_ms: Date.now() };
+      },
+      deleteTopic: async () => true,
+      createNote: async (input) =>
+        baseSnapshot().items[0]
+          ? {
+              ...baseSnapshot().items[0]!,
+              note_id: 'note-created',
+              topic_id: input.topic_id,
+              body: input.body,
+              preview_text: input.body,
+              character_count: input.body.length,
+              x: input.x,
+              y: input.y,
+            }
+          : baseItem(),
+      updateNote,
+      bringNoteToFront,
+      deleteNote: vi.fn(async () => undefined),
+      restoreNote: vi.fn(async () => {
+        throw new Error('Unused in test');
+      }),
+      deleteTrashedNotePermanently: vi.fn(async () => undefined),
+      clearTrashTopic: vi.fn(async () => undefined),
+    };
+
+    return {
+      controller,
+      viewport,
+      bringNoteToFront,
+      updateNote,
+      resolveMove,
+      rejectMove,
+      dispose,
+    };
+  });
+}
+
 async function settle(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -309,6 +404,35 @@ function mockElementsFromPoint(
 
     delete (document as Document & { elementsFromPoint?: Document['elementsFromPoint'] }).elementsFromPoint;
   };
+}
+
+function dragNote(handle: HTMLButtonElement, pointerId: number, nextClientX: number, nextClientY: number) {
+  handle.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      bubbles: true,
+      button: 0,
+      clientX: 20,
+      clientY: 24,
+      pointerId,
+    }),
+  );
+  window.dispatchEvent(
+    new PointerEvent('pointermove', {
+      bubbles: true,
+      clientX: nextClientX,
+      clientY: nextClientY,
+      pointerId,
+    }),
+  );
+  window.dispatchEvent(
+    new PointerEvent('pointerup', {
+      bubbles: true,
+      button: 0,
+      clientX: nextClientX,
+      clientY: nextClientY,
+      pointerId,
+    }),
+  );
 }
 
 function trackWindowKeydownListeners() {
@@ -859,6 +983,89 @@ describe('NotesOverlay', () => {
 
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
     expect(host.textContent).not.toContain('Copied');
+  });
+
+  it('keeps the dropped note position projected while the move mutation is still pending', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createDeferredMoveController({
+      ...baseSnapshot(),
+      items: [
+        baseItem({
+          note_id: 'note-1',
+          color_token: 'sage',
+          x: 120,
+          y: 90,
+          z_index: 1,
+        }),
+        baseItem({
+          note_id: 'note-2',
+          body: 'Anchor note',
+          preview_text: 'Anchor note',
+          character_count: 11,
+          color_token: 'coral',
+          x: 520,
+          y: 320,
+          z_index: 2,
+          updated_at_unix_ms: 3,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const note = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    const overviewNote = host.querySelector('.notes-overview__note.notes-note--moss') as HTMLDivElement | null;
+    expect(note).toBeTruthy();
+    expect(dragHandle).toBeTruthy();
+    expect(overviewNote).toBeTruthy();
+
+    const initialOverviewLeft = overviewNote!.style.left;
+    dragNote(dragHandle!, 11, 110, 124);
+    await settle();
+
+    const projectedNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const projectedOverviewNote = host.querySelector('.notes-overview__note.notes-note--moss') as HTMLDivElement | null;
+    expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
+    expect(state.updateNote).toHaveBeenCalledWith('note-1', { x: 210, y: 190 });
+    expect(projectedNote?.style.transform).toBe('translate(210px, 190px)');
+    expect(projectedOverviewNote?.style.left).not.toBe(initialOverviewLeft);
+
+    state.resolveMove();
+    await settle();
+
+    const settledNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    expect(settledNote?.style.transform).toBe('translate(210px, 190px)');
+  });
+
+  it('clears the projected move position when the move mutation fails', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createDeferredMoveController(baseSnapshot());
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const note = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    expect(note).toBeTruthy();
+    expect(dragHandle).toBeTruthy();
+
+    dragNote(dragHandle!, 12, 110, 124);
+    await settle();
+    const projectedNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    expect(projectedNote?.style.transform).toBe('translate(210px, 190px)');
+
+    state.rejectMove(new Error('Move failed'));
+    await settle();
+
+    const reconciledNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    expect(reconciledNote?.style.transform).toBe('translate(120px, 90px)');
   });
 
   it('moves deleted notes into trash and restores them through the trash panel', async () => {

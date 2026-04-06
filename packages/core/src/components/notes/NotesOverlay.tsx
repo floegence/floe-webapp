@@ -200,6 +200,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
               onSelectTopic={model.board.selectTopic}
               onMobileCreateNote={() => void model.board.mobileCreateNote()}
               onMobilePaste={() => void model.board.mobilePaste()}
+              onSeedMoveProjection={model.board.seedMoveProjection}
               onCopyNote={(item) => void model.board.copyNote(item)}
               onOpenNoteContextMenu={model.board.openNoteContextMenu}
               onOpenEditor={model.board.openEditor}

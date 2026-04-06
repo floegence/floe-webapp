@@ -28,6 +28,7 @@ export interface NotesBoardProps {
   onSelectTopic: (topicID: string) => void;
   onMobileCreateNote: () => void;
   onMobilePaste: () => void;
+  onSeedMoveProjection: (noteID: string, position: { x: number; y: number }) => void;
   onCopyNote: (item: NotesItem) => void;
   onOpenNoteContextMenu: (event: MouseEvent, item: NotesItem) => void;
   onOpenEditor: (noteID: string) => void;
@@ -130,6 +131,7 @@ export function NotesBoard(props: NotesBoardProps) {
                   optimisticFront={props.optimisticFrontNoteID === item.note_id}
                   topZIndex={props.topZIndex}
                   viewportScale={props.viewport.scale}
+                  onSeedMoveProjection={props.onSeedMoveProjection}
                   onCopy={props.onCopyNote}
                   onOpenContextMenu={props.onOpenNoteContextMenu}
                   onOpenEditor={props.onOpenEditor}

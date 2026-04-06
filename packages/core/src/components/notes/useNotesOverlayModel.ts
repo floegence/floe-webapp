@@ -18,6 +18,7 @@ import {
   resolveCenteredViewport,
   resolveFrameSize,
   resolveOverviewBounds,
+  samePoint,
   type NotesCanvasPlacement,
   type NotesContextMenuState,
   type NotesOverviewBounds,
@@ -71,6 +72,8 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const [overviewNavigationState, setOverviewNavigationState] =
     createSignal<NotesOverviewNavigationState | null>(null);
   const [viewportPreview, setViewportPreview] = createSignal<NotesViewport | null>(null);
+  const [transientMoveProjections, setTransientMoveProjections] =
+    createSignal<ReadonlyMap<string, { x: number; y: number }>>(new Map());
 
   let copiedResetTimer: number | undefined;
   let overviewAbortController: AbortController | undefined;
@@ -91,8 +94,21 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const activeTopic = createMemo(() =>
     topics().find((topic) => topic.topic_id === resolvedActiveTopicID()),
   );
+  const projectedItems = createMemo(() => {
+    const projections = transientMoveProjections();
+    return snapshot().items.map((item) => {
+      const projected = projections.get(item.note_id);
+      if (!projected) return item;
+      if (samePoint({ x: item.x, y: item.y }, projected)) return item;
+      return {
+        ...item,
+        x: projected.x,
+        y: projected.y,
+      };
+    });
+  });
   const activeItems = createMemo(() =>
-    snapshot().items.filter((item) => item.topic_id === resolvedActiveTopicID()),
+    projectedItems().filter((item) => item.topic_id === resolvedActiveTopicID()),
   );
   const trashGroups = createMemo(() => groupTrashItems(snapshot().trash_items));
   const trashCount = createMemo(() => snapshot().trash_items.length);
@@ -168,6 +184,27 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     copiedResetTimer = undefined;
   };
 
+  const seedTransientMoveProjection = (noteID: string, position: { x: number; y: number }) => {
+    setTransientMoveProjections((current) => {
+      const existing = current.get(noteID);
+      if (existing && samePoint(existing, position)) return current;
+
+      const next = new Map(current);
+      next.set(noteID, position);
+      return next;
+    });
+  };
+
+  const clearTransientMoveProjection = (noteID: string) => {
+    setTransientMoveProjections((current) => {
+      if (!current.has(noteID)) return current;
+
+      const next = new Map(current);
+      next.delete(noteID);
+      return next;
+    });
+  };
+
   const closeManualPaste = () => {
     setManualPasteTarget(null);
     setManualPasteText('');
@@ -204,6 +241,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     closeOverview();
     closeEditor();
     closeManualPaste();
+    setTransientMoveProjections(new Map());
   };
 
   const handleCloseRequest = () => {
@@ -570,6 +608,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   const handleMoveToTrash = async (noteID: string) => {
     try {
+      clearTransientMoveProjection(noteID);
       await options.controller.deleteNote(noteID);
       clearCopiedState();
       setCopiedNoteID((current) => (current === noteID ? null : current));
@@ -581,6 +620,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   const handleRestoreNote = async (noteID: string) => {
     try {
+      clearTransientMoveProjection(noteID);
       await options.controller.restoreNote(noteID);
     } catch (error) {
       notifications.error('Restore failed', errorMessage(error));
@@ -590,6 +630,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const handleDeleteNow = async (noteID: string) => {
     if (!options.controller.deleteTrashedNotePermanently) return;
     try {
+      clearTransientMoveProjection(noteID);
       await options.controller.deleteTrashedNotePermanently(noteID);
     } catch (error) {
       notifications.error('Delete failed', errorMessage(error));
@@ -697,12 +738,14 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     noteID: string,
     position: { x: number; y: number },
   ) => {
+    seedTransientMoveProjection(noteID, position);
     try {
       await options.controller.updateNote(noteID, {
         x: position.x,
         y: position.y,
       });
     } catch (error) {
+      clearTransientMoveProjection(noteID);
       notifications.error('Move failed', errorMessage(error));
     }
   };
@@ -872,6 +915,26 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   });
 
   createEffect(() => {
+    const liveItems = snapshot().items;
+    const projections = transientMoveProjections();
+    if (projections.size === 0) return;
+
+    let next: Map<string, { x: number; y: number }> | null = null;
+
+    for (const [noteID, projected] of projections) {
+      const item = liveItems.find((entry) => entry.note_id === noteID);
+      if (!item || samePoint({ x: item.x, y: item.y }, projected)) {
+        next ??= new Map(projections);
+        next.delete(noteID);
+      }
+    }
+
+    if (next) {
+      setTransientMoveProjections(next);
+    }
+  });
+
+  createEffect(() => {
     if (!options.open) return;
 
     const syncLayoutMode = () => {
@@ -968,6 +1031,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       selectTopic,
       mobileCreateNote: handleMobileCreateNote,
       mobilePaste: handleMobilePaste,
+      seedMoveProjection: seedTransientMoveProjection,
       copyNote: handleCopyNote,
       openNoteContextMenu,
       openEditor,
