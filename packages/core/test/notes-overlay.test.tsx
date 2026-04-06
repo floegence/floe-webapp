@@ -258,6 +258,16 @@ function mockCanvasFrameRect(host: HTMLElement): void {
   const frame = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
   if (!frame) return;
 
+  Object.defineProperty(frame, 'clientWidth', {
+    configurable: true,
+    value: 960,
+  });
+
+  Object.defineProperty(frame, 'clientHeight', {
+    configurable: true,
+    value: 640,
+  });
+
   Object.defineProperty(frame, 'getBoundingClientRect', {
     configurable: true,
     value: () => ({
@@ -480,7 +490,38 @@ describe('NotesOverlay', () => {
     expect(host.querySelector('button[aria-label="Open overview map"]')).toBeTruthy();
   });
 
-  it('updates the viewport continuously while dragging on the minimap', async () => {
+  it('closes child layers before closing the root overlay', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
+    await settle();
+
+    const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
+    expect(toggle).toBeTruthy();
+    toggle!.click();
+    await settle();
+    expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+
+    const closeButton = host.querySelector(
+      'button[aria-label="Close notes overlay"]'
+    ) as HTMLButtonElement | null;
+    expect(closeButton).toBeTruthy();
+
+    closeButton!.click();
+    await settle();
+    expect(document.body.querySelector('.notes-trash__panel')).toBeFalsy();
+    expect(onClose).not.toHaveBeenCalled();
+
+    closeButton!.click();
+    await settle();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('commits viewport movement on minimap release instead of during drag', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const setup = createController();
@@ -488,6 +529,7 @@ describe('NotesOverlay', () => {
 
     render(() => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />, host);
     await settle();
+    mockCanvasFrameRect(host);
 
     const minimap = host.querySelector('.notes-overview__surface') as HTMLDivElement | null;
     expect(minimap).toBeTruthy();
@@ -508,7 +550,6 @@ describe('NotesOverlay', () => {
     });
 
     const initialViewport = setup.viewport();
-
     minimap!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 18, pointerId: 7 }));
     await settle();
     const afterDownViewport = setup.viewport();
@@ -519,9 +560,11 @@ describe('NotesOverlay', () => {
 
     minimap!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 138, clientY: 94, pointerId: 7 }));
     await settle();
+    const afterReleaseViewport = setup.viewport();
 
-    expect(afterDownViewport).not.toEqual(initialViewport);
-    expect(afterMoveViewport).not.toEqual(afterDownViewport);
+    expect(afterDownViewport).toEqual(initialViewport);
+    expect(afterMoveViewport).toEqual(initialViewport);
+    expect(afterReleaseViewport).not.toEqual(initialViewport);
   });
 
   it('permanently deletes trashed notes when requested from the trash flyout', async () => {

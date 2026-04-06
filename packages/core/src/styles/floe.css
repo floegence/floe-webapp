@@ -406,7 +406,9 @@
   [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='shell-sidebar'],
   [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='sidebar-pane'],
   [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='floating-window'],
-  [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='floating-window'] {
+  [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='floating-window'],
+  [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='notes-note'],
+  [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='notes-note'] .notes-note__surface {
     animation: none !important;
     transition: none !important;
   }

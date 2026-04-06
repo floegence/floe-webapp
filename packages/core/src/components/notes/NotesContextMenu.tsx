@@ -46,7 +46,7 @@ export function NotesContextMenu(props: NotesContextMenuProps) {
     <div
       ref={props.menuRef}
       role="menu"
-      class="notes-context-menu"
+      class="notes-context-menu notes-menu"
       style={{ left: `${props.x}px`, top: `${props.y}px` }}
       onContextMenu={(event) => event.preventDefault()}
     >
@@ -62,7 +62,7 @@ export function NotesContextMenu(props: NotesContextMenuProps) {
             <button
               type="button"
               role="menuitem"
-              class={cn('notes-context-menu__item', item.destructive && 'is-destructive')}
+              class={cn('notes-context-menu__item notes-menu__item', item.destructive && 'is-destructive is-danger')}
               onClick={item.onSelect}
               disabled={item.disabled}
             >

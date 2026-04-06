@@ -129,6 +129,8 @@
 - Shell sidebar：拖动时只改本地 preview width，结束后再写 `LayoutContext`
 - FileBrowser sidebar：拖动时只改本地 preview width，结束后再写 `FileBrowserContext`
 - FloatingWindow：拖拽/resize 期间直接写 DOM 几何，结束后再 commit 到 signal
+- NotesOverlay：note drag 只更新 note-local preview 坐标，pointerup 后再 `updateNote()`
+- NotesOverlay：minimap / overview navigation 只更新本地 viewport preview，release 后再 `setViewport()`
 
 ### 3.4 组件必须遵守的实现规范
 
@@ -156,6 +158,7 @@
 - 校验热表面文件挂上 `data-floe-geometry-surface`
 - 校验关键交互组件复用 `startHotInteraction()`
 - 校验移动端 tab 选择不再被 defer 到下一 task
+- 校验 Notes overlay 继续复用 `useOverlayMask()`，且仍保持 preview / commit 分层
 - 校验规范文档本身存在并纳入 docs 索引
 
 ### 4.2 文档约束
@@ -191,20 +194,27 @@
 - [x] FloatingWindow 复用共享 hot interaction 运行时
 - [x] CommandPalette 统一走 `useOverlayMask` autofocus
 
-### 5.4 拖拽 / resize 统一
+### 5.4 Notes overlay
+
+- [x] NotesOverlay 根层接入 `useOverlayMask`
+- [x] Notes note drag 改成 note-local preview -> release commit
+- [x] Notes minimap / overview navigation 改成 local viewport preview -> release commit
+- [x] Notes hot surfaces 标记 `data-floe-geometry-surface` 并接入共享热交互防护
+
+### 5.5 拖拽 / resize 统一
 
 - [x] Layout `ResizeHandle` 复用共享 hot interaction
 - [x] Deck drag / resize 复用共享 hot interaction
 - [x] FileBrowser drag 复用共享 hot interaction
 - [x] FileBrowser global drag context 统一管理拖拽光标状态
 
-### 5.5 点击 / 页面切换
+### 5.6 点击 / 页面切换
 
 - [x] MobileTabBar 改为同步更新 UI-owned selection
 - [x] ActivityBar / MobileTabBar 的热按钮去掉 `transition-all`
 - [x] 仅保留颜色/transform 等低成本反馈动画
 
-### 5.6 工程守卫
+### 5.7 工程守卫
 
 - [x] 新增交互架构守卫测试
 - [x] README / docs 索引更新

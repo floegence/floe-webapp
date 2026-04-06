@@ -48,6 +48,7 @@ describe('interaction architecture guard', () => {
     const deckDragSrc = read('../src/hooks/useDeckDrag.ts');
     const fileDragContextSrc = read('../src/context/FileBrowserDragContext.tsx');
     const floatingWindowSrc = read('../src/components/ui/FloatingWindow.tsx');
+    const notesBoardNoteSrc = read('../src/components/notes/NotesBoardNote.tsx');
 
     expect(sidebarSrc).toContain('data-floe-geometry-surface="shell-sidebar"');
     expect(sidebarPaneSrc).toContain('data-floe-geometry-surface="sidebar-pane"');
@@ -65,6 +66,9 @@ describe('interaction architecture guard', () => {
     expect(floatingWindowSrc).toContain('data-floe-floating-window-state={isActive() ? \'active\' : \'inactive\'}');
     expect(floatingWindowSrc).toContain('tabIndex={-1}');
     expect(floatingWindowSrc).not.toContain('aria-modal="true"');
+
+    expect(notesBoardNoteSrc).toContain('data-floe-geometry-surface="notes-note"');
+    expect(notesBoardNoteSrc).toContain('startHotInteraction({ kind: \'drag\', cursor: \'grabbing\' })');
   });
 
   it('splits preview state from committed sidebar state for shell and file browser', () => {
@@ -92,10 +96,19 @@ describe('interaction architecture guard', () => {
     const mobileTabBarSrc = read('../src/components/layout/MobileTabBar.tsx');
     const shellSrc = read('../src/components/layout/Shell.tsx');
     const commandPaletteSrc = read('../src/components/ui/CommandPalette.tsx');
+    const notesOverlaySrc = read('../src/components/notes/NotesOverlay.tsx');
+    const notesModelSrc = read('../src/components/notes/useNotesOverlayModel.ts');
 
     expect(mobileTabBarSrc).toContain('onSelect(id);');
     expect(mobileTabBarSrc).not.toContain('deferNonBlocking(() => onSelect(id))');
     expect(shellSrc).toContain('useOverlayMask({');
     expect(commandPaletteSrc).toContain("autoFocus: { selector: 'input' }");
+
+    expect(notesOverlaySrc).toContain('useOverlayMask({');
+    expect(notesModelSrc).toContain('const [viewportPreview, setViewportPreview] = createSignal<NotesViewport | null>(null);');
+    expect(notesModelSrc).toContain('const commitViewport = (viewport: NotesViewport) => {');
+    expect(notesModelSrc).toContain('setViewportPreview(viewport);');
+    expect(notesModelSrc).toContain('options.controller.setViewport(viewport);');
+    expect(notesModelSrc).toContain('options.controller.setViewport(preview);');
   });
 });

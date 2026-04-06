@@ -680,6 +680,10 @@
     height: var(--note-height);
   }
 
+  .notes-note.is-dragging {
+    will-change: transform;
+  }
+
   .notes-note__surface {
     position: relative;
     display: flex;
@@ -1302,7 +1306,8 @@
     background: color-mix(in srgb, var(--background) 8%, transparent);
   }
 
-  .notes-menu {
+  .notes-menu,
+  .notes-context-menu {
     position: fixed;
     z-index: 75;
     width: 13rem;
@@ -1314,7 +1319,8 @@
     box-shadow: 0 18px 36px color-mix(in srgb, var(--foreground) 14%, transparent);
   }
 
-  .notes-menu__item {
+  .notes-menu__item,
+  .notes-context-menu__item {
     display: flex;
     align-items: center;
     gap: 0.68rem;
@@ -1331,30 +1337,46 @@
       transform 140ms ease;
   }
 
-  .notes-menu__item svg {
+  .notes-context-menu__separator {
+    height: 1px;
+    margin: 0.35rem 0.45rem;
+    background: color-mix(in srgb, var(--border) 76%, transparent);
+  }
+
+  .notes-menu__item svg,
+  .notes-context-menu__item svg {
     color: color-mix(in srgb, var(--popover-foreground) 56%, var(--muted-foreground));
     transition: color 140ms ease;
   }
 
-  .notes-menu__item:hover {
+  .notes-context-menu__label {
+    flex: 1;
+  }
+
+  .notes-menu__item:hover,
+  .notes-context-menu__item:hover {
     background: color-mix(in srgb, var(--accent) 82%, transparent);
     color: var(--accent-foreground);
     transform: translateX(1px);
   }
 
-  .notes-menu__item:hover svg {
+  .notes-menu__item:hover svg,
+  .notes-context-menu__item:hover svg {
     color: currentColor;
   }
 
-  .notes-menu__item.is-danger {
+  .notes-menu__item.is-danger,
+  .notes-context-menu__item.is-destructive {
     color: color-mix(in srgb, var(--error) 82%, var(--popover-foreground));
   }
 
-  .notes-menu__item.is-danger svg {
+  .notes-menu__item.is-danger svg,
+  .notes-context-menu__item.is-destructive svg {
     color: color-mix(in srgb, var(--error) 66%, var(--muted-foreground));
   }
 
-  .notes-menu__item.is-danger:hover {
+  .notes-menu__item.is-danger:hover,
+  .notes-context-menu__item.is-destructive:hover {
     background: color-mix(in srgb, var(--error) 12%, transparent);
     color: color-mix(in srgb, var(--error) 92%, var(--popover-foreground));
   }
@@ -1429,6 +1451,7 @@
   .notes-trash-section__clear:focus-visible,
   .notes-trash-note__actions button:focus-visible,
   .notes-menu__item:focus-visible,
+  .notes-context-menu__item:focus-visible,
   .notes-note__drag:focus-visible,
   .notes-note__icon-button:focus-visible,
   .notes-note__body:focus-visible,
@@ -1447,7 +1470,8 @@
   .dark .notes-mobile-dock,
   .dark .notes-trash__toggle,
   .dark .notes-trash__panel,
-  .dark .notes-menu {
+  .dark .notes-menu,
+  .dark .notes-context-menu {
     box-shadow: 0 22px 42px color-mix(in srgb, black 34%, transparent);
   }
 
@@ -2225,6 +2249,7 @@
   .notes-overview__surface,
   .notes-trash__panel,
   .notes-menu,
+  .notes-context-menu,
   .notes-flyout {
     border-radius: 0.62rem;
   }
@@ -2295,7 +2320,8 @@
 
   .notes-trash-note__actions button,
   .notes-trash-section__clear,
-  .notes-menu__item {
+  .notes-menu__item,
+  .notes-context-menu__item {
     cursor: pointer;
   }
 
@@ -2303,7 +2329,8 @@
     background: transparent;
   }
 
-  .notes-menu {
+  .notes-menu,
+  .notes-context-menu {
     width: 12.5rem;
   }
 
@@ -2393,7 +2420,8 @@
   .dark .notes-overlay__frame,
   .dark .notes-flyout,
   .dark .notes-trash__panel,
-  .dark .notes-menu {
+  .dark .notes-menu,
+  .dark .notes-context-menu {
     box-shadow: 0 26px 56px color-mix(in srgb, black 36%, transparent);
   }
 
