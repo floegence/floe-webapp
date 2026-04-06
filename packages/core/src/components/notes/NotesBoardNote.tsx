@@ -149,6 +149,7 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
         'is-dragging': isDragging(),
       }}
       data-floe-geometry-surface="notes-note"
+      data-floe-notes-note-id={props.item.note_id}
       onContextMenu={(event) => {
         event.preventDefault();
         event.stopPropagation();

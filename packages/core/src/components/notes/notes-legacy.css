@@ -1209,12 +1209,16 @@
   }
 
   .notes-trash-note__body {
-    flex: 1;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
     padding: 0.18rem 0.78rem 0.65rem;
   }
 
   .notes-trash-note__body span {
     display: -webkit-box;
+    width: 100%;
     overflow: hidden;
     color: color-mix(in srgb, var(--notes-ink) 92%, black 8%);
     font-size: 0.83rem;
@@ -1239,6 +1243,7 @@
 
   .notes-trash-note__actions {
     display: flex;
+    flex-shrink: 0;
     gap: 0.35rem;
     padding: 0 0.72rem 0.72rem;
     margin-top: auto;
@@ -1246,6 +1251,9 @@
 
   .notes-trash-note__actions button {
     flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
     padding: 0.44rem 0.1rem;
     cursor: pointer;
@@ -1253,6 +1261,7 @@
     color: color-mix(in srgb, var(--foreground) 84%, var(--muted-foreground));
     font-size: 0.68rem;
     font-weight: 650;
+    white-space: nowrap;
     transition:
       transform 140ms ease,
       color 140ms ease,

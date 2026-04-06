@@ -289,6 +289,28 @@ function mockCanvasFrameRect(host: HTMLElement): void {
   });
 }
 
+function mockElementsFromPoint(
+  resolver: (clientX: number, clientY: number) => Element[],
+): () => void {
+  const original = document.elementsFromPoint;
+  Object.defineProperty(document, 'elementsFromPoint', {
+    configurable: true,
+    value: vi.fn((clientX: number, clientY: number) => resolver(clientX, clientY)),
+  });
+
+  return () => {
+    if (original) {
+      Object.defineProperty(document, 'elementsFromPoint', {
+        configurable: true,
+        value: original,
+      });
+      return;
+    }
+
+    delete (document as Document & { elementsFromPoint?: Document['elementsFromPoint'] }).elementsFromPoint;
+  };
+}
+
 function trackWindowKeydownListeners() {
   const originalAddEventListener = window.addEventListener.bind(window);
   const originalRemoveEventListener = window.removeEventListener.bind(window);
@@ -555,6 +577,127 @@ describe('NotesOverlay', () => {
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
   });
 
+  it('retargets the open context menu when right-clicking another canvas point through the backdrop', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(canvas).toBeTruthy();
+
+    canvas!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 240,
+        clientY: 160,
+      }),
+    );
+    await settle();
+
+    const backdrop = document.body.querySelector('.notes-menu-backdrop') as HTMLDivElement | null;
+    const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
+    expect(backdrop).toBeTruthy();
+    expect(menu).toBeTruthy();
+    expect(menu?.style.left).toBe('240px');
+    expect(menu?.style.top).toBe('160px');
+
+    const restoreElementsFromPoint = mockElementsFromPoint(() => [backdrop!, canvas!]);
+
+    backdrop!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 412,
+        clientY: 286,
+      }),
+    );
+    await settle();
+    restoreElementsFromPoint();
+
+    const retargetedMenu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
+    expect(retargetedMenu).toBeTruthy();
+    expect(retargetedMenu?.style.left).toBe('412px');
+    expect(retargetedMenu?.style.top).toBe('286px');
+    expect(retargetedMenu?.textContent).toContain('Paste here');
+    expect(retargetedMenu?.textContent).not.toContain('Delete');
+  });
+
+  it('retargets the open context menu from one note to another through the backdrop', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: [
+        baseSnapshot().items[0]!,
+        {
+          note_id: 'note-2',
+          topic_id: 'topic-1',
+          body: 'Secondary note body',
+          preview_text: 'Secondary note body',
+          character_count: 19,
+          size_bucket: 3,
+          style_version: 'note/v1',
+          color_token: 'amber',
+          x: 360,
+          y: 180,
+          z_index: 2,
+          created_at_unix_ms: 3,
+          updated_at_unix_ms: 3,
+        },
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const notes = host.querySelectorAll('.notes-note');
+    const firstNote = notes[0] as HTMLElement | undefined;
+    const secondNote = notes[1] as HTMLElement | undefined;
+    expect(firstNote).toBeTruthy();
+    expect(secondNote).toBeTruthy();
+
+    firstNote!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 260,
+        clientY: 180,
+      }),
+    );
+    await settle();
+
+    const backdrop = document.body.querySelector('.notes-menu-backdrop') as HTMLDivElement | null;
+    expect(backdrop).toBeTruthy();
+
+    const restoreElementsFromPoint = mockElementsFromPoint(() => [backdrop!, secondNote!]);
+
+    backdrop!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 480,
+        clientY: 240,
+      }),
+    );
+    await settle();
+    restoreElementsFromPoint();
+
+    const menu = document.body.querySelector('.notes-menu') as HTMLDivElement | null;
+    expect(menu).toBeTruthy();
+    expect(menu?.style.left).toBe('480px');
+    expect(menu?.style.top).toBe('240px');
+    expect(menu?.textContent).toContain('Delete');
+    expect(state.bringNoteToFront).toHaveBeenLastCalledWith('note-2');
+  });
+
   it('renders the editor flyout through a body portal so its controls stay interactive', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -745,6 +888,41 @@ describe('NotesOverlay', () => {
 
     expect(state.restoreNote).toHaveBeenCalledWith('note-1');
     expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+  });
+
+  it('keeps trash note actions rendered for long-content notes', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const longBody = Array.from({ length: 40 }, (_, index) => `Segment ${index + 1}`).join(' ');
+    const state = createController({
+      ...baseSnapshot(),
+      items: [],
+      trash_items: [
+        {
+          ...toTrashItem(baseSnapshot().items[0]!),
+          note_id: 'trash-1',
+          body: longBody,
+          preview_text: longBody,
+          character_count: longBody.length,
+          size_bucket: 5,
+        },
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
+    expect(toggle).toBeTruthy();
+    toggle!.click();
+    await settle();
+
+    const actions = document.body.querySelector('.notes-trash-note__actions') as HTMLDivElement | null;
+    expect(actions).toBeTruthy();
+    expect(actions?.querySelectorAll('button')).toHaveLength(2);
+    expect(actions?.textContent).toContain('Restore');
+    expect(actions?.textContent).toContain('Delete now');
   });
 
   it('shows the mobile topic chips and overview entry point on narrow screens', async () => {

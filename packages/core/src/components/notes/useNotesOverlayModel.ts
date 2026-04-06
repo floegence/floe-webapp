@@ -271,6 +271,48 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     };
   };
 
+  const getElementsFromClientPoint = (clientX: number, clientY: number): Element[] => {
+    if (typeof document === 'undefined') return [];
+    if (typeof document.elementsFromPoint === 'function') {
+      return document.elementsFromPoint(clientX, clientY);
+    }
+
+    const target = document.elementFromPoint(clientX, clientY);
+    return target ? [target] : [];
+  };
+
+  const findNoteTargetAtClientPoint = (
+    clientX: number,
+    clientY: number,
+  ): NotesItem | undefined => {
+    const noteID = getElementsFromClientPoint(clientX, clientY)
+      .filter((element): element is HTMLElement => element instanceof HTMLElement)
+      .map((element) => element.closest<HTMLElement>('[data-floe-notes-note-id]'))
+      .find(Boolean)
+      ?.dataset.floeNotesNoteId?.trim();
+
+    if (!noteID) return undefined;
+    return snapshot().items.find((item) => item.note_id === noteID);
+  };
+
+  const resolveContextMenuStateAtClientPoint = (
+    clientX: number,
+    clientY: number,
+    options?: { topicID?: string; noteID?: string | null },
+  ): NotesContextMenuState | null => {
+    const placement = getPlacementFromClientPoint(clientX, clientY, options?.topicID);
+    if (!placement) return null;
+
+    return {
+      clientX,
+      clientY,
+      worldX: placement.worldX,
+      worldY: placement.worldY,
+      topicID: placement.topicID,
+      noteID: options?.noteID ?? null,
+    };
+  };
+
   const getViewportCenterPlacement = (): NotesCanvasPlacement | null => {
     const topic = activeTopic();
     if (!topic) return null;
@@ -288,18 +330,26 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     clientY: number,
     options?: { topicID?: string; noteID?: string | null },
   ) => {
-    const placement = getPlacementFromClientPoint(clientX, clientY, options?.topicID);
-    if (!placement) return false;
+    const next = resolveContextMenuStateAtClientPoint(clientX, clientY, options);
+    if (!next) return false;
 
-    setContextMenu({
-      clientX,
-      clientY,
-      worldX: placement.worldX,
-      worldY: placement.worldY,
-      topicID: placement.topicID,
-      noteID: options?.noteID ?? null,
-    });
+    setContextMenu(next);
     return true;
+  };
+
+  const retargetContextMenuAtClientPoint = (clientX: number, clientY: number) => {
+    const note = findNoteTargetAtClientPoint(clientX, clientY);
+    if (note) {
+      commitFront(note.note_id);
+      const next = resolveContextMenuStateAtClientPoint(clientX, clientY, {
+        topicID: note.topic_id,
+        noteID: note.note_id,
+      });
+      setContextMenu(next);
+      return;
+    }
+
+    setContextMenu(resolveContextMenuStateAtClientPoint(clientX, clientY));
   };
 
   const commitViewport = (viewport: NotesViewport) => {
@@ -766,6 +816,12 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     openContextMenuAtClientPoint(event.clientX, event.clientY);
   };
 
+  const retargetOpenContextMenu = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    retargetContextMenuAtClientPoint(event.clientX, event.clientY);
+  };
+
   createEffect(() => {
     if (!options.open) {
       resetTransientLayers();
@@ -946,6 +1002,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       items: contextMenuItems,
       position: contextMenuPosition,
       close: () => setContextMenu(null),
+      retarget: retargetOpenContextMenu,
     },
     editor: {
       note: editingNote,

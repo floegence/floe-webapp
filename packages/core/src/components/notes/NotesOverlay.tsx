@@ -280,7 +280,12 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
         <Show when={model.contextMenu.state()}>
           <Portal>
-            <div class="notes-menu-backdrop" data-floe-notes-boundary="true" onClick={model.contextMenu.close} />
+            <div
+              class="notes-menu-backdrop"
+              data-floe-notes-boundary="true"
+              onClick={model.contextMenu.close}
+              onContextMenu={model.contextMenu.retarget}
+            />
             <NotesContextMenu
               x={model.contextMenu.position()?.left ?? 0}
               y={model.contextMenu.position()?.top ?? 0}
