@@ -252,6 +252,11 @@ async function settle(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
   await new Promise((resolve) => window.setTimeout(resolve, 0));
+  if (typeof requestAnimationFrame !== 'undefined') {
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => window.setTimeout(resolve, 0)),
+    );
+  }
 }
 
 function mockCanvasFrameRect(host: HTMLElement): void {
@@ -282,6 +287,42 @@ function mockCanvasFrameRect(host: HTMLElement): void {
       toJSON: () => ({}),
     }),
   });
+}
+
+function trackWindowKeydownListeners() {
+  const originalAddEventListener = window.addEventListener.bind(window);
+  const originalRemoveEventListener = window.removeEventListener.bind(window);
+  const handlers = new Set<(event: KeyboardEvent) => void>();
+
+  const addSpy = vi
+    .spyOn(window, 'addEventListener')
+    .mockImplementation((type, listener, options) => {
+      if (type === 'keydown' && typeof listener === 'function') {
+        handlers.add(listener as (event: KeyboardEvent) => void);
+      }
+      return originalAddEventListener(type, listener, options as AddEventListenerOptions);
+    });
+
+  const removeSpy = vi
+    .spyOn(window, 'removeEventListener')
+    .mockImplementation((type, listener, options) => {
+      if (type === 'keydown' && typeof listener === 'function') {
+        handlers.delete(listener as (event: KeyboardEvent) => void);
+      }
+      return originalRemoveEventListener(type, listener, options as EventListenerOptions);
+    });
+
+  return {
+    dispatch(event: KeyboardEvent) {
+      for (const handler of handlers) {
+        handler(event);
+      }
+    },
+    restore() {
+      addSpy.mockRestore();
+      removeSpy.mockRestore();
+    },
+  };
 }
 
 describe('NotesOverlay', () => {
@@ -345,6 +386,101 @@ describe('NotesOverlay', () => {
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
     expect(host.textContent).toContain('Copied');
+  });
+
+  it('keeps modal interaction semantics by default', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    const keydownTracker = trackWindowKeydownListeners();
+    disposers.push(state.dispose);
+
+    const externalInput = document.createElement('input');
+    document.body.appendChild(externalInput);
+    externalInput.focus();
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
+    await settle();
+
+    const overlay = host.querySelector('.notes-overlay') as HTMLElement | null;
+    const closeButton = host.querySelector(
+      'button[aria-label="Close notes overlay"]'
+    ) as HTMLButtonElement | null;
+
+    expect(overlay?.getAttribute('data-notes-interaction-mode')).toBe('modal');
+    expect(overlay?.getAttribute('aria-modal')).toBe('true');
+    expect(document.activeElement).toBe(closeButton);
+
+    externalInput.focus();
+    const escapeEvent = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(escapeEvent, 'target', { configurable: true, value: externalInput });
+    keydownTracker.dispatch(escapeEvent);
+    await settle();
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    keydownTracker.restore();
+  });
+
+  it('supports floating interaction semantics without stealing focus', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const onClose = vi.fn();
+    const keydownTracker = trackWindowKeydownListeners();
+    disposers.push(state.dispose);
+
+    const externalInput = document.createElement('input');
+    document.body.appendChild(externalInput);
+    externalInput.focus();
+
+    render(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={onClose}
+          interactionMode="floating"
+        />
+      ),
+      host,
+    );
+    await settle();
+
+    const overlay = host.querySelector('.notes-overlay') as HTMLElement | null;
+    const closeButton = host.querySelector(
+      'button[aria-label="Close notes overlay"]'
+    ) as HTMLButtonElement | null;
+
+    expect(overlay?.getAttribute('data-notes-interaction-mode')).toBe('floating');
+    expect(overlay?.hasAttribute('aria-modal')).toBe(false);
+    expect(document.activeElement).toBe(externalInput);
+
+    const outsideEscape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(outsideEscape, 'target', { configurable: true, value: externalInput });
+    keydownTracker.dispatch(outsideEscape);
+    await settle();
+    expect(onClose).not.toHaveBeenCalled();
+
+    closeButton!.focus();
+    const insideEscape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(insideEscape, 'target', { configurable: true, value: closeButton });
+    keydownTracker.dispatch(insideEscape);
+    await settle();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    keydownTracker.restore();
   });
 
   it('opens the trash flyout from the dock toggle', async () => {

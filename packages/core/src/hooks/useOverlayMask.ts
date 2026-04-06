@@ -4,6 +4,7 @@ import { deferAfterPaint } from '../utils/defer';
 import { getFocusableElements, getFirstFocusableElement } from '../utils/focus';
 
 export type OverlayScrollBlockMode = 'none' | 'outside' | 'all';
+export type OverlayEscapeCloseMode = 'none' | 'inside' | 'always';
 
 export interface UseOverlayMaskOptions {
   open: Accessor<boolean>;
@@ -22,8 +23,8 @@ export interface UseOverlayMaskOptions {
   /** Keep tab focus within the overlay root (default: true). */
   trapFocus?: boolean;
 
-  /** Close on Escape and never leak to underlying window handlers (default: true). */
-  closeOnEscape?: boolean;
+  /** Close on Escape and never leak to underlying window handlers (default: always). */
+  closeOnEscape?: boolean | OverlayEscapeCloseMode;
 
   /** Stop bubbling keydown events to window-level hotkeys (default: true). */
   blockHotkeys?: boolean;
@@ -51,7 +52,12 @@ function shouldBlockByMode(root: HTMLElement | undefined, target: EventTarget | 
 export function useOverlayMask(options: UseOverlayMaskOptions): void {
   const lockBodyScroll = () => options.lockBodyScroll !== false;
   const trapFocus = () => options.trapFocus !== false;
-  const closeOnEscape = () => options.closeOnEscape !== false;
+  const closeOnEscape = (): OverlayEscapeCloseMode => {
+    if (options.closeOnEscape === false) return 'none';
+    if (options.closeOnEscape === 'inside') return 'inside';
+    if (options.closeOnEscape === 'none') return 'none';
+    return 'always';
+  };
   const blockHotkeys = () => options.blockHotkeys !== false;
   const restoreFocus = () => options.restoreFocus !== false;
 
@@ -130,6 +136,16 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     const handleEscapeCapture = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      const closeMode = closeOnEscape();
+      if (closeMode === 'none') return;
+
+      if (closeMode === 'inside') {
+        const root = options.root();
+        if (!root) return;
+        const target = isNode(e.target) ? e.target : document.activeElement;
+        if (!target || !root.contains(target)) return;
+      }
+
       e.preventDefault();
       e.stopImmediatePropagation();
       options.onClose?.();
@@ -164,7 +180,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     };
 
     if (trapFocus()) document.addEventListener('keydown', handleTabTrap, true);
-    if (closeOnEscape()) window.addEventListener('keydown', handleEscapeCapture, true);
+    if (closeOnEscape() !== 'none') window.addEventListener('keydown', handleEscapeCapture, true);
     document.addEventListener('keydown', handleKeydownBubble);
 
     if ((options.blockWheel ?? 'none') !== 'none') {
@@ -177,7 +193,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     onCleanup(() => {
       if (trapFocus()) document.removeEventListener('keydown', handleTabTrap, true);
-      if (closeOnEscape()) window.removeEventListener('keydown', handleEscapeCapture, true);
+      if (closeOnEscape() !== 'none') window.removeEventListener('keydown', handleEscapeCapture, true);
       document.removeEventListener('keydown', handleKeydownBubble);
 
       if ((options.blockWheel ?? 'none') !== 'none') {

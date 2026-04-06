@@ -13,27 +13,70 @@ import { NotesTrashCanIcon } from './notesAppearance';
 import type { NotesController } from './types';
 import { useNotesOverlayModel } from './useNotesOverlayModel';
 
+export type NotesOverlayInteractionMode = 'modal' | 'floating';
+
 export interface NotesOverlayProps {
   open: boolean;
   onClose: () => void;
   controller: NotesController;
+  interactionMode?: NotesOverlayInteractionMode;
+}
+
+interface ResolvedNotesOverlayInteraction {
+  mode: NotesOverlayInteractionMode;
+  ariaModal: true | undefined;
+  lockBodyScroll: boolean;
+  trapFocus: boolean;
+  closeOnEscape: true | 'inside';
+  blockWheel: 'outside' | 'none';
+  blockTouchMove: 'outside' | 'none';
+  autoFocus: false | { selector: string };
+}
+
+function resolveNotesOverlayInteraction(
+  mode: NotesOverlayInteractionMode | undefined,
+): ResolvedNotesOverlayInteraction {
+  if (mode === 'floating') {
+    return {
+      mode,
+      ariaModal: undefined,
+      lockBodyScroll: false,
+      trapFocus: false,
+      closeOnEscape: 'inside',
+      blockWheel: 'none',
+      blockTouchMove: 'none',
+      autoFocus: false,
+    };
+  }
+
+  return {
+    mode: 'modal',
+    ariaModal: true,
+    lockBodyScroll: true,
+    trapFocus: true,
+    closeOnEscape: true,
+    blockWheel: 'outside',
+    blockTouchMove: 'outside',
+    autoFocus: { selector: '[data-floe-overlay-close="true"]' },
+  };
 }
 
 export function NotesOverlay(props: NotesOverlayProps) {
   const model = useNotesOverlayModel(props);
   let rootRef: HTMLElement | undefined;
+  const interaction = () => resolveNotesOverlayInteraction(props.interactionMode);
 
   useOverlayMask({
     open: () => props.open,
     root: () => rootRef,
     onClose: () => model.handleCloseRequest(),
-    lockBodyScroll: true,
-    trapFocus: true,
-    closeOnEscape: true,
+    lockBodyScroll: interaction().lockBodyScroll,
+    trapFocus: interaction().trapFocus,
+    closeOnEscape: interaction().closeOnEscape,
     blockHotkeys: true,
-    blockWheel: 'outside',
-    blockTouchMove: 'outside',
-    autoFocus: { selector: '[data-floe-overlay-close="true"]' },
+    blockWheel: interaction().blockWheel,
+    blockTouchMove: interaction().blockTouchMove,
+    autoFocus: interaction().autoFocus,
     restoreFocus: true,
   });
 
@@ -43,8 +86,9 @@ export function NotesOverlay(props: NotesOverlayProps) {
         ref={rootRef}
         class="notes-overlay"
         role="dialog"
-        aria-modal="true"
+        aria-modal={interaction().ariaModal}
         aria-label="Notes overlay"
+        data-notes-interaction-mode={interaction().mode}
         tabIndex={-1}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

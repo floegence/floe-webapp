@@ -153,14 +153,22 @@ const controller: NotesController = {
 };
 
 export function ProductNotes() {
-  return <NotesOverlay open controller={controller} onClose={() => setNotesOpen(false)} />;
+  return (
+    <NotesOverlay
+      open
+      controller={controller}
+      onClose={() => setNotesOpen(false)}
+      interactionMode="floating"
+    />
+  );
 }
 ```
 
 Notes on the contract:
 
 - The controller owns runtime authority. Floe owns rendering, gesture handling, and shared visual language.
-- The shared overlay already handles focus trapping, Escape close, body scroll lock, and outside scroll blocking through the common `useOverlayMask()` contract, so downstream apps should treat `open` / `onClose` as the only overlay lifecycle boundary.
+- `interactionMode` defaults to `modal`, which keeps focus trapping, body scroll lock, and global Escape-close semantics for modal surfaces such as demos and settings flows.
+- Use `interactionMode="floating"` when Notes should stay above an already-active workspace without stealing the current focus; this keeps the shared Notes UI while switching the overlay shell to non-modal floating semantics.
 - Canvas pan/zoom, minimap navigation, and note drag keep preview state local inside the shared surface and only commit through `setViewport()` / `updateNote()` at the end of the gesture. Downstream controllers should stay authoritative, but they do not need per-frame drag state.
 - `deleteTrashedNotePermanently` is optional; implement it when you want the shared trash flyout to expose a `Delete now` action in addition to timed retention.
 - Keep your snapshot shape aligned with the exported canonical notes types so multiple products can share the same card DSL (`style_version`, `color_token`, `size_bucket`) and projection helpers.
