@@ -7,6 +7,9 @@ import { FloeProvider } from '@floegence/floe-webapp-core/app';
 import { NotesDemoProvider } from './NotesDemoContext';
 import { useNotesDemoController } from './createNotesDemoController';
 
+const NOTES_PAGE_SOURCE = resolve(__dirname, 'NotesPage.tsx');
+const DEMO_VITE_CONFIG_SOURCE = resolve(__dirname, '../../../vite.config.ts');
+
 function DemoProviders(props: { children: JSX.Element }) {
   return (
     <FloeProvider
@@ -53,7 +56,7 @@ describe('demo notes shared adapter', () => {
   });
 
   it('keeps the demo page as a thin Portal wrapper around the shared NotesOverlay', () => {
-    const source = readFileSync(resolve(__dirname, 'NotesPage.tsx'), 'utf-8');
+    const source = readFileSync(NOTES_PAGE_SOURCE, 'utf-8');
 
     expect(source).toContain("import { Portal } from 'solid-js/web';");
     expect(source).toContain("import { NotesOverlay } from '@floegence/floe-webapp-core/notes';");
@@ -61,5 +64,12 @@ describe('demo notes shared adapter', () => {
     expect(source).toContain('const controller = useNotesDemoController();');
     expect(source).toContain('<Portal>');
     expect(source).toContain('<NotesOverlay open controller={controller} onClose={props.onRequestClose} />');
+  });
+
+  it('keeps the Vite workspace aliases in sync with the demo notes subpath import', () => {
+    const source = readFileSync(DEMO_VITE_CONFIG_SOURCE, 'utf-8');
+
+    expect(source).toContain("find: '@floegence/floe-webapp-core/notes'");
+    expect(source).toContain("replacement: resolve(repoRoot, 'packages/core/src/notes.ts')");
   });
 });

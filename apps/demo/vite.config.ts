@@ -58,6 +58,10 @@ export default defineConfig(({ command }) => {
           replacement: resolve(repoRoot, 'packages/core/src/chat.ts'),
         },
         {
+          find: '@floegence/floe-webapp-core/notes',
+          replacement: resolve(repoRoot, 'packages/core/src/notes.ts'),
+        },
+        {
           find: '@floegence/floe-webapp-core/editor',
           replacement: resolve(repoRoot, 'packages/core/src/editor.ts'),
         },
