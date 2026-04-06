@@ -1365,6 +1365,12 @@
     gap: 1rem;
   }
 
+  .notes-editor__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
   .notes-editor__swatches {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
