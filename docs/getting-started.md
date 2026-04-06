@@ -148,6 +148,7 @@ const controller: NotesController = {
   bringNoteToFront: async (noteID) => bringNoteToFront(noteID),
   deleteNote: async (noteID) => deleteNote(noteID),
   restoreNote: async (noteID) => restoreNote(noteID),
+  deleteTrashedNotePermanently: async (noteID) => deleteTrashedNotePermanently(noteID),
   clearTrashTopic: async (topicID) => clearTrashTopic(topicID),
 };
 
@@ -159,6 +160,7 @@ export function ProductNotes() {
 Notes on the contract:
 
 - The controller owns runtime authority. Floe owns rendering, gesture handling, and shared visual language.
+- `deleteTrashedNotePermanently` is optional; implement it when you want the shared trash flyout to expose a `Delete now` action in addition to timed retention.
 - Keep your snapshot shape aligned with the exported canonical notes types so multiple products can share the same card DSL (`style_version`, `color_token`, `size_bucket`) and projection helpers.
 - Import `@floegence/floe-webapp-core/tailwind` or `@floegence/floe-webapp-core/styles` so the Notes surface CSS is present in your app bundle.
 

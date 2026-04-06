@@ -34,6 +34,10 @@ const copies = [
     dest: resolve(pkgRoot, 'dist/notes.css'),
   },
   {
+    src: resolve(pkgRoot, 'src/components/notes/notes-legacy.css'),
+    dest: resolve(pkgRoot, 'dist/notes-legacy.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/components/ui/styles/ui.css'),
     dest: resolve(pkgRoot, 'dist/ui.css'),
   },

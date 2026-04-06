@@ -8,6 +8,7 @@ import {
   normalizeNotesSnapshot,
   promoteLocalItem,
   removeSnapshotItem,
+  removeSnapshotTrashItem,
   replaceSnapshotItem,
   replaceSnapshotTrashItem,
   type NotesController,
@@ -17,16 +18,6 @@ import {
   type NotesViewport,
 } from '../src/components/notes/types';
 
-type MotionDivProps = Record<string, unknown> & {
-  children?: unknown;
-};
-
-vi.mock('solid-motionone', () => ({
-  Motion: {
-    div: (props: MotionDivProps) => <div {...props}>{props.children}</div>,
-  },
-}));
-
 vi.mock('../src/context', () => ({
   useNotification: () => ({
     error: vi.fn(),
@@ -34,6 +25,39 @@ vi.mock('../src/context', () => ({
     info: vi.fn(),
   }),
 }));
+
+vi.mock('solid-motionone', async () => {
+  const solid = await vi.importActual<typeof import('solid-js')>('solid-js');
+  const createMotionDiv = (props: Record<string, unknown> & { children?: unknown }) => {
+    const [local, rest] = solid.splitProps(props, ['children']);
+    return <div {...rest}>{local.children}</div>;
+  };
+  const createMotionSection = (props: Record<string, unknown> & { children?: unknown }) => {
+    const [local, rest] = solid.splitProps(props, ['children']);
+    return <section {...rest}>{local.children}</section>;
+  };
+
+  return {
+    Motion: {
+      div: createMotionDiv,
+      section: createMotionSection,
+    },
+    Presence: (props: { children?: unknown }) => <>{props.children}</>,
+  };
+});
+
+vi.mock('../src/ui', async () => {
+  const actual = await vi.importActual<typeof import('../src/ui')>('../src/ui');
+
+  return {
+    ...actual,
+    Input: (props: Record<string, unknown>) => <input {...props} />,
+    Textarea: (props: Record<string, unknown>) => <textarea {...props} />,
+    Button: (props: Record<string, unknown> & { children?: unknown }) => (
+      <button {...props}>{props.children}</button>
+    ),
+  };
+});
 
 function baseSnapshot(): NotesSnapshot {
   return {
@@ -147,6 +171,10 @@ function createController(snapshot = baseSnapshot()) {
       );
     });
 
+    const deleteTrashedNotePermanently = vi.fn(async (noteID: string) => {
+      setCurrentSnapshot((value) => normalizeNotesSnapshot(removeSnapshotTrashItem(value, noteID)));
+    });
+
     const controller: NotesController = {
       snapshot: currentSnapshot,
       activeTopicID,
@@ -203,10 +231,20 @@ function createController(snapshot = baseSnapshot()) {
       bringNoteToFront,
       deleteNote,
       restoreNote,
+      deleteTrashedNotePermanently,
       clearTrashTopic,
     };
 
-    return { controller, viewport, bringNoteToFront, deleteNote, restoreNote, clearTrashTopic, dispose };
+    return {
+      controller,
+      viewport,
+      bringNoteToFront,
+      deleteNote,
+      restoreNote,
+      deleteTrashedNotePermanently,
+      clearTrashTopic,
+      dispose,
+    };
   });
 }
 
@@ -268,12 +306,10 @@ describe('NotesOverlay', () => {
 
     render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    expect(noteBody).toBeTruthy();
 
-    const note = host.querySelector('.notes-note') as HTMLDivElement | null;
-    expect(note).toBeTruthy();
-
-    note!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 60, clientY: 80, pointerId: 1 }));
-    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 60, clientY: 80, pointerId: 1 }));
+    noteBody!.click();
     await settle();
 
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
@@ -290,12 +326,14 @@ describe('NotesOverlay', () => {
     render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
-    const note = host.querySelector('.notes-note') as HTMLDivElement | null;
-    expect(note).toBeTruthy();
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(noteBody).toBeTruthy();
+    expect(canvas).toBeTruthy();
 
-    note!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 40, clientY: 50, pointerId: 2 }));
-    document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 78, clientY: 96, pointerId: 2 }));
-    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 78, clientY: 96, pointerId: 2 }));
+    noteBody!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 40, clientY: 50, pointerId: 2 }));
+    canvas!.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 78, clientY: 96, pointerId: 2 }));
+    canvas!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 78, clientY: 96, pointerId: 2 }));
     await settle();
 
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
@@ -311,30 +349,27 @@ describe('NotesOverlay', () => {
     render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
-    const deleteButton = host.querySelector('button[aria-label="Delete note"]') as HTMLButtonElement | null;
+    const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
     expect(deleteButton).toBeTruthy();
     deleteButton!.click();
     await settle();
 
     expect(state.deleteNote).toHaveBeenCalledWith('note-1');
-
-    const trashDock = host.querySelector('button[aria-label="Open trash"]') as HTMLButtonElement | null;
-    expect(trashDock).toBeTruthy();
-    trashDock!.click();
-    await settle();
-
+    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
     expect(host.textContent).toContain('Research');
 
-    const restoreButton = host.querySelector('button[aria-label="Restore note"]') as HTMLButtonElement | null;
+    const restoreButton = [...host.querySelectorAll('.notes-trash-note__actions button')].find(
+      (button) => button.textContent?.includes('Restore')
+    ) as HTMLButtonElement | undefined;
     expect(restoreButton).toBeTruthy();
     restoreButton!.click();
     await settle();
 
     expect(state.restoreNote).toHaveBeenCalledWith('note-1');
-    expect(host.querySelector('button[aria-label="Open trash"]')).toBeTruthy();
+    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
   });
 
-  it('collapses the topic rail on mobile and reopens it from the HUD', async () => {
+  it('shows the mobile topic chips and overview entry point on narrow screens', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -344,15 +379,8 @@ describe('NotesOverlay', () => {
     render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
-    const rail = host.querySelector('.notes-overlay__rail') as HTMLElement | null;
-    expect(rail?.className).toContain('is-closed');
-
-    const hudButton = host.querySelector('button[aria-label="Open topics"]') as HTMLButtonElement | null;
-    expect(hudButton).toBeTruthy();
-    hudButton!.click();
-    await settle();
-
-    expect(rail?.className).toContain('is-open');
+    expect(host.querySelector('.notes-page__mobile-topic')).toBeTruthy();
+    expect(host.querySelector('button[aria-label="Open overview map"]')).toBeTruthy();
   });
 
   it('updates the viewport continuously while dragging on the minimap', async () => {
@@ -364,7 +392,7 @@ describe('NotesOverlay', () => {
     render(() => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />, host);
     await settle();
 
-    const minimap = host.querySelector('.notes-minimap') as HTMLDivElement | null;
+    const minimap = host.querySelector('.notes-overview__surface') as HTMLDivElement | null;
     expect(minimap).toBeTruthy();
 
     Object.defineProperty(minimap!, 'getBoundingClientRect', {
@@ -397,5 +425,29 @@ describe('NotesOverlay', () => {
 
     expect(afterDownViewport).not.toEqual(initialViewport);
     expect(afterMoveViewport).not.toEqual(afterDownViewport);
+  });
+
+  it('permanently deletes trashed notes when requested from the trash flyout', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
+    deleteButton!.click();
+    await settle();
+    expect(host.querySelector('.notes-trash__panel')).toBeTruthy();
+
+    const deleteNowButton = [...host.querySelectorAll('.notes-trash-note__actions button')].find(
+      (button) => button.textContent?.includes('Delete now')
+    ) as HTMLButtonElement | undefined;
+    expect(deleteNowButton).toBeTruthy();
+    deleteNowButton!.click();
+    await settle();
+
+    expect(state.deleteTrashedNotePermanently).toHaveBeenCalledWith('note-1');
   });
 });

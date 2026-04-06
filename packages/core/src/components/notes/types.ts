@@ -91,6 +91,7 @@ export type NotesItemMetrics = Readonly<{
   width: number;
   height: number;
   preview_lines: number;
+  preview_limit: number;
 }>;
 
 export type NotesCreateTopicInput = Readonly<{
@@ -134,6 +135,7 @@ export interface NotesController {
   bringNoteToFront: (noteID: string) => MaybePromise<NotesItem | void>;
   deleteNote: (noteID: string) => MaybePromise<void>;
   restoreNote: (noteID: string) => MaybePromise<NotesItem>;
+  deleteTrashedNotePermanently?: (noteID: string) => MaybePromise<void>;
   clearTrashTopic: (topicID: string) => MaybePromise<void>;
 }
 
@@ -145,11 +147,11 @@ export const TOPIC_ICON_KEYS = ['fox', 'crane', 'otter', 'lynx', 'whale', 'hare'
 export const TOPIC_ACCENT_TOKENS = ['ember', 'sea', 'moss', 'ink', 'gold', 'berry'] as const;
 
 export const NOTE_BUCKET_METRICS: Readonly<Record<NotesSizeBucket, NotesItemMetrics>> = Object.freeze({
-  1: { width: 184, height: 126, preview_lines: 4 },
-  2: { width: 202, height: 142, preview_lines: 5 },
-  3: { width: 220, height: 160, preview_lines: 6 },
-  4: { width: 238, height: 180, preview_lines: 7 },
-  5: { width: 256, height: 198, preview_lines: 8 },
+  1: { width: 196, height: 134, preview_lines: 4, preview_limit: 68 },
+  2: { width: 214, height: 148, preview_lines: 5, preview_limit: 90 },
+  3: { width: 232, height: 164, preview_lines: 6, preview_limit: 112 },
+  4: { width: 248, height: 182, preview_lines: 7, preview_limit: 138 },
+  5: { width: 266, height: 202, preview_lines: 8, preview_limit: 164 },
 });
 
 const DEFAULT_BOARD_BOUNDS: NotesRect = Object.freeze({
@@ -395,6 +397,13 @@ export function replaceSnapshotTrashItem(snapshot: NotesSnapshot, trashItem: Not
   };
 }
 
+export function removeSnapshotTrashItem(snapshot: NotesSnapshot, noteID: string): NotesSnapshot {
+  return {
+    ...snapshot,
+    trash_items: snapshot.trash_items.filter((item) => item.note_id !== noteID),
+  };
+}
+
 export function removeSnapshotTopic(snapshot: NotesSnapshot, topicID: string): NotesSnapshot {
   return {
     ...snapshot,
@@ -487,6 +496,21 @@ export function applyNotesEvent(snapshot: NotesSnapshot, event: NotesEvent): Not
           return true;
         }),
       };
+      if (topicRemoved && topicID) {
+        next = {
+          ...next,
+          topics: next.topics.filter((topic) => topic.topic_id !== topicID),
+        };
+      }
+      break;
+    }
+    case 'item.removed': {
+      const noteID = String((payload as { note_id?: unknown }).note_id ?? event.entity_id ?? '').trim();
+      if (noteID) {
+        next = removeSnapshotTrashItem(next, noteID);
+      }
+      const topicID = String((payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? '').trim();
+      const topicRemoved = Boolean((payload as { topic_removed?: unknown }).topic_removed);
       if (topicRemoved && topicID) {
         next = {
           ...next,

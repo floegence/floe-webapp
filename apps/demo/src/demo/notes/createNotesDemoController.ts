@@ -264,6 +264,9 @@ export function useNotesDemoController(): NotesController {
       }
       return mapItem(note, notes.getTextPreview(note.text), toSizeBucket(notes.getNoteSize(note.text) + 1));
     },
+    deleteTrashedNotePermanently: (noteID) => {
+      notes.deleteNotePermanently(noteID);
+    },
     clearTrashTopic: (topicID) => {
       notes.clearTrashForTopic(topicID);
     },
