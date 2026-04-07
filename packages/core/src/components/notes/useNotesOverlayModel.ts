@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { useNotification } from '../../context';
 import { Paste, Plus, Trash } from '../../icons';
 import {
@@ -48,6 +48,10 @@ function errorMessage(error: unknown): string {
 
 export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const notifications = useNotification();
+  let nextNoteOperationToken = 1;
+  let previousLiveNoteIDs = new Set<string>();
+  const pendingFrontTokens = new Map<string, number>();
+  const pendingMoveTokens = new Map<string, number>();
 
   const [canvasFrameRef, setCanvasFrameRef] = createSignal<HTMLDivElement | undefined>();
   const [canvasFrameSize, setCanvasFrameSize] = createSignal({ width: 0, height: 0 });
@@ -177,6 +181,58 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       ? snapshot().items.find((item) => item.note_id === noteID)
       : undefined;
   });
+  const hasLiveNote = (noteID: string) =>
+    untrack(() => snapshot().items.some((item) => item.note_id === noteID));
+  const issueNoteOperationToken = () => {
+    const token = nextNoteOperationToken;
+    nextNoteOperationToken += 1;
+    return token;
+  };
+  const issuePendingFrontToken = (noteID: string) => {
+    const token = issueNoteOperationToken();
+    pendingFrontTokens.set(noteID, token);
+    return token;
+  };
+  const issuePendingMoveToken = (noteID: string) => {
+    const token = issueNoteOperationToken();
+    pendingMoveTokens.set(noteID, token);
+    return token;
+  };
+  const isCurrentFrontToken = (noteID: string, token: number) =>
+    pendingFrontTokens.get(noteID) === token;
+  const isCurrentMoveToken = (noteID: string, token: number) =>
+    pendingMoveTokens.get(noteID) === token;
+  const clearPendingFrontToken = (noteID: string) => {
+    pendingFrontTokens.delete(noteID);
+  };
+  const clearPendingMoveToken = (noteID: string) => {
+    pendingMoveTokens.delete(noteID);
+  };
+  const invalidateNoteOperationGuards = (noteID: string) => {
+    clearPendingFrontToken(noteID);
+    clearPendingMoveToken(noteID);
+    clearTransientMoveProjection(noteID);
+    setOptimisticFrontNoteID((current) => (current === noteID ? null : current));
+  };
+  const invalidateTopicOperationGuards = (topicID: string) => {
+    for (const item of snapshot().items) {
+      if (item.topic_id !== topicID) continue;
+      invalidateNoteOperationGuards(item.note_id);
+    }
+  };
+  const reconcileRemovedLiveNote = (noteID: string) => {
+    invalidateNoteOperationGuards(noteID);
+    clearCopiedState();
+    setCopiedNoteID((current) => (current === noteID ? null : current));
+    setContextMenu((current) =>
+      current?.noteID === noteID ? null : current,
+    );
+    setEditorNoteID((current) => (current === noteID ? null : current));
+  };
+  const resetNoteOperationGuards = () => {
+    pendingFrontTokens.clear();
+    pendingMoveTokens.clear();
+  };
 
   const clearCopiedState = () => {
     if (copiedResetTimer === undefined) return;
@@ -242,6 +298,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     closeEditor();
     closeManualPaste();
     setTransientMoveProjections(new Map());
+    resetNoteOperationGuards();
   };
 
   const handleCloseRequest = () => {
@@ -578,11 +635,23 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   };
 
   const commitFront = (noteID: string) => {
+    const token = issuePendingFrontToken(noteID);
     setOptimisticFrontNoteID(noteID);
-    void Promise.resolve(options.controller.bringNoteToFront(noteID)).catch((error) => {
-      notifications.error('Bring forward failed', errorMessage(error));
-      setOptimisticFrontNoteID((current) => (current === noteID ? null : current));
-    });
+    void Promise.resolve(options.controller.bringNoteToFront(noteID))
+      .then(() => {
+        if (!isCurrentFrontToken(noteID, token)) return;
+        clearPendingFrontToken(noteID);
+      })
+      .catch((error) => {
+        if (!isCurrentFrontToken(noteID, token)) return;
+        clearPendingFrontToken(noteID);
+        if (!hasLiveNote(noteID)) {
+          setOptimisticFrontNoteID((current) => (current === noteID ? null : current));
+          return;
+        }
+        notifications.error('Bring forward failed', errorMessage(error));
+        setOptimisticFrontNoteID((current) => (current === noteID ? null : current));
+      });
   };
 
   const openEditor = (noteID: string) => {
@@ -598,7 +667,6 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     }
 
     try {
-      commitFront(item.note_id);
       await navigator.clipboard.writeText(item.body);
       markCopied(item.note_id);
     } catch {
@@ -608,7 +676,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   const handleMoveToTrash = async (noteID: string) => {
     try {
-      clearTransientMoveProjection(noteID);
+      invalidateNoteOperationGuards(noteID);
       await options.controller.deleteNote(noteID);
       clearCopiedState();
       setCopiedNoteID((current) => (current === noteID ? null : current));
@@ -710,6 +778,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     }
 
     try {
+      invalidateTopicOperationGuards(topic.topic_id);
       const deleted = await options.controller.deleteTopic(topic.topic_id);
       if (deleted === false) {
         notifications.info(
@@ -738,6 +807,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     noteID: string,
     position: { x: number; y: number },
   ) => {
+    const token = issuePendingMoveToken(noteID);
     seedTransientMoveProjection(noteID, position);
     try {
       await options.controller.updateNote(noteID, {
@@ -745,23 +815,17 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
         y: position.y,
       });
     } catch (error) {
+      if (!isCurrentMoveToken(noteID, token)) return;
+      clearPendingMoveToken(noteID);
       clearTransientMoveProjection(noteID);
+      if (!hasLiveNote(noteID)) return;
       notifications.error('Move failed', errorMessage(error));
+      return;
     }
-  };
 
-  const handleMobileCreateNote = async () => {
-    const placement = getViewportCenterPlacement();
-    if (!placement) return;
-    closeOverview();
-    await createNewNoteAt(placement);
-  };
-
-  const handleMobilePaste = async () => {
-    const placement = getViewportCenterPlacement();
-    if (!placement) return;
-    closeOverview();
-    await pasteNoteAt(placement);
+    if (isCurrentMoveToken(noteID, token)) {
+      clearPendingMoveToken(noteID);
+    }
   };
 
   const contextMenuItems = createMemo<NotesContextMenuItem[]>(() => {
@@ -863,6 +927,42 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     event.preventDefault();
     event.stopPropagation();
     retargetContextMenuAtClientPoint(event.clientX, event.clientY);
+  };
+
+  createEffect(() => {
+    const nextLiveNoteIDs = new Set(snapshot().items.map((item) => item.note_id));
+    for (const noteID of previousLiveNoteIDs) {
+      if (nextLiveNoteIDs.has(noteID)) continue;
+      reconcileRemovedLiveNote(noteID);
+    }
+    previousLiveNoteIDs = nextLiveNoteIDs;
+  });
+
+  createEffect(() => {
+    const menu = contextMenu();
+    if (!menu?.noteID) return;
+    if (hasLiveNote(menu.noteID)) return;
+    setContextMenu(null);
+  });
+
+  createEffect(() => {
+    if (!options.open) {
+      previousLiveNoteIDs = new Set();
+    }
+  });
+
+  const handleMobileCreateNote = async () => {
+    const placement = getViewportCenterPlacement();
+    if (!placement) return;
+    closeOverview();
+    await createNewNoteAt(placement);
+  };
+
+  const handleMobilePaste = async () => {
+    const placement = getViewportCenterPlacement();
+    if (!placement) return;
+    closeOverview();
+    await pasteNoteAt(placement);
   };
 
   createEffect(() => {

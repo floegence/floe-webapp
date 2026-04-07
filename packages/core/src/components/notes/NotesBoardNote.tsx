@@ -9,6 +9,8 @@ import {
 } from './notesOverlayHelpers';
 import type { NotesItem, NotesPoint } from './types';
 
+const NOTE_FRONT_SKIP_SELECTOR = '[data-floe-notes-front-skip="true"]';
+
 interface LocalDragState {
   pointerId: number;
   startClientX: number;
@@ -57,6 +59,8 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
     if (!current) return { x: props.item.x, y: props.item.y };
     return { x: current.worldX, y: current.worldY };
   });
+  const shouldCommitFrontFromClick = (target: EventTarget | null) =>
+    !(target instanceof Element && target.closest(NOTE_FRONT_SKIP_SELECTOR));
 
   const finishDrag = (commitMove: boolean) => {
     const current = untrack(dragState);
@@ -160,7 +164,10 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
         event.stopPropagation();
         props.onOpenContextMenu(event, props.item);
       }}
-      onClick={() => props.onCommitFront(props.item.note_id)}
+      onClick={(event) => {
+        if (!shouldCommitFrontFromClick(event.target)) return;
+        props.onCommitFront(props.item.note_id);
+      }}
       style={{
         transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
         '--note-width': `${metrics().width}px`,
@@ -178,6 +185,7 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
             class="notes-note__drag"
             aria-label="Drag note"
             data-floe-canvas-interactive="true"
+            data-floe-notes-front-skip="true"
             onPointerDown={beginDrag}
           >
             <GripVertical class="w-3.5 h-3.5" />
@@ -197,6 +205,7 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
               type="button"
               class="notes-note__icon-button is-danger"
               data-floe-canvas-interactive="true"
+              data-floe-notes-front-skip="true"
               aria-label="Move note to trash"
               onClick={() => props.onMoveToTrash(props.item.note_id)}
             >

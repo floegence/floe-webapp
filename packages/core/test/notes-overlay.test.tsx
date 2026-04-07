@@ -18,12 +18,14 @@ import {
   type NotesViewport,
 } from '../src/components/notes/types';
 
+const notificationState = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
+  info: vi.fn(),
+}));
+
 vi.mock('../src/context', () => ({
-  useNotification: () => ({
-    error: vi.fn(),
-    success: vi.fn(),
-    info: vi.fn(),
-  }),
+  useNotification: () => notificationState,
 }));
 
 vi.mock('solid-motionone', async () => {
@@ -336,8 +338,201 @@ function createDeferredMoveController(snapshot = baseSnapshot()) {
       viewport,
       bringNoteToFront,
       updateNote,
+      removeLiveNote(noteID: string) {
+        setCurrentSnapshot((value) =>
+          normalizeNotesSnapshot({
+            ...value,
+            items: value.items.filter((item) => item.note_id !== noteID),
+          }),
+        );
+      },
       resolveMove,
       rejectMove,
+      dispose,
+    };
+  });
+}
+
+function createDeferredFrontController(snapshot = baseSnapshot()) {
+  return createRoot((dispose) => {
+    const [currentSnapshot, setCurrentSnapshot] = createSignal(normalizeNotesSnapshot(snapshot));
+    const [activeTopicID, setActiveTopicID] = createSignal(snapshot.topics[0]?.topic_id ?? '');
+    const [viewport, setViewport] = createSignal<NotesViewport>({ x: 240, y: 120, scale: 1 });
+
+    let rejectFront!: (error: unknown) => void;
+    const frontPromise = new Promise<void>((_, reject) => {
+      rejectFront = reject;
+    });
+
+    const bringNoteToFront = vi.fn(async (noteID: string) => {
+      await frontPromise;
+      const note = untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
+      if (!note) {
+        throw new Error('note not found');
+      }
+      setCurrentSnapshot((value) => normalizeNotesSnapshot(promoteLocalItem(value, noteID)));
+      return untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
+    });
+
+    const deleteNote = vi.fn(async (noteID: string) => {
+      const note = untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
+      if (!note) return;
+      setCurrentSnapshot((value) =>
+        normalizeNotesSnapshot(replaceSnapshotTrashItem(removeSnapshotItem(value, noteID), toTrashItem(note))),
+      );
+    });
+
+    const controller: NotesController = {
+      snapshot: currentSnapshot,
+      activeTopicID,
+      setActiveTopicID,
+      viewport,
+      setViewport,
+      loading: () => false,
+      connectionState: () => 'live',
+      createTopic: async () => snapshot.topics[0]!,
+      updateTopic: async (topicID, input) => {
+        const current = currentSnapshot().topics.find((topic) => topic.topic_id === topicID);
+        if (!current) throw new Error('Topic missing');
+        return { ...current, name: input.name, updated_at_unix_ms: Date.now() };
+      },
+      deleteTopic: async () => true,
+      createNote: async (input) => ({
+        ...baseItem(),
+        note_id: 'note-created',
+        topic_id: input.topic_id,
+        body: input.body,
+        preview_text: input.body,
+        character_count: input.body.length,
+        x: input.x,
+        y: input.y,
+      }),
+      updateNote: async (noteID, input) => {
+        const current = currentSnapshot().items.find((item) => item.note_id === noteID);
+        if (!current) throw new Error('Note missing');
+        const next = {
+          ...current,
+          x: input.x ?? current.x,
+          y: input.y ?? current.y,
+          body: input.body ?? current.body,
+          preview_text: input.body ?? current.preview_text,
+          color_token: input.color_token ?? current.color_token,
+          updated_at_unix_ms: Date.now(),
+        };
+        setCurrentSnapshot((value) => normalizeNotesSnapshot(replaceSnapshotItem(value, next)));
+        return next;
+      },
+      bringNoteToFront,
+      deleteNote,
+      restoreNote: vi.fn(async () => {
+        throw new Error('Unused in test');
+      }),
+      deleteTrashedNotePermanently: vi.fn(async () => undefined),
+      clearTrashTopic: vi.fn(async () => undefined),
+    };
+
+    return {
+      controller,
+      bringNoteToFront,
+      deleteNote,
+      rejectFront,
+      dispose,
+    };
+  });
+}
+
+function createDeferredFrontTopicDeleteController(snapshot: NotesSnapshot) {
+  return createRoot((dispose) => {
+    const [currentSnapshot, setCurrentSnapshot] = createSignal(normalizeNotesSnapshot(snapshot));
+    const [activeTopicID, setActiveTopicID] = createSignal(snapshot.topics[0]?.topic_id ?? '');
+    const [viewport, setViewport] = createSignal<NotesViewport>({ x: 240, y: 120, scale: 1 });
+
+    let rejectFront!: (error: unknown) => void;
+    const frontPromise = new Promise<void>((_, reject) => {
+      rejectFront = reject;
+    });
+
+    const bringNoteToFront = vi.fn(async (noteID: string) => {
+      await frontPromise;
+      const note = untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
+      if (!note) {
+        throw new Error('note not found');
+      }
+      return note;
+    });
+
+    const deleteTopic = vi.fn(async (topicID: string) => {
+      setCurrentSnapshot((value) =>
+        normalizeNotesSnapshot({
+          ...value,
+          topics: value.topics.filter((topic) => topic.topic_id !== topicID),
+          items: value.items.filter((item) => item.topic_id !== topicID),
+          trash_items: [
+            ...value.trash_items,
+            ...value.items
+              .filter((item) => item.topic_id === topicID)
+              .map((item) => ({
+                ...toTrashItem(item),
+                topic_id: topicID,
+              })),
+          ],
+        }),
+      );
+      setActiveTopicID((current) => (current === topicID ? 'topic-2' : current));
+      return true;
+    });
+
+    const controller: NotesController = {
+      snapshot: currentSnapshot,
+      activeTopicID,
+      setActiveTopicID,
+      viewport,
+      setViewport,
+      loading: () => false,
+      connectionState: () => 'live',
+      createTopic: async () => snapshot.topics[0]!,
+      updateTopic: async (topicID, input) => {
+        const current = currentSnapshot().topics.find((topic) => topic.topic_id === topicID);
+        if (!current) throw new Error('Topic missing');
+        return { ...current, name: input.name, updated_at_unix_ms: Date.now() };
+      },
+      deleteTopic,
+      createNote: async (input) => ({
+        ...baseItem(),
+        note_id: 'note-created',
+        topic_id: input.topic_id,
+        body: input.body,
+        preview_text: input.body,
+        character_count: input.body.length,
+        x: input.x,
+        y: input.y,
+      }),
+      updateNote: async (noteID, input) => {
+        const current = currentSnapshot().items.find((item) => item.note_id === noteID);
+        if (!current) throw new Error('Note missing');
+        const next = {
+          ...current,
+          x: input.x ?? current.x,
+          y: input.y ?? current.y,
+          updated_at_unix_ms: Date.now(),
+        };
+        setCurrentSnapshot((value) => normalizeNotesSnapshot(replaceSnapshotItem(value, next)));
+        return next;
+      },
+      bringNoteToFront,
+      deleteNote: vi.fn(async () => undefined),
+      restoreNote: vi.fn(async () => {
+        throw new Error('Unused in test');
+      }),
+      deleteTrashedNotePermanently: vi.fn(async () => undefined),
+      clearTrashTopic: vi.fn(async () => undefined),
+    };
+
+    return {
+      controller,
+      bringNoteToFront,
+      deleteTopic,
+      rejectFront,
       dispose,
     };
   });
@@ -505,6 +700,9 @@ describe('NotesOverlay', () => {
         readText: vi.fn(async () => 'Clipboard note'),
       },
     });
+    notificationState.error.mockReset();
+    notificationState.success.mockReset();
+    notificationState.info.mockReset();
   });
 
   afterEach(() => {
@@ -531,6 +729,7 @@ describe('NotesOverlay', () => {
 
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
+    expect(state.bringNoteToFront).toHaveBeenCalledTimes(1);
     expect(host.textContent).toContain('Copied');
   });
 
@@ -1031,6 +1230,7 @@ describe('NotesOverlay', () => {
     const projectedNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
     const projectedOverviewNote = host.querySelector('.notes-overview__note.notes-note--moss') as HTMLDivElement | null;
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
+    expect(state.bringNoteToFront).toHaveBeenCalledTimes(1);
     expect(state.updateNote).toHaveBeenCalledWith('note-1', { x: 210, y: 190 });
     expect(projectedNote?.style.transform).toBe('translate(210px, 190px)');
     expect(projectedOverviewNote?.style.left).not.toBe(initialOverviewLeft);
@@ -1083,6 +1283,7 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(state.deleteNote).toHaveBeenCalledWith('note-1');
+    expect(state.bringNoteToFront).not.toHaveBeenCalled();
     expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
     expect(document.body.textContent).toContain('Research');
 
@@ -1095,6 +1296,136 @@ describe('NotesOverlay', () => {
 
     expect(state.restoreNote).toHaveBeenCalledWith('note-1');
     expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
+  });
+
+  it('suppresses stale bring-forward errors after deleting a note from its context menu', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createDeferredFrontController();
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const note = host.querySelector('.notes-note') as HTMLElement | null;
+    expect(note).toBeTruthy();
+
+    note!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 260,
+        clientY: 180,
+      }),
+    );
+    await settle();
+
+    const deleteAction = Array.from(document.body.querySelectorAll('.notes-menu button')).find((button) =>
+      button.textContent?.includes('Delete'),
+    ) as HTMLButtonElement | undefined;
+    expect(deleteAction).toBeTruthy();
+
+    deleteAction!.click();
+    await settle();
+    state.rejectFront(new Error('note not found'));
+    await settle();
+
+    expect(state.deleteNote).toHaveBeenCalledWith('note-1');
+    expect(notificationState.error).not.toHaveBeenCalledWith('Bring forward failed', 'note not found');
+  });
+
+  it('suppresses stale move errors after the note disappears while the move is pending', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createDeferredMoveController(baseSnapshot());
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    expect(dragHandle).toBeTruthy();
+
+    dragNote(dragHandle!, 13, 110, 124);
+    await settle();
+    state.removeLiveNote('note-1');
+    await settle();
+    state.rejectMove(new Error('note not found'));
+    await settle();
+
+    expect(notificationState.error).not.toHaveBeenCalledWith('Move failed', 'note not found');
+  });
+
+  it('suppresses stale bring-forward errors when topic deletion removes the note', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createDeferredFrontTopicDeleteController({
+      ...baseSnapshot(),
+      topics: [
+        baseSnapshot().topics[0]!,
+        {
+          topic_id: 'topic-2',
+          name: 'Parking Lot',
+          icon_key: 'otter',
+          icon_accent: 'sea',
+          sort_order: 2,
+          created_at_unix_ms: 3,
+          updated_at_unix_ms: 3,
+          deleted_at_unix_ms: 0,
+        },
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    mockCanvasFrameRect(host);
+
+    const note = host.querySelector('.notes-note') as HTMLElement | null;
+    expect(note).toBeTruthy();
+    note!.dispatchEvent(
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 260,
+        clientY: 180,
+      }),
+    );
+    await settle();
+
+    const deleteTopicButton = host.querySelector('button[aria-label="Delete topic Research"]') as HTMLButtonElement | null;
+    expect(deleteTopicButton).toBeTruthy();
+    deleteTopicButton!.click();
+    await settle();
+
+    state.rejectFront(new Error('note not found'));
+    await settle();
+
+    expect(state.deleteTopic).toHaveBeenCalledWith('topic-1');
+    expect(notificationState.error).not.toHaveBeenCalledWith('Bring forward failed', 'note not found');
+  });
+
+  it('still reports genuine bring-forward failures while the note remains live', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    const failingBring = vi.fn(async () => {
+      throw new Error('Front unavailable');
+    });
+    state.controller.bringNoteToFront = failingBring;
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    expect(noteBody).toBeTruthy();
+    noteBody!.click();
+    await settle();
+
+    expect(failingBring).toHaveBeenCalledWith('note-1');
+    expect(notificationState.error).toHaveBeenCalledWith('Bring forward failed', 'Front unavailable');
   });
 
   it('keeps trash note actions rendered for long-content notes', async () => {
