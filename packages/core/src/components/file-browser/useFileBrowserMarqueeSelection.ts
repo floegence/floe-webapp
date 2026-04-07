@@ -2,15 +2,32 @@ import { createMemo, createSignal, onCleanup, type Accessor } from 'solid-js';
 import type { ReplaceSelectionOptions } from './types';
 import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
-type ViewportRect = {
+export type ViewportRect = {
   left: number;
   top: number;
   width: number;
   height: number;
 };
 
+export type LocalOverlayRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+export interface OverlayHostGeometry {
+  left: number;
+  top: number;
+  scrollLeft: number;
+  scrollTop: number;
+  clientLeft: number;
+  clientTop: number;
+}
+
 export interface FileBrowserMarqueeSelectionOptions {
   getContainer: () => HTMLElement | null;
+  getOverlayHost?: () => HTMLElement | null;
   getVisibleItemIdsInOrder: () => string[];
   getElementForId: (id: string) => HTMLElement | null | undefined;
   getSelectedIds: () => string[];
@@ -25,7 +42,7 @@ export interface FileBrowserMarqueeSelectionResult {
 
 const MARQUEE_DRAG_THRESHOLD_PX = 4;
 
-export const FILE_BROWSER_MARQUEE_OVERLAY_CLASS = 'pointer-events-none fixed z-40 rounded-md floe-file-browser-marquee-overlay';
+export const FILE_BROWSER_MARQUEE_OVERLAY_CLASS = 'pointer-events-none absolute z-40 rounded-md floe-file-browser-marquee-overlay';
 
 function normalizeViewportRect(startX: number, startY: number, endX: number, endY: number): ViewportRect {
   const left = Math.min(startX, endX);
@@ -52,6 +69,30 @@ function isMarqueeBackgroundTarget(target: EventTarget | null): target is Elemen
   if (target.closest('[data-file-browser-item-id]')) return false;
   if (target.closest('button, input, textarea, select, a, [role="button"], [role="menuitem"]')) return false;
   return true;
+}
+
+function readOverlayHostGeometry(host: HTMLElement): OverlayHostGeometry {
+  const rect = host.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top,
+    scrollLeft: host.scrollLeft,
+    scrollTop: host.scrollTop,
+    clientLeft: host.clientLeft,
+    clientTop: host.clientTop,
+  };
+}
+
+export function projectViewportRectToOverlayHost(
+  rect: ViewportRect,
+  geometry: OverlayHostGeometry,
+): LocalOverlayRect {
+  return {
+    left: rect.left - geometry.left + geometry.scrollLeft - geometry.clientLeft,
+    top: rect.top - geometry.top + geometry.scrollTop - geometry.clientTop,
+    width: rect.width,
+    height: rect.height,
+  };
 }
 
 export function createFileBrowserMarqueeSelection(
@@ -156,12 +197,15 @@ export function createFileBrowserMarqueeSelection(
   const overlayStyle = createMemo<Record<string, string> | null>(() => {
     const rect = overlayRect();
     if (!rect) return null;
+    const overlayHost = options.getOverlayHost?.() ?? options.getContainer();
+    if (!overlayHost) return null;
+    const localRect = projectViewportRectToOverlayHost(rect, readOverlayHostGeometry(overlayHost));
 
     return {
-      left: `${rect.left}px`,
-      top: `${rect.top}px`,
-      width: `${rect.width}px`,
-      height: `${rect.height}px`,
+      left: `${localRect.left}px`,
+      top: `${localRect.top}px`,
+      width: `${localRect.width}px`,
+      height: `${localRect.height}px`,
     };
   });
 

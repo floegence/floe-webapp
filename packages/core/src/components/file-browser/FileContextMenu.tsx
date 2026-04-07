@@ -86,6 +86,8 @@ const PencilIcon = (props: { class?: string }) => (
 
 let fileContextMenuIdSeq = 0;
 
+type ContextMenuDismissWindow = Pick<Window, 'addEventListener' | 'removeEventListener'>;
+
 export interface FileContextMenuProps {
   /** Custom menu items to add (will be merged with defaults) */
   customItems?: ContextMenuItem[];
@@ -264,6 +266,65 @@ function handlePanelKeyDown(
     default:
       return;
   }
+}
+
+function matchesContextMenuNode(node: unknown, contextMenuId: string): boolean {
+  if (!node || typeof node !== 'object') return false;
+
+  const dataset = 'dataset' in node
+    ? (node as { dataset?: Record<string, string | undefined> }).dataset
+    : undefined;
+  return dataset?.floeContextMenu === contextMenuId;
+}
+
+function isEventInsideContextMenu(event: Event, contextMenuId: string): boolean {
+  if (typeof event.composedPath === 'function') {
+    const path = event.composedPath();
+    for (const node of path) {
+      if (matchesContextMenuNode(node, contextMenuId)) return true;
+    }
+  }
+
+  const target = event.target;
+  if (typeof Element !== 'undefined' && target instanceof Element) {
+    return !!target.closest(`[data-floe-context-menu="${contextMenuId}"]`);
+  }
+
+  return false;
+}
+
+export function installContextMenuDismissListeners(options: {
+  ownerWindow: ContextMenuDismissWindow;
+  contextMenuId: string;
+  onDismiss: () => void;
+}): () => void {
+  const { ownerWindow, contextMenuId, onDismiss } = options;
+
+  const handlePointerOutside = (event: PointerEvent) => {
+    if (isEventInsideContextMenu(event, contextMenuId)) return;
+    onDismiss();
+  };
+
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape') return;
+    onDismiss();
+  };
+
+  const handleViewportChange = () => {
+    onDismiss();
+  };
+
+  ownerWindow.addEventListener('pointerdown', handlePointerOutside, true);
+  ownerWindow.addEventListener('keydown', handleEscape, true);
+  ownerWindow.addEventListener('resize', handleViewportChange);
+  ownerWindow.addEventListener('scroll', handleViewportChange, true);
+
+  return () => {
+    ownerWindow.removeEventListener('pointerdown', handlePointerOutside, true);
+    ownerWindow.removeEventListener('keydown', handleEscape, true);
+    ownerWindow.removeEventListener('resize', handleViewportChange);
+    ownerWindow.removeEventListener('scroll', handleViewportChange, true);
+  };
 }
 
 function ContextMenuEntry(props: ContextMenuEntryProps) {
@@ -475,14 +536,6 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   };
 
-  const handlePointerOutside = (event: MouseEvent) => {
-    const target = event.target as HTMLElement | null;
-    if (target && typeof target.closest === 'function') {
-      if (target.closest(`[data-floe-context-menu="${contextMenuId}"]`)) return;
-    }
-    ctx.hideContextMenu();
-  };
-
   const calculateAdjustedPosition = () => {
     const menu = ctx.contextMenu();
     if (!menu || !menuRef) return { x: menu?.x ?? 0, y: menu?.y ?? 0 };
@@ -510,19 +563,15 @@ export function FileContextMenu(props: FileContextMenuProps) {
   };
 
   createEffect(() => {
-    if (!ctx.contextMenu()) return;
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      ctx.hideContextMenu();
-    };
-
-    document.addEventListener('mousedown', handlePointerOutside);
-    document.addEventListener('keydown', handleEscape);
+    if (isServer || !ctx.contextMenu()) return;
+    const cleanup = installContextMenuDismissListeners({
+      ownerWindow: window,
+      contextMenuId,
+      onDismiss: ctx.hideContextMenu,
+    });
 
     onCleanup(() => {
-      document.removeEventListener('mousedown', handlePointerOutside);
-      document.removeEventListener('keydown', handleEscape);
+      cleanup();
     });
   });
 

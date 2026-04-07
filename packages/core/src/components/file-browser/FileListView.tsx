@@ -191,6 +191,7 @@ export function FileListView(props: FileListViewProps) {
 
   const marquee = createFileBrowserMarqueeSelection({
     getContainer: () => scrollEl,
+    getOverlayHost: () => scrollEl,
     getVisibleItemIdsInOrder: () => ctx.currentFiles().map((item) => item.id),
     getElementForId: (id) => rowRefs.get(id) ?? null,
     getSelectedIds: () => [...ctx.selectedItems()],

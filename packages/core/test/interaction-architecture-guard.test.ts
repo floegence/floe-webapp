@@ -21,6 +21,8 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('data-floe-geometry-surface');
     expect(architectureDoc).toContain('startHotInteraction()');
     expect(architectureDoc).toContain('useOverlayMask()');
+    expect(architectureDoc).toContain('overlay host');
+    expect(architectureDoc).toContain('pointerdown capture');
     expect(architectureDoc).toContain('详细落地 checklist');
   });
 

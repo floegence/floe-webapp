@@ -19,6 +19,7 @@ describe('file browser view selection integration contract', () => {
     expect(src).toContain('ctx.selectItem(props.item.id, isPrimaryModKeyPressed(e));');
     expect(src).toContain('ctx.ensureContextMenuSelection(props.item.id);');
     expect(src).toContain('onPointerDown={marquee.onPointerDown}');
+    expect(src).toContain('getOverlayHost: () => scrollEl,');
     expect(src).toContain('class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}');
   });
 
@@ -31,6 +32,7 @@ describe('file browser view selection integration contract', () => {
     expect(src).toContain('ctx.selectItem(props.item.id, isPrimaryModKeyPressed(e));');
     expect(src).toContain('ctx.ensureContextMenuSelection(props.item.id);');
     expect(src).toContain('onPointerDown={marquee.onPointerDown}');
+    expect(src).toContain('getOverlayHost: () => scrollEl,');
     expect(src).toContain('class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}');
   });
 
@@ -39,7 +41,9 @@ describe('file browser view selection integration contract', () => {
     const cssSrc = read('../src/styles/floe.css');
 
     expect(hookSrc).toContain('export const FILE_BROWSER_MARQUEE_OVERLAY_CLASS =');
+    expect(hookSrc).toContain('pointer-events-none absolute');
     expect(hookSrc).toContain('floe-file-browser-marquee-overlay');
+    expect(hookSrc).toContain('projectViewportRectToOverlayHost');
     expect(cssSrc).toContain('.floe-file-browser-marquee-overlay');
     expect(cssSrc).toContain('var(--selection-bg)');
     expect(cssSrc).toContain('background-color: color-mix(in srgb, var(--selection-bg) 18%, transparent);');

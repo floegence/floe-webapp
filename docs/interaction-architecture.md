@@ -144,6 +144,20 @@
 6. 如果组件确实需要布局动画，必须证明该动画不会和热交互同时发生，或者必须受 `data-floe-hot-interaction` 保护
 7. 对于 shell-owned sidebar 的单次显隐切换，如果产品想禁用该次 width motion，必须通过 shared `visibilityMotion` contract，而不是添加产品私有 class hack
 
+### 3.5 文件浏览浮层与几何交互
+
+文件浏览的框选与右键菜单，必须遵守下面两条共享契约：
+
+1. marquee 命中检测使用 viewport rect，但视觉 overlay 必须先投影到当前 overlay host 的本地坐标系，再以容器内 `absolute` 方式渲染。
+2. 禁止继续假设 `fixed` 永远跟 viewport 同步；一旦承载面处于 transformed surface（例如 floating window），`fixed` 子元素就可能转为局部 containing block，视觉会和鼠标脱离。
+3. context menu 的 outside-dismiss 必须使用 `pointerdown capture`，而不是依赖兼容性的 `mousedown`。
+4. context menu 的关闭口径必须统一覆盖 outside pointer、Escape、scroll、resize，避免不同承载面出现“菜单挂住”的分叉行为。
+
+结论：
+
+- 框选的“命中坐标系”和“渲染坐标系”必须显式分层。
+- 右键菜单的关闭判定必须先于空白区自己的手势逻辑触发。
+
 ## 4. 工程化防回退手段
 
 ### 4.1 源码守卫测试

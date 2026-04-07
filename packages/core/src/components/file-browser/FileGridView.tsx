@@ -207,6 +207,7 @@ export function FileGridView(props: FileGridViewProps) {
 
   const marquee = createFileBrowserMarqueeSelection({
     getContainer: () => scrollEl,
+    getOverlayHost: () => scrollEl,
     getVisibleItemIdsInOrder: () => ctx.currentFiles().map((item) => item.id),
     getElementForId: (id) => tileRefs.get(id) ?? null,
     getSelectedIds: () => [...ctx.selectedItems()],
@@ -269,15 +270,15 @@ export function FileGridView(props: FileGridViewProps) {
             </For>
           </div>
         </Show>
+        <Show when={marquee.overlayStyle()}>
+          {(style) => (
+            <div
+              class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}
+              style={style()}
+            />
+          )}
+        </Show>
       </div>
-      <Show when={marquee.overlayStyle()}>
-        {(style) => (
-          <div
-            class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}
-            style={style()}
-          />
-        )}
-      </Show>
     </div>
   );
 }

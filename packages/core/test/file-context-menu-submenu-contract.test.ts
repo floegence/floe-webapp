@@ -45,5 +45,9 @@ describe('FileContextMenu submenu contract', () => {
     expect(src).toContain('calculateSubmenuPosition');
     expect(src).toContain('<ChevronRight');
     expect(src).toContain('submenuOpen() && hasChildren()');
+    expect(src).toContain('isEventInsideContextMenu');
+    expect(src).toContain('installContextMenuDismissListeners');
+    expect(src).toContain("ownerWindow.addEventListener('pointerdown', handlePointerOutside, true);");
+    expect(src).toContain("ownerWindow.addEventListener('scroll', handleViewportChange, true);");
   });
 });
