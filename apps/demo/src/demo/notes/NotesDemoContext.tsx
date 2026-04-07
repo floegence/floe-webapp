@@ -36,6 +36,7 @@ export interface NotesTopic {
 export interface NotesNote {
   id: string;
   topicId: string;
+  title: string;
   text: string;
   colorId: NotesColorId;
   x: number;
@@ -47,12 +48,17 @@ export interface NotesNote {
 }
 
 export interface NotesDemoState {
-  version: 5;
+  version: 6;
   activeTopicId: string;
   topics: NotesTopic[];
   notes: NotesNote[];
   viewports: Record<string, TopicViewport>;
 }
+
+type LegacyNotesNote = Omit<NotesNote, 'layer' | 'title'> & {
+  layer?: number;
+  title?: string;
+};
 
 interface LegacyTopicViewport {
   x: number;
@@ -64,7 +70,7 @@ interface LegacyNotesDemoState {
   version: 1;
   activeTopicId: string;
   topics: NotesTopic[];
-  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  notes: LegacyNotesNote[];
   viewports: Record<string, LegacyTopicViewport>;
 }
 
@@ -72,7 +78,7 @@ interface LegacyNotesDemoStateV2 {
   version: 2;
   activeTopicId: string;
   topics: NotesTopic[];
-  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  notes: LegacyNotesNote[];
   viewports: Record<string, LegacyTopicViewport>;
 }
 
@@ -86,7 +92,7 @@ interface LegacyNotesDemoStateV3 {
   version: 3;
   activeTopicId: string;
   topics: LegacyNotesTopicV3[];
-  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  notes: LegacyNotesNote[];
   viewports: Record<string, LegacyTopicViewport>;
 }
 
@@ -102,7 +108,15 @@ interface LegacyNotesDemoStateV4 {
   version: 4;
   activeTopicId: string;
   topics: LegacyNotesTopicV4[];
-  notes: Array<Omit<NotesNote, 'layer'> & { layer?: number }>;
+  notes: LegacyNotesNote[];
+  viewports: Record<string, LegacyTopicViewport>;
+}
+
+interface LegacyNotesDemoStateV5 {
+  version: 5;
+  activeTopicId: string;
+  topics: NotesTopic[];
+  notes: LegacyNotesNote[];
   viewports: Record<string, LegacyTopicViewport>;
 }
 
@@ -147,11 +161,15 @@ export interface CreateNoteInput {
   topicId?: string;
   x: number;
   y: number;
+  headline?: string;
+  title?: string;
   text?: string;
   colorId?: NotesColorId;
 }
 
 export interface UpdateNoteInput {
+  headline?: string;
+  title?: string;
   text?: string;
   colorId?: NotesColorId;
 }
@@ -174,7 +192,7 @@ export interface NotesDemoContextValue {
   getNoteById: (noteId: string) => NotesNote | undefined;
   getLiveNoteCount: (topicId: string) => number;
   getTextPreview: (text: string, limit?: number) => string;
-  getNoteSize: (text: string) => NotesSizeBucket;
+  getNoteSize: (text: string, title?: string) => NotesSizeBucket;
   createTopic: (title: string) => string;
   updateTopic: (topicId: string, input: UpdateTopicInput) => void;
   deleteTopic: (topicId: string) => boolean;
@@ -205,6 +223,18 @@ function createId(prefix: string): string {
 
 function normalizeText(text: string): string {
   return text.replace(/\r\n/g, '\n').trim();
+}
+
+function normalizeTitle(title: string): string {
+  return title.replace(/\s+/g, ' ').trim();
+}
+
+function resolveInputHeadline(input: Readonly<{ headline?: string; title?: string }>): string {
+  return typeof input.headline === 'string'
+    ? input.headline
+    : typeof input.title === 'string'
+      ? input.title
+      : '';
 }
 
 function getRandomColorId(): NotesColorId {
@@ -239,8 +269,14 @@ export function getNoteTextWeight(text: string): number {
   return normalized.length + lineBreaks * 18;
 }
 
-export function getNoteSizeBucket(text: string): NotesSizeBucket {
-  const weight = getNoteTextWeight(text);
+export function getNoteWeight(text: string, title = ''): number {
+  const normalizedTitle = normalizeTitle(title);
+  const titleWeight = normalizedTitle ? normalizedTitle.length * 1.45 + 20 : 0;
+  return getNoteTextWeight(text) + titleWeight;
+}
+
+export function getNoteSizeBucket(text: string, title = ''): NotesSizeBucket {
+  const weight = getNoteWeight(text, title);
 
   if (weight <= 28) return 0;
   if (weight <= 86) return 1;
@@ -254,6 +290,20 @@ export function getNotePreviewText(text: string, limit = NOTES_PREVIEW_LIMIT): s
   if (!normalized) return 'Empty note';
   if (normalized.length <= limit) return normalized;
   return `${normalized.slice(0, Math.max(0, limit - 1)).trimEnd()}…`;
+}
+
+const DEFAULT_NOTE_TITLES: Readonly<Record<string, string>> = Object.freeze({
+  'note-seed-1': 'Atmosphere',
+  'note-seed-2': 'Paste Flow',
+  'note-seed-3': 'Sizing Rule',
+  'note-seed-4': 'Review Loop',
+  'note-seed-5': 'Right-click Only',
+  'note-seed-6': 'Holding Pen',
+  'note-trash-1': 'Retired Route',
+});
+
+function getDefaultNoteTitle(noteId: string): string {
+  return DEFAULT_NOTE_TITLES[noteId] ?? '';
 }
 
 function createDefaultState(): NotesDemoState {
@@ -287,7 +337,7 @@ function createDefaultState(): NotesDemoState {
   ];
 
   return {
-    version: 5,
+    version: 6,
     activeTopicId: topics[0].id,
     topics,
     viewports: {
@@ -299,6 +349,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-1',
         topicId: topics[0].id,
+        title: 'Atmosphere',
         text: 'The board should feel like a quiet worktable, not a generic whiteboard. Keep the paper mood calm and useful.',
         colorId: 'butter',
         x: 88,
@@ -311,6 +362,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-2',
         topicId: topics[0].id,
+        title: 'Paste Flow',
         text: 'Paste Here needs to be fast. One gesture, one note, clipboard text already inside.',
         colorId: 'mist',
         x: 356,
@@ -323,6 +375,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-3',
         topicId: topics[0].id,
+        title: 'Sizing Rule',
         text: 'Big notes should look slightly larger, but never explode into giant cards. Size is a signal, not a layout takeover.',
         colorId: 'moss',
         x: 246,
@@ -335,6 +388,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-4',
         topicId: topics[1].id,
+        title: 'Review Loop',
         text: 'Review loop:\n1. capture\n2. cluster\n3. copy to spec\n4. archive loose scraps',
         colorId: 'sand',
         x: 120,
@@ -347,6 +401,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-5',
         topicId: topics[1].id,
+        title: 'Right-click Only',
         text: 'Right click should be enough. No toolbar hunting.',
         colorId: 'coral',
         x: 388,
@@ -359,6 +414,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-seed-6',
         topicId: topics[2].id,
+        title: 'Holding Pen',
         text: 'Tiny scraps live here until they deserve a real topic.',
         colorId: 'blush',
         x: 148,
@@ -371,6 +427,7 @@ function createDefaultState(): NotesDemoState {
       {
         id: 'note-trash-1',
         topicId: topics[0].id,
+        title: 'Retired Route',
         text: 'Old direction that can disappear if nobody restores it.',
         colorId: 'blush',
         x: 522,
@@ -397,6 +454,7 @@ function sanitizeState(
     | LegacyNotesDemoStateV2
     | LegacyNotesDemoStateV3
     | LegacyNotesDemoStateV4
+    | LegacyNotesDemoStateV5
     | undefined
 ): NotesDemoState {
   if (
@@ -405,7 +463,8 @@ function sanitizeState(
       input.version !== 2 &&
       input.version !== 3 &&
       input.version !== 4 &&
-      input.version !== 5) ||
+      input.version !== 5 &&
+      input.version !== 6) ||
     !Array.isArray(input.topics) ||
     !Array.isArray(input.notes)
   ) {
@@ -449,24 +508,36 @@ function sanitizeState(
   const notes = purgeExpiredNotes(
     input.notes
       .filter((note) => note && typeof note.id === 'string' && topicIds.has(note.topicId))
-      .map((note, index) => ({
-        id: note.id,
-        topicId: note.topicId,
-        text: typeof note.text === 'string' ? note.text : '',
-        colorId: NOTES_COLOR_OPTIONS.some((option) => option.id === note.colorId)
-          ? note.colorId
-          : getRandomColorId(),
-        x: Number.isFinite(note.x) ? note.x : 0,
-        y: Number.isFinite(note.y) ? note.y : 0,
-        layer:
-          typeof note.layer === 'number' && Number.isFinite(note.layer) && note.layer > 0
-            ? note.layer
-            : index + 1,
-        createdAt: Number.isFinite(note.createdAt) ? note.createdAt : Date.now(),
-        updatedAt: Number.isFinite(note.updatedAt) ? note.updatedAt : Date.now(),
-        deletedAt:
-          note.deletedAt === null || Number.isFinite(note.deletedAt) ? note.deletedAt : null,
-      }))
+      .map((note, index) => {
+        const migratedTitle =
+          input.version === 6
+            ? typeof note.title === 'string'
+              ? note.title
+              : ''
+            : typeof note.title === 'string'
+              ? note.title
+              : getDefaultNoteTitle(note.id);
+
+        return {
+          id: note.id,
+          topicId: note.topicId,
+          title: normalizeTitle(migratedTitle),
+          text: typeof note.text === 'string' ? note.text : '',
+          colorId: NOTES_COLOR_OPTIONS.some((option) => option.id === note.colorId)
+            ? note.colorId
+            : getRandomColorId(),
+          x: Number.isFinite(note.x) ? note.x : 0,
+          y: Number.isFinite(note.y) ? note.y : 0,
+          layer:
+            typeof note.layer === 'number' && Number.isFinite(note.layer) && note.layer > 0
+              ? note.layer
+              : index + 1,
+          createdAt: Number.isFinite(note.createdAt) ? note.createdAt : Date.now(),
+          updatedAt: Number.isFinite(note.updatedAt) ? note.updatedAt : Date.now(),
+          deletedAt:
+            note.deletedAt === null || Number.isFinite(note.deletedAt) ? note.deletedAt : null,
+        };
+      })
   );
 
   const viewports: Record<string, TopicViewport> = {};
@@ -485,7 +556,7 @@ function sanitizeState(
   }
 
   return {
-    version: 5,
+    version: 6,
     activeTopicId:
       topicIds.has(input.activeTopicId) &&
       topics.some((topic) => topic.id === input.activeTopicId && topic.deletedAt === null)
@@ -536,6 +607,7 @@ export function NotesDemoProvider(props: { children: JSX.Element }) {
     | LegacyNotesDemoStateV2
     | LegacyNotesDemoStateV3
     | LegacyNotesDemoStateV4
+    | LegacyNotesDemoStateV5
   >('demo.notes.state.v1', createDefaultState());
   const [state, setState] = createStore<NotesDemoState>(sanitizeState(persistedState()));
 
@@ -544,7 +616,9 @@ export function NotesDemoProvider(props: { children: JSX.Element }) {
   });
 
   createEffect(() => {
-    if (state.topics.some((topic) => topic.id === state.activeTopicId && topic.deletedAt === null)) {
+    if (
+      state.topics.some((topic) => topic.id === state.activeTopicId && topic.deletedAt === null)
+    ) {
       return;
     }
     const fallbackTopicId = getFirstLiveTopicId(state.topics);
@@ -698,6 +772,7 @@ export function NotesDemoProvider(props: { children: JSX.Element }) {
     const note: NotesNote = {
       id: createId('note'),
       topicId,
+      title: normalizeTitle(resolveInputHeadline(input)),
       text: input.text ?? '',
       colorId: input.colorId ?? getRandomColorId(),
       x: input.x,
@@ -723,6 +798,9 @@ export function NotesDemoProvider(props: { children: JSX.Element }) {
         const note = draft.notes.find((item) => item.id === noteId);
         if (!note) return;
 
+        if (typeof input.headline === 'string' || typeof input.title === 'string') {
+          note.title = normalizeTitle(resolveInputHeadline(input));
+        }
         if (typeof input.text === 'string') note.text = input.text;
         if (input.colorId) note.colorId = input.colorId;
         note.updatedAt = Date.now();

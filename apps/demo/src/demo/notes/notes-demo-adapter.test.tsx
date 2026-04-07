@@ -38,8 +38,44 @@ function NotesControllerProbe() {
         snapshot.topics[0]?.name ?? 'none',
         snapshot.topics[0]?.icon_key ?? 'none',
         snapshot.items[0]?.style_version ?? 'none',
+        snapshot.items[0]?.title ?? 'none',
+        snapshot.items[0]?.headline ?? 'none',
         controller.activeTopicID(),
         controller.connectionState?.() ?? 'none',
+      ].join('|')}
+    </div>
+  );
+}
+
+function HeadlineSDKProbe() {
+  const controller = useNotesDemoController();
+  const created = controller.createNote({
+    topic_id: controller.activeTopicID(),
+    headline: 'SDK Headline',
+    body: 'SDK body',
+    x: 24,
+    y: 36,
+  });
+
+  if (created instanceof Promise) {
+    throw new Error('Demo controller createNote should be synchronous in tests');
+  }
+
+  const updated = controller.updateNote(created.note_id, {
+    headline: 'Updated SDK Headline',
+  });
+
+  if (updated instanceof Promise) {
+    throw new Error('Demo controller updateNote should be synchronous in tests');
+  }
+
+  return (
+    <div>
+      {[
+        created.title,
+        created.headline ?? 'none',
+        updated.title,
+        updated.headline ?? 'none',
       ].join('|')}
     </div>
   );
@@ -53,7 +89,21 @@ describe('demo notes shared adapter', () => {
       </DemoProviders>
     ));
 
-    expect(html).toContain('3|6|1|Research Threads|hare|note/v1|topic-research-threads|live');
+    expect(html).toContain(
+      '3|6|1|Research Threads|hare|note/v1|Atmosphere|Atmosphere|topic-research-threads|live'
+    );
+  });
+
+  it('supports headline through the shared notes sdk contract', () => {
+    const html = renderToString(() => (
+      <DemoProviders>
+        <HeadlineSDKProbe />
+      </DemoProviders>
+    ));
+
+    expect(html).toContain(
+      'SDK Headline|SDK Headline|Updated SDK Headline|Updated SDK Headline'
+    );
   });
 
   it('keeps the demo page as a thin Portal wrapper around the shared NotesOverlay', () => {
@@ -61,10 +111,14 @@ describe('demo notes shared adapter', () => {
 
     expect(source).toContain("import { Portal } from 'solid-js/web';");
     expect(source).toContain("import { NotesOverlay } from '@floegence/floe-webapp-core/notes';");
-    expect(source).toContain("import { useNotesDemoController } from './createNotesDemoController';");
+    expect(source).toContain(
+      "import { useNotesDemoController } from './createNotesDemoController';"
+    );
     expect(source).toContain('const controller = useNotesDemoController();');
     expect(source).toContain('<Portal>');
-    expect(source).toContain('<NotesOverlay open controller={controller} onClose={props.onRequestClose} />');
+    expect(source).toContain(
+      '<NotesOverlay open controller={controller} onClose={props.onRequestClose} />'
+    );
   });
 
   it('keeps the Vite workspace aliases in sync with the demo notes subpath import', () => {

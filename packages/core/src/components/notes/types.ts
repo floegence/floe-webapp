@@ -20,6 +20,8 @@ export type NotesTopic = Readonly<{
 export type NotesItem = Readonly<{
   note_id: string;
   topic_id: string;
+  title: string;
+  headline?: string;
   body: string;
   preview_text: string;
   character_count: number;
@@ -33,13 +35,15 @@ export type NotesItem = Readonly<{
   updated_at_unix_ms: number;
 }>;
 
-export type NotesTrashItem = Readonly<NotesItem & {
-  topic_name: string;
-  topic_icon_key: TopicIconKey;
-  topic_icon_accent: TopicAccentToken;
-  topic_sort_order: number;
-  deleted_at_unix_ms: number;
-}>;
+export type NotesTrashItem = Readonly<
+  NotesItem & {
+    topic_name: string;
+    topic_icon_key: TopicIconKey;
+    topic_icon_accent: TopicAccentToken;
+    topic_sort_order: number;
+    deleted_at_unix_ms: number;
+  }
+>;
 
 export type NotesSnapshot = Readonly<{
   seq: number;
@@ -104,6 +108,8 @@ export type NotesUpdateTopicInput = Readonly<{
 
 export type NotesCreateNoteInput = Readonly<{
   topic_id: string;
+  headline?: string;
+  title?: string;
   body: string;
   color_token?: NoteColorToken;
   x: number;
@@ -111,6 +117,8 @@ export type NotesCreateNoteInput = Readonly<{
 }>;
 
 export type NotesUpdateNoteInput = Readonly<{
+  headline?: string;
+  title?: string;
   body?: string;
   color_token?: NoteColorToken;
   x?: number;
@@ -146,13 +154,14 @@ export const NOTE_COLOR_TOKENS = ['graphite', 'sage', 'amber', 'azure', 'coral',
 export const TOPIC_ICON_KEYS = ['fox', 'crane', 'otter', 'lynx', 'whale', 'hare'] as const;
 export const TOPIC_ACCENT_TOKENS = ['ember', 'sea', 'moss', 'ink', 'gold', 'berry'] as const;
 
-export const NOTE_BUCKET_METRICS: Readonly<Record<NotesSizeBucket, NotesItemMetrics>> = Object.freeze({
-  1: { width: 196, height: 134, preview_lines: 4, preview_limit: 68 },
-  2: { width: 214, height: 148, preview_lines: 5, preview_limit: 90 },
-  3: { width: 232, height: 164, preview_lines: 6, preview_limit: 112 },
-  4: { width: 248, height: 182, preview_lines: 7, preview_limit: 138 },
-  5: { width: 266, height: 202, preview_lines: 8, preview_limit: 164 },
-});
+export const NOTE_BUCKET_METRICS: Readonly<Record<NotesSizeBucket, NotesItemMetrics>> =
+  Object.freeze({
+    1: { width: 196, height: 134, preview_lines: 4, preview_limit: 68 },
+    2: { width: 214, height: 148, preview_lines: 5, preview_limit: 90 },
+    3: { width: 232, height: 164, preview_lines: 6, preview_limit: 112 },
+    4: { width: 248, height: 182, preview_lines: 7, preview_limit: 138 },
+    5: { width: 266, height: 202, preview_lines: 8, preview_limit: 164 },
+  });
 
 const DEFAULT_BOARD_BOUNDS: NotesRect = Object.freeze({
   minX: -320,
@@ -178,23 +187,57 @@ function sortTopics(topics: readonly NotesTopic[]): NotesTopic[] {
 function sortItems(items: readonly NotesItem[]): NotesItem[] {
   return [...items].sort((left, right) => {
     if (left.z_index !== right.z_index) return left.z_index - right.z_index;
-    if (left.updated_at_unix_ms !== right.updated_at_unix_ms) return left.updated_at_unix_ms - right.updated_at_unix_ms;
+    if (left.updated_at_unix_ms !== right.updated_at_unix_ms)
+      return left.updated_at_unix_ms - right.updated_at_unix_ms;
     return left.note_id.localeCompare(right.note_id);
   });
 }
 
 function sortTrashItems(items: readonly NotesTrashItem[]): NotesTrashItem[] {
   return [...items].sort((left, right) => {
-    if (left.deleted_at_unix_ms !== right.deleted_at_unix_ms) return right.deleted_at_unix_ms - left.deleted_at_unix_ms;
-    if (left.topic_sort_order !== right.topic_sort_order) return left.topic_sort_order - right.topic_sort_order;
+    if (left.deleted_at_unix_ms !== right.deleted_at_unix_ms)
+      return right.deleted_at_unix_ms - left.deleted_at_unix_ms;
+    if (left.topic_sort_order !== right.topic_sort_order)
+      return left.topic_sort_order - right.topic_sort_order;
     return right.updated_at_unix_ms - left.updated_at_unix_ms;
   });
+}
+
+function resolveNoteHeadlineValue(
+  value: Readonly<{
+    headline?: string;
+    title?: string;
+  }>
+): string {
+  return typeof value.headline === 'string'
+    ? value.headline
+    : typeof value.title === 'string'
+      ? value.title
+      : '';
+}
+
+function normalizeItem(item: NotesItem): NotesItem {
+  const headline = resolveNoteHeadlineValue(item);
+  return {
+    ...item,
+    title: headline,
+    headline,
+  };
+}
+
+function normalizeTrashItem(item: NotesTrashItem): NotesTrashItem {
+  const headline = resolveNoteHeadlineValue(item);
+  return {
+    ...item,
+    title: headline,
+    headline,
+  };
 }
 
 function upsertByID<T extends { [key in K]: string }, K extends keyof T>(
   entries: readonly T[],
   key: K,
-  nextEntry: T,
+  nextEntry: T
 ): T[] {
   const next = [...entries];
   const index = next.findIndex((entry) => entry[key] === nextEntry[key]);
@@ -225,8 +268,8 @@ export function normalizeNotesSnapshot(snapshot: NotesSnapshot): NotesSnapshot {
     seq: Number(snapshot.seq) || 0,
     retention_hours: Number(snapshot.retention_hours) || 72,
     topics: sortTopics(snapshot.topics ?? []),
-    items: sortItems(snapshot.items ?? []),
-    trash_items: sortTrashItems(snapshot.trash_items ?? []),
+    items: sortItems((snapshot.items ?? []).map(normalizeItem)),
+    trash_items: sortTrashItems((snapshot.trash_items ?? []).map(normalizeTrashItem)),
   };
 }
 
@@ -251,7 +294,11 @@ export function screenToWorld(viewport: NotesViewport, point: NotesPoint): Notes
   };
 }
 
-export function visibleWorldRect(viewport: NotesViewport, width: number, height: number): NotesRect {
+export function visibleWorldRect(
+  viewport: NotesViewport,
+  width: number,
+  height: number
+): NotesRect {
   const topLeft = screenToWorld(viewport, { x: 0, y: 0 });
   const bottomRight = screenToWorld(viewport, { x: width, y: height });
   return {
@@ -266,7 +313,7 @@ export function zoomViewportAtPoint(
   viewport: NotesViewport,
   requestedScale: number,
   anchorX: number,
-  anchorY: number,
+  anchorY: number
 ): NotesViewport {
   const nextScale = clampScale(requestedScale);
   const anchorWorld = screenToWorld(viewport, { x: anchorX, y: anchorY });
@@ -282,7 +329,7 @@ export function centerViewportOnWorldPoint(
   worldX: number,
   worldY: number,
   width: number,
-  height: number,
+  height: number
 ): NotesViewport {
   return {
     x: width / 2 - worldX * viewport.scale,
@@ -377,7 +424,7 @@ export function replaceSnapshotTopic(snapshot: NotesSnapshot, topic: NotesTopic)
 export function replaceSnapshotItem(snapshot: NotesSnapshot, item: NotesItem): NotesSnapshot {
   return {
     ...snapshot,
-    items: sortItems(upsertByID(snapshot.items, 'note_id', item)),
+    items: sortItems(upsertByID(snapshot.items, 'note_id', normalizeItem(item))),
     trash_items: snapshot.trash_items.filter((candidate) => candidate.note_id !== item.note_id),
   };
 }
@@ -389,11 +436,16 @@ export function removeSnapshotItem(snapshot: NotesSnapshot, noteID: string): Not
   };
 }
 
-export function replaceSnapshotTrashItem(snapshot: NotesSnapshot, trashItem: NotesTrashItem): NotesSnapshot {
+export function replaceSnapshotTrashItem(
+  snapshot: NotesSnapshot,
+  trashItem: NotesTrashItem
+): NotesSnapshot {
   return {
     ...snapshot,
     items: snapshot.items.filter((candidate) => candidate.note_id !== trashItem.note_id),
-    trash_items: sortTrashItems(upsertByID(snapshot.trash_items, 'note_id', trashItem)),
+    trash_items: sortTrashItems(
+      upsertByID(snapshot.trash_items, 'note_id', normalizeTrashItem(trashItem))
+    ),
   };
 }
 
@@ -428,7 +480,7 @@ function asTrashItem(value: unknown): NotesTrashItem | null {
 }
 
 function asTrashItems(value: unknown): NotesTrashItem[] {
-  return Array.isArray(value) ? value.map(asTrashItem).filter(Boolean) as NotesTrashItem[] : [];
+  return Array.isArray(value) ? (value.map(asTrashItem).filter(Boolean) as NotesTrashItem[]) : [];
 }
 
 function asStringArray(value: unknown): string[] {
@@ -461,7 +513,9 @@ export function applyNotesEvent(snapshot: NotesSnapshot, event: NotesEvent): Not
       break;
     }
     case 'topic.removed': {
-      const topicID = String((payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? '').trim();
+      const topicID = String(
+        (payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? ''
+      ).trim();
       if (topicID) {
         next = removeSnapshotTopic(next, topicID);
         next = {
@@ -485,7 +539,9 @@ export function applyNotesEvent(snapshot: NotesSnapshot, event: NotesEvent): Not
       break;
     }
     case 'trash.topic_cleared': {
-      const topicID = String((payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? '').trim();
+      const topicID = String(
+        (payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? ''
+      ).trim();
       const deletedIDs = asStringArray((payload as { deleted_ids?: unknown }).deleted_ids);
       const topicRemoved = Boolean((payload as { topic_removed?: unknown }).topic_removed);
       next = {
@@ -505,11 +561,15 @@ export function applyNotesEvent(snapshot: NotesSnapshot, event: NotesEvent): Not
       break;
     }
     case 'item.removed': {
-      const noteID = String((payload as { note_id?: unknown }).note_id ?? event.entity_id ?? '').trim();
+      const noteID = String(
+        (payload as { note_id?: unknown }).note_id ?? event.entity_id ?? ''
+      ).trim();
       if (noteID) {
         next = removeSnapshotTrashItem(next, noteID);
       }
-      const topicID = String((payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? '').trim();
+      const topicID = String(
+        (payload as { topic_id?: unknown }).topic_id ?? event.topic_id ?? ''
+      ).trim();
       const topicRemoved = Boolean((payload as { topic_removed?: unknown }).topic_removed);
       if (topicRemoved && topicID) {
         next = {

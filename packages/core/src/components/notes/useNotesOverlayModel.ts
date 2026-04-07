@@ -15,6 +15,7 @@ import {
   hasLiveNotesForTopic,
   NOTES_CANVAS_ZOOM_STEP,
   NOTES_MOBILE_BREAKPOINT_PX,
+  normalizeNoteText,
   resolveCenteredViewport,
   resolveFrameSize,
   resolveOverviewBounds,
@@ -61,13 +62,14 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const [renamingTopicID, setRenamingTopicID] = createSignal<string | null>(null);
   const [renamingTopicTitle, setRenamingTopicTitle] = createSignal('');
   const [editorNoteID, setEditorNoteID] = createSignal<string | null>(null);
+  const [draftTitle, setDraftTitle] = createSignal('');
   const [draftBody, setDraftBody] = createSignal('');
-  const [draftColor, setDraftColor] =
-    createSignal<'graphite' | 'sage' | 'amber' | 'azure' | 'coral' | 'rose'>('amber');
+  const [draftColor, setDraftColor] = createSignal<
+    'graphite' | 'sage' | 'amber' | 'azure' | 'coral' | 'rose'
+  >('amber');
   const [trashOpen, setTrashOpen] = createSignal(false);
   const [overviewOpen, setOverviewOpen] = createSignal(false);
-  const [manualPasteTarget, setManualPasteTarget] =
-    createSignal<NotesCanvasPlacement | null>(null);
+  const [manualPasteTarget, setManualPasteTarget] = createSignal<NotesCanvasPlacement | null>(null);
   const [manualPasteText, setManualPasteText] = createSignal('');
   const [copiedNoteID, setCopiedNoteID] = createSignal<string | null>(null);
   const [clock, setClock] = createSignal(Date.now());
@@ -76,8 +78,9 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const [overviewNavigationState, setOverviewNavigationState] =
     createSignal<NotesOverviewNavigationState | null>(null);
   const [viewportPreview, setViewportPreview] = createSignal<NotesViewport | null>(null);
-  const [transientMoveProjections, setTransientMoveProjections] =
-    createSignal<ReadonlyMap<string, { x: number; y: number }>>(new Map());
+  const [transientMoveProjections, setTransientMoveProjections] = createSignal<
+    ReadonlyMap<string, { x: number; y: number }>
+  >(new Map());
 
   let copiedResetTimer: number | undefined;
   let overviewAbortController: AbortController | undefined;
@@ -85,7 +88,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   const snapshot = createMemo(() => normalizeNotesSnapshot(options.controller.snapshot()));
   const topics = createMemo(() =>
-    snapshot().topics.filter((topic) => topic.deleted_at_unix_ms <= 0),
+    snapshot().topics.filter((topic) => topic.deleted_at_unix_ms <= 0)
   );
   const headerTopicCount = createMemo(() => topics().length);
 
@@ -96,7 +99,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   });
 
   const activeTopic = createMemo(() =>
-    topics().find((topic) => topic.topic_id === resolvedActiveTopicID()),
+    topics().find((topic) => topic.topic_id === resolvedActiveTopicID())
   );
   const projectedItems = createMemo(() => {
     const projections = transientMoveProjections();
@@ -112,30 +115,26 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     });
   });
   const activeItems = createMemo(() =>
-    projectedItems().filter((item) => item.topic_id === resolvedActiveTopicID()),
+    projectedItems().filter((item) => item.topic_id === resolvedActiveTopicID())
   );
   const trashGroups = createMemo(() => groupTrashItems(snapshot().trash_items));
   const trashCount = createMemo(() => snapshot().trash_items.length);
   const totalLiveNotes = createMemo(() => snapshot().items.length);
   const topActiveLayer = createMemo(() =>
-    activeItems().reduce((maxLayer, item) => Math.max(maxLayer, item.z_index), 1),
+    activeItems().reduce((maxLayer, item) => Math.max(maxLayer, item.z_index), 1)
   );
-  const effectiveViewport = createMemo(
-    () => viewportPreview() ?? options.controller.viewport(),
-  );
+  const effectiveViewport = createMemo(() => viewportPreview() ?? options.controller.viewport());
   const activeTopicLabel = createMemo(() => activeTopic()?.name ?? 'No topic');
-  const boardScaleLabel = createMemo(
-    () => `${Math.round(effectiveViewport().scale * 100)}%`,
-  );
+  const boardScaleLabel = createMemo(() => `${Math.round(effectiveViewport().scale * 100)}%`);
   const visibleRect = createMemo(() => {
     const frame = resolveFrameSize(canvasFrameSize());
     return visibleWorldRect(effectiveViewport(), frame.width, frame.height);
   });
   const overviewBounds = createMemo<NotesOverviewBounds>(() =>
-    resolveOverviewBounds(computeBoardBounds(activeItems()), visibleRect()),
+    resolveOverviewBounds(computeBoardBounds(activeItems()), visibleRect())
   );
   const overviewItems = createMemo(() =>
-    activeItems().map((item) => createOverviewItem(item, overviewBounds())),
+    activeItems().map((item) => createOverviewItem(item, overviewBounds()))
   );
 
   const overviewViewportMetrics = createMemo<NotesOverviewViewportMetrics>(() => {
@@ -177,9 +176,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   const editingNote = createMemo(() => {
     const noteID = editorNoteID();
-    return noteID
-      ? snapshot().items.find((item) => item.note_id === noteID)
-      : undefined;
+    return noteID ? snapshot().items.find((item) => item.note_id === noteID) : undefined;
   });
   const hasLiveNote = (noteID: string) =>
     untrack(() => snapshot().items.some((item) => item.note_id === noteID));
@@ -224,9 +221,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     invalidateNoteOperationGuards(noteID);
     clearCopiedState();
     setCopiedNoteID((current) => (current === noteID ? null : current));
-    setContextMenu((current) =>
-      current?.noteID === noteID ? null : current,
-    );
+    setContextMenu((current) => (current?.noteID === noteID ? null : current));
     setEditorNoteID((current) => (current === noteID ? null : current));
   };
   const resetNoteOperationGuards = () => {
@@ -329,13 +324,12 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     options.controller.setActiveTopicID(topicID);
   };
 
-  const getLiveNoteCount = (topicID: string) =>
-    hasLiveNotesForTopic(snapshot().items, topicID);
+  const getLiveNoteCount = (topicID: string) => hasLiveNotesForTopic(snapshot().items, topicID);
 
   const getPlacementFromClientPoint = (
     clientX: number,
     clientY: number,
-    topicID = activeTopic()?.topic_id,
+    topicID = activeTopic()?.topic_id
   ): NotesCanvasPlacement | null => {
     if (!topicID) return null;
 
@@ -376,10 +370,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     return target ? [target] : [];
   };
 
-  const findNoteTargetAtClientPoint = (
-    clientX: number,
-    clientY: number,
-  ): NotesItem | undefined => {
+  const findNoteTargetAtClientPoint = (clientX: number, clientY: number): NotesItem | undefined => {
     const noteID = getElementsFromClientPoint(clientX, clientY)
       .filter((element): element is HTMLElement => element instanceof HTMLElement)
       .map((element) => element.closest<HTMLElement>('[data-floe-notes-note-id]'))
@@ -393,7 +384,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const resolveContextMenuStateAtClientPoint = (
     clientX: number,
     clientY: number,
-    options?: { topicID?: string; noteID?: string | null },
+    options?: { topicID?: string; noteID?: string | null }
   ): NotesContextMenuState | null => {
     const placement = getPlacementFromClientPoint(clientX, clientY, options?.topicID);
     if (!placement) return null;
@@ -423,7 +414,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const openContextMenuAtClientPoint = (
     clientX: number,
     clientY: number,
-    options?: { topicID?: string; noteID?: string | null },
+    options?: { topicID?: string; noteID?: string | null }
   ) => {
     const next = resolveContextMenuStateAtClientPoint(clientX, clientY, options);
     if (!next) return false;
@@ -479,7 +470,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const syncOverviewToClientPoint = (
     clientX: number,
     clientY: number,
-    navigationState: NotesOverviewNavigationState,
+    navigationState: NotesOverviewNavigationState
   ) => {
     const rect = navigationState.surfaceRect;
     if (rect.width <= 0 || rect.height <= 0) return;
@@ -492,8 +483,8 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     setViewportPreview(
       resolveViewportAtCenter(
         bounds.minX + centerX * bounds.width,
-        bounds.minY + centerY * bounds.height,
-      ),
+        bounds.minY + centerY * bounds.height
+      )
     );
   };
 
@@ -660,14 +651,15 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   };
 
   const handleCopyNote = async (item: NotesItem) => {
-    if (!item.body.trim()) {
+    const clipboardText = normalizeNoteText(item.body);
+    if (!clipboardText) {
       setContextMenu(null);
       setEditorNoteID(item.note_id);
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(item.body);
+      await navigator.clipboard.writeText(clipboardText);
       markCopied(item.note_id);
     } catch {
       notifications.error('Copy failed', 'Clipboard write was not available.');
@@ -719,6 +711,8 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
     try {
       await options.controller.updateNote(noteID, {
+        headline: draftTitle(),
+        title: draftTitle(),
         body: draftBody(),
         color_token: draftColor(),
       });
@@ -781,19 +775,13 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       invalidateTopicOperationGuards(topic.topic_id);
       const deleted = await options.controller.deleteTopic(topic.topic_id);
       if (deleted === false) {
-        notifications.info(
-          'Keep one topic',
-          'At least one topic needs to remain available.',
-        );
+        notifications.info('Keep one topic', 'At least one topic needs to remain available.');
         return;
       }
 
       if (noteCount > 0) {
         openTrash();
-        notifications.success(
-          'Topic deleted',
-          'Live notes moved into trash for this topic.',
-        );
+        notifications.success('Topic deleted', 'Live notes moved into trash for this topic.');
         return;
       }
 
@@ -803,10 +791,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     }
   };
 
-  const handleCommitMove = async (
-    noteID: string,
-    position: { x: number; y: number },
-  ) => {
+  const handleCommitMove = async (noteID: string, position: { x: number; y: number }) => {
     const token = issuePendingMoveToken(noteID);
     seedTransientMoveProjection(noteID, position);
     try {
@@ -991,6 +976,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     if (editorSeededForNoteID === note.note_id) return;
 
     editorSeededForNoteID = note.note_id;
+    setDraftTitle(note.title);
     setDraftBody(note.body);
     setDraftColor(note.color_token);
   });
@@ -1007,7 +993,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
     const highest = snapshot().items.reduce(
       (maxLayer, item) => Math.max(maxLayer, item.z_index),
-      0,
+      0
     );
     if (note.z_index >= highest) {
       setOptimisticFrontNoteID(null);
@@ -1170,8 +1156,10 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     },
     editor: {
       note: editingNote,
+      draftTitle,
       draftBody,
       draftColor,
+      setDraftTitle,
       setDraftBody,
       setDraftColor,
       close: closeEditor,

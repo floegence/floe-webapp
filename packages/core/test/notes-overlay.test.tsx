@@ -30,13 +30,45 @@ vi.mock('../src/context', () => ({
 
 vi.mock('solid-motionone', async () => {
   const solid = await vi.importActual<typeof import('solid-js')>('solid-js');
-  const createMotionDiv = (props: Record<string, unknown> & { children?: unknown }) => {
-    const [local, rest] = solid.splitProps(props, ['children']);
-    return <div {...rest}>{local.children}</div>;
+  const createMotionDiv = (
+    props: Record<string, unknown> & {
+      children?: unknown;
+      ref?: HTMLDivElement | ((el: HTMLDivElement) => void);
+    }
+  ) => {
+    const [local, rest] = solid.splitProps(props, [
+      'children',
+      'ref',
+      'initial',
+      'animate',
+      'exit',
+      'transition',
+    ]);
+    return (
+      <div ref={local.ref as HTMLDivElement | ((el: HTMLDivElement) => void)} {...rest}>
+        {local.children}
+      </div>
+    );
   };
-  const createMotionSection = (props: Record<string, unknown> & { children?: unknown }) => {
-    const [local, rest] = solid.splitProps(props, ['children']);
-    return <section {...rest}>{local.children}</section>;
+  const createMotionSection = (
+    props: Record<string, unknown> & {
+      children?: unknown;
+      ref?: HTMLElement | ((el: HTMLElement) => void);
+    }
+  ) => {
+    const [local, rest] = solid.splitProps(props, [
+      'children',
+      'ref',
+      'initial',
+      'animate',
+      'exit',
+      'transition',
+    ]);
+    return (
+      <section ref={local.ref as HTMLElement | ((el: HTMLElement) => void)} {...rest}>
+        {local.children}
+      </section>
+    );
   };
 
   return {
@@ -731,6 +763,67 @@ describe('NotesOverlay', () => {
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
     expect(state.bringNoteToFront).toHaveBeenCalledTimes(1);
     expect(host.textContent).toContain('Copied');
+  });
+
+  it('copies only the note body when a headline is present', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: [
+        baseItem({
+          title: 'Launch checklist',
+          body: 'Primary note body',
+          preview_text: 'Primary note body',
+          character_count: 'Primary note body'.length,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    expect(noteBody).toBeTruthy();
+
+    noteBody!.click();
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalledWith(
+      'Launch checklist\n\nPrimary note body'
+    );
+    expect(host.textContent).toContain('Launch checklist');
+    expect(host.textContent).toContain('Copied');
+  });
+
+  it('opens the editor instead of copying when a note only has a headline', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: [
+        baseItem({
+          title: 'Color key',
+          body: '   ',
+          preview_text: '',
+          character_count: 0,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    await settle();
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    expect(noteBody).toBeTruthy();
+
+    noteBody!.click();
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain('Copied');
+    expect(document.body.querySelector('.notes-flyout--editor')).toBeTruthy();
   });
 
   it('keeps modal interaction semantics by default', async () => {

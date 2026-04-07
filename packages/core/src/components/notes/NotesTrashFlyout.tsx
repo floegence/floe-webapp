@@ -5,6 +5,8 @@ import {
   formatDeletedTimestamp,
   formatRemainingTrashTime,
   getNotePreviewText,
+  normalizeNoteText,
+  normalizeNoteTitle,
   noteColorClass,
   notePreviewMetrics,
   topicAccentClass,
@@ -50,7 +52,9 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
               <div class="notes-trash__panel-title-row">
                 <div class="notes-trash__panel-title">Trash Dock</div>
                 <div class="notes-trash__panel-header-actions">
-                  <div class="notes-trash__panel-count">{props.groups.reduce((count, group) => count + group.items.length, 0)} items</div>
+                  <div class="notes-trash__panel-count">
+                    {props.groups.reduce((count, group) => count + group.items.length, 0)} items
+                  </div>
                   <button
                     type="button"
                     class="notes-trash__panel-close"
@@ -89,7 +93,10 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
                         <div class="notes-trash-section__title-group">
                           <div class="notes-trash-section__title-line">
                             <div class={`notes-topic-mark notes-topic-mark--trash ${accentClass}`}>
-                              <NotesAnimalIcon iconKey={group.topic_icon_key} class="notes-topic-mark__icon" />
+                              <NotesAnimalIcon
+                                iconKey={group.topic_icon_key}
+                                class="notes-topic-mark__icon"
+                              />
                             </div>
                             <div class="notes-trash-section__title">{group.topic_name}</div>
                           </div>
@@ -97,7 +104,11 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
                             {group.items.length} deleted note{group.items.length === 1 ? '' : 's'}
                           </div>
                         </div>
-                        <button type="button" class="notes-trash-section__clear" onClick={() => props.onClearTopicTrash(group.topic_id)}>
+                        <button
+                          type="button"
+                          class="notes-trash-section__clear"
+                          onClick={() => props.onClearTopicTrash(group.topic_id)}
+                        >
                           Clear topic trash
                         </button>
                       </div>
@@ -106,10 +117,17 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
                         <For each={group.items}>
                           {(item) => {
                             const metrics = notePreviewMetrics(item);
-                            const preview = getNotePreviewText(item.body, metrics.preview_limit);
+                            const title = normalizeNoteTitle(item.title);
+                            const body = normalizeNoteText(item.body);
+                            const preview = body
+                              ? getNotePreviewText(item.body, metrics.preview_limit)
+                              : title
+                                ? ''
+                                : 'Empty note';
                             return (
                               <article
                                 class={`notes-note notes-trash-note ${noteColorClass(item.color_token)} notes-note--size-${item.size_bucket - 1}`}
+                                classList={{ 'has-title': Boolean(title) }}
                                 style={{
                                   '--note-width': `${metrics.width}px`,
                                   '--note-height': `${metrics.height}px`,
@@ -118,19 +136,41 @@ export function NotesTrashFlyout(props: NotesTrashFlyoutProps) {
                                 <div class="notes-note__surface">
                                   <div class="notes-trash-note__meta">
                                     <span>{formatDeletedTimestamp(item.deleted_at_unix_ms)}</span>
-                                    <strong>{formatRemainingTrashTime(item.deleted_at_unix_ms, props.now)}</strong>
+                                    <strong>
+                                      {formatRemainingTrashTime(item.deleted_at_unix_ms, props.now)}
+                                    </strong>
                                   </div>
 
-                                  <div class="notes-trash-note__body">
-                                    <span>{preview}</span>
+                                  <div
+                                    class="notes-trash-note__body"
+                                    classList={{
+                                      'has-title': Boolean(title),
+                                      'is-title-only': Boolean(title) && !body,
+                                    }}
+                                  >
+                                    {title ? (
+                                      <span class="notes-note__title-block notes-note__title-block--trash">
+                                        <span class="notes-note__title">{title}</span>
+                                      </span>
+                                    ) : null}
+                                    {preview ? (
+                                      <span class="notes-trash-note__body-copy">{preview}</span>
+                                    ) : null}
                                   </div>
 
                                   <div class="notes-trash-note__actions">
-                                    <button type="button" onClick={() => props.onRestore(item.note_id)}>
+                                    <button
+                                      type="button"
+                                      onClick={() => props.onRestore(item.note_id)}
+                                    >
                                       Restore
                                     </button>
                                     <Show when={props.canDeleteNow}>
-                                      <button type="button" class="is-danger" onClick={() => props.onDeleteNow(item.note_id)}>
+                                      <button
+                                        type="button"
+                                        class="is-danger"
+                                        onClick={() => props.onDeleteNow(item.note_id)}
+                                      >
                                         Delete now
                                       </button>
                                     </Show>

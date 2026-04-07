@@ -73,7 +73,12 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-export function clampOverviewCenter(center: number, span: number, min: number, max: number): number {
+export function clampOverviewCenter(
+  center: number,
+  span: number,
+  min: number,
+  max: number
+): number {
   const total = max - min;
   if (!Number.isFinite(total) || total <= 0) return center;
   if (span >= total) return min + total / 2;
@@ -88,7 +93,15 @@ export function getNormalizedOverviewPoint(clientX: number, clientY: number, rec
 }
 
 export function normalizeNoteText(text: string): string {
-  return String(text ?? '').replace(/\r\n/g, '\n').trim();
+  return String(text ?? '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+}
+
+export function normalizeNoteTitle(title: string): string {
+  return String(title ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function getNotePreviewText(text: string, limit: number): string {
@@ -139,7 +152,7 @@ export function buildOverviewBounds(rect: NotesRect): NotesOverviewBounds {
 
 export function resolveOverviewBounds(
   boardBounds: NotesRect,
-  visibleRect: NotesRect,
+  visibleRect: NotesRect
 ): NotesOverviewBounds {
   const visibleWidth = visibleRect.maxX - visibleRect.minX;
   const visibleHeight = visibleRect.maxY - visibleRect.minY;
@@ -185,13 +198,13 @@ export function resolveCenteredViewport(options: {
     options.worldX,
     visibleWorldWidth,
     options.bounds.minX,
-    options.bounds.maxX,
+    options.bounds.maxX
   );
   const centeredWorldY = clampOverviewCenter(
     options.worldY,
     visibleWorldHeight,
     options.bounds.minY,
-    options.bounds.maxY,
+    options.bounds.maxY
   );
 
   return centerViewportOnWorldPoint(
@@ -199,7 +212,7 @@ export function resolveCenteredViewport(options: {
     centeredWorldX,
     centeredWorldY,
     frame.width,
-    frame.height,
+    frame.height
   );
 }
 

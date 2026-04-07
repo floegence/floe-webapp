@@ -51,7 +51,7 @@ function isWithinNotesBoundary(target: EventTarget | null): boolean {
 }
 
 function resolveNotesOverlayInteraction(
-  mode: NotesOverlayInteractionMode | undefined,
+  mode: NotesOverlayInteractionMode | undefined
 ): ResolvedNotesOverlayInteraction {
   if (mode === 'floating') {
     return {
@@ -248,7 +248,11 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
         <Show when={model.board.isMobile() && model.board.overviewOpen()}>
           <Portal>
-            <div class="notes-overview-backdrop" data-floe-notes-boundary="true" onClick={model.overview.close} />
+            <div
+              class="notes-overview-backdrop"
+              data-floe-notes-boundary="true"
+              onClick={model.overview.close}
+            />
             <div class="notes-overview-flyout" data-floe-notes-boundary="true">
               <NotesOverviewPanel
                 mode="mobile"
@@ -299,8 +303,10 @@ export function NotesOverlay(props: NotesOverlayProps) {
           <Portal>
             <NotesEditorFlyout
               note={model.editor.note()}
+              draftTitle={model.editor.draftTitle()}
               draftBody={model.editor.draftBody()}
               draftColor={model.editor.draftColor()}
+              onDraftTitleChange={model.editor.setDraftTitle}
               onDraftBodyChange={model.editor.setDraftBody}
               onDraftColorChange={model.editor.setDraftColor}
               onClose={model.editor.close}

@@ -3,6 +3,8 @@ import { startHotInteraction } from '../../utils/hotInteraction';
 import { Check, GripVertical, Pencil, Trash } from '../../icons';
 import {
   getNotePreviewText,
+  normalizeNoteText,
+  normalizeNoteTitle,
   noteColorClass,
   notePreviewMetrics,
   samePoint,
@@ -51,8 +53,14 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
   });
 
   const metrics = createMemo(() => notePreviewMetrics(props.item));
-  const previewText = createMemo(() => getNotePreviewText(props.item.body, metrics().preview_limit));
-  const isEmpty = createMemo(() => !props.item.body.trim());
+  const titleText = createMemo(() => normalizeNoteTitle(props.item.title));
+  const bodyText = createMemo(() => normalizeNoteText(props.item.body));
+  const previewText = createMemo(() =>
+    bodyText() ? getNotePreviewText(props.item.body, metrics().preview_limit) : ''
+  );
+  const hasTitle = createMemo(() => titleText().length > 0);
+  const hasBody = createMemo(() => bodyText().length > 0);
+  const isEmpty = createMemo(() => !hasTitle() && !hasBody());
   const isDragging = () => dragState() !== null;
   const livePosition = createMemo(() => {
     const current = dragState();
@@ -112,8 +120,10 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
       setDragState((current) => {
         if (!current || current.pointerId !== nextEvent.pointerId) return current;
 
-        const worldX = current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale;
-        const worldY = current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale;
+        const worldX =
+          current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale;
+        const worldY =
+          current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale;
         return {
           ...current,
           worldX,
@@ -156,6 +166,7 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
       classList={{
         'is-copied': props.copied,
         'is-dragging': isDragging(),
+        'has-title': hasTitle(),
       }}
       data-floe-geometry-surface="notes-note"
       data-floe-notes-note-id={props.item.note_id}
@@ -217,12 +228,22 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
         <button
           type="button"
           class="notes-note__body"
-          classList={{ 'is-empty': isEmpty() }}
+          classList={{
+            'is-empty': isEmpty(),
+            'has-title': hasTitle(),
+            'is-title-only': hasTitle() && !hasBody(),
+          }}
           data-floe-canvas-interactive="true"
           data-floe-canvas-pan-surface="true"
           onClick={() => props.onCopy(props.item)}
         >
-          <span>{previewText()}</span>
+          {hasTitle() ? (
+            <span class="notes-note__title-block">
+              <span class="notes-note__title">{titleText()}</span>
+            </span>
+          ) : null}
+          {hasBody() ? <span class="notes-note__body-copy">{previewText()}</span> : null}
+          {isEmpty() ? <span class="notes-note__body-copy">Empty note</span> : null}
         </button>
 
         {props.copied ? (

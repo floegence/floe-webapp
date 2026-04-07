@@ -117,9 +117,11 @@ function mapItem(note: NotesNote, previewText: string, sizeBucket: NotesSizeBuck
   return {
     note_id: note.id,
     topic_id: note.topicId,
+    headline: note.title,
+    title: note.title,
     body: note.text,
     preview_text: previewText,
-    character_count: note.text.length,
+    character_count: note.title.length + note.text.length,
     size_bucket: sizeBucket,
     style_version: 'note/v1',
     color_token: toColorToken(note.colorId),
@@ -131,7 +133,11 @@ function mapItem(note: NotesNote, previewText: string, sizeBucket: NotesSizeBuck
   };
 }
 
-function mapTrashItem(note: NotesNote, topic: DemoTopic | undefined, sortOrder: number): NotesTrashItem {
+function mapTrashItem(
+  note: NotesNote,
+  topic: DemoTopic | undefined,
+  sortOrder: number
+): NotesTrashItem {
   const item = mapItem(note, note.text, toSizeBucket(1));
   return {
     ...item,
@@ -151,13 +157,23 @@ function toViewport(value: { x: number; y: number; scale: number }): NotesViewpo
   };
 }
 
+function resolveHeadlineInput(input: Readonly<{ headline?: string; title?: string }>): string | undefined {
+  return typeof input.headline === 'string'
+    ? input.headline
+    : typeof input.title === 'string'
+      ? input.title
+      : undefined;
+}
+
 export function useNotesDemoController(): NotesController {
   const notes = useNotesDemo();
   const viewport = createMemo(() => toViewport(notes.activeViewport()));
 
   const snapshot = createMemo<NotesSnapshot>(() => {
     const topics = notes.topics().map((topic, index) => mapTopic(topic, index + 1));
-    const topicOrder = new Map<string, number>(topics.map((topic) => [topic.topic_id, topic.sort_order]));
+    const topicOrder = new Map<string, number>(
+      topics.map((topic) => [topic.topic_id, topic.sort_order])
+    );
 
     return normalizeNotesSnapshot({
       seq: 0,
@@ -168,7 +184,7 @@ export function useNotesDemoController(): NotesController {
           const mapped = mapItem(
             note,
             notes.getTextPreview(note.text),
-            toSizeBucket(notes.getNoteSize(note.text) + 1),
+            toSizeBucket(notes.getNoteSize(note.text, note.title) + 1)
           );
           return {
             ...mapped,
@@ -178,9 +194,13 @@ export function useNotesDemoController(): NotesController {
       trash_items: notes.trashedNotes().map((note) => {
         const topic = notes.getTopic(note.topicId);
         return {
-          ...mapTrashItem(note, topic, topicOrder.get(note.topicId) ?? Math.max(1, Math.round(topic?.createdAt ?? 1))),
+          ...mapTrashItem(
+            note,
+            topic,
+            topicOrder.get(note.topicId) ?? Math.max(1, Math.round(topic?.createdAt ?? 1))
+          ),
           preview_text: notes.getTextPreview(note.text),
-          size_bucket: toSizeBucket(notes.getNoteSize(note.text) + 1),
+          size_bucket: toSizeBucket(notes.getNoteSize(note.text, note.title) + 1),
         };
       }),
     });
@@ -214,20 +234,30 @@ export function useNotesDemoController(): NotesController {
     },
     deleteTopic: (topicID) => notes.deleteTopic(topicID),
     createNote: (input) => {
+      const headline = resolveHeadlineInput(input);
       const note = notes.createNote({
         topicId: input.topic_id,
         x: input.x,
         y: input.y,
+        headline,
+        title: headline,
         text: input.body,
         colorId: input.color_token ? toDemoColorId(input.color_token) : undefined,
       });
       if (!note) {
         throw new Error('Note creation failed');
       }
-      return mapItem(note, notes.getTextPreview(note.text), toSizeBucket(notes.getNoteSize(note.text) + 1));
+      return mapItem(
+        note,
+        notes.getTextPreview(note.text),
+        toSizeBucket(notes.getNoteSize(note.text, note.title) + 1)
+      );
     },
     updateNote: (noteID, input) => {
+      const headline = resolveHeadlineInput(input);
       notes.updateNote(noteID, {
+        headline,
+        title: headline,
         text: input.body,
         colorId: input.color_token ? toDemoColorId(input.color_token) : undefined,
       });
@@ -244,13 +274,21 @@ export function useNotesDemoController(): NotesController {
       if (!note) {
         throw new Error('Note update failed');
       }
-      return mapItem(note, notes.getTextPreview(note.text), toSizeBucket(notes.getNoteSize(note.text) + 1));
+      return mapItem(
+        note,
+        notes.getTextPreview(note.text),
+        toSizeBucket(notes.getNoteSize(note.text, note.title) + 1)
+      );
     },
     bringNoteToFront: (noteID) => {
       notes.bringNoteToFront(noteID);
       const note = notes.getNoteById(noteID);
       return note
-        ? mapItem(note, notes.getTextPreview(note.text), toSizeBucket(notes.getNoteSize(note.text) + 1))
+        ? mapItem(
+            note,
+            notes.getTextPreview(note.text),
+            toSizeBucket(notes.getNoteSize(note.text, note.title) + 1)
+          )
         : undefined;
     },
     deleteNote: (noteID) => {
@@ -262,7 +300,11 @@ export function useNotesDemoController(): NotesController {
       if (!note) {
         throw new Error('Note restore failed');
       }
-      return mapItem(note, notes.getTextPreview(note.text), toSizeBucket(notes.getNoteSize(note.text) + 1));
+      return mapItem(
+        note,
+        notes.getTextPreview(note.text),
+        toSizeBucket(notes.getNoteSize(note.text, note.title) + 1)
+      );
     },
     deleteTrashedNotePermanently: (noteID) => {
       notes.deleteNotePermanently(noteID);

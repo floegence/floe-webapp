@@ -1,14 +1,16 @@
 import { For, Show } from 'solid-js';
 import { X } from '../../icons';
-import { Button, Textarea } from '../../ui';
+import { Button, Input, Textarea } from '../../ui';
 import { NOTE_COLOR_LABELS } from './notesAppearance';
 import { noteColorClass } from './notesOverlayHelpers';
 import { NOTE_COLOR_TOKENS, type NoteColorToken, type NotesItem } from './types';
 
 export interface NotesEditorFlyoutProps {
   note: NotesItem | undefined;
+  draftTitle: string;
   draftBody: string;
   draftColor: NoteColorToken;
+  onDraftTitleChange: (value: string) => void;
   onDraftBodyChange: (value: string) => void;
   onDraftColorChange: (value: NoteColorToken) => void;
   onClose: () => void;
@@ -58,10 +60,26 @@ export function NotesEditorFlyout(props: NotesEditorFlyoutProps) {
           </div>
         </div>
 
+        <div class="notes-editor__field notes-editor__field--headline">
+          <div class="notes-editor__label">Headline</div>
+          <Input
+            data-floe-autofocus={
+              !props.note?.title.trim() && !props.note?.body.trim() ? true : undefined
+            }
+            size="lg"
+            value={props.draftTitle}
+            onInput={(event) => props.onDraftTitleChange(event.currentTarget.value)}
+            placeholder="Optional note headline"
+            helperText="Shown as a large accent title on the card."
+          />
+        </div>
+
         <div class="notes-editor__field">
           <div class="notes-editor__label">Text</div>
           <Textarea
-            data-floe-autofocus
+            data-floe-autofocus={
+              props.note?.title.trim() || props.note?.body.trim() ? true : undefined
+            }
             rows={10}
             value={props.draftBody}
             onInput={(event) => props.onDraftBodyChange(event.currentTarget.value)}
