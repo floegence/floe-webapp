@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-protocol",
-  "version": "0.35.50",
+  "version": "0.35.51",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
