@@ -93,7 +93,8 @@ Type reference:
 
 - `ConnectConfig = BrowserReconnectConfig`
 - connection timeouts / keepalive live under `connect`
-- tunnel grant helpers (`controlplane`, `getGrant`, `grant`) and direct helpers (`directInfo`, `getDirectInfo`) come from `@floegence/flowersec-core/browser`
+- tunnel helpers support both the legacy grant flow (`controlplane`, `getGrant`, `grant`) and the canonical artifact flow (`artifactControlplane`, `getArtifact`, `artifact`)
+- direct helpers still use `directInfo` / `getDirectInfo`, and can also opt into the canonical artifact flow through `artifactControlplane`, `getArtifact`, or `artifact`
 
 Best practice:
 
@@ -105,7 +106,7 @@ Notes:
 - `connect()` is intentionally idempotent: it should not tear down a healthy connection.
 - Use `reconnect()` when you need to force a hard restart (e.g. token rotation, suspected half-open state, manual retry).
 
-### Tunnel mode (controlplane)
+### Tunnel mode (controlplane, legacy grant envelope)
 
 ```ts
 await protocol.connect({
@@ -128,13 +129,48 @@ Controlplane contract (used by `requestChannelGrant`):
 - response: `{ "grant_client": <ChannelInitGrant> }`
 - non-2xx failures surface as `ControlplaneRequestError`, preserving `status`, `code`, and the server message from Flowersec
 
-Implementation reference:
+Implementation references:
 
 - `packages/protocol/src/controlplane.ts`
+- `packages/protocol/src/client.tsx`
 
-### Tunnel mode (dynamic grant provider, recommended)
+### Tunnel mode (canonical connect artifact, recommended)
 
-When your auth flow requires a fresh ticket/grant after disconnects (e.g. `entry_ticket -> /v1/channel/init/entry -> grant_client`),
+Flowersec `v0.18.0` adds a canonical `connect_artifact` envelope that works for both direct and tunnel transports.
+When your control plane can mint that stable envelope, prefer wiring `artifactControlplane` so reconnects keep using the same public contract.
+
+```ts
+await protocol.connect({
+  mode: 'tunnel',
+  artifactControlplane: {
+    baseUrl: 'https://<controlplane>',
+    endpointId: '<endpoint-id>',
+    entryTicket: '<entry-ticket>',
+  },
+  connect: {
+    handshakeTimeoutMs: 10_000,
+  },
+  autoReconnect: { enabled: true },
+});
+```
+
+Canonical artifact contract (used by `requestConnectArtifact` / `requestEntryConnectArtifact`):
+
+- `POST ${baseUrl}/v1/connect/artifact`
+- `POST ${baseUrl}/v1/connect/artifact/entry`
+- body: `{ "endpoint_id": "<endpointId>", "payload": { ... }, "correlation": { "trace_id": "<traceId>" } }`
+- response: `{ "connect_artifact": <ConnectArtifact> }`
+- the reconnect helper automatically forwards the latest `trace_id` it observed from a prior artifact, so downstream control planes can correlate refreshes without product-specific state
+
+Public helper exports:
+
+- `requestConnectArtifact`
+- `requestEntryConnectArtifact`
+- `assertConnectArtifact`
+
+### Tunnel mode (dynamic grant provider)
+
+When your auth flow still requires a fresh legacy grant after disconnects (e.g. `entry_ticket -> /v1/channel/init/entry -> grant_client`),
 you should use `getGrant()` so every reconnect attempt uses a new `ChannelInitGrant`.
 
 ```ts
