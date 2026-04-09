@@ -89,11 +89,11 @@ Type reference:
 
 - `packages/protocol/src/client.tsx` (`ConnectConfig`, `AutoReconnectConfig`)
 
-`ConnectConfig` directly reuses the Flowersec browser reconnect shape:
+`ConnectConfig` directly reuses the Flowersec browser reconnect adapter shape:
 
 - `ConnectConfig = BrowserReconnectConfig`
 - connection timeouts / keepalive live under `connect`
-- tunnel helpers support both the legacy grant flow (`controlplane`, `getGrant`, `grant`) and the canonical artifact flow (`artifactControlplane`, `getArtifact`, `artifact`)
+- tunnel helpers support the canonical artifact flow (`artifactControlplane`, `getArtifact`, `artifact`) and still keep the legacy grant flow (`controlplane`, `getGrant`, `grant`) for compatibility
 - direct helpers still use `directInfo` / `getDirectInfo`, and can also opt into the canonical artifact flow through `artifactControlplane`, `getArtifact`, or `artifact`
 
 Best practice:
@@ -106,37 +106,9 @@ Notes:
 - `connect()` is intentionally idempotent: it should not tear down a healthy connection.
 - Use `reconnect()` when you need to force a hard restart (e.g. token rotation, suspected half-open state, manual retry).
 
-### Tunnel mode (controlplane, legacy grant envelope)
-
-```ts
-await protocol.connect({
-  mode: 'tunnel',
-  controlplane: {
-    baseUrl: 'https://<controlplane>',
-    endpointId: '<endpoint-id>',
-  },
-  connect: {
-    handshakeTimeoutMs: 10_000,
-  },
-  autoReconnect: { enabled: true },
-});
-```
-
-Controlplane contract (used by `requestChannelGrant`):
-
-- `POST ${baseUrl}/v1/channel/init`
-- body: `{ "endpoint_id": "<endpointId>" }`
-- response: `{ "grant_client": <ChannelInitGrant> }`
-- non-2xx failures surface as `ControlplaneRequestError`, preserving `status`, `code`, and the server message from Flowersec
-
-Implementation references:
-
-- `packages/protocol/src/controlplane.ts`
-- `packages/protocol/src/client.tsx`
-
 ### Tunnel mode (canonical connect artifact, recommended)
 
-Flowersec `v0.18.0` adds a canonical `connect_artifact` envelope that works for both direct and tunnel transports.
+Flowersec v0.19.x treats the canonical `connect_artifact` envelope as the recommended browser contract.
 When your control plane can mint that stable envelope, prefer wiring `artifactControlplane` so reconnects keep using the same public contract.
 
 ```ts
@@ -154,7 +126,7 @@ await protocol.connect({
 });
 ```
 
-Canonical artifact contract (used by `requestConnectArtifact` / `requestEntryConnectArtifact`):
+Canonical artifact contract (used by `requestConnectArtifact` / `requestEntryConnectArtifact` from `@floegence/flowersec-core/controlplane`):
 
 - `POST ${baseUrl}/v1/connect/artifact`
 - `POST ${baseUrl}/v1/connect/artifact/entry`
@@ -167,6 +139,34 @@ Public helper exports:
 - `requestConnectArtifact`
 - `requestEntryConnectArtifact`
 - `assertConnectArtifact`
+
+### Tunnel mode (controlplane, legacy grant envelope)
+
+```ts
+await protocol.connect({
+  mode: 'tunnel',
+  controlplane: {
+    baseUrl: 'https://<controlplane>',
+    endpointId: '<endpoint-id>',
+  },
+  connect: {
+    handshakeTimeoutMs: 10_000,
+  },
+  autoReconnect: { enabled: true },
+});
+```
+
+Controlplane contract (used by the compatibility helper `requestChannelGrant`):
+
+- `POST ${baseUrl}/v1/channel/init`
+- body: `{ "endpoint_id": "<endpointId>" }`
+- response: `{ "grant_client": <ChannelInitGrant> }`
+- non-2xx failures surface as `ControlplaneRequestError`, preserving `status`, `code`, and the server message from Flowersec
+
+Implementation references:
+
+- `packages/protocol/src/controlplane.ts`
+- `packages/protocol/src/client.tsx`
 
 ### Tunnel mode (dynamic grant provider)
 

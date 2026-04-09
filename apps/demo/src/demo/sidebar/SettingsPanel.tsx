@@ -26,7 +26,7 @@ export function SettingsPanel() {
     try {
       const config: ConnectConfig = {
         mode: 'tunnel',
-        controlplane: { baseUrl, endpointId },
+        artifactControlplane: { baseUrl, endpointId },
       };
       await protocol.connect(config);
       notifications.success('Connected', 'Flowersec tunnel established.');

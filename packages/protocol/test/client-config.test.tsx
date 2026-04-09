@@ -119,7 +119,7 @@ describe('ProtocolProvider connect config delegation', () => {
 
     const config: ConnectConfig = {
       mode: 'tunnel',
-      controlplane: {
+      artifactControlplane: {
         baseUrl: 'https://cp.example.com',
         endpointId: 'endpoint-1',
       },

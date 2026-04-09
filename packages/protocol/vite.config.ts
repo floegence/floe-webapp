@@ -18,6 +18,7 @@ export default defineConfig({
         'solid-js/store',
         '@floegence/flowersec-core',
         '@floegence/flowersec-core/browser',
+        '@floegence/flowersec-core/controlplane',
         '@floegence/flowersec-core/rpc',
         '@floegence/flowersec-core/reconnect',
       ],
