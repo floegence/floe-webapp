@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 
-const NOTES_OVERLAY_ROOT_PATH = 'packages/core/test/notes-overlay.test.tsx';
-const NOTES_OVERLAY_PACKAGE_PATH = 'test/notes-overlay.test.tsx';
+const CORE_CLIENT_TEST_ROOT_PATHS = [
+  'packages/core/test/notes-overlay.test.tsx',
+  'packages/core/test/overlay-mask-hotkeys.test.tsx',
+];
 
 function isFlag(arg) {
   return arg.startsWith('-');
 }
 
-function isNotesOverlayPath(arg) {
-  return arg.includes('notes-overlay.test.tsx');
+function isCoreClientTestPath(arg) {
+  return CORE_CLIENT_TEST_ROOT_PATHS.some((path) => arg.includes(path) || arg.endsWith(path.replace(/^packages\/core\//, '')));
 }
 
 function normalizePackagePath(arg) {
@@ -35,12 +37,12 @@ function run(command, args) {
 const rawArgs = process.argv.slice(2);
 const flags = rawArgs.filter(isFlag);
 const positional = rawArgs.filter((arg) => !isFlag(arg));
-const notesOverlayArgs = positional.filter(isNotesOverlayPath);
-const otherArgs = positional.filter((arg) => !isNotesOverlayPath(arg));
+const coreClientTestArgs = positional.filter(isCoreClientTestPath);
+const otherArgs = positional.filter((arg) => !isCoreClientTestPath(arg));
 const normalizedFlags = flags.includes('--run') ? flags : ['--run', ...flags];
 
 const shouldRunRootSuite = positional.length === 0 || otherArgs.length > 0;
-const shouldRunNotesOverlaySuite = positional.length === 0 || notesOverlayArgs.length > 0;
+const shouldRunCoreClientSuite = positional.length === 0 || coreClientTestArgs.length > 0;
 
 if (shouldRunRootSuite) {
   await run('pnpm', [
@@ -48,22 +50,21 @@ if (shouldRunRootSuite) {
     'vitest',
     ...normalizedFlags,
     ...otherArgs,
-    '--exclude',
-    NOTES_OVERLAY_ROOT_PATH,
+    ...CORE_CLIENT_TEST_ROOT_PATHS.flatMap((path) => ['--exclude', path]),
   ]);
 }
 
-if (shouldRunNotesOverlaySuite) {
-  const packagePaths = notesOverlayArgs.length > 0
-    ? notesOverlayArgs.map(normalizePackagePath)
-    : [NOTES_OVERLAY_PACKAGE_PATH];
+if (shouldRunCoreClientSuite) {
+  const packagePaths = coreClientTestArgs.length > 0
+    ? coreClientTestArgs.map(normalizePackagePath)
+    : CORE_CLIENT_TEST_ROOT_PATHS.map(normalizePackagePath);
 
   await run('pnpm', [
     '--dir',
     'packages/core',
     'exec',
     'vitest',
-    'run',
+    ...normalizedFlags,
     ...packagePaths,
   ]);
 }

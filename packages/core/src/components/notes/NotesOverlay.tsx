@@ -1,9 +1,10 @@
-import { createEffect, onCleanup, Show } from 'solid-js';
+import { createEffect, createMemo, onCleanup, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { X } from '../../icons';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { NotesBoard } from './NotesBoard';
 import { NotesContextMenu } from './NotesContextMenu';
 import { NotesEditorFlyout, NotesManualPasteFlyout } from './NotesEditorFlyout';
@@ -21,6 +22,8 @@ export interface NotesOverlayProps {
   onClose: () => void;
   controller: NotesController;
   interactionMode?: NotesOverlayInteractionMode;
+  /** Additional shell-owned keybinds that should continue working while floating Notes is focused. */
+  allowGlobalHotkeys?: readonly string[];
 }
 
 interface ResolvedNotesOverlayInteraction {
@@ -79,10 +82,32 @@ function resolveNotesOverlayInteraction(
 }
 
 export function NotesOverlay(props: NotesOverlayProps) {
+  const floe = useResolvedFloeConfig();
   const model = useNotesOverlayModel(props);
   let rootRef: HTMLElement | undefined;
   const interaction = () => resolveNotesOverlayInteraction(props.interactionMode);
   const requestOverlayClose = () => props.onClose();
+  const allowedFloatingHotkeys = createMemo<readonly string[]>(() => {
+    if (interaction().mode !== 'floating') {
+      return [];
+    }
+
+    const allowedHotkeys = new Set<string>();
+    if (floe.config.commands.palette.enabled) {
+      const paletteKeybind = floe.config.commands.palette.keybind.trim();
+      if (paletteKeybind) {
+        allowedHotkeys.add(paletteKeybind);
+      }
+    }
+
+    for (const keybind of props.allowGlobalHotkeys ?? []) {
+      const normalizedKeybind = keybind.trim();
+      if (!normalizedKeybind) continue;
+      allowedHotkeys.add(normalizedKeybind);
+    }
+
+    return Array.from(allowedHotkeys);
+  });
 
   createEffect(() => {
     if (!props.open) return;
@@ -108,6 +133,7 @@ export function NotesOverlay(props: NotesOverlayProps) {
     trapFocus: interaction().trapFocus,
     closeOnEscape: interaction().closeOnEscape,
     blockHotkeys: true,
+    allowHotkeys: allowedFloatingHotkeys,
     blockWheel: interaction().blockWheel,
     blockTouchMove: interaction().blockTouchMove,
     autoFocus: interaction().autoFocus,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createRoot, createSignal, untrack } from 'solid-js';
-import { render } from 'solid-js/web/dist/web.js';
+import { render as renderSolid } from 'solid-js/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NotesOverlay } from '../src/components/notes/NotesOverlay';
 import {
@@ -30,6 +30,7 @@ vi.mock('../src/context', () => ({
 
 vi.mock('solid-motionone', async () => {
   const solid = await vi.importActual<typeof import('solid-js')>('solid-js');
+  const web = await vi.importActual<typeof import('solid-js/web')>('solid-js/web');
   const createMotionDiv = (
     props: Record<string, unknown> & {
       children?: unknown;
@@ -44,11 +45,7 @@ vi.mock('solid-motionone', async () => {
       'exit',
       'transition',
     ]);
-    return (
-      <div ref={local.ref as HTMLDivElement | ((el: HTMLDivElement) => void)} {...rest}>
-        {local.children}
-      </div>
-    );
+    return <web.Dynamic component="div" ref={local.ref} {...rest}>{local.children}</web.Dynamic>;
   };
   const createMotionSection = (
     props: Record<string, unknown> & {
@@ -64,11 +61,7 @@ vi.mock('solid-motionone', async () => {
       'exit',
       'transition',
     ]);
-    return (
-      <section ref={local.ref as HTMLElement | ((el: HTMLElement) => void)} {...rest}>
-        {local.children}
-      </section>
-    );
+    return <web.Dynamic component="section" ref={local.ref} {...rest}>{local.children}</web.Dynamic>;
   };
 
   return {
@@ -700,6 +693,9 @@ function trackWindowKeydownListeners() {
 
 describe('NotesOverlay', () => {
   const disposers: Array<() => void> = [];
+  const mount = (view: () => unknown, host: HTMLElement) => {
+    disposers.push(renderSolid(view, host));
+  };
 
   beforeEach(() => {
     if (typeof PointerEvent === 'undefined') {
@@ -751,7 +747,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -781,7 +777,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -813,7 +809,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -838,7 +834,7 @@ describe('NotesOverlay', () => {
     document.body.appendChild(externalInput);
     externalInput.focus();
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
     await settle();
 
     const overlay = host.querySelector('.notes-overlay') as HTMLElement | null;
@@ -876,7 +872,7 @@ describe('NotesOverlay', () => {
     document.body.appendChild(externalInput);
     externalInput.focus();
 
-    render(
+    mount(
       () => (
         <NotesOverlay
           open
@@ -912,13 +908,107 @@ describe('NotesOverlay', () => {
     keydownTracker.restore();
   });
 
+  it('preserves the command palette keybind while floating Notes is focused', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host,
+    );
+    await settle();
+
+    const bubbleSpy = vi.fn();
+    const bubbleHandler = (event: KeyboardEvent) => bubbleSpy(event.key);
+    window.addEventListener('keydown', bubbleHandler);
+
+    const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
+    expect(noteBody).toBeTruthy();
+
+    noteBody!.focus();
+    noteBody!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'k',
+        ctrlKey: true,
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    noteBody!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '.',
+        ctrlKey: true,
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    expect(bubbleSpy.mock.calls.map(([key]) => key)).toEqual(['k']);
+
+    window.removeEventListener('keydown', bubbleHandler);
+  });
+
+  it('preserves caller allowlisted global hotkeys while floating Notes is focused', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController();
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+          allowGlobalHotkeys={['mod+.']}
+        />
+      ),
+      host,
+    );
+    await settle();
+
+    const bubbleSpy = vi.fn();
+    const bubbleHandler = (event: KeyboardEvent) => bubbleSpy(event.key);
+    window.addEventListener('keydown', bubbleHandler);
+
+    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    expect(dragHandle).toBeTruthy();
+
+    dragHandle!.focus();
+    dragHandle!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: '.',
+        ctrlKey: true,
+        metaKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    expect(bubbleSpy.mock.calls.map(([key]) => key)).toEqual(['.']);
+
+    window.removeEventListener('keydown', bubbleHandler);
+  });
+
   it('opens the trash flyout from the dock toggle', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
@@ -938,7 +1028,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -969,7 +1059,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -999,7 +1089,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1070,7 +1160,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1120,7 +1210,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const editButton = host.querySelector('button[aria-label="Edit note"]') as HTMLButtonElement | null;
@@ -1142,7 +1232,7 @@ describe('NotesOverlay', () => {
     const keydownTracker = trackWindowKeydownListeners();
     disposers.push(state.dispose);
 
-    render(
+    mount(
       () => (
         <NotesOverlay
           open
@@ -1191,7 +1281,7 @@ describe('NotesOverlay', () => {
     outsideButton.textContent = 'outside';
     document.body.appendChild(outsideButton);
 
-    render(
+    mount(
       () => (
         <NotesOverlay
           open
@@ -1217,7 +1307,7 @@ describe('NotesOverlay', () => {
     const onClose = vi.fn();
     disposers.push(state.dispose);
 
-    render(
+    mount(
       () => (
         <NotesOverlay
           open
@@ -1260,7 +1350,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
@@ -1305,7 +1395,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1341,7 +1431,7 @@ describe('NotesOverlay', () => {
     const state = createDeferredMoveController(baseSnapshot());
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const note = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
@@ -1367,7 +1457,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
@@ -1397,7 +1487,7 @@ describe('NotesOverlay', () => {
     const state = createDeferredFrontController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1434,7 +1524,7 @@ describe('NotesOverlay', () => {
     const state = createDeferredMoveController(baseSnapshot());
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
@@ -1471,7 +1561,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1509,7 +1599,7 @@ describe('NotesOverlay', () => {
     state.controller.bringNoteToFront = failingBring;
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
@@ -1541,7 +1631,7 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
@@ -1563,7 +1653,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     expect(host.querySelector('.notes-page__mobile-topic')).toBeTruthy();
@@ -1577,7 +1667,7 @@ describe('NotesOverlay', () => {
     const onClose = vi.fn();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={onClose} />, host);
     await settle();
 
     const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
@@ -1607,7 +1697,7 @@ describe('NotesOverlay', () => {
     const setup = createController();
     disposers.push(setup.dispose);
 
-    render(() => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />, host);
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1653,7 +1743,7 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    render(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
     await settle();
 
     const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;

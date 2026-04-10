@@ -81,6 +81,7 @@
 标准做法：
 
 - 一律优先复用 `useOverlayMask()`。
+- 如果 floating overlay 必须保留极少数 shell 级快捷键，使用 `useOverlayMask()` 的 allowlist 放行明确 keybind；不要在产品层零散重写键盘桥接。
 
 禁止：
 

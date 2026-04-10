@@ -2,6 +2,7 @@ import { createEffect, onCleanup, type Accessor } from 'solid-js';
 import { lockBodyStyle } from '../utils/bodyStyleLock';
 import { deferAfterPaint } from '../utils/defer';
 import { getFocusableElements, getFirstFocusableElement } from '../utils/focus';
+import { matchKeybind } from '../utils/keybind';
 
 export type OverlayScrollBlockMode = 'none' | 'outside' | 'all';
 export type OverlayEscapeCloseMode = 'none' | 'inside' | 'always';
@@ -32,6 +33,13 @@ export interface UseOverlayMaskOptions {
 
   /** Stop bubbling keydown events to window-level hotkeys (default: true). */
   blockHotkeys?: boolean;
+
+  /**
+   * Allow a small set of global keybinds to continue bubbling to window-level handlers
+   * while the overlay is focused. This is primarily used by floating overlays that must
+   * preserve one or two shell-owned shortcuts such as their own toggle keybind.
+   */
+  allowHotkeys?: readonly string[] | Accessor<readonly string[] | undefined>;
 
   /** Auto-focus on open (default: true). */
   autoFocus?: boolean | { selector?: string };
@@ -65,6 +73,29 @@ function shouldBlockByMode(
   if (mode === 'all') return true;
   // mode === 'outside'
   return !isWithinOverlayTarget(root, target, containsTarget);
+}
+
+function resolveAllowedHotkeys(
+  allowHotkeys: UseOverlayMaskOptions['allowHotkeys'],
+): readonly string[] {
+  if (typeof allowHotkeys === 'function') {
+    return allowHotkeys() ?? [];
+  }
+  return allowHotkeys ?? [];
+}
+
+function shouldAllowHotkey(
+  event: KeyboardEvent,
+  allowHotkeys: UseOverlayMaskOptions['allowHotkeys'],
+): boolean {
+  for (const keybind of resolveAllowedHotkeys(allowHotkeys)) {
+    const normalizedKeybind = keybind.trim();
+    if (!normalizedKeybind) continue;
+    if (matchKeybind(event, normalizedKeybind)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function useOverlayMask(options: UseOverlayMaskOptions): void {
@@ -187,6 +218,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       if (!root) return;
       if (!blockHotkeys()) return;
       if (!isWithinOverlayTarget(root, e.target, options.containsTarget)) return;
+      if (shouldAllowHotkey(e, options.allowHotkeys)) return;
       e.stopPropagation();
     };
 

@@ -159,6 +159,7 @@ export function ProductNotes() {
       controller={controller}
       onClose={() => setNotesOpen(false)}
       interactionMode="floating"
+      allowGlobalHotkeys={['mod+.']}
     />
   );
 }
@@ -169,6 +170,7 @@ Notes on the contract:
 - The controller owns runtime authority. Floe owns rendering, gesture handling, and shared visual language.
 - `interactionMode` defaults to `modal`, which keeps focus trapping, body scroll lock, and global Escape-close semantics for modal surfaces such as demos and settings flows.
 - Use `interactionMode="floating"` when Notes should stay above an already-active workspace without stealing the current focus; this keeps the shared Notes UI while switching the overlay shell to non-modal floating semantics.
+- Floating Notes keeps the global command-palette keybind available automatically, and `allowGlobalHotkeys` lets product shells preserve their own Notes toggle shortcut without reopening the rest of the global hotkey surface.
 - Floating Notes now dismiss on outside click and on `Escape` pressed outside the Notes surface; nested Notes-owned portals such as trash, editor, manual paste, and context menus still count as inside the same logical surface.
 - Canvas pan/zoom, minimap navigation, and note drag keep preview state local inside the shared surface and only commit through `setViewport()` / `updateNote()` at the end of the gesture. Downstream controllers should stay authoritative, but they do not need per-frame drag state.
 - `deleteTrashedNotePermanently` is optional; implement it when you want the shared trash flyout to expose a `Delete now` action in addition to timed retention.
