@@ -49,6 +49,23 @@
     }
   }
 
+  @keyframes notes-shortcut-pending {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+      box-shadow:
+        0 8px 18px color-mix(in srgb, var(--foreground) 8%, transparent),
+        0 1px 0 color-mix(in srgb, white 16%, transparent) inset;
+    }
+    50% {
+      transform: translateY(-1px) scale(1.035);
+      box-shadow:
+        0 10px 22px color-mix(in srgb, var(--primary) 16%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--primary) 24%, transparent),
+        0 1px 0 color-mix(in srgb, white 20%, transparent) inset;
+    }
+  }
+
   .notes-sidebar-hero__title,
   .notes-page__title {
     color: var(--foreground);
@@ -817,6 +834,13 @@
     padding: 0.52rem 0.56rem 0;
   }
 
+  .notes-note__lead {
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-width: 0;
+  }
+
   .notes-note__drag,
   .notes-note__icon-button {
     display: grid;
@@ -863,6 +887,49 @@
   .notes-note.is-dragging .notes-note__drag,
   .notes-note__drag:active {
     cursor: grabbing;
+  }
+
+  .notes-note__number {
+    display: inline-flex;
+    align-items: center;
+    min-width: 1.7rem;
+    max-width: 3.2rem;
+    padding: 0 0.38rem;
+    border-radius: 0.42rem;
+    border: 1px solid color-mix(in srgb, var(--notes-accent) 18%, var(--notes-border));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, white 16%, transparent), transparent 70%),
+      color-mix(in srgb, var(--background) 82%, transparent);
+    box-shadow:
+      0 8px 18px color-mix(in srgb, var(--foreground) 7%, transparent),
+      0 1px 0 color-mix(in srgb, white 14%, transparent) inset;
+  }
+
+  .notes-note__number-key {
+    width: 100%;
+    color: color-mix(in srgb, var(--notes-title-ink) 78%, var(--notes-ink));
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.6rem;
+    text-align: center;
+  }
+
+  .notes-note.is-shortcut-pending .notes-note__surface {
+    border-color: color-mix(in srgb, var(--primary) 28%, var(--notes-border));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
+      0 20px 34px color-mix(in srgb, var(--foreground) 10%, transparent),
+      0 1px 0 color-mix(in srgb, white 12%, transparent) inset;
+  }
+
+  .notes-note.is-shortcut-pending .notes-note__number {
+    border-color: color-mix(in srgb, var(--primary) 32%, var(--notes-border));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, white 18%, transparent), transparent 72%),
+      color-mix(in srgb, var(--primary) 10%, var(--background));
+    animation: notes-shortcut-pending 650ms ease-in-out infinite;
   }
 
   .notes-note__actions {
@@ -2426,6 +2493,10 @@
     padding: 0.48rem 0.54rem 0;
   }
 
+  .notes-note__lead {
+    gap: 0.34rem;
+  }
+
   .notes-note__drag {
     width: 1.48rem;
     height: 1.48rem;
@@ -2446,6 +2517,17 @@
     width: 1.56rem;
     height: 1.56rem;
     border-radius: 0.36rem;
+  }
+
+  .notes-note__number {
+    min-width: 1.62rem;
+    padding: 0 0.34rem;
+    border-radius: 0.38rem;
+  }
+
+  .notes-note__number-key {
+    font-size: 0.64rem;
+    line-height: 1.46rem;
   }
 
   .notes-note__body {

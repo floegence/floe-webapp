@@ -27,6 +27,11 @@ import {
   type NotesOverviewViewportMetrics,
 } from './notesOverlayHelpers';
 import {
+  numberNotesInTopic,
+  resolveNotesDigitSequence,
+  type NotesNumberedItem,
+} from './notesNumbering';
+import {
   computeBoardBounds,
   groupTrashItems,
   normalizeNotesSnapshot,
@@ -42,6 +47,8 @@ export interface UseNotesOverlayModelOptions {
   onClose: () => void;
   controller: NotesController;
 }
+
+const NOTE_DIGIT_SEQUENCE_TIMEOUT_MS = 650;
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -72,6 +79,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const [manualPasteTarget, setManualPasteTarget] = createSignal<NotesCanvasPlacement | null>(null);
   const [manualPasteText, setManualPasteText] = createSignal('');
   const [copiedNoteID, setCopiedNoteID] = createSignal<string | null>(null);
+  const [pendingDigitSequence, setPendingDigitSequence] = createSignal('');
   const [clock, setClock] = createSignal(Date.now());
   const [isMobile, setIsMobile] = createSignal(false);
   const [optimisticFrontNoteID, setOptimisticFrontNoteID] = createSignal<string | null>(null);
@@ -83,6 +91,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   >(new Map());
 
   let copiedResetTimer: number | undefined;
+  let pendingDigitTimer: number | undefined;
   let overviewAbortController: AbortController | undefined;
   let editorSeededForNoteID: string | null = null;
 
@@ -116,6 +125,12 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   });
   const activeItems = createMemo(() =>
     projectedItems().filter((item) => item.topic_id === resolvedActiveTopicID())
+  );
+  const numberedActiveItems = createMemo(() =>
+    numberNotesInTopic(snapshot().items, resolvedActiveTopicID())
+  );
+  const noteNumberByID = createMemo(
+    () => new Map(numberedActiveItems().map((entry) => [entry.item.note_id, entry.label]))
   );
   const trashGroups = createMemo(() => groupTrashItems(snapshot().trash_items));
   const trashCount = createMemo(() => snapshot().trash_items.length);
@@ -178,6 +193,24 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     const noteID = editorNoteID();
     return noteID ? snapshot().items.find((item) => item.note_id === noteID) : undefined;
   });
+  const digitShortcutsBlocked = createMemo(
+    () =>
+      Boolean(
+        editorNoteID() ||
+          manualPasteTarget() ||
+          renamingTopicID() ||
+          contextMenu() ||
+          trashOpen()
+      )
+  );
+  const pendingShortcutNoteID = createMemo(() => {
+    const sequence = pendingDigitSequence();
+    if (!sequence) return null;
+
+    const resolution = resolveNotesDigitSequence(sequence, numberedActiveItems());
+    if (resolution.kind !== 'pending') return null;
+    return resolution.exactMatch?.item.note_id ?? null;
+  });
   const hasLiveNote = (noteID: string) =>
     untrack(() => snapshot().items.some((item) => item.note_id === noteID));
   const issueNoteOperationToken = () => {
@@ -233,6 +266,14 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     if (copiedResetTimer === undefined) return;
     window.clearTimeout(copiedResetTimer);
     copiedResetTimer = undefined;
+  };
+
+  const clearPendingDigitState = () => {
+    if (pendingDigitTimer !== undefined) {
+      window.clearTimeout(pendingDigitTimer);
+      pendingDigitTimer = undefined;
+    }
+    setPendingDigitSequence('');
   };
 
   const seedTransientMoveProjection = (noteID: string, position: { x: number; y: number }) => {
@@ -621,6 +662,79 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     }, 1100);
   };
 
+  const copyNumberedNote = async (entry: NotesNumberedItem) => {
+    clearPendingDigitState();
+
+    const clipboardText = normalizeNoteText(entry.item.body);
+    if (!clipboardText) {
+      notifications.info('Nothing to copy', `Note #${entry.label} has no body text.`);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(clipboardText);
+      markCopied(entry.item.note_id);
+      notifications.success('Copied', `Note #${entry.label} copied to clipboard.`);
+    } catch {
+      notifications.error('Copy failed', 'Clipboard write was not available.');
+    }
+  };
+
+  const schedulePendingDigitSequence = (sequence: string) => {
+    if (pendingDigitTimer !== undefined) {
+      window.clearTimeout(pendingDigitTimer);
+    }
+
+    setPendingDigitSequence(sequence);
+    pendingDigitTimer = window.setTimeout(() => {
+      pendingDigitTimer = undefined;
+      if (untrack(pendingDigitSequence) !== sequence) return;
+
+      setPendingDigitSequence('');
+      const resolution = resolveNotesDigitSequence(sequence, untrack(numberedActiveItems));
+      if (resolution.kind === 'ready') {
+        void copyNumberedNote(resolution.match);
+        return;
+      }
+      if (resolution.kind === 'pending' && resolution.exactMatch) {
+        void copyNumberedNote(resolution.exactMatch);
+      }
+    }, NOTE_DIGIT_SEQUENCE_TIMEOUT_MS);
+  };
+
+  const handleDigitShortcutResolution = (sequence: string): boolean => {
+    const resolution = resolveNotesDigitSequence(sequence, numberedActiveItems());
+    if (resolution.kind === 'invalid') {
+      return false;
+    }
+    if (resolution.kind === 'ready') {
+      clearPendingDigitState();
+      void copyNumberedNote(resolution.match);
+      return true;
+    }
+
+    schedulePendingDigitSequence(sequence);
+    return true;
+  };
+
+  const handleDigitShortcut = (digit: string) => {
+    const currentSequence = pendingDigitSequence();
+    const nextSequence = `${currentSequence}${digit}`;
+
+    if (handleDigitShortcutResolution(currentSequence ? nextSequence : digit)) {
+      return;
+    }
+
+    if (!currentSequence || digit === '0') {
+      clearPendingDigitState();
+      return;
+    }
+
+    if (!handleDigitShortcutResolution(digit)) {
+      clearPendingDigitState();
+    }
+  };
+
   const startOptimisticFront = (noteID: string) => {
     setOptimisticFrontNoteID(noteID);
   };
@@ -646,11 +760,13 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   };
 
   const openEditor = (noteID: string) => {
+    clearPendingDigitState();
     setContextMenu(null);
     setEditorNoteID(noteID);
   };
 
   const handleCopyNote = async (item: NotesItem) => {
+    clearPendingDigitState();
     const clipboardText = normalizeNoteText(item.body);
     if (!clipboardText) {
       setContextMenu(null);
@@ -1001,6 +1117,29 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   });
 
   createEffect(() => {
+    if (options.open) return;
+    clearCopiedState();
+    clearPendingDigitState();
+    setCopiedNoteID(null);
+  });
+
+  createEffect(() => {
+    if (!pendingDigitSequence()) return;
+    if (digitShortcutsBlocked()) {
+      clearPendingDigitState();
+    }
+  });
+
+  createEffect(() => {
+    const sequence = pendingDigitSequence();
+    if (!sequence) return;
+
+    if (resolveNotesDigitSequence(sequence, numberedActiveItems()).kind === 'invalid') {
+      clearPendingDigitState();
+    }
+  });
+
+  createEffect(() => {
     const liveItems = snapshot().items;
     const projections = transientMoveProjections();
     if (projections.size === 0) return;
@@ -1070,6 +1209,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
 
   onCleanup(() => {
     clearCopiedState();
+    clearPendingDigitState();
     clearOverviewNavigation(false);
   });
 
@@ -1108,6 +1248,8 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       overviewOpen,
       optimisticFrontNoteID,
       copiedNoteID,
+      noteNumberByID,
+      pendingShortcutNoteID,
       setCanvasFrameRef,
       commitViewport,
       openCanvasContextMenu,
@@ -1171,6 +1313,11 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
       setText: setManualPasteText,
       close: closeManualPaste,
       confirm: confirmManualPaste,
+    },
+    shortcuts: {
+      blocked: digitShortcutsBlocked,
+      handleDigitShortcut,
+      clearPendingDigitState,
     },
     handleCloseRequest,
   };

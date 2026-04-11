@@ -144,6 +144,7 @@
 5. 任何热路径组件禁止直接使用无约束的 `transition-all`
 6. 如果组件确实需要布局动画，必须证明该动画不会和热交互同时发生，或者必须受 `data-floe-hot-interaction` 保护
 7. 对于 shell-owned sidebar 的单次显隐切换，如果产品想禁用该次 width motion，必须通过 shared `visibilityMotion` contract，而不是添加产品私有 class hack
+8. 像 Notes 数字复制这类“依赖 overlay 语义 + 焦点/输入状态 + 共享视觉反馈”的键盘 affordance，必须收敛在 shared overlay boundary 中统一判定，不允许在下游产品层通过 DOM decorate + document 监听重复实现
 
 ### 3.5 文件浏览浮层与几何交互
 
@@ -215,6 +216,7 @@
 - [x] Notes note drag 改成 note-local preview -> release commit
 - [x] Notes minimap / overview navigation 改成 local viewport preview -> release commit
 - [x] Notes hot surfaces 标记 `data-floe-geometry-surface` 并接入共享热交互防护
+- [x] Notes 数字编号 / digit-copy 统一收敛到 shared overlay model + boundary gate，避免下游重复接管快捷键语义
 
 ### 5.5 拖拽 / resize 统一
 

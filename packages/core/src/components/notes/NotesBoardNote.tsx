@@ -29,7 +29,9 @@ interface LocalDragState {
 export interface NotesBoardNoteProps {
   item: NotesItem;
   copied: boolean;
+  numberLabel: string | null;
   optimisticFront: boolean;
+  shortcutPending: boolean;
   topZIndex: number;
   viewportScale: number;
   onSeedMoveProjection: (noteID: string, position: NotesPoint) => void;
@@ -167,6 +169,7 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
         'is-copied': props.copied,
         'is-dragging': isDragging(),
         'has-title': hasTitle(),
+        'is-shortcut-pending': props.shortcutPending,
       }}
       data-floe-geometry-surface="notes-note"
       data-floe-notes-note-id={props.item.note_id}
@@ -191,16 +194,28 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
     >
       <div class="notes-note__surface">
         <header class="notes-note__header">
-          <button
-            type="button"
-            class="notes-note__drag"
-            aria-label="Drag note"
-            data-floe-canvas-interactive="true"
-            data-floe-notes-front-skip="true"
-            onPointerDown={beginDrag}
-          >
-            <GripVertical class="w-3.5 h-3.5" />
-          </button>
+          <div class="notes-note__lead">
+            <button
+              type="button"
+              class="notes-note__drag"
+              aria-label="Drag note"
+              data-floe-canvas-interactive="true"
+              data-floe-notes-front-skip="true"
+              onPointerDown={beginDrag}
+            >
+              <GripVertical class="w-3.5 h-3.5" />
+            </button>
+
+            {props.numberLabel ? (
+              <div
+                class="notes-note__number"
+                data-floe-notes-note-number={props.numberLabel}
+                aria-hidden="true"
+              >
+                <span class="notes-note__number-key">{props.numberLabel}</span>
+              </div>
+            ) : null}
+          </div>
 
           <div class="notes-note__actions">
             <button

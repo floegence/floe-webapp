@@ -130,6 +130,32 @@ function baseItem(overrides: Partial<NotesItem> = {}): NotesItem {
   };
 }
 
+function buildTopicItems(
+  count: number,
+  overrides?: {
+    topicID?: string;
+    startCreatedAt?: number;
+  }
+): NotesItem[] {
+  const topicID = overrides?.topicID ?? 'topic-1';
+  const startCreatedAt = overrides?.startCreatedAt ?? 1;
+  return Array.from({ length: count }, (_, index) =>
+    baseItem({
+      note_id: `note-${index + 1}`,
+      topic_id: topicID,
+      title: '',
+      body: `Body ${index + 1}`,
+      preview_text: `Body ${index + 1}`,
+      character_count: `Body ${index + 1}`.length,
+      created_at_unix_ms: startCreatedAt + index,
+      updated_at_unix_ms: startCreatedAt + index,
+      z_index: index + 1,
+      x: 120 + index * 24,
+      y: 90 + index * 16,
+    })
+  );
+}
+
 function toTrashItem(item: NotesItem): NotesTrashItem {
   return {
     ...item,
@@ -820,6 +846,365 @@ describe('NotesOverlay', () => {
     expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
     expect(host.textContent).not.toContain('Copied');
     expect(document.body.querySelector('.notes-flyout--editor')).toBeTruthy();
+  });
+
+  it('renders continuous note numbers and renumbers after a note is deleted', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      topics: [
+        baseSnapshot().topics[0]!,
+        {
+          ...baseSnapshot().topics[0]!,
+          topic_id: 'topic-2',
+          name: 'Archive',
+          sort_order: 2,
+        },
+      ],
+      items: [
+        baseItem({
+          note_id: 'note-2',
+          body: 'Later note',
+          preview_text: 'Later note',
+          character_count: 'Later note'.length,
+          created_at_unix_ms: 6,
+          updated_at_unix_ms: 6,
+          z_index: 2,
+        }),
+        baseItem({
+          note_id: 'note-1',
+          body: 'Earlier note',
+          preview_text: 'Earlier note',
+          character_count: 'Earlier note'.length,
+          created_at_unix_ms: 3,
+          updated_at_unix_ms: 3,
+          z_index: 1,
+        }),
+        baseItem({
+          note_id: 'note-3',
+          topic_id: 'topic-2',
+          body: 'Other topic note',
+          preview_text: 'Other topic note',
+          character_count: 'Other topic note'.length,
+          created_at_unix_ms: 1,
+          updated_at_unix_ms: 1,
+          z_index: 1,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
+    await settle();
+
+    const firstNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const secondNote = host.querySelector('[data-floe-notes-note-id="note-2"]') as HTMLElement | null;
+    expect(firstNote?.querySelector('[data-floe-notes-note-number="1"]')).toBeTruthy();
+    expect(secondNote?.querySelector('[data-floe-notes-note-number="2"]')).toBeTruthy();
+    expect(host.querySelector('[data-floe-notes-note-id="note-3"]')).toBeNull();
+
+    await state.controller.deleteNote('note-1');
+    await settle();
+
+    const renumberedSecondNote = host.querySelector(
+      '[data-floe-notes-note-id="note-2"]'
+    ) as HTMLElement | null;
+    expect(renumberedSecondNote?.querySelector('[data-floe-notes-note-number="1"]')).toBeTruthy();
+  });
+
+  it('copies the matching note when a digit shortcut is pressed in browse mode', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: [
+        baseItem({
+          note_id: 'note-1',
+          body: 'First body',
+          preview_text: 'First body',
+          character_count: 'First body'.length,
+          created_at_unix_ms: 1,
+          updated_at_unix_ms: 1,
+          z_index: 1,
+        }),
+        baseItem({
+          note_id: 'note-2',
+          body: 'Second body',
+          preview_text: 'Second body',
+          character_count: 'Second body'.length,
+          created_at_unix_ms: 2,
+          updated_at_unix_ms: 2,
+          z_index: 2,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
+
+    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+    expect(canvas).toBeTruthy();
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 3,
+      })
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+      'Second body'
+    );
+    expect(notificationState.success).toHaveBeenCalledWith('Copied', 'Note #2 copied to clipboard.');
+    expect(
+      host
+        .querySelector('[data-floe-notes-note-id="note-2"]')
+        ?.classList.contains('is-copied')
+    ).toBe(true);
+  });
+
+  it('waits for another digit when the current shortcut prefix is ambiguous', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: buildTopicItems(12),
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
+
+    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 4,
+      })
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      host
+        .querySelector('[data-floe-notes-note-id="note-1"]')
+        ?.classList.contains('is-shortcut-pending')
+    ).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+      'Body 12'
+    );
+    expect(notificationState.success).toHaveBeenCalledWith('Copied', 'Note #12 copied to clipboard.');
+  });
+
+  it('does not trigger digit shortcuts before the user enters canvas browse mode in modal interaction', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: buildTopicItems(2),
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
+    await settle();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+
+    const closeButton = host.querySelector(
+      'button[aria-label="Close notes overlay"]'
+    ) as HTMLButtonElement | null;
+    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+    closeButton?.blur();
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 5,
+      })
+    );
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
+      'Body 1'
+    );
+  });
+
+  it('disables digit shortcuts while the user is typing in notes inputs', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: buildTopicItems(2),
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
+
+    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 6,
+      })
+    );
+
+    const topicInput = host.querySelector('input[placeholder="Add topic"]') as HTMLInputElement | null;
+    expect(topicInput).toBeTruthy();
+    topicInput!.focus();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(notificationState.success).not.toHaveBeenCalled();
+  });
+
+  it('disables digit shortcuts while the note editor is open', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: buildTopicItems(2),
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
+
+    const editButton = host.querySelector(
+      'button[aria-label="Edit note"]'
+    ) as HTMLButtonElement | null;
+    expect(editButton).toBeTruthy();
+    editButton!.click();
+    await settle();
+
+    expect(document.body.querySelector('.notes-flyout--editor')).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(notificationState.success).not.toHaveBeenCalled();
+  });
+
+  it('shows an info toast instead of opening the editor when a digit shortcut targets a title-only note', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: [
+        baseItem({
+          title: 'Color key',
+          body: '   ',
+          preview_text: '',
+          character_count: 0,
+        }),
+      ],
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
+
+    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 7,
+      })
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    await settle();
+
+    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(notificationState.info).toHaveBeenCalledWith('Nothing to copy', 'Note #1 has no body text.');
+    expect(document.body.querySelector('.notes-flyout--editor')).toBeNull();
   });
 
   it('keeps modal interaction semantics by default', async () => {

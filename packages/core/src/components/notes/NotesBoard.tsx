@@ -19,6 +19,8 @@ export interface NotesBoardProps {
   overviewOpen: boolean;
   optimisticFrontNoteID: string | null;
   copiedNoteID: string | null;
+  noteNumberByID: ReadonlyMap<string, string>;
+  pendingShortcutNoteID: string | null;
   setCanvasFrameRef: (el: HTMLDivElement | undefined) => void;
   onViewportCommit: (viewport: NotesViewport) => void;
   onCanvasContextMenu: (event: InfiniteCanvasContextMenuEvent) => void;
@@ -114,7 +116,7 @@ export function NotesBoard(props: NotesBoardProps) {
         </div>
       </Show>
 
-      <div class="notes-page__canvas" ref={props.setCanvasFrameRef}>
+      <div class="notes-page__canvas" data-floe-notes-digit-browse="true" ref={props.setCanvasFrameRef}>
         <InfiniteCanvas
           ariaLabel={`Canvas for ${props.activeTopicLabel}`}
           class="notes-canvas"
@@ -128,7 +130,9 @@ export function NotesBoard(props: NotesBoardProps) {
                 <NotesBoardNote
                   item={item}
                   copied={props.copiedNoteID === item.note_id}
+                  numberLabel={props.noteNumberByID.get(item.note_id) ?? null}
                   optimisticFront={props.optimisticFrontNoteID === item.note_id}
+                  shortcutPending={props.pendingShortcutNoteID === item.note_id}
                   topZIndex={props.topZIndex}
                   viewportScale={props.viewport.scale}
                   onSeedMoveProjection={props.onSeedMoveProjection}
