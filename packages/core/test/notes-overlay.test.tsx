@@ -45,7 +45,11 @@ vi.mock('solid-motionone', async () => {
       'exit',
       'transition',
     ]);
-    return <web.Dynamic component="div" ref={local.ref} {...rest}>{local.children}</web.Dynamic>;
+    return (
+      <web.Dynamic component="div" ref={local.ref} {...rest}>
+        {local.children}
+      </web.Dynamic>
+    );
   };
   const createMotionSection = (
     props: Record<string, unknown> & {
@@ -61,7 +65,11 @@ vi.mock('solid-motionone', async () => {
       'exit',
       'transition',
     ]);
-    return <web.Dynamic component="section" ref={local.ref} {...rest}>{local.children}</web.Dynamic>;
+    return (
+      <web.Dynamic component="section" ref={local.ref} {...rest}>
+        {local.children}
+      </web.Dynamic>
+    );
   };
 
   return {
@@ -182,12 +190,16 @@ function createController(snapshot = baseSnapshot()) {
       const note = untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
       if (!note) return;
       setCurrentSnapshot((value) =>
-        normalizeNotesSnapshot(replaceSnapshotTrashItem(removeSnapshotItem(value, noteID), toTrashItem(note)))
+        normalizeNotesSnapshot(
+          replaceSnapshotTrashItem(removeSnapshotItem(value, noteID), toTrashItem(note))
+        )
       );
     });
 
     const restoreNote = vi.fn(async (noteID: string) => {
-      const trashItem = untrack(currentSnapshot).trash_items.find((entry) => entry.note_id === noteID);
+      const trashItem = untrack(currentSnapshot).trash_items.find(
+        (entry) => entry.note_id === noteID
+      );
       if (!trashItem) {
         throw new Error('Trash note missing');
       }
@@ -214,7 +226,7 @@ function createController(snapshot = baseSnapshot()) {
               ...value,
               trash_items: value.trash_items.filter((item) => item.note_id !== noteID),
             },
-            restored,
+            restored
           ),
         })
       );
@@ -394,7 +406,7 @@ function createDeferredMoveController(snapshot = baseSnapshot()) {
           normalizeNotesSnapshot({
             ...value,
             items: value.items.filter((item) => item.note_id !== noteID),
-          }),
+          })
         );
       },
       resolveMove,
@@ -429,7 +441,9 @@ function createDeferredFrontController(snapshot = baseSnapshot()) {
       const note = untrack(currentSnapshot).items.find((entry) => entry.note_id === noteID);
       if (!note) return;
       setCurrentSnapshot((value) =>
-        normalizeNotesSnapshot(replaceSnapshotTrashItem(removeSnapshotItem(value, noteID), toTrashItem(note))),
+        normalizeNotesSnapshot(
+          replaceSnapshotTrashItem(removeSnapshotItem(value, noteID), toTrashItem(note))
+        )
       );
     });
 
@@ -527,7 +541,7 @@ function createDeferredFrontTopicDeleteController(snapshot: NotesSnapshot) {
                 topic_id: topicID,
               })),
           ],
-        }),
+        })
       );
       setActiveTopicID((current) => (current === topicID ? 'topic-2' : current));
       return true;
@@ -594,9 +608,7 @@ async function settle(): Promise<void> {
   await Promise.resolve();
   await new Promise((resolve) => window.setTimeout(resolve, 0));
   if (typeof requestAnimationFrame !== 'undefined') {
-    await new Promise((resolve) =>
-      requestAnimationFrame(() => window.setTimeout(resolve, 0)),
-    );
+    await new Promise((resolve) => requestAnimationFrame(() => window.setTimeout(resolve, 0)));
   }
 }
 
@@ -631,7 +643,7 @@ function mockCanvasFrameRect(host: HTMLElement): void {
 }
 
 function mockElementsFromPoint(
-  resolver: (clientX: number, clientY: number) => Element[],
+  resolver: (clientX: number, clientY: number) => Element[]
 ): () => void {
   const original = document.elementsFromPoint;
   Object.defineProperty(document, 'elementsFromPoint', {
@@ -648,11 +660,17 @@ function mockElementsFromPoint(
       return;
     }
 
-    delete (document as Document & { elementsFromPoint?: Document['elementsFromPoint'] }).elementsFromPoint;
+    delete (document as Document & { elementsFromPoint?: Document['elementsFromPoint'] })
+      .elementsFromPoint;
   };
 }
 
-function dragNote(handle: HTMLButtonElement, pointerId: number, nextClientX: number, nextClientY: number) {
+function dragNote(
+  handle: HTMLButtonElement,
+  pointerId: number,
+  nextClientX: number,
+  nextClientY: number
+) {
   handle.dispatchEvent(
     new PointerEvent('pointerdown', {
       bubbles: true,
@@ -660,7 +678,7 @@ function dragNote(handle: HTMLButtonElement, pointerId: number, nextClientX: num
       clientX: 20,
       clientY: 24,
       pointerId,
-    }),
+    })
   );
   window.dispatchEvent(
     new PointerEvent('pointermove', {
@@ -668,7 +686,7 @@ function dragNote(handle: HTMLButtonElement, pointerId: number, nextClientX: num
       clientX: nextClientX,
       clientY: nextClientY,
       pointerId,
-    }),
+    })
   );
   window.dispatchEvent(
     new PointerEvent('pointerup', {
@@ -677,7 +695,7 @@ function dragNote(handle: HTMLButtonElement, pointerId: number, nextClientX: num
       clientX: nextClientX,
       clientY: nextClientY,
       pointerId,
-    }),
+    })
   );
 }
 
@@ -725,23 +743,29 @@ describe('NotesOverlay', () => {
 
   beforeEach(() => {
     if (typeof PointerEvent === 'undefined') {
-      (globalThis as typeof globalThis & { PointerEvent?: typeof MouseEvent }).PointerEvent = MouseEvent as typeof PointerEvent;
+      (globalThis as typeof globalThis & { PointerEvent?: typeof MouseEvent }).PointerEvent =
+        MouseEvent as typeof PointerEvent;
     }
     if (typeof ResizeObserver === 'undefined') {
-      (globalThis as typeof globalThis & { ResizeObserver?: typeof ResizeObserver }).ResizeObserver = class {
+      (
+        globalThis as typeof globalThis & { ResizeObserver?: typeof ResizeObserver }
+      ).ResizeObserver = class {
         observe() {}
         disconnect() {}
         unobserve() {}
       } as unknown as typeof ResizeObserver;
     }
     if (!HTMLElement.prototype.setPointerCapture) {
-      HTMLElement.prototype.setPointerCapture = (() => undefined) as typeof HTMLElement.prototype.setPointerCapture;
+      HTMLElement.prototype.setPointerCapture = (() =>
+        undefined) as typeof HTMLElement.prototype.setPointerCapture;
     }
     if (!HTMLElement.prototype.releasePointerCapture) {
-      HTMLElement.prototype.releasePointerCapture = (() => undefined) as typeof HTMLElement.prototype.releasePointerCapture;
+      HTMLElement.prototype.releasePointerCapture = (() =>
+        undefined) as typeof HTMLElement.prototype.releasePointerCapture;
     }
     if (!HTMLElement.prototype.hasPointerCapture) {
-      HTMLElement.prototype.hasPointerCapture = (() => true) as typeof HTMLElement.prototype.hasPointerCapture;
+      HTMLElement.prototype.hasPointerCapture = (() =>
+        true) as typeof HTMLElement.prototype.hasPointerCapture;
     }
 
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 });
@@ -773,7 +797,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -781,7 +808,9 @@ describe('NotesOverlay', () => {
     noteBody!.click();
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Primary note body');
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
     expect(state.bringNoteToFront).toHaveBeenCalledTimes(1);
     expect(host.textContent).toContain('Copied');
@@ -803,7 +832,10 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -811,10 +843,12 @@ describe('NotesOverlay', () => {
     noteBody!.click();
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith('Primary note body');
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalledWith(
-      'Launch checklist\n\nPrimary note body'
-    );
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Primary note body');
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalledWith('Launch checklist\n\nPrimary note body');
     expect(host.textContent).toContain('Launch checklist');
     expect(host.textContent).toContain('Copied');
   });
@@ -835,7 +869,10 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
     expect(noteBody).toBeTruthy();
@@ -843,7 +880,9 @@ describe('NotesOverlay', () => {
     noteBody!.click();
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
     expect(host.textContent).not.toContain('Copied');
     expect(document.body.querySelector('.notes-flyout--editor')).toBeTruthy();
   });
@@ -901,8 +940,12 @@ describe('NotesOverlay', () => {
     );
     await settle();
 
-    const firstNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
-    const secondNote = host.querySelector('[data-floe-notes-note-id="note-2"]') as HTMLElement | null;
+    const firstNote = host.querySelector(
+      '[data-floe-notes-note-id="note-1"]'
+    ) as HTMLElement | null;
+    const secondNote = host.querySelector(
+      '[data-floe-notes-note-id="note-2"]'
+    ) as HTMLElement | null;
     expect(firstNote?.querySelector('[data-floe-notes-note-number="1"]')).toBeTruthy();
     expect(secondNote?.querySelector('[data-floe-notes-note-number="2"]')).toBeTruthy();
     expect(host.querySelector('[data-floe-notes-note-id="note-3"]')).toBeNull();
@@ -916,7 +959,7 @@ describe('NotesOverlay', () => {
     expect(renumberedSecondNote?.querySelector('[data-floe-notes-note-number="1"]')).toBeTruthy();
   });
 
-  it('copies the matching note when a digit shortcut is pressed in browse mode', async () => {
+  it('copies the matching note as soon as Notes is open', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const state = createController({
@@ -957,29 +1000,20 @@ describe('NotesOverlay', () => {
     );
     await settle();
 
-    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
-    expect(canvas).toBeTruthy();
-    canvas!.dispatchEvent(
-      new PointerEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-        clientX: 40,
-        clientY: 50,
-        pointerId: 3,
-      })
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true })
     );
-
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true }));
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
-      'Second body'
-    );
-    expect(notificationState.success).toHaveBeenCalledWith('Copied', 'Note #2 copied to clipboard.');
     expect(
-      host
-        .querySelector('[data-floe-notes-note-id="note-2"]')
-        ?.classList.contains('is-copied')
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Second body');
+    expect(notificationState.success).toHaveBeenCalledWith(
+      'Copied',
+      'Note #2 copied to clipboard.'
+    );
+    expect(
+      host.querySelector('[data-floe-notes-note-id="note-2"]')?.classList.contains('is-copied')
     ).toBe(true);
   });
 
@@ -1005,37 +1039,35 @@ describe('NotesOverlay', () => {
     );
     await settle();
 
-    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
-    canvas!.dispatchEvent(
-      new PointerEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-        clientX: 40,
-        clientY: 50,
-        pointerId: 4,
-      })
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true })
     );
-
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
     expect(
       host
         .querySelector('[data-floe-notes-note-id="note-1"]')
         ?.classList.contains('is-shortcut-pending')
     ).toBe(true);
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
-      'Body 12'
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Body 12');
+    expect(notificationState.success).toHaveBeenCalledWith(
+      'Copied',
+      'Note #12 copied to clipboard.'
     );
-    expect(notificationState.success).toHaveBeenCalledWith('Copied', 'Note #12 copied to clipboard.');
   });
 
-  it('does not trigger digit shortcuts before the user enters canvas browse mode in modal interaction', async () => {
+  it('triggers digit shortcuts immediately after the overlay opens in modal interaction', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const state = createController({
@@ -1050,31 +1082,52 @@ describe('NotesOverlay', () => {
     );
     await settle();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Body 1');
+  });
+
+  it('keeps digit shortcuts active when focus leaves the canvas surface', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const state = createController({
+      ...baseSnapshot(),
+      items: buildTopicItems(2),
+    });
+    disposers.push(state.dispose);
+
+    mount(
+      () => (
+        <NotesOverlay
+          open
+          controller={state.controller}
+          onClose={() => undefined}
+          interactionMode="floating"
+        />
+      ),
+      host
+    );
+    await settle();
 
     const closeButton = host.querySelector(
       'button[aria-label="Close notes overlay"]'
     ) as HTMLButtonElement | null;
-    const canvas = host.querySelector('.notes-page__canvas') as HTMLDivElement | null;
-    closeButton?.blur();
-    canvas!.dispatchEvent(
-      new PointerEvent('pointerdown', {
-        bubbles: true,
-        button: 0,
-        clientX: 40,
-        clientY: 50,
-        pointerId: 5,
-      })
+    expect(closeButton).toBeTruthy();
+    closeButton!.focus();
+
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '2', bubbles: true, cancelable: true })
     );
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalledWith(
-      'Body 1'
-    );
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).toHaveBeenCalledWith('Body 2');
   });
 
   it('disables digit shortcuts while the user is typing in notes inputs', async () => {
@@ -1110,14 +1163,20 @@ describe('NotesOverlay', () => {
       })
     );
 
-    const topicInput = host.querySelector('input[placeholder="Add topic"]') as HTMLInputElement | null;
+    const topicInput = host.querySelector(
+      'input[placeholder="Add topic"]'
+    ) as HTMLInputElement | null;
     expect(topicInput).toBeTruthy();
     topicInput!.focus();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
     expect(notificationState.success).not.toHaveBeenCalled();
   });
 
@@ -1152,10 +1211,14 @@ describe('NotesOverlay', () => {
 
     expect(document.body.querySelector('.notes-flyout--editor')).toBeTruthy();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
     expect(notificationState.success).not.toHaveBeenCalled();
   });
 
@@ -1199,11 +1262,18 @@ describe('NotesOverlay', () => {
       })
     );
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true }));
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '1', bubbles: true, cancelable: true })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
-    expect(notificationState.info).toHaveBeenCalledWith('Nothing to copy', 'Note #1 has no body text.');
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
+    expect(notificationState.info).toHaveBeenCalledWith(
+      'Nothing to copy',
+      'Note #1 has no body text.'
+    );
     expect(document.body.querySelector('.notes-flyout--editor')).toBeNull();
   });
 
@@ -1266,7 +1336,7 @@ describe('NotesOverlay', () => {
           interactionMode="floating"
         />
       ),
-      host,
+      host
     );
     await settle();
 
@@ -1308,7 +1378,7 @@ describe('NotesOverlay', () => {
           interactionMode="floating"
         />
       ),
-      host,
+      host
     );
     await settle();
 
@@ -1327,7 +1397,7 @@ describe('NotesOverlay', () => {
         metaKey: true,
         bubbles: true,
         cancelable: true,
-      }),
+      })
     );
     noteBody!.dispatchEvent(
       new KeyboardEvent('keydown', {
@@ -1336,7 +1406,7 @@ describe('NotesOverlay', () => {
         metaKey: true,
         bubbles: true,
         cancelable: true,
-      }),
+      })
     );
 
     expect(bubbleSpy.mock.calls.map(([key]) => key)).toEqual(['k']);
@@ -1360,7 +1430,7 @@ describe('NotesOverlay', () => {
           allowGlobalHotkeys={['mod+.']}
         />
       ),
-      host,
+      host
     );
     await settle();
 
@@ -1368,7 +1438,9 @@ describe('NotesOverlay', () => {
     const bubbleHandler = (event: KeyboardEvent) => bubbleSpy(event.key);
     window.addEventListener('keydown', bubbleHandler);
 
-    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    const dragHandle = host.querySelector(
+      'button[aria-label="Drag note"]'
+    ) as HTMLButtonElement | null;
     expect(dragHandle).toBeTruthy();
 
     dragHandle!.focus();
@@ -1379,7 +1451,7 @@ describe('NotesOverlay', () => {
         metaKey: true,
         bubbles: true,
         cancelable: true,
-      }),
+      })
     );
 
     expect(bubbleSpy.mock.calls.map(([key]) => key)).toEqual(['.']);
@@ -1393,7 +1465,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
@@ -1413,7 +1488,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1444,7 +1522,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1474,7 +1555,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1487,7 +1571,7 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 240,
         clientY: 160,
-      }),
+      })
     );
     await settle();
 
@@ -1506,7 +1590,7 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 412,
         clientY: 286,
-      }),
+      })
     );
     await settle();
     restoreElementsFromPoint();
@@ -1545,7 +1629,10 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1561,7 +1648,7 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 260,
         clientY: 180,
-      }),
+      })
     );
     await settle();
 
@@ -1576,7 +1663,7 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 480,
         clientY: 240,
-      }),
+      })
     );
     await settle();
     restoreElementsFromPoint();
@@ -1595,10 +1682,15 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
-    const editButton = host.querySelector('button[aria-label="Edit note"]') as HTMLButtonElement | null;
+    const editButton = host.querySelector(
+      'button[aria-label="Edit note"]'
+    ) as HTMLButtonElement | null;
     expect(editButton).toBeTruthy();
 
     editButton!.click();
@@ -1626,17 +1718,21 @@ describe('NotesOverlay', () => {
           interactionMode="floating"
         />
       ),
-      host,
+      host
     );
     await settle();
 
-    const editButton = host.querySelector('button[aria-label="Edit note"]') as HTMLButtonElement | null;
+    const editButton = host.querySelector(
+      'button[aria-label="Edit note"]'
+    ) as HTMLButtonElement | null;
     expect(editButton).toBeTruthy();
 
     editButton!.click();
     await settle();
 
-    const editorTextarea = document.body.querySelector('.notes-flyout--editor textarea') as HTMLTextAreaElement | null;
+    const editorTextarea = document.body.querySelector(
+      '.notes-flyout--editor textarea'
+    ) as HTMLTextAreaElement | null;
     expect(editorTextarea).toBeTruthy();
     editorTextarea!.focus();
 
@@ -1675,7 +1771,7 @@ describe('NotesOverlay', () => {
           interactionMode="floating"
         />
       ),
-      host,
+      host
     );
     await settle();
 
@@ -1701,7 +1797,7 @@ describe('NotesOverlay', () => {
           interactionMode="floating"
         />
       ),
-      host,
+      host
     );
     await settle();
     mockCanvasFrameRect(host);
@@ -1715,7 +1811,7 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 240,
         clientY: 160,
-      }),
+      })
     );
     await settle();
 
@@ -1735,7 +1831,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
@@ -1743,12 +1842,32 @@ describe('NotesOverlay', () => {
     expect(noteBody).toBeTruthy();
     expect(canvas).toBeTruthy();
 
-    noteBody!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 40, clientY: 50, pointerId: 2 }));
-    canvas!.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 78, clientY: 96, pointerId: 2 }));
-    canvas!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 78, clientY: 96, pointerId: 2 }));
+    noteBody!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 40,
+        clientY: 50,
+        pointerId: 2,
+      })
+    );
+    canvas!.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, clientX: 78, clientY: 96, pointerId: 2 })
+    );
+    canvas!.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        clientX: 78,
+        clientY: 96,
+        pointerId: 2,
+      })
+    );
     await settle();
 
-    expect((navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(
+      navigator.clipboard.writeText as unknown as ReturnType<typeof vi.fn>
+    ).not.toHaveBeenCalled();
     expect(host.textContent).not.toContain('Copied');
   });
 
@@ -1780,13 +1899,20 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
     const note = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
-    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
-    const overviewNote = host.querySelector('.notes-overview__note.notes-note--moss') as HTMLDivElement | null;
+    const dragHandle = host.querySelector(
+      'button[aria-label="Drag note"]'
+    ) as HTMLButtonElement | null;
+    const overviewNote = host.querySelector(
+      '.notes-overview__note.notes-note--moss'
+    ) as HTMLDivElement | null;
     expect(note).toBeTruthy();
     expect(dragHandle).toBeTruthy();
     expect(overviewNote).toBeTruthy();
@@ -1795,8 +1921,12 @@ describe('NotesOverlay', () => {
     dragNote(dragHandle!, 11, 110, 124);
     await settle();
 
-    const projectedNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
-    const projectedOverviewNote = host.querySelector('.notes-overview__note.notes-note--moss') as HTMLDivElement | null;
+    const projectedNote = host.querySelector(
+      '[data-floe-notes-note-id="note-1"]'
+    ) as HTMLElement | null;
+    const projectedOverviewNote = host.querySelector(
+      '.notes-overview__note.notes-note--moss'
+    ) as HTMLDivElement | null;
     expect(state.bringNoteToFront).toHaveBeenCalledWith('note-1');
     expect(state.bringNoteToFront).toHaveBeenCalledTimes(1);
     expect(state.updateNote).toHaveBeenCalledWith('note-1', { x: 210, y: 190 });
@@ -1806,7 +1936,9 @@ describe('NotesOverlay', () => {
     state.resolveMove();
     await settle();
 
-    const settledNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const settledNote = host.querySelector(
+      '[data-floe-notes-note-id="note-1"]'
+    ) as HTMLElement | null;
     expect(settledNote?.style.transform).toBe('translate(210px, 190px)');
   });
 
@@ -1816,23 +1948,32 @@ describe('NotesOverlay', () => {
     const state = createDeferredMoveController(baseSnapshot());
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     const note = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
-    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    const dragHandle = host.querySelector(
+      'button[aria-label="Drag note"]'
+    ) as HTMLButtonElement | null;
     expect(note).toBeTruthy();
     expect(dragHandle).toBeTruthy();
 
     dragNote(dragHandle!, 12, 110, 124);
     await settle();
-    const projectedNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const projectedNote = host.querySelector(
+      '[data-floe-notes-note-id="note-1"]'
+    ) as HTMLElement | null;
     expect(projectedNote?.style.transform).toBe('translate(210px, 190px)');
 
     state.rejectMove(new Error('Move failed'));
     await settle();
 
-    const reconciledNote = host.querySelector('[data-floe-notes-note-id="note-1"]') as HTMLElement | null;
+    const reconciledNote = host.querySelector(
+      '[data-floe-notes-note-id="note-1"]'
+    ) as HTMLElement | null;
     expect(reconciledNote?.style.transform).toBe('translate(120px, 90px)');
   });
 
@@ -1842,10 +1983,15 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
-    const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
+    const deleteButton = host.querySelector(
+      'button[aria-label="Move note to trash"]'
+    ) as HTMLButtonElement | null;
     expect(deleteButton).toBeTruthy();
     deleteButton!.click();
     await settle();
@@ -1855,9 +2001,9 @@ describe('NotesOverlay', () => {
     expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
     expect(document.body.textContent).toContain('Research');
 
-    const restoreButton = [...document.body.querySelectorAll('.notes-trash-note__actions button')].find(
-      (button) => button.textContent?.includes('Restore')
-    ) as HTMLButtonElement | undefined;
+    const restoreButton = [
+      ...document.body.querySelectorAll('.notes-trash-note__actions button'),
+    ].find((button) => button.textContent?.includes('Restore')) as HTMLButtonElement | undefined;
     expect(restoreButton).toBeTruthy();
     restoreButton!.click();
     await settle();
@@ -1872,7 +2018,10 @@ describe('NotesOverlay', () => {
     const state = createDeferredFrontController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1885,12 +2034,12 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 260,
         clientY: 180,
-      }),
+      })
     );
     await settle();
 
-    const deleteAction = Array.from(document.body.querySelectorAll('.notes-menu button')).find((button) =>
-      button.textContent?.includes('Delete'),
+    const deleteAction = Array.from(document.body.querySelectorAll('.notes-menu button')).find(
+      (button) => button.textContent?.includes('Delete')
     ) as HTMLButtonElement | undefined;
     expect(deleteAction).toBeTruthy();
 
@@ -1900,7 +2049,10 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(state.deleteNote).toHaveBeenCalledWith('note-1');
-    expect(notificationState.error).not.toHaveBeenCalledWith('Bring forward failed', 'note not found');
+    expect(notificationState.error).not.toHaveBeenCalledWith(
+      'Bring forward failed',
+      'note not found'
+    );
   });
 
   it('suppresses stale move errors after the note disappears while the move is pending', async () => {
@@ -1909,10 +2061,15 @@ describe('NotesOverlay', () => {
     const state = createDeferredMoveController(baseSnapshot());
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
-    const dragHandle = host.querySelector('button[aria-label="Drag note"]') as HTMLButtonElement | null;
+    const dragHandle = host.querySelector(
+      'button[aria-label="Drag note"]'
+    ) as HTMLButtonElement | null;
     expect(dragHandle).toBeTruthy();
 
     dragNote(dragHandle!, 13, 110, 124);
@@ -1946,7 +2103,10 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -1958,11 +2118,13 @@ describe('NotesOverlay', () => {
         cancelable: true,
         clientX: 260,
         clientY: 180,
-      }),
+      })
     );
     await settle();
 
-    const deleteTopicButton = host.querySelector('button[aria-label="Delete topic Research"]') as HTMLButtonElement | null;
+    const deleteTopicButton = host.querySelector(
+      'button[aria-label="Delete topic Research"]'
+    ) as HTMLButtonElement | null;
     expect(deleteTopicButton).toBeTruthy();
     deleteTopicButton!.click();
     await settle();
@@ -1971,7 +2133,10 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(state.deleteTopic).toHaveBeenCalledWith('topic-1');
-    expect(notificationState.error).not.toHaveBeenCalledWith('Bring forward failed', 'note not found');
+    expect(notificationState.error).not.toHaveBeenCalledWith(
+      'Bring forward failed',
+      'note not found'
+    );
   });
 
   it('still reports genuine bring-forward failures while the note remains live', async () => {
@@ -1984,7 +2149,10 @@ describe('NotesOverlay', () => {
     state.controller.bringNoteToFront = failingBring;
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     const noteBody = host.querySelector('.notes-note__body') as HTMLButtonElement | null;
@@ -1993,7 +2161,10 @@ describe('NotesOverlay', () => {
     await settle();
 
     expect(failingBring).toHaveBeenCalledWith('note-1');
-    expect(notificationState.error).toHaveBeenCalledWith('Bring forward failed', 'Front unavailable');
+    expect(notificationState.error).toHaveBeenCalledWith(
+      'Bring forward failed',
+      'Front unavailable'
+    );
   });
 
   it('keeps trash note actions rendered for long-content notes', async () => {
@@ -2016,7 +2187,10 @@ describe('NotesOverlay', () => {
     });
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     const toggle = host.querySelector('.notes-trash__toggle') as HTMLButtonElement | null;
@@ -2024,7 +2198,9 @@ describe('NotesOverlay', () => {
     toggle!.click();
     await settle();
 
-    const actions = document.body.querySelector('.notes-trash-note__actions') as HTMLDivElement | null;
+    const actions = document.body.querySelector(
+      '.notes-trash-note__actions'
+    ) as HTMLDivElement | null;
     expect(actions).toBeTruthy();
     expect(actions?.querySelectorAll('button')).toHaveLength(2);
     expect(actions?.textContent).toContain('Restore');
@@ -2038,7 +2214,10 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
     expect(host.querySelector('.notes-page__mobile-topic')).toBeTruthy();
@@ -2082,7 +2261,10 @@ describe('NotesOverlay', () => {
     const setup = createController();
     disposers.push(setup.dispose);
 
-    mount(() => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={setup.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
     mockCanvasFrameRect(host);
 
@@ -2105,15 +2287,33 @@ describe('NotesOverlay', () => {
     });
 
     const initialViewport = setup.viewport();
-    minimap!.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: 20, clientY: 18, pointerId: 7 }));
+    minimap!.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        clientX: 20,
+        clientY: 18,
+        pointerId: 7,
+      })
+    );
     await settle();
     const afterDownViewport = setup.viewport();
 
-    minimap!.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 138, clientY: 94, pointerId: 7 }));
+    minimap!.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, clientX: 138, clientY: 94, pointerId: 7 })
+    );
     await settle();
     const afterMoveViewport = setup.viewport();
 
-    minimap!.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0, clientX: 138, clientY: 94, pointerId: 7 }));
+    minimap!.dispatchEvent(
+      new PointerEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        clientX: 138,
+        clientY: 94,
+        pointerId: 7,
+      })
+    );
     await settle();
     const afterReleaseViewport = setup.viewport();
 
@@ -2128,17 +2328,22 @@ describe('NotesOverlay', () => {
     const state = createController();
     disposers.push(state.dispose);
 
-    mount(() => <NotesOverlay open controller={state.controller} onClose={() => undefined} />, host);
+    mount(
+      () => <NotesOverlay open controller={state.controller} onClose={() => undefined} />,
+      host
+    );
     await settle();
 
-    const deleteButton = host.querySelector('button[aria-label="Move note to trash"]') as HTMLButtonElement | null;
+    const deleteButton = host.querySelector(
+      'button[aria-label="Move note to trash"]'
+    ) as HTMLButtonElement | null;
     deleteButton!.click();
     await settle();
     expect(document.body.querySelector('.notes-trash__panel')).toBeTruthy();
 
-    const deleteNowButton = [...document.body.querySelectorAll('.notes-trash-note__actions button')].find(
-      (button) => button.textContent?.includes('Delete now')
-    ) as HTMLButtonElement | undefined;
+    const deleteNowButton = [
+      ...document.body.querySelectorAll('.notes-trash-note__actions button'),
+    ].find((button) => button.textContent?.includes('Delete now')) as HTMLButtonElement | undefined;
     expect(deleteNowButton).toBeTruthy();
     deleteNowButton!.click();
     await settle();

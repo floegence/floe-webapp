@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from 'solid-js';
+import { createEffect, createMemo, onCleanup, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
@@ -38,7 +38,6 @@ interface ResolvedNotesOverlayInteraction {
 }
 
 const NOTES_BOUNDARY_SELECTOR = '[data-floe-notes-boundary="true"]';
-const NOTES_DIGIT_BROWSE_SELECTOR = '[data-floe-notes-digit-browse="true"]';
 const NOTES_TYPING_TARGET_SELECTOR =
   'input, textarea, select, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"], [role="textbox"]';
 
@@ -56,20 +55,13 @@ function isWithinNotesBoundary(target: EventTarget | null): boolean {
   return Boolean(resolveBoundaryElement(target)?.closest(NOTES_BOUNDARY_SELECTOR));
 }
 
-function isWithinNotesDigitBrowseSurface(target: EventTarget | null): boolean {
-  return Boolean(resolveBoundaryElement(target)?.closest(NOTES_DIGIT_BROWSE_SELECTOR));
-}
-
 function isTypingTarget(target: EventTarget | null): boolean {
   return Boolean(resolveBoundaryElement(target)?.closest(NOTES_TYPING_TARGET_SELECTOR));
 }
 
 function isModifierOnlyKey(event: KeyboardEvent): boolean {
   return (
-    event.key === 'Shift' ||
-    event.key === 'Meta' ||
-    event.key === 'Alt' ||
-    event.key === 'Control'
+    event.key === 'Shift' || event.key === 'Meta' || event.key === 'Alt' || event.key === 'Control'
   );
 }
 
@@ -109,7 +101,6 @@ export function NotesOverlay(props: NotesOverlayProps) {
   const floe = useResolvedFloeConfig();
   const model = useNotesOverlayModel(props);
   let rootRef: HTMLElement | undefined;
-  const [keyboardBrowsePrimed, setKeyboardBrowsePrimed] = createSignal(false);
   const interaction = () => resolveNotesOverlayInteraction(props.interactionMode);
   const requestOverlayClose = () => props.onClose();
   const allowedFloatingHotkeys = createMemo<readonly string[]>(() => {
@@ -167,36 +158,12 @@ export function NotesOverlay(props: NotesOverlayProps) {
 
   createEffect(() => {
     if (props.open) return;
-    setKeyboardBrowsePrimed(false);
     model.shortcuts.clearPendingDigitState();
   });
 
   createEffect(() => {
     if (!props.open) return;
     if (typeof document === 'undefined') return;
-
-    const clearBrowsePrimedState = () => {
-      setKeyboardBrowsePrimed(false);
-      model.shortcuts.clearPendingDigitState();
-    };
-
-    const handlePointerDownCapture = (event: Event) => {
-      const insideBrowseSurface = isWithinNotesDigitBrowseSurface(event.target);
-      const insideBoundary = isWithinNotesBoundary(event.target);
-      setKeyboardBrowsePrimed(insideBrowseSurface);
-      if (!insideBoundary || !insideBrowseSurface) {
-        model.shortcuts.clearPendingDigitState();
-      }
-    };
-
-    const handleFocusInCapture = (event: FocusEvent) => {
-      const insideBrowseSurface = isWithinNotesDigitBrowseSurface(event.target);
-      const insideBoundary = isWithinNotesBoundary(event.target);
-      setKeyboardBrowsePrimed(insideBrowseSurface);
-      if (!insideBoundary || !insideBrowseSurface) {
-        model.shortcuts.clearPendingDigitState();
-      }
-    };
 
     const handleKeyDownCapture = (event: KeyboardEvent) => {
       const digit = resolveDigitKey(event);
@@ -208,13 +175,6 @@ export function NotesOverlay(props: NotesOverlayProps) {
       }
 
       const activeElement = document.activeElement;
-      const activeInsideBrowseSurface = isWithinNotesDigitBrowseSurface(activeElement);
-      const allowPrimedBodyTarget =
-        keyboardBrowsePrimed() &&
-        (!activeElement ||
-          activeElement === document.body ||
-          activeElement === document.documentElement ||
-          activeElement === rootRef);
       const shouldHandle =
         !event.defaultPrevented &&
         !event.repeat &&
@@ -224,11 +184,10 @@ export function NotesOverlay(props: NotesOverlayProps) {
         !event.metaKey &&
         !model.shortcuts.blocked() &&
         !isTypingTarget(event.target) &&
-        !isTypingTarget(activeElement) &&
-        (activeInsideBrowseSurface || allowPrimedBodyTarget);
+        !isTypingTarget(activeElement);
 
       if (!shouldHandle) {
-        clearBrowsePrimedState();
+        model.shortcuts.clearPendingDigitState();
         return;
       }
 
@@ -241,13 +200,9 @@ export function NotesOverlay(props: NotesOverlayProps) {
       model.shortcuts.handleDigitShortcut(digit);
     };
 
-    document.addEventListener('pointerdown', handlePointerDownCapture, true);
-    document.addEventListener('focusin', handleFocusInCapture, true);
     document.addEventListener('keydown', handleKeyDownCapture, true);
 
     onCleanup(() => {
-      document.removeEventListener('pointerdown', handlePointerDownCapture, true);
-      document.removeEventListener('focusin', handleFocusInCapture, true);
       document.removeEventListener('keydown', handleKeyDownCapture, true);
     });
   });

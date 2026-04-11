@@ -60,6 +60,13 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
   const previewText = createMemo(() =>
     bodyText() ? getNotePreviewText(props.item.body, metrics().preview_limit) : ''
   );
+  const numberBadgeStyle = createMemo<JSX.CSSProperties | undefined>(() =>
+    props.numberLabel
+      ? {
+          '--notes-number-length': `${Math.max(props.numberLabel.length, 1)}`,
+        }
+      : undefined
+  );
   const hasTitle = createMemo(() => titleText().length > 0);
   const hasBody = createMemo(() => bodyText().length > 0);
   const isEmpty = createMemo(() => !hasTitle() && !hasBody());
@@ -205,38 +212,6 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
             >
               <GripVertical class="w-3.5 h-3.5" />
             </button>
-
-            {props.numberLabel ? (
-              <div
-                class="notes-note__number"
-                data-floe-notes-note-number={props.numberLabel}
-                aria-hidden="true"
-              >
-                <span class="notes-note__number-key">{props.numberLabel}</span>
-              </div>
-            ) : null}
-          </div>
-
-          <div class="notes-note__actions">
-            <button
-              type="button"
-              class="notes-note__icon-button"
-              data-floe-canvas-interactive="true"
-              aria-label="Edit note"
-              onClick={() => props.onOpenEditor(props.item.note_id)}
-            >
-              <Pencil class="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              class="notes-note__icon-button is-danger"
-              data-floe-canvas-interactive="true"
-              data-floe-notes-front-skip="true"
-              aria-label="Move note to trash"
-              onClick={() => props.onMoveToTrash(props.item.note_id)}
-            >
-              <Trash class="w-3.5 h-3.5" />
-            </button>
           </div>
         </header>
 
@@ -272,6 +247,40 @@ export function NotesBoardNote(props: NotesBoardNoteProps) {
           </div>
         ) : null}
       </div>
+
+      <div class="notes-note__actions">
+        <button
+          type="button"
+          class="notes-note__icon-button"
+          data-floe-canvas-interactive="true"
+          aria-label="Edit note"
+          onClick={() => props.onOpenEditor(props.item.note_id)}
+        >
+          <Pencil class="w-3.5 h-3.5" />
+        </button>
+        <button
+          type="button"
+          class="notes-note__icon-button is-danger"
+          data-floe-canvas-interactive="true"
+          data-floe-notes-front-skip="true"
+          aria-label="Move note to trash"
+          onClick={() => props.onMoveToTrash(props.item.note_id)}
+        >
+          <Trash class="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {props.numberLabel ? (
+        <div
+          class="notes-note__number"
+          data-floe-notes-note-number={props.numberLabel}
+          data-floe-notes-note-number-length={props.numberLabel.length}
+          style={numberBadgeStyle()}
+          aria-hidden="true"
+        >
+          <span class="notes-note__number-key">{props.numberLabel}</span>
+        </div>
+      ) : null}
     </article>
   );
 }

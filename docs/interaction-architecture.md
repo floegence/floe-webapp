@@ -216,7 +216,7 @@
 - [x] Notes note drag 改成 note-local preview -> release commit
 - [x] Notes minimap / overview navigation 改成 local viewport preview -> release commit
 - [x] Notes hot surfaces 标记 `data-floe-geometry-surface` 并接入共享热交互防护
-- [x] Notes 数字编号 / digit-copy 统一收敛到 shared overlay model + boundary gate，避免下游重复接管快捷键语义
+- [x] Notes 数字编号 / digit-copy 统一收敛到 shared overlay model + overlay-wide key capture，避免下游重复接管快捷键语义
 
 ### 5.5 拖拽 / resize 统一
 

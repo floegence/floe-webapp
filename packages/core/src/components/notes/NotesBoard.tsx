@@ -57,7 +57,8 @@ export function NotesBoard(props: NotesBoardProps) {
                     <div class="notes-page__eyebrow">Active Topic</div>
                     <div class="notes-overlay__board-title">{topic().name}</div>
                     <div class="notes-overlay__board-meta">
-                      {props.activeItems.length} live note{props.activeItems.length === 1 ? '' : 's'}
+                      {props.activeItems.length} live note
+                      {props.activeItems.length === 1 ? '' : 's'}
                     </div>
                   </div>
                 </>
@@ -116,7 +117,7 @@ export function NotesBoard(props: NotesBoardProps) {
         </div>
       </Show>
 
-      <div class="notes-page__canvas" data-floe-notes-digit-browse="true" ref={props.setCanvasFrameRef}>
+      <div class="notes-page__canvas" ref={props.setCanvasFrameRef}>
         <InfiniteCanvas
           ariaLabel={`Canvas for ${props.activeTopicLabel}`}
           class="notes-canvas"

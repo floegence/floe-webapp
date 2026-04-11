@@ -692,6 +692,12 @@
     --notes-ink: color-mix(in srgb, var(--card-foreground) 92%, var(--notes-accent) 8%);
     --notes-ribbon: color-mix(in srgb, var(--notes-accent) 74%, var(--foreground) 26%);
     --notes-title-ink: color-mix(in srgb, var(--notes-ribbon) 82%, var(--card-foreground) 18%);
+    --notes-number-badge-top: -0.64rem;
+    --notes-number-badge-right: -0.38rem;
+    --notes-number-badge-size: 2.08rem;
+    --notes-number-base-font-size: 0.98rem;
+    --notes-number-step-font-size: 0.14rem;
+    --notes-action-rail-gap: 0.26rem;
     position: absolute;
     width: var(--note-width);
     height: var(--note-height);
@@ -890,30 +896,59 @@
   }
 
   .notes-note__number {
-    display: inline-flex;
-    align-items: center;
-    min-width: 1.7rem;
-    max-width: 3.2rem;
-    padding: 0 0.38rem;
-    border-radius: 0.42rem;
-    border: 1px solid color-mix(in srgb, var(--notes-accent) 18%, var(--notes-border));
-    background:
-      linear-gradient(180deg, color-mix(in srgb, white 16%, transparent), transparent 70%),
-      color-mix(in srgb, var(--background) 82%, transparent);
+    position: absolute;
+    top: var(--notes-number-badge-top);
+    right: var(--notes-number-badge-right);
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    width: var(--notes-number-badge-size);
+    height: var(--notes-number-badge-size);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--notes-ribbon) 78%, var(--foreground) 22%);
+    color: color-mix(in srgb, white 92%, var(--notes-accent) 8%);
+    pointer-events: none;
+    background: linear-gradient(180deg, color-mix(in srgb, white 16%, transparent), transparent 66%),
+      var(--notes-ribbon);
     box-shadow:
-      0 8px 18px color-mix(in srgb, var(--foreground) 7%, transparent),
-      0 1px 0 color-mix(in srgb, white 14%, transparent) inset;
+      0 12px 22px color-mix(in srgb, var(--notes-ribbon) 22%, transparent),
+      0 0 0 1px color-mix(in srgb, white 18%, transparent) inset;
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      filter 180ms ease;
   }
 
   .notes-note__number-key {
     width: 100%;
-    color: color-mix(in srgb, var(--notes-title-ink) 78%, var(--notes-ink));
+    padding: 0 0.1rem;
+    color: inherit;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    line-height: 1.6rem;
+    font-size: clamp(
+      0.42rem,
+      calc(
+        var(--notes-number-base-font-size) - (var(--notes-number-length, 1) - 1) *
+          var(--notes-number-step-font-size)
+      ),
+      var(--notes-number-base-font-size)
+    );
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+    line-height: 1;
     text-align: center;
+    text-shadow: 0 1px 1px color-mix(in srgb, black 18%, transparent);
+    transform: translateY(-0.01em);
+  }
+
+  .notes-note:hover .notes-note__number,
+  .notes-note:focus-within .notes-note__number {
+    transform: translateY(-1px) scale(1.035);
+    box-shadow:
+      0 14px 24px color-mix(in srgb, var(--notes-ribbon) 24%, transparent),
+      0 0 0 1px color-mix(in srgb, white 20%, transparent) inset;
+    filter: saturate(1.03);
   }
 
   .notes-note.is-shortcut-pending .notes-note__surface {
@@ -926,39 +961,73 @@
 
   .notes-note.is-shortcut-pending .notes-note__number {
     border-color: color-mix(in srgb, var(--primary) 32%, var(--notes-border));
-    background:
-      linear-gradient(180deg, color-mix(in srgb, white 18%, transparent), transparent 72%),
-      color-mix(in srgb, var(--primary) 10%, var(--background));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent),
+      0 14px 26px color-mix(in srgb, var(--primary) 18%, transparent),
+      0 0 0 1px color-mix(in srgb, white 22%, transparent) inset;
     animation: notes-shortcut-pending 650ms ease-in-out infinite;
   }
 
+  .notes-note.is-copied .notes-note__number {
+    border-color: color-mix(in srgb, var(--success) 48%, var(--notes-ribbon));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--success) 24%, transparent),
+      0 14px 26px color-mix(in srgb, var(--success) 18%, transparent),
+      0 0 0 1px color-mix(in srgb, white 22%, transparent) inset;
+  }
+
   .notes-note__actions {
+    position: absolute;
+    top: calc(
+      var(--notes-number-badge-top) + var(--notes-number-badge-size) + var(--notes-action-rail-gap)
+    );
+    right: var(--notes-number-badge-right);
+    z-index: 5;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.2rem;
+    gap: 0.22rem;
+    width: var(--notes-number-badge-size);
+    padding: 0.22rem 0;
+    border: 1px solid color-mix(in srgb, var(--notes-accent) 18%, var(--notes-border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--background) 80%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      0 14px 26px color-mix(in srgb, var(--foreground) 11%, transparent),
+      0 0 0 1px color-mix(in srgb, white 16%, transparent) inset;
     opacity: 0;
-    transform: translateY(-4px);
+    pointer-events: none;
+    transform: translateY(-6px) scale(0.92);
+    transform-origin: top center;
     transition:
       opacity 160ms ease,
-      transform 160ms ease;
+      transform 160ms ease,
+      box-shadow 160ms ease,
+      border-color 160ms ease;
   }
 
   .notes-note:hover .notes-note__actions,
   .notes-note:focus-within .notes-note__actions,
   .notes-note.is-copied .notes-note__actions {
     opacity: 1;
+    pointer-events: auto;
     transform: translateY(0);
   }
 
   .notes-note__icon-button {
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 0.34rem;
-    border: 1px solid transparent;
+    width: calc(var(--notes-number-badge-size) - 0.52rem);
+    height: calc(var(--notes-number-badge-size) - 0.52rem);
+    cursor: pointer;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--notes-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--background) 66%, transparent);
+    box-shadow: 0 1px 0 color-mix(in srgb, white 12%, transparent) inset;
   }
 
   .notes-note__icon-button:hover {
-    border-color: color-mix(in srgb, var(--notes-accent) 24%, var(--border));
+    border-color: color-mix(in srgb, var(--notes-accent) 30%, var(--border));
+    background: color-mix(in srgb, var(--background) 78%, transparent);
   }
 
   .notes-note__icon-button.is-danger:hover {
@@ -1023,13 +1092,12 @@
   .notes-note__title-block::before {
     bottom: -0.05rem;
     height: var(--notes-title-marker-soft-height);
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, currentColor 28%, white 72%) 0%,
-        color-mix(in srgb, currentColor 42%, white 58%) 45%,
-        color-mix(in srgb, currentColor 24%, transparent) 100%
-      );
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, currentColor 28%, white 72%) 0%,
+      color-mix(in srgb, currentColor 42%, white 58%) 45%,
+      color-mix(in srgb, currentColor 24%, transparent) 100%
+    );
     opacity: 0.52;
     filter: blur(0.065rem);
     transform: translateX(0.015rem) rotate(-0.6deg);
@@ -1038,13 +1106,12 @@
   .notes-note__title-block::after {
     bottom: 0.01rem;
     height: var(--notes-title-marker-height);
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, currentColor 52%, white 48%) 0%,
-        color-mix(in srgb, currentColor 88%, white 12%) 40%,
-        color-mix(in srgb, currentColor 76%, black 24%) 100%
-      );
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, currentColor 52%, white 48%) 0%,
+      color-mix(in srgb, currentColor 88%, white 12%) 40%,
+      color-mix(in srgb, currentColor 76%, black 24%) 100%
+    );
     opacity: 0.84;
     filter: saturate(0.94);
     transform: rotate(-0.95deg);
@@ -2460,6 +2527,11 @@
     --notes-border: color-mix(in srgb, var(--border) 78%, var(--notes-accent) 22%);
     --notes-ink: color-mix(in srgb, var(--card-foreground) 94%, var(--notes-accent) 6%);
     --notes-ribbon: color-mix(in srgb, var(--notes-accent) 78%, var(--foreground) 22%);
+    --notes-number-badge-top: -0.52rem;
+    --notes-number-badge-right: -0.32rem;
+    --notes-number-badge-size: 1.9rem;
+    --notes-number-base-font-size: 0.9rem;
+    --notes-number-step-font-size: 0.12rem;
   }
 
   .notes-note__surface {
@@ -2514,20 +2586,13 @@
   }
 
   .notes-note__icon-button {
-    width: 1.56rem;
-    height: 1.56rem;
-    border-radius: 0.36rem;
+    width: calc(var(--notes-number-badge-size) - 0.44rem);
+    height: calc(var(--notes-number-badge-size) - 0.44rem);
   }
 
   .notes-note__number {
-    min-width: 1.62rem;
-    padding: 0 0.34rem;
-    border-radius: 0.38rem;
-  }
-
-  .notes-note__number-key {
-    font-size: 0.64rem;
-    line-height: 1.46rem;
+    top: var(--notes-number-badge-top);
+    right: var(--notes-number-badge-right);
   }
 
   .notes-note__body {
