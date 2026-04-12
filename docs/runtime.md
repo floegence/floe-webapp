@@ -7,8 +7,9 @@ This repo provides an optional helper package for bootstrapping Flowersec E2EE d
 Best practice:
 
 - Keep low-level Flowersec building blocks in `@floegence/flowersec-core` (source of truth).
-- Keep Floe Webapp packages focused on UI/protocol glue (providers, contracts, typed RPC).
-- For proxy runtime mode (Service Worker + HTML injection + WS patch), integrate directly via `@floegence/flowersec-core/proxy`.
+- Keep Floe Webapp packages focused on UI/protocol glue plus reusable browser bootstrap orchestration.
+- Use `@floegence/floe-webapp-boot` for first-party browser bootstrap concerns such as `ArtifactSource`, shared reconnect config assembly, and shared `proxy.runtime` scope validation.
+- For proxy runtime mode (Service Worker + HTML injection + WS patch), keep the runtime itself integrated directly via `@floegence/flowersec-core/proxy`.
 
 ---
 
@@ -23,6 +24,15 @@ Exports:
 - `getSessionStorage(key)` / `setSessionStorage(key, value)` / `removeSessionStorage(key)`
 - `postMessageToOrigins(target, origins, message)`
 - `waitForMessage({ expectedOrigins, expectedSource, timeoutMs, accept })`
+- `createArtifactSourceFromFactory(getArtifact, kind?)`
+- `createFixedArtifactSource(artifact)`
+- `createControlplaneArtifactSource(config)`
+- `createEntryControlplaneArtifactSource(config)`
+- `createArtifactTunnelReconnectConfig(options)`
+- `createProxyRuntimeTunnelReconnectConfig(options)`
+- `createArtifactDirectReconnectConfig(options)`
+- `FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS`
+- `createBootstrapScopeResolvers(extra?)`
 
 ### Example: read payload from hash and clear it
 
@@ -59,6 +69,43 @@ const init = await waitForMessage({
 });
 ```
 
+### Example: artifact-first shared bootstrap
+
+```ts
+import {
+  createEntryControlplaneArtifactSource,
+  createProxyRuntimeTunnelReconnectConfig,
+} from '@floegence/floe-webapp-boot';
+
+const artifactSource = createEntryControlplaneArtifactSource({
+  baseUrl: 'https://region.example.com',
+  endpointId: 'env_demo',
+  entryTicket: '<entry-ticket>',
+  credentials: 'omit',
+  payload: {
+    floe_app: 'com.floegence.redeven.agent',
+  },
+});
+
+const reconnectConfig = createProxyRuntimeTunnelReconnectConfig({
+  artifactSource,
+  connect: {
+    handshakeTimeoutMs: 10_000,
+  },
+  autoReconnect: {
+    enabled: true,
+  },
+});
+```
+
+`ArtifactSource` is the shared boundary for browser bootstrap documents:
+
+- controlplane-backed sources (`createControlplaneArtifactSource`, `createEntryControlplaneArtifactSource`)
+- fixed artifacts (`createFixedArtifactSource`)
+- product-owned factories (`createArtifactSourceFromFactory`)
+
+This keeps `connect_artifact` acquisition reusable while leaving product policy outside the shared package.
+
 ---
 
 ## Flowersec proxy runtime (recommended entrypoints)
@@ -81,3 +128,9 @@ const swScript = createProxyServiceWorkerScript({
 
 await registerServiceWorkerAndEnsureControl({ scriptUrl: '/_proxy/sw.js', scope: '/' });
 ```
+
+Ownership boundary:
+
+- `@floegence/floe-webapp-boot` owns the browser bootstrap document helpers and first-party reconnect config assembly.
+- `@floegence/flowersec-core/proxy` still owns the proxy runtime itself.
+- Product repositories still own trusted-launcher routing, entry-ticket policy, recovery UX, and runtime-isolation payloads.

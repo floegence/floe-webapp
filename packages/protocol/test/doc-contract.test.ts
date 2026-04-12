@@ -11,6 +11,7 @@ describe('protocol docs', () => {
     const doc = readProtocolDoc();
 
     expect(doc).toContain('artifactControlplane');
+    expect(doc).toContain('@floegence/floe-webapp-boot');
     expect(doc).toContain('@floegence/flowersec-core/controlplane');
     expect(doc).toContain('requestConnectArtifact');
     expect(doc).toContain('requestEntryConnectArtifact');

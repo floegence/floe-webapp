@@ -99,6 +99,7 @@ Type reference:
 Best practice:
 
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
+- `@floegence/floe-webapp-boot` is the recommended first-party place for browser bootstrap helpers such as `ArtifactSource` and artifact-first reconnect config assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
 
 Notes:
@@ -110,6 +111,8 @@ Notes:
 
 Flowersec v0.19.x treats the canonical `connect_artifact` envelope as the recommended browser contract.
 When your control plane can mint that stable envelope, prefer wiring `artifactControlplane` so reconnects keep using the same public contract.
+
+For first-party application bootstrap flows, prefer building the `getArtifact` / reconnect config boundary via `@floegence/floe-webapp-boot` and let this protocol package stay focused on context + RPC wiring.
 
 ```ts
 await protocol.connect({
