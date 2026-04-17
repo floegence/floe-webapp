@@ -216,9 +216,10 @@ export function useDeckDrag() {
     stopDragging();
   };
 
-  // Only add event listeners when in edit mode
+  // Listen globally — the hook only actually starts a drag for elements that
+  // carry `data-widget-drag-handle`, so idle callers are free of overhead and
+  // Deck drag is always-on (autosave).
   createEffect(() => {
-    if (!deck.editMode()) return;
     if (typeof document === 'undefined') return;
 
     document.addEventListener('pointerdown', handlePointerDown, true);

@@ -38,6 +38,8 @@ export interface InfiniteCanvasProps {
   minScale?: number;
   maxScale?: number;
   wheelZoomSpeed?: number;
+  /** When true, wheel zoom and pan are suppressed. Widgets inside remain interactive. */
+  disablePanZoom?: boolean;
 }
 
 interface DragState {
@@ -188,9 +190,15 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     };
 
     root.addEventListener('click', handleClickCapture, true);
+    // Explicit `passive: false` — wheel zoom calls preventDefault() to stop
+    // the page from scrolling while the user is zooming. Attaching this
+    // manually avoids Chrome's "non-passive scroll-blocking listener"
+    // violation warning that fires on implicit onWheel JSX bindings.
+    root.addEventListener('wheel', handleWheel, { passive: false });
 
     onCleanup(() => {
       root.removeEventListener('click', handleClickCapture, true);
+      root.removeEventListener('wheel', handleWheel);
     });
   });
 
@@ -203,6 +211,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   const handlePointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
     if (isTypingElement(event.target)) return;
+    if (props.disablePanZoom) return;
 
     const startedFromPanSurface = isPanSurfaceTarget(event.target);
     if (isInteractiveTarget(event.target) && !startedFromPanSurface) return;
@@ -274,9 +283,17 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     releaseDrag(event.pointerId);
   };
 
-  const handleWheel: JSX.EventHandler<HTMLDivElement, WheelEvent> = (event) => {
+  // Plain-function signature (not a JSX.EventHandler) because this listener
+  // is attached manually below with `{ passive: false }` — the browser warns
+  // about implicit non-passive wheel listeners otherwise, since it can't tell
+  // whether a JSX-bound handler plans to call preventDefault.
+  const handleWheel = (event: WheelEvent) => {
     const rect = rootRef?.getBoundingClientRect();
     if (!rect) return;
+    if (props.disablePanZoom) {
+      event.preventDefault();
+      return;
+    }
 
     event.preventDefault();
 
@@ -329,12 +346,16 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   return (
     <div
       ref={rootRef}
-      class={cn('floe-infinite-canvas', isPanning() && 'is-panning', props.class)}
+      class={cn(
+        'floe-infinite-canvas',
+        isPanning() && 'is-panning',
+        props.disablePanZoom && 'is-locked',
+        props.class
+      )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
-      onWheel={handleWheel}
       onContextMenu={handleContextMenu}
       aria-label={props.ariaLabel ?? 'Infinite canvas'}
     >

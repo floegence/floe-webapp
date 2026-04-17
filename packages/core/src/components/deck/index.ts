@@ -7,3 +7,8 @@ export { WidgetTypeSwitcher, type WidgetTypeSwitcherProps } from './WidgetTypeSw
 export { LayoutSelector, type LayoutSelectorProps } from './LayoutSelector';
 export { DeckTopBar, type DeckTopBarProps } from './DeckTopBar';
 export { DropZonePreview, type DropZonePreviewProps } from './DropZonePreview';
+export {
+  DeckContextMenu,
+  type DeckContextMenuItem,
+  type DeckContextMenuProps,
+} from './DeckContextMenu';

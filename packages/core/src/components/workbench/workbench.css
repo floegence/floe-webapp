@@ -1,0 +1,1220 @@
+@layer components {
+  /* ------------------------------------------------------------------ */
+  /* Overlay                                                            */
+  /* ------------------------------------------------------------------ */
+  .workbench-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    background: color-mix(
+      in srgb,
+      var(--foreground, #000) 55%,
+      transparent
+    );
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .workbench-overlay__frame {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 14px;
+    border-radius: 14px;
+    background: var(--card, #fff);
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 82%, transparent);
+    overflow: hidden;
+    box-shadow:
+      0 24px 64px color-mix(in srgb, var(--foreground, #000) 16%, transparent),
+      0 2px 6px color-mix(in srgb, var(--foreground, #000) 6%, transparent);
+  }
+
+  .workbench-overlay__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 82%, transparent);
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--card, #fff) 92%, var(--muted, #f9f9f9) 8%);
+    z-index: 10;
+  }
+
+  .workbench-overlay__header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .workbench-overlay__header-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground, #111);
+  }
+
+  .workbench-overlay__header-separator {
+    width: 1px;
+    height: 14px;
+    background: var(--border, #e5e5e5);
+  }
+
+  .workbench-overlay__header-stat {
+    font-size: 11px;
+    color: var(--muted-foreground, #888);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .workbench-overlay__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .workbench-overlay__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground, #888);
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+
+  .workbench-overlay__close:hover {
+    background: var(--accent, #f5f5f5);
+    color: var(--foreground, #111);
+  }
+
+  .workbench-overlay__body {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Surface (page-mode body, no modal chrome)                           */
+  /* ------------------------------------------------------------------ */
+  .workbench-surface {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .workbench-surface__body {
+    position: absolute;
+    inset: 0;
+  }
+
+  .workbench-surface--in-overlay {
+    border-radius: inherit;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Canvas                                                             */
+  /* ------------------------------------------------------------------ */
+  .workbench-canvas {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--background, #fafafa) 96%, var(--muted, #f3f3f3) 4%);
+  }
+
+  .workbench-canvas.is-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 2px
+      color-mix(in srgb, var(--primary, #3b82f6) 28%, transparent);
+    z-index: 4;
+    border-radius: inherit;
+  }
+
+  .workbench-canvas__infinite {
+    width: 100%;
+    height: 100%;
+  }
+
+  .workbench-canvas__field {
+    position: relative;
+    width: 3600px;
+    height: 2600px;
+  }
+
+  .workbench-canvas__grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--border, #e5e5e5) 42%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--border, #e5e5e5) 42%, transparent) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent) 0.9px,
+        transparent 1px
+      );
+    background-size: 160px 160px, 160px 160px, 40px 40px;
+    background-position: 0 0, 0 0, 20px 20px;
+    opacity: 0.78;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget                                                             */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 82%, transparent);
+    background: var(--card, #fff);
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--foreground, #000) 4%, transparent),
+      0 10px 30px -18px color-mix(in srgb, var(--foreground, #000) 22%, transparent);
+    overflow: hidden;
+    cursor: default;
+    will-change: transform;
+    /* Transform is intentionally NOT transitioned — drag must be 1:1 with pointer. */
+    transition:
+      box-shadow 220ms cubic-bezier(0.33, 1, 0.68, 1),
+      opacity 220ms ease,
+      border-color 180ms ease;
+  }
+
+  .workbench-widget.is-dragging {
+    transition: none;
+  }
+
+  .workbench-widget:hover {
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--foreground, #000) 5%, transparent),
+      0 18px 40px -18px color-mix(in srgb, var(--foreground, #000) 26%, transparent);
+  }
+
+  .workbench-widget.is-selected {
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 55%, transparent);
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 28%, transparent),
+      0 18px 42px -14px color-mix(in srgb, var(--primary, #3b82f6) 22%, transparent);
+  }
+
+  .workbench-widget.is-dragging {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 40%, transparent),
+      0 28px 60px -12px color-mix(in srgb, var(--foreground, #000) 30%, transparent);
+    cursor: grabbing;
+  }
+
+  .workbench-widget.is-filtered-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .workbench-widget__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 6px 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    background: color-mix(in srgb, var(--card, #fff) 86%, var(--muted, #f3f3f3) 14%);
+    flex-shrink: 0;
+  }
+
+  .workbench-widget__drag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground, #888);
+    /* Four-way arrow signals "you can drag me anywhere". */
+    cursor: move;
+    flex-shrink: 0;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+
+  .workbench-widget__drag:hover {
+    background: var(--accent, #eee);
+    color: var(--foreground, #111);
+  }
+
+  .workbench-widget__drag:active {
+    cursor: grabbing;
+  }
+
+  .workbench-widget.is-dragging,
+  .workbench-widget.is-dragging .workbench-widget__drag {
+    cursor: grabbing;
+  }
+
+  .workbench-widget.is-resizing {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 40%, transparent),
+      0 18px 42px -14px color-mix(in srgb, var(--primary, #3b82f6) 22%, transparent);
+  }
+
+  .workbench-widget__title-area {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--muted-foreground, #888);
+  }
+
+  .workbench-widget__title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--foreground, #111);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .workbench-widget__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+    flex-shrink: 0;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground, #888);
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      background-color 140ms ease,
+      color 140ms ease,
+      opacity 140ms ease;
+  }
+
+  .workbench-widget:hover .workbench-widget__close,
+  .workbench-widget.is-selected .workbench-widget__close {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .workbench-widget__close:hover,
+  .workbench-widget__close:focus-visible {
+    background: var(--destructive, #ef4444);
+    color: #fff;
+    outline: none;
+  }
+
+  .workbench-widget__body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .workbench-widget__resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    cursor: nwse-resize;
+    color: color-mix(in srgb, var(--muted-foreground, #888) 60%, transparent);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 2px;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 140ms ease, color 140ms ease;
+  }
+
+  .workbench-widget:hover .workbench-widget__resize,
+  .workbench-widget.is-selected .workbench-widget__resize,
+  .workbench-widget.is-resizing .workbench-widget__resize {
+    opacity: 1;
+  }
+
+  .workbench-widget__resize:hover {
+    color: var(--primary, #3b82f6);
+  }
+
+  .workbench-widget__resize-glyph {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    stroke-width: 1.3;
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Context Menu                                                       */
+  /* ------------------------------------------------------------------ */
+  .workbench-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9010;
+  }
+
+  .workbench-context-menu {
+    position: fixed;
+    z-index: 9011;
+    min-width: 190px;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    background: var(--popover, var(--card, #fff));
+    box-shadow:
+      0 10px 32px color-mix(in srgb, var(--foreground, #000) 18%, transparent),
+      0 1px 0 color-mix(in srgb, white 50%, transparent) inset;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: workbench-menu-in 140ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  @keyframes workbench-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .workbench-context-menu__separator {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--border, #e5e5e5);
+  }
+
+  .workbench-context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--foreground, #111);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+    text-align: left;
+  }
+
+  .workbench-context-menu__item:hover {
+    background: var(--accent, #f2f2f2);
+  }
+
+  .workbench-context-menu__item.is-destructive {
+    color: var(--destructive, #ef4444);
+  }
+
+  .workbench-context-menu__item.is-destructive:hover {
+    background: color-mix(in srgb, var(--destructive, #ef4444) 10%, transparent);
+  }
+
+  .workbench-context-menu__label {
+    flex: 1;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Dock (filter bar)                                                  */
+  /* ------------------------------------------------------------------ */
+  .workbench-dock {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 82%, transparent);
+    background: color-mix(in srgb, var(--card, #fff) 72%, transparent);
+    box-shadow:
+      0 18px 48px -12px color-mix(in srgb, var(--foreground, #000) 22%, transparent),
+      0 1px 0 color-mix(in srgb, white 60%, transparent) inset;
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    z-index: 8;
+  }
+
+  .workbench-dock__item {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted-foreground, #888);
+    transform-origin: center bottom;
+    /* Keep each slot at a fixed footprint so neighbor translateX moves the
+       visual tile without reflowing the row. */
+    width: 36px;
+    height: 36px;
+  }
+
+  .workbench-dock__tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--muted, #f1f1f1) 62%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 50%, transparent);
+    color: var(--muted-foreground, #888);
+    transform-origin: center bottom;
+    will-change: transform;
+    /* Motion component drives transform; only animate visual chrome here. */
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .workbench-dock__icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .workbench-dock__item.is-active .workbench-dock__tile {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary, #3b82f6) 90%, white),
+      var(--primary, #3b82f6)
+    );
+    color: var(--primary-foreground, #fff);
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 80%, transparent);
+    box-shadow:
+      0 6px 14px -4px color-mix(in srgb, var(--primary, #3b82f6) 52%, transparent),
+      0 1px 0 color-mix(in srgb, white 30%, transparent) inset;
+  }
+
+  .workbench-dock__item.is-hovered .workbench-dock__tile {
+    box-shadow:
+      0 10px 22px -8px color-mix(in srgb, var(--foreground, #000) 22%, transparent),
+      0 1px 0 color-mix(in srgb, white 50%, transparent) inset;
+  }
+
+  .workbench-dock__divider {
+    width: 1px;
+    height: 24px;
+    align-self: center;
+    background: color-mix(in srgb, var(--border, #e5e5e5) 75%, transparent);
+    margin: 0 2px;
+  }
+
+  .workbench-dock__tooltip {
+    position: absolute;
+    bottom: 100%;
+    margin-bottom: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--foreground, #111);
+    color: var(--background, #fff);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Lock Button                                                        */
+  /* ------------------------------------------------------------------ */
+  .workbench-lock-button {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px 0 8px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 80%, transparent);
+    background: color-mix(in srgb, var(--card, #fff) 78%, transparent);
+    color: var(--muted-foreground, #888);
+    cursor: pointer;
+    box-shadow:
+      0 6px 20px -10px color-mix(in srgb, var(--foreground, #000) 22%, transparent),
+      0 1px 0 color-mix(in srgb, white 40%, transparent) inset;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    z-index: 8;
+  }
+
+  .workbench-lock-button:hover {
+    background: var(--card, #fff);
+    color: var(--foreground, #111);
+  }
+
+  .workbench-lock-button.is-locked {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary, #3b82f6) 90%, white),
+      var(--primary, #3b82f6)
+    );
+    color: var(--primary-foreground, #fff);
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 70%, transparent);
+    box-shadow:
+      0 8px 24px -6px color-mix(in srgb, var(--primary, #3b82f6) 45%, transparent),
+      0 1px 0 color-mix(in srgb, white 30%, transparent) inset;
+  }
+
+  .workbench-lock-button__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    position: relative;
+  }
+
+  .workbench-lock-button__icon-swap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .workbench-lock-button__kbd {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+    line-height: 1.1;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Mobile-responsive positioning                                        */
+  /*                                                                      */
+  /* On narrow viewports the dock takes ~80% of the width and sits at     */
+  /* bottom-center; the lock button's default bottom-left slot would      */
+  /* collide with it. Relocate the lock to the top-left corner and hide   */
+  /* the F1 kbd hint — the key isn't reachable on mobile anyway.          */
+  /* ------------------------------------------------------------------ */
+  @media (max-width: 640px) {
+    .workbench-lock-button {
+      left: 12px;
+      top: 12px;
+      bottom: auto;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      justify-content: center;
+    }
+
+    .workbench-lock-button__kbd {
+      display: none;
+    }
+
+    .workbench-dock {
+      bottom: 12px;
+      padding: 6px 10px;
+      gap: 6px;
+      /* Cap the width so magnified tiles can't push the dock outside the
+         viewport, and so the HUD / lock above stay clear. */
+      max-width: calc(100vw - 24px);
+    }
+
+    .workbench-dock__item,
+    .workbench-dock__tile {
+      width: 32px;
+      height: 32px;
+    }
+
+    .workbench-dock__icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .workbench-hud {
+      top: 12px;
+      right: 12px;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* HUD (zoom controls)                                                */
+  /* ------------------------------------------------------------------ */
+  .workbench-hud {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 80%, transparent);
+    background: color-mix(in srgb, var(--card, #fff) 80%, transparent);
+    box-shadow:
+      0 6px 20px -10px color-mix(in srgb, var(--foreground, #000) 22%, transparent),
+      0 1px 0 color-mix(in srgb, white 40%, transparent) inset;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    z-index: 8;
+  }
+
+  .workbench-hud__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground, #888);
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+
+  .workbench-hud__button:hover {
+    background: var(--accent, #f2f2f2);
+    color: var(--foreground, #111);
+  }
+
+  .workbench-hud__scale {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted-foreground, #888);
+    min-width: 42px;
+    text-align: center;
+    user-select: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget bodies – Terminal                                            */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget-terminal {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: linear-gradient(180deg, #1d1f2b 0%, #121322 100%);
+    color: #d6dee7;
+    font-family: 'SF Mono', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .workbench-widget-terminal__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .workbench-widget-terminal__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  }
+
+  .workbench-widget-terminal__dot--red { background: #ff6b6b; }
+  .workbench-widget-terminal__dot--yellow { background: #ffd93d; }
+  .workbench-widget-terminal__dot--green { background: #6bff8d; }
+
+  .workbench-widget-terminal__path {
+    margin-left: 8px;
+    color: #7e87a4;
+    font-size: 10px;
+  }
+
+  .workbench-widget-terminal__body {
+    flex: 1;
+    padding: 8px 10px;
+    overflow: hidden;
+  }
+
+  .workbench-widget-terminal__line {
+    white-space: pre;
+    display: flex;
+    gap: 6px;
+    animation: workbench-term-line-in 160ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  @keyframes workbench-term-line-in {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .workbench-widget-terminal__line--muted {
+    color: #7e87a4;
+  }
+
+  .workbench-widget-terminal__prompt {
+    color: #6bff8d;
+    flex-shrink: 0;
+  }
+
+  .workbench-widget-terminal__cursor {
+    display: inline-block;
+    width: 7px;
+    height: 13px;
+    background: #d6dee7;
+    margin-left: 2px;
+    align-self: center;
+    animation: workbench-blink 1s step-end infinite;
+  }
+
+  @keyframes workbench-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget bodies – File Browser                                       */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget-filebrowser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    font-size: 12px;
+  }
+
+  .workbench-widget-filebrowser__toolbar {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    background: color-mix(in srgb, var(--muted, #f5f5f5) 62%, transparent);
+  }
+
+  .workbench-widget-filebrowser__path {
+    font-size: 10px;
+    color: var(--muted-foreground, #888);
+    font-family: 'SF Mono', 'Cascadia Code', 'Menlo', monospace;
+  }
+
+  .workbench-widget-filebrowser__tree {
+    flex: 1;
+    padding: 4px 0;
+    overflow: auto;
+  }
+
+  .workbench-widget-filebrowser__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 4px 10px 4px 0;
+    border: none;
+    background: transparent;
+    color: var(--foreground, #111);
+    text-align: left;
+    font-size: 11.5px;
+    cursor: default;
+    transition: background-color 100ms ease, color 100ms ease;
+  }
+
+  .workbench-widget-filebrowser__row:hover {
+    background: color-mix(in srgb, var(--accent, #f5f5f5) 80%, transparent);
+  }
+
+  .workbench-widget-filebrowser__row.is-folder {
+    cursor: pointer;
+  }
+
+  .workbench-widget-filebrowser__row.is-open {
+    color: var(--foreground, #111);
+  }
+
+  .workbench-widget-filebrowser__chev {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: var(--muted-foreground, #888);
+    transition: transform 150ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .workbench-widget-filebrowser__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: color-mix(in srgb, var(--primary, #3b82f6) 70%, var(--muted-foreground, #888));
+  }
+
+  .workbench-widget-filebrowser__row:not(.is-folder) .workbench-widget-filebrowser__icon {
+    color: var(--muted-foreground, #888);
+  }
+
+  .workbench-widget-filebrowser__name {
+    font-weight: 500;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget bodies – System Monitor                                     */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget-sysmon {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    height: 100%;
+    justify-content: center;
+  }
+
+  .workbench-widget-sysmon__row {
+    display: grid;
+    grid-template-columns: 86px 78px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .workbench-widget-sysmon__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--foreground, #111);
+  }
+
+  .workbench-widget-sysmon__bar {
+    height: 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--muted, #eee) 70%, transparent);
+    overflow: hidden;
+  }
+
+  .workbench-widget-sysmon__fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 480ms cubic-bezier(0.33, 1, 0.68, 1);
+    box-shadow: 0 0 12px color-mix(in srgb, currentColor 30%, transparent);
+  }
+
+  .workbench-widget-sysmon__fill--cpu {
+    background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    color: #3b82f6;
+  }
+  .workbench-widget-sysmon__fill--memory {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    color: #f59e0b;
+  }
+  .workbench-widget-sysmon__fill--disk {
+    background: linear-gradient(90deg, #34d399, #10b981);
+    color: #10b981;
+  }
+
+  .workbench-widget-sysmon__spark {
+    height: 22px;
+    width: 100%;
+  }
+
+  .workbench-widget-sysmon__spark--cpu { color: #3b82f6; }
+  .workbench-widget-sysmon__spark--memory { color: #f59e0b; }
+  .workbench-widget-sysmon__spark--disk { color: #10b981; }
+
+  .workbench-widget-sysmon__value {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--foreground, #111);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget bodies – Log Viewer                                         */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget-logviewer {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'SF Mono', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
+    font-size: 10.5px;
+    line-height: 1.65;
+    background: color-mix(in srgb, var(--card, #fff) 96%, var(--muted, #f5f5f5) 4%);
+  }
+
+  .workbench-widget-logviewer__lines {
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+  }
+
+  .workbench-widget-logviewer__line {
+    display: grid;
+    grid-template-columns: 58px 48px 1fr;
+    gap: 8px;
+    align-items: baseline;
+    white-space: nowrap;
+    color: var(--foreground, #111);
+    animation: workbench-log-line-in 180ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .workbench-widget-logviewer__msg {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @keyframes workbench-log-line-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .workbench-widget-logviewer__ts {
+    color: var(--muted-foreground, #888);
+  }
+
+  .workbench-widget-logviewer__level {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .workbench-widget-logviewer__level--info { color: #3b82f6; }
+  .workbench-widget-logviewer__level--warn { color: #f59e0b; }
+  .workbench-widget-logviewer__level--error { color: #ef4444; }
+  .workbench-widget-logviewer__level--debug { color: #94a3b8; }
+
+  /* ------------------------------------------------------------------ */
+  /* Widget bodies – Code Editor                                        */
+  /* ------------------------------------------------------------------ */
+  .workbench-widget-codeeditor {
+    display: flex;
+    height: 100%;
+    font-family: 'SF Mono', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    background: color-mix(in srgb, var(--card, #fff) 94%, var(--muted, #f5f5f5) 6%);
+  }
+
+  .workbench-widget-codeeditor__gutter {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 10px 14px;
+    text-align: right;
+    color: color-mix(in srgb, var(--muted-foreground, #888) 70%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    user-select: none;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .workbench-widget-codeeditor__gutter span.is-active {
+    color: var(--primary, #3b82f6);
+    font-weight: 700;
+  }
+
+  .workbench-widget-codeeditor__code {
+    flex: 1;
+    padding: 10px 12px;
+    overflow: hidden;
+    color: var(--foreground, #111);
+  }
+
+  .workbench-widget-codeeditor__line {
+    min-height: 1.7em;
+    white-space: pre;
+    position: relative;
+    padding: 0 6px;
+    border-radius: 3px;
+  }
+
+  .workbench-widget-codeeditor__line.is-active {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 8%, transparent);
+  }
+
+  .workbench-widget-codeeditor__caret {
+    display: inline-block;
+    width: 1.5px;
+    height: 1.1em;
+    background: var(--primary, #3b82f6);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: workbench-blink 1s step-end infinite;
+  }
+
+  .workbench-widget-codeeditor__keyword { color: #c678dd; }
+  .workbench-widget-codeeditor__string { color: #98c379; }
+  .workbench-widget-codeeditor__fn { color: #61afef; }
+  .workbench-widget-codeeditor__number { color: #d19a66; }
+  .workbench-widget-codeeditor__attr { color: #e5c07b; }
+  .workbench-widget-codeeditor__comment {
+    color: color-mix(in srgb, var(--muted-foreground, #888) 80%, transparent);
+    font-style: italic;
+  }
+  .workbench-widget-codeeditor__plain { color: inherit; }
+
+  /* ------------------------------------------------------------------ */
+  /* Dock — drag-to-create ghost                                          */
+  /* ------------------------------------------------------------------ */
+  .workbench-dock__item.is-source-dragging .workbench-dock__tile {
+    opacity: 0.45;
+    filter: saturate(0.8);
+  }
+
+  .workbench-dock-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    z-index: 9020;
+    /* Transform is driven every pointermove — keep it GPU-composited and
+       never transition, so the ghost is 1:1 with the cursor. */
+    will-change: transform;
+    transition: none;
+  }
+
+  .workbench-dock-ghost__halo {
+    position: absolute;
+    left: -12px;
+    top: -12px;
+    right: -12px;
+    bottom: -12px;
+    border-radius: 18px;
+    background: radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--primary, #3b82f6) 32%, transparent),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+
+  .workbench-dock-ghost.is-over-canvas .workbench-dock-ghost__halo {
+    opacity: 1;
+  }
+
+  .workbench-dock-ghost__card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 8px 10px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--card, #fff) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 80%, transparent);
+    box-shadow:
+      0 18px 36px -10px color-mix(in srgb, var(--foreground, #000) 28%, transparent),
+      0 4px 12px -4px color-mix(in srgb, var(--foreground, #000) 14%, transparent),
+      0 1px 0 color-mix(in srgb, white 60%, transparent) inset;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    min-width: 168px;
+    transform-origin: top left;
+    animation: workbench-dock-ghost-in 140ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .workbench-dock-ghost.is-over-canvas .workbench-dock-ghost__card {
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 70%, transparent);
+    box-shadow:
+      0 18px 36px -10px color-mix(in srgb, var(--primary, #3b82f6) 32%, transparent),
+      0 4px 12px -4px color-mix(in srgb, var(--primary, #3b82f6) 18%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--primary, #3b82f6) 38%, transparent) inset;
+  }
+
+  @keyframes workbench-dock-ghost-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .workbench-dock-ghost__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary, #3b82f6) 88%, white),
+      var(--primary, #3b82f6)
+    );
+    color: var(--primary-foreground, #fff);
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px -3px color-mix(in srgb, var(--primary, #3b82f6) 60%, transparent);
+  }
+
+  .workbench-dock-ghost__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .workbench-dock-ghost__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--foreground, #111);
+    letter-spacing: -0.005em;
+  }
+
+  .workbench-dock-ghost__hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--muted-foreground, #888);
+    font-weight: 500;
+  }
+
+  .workbench-dock-ghost.is-over-canvas .workbench-dock-ghost__hint {
+    color: var(--primary, #3b82f6);
+  }
+}

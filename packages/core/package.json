@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.35.59",
+  "version": "0.36.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -71,6 +71,10 @@
     "./terminal": {
       "types": "./dist/terminal.d.ts",
       "import": "./dist/terminal.js"
+    },
+    "./workbench": {
+      "types": "./dist/workbench.d.ts",
+      "import": "./dist/workbench.js"
     },
     "./styles": "./dist/styles.css",
     "./tailwind": "./dist/tailwind.css"

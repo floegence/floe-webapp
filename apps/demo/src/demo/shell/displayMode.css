@@ -1,0 +1,79 @@
+@layer components {
+  /* ------------------------------------------------------------------ */
+  /* Display-mode page shell (Deck / Workbench)                          */
+  /* ------------------------------------------------------------------ */
+  .display-mode-page-shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--background, #fff);
+    color: var(--foreground, #111);
+  }
+
+  .display-mode-page-shell__body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Mode switcher segmented control                                     */
+  /* ------------------------------------------------------------------ */
+  .display-mode-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding: 2px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--muted, #f1f1f1) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 60%, transparent);
+  }
+
+  .display-mode-switcher__pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground, #888);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 140ms ease;
+    isolation: isolate;
+  }
+
+  .display-mode-switcher__pill:hover {
+    color: var(--foreground, #111);
+  }
+
+  .display-mode-switcher__pill.is-active {
+    color: var(--foreground, #111);
+  }
+
+  .display-mode-switcher__pill-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: var(--card, #fff);
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--foreground, #000) 6%, transparent),
+      0 1px 0 color-mix(in srgb, white 60%, transparent) inset;
+    z-index: -1;
+  }
+
+  .display-mode-switcher__icon {
+    width: 12px;
+    height: 12px;
+  }
+
+  .display-mode-switcher__label {
+    line-height: 1;
+  }
+}

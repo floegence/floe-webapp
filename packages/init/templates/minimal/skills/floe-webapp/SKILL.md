@@ -43,6 +43,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/editor`
    - `@floegence/floe-webapp-core/widgets`
    - `@floegence/floe-webapp-core/terminal`
+   - `@floegence/floe-webapp-core/workbench`
    - `@floegence/floe-webapp-core/styles`
    - `@floegence/floe-webapp-core/tailwind`
 4. Align registry behavior end-to-end:

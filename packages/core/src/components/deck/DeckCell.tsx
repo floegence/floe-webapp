@@ -55,23 +55,20 @@ export function DeckCell(props: DeckCellProps) {
   return (
     <div
       class={cn(
-        'deck-cell relative rounded-md overflow-hidden',
+        'deck-cell relative rounded-md overflow-hidden group',
         'bg-card border border-border',
         // Smooth transition when not dragging (for snap-back animation)
         !props.isDragging && 'transition-transform duration-200 ease-out',
         props.isDragging && 'shadow-xl z-50 ring-2 ring-primary scale-[1.02]',
         props.isResizing && 'shadow-lg z-50 ring-2 ring-primary',
-        editMode() && !props.isDragging && !props.isResizing && 'hover:ring-1 hover:ring-primary/50',
-        // Edit mode: disable selection and show grab cursor
-        editMode() && 'select-none cursor-grab',
+        !props.isDragging && !props.isResizing && 'hover:ring-1 hover:ring-primary/50',
+        'select-none',
         props.isDragging && 'cursor-grabbing'
       )}
       style={{
         'grid-area': gridArea(),
         ...transformStyle(),
       }}
-      // In edit mode, entire cell is draggable
-      data-widget-drag-handle={editMode() ? props.widget.id : undefined}
     >
       <WidgetFrame
         widget={props.widget}
@@ -79,24 +76,21 @@ export function DeckCell(props: DeckCellProps) {
         isDragging={props.isDragging}
         isResizing={props.isResizing}
       >
-        {/* Content wrapper - disable pointer events in edit mode */}
-        <div class={cn('h-full', editMode() && 'pointer-events-none')}>
-          <Show when={WidgetComponent()} fallback={<PlaceholderWidget type={widgetType()} />}>
-            <WidgetStateProvider
+        <Show when={WidgetComponent()} fallback={<PlaceholderWidget type={widgetType()} />}>
+          <WidgetStateProvider
+            widgetId={props.widget.id}
+            state={widgetState}
+            onStateChange={handleStateChange}
+          >
+            {/* Use Dynamic to properly re-render when component changes */}
+            <Dynamic
+              component={WidgetComponent()}
               widgetId={props.widget.id}
-              state={widgetState}
-              onStateChange={handleStateChange}
-            >
-              {/* Use Dynamic to properly re-render when component changes */}
-              <Dynamic
-                component={WidgetComponent()}
-                widgetId={props.widget.id}
-                config={props.widget.config}
-                isEditMode={editMode()}
-              />
-            </WidgetStateProvider>
-          </Show>
-        </div>
+              config={props.widget.config}
+              isEditMode={editMode()}
+            />
+          </WidgetStateProvider>
+        </Show>
       </WidgetFrame>
     </div>
   );

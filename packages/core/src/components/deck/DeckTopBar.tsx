@@ -7,7 +7,7 @@ import { useLayout } from '../../context/LayoutContext';
 import { useWidgetRegistry } from '../../context/WidgetRegistry';
 import { deferNonBlocking } from '../../utils/defer';
 import { LayoutSelector } from './LayoutSelector';
-import { Pencil, Check, Plus, ChevronDown, Copy } from '../icons';
+import { Plus, ChevronDown, Copy } from '../icons';
 
 export interface DeckTopBarProps {
   class?: string;
@@ -27,7 +27,11 @@ export function DeckTopBar(props: DeckTopBarProps) {
   const [menuPosition, setMenuPosition] = createSignal({ top: 0, left: 0 });
   let triggerRef: HTMLButtonElement | undefined;
 
-  const isMobile = () => layout.isMobile();
+  // `layout` is imported for host-level gating but the deck topbar currently
+  // renders the same set of controls on desktop and mobile. Kept for future
+  // conditional branches.
+  void layout;
+
   const isImmutablePreset = () =>
     (floe.config.deck.presetsMode ?? 'mutable') === 'immutable' && Boolean(deck.activeLayout()?.isPreset);
 
@@ -56,13 +60,6 @@ export function DeckTopBar(props: DeckTopBarProps) {
   const handleClose = () => {
     setShowWidgetMenu(false);
   };
-
-  // Safety: leaving edit mode should close the dropdown.
-  createEffect(() => {
-    if (!deck.editMode()) {
-      setShowWidgetMenu(false);
-    }
-  });
 
   // Only add escape key listener when dropdown is open
   createEffect(() => {
@@ -94,8 +91,8 @@ export function DeckTopBar(props: DeckTopBarProps) {
       {/* Separator */}
       <div class="w-px h-3.5 bg-border/40" />
 
-      {/* Add Widget button (edit mode only) */}
-      <Show when={deck.editMode() && !isImmutablePreset()}>
+      {/* Add Widget button — always live on mutable layouts. */}
+      <Show when={!isImmutablePreset()}>
         <button
           ref={triggerRef}
           onClick={handleToggle}
@@ -186,32 +183,6 @@ export function DeckTopBar(props: DeckTopBarProps) {
         >
           <Copy class="w-2.5 h-2.5" />
           <span>Duplicate &amp; Edit</span>
-        </button>
-      </Show>
-
-      {/* Edit mode toggle (desktop only, non-immutable presets) */}
-      <Show when={!isMobile() && !isImmutablePreset()}>
-        <button
-          onClick={() => deck.toggleEditMode()}
-          class={cn(
-            'flex items-center gap-1 px-1.5 h-5 rounded text-[10px] transition-colors cursor-pointer',
-            deck.editMode()
-              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'text-muted-foreground/70 hover:text-foreground hover:bg-muted/50'
-          )}
-        >
-          <Show
-            when={deck.editMode()}
-            fallback={
-              <>
-                <Pencil class="w-2.5 h-2.5" />
-                <span>Edit</span>
-              </>
-            }
-          >
-            <Check class="w-2.5 h-2.5" />
-            <span>Done</span>
-          </Show>
         </button>
       </Show>
 

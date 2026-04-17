@@ -2,6 +2,7 @@ import { Show, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget } from '../../context/DeckContext';
 import type { WidgetDefinition } from '../../context/WidgetRegistry';
+import { useLayout } from '../../context/LayoutContext';
 import { GripVertical, X } from '../icons';
 import { WidgetResizeHandle } from './WidgetResizeHandle';
 import { WidgetTypeSwitcher } from './WidgetTypeSwitcher';
@@ -15,16 +16,25 @@ export interface WidgetFrameProps {
 }
 
 /**
- * Widget chrome with header, drag handle, and resize handles
+ * Widget chrome with header drag-handle and resize handles.
+ *
+ * The header is a persistent, always-on drag handle (notes-style): the grip
+ * icon + title region carries `data-widget-drag-handle`, so dragging the
+ * header moves the widget while the widget body stays fully interactive.
+ * The widget body never blocks pointer events — autosave on every commit
+ * means there's no "edit / done" toggle to gate interactions with.
  */
 export function WidgetFrame(props: WidgetFrameProps) {
   const deck = useDeck();
-  const editMode = () => deck.editMode();
+  const layout = useLayout();
 
   const title = () => props.widget.title ?? props.widgetDef?.name ?? props.widget.type;
 
+  // Drag / resize UI is only meaningful on desktop where pointers are precise.
+  // On mobile, suppress it so the widget stays fully interactive.
+  const interactive = () => !layout.isMobile();
+
   const handleRemove = (e: MouseEvent) => {
-    // Stop propagation to prevent drag from starting
     e.stopPropagation();
     e.preventDefault();
     deck.removeWidget(props.widget.id);
@@ -32,16 +42,18 @@ export function WidgetFrame(props: WidgetFrameProps) {
 
   return (
     <div class="h-full flex flex-col">
-      {/* Header - no longer a drag handle, entire cell handles drag */}
+      {/* Header — four-way-arrow cursor on hover, grabbing while active. */}
       <div
         class={cn(
           'widget-header flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30',
-          'select-none'
+          'select-none',
+          interactive() && !props.isDragging && 'cursor-move',
+          props.isDragging && 'cursor-grabbing'
         )}
+        data-widget-drag-handle={interactive() ? props.widget.id : undefined}
       >
-        {/* Drag indicator icon (edit mode only) - visual only */}
-        <Show when={editMode()}>
-          <div class="text-muted-foreground/50">
+        <Show when={interactive()}>
+          <div class="text-muted-foreground/50 pointer-events-none">
             <GripVertical class="w-3.5 h-3.5" />
           </div>
         </Show>
@@ -57,15 +69,17 @@ export function WidgetFrame(props: WidgetFrameProps) {
         {/* Title */}
         <span class="flex-1 text-xs font-medium text-foreground truncate">{title()}</span>
 
-        {/* Widget type switcher (edit mode only) */}
-        <Show when={editMode()}>
-          <WidgetTypeSwitcher widget={props.widget} />
+        {/* Widget type switcher — subtle unless the card is hovered. */}
+        <Show when={interactive()}>
+          <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+            <WidgetTypeSwitcher widget={props.widget} />
+          </div>
         </Show>
 
-        {/* Remove button (edit mode only) - needs pointer-events to work */}
-        <Show when={editMode()}>
+        {/* Remove button — subtle unless the card is hovered. */}
+        <Show when={interactive()}>
           <button
-            class="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer pointer-events-auto"
+            class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
             onClick={handleRemove}
             title="Remove widget"
           >
@@ -74,11 +88,11 @@ export function WidgetFrame(props: WidgetFrameProps) {
         </Show>
       </div>
 
-      {/* Content */}
+      {/* Content — always interactive. */}
       <div class="flex-1 min-h-0 overflow-auto">{props.children}</div>
 
-      {/* Resize handles (edit mode only) */}
-      <Show when={editMode()}>
+      {/* Resize handles — always live on desktop, no edit-mode gate. */}
+      <Show when={interactive()}>
         <WidgetResizeHandle widget={props.widget} edge="e" />
         <WidgetResizeHandle widget={props.widget} edge="s" />
         <WidgetResizeHandle widget={props.widget} edge="se" />

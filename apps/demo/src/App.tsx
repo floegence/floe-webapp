@@ -19,6 +19,7 @@ import {
   useComponentRegistry,
   useLayout,
   useNotification,
+  usePersisted,
   useTheme,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
@@ -67,6 +68,13 @@ import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
 import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
+import { WorkbenchDemoProvider } from './demo/workbench/WorkbenchDemoContext';
+import {
+  DisplayModeSwitcher,
+  sanitizeDisplayMode,
+  type DisplayMode,
+} from './demo/shell/DisplayModeSwitcher';
+import { DisplayModePageShell } from './demo/shell/DisplayModePageShell';
 
 const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',
@@ -89,6 +97,9 @@ const DesignTokensPage = lazy(() =>
 );
 const NotesPage = lazy(() =>
   import('./demo/notes/NotesPage').then((m) => ({ default: m.NotesPage }))
+);
+const WorkbenchPage = lazy(() =>
+  import('./demo/workbench/WorkbenchPage').then((m) => ({ default: m.WorkbenchPage }))
 );
 
 const renderLazyPage = (view: JSX.Element, label: string): JSX.Element => (
@@ -156,6 +167,17 @@ function AppContent() {
   const [launchpadOpen, setLaunchpadOpen] = createSignal(false);
   const [notesOverlayOpen, setNotesOverlayOpen] = createSignal(false);
 
+  // Top-level display mode. Activity = the standard Shell with activity bar +
+  // sidebar + main; Deck and Workbench are full-page display modes that own
+  // the whole viewport and never render the activity bar. Persisted across
+  // reloads so the user stays in whichever mode they last selected.
+  const [persistedDisplayMode, setPersistedDisplayMode] = usePersisted<DisplayMode>(
+    'demo.displayMode.v1',
+    'activity'
+  );
+  const displayMode = () => sanitizeDisplayMode(persistedDisplayMode());
+  const setDisplayMode = (mode: DisplayMode) => setPersistedDisplayMode(mode);
+
   const demoLaunchpadItems: LaunchpadItemData[] = [
     {
       id: 'notes',
@@ -163,6 +185,13 @@ function AppContent() {
       icon: Bookmark,
       description: 'Endless sticky-note canvas demo',
       color: 'linear-gradient(135deg, #f2dfad 0%, #c98d55 100%)',
+    },
+    {
+      id: 'workbench',
+      name: 'Workbench',
+      icon: Grid3x3,
+      description: 'Infinite widget canvas demo',
+      color: 'linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%)',
     },
     {
       id: 'showcase',
@@ -236,11 +265,24 @@ function AppContent() {
     layout.setSidebarActiveTab(id, { openSidebar: !(fullScreen || renderInMain) });
   };
 
+  const switchDisplayMode = (mode: DisplayMode, label?: string) => {
+    setDisplayMode(mode);
+    if (label) {
+      notifications.success('Display mode', `Switched to ${label}`);
+    }
+  };
+
   const handleLaunchpadSelect = (item: LaunchpadItemData) => {
     switch (item.id) {
       case 'notes':
         setNotesOverlayOpen(true);
         notifications.success('Launched', 'Opening Notes');
+        return;
+      case 'workbench':
+        switchDisplayMode('workbench', 'Workbench');
+        return;
+      case 'deck':
+        switchDisplayMode('deck', 'Deck');
         return;
       case 'theme-light':
         theme.setTheme('light');
@@ -250,6 +292,12 @@ function AppContent() {
         theme.setTheme('dark');
         notifications.success('Theme', 'Switched to dark mode');
         return;
+    }
+
+    // For non-mode items, ensure we're back in Activity mode before
+    // navigating to a sidebar tab.
+    if (displayMode() !== 'activity') {
+      setDisplayMode('activity');
     }
 
     const comp = registry.getComponent(item.id);
@@ -263,7 +311,9 @@ function AppContent() {
   };
 
   const shellActivityItems = createMemo(() => {
-    const base = [
+    // Activity-mode-only items. Deck and Workbench are top-level display
+    // modes (switched via the header bar) and intentionally absent here.
+    return [
       {
         id: 'launchpad-modal',
         icon: Grid3x3,
@@ -276,7 +326,6 @@ function AppContent() {
         label: 'Notes',
         onClick: () => setNotesOverlayOpen((open) => !open),
       },
-      { id: 'deck', icon: LayoutDashboard, label: 'Deck', collapseBehavior: 'preserve' as const },
       { id: 'showcase', icon: Terminal, label: 'Showcase' },
       { id: 'files', icon: Files, label: 'Files' },
       { id: 'search', icon: Search, label: 'Search' },
@@ -289,9 +338,6 @@ function AppContent() {
         collapseBehavior: 'preserve' as const,
       },
     ];
-
-    // Match registry-driven behavior: hide Deck tab on mobile.
-    return layout.isMobile() ? base.filter((item) => item.id !== 'deck') : base;
   });
 
   // Demo state migration: Launchpad is now a modal, not an activity tab.
@@ -300,7 +346,7 @@ function AppContent() {
     layout.setSidebarActiveTab('showcase', { openSidebar: false });
   });
 
-  // Notes is now an overlay, not a main-content view.
+  // Notes is an overlay, not a main-content view.
   createEffect(() => {
     if (layout.sidebarActiveTab() !== 'notes') return;
     setSidebarActiveTab('files');
@@ -338,8 +384,8 @@ function AppContent() {
   const ChatView: Component = () => <ChatSidebar />;
 
   const NotesRegistrationView: Component = () => null;
-
-  const DeckView: Component = () => renderLazyPage(<DeckPage />, 'deck');
+  const WorkbenchRegistrationView: Component = () => null;
+  const DeckRegistrationView: Component = () => null;
 
   const DesignTokensView: Component = () => renderLazyPage(<DesignTokensPage />, 'design tokens');
 
@@ -363,19 +409,41 @@ function AppContent() {
       ],
     },
     {
+      id: 'workbench',
+      name: 'Workbench',
+      icon: Grid3x3,
+      description: 'Switch to Workbench display mode',
+      component: WorkbenchRegistrationView,
+      commands: [
+        {
+          id: 'demo.mode.workbench',
+          title: 'Display: Switch to Workbench',
+          keybind: 'mod+8',
+          category: 'Display Modes',
+          execute: () => switchDisplayMode('workbench', 'Workbench'),
+        },
+      ],
+    },
+    {
       id: 'deck',
       name: 'Deck',
       icon: LayoutDashboard,
-      description: 'Grafana-style deck layout editor',
-      component: DeckView,
-      sidebar: { order: 1, fullScreen: true, hiddenOnMobile: true },
+      description: 'Switch to Deck display mode',
+      component: DeckRegistrationView,
       commands: [
         {
-          id: 'demo.open.deck',
-          title: 'Demo: Open Deck',
+          id: 'demo.mode.deck',
+          title: 'Display: Switch to Deck',
           keybind: 'mod+d',
-          category: 'Demo',
-          execute: () => layout.setSidebarActiveTab('deck'),
+          category: 'Display Modes',
+          execute: () => switchDisplayMode('deck', 'Deck'),
+        },
+        {
+          id: 'demo.mode.activity',
+          title: 'Display: Switch to Activity',
+          keybind: 'mod+9',
+          category: 'Display Modes',
+          execute: () => switchDisplayMode('activity', 'Activity'),
         },
       ],
     },
@@ -677,50 +745,71 @@ function AppContent() {
     </>
   );
 
+  // Shared header actions: rendered in every display mode's top bar so the
+  // user can switch modes (and toggle the theme) without losing context.
+  const HeaderActions: Component = () => (
+    <div class="flex items-center gap-2">
+      <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => theme.toggleTheme()}
+        title="Toggle theme"
+      >
+        {theme.resolvedTheme() === 'light' ? (
+          <Moon class="w-4 h-4" />
+        ) : (
+          <Sun class="w-4 h-4" />
+        )}
+      </Button>
+    </div>
+  );
+
+  const Logo: Component = () => <img src="/logo.svg" alt="Floe" class="w-7 h-7" />;
+
   return (
     <>
-      <Shell
-        logo={<img src="/logo.svg" alt="Floe" class="w-7 h-7" />}
-        activityItems={shellActivityItems()}
-        activityBottomItemsMobileMode="topBar"
-        activityBottomItems={[
-          {
-            id: 'settings',
-            icon: Settings,
-            label: 'Settings',
-            onClick: () => layout.setSidebarActiveTab('settings'),
-          },
-        ]}
-        topBarActions={
-          <div class="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => theme.toggleTheme()}
-              title="Toggle theme"
-            >
-              {theme.resolvedTheme() === 'light' ? (
-                <Moon class="w-4 h-4" />
-              ) : (
-                <Sun class="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        }
-        terminalPanel={
-          <div class="h-full flex items-center justify-center text-muted-foreground text-xs">
-            <Terminal class="w-4 h-4 mr-1.5" />
-            Terminal placeholder
-          </div>
-        }
-      >
-        <Show when={!layout.isMobile()}>
-          <DesktopMain />
-        </Show>
-        <Show when={layout.isMobile()}>
-          <MobileMain />
-        </Show>
-      </Shell>
+      <Show when={displayMode() === 'activity'}>
+        <Shell
+          logo={<Logo />}
+          activityItems={shellActivityItems()}
+          activityBottomItemsMobileMode="topBar"
+          activityBottomItems={[
+            {
+              id: 'settings',
+              icon: Settings,
+              label: 'Settings',
+              onClick: () => layout.setSidebarActiveTab('settings'),
+            },
+          ]}
+          topBarActions={<HeaderActions />}
+          terminalPanel={
+            <div class="h-full flex items-center justify-center text-muted-foreground text-xs">
+              <Terminal class="w-4 h-4 mr-1.5" />
+              Terminal placeholder
+            </div>
+          }
+        >
+          <Show when={!layout.isMobile()}>
+            <DesktopMain />
+          </Show>
+          <Show when={layout.isMobile()}>
+            <MobileMain />
+          </Show>
+        </Shell>
+      </Show>
+
+      <Show when={displayMode() === 'deck'}>
+        <DisplayModePageShell logo={<Logo />} actions={<HeaderActions />}>
+          {renderLazyPage(<DeckPage />, 'deck')}
+        </DisplayModePageShell>
+      </Show>
+
+      <Show when={displayMode() === 'workbench'}>
+        <DisplayModePageShell logo={<Logo />} actions={<HeaderActions />}>
+          {renderLazyPage(<WorkbenchPage />, 'workbench')}
+        </DisplayModePageShell>
+      </Show>
 
       <CommandPalette />
       <NotificationContainer />
@@ -811,7 +900,9 @@ export function App() {
     >
       <FileBrowserDragProvider>
         <NotesDemoProvider>
-          <AppContent />
+          <WorkbenchDemoProvider>
+            <AppContent />
+          </WorkbenchDemoProvider>
         </NotesDemoProvider>
       </FileBrowserDragProvider>
     </FloeProvider>

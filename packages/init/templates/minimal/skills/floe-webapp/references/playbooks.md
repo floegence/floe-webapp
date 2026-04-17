@@ -76,6 +76,7 @@ done
 - `@floegence/floe-webapp-core/editor`
 - `@floegence/floe-webapp-core/widgets`
 - `@floegence/floe-webapp-core/terminal`
+- `@floegence/floe-webapp-core/workbench`
 - `@floegence/floe-webapp-core/deck`
 - `@floegence/floe-webapp-core/full`
 - `@floegence/floe-webapp-core/styles`

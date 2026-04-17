@@ -1,9 +1,12 @@
-import { For, Show, createEffect, createMemo, createSignal, onMount, onCleanup, type JSX } from 'solid-js';
+import { For, Show, createMemo, createSignal, onMount, onCleanup, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck } from '../../context/DeckContext';
 import { useLayout } from '../../context/LayoutContext';
+import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { useWidgetRegistry } from '../../context/WidgetRegistry';
 import { hasCollision } from '../../utils/gridCollision';
 import { DeckCell } from './DeckCell';
+import { DeckContextMenu, type DeckContextMenuItem } from './DeckContextMenu';
 import { DropZonePreview } from './DropZonePreview';
 
 export interface DeckGridProps {
@@ -31,22 +34,76 @@ const ZERO_OFFSET = { x: 0, y: 0 } as const;
 export function DeckGrid(props: DeckGridProps) {
   const deck = useDeck();
   const layout = useLayout();
+  const widgetRegistry = useWidgetRegistry();
+  const floe = useResolvedFloeConfig();
   let gridRef: HTMLDivElement | undefined;
 
   // Track container dimensions for dynamic row height calculation
   const [containerHeight, setContainerHeight] = createSignal(0);
+
+  // Right-click "add widget here" context menu state.
+  const [menuState, setMenuState] = createSignal<
+    | { x: number; y: number; col: number; row: number }
+    | null
+  >(null);
 
   // Access widgets as a function to ensure reactivity for nested property changes
   const widgets = () => deck.activeLayout()?.widgets ?? [];
   const dragState = () => deck.dragState();
   const resizeState = () => deck.resizeState();
 
-  // Mobile UX safety: never allow edit mode on mobile to avoid disabling widget interactions.
-  createEffect(() => {
-    if (layout.isMobile() && deck.editMode()) {
-      deck.setEditMode(false);
-    }
-  });
+  const showGridBackground = () => !layout.isMobile();
+
+  const immutablePreset = () =>
+    (floe.config.deck.presetsMode ?? 'mutable') === 'immutable' &&
+    Boolean(deck.activeLayout()?.isPreset);
+
+  const menuItems = createMemo<DeckContextMenuItem[]>(() =>
+    Array.from(widgetRegistry.widgets().values()).map((widget) => ({
+      type: widget.type,
+      name: widget.name,
+      icon: widget.icon,
+    }))
+  );
+
+  const handleGridContextMenu: JSX.EventHandler<HTMLDivElement, MouseEvent> = (event) => {
+    if (layout.isMobile() || immutablePreset()) return;
+    // Only open the menu when right-clicking empty grid space — a right-click
+    // landing on a widget cell should be free to do its own thing.
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.deck-cell')) return;
+    if (!gridRef) return;
+
+    event.preventDefault();
+
+    const rect = gridRef.getBoundingClientRect();
+    const { cols, rowHeight, gap } = getGridConfigFromElement(gridRef);
+    const styles = window.getComputedStyle(gridRef);
+    const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+    const paddingTop = parseFloat(styles.paddingTop) || 0;
+    const innerWidth =
+      gridRef.clientWidth -
+      paddingLeft -
+      (parseFloat(styles.paddingRight) || 0);
+    const cellWidth = (innerWidth - gap * (cols - 1)) / cols;
+    const cellHeight = rowHeight + gap;
+    if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
+
+    const localX = event.clientX - rect.left + gridRef.scrollLeft - paddingLeft;
+    const localY = event.clientY - rect.top + gridRef.scrollTop - paddingTop;
+
+    const col = Math.max(0, Math.min(cols - 1, Math.floor(localX / (cellWidth + gap))));
+    const row = Math.max(0, Math.floor(localY / cellHeight));
+
+    setMenuState({ x: event.clientX, y: event.clientY, col, row });
+  };
+
+  const handleMenuSelect = (type: string) => {
+    const state = menuState();
+    setMenuState(null);
+    if (!state) return;
+    deck.addWidget(type, { col: state.col, row: state.row });
+  };
 
   const dragPreviewValid = createMemo(() => {
     const drag = dragState();
@@ -134,7 +191,7 @@ export function DeckGrid(props: DeckGridProps) {
         // Only enable vertical scroll when content exceeds 24 rows
         needsScroll() ? 'overflow-y-scroll' : 'overflow-y-hidden',
         'grid p-1',
-        deck.editMode() && 'bg-muted/20',
+        showGridBackground() && 'bg-muted/20',
         props.class
       )}
       style={{
@@ -147,6 +204,7 @@ export function DeckGrid(props: DeckGridProps) {
       data-row-height={rowHeight()}
       data-gap={GAP}
       data-default-rows={DEFAULT_ROWS}
+      onContextMenu={handleGridContextMenu}
     >
       {/* Invisible placeholder to ensure minimum content height */}
       <div
@@ -158,8 +216,8 @@ export function DeckGrid(props: DeckGridProps) {
         aria-hidden="true"
       />
 
-      {/* Grid background (edit mode only) – behind widgets, scrolls with the canvas */}
-      <Show when={deck.editMode()}>
+      {/* Grid background — always visible on desktop (autosave is always on). */}
+      <Show when={showGridBackground()}>
         <div
           class="pointer-events-none z-0"
           style={{
@@ -251,6 +309,15 @@ export function DeckGrid(props: DeckGridProps) {
       </For>
 
       {props.children}
+
+      <DeckContextMenu
+        open={menuState() !== null}
+        x={menuState()?.x ?? 0}
+        y={menuState()?.y ?? 0}
+        items={menuItems()}
+        onSelect={handleMenuSelect}
+        onDismiss={() => setMenuState(null)}
+      />
     </div>
   );
 }

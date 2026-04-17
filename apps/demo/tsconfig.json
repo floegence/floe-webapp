@@ -19,6 +19,7 @@
       "@floegence/floe-webapp-core/editor": ["../../packages/core/src/editor.ts"],
       "@floegence/floe-webapp-core/widgets": ["../../packages/core/src/widgets.ts"],
       "@floegence/floe-webapp-core/terminal": ["../../packages/core/src/terminal.ts"],
+      "@floegence/floe-webapp-core/workbench": ["../../packages/core/src/workbench.ts"],
       "@floegence/floe-webapp-protocol": ["../../packages/protocol/src/index.ts"]
     }
   },

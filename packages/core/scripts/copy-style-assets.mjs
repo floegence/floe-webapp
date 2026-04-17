@@ -41,6 +41,10 @@ const copies = [
     src: resolve(pkgRoot, 'src/components/ui/styles/ui.css'),
     dest: resolve(pkgRoot, 'dist/ui.css'),
   },
+  {
+    src: resolve(pkgRoot, 'src/components/workbench/workbench.css'),
+    dest: resolve(pkgRoot, 'dist/workbench.css'),
+  },
 ];
 
 function copyFile({ src, dest }) {

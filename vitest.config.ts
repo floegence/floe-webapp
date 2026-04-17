@@ -9,6 +9,7 @@ export default defineConfig({
     alias: [
       { find: '@floegence/floe-webapp-core/app', replacement: resolve(__dirname, 'packages/core/src/app.ts') },
       { find: '@floegence/floe-webapp-core/notes', replacement: resolve(__dirname, 'packages/core/src/notes.ts') },
+      { find: '@floegence/floe-webapp-core/workbench', replacement: resolve(__dirname, 'packages/core/src/workbench.ts') },
       { find: '@floegence/floe-webapp-core', replacement: resolve(__dirname, 'packages/core/src/index.ts') },
     ],
     conditions: ['node'],

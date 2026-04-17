@@ -1787,6 +1787,10 @@
     cursor: grabbing;
   }
 
+  .floe-infinite-canvas.is-locked {
+    cursor: default;
+  }
+
   .floe-infinite-canvas__viewport {
     position: absolute;
     inset: 0 auto auto 0;

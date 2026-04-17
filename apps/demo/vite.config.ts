@@ -74,6 +74,10 @@ export default defineConfig(({ command }) => {
           replacement: resolve(repoRoot, 'packages/core/src/terminal.ts'),
         },
         {
+          find: '@floegence/floe-webapp-core/workbench',
+          replacement: resolve(repoRoot, 'packages/core/src/workbench.ts'),
+        },
+        {
           find: '@floegence/floe-webapp-core',
           replacement: resolve(repoRoot, 'packages/core/src/index.ts'),
         },
