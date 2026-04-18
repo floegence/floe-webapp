@@ -24,6 +24,7 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('overlay host');
     expect(architectureDoc).toContain('data-floe-dialog-surface-host="true"');
     expect(architectureDoc).toContain('data-floe-dialog-surface-boundary');
+    expect(architectureDoc).toContain('data-floe-local-interaction-surface="true"');
     expect(architectureDoc).toContain('局部 dialog');
     expect(architectureDoc).toContain('pointerdown capture');
     expect(architectureDoc).toContain('详细落地 checklist');
@@ -81,6 +82,7 @@ describe('interaction architecture guard', () => {
     expect(dialogSrc).toContain('Portal mount={portalMount()}');
     expect(dialogSrc).toContain('closeOnEscape: () => (isSurfaceMode() ? \'inside\' : true)');
     expect(dialogSrc).toContain('data-floe-dialog-backdrop={baseId}');
+    expect(dialogSrc).toContain('[LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? \'true\' : undefined');
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host'");
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary'");
     expect(dialogSurfaceScopeSrc).toContain('resolveDialogSurfaceHost');

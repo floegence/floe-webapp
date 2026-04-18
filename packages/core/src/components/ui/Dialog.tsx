@@ -10,6 +10,7 @@ import {
   resolveDialogSurfaceHost,
   type ResolvedDialogSurfaceHost,
 } from './dialogSurfaceScope';
+import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 
 export interface DialogProps {
   open: boolean;
@@ -68,6 +69,7 @@ export function Dialog(props: DialogProps) {
         <div
           data-floe-dialog-overlay-root={baseId}
           data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
+          {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
           class={cn(
             isSurfaceMode() ? 'absolute inset-0 z-20 p-3' : 'fixed inset-0 z-50 p-4'
           )}

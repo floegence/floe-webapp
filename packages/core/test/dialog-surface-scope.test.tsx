@@ -6,6 +6,7 @@ import { render as renderSolid } from 'solid-js/web';
 
 import { Dialog } from '../src/components/ui/Dialog';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
+import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
 import { __resetDialogSurfaceScopeForTests } from '../src/components/ui/dialogSurfaceScope';
 
 vi.mock('../src/context/LayoutContext', () => ({
@@ -122,6 +123,51 @@ function FloatingWindowEscapeHarness() {
   );
 }
 
+function CanvasDialogHarness() {
+  const [open, setOpen] = createSignal(false);
+  const [actionCount, setActionCount] = createSignal(0);
+  const [viewport, setViewport] = createSignal({ x: 0, y: 0, scale: 1 });
+
+  return (
+    <>
+      <InfiniteCanvas
+        viewport={viewport()}
+        onViewportChange={setViewport}
+        ariaLabel="Canvas dialog harness"
+      >
+        <div
+          data-testid="canvas-surface-host"
+          data-floe-dialog-surface-host="true"
+          style={{ position: 'relative', width: '360px', height: '240px' }}
+        >
+          <div data-floe-canvas-interactive="true">
+            <button type="button" data-testid="canvas-dialog-trigger" onClick={() => setOpen(true)}>
+              Open canvas dialog
+            </button>
+          </div>
+
+          <Dialog
+            open={open()}
+            onOpenChange={setOpen}
+            title="Canvas dialog"
+            description="Canvas-scoped dialog"
+          >
+            <button
+              type="button"
+              data-testid="canvas-dialog-action"
+              onClick={() => setActionCount((value) => value + 1)}
+            >
+              Confirm canvas dialog
+            </button>
+          </Dialog>
+        </div>
+      </InfiniteCanvas>
+
+      <output data-testid="canvas-dialog-action-count">{String(actionCount())}</output>
+    </>
+  );
+}
+
 describe('dialog surface scope', () => {
   afterEach(() => {
     while (disposers.length) {
@@ -203,6 +249,59 @@ describe('dialog surface scope', () => {
     await flushMicrotasks();
 
     expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+  });
+
+  it('keeps a surface dialog clickable when mounted inside an infinite-canvas host', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <CanvasDialogHarness />, host);
+
+    const trigger = host.querySelector('[data-testid="canvas-dialog-trigger"]') as HTMLButtonElement | null;
+    expect(trigger).toBeTruthy();
+
+    dispatchPointerDown(trigger!);
+    trigger!.click();
+    await flushMicrotasks();
+
+    const dialogAction = host.querySelector('[data-testid="canvas-dialog-action"]') as HTMLButtonElement | null;
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(dialogAction).toBeTruthy();
+    expect(canvas).toBeTruthy();
+
+    dispatchPointerDown(dialogAction!);
+    await flushMicrotasks();
+    expect(canvas?.classList.contains('is-panning')).toBe(false);
+
+    dialogAction!.click();
+    await flushMicrotasks();
+
+    const actionCount = host.querySelector('[data-testid="canvas-dialog-action-count"]');
+    expect(actionCount?.textContent).toBe('1');
+  });
+
+  it('does not let infinite-canvas wheel routing steal surface-dialog events', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <CanvasDialogHarness />, host);
+
+    const trigger = host.querySelector('[data-testid="canvas-dialog-trigger"]') as HTMLButtonElement | null;
+    expect(trigger).toBeTruthy();
+
+    dispatchPointerDown(trigger!);
+    trigger!.click();
+    await flushMicrotasks();
+
+    const dialogAction = host.querySelector('[data-testid="canvas-dialog-action"]') as HTMLButtonElement | null;
+    expect(dialogAction).toBeTruthy();
+
+    const wheelEvent = new WheelEvent('wheel', {
+      bubbles: true,
+      cancelable: true,
+      deltaY: 120,
+    });
+    dialogAction!.dispatchEvent(wheelEvent);
+
+    expect(wheelEvent.defaultPrevented).toBe(false);
   });
 
   it('mounts floating-window dialogs into the floating surface instead of document.body', async () => {

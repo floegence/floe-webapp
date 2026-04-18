@@ -170,11 +170,13 @@
 3. 找到局部 host 时，dialog 必须以局部 surface 模式挂载：
    - `Portal mount={host}`
    - overlay root / backdrop 使用局部 `absolute inset-0`
+   - overlay root 显式声明 `data-floe-local-interaction-surface="true"`
    - dialog 自身使用 `data-floe-dialog-surface-boundary`
 4. 局部 dialog 的 backdrop 点击只在当前宿主内部关闭；点击其它 widget、其它 surface、页面其它区域不自动关闭。
 5. 局部 dialog 的 `Escape` 只允许由当前 dialog boundary 内的事件 target / activeElement 响应，不能跨 surface 误关其它组件。
-6. 局部 dialog 不锁整个 body scroll，但仍要阻断 dialog 内按键向全局热键穿透。
-7. 没有局部 host 时必须自动回退为全局 modal 语义，不能留下半局部、半全局的漂移状态。
+6. 承载 `InfiniteCanvas` / workbench / notes board 这类外层手势表面，必须把 `data-floe-local-interaction-surface="true"` 视为“局部交互面”，pointer / wheel / contextmenu 都必须优先让权，不能再从 dialog 内部抢走 pan / zoom / canvas menu。
+7. 局部 dialog 不锁整个 body scroll，但仍要阻断 dialog 内按键向全局热键穿透。
+8. 没有局部 host 时必须自动回退为全局 modal 语义，不能留下半局部、半全局的漂移状态。
 
 ## 4. 工程化防回退手段
 

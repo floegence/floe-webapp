@@ -30,6 +30,14 @@ export {
   type InfiniteCanvasContextMenuEvent,
 } from './InfiniteCanvas';
 export {
+  LOCAL_INTERACTION_SURFACE_ATTR,
+  DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+  isLocalInteractionSurfaceTarget,
+  resolveSurfaceInteractionTargetRole,
+  type SurfaceInteractionRoutingOptions,
+  type SurfaceInteractionTargetRole,
+} from './localInteractionSurface';
+export {
   Card,
   CardHeader,
   CardTitle,
