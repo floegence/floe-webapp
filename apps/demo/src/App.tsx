@@ -33,9 +33,12 @@ import {
 } from '@floegence/floe-webapp-core/chat';
 import {
   BottomBarItem,
+  DisplayModePageShell,
+  DisplayModeSwitcher,
   KeepAliveStack,
   Shell,
   StatusIndicator,
+  sanitizeDisplayMode,
   type KeepAliveView,
 } from '@floegence/floe-webapp-core/layout';
 import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
@@ -69,12 +72,7 @@ import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
 import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
 import { WorkbenchDemoProvider } from './demo/workbench/WorkbenchDemoContext';
-import {
-  DisplayModeSwitcher,
-  sanitizeDisplayMode,
-  type DisplayMode,
-} from './demo/shell/DisplayModeSwitcher';
-import { DisplayModePageShell } from './demo/shell/DisplayModePageShell';
+import type { DisplayMode } from '@floegence/floe-webapp-core/layout';
 
 const demoProtocolContract: ProtocolContract = {
   id: 'demo_v1',

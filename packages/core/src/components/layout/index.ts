@@ -20,3 +20,10 @@ export { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 export { SidebarPane, type SidebarPaneProps } from './SidebarPane';
 export { Panel, PanelHeader, PanelContent, type PanelProps, type PanelHeaderProps, type PanelContentProps } from './Panel';
 export { KeepAliveStack, type KeepAliveStackProps, type KeepAliveView } from './KeepAliveStack';
+export {
+  DisplayModeSwitcher,
+  sanitizeDisplayMode,
+  type DisplayMode,
+  type DisplayModeSwitcherProps,
+} from './DisplayModeSwitcher';
+export { DisplayModePageShell, type DisplayModePageShellProps } from './DisplayModePageShell';

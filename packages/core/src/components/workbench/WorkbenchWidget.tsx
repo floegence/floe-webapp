@@ -1,8 +1,7 @@
 import { createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, X } from '../../icons';
-import type { WorkbenchWidgetItem } from './types';
-import { getWidgetEntry } from './widgets/widgetRegistry';
+import type { WorkbenchWidgetDefinition, WorkbenchWidgetItem } from './types';
 
 interface LocalDragState {
   pointerId: number;
@@ -34,6 +33,7 @@ const MIN_WIDTH = 220;
 const MIN_HEIGHT = 160;
 
 export interface WorkbenchWidgetProps {
+  definition: WorkbenchWidgetDefinition;
   item: WorkbenchWidgetItem;
   selected: boolean;
   optimisticFront: boolean;
@@ -65,7 +65,6 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     untrack(resizeState)?.stopInteraction();
   });
 
-  const entry = createMemo(() => getWidgetEntry(props.item.type));
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
 
@@ -282,7 +281,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         </button>
         <div class="workbench-widget__title-area">
           {(() => {
-            const Icon = entry().icon;
+            const Icon = props.definition.icon;
             return <Icon class="w-3.5 h-3.5" />;
           })()}
           <span class="workbench-widget__title">{props.item.title}</span>
@@ -304,8 +303,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       </header>
       <div class="workbench-widget__body" data-floe-canvas-interactive="true">
         {(() => {
-          const Body = entry().body;
-          return <Body />;
+          const Body = props.definition.body;
+          return (
+            <Body
+              widgetId={props.item.id}
+              title={props.item.title}
+              type={props.item.type}
+            />
+          );
         })()}
       </div>
       {props.locked ? null : (

@@ -5,4 +5,3 @@
 
 /* Floe core provides a Tailwind entry that scans core dist + injects tokens/utilities. */
 @import '@floegence/floe-webapp-core/tailwind';
-@import './demo/shell/displayMode.css';

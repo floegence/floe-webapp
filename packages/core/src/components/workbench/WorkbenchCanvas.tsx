@@ -1,9 +1,16 @@
 import { For } from 'solid-js';
 import { InfiniteCanvas, type InfiniteCanvasContextMenuEvent } from '../../ui';
 import { WorkbenchWidget } from './WorkbenchWidget';
-import type { WorkbenchViewport, WorkbenchWidgetItem, WorkbenchWidgetType } from './types';
+import type {
+  WorkbenchViewport,
+  WorkbenchWidgetDefinition,
+  WorkbenchWidgetItem,
+  WorkbenchWidgetType,
+} from './types';
+import { getWidgetEntry } from './widgets/widgetRegistry';
 
 export interface WorkbenchCanvasProps {
+  widgetDefinitions: readonly WorkbenchWidgetDefinition[];
   widgets: readonly WorkbenchWidgetItem[];
   viewport: WorkbenchViewport;
   selectedWidgetId: string | null;
@@ -43,6 +50,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           <For each={props.widgets}>
             {(item) => (
               <WorkbenchWidget
+                definition={getWidgetEntry(item.type, props.widgetDefinitions)}
                 item={item}
                 selected={props.selectedWidgetId === item.id}
                 optimisticFront={props.optimisticFrontWidgetId === item.id}

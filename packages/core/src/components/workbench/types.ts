@@ -1,9 +1,13 @@
-export type WorkbenchWidgetType =
+import type { Component } from 'solid-js';
+
+export type BuiltinWorkbenchWidgetType =
   | 'terminal'
   | 'file-browser'
   | 'system-monitor'
   | 'log-viewer'
   | 'code-editor';
+
+export type WorkbenchWidgetType = BuiltinWorkbenchWidgetType | (string & {});
 
 export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
   'terminal',
@@ -13,9 +17,29 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
   'code-editor',
 ];
 
-export interface WorkbenchWidgetItem {
+export interface WorkbenchWidgetBodyProps<TWidgetType extends string = WorkbenchWidgetType> {
+  widgetId: string;
+  title: string;
+  type: TWidgetType;
+}
+
+export interface WorkbenchWidgetDefinition<TWidgetType extends string = WorkbenchWidgetType> {
+  type: TWidgetType;
+  label: string;
+  icon: Component<{ class?: string }>;
+  body: Component<WorkbenchWidgetBodyProps<TWidgetType>>;
+  defaultTitle: string;
+  defaultSize: {
+    width: number;
+    height: number;
+  };
+  group?: string;
+  singleton?: boolean;
+}
+
+export interface WorkbenchWidgetItem<TWidgetType extends string = WorkbenchWidgetType> {
   id: string;
-  type: WorkbenchWidgetType;
+  type: TWidgetType;
   title: string;
   x: number;
   y: number;
@@ -31,12 +55,12 @@ export interface WorkbenchViewport {
   scale: number;
 }
 
-export interface WorkbenchState {
+export interface WorkbenchState<TWidgetType extends string = WorkbenchWidgetType> {
   version: 1;
-  widgets: WorkbenchWidgetItem[];
+  widgets: WorkbenchWidgetItem<TWidgetType>[];
   viewport: WorkbenchViewport;
   locked: boolean;
-  filters: Record<WorkbenchWidgetType, boolean>;
+  filters: Record<TWidgetType, boolean>;
   selectedWidgetId: string | null;
 }
 
@@ -48,22 +72,4 @@ export interface WorkbenchContextMenuState {
   widgetId?: string | null;
 }
 
-export const DEFAULT_WIDGET_DIMENSIONS: Readonly<
-  Record<WorkbenchWidgetType, { width: number; height: number }>
-> = {
-  'terminal': { width: 480, height: 320 },
-  'file-browser': { width: 360, height: 400 },
-  'system-monitor': { width: 340, height: 280 },
-  'log-viewer': { width: 500, height: 300 },
-  'code-editor': { width: 520, height: 380 },
-};
-
 export const DEFAULT_WORKBENCH_VIEWPORT: WorkbenchViewport = { x: 80, y: 60, scale: 1 };
-
-export const DEFAULT_FILTERS: Record<WorkbenchWidgetType, boolean> = {
-  'terminal': true,
-  'file-browser': true,
-  'system-monitor': true,
-  'log-viewer': true,
-  'code-editor': true,
-};

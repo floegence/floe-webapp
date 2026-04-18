@@ -8,6 +8,7 @@
 @source './**/*.{js}';
 @import './floe.css';
 @import './chat.css';
+@import './display-mode.css';
 @import './notes.css';
 @import './ui.css';
 @import './workbench.css';

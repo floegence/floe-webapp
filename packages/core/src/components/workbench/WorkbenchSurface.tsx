@@ -7,7 +7,24 @@ import { WorkbenchFilterBar } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
-import type { WorkbenchState, WorkbenchWidgetType } from './types';
+import type {
+  WorkbenchState,
+  WorkbenchWidgetDefinition,
+  WorkbenchWidgetItem,
+  WorkbenchWidgetType,
+} from './types';
+
+export interface WorkbenchSurfaceApi {
+  ensureWidget: (
+    type: WorkbenchWidgetType,
+    options?: { centerViewport?: boolean; worldX?: number; worldY?: number },
+  ) => WorkbenchWidgetItem | null;
+  focusWidget: (
+    widget: WorkbenchWidgetItem,
+    options?: { centerViewport?: boolean },
+  ) => WorkbenchWidgetItem;
+  findWidgetByType: (type: WorkbenchWidgetType) => WorkbenchWidgetItem | null;
+}
 
 export interface WorkbenchSurfaceProps {
   state: () => WorkbenchState;
@@ -27,6 +44,8 @@ export interface WorkbenchSurfaceProps {
    * Optional class added to the surface root for layout integration.
    */
   class?: string;
+  widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
+  onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
 }
 
 const DEFAULT_LOCK_SHORTCUT = 'F1';
@@ -35,12 +54,25 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const modelOptions: UseWorkbenchModelOptions = {
     state: () => props.state(),
     setState: (updater) => props.setState(updater),
+    widgetDefinitions: () => props.widgetDefinitions,
     onClose: () => {
       // Page mode has no "close" — surface is a permanent display, not a modal.
     },
   };
 
   const model = useWorkbenchModel(modelOptions);
+
+  createEffect(() => {
+    props.onApiReady?.({
+      ensureWidget: (type, options) => model.widgetActions.ensureWidget(type, options) ?? null,
+      focusWidget: (widget, options) => model.navigation.focusWidget(widget, options),
+      findWidgetByType: (type) => model.queries.findWidgetByType(type),
+    });
+
+    onCleanup(() => {
+      props.onApiReady?.(null);
+    });
+  });
 
   const lockShortcut = () =>
     props.lockShortcut === undefined ? DEFAULT_LOCK_SHORTCUT : props.lockShortcut;
@@ -131,6 +163,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     <div class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}>
       <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
         <WorkbenchCanvas
+          widgetDefinitions={model.widgetDefinitions()}
           widgets={model.widgets()}
           viewport={model.viewport()}
           selectedWidgetId={model.selectedWidgetId()}
@@ -158,6 +191,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       />
 
       <WorkbenchFilterBar
+        widgetDefinitions={model.widgetDefinitions()}
         widgets={model.widgets()}
         filters={model.filters()}
         onSoloFilter={model.filter.solo}

@@ -89,6 +89,7 @@ The demo uses the VSCode-style Shell layout from `@floegence/floe-webapp-core`:
 - Sidebar (left, resizable/collapsible)
 - Bottom bar (status)
 - Mobile tab bar on small screens
+- Shared page-mode primitives for `Activity / Deck / Workbench`
 
 ### Demo tour
 
@@ -98,6 +99,7 @@ The demo is intentionally “batteries-included” so downstream apps can copy p
 - **Files tab**: Monaco-powered file viewer for real workspace sources (core components, protocol client, docs).
 - **Search tab**: simple workspace search that can jump into the file viewer.
 - **Settings tab**: protocol connect/disconnect + shell theme + chart theme presets.
+- **Deck / Workbench**: page-mode surfaces that reuse the shared top bar and switcher contract from `@floegence/floe-webapp-core/layout`.
 
 Tips:
 
@@ -379,6 +381,39 @@ Avoid broad resets such as `* { border-width: 0; }`, which can remove the defaul
 Named theme presets are a good fit for chart palettes and brand accents because they can switch token groups without forcing the whole app between light and dark mode.
 
 If you are building a token viewer or docs surface, import the public token contract from `@floegence/floe-webapp-core` (`floeDesignTokens`, `floeColorTokenCategories`, `floeThemeColorVariables`, `floeSharedCssVariables`) instead of duplicating theme values in your app.
+
+### Optional: use page-mode shells for deck/workbench-style views
+
+Use the shared `layout` exports when you want a surface to own the full viewport while still keeping the same top-bar contract:
+
+```tsx
+import { DisplayModePageShell, DisplayModeSwitcher } from '@floegence/floe-webapp-core/layout';
+
+<DisplayModePageShell
+  logo={<Logo />}
+  actions={<DisplayModeSwitcher mode={mode()} onChange={setMode} />}
+>
+  <WorkbenchSurface state={state} setState={setState} widgetDefinitions={widgetDefinitions} />
+</DisplayModePageShell>;
+```
+
+Use the shared `workbench` exports when the host app needs custom widgets but should still inherit the same canvas, dock, HUD, widget chrome, and context menu behavior:
+
+```tsx
+import type { WorkbenchWidgetDefinition } from '@floegence/floe-webapp-core/workbench';
+
+const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
+  {
+    type: 'ops.logs',
+    label: 'Logs',
+    icon: LogsIcon,
+    body: LogsWidget,
+    defaultTitle: 'Logs',
+    defaultSize: { width: 720, height: 420 },
+    singleton: true,
+  },
+];
+```
 
 ---
 

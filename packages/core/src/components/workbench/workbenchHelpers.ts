@@ -1,12 +1,17 @@
 import {
-  DEFAULT_FILTERS,
   DEFAULT_WORKBENCH_VIEWPORT,
   type WorkbenchState,
   type WorkbenchViewport,
+  type WorkbenchWidgetDefinition,
   type WorkbenchWidgetItem,
   type WorkbenchWidgetType,
-  WORKBENCH_WIDGET_TYPES,
 } from './types';
+import {
+  createWorkbenchFilterState,
+  getWidgetEntry,
+  isValidWorkbenchWidgetType,
+  resolveWorkbenchWidgetDefinitions,
+} from './widgets/widgetRegistry';
 
 export function createWorkbenchId(): string {
   const crypto = globalThis.crypto;
@@ -26,26 +31,26 @@ export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefine
 }
 
 export function sanitizeFilters(
-  filters: Partial<Record<WorkbenchWidgetType, boolean>> | undefined
+  filters: Partial<Record<WorkbenchWidgetType, boolean>> | undefined,
+  widgetDefinitions?: readonly WorkbenchWidgetDefinition[]
 ): Record<WorkbenchWidgetType, boolean> {
-  if (!filters) return { ...DEFAULT_FILTERS };
-  const result = { ...DEFAULT_FILTERS };
-  for (const type of WORKBENCH_WIDGET_TYPES) {
-    if (typeof filters[type] === 'boolean') {
-      result[type] = filters[type];
-    }
-  }
-  return result;
+  return createWorkbenchFilterState(widgetDefinitions, filters);
 }
 
-function isValidWidgetType(type: unknown): type is WorkbenchWidgetType {
-  return typeof type === 'string' && WORKBENCH_WIDGET_TYPES.includes(type as WorkbenchWidgetType);
+export interface SanitizeWorkbenchStateOptions {
+  widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
+  createFallbackState?: () => WorkbenchState;
 }
 
-export function sanitizeWorkbenchState(input: unknown): WorkbenchState {
+export function sanitizeWorkbenchState(
+  input: unknown,
+  options: SanitizeWorkbenchStateOptions = {}
+): WorkbenchState {
+  const widgetDefinitions = resolveWorkbenchWidgetDefinitions(options.widgetDefinitions);
+  const createFallbackState = options.createFallbackState ?? (() => createDefaultWorkbenchState(widgetDefinitions));
   const state = input as Partial<WorkbenchState> | undefined;
   if (!state || state.version !== 1 || !Array.isArray(state.widgets)) {
-    return createDefaultWorkbenchState();
+    return createFallbackState();
   }
 
   const widgets: WorkbenchWidgetItem[] = state.widgets
@@ -53,97 +58,75 @@ export function sanitizeWorkbenchState(input: unknown): WorkbenchState {
       (w): w is WorkbenchWidgetItem =>
         !!w &&
         typeof w.id === 'string' &&
-        isValidWidgetType(w.type) &&
+        isValidWorkbenchWidgetType(w.type, widgetDefinitions) &&
         typeof w.title === 'string'
     )
-    .map((w) => ({
-      id: w.id,
-      type: w.type,
-      title: w.title,
-      x: Number.isFinite(w.x) ? w.x : 0,
-      y: Number.isFinite(w.y) ? w.y : 0,
-      width: Number.isFinite(w.width) && w.width > 0 ? w.width : 300,
-      height: Number.isFinite(w.height) && w.height > 0 ? w.height : 200,
-      z_index: Number.isFinite(w.z_index) && w.z_index >= 0 ? w.z_index : 1,
-      created_at_unix_ms: Number.isFinite(w.created_at_unix_ms) ? w.created_at_unix_ms : Date.now(),
-    }));
+    .map((w) => {
+      const entry = getWidgetEntry(w.type, widgetDefinitions);
+      return {
+        id: w.id,
+        type: w.type,
+        title: w.title,
+        x: Number.isFinite(w.x) ? w.x : 0,
+        y: Number.isFinite(w.y) ? w.y : 0,
+        width: Number.isFinite(w.width) && w.width > 0 ? w.width : entry.defaultSize.width,
+        height: Number.isFinite(w.height) && w.height > 0 ? w.height : entry.defaultSize.height,
+        z_index: Number.isFinite(w.z_index) && w.z_index >= 0 ? w.z_index : 1,
+        created_at_unix_ms: Number.isFinite(w.created_at_unix_ms) ? w.created_at_unix_ms : Date.now(),
+      };
+    });
+
+  const selectedWidgetId = typeof state.selectedWidgetId === 'string' && widgets.some((widget) => widget.id === state.selectedWidgetId)
+    ? state.selectedWidgetId
+    : null;
 
   return {
     version: 1,
     widgets,
     viewport: sanitizeViewport(state.viewport),
     locked: typeof state.locked === 'boolean' ? state.locked : false,
-    filters: sanitizeFilters(state.filters),
-    selectedWidgetId:
-      typeof state.selectedWidgetId === 'string' ? state.selectedWidgetId : null,
+    filters: sanitizeFilters(state.filters, widgetDefinitions),
+    selectedWidgetId,
   };
 }
 
-export function createDefaultWorkbenchState(): WorkbenchState {
+export function createDefaultWorkbenchState(
+  widgetDefinitions?: readonly WorkbenchWidgetDefinition[]
+): WorkbenchState {
+  const definitions = resolveWorkbenchWidgetDefinitions(widgetDefinitions);
   const now = Date.now();
+  const seedSpecs: ReadonlyArray<Readonly<{ type: string; title: string; x: number; y: number }>> = [
+    { type: 'terminal', title: 'dev · terminal', x: 80, y: 80 },
+    { type: 'file-browser', title: 'project · files', x: 600, y: 80 },
+    { type: 'system-monitor', title: 'host · system monitor', x: 80, y: 420 },
+    { type: 'log-viewer', title: 'services · logs', x: 540, y: 500 },
+    { type: 'code-editor', title: 'Counter.tsx', x: 1000, y: 180 },
+  ];
+
+  const widgets = seedSpecs
+    .filter((seed) => definitions.some((entry) => entry.type === seed.type))
+    .map((seed, index) => {
+      const entry = getWidgetEntry(seed.type, definitions);
+      return {
+        id: `wb-seed-${index + 1}`,
+        type: seed.type,
+        title: seed.title,
+        x: seed.x,
+        y: seed.y,
+        width: entry.defaultSize.width,
+        height: entry.defaultSize.height,
+        z_index: index + 1,
+        created_at_unix_ms: now - (seedSpecs.length - index) * 600000,
+      } satisfies WorkbenchWidgetItem;
+    });
+
   return {
     version: 1,
-    widgets: [
-      {
-        id: 'wb-seed-terminal',
-        type: 'terminal',
-        title: 'dev · terminal',
-        x: 80,
-        y: 80,
-        width: 480,
-        height: 300,
-        z_index: 1,
-        created_at_unix_ms: now - 3600000,
-      },
-      {
-        id: 'wb-seed-files',
-        type: 'file-browser',
-        title: 'project · files',
-        x: 600,
-        y: 80,
-        width: 360,
-        height: 380,
-        z_index: 2,
-        created_at_unix_ms: now - 3000000,
-      },
-      {
-        id: 'wb-seed-monitor',
-        type: 'system-monitor',
-        title: 'host · system monitor',
-        x: 80,
-        y: 420,
-        width: 420,
-        height: 260,
-        z_index: 3,
-        created_at_unix_ms: now - 2400000,
-      },
-      {
-        id: 'wb-seed-logs',
-        type: 'log-viewer',
-        title: 'services · logs',
-        x: 540,
-        y: 500,
-        width: 520,
-        height: 240,
-        z_index: 4,
-        created_at_unix_ms: now - 1800000,
-      },
-      {
-        id: 'wb-seed-code',
-        type: 'code-editor',
-        title: 'Counter.tsx',
-        x: 1000,
-        y: 180,
-        width: 500,
-        height: 340,
-        z_index: 5,
-        created_at_unix_ms: now - 1200000,
-      },
-    ],
+    widgets,
     viewport: { ...DEFAULT_WORKBENCH_VIEWPORT },
     locked: false,
-    filters: { ...DEFAULT_FILTERS },
-    selectedWidgetId: null,
+    filters: createWorkbenchFilterState(definitions),
+    selectedWidgetId: widgets[0]?.id ?? null,
   };
 }
 

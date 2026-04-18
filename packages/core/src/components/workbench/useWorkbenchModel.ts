@@ -2,8 +2,7 @@ import { createMemo, createSignal } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
 import { ArrowUp, Copy, Trash } from '../../icons';
 import {
-  DEFAULT_FILTERS,
-  DEFAULT_WIDGET_DIMENSIONS,
+  type WorkbenchWidgetDefinition,
   type WorkbenchContextMenuState,
   type WorkbenchState,
   type WorkbenchViewport,
@@ -20,13 +19,20 @@ import {
   WORKBENCH_CANVAS_ZOOM_STEP,
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
 } from './workbenchHelpers';
-import { getWidgetEntry, WIDGET_REGISTRY } from './widgets/widgetRegistry';
+import {
+  createWorkbenchFilterState,
+  getWidgetEntry,
+  resolveWorkbenchWidgetDefinitions,
+} from './widgets/widgetRegistry';
 import type { WorkbenchContextMenuItem } from './WorkbenchContextMenu';
 
 export interface UseWorkbenchModelOptions {
   state: () => WorkbenchState;
   setState: (updater: (prev: WorkbenchState) => WorkbenchState) => void;
   onClose: () => void;
+  widgetDefinitions?:
+    | readonly WorkbenchWidgetDefinition[]
+    | (() => readonly WorkbenchWidgetDefinition[] | undefined);
 }
 
 export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
@@ -42,6 +48,13 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const selectedWidgetId = createMemo(() => state().selectedWidgetId);
   const topZIndex = createMemo(() => getTopZIndex(widgets()));
   const scaleLabel = createMemo(() => `${Math.round(viewport().scale * 100)}%`);
+  const readWidgetDefinitions = () =>
+    typeof options.widgetDefinitions === 'function'
+      ? options.widgetDefinitions()
+      : options.widgetDefinitions;
+  const widgetDefinitions = createMemo(() =>
+    resolveWorkbenchWidgetDefinitions(readWidgetDefinitions())
+  );
 
   const setCanvasFrameRef = (el: HTMLDivElement | undefined) => {
     if (el) {
@@ -71,6 +84,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const closeContextMenu = () => setContextMenu(null);
+  const findWidgetById = (widgetId: string) => state().widgets.find((widget) => widget.id === widgetId) ?? null;
+  const findWidgetByType = (type: WorkbenchWidgetType) => state().widgets.find((widget) => widget.type === type) ?? null;
 
   const contextMenuItems = createMemo<WorkbenchContextMenuItem[]>(() => {
     const menu = contextMenu();
@@ -122,7 +137,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }
 
     // Canvas context menu: add widget items (centered on cursor).
-    return WIDGET_REGISTRY.map((entry) => ({
+    return widgetDefinitions().map((entry) => ({
       id: `add-${entry.type}`,
       kind: 'action' as const,
       label: `Add ${entry.label}`,
@@ -152,8 +167,13 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   // --- Widget CRUD ---
   const addWidget = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
-    const entry = getWidgetEntry(type);
-    const dims = DEFAULT_WIDGET_DIMENSIONS[type];
+    const entry = getWidgetEntry(type, widgetDefinitions());
+    const existing = entry.singleton ? findWidgetByType(type) : null;
+    if (existing) {
+      return focusWidget(existing, { centerViewport: true });
+    }
+
+    const dims = entry.defaultSize;
     const newWidget: WorkbenchWidgetItem = {
       id: createWorkbenchId(),
       type,
@@ -176,7 +196,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const addWidgetAtCursor = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
-    const dims = DEFAULT_WIDGET_DIMENSIONS[type];
+    const dims = getWidgetEntry(type, widgetDefinitions()).defaultSize;
     return addWidget(type, worldX - dims.width / 2, worldY - dims.height / 2);
   };
 
@@ -283,15 +303,25 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const showAll = () => {
+    const nextFilters = createWorkbenchFilterState(widgetDefinitions());
     options.setState((prev) => ({
       ...prev,
-      filters: { ...DEFAULT_FILTERS },
+      filters: nextFilters,
     }));
   };
 
   // --- Selection / Navigation ---
   const selectWidget = (widgetId: string) => {
     options.setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
+  };
+
+  const viewportWorldCenter = () => {
+    const frame = canvasFrameSize();
+    const vp = viewport();
+    return {
+      worldX: frame.width > 0 ? (frame.width / 2 - vp.x) / vp.scale : 240,
+      worldY: frame.height > 0 ? (frame.height / 2 - vp.y) / vp.scale : 180,
+    };
   };
 
   let navigationAnimToken = 0;
@@ -336,10 +366,37 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     animateViewportTo(targetX, targetY, vp.scale);
   };
 
-  const navigateToWidget = (widget: WorkbenchWidgetItem) => {
+  const focusWidget = (
+    widget: WorkbenchWidgetItem,
+    options: { centerViewport?: boolean } = {}
+  ) => {
     selectWidget(widget.id);
     commitFront(widget.id);
-    centerViewportOnWidget(widget);
+    if (options.centerViewport !== false) {
+      centerViewportOnWidget(widget);
+    }
+    return widget;
+  };
+
+  const ensureWidget = (
+    type: WorkbenchWidgetType,
+    ensureOptions?: { centerViewport?: boolean; worldX?: number; worldY?: number }
+  ) => {
+    const existing = findWidgetByType(type);
+    if (existing) {
+      return focusWidget(existing, { centerViewport: ensureOptions?.centerViewport ?? true });
+    }
+
+    const center = viewportWorldCenter();
+    const widget = addWidgetAtCursor(
+      type,
+      ensureOptions?.worldX ?? center.worldX,
+      ensureOptions?.worldY ?? center.worldY
+    );
+    if ((ensureOptions?.centerViewport ?? true) && widget) {
+      centerViewportOnWidget(widget);
+    }
+    return widget;
   };
 
   const handleArrowNavigation = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -350,7 +407,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       filters()
     );
     if (target) {
-      navigateToWidget(target);
+      focusWidget(target);
     }
   };
 
@@ -377,6 +434,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     topZIndex,
     scaleLabel,
     optimisticFrontWidgetId,
+    widgetDefinitions,
     setCanvasFrameRef,
 
     contextMenu: {
@@ -425,7 +483,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     navigation: {
       handleArrowNavigation,
       centerOnWidget: centerViewportOnWidget,
-      focusWidget: navigateToWidget,
+      focusWidget,
     },
 
     widgetActions: {
@@ -434,6 +492,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       addWidget,
       addWidgetAtCursor,
       addWidgetCentered,
+      ensureWidget,
+    },
+
+    queries: {
+      findWidgetByType,
+      findWidgetById,
     },
 
     handleCloseRequest,

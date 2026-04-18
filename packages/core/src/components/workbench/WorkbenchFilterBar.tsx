@@ -12,10 +12,14 @@ import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import { Layers, Plus } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
-import type { WorkbenchWidgetItem, WorkbenchWidgetType } from './types';
-import { WIDGET_REGISTRY } from './widgets/widgetRegistry';
+import type {
+  WorkbenchWidgetDefinition,
+  WorkbenchWidgetItem,
+  WorkbenchWidgetType,
+} from './types';
 
 export interface WorkbenchFilterBarProps {
+  widgetDefinitions: readonly WorkbenchWidgetDefinition[];
   widgets: readonly WorkbenchWidgetItem[];
   filters: Record<WorkbenchWidgetType, boolean>;
   /** Solo a single widget type — only this type remains visible. */
@@ -137,7 +141,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
   });
 
   const allActive = createMemo(() =>
-    WIDGET_REGISTRY.every((entry) => props.filters[entry.type])
+    props.widgetDefinitions.every((entry) => props.filters[entry.type])
   );
 
   // "All" pill = slot 0; widget types = slots 1..N.
@@ -275,7 +279,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
           </Motion.span>
         </button>
         <span class="workbench-dock__divider" aria-hidden="true" />
-        <For each={WIDGET_REGISTRY}>
+        <For each={props.widgetDefinitions}>
           {(entry, index) => {
             const slot = () => index() + 1;
             return (

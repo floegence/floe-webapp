@@ -1,16 +1,14 @@
 import { For, type Component } from 'solid-js';
-import {
-  Bookmark,
-  Grid3x3,
-  LayoutDashboard,
-} from '@floegence/floe-webapp-core/icons';
+import { Bookmark, Grid3x3, LayoutDashboard } from '../icons';
 
 export type DisplayMode = 'activity' | 'deck' | 'workbench';
 
 const VALID_MODES: ReadonlySet<DisplayMode> = new Set(['activity', 'deck', 'workbench']);
 
-/** Coerce any unknown persisted value back into a valid DisplayMode. */
-export function sanitizeDisplayMode(value: unknown, fallback: DisplayMode = 'activity'): DisplayMode {
+export function sanitizeDisplayMode(
+  value: unknown,
+  fallback: DisplayMode = 'activity'
+): DisplayMode {
   return typeof value === 'string' && VALID_MODES.has(value as DisplayMode)
     ? (value as DisplayMode)
     : fallback;
@@ -27,7 +25,7 @@ interface ModeOption {
   icon: Component<{ class?: string }>;
 }
 
-const MODES: ReadonlyArray<ModeOption> = [
+const MODES: readonly ModeOption[] = [
   { id: 'activity', label: 'Activity', icon: Bookmark },
   { id: 'deck', label: 'Deck', icon: LayoutDashboard },
   { id: 'workbench', label: 'Workbench', icon: Grid3x3 },

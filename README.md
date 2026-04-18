@@ -23,7 +23,7 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 
 - Start from a familiar app shell with a top bar, activity bar, sidebar, bottom bar, resizable panels, and mobile navigation.
 - Add product-specific navigation, commands, and status items through a component registry instead of forking the shell.
-- Reuse higher-level building blocks such as file browsing, launchpad flows, deck layouts, chat blocks, editor surfaces, and terminal integration points.
+- Reuse higher-level building blocks such as file browsing, launchpad flows, deck layouts, workbench canvases, display-mode page shells, chat blocks, editor surfaces, and terminal integration points.
 - Keep theming, keyboard behavior, notifications, and shared accessibility patterns consistent across the whole app.
 - Connect the same shell to Flowersec-backed sessions and typed RPC contracts when the product needs remote capabilities.
 
@@ -31,7 +31,7 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 
 | Surface | What teams get | Why it matters | Docs |
 | --- | --- | --- | --- |
-| `App Shell` | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md) |
+| `App Shell` | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar, `DisplayModeSwitcher`, `DisplayModePageShell` | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints, including page-mode surfaces such as Deck and Workbench | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md) |
 | `UI Primitives` | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, theme tokens | Keeps core interactions and visual language consistent while leaving room for product-owned features | [`docs/getting-started.md`](docs/getting-started.md) |
 | `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, terminal extension helpers, widget hooks, controller-driven Notes overlay primitives with shared overlay/gesture contracts, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md), [`docs/getting-started.md`](docs/getting-started.md) |
 | `Protocol Layer` | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring | Lets apps attach connection state and remote capabilities without baking business contracts into the framework | [`docs/protocol.md`](docs/protocol.md) |
@@ -87,7 +87,14 @@ The demo shows how Floe can host multiple product surfaces in one shell:
 - `Files`: Monaco-powered source viewing over demo workspace files
 - `Search`: workspace search that jumps into the file view
 - `Settings`: protocol connect/disconnect plus shell and chart theme controls
-- `Chat`, `Deck`, `Notes`, and `Design Tokens`: reference surfaces for richer app experiences
+- `Chat`, `Deck`, `Workbench`, `Notes`, and `Design Tokens`: reference surfaces for richer app experiences
+
+The shared `layout` package now also owns the demo's page-mode shell primitives:
+
+- `DisplayModeSwitcher` for the top-bar activity/deck/workbench mode contract
+- `DisplayModePageShell` for full-page surfaces that reuse the shared top bar without rendering the activity bar or sidebar
+
+The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior.
 
 Optional local variations:
 
