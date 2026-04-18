@@ -94,7 +94,7 @@ The shared `layout` package now also owns the demo's page-mode shell primitives:
 - `DisplayModeSwitcher` for the top-bar activity/deck/workbench mode contract
 - `DisplayModePageShell` for full-page surfaces that reuse the shared top bar without rendering the activity bar or sidebar
 
-The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior.
+The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior. Within a mounted workbench session, the widget lifecycle boundary is the stable `widget.id`: fronting, focus, and geometry updates mutate the visible snapshot without remounting the business widget subtree.
 
 Optional local variations:
 

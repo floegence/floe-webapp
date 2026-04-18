@@ -1,13 +1,11 @@
-import { For } from 'solid-js';
 import { InfiniteCanvas, type InfiniteCanvasContextMenuEvent } from '../../ui';
-import { WorkbenchWidget } from './WorkbenchWidget';
 import type {
   WorkbenchViewport,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
 } from './types';
-import { getWidgetEntry } from './widgets/widgetRegistry';
+import { WorkbenchCanvasField } from './WorkbenchCanvasField';
 
 export interface WorkbenchCanvasProps {
   widgetDefinitions: readonly WorkbenchWidgetDefinition[];
@@ -45,30 +43,23 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         onCanvasContextMenu={props.onCanvasContextMenu}
         disablePanZoom={props.locked}
       >
-        <div class="workbench-canvas__field">
-          <div class="workbench-canvas__grid" aria-hidden="true" />
-          <For each={props.widgets}>
-            {(item) => (
-              <WorkbenchWidget
-                definition={getWidgetEntry(item.type, props.widgetDefinitions)}
-                item={item}
-                selected={props.selectedWidgetId === item.id}
-                optimisticFront={props.optimisticFrontWidgetId === item.id}
-                topZIndex={props.topZIndex}
-                viewportScale={props.viewport.scale}
-                locked={props.locked}
-                filtered={!props.filters[item.type]}
-                onSelect={props.onSelectWidget}
-                onContextMenu={props.onWidgetContextMenu}
-                onStartOptimisticFront={props.onStartOptimisticFront}
-                onCommitFront={props.onCommitFront}
-                onCommitMove={props.onCommitMove}
-                onCommitResize={props.onCommitResize}
-                onRequestDelete={props.onRequestDelete}
-              />
-            )}
-          </For>
-        </div>
+        <WorkbenchCanvasField
+          widgetDefinitions={props.widgetDefinitions}
+          widgets={props.widgets}
+          selectedWidgetId={props.selectedWidgetId}
+          optimisticFrontWidgetId={props.optimisticFrontWidgetId}
+          topZIndex={props.topZIndex}
+          viewportScale={props.viewport.scale}
+          locked={props.locked}
+          filters={props.filters}
+          onSelectWidget={props.onSelectWidget}
+          onWidgetContextMenu={props.onWidgetContextMenu}
+          onStartOptimisticFront={props.onStartOptimisticFront}
+          onCommitFront={props.onCommitFront}
+          onCommitMove={props.onCommitMove}
+          onCommitResize={props.onCommitResize}
+          onRequestDelete={props.onRequestDelete}
+        />
       </InfiniteCanvas>
     </div>
   );
