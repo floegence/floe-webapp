@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process';
 
 const CORE_CLIENT_TEST_ROOT_PATHS = [
+  'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',

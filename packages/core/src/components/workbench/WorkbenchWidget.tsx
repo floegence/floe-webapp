@@ -257,6 +257,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         'is-resizing': isResizing(),
         'is-filtered-out': props.filtered,
       }}
+      data-floe-dialog-surface-host="true"
       data-floe-workbench-widget-id={props.widgetId}
       onContextMenu={(event) => {
         event.preventDefault();

@@ -82,6 +82,7 @@
 
 - 一律优先复用 `useOverlayMask()`。
 - 如果 floating overlay 必须保留极少数 shell 级快捷键，使用 `useOverlayMask()` 的 allowlist 放行明确 keybind；不要在产品层零散重写键盘桥接。
+- 如果 overlay 由 deck cell、workbench widget、floating window 这类局部 surface 打开，必须优先挂到最近的 overlay host，而不是默认逃逸到整个 viewport。
 
 禁止：
 
@@ -160,6 +161,21 @@
 - 框选的“命中坐标系”和“渲染坐标系”必须显式分层。
 - 右键菜单的关闭判定必须先于空白区自己的手势逻辑触发。
 
+### 3.6 局部 dialog surface contract
+
+当 dialog 由局部工作表面触发时（例如 deck widget、workbench widget、floating window），必须遵守同一套局部弹窗契约：
+
+1. 局部宿主节点显式声明 `data-floe-dialog-surface-host="true"`。
+2. `Dialog` 打开时优先根据最近一次 `pointerdown capture` / `focusin` 交互快照，回溯最近的 overlay host。
+3. 找到局部 host 时，dialog 必须以局部 surface 模式挂载：
+   - `Portal mount={host}`
+   - overlay root / backdrop 使用局部 `absolute inset-0`
+   - dialog 自身使用 `data-floe-dialog-surface-boundary`
+4. 局部 dialog 的 backdrop 点击只在当前宿主内部关闭；点击其它 widget、其它 surface、页面其它区域不自动关闭。
+5. 局部 dialog 的 `Escape` 只允许由当前 dialog boundary 内的事件 target / activeElement 响应，不能跨 surface 误关其它组件。
+6. 局部 dialog 不锁整个 body scroll，但仍要阻断 dialog 内按键向全局热键穿透。
+7. 没有局部 host 时必须自动回退为全局 modal 语义，不能留下半局部、半全局的漂移状态。
+
 ## 4. 工程化防回退手段
 
 ### 4.1 源码守卫测试
@@ -209,6 +225,9 @@
 - [x] FloatingWindow 改成 DOM imperative geometry + end commit
 - [x] FloatingWindow 复用共享 hot interaction 运行时
 - [x] CommandPalette 统一走 `useOverlayMask` autofocus
+- [x] Dialog 支持基于 overlay host 的局部 surface mount
+- [x] FloatingWindow / DeckCell / WorkbenchWidget 显式声明 dialog surface host
+- [x] 局部 dialog 的 backdrop / Escape 语义收敛到共享 contract
 
 ### 5.4 Notes overlay
 

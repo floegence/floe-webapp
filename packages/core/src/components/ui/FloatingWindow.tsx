@@ -152,6 +152,20 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setSize({ width: rect.width, height: rect.height });
   };
 
+  const focusWindowRoot = () => {
+    try {
+      windowRef?.focus({ preventScroll: true });
+    } catch {
+      // Ignore focus failures (e.g. detached node).
+    }
+  };
+
+  const shouldFocusWindowRootFromPointer = (target: EventTarget | null) => {
+    const element = target instanceof Element ? target : null;
+    if (!element) return true;
+    return element.closest('button, input, select, textarea, a, [role="button"], [tabindex]:not([tabindex="-1"])') === null;
+  };
+
   const isTargetInsideWindow = (target: EventTarget | null) =>
     !!windowRef && target instanceof Node && windowRef.contains(target);
 
@@ -223,7 +237,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
     const committedRect = commit ? (readLiveRectFromDom() ?? liveRect) : null;
     if (pointerId !== undefined) {
       try {
-        windowRef?.releasePointerCapture(pointerId);
+        if (typeof windowRef?.releasePointerCapture === 'function') {
+          windowRef.releasePointerCapture(pointerId);
+        }
       } catch {
         // Ignore (e.g. already released).
       }
@@ -273,13 +289,22 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (!props.open) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        props.onOpenChange(false);
+      if (e.key !== 'Escape') return;
+
+      const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
+      if (!isTargetInsideWindow(e.target) && !isTargetInsideWindow(activeElement)) return;
+
+      e.preventDefault();
+      if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+      } else {
+        e.stopPropagation();
       }
+      props.onOpenChange(false);
     };
 
-    document.addEventListener('keydown', handleEscape);
-    onCleanup(() => document.removeEventListener('keydown', handleEscape));
+    document.addEventListener('keydown', handleEscape, true);
+    onCleanup(() => document.removeEventListener('keydown', handleEscape, true));
   });
 
   createEffect(() => {
@@ -340,7 +365,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
     dragStartRect = { ...liveRect };
     lastPointerPos = { x: e.clientX, y: e.clientY };
     setGlobalInteractionStyles(true, 'grabbing');
-    windowRef?.setPointerCapture(e.pointerId);
+    if (typeof windowRef?.setPointerCapture === 'function') {
+      windowRef.setPointerCapture(e.pointerId);
+    }
   };
 
   // eslint-disable-next-line solid/reactivity -- This returns an event handler.
@@ -359,7 +386,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
     resizeStartRect = { ...liveRect };
     lastPointerPos = { x: e.clientX, y: e.clientY };
     setGlobalInteractionStyles(true, RESIZE_CURSORS[handle]);
-    windowRef?.setPointerCapture(e.pointerId);
+    if (typeof windowRef?.setPointerCapture === 'function') {
+      windowRef.setPointerCapture(e.pointerId);
+    }
   };
 
   const flushPointerMove = () => {
@@ -427,6 +456,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
     toggleMaximize();
   };
 
+  const handleSurfacePointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
+    if (!shouldFocusWindowRootFromPointer(event.target)) return;
+    focusWindowRoot();
+  };
+
   const getResizeHandleClass = (handle: FloatingWindowResizeHandle) => {
     const baseClass = 'absolute z-10';
     const cursorMap: Record<FloatingWindowResizeHandle, string> = {
@@ -465,8 +499,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
           role="dialog"
           aria-labelledby={props.title ? titleId() : undefined}
           tabIndex={-1}
+          onPointerDown={handleSurfacePointerDown}
         >
           <div
+            data-floe-dialog-surface-host="true"
             data-floe-floating-window-surface="true"
             data-floe-floating-window-state={isActive() ? 'active' : 'inactive'}
             class={cn(

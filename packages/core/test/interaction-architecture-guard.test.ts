@@ -22,6 +22,9 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('startHotInteraction()');
     expect(architectureDoc).toContain('useOverlayMask()');
     expect(architectureDoc).toContain('overlay host');
+    expect(architectureDoc).toContain('data-floe-dialog-surface-host="true"');
+    expect(architectureDoc).toContain('data-floe-dialog-surface-boundary');
+    expect(architectureDoc).toContain('局部 dialog');
     expect(architectureDoc).toContain('pointerdown capture');
     expect(architectureDoc).toContain('详细落地 checklist');
   });
@@ -50,6 +53,10 @@ describe('interaction architecture guard', () => {
     const deckDragSrc = read('../src/hooks/useDeckDrag.ts');
     const fileDragContextSrc = read('../src/context/FileBrowserDragContext.tsx');
     const floatingWindowSrc = read('../src/components/ui/FloatingWindow.tsx');
+    const dialogSrc = read('../src/components/ui/Dialog.tsx');
+    const dialogSurfaceScopeSrc = read('../src/components/ui/dialogSurfaceScope.ts');
+    const deckCellSrc = read('../src/components/deck/DeckCell.tsx');
+    const workbenchWidgetSrc = read('../src/components/workbench/WorkbenchWidget.tsx');
     const notesBoardNoteSrc = read('../src/components/notes/NotesBoardNote.tsx');
 
     expect(sidebarSrc).toContain('data-floe-geometry-surface="shell-sidebar"');
@@ -67,7 +74,18 @@ describe('interaction architecture guard', () => {
     expect(floatingWindowSrc).toContain('startHotInteraction({');
     expect(floatingWindowSrc).toContain('data-floe-floating-window-state={isActive() ? \'active\' : \'inactive\'}');
     expect(floatingWindowSrc).toContain('tabIndex={-1}');
+    expect(floatingWindowSrc).toContain('data-floe-dialog-surface-host="true"');
     expect(floatingWindowSrc).not.toContain('aria-modal="true"');
+
+    expect(dialogSrc).toContain('data-floe-dialog-mode={isSurfaceMode() ? \'surface\' : \'global\'}');
+    expect(dialogSrc).toContain('Portal mount={portalMount()}');
+    expect(dialogSrc).toContain('closeOnEscape: () => (isSurfaceMode() ? \'inside\' : true)');
+    expect(dialogSrc).toContain('data-floe-dialog-backdrop={baseId}');
+    expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host'");
+    expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary'");
+    expect(dialogSurfaceScopeSrc).toContain('resolveDialogSurfaceHost');
+    expect(deckCellSrc).toContain('data-floe-dialog-surface-host="true"');
+    expect(workbenchWidgetSrc).toContain('data-floe-dialog-surface-host="true"');
 
     expect(notesBoardNoteSrc).toContain('data-floe-geometry-surface="notes-note"');
     expect(notesBoardNoteSrc).toContain('startHotInteraction({ kind: \'drag\', cursor: \'grabbing\' })');

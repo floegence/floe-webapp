@@ -54,6 +54,7 @@ export function DeckCell(props: DeckCellProps) {
 
   return (
     <div
+      data-floe-dialog-surface-host="true"
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',
         'bg-card border border-border',

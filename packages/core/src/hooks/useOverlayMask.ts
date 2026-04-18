@@ -6,6 +6,7 @@ import { matchKeybind } from '../utils/keybind';
 
 export type OverlayScrollBlockMode = 'none' | 'outside' | 'all';
 export type OverlayEscapeCloseMode = 'none' | 'inside' | 'always';
+type MaybeAccessor<T> = T | Accessor<T>;
 
 export interface UseOverlayMaskOptions {
   open: Accessor<boolean>;
@@ -17,22 +18,22 @@ export interface UseOverlayMaskOptions {
   onEscapeOutside?: () => void;
 
   /** Lock `document.body` scroll while the overlay is open (default: true). */
-  lockBodyScroll?: boolean;
+  lockBodyScroll?: MaybeAccessor<boolean | undefined>;
 
   /** Prevent scroll via wheel events (default: none). */
-  blockWheel?: OverlayScrollBlockMode;
+  blockWheel?: MaybeAccessor<OverlayScrollBlockMode | undefined>;
 
   /** Prevent scroll via touch-move events (default: none). */
-  blockTouchMove?: OverlayScrollBlockMode;
+  blockTouchMove?: MaybeAccessor<OverlayScrollBlockMode | undefined>;
 
   /** Keep tab focus within the overlay root (default: true). */
-  trapFocus?: boolean;
+  trapFocus?: MaybeAccessor<boolean | undefined>;
 
   /** Close on Escape and never leak to underlying window handlers (default: always). */
-  closeOnEscape?: boolean | OverlayEscapeCloseMode;
+  closeOnEscape?: MaybeAccessor<boolean | OverlayEscapeCloseMode | undefined>;
 
   /** Stop bubbling keydown events to window-level hotkeys (default: true). */
-  blockHotkeys?: boolean;
+  blockHotkeys?: MaybeAccessor<boolean | undefined>;
 
   /**
    * Allow a small set of global keybinds to continue bubbling to window-level handlers
@@ -42,10 +43,10 @@ export interface UseOverlayMaskOptions {
   allowHotkeys?: readonly string[] | Accessor<readonly string[] | undefined>;
 
   /** Auto-focus on open (default: true). */
-  autoFocus?: boolean | { selector?: string };
+  autoFocus?: MaybeAccessor<boolean | { selector?: string } | undefined>;
 
   /** Restore focus to the previously active element on close (default: true). */
-  restoreFocus?: boolean;
+  restoreFocus?: MaybeAccessor<boolean | undefined>;
 }
 
 function isNode(target: unknown): target is Node {
@@ -84,6 +85,16 @@ function resolveAllowedHotkeys(
   return allowHotkeys ?? [];
 }
 
+function resolveOptionValue<T>(
+  value: MaybeAccessor<T | undefined> | undefined,
+  fallback: T,
+): T {
+  if (typeof value === 'function') {
+    return (value as Accessor<T | undefined>)() ?? fallback;
+  }
+  return value ?? fallback;
+}
+
 function shouldAllowHotkey(
   event: KeyboardEvent,
   allowHotkeys: UseOverlayMaskOptions['allowHotkeys'],
@@ -99,33 +110,45 @@ function shouldAllowHotkey(
 }
 
 export function useOverlayMask(options: UseOverlayMaskOptions): void {
-  const lockBodyScroll = () => options.lockBodyScroll !== false;
-  const trapFocus = () => options.trapFocus !== false;
+  const lockBodyScroll = () => resolveOptionValue(options.lockBodyScroll, true);
+  const trapFocus = () => resolveOptionValue(options.trapFocus, true);
   const closeOnEscape = (): OverlayEscapeCloseMode => {
-    if (options.closeOnEscape === false) return 'none';
-    if (options.closeOnEscape === 'inside') return 'inside';
-    if (options.closeOnEscape === 'none') return 'none';
+    const resolved = resolveOptionValue<boolean | OverlayEscapeCloseMode>(options.closeOnEscape, true);
+    if (resolved === false) return 'none';
+    if (resolved === 'inside') return 'inside';
+    if (resolved === 'none') return 'none';
     return 'always';
   };
-  const blockHotkeys = () => options.blockHotkeys !== false;
-  const restoreFocus = () => options.restoreFocus !== false;
+  const blockHotkeys = () => resolveOptionValue(options.blockHotkeys, true);
+  const restoreFocus = () => resolveOptionValue(options.restoreFocus, true);
+  const blockWheel = () => resolveOptionValue<OverlayScrollBlockMode>(options.blockWheel, 'none');
+  const blockTouchMove = () => resolveOptionValue<OverlayScrollBlockMode>(options.blockTouchMove, 'none');
+  const autoFocus = () => resolveOptionValue<boolean | { selector?: string }>(options.autoFocus, true);
 
   createEffect(() => {
     if (!options.open()) return;
     if (typeof document === 'undefined') return;
 
+    const shouldLockBodyScroll = lockBodyScroll();
+    const shouldTrapFocus = trapFocus();
+    const escapeCloseMode = closeOnEscape();
+    const shouldBlockHotkeys = blockHotkeys();
+    const shouldRestoreFocus = restoreFocus();
+    const wheelBlockMode = blockWheel();
+    const touchMoveBlockMode = blockTouchMove();
+    const autoFocusMode = autoFocus();
+
     const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const unlockBody = lockBodyScroll() ? lockBodyStyle({ overflow: 'hidden' }) : null;
+    const unlockBody = shouldLockBodyScroll ? lockBodyStyle({ overflow: 'hidden' }) : null;
 
     // Focus management is deferred to ensure Portal DOM is mounted and at least one paint is not blocked.
     const focusOnOpen = () => {
       const root = options.root();
       if (!root) return;
 
-      const autofocus = options.autoFocus;
-      if (autofocus === false) return;
+      if (autoFocusMode === false) return;
 
-      const preferredSelector = typeof autofocus === 'object' ? autofocus.selector : undefined;
+      const preferredSelector = typeof autoFocusMode === 'object' ? autoFocusMode.selector : undefined;
       const preferred = preferredSelector ? root.querySelector<HTMLElement>(preferredSelector) : null;
       const target =
         preferred ??
@@ -185,12 +208,11 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     const handleEscapeCapture = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      const closeMode = closeOnEscape();
-      if (closeMode === 'none') return;
+      if (escapeCloseMode === 'none') return;
       const root = options.root();
       const inside = isWithinOverlayTarget(root, isNode(e.target) ? e.target : document.activeElement, options.containsTarget);
 
-      if (closeMode === 'inside') {
+      if (escapeCloseMode === 'inside') {
         if (inside) {
           e.preventDefault();
           e.stopImmediatePropagation();
@@ -216,16 +238,15 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     const handleKeydownBubble = (e: KeyboardEvent) => {
       const root = options.root();
       if (!root) return;
-      if (!blockHotkeys()) return;
+      if (!shouldBlockHotkeys) return;
       if (!isWithinOverlayTarget(root, e.target, options.containsTarget)) return;
       if (shouldAllowHotkey(e, options.allowHotkeys)) return;
       e.stopPropagation();
     };
 
     const handleWheelCapture = (e: WheelEvent) => {
-      const mode = options.blockWheel ?? 'none';
       const root = options.root();
-      if (!shouldBlockByMode(root, e.target, mode, options.containsTarget)) return;
+      if (!shouldBlockByMode(root, e.target, wheelBlockMode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
     };
     const handleWheelBubble = (e: WheelEvent) => {
@@ -233,40 +254,39 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     };
 
     const handleTouchMoveCapture = (e: TouchEvent) => {
-      const mode = options.blockTouchMove ?? 'none';
       const root = options.root();
-      if (!shouldBlockByMode(root, e.target, mode, options.containsTarget)) return;
+      if (!shouldBlockByMode(root, e.target, touchMoveBlockMode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
     };
 
-    if (trapFocus()) document.addEventListener('keydown', handleTabTrap, true);
-    if (closeOnEscape() !== 'none') window.addEventListener('keydown', handleEscapeCapture, true);
+    if (shouldTrapFocus) document.addEventListener('keydown', handleTabTrap, true);
+    if (escapeCloseMode !== 'none') window.addEventListener('keydown', handleEscapeCapture, true);
     document.addEventListener('keydown', handleKeydownBubble);
 
-    if ((options.blockWheel ?? 'none') !== 'none') {
+    if (wheelBlockMode !== 'none') {
       document.addEventListener('wheel', handleWheelCapture, { capture: true, passive: false });
       document.addEventListener('wheel', handleWheelBubble);
     }
-    if ((options.blockTouchMove ?? 'none') !== 'none') {
+    if (touchMoveBlockMode !== 'none') {
       document.addEventListener('touchmove', handleTouchMoveCapture, { capture: true, passive: false });
     }
 
     onCleanup(() => {
-      if (trapFocus()) document.removeEventListener('keydown', handleTabTrap, true);
-      if (closeOnEscape() !== 'none') window.removeEventListener('keydown', handleEscapeCapture, true);
+      if (shouldTrapFocus) document.removeEventListener('keydown', handleTabTrap, true);
+      if (escapeCloseMode !== 'none') window.removeEventListener('keydown', handleEscapeCapture, true);
       document.removeEventListener('keydown', handleKeydownBubble);
 
-      if ((options.blockWheel ?? 'none') !== 'none') {
+      if (wheelBlockMode !== 'none') {
         document.removeEventListener('wheel', handleWheelCapture, true);
         document.removeEventListener('wheel', handleWheelBubble);
       }
-      if ((options.blockTouchMove ?? 'none') !== 'none') {
+      if (touchMoveBlockMode !== 'none') {
         document.removeEventListener('touchmove', handleTouchMoveCapture, true);
       }
 
       unlockBody?.();
 
-      if (restoreFocus() && prevActive && prevActive.isConnected) {
+      if (shouldRestoreFocus && prevActive && prevActive.isConnected) {
         // Restore focus after unmount/paint to avoid forcing layout in the close stack.
         deferAfterPaint(() => {
           if (typeof document === 'undefined') return;
