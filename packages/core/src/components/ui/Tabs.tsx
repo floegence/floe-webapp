@@ -103,6 +103,23 @@ export interface TabsProps extends Omit<
   ariaLabel?: string;
 }
 
+type TabsSliderGeometry = {
+  x: number;
+  width: number;
+  visible: boolean;
+};
+
+type TabsSliderMeasurementContext = {
+  container: HTMLDivElement;
+  tab: HTMLDivElement;
+};
+
+const HIDDEN_TABS_SLIDER_GEOMETRY: TabsSliderGeometry = {
+  x: 0,
+  width: 0,
+  visible: false,
+};
+
 export function resolveTabNavigationTargetId(
   items: Pick<TabItem, 'id' | 'disabled'>[],
   currentId: string,
@@ -196,6 +213,40 @@ const ChevronLeft = (props: { class?: string }) => (
   </svg>
 );
 
+function resolveTabsSliderGeometry(context: TabsSliderMeasurementContext): TabsSliderGeometry {
+  const { container, tab } = context;
+  const offsetParent = tab.offsetParent;
+  const localOffsetWidth = tab.offsetWidth;
+
+  // Prefer layout-space measurements. getBoundingClientRect() returns
+  // post-transform screen coordinates, which drift when the tab row lives
+  // inside a scaled surface such as workbench infinite canvas widgets.
+  if (
+    offsetParent === container &&
+    Number.isFinite(tab.offsetLeft) &&
+    Number.isFinite(localOffsetWidth)
+  ) {
+    return {
+      x: tab.offsetLeft,
+      width: localOffsetWidth,
+      visible: localOffsetWidth > 0,
+    };
+  }
+
+  const containerRect = container.getBoundingClientRect();
+  const tabRect = tab.getBoundingClientRect();
+  const layoutWidth = container.offsetWidth || container.clientWidth;
+  const scaleX = containerRect.width > 0 && layoutWidth > 0 ? containerRect.width / layoutWidth : 1;
+  const normalizedScaleX = Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
+  const width = tabRect.width / normalizedScaleX;
+
+  return {
+    x: (tabRect.left - containerRect.left + container.scrollLeft) / normalizedScaleX,
+    width,
+    visible: width > 0,
+  };
+}
+
 export function Tabs(props: TabsProps) {
   const [local, rest] = splitProps(props, [
     'items',
@@ -249,9 +300,9 @@ export function Tabs(props: TabsProps) {
   let scrollStateScheduled = false;
 
   // Slider indicator mode: shared moving indicator.
-  const [sliderX, setSliderX] = createSignal(0);
-  const [sliderW, setSliderW] = createSignal(0);
-  const [sliderVisible, setSliderVisible] = createSignal(false);
+  const [sliderGeometry, setSliderGeometry] = createSignal<TabsSliderGeometry>(
+    HIDDEN_TABS_SLIDER_GEOMETRY
+  );
 
   // Track tab elements by id for indicator measurements.
   const tabEls = new Map<string, HTMLDivElement>();
@@ -267,28 +318,22 @@ export function Tabs(props: TabsProps) {
     const el = tabEls.get(id);
     if (!el) return false;
 
-    const containerRect = scrollContainerRef.getBoundingClientRect();
-    const tabRect = el.getBoundingClientRect();
-
-    // Translate into scroll-content coordinates so the indicator stays aligned
-    // even when the tab row is horizontally scrolled.
-    const x = tabRect.left - containerRect.left + scrollContainerRef.scrollLeft;
-    const w = tabRect.width;
-
-    setSliderX(x);
-    setSliderW(w);
-    setSliderVisible(w > 0);
-    return w > 0;
+    const nextGeometry = resolveTabsSliderGeometry({
+      container: scrollContainerRef,
+      tab: el,
+    });
+    setSliderGeometry(nextGeometry);
+    return nextGeometry.visible;
   };
 
   const updateSliderIndicator = () => {
     if (!isSliderIndicator()) {
-      setSliderVisible(false);
+      setSliderGeometry(HIDDEN_TABS_SLIDER_GEOMETRY);
       return;
     }
 
     const ok = updateSliderIndicatorForId(optimisticActiveId());
-    if (!ok) setSliderVisible(false);
+    if (!ok) setSliderGeometry(HIDDEN_TABS_SLIDER_GEOMETRY);
   };
 
   const scheduleUpdateSliderIndicator = () => {
@@ -483,7 +528,9 @@ export function Tabs(props: TabsProps) {
       const mode = indicatorMode();
       if (mode === 'none') return 'border-transparent';
       if (mode === 'slider') {
-        return sliderVisible() ? 'border-transparent' : indicatorColorClasses().tabBorderClass;
+        return sliderGeometry().visible
+          ? 'border-transparent'
+          : indicatorColorClasses().tabBorderClass;
       }
       return indicatorColorClasses().tabBorderClass;
     })();
@@ -551,7 +598,7 @@ export function Tabs(props: TabsProps) {
         aria-label={local.ariaLabel}
       >
         {/* Shared moving slider indicator */}
-        <Show when={isSliderIndicator() && sliderVisible()}>
+        <Show when={isSliderIndicator() && sliderGeometry().visible}>
           <div
             class={cn(
               'pointer-events-none absolute bottom-0 left-0 z-10',
@@ -564,8 +611,8 @@ export function Tabs(props: TabsProps) {
               local.slotClassNames?.indicator
             )}
             style={{
-              transform: `translate3d(${sliderX()}px, 0, 0)`,
-              width: `${sliderW()}px`,
+              transform: `translate3d(${sliderGeometry().x}px, 0, 0)`,
+              width: `${sliderGeometry().width}px`,
             }}
           />
         </Show>

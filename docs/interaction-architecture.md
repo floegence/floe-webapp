@@ -153,8 +153,9 @@
 
 1. marquee 命中检测使用 viewport rect，但视觉 overlay 必须先投影到当前 overlay host 的本地坐标系，再以容器内 `absolute` 方式渲染。
 2. 禁止继续假设 `fixed` 永远跟 viewport 同步；一旦承载面处于 transformed surface（例如 floating window），`fixed` 子元素就可能转为局部 containing block，视觉会和鼠标脱离。
-3. context menu 的 outside-dismiss 必须使用 `pointerdown capture`，而不是依赖兼容性的 `mousedown`。
-4. context menu 的关闭口径必须统一覆盖 outside pointer、Escape、scroll、resize，避免不同承载面出现“菜单挂住”的分叉行为。
+3. 像 tabs indicator、selection rail 这类容器内 `absolute` affordance，如果宿主可能处于 transformed surface，测量必须优先使用宿主本地布局坐标（例如 `offsetLeft` / `offsetWidth`），不能把 `getBoundingClientRect()` 的屏幕坐标直接回写到局部坐标系。
+4. context menu 的 outside-dismiss 必须使用 `pointerdown capture`，而不是依赖兼容性的 `mousedown`。
+5. context menu 的关闭口径必须统一覆盖 outside pointer、Escape、scroll、resize，避免不同承载面出现“菜单挂住”的分叉行为。
 
 结论：
 

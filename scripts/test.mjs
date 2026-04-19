@@ -5,6 +5,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
+  'packages/core/test/tabs-slider-geometry.test.tsx',
   'packages/core/test/workbench-navigation-center.test.ts',
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',
@@ -15,7 +16,9 @@ function isFlag(arg) {
 }
 
 function isCoreClientTestPath(arg) {
-  return CORE_CLIENT_TEST_ROOT_PATHS.some((path) => arg.includes(path) || arg.endsWith(path.replace(/^packages\/core\//, '')));
+  return CORE_CLIENT_TEST_ROOT_PATHS.some(
+    (path) => arg.includes(path) || arg.endsWith(path.replace(/^packages\/core\//, ''))
+  );
 }
 
 function normalizePackagePath(arg) {
@@ -59,9 +62,10 @@ if (shouldRunRootSuite) {
 }
 
 if (shouldRunCoreClientSuite) {
-  const packagePaths = coreClientTestArgs.length > 0
-    ? coreClientTestArgs.map(normalizePackagePath)
-    : CORE_CLIENT_TEST_ROOT_PATHS.map(normalizePackagePath);
+  const packagePaths =
+    coreClientTestArgs.length > 0
+      ? coreClientTestArgs.map(normalizePackagePath)
+      : CORE_CLIENT_TEST_ROOT_PATHS.map(normalizePackagePath);
 
   await run('pnpm', [
     '--dir',
