@@ -210,6 +210,41 @@ function CanvasDialogHarness() {
   );
 }
 
+function CanvasFloatingWindowHarness() {
+  const [actionCount, setActionCount] = createSignal(0);
+  const [viewport, setViewport] = createSignal({ x: 0, y: 0, scale: 1 });
+
+  return (
+    <>
+      <InfiniteCanvas
+        viewport={viewport()}
+        onViewportChange={setViewport}
+        ariaLabel="Canvas floating window harness"
+      >
+        <div
+          data-testid="canvas-floating-host"
+          data-floe-dialog-surface-host="true"
+          style={{ position: 'relative', width: '360px', height: '240px' }}
+        >
+          <FloatingWindow open onOpenChange={() => undefined} title="Canvas floating window">
+            <div class="flex h-full min-h-0 flex-col gap-2 p-3">
+              <button
+                type="button"
+                data-testid="canvas-floating-action"
+                onClick={() => setActionCount((value) => value + 1)}
+              >
+                Perform floating action
+              </button>
+            </div>
+          </FloatingWindow>
+        </div>
+      </InfiniteCanvas>
+
+      <output data-testid="canvas-floating-action-count">{String(actionCount())}</output>
+    </>
+  );
+}
+
 describe('dialog surface scope', () => {
   afterEach(() => {
     while (disposers.length) {
@@ -387,6 +422,41 @@ describe('dialog surface scope', () => {
     expect(overlayRoot).toBeTruthy();
     expect(floatingSurface?.contains(overlayRoot ?? null)).toBe(true);
     expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('surface');
+  });
+
+  it('treats floating-window content actions as local surfaces inside an infinite canvas host', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <CanvasFloatingWindowHarness />, host);
+
+    const actionButton = document.querySelector('[data-testid="canvas-floating-action"]') as HTMLButtonElement | null;
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(actionButton).toBeTruthy();
+    expect(canvas).toBeTruthy();
+
+    dispatchPointerDown(actionButton!);
+    await flushMicrotasks();
+    expect(canvas?.classList.contains('is-panning')).toBe(false);
+
+    actionButton!.click();
+    await flushMicrotasks();
+
+    expect(host.querySelector('[data-testid="canvas-floating-action-count"]')?.textContent).toBe('1');
+  });
+
+  it('treats floating-window resize handles as local surfaces inside an infinite canvas host', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <CanvasFloatingWindowHarness />, host);
+
+    const resizeHandle = document.querySelector('[data-floe-floating-window-resize-handle="se"]') as HTMLElement | null;
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLDivElement | null;
+    expect(resizeHandle).toBeTruthy();
+    expect(canvas).toBeTruthy();
+
+    dispatchPointerDown(resizeHandle!);
+    await flushMicrotasks();
+    expect(canvas?.classList.contains('is-panning')).toBe(false);
   });
 
   it('scopes floating-window Escape handling to the focused window only', async () => {

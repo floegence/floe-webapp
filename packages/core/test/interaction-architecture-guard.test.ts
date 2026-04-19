@@ -76,6 +76,8 @@ describe('interaction architecture guard', () => {
     expect(floatingWindowSrc).toContain('data-floe-floating-window-state={isActive() ? \'active\' : \'inactive\'}');
     expect(floatingWindowSrc).toContain('tabIndex={-1}');
     expect(floatingWindowSrc).toContain('data-floe-dialog-surface-host="true"');
+    expect(floatingWindowSrc).toContain("[LOCAL_INTERACTION_SURFACE_ATTR]: 'true'");
+    expect(floatingWindowSrc).toContain('data-floe-floating-window-resize-handle="se"');
     expect(floatingWindowSrc).not.toContain('aria-modal="true"');
 
     expect(dialogSrc).toContain('data-floe-dialog-mode={isSurfaceMode() ? \'surface\' : \'global\'}');

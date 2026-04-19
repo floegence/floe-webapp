@@ -178,6 +178,15 @@
 7. 局部 dialog 不锁整个 body scroll，但仍要阻断 dialog 内按键向全局热键穿透。
 8. 没有局部 host 时必须自动回退为全局 modal 语义，不能留下半局部、半全局的漂移状态。
 
+### 3.7 浮窗 local surface contract
+
+当 `FloatingWindow` 被渲染在 `InfiniteCanvas` / workbench / 其它外层手势表面之上时，必须额外遵守下面两条共享契约：
+
+1. 浮窗的几何根节点与可见表面都要显式声明 `data-floe-local-interaction-surface="true"`。
+2. 几何根节点必须覆盖 resize handles 等不在可见内容面板内部的热区，避免这些热区因为 DOM 结构在表面边界外侧而重新落回 canvas 手势。
+3. 这样做不是为了“兼容某个页面特判”，而是为了覆盖 portal + delegated events 的统一运行时事实：即使浮窗 DOM 被 portal 到 `document.body`，上层交互容器仍可能通过事件委托看见这次 `pointerdown`，所以浮窗必须自己声明“我是局部交互面”。
+4. 任何 app-owned wrapper 都只能做薄适配；共享 `FloatingWindow` 本身仍然是这条契约的单一事实来源。
+
 ## 4. 工程化防回退手段
 
 ### 4.1 源码守卫测试
