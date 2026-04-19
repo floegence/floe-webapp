@@ -1,4 +1,4 @@
-import { createMemo, createSignal } from 'solid-js';
+import { createMemo, createSignal, onCleanup } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
 import { ArrowUp, Copy, Trash } from '../../icons';
 import {
@@ -39,6 +39,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const [contextMenu, setContextMenu] = createSignal<WorkbenchContextMenuState | null>(null);
   const [optimisticFrontWidgetId, setOptimisticFrontWidgetId] = createSignal<string | null>(null);
   const [canvasFrameSize, setCanvasFrameSize] = createSignal({ width: 0, height: 0 });
+  let canvasFrameEl: HTMLDivElement | null = null;
+  let canvasFrameObserver: ResizeObserver | null = null;
 
   const state = options.state;
   const widgets = createMemo(() => state().widgets);
@@ -56,11 +58,60 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     resolveWorkbenchWidgetDefinitions(readWidgetDefinitions())
   );
 
-  const setCanvasFrameRef = (el: HTMLDivElement | undefined) => {
-    if (el) {
-      setCanvasFrameSize({ width: el.clientWidth, height: el.clientHeight });
+  const setMeasuredCanvasFrameSize = (width: number, height: number) => {
+    const nextWidth = Number.isFinite(width) && width > 0 ? width : 0;
+    const nextHeight = Number.isFinite(height) && height > 0 ? height : 0;
+    const nextSize = { width: nextWidth, height: nextHeight };
+    const currentSize = canvasFrameSize();
+
+    if (currentSize.width === nextWidth && currentSize.height === nextHeight) {
+      return currentSize;
     }
+
+    setCanvasFrameSize(nextSize);
+
+    return nextSize;
   };
+
+  const disconnectCanvasFrameObserver = () => {
+    canvasFrameObserver?.disconnect();
+    canvasFrameObserver = null;
+  };
+
+  const readCanvasFrameSize = () => {
+    if (!canvasFrameEl) {
+      return setMeasuredCanvasFrameSize(0, 0);
+    }
+
+    return setMeasuredCanvasFrameSize(canvasFrameEl.clientWidth, canvasFrameEl.clientHeight);
+  };
+
+  const setCanvasFrameRef = (el: HTMLDivElement | undefined) => {
+    if (canvasFrameEl === (el ?? null)) {
+      readCanvasFrameSize();
+      return;
+    }
+
+    disconnectCanvasFrameObserver();
+    canvasFrameEl = el ?? null;
+    readCanvasFrameSize();
+
+    if (!canvasFrameEl || typeof ResizeObserver === 'undefined') return;
+
+    canvasFrameObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      setMeasuredCanvasFrameSize(
+        entry?.contentRect.width ?? canvasFrameEl?.clientWidth ?? 0,
+        entry?.contentRect.height ?? canvasFrameEl?.clientHeight ?? 0,
+      );
+    });
+    canvasFrameObserver.observe(canvasFrameEl);
+  };
+
+  onCleanup(() => {
+    disconnectCanvasFrameObserver();
+    canvasFrameEl = null;
+  });
 
   // --- Context Menu ---
   const openCanvasContextMenu = (event: InfiniteCanvasContextMenuEvent) => {
@@ -256,7 +307,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const adjustZoom = (direction: 'in' | 'out') => {
     const vp = viewport();
-    const frame = canvasFrameSize();
+    const frame = readCanvasFrameSize();
     const centerWorldX = (frame.width / 2 - vp.x) / vp.scale;
     const centerWorldY = (frame.height / 2 - vp.y) / vp.scale;
     const nextScale = clampScale(
@@ -316,7 +367,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const viewportWorldCenter = () => {
-    const frame = canvasFrameSize();
+    const frame = readCanvasFrameSize();
     const vp = viewport();
     return {
       worldX: frame.width > 0 ? (frame.width / 2 - vp.x) / vp.scale : 240,
@@ -358,7 +409,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const centerViewportOnWidget = (widget: WorkbenchWidgetItem) => {
-    const frame = canvasFrameSize();
+    const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
     const vp = viewport();
     const targetX = frame.width / 2 - (widget.x + widget.width / 2) * vp.scale;
