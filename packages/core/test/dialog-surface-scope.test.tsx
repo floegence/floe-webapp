@@ -87,6 +87,48 @@ function SurfaceDialogHarness(props: {
   );
 }
 
+function SurfaceDialogCrossHostHarness() {
+  const [open, setOpen] = createSignal(false);
+  const [otherHostClickCount, setOtherHostClickCount] = createSignal(0);
+
+  return (
+    <>
+      <div
+        data-testid="surface-host-primary"
+        data-floe-dialog-surface-host="true"
+        style={{ position: 'relative', width: '360px', height: '240px' }}
+      >
+        <button type="button" data-testid="surface-trigger" onClick={() => setOpen(true)}>
+          Open dialog
+        </button>
+        <Dialog
+          open={open()}
+          onOpenChange={setOpen}
+          title="Widget dialog"
+        >
+          <button type="button" data-testid="primary-dialog-action">Inside dialog</button>
+        </Dialog>
+      </div>
+
+      <div
+        data-testid="surface-host-secondary"
+        data-floe-dialog-surface-host="true"
+        style={{ position: 'relative', width: '360px', height: '240px' }}
+      >
+        <button
+          type="button"
+          data-testid="other-widget-button"
+          onClick={() => setOtherHostClickCount((value) => value + 1)}
+        >
+          Other widget action
+        </button>
+      </div>
+
+      <output data-testid="other-widget-click-count">{String(otherHostClickCount())}</output>
+    </>
+  );
+}
+
 function FloatingWindowDialogHarness() {
   const [dialogOpen, setDialogOpen] = createSignal(false);
 
@@ -221,6 +263,29 @@ describe('dialog surface scope', () => {
     await flushMicrotasks();
 
     expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+  });
+
+  it('does not swallow clicks for a different local host while the dialog stays open', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <SurfaceDialogCrossHostHarness />, host);
+
+    const trigger = host.querySelector('[data-testid="surface-trigger"]') as HTMLButtonElement | null;
+    const otherWidgetButton = host.querySelector('[data-testid="other-widget-button"]') as HTMLButtonElement | null;
+    const clickCount = host.querySelector('[data-testid="other-widget-click-count"]') as HTMLOutputElement | null;
+    expect(trigger).toBeTruthy();
+    expect(otherWidgetButton).toBeTruthy();
+    expect(clickCount).toBeTruthy();
+
+    dispatchPointerDown(trigger!);
+    trigger!.click();
+    await flushMicrotasks();
+
+    otherWidgetButton!.click();
+    await flushMicrotasks();
+
+    expect(clickCount?.textContent).toBe('1');
+    expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeTruthy();
   });
 
   it('responds to Escape only when focus belongs to the current dialog boundary', async () => {

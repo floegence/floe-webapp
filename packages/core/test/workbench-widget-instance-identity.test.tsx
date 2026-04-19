@@ -52,7 +52,7 @@ function createInitialState(): WorkbenchState {
         y: 24,
         width: 360,
         height: 240,
-        z_index: 1,
+        z_index: 42,
         created_at_unix_ms: 1,
       },
       {
@@ -63,7 +63,7 @@ function createInitialState(): WorkbenchState {
         y: 64,
         width: 360,
         height: 240,
-        z_index: 2,
+        z_index: 420,
         created_at_unix_ms: 2,
       },
     ],
@@ -102,7 +102,6 @@ function renderWorkbenchHarness(host: HTMLDivElement) {
         widgets={state().widgets}
         selectedWidgetId={state().selectedWidgetId}
         optimisticFrontWidgetId={null}
-        topZIndex={topZIndex()}
         viewportScale={state().viewport.scale}
         locked={state().locked}
         filters={state().filters}
@@ -198,6 +197,24 @@ describe('WorkbenchCanvas widget instance identity', () => {
 
     expect(bodyLifecycle.mounts.get('widget-primary')).toBe(1);
     expect(bodyLifecycle.cleanups.get('widget-primary') ?? 0).toBe(0);
+
+    dispose();
+  });
+
+  it('renders bounded layer indices instead of raw persisted z-index values', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const { dispose } = renderWorkbenchHarness(host);
+    await Promise.resolve();
+
+    const primaryWidget = host.querySelector('[data-floe-workbench-widget-id="widget-primary"]') as HTMLElement | null;
+    const secondaryWidget = host.querySelector('[data-floe-workbench-widget-id="widget-secondary"]') as HTMLElement | null;
+    expect(primaryWidget).toBeTruthy();
+    expect(secondaryWidget).toBeTruthy();
+
+    expect(primaryWidget?.style.zIndex).toBe('1');
+    expect(secondaryWidget?.style.zIndex).toBe('2');
 
     dispose();
   });

@@ -168,7 +168,6 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           viewport={model.viewport()}
           selectedWidgetId={model.selectedWidgetId()}
           optimisticFrontWidgetId={model.optimisticFrontWidgetId()}
-          topZIndex={model.topZIndex()}
           locked={model.locked()}
           filters={model.filters()}
           setCanvasFrameRef={model.setCanvasFrameRef}

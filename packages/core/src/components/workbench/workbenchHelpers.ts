@@ -133,6 +133,40 @@ export function createDefaultWorkbenchState(
 export const WORKBENCH_CANVAS_ZOOM_STEP = 1.18;
 export const WORKBENCH_CONTEXT_MENU_WIDTH_PX = 200;
 
+export interface WorkbenchRenderLayerMap {
+  byWidgetId: ReadonlyMap<string, number>;
+  topRenderLayer: number;
+}
+
+function compareWorkbenchWidgetRenderOrder(
+  left: WorkbenchWidgetItem,
+  right: WorkbenchWidgetItem,
+): number {
+  if (left.z_index !== right.z_index) {
+    return left.z_index - right.z_index;
+  }
+  if (left.created_at_unix_ms !== right.created_at_unix_ms) {
+    return left.created_at_unix_ms - right.created_at_unix_ms;
+  }
+  return left.id.localeCompare(right.id);
+}
+
+export function createWorkbenchRenderLayerMap(
+  widgets: readonly WorkbenchWidgetItem[],
+): WorkbenchRenderLayerMap {
+  const ordered = [...widgets].sort(compareWorkbenchWidgetRenderOrder);
+  const byWidgetId = new Map<string, number>();
+
+  for (const [index, widget] of ordered.entries()) {
+    byWidgetId.set(widget.id, index + 1);
+  }
+
+  return {
+    byWidgetId,
+    topRenderLayer: Math.max(ordered.length, 1),
+  };
+}
+
 export function createContextMenuPosition(options: {
   clientX: number;
   clientY: number;

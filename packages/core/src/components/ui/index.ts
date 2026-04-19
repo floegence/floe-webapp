@@ -32,10 +32,15 @@ export {
 export {
   LOCAL_INTERACTION_SURFACE_ATTR,
   DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+  WORKBENCH_WIDGET_SHELL_ATTR,
+  DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
   isLocalInteractionSurfaceTarget,
   resolveSurfaceInteractionTargetRole,
+  resolveWorkbenchWidgetEventOwnership,
   type SurfaceInteractionRoutingOptions,
   type SurfaceInteractionTargetRole,
+  type WorkbenchWidgetEventOwnership,
+  type WorkbenchWidgetEventOwnershipOptions,
 } from './localInteractionSurface';
 export {
   Card,

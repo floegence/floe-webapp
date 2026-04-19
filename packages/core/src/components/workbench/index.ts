@@ -26,4 +26,6 @@ export {
   sanitizeWorkbenchState,
   createDefaultWorkbenchState,
   createWorkbenchId,
+  createWorkbenchRenderLayerMap,
+  type WorkbenchRenderLayerMap,
 } from './workbenchHelpers';

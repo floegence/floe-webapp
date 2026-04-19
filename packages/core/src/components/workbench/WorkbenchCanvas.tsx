@@ -13,7 +13,6 @@ export interface WorkbenchCanvasProps {
   viewport: WorkbenchViewport;
   selectedWidgetId: string | null;
   optimisticFrontWidgetId: string | null;
-  topZIndex: number;
   locked: boolean;
   filters: Record<WorkbenchWidgetType, boolean>;
   setCanvasFrameRef: (el: HTMLDivElement | undefined) => void;
@@ -48,7 +47,6 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           widgets={props.widgets}
           selectedWidgetId={props.selectedWidgetId}
           optimisticFrontWidgetId={props.optimisticFrontWidgetId}
-          topZIndex={props.topZIndex}
           viewportScale={props.viewport.scale}
           locked={props.locked}
           filters={props.filters}

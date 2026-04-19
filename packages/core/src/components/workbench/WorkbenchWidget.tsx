@@ -1,6 +1,10 @@
 import { createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, X } from '../../icons';
+import {
+  WORKBENCH_WIDGET_SHELL_ATTR,
+  resolveWorkbenchWidgetEventOwnership,
+} from '../ui/localInteractionSurface';
 import type { WorkbenchWidgetDefinition, WorkbenchWidgetItem, WorkbenchWidgetType } from './types';
 
 interface LocalDragState {
@@ -31,6 +35,8 @@ interface LocalResizeState {
 /** Minimum widget footprint in world-space pixels. */
 const MIN_WIDTH = 220;
 const MIN_HEIGHT = 160;
+const WORKBENCH_WIDGET_INTERACTIVE_SELECTOR = '[data-floe-canvas-interactive="true"]';
+const WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR = '[data-floe-canvas-pan-surface="true"]';
 
 export interface WorkbenchWidgetProps {
   definition: WorkbenchWidgetDefinition;
@@ -41,11 +47,11 @@ export interface WorkbenchWidgetProps {
   y: number;
   width: number;
   height: number;
-  zIndex: number;
+  renderLayer: number;
   itemSnapshot: () => WorkbenchWidgetItem;
   selected: boolean;
   optimisticFront: boolean;
-  topZIndex: number;
+  topRenderLayer: number;
   viewportScale: number;
   locked: boolean;
   filtered: boolean;
@@ -63,6 +69,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
   let dragAbortController: AbortController | undefined;
   let resizeAbortController: AbortController | undefined;
+  let widgetRootEl: HTMLElement | undefined;
 
   onCleanup(() => {
     dragAbortController?.abort();
@@ -75,6 +82,22 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
+  const resolveEventOwnership = (target: EventTarget | null) =>
+    resolveWorkbenchWidgetEventOwnership({
+      target,
+      widgetRoot: widgetRootEl ?? null,
+      interactiveSelector: WORKBENCH_WIDGET_INTERACTIVE_SELECTOR,
+      panSurfaceSelector: WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR,
+    });
+  const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
+    if (event.button !== 0) return;
+
+    props.onSelect(props.widgetId);
+    props.onCommitFront(props.widgetId);
+
+    if (resolveEventOwnership(event.target) !== 'widget_shell') return;
+    widgetRootEl?.focus({ preventScroll: true });
+  };
 
   const livePosition = createMemo(() => {
     const current = dragState();
@@ -250,6 +273,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   return (
     <article
+      ref={widgetRootEl}
       class="workbench-widget"
       classList={{
         'is-selected': props.selected,
@@ -259,14 +283,16 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       }}
       data-floe-dialog-surface-host="true"
       data-floe-workbench-widget-id={props.widgetId}
+      tabIndex={0}
+      onPointerDown={handlePointerDown}
+      onFocus={() => {
+        props.onSelect(props.widgetId);
+      }}
       onContextMenu={(event) => {
+        if (resolveEventOwnership(event.target) !== 'widget_shell') return;
         event.preventDefault();
         event.stopPropagation();
         props.onContextMenu(event, props.itemSnapshot());
-      }}
-      onClick={() => {
-        props.onSelect(props.widgetId);
-        props.onCommitFront(props.widgetId);
       }}
       style={{
         transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
@@ -274,11 +300,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         height: `${liveSize().height}px`,
         'z-index':
           isDragging() || isResizing() || props.optimisticFront
-            ? `${props.topZIndex + 1}`
-            : `${props.zIndex}`,
+            ? `${props.topRenderLayer + 1}`
+            : `${props.renderLayer}`,
       }}
     >
-      <header class="workbench-widget__header">
+      <header
+        class="workbench-widget__header"
+        {...{ [WORKBENCH_WIDGET_SHELL_ATTR]: 'true' }}
+      >
         <button
           type="button"
           class="workbench-widget__drag"

@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   LOCAL_INTERACTION_SURFACE_ATTR,
+  WORKBENCH_WIDGET_SHELL_ATTR,
+  resolveWorkbenchWidgetEventOwnership,
   resolveSurfaceInteractionTargetRole,
 } from '../src/components/ui/localInteractionSurface';
 
@@ -13,6 +15,15 @@ const PAN_SURFACE_SELECTOR = '[data-floe-canvas-pan-surface="true"]';
 function resolveRole(target: EventTarget | null) {
   return resolveSurfaceInteractionTargetRole({
     target,
+    interactiveSelector: INTERACTIVE_SELECTOR,
+    panSurfaceSelector: PAN_SURFACE_SELECTOR,
+  });
+}
+
+function resolveWidgetOwnership(target: EventTarget | null, widgetRoot: Element | null) {
+  return resolveWorkbenchWidgetEventOwnership({
+    target,
+    widgetRoot,
     interactiveSelector: INTERACTIVE_SELECTOR,
     panSurfaceSelector: PAN_SURFACE_SELECTOR,
   });
@@ -55,5 +66,34 @@ describe('local interaction surface routing', () => {
   it('falls back to canvas when no local affordance is present', () => {
     const plain = document.createElement('div');
     expect(resolveRole(plain)).toBe('canvas');
+  });
+
+  it('treats explicit widget shell surfaces as shell-owned workbench zones', () => {
+    const widget = document.createElement('article');
+    const header = document.createElement('header');
+    header.setAttribute(WORKBENCH_WIDGET_SHELL_ATTR, 'true');
+    const title = document.createElement('span');
+    header.appendChild(title);
+    widget.appendChild(header);
+
+    expect(resolveWidgetOwnership(title, widget)).toBe('widget_shell');
+  });
+
+  it('keeps interactive widget body descendants under local ownership', () => {
+    const widget = document.createElement('article');
+    const body = document.createElement('div');
+    body.setAttribute('data-floe-canvas-interactive', 'true');
+    const button = document.createElement('button');
+    body.appendChild(button);
+    widget.appendChild(body);
+
+    expect(resolveWidgetOwnership(button, widget)).toBe('widget_local');
+  });
+
+  it('treats targets outside the widget as outside widget ownership', () => {
+    const widget = document.createElement('article');
+    const outside = document.createElement('div');
+
+    expect(resolveWidgetOwnership(outside, widget)).toBe('outside_widget');
   });
 });
