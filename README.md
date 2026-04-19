@@ -29,13 +29,13 @@ This repository contains the public Solid.js packages, demo app, scaffolding CLI
 
 ## Capabilities
 
-| Surface | What teams get | Why it matters | Docs |
-| --- | --- | --- | --- |
-| `App Shell` | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar, `DisplayModeSwitcher`, `DisplayModePageShell` | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints, including page-mode surfaces such as Deck and Workbench | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md) |
-| `UI Primitives` | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, theme tokens | Keeps core interactions and visual language consistent while leaving room for product-owned features, including surface-scoped dialogs that stay inside the nearest deck/workbench/floating host when opened from local workspace widgets and mark themselves as local interaction surfaces so outer canvas gestures yield correctly | [`docs/getting-started.md`](docs/getting-started.md) |
-| `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, terminal extension helpers, widget hooks, controller-driven Notes overlay primitives with shared overlay/gesture contracts, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md), [`docs/getting-started.md`](docs/getting-started.md) |
-| `Protocol Layer` | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring | Lets apps attach connection state and remote capabilities without baking business contracts into the framework | [`docs/protocol.md`](docs/protocol.md) |
-| `Boot Helpers` | Hash/session helpers and `postMessage` handshake utilities | Helps multi-window and sandbox-style launch flows stay consistent | [`docs/runtime.md`](docs/runtime.md) |
+| Surface              | What teams get                                                                                                                                                                                                                                            | Why it matters                                                                                                                                                                                                                                                                                                                       | Docs                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `App Shell`          | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar, `DisplayModeSwitcher`, `DisplayModePageShell`                                                                                             | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints, including page-mode surfaces such as Deck and Workbench                                                                                                                                                                 | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md)                                                                                   |
+| `UI Primitives`      | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, theme tokens                                                                                                                                                                         | Keeps core interactions and visual language consistent while leaving room for product-owned features, including surface-scoped dialogs that stay inside the nearest deck/workbench/floating host when opened from local workspace widgets and mark themselves as local interaction surfaces so outer canvas gestures yield correctly | [`docs/getting-started.md`](docs/getting-started.md)                                                                                                                                     |
+| `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, terminal extension helpers, widget hooks, controller-driven Notes overlay primitives with shared overlay/gesture contracts, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape                                                                                                                                                                                                                            | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md), [`docs/getting-started.md`](docs/getting-started.md) |
+| `Protocol Layer`     | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring                                                                                                                                                                         | Lets apps attach connection state and remote capabilities without baking business contracts into the framework                                                                                                                                                                                                                       | [`docs/protocol.md`](docs/protocol.md)                                                                                                                                                   |
+| `Boot Helpers`       | Hash/session helpers and `postMessage` handshake utilities                                                                                                                                                                                                | Helps multi-window and sandbox-style launch flows stay consistent                                                                                                                                                                                                                                                                    | [`docs/runtime.md`](docs/runtime.md)                                                                                                                                                     |
 
 ### File browser link semantics
 
@@ -47,12 +47,12 @@ Selection behavior follows one shared contract across list and grid views: singl
 
 ## What you can build
 
-| Use case | Floe fit |
-| --- | --- |
-| Internal tools and operator consoles | Combine navigation, command search, settings, notifications, and product pages inside one consistent shell |
-| File-centric workspaces | Pair the shared shell with file browsing, search, editor views, and status surfaces |
-| Browser-based companion apps | Add chat, deck, widget, and launchpad-style surfaces without rebuilding base chrome |
-| Connected products with remote actions | Inject a custom Flowersec contract and typed RPC layer when the UI needs live endpoint or service access |
+| Use case                               | Floe fit                                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Internal tools and operator consoles   | Combine navigation, command search, settings, notifications, and product pages inside one consistent shell |
+| File-centric workspaces                | Pair the shared shell with file browsing, search, editor views, and status surfaces                        |
+| Browser-based companion apps           | Add chat, deck, widget, and launchpad-style surfaces without rebuilding base chrome                        |
+| Connected products with remote actions | Inject a custom Flowersec contract and typed RPC layer when the UI needs live endpoint or service access   |
 
 ## Quick Start
 
@@ -94,7 +94,7 @@ The shared `layout` package now also owns the demo's page-mode shell primitives:
 - `DisplayModeSwitcher` for the top-bar activity/deck/workbench mode contract
 - `DisplayModePageShell` for full-page surfaces that reuse the shared top bar without rendering the activity bar or sidebar
 
-The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior. Within a mounted workbench session, the widget lifecycle boundary is the stable `widget.id`: fronting, focus, and geometry updates mutate the visible snapshot without remounting the business widget subtree. Starting with `v0.36.5`, workbench viewport centering also depends on a live canvas-frame measurement contract, so arrow-key navigation, `focusWidget(...)`, and `ensureWidget(...)` continue centering the target widget correctly after mount-time zero-size layouts or later container resizes.
+The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior. Within a mounted workbench session, the widget lifecycle boundary is the stable `widget.id`: fronting, focus, and geometry updates mutate the visible snapshot without remounting the business widget subtree. Starting with `v0.36.6`, workbench viewport centering also depends on a live canvas-frame measurement contract, so arrow-key navigation, `focusWidget(...)`, and `ensureWidget(...)` continue centering the target widget correctly after mount-time zero-size layouts or later container resizes.
 
 Optional local variations:
 
@@ -103,15 +103,15 @@ Optional local variations:
 
 ## Docs By Task
 
-| I want to... | Read |
-| --- | --- |
-| Start a new app and understand the demo | [`docs/getting-started.md`](docs/getting-started.md) |
-| Configure shell defaults, strings, storage, and keybinds | [`docs/configuration.md`](docs/configuration.md) |
-| Add sidebar views, commands, and status contributions | [`docs/component-registry.md`](docs/component-registry.md) |
-| Understand shared interaction and layout guardrails | [`docs/interaction-architecture.md`](docs/interaction-architecture.md) |
-| Adopt the shared accessibility contract | [`docs/accessibility.md`](docs/accessibility.md) |
-| Connect Flowersec sessions and typed RPC contracts | [`docs/protocol.md`](docs/protocol.md) |
-| Wire multi-window or sandbox boot flows | [`docs/runtime.md`](docs/runtime.md) |
+| I want to...                                             | Read                                                                   |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Start a new app and understand the demo                  | [`docs/getting-started.md`](docs/getting-started.md)                   |
+| Configure shell defaults, strings, storage, and keybinds | [`docs/configuration.md`](docs/configuration.md)                       |
+| Add sidebar views, commands, and status contributions    | [`docs/component-registry.md`](docs/component-registry.md)             |
+| Understand shared interaction and layout guardrails      | [`docs/interaction-architecture.md`](docs/interaction-architecture.md) |
+| Adopt the shared accessibility contract                  | [`docs/accessibility.md`](docs/accessibility.md)                       |
+| Connect Flowersec sessions and typed RPC contracts       | [`docs/protocol.md`](docs/protocol.md)                                 |
+| Wire multi-window or sandbox boot flows                  | [`docs/runtime.md`](docs/runtime.md)                                   |
 
 ## Accessibility And Integration At A Glance
 
@@ -143,12 +143,12 @@ make check
 
 ### Workspace packages
 
-| Package | Purpose |
-| --- | --- |
-| `@floegence/floe-webapp-core` | Shared shell, UI primitives, workspace surfaces, and theme utilities |
-| `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring |
-| `@floegence/floe-webapp-boot` | Boot helpers for multi-window and sandbox flows |
-| `@floegence/floe-webapp-init` | CLI scaffolding for new Floe apps |
+| Package                           | Purpose                                                              |
+| --------------------------------- | -------------------------------------------------------------------- |
+| `@floegence/floe-webapp-core`     | Shared shell, UI primitives, workspace surfaces, and theme utilities |
+| `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring                |
+| `@floegence/floe-webapp-boot`     | Boot helpers for multi-window and sandbox flows                      |
+| `@floegence/floe-webapp-init`     | CLI scaffolding for new Floe apps                                    |
 
 </details>
 
