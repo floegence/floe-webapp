@@ -188,6 +188,21 @@
 3. 这样做不是为了“兼容某个页面特判”，而是为了覆盖 portal + delegated events 的统一运行时事实：即使浮窗 DOM 被 portal 到 `document.body`，上层交互容器仍可能通过事件委托看见这次 `pointerdown`，所以浮窗必须自己声明“我是局部交互面”。
 4. 任何 app-owned wrapper 都只能做薄适配；共享 `FloatingWindow` 本身仍然是这条契约的单一事实来源。
 
+### 3.8 Canvas wheel ownership contract
+
+`InfiniteCanvas` / workbench / notes board 这类可缩放画布必须把 wheel ownership 当成一条**独立契约**，不能直接复用 pointer / contextmenu 的 local-surface 判定。
+
+规则如下：
+
+1. `data-floe-canvas-interactive="true"` 只表示 pointer / focus / contextmenu 需要让权给局部交互，不自动表示该区域消费 wheel。
+2. 普通 widget 内容、note body、按钮式壳层等**不消费 wheel** 的区域，应继续允许 canvas 在鼠标位置做 anchor-preserving zoom。
+3. 只有下面三类区域才应拦截 wheel，阻止 canvas zoom：
+   - typing / editing 元素；
+   - `data-floe-local-interaction-surface="true"` 局部 overlay / dialog / floating surface；
+   - 显式声明 `data-floe-canvas-wheel-interactive="true"` 的局部 wheel consumer（例如 scroller、editor viewport、terminal viewport）。
+4. 锁定态下，如果当前目标不是局部 wheel consumer，wheel 结果应是 `ignore`，而不是偷偷把普通区域也当成 local surface。
+5. 共享 helper 必须返回可解释的 wheel routing decision，而不是只靠布尔值散落在各组件里。
+
 ## 4. 工程化防回退手段
 
 ### 4.1 源码守卫测试

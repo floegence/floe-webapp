@@ -30,15 +30,21 @@ export {
   type InfiniteCanvasContextMenuEvent,
 } from './InfiniteCanvas';
 export {
+  CANVAS_WHEEL_INTERACTIVE_ATTR,
+  DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
   LOCAL_INTERACTION_SURFACE_ATTR,
   DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
   WORKBENCH_WIDGET_SHELL_ATTR,
   DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
   isLocalInteractionSurfaceTarget,
   resolveSurfaceInteractionTargetRole,
+  resolveSurfaceWheelRouting,
   resolveWorkbenchWidgetEventOwnership,
   type SurfaceInteractionRoutingOptions,
   type SurfaceInteractionTargetRole,
+  type SurfaceWheelLocalReason,
+  type SurfaceWheelRoutingDecision,
+  type SurfaceWheelRoutingOptions,
   type WorkbenchWidgetEventOwnership,
   type WorkbenchWidgetEventOwnershipOptions,
 } from './localInteractionSurface';

@@ -1,7 +1,11 @@
 import { createEffect, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { startHotInteraction } from '../../utils/hotInteraction';
-import { resolveSurfaceInteractionTargetRole } from './localInteractionSurface';
+import {
+  DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
+  resolveSurfaceInteractionTargetRole,
+  resolveSurfaceWheelRouting,
+} from './localInteractionSurface';
 
 const DEFAULT_SCALE = 1;
 const DEFAULT_MIN_SCALE = 0.45;
@@ -35,6 +39,7 @@ export interface InfiniteCanvasProps {
   contentClass?: string;
   interactiveSelector?: string;
   panSurfaceSelector?: string;
+  wheelInteractiveSelector?: string;
   minScale?: number;
   maxScale?: number;
   wheelZoomSpeed?: number;
@@ -83,6 +88,8 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   const interactiveSelector = () =>
     props.interactiveSelector ?? '[data-floe-canvas-interactive="true"]';
   const panSurfaceSelector = () => props.panSurfaceSelector ?? DEFAULT_PAN_SURFACE_SELECTOR;
+  const wheelInteractiveSelector = () =>
+    props.wheelInteractiveSelector ?? DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR;
   const minScale = () => props.minScale ?? DEFAULT_MIN_SCALE;
   const maxScale = () => props.maxScale ?? DEFAULT_MAX_SCALE;
   const wheelZoomSpeed = () => props.wheelZoomSpeed ?? DEFAULT_WHEEL_ZOOM_SPEED;
@@ -285,16 +292,14 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   // about implicit non-passive wheel listeners otherwise, since it can't tell
   // whether a JSX-bound handler plans to call preventDefault.
   const handleWheel = (event: WheelEvent) => {
-    const targetRole = resolveTargetRole(event.target);
-    if (targetRole !== 'canvas') {
-      return;
-    }
-
     const rect = rootRef?.getBoundingClientRect();
     if (!rect) return;
-    if (props.disablePanZoom) {
-      return;
-    }
+    const routing = resolveSurfaceWheelRouting({
+      target: event.target,
+      disablePanZoom: !!props.disablePanZoom,
+      wheelInteractiveSelector: wheelInteractiveSelector(),
+    });
+    if (routing.kind !== 'canvas_zoom') return;
 
     event.preventDefault();
 

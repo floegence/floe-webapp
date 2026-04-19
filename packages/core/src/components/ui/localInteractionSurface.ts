@@ -3,11 +3,22 @@ import { isTypingElement } from '../../utils/dom';
 export const LOCAL_INTERACTION_SURFACE_ATTR = 'data-floe-local-interaction-surface';
 export const DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR =
   `[${LOCAL_INTERACTION_SURFACE_ATTR}="true"]`;
+export const CANVAS_WHEEL_INTERACTIVE_ATTR = 'data-floe-canvas-wheel-interactive';
+export const DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR =
+  `[${CANVAS_WHEEL_INTERACTIVE_ATTR}="true"]`;
 export const WORKBENCH_WIDGET_SHELL_ATTR = 'data-floe-workbench-widget-shell';
 export const DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR =
   `[${WORKBENCH_WIDGET_SHELL_ATTR}="true"]`;
 
 export type SurfaceInteractionTargetRole = 'canvas' | 'local_surface' | 'pan_surface';
+export type SurfaceWheelLocalReason =
+  | 'typing_element'
+  | 'local_interaction_surface'
+  | 'wheel_interactive';
+export type SurfaceWheelRoutingDecision =
+  | { kind: 'canvas_zoom' }
+  | { kind: 'local_surface'; reason: SurfaceWheelLocalReason }
+  | { kind: 'ignore'; reason: 'pan_zoom_disabled' };
 export type WorkbenchWidgetEventOwnership =
   | 'outside_widget'
   | 'widget_local'
@@ -23,6 +34,13 @@ export interface SurfaceInteractionRoutingOptions {
 export interface WorkbenchWidgetEventOwnershipOptions extends SurfaceInteractionRoutingOptions {
   widgetRoot: Element | EventTarget | null;
   shellSelector?: string;
+}
+
+export interface SurfaceWheelRoutingOptions {
+  target: EventTarget | null;
+  disablePanZoom: boolean;
+  localInteractionSurfaceSelector?: string;
+  wheelInteractiveSelector?: string;
 }
 
 function resolveElement(target: Element | EventTarget | null): Element | null {
@@ -61,6 +79,48 @@ export function resolveSurfaceInteractionTargetRole(
   }
 
   return 'canvas';
+}
+
+function resolveSurfaceWheelLocalReason(
+  options: SurfaceWheelRoutingOptions,
+): SurfaceWheelLocalReason | null {
+  const {
+    target,
+    localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+    wheelInteractiveSelector = DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
+  } = options;
+
+  const element = resolveElement(target);
+  if (!element) return null;
+
+  if (isTypingElement(element)) {
+    return 'typing_element';
+  }
+
+  if (element.closest(localInteractionSurfaceSelector) !== null) {
+    return 'local_interaction_surface';
+  }
+
+  if (element.closest(wheelInteractiveSelector) !== null) {
+    return 'wheel_interactive';
+  }
+
+  return null;
+}
+
+export function resolveSurfaceWheelRouting(
+  options: SurfaceWheelRoutingOptions,
+): SurfaceWheelRoutingDecision {
+  const localReason = resolveSurfaceWheelLocalReason(options);
+  if (localReason) {
+    return { kind: 'local_surface', reason: localReason };
+  }
+
+  if (options.disablePanZoom) {
+    return { kind: 'ignore', reason: 'pan_zoom_disabled' };
+  }
+
+  return { kind: 'canvas_zoom' };
 }
 
 export function isLocalInteractionSurfaceTarget(

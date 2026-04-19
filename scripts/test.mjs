@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 
 const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/dialog-surface-scope.test.tsx',
+  'packages/core/test/infinite-canvas-wheel-routing.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
   'packages/core/test/tabs-slider-geometry.test.tsx',
