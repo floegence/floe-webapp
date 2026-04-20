@@ -30,6 +30,8 @@ export interface DeckPointerSessionFrame {
   gap: number;
   cellWidth: number;
   cellHeight: number;
+  colPitch: number;
+  rowPitch: number;
 }
 
 export interface StartDeckPointerSessionOptions {
@@ -107,6 +109,8 @@ function readFrame(snapshot: DeckPointerSessionSnapshot): DeckPointerSessionFram
     gap: measurements.gap,
     cellWidth: measurements.cellWidth,
     cellHeight: measurements.cellHeight,
+    colPitch: measurements.cellWidth + measurements.gap,
+    rowPitch: measurements.cellHeight,
   };
 }
 
@@ -210,12 +214,15 @@ export function startDeckPointerSession(options: StartDeckPointerSessionOptions)
 
     cleanupListeners();
     releasePointerCapture();
-    snapshot.stopHotInteraction?.();
-    snapshot.stopHotInteraction = null;
-    options.onEnd({
-      commit: stopOptions?.commit !== false,
-      snapshot,
-    });
+    try {
+      options.onEnd({
+        commit: stopOptions?.commit !== false,
+        snapshot,
+      });
+    } finally {
+      snapshot.stopHotInteraction?.();
+      snapshot.stopHotInteraction = null;
+    }
   };
 
   const updatePointer = (event: Pick<PointerEvent, 'pointerId' | 'clientX' | 'clientY'>) => {

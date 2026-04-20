@@ -71,8 +71,8 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
       pointerEvent: event,
       cursor: EDGE_CURSORS[props.edge],
       onMove: (frame) => {
-        const colDelta = Math.round(frame.deltaX / frame.cellWidth);
-        const rowDelta = Math.round(frame.deltaY / frame.cellHeight);
+        const colDelta = Math.round(frame.deltaX / frame.colPitch);
+        const rowDelta = Math.round(frame.deltaY / frame.rowPitch);
         const constraints = deck.getWidgetMinConstraints(props.widget.type);
         const currentPosition = applyResizeDelta(
           props.widget.position,

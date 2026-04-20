@@ -49,8 +49,7 @@ export function DeckCell(props: DeckCellProps) {
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',
         'bg-card border border-border',
-        // Smooth transition when not dragging (for snap-back animation)
-        !props.isDragging && 'transition-transform duration-200 ease-out',
+        !props.isDragging && !props.isResizing && 'transition-shadow duration-150 ease-out',
         props.isDragging && 'shadow-2xl z-50 ring-2 ring-primary/70',
         props.isResizing && 'shadow-lg z-50 ring-2 ring-primary',
         !props.isDragging && !props.isResizing && 'hover:ring-1 hover:ring-primary/50',

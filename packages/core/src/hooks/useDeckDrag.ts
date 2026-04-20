@@ -68,8 +68,8 @@ export function useDeckDrag() {
       onMove: (frame) => {
         if (!currentWidgetId || !originalPosition) return;
 
-        const colDelta = Math.round(frame.deltaX / frame.cellWidth);
-        const rowDelta = Math.round(frame.deltaY / frame.cellHeight);
+        const colDelta = Math.round(frame.deltaX / frame.colPitch);
+        const rowDelta = Math.round(frame.deltaY / frame.rowPitch);
         const currentPosition = applyDragDelta(originalPosition, colDelta, rowDelta, frame.cols);
         deck.updateDrag(currentPosition, {
           deltaX: frame.deltaX,

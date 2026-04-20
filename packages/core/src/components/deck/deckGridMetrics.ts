@@ -32,6 +32,11 @@ export interface DeckGridPixelRect {
   height: number;
 }
 
+export interface DeckGridPixelOffset {
+  x: number;
+  y: number;
+}
+
 export const DECK_GRID_CONFIG = {
   cols: DECK_GRID_COLS,
   defaultRows: DECK_DEFAULT_ROWS,
@@ -84,14 +89,33 @@ export function measureDeckGridSurface(gridEl: HTMLElement): DeckGridSurfaceMeas
   };
 }
 
+export function getDeckGridColPitch(measurements: Pick<DeckGridMeasurements, 'cellWidth' | 'gap'>): number {
+  return measurements.cellWidth + measurements.gap;
+}
+
+export function getDeckGridRowPitch(measurements: Pick<DeckGridMeasurements, 'cellHeight'>): number {
+  return measurements.cellHeight;
+}
+
 export function positionToDeckPixelRect(
   position: GridPosition,
   measurements: DeckGridSurfaceMeasurements
 ): DeckGridPixelRect {
   return {
-    left: measurements.paddingLeft + position.col * (measurements.cellWidth + measurements.gap),
-    top: measurements.paddingTop + position.row * (measurements.rowHeight + measurements.gap),
+    left: measurements.paddingLeft + position.col * getDeckGridColPitch(measurements),
+    top: measurements.paddingTop + position.row * getDeckGridRowPitch(measurements),
     width: position.colSpan * measurements.cellWidth + Math.max(0, position.colSpan - 1) * measurements.gap,
     height: position.rowSpan * measurements.rowHeight + Math.max(0, position.rowSpan - 1) * measurements.gap,
+  };
+}
+
+export function positionDeltaToDeckPixelOffset(
+  from: GridPosition,
+  to: GridPosition,
+  measurements: DeckGridSurfaceMeasurements
+): DeckGridPixelOffset {
+  return {
+    x: (to.col - from.col) * getDeckGridColPitch(measurements),
+    y: (to.row - from.row) * getDeckGridRowPitch(measurements),
   };
 }

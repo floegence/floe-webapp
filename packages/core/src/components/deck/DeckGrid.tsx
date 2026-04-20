@@ -17,6 +17,7 @@ import {
   DECK_PADDING,
   getGridConfigFromElement,
   measureDeckGridSurface,
+  positionDeltaToDeckPixelOffset,
   positionToDeckPixelRect,
   type DeckGridSurfaceMeasurements,
 } from './deckGridMetrics';
@@ -306,14 +307,17 @@ export function DeckGrid(props: DeckGridProps) {
             const measurements = resolvedGridMeasurements();
             if (!measurements) return undefined;
 
-            const rect = positionToDeckPixelRect(drag.originalPosition, measurements);
+            const rect = positionToDeckPixelRect(drag.currentPosition, measurements);
+            const snappedOffset = positionDeltaToDeckPixelOffset(drag.originalPosition, drag.currentPosition, measurements);
+            const residualX = motion.deltaX - snappedOffset.x;
+            const residualY = motion.deltaY - snappedOffset.y;
             return {
               position: 'absolute',
               left: `${rect.left}px`,
               top: `${rect.top}px`,
               width: `${rect.width}px`,
               height: `${rect.height}px`,
-              transform: `translate3d(${motion.deltaX}px, ${motion.deltaY}px, 0) scale(0.992)`,
+              transform: `translate3d(${residualX}px, ${residualY}px, 0) scale(0.992)`,
               'transform-origin': 'center center',
               'will-change': 'transform',
             };

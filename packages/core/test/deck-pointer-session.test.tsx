@@ -85,6 +85,15 @@ async function flushEffects() {
   await Promise.resolve();
 }
 
+function readTranslate3d(transform: string): { x: number; y: number } | null {
+  const match = /translate3d\(([-\d.]+)px,\s*([-\d.]+)px,\s*0\)/.exec(transform);
+  if (!match) return null;
+  return {
+    x: Number(match[1]),
+    y: Number(match[2]),
+  };
+}
+
 function DeckHarness(props: { onReady: (deck: DeckContextValue) => void }) {
   const deck = useDeck();
   const widgetRegistry = useWidgetRegistry();
@@ -182,6 +191,73 @@ describe('Deck pointer session', () => {
     expect(deckApi!.dragState()?.currentPosition).toEqual({ col: 0, row: 0, colSpan: 6, rowSpan: 4 });
   });
 
+  it('waits for the full horizontal grid pitch before snapping to the next column', async () => {
+    let deckApi: DeckContextValue | undefined;
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    dispose = render(() => (
+      <FloeProvider>
+        <DeckHarness onReady={(deck) => { deckApi = deck; }} />
+      </FloeProvider>
+    ), host);
+
+    await flushEffects();
+
+    const gridEl = host.querySelector('.deck-grid') as HTMLElement | null;
+    expect(gridEl).toBeTruthy();
+    installGridGeometry(gridEl!);
+
+    const dragHandle = host.querySelector('[data-widget-drag-handle="widget-a"]') as HTMLElement | null;
+    expect(dragHandle).toBeTruthy();
+
+    dispatchPointer(dragHandle!, 'pointerdown', { pointerId: 4, button: 0, clientX: 120, clientY: 96 });
+    dispatchPointer(document, 'pointermove', { pointerId: 4, button: 0, clientX: 139, clientY: 96 });
+    await flushEffects();
+
+    expect(deckApi!.dragState()?.currentPosition).toEqual({ col: 0, row: 0, colSpan: 6, rowSpan: 4 });
+  });
+
+  it('anchors the drag overlay to the snapped slot and only keeps residual pointer motion live', async () => {
+    let deckApi: DeckContextValue | undefined;
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    dispose = render(() => (
+      <FloeProvider>
+        <DeckHarness onReady={(deck) => { deckApi = deck; }} />
+      </FloeProvider>
+    ), host);
+
+    await flushEffects();
+
+    const gridEl = host.querySelector('.deck-grid') as HTMLElement | null;
+    expect(gridEl).toBeTruthy();
+    installGridGeometry(gridEl!);
+
+    const dragHandle = host.querySelector('[data-widget-drag-handle="widget-a"]') as HTMLElement | null;
+    expect(dragHandle).toBeTruthy();
+
+    dispatchPointer(dragHandle!, 'pointerdown', { pointerId: 5, button: 0, clientX: 120, clientY: 96 });
+    dispatchPointer(document, 'pointermove', { pointerId: 5, button: 0, clientX: 150, clientY: 96 });
+    await flushEffects();
+
+    const widgetEl = host.querySelector('[data-floe-deck-widget-id="widget-a"]') as HTMLElement | null;
+    const previewEl = host.querySelector('[data-floe-deck-drop-preview="true"]') as HTMLElement | null;
+    expect(widgetEl).toBeTruthy();
+    expect(previewEl).toBeTruthy();
+    expect(deckApi!.dragState()?.currentPosition).toEqual({ col: 1, row: 0, colSpan: 6, rowSpan: 4 });
+    expect(previewEl!.style.gridArea).toBe('1 / 2 / 5 / 8');
+
+    const expectedPitch = (960 - 23 * 4) / 24 + 4;
+    expect(Number(widgetEl!.style.left.replace('px', ''))).toBeCloseTo(expectedPitch, 3);
+
+    const translate = readTranslate3d(widgetEl!.style.transform);
+    expect(translate).not.toBeNull();
+    expect(translate!.x).toBeCloseTo(30 - expectedPitch, 3);
+    expect(translate!.y).toBeCloseTo(0, 3);
+  });
+
   it('commits drag release through the document fallback even when pointerup lands on another widget', async () => {
     let deckApi: DeckContextValue | undefined;
     const host = document.createElement('div');
@@ -205,8 +281,8 @@ describe('Deck pointer session', () => {
     expect(otherWidget).toBeTruthy();
 
     dispatchPointer(dragHandle!, 'pointerdown', { pointerId: 1, button: 0, clientX: 120, clientY: 96 });
-    dispatchPointer(document, 'pointermove', { pointerId: 1, button: 0, clientX: 340, clientY: 96 });
-    dispatchPointer(otherWidget!, 'pointerup', { pointerId: 1, button: 0, clientX: 340, clientY: 96 });
+    dispatchPointer(document, 'pointermove', { pointerId: 1, button: 0, clientX: 362, clientY: 96 });
+    dispatchPointer(otherWidget!, 'pointerup', { pointerId: 1, button: 0, clientX: 362, clientY: 96 });
     await flushEffects();
 
     expect(deckApi!.dragState()).toBeNull();

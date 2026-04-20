@@ -131,7 +131,7 @@
 - Shell sidebar：拖动时只改本地 preview width，结束后再写 `LayoutContext`
 - FileBrowser sidebar：拖动时只改本地 preview width，结束后再写 `FileBrowserContext`
 - FloatingWindow：拖拽/resize 期间直接写 DOM 几何，结束后再 commit 到 signal
-- Deck：drag / resize 必须通过共享 `deckPointerSession` 维护一次 pointer session；drag 期间 drop preview 维护唯一的 snapped `currentPosition` 作为 collision / commit 真相，而 dragged widget 允许通过与布局真相解耦的 floating motion overlay 连续跟手，release 时只允许这份 snapped truth 进入 commit
+- Deck：drag / resize 必须通过共享 `deckPointerSession` 维护一次 pointer session；drag 期间 drop preview 维护唯一的 snapped `currentPosition` 作为 collision / commit 真相，而 dragged widget 允许通过“snapped anchor + residual motion overlay”连续跟手，release 时只允许这份 snapped truth 进入 commit
 - NotesOverlay：note drag 只更新 note-local preview 坐标，pointerup 后再 `updateNote()`
 - NotesOverlay：minimap / overview navigation 只更新本地 viewport preview，release 后再 `setViewport()`
 
@@ -156,7 +156,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 2. Deck pointer session 必须统一覆盖 `document` capture 阶段的 `pointermove` / `pointerup` / `pointercancel`，并额外监听 `lostpointercapture`，保证指针跨过其它 widget、复杂 surface 或浏览器重定向事件链时仍能稳定结束。
 3. Drag 渲染必须坚持 one commit truth：
    - `DropZonePreview` 独占 snapped `currentPosition`，它是唯一的 collision / commit 候选落位
-   - dragged widget 允许渲染为 anchored floating overlay，并只消费连续 pointer delta 作为视觉 affordance
+   - dragged widget 允许渲染为 anchored floating overlay，但 anchor 必须跟随 snapped `currentPosition`，只把 pointer residual 留给视觉 affordance
    - 禁止让 dragged widget 再参与第二份独立的 grid layout truth；视觉 overlay 不能绕过 snapped preview 自行决定最终 commit
 
 结论：
