@@ -148,7 +148,7 @@ describe('Deck pointer session', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders the dragged widget from drag.currentPosition without a leftover translate offset', async () => {
+  it('keeps a snapped drop preview while the dragged widget follows continuous pointer motion', async () => {
     let deckApi: DeckContextValue | undefined;
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -165,14 +165,21 @@ describe('Deck pointer session', () => {
     expect(gridEl).toBeTruthy();
     installGridGeometry(gridEl!);
 
-    deckApi!.startDrag('widget-a', 80, 80);
-    deckApi!.updateDrag({ col: 6, row: 2, colSpan: 6, rowSpan: 4 });
+    const dragHandle = host.querySelector('[data-widget-drag-handle="widget-a"]') as HTMLElement | null;
+    expect(dragHandle).toBeTruthy();
+
+    dispatchPointer(dragHandle!, 'pointerdown', { pointerId: 1, button: 0, clientX: 120, clientY: 96 });
+    dispatchPointer(document, 'pointermove', { pointerId: 1, button: 0, clientX: 138, clientY: 106 });
     await flushEffects();
 
     const widgetEl = host.querySelector('[data-floe-deck-widget-id="widget-a"]') as HTMLElement | null;
+    const previewEl = host.querySelector('[data-floe-deck-drop-preview="true"]') as HTMLElement | null;
     expect(widgetEl).toBeTruthy();
-    expect(widgetEl!.style.gridArea).toBe('3 / 7 / 7 / 13');
-    expect(widgetEl!.style.transform).toBe('');
+    expect(previewEl).toBeTruthy();
+    expect(widgetEl!.style.position).toBe('absolute');
+    expect(widgetEl!.style.transform).toContain('translate3d(18px, 10px, 0)');
+    expect(previewEl!.style.gridArea).toBe('1 / 1 / 5 / 7');
+    expect(deckApi!.dragState()?.currentPosition).toEqual({ col: 0, row: 0, colSpan: 6, rowSpan: 4 });
   });
 
   it('commits drag release through the document fallback even when pointerup lands on another widget', async () => {

@@ -131,7 +131,7 @@
 - Shell sidebar：拖动时只改本地 preview width，结束后再写 `LayoutContext`
 - FileBrowser sidebar：拖动时只改本地 preview width，结束后再写 `FileBrowserContext`
 - FloatingWindow：拖拽/resize 期间直接写 DOM 几何，结束后再 commit 到 signal
-- Deck：drag / resize 必须通过共享 `deckPointerSession` 维护一次 pointer session；drag 期间 dragged widget 与 drop preview 共享同一份 snapped `currentPosition`，release 时只允许这一份布局真相进入 commit
+- Deck：drag / resize 必须通过共享 `deckPointerSession` 维护一次 pointer session；drag 期间 drop preview 维护唯一的 snapped `currentPosition` 作为 collision / commit 真相，而 dragged widget 允许通过与布局真相解耦的 floating motion overlay 连续跟手，release 时只允许这份 snapped truth 进入 commit
 - NotesOverlay：note drag 只更新 note-local preview 坐标，pointerup 后再 `updateNote()`
 - NotesOverlay：minimap / overview navigation 只更新本地 viewport preview，release 后再 `setViewport()`
 
@@ -154,14 +154,16 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 
 1. `packages/core/src/components/deck/deckPointerSession.ts` 是 Deck drag / resize 的单一 pointer lifecycle 入口；`pointer capture` 只是增强能力，不能作为唯一正确性来源。
 2. Deck pointer session 必须统一覆盖 `document` capture 阶段的 `pointermove` / `pointerup` / `pointercancel`，并额外监听 `lostpointercapture`，保证指针跨过其它 widget、复杂 surface 或浏览器重定向事件链时仍能稳定结束。
-3. Drag 渲染必须坚持 one snapped truth：
-   - `DropZonePreview` 与 dragged widget 共享同一份 `currentPosition`
-   - 禁止继续保留“preview 已经在新 slot，但 widget 还停留在旧 `grid-area` 只靠 transform 跟手”的双真相模型
+3. Drag 渲染必须坚持 one commit truth：
+   - `DropZonePreview` 独占 snapped `currentPosition`，它是唯一的 collision / commit 候选落位
+   - dragged widget 允许渲染为 anchored floating overlay，并只消费连续 pointer delta 作为视觉 affordance
+   - 禁止让 dragged widget 再参与第二份独立的 grid layout truth；视觉 overlay 不能绕过 snapped preview 自行决定最终 commit
 
 结论：
 
 - Deck 是离散网格表面，不是自由画布。
 - 一旦交互已经吸附到某个 grid slot，UI 就必须让用户看到这就是当前唯一候选落位。
+- 连续跟手只能服务于拖拽感知，不能演变成第二套布局真相。
 
 ### 3.6 文件浏览浮层与几何交互
 

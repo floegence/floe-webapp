@@ -17,10 +17,11 @@ export function DropZonePreview(props: DropZonePreviewProps) {
 
   return (
     <div
+      data-floe-deck-drop-preview="true"
       class={cn(
-        'pointer-events-none rounded-md relative',
+        'pointer-events-none rounded-md relative z-20',
         'border-2 border-dashed',
-        props.isValid !== false ? 'border-info/50 bg-info/10' : 'border-error/50 bg-error/10',
+        props.isValid !== false ? 'border-info/60 bg-info/10 ring-1 ring-inset ring-info/25' : 'border-error/60 bg-error/10 ring-1 ring-inset ring-error/25',
         // Subtle animation
         'animate-in fade-in duration-150'
       )}

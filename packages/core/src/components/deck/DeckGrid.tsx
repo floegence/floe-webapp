@@ -16,6 +16,9 @@ import {
   DECK_MIN_ROW_HEIGHT,
   DECK_PADDING,
   getGridConfigFromElement,
+  measureDeckGridSurface,
+  positionToDeckPixelRect,
+  type DeckGridSurfaceMeasurements,
 } from './deckGridMetrics';
 
 export interface DeckGridProps {
@@ -43,6 +46,7 @@ export function DeckGrid(props: DeckGridProps) {
 
   // Track container dimensions for dynamic row height calculation
   const [containerHeight, setContainerHeight] = createSignal(0);
+  const [gridMeasurements, setGridMeasurements] = createSignal<DeckGridSurfaceMeasurements | null>(null);
 
   // Right-click "add widget here" context menu state.
   const [menuState, setMenuState] = createSignal<
@@ -53,7 +57,9 @@ export function DeckGrid(props: DeckGridProps) {
   // Access widgets as a function to ensure reactivity for nested property changes
   const widgets = () => deck.activeLayout()?.widgets ?? [];
   const dragState = () => deck.dragState();
+  const dragMotion = () => deck.dragMotion();
   const resizeState = () => deck.resizeState();
+  const resolvedGridMeasurements = () => gridMeasurements() ?? (gridRef ? measureDeckGridSurface(gridRef) : null);
 
   const showGridBackground = () => !layout.isMobile();
 
@@ -160,17 +166,23 @@ export function DeckGrid(props: DeckGridProps) {
 
   // Set up ResizeObserver to track container dimensions
   onMount(() => {
+    const refreshGridMetrics = () => {
+      if (!gridRef) return;
+      setContainerHeight(gridRef.clientHeight);
+      setGridMeasurements(measureDeckGridSurface(gridRef));
+    };
+
+    refreshGridMetrics();
     if (!gridRef || typeof ResizeObserver === 'undefined') return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerHeight(entry.contentRect.height);
       }
+      refreshGridMetrics();
     });
 
     observer.observe(gridRef);
-    // Initial measurement
-    setContainerHeight(gridRef.clientHeight);
 
     onCleanup(() => observer.disconnect());
   });
@@ -266,14 +278,7 @@ export function DeckGrid(props: DeckGridProps) {
       {/* Widget cells */}
       <For each={widgets()}>
         {(widget) => {
-          // During drag: use original position (visual offset handled by transform)
-          // During resize: use currentPosition (actual resize preview)
-          // Otherwise: use widget position
           const position = createMemo(() => {
-            const drag = dragState();
-            if (drag && drag.widgetId === widget.id) {
-              return drag.currentPosition;
-            }
             const resize = resizeState();
             if (resize && resize.widgetId === widget.id) {
               return resize.currentPosition;
@@ -291,12 +296,36 @@ export function DeckGrid(props: DeckGridProps) {
             return resize?.widgetId === widget.id;
           });
 
+          const dragOverlayStyle = createMemo<JSX.CSSProperties | undefined>(() => {
+            const drag = dragState();
+            if (!drag || drag.widgetId !== widget.id) return undefined;
+
+            const motion = dragMotion();
+            if (!motion || motion.widgetId !== widget.id) return undefined;
+
+            const measurements = resolvedGridMeasurements();
+            if (!measurements) return undefined;
+
+            const rect = positionToDeckPixelRect(drag.originalPosition, measurements);
+            return {
+              position: 'absolute',
+              left: `${rect.left}px`,
+              top: `${rect.top}px`,
+              width: `${rect.width}px`,
+              height: `${rect.height}px`,
+              transform: `translate3d(${motion.deltaX}px, ${motion.deltaY}px, 0) scale(0.992)`,
+              'transform-origin': 'center center',
+              'will-change': 'transform',
+            };
+          });
+
           return (
             <DeckCell
               widget={widget}
               position={position()}
               isDragging={isDragging()}
               isResizing={isResizing()}
+              dragOverlayStyle={dragOverlayStyle()}
             />
           );
         }}

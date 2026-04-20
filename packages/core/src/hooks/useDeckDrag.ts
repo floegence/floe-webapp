@@ -71,7 +71,10 @@ export function useDeckDrag() {
         const colDelta = Math.round(frame.deltaX / frame.cellWidth);
         const rowDelta = Math.round(frame.deltaY / frame.cellHeight);
         const currentPosition = applyDragDelta(originalPosition, colDelta, rowDelta, frame.cols);
-        deck.updateDrag(currentPosition);
+        deck.updateDrag(currentPosition, {
+          deltaX: frame.deltaX,
+          deltaY: frame.deltaY,
+        });
       },
       onEnd: ({ commit }) => {
         activeSession = null;

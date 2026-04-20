@@ -1,4 +1,4 @@
-import { Show, createMemo, type Component } from 'solid-js';
+import { Show, createMemo, type Component, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget } from '../../context/DeckContext';
@@ -13,6 +13,7 @@ export interface DeckCellProps {
   position: GridPosition;
   isDragging?: boolean;
   isResizing?: boolean;
+  dragOverlayStyle?: JSX.CSSProperties;
 }
 
 /**
@@ -44,20 +45,19 @@ export function DeckCell(props: DeckCellProps) {
     <div
       data-floe-deck-widget-id={props.widget.id}
       data-floe-dialog-surface-host="true"
+      data-floe-geometry-surface="deck-widget"
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',
         'bg-card border border-border',
         // Smooth transition when not dragging (for snap-back animation)
         !props.isDragging && 'transition-transform duration-200 ease-out',
-        props.isDragging && 'shadow-xl z-50 ring-2 ring-primary scale-[1.02]',
+        props.isDragging && 'shadow-2xl z-50 ring-2 ring-primary/70',
         props.isResizing && 'shadow-lg z-50 ring-2 ring-primary',
         !props.isDragging && !props.isResizing && 'hover:ring-1 hover:ring-primary/50',
         'select-none',
         props.isDragging && 'cursor-grabbing'
       )}
-      style={{
-        'grid-area': gridArea(),
-      }}
+      style={props.dragOverlayStyle ?? { 'grid-area': gridArea() }}
     >
       <WidgetFrame
         widget={props.widget}

@@ -1,4 +1,4 @@
-import { createEffect, createSignal, type Accessor } from 'solid-js';
+import { batch, createEffect, createSignal, type Accessor } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig, type FloeDeckPresetLayout } from './FloeConfigContext';
@@ -40,6 +40,16 @@ export interface DragState {
   currentPosition: GridPosition;
   startX: number;
   startY: number;
+}
+
+/**
+ * High-frequency visual motion for an active drag session.
+ * This never participates in collision checks or final commit.
+ */
+export interface DragMotionState {
+  widgetId: string;
+  deltaX: number;
+  deltaY: number;
 }
 
 /**
@@ -105,8 +115,9 @@ export interface DeckContextValue {
 
   // Drag state
   dragState: Accessor<DragState | null>;
+  dragMotion: Accessor<DragMotionState | null>;
   startDrag: (widgetId: string, startX: number, startY: number) => void;
-  updateDrag: (currentPosition: GridPosition) => void;
+  updateDrag: (currentPosition: GridPosition, motion: { deltaX: number; deltaY: number }) => void;
   endDrag: (commit: boolean) => void;
 
   // Resize state
@@ -349,6 +360,7 @@ export function createDeckService(): DeckContextValue {
 
   // Drag/resize state (not persisted)
   const [dragState, setDragState] = createSignal<DragState | null>(null);
+  const [dragMotion, setDragMotion] = createSignal<DragMotionState | null>(null);
   const [resizeState, setResizeState] = createSignal<ResizeState | null>(null);
   const track = <T,>(v: T): T => v;
 
@@ -670,49 +682,66 @@ export function createDeckService(): DeckContextValue {
 
     // Drag state
     dragState,
+    dragMotion,
     startDrag: (widgetId: string, startX: number, startY: number) => {
       const layout = getActiveLayout();
       if (immutablePresets && layout?.isPreset) return;
       const widget = layout?.widgets.find((w) => w.id === widgetId);
       if (!widget) return;
 
-      setDragState({
-        widgetId,
-        originalPosition: { ...widget.position },
-        currentPosition: { ...widget.position },
-        startX,
-        startY,
+      batch(() => {
+        setDragState({
+          widgetId,
+          originalPosition: { ...widget.position },
+          currentPosition: { ...widget.position },
+          startX,
+          startY,
+        });
+        setDragMotion({
+          widgetId,
+          deltaX: 0,
+          deltaY: 0,
+        });
       });
     },
-    updateDrag: (currentPosition: GridPosition) => {
-      setDragState((prev) => {
-        if (!prev || sameGridPosition(prev.currentPosition, currentPosition)) return prev;
-        return { ...prev, currentPosition };
+    updateDrag: (currentPosition: GridPosition, motion: { deltaX: number; deltaY: number }) => {
+      batch(() => {
+        setDragMotion((prev) => {
+          if (!prev) return prev;
+          if (prev.deltaX === motion.deltaX && prev.deltaY === motion.deltaY) return prev;
+          return { ...prev, deltaX: motion.deltaX, deltaY: motion.deltaY };
+        });
+        setDragState((prev) => {
+          if (!prev || sameGridPosition(prev.currentPosition, currentPosition)) return prev;
+          return { ...prev, currentPosition };
+        });
       });
     },
     endDrag: (commit: boolean) => {
       const state = dragState();
       if (!state) return;
 
-      if (commit) {
-        const layout = getActiveLayout();
-        if (layout && !(immutablePresets && layout.isPreset) && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
-          setStore(
-            produce((s) => {
-              const l = s.layouts.find((l) => l.id === s.activeLayoutId);
-              if (l) {
-                const w = l.widgets.find((w) => w.id === state.widgetId);
-                if (w) {
-                  w.position = state.currentPosition;
-                  l.updatedAt = Date.now();
+      batch(() => {
+        if (commit) {
+          const layout = getActiveLayout();
+          if (layout && !(immutablePresets && layout.isPreset) && !hasCollision(state.currentPosition, layout.widgets, state.widgetId)) {
+            setStore(
+              produce((s) => {
+                const l = s.layouts.find((l) => l.id === s.activeLayoutId);
+                if (l) {
+                  const w = l.widgets.find((w) => w.id === state.widgetId);
+                  if (w) {
+                    w.position = state.currentPosition;
+                    l.updatedAt = Date.now();
+                  }
                 }
-              }
-            })
-          );
+              })
+            );
+          }
         }
-      }
-
-      setDragState(null);
+        setDragState(null);
+        setDragMotion(null);
+      });
     },
 
     // Resize state
