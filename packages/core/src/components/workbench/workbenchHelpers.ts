@@ -1,9 +1,12 @@
 import {
   DEFAULT_WORKBENCH_VIEWPORT,
+  type WorkbenchProjectedRect,
   type WorkbenchState,
   type WorkbenchViewport,
   type WorkbenchWidgetDefinition,
   type WorkbenchWidgetItem,
+  type WorkbenchWidgetRenderMode,
+  type WorkbenchWidgetSurfaceMetrics,
   type WorkbenchWidgetType,
 } from './types';
 import {
@@ -19,6 +22,50 @@ export function createWorkbenchId(): string {
     return `wb-${crypto.randomUUID()}`;
   }
   return `wb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function resolveWorkbenchWidgetRenderMode(
+  definition: WorkbenchWidgetDefinition,
+): WorkbenchWidgetRenderMode {
+  return definition.renderMode ?? 'canvas_scaled';
+}
+
+export interface CreateWorkbenchProjectedRectInput {
+  widgetId: string;
+  worldX: number;
+  worldY: number;
+  worldWidth: number;
+  worldHeight: number;
+  viewport: WorkbenchViewport;
+}
+
+export function createWorkbenchProjectedRect(
+  input: CreateWorkbenchProjectedRectInput,
+): WorkbenchProjectedRect {
+  const viewportScale =
+    Number.isFinite(input.viewport.scale) && input.viewport.scale > 0 ? input.viewport.scale : 1;
+
+  return {
+    widgetId: input.widgetId,
+    worldX: input.worldX,
+    worldY: input.worldY,
+    worldWidth: input.worldWidth,
+    worldHeight: input.worldHeight,
+    screenX: input.viewport.x + input.worldX * viewportScale,
+    screenY: input.viewport.y + input.worldY * viewportScale,
+    screenWidth: input.worldWidth * viewportScale,
+    screenHeight: input.worldHeight * viewportScale,
+    viewportScale,
+  };
+}
+
+export function createWorkbenchWidgetSurfaceMetrics(
+  input: CreateWorkbenchProjectedRectInput & { ready: boolean },
+): WorkbenchWidgetSurfaceMetrics {
+  return {
+    ready: input.ready,
+    rect: createWorkbenchProjectedRect(input),
+  };
 }
 
 export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefined): WorkbenchViewport {

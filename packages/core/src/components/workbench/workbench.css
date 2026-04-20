@@ -151,6 +151,14 @@
     height: 2600px;
   }
 
+  .workbench-canvas__projected-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 3;
+  }
+
   .workbench-canvas__grid {
     position: absolute;
     inset: 0;
@@ -199,6 +207,14 @@
       box-shadow 220ms cubic-bezier(0.33, 1, 0.68, 1),
       opacity 220ms ease,
       border-color 180ms ease;
+  }
+
+  .workbench-canvas__projected-layer > .workbench-widget {
+    pointer-events: auto;
+  }
+
+  .workbench-widget.is-projected-surface {
+    zoom: var(--floe-workbench-projected-scale, 1);
   }
 
   .workbench-widget.is-dragging {

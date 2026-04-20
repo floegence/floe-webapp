@@ -7,7 +7,10 @@ import 'monaco-editor/min/vs/editor/editor.main.css';
 
 import { resolveCodeEditorLanguageSpec } from './languages';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
-import { ensureMonacoStandaloneRuntime } from './monacoStandaloneRuntime';
+import {
+  ensureMonacoStandaloneRuntime,
+  type CodeEditorRuntimeOptions,
+} from './monacoStandaloneRuntime';
 
 const DEFAULT_EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
   readOnly: true,
@@ -27,6 +30,7 @@ export interface CodeEditorProps {
   language?: string;
   value: string;
   options?: monaco.editor.IStandaloneEditorConstructionOptions;
+  runtimeOptions?: CodeEditorRuntimeOptions;
   class?: string;
   style?: JSX.CSSProperties;
   onReady?: (api: CodeEditorApi) => void;
@@ -147,7 +151,7 @@ export function CodeEditor(props: CodeEditorProps) {
       if (!container) return;
 
       ensureMonacoEnvironment();
-      await ensureMonacoStandaloneRuntime();
+      await ensureMonacoStandaloneRuntime(props.runtimeOptions);
       if (cancelled || !container) return;
 
       editor = monaco.editor.create(container, {

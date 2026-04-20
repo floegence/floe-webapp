@@ -96,6 +96,10 @@ The shared `layout` package now also owns the demo's page-mode shell primitives:
 
 The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior. Within a mounted workbench session, the widget lifecycle boundary is the stable `widget.id`: fronting, focus, and geometry updates mutate the visible snapshot without remounting the business widget subtree. Starting with `v0.36.7`, workbench viewport centering also depends on a live canvas-frame measurement contract, so arrow-key navigation, `focusWidget(...)`, and `ensureWidget(...)` continue centering the target widget correctly after mount-time zero-size layouts or later container resizes.
 
+Starting with `v0.36.8`, workbench widgets can also opt into `renderMode: 'projected_surface'`. Projected widgets keep their world-space position, persistence, and z-order semantics, but their business DOM no longer lives inside the canvas scale transform ancestor. Instead, the canvas exposes a live viewport overlay layer and the widget body receives `surfaceMetrics` with projected screen geometry. This is the preferred path for rich surfaces such as Monaco, terminals, embedded previews, and other widgets that need a stable pixel-space host while the surrounding workbench still pans and zooms.
+
+`CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
+
 Optional local variations:
 
 - `pnpm dev -- --host 0.0.0.0 --port 5173` to expose the demo on your LAN

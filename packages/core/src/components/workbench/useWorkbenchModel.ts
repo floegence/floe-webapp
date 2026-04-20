@@ -479,6 +479,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   return {
     widgets,
     viewport,
+    canvasFrameSize,
     locked,
     filters,
     selectedWidgetId,

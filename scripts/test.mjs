@@ -7,6 +7,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
   'packages/core/test/tabs-slider-geometry.test.tsx',
+  'packages/core/test/workbench-projected-surface.test.tsx',
   'packages/core/test/workbench-navigation-center.test.ts',
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',

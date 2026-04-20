@@ -17,10 +17,31 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
   'code-editor',
 ];
 
+export type WorkbenchWidgetRenderMode = 'canvas_scaled' | 'projected_surface';
+
+export interface WorkbenchProjectedRect {
+  widgetId: string;
+  worldX: number;
+  worldY: number;
+  worldWidth: number;
+  worldHeight: number;
+  screenX: number;
+  screenY: number;
+  screenWidth: number;
+  screenHeight: number;
+  viewportScale: number;
+}
+
+export interface WorkbenchWidgetSurfaceMetrics {
+  ready: boolean;
+  rect: WorkbenchProjectedRect;
+}
+
 export interface WorkbenchWidgetBodyProps<TWidgetType extends string = WorkbenchWidgetType> {
   widgetId: string;
   title: string;
   type: TWidgetType;
+  surfaceMetrics?: WorkbenchWidgetSurfaceMetrics;
 }
 
 export interface WorkbenchWidgetDefinition<TWidgetType extends string = WorkbenchWidgetType> {
@@ -35,6 +56,7 @@ export interface WorkbenchWidgetDefinition<TWidgetType extends string = Workbenc
   };
   group?: string;
   singleton?: boolean;
+  renderMode?: WorkbenchWidgetRenderMode;
 }
 
 export interface WorkbenchWidgetItem<TWidgetType extends string = WorkbenchWidgetType> {

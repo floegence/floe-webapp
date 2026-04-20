@@ -203,6 +203,34 @@
 4. 锁定态下，如果当前目标不是局部 wheel consumer，wheel 结果应是 `ignore`，而不是偷偷把普通区域也当成 local surface。
 5. 共享 helper 必须返回可解释的 wheel routing decision，而不是只靠布尔值散落在各组件里。
 
+### 3.9 Projected workbench surfaces contract
+
+当 workbench widget 承载 Monaco、terminal、iframe、rich preview 等“不能安全挂在 CSS scale 祖先里”的业务 DOM 时，必须切换到 projected surface contract：
+
+1. widget definition 显式声明 `renderMode: 'projected_surface'`。
+2. projected widget 仍然使用相同的 world-space `x / y / width / height / z_index` 持久化模型，禁止改存 screen-space rect。
+3. `InfiniteCanvas` 必须提供 live viewport overlay 能力，让 projected widget 在 pan / zoom 过程中继续跟随实时 viewport，而不是只依赖节流后的 committed viewport。
+4. projected widget 的可见几何必须来自共享 projected rect helper，禁止在下游各自手写 `x * scale + offset` 公式。
+5. rich widget body 必须通过 `surfaceMetrics` 感知自己的 projected rect 与 ready 状态，而不是自行猜测 mount host 是否稳定。
+6. projected surface 只解决“业务 DOM 不再处于 canvas scale transform 祖先”这个架构问题；selection、focus、fronting、drag、resize、context menu、persisted geometry 仍然保持 workbench 统一契约。
+
+结论：
+
+- world model 和 pixel-space host 必须显式分层。
+- rich widget 不能再依赖 canvas transform 祖先承担 DOM runtime 几何。
+
+### 3.10 Monaco standalone runtime contract
+
+`CodeEditor` 这类共享 surface 不允许再假设所有 standalone service 都应无条件加载。
+
+规则如下：
+
+1. Monaco standalone runtime 必须以 feature set 维度缓存，而不是“一次性全量导入后全局复用”。
+2. preview / readonly surface 应该通过 `runtimeOptions.standaloneFeatures` 显式关闭不需要的 optional service。
+3. richer editor surface 可以继续使用默认 feature set，但默认值必须集中在共享 runtime helper 中维护。
+4. runtime loader 失败后必须允许同一 feature set 重试，不能把失败状态永久缓存。
+5. 共享测试必须覆盖：默认 runtime、最小 preview runtime、以及不同 feature set 的独立缓存行为。
+
 ## 4. 工程化防回退手段
 
 ### 4.1 源码守卫测试
