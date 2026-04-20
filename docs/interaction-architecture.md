@@ -131,6 +131,7 @@
 - Shell sidebar：拖动时只改本地 preview width，结束后再写 `LayoutContext`
 - FileBrowser sidebar：拖动时只改本地 preview width，结束后再写 `FileBrowserContext`
 - FloatingWindow：拖拽/resize 期间直接写 DOM 几何，结束后再 commit 到 signal
+- Deck：drag / resize 必须通过共享 `deckPointerSession` 维护一次 pointer session；drag 期间 dragged widget 与 drop preview 共享同一份 snapped `currentPosition`，release 时只允许这一份布局真相进入 commit
 - NotesOverlay：note drag 只更新 note-local preview 坐标，pointerup 后再 `updateNote()`
 - NotesOverlay：minimap / overview navigation 只更新本地 viewport preview，release 后再 `setViewport()`
 
@@ -147,7 +148,22 @@
 7. 对于 shell-owned sidebar 的单次显隐切换，如果产品想禁用该次 width motion，必须通过 shared `visibilityMotion` contract，而不是添加产品私有 class hack
 8. 像 Notes 数字复制这类“依赖 overlay 语义 + 焦点/输入状态 + 共享视觉反馈”的键盘 affordance，必须收敛在 shared overlay boundary 中统一判定，不允许在下游产品层通过 DOM decorate + document 监听重复实现
 
-### 3.5 文件浏览浮层与几何交互
+### 3.5 Deck pointer-session contract
+
+Deck 的几何交互必须额外遵守下面三条共享约束：
+
+1. `packages/core/src/components/deck/deckPointerSession.ts` 是 Deck drag / resize 的单一 pointer lifecycle 入口；`pointer capture` 只是增强能力，不能作为唯一正确性来源。
+2. Deck pointer session 必须统一覆盖 `document` capture 阶段的 `pointermove` / `pointerup` / `pointercancel`，并额外监听 `lostpointercapture`，保证指针跨过其它 widget、复杂 surface 或浏览器重定向事件链时仍能稳定结束。
+3. Drag 渲染必须坚持 one snapped truth：
+   - `DropZonePreview` 与 dragged widget 共享同一份 `currentPosition`
+   - 禁止继续保留“preview 已经在新 slot，但 widget 还停留在旧 `grid-area` 只靠 transform 跟手”的双真相模型
+
+结论：
+
+- Deck 是离散网格表面，不是自由画布。
+- 一旦交互已经吸附到某个 grid slot，UI 就必须让用户看到这就是当前唯一候选落位。
+
+### 3.6 文件浏览浮层与几何交互
 
 文件浏览的框选与右键菜单，必须遵守下面两条共享契约：
 
@@ -162,7 +178,7 @@
 - 框选的“命中坐标系”和“渲染坐标系”必须显式分层。
 - 右键菜单的关闭判定必须先于空白区自己的手势逻辑触发。
 
-### 3.6 局部 dialog surface contract
+### 3.7 局部 dialog surface contract
 
 当 dialog 由局部工作表面触发时（例如 deck widget、workbench widget、floating window），必须遵守同一套局部弹窗契约：
 
@@ -179,7 +195,7 @@
 7. 局部 dialog 不锁整个 body scroll，但仍要阻断 dialog 内按键向全局热键穿透。
 8. 没有局部 host 时必须自动回退为全局 modal 语义，不能留下半局部、半全局的漂移状态。
 
-### 3.7 浮窗 local surface contract
+### 3.8 浮窗 local surface contract
 
 当 `FloatingWindow` 被渲染在 `InfiniteCanvas` / workbench / 其它外层手势表面之上时，必须额外遵守下面两条共享契约：
 
@@ -188,7 +204,7 @@
 3. 这样做不是为了“兼容某个页面特判”，而是为了覆盖 portal + delegated events 的统一运行时事实：即使浮窗 DOM 被 portal 到 `document.body`，上层交互容器仍可能通过事件委托看见这次 `pointerdown`，所以浮窗必须自己声明“我是局部交互面”。
 4. 任何 app-owned wrapper 都只能做薄适配；共享 `FloatingWindow` 本身仍然是这条契约的单一事实来源。
 
-### 3.8 Canvas wheel ownership contract
+### 3.9 Canvas wheel ownership contract
 
 `InfiniteCanvas` / workbench / notes board 这类可缩放画布必须把 wheel ownership 当成一条**独立契约**，不能直接复用 pointer / contextmenu 的 local-surface 判定。
 
@@ -203,7 +219,7 @@
 4. 锁定态下，如果当前目标不是局部 wheel consumer，wheel 结果应是 `ignore`，而不是偷偷把普通区域也当成 local surface。
 5. 共享 helper 必须返回可解释的 wheel routing decision，而不是只靠布尔值散落在各组件里。
 
-### 3.9 Projected workbench surfaces contract
+### 3.10 Projected workbench surfaces contract
 
 当 workbench widget 承载 Monaco、terminal、iframe、rich preview 等“不能安全挂在 CSS scale 祖先里”的业务 DOM 时，必须切换到 projected surface contract：
 
@@ -219,7 +235,7 @@
 - world model 和 pixel-space host 必须显式分层。
 - rich widget 不能再依赖 canvas transform 祖先承担 DOM runtime 几何。
 
-### 3.10 Monaco standalone runtime contract
+### 3.11 Monaco standalone runtime contract
 
 `CodeEditor` 这类共享 surface 不允许再假设所有 standalone service 都应无条件加载。
 
@@ -295,7 +311,7 @@
 ### 5.5 拖拽 / resize 统一
 
 - [x] Layout `ResizeHandle` 复用共享 hot interaction
-- [x] Deck drag / resize 复用共享 hot interaction
+- [x] Deck drag / resize 收敛到共享 `deckPointerSession`，并补齐 document-level release fallback
 - [x] FileBrowser drag 复用共享 hot interaction
 - [x] FileBrowser global drag context 统一管理拖拽光标状态
 

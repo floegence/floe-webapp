@@ -2,8 +2,7 @@ import { createSignal, onCleanup } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useDeck, type DeckWidget, type ResizeState } from '../../context/DeckContext';
 import { applyResizeDelta } from '../../utils/gridLayout';
-import { getGridConfigFromElement } from './DeckGrid';
-import { startHotInteraction } from '../../utils/hotInteraction';
+import { startDeckPointerSession, type DeckPointerSessionController } from './deckPointerSession';
 
 export interface WidgetResizeHandleProps {
   widget: DeckWidget;
@@ -33,195 +32,69 @@ const EDGE_CURSORS: Record<ResizeState['edge'], string> = {
 };
 
 /**
- * Resize handle for a specific edge of a widget
+ * Resize handle for a specific edge of a widget.
+ * The active pointer session is owned by the shared Deck pointer-session helper,
+ * so pointer release remains reliable even when the cursor crosses other widgets.
  */
 export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
   const deck = useDeck();
 
   const [isActive, setIsActive] = createSignal(false);
   let handleRef: HTMLDivElement | undefined;
-  let activePointerId: number | null = null;
-  let startX = 0;
-  let startY = 0;
-  let startScrollTop = 0;
-  let lastX = 0;
-  let lastY = 0;
-  let lastAppliedX = 0;
-  let lastAppliedY = 0;
-  let lastAppliedScrollTop = 0;
-  let rafId: number | null = null;
-  let stopHotInteraction: (() => void) | null = null;
-  let gridEl: HTMLElement | null = null;
-  let gridRect: DOMRect | null = null;
-  let gridPaddingLeft = 0;
-  let gridPaddingRight = 0;
+  let activeSession: DeckPointerSessionController | null = null;
 
-  const setGlobalStyles = (active: boolean) => {
-    if (!active) {
-      stopHotInteraction?.();
-      stopHotInteraction = null;
-      return;
-    }
+  const stopResizing = (commit: boolean) => {
+    activeSession?.stop({ commit });
+    activeSession = null;
+  };
 
-    stopHotInteraction?.();
-    stopHotInteraction = startHotInteraction({
+  const handlePointerDown = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const gridEl = (event.currentTarget as HTMLElement | null)?.closest('.deck-grid') as HTMLElement | null;
+    if (!gridEl) return;
+
+    stopResizing(false);
+
+    deck.startResize(props.widget.id, props.edge, event.clientX, event.clientY);
+    const resize = deck.resizeState();
+    if (!resize || resize.widgetId !== props.widget.id || resize.edge !== props.edge) return;
+
+    setIsActive(true);
+    activeSession = startDeckPointerSession({
       kind: 'resize',
+      widgetId: props.widget.id,
+      gridEl,
+      captureEl: handleRef,
+      pointerEvent: event,
       cursor: EDGE_CURSORS[props.edge],
-      lockUserSelect: true,
+      onMove: (frame) => {
+        const colDelta = Math.round(frame.deltaX / frame.cellWidth);
+        const rowDelta = Math.round(frame.deltaY / frame.cellHeight);
+        const constraints = deck.getWidgetMinConstraints(props.widget.type);
+        const currentPosition = applyResizeDelta(
+          props.widget.position,
+          props.edge,
+          colDelta,
+          rowDelta,
+          constraints.minColSpan,
+          constraints.minRowSpan,
+          frame.cols
+        );
+
+        deck.updateResize(currentPosition);
+      },
+      onEnd: ({ commit }) => {
+        activeSession = null;
+        setIsActive(false);
+        deck.endResize(commit);
+      },
     });
   };
 
-  const stopResizing = () => {
-    if (!isActive()) return;
-    if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
-      cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-    setIsActive(false);
-    activePointerId = null;
-    gridEl = null;
-    gridRect = null;
-    setGlobalStyles(false);
-    deck.endResize(true);
-  };
-
-  const maybeAutoScroll = (): void => {
-    if (!gridEl) return;
-    const rect = gridRect ?? gridEl.getBoundingClientRect();
-    const threshold = 48;
-    const maxSpeed = 24;
-
-    const distTop = lastY - rect.top;
-    const distBottom = rect.bottom - lastY;
-
-    let delta = 0;
-    if (distTop < threshold) {
-      delta = -Math.ceil(((threshold - distTop) / threshold) * maxSpeed);
-    } else if (distBottom < threshold) {
-      delta = Math.ceil(((threshold - distBottom) / threshold) * maxSpeed);
-    }
-
-    if (delta === 0) return;
-    const prev = gridEl.scrollTop;
-    const next = Math.max(0, Math.min(prev + delta, gridEl.scrollHeight - gridEl.clientHeight));
-    if (next !== prev) gridEl.scrollTop = next;
-  };
-
-  const startTick = () => {
-    if (rafId !== null) return;
-    if (typeof requestAnimationFrame === 'undefined') return;
-
-    const tick = () => {
-      if (!isActive()) {
-        rafId = null;
-        return;
-      }
-      updatePosition();
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-  };
-
-  const handlePointerDown = (e: PointerEvent) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const nearestGrid = (e.currentTarget as HTMLElement | null)?.closest('.deck-grid') as HTMLElement | null;
-    if (!nearestGrid) return;
-
-    activePointerId = e.pointerId;
-    startX = e.clientX;
-    startY = e.clientY;
-    lastX = startX;
-    lastY = startY;
-    lastAppliedX = startX;
-    lastAppliedY = startY;
-    setIsActive(true);
-    setGlobalStyles(true);
-    gridEl = nearestGrid;
-    // Cache the grid rect once per interaction to avoid per-frame layout reads.
-    gridRect = nearestGrid.getBoundingClientRect();
-    startScrollTop = nearestGrid.scrollTop;
-    lastAppliedScrollTop = startScrollTop;
-
-    // Cache horizontal paddings once per interaction (avoid per-frame getComputedStyle).
-    const styles = window.getComputedStyle(nearestGrid);
-    gridPaddingLeft = parseFloat(styles.paddingLeft) || 0;
-    gridPaddingRight = parseFloat(styles.paddingRight) || 0;
-
-    deck.startResize(props.widget.id, props.edge, startX, startY);
-    handleRef?.setPointerCapture(e.pointerId);
-    startTick();
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (!isActive() || activePointerId !== e.pointerId) return;
-
-    lastX = e.clientX;
-    lastY = e.clientY;
-    if (typeof requestAnimationFrame === 'undefined') {
-      updatePosition();
-    }
-  };
-
-  const updatePosition = () => {
-    // Get grid element and calculate cell sizes
-    if (!gridEl) return;
-
-    // Keep scrolling responsive even if the pointer is stationary near edges.
-    maybeAutoScroll();
-
-    const scrollTop = gridEl.scrollTop;
-    if (lastX === lastAppliedX && lastY === lastAppliedY && scrollTop === lastAppliedScrollTop) return;
-    lastAppliedX = lastX;
-    lastAppliedY = lastY;
-    lastAppliedScrollTop = scrollTop;
-
-    const deltaX = lastX - startX;
-    const deltaY = (lastY - startY) + (scrollTop - startScrollTop);
-
-    // Read dynamic row height from the grid element
-    const { cols, rowHeight, gap } = getGridConfigFromElement(gridEl);
-
-    // Calculate cell dimensions
-    // Use clientWidth (excludes scrollbar) to avoid jitter when scrollbars appear/disappear.
-    const innerWidth = gridEl.clientWidth - gridPaddingLeft - gridPaddingRight;
-    const totalGapWidth = gap * (cols - 1);
-    const cellWidth = (innerWidth - totalGapWidth) / cols;
-    if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
-    const cellHeight = rowHeight + gap;
-
-    // Convert pixel delta to grid units
-    const colDelta = Math.round(deltaX / cellWidth);
-    const rowDelta = Math.round(deltaY / cellHeight);
-
-    const constraints = deck.getWidgetMinConstraints(props.widget.type);
-    const newPosition = applyResizeDelta(
-      props.widget.position,
-      props.edge,
-      colDelta,
-      rowDelta,
-      constraints.minColSpan,
-      constraints.minRowSpan,
-      cols
-    );
-
-    deck.updateResize(newPosition);
-  };
-
-  const handlePointerUpOrCancel = (e: PointerEvent) => {
-    if (activePointerId !== e.pointerId) return;
-    try {
-      handleRef?.releasePointerCapture(e.pointerId);
-    } catch {
-      // Ignore
-    }
-    stopResizing();
-  };
-
-  onCleanup(() => stopResizing());
+  onCleanup(() => stopResizing(false));
 
   return (
     <div
@@ -235,9 +108,6 @@ export function WidgetResizeHandle(props: WidgetResizeHandleProps) {
       style={{ 'touch-action': 'none' }}
       data-widget-resize-handle={props.edge}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUpOrCancel}
-      onPointerCancel={handlePointerUpOrCancel}
     />
   );
 }

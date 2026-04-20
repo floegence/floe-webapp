@@ -4,7 +4,7 @@ import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig, type FloeDeckPresetLayout } from './FloeConfigContext';
 import { useWidgetRegistry } from './WidgetRegistry';
 import type { GridPosition } from '../utils/gridCollision';
-import { findFreePosition, hasCollision, constrainPosition } from '../utils/gridCollision';
+import { findFreePosition, hasCollision, constrainPosition, sameGridPosition } from '../utils/gridCollision';
 
 /**
  * Widget instance on the deck
@@ -38,8 +38,6 @@ export interface DragState {
   widgetId: string;
   originalPosition: GridPosition;
   currentPosition: GridPosition;
-  /** Pixel offset for smooth visual following */
-  pixelOffset: { x: number; y: number };
   startX: number;
   startY: number;
 }
@@ -108,7 +106,7 @@ export interface DeckContextValue {
   // Drag state
   dragState: Accessor<DragState | null>;
   startDrag: (widgetId: string, startX: number, startY: number) => void;
-  updateDrag: (currentPosition: GridPosition, pixelOffset: { x: number; y: number }) => void;
+  updateDrag: (currentPosition: GridPosition) => void;
   endDrag: (commit: boolean) => void;
 
   // Resize state
@@ -682,13 +680,15 @@ export function createDeckService(): DeckContextValue {
         widgetId,
         originalPosition: { ...widget.position },
         currentPosition: { ...widget.position },
-        pixelOffset: { x: 0, y: 0 },
         startX,
         startY,
       });
     },
-    updateDrag: (currentPosition: GridPosition, pixelOffset: { x: number; y: number }) => {
-      setDragState((prev) => (prev ? { ...prev, currentPosition, pixelOffset } : null));
+    updateDrag: (currentPosition: GridPosition) => {
+      setDragState((prev) => {
+        if (!prev || sameGridPosition(prev.currentPosition, currentPosition)) return prev;
+        return { ...prev, currentPosition };
+      });
     },
     endDrag: (commit: boolean) => {
       const state = dragState();
@@ -733,7 +733,10 @@ export function createDeckService(): DeckContextValue {
       });
     },
     updateResize: (currentPosition: GridPosition) => {
-      setResizeState((prev) => (prev ? { ...prev, currentPosition } : null));
+      setResizeState((prev) => {
+        if (!prev || sameGridPosition(prev.currentPosition, currentPosition)) return prev;
+        return { ...prev, currentPosition };
+      });
     },
     endResize: (commit: boolean) => {
       const state = resizeState();

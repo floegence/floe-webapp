@@ -8,6 +8,15 @@ import { hasCollision } from '../../utils/gridCollision';
 import { DeckCell } from './DeckCell';
 import { DeckContextMenu, type DeckContextMenuItem } from './DeckContextMenu';
 import { DropZonePreview } from './DropZonePreview';
+import {
+  DECK_DEFAULT_ROWS,
+  DECK_GAP,
+  DECK_GRID_COLS,
+  DECK_GRID_CONFIG,
+  DECK_MIN_ROW_HEIGHT,
+  DECK_PADDING,
+  getGridConfigFromElement,
+} from './deckGridMetrics';
 
 export interface DeckGridProps {
   class?: string;
@@ -15,13 +24,7 @@ export interface DeckGridProps {
 }
 
 // Grid configuration
-const GRID_COLS = 24;
-const DEFAULT_ROWS = 24; // Default rows to fill one screen (24x24 grid)
-const GAP = 4;
-const MIN_ROW_HEIGHT = 20; // Minimum row height to prevent cells from being too small
-const PADDING = 4; // p-1 = 4px
-const TOTAL_GAP_WIDTH = (GRID_COLS - 1) * GAP;
-const ZERO_OFFSET = { x: 0, y: 0 } as const;
+const TOTAL_GAP_WIDTH = (DECK_GRID_COLS - 1) * DECK_GAP;
 
 /**
  * CSS Grid container for the deck layout (24x24 grid that fills the container)
@@ -116,8 +119,8 @@ export function DeckGrid(props: DeckGridProps) {
   // Calculate actual rows needed (minimum 24 to fill one screen)
   const widgetRows = createMemo(() => {
     const ws = widgets();
-    if (ws.length === 0) return DEFAULT_ROWS;
-    let max = DEFAULT_ROWS;
+    if (ws.length === 0) return DECK_DEFAULT_ROWS;
+    let max = DECK_DEFAULT_ROWS;
     for (const w of ws) {
       const end = w.position.row + w.position.rowSpan;
       if (end > max) max = end;
@@ -141,18 +144,18 @@ export function DeckGrid(props: DeckGridProps) {
       if (end > max) max = end;
     }
 
-    return Math.max(DEFAULT_ROWS, max);
+    return Math.max(DECK_DEFAULT_ROWS, max);
   });
 
   // Calculate dynamic row height based on container height
   // Formula: rowHeight = (containerHeight - padding * 2 - (DEFAULT_ROWS - 1) * gap) / DEFAULT_ROWS
   const rowHeight = createMemo(() => {
     const height = containerHeight();
-    if (height <= 0) return MIN_ROW_HEIGHT;
+    if (height <= 0) return DECK_MIN_ROW_HEIGHT;
 
-    const availableHeight = height - PADDING * 2 - (DEFAULT_ROWS - 1) * GAP;
-    const calculated = availableHeight / DEFAULT_ROWS;
-    return Math.max(MIN_ROW_HEIGHT, calculated);
+    const availableHeight = height - DECK_PADDING * 2 - (DECK_DEFAULT_ROWS - 1) * DECK_GAP;
+    const calculated = availableHeight / DECK_DEFAULT_ROWS;
+    return Math.max(DECK_MIN_ROW_HEIGHT, calculated);
   });
 
   // Set up ResizeObserver to track container dimensions
@@ -174,12 +177,12 @@ export function DeckGrid(props: DeckGridProps) {
 
   // Check if content exceeds container (needs scrolling)
   const needsScroll = createMemo(() => {
-    if (previewRows() > DEFAULT_ROWS) return true;
+    if (previewRows() > DECK_DEFAULT_ROWS) return true;
     if (containerHeight() <= 0) return false;
 
     // If the container is too short to fit 24 rows at the minimum row height, allow scrolling
     // instead of clipping content (e.g. small viewport / embedded container).
-    const baseHeight = DEFAULT_ROWS * rowHeight() + (DEFAULT_ROWS - 1) * GAP + PADDING * 2;
+    const baseHeight = DECK_DEFAULT_ROWS * rowHeight() + (DECK_DEFAULT_ROWS - 1) * DECK_GAP + DECK_PADDING * 2;
     return baseHeight > containerHeight() + 1;
   });
 
@@ -196,14 +199,14 @@ export function DeckGrid(props: DeckGridProps) {
       )}
       style={{
         'scrollbar-gutter': 'stable',
-        'grid-template-columns': `repeat(${GRID_COLS}, 1fr)`,
+        'grid-template-columns': `repeat(${DECK_GRID_COLS}, 1fr)`,
         'grid-auto-rows': `${rowHeight()}px`,
-        'gap': `${GAP}px`,
+        'gap': `${DECK_GAP}px`,
       }}
-      data-grid-cols={GRID_COLS}
+      data-grid-cols={DECK_GRID_COLS}
       data-row-height={rowHeight()}
-      data-gap={GAP}
-      data-default-rows={DEFAULT_ROWS}
+      data-gap={DECK_GAP}
+      data-default-rows={DECK_DEFAULT_ROWS}
       onContextMenu={handleGridContextMenu}
     >
       {/* Invisible placeholder to ensure minimum content height */}
@@ -223,8 +226,8 @@ export function DeckGrid(props: DeckGridProps) {
           style={{
             'grid-column': '1 / -1',
             'grid-row': `1 / ${previewRows() + 1}`,
-            '--deck-grid-unit-x': `calc((100% - ${TOTAL_GAP_WIDTH}px) / ${GRID_COLS} + ${GAP}px)`,
-            '--deck-grid-unit-y': `${rowHeight() + GAP}px`,
+            '--deck-grid-unit-x': `calc((100% - ${TOTAL_GAP_WIDTH}px) / ${DECK_GRID_COLS} + ${DECK_GAP}px)`,
+            '--deck-grid-unit-y': `${rowHeight() + DECK_GAP}px`,
             // Fine grid + major gridlines every 6 / 12 cells (Grafana style)
             'background-image': [
               // Fine
@@ -269,7 +272,7 @@ export function DeckGrid(props: DeckGridProps) {
           const position = createMemo(() => {
             const drag = dragState();
             if (drag && drag.widgetId === widget.id) {
-              return widget.position;
+              return drag.currentPosition;
             }
             const resize = resizeState();
             if (resize && resize.widgetId === widget.id) {
@@ -288,21 +291,12 @@ export function DeckGrid(props: DeckGridProps) {
             return resize?.widgetId === widget.id;
           });
 
-          const pixelOffset = createMemo(() => {
-            const drag = dragState();
-            if (drag && drag.widgetId === widget.id) {
-              return drag.pixelOffset;
-            }
-            return ZERO_OFFSET;
-          });
-
           return (
             <DeckCell
               widget={widget}
               position={position()}
               isDragging={isDragging()}
               isResizing={isResizing()}
-              pixelOffset={pixelOffset()}
             />
           );
         }}
@@ -322,25 +316,4 @@ export function DeckGrid(props: DeckGridProps) {
   );
 }
 
-// Export grid configuration
-// Note: rowHeight is now dynamic and should be read from the grid element's data-row-height attribute
-export const DECK_GRID_CONFIG = {
-  cols: GRID_COLS,
-  defaultRows: DEFAULT_ROWS,
-  gap: GAP,
-  // Deprecated: use getGridConfig() or read from data-row-height attribute instead
-  rowHeight: MIN_ROW_HEIGHT,
-};
-
-/**
- * Get grid configuration from the DOM element
- * Use this for accurate row height during drag/resize operations
- */
-export function getGridConfigFromElement(gridEl: HTMLElement) {
-  return {
-    cols: parseInt(gridEl.dataset.gridCols || String(GRID_COLS), 10),
-    rowHeight: parseFloat(gridEl.dataset.rowHeight || String(MIN_ROW_HEIGHT)),
-    gap: parseInt(gridEl.dataset.gap || String(GAP), 10),
-    defaultRows: parseInt(gridEl.dataset.defaultRows || String(DEFAULT_ROWS), 10),
-  };
-}
+export { DECK_GRID_CONFIG, getGridConfigFromElement };

@@ -13,8 +13,6 @@ export interface DeckCellProps {
   position: GridPosition;
   isDragging?: boolean;
   isResizing?: boolean;
-  /** Pixel offset for smooth drag following */
-  pixelOffset?: { x: number; y: number };
 }
 
 /**
@@ -42,18 +40,9 @@ export function DeckCell(props: DeckCellProps) {
     return def?.component as Component<{ widgetId: string; config?: Record<string, unknown>; isEditMode?: boolean }> | undefined;
   };
 
-  // Compute transform style for smooth drag
-  const transformStyle = createMemo(() => {
-    if (!props.isDragging || !props.pixelOffset) return {};
-    const { x, y } = props.pixelOffset;
-    if (x === 0 && y === 0) return {};
-    return {
-      transform: `translate(${x}px, ${y}px)`,
-    };
-  });
-
   return (
     <div
+      data-floe-deck-widget-id={props.widget.id}
       data-floe-dialog-surface-host="true"
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',
@@ -68,7 +57,6 @@ export function DeckCell(props: DeckCellProps) {
       )}
       style={{
         'grid-area': gridArea(),
-        ...transformStyle(),
       }}
     >
       <WidgetFrame

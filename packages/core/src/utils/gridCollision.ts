@@ -9,6 +9,15 @@ export interface GridPosition {
   rowSpan: number; // 1-N (height in rows)
 }
 
+export function sameGridPosition(a: GridPosition, b: GridPosition): boolean {
+  return (
+    a.col === b.col &&
+    a.row === b.row &&
+    a.colSpan === b.colSpan &&
+    a.rowSpan === b.rowSpan
+  );
+}
+
 /**
  * Check if two grid positions overlap using AABB collision detection
  */

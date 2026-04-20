@@ -54,6 +54,7 @@ describe('interaction architecture guard', () => {
     const resizeHandleSrc = read('../src/components/layout/ResizeHandle.tsx');
     const widgetResizeSrc = read('../src/components/deck/WidgetResizeHandle.tsx');
     const deckDragSrc = read('../src/hooks/useDeckDrag.ts');
+    const deckPointerSessionSrc = read('../src/components/deck/deckPointerSession.ts');
     const fileDragContextSrc = read('../src/context/FileBrowserDragContext.tsx');
     const floatingWindowSrc = read('../src/components/ui/FloatingWindow.tsx');
     const dialogSrc = read('../src/components/ui/Dialog.tsx');
@@ -66,8 +67,11 @@ describe('interaction architecture guard', () => {
     expect(sidebarPaneSrc).toContain('data-floe-geometry-surface="sidebar-pane"');
 
     expect(resizeHandleSrc).toContain('startHotInteraction({');
-    expect(widgetResizeSrc).toContain('startHotInteraction({');
-    expect(deckDragSrc).toContain('startHotInteraction({');
+    expect(widgetResizeSrc).toContain('startDeckPointerSession({');
+    expect(deckDragSrc).toContain('startDeckPointerSession({');
+    expect(deckPointerSessionSrc).toContain('startHotInteraction({');
+    expect(deckPointerSessionSrc).toContain("ownerDocument.addEventListener('pointerup', handlePointerUp, true)");
+    expect(deckPointerSessionSrc).toContain("addEventListener('lostpointercapture', handleLostPointerCapture)");
     expect(fileDragContextSrc).toContain('startHotInteraction({');
 
     expect(floatingWindowSrc).toContain('data-floe-geometry-surface="floating-window"');
