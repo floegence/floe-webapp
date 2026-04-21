@@ -30,6 +30,14 @@ export {
   type InfiniteCanvasContextMenuEvent,
 } from './InfiniteCanvas';
 export {
+  startPointerSession,
+  type PointerSessionController,
+  type PointerSessionEndEvent,
+  type PointerSessionEndReason,
+  type PointerSessionSnapshot,
+  type StartPointerSessionOptions,
+} from './pointerSession';
+export {
   clientToCanvasLocal,
   clientToCanvasWorld,
   createViewportFromZoomAnchor,

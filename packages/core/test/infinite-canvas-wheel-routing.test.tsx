@@ -53,6 +53,36 @@ function dispatchWheel(target: EventTarget, deltaY: number): WheelEvent {
   return event;
 }
 
+function dispatchPointerEvent(
+  type: string,
+  target: EventTarget,
+  options: {
+    pointerId?: number;
+    clientX?: number;
+    clientY?: number;
+    buttons?: number;
+  } = {},
+): void {
+  const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
+  const event = new EventCtor(type, {
+    bubbles: true,
+    button: 0,
+    clientX: options.clientX ?? 0,
+    clientY: options.clientY ?? 0,
+  });
+  if (!('pointerId' in event)) {
+    Object.defineProperty(event, 'pointerId', {
+      configurable: true,
+      value: options.pointerId ?? 1,
+    });
+  }
+  Object.defineProperty(event, 'buttons', {
+    configurable: true,
+    value: options.buttons ?? 1,
+  });
+  target.dispatchEvent(event);
+}
+
 function CanvasWheelHarness(props: {
   mode: HarnessMode;
   onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
@@ -177,5 +207,58 @@ describe('InfiniteCanvas wheel routing', () => {
 
     expect(onViewportInteractionStart).toHaveBeenCalledTimes(1);
     expect(onViewportInteractionStart).toHaveBeenCalledWith('wheel');
+  });
+
+  it('ends canvas panning when a re-entered pointer reports that the button is released', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <CanvasWheelHarness mode="interactive" />, host);
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLElement | null;
+    expect(canvas).toBeTruthy();
+    mockCanvasRect(canvas!);
+
+    dispatchPointerEvent('pointerdown', canvas!, {
+      pointerId: 10,
+      clientX: 10,
+      clientY: 10,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 10,
+      clientX: 60,
+      clientY: 40,
+      buttons: 1,
+    });
+    await Promise.resolve();
+
+    expect(canvas!.classList.contains('is-panning')).toBe(true);
+    expect(readViewportSnapshot(host)).toEqual(INITIAL_VIEWPORT);
+
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 10,
+      clientX: 160,
+      clientY: 120,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    const releasedViewport = readViewportSnapshot(host);
+    expect(canvas!.classList.contains('is-panning')).toBe(false);
+    expect(releasedViewport).toMatchObject({
+      x: INITIAL_VIEWPORT.x + 50,
+      y: INITIAL_VIEWPORT.y + 30,
+      scale: INITIAL_VIEWPORT.scale,
+    });
+
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 10,
+      clientX: 260,
+      clientY: 220,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(readViewportSnapshot(host)).toEqual(releasedViewport);
   });
 });

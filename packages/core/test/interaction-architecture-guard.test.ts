@@ -30,6 +30,9 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('局部 dialog');
     expect(architectureDoc).toContain('pointerdown capture');
     expect(architectureDoc).toContain('Canvas wheel ownership contract');
+    expect(architectureDoc).toContain('Freeform pointer-session contract');
+    expect(architectureDoc).toContain('pointerSession.ts');
+    expect(architectureDoc).toContain('event.buttons === 0');
     expect(architectureDoc).toContain('详细落地 checklist');
   });
 
@@ -61,8 +64,10 @@ describe('interaction architecture guard', () => {
     const dialogSrc = read('../src/components/ui/Dialog.tsx');
     const dialogSurfaceScopeSrc = read('../src/components/ui/dialogSurfaceScope.ts');
     const infiniteCanvasSrc = read('../src/components/ui/InfiniteCanvas.tsx');
+    const pointerSessionSrc = read('../src/components/ui/pointerSession.ts');
     const deckCellSrc = read('../src/components/deck/DeckCell.tsx');
     const workbenchWidgetSrc = read('../src/components/workbench/WorkbenchWidget.tsx');
+    const workbenchFilterBarSrc = read('../src/components/workbench/WorkbenchFilterBar.tsx');
     const notesBoardNoteSrc = read('../src/components/notes/NotesBoardNote.tsx');
 
     expect(sidebarSrc).toContain('data-floe-geometry-surface="shell-sidebar"');
@@ -100,9 +105,15 @@ describe('interaction architecture guard', () => {
     expect(dialogSurfaceScopeSrc).toContain('mountHost');
     expect(infiniteCanvasSrc).toContain('onViewportInteractionStart');
     expect(infiniteCanvasSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
+    expect(infiniteCanvasSrc).toContain('startPointerSession({');
+    expect(pointerSessionSrc).toContain("ownerDocument.addEventListener('pointermove', handlePointerMove, true)");
+    expect(pointerSessionSrc).toContain("options.captureEl?.addEventListener('lostpointercapture', handleLostPointerCapture)");
+    expect(pointerSessionSrc).toContain("reason: 'buttons_released'");
     expect(deckCellSrc).toContain('data-floe-dialog-surface-host="true"');
     expect(deckCellSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
     expect(workbenchWidgetSrc).toContain('data-floe-dialog-surface-host="true"');
+    expect(workbenchWidgetSrc).toContain('startPointerSession({');
+    expect(workbenchFilterBarSrc).toContain('startPointerSession({');
 
     expect(notesBoardNoteSrc).toContain('data-floe-geometry-surface="notes-note"');
     expect(notesBoardNoteSrc).toContain('startHotInteraction({ kind: \'drag\', cursor: \'grabbing\' })');

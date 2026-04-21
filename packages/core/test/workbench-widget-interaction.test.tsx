@@ -34,16 +34,38 @@ function createWidgetSnapshot(): WorkbenchWidgetItem<typeof FILES_WIDGET_TYPE> {
   };
 }
 
-function dispatchPointerDown(target: EventTarget): void {
+function dispatchPointerEvent(
+  type: string,
+  target: EventTarget,
+  options: {
+    pointerId?: number;
+    clientX?: number;
+    clientY?: number;
+    buttons?: number;
+  } = {},
+): void {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
-  const event = new EventCtor('pointerdown', {
+  const event = new EventCtor(type, {
     bubbles: true,
     button: 0,
+    clientX: options.clientX ?? 0,
+    clientY: options.clientY ?? 0,
   });
   if (!('pointerId' in event)) {
-    Object.defineProperty(event, 'pointerId', { configurable: true, value: 1 });
+    Object.defineProperty(event, 'pointerId', {
+      configurable: true,
+      value: options.pointerId ?? 1,
+    });
   }
+  Object.defineProperty(event, 'buttons', {
+    configurable: true,
+    value: options.buttons ?? 1,
+  });
   target.dispatchEvent(event);
+}
+
+function dispatchPointerDown(target: EventTarget): void {
+  dispatchPointerEvent('pointerdown', target);
 }
 
 describe('WorkbenchWidget interaction ownership', () => {
@@ -176,5 +198,145 @@ describe('WorkbenchWidget interaction ownership', () => {
     await Promise.resolve();
 
     expect(onWidgetContextMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('commits widget drag once when release is only observable through a later buttons=0 move', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const onCommitMove = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={filesWidgetDefinition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        onSelect={() => {}}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={onCommitMove}
+        onCommitResize={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ), host);
+
+    const dragButton = host.querySelector('.workbench-widget__drag') as HTMLElement | null;
+    expect(dragButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', dragButton!, {
+      pointerId: 11,
+      clientX: 10,
+      clientY: 10,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 11,
+      clientX: 48,
+      clientY: 34,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 11,
+      clientX: 160,
+      clientY: 120,
+      buttons: 0,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 11,
+      clientX: 260,
+      clientY: 220,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(onCommitMove).toHaveBeenCalledTimes(1);
+    expect(onCommitMove).toHaveBeenCalledWith('widget-files-1', {
+      x: 38,
+      y: 24,
+    });
+  });
+
+  it('commits widget resize once when release is only observable through a later buttons=0 move', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const onCommitResize = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={filesWidgetDefinition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        onSelect={() => {}}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={() => {}}
+        onCommitResize={onCommitResize}
+        onRequestDelete={() => {}}
+      />
+    ), host);
+
+    const resizeHandle = host.querySelector('.workbench-widget__resize') as HTMLElement | null;
+    expect(resizeHandle).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', resizeHandle!, {
+      pointerId: 12,
+      clientX: 10,
+      clientY: 10,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 12,
+      clientX: 54,
+      clientY: 42,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 12,
+      clientX: 180,
+      clientY: 140,
+      buttons: 0,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 12,
+      clientX: 280,
+      clientY: 240,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(onCommitResize).toHaveBeenCalledTimes(1);
+    expect(onCommitResize).toHaveBeenCalledWith('widget-files-1', {
+      width: 524,
+      height: 352,
+    });
   });
 });

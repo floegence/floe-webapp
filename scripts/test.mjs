@@ -6,6 +6,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/dropdown-surface-scope.test.tsx',
   'packages/core/test/file-context-menu-surface-scope.test.tsx',
+  'packages/core/test/pointer-session.test.ts',
   'packages/core/test/infinite-canvas-wheel-routing.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
@@ -15,6 +16,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-context-menu.test.tsx',
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',
+  'packages/core/test/workbench-filter-bar-pointer-session.test.tsx',
   'packages/core/test/workbench-surface-wheel-selection.test.tsx',
 ];
 

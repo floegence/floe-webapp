@@ -148,7 +148,23 @@
 7. 对于 shell-owned sidebar 的单次显隐切换，如果产品想禁用该次 width motion，必须通过 shared `visibilityMotion` contract，而不是添加产品私有 class hack
 8. 像 Notes 数字复制这类“依赖 overlay 语义 + 焦点/输入状态 + 共享视觉反馈”的键盘 affordance，必须收敛在 shared overlay boundary 中统一判定，不允许在下游产品层通过 DOM decorate + document 监听重复实现
 
-### 3.5 Deck pointer-session contract
+### 3.5 Freeform pointer-session contract
+
+`InfiniteCanvas` / workbench widget / workbench filter bar 这类自由几何交互必须复用共享 pointer session：
+
+1. `packages/core/src/components/ui/pointerSession.ts` 是自由几何 drag / resize / pan 的共享 pointer lifecycle 入口；各组件只能保留自己的几何计算，不能各自手写完整 teardown 逻辑。
+2. Pointer session 必须统一覆盖 `document` capture 阶段的 `pointermove` / `pointerup` / `pointercancel`，并额外监听 `lostpointercapture`、`window.blur`、`document.visibilitychange`。
+3. `pointermove` 必须验证主按钮仍处于按下态；当用户在浏览器窗口外松开鼠标后重新进入页面，`event.buttons === 0` 必须立即收敛为一次结束信号，不能继续沿用旧 drag state。
+4. `pointer capture` 只能作为增强能力，不能作为唯一正确性来源；即使 capture 设置失败，document capture listeners 仍必须保证 session 可结束。
+5. 禁止用 `mouseleave` / `mouseout` 作为 drag 的主要结束条件，因为合法拖拽本来就可能跨过元素边界；终止 authority 必须来自 pointer lifecycle 与按钮状态，而不是几何边界。
+
+结论：
+
+- 自由几何表面的拖拽状态必须能自证仍然有效。
+- “窗口外松手”不能让 UI 留在 hot interaction / grabbing / panning 状态。
+- 下游业务仓库需要这类能力时应消费该共享 session，而不是复制一份本地事件监听器。
+
+### 3.6 Deck pointer-session contract
 
 Deck 的几何交互必须额外遵守下面三条共享约束：
 
@@ -165,7 +181,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 - 一旦交互已经吸附到某个 grid slot，UI 就必须让用户看到这就是当前唯一候选落位。
 - 连续跟手只能服务于拖拽感知，不能演变成第二套布局真相。
 
-### 3.6 文件浏览浮层与几何交互
+### 3.7 文件浏览浮层与几何交互
 
 文件浏览的框选与右键菜单，必须遵守下面两条共享契约：
 
@@ -180,7 +196,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 - 框选的“命中坐标系”和“渲染坐标系”必须显式分层。
 - 右键菜单的关闭判定必须先于空白区自己的手势逻辑触发。
 
-### 3.7 局部 dialog surface contract
+### 3.8 局部 dialog surface contract
 
 当 dialog 由局部工作表面触发时（例如 deck widget、workbench widget、floating window），必须遵守同一套局部弹窗契约。`Dialog`、`FileContextMenu`、`Dropdown` 这类 portal overlay 现在共用同一套 surface portal scope：都依赖最近一次 `pointerdown capture` / `focusin` 交互快照回溯最近的局部 host，而不是各自发明一份 host 解析逻辑。
 
@@ -206,7 +222,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 - 局部菜单的 outside-dismiss 仍然要走 `pointerdown capture`，但“菜单内部点击是否算 inside”必须以显式菜单根边界为准，而不是靠 DOM 祖先偶然还在原 surface 下面。
 - 任何业务组件如果声明自己依赖局部 overlay，就应优先复用共享 surface portal scope，而不是在下游仓库临时硬编码 `Portal mount` 和坐标减法。
 
-### 3.8 浮窗 local surface contract
+### 3.9 浮窗 local surface contract
 
 当 `FloatingWindow` 被渲染在 `InfiniteCanvas` / workbench / 其它外层手势表面之上时，必须额外遵守下面两条共享契约：
 
@@ -215,7 +231,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 3. 这样做不是为了“兼容某个页面特判”，而是为了覆盖 portal + delegated events 的统一运行时事实：即使浮窗 DOM 被 portal 到 `document.body`，上层交互容器仍可能通过事件委托看见这次 `pointerdown`，所以浮窗必须自己声明“我是局部交互面”。
 4. 任何 app-owned wrapper 都只能做薄适配；共享 `FloatingWindow` 本身仍然是这条契约的单一事实来源。
 
-### 3.9 Canvas wheel ownership contract
+### 3.10 Canvas wheel ownership contract
 
 `InfiniteCanvas` / workbench / notes board 这类可缩放画布必须把 wheel ownership 当成一条**独立契约**，不能直接复用 pointer / contextmenu 的 local-surface 判定。
 

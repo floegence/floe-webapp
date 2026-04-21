@@ -12,6 +12,7 @@ import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import { Layers, Plus } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
+import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import type {
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
@@ -131,11 +132,11 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
   const [hoveredIndex, setHoveredIndex] = createSignal<number | null>(null);
   const [dragState, setDragState] = createSignal<DragState | null>(null);
 
-  let dragAbortController: AbortController | undefined;
+  let dragSession: PointerSessionController | undefined;
 
   onCleanup(() => {
-    dragAbortController?.abort();
-    dragAbortController = undefined;
+    dragSession?.stop({ reason: 'manual_stop', commit: false });
+    dragSession = undefined;
     const current = dragState();
     current?.stopInteraction();
   });
@@ -161,8 +162,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     const isClick = !current.moved;
     current.stopInteraction();
     setDragState(null);
-    dragAbortController?.abort();
-    dragAbortController = undefined;
+    dragSession = undefined;
 
     if (isClick) {
       // No movement → treat as solo click.
@@ -182,7 +182,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     icon: Component<{ class?: string }>
   ) => {
     event.preventDefault();
-    dragAbortController?.abort();
+    dragSession?.stop({ reason: 'manual_stop', commit: false });
 
     setDragState({
       type,
@@ -197,9 +197,6 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
       overCanvas: false,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
     });
-
-    const controller = new AbortController();
-    dragAbortController = controller;
 
     const handleMove = (next: PointerEvent) => {
       setDragState((current) => {
@@ -220,19 +217,12 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
       });
     };
 
-    const handleUp = (next: PointerEvent) => {
-      if (next.pointerId !== event.pointerId) return;
-      finalizeDrag(true);
-    };
-
-    const handleCancel = (next: PointerEvent) => {
-      if (next.pointerId !== event.pointerId) return;
-      finalizeDrag(false);
-    };
-
-    window.addEventListener('pointermove', handleMove, { signal: controller.signal });
-    window.addEventListener('pointerup', handleUp, { signal: controller.signal });
-    window.addEventListener('pointercancel', handleCancel, { signal: controller.signal });
+    dragSession = startPointerSession({
+      pointerEvent: event,
+      captureEl: event.currentTarget as HTMLElement,
+      onMove: handleMove,
+      onEnd: ({ commit }) => finalizeDrag(commit),
+    });
   };
 
   const draggingType = (): WorkbenchWidgetType | null => dragState()?.type ?? null;

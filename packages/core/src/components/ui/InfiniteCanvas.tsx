@@ -6,6 +6,7 @@ import {
   resolveSurfaceInteractionTargetRole,
   resolveSurfaceWheelRouting,
 } from './localInteractionSurface';
+import { startPointerSession, type PointerSessionController } from './pointerSession';
 import {
   clientToCanvasLocal,
   createViewportFromZoomAnchor,
@@ -90,6 +91,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   );
   const [dragState, setDragState] = createSignal<DragState | null>(null);
   let rootRef: HTMLDivElement | undefined;
+  let dragSession: PointerSessionController | undefined;
   let wheelCommitTimer: number | undefined;
   let suppressPanSurfaceClick = false;
   let clearPanSurfaceClickTimer: number | undefined;
@@ -164,18 +166,14 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     });
   };
 
-  const releaseDrag = (pointerId?: number) => {
+  const releaseDrag = () => {
     const current = dragState();
     if (!current) return;
-    if (pointerId !== undefined && current.pointerId !== pointerId) return;
 
     current.stopInteraction?.();
     const next = liveViewport();
     setDragState(null);
-
-    if (rootRef && rootRef.hasPointerCapture(current.pointerId)) {
-      rootRef.releasePointerCapture(current.pointerId);
-    }
+    dragSession = undefined;
 
     if (current.startedFromPanSurface && current.moved) {
       suppressPanSurfaceClick = true;
@@ -217,7 +215,8 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
 
   onCleanup(() => {
     clearWheelCommitTimer();
-    releaseDrag();
+    dragSession?.stop({ reason: 'manual_stop', commit: true });
+    dragSession = undefined;
     clearPanSurfaceClickSuppression();
   });
 
@@ -239,9 +238,9 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     if (!startedFromPanSurface) {
       props.onViewportInteractionStart?.('pan');
       event.preventDefault();
-      rootRef?.setPointerCapture(event.pointerId);
     }
 
+    dragSession?.stop({ reason: 'manual_stop', commit: true });
     setDragState({
       pointerId: event.pointerId,
       startClientX: event.clientX,
@@ -253,9 +252,19 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
         ? undefined
         : startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
     });
+
+    dragSession = startPointerSession({
+      pointerEvent: event,
+      captureEl: rootRef ?? null,
+      capturePointer: !startedFromPanSurface,
+      onMove: handlePointerMove,
+      onEnd: () => {
+        releaseDrag();
+      },
+    });
   };
 
-  const handlePointerMove: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
+  const handlePointerMove = (event: PointerEvent) => {
     const current = dragState();
     if (!current || current.pointerId !== event.pointerId) return;
 
@@ -271,8 +280,12 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     if (!current.moved) {
       event.preventDefault();
 
-      if (!rootRef?.hasPointerCapture(event.pointerId)) {
-        rootRef?.setPointerCapture(event.pointerId);
+      if (
+        !rootRef ||
+        typeof rootRef.hasPointerCapture !== 'function' ||
+        !rootRef.hasPointerCapture(event.pointerId)
+      ) {
+        dragSession?.capturePointer();
       }
     }
 
@@ -292,14 +305,6 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     }
 
     setLiveViewport(next);
-  };
-
-  const handlePointerUp: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
-    releaseDrag(event.pointerId);
-  };
-
-  const handlePointerCancel: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
-    releaseDrag(event.pointerId);
   };
 
   // Plain-function signature (not a JSX.EventHandler) because this listener
@@ -379,9 +384,6 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       )}
       {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
       onContextMenu={handleContextMenu}
       aria-label={props.ariaLabel ?? 'Infinite canvas'}
     >

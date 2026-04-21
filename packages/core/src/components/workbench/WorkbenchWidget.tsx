@@ -6,6 +6,7 @@ import {
   WORKBENCH_WIDGET_SHELL_ATTR,
   resolveWorkbenchWidgetEventOwnership,
 } from '../ui/localInteractionSurface';
+import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
 import type {
   WorkbenchViewport,
@@ -81,15 +82,15 @@ export interface WorkbenchWidgetProps {
 export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [dragState, setDragState] = createSignal<LocalDragState | null>(null);
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
-  let dragAbortController: AbortController | undefined;
-  let resizeAbortController: AbortController | undefined;
+  let dragSession: PointerSessionController | undefined;
+  let resizeSession: PointerSessionController | undefined;
   let widgetRootEl: HTMLElement | undefined;
 
   onCleanup(() => {
-    dragAbortController?.abort();
-    dragAbortController = undefined;
-    resizeAbortController?.abort();
-    resizeAbortController = undefined;
+    dragSession?.stop({ reason: 'manual_stop', commit: false });
+    dragSession = undefined;
+    resizeSession?.stop({ reason: 'manual_stop', commit: false });
+    resizeSession = undefined;
     untrack(dragState)?.stopInteraction();
     untrack(resizeState)?.stopInteraction();
   });
@@ -206,8 +207,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     current.stopInteraction();
     setDragState(null);
-    dragAbortController?.abort();
-    dragAbortController = undefined;
+    dragSession = undefined;
   };
 
   const beginDrag: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
@@ -215,7 +215,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     event.preventDefault();
     event.stopPropagation();
-    dragAbortController?.abort();
+    dragSession?.stop({ reason: 'manual_stop', commit: false });
     props.onSelect(props.widgetId);
     widgetRootEl?.focus({ preventScroll: true });
     props.onStartOptimisticFront(props.widgetId);
@@ -255,22 +255,12 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       });
     };
 
-    const finish = (nextEvent: PointerEvent) => {
-      if (nextEvent.pointerId !== event.pointerId) return;
-      finishDrag(true);
-    };
-
-    const cancel = (nextEvent: PointerEvent) => {
-      if (nextEvent.pointerId !== event.pointerId) return;
-      finishDrag(false);
-    };
-
-    const controller = new AbortController();
-    dragAbortController = controller;
-
-    window.addEventListener('pointermove', handleMove, { signal: controller.signal });
-    window.addEventListener('pointerup', finish, { once: true, signal: controller.signal });
-    window.addEventListener('pointercancel', cancel, { once: true, signal: controller.signal });
+    dragSession = startPointerSession({
+      pointerEvent: event,
+      captureEl: event.currentTarget,
+      onMove: handleMove,
+      onEnd: ({ commit }) => finishDrag(commit),
+    });
   };
 
   const finishResize = (commit: boolean) => {
@@ -288,8 +278,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     current.stopInteraction();
     setResizeState(null);
-    resizeAbortController?.abort();
-    resizeAbortController = undefined;
+    resizeSession = undefined;
   };
 
   const beginResize: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
@@ -297,7 +286,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     event.preventDefault();
     event.stopPropagation();
-    resizeAbortController?.abort();
+    resizeSession?.stop({ reason: 'manual_stop', commit: false });
     props.onStartOptimisticFront(props.widgetId);
 
     const stopInteraction = startHotInteraction({ kind: 'drag', cursor: 'nwse-resize' });
@@ -330,22 +319,12 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       });
     };
 
-    const finish = (nextEvent: PointerEvent) => {
-      if (nextEvent.pointerId !== event.pointerId) return;
-      finishResize(true);
-    };
-
-    const cancel = (nextEvent: PointerEvent) => {
-      if (nextEvent.pointerId !== event.pointerId) return;
-      finishResize(false);
-    };
-
-    const controller = new AbortController();
-    resizeAbortController = controller;
-
-    window.addEventListener('pointermove', handleMove, { signal: controller.signal });
-    window.addEventListener('pointerup', finish, { once: true, signal: controller.signal });
-    window.addEventListener('pointercancel', cancel, { once: true, signal: controller.signal });
+    resizeSession = startPointerSession({
+      pointerEvent: event,
+      captureEl: event.currentTarget,
+      onMove: handleMove,
+      onEnd: ({ commit }) => finishResize(commit),
+    });
   };
 
   return (
