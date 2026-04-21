@@ -1,0 +1,1106 @@
+/*
+ * Workbench theme variants.
+ *
+ * The default workbench inherits app-level tokens. These variants intentionally
+ * go beyond palette swaps: they tune canvas atmosphere, grid cadence, typography,
+ * widget chrome, dock shape, and the demo widgets' internal semantic colours.
+ */
+
+@layer components {
+  .workbench-surface:is(
+    [data-workbench-theme='vibrancy'],
+    [data-workbench-theme='mica'],
+    [data-workbench-theme='midnight'],
+    [data-workbench-theme='aurora'],
+    [data-workbench-theme='terminal']
+  ) {
+    color: var(--wb-text);
+  }
+
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-widget__title {
+    color: var(--wb-text);
+  }
+
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-lock-button.is-locked {
+    background: var(--wb-accent);
+    border-color: var(--wb-accent);
+    color: #ffffff;
+    box-shadow: 0 8px 24px -6px var(--wb-accent-ring);
+  }
+
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-widget__drag {
+    display: none;
+  }
+
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-hud__button:hover,
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-theme-selector__trigger:hover,
+  .workbench-surface:is(
+      [data-workbench-theme='vibrancy'],
+      [data-workbench-theme='mica'],
+      [data-workbench-theme='midnight'],
+      [data-workbench-theme='aurora'],
+      [data-workbench-theme='terminal']
+    )
+    .workbench-theme-selector__trigger[data-open='true'] {
+    background: var(--wb-row-hover);
+    color: var(--wb-text);
+  }
+
+  /* =========================================================================
+   * MACOS VIBRANCY — traffic-light glass over a quiet wallpaper.
+   * =====================================================================*/
+  .workbench-surface[data-workbench-theme='vibrancy'] {
+    --wb-font-body:
+      'DM Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --wb-font-display: 'DM Serif Display', Georgia, serif;
+    --wb-font-mono: 'SF Mono', 'Cascadia Code', Menlo, ui-monospace, monospace;
+    --wb-vib-wallpaper:
+      radial-gradient(ellipse 80% 60% at 25% 20%, #dbe6fb 0%, transparent 60%),
+      radial-gradient(ellipse 90% 70% at 80% 85%, #ead7ee 0%, transparent 60%),
+      linear-gradient(160deg, #e6ebf5 0%, #ece0ef 100%);
+    --wb-vib-widget: rgba(255, 255, 255, 0.74);
+    --wb-vib-widget-hover: rgba(255, 255, 255, 0.82);
+    --wb-vib-header: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(252, 252, 254, 0.66));
+    --wb-vib-border: rgba(255, 255, 255, 0.48);
+    --wb-vib-border-strong: rgba(52, 120, 246, 0.54);
+    --wb-vib-divider: rgba(30, 37, 54, 0.08);
+    --wb-vib-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.66) inset, 0 12px 40px -14px rgba(22, 28, 45, 0.26),
+      0 4px 10px -6px rgba(22, 28, 45, 0.12);
+    --wb-accent: #3478f6;
+    --wb-accent-strong: #1e6ae8;
+    --wb-accent-soft: rgba(52, 120, 246, 0.14);
+    --wb-accent-ring: rgba(52, 120, 246, 0.28);
+    --wb-text: #1d2430;
+    --wb-text-muted: rgba(29, 36, 48, 0.58);
+    --wb-border: rgba(29, 36, 48, 0.12);
+    --wb-widget-body: rgba(255, 255, 255, 0.42);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.36);
+    --wb-row-hover: rgba(255, 255, 255, 0.46);
+    --wb-row-active: rgba(52, 120, 246, 0.12);
+    --wb-grid-major: 96px;
+    --wb-grid-minor: 32px;
+    --wb-grid-minor-offset: 16px;
+    --wb-atmosphere:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.65), transparent 28%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    --wb-atmosphere-opacity: 0.2;
+    --wb-atmosphere-blend: multiply;
+    --wb-chart-cpu: var(--wb-accent);
+    --wb-chart-memory: color-mix(in srgb, var(--wb-accent) 58%, var(--wb-text-muted));
+    --wb-chart-disk: color-mix(in srgb, var(--wb-accent) 36%, var(--wb-text-muted));
+    --wb-log-info: var(--wb-accent);
+    --wb-log-warn: color-mix(in srgb, var(--wb-accent) 62%, #8a6a00);
+    --wb-log-error: color-mix(in srgb, var(--wb-accent) 56%, #d92d20);
+    --wb-log-debug: var(--wb-text-muted);
+    --wb-syntax-keyword: var(--wb-accent);
+    --wb-syntax-string: color-mix(in srgb, var(--wb-accent) 48%, var(--wb-text));
+    --wb-syntax-fn: var(--wb-accent-strong);
+    --wb-syntax-number: color-mix(in srgb, var(--wb-accent) 62%, var(--wb-text-muted));
+    --wb-syntax-attr: color-mix(in srgb, var(--wb-accent) 42%, var(--wb-text));
+    --wb-terminal-bg: rgba(255, 255, 255, 0.45);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.28);
+    --wb-terminal-text: var(--wb-text);
+    --wb-terminal-muted: var(--wb-text-muted);
+    --wb-terminal-prompt: var(--wb-accent);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] {
+    --wb-vib-wallpaper:
+      radial-gradient(ellipse 80% 60% at 25% 20%, #1b2540 0%, transparent 60%),
+      radial-gradient(ellipse 90% 70% at 80% 85%, #281a38 0%, transparent 60%),
+      linear-gradient(160deg, #0c1020 0%, #140a22 100%);
+    --wb-vib-widget: rgba(38, 38, 44, 0.58);
+    --wb-vib-widget-hover: rgba(44, 44, 52, 0.7);
+    --wb-vib-header: linear-gradient(180deg, rgba(68, 68, 76, 0.62), rgba(40, 40, 48, 0.5));
+    --wb-vib-border: rgba(255, 255, 255, 0.12);
+    --wb-vib-border-strong: rgba(90, 155, 255, 0.62);
+    --wb-vib-divider: rgba(255, 255, 255, 0.08);
+    --wb-vib-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 20px 60px -14px rgba(0, 0, 0, 0.72),
+      0 6px 14px -6px rgba(0, 0, 0, 0.46);
+    --wb-accent: #5a9bff;
+    --wb-accent-strong: #86b7ff;
+    --wb-accent-soft: rgba(90, 155, 255, 0.16);
+    --wb-accent-ring: rgba(90, 155, 255, 0.32);
+    --wb-text: #f4f7fb;
+    --wb-text-muted: rgba(244, 247, 251, 0.58);
+    --wb-border: rgba(255, 255, 255, 0.12);
+    --wb-widget-body: rgba(255, 255, 255, 0.045);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.055);
+    --wb-row-hover: rgba(255, 255, 255, 0.08);
+    --wb-row-active: rgba(90, 155, 255, 0.16);
+    --wb-atmosphere-opacity: 0.28;
+    --wb-atmosphere-blend: overlay;
+    --wb-terminal-bg: rgba(10, 14, 26, 0.36);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.045);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-canvas {
+    background: var(--wb-vib-wallpaper);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(to right, rgba(29, 36, 48, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(29, 36, 48, 0.035) 1px, transparent 1px),
+      radial-gradient(circle, rgba(29, 36, 48, 0.07) 0.9px, transparent 1px);
+    opacity: 0.42;
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      radial-gradient(circle, rgba(255, 255, 255, 0.055) 0.9px, transparent 1px);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget {
+    background: var(--wb-vib-widget);
+    border-color: var(--wb-vib-border);
+    border-radius: 14px;
+    box-shadow: var(--wb-vib-shadow);
+    backdrop-filter: blur(34px) saturate(180%);
+    -webkit-backdrop-filter: blur(34px) saturate(180%);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget:hover {
+    background: var(--wb-vib-widget-hover);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget.is-selected,
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget.is-dragging,
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget.is-resizing {
+    border-color: var(--wb-vib-border-strong);
+    box-shadow:
+      0 0 0 2px var(--wb-accent-soft),
+      0 20px 48px -14px var(--wb-accent-ring),
+      var(--wb-vib-shadow);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__header {
+    --wb-window-control-bleed: 7px;
+    --wb-window-control-bleed-negative: -7px;
+    min-height: 34px;
+    padding: 7px 12px;
+    gap: 10px;
+    background: var(--wb-vib-header);
+    border-bottom-color: var(--wb-vib-divider);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__traffic {
+    display: inline-flex;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__window-controls {
+    display: none;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__title-area svg {
+    display: none;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__title {
+    font-family: var(--wb-font-display);
+    font-size: 13.5px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button,
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
+    background: rgba(255, 255, 255, 0.56);
+    border-color: rgba(255, 255, 255, 0.46);
+    box-shadow: var(--wb-vib-shadow);
+    backdrop-filter: blur(36px) saturate(180%);
+    -webkit-backdrop-filter: blur(36px) saturate(180%);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-hud,
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button,
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
+    background: rgba(36, 36, 40, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
+    border-radius: 20px;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock__tile {
+    background: rgba(255, 255, 255, 0.42);
+    border-color: rgba(255, 255, 255, 0.26);
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--wb-accent) 82%, white),
+      var(--wb-accent)
+    );
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 8px 18px -4px var(--wb-accent-ring);
+  }
+
+  /* =========================================================================
+   * FLUENT MICA — wallpaper bleed-through, system titlebars, taskbar.
+   * =====================================================================*/
+  .workbench-surface[data-workbench-theme='mica'] {
+    --wb-font-body:
+      'Manrope', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+    --wb-font-display: var(--wb-font-body);
+    --wb-font-mono: 'Cascadia Code', 'SF Mono', Menlo, ui-monospace, monospace;
+    --wb-mica-wallpaper:
+      radial-gradient(ellipse 70% 70% at 12% 16%, rgba(255, 220, 230, 0.55), transparent 62%),
+      radial-gradient(ellipse 74% 64% at 86% 20%, rgba(220, 230, 255, 0.45), transparent 58%),
+      radial-gradient(ellipse 70% 60% at 70% 90%, rgba(250, 235, 215, 0.52), transparent 60%),
+      linear-gradient(135deg, #eef2f7 0%, #f6edf0 52%, #e8f0fb 100%);
+    --wb-mica-widget: rgba(255, 255, 255, 0.84);
+    --wb-mica-header: rgba(255, 255, 255, 0.74);
+    --wb-mica-border: rgba(17, 24, 39, 0.1);
+    --wb-mica-divider: rgba(17, 24, 39, 0.08);
+    --wb-mica-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.64) inset, 0 16px 42px -18px rgba(31, 41, 55, 0.28);
+    --wb-accent: #0078d4;
+    --wb-accent-strong: #005fae;
+    --wb-accent-soft: rgba(0, 120, 212, 0.12);
+    --wb-accent-ring: rgba(0, 120, 212, 0.28);
+    --wb-text: #202027;
+    --wb-text-muted: rgba(32, 32, 39, 0.6);
+    --wb-border: var(--wb-mica-border);
+    --wb-widget-body: rgba(255, 255, 255, 0.42);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.36);
+    --wb-row-hover: rgba(0, 0, 0, 0.045);
+    --wb-row-active: rgba(0, 120, 212, 0.12);
+    --wb-grid-major: 120px;
+    --wb-grid-minor: 40px;
+    --wb-grid-minor-offset: 20px;
+    --wb-atmosphere:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.62), transparent 32%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    --wb-atmosphere-opacity: 0.16;
+    --wb-atmosphere-blend: multiply;
+    --wb-chart-cpu: var(--wb-accent);
+    --wb-chart-memory: color-mix(in srgb, var(--wb-accent) 62%, var(--wb-text-muted));
+    --wb-chart-disk: color-mix(in srgb, var(--wb-accent) 36%, var(--wb-text-muted));
+    --wb-log-info: var(--wb-accent);
+    --wb-log-warn: color-mix(in srgb, var(--wb-accent) 62%, #8a6a00);
+    --wb-log-error: color-mix(in srgb, var(--wb-accent) 52%, #d92d20);
+    --wb-log-debug: var(--wb-text-muted);
+    --wb-syntax-keyword: var(--wb-accent);
+    --wb-syntax-string: color-mix(in srgb, var(--wb-accent) 50%, var(--wb-text));
+    --wb-syntax-fn: var(--wb-accent-strong);
+    --wb-syntax-number: color-mix(in srgb, var(--wb-accent) 66%, var(--wb-text-muted));
+    --wb-syntax-attr: color-mix(in srgb, var(--wb-accent) 42%, var(--wb-text));
+    --wb-terminal-bg: rgba(255, 255, 255, 0.46);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.32);
+    --wb-terminal-text: var(--wb-text);
+    --wb-terminal-muted: var(--wb-text-muted);
+    --wb-terminal-prompt: var(--wb-accent);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='mica'] {
+    --wb-mica-wallpaper:
+      radial-gradient(ellipse 70% 70% at 12% 16%, rgba(60, 70, 95, 0.38), transparent 62%),
+      radial-gradient(ellipse 74% 64% at 86% 20%, rgba(95, 70, 110, 0.24), transparent 58%),
+      radial-gradient(ellipse 70% 60% at 70% 90%, rgba(40, 55, 75, 0.34), transparent 60%),
+      linear-gradient(135deg, #151923 0%, #1c1824 52%, #121925 100%);
+    --wb-mica-widget: rgba(36, 36, 42, 0.84);
+    --wb-mica-header: rgba(42, 42, 48, 0.72);
+    --wb-mica-border: rgba(255, 255, 255, 0.08);
+    --wb-mica-divider: rgba(255, 255, 255, 0.07);
+    --wb-mica-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 20px 58px -16px rgba(0, 0, 0, 0.66);
+    --wb-accent: #60cdff;
+    --wb-accent-strong: #8bdcff;
+    --wb-accent-soft: rgba(96, 205, 255, 0.14);
+    --wb-accent-ring: rgba(96, 205, 255, 0.28);
+    --wb-text: #f4f4f5;
+    --wb-text-muted: rgba(244, 244, 245, 0.58);
+    --wb-widget-body: rgba(255, 255, 255, 0.045);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.055);
+    --wb-row-hover: rgba(255, 255, 255, 0.075);
+    --wb-row-active: rgba(96, 205, 255, 0.14);
+    --wb-atmosphere-opacity: 0.3;
+    --wb-atmosphere-blend: overlay;
+    --wb-terminal-bg: rgba(8, 11, 18, 0.38);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.045);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-canvas {
+    background: var(--wb-mica-wallpaper);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--wb-text) 5%, transparent) 0.9px,
+        transparent 1px
+      );
+    opacity: 0.7;
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget {
+    background: var(--wb-mica-widget);
+    border-color: var(--wb-mica-border);
+    border-radius: 8px;
+    box-shadow: var(--wb-mica-shadow);
+    backdrop-filter: blur(48px) saturate(150%);
+    -webkit-backdrop-filter: blur(48px) saturate(150%);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget.is-selected,
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget.is-dragging,
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget.is-resizing {
+    border-color: var(--wb-accent);
+    box-shadow:
+      0 0 0 1px var(--wb-accent-soft),
+      0 16px 42px -18px var(--wb-accent-ring),
+      var(--wb-mica-shadow);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget__header {
+    --wb-window-control-bleed: 0px;
+    --wb-window-control-bleed-negative: 0px;
+    min-height: 36px;
+    padding: 0 0 0 12px;
+    gap: 8px;
+    background: var(--wb-mica-header);
+    border-bottom-color: var(--wb-mica-divider);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget__title {
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget__window-controls {
+    display: inline-flex;
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget__window-control--close {
+    width: 42px;
+  }
+
+  .workbench-surface[data-workbench-theme='mica']
+    .workbench-widget__window-control--close:hover,
+  .workbench-surface[data-workbench-theme='mica']
+    .workbench-widget__window-control--close:focus-visible {
+    background: #c42b1c;
+    color: #ffffff;
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='mica'] .workbench-lock-button {
+    background: var(--wb-mica-widget);
+    border-color: var(--wb-mica-border);
+    box-shadow: var(--wb-mica-shadow);
+    backdrop-filter: blur(48px) saturate(160%);
+    -webkit-backdrop-filter: blur(48px) saturate(160%);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-dock {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    justify-content: center;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: color-mix(in srgb, var(--wb-mica-widget) 92%, transparent);
+    border-color: var(--wb-mica-border);
+    box-shadow: 0 -12px 34px -22px rgba(17, 24, 39, 0.28);
+    backdrop-filter: blur(56px) saturate(180%);
+    -webkit-backdrop-filter: blur(56px) saturate(180%);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-dock__tile {
+    background: transparent;
+    border-color: transparent;
+    border-radius: 6px;
+    color: var(--wb-text-muted);
+  }
+
+  .workbench-surface[data-workbench-theme='mica'] .workbench-dock__item:hover .workbench-dock__tile,
+  .workbench-surface[data-workbench-theme='mica']
+    .workbench-dock__item.is-hovered
+    .workbench-dock__tile {
+    background: var(--wb-row-hover);
+    color: var(--wb-text);
+    box-shadow: none;
+  }
+
+  .workbench-surface[data-workbench-theme='mica']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    background: var(--wb-accent-soft);
+    border-color: transparent;
+    color: var(--wb-accent);
+    box-shadow: inset 0 -2px 0 var(--wb-accent);
+  }
+
+  /* =========================================================================
+   * MIDNIGHT STUDIO — restrained product-tool chrome.
+   * =====================================================================*/
+  .workbench-surface[data-workbench-theme='midnight'] {
+    --wb-font-body:
+      'Geist', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --wb-font-display: var(--wb-font-body);
+    --wb-font-mono: 'Geist Mono', 'SF Mono', Menlo, ui-monospace, monospace;
+    --wb-mid-canvas: #fafafa;
+    --wb-mid-widget: #ffffff;
+    --wb-mid-header: #fbfbfc;
+    --wb-mid-border: rgba(16, 16, 26, 0.08);
+    --wb-mid-border-strong: rgba(16, 16, 26, 0.14);
+    --wb-mid-divider: rgba(16, 16, 26, 0.06);
+    --wb-mid-shadow: 0 1px 2px rgba(16, 16, 26, 0.05), 0 10px 26px -14px rgba(16, 16, 26, 0.18);
+    --wb-accent: #5e6ad2;
+    --wb-accent-strong: #4c55a8;
+    --wb-accent-soft: rgba(94, 106, 210, 0.1);
+    --wb-accent-ring: rgba(94, 106, 210, 0.22);
+    --wb-text: #10101a;
+    --wb-text-muted: #646470;
+    --wb-border: var(--wb-mid-border);
+    --wb-widget-body: #ffffff;
+    --wb-widget-body-alt: #f7f7f8;
+    --wb-row-hover: #f3f3f5;
+    --wb-row-active: rgba(94, 106, 210, 0.1);
+    --wb-grid-major: 64px;
+    --wb-grid-minor: 64px;
+    --wb-grid-minor-offset: 0;
+    --wb-atmosphere: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    --wb-atmosphere-opacity: 0.14;
+    --wb-atmosphere-blend: multiply;
+    --wb-chart-cpu: var(--wb-accent);
+    --wb-chart-memory: color-mix(in srgb, var(--wb-accent) 64%, var(--wb-text-muted));
+    --wb-chart-disk: color-mix(in srgb, var(--wb-accent) 38%, var(--wb-text-muted));
+    --wb-log-info: var(--wb-accent);
+    --wb-log-warn: color-mix(in srgb, var(--wb-accent) 60%, var(--wb-text));
+    --wb-log-error: color-mix(in srgb, var(--wb-accent) 48%, #d92d20);
+    --wb-log-debug: var(--wb-text-muted);
+    --wb-syntax-keyword: var(--wb-accent);
+    --wb-syntax-string: color-mix(in srgb, var(--wb-accent) 46%, var(--wb-text));
+    --wb-syntax-fn: var(--wb-accent-strong);
+    --wb-syntax-number: color-mix(in srgb, var(--wb-accent) 66%, var(--wb-text-muted));
+    --wb-syntax-attr: color-mix(in srgb, var(--wb-accent) 38%, var(--wb-text));
+    --wb-terminal-bg: #fbfbfc;
+    --wb-terminal-toolbar: #f4f4f6;
+    --wb-terminal-text: var(--wb-text);
+    --wb-terminal-muted: var(--wb-text-muted);
+    --wb-terminal-prompt: var(--wb-accent);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='midnight'] {
+    --wb-mid-canvas: #08090c;
+    --wb-mid-widget: #131316;
+    --wb-mid-header: #16161a;
+    --wb-mid-border: rgba(255, 255, 255, 0.07);
+    --wb-mid-border-strong: rgba(255, 255, 255, 0.14);
+    --wb-mid-divider: rgba(255, 255, 255, 0.05);
+    --wb-mid-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 32px -16px rgba(0, 0, 0, 0.6);
+    --wb-accent: #7b7fef;
+    --wb-accent-strong: #a4a7ff;
+    --wb-accent-soft: rgba(123, 127, 239, 0.14);
+    --wb-accent-ring: rgba(123, 127, 239, 0.3);
+    --wb-text: #ededf1;
+    --wb-text-muted: #7c818a;
+    --wb-widget-body: #131316;
+    --wb-widget-body-alt: #17171b;
+    --wb-row-hover: rgba(255, 255, 255, 0.055);
+    --wb-row-active: rgba(123, 127, 239, 0.14);
+    --wb-atmosphere-opacity: 0.28;
+    --wb-atmosphere-blend: overlay;
+    --wb-terminal-bg: #101014;
+    --wb-terminal-toolbar: #151519;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-canvas {
+    background: var(--wb-mid-canvas);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      );
+    opacity: 1;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget {
+    background: var(--wb-mid-widget);
+    border-color: var(--wb-mid-border);
+    border-radius: 10px;
+    box-shadow: var(--wb-mid-shadow);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget:hover {
+    border-color: var(--wb-mid-border-strong);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget.is-selected,
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget.is-dragging,
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget.is-resizing {
+    border-color: var(--wb-accent);
+    box-shadow:
+      0 0 0 1px var(--wb-accent-soft),
+      0 12px 30px -14px var(--wb-accent-ring);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget__header {
+    --wb-window-control-bleed: 7px;
+    --wb-window-control-bleed-negative: -7px;
+    min-height: 32px;
+    padding: 7px 12px;
+    background: var(--wb-mid-header);
+    border-bottom-color: var(--wb-mid-divider);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget__window-control {
+    color: color-mix(in srgb, var(--wb-text-muted) 84%, white);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):hover,
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):focus-visible {
+    background: color-mix(in srgb, var(--wb-accent) 18%, transparent);
+    color: var(--wb-text);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget__title-dot {
+    display: inline-flex;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget__title-area svg {
+    display: none;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-widget__title {
+    font-size: 11.5px;
+    font-weight: 620;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-lock-button,
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-dock {
+    background: var(--wb-mid-widget);
+    border-color: var(--wb-mid-border);
+    box-shadow: var(--wb-mid-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-dock {
+    border-radius: 12px;
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-dock__tile {
+    background: transparent;
+    border-color: transparent;
+    border-radius: 8px;
+    color: var(--wb-text-muted);
+  }
+
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-dock__item:hover
+    .workbench-dock__tile,
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-dock__item.is-hovered
+    .workbench-dock__tile,
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    background: var(--wb-row-hover);
+    color: var(--wb-text);
+    box-shadow: none;
+  }
+
+  .workbench-surface[data-workbench-theme='midnight']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    box-shadow: inset 0 -2px 0 var(--wb-accent);
+  }
+
+  /* =========================================================================
+   * AURORA GLASS — editorial glass, deep radius, dreamy indigo/violet.
+   * =====================================================================*/
+  .workbench-surface[data-workbench-theme='aurora'] {
+    --wb-font-body:
+      'Satoshi', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --wb-font-display: 'Fraunces', Georgia, serif;
+    --wb-font-mono: 'SF Mono', 'Cascadia Code', Menlo, ui-monospace, monospace;
+    --wb-aur-wallpaper:
+      radial-gradient(ellipse 55% 45% at 20% 30%, #ffd9d9 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 30%, #e0d7ff 0%, transparent 60%),
+      radial-gradient(ellipse 55% 45% at 70% 85%, #ffe4c4 0%, transparent 60%),
+      radial-gradient(ellipse 55% 45% at 15% 90%, #d4f1ff 0%, transparent 60%),
+      linear-gradient(140deg, #fef6ef 0%, #f3ebfa 100%);
+    --wb-aur-widget: rgba(255, 255, 255, 0.58);
+    --wb-aur-widget-hover: rgba(255, 255, 255, 0.68);
+    --wb-aur-header: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.36));
+    --wb-aur-border: rgba(255, 255, 255, 0.66);
+    --wb-aur-border-inner: rgba(255, 255, 255, 0.9);
+    --wb-aur-divider: rgba(17, 15, 38, 0.06);
+    --wb-aur-shadow:
+      0 1px 0 var(--wb-aur-border-inner) inset, 0 20px 50px -14px rgba(67, 56, 202, 0.2),
+      0 6px 16px -6px rgba(17, 15, 38, 0.1);
+    --wb-accent: #6366f1;
+    --wb-accent-strong: #4f46e5;
+    --wb-accent-soft: rgba(99, 102, 241, 0.16);
+    --wb-accent-ring: rgba(99, 102, 241, 0.3);
+    --wb-text: #17152d;
+    --wb-text-muted: rgba(23, 21, 45, 0.58);
+    --wb-border: rgba(99, 102, 241, 0.16);
+    --wb-widget-body: rgba(255, 255, 255, 0.24);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.28);
+    --wb-row-hover: rgba(255, 255, 255, 0.34);
+    --wb-row-active: rgba(99, 102, 241, 0.14);
+    --wb-grid-major: 112px;
+    --wb-grid-minor: 36px;
+    --wb-grid-minor-offset: 18px;
+    --wb-atmosphere:
+      radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.55), transparent 32%),
+      radial-gradient(ellipse at center, transparent 44%, rgba(59, 45, 114, 0.16) 100%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    --wb-atmosphere-opacity: 0.24;
+    --wb-atmosphere-blend: multiply;
+    --wb-chart-cpu: var(--wb-accent);
+    --wb-chart-memory: color-mix(in srgb, var(--wb-accent) 66%, #c4b5fd);
+    --wb-chart-disk: color-mix(in srgb, var(--wb-accent) 42%, var(--wb-text-muted));
+    --wb-log-info: var(--wb-accent);
+    --wb-log-warn: color-mix(in srgb, var(--wb-accent) 58%, #8b5cf6);
+    --wb-log-error: color-mix(in srgb, var(--wb-accent) 45%, #e11d48);
+    --wb-log-debug: var(--wb-text-muted);
+    --wb-syntax-keyword: var(--wb-accent);
+    --wb-syntax-string: color-mix(in srgb, var(--wb-accent) 48%, var(--wb-text));
+    --wb-syntax-fn: color-mix(in srgb, var(--wb-accent) 70%, #a5b4fc);
+    --wb-syntax-number: #7c3aed;
+    --wb-syntax-attr: color-mix(in srgb, var(--wb-accent) 46%, var(--wb-text));
+    --wb-terminal-bg: rgba(255, 255, 255, 0.25);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.22);
+    --wb-terminal-text: var(--wb-text);
+    --wb-terminal-muted: var(--wb-text-muted);
+    --wb-terminal-prompt: var(--wb-accent);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='aurora'] {
+    --wb-aur-wallpaper:
+      radial-gradient(ellipse 55% 45% at 20% 30%, #6366f1 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 70%, #4338ca 0%, transparent 60%),
+      linear-gradient(140deg, #1a1038 0%, #08051a 100%);
+    --wb-aur-widget: rgba(24, 22, 45, 0.48);
+    --wb-aur-widget-hover: rgba(28, 26, 52, 0.58);
+    --wb-aur-header: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    --wb-aur-border: rgba(255, 255, 255, 0.12);
+    --wb-aur-border-inner: rgba(255, 255, 255, 0.22);
+    --wb-aur-divider: rgba(255, 255, 255, 0.08);
+    --wb-aur-shadow:
+      0 1px 0 var(--wb-aur-border-inner) inset, 0 30px 72px -14px rgba(8, 5, 26, 0.66),
+      0 8px 20px -8px rgba(67, 56, 202, 0.28);
+    --wb-accent: #a5b4fc;
+    --wb-accent-strong: #c4b5fd;
+    --wb-accent-soft: rgba(165, 180, 252, 0.18);
+    --wb-accent-ring: rgba(165, 180, 252, 0.34);
+    --wb-text: #f4f1ff;
+    --wb-text-muted: rgba(244, 241, 255, 0.58);
+    --wb-border: rgba(255, 255, 255, 0.12);
+    --wb-widget-body: rgba(255, 255, 255, 0.04);
+    --wb-widget-body-alt: rgba(255, 255, 255, 0.055);
+    --wb-row-hover: rgba(255, 255, 255, 0.08);
+    --wb-row-active: rgba(165, 180, 252, 0.16);
+    --wb-atmosphere-opacity: 0.3;
+    --wb-atmosphere-blend: overlay;
+    --wb-terminal-bg: rgba(8, 5, 26, 0.32);
+    --wb-terminal-toolbar: rgba(255, 255, 255, 0.045);
+    --wb-syntax-number: #c4b5fd;
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-canvas {
+    background: var(--wb-aur-wallpaper);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--wb-accent) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--wb-accent) 7%, transparent) 1px,
+        transparent 1px
+      ),
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--wb-accent) 12%, transparent) 0.9px,
+        transparent 1px
+      );
+    opacity: 0.75;
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget {
+    background: var(--wb-aur-widget);
+    border: 1px solid var(--wb-aur-border);
+    border-top-color: var(--wb-aur-border-inner);
+    border-radius: 20px;
+    box-shadow: var(--wb-aur-shadow);
+    backdrop-filter: blur(60px) saturate(180%);
+    -webkit-backdrop-filter: blur(60px) saturate(180%);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget:hover {
+    background: var(--wb-aur-widget-hover);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget.is-selected,
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget.is-dragging,
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget.is-resizing {
+    border-color: var(--wb-accent);
+    box-shadow:
+      0 0 0 2px var(--wb-accent-soft),
+      0 24px 56px -14px var(--wb-accent-ring),
+      var(--wb-aur-shadow);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget__header {
+    --wb-window-control-bleed: 8px;
+    --wb-window-control-bleed-negative: -8px;
+    min-height: 38px;
+    padding: 8px 14px;
+    background: var(--wb-aur-header);
+    border-bottom-color: var(--wb-aur-divider);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):hover,
+  .workbench-surface[data-workbench-theme='aurora']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):focus-visible {
+    background: rgba(255, 255, 255, 0.32);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget__title-area svg {
+    opacity: 0.6;
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-widget__title {
+    font-family: var(--wb-font-display);
+    font-size: 14px;
+    font-weight: 580;
+    letter-spacing: -0.015em;
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-lock-button,
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-dock {
+    background: var(--wb-aur-widget);
+    border: 1px solid var(--wb-aur-border);
+    border-top-color: var(--wb-aur-border-inner);
+    box-shadow: var(--wb-aur-shadow);
+    backdrop-filter: blur(50px) saturate(180%);
+    -webkit-backdrop-filter: blur(50px) saturate(180%);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-dock {
+    border-radius: 22px;
+    padding: 8px 14px;
+  }
+
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-dock__tile {
+    background: rgba(255, 255, 255, 0.36);
+    border-color: var(--wb-aur-border);
+    border-radius: 12px;
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='aurora'] .workbench-dock__tile {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .workbench-surface[data-workbench-theme='aurora']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    background: linear-gradient(135deg, #818cf8 0%, #c4b5fd 100%);
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 8px 22px -4px rgba(99, 102, 241, 0.45);
+  }
+
+  /* =========================================================================
+   * TERMINAL CHIC — crisp mono shell, badges, command dock.
+   * =====================================================================*/
+  .workbench-surface[data-workbench-theme='terminal'] {
+    --wb-font-body:
+      'IBM Plex Sans', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --wb-font-display: 'IBM Plex Mono', ui-monospace, monospace;
+    --wb-font-mono: 'IBM Plex Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+    --wb-term-canvas: #f7f5f2;
+    --wb-term-widget: #ffffff;
+    --wb-term-header: #faf8f3;
+    --wb-term-border: #d9d5cf;
+    --wb-term-divider: #e9e5df;
+    --wb-term-shadow: 0 1px 2px rgba(18, 18, 24, 0.05), 0 10px 24px -14px rgba(18, 18, 24, 0.12);
+    --wb-accent: #d63384;
+    --wb-accent-strong: #b4236c;
+    --wb-accent-soft: rgba(214, 51, 132, 0.12);
+    --wb-accent-ring: rgba(214, 51, 132, 0.28);
+    --wb-text: #121218;
+    --wb-text-muted: #6f6b66;
+    --wb-border: var(--wb-term-border);
+    --wb-widget-body: #fffdfa;
+    --wb-widget-body-alt: #faf8f3;
+    --wb-row-hover: rgba(18, 18, 24, 0.045);
+    --wb-row-active: rgba(214, 51, 132, 0.12);
+    --wb-grid-major: 56px;
+    --wb-grid-minor: 56px;
+    --wb-grid-minor-offset: 0;
+    --wb-atmosphere:
+      radial-gradient(ellipse at center, transparent 42%, rgba(18, 18, 24, 0.08) 100%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    --wb-atmosphere-opacity: 0.22;
+    --wb-atmosphere-blend: multiply;
+    --wb-chart-cpu: var(--wb-accent);
+    --wb-chart-memory: color-mix(in srgb, var(--wb-accent) 60%, var(--wb-text-muted));
+    --wb-chart-disk: color-mix(in srgb, var(--wb-accent) 38%, var(--wb-text-muted));
+    --wb-log-info: var(--wb-accent);
+    --wb-log-warn: color-mix(in srgb, var(--wb-accent) 58%, var(--wb-text));
+    --wb-log-error: color-mix(in srgb, var(--wb-accent) 48%, #c2410c);
+    --wb-log-debug: var(--wb-text-muted);
+    --wb-syntax-keyword: var(--wb-accent);
+    --wb-syntax-string: color-mix(in srgb, var(--wb-accent) 46%, var(--wb-text));
+    --wb-syntax-fn: var(--wb-accent-strong);
+    --wb-syntax-number: color-mix(in srgb, var(--wb-accent) 72%, var(--wb-text-muted));
+    --wb-syntax-attr: color-mix(in srgb, var(--wb-accent) 42%, var(--wb-text));
+    --wb-terminal-bg: #fffdfa;
+    --wb-terminal-toolbar: #faf8f3;
+    --wb-terminal-text: var(--wb-text);
+    --wb-terminal-muted: var(--wb-text-muted);
+    --wb-terminal-prompt: var(--wb-accent);
+  }
+
+  html.dark .workbench-surface[data-workbench-theme='terminal'] {
+    --wb-term-canvas: #0a0a0c;
+    --wb-term-widget: #111114;
+    --wb-term-header: #16161a;
+    --wb-term-border: #26262c;
+    --wb-term-divider: #1f1f24;
+    --wb-term-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 14px 32px -16px rgba(0, 0, 0, 0.66);
+    --wb-accent: #ff4593;
+    --wb-accent-strong: #ff75ae;
+    --wb-accent-soft: rgba(255, 69, 147, 0.14);
+    --wb-accent-ring: rgba(255, 69, 147, 0.3);
+    --wb-text: #e8e8ea;
+    --wb-text-muted: #89898f;
+    --wb-widget-body: #111114;
+    --wb-widget-body-alt: #16161a;
+    --wb-row-hover: rgba(255, 255, 255, 0.06);
+    --wb-row-active: rgba(255, 69, 147, 0.14);
+    --wb-atmosphere-opacity: 0.3;
+    --wb-atmosphere-blend: overlay;
+    --wb-terminal-bg: #0f0f12;
+    --wb-terminal-toolbar: #151519;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-canvas {
+    background: var(--wb-term-canvas);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-canvas__grid {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--wb-text) 4%, transparent) 1px,
+        transparent 1px
+      );
+    opacity: 1;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget {
+    background: var(--wb-term-widget);
+    border-color: var(--wb-term-border);
+    border-radius: 6px;
+    box-shadow: var(--wb-term-shadow);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget.is-selected,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget.is-dragging,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget.is-resizing {
+    border-color: var(--wb-accent);
+    box-shadow:
+      0 0 0 1px var(--wb-accent-soft),
+      0 14px 36px -14px var(--wb-accent-ring);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__header {
+    --wb-window-control-bleed: 6px;
+    --wb-window-control-bleed-negative: -6px;
+    min-height: 32px;
+    padding: 6px 10px;
+    gap: 8px;
+    background: var(--wb-term-header);
+    border-bottom-color: var(--wb-term-divider);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__badge {
+    display: inline-flex;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__window-control {
+    color: #87d98a;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):hover,
+  .workbench-surface[data-workbench-theme='terminal']
+    .workbench-widget__window-control:not(.workbench-widget__window-control--close):focus-visible {
+    background: rgba(85, 255, 136, 0.12);
+    color: #d8ffe2;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__title-area svg {
+    display: none;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__header,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__title,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock {
+    font-family: var(--wb-font-mono);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-widget__title {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-hud,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-lock-button,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock {
+    background: var(--wb-term-widget);
+    border-color: var(--wb-term-border);
+    border-radius: 6px;
+    box-shadow: var(--wb-term-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock {
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock::after {
+    content: '$ theme apply terminal-chic';
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    margin-left: 6px;
+    padding: 0 10px;
+    border-left: 1px solid var(--wb-term-border);
+    color: var(--wb-text-muted);
+    font-size: 10.5px;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock__item,
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock__tile {
+    width: 32px;
+    height: 32px;
+  }
+
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock__tile {
+    background: var(--wb-term-header);
+    border: 1px solid var(--wb-term-border);
+    border-radius: 4px;
+    color: var(--wb-text);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal']
+    .workbench-dock__item:hover
+    .workbench-dock__tile,
+  .workbench-surface[data-workbench-theme='terminal']
+    .workbench-dock__item.is-hovered
+    .workbench-dock__tile {
+    border-color: var(--wb-accent);
+    color: var(--wb-accent);
+    box-shadow: 0 0 0 1px var(--wb-accent-soft);
+  }
+
+  .workbench-surface[data-workbench-theme='terminal']
+    .workbench-dock__item.is-active
+    .workbench-dock__tile {
+    background: var(--wb-accent-soft);
+    border-color: var(--wb-accent);
+    color: var(--wb-accent);
+    box-shadow: 0 0 18px var(--wb-accent-ring);
+  }
+}

@@ -4,10 +4,22 @@ import { renderToString } from 'solid-js/web';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FloeProvider } from '@floegence/floe-webapp-core/app';
-import { sanitizeWorkbenchState } from '@floegence/floe-webapp-core/workbench';
+import { WORKBENCH_THEMES, sanitizeWorkbenchState } from '@floegence/floe-webapp-core/workbench';
 import { WorkbenchDemoProvider, useWorkbenchDemo } from './WorkbenchDemoContext';
 
 const WORKBENCH_PAGE_SOURCE = resolve(__dirname, 'WorkbenchPage.tsx');
+const WORKBENCH_WIDGET_SOURCE = resolve(
+  __dirname,
+  '../../../../../packages/core/src/components/workbench/WorkbenchWidget.tsx'
+);
+const WORKBENCH_STYLE_SOURCE = resolve(
+  __dirname,
+  '../../../../../packages/core/src/components/workbench/workbench.css'
+);
+const WORKBENCH_THEME_STYLE_SOURCE = resolve(
+  __dirname,
+  '../../../../../packages/core/src/components/workbench/workbench-themes.css'
+);
 const DEMO_VITE_CONFIG_SOURCE = resolve(__dirname, '../../../vite.config.ts');
 const DEMO_WORKSPACE_TAILWIND_SOURCE = resolve(__dirname, '../../core-workspace-tailwind.css');
 
@@ -81,6 +93,64 @@ describe('demo workbench shared adapter', () => {
     expect(Object.values(seed.filters).every(Boolean)).toBe(true);
   });
 
+  it('keeps the five demo theme directions available in the selector', () => {
+    expect(WORKBENCH_THEMES.map((theme) => theme.id)).toEqual([
+      'default',
+      'vibrancy',
+      'mica',
+      'midnight',
+      'aurora',
+      'terminal',
+    ]);
+  });
+
+  it('maps macOS traffic lights to real widget window actions', () => {
+    const source = readFileSync(WORKBENCH_WIDGET_SOURCE, 'utf-8');
+
+    expect(source).toContain('workbench-widget__traffic-dot--close');
+    expect(source).toContain('onClick={handleDelete}');
+    expect(source).toContain('<X class="workbench-widget__traffic-icon"');
+    expect(source).toContain('workbench-widget__traffic-dot--min');
+    expect(source).toContain('onClick={handleOverview}');
+    expect(source).toContain('<Minus class="workbench-widget__traffic-icon"');
+    expect(source).toContain('workbench-widget__traffic-dot--max');
+    expect(source).toContain('onClick={handleFit}');
+    expect(source).toContain('<Maximize class="workbench-widget__traffic-icon"');
+    expect(source).toContain('workbench-widget__window-control--close');
+    expect(source).toContain('<X class="workbench-widget__window-control-icon"');
+    expect(source).not.toContain('class="workbench-widget__close"');
+  });
+
+  it('keeps window chrome affordances visible across themes', () => {
+    const baseSource = readFileSync(WORKBENCH_STYLE_SOURCE, 'utf-8');
+    const themeSource = readFileSync(WORKBENCH_THEME_STYLE_SOURCE, 'utf-8');
+
+    expect(baseSource).toContain('.workbench-widget__traffic-icon {');
+    expect(baseSource).toContain('.workbench-widget__traffic:hover .workbench-widget__traffic-icon,');
+    expect(baseSource).toContain('.workbench-widget__window-control-icon {');
+    expect(baseSource).toContain('.workbench-widget__window-control--close {');
+    expect(baseSource).toContain('.workbench-widget__window-controls {');
+    expect(baseSource).toContain('display: inline-flex;');
+    expect(baseSource).toContain('gap: 0;');
+    expect(baseSource).toContain('.workbench-widget__header {');
+    expect(baseSource).toContain('cursor: move;');
+    expect(baseSource).toContain('.workbench-widget.is-locked .workbench-widget__header {');
+    expect(baseSource).not.toContain('.workbench-widget__close {');
+    expect(themeSource).toContain(
+      ".workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__window-controls {"
+    );
+    expect(themeSource).toContain(
+      ".workbench-surface[data-workbench-theme='mica'] .workbench-widget__window-control--close {"
+    );
+    expect(themeSource).toContain(
+      '.workbench-widget__window-control:not(.workbench-widget__window-control--close):hover'
+    );
+    expect(themeSource).toContain(
+      '.workbench-widget__window-control:not(.workbench-widget__window-control--close):focus-visible'
+    );
+    expect(themeSource).not.toContain('cursor: grab;');
+  });
+
   it('exposes the default widget set through the demo store', () => {
     const html = renderToString(() => (
       <DemoProviders>
@@ -122,9 +192,12 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain("replacement: resolve(repoRoot, 'packages/core/src/workbench.ts')");
   });
 
-  it('loads workbench overlay styles in workspace dev mode', () => {
+  it('loads page-mode and workbench styles in workspace dev mode', () => {
     const source = readFileSync(DEMO_WORKSPACE_TAILWIND_SOURCE, 'utf-8');
 
+    expect(source).toContain(
+      "@import '../../../packages/core/src/components/layout/displayMode.css';"
+    );
     expect(source).toContain(
       "@import '../../../packages/core/src/components/workbench/workbench.css';"
     );

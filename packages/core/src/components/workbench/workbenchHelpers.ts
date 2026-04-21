@@ -15,6 +15,7 @@ import {
   isValidWorkbenchWidgetType,
   resolveWorkbenchWidgetDefinitions,
 } from './widgets/widgetRegistry';
+import { DEFAULT_WORKBENCH_THEME, isWorkbenchThemeId } from './workbenchThemes';
 
 export function createWorkbenchId(): string {
   const crypto = globalThis.crypto;
@@ -134,6 +135,7 @@ export function sanitizeWorkbenchState(
     locked: typeof state.locked === 'boolean' ? state.locked : false,
     filters: sanitizeFilters(state.filters, widgetDefinitions),
     selectedWidgetId,
+    theme: isWorkbenchThemeId(state.theme) ? state.theme : DEFAULT_WORKBENCH_THEME,
   };
 }
 
@@ -174,6 +176,7 @@ export function createDefaultWorkbenchState(
     locked: false,
     filters: createWorkbenchFilterState(definitions),
     selectedWidgetId: widgets[0]?.id ?? null,
+    theme: DEFAULT_WORKBENCH_THEME,
   };
 }
 

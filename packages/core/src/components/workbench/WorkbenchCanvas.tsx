@@ -31,16 +31,22 @@ export interface WorkbenchCanvasProps {
   onViewportCommit: (viewport: WorkbenchViewport) => void;
   onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
   onCanvasContextMenu: (event: InfiniteCanvasContextMenuEvent) => void;
+  onCanvasPointerDown?: (event: PointerEvent) => void;
   onSelectWidget: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onStartOptimisticFront: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
+  onRequestOverview: (item: WorkbenchWidgetItem) => void;
+  onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
 }
 
-interface WorkbenchProjectedWidgetSlotProps extends Omit<WorkbenchCanvasProps, 'viewport' | 'widgets'> {
+interface WorkbenchProjectedWidgetSlotProps extends Omit<
+  WorkbenchCanvasProps,
+  'viewport' | 'widgets'
+> {
   widgetId: string;
   widgetById: () => Map<string, WorkbenchWidgetItem>;
   renderLayers: () => ReturnType<typeof createWorkbenchRenderLayerMap>;
@@ -84,13 +90,17 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       onCommitFront={props.onCommitFront}
       onCommitMove={props.onCommitMove}
       onCommitResize={props.onCommitResize}
+      onRequestOverview={props.onRequestOverview}
+      onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
     />
   );
 }
 
 export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
-  const widgetById = createMemo(() => new Map(props.widgets.map((item) => [item.id, item] as const)));
+  const widgetById = createMemo(
+    () => new Map(props.widgets.map((item) => [item.id, item] as const))
+  );
   const renderLayers = createMemo(() => createWorkbenchRenderLayerMap(props.widgets));
   const canvasWidgets = createMemo(() =>
     props.widgets.filter((item) => {
@@ -115,6 +125,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
       classList={{ 'is-locked': props.locked }}
       ref={props.setCanvasFrameRef}
     >
+      <div class="workbench-canvas__atmosphere" aria-hidden="true" />
       <InfiniteCanvas
         ariaLabel="Workbench canvas"
         class="workbench-canvas__infinite"
@@ -122,6 +133,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         onViewportChange={props.onViewportCommit}
         onViewportInteractionStart={props.onViewportInteractionStart}
         onCanvasContextMenu={props.onCanvasContextMenu}
+        onCanvasPointerDown={props.onCanvasPointerDown}
         disablePanZoom={props.locked}
         overlay={(liveViewport) => (
           <Show when={projectedWidgetIds().length > 0}>
@@ -147,6 +159,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                     onCommitFront={props.onCommitFront}
                     onCommitMove={props.onCommitMove}
                     onCommitResize={props.onCommitResize}
+                    onRequestOverview={props.onRequestOverview}
+                    onRequestFit={props.onRequestFit}
                     onRequestDelete={props.onRequestDelete}
                     projectedViewport={liveViewport}
                     surfaceReady={projectedSurfaceReady()}
@@ -171,6 +185,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           onCommitFront={props.onCommitFront}
           onCommitMove={props.onCommitMove}
           onCommitResize={props.onCommitResize}
+          onRequestOverview={props.onRequestOverview}
+          onRequestFit={props.onRequestFit}
           onRequestDelete={props.onRequestDelete}
         />
       </InfiniteCanvas>

@@ -9,6 +9,7 @@ import {
   type WorkbenchWidgetItem,
   type WorkbenchWidgetType,
 } from './types';
+import type { WorkbenchThemeId } from './workbenchThemes';
 import {
   clampScale,
   createContextMenuPosition,
@@ -51,6 +52,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const locked = createMemo(() => state().locked);
   const filters = createMemo(() => state().filters);
   const selectedWidgetId = createMemo(() => state().selectedWidgetId);
+  const theme = createMemo(() => state().theme);
   const topZIndex = createMemo(() => getTopZIndex(widgets()));
   const scaleLabel = createMemo(() => `${Math.round(viewport().scale * 100)}%`);
   const readWidgetDefinitions = () =>
@@ -526,6 +528,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     options.onClose();
   };
 
+  // --- Appearance ---
+  const setTheme = (next: WorkbenchThemeId) => {
+    if (state().theme === next) return;
+    options.setState((prev) => ({ ...prev, theme: next }));
+  };
+
   return {
     widgets,
     viewport,
@@ -533,6 +541,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     locked,
     filters,
     selectedWidgetId,
+    theme,
     topZIndex,
     scaleLabel,
     optimisticFrontWidgetId,
@@ -608,6 +617,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     queries: {
       findWidgetByType,
       findWidgetById,
+    },
+
+    appearance: {
+      setTheme,
     },
 
     handleCloseRequest,

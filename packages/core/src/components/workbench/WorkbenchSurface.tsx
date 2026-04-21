@@ -19,12 +19,12 @@ import type {
 export interface WorkbenchSurfaceApi {
   ensureWidget: (
     type: WorkbenchWidgetType,
-    options?: { centerViewport?: boolean; worldX?: number; worldY?: number },
+    options?: { centerViewport?: boolean; worldX?: number; worldY?: number }
   ) => WorkbenchWidgetItem | null;
   clearSelection: () => void;
   focusWidget: (
     widget: WorkbenchWidgetItem,
-    options?: { centerViewport?: boolean },
+    options?: { centerViewport?: boolean }
   ) => WorkbenchWidgetItem;
   fitWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
   overviewWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
@@ -166,7 +166,10 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   };
 
   return (
-    <div class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}>
+    <div
+      class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
+      data-workbench-theme={model.theme()}
+    >
       <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
         <WorkbenchCanvas
           widgetDefinitions={model.widgetDefinitions()}
@@ -181,12 +184,15 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onViewportCommit={model.canvas.commitViewport}
           onViewportInteractionStart={model.canvas.cancelViewportNavigation}
           onCanvasContextMenu={model.canvas.openCanvasContextMenu}
+          onCanvasPointerDown={model.selection.clear}
           onSelectWidget={model.canvas.selectWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}
           onStartOptimisticFront={model.canvas.startOptimisticFront}
           onCommitFront={model.canvas.commitFront}
           onCommitMove={model.canvas.commitMove}
           onCommitResize={model.canvas.commitResize}
+          onRequestOverview={model.navigation.overviewWidget}
+          onRequestFit={model.navigation.fitWidget}
           onRequestDelete={model.widgetActions.deleteWidget}
         />
       </div>
@@ -210,6 +216,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         scaleLabel={model.scaleLabel()}
         onZoomOut={model.hud.zoomOut}
         onZoomIn={model.hud.zoomIn}
+        activeTheme={model.theme()}
+        onSelectTheme={(id) => model.appearance.setTheme(id)}
       />
 
       <Show when={model.contextMenu.state()}>

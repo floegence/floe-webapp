@@ -1,7 +1,8 @@
 import { createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
-import { GripVertical, X } from '../../icons';
+import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
+  CANVAS_WHEEL_INTERACTIVE_ATTR,
   WORKBENCH_WIDGET_SHELL_ATTR,
   resolveWorkbenchWidgetEventOwnership,
 } from '../ui/localInteractionSurface';
@@ -72,6 +73,8 @@ export interface WorkbenchWidgetProps {
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
+  onRequestOverview: (item: WorkbenchWidgetItem) => void;
+  onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
 }
 
@@ -136,6 +139,28 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       ready: props.surfaceReady ?? true,
     });
   });
+  const widgetBadgeLabel = createMemo(() => {
+    const zIndex = props.itemSnapshot().z_index;
+    const normalizedIndex = Number.isFinite(zIndex)
+      ? Math.max(1, Math.min(99, Math.round(zIndex)))
+      : 1;
+    return String(normalizedIndex).padStart(2, '0');
+  });
+  const handleOverview: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    props.onRequestOverview(props.itemSnapshot());
+  };
+  const handleFit: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    props.onRequestFit(props.itemSnapshot());
+  };
+  const handleDelete: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    props.onRequestDelete(props.widgetId);
+  };
   const rootStyle = createMemo<JSX.CSSProperties>(() => {
     const shared = {
       width: `${liveSize().width}px`,
@@ -152,8 +177,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         ...shared,
         left: `${rect?.screenX ?? 0}px`,
         top: `${rect?.screenY ?? 0}px`,
-        '--floe-workbench-projected-scale':
-          `${rect?.viewportScale ?? Math.max(props.viewportScale, 0.001)}`,
+        '--floe-workbench-projected-scale': `${rect?.viewportScale ?? Math.max(props.viewportScale, 0.001)}`,
       };
     }
 
@@ -170,8 +194,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     const next = { x: current.worldX, y: current.worldY };
     const start = { x: current.startWorldX, y: current.startWorldY };
     const shouldCommitMove =
-      commitMove &&
-      (Math.abs(next.x - start.x) > 1 || Math.abs(next.y - start.y) > 1);
+      commitMove && (Math.abs(next.x - start.x) > 1 || Math.abs(next.y - start.y) > 1);
 
     // Commit position FIRST so the parent snapshot reflects the final value
     // before we release the local drag state. Otherwise livePosition would
@@ -187,12 +210,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     dragAbortController = undefined;
   };
 
-  const beginDrag: JSX.EventHandler<HTMLButtonElement, PointerEvent> = (event) => {
+  const beginDrag: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0 || props.locked) return;
 
     event.preventDefault();
     event.stopPropagation();
     dragAbortController?.abort();
+    props.onSelect(props.widgetId);
+    widgetRootEl?.focus({ preventScroll: true });
     props.onStartOptimisticFront(props.widgetId);
 
     const stopInteraction = startHotInteraction({ kind: 'drag', cursor: 'grabbing' });
@@ -333,10 +358,13 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         'is-resizing': isResizing(),
         'is-filtered-out': props.filtered,
         'is-projected-surface': props.layoutMode === 'projected_surface',
+        'is-locked': props.locked,
       }}
       data-floe-dialog-surface-host="true"
       data-floe-workbench-widget-id={props.widgetId}
+      data-workbench-widget-type={props.widgetType}
       data-floe-workbench-render-mode={props.layoutMode ?? 'canvas_scaled'}
+      {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: props.selected ? 'true' : undefined }}
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onFocus={() => {
@@ -352,8 +380,47 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     >
       <header
         class="workbench-widget__header"
+        onPointerDown={beginDrag}
         {...{ [WORKBENCH_WIDGET_SHELL_ATTR]: 'true' }}
       >
+        <span class="workbench-widget__traffic" role="group" aria-label="Window controls">
+          <button
+            type="button"
+            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--close"
+            aria-label="Close widget"
+            title="Close widget"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleDelete}
+          >
+            <X class="workbench-widget__traffic-icon" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--min"
+            aria-label="Minimize widget to overview"
+            title="Minimize widget to overview"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleOverview}
+          >
+            <Minus class="workbench-widget__traffic-icon" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--max"
+            aria-label="Zoom widget to fit viewport"
+            title="Zoom widget to fit viewport"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleFit}
+          >
+            <Maximize class="workbench-widget__traffic-icon" aria-hidden="true" />
+          </button>
+        </span>
+        <span class="workbench-widget__badge" aria-hidden="true">
+          {widgetBadgeLabel()}
+        </span>
         <button
           type="button"
           class="workbench-widget__drag"
@@ -364,26 +431,48 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
           <GripVertical class="w-3.5 h-3.5" />
         </button>
         <div class="workbench-widget__title-area">
+          <span class="workbench-widget__title-dot" aria-hidden="true" />
           {(() => {
             const Icon = props.definition.icon;
             return <Icon class="w-3.5 h-3.5" />;
           })()}
           <span class="workbench-widget__title">{props.widgetTitle}</span>
         </div>
-        <button
-          type="button"
-          class="workbench-widget__close"
-          aria-label="Remove widget"
-          data-floe-canvas-interactive="true"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => {
-            event.stopPropagation();
-            event.preventDefault();
-            props.onRequestDelete(props.widgetId);
-          }}
-        >
-          <X class="w-3 h-3" />
-        </button>
+        <span class="workbench-widget__window-controls" role="group" aria-label="Window controls">
+          <button
+            type="button"
+            class="workbench-widget__window-control workbench-widget__window-control--min"
+            aria-label="Minimize widget to overview"
+            title="Minimize widget to overview"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleOverview}
+          >
+            <Minus class="workbench-widget__window-control-icon" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="workbench-widget__window-control workbench-widget__window-control--max"
+            aria-label="Zoom widget to fit viewport"
+            title="Zoom widget to fit viewport"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleFit}
+          >
+            <Maximize class="workbench-widget__window-control-icon" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="workbench-widget__window-control workbench-widget__window-control--close"
+            aria-label="Remove widget"
+            title="Remove widget"
+            data-floe-canvas-interactive="true"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={handleDelete}
+          >
+            <X class="workbench-widget__window-control-icon" aria-hidden="true" />
+          </button>
+        </span>
       </header>
       <div class="workbench-widget__body" data-floe-canvas-interactive="true">
         {(() => {
@@ -405,11 +494,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
           data-floe-canvas-interactive="true"
           onPointerDown={beginResize}
         >
-          <svg
-            class="workbench-widget__resize-glyph"
-            viewBox="0 0 12 12"
-            aria-hidden="true"
-          >
+          <svg class="workbench-widget__resize-glyph" viewBox="0 0 12 12" aria-hidden="true">
             <path d="M12 0 L0 12" />
             <path d="M12 4 L4 12" />
             <path d="M12 8 L8 12" />

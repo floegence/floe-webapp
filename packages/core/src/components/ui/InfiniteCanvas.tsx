@@ -42,6 +42,7 @@ export interface InfiniteCanvasProps {
   onViewportChange?: (viewport: InfiniteCanvasPoint) => void;
   onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
   onCanvasContextMenu?: (event: InfiniteCanvasContextMenuEvent) => void;
+  onCanvasPointerDown?: (event: PointerEvent) => void;
   ariaLabel?: string;
   class?: string;
   contentClass?: string;
@@ -222,9 +223,14 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
 
   const handlePointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
-    if (props.disablePanZoom) return;
 
     const targetRole = resolveTargetRole(event.target);
+    if (targetRole === 'canvas') {
+      props.onCanvasPointerDown?.(event);
+    }
+
+    if (props.disablePanZoom) return;
+
     const startedFromPanSurface = targetRole === 'pan_surface';
     if (targetRole === 'local_surface') return;
 

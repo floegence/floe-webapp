@@ -1,9 +1,5 @@
 import { For, createMemo } from 'solid-js';
-import type {
-  WorkbenchWidgetDefinition,
-  WorkbenchWidgetItem,
-  WorkbenchWidgetType,
-} from './types';
+import type { WorkbenchWidgetDefinition, WorkbenchWidgetItem, WorkbenchWidgetType } from './types';
 import { createWorkbenchRenderLayerMap } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
 import { WorkbenchWidget } from './WorkbenchWidget';
@@ -22,6 +18,8 @@ export interface WorkbenchCanvasFieldProps {
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
+  onRequestOverview: (item: WorkbenchWidgetItem) => void;
+  onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
 }
 
@@ -64,6 +62,8 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       onCommitFront={props.onCommitFront}
       onCommitMove={props.onCommitMove}
       onCommitResize={props.onCommitResize}
+      onRequestOverview={props.onRequestOverview}
+      onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
     />
   );
@@ -71,7 +71,9 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
 
 export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
   const widgetIds = createMemo(() => props.widgets.map((item) => item.id));
-  const widgetById = createMemo(() => new Map(props.widgets.map((item) => [item.id, item] as const)));
+  const widgetById = createMemo(
+    () => new Map(props.widgets.map((item) => [item.id, item] as const))
+  );
   const renderLayers = createMemo(() => createWorkbenchRenderLayerMap(props.widgets));
 
   return (
@@ -97,6 +99,8 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             onCommitFront={props.onCommitFront}
             onCommitMove={props.onCommitMove}
             onCommitResize={props.onCommitResize}
+            onRequestOverview={props.onRequestOverview}
+            onRequestFit={props.onRequestFit}
             onRequestDelete={props.onRequestDelete}
           />
         )}

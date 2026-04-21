@@ -15,6 +15,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-context-menu.test.tsx',
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',
+  'packages/core/test/workbench-surface-wheel-selection.test.tsx',
 ];
 
 function isFlag(arg) {

@@ -14,6 +14,7 @@
 /* Bring in Floe tokens + component CSS (Tailwind v4 input CSS). */
 @import '../../../packages/core/src/styles/floe.css';
 @import '../../../packages/core/src/components/chat/styles/chat.css';
+@import '../../../packages/core/src/components/layout/displayMode.css';
 @import '../../../packages/core/src/components/notes/notes.css';
 @import '../../../packages/core/src/components/ui/styles/ui.css';
 @import '../../../packages/core/src/components/workbench/workbench.css';

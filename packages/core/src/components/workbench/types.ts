@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js';
+import type { WorkbenchThemeId } from './workbenchThemes';
 
 export type BuiltinWorkbenchWidgetType =
   | 'terminal'
@@ -84,6 +85,7 @@ export interface WorkbenchState<TWidgetType extends string = WorkbenchWidgetType
   locked: boolean;
   filters: Record<TWidgetType, boolean>;
   selectedWidgetId: string | null;
+  theme: WorkbenchThemeId;
 }
 
 export interface WorkbenchContextMenuState {

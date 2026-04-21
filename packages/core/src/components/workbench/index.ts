@@ -34,3 +34,17 @@ export {
   resolveWorkbenchWidgetRenderMode,
   type WorkbenchRenderLayerMap,
 } from './workbenchHelpers';
+export {
+  DEFAULT_WORKBENCH_THEME,
+  WORKBENCH_THEME_IDS,
+  WORKBENCH_THEMES,
+  isWorkbenchThemeId,
+  workbenchThemeMeta,
+  type WorkbenchThemeId,
+  type WorkbenchThemeMeta,
+  type WorkbenchThemePreview,
+} from './workbenchThemes';
+export {
+  WorkbenchThemeSelector,
+  type WorkbenchThemeSelectorProps,
+} from './WorkbenchThemeSelector';
