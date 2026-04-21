@@ -1,5 +1,8 @@
+import type { SurfacePortalRect } from './surfacePortalTypes';
+
 export const DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host';
 export const SURFACE_PORTAL_HOST_ATTR = DIALOG_SURFACE_HOST_ATTR;
+export const SURFACE_PORTAL_LAYER_ATTR = 'data-floe-surface-portal-layer';
 export const DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary';
 
 const SURFACE_PORTAL_INTERACTION_TTL_MS = 1600;
@@ -15,17 +18,13 @@ export type SurfacePortalMode = 'global' | 'surface';
 
 export type ResolvedDialogSurfaceHost = Readonly<{
   host: HTMLElement | null;
+  boundaryHost: HTMLElement | null;
+  mountHost: HTMLElement | null;
   mode: SurfacePortalMode;
 }>;
 export type ResolvedSurfacePortalHost = ResolvedDialogSurfaceHost;
-export type SurfacePortalBoundaryRect = Readonly<{
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-  width: number;
-  height: number;
-}>;
+export type SurfacePortalBoundaryRect = SurfacePortalRect;
+export type { SurfacePortalRect };
 
 let lastInteractionSnapshot: DialogSurfaceInteractionSnapshot | null = null;
 let trackedDocument: Document | null = null;
@@ -94,6 +93,13 @@ function findSurfaceHostFromElement(element: Element | null): HTMLElement | null
   return host instanceof HTMLElement && host.isConnected ? host : null;
 }
 
+function findSurfacePortalLayerFromHost(host: HTMLElement | null): HTMLElement | null {
+  if (!host) return null;
+  const layer = host.closest(`[${SURFACE_PORTAL_LAYER_ATTR}="true"]`);
+  if (typeof HTMLElement === 'undefined') return null;
+  return layer instanceof HTMLElement && layer.isConnected ? layer : null;
+}
+
 export function resolveDialogSurfaceHost(): ResolvedDialogSurfaceHost {
   return resolveSurfacePortalHost();
 }
@@ -102,25 +108,34 @@ export function resolveSurfacePortalHost(): ResolvedSurfacePortalHost {
   ensureDialogSurfaceInteractionTracking();
 
   const snapshot = readFreshInteractionSnapshot();
-  const host =
+  const boundaryHost =
     findSurfaceHostFromElement(snapshot?.target ?? null) ??
     findSurfaceHostFromElement(snapshot?.activeElement ?? null);
 
-  if (!host) {
-    return { host: null, mode: 'global' };
+  if (!boundaryHost) {
+    return { host: null, boundaryHost: null, mountHost: null, mode: 'global' };
   }
 
-  return { host, mode: 'surface' };
+  return {
+    host: boundaryHost,
+    boundaryHost,
+    mountHost: findSurfacePortalLayerFromHost(boundaryHost) ?? boundaryHost,
+    mode: 'surface',
+  };
 }
 
 export function isSurfacePortalMode(surfaceHost: ResolvedSurfacePortalHost): boolean {
-  return surfaceHost.mode === 'surface' && Boolean(surfaceHost.host?.isConnected);
+  return surfaceHost.mode === 'surface' && Boolean(surfaceHost.boundaryHost?.isConnected);
 }
 
 export function resolveSurfacePortalMount(
   surfaceHost: ResolvedSurfacePortalHost
 ): HTMLElement | undefined {
-  return isSurfacePortalMode(surfaceHost) ? (surfaceHost.host ?? undefined) : undefined;
+  if (!isSurfacePortalMode(surfaceHost)) {
+    return undefined;
+  }
+
+  return surfaceHost.mountHost ?? surfaceHost.boundaryHost ?? undefined;
 }
 
 function resolveViewportBoundaryRect(): SurfacePortalBoundaryRect {
@@ -148,11 +163,30 @@ function resolveViewportBoundaryRect(): SurfacePortalBoundaryRect {
 export function resolveSurfacePortalBoundaryRect(
   surfaceHost: ResolvedSurfacePortalHost
 ): SurfacePortalBoundaryRect {
-  if (!isSurfacePortalMode(surfaceHost) || !surfaceHost.host) {
+  if (!isSurfacePortalMode(surfaceHost) || !surfaceHost.boundaryHost) {
     return resolveViewportBoundaryRect();
   }
 
-  const rect = surfaceHost.host.getBoundingClientRect();
+  const rect = surfaceHost.boundaryHost.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+export function resolveSurfacePortalMountRect(
+  surfaceHost: ResolvedSurfacePortalHost
+): SurfacePortalBoundaryRect {
+  const mount = resolveSurfacePortalMount(surfaceHost);
+  if (!mount) {
+    return resolveViewportBoundaryRect();
+  }
+
+  const rect = mount.getBoundingClientRect();
   return {
     left: rect.left,
     top: rect.top,
@@ -171,10 +205,29 @@ export function projectSurfacePortalPosition(
     return position;
   }
 
-  const boundaryRect = resolveSurfacePortalBoundaryRect(surfaceHost);
+  const mountRect = resolveSurfacePortalMountRect(surfaceHost);
   return {
-    x: position.x - boundaryRect.left,
-    y: position.y - boundaryRect.top,
+    x: position.x - mountRect.left,
+    y: position.y - mountRect.top,
+  };
+}
+
+export function projectSurfacePortalRect(
+  rect: SurfacePortalBoundaryRect,
+  surfaceHost: ResolvedSurfacePortalHost
+): SurfacePortalBoundaryRect {
+  if (!isSurfacePortalMode(surfaceHost)) {
+    return rect;
+  }
+
+  const mountRect = resolveSurfacePortalMountRect(surfaceHost);
+  return {
+    left: rect.left - mountRect.left,
+    top: rect.top - mountRect.top,
+    right: rect.right - mountRect.left,
+    bottom: rect.bottom - mountRect.top,
+    width: rect.width,
+    height: rect.height,
   };
 }
 

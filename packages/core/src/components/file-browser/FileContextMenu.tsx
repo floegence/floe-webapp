@@ -605,7 +605,9 @@ export function FileContextMenu(props: FileContextMenuProps) {
 
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
-    ctx.contextMenu() ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+    ctx.contextMenu()
+      ? resolveSurfacePortalHost()
+      : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const portalLayout: ContextMenuPortalLayout = {
     mount: () => resolveSurfacePortalMount(surfaceHost()),

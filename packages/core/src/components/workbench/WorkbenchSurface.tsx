@@ -1,6 +1,7 @@
 import { createEffect, onCleanup, Show } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { isTypingElement } from '../../utils/dom';
+import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu } from './WorkbenchContextMenu';
 import { WorkbenchFilterBar } from './WorkbenchFilterBar';
@@ -155,21 +156,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     ) as HTMLElement | null;
     if (!frameEl) return null;
     const rect = frameEl.getBoundingClientRect();
-    if (
-      clientX < rect.left ||
-      clientX > rect.right ||
-      clientY < rect.top ||
-      clientY > rect.bottom
-    ) {
-      return null;
-    }
-    const localX = clientX - rect.left;
-    const localY = clientY - rect.top;
-    const vp = model.viewport();
-    return {
-      worldX: (localX - vp.x) / vp.scale,
-      worldY: (localY - vp.y) / vp.scale,
-    };
+    return clientToCanvasWorld(rect, model.viewport(), { clientX, clientY });
   };
 
   const handleCreateAtClient = (type: WorkbenchWidgetType, clientX: number, clientY: number) => {
@@ -192,6 +179,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           filters={model.filters()}
           setCanvasFrameRef={model.setCanvasFrameRef}
           onViewportCommit={model.canvas.commitViewport}
+          onViewportInteractionStart={model.canvas.cancelViewportNavigation}
           onCanvasContextMenu={model.canvas.openCanvasContextMenu}
           onSelectWidget={model.canvas.selectWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}

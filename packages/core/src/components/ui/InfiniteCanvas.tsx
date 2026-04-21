@@ -6,6 +6,12 @@ import {
   resolveSurfaceInteractionTargetRole,
   resolveSurfaceWheelRouting,
 } from './localInteractionSurface';
+import {
+  clientToCanvasLocal,
+  createViewportFromZoomAnchor,
+  localToCanvasWorld,
+} from './canvasGeometry';
+import { SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
 
 const DEFAULT_SCALE = 1;
 const DEFAULT_MIN_SCALE = 0.45;
@@ -34,6 +40,7 @@ export interface InfiniteCanvasProps {
   overlay?: (viewport: InfiniteCanvasPoint) => JSX.Element;
   viewport: InfiniteCanvasPoint;
   onViewportChange?: (viewport: InfiniteCanvasPoint) => void;
+  onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
   onCanvasContextMenu?: (event: InfiniteCanvasContextMenuEvent) => void;
   ariaLabel?: string;
   class?: string;
@@ -224,6 +231,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     clearWheelCommitTimer();
     clearPanSurfaceClickSuppression();
     if (!startedFromPanSurface) {
+      props.onViewportInteractionStart?.('pan');
       event.preventDefault();
       rootRef?.setPointerCapture(event.pointerId);
     }
@@ -303,10 +311,13 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     if (routing.kind !== 'canvas_zoom') return;
 
     event.preventDefault();
+    props.onViewportInteractionStart?.('wheel');
 
     const current = liveViewport();
-    const localX = event.clientX - rect.left;
-    const localY = event.clientY - rect.top;
+    const localPoint = clientToCanvasLocal(rect, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
     const rawDelta = resolveWheelDelta(event, rootRef);
     const nextScale = clamp(
       current.scale * Math.exp(-rawDelta * wheelZoomSpeed()),
@@ -316,13 +327,11 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
 
     if (Math.abs(nextScale - current.scale) < 0.0001) return;
 
-    const worldX = (localX - current.x) / current.scale;
-    const worldY = (localY - current.y) / current.scale;
-    const next = {
-      x: localX - worldX * nextScale,
-      y: localY - worldY * nextScale,
-      scale: nextScale,
-    };
+    const next = createViewportFromZoomAnchor({
+      viewport: current,
+      localPoint,
+      nextScale,
+    });
 
     setLiveViewport(next);
     scheduleViewportCommit(next);
@@ -336,17 +345,20 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
 
     event.preventDefault();
 
-    const localX = event.clientX - rect.left;
-    const localY = event.clientY - rect.top;
+    const localPoint = clientToCanvasLocal(rect, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
     const viewport = liveViewport();
+    const worldPoint = localToCanvasWorld(viewport, localPoint);
 
     props.onCanvasContextMenu?.({
       clientX: event.clientX,
       clientY: event.clientY,
-      localX,
-      localY,
-      worldX: (localX - viewport.x) / viewport.scale,
-      worldY: (localY - viewport.y) / viewport.scale,
+      localX: localPoint.localX,
+      localY: localPoint.localY,
+      worldX: worldPoint.worldX,
+      worldY: worldPoint.worldY,
     });
   };
 
@@ -359,6 +371,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
         props.disablePanZoom && 'is-locked',
         props.class
       )}
+      {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

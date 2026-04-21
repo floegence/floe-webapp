@@ -101,7 +101,9 @@ export function Dropdown(props: DropdownProps) {
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
   const menuId = `${dropdownId}-menu`;
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
-    open() ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+    open()
+      ? resolveSurfacePortalHost()
+      : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const portalLayout: DropdownPortalLayout = {
     mount: () => resolveSurfacePortalMount(surfaceHost()),
@@ -131,7 +133,7 @@ export function Dropdown(props: DropdownProps) {
       return;
     }
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: PointerEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && typeof target.closest === 'function') {
         if (target.closest(`[data-floe-dropdown="${dropdownId}"]`)) return;
@@ -145,7 +147,7 @@ export function Dropdown(props: DropdownProps) {
       requestAnimationFrame(() => triggerRef?.focus());
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside, true);
     document.addEventListener('keydown', handleEscape);
 
     // Initial positioning + focus after mount
@@ -155,7 +157,7 @@ export function Dropdown(props: DropdownProps) {
     });
 
     onCleanup(() => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handleClickOutside, true);
       document.removeEventListener('keydown', handleEscape);
     });
   });

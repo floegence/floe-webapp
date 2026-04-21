@@ -29,6 +29,7 @@ export interface WorkbenchCanvasProps {
   filters: Record<WorkbenchWidgetType, boolean>;
   setCanvasFrameRef: (el: HTMLDivElement | undefined) => void;
   onViewportCommit: (viewport: WorkbenchViewport) => void;
+  onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
   onCanvasContextMenu: (event: InfiniteCanvasContextMenuEvent) => void;
   onSelectWidget: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
@@ -119,6 +120,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         class="workbench-canvas__infinite"
         viewport={props.viewport}
         onViewportChange={props.onViewportCommit}
+        onViewportInteractionStart={props.onViewportInteractionStart}
         onCanvasContextMenu={props.onCanvasContextMenu}
         disablePanZoom={props.locked}
         overlay={(liveViewport) => (

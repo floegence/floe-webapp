@@ -23,6 +23,7 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('useOverlayMask()');
     expect(architectureDoc).toContain('overlay host');
     expect(architectureDoc).toContain('data-floe-dialog-surface-host="true"');
+    expect(architectureDoc).toContain('data-floe-surface-portal-layer="true"');
     expect(architectureDoc).toContain('data-floe-dialog-surface-boundary');
     expect(architectureDoc).toContain('data-floe-local-interaction-surface="true"');
     expect(architectureDoc).toContain('data-floe-canvas-wheel-interactive="true"');
@@ -59,6 +60,7 @@ describe('interaction architecture guard', () => {
     const floatingWindowSrc = read('../src/components/ui/FloatingWindow.tsx');
     const dialogSrc = read('../src/components/ui/Dialog.tsx');
     const dialogSurfaceScopeSrc = read('../src/components/ui/dialogSurfaceScope.ts');
+    const infiniteCanvasSrc = read('../src/components/ui/InfiniteCanvas.tsx');
     const deckCellSrc = read('../src/components/deck/DeckCell.tsx');
     const workbenchWidgetSrc = read('../src/components/workbench/WorkbenchWidget.tsx');
     const notesBoardNoteSrc = read('../src/components/notes/NotesBoardNote.tsx');
@@ -92,9 +94,14 @@ describe('interaction architecture guard', () => {
     expect(dialogSrc).toContain('data-floe-dialog-backdrop={baseId}');
     expect(dialogSrc).toContain('[LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? \'true\' : undefined');
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host'");
+    expect(dialogSurfaceScopeSrc).toContain("SURFACE_PORTAL_LAYER_ATTR = 'data-floe-surface-portal-layer'");
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary'");
     expect(dialogSurfaceScopeSrc).toContain('resolveDialogSurfaceHost');
+    expect(dialogSurfaceScopeSrc).toContain('mountHost');
+    expect(infiniteCanvasSrc).toContain('onViewportInteractionStart');
+    expect(infiniteCanvasSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
     expect(deckCellSrc).toContain('data-floe-dialog-surface-host="true"');
+    expect(deckCellSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
     expect(workbenchWidgetSrc).toContain('data-floe-dialog-surface-host="true"');
 
     expect(notesBoardNoteSrc).toContain('data-floe-geometry-surface="notes-note"');
@@ -128,6 +135,7 @@ describe('interaction architecture guard', () => {
     const commandPaletteSrc = read('../src/components/ui/CommandPalette.tsx');
     const notesOverlaySrc = read('../src/components/notes/NotesOverlay.tsx');
     const notesModelSrc = read('../src/components/notes/useNotesOverlayModel.ts');
+    const workbenchModelSrc = read('../src/components/workbench/useWorkbenchModel.ts');
 
     expect(mobileTabBarSrc).toContain('onSelect(id);');
     expect(mobileTabBarSrc).not.toContain('deferNonBlocking(() => onSelect(id))');
@@ -140,5 +148,6 @@ describe('interaction architecture guard', () => {
     expect(notesModelSrc).toContain('setViewportPreview(viewport);');
     expect(notesModelSrc).toContain('options.controller.setViewport(viewport);');
     expect(notesModelSrc).toContain('options.controller.setViewport(preview);');
+    expect(workbenchModelSrc).toContain('cancelViewportNavigation');
   });
 });

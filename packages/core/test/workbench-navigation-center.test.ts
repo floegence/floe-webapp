@@ -240,6 +240,36 @@ describe('workbench navigation centering', () => {
     });
   });
 
+  it('cancels pending navigation animation when direct viewport manipulation begins', () => {
+    createRoot((dispose) => {
+      const widget = createWidget('widget-right', 600, 0);
+      const [state, setState] = createSignal(createWorkbenchState([widget], widget.id));
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+      const frame = createFrameHarness(800, 600);
+
+      model.setCanvasFrameRef(frame.element);
+      model.navigation.fitWidget(widget);
+
+      expect(rafQueue).toHaveLength(1);
+
+      model.canvas.cancelViewportNavigation();
+      flushLatestAnimationFrame();
+
+      expect(untrack(state).viewport).toEqual({
+        x: 0,
+        y: 0,
+        scale: 1,
+      });
+
+      dispose();
+    });
+  });
+
   it('fits the selected widget fully into the viewport when fitWidget is requested', () => {
     createRoot((dispose) => {
       const widget = createWidget('widget-right', 600, 0);

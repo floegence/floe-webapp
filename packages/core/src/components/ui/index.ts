@@ -30,6 +30,18 @@ export {
   type InfiniteCanvasContextMenuEvent,
 } from './InfiniteCanvas';
 export {
+  clientToCanvasLocal,
+  clientToCanvasWorld,
+  createViewportFromZoomAnchor,
+  isPointInsideCanvasRect,
+  localToCanvasWorld,
+  type CanvasClientPoint,
+  type CanvasLocalPoint,
+  type CanvasViewportLike,
+  type CanvasViewportRectLike,
+  type CanvasWorldPoint,
+} from './canvasGeometry';
+export {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
   DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
   LOCAL_INTERACTION_SURFACE_ATTR,
@@ -48,6 +60,26 @@ export {
   type WorkbenchWidgetEventOwnership,
   type WorkbenchWidgetEventOwnershipOptions,
 } from './localInteractionSurface';
+export {
+  DIALOG_SURFACE_HOST_ATTR,
+  SURFACE_PORTAL_HOST_ATTR,
+  SURFACE_PORTAL_LAYER_ATTR,
+  DIALOG_SURFACE_BOUNDARY_ATTR,
+  ensureSurfacePortalInteractionTracking,
+  isSurfacePortalMode,
+  projectSurfacePortalPosition,
+  projectSurfacePortalRect,
+  resolveSurfacePortalBoundaryRect,
+  resolveSurfacePortalHost,
+  resolveSurfacePortalMount,
+  resolveSurfacePortalMountRect,
+  __resetSurfacePortalScopeForTests,
+  type ResolvedSurfacePortalHost,
+  type SurfacePortalBoundaryRect,
+  type SurfacePortalInteractionSnapshot,
+  type SurfacePortalMode,
+  type SurfacePortalRect,
+} from './surfacePortalScope';
 export {
   Card,
   CardHeader,

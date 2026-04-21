@@ -74,6 +74,50 @@ function SurfaceScopedMenuHarnessBody(props: { onDuplicate: (items: FileItem[]) 
   );
 }
 
+function LayerScopedMenuHarness(props: { onDuplicate: (items: FileItem[]) => void }) {
+  return (
+    <FileBrowserProvider files={files} initialPath="/">
+      <LayerScopedMenuHarnessBody onDuplicate={props.onDuplicate} />
+    </FileBrowserProvider>
+  );
+}
+
+function LayerScopedMenuHarnessBody(props: { onDuplicate: (items: FileItem[]) => void }) {
+  const ctx = useFileBrowser();
+
+  return (
+    <div
+      data-testid="surface-layer"
+      data-floe-surface-portal-layer="true"
+      style={{ position: 'relative', width: '520px', height: '360px' }}
+    >
+      <div
+        data-testid="surface-host"
+        data-floe-dialog-surface-host="true"
+        style={{ position: 'absolute', left: '120px', top: '80px', width: '320px', height: '240px' }}
+      >
+        <button
+          type="button"
+          data-testid="open-menu"
+          onClick={() =>
+            ctx.showContextMenu({
+              x: 160,
+              y: 140,
+              items: files,
+              targetKind: 'item',
+              source: 'list',
+              directory: null,
+            })
+          }
+        >
+          Open layered file menu
+        </button>
+        <FileContextMenu callbacks={{ onDuplicate: props.onDuplicate }} />
+      </div>
+    </div>
+  );
+}
+
 describe('FileContextMenu surface scope', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -126,6 +170,73 @@ describe('FileContextMenu surface scope', () => {
     await flushDeferredWork();
 
     expect(onDuplicate).toHaveBeenCalledTimes(1);
+    expect(onDuplicate).toHaveBeenCalledWith(files);
+  });
+
+  it('mounts transformed-host menus into the portal layer and projects client coordinates against the layer', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onDuplicate = vi.fn();
+
+    mount(() => <LayerScopedMenuHarness onDuplicate={onDuplicate} />, host);
+
+    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLDivElement | null;
+    const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
+    const trigger = host.querySelector('[data-testid="open-menu"]') as HTMLButtonElement | null;
+
+    expect(surfaceLayer).toBeTruthy();
+    expect(surfaceHost).toBeTruthy();
+    expect(trigger).toBeTruthy();
+
+    Object.defineProperty(surfaceLayer!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        left: 20,
+        top: 30,
+        right: 540,
+        bottom: 390,
+        width: 520,
+        height: 360,
+        x: 20,
+        y: 30,
+        toJSON: () => undefined,
+      }),
+    });
+    Object.defineProperty(surfaceHost!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        left: 120,
+        top: 80,
+        right: 440,
+        bottom: 320,
+        width: 320,
+        height: 240,
+        x: 120,
+        y: 80,
+        toJSON: () => undefined,
+      }),
+    });
+
+    dispatchPointerDown(trigger!);
+    trigger!.click();
+    await flushDeferredWork();
+
+    const menu = surfaceLayer!.querySelector('[data-floe-context-menu]') as HTMLDivElement | null;
+    expect(menu).toBeTruthy();
+    expect(surfaceLayer?.contains(menu ?? null)).toBe(true);
+    expect(surfaceHost?.contains(menu ?? null)).toBe(false);
+    expect(menu?.style.left).toBe('140px');
+    expect(menu?.style.top).toBe('110px');
+
+    const duplicateButton = Array.from(menu!.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Duplicate')
+    ) as HTMLButtonElement | undefined;
+    expect(duplicateButton).toBeTruthy();
+
+    dispatchPointerDown(duplicateButton!);
+    duplicateButton!.click();
+    await flushDeferredWork();
+
     expect(onDuplicate).toHaveBeenCalledWith(files);
   });
 });

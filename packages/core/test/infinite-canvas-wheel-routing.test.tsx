@@ -53,12 +53,20 @@ function dispatchWheel(target: EventTarget, deltaY: number): WheelEvent {
   return event;
 }
 
-function CanvasWheelHarness(props: { mode: HarnessMode }) {
+function CanvasWheelHarness(props: {
+  mode: HarnessMode;
+  onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
+}) {
   const [viewport, setViewport] = createSignal(INITIAL_VIEWPORT);
 
   return (
     <>
-      <InfiniteCanvas viewport={viewport()} onViewportChange={setViewport} ariaLabel="Wheel routing harness">
+      <InfiniteCanvas
+        viewport={viewport()}
+        onViewportChange={setViewport}
+        onViewportInteractionStart={props.onViewportInteractionStart}
+        ariaLabel="Wheel routing harness"
+      >
         <div style={{ position: 'relative', width: '480px', height: '320px' }}>
           <div
             {...(props.mode === 'interactive'
@@ -140,5 +148,34 @@ describe('InfiniteCanvas wheel routing', () => {
     vi.advanceTimersByTime(100);
 
     expect(readViewportSnapshot(host)).toEqual(INITIAL_VIEWPORT);
+  });
+
+  it('emits a direct-manipulation signal before applying wheel zoom', () => {
+    vi.useFakeTimers();
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onViewportInteractionStart = vi.fn();
+    mount(
+      () => (
+        <CanvasWheelHarness
+          mode="interactive"
+          onViewportInteractionStart={onViewportInteractionStart}
+        />
+      ),
+      host
+    );
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLElement | null;
+    const target = host.querySelector('[data-testid="wheel-target"]') as HTMLButtonElement | null;
+    expect(canvas).toBeTruthy();
+    expect(target).toBeTruthy();
+
+    mockCanvasRect(canvas!);
+
+    dispatchWheel(target!, -120);
+
+    expect(onViewportInteractionStart).toHaveBeenCalledTimes(1);
+    expect(onViewportInteractionStart).toHaveBeenCalledWith('wheel');
   });
 });

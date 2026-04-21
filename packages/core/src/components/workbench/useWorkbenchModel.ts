@@ -386,6 +386,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   let navigationAnimToken = 0;
 
+  const cancelViewportNavigation = () => {
+    navigationAnimToken += 1;
+  };
+
   const animateViewportTo = (target: WorkbenchViewport) => {
     const vp = viewport();
     const startX = vp.x;
@@ -562,6 +566,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       commitMove,
       commitResize,
       commitViewport,
+      cancelViewportNavigation,
     },
 
     hud: {

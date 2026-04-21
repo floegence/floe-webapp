@@ -7,6 +7,7 @@ import { WidgetStateProvider } from '../../context/WidgetStateContext';
 import { positionToGridArea } from '../../utils/gridLayout';
 import type { GridPosition } from '../../utils/gridCollision';
 import { WidgetFrame } from './WidgetFrame';
+import { SURFACE_PORTAL_LAYER_ATTR } from '../ui/surfacePortalScope';
 
 export interface DeckCellProps {
   widget: DeckWidget;
@@ -45,6 +46,7 @@ export function DeckCell(props: DeckCellProps) {
     <div
       data-floe-deck-widget-id={props.widget.id}
       data-floe-dialog-surface-host="true"
+      {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
       data-floe-geometry-surface="deck-widget"
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',

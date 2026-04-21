@@ -9,6 +9,8 @@ import { DIALOG_SURFACE_BOUNDARY_ATTR, type ResolvedDialogSurfaceHost } from './
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import {
   isSurfacePortalMode,
+  projectSurfacePortalRect,
+  resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalHost,
   resolveSurfacePortalMount,
 } from './surfacePortalScope';
@@ -33,11 +35,16 @@ export function Dialog(props: DialogProps) {
   const descriptionId = () => `dialog-${baseId}-description`;
   let dialogRef: HTMLDivElement | undefined;
   const surfaceHost = createMemo<ResolvedDialogSurfaceHost>(() =>
-    props.open ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+    props.open
+      ? resolveSurfacePortalHost()
+      : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const dialogBoundaryId = () => `dialog-boundary-${baseId}`;
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
   const portalMount = () => resolveSurfacePortalMount(surfaceHost());
+  const projectedBoundaryRect = createMemo(() =>
+    projectSurfacePortalRect(resolveSurfacePortalBoundaryRect(surfaceHost()), surfaceHost())
+  );
 
   const isWithinDialogBoundary = (target: EventTarget | null) => {
     if (typeof Element !== 'undefined' && target instanceof Element) {
@@ -73,7 +80,17 @@ export function Dialog(props: DialogProps) {
           data-floe-dialog-overlay-root={baseId}
           data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
           {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
-          class={cn(isSurfaceMode() ? 'absolute inset-0 z-20 p-3' : 'fixed inset-0 z-50 p-4')}
+          class={cn(isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4')}
+          style={
+            isSurfaceMode()
+              ? {
+                  left: `${projectedBoundaryRect().left}px`,
+                  top: `${projectedBoundaryRect().top}px`,
+                  width: `${projectedBoundaryRect().width}px`,
+                  height: `${projectedBoundaryRect().height}px`,
+                }
+              : undefined
+          }
         >
           {/* Backdrop */}
           <div

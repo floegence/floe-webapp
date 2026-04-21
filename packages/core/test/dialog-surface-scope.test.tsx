@@ -87,6 +87,46 @@ function SurfaceDialogHarness(props: {
   );
 }
 
+function LayerScopedDialogHarness() {
+  const [open, setOpen] = createSignal(false);
+  const [actionCount, setActionCount] = createSignal(0);
+
+  return (
+    <div
+      data-testid="surface-layer"
+      data-floe-surface-portal-layer="true"
+      style={{ position: 'relative', width: '520px', height: '360px' }}
+    >
+      <div
+        data-testid="surface-host"
+        data-floe-dialog-surface-host="true"
+        style={{ position: 'absolute', left: '120px', top: '80px', width: '240px', height: '180px' }}
+      >
+        <button type="button" data-testid="surface-trigger" onClick={() => setOpen(true)}>
+          Open layered dialog
+        </button>
+
+        <Dialog
+          open={open()}
+          onOpenChange={setOpen}
+          title="Layered dialog"
+          description="Boundary from host, mount in layer"
+        >
+          <button
+            type="button"
+            data-testid="layered-dialog-action"
+            onClick={() => setActionCount((value) => value + 1)}
+          >
+            Confirm layered dialog
+          </button>
+        </Dialog>
+      </div>
+
+      <output data-testid="layered-dialog-action-count">{String(actionCount())}</output>
+    </div>
+  );
+}
+
 function SurfaceDialogCrossHostHarness() {
   const [open, setOpen] = createSignal(false);
   const [otherHostClickCount, setOtherHostClickCount] = createSignal(0);
@@ -272,6 +312,69 @@ describe('dialog surface scope', () => {
     expect(overlayRoot).toBeTruthy();
     expect(surfaceHost?.contains(overlayRoot ?? null)).toBe(true);
     expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('surface');
+  });
+
+  it('mounts a transformed-surface dialog into the nearest portal layer while keeping boundary-relative geometry', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <LayerScopedDialogHarness />, host);
+
+    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLElement | null;
+    const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLElement | null;
+    const trigger = host.querySelector('[data-testid="surface-trigger"]') as HTMLButtonElement | null;
+    expect(surfaceLayer).toBeTruthy();
+    expect(surfaceHost).toBeTruthy();
+    expect(trigger).toBeTruthy();
+
+    Object.defineProperty(surfaceLayer!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        left: 20,
+        top: 30,
+        right: 540,
+        bottom: 390,
+        width: 520,
+        height: 360,
+        x: 20,
+        y: 30,
+        toJSON: () => undefined,
+      }),
+    });
+    Object.defineProperty(surfaceHost!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        left: 120,
+        top: 80,
+        right: 360,
+        bottom: 260,
+        width: 240,
+        height: 180,
+        x: 120,
+        y: 80,
+        toJSON: () => undefined,
+      }),
+    });
+
+    dispatchPointerDown(trigger!);
+    trigger!.click();
+    await flushMicrotasks();
+
+    const overlayRoot = surfaceLayer!.querySelector('[data-floe-dialog-overlay-root]') as HTMLElement | null;
+    expect(overlayRoot).toBeTruthy();
+    expect(surfaceLayer?.contains(overlayRoot ?? null)).toBe(true);
+    expect(surfaceHost?.contains(overlayRoot ?? null)).toBe(false);
+    expect(overlayRoot?.style.left).toBe('100px');
+    expect(overlayRoot?.style.top).toBe('50px');
+    expect(overlayRoot?.style.width).toBe('240px');
+    expect(overlayRoot?.style.height).toBe('180px');
+
+    const action = surfaceLayer!.querySelector('[data-testid="layered-dialog-action"]') as HTMLButtonElement | null;
+    expect(action).toBeTruthy();
+    dispatchPointerDown(action!);
+    action!.click();
+    await flushMicrotasks();
+
+    expect(host.querySelector('[data-testid="layered-dialog-action-count"]')?.textContent).toBe('1');
   });
 
   it('keeps the dialog open when clicking outside the host and closes only from the local backdrop', async () => {

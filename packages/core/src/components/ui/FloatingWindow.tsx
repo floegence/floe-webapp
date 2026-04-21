@@ -21,6 +21,7 @@ import {
   type FloatingWindowResizeHandle,
 } from './floatingWindowGeometry';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
+import { SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
 
 export interface FloatingWindowProps {
   /** Whether the window is open */
@@ -505,6 +506,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
         >
           <div
             data-floe-dialog-surface-host="true"
+            {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
             data-floe-floating-window-surface="true"
             data-floe-floating-window-state={isActive() ? 'active' : 'inactive'}
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
