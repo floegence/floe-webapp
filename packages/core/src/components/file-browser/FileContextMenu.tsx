@@ -1,13 +1,24 @@
-import { For, Show, createEffect, createSignal, onCleanup } from 'solid-js';
+import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import { Portal, Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
 import { ChevronRight } from '../icons';
 import {
+  clampMenuPosition,
   calculateSubmenuPosition,
   focusMenuItem,
   moveMenuFocus,
+  type MenuBoundaryRect,
 } from '../ui/menuUtils';
+import { LOCAL_INTERACTION_SURFACE_ATTR } from '../ui/localInteractionSurface';
+import {
+  isSurfacePortalMode,
+  projectSurfacePortalPosition,
+  resolveSurfacePortalBoundaryRect,
+  resolveSurfacePortalHost,
+  resolveSurfacePortalMount,
+  type ResolvedSurfacePortalHost,
+} from '../ui/surfacePortalScope';
 import { useFileBrowser } from './FileBrowserContext';
 import type {
   ContextMenuActionType,
@@ -33,27 +44,63 @@ export type HideItemsValue =
 
 // Default icons for menu items
 const CopyIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
     <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
   </svg>
 );
 
 const ClipboardIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <rect width="14" height="16" x="5" y="4" rx="2" />
     <path d="M9 4.5h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v.5a1 1 0 0 0 1 1Z" />
   </svg>
 );
 
 const SparklesIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
   </svg>
 );
 
 const FolderCopyIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
     <path d="M8 10v4" />
     <path d="M12 10v2" />
@@ -62,7 +109,16 @@ const FolderCopyIcon = (props: { class?: string }) => (
 );
 
 const MoveIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <path d="M12 3v18" />
     <path d="m8 7-4 4 4 4" />
     <path d="m16 7 4 4-4 4" />
@@ -70,7 +126,16 @@ const MoveIcon = (props: { class?: string }) => (
 );
 
 const TrashIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <path d="M3 6h18" />
     <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
     <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -78,7 +143,16 @@ const TrashIcon = (props: { class?: string }) => (
 );
 
 const PencilIcon = (props: { class?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={props.class}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
     <path d="m15 5 4 4" />
   </svg>
@@ -107,6 +181,15 @@ export interface FileContextMenuProps {
    */
   hideItems?: HideItemsValue;
 }
+
+type ContextMenuPortalLayout = Readonly<{
+  mount: () => HTMLElement | undefined;
+  isSurfaceMode: () => boolean;
+  boundaryRect: () => MenuBoundaryRect;
+  projectPosition: (
+    position: Readonly<{ x: number; y: number }>
+  ) => Readonly<{ x: number; y: number }>;
+}>;
 
 export function createDefaultContextMenuItems(callbacks?: ContextMenuCallbacks): ContextMenuItem[] {
   const hasAskAgent = !!callbacks?.onAskAgent;
@@ -213,6 +296,7 @@ type ContextMenuEntryProps = {
   item: ContextMenuItem;
   menu: ContextMenuEvent;
   contextMenuId: string;
+  portalLayout: ContextMenuPortalLayout;
   onSelect: (item: ContextMenuItem, event: ContextMenuEvent) => void;
   onDismiss: () => void;
 };
@@ -271,9 +355,10 @@ function handlePanelKeyDown(
 function matchesContextMenuNode(node: unknown, contextMenuId: string): boolean {
   if (!node || typeof node !== 'object') return false;
 
-  const dataset = 'dataset' in node
-    ? (node as { dataset?: Record<string, string | undefined> }).dataset
-    : undefined;
+  const dataset =
+    'dataset' in node
+      ? (node as { dataset?: Record<string, string | undefined> }).dataset
+      : undefined;
   return dataset?.floeContextMenu === contextMenuId;
 }
 
@@ -341,7 +426,11 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
     if (!itemRef || !submenuRef) return;
     const parentRect = itemRef.getBoundingClientRect();
     const submenuRect = submenuRef.getBoundingClientRect();
-    const pos = calculateSubmenuPosition(parentRect, submenuRect);
+    const pos = calculateSubmenuPosition(
+      parentRect,
+      submenuRect,
+      props.portalLayout.boundaryRect()
+    );
     setSubmenuPosition(pos);
   };
 
@@ -402,6 +491,8 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
     clearHoverTimeout();
   });
 
+  const projectedSubmenuPosition = () => props.portalLayout.projectPosition(submenuPosition());
+
   return (
     <div
       ref={itemRef}
@@ -420,7 +511,10 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
             openSubmenu('first');
           }
         }}
-        disabled={props.item.disabled || (!hasChildren() && props.item.type === 'rename' && props.menu.items.length > 1)}
+        disabled={
+          props.item.disabled ||
+          (!hasChildren() && props.item.type === 'rename' && props.menu.items.length > 1)
+        }
         class={cn(
           'w-full flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer',
           'transition-colors duration-75',
@@ -446,23 +540,35 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
       </button>
 
       <Show when={submenuOpen() && hasChildren()}>
-        <Portal>
+        <Portal mount={props.portalLayout.mount()}>
           <div
             ref={submenuRef}
             class={cn(
-              'fixed z-50 min-w-[180px] py-1',
+              props.portalLayout.isSurfaceMode()
+                ? 'absolute z-20 min-w-[180px] py-1'
+                : 'fixed z-50 min-w-[180px] py-1',
               'bg-popover border border-border rounded-lg shadow-lg',
               'animate-in fade-in slide-in-from-left-1'
             )}
             data-floe-context-menu={props.contextMenuId}
+            {...{
+              [LOCAL_INTERACTION_SURFACE_ATTR]: props.portalLayout.isSurfaceMode()
+                ? 'true'
+                : undefined,
+            }}
             style={{
-              left: `${submenuPosition().x}px`,
-              top: `${submenuPosition().y}px`,
+              left: `${projectedSubmenuPosition().x}px`,
+              top: `${projectedSubmenuPosition().y}px`,
             }}
             role="menu"
             onMouseEnter={clearHoverTimeout}
             onMouseLeave={handleMouseLeave}
-            onKeyDown={(event) => handlePanelKeyDown(event, { onDismiss: props.onDismiss, onCloseSubmenu: closeSubmenu })}
+            onKeyDown={(event) =>
+              handlePanelKeyDown(event, {
+                onDismiss: props.onDismiss,
+                onCloseSubmenu: closeSubmenu,
+              })
+            }
           >
             <For each={props.item.children}>
               {(child) => (
@@ -471,6 +577,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
                     item={child}
                     menu={props.menu}
                     contextMenuId={props.contextMenuId}
+                    portalLayout={props.portalLayout}
                     onSelect={props.onSelect}
                     onDismiss={props.onDismiss}
                   />
@@ -497,6 +604,15 @@ export function FileContextMenu(props: FileContextMenuProps) {
   const contextMenuId = `floe-context-menu-${(fileContextMenuIdSeq += 1)}`;
 
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
+  const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
+    ctx.contextMenu() ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+  );
+  const portalLayout: ContextMenuPortalLayout = {
+    mount: () => resolveSurfacePortalMount(surfaceHost()),
+    isSurfaceMode: () => isSurfacePortalMode(surfaceHost()),
+    boundaryRect: () => resolveSurfacePortalBoundaryRect(surfaceHost()),
+    projectPosition: (nextPosition) => projectSurfacePortalPosition(nextPosition, surfaceHost()),
+  };
 
   const menuItems = () => {
     if (props.overrideItems) {
@@ -541,25 +657,11 @@ export function FileContextMenu(props: FileContextMenuProps) {
     if (!menu || !menuRef) return { x: menu?.x ?? 0, y: menu?.y ?? 0 };
 
     const rect = menuRef.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    let x = menu.x;
-    let y = menu.y;
-
     if (rect.width === 0 || rect.height === 0) {
-      return { x, y };
+      return { x: menu.x, y: menu.y };
     }
 
-    if (x + rect.width > viewportWidth) {
-      x = viewportWidth - rect.width - 8;
-    }
-
-    if (y + rect.height > viewportHeight) {
-      y = viewportHeight - rect.height - 8;
-    }
-
-    return { x: Math.max(8, x), y: Math.max(8, y) };
+    return clampMenuPosition({ x: menu.x, y: menu.y }, rect, portalLayout.boundaryRect());
   };
 
   createEffect(() => {
@@ -591,18 +693,23 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   });
 
+  const projectedPosition = () => portalLayout.projectPosition(position());
+
   const MenuPanel = (panelProps: { menu: () => ContextMenuEvent }) => (
     <div
       ref={menuRef}
       class={cn(
-        'fixed z-50 min-w-[180px] py-1',
+        portalLayout.isSurfaceMode()
+          ? 'absolute z-20 min-w-[180px] py-1'
+          : 'fixed z-50 min-w-[180px] py-1',
         'bg-popover border border-border rounded-lg shadow-lg',
         'animate-in fade-in zoom-in-95 duration-100'
       )}
       data-floe-context-menu={contextMenuId}
+      {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: portalLayout.isSurfaceMode() ? 'true' : undefined }}
       style={{
-        left: `${position().x}px`,
-        top: `${position().y}px`,
+        left: `${projectedPosition().x}px`,
+        top: `${projectedPosition().y}px`,
       }}
       role="menu"
       aria-orientation="vertical"
@@ -615,6 +722,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
               item={item}
               menu={panelProps.menu()}
               contextMenuId={contextMenuId}
+              portalLayout={portalLayout}
               onSelect={handleItemSelect}
               onDismiss={ctx.hideContextMenu}
             />
@@ -633,7 +741,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
         isServer ? (
           <MenuPanel menu={menu} />
         ) : (
-          <Portal>
+          <Portal mount={portalLayout.mount()}>
             <MenuPanel menu={menu} />
           </Portal>
         )

@@ -5,12 +5,13 @@ import { Button } from './Button';
 import { X } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
-import {
-  DIALOG_SURFACE_BOUNDARY_ATTR,
-  resolveDialogSurfaceHost,
-  type ResolvedDialogSurfaceHost,
-} from './dialogSurfaceScope';
+import { DIALOG_SURFACE_BOUNDARY_ATTR, type ResolvedDialogSurfaceHost } from './dialogSurfaceScope';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
+import {
+  isSurfacePortalMode,
+  resolveSurfacePortalHost,
+  resolveSurfacePortalMount,
+} from './surfacePortalScope';
 
 export interface DialogProps {
   open: boolean;
@@ -31,19 +32,21 @@ export function Dialog(props: DialogProps) {
   const titleId = () => `dialog-${baseId}-title`;
   const descriptionId = () => `dialog-${baseId}-description`;
   let dialogRef: HTMLDivElement | undefined;
-  const surfaceHost = createMemo<ResolvedDialogSurfaceHost>(() => (
-    props.open ? resolveDialogSurfaceHost() : { host: null, mode: 'global' }
-  ));
+  const surfaceHost = createMemo<ResolvedDialogSurfaceHost>(() =>
+    props.open ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+  );
   const dialogBoundaryId = () => `dialog-boundary-${baseId}`;
-  const isSurfaceMode = () => surfaceHost().mode === 'surface' && Boolean(surfaceHost().host?.isConnected);
-  const portalMount = () => surfaceHost().host ?? undefined;
+  const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
+  const portalMount = () => resolveSurfacePortalMount(surfaceHost());
 
   const isWithinDialogBoundary = (target: EventTarget | null) => {
     if (typeof Element !== 'undefined' && target instanceof Element) {
       return Boolean(target.closest(`[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`));
     }
     if (typeof Node !== 'undefined' && target instanceof Node) {
-      return Boolean(target.parentElement?.closest(`[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`));
+      return Boolean(
+        target.parentElement?.closest(`[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`)
+      );
     }
     return false;
   };
@@ -70,9 +73,7 @@ export function Dialog(props: DialogProps) {
           data-floe-dialog-overlay-root={baseId}
           data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
           {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
-          class={cn(
-            isSurfaceMode() ? 'absolute inset-0 z-20 p-3' : 'fixed inset-0 z-50 p-4'
-          )}
+          class={cn(isSurfaceMode() ? 'absolute inset-0 z-20 p-3' : 'fixed inset-0 z-50 p-4')}
         >
           {/* Backdrop */}
           <div
@@ -80,7 +81,9 @@ export function Dialog(props: DialogProps) {
             {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
             class={cn(
               'absolute inset-0 cursor-pointer animate-in fade-in',
-              isSurfaceMode() ? 'bg-background/72 backdrop-blur-[2px]' : 'bg-background/80 backdrop-blur-sm'
+              isSurfaceMode()
+                ? 'bg-background/72 backdrop-blur-[2px]'
+                : 'bg-background/80 backdrop-blur-sm'
             )}
             onClick={() => props.onOpenChange(false)}
           />
@@ -179,7 +182,11 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
       description={props.description}
       footer={
         <>
-          <Button variant="ghost" onClick={() => props.onOpenChange(false)} disabled={props.loading}>
+          <Button
+            variant="ghost"
+            onClick={() => props.onOpenChange(false)}
+            disabled={props.loading}
+          >
             {props.cancelText ?? floe.config.strings.confirmDialog.cancel}
           </Button>
           <Button

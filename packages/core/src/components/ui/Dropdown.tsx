@@ -1,4 +1,4 @@
-import { createSignal, Show, Index, type JSX, createEffect, onCleanup } from 'solid-js';
+import { createSignal, Show, Index, type JSX, createEffect, createMemo, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -9,7 +9,17 @@ import {
   focusMenuItem,
   MENU_ITEM_SELECTOR,
   moveMenuFocus,
+  type MenuBoundaryRect,
 } from './menuUtils';
+import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
+import {
+  isSurfacePortalMode,
+  projectSurfacePortalPosition,
+  resolveSurfacePortalBoundaryRect,
+  resolveSurfacePortalHost,
+  resolveSurfacePortalMount,
+  type ResolvedSurfacePortalHost,
+} from './surfacePortalScope';
 
 export interface DropdownItem {
   id: string;
@@ -36,6 +46,15 @@ export interface DropdownProps {
   disabled?: boolean;
   class?: string;
 }
+
+type DropdownPortalLayout = Readonly<{
+  mount: () => HTMLElement | undefined;
+  isSurfaceMode: () => boolean;
+  boundaryRect: () => MenuBoundaryRect;
+  projectPosition: (
+    position: Readonly<{ x: number; y: number }>
+  ) => Readonly<{ x: number; y: number }>;
+}>;
 
 let dropdownIdSeq = 0;
 let dropdownMenuItemIdSeq = 0;
@@ -81,13 +100,27 @@ export function Dropdown(props: DropdownProps) {
   let menuRef: HTMLDivElement | undefined;
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
   const menuId = `${dropdownId}-menu`;
+  const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
+    open() ? resolveSurfacePortalHost() : { host: null, mode: 'global' }
+  );
+  const portalLayout: DropdownPortalLayout = {
+    mount: () => resolveSurfacePortalMount(surfaceHost()),
+    isSurfaceMode: () => isSurfacePortalMode(surfaceHost()),
+    boundaryRect: () => resolveSurfacePortalBoundaryRect(surfaceHost()),
+    projectPosition: (position) => projectSurfacePortalPosition(position, surfaceHost()),
+  };
 
   // Update menu position
   const updateMenuPosition = () => {
     if (!triggerRef || !menuRef) return;
     const triggerRect = triggerRef.getBoundingClientRect();
     const menuRect = menuRef.getBoundingClientRect();
-    const pos = calculateMenuPosition(triggerRect, menuRect, props.align ?? 'start');
+    const pos = calculateMenuPosition(
+      triggerRect,
+      menuRect,
+      props.align ?? 'start',
+      portalLayout.boundaryRect()
+    );
     setMenuPosition(pos);
   };
 
@@ -224,19 +257,24 @@ export function Dropdown(props: DropdownProps) {
 
       {/* Menu - rendered via Portal */}
       <Show when={open()}>
-        <Portal>
+        <Portal mount={portalLayout.mount()}>
           <div
             ref={menuRef}
             class={cn(
-              'fixed z-50 min-w-36 py-0.5',
+              portalLayout.isSurfaceMode()
+                ? 'absolute z-20 min-w-36 py-0.5'
+                : 'fixed z-50 min-w-36 py-0.5',
               'bg-popover text-popover-foreground',
               'rounded border border-border shadow-md',
               'animate-in fade-in slide-in-from-top-2'
             )}
             data-floe-dropdown={dropdownId}
+            {...{
+              [LOCAL_INTERACTION_SURFACE_ATTR]: portalLayout.isSurfaceMode() ? 'true' : undefined,
+            }}
             style={{
-              left: `${menuPosition().x}px`,
-              top: `${menuPosition().y}px`,
+              left: `${portalLayout.projectPosition(menuPosition()).x}px`,
+              top: `${portalLayout.projectPosition(menuPosition()).y}px`,
             }}
             role="menu"
             id={menuId}
@@ -254,6 +292,7 @@ export function Dropdown(props: DropdownProps) {
                     onSelect={handleSelect}
                     onCloseMenu={() => setOpen(false)}
                     dropdownId={dropdownId}
+                    portalLayout={portalLayout}
                   />
                 </Show>
               )}
@@ -271,6 +310,7 @@ interface DropdownMenuItemProps {
   onSelect: (item: DropdownItem) => void;
   onCloseMenu: () => void;
   dropdownId: string;
+  portalLayout: DropdownPortalLayout;
 }
 
 function DropdownMenuItem(props: DropdownMenuItemProps) {
@@ -289,7 +329,11 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     if (!itemRef || !submenuRef) return;
     const parentRect = itemRef.getBoundingClientRect();
     const submenuRect = submenuRef.getBoundingClientRect();
-    const pos = calculateSubmenuPosition(parentRect, submenuRect);
+    const pos = calculateSubmenuPosition(
+      parentRect,
+      submenuRect,
+      props.portalLayout.boundaryRect()
+    );
     setSubmenuPosition(pos);
   };
 
@@ -412,19 +456,26 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
 
       {/* Submenu */}
       <Show when={submenuOpen() && hasChildren()}>
-        <Portal>
+        <Portal mount={props.portalLayout.mount()}>
           <div
             ref={submenuRef}
             class={cn(
-              'fixed z-50 min-w-36 py-0.5',
+              props.portalLayout.isSurfaceMode()
+                ? 'absolute z-20 min-w-36 py-0.5'
+                : 'fixed z-50 min-w-36 py-0.5',
               'bg-popover text-popover-foreground',
               'rounded border border-border shadow-md',
               'animate-in fade-in slide-in-from-left-1'
             )}
             data-floe-dropdown={props.dropdownId}
+            {...{
+              [LOCAL_INTERACTION_SURFACE_ATTR]: props.portalLayout.isSurfaceMode()
+                ? 'true'
+                : undefined,
+            }}
             style={{
-              left: `${submenuPosition().x}px`,
-              top: `${submenuPosition().y}px`,
+              left: `${props.portalLayout.projectPosition(submenuPosition()).x}px`,
+              top: `${props.portalLayout.projectPosition(submenuPosition()).y}px`,
             }}
             role="menu"
             aria-labelledby={menuItemId}
@@ -451,6 +502,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                     onSelect={props.onSelect}
                     onCloseMenu={props.onCloseMenu}
                     dropdownId={props.dropdownId}
+                    portalLayout={props.portalLayout}
                   />
                 </Show>
               )}
