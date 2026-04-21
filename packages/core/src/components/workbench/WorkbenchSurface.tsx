@@ -6,6 +6,7 @@ import { WorkbenchContextMenu } from './WorkbenchContextMenu';
 import { WorkbenchFilterBar } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
+import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
 import type {
   WorkbenchState,
@@ -19,10 +20,13 @@ export interface WorkbenchSurfaceApi {
     type: WorkbenchWidgetType,
     options?: { centerViewport?: boolean; worldX?: number; worldY?: number },
   ) => WorkbenchWidgetItem | null;
+  clearSelection: () => void;
   focusWidget: (
     widget: WorkbenchWidgetItem,
     options?: { centerViewport?: boolean },
   ) => WorkbenchWidgetItem;
+  fitWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
+  overviewWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
   findWidgetByType: (type: WorkbenchWidgetType) => WorkbenchWidgetItem | null;
 }
 
@@ -65,7 +69,10 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   createEffect(() => {
     props.onApiReady?.({
       ensureWidget: (type, options) => model.widgetActions.ensureWidget(type, options) ?? null,
+      clearSelection: () => model.selection.clear(),
       focusWidget: (widget, options) => model.navigation.focusWidget(widget, options),
+      fitWidget: (widget) => model.navigation.fitWidget(widget),
+      overviewWidget: (widget) => model.navigation.overviewWidget(widget),
       findWidgetByType: (type) => model.queries.findWidgetByType(type),
     });
 
@@ -76,6 +83,18 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
 
   const lockShortcut = () =>
     props.lockShortcut === undefined ? DEFAULT_LOCK_SHORTCUT : props.lockShortcut;
+
+  createEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!model.contextMenu.state()) return;
+
+    const cleanup = installWorkbenchContextMenuDismissListeners({
+      ownerWindow: window,
+      onDismiss: model.contextMenu.close,
+    });
+
+    onCleanup(() => cleanup());
+  });
 
   // Keyboard handler for arrow navigation, lock toggle, and deleting the selected widget.
   createEffect(() => {
@@ -210,7 +229,6 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           <div
             class="workbench-menu-backdrop"
             data-floe-workbench-boundary="true"
-            onClick={model.contextMenu.close}
             onContextMenu={model.contextMenu.retarget}
           />
           <WorkbenchContextMenu

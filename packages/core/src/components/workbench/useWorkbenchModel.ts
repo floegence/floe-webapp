@@ -13,11 +13,14 @@ import {
   clampScale,
   createContextMenuPosition,
   createWorkbenchId,
+  createWorkbenchViewportCenteredOnWidget,
+  createWorkbenchViewportFitForWidget,
   estimateContextMenuHeight,
   findNearestWidget,
   getTopZIndex,
   WORKBENCH_CANVAS_ZOOM_STEP,
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
+  WORKBENCH_MIN_SCALE,
 } from './workbenchHelpers';
 import {
   createWorkbenchFilterState,
@@ -366,6 +369,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     options.setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
   };
 
+  const clearSelection = () => {
+    options.setState((prev) =>
+      prev.selectedWidgetId === null ? prev : { ...prev, selectedWidgetId: null }
+    );
+  };
+
   const viewportWorldCenter = () => {
     const frame = readCanvasFrameSize();
     const vp = viewport();
@@ -377,7 +386,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   let navigationAnimToken = 0;
 
-  const animateViewportTo = (targetX: number, targetY: number, targetScale: number) => {
+  const animateViewportTo = (target: WorkbenchViewport) => {
     const vp = viewport();
     const startX = vp.x;
     const startY = vp.y;
@@ -395,9 +404,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       const e = easeOutCubic(t);
 
       commitViewport({
-        x: startX + (targetX - startX) * e,
-        y: startY + (targetY - startY) * e,
-        scale: startScale + (targetScale - startScale) * e,
+        x: startX + (target.x - startX) * e,
+        y: startY + (target.y - startY) * e,
+        scale: startScale + (target.scale - startScale) * e,
       });
 
       if (t < 1) {
@@ -411,10 +420,33 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const centerViewportOnWidget = (widget: WorkbenchWidgetItem) => {
     const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
-    const vp = viewport();
-    const targetX = frame.width / 2 - (widget.x + widget.width / 2) * vp.scale;
-    const targetY = frame.height / 2 - (widget.y + widget.height / 2) * vp.scale;
-    animateViewportTo(targetX, targetY, vp.scale);
+    animateViewportTo(createWorkbenchViewportCenteredOnWidget({
+      widget,
+      scale: viewport().scale,
+      frameWidth: frame.width,
+      frameHeight: frame.height,
+    }));
+  };
+
+  const fitViewportOnWidget = (widget: WorkbenchWidgetItem) => {
+    const frame = readCanvasFrameSize();
+    if (frame.width === 0 || frame.height === 0) return;
+    animateViewportTo(createWorkbenchViewportFitForWidget({
+      widget,
+      frameWidth: frame.width,
+      frameHeight: frame.height,
+    }));
+  };
+
+  const overviewViewportOnWidget = (widget: WorkbenchWidgetItem) => {
+    const frame = readCanvasFrameSize();
+    if (frame.width === 0 || frame.height === 0) return;
+    animateViewportTo(createWorkbenchViewportCenteredOnWidget({
+      widget,
+      scale: WORKBENCH_MIN_SCALE,
+      frameWidth: frame.width,
+      frameHeight: frame.height,
+    }));
   };
 
   const focusWidget = (
@@ -426,6 +458,20 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     if (options.centerViewport !== false) {
       centerViewportOnWidget(widget);
     }
+    return widget;
+  };
+
+  const fitWidget = (widget: WorkbenchWidgetItem) => {
+    selectWidget(widget.id);
+    commitFront(widget.id);
+    fitViewportOnWidget(widget);
+    return widget;
+  };
+
+  const overviewWidget = (widget: WorkbenchWidgetItem) => {
+    selectWidget(widget.id);
+    commitFront(widget.id);
+    overviewViewportOnWidget(widget);
     return widget;
   };
 
@@ -510,6 +556,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       openCanvasContextMenu,
       openWidgetContextMenu,
       selectWidget,
+      clearSelection,
       startOptimisticFront,
       commitFront,
       commitMove,
@@ -536,6 +583,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       handleArrowNavigation,
       centerOnWidget: centerViewportOnWidget,
       focusWidget,
+      fitWidget,
+      overviewWidget,
+    },
+
+    selection: {
+      clear: clearSelection,
     },
 
     widgetActions: {

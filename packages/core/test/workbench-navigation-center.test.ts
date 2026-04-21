@@ -239,4 +239,54 @@ describe('workbench navigation centering', () => {
       dispose();
     });
   });
+
+  it('fits the selected widget fully into the viewport when fitWidget is requested', () => {
+    createRoot((dispose) => {
+      const widget = createWidget('widget-right', 600, 0);
+      const [state, setState] = createSignal(createWorkbenchState([widget], widget.id));
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+      const frame = createFrameHarness(800, 600);
+
+      model.setCanvasFrameRef(frame.element);
+      model.navigation.fitWidget(widget);
+      flushLatestAnimationFrame();
+
+      expect(untrack(state).selectedWidgetId).toBe(widget.id);
+      expect(untrack(state).viewport.x).toBeCloseTo(-1140, 6);
+      expect(untrack(state).viewport.y).toBeCloseTo(168, 6);
+      expect(untrack(state).viewport.scale).toBeCloseTo(2.2, 6);
+
+      dispose();
+    });
+  });
+
+  it('centers the selected widget at minimum scale when overviewWidget is requested', () => {
+    createRoot((dispose) => {
+      const widget = createWidget('widget-right', 600, 0);
+      const [state, setState] = createSignal(createWorkbenchState([widget], widget.id));
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+      const frame = createFrameHarness(800, 600);
+
+      model.setCanvasFrameRef(frame.element);
+      model.navigation.overviewWidget(widget);
+      flushLatestAnimationFrame();
+
+      expect(untrack(state).selectedWidgetId).toBe(widget.id);
+      expect(untrack(state).viewport.x).toBeCloseTo(85, 6);
+      expect(untrack(state).viewport.y).toBeCloseTo(273, 6);
+      expect(untrack(state).viewport.scale).toBeCloseTo(0.45, 6);
+
+      dispose();
+    });
+  });
 });

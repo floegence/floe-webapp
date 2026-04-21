@@ -1,5 +1,6 @@
 import { For, type Component } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { WORKBENCH_CONTEXT_MENU_ATTR } from './workbenchContextMenuDismiss';
 
 type WorkbenchContextMenuActionItem = Readonly<{
   id: string;
@@ -36,6 +37,7 @@ export function WorkbenchContextMenu(props: WorkbenchContextMenuProps) {
       role="menu"
       class="workbench-context-menu"
       data-floe-workbench-boundary="true"
+      {...{ [WORKBENCH_CONTEXT_MENU_ATTR]: 'true' }}
       style={{ left: `${props.x}px`, top: `${props.y}px` }}
       onContextMenu={(event) => event.preventDefault()}
     >

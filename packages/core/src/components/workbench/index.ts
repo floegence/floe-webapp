@@ -28,6 +28,8 @@ export {
   createWorkbenchId,
   createWorkbenchProjectedRect,
   createWorkbenchRenderLayerMap,
+  createWorkbenchViewportCenteredOnWidget,
+  createWorkbenchViewportFitForWidget,
   createWorkbenchWidgetSurfaceMetrics,
   resolveWorkbenchWidgetRenderMode,
   type WorkbenchRenderLayerMap,

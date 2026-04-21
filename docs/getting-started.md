@@ -400,7 +400,10 @@ import { DisplayModePageShell, DisplayModeSwitcher } from '@floegence/floe-webap
 Use the shared `workbench` exports when the host app needs custom widgets but should still inherit the same canvas, dock, HUD, widget chrome, and context menu behavior:
 
 ```tsx
-import type { WorkbenchWidgetDefinition } from '@floegence/floe-webapp-core/workbench';
+import type {
+  WorkbenchSurfaceApi,
+  WorkbenchWidgetDefinition,
+} from '@floegence/floe-webapp-core/workbench';
 
 const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
   {
@@ -413,6 +416,29 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
     singleton: true,
   },
 ];
+
+let workbenchApi: WorkbenchSurfaceApi | undefined;
+
+<WorkbenchSurface
+  state={state}
+  setState={setState}
+  widgetDefinitions={widgetDefinitions}
+  onApiReady={(api) => {
+    workbenchApi = api;
+  }}
+/>;
+
+// Center without changing zoom for activation flows.
+workbenchApi?.focusWidget(widget);
+
+// Center and scale the widget fully into the current viewport.
+workbenchApi?.fitWidget(widget);
+
+// Center the widget while returning the canvas to its minimum scale.
+workbenchApi?.overviewWidget(widget);
+
+// Clear selection when the host surface treats a pointer event as blank-canvas intent.
+workbenchApi?.clearSelection();
 ```
 
 ---

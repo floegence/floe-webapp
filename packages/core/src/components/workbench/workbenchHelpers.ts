@@ -179,6 +179,54 @@ export function createDefaultWorkbenchState(
 
 export const WORKBENCH_CANVAS_ZOOM_STEP = 1.18;
 export const WORKBENCH_CONTEXT_MENU_WIDTH_PX = 200;
+export const WORKBENCH_MIN_SCALE = 0.45;
+export const WORKBENCH_MAX_SCALE = 2.2;
+export const WORKBENCH_VIEWPORT_FIT_PADDING_PX = 48;
+
+export function createWorkbenchViewportCenteredOnWidget(options: {
+  widget: WorkbenchWidgetItem;
+  scale: number;
+  frameWidth: number;
+  frameHeight: number;
+}): WorkbenchViewport {
+  const nextScale = clampScale(options.scale, WORKBENCH_MIN_SCALE, WORKBENCH_MAX_SCALE);
+
+  return {
+    x: options.frameWidth / 2 - (options.widget.x + options.widget.width / 2) * nextScale,
+    y: options.frameHeight / 2 - (options.widget.y + options.widget.height / 2) * nextScale,
+    scale: nextScale,
+  };
+}
+
+export function createWorkbenchViewportFitForWidget(options: {
+  widget: WorkbenchWidgetItem;
+  frameWidth: number;
+  frameHeight: number;
+  minScale?: number;
+  maxScale?: number;
+  paddingPx?: number;
+}): WorkbenchViewport {
+  const minScale = options.minScale ?? WORKBENCH_MIN_SCALE;
+  const maxScale = options.maxScale ?? WORKBENCH_MAX_SCALE;
+  const paddingPx = options.paddingPx ?? WORKBENCH_VIEWPORT_FIT_PADDING_PX;
+  const availableWidth = Math.max(options.frameWidth - paddingPx * 2, 1);
+  const availableHeight = Math.max(options.frameHeight - paddingPx * 2, 1);
+  const targetScale = clampScale(
+    Math.min(
+      availableWidth / Math.max(options.widget.width, 1),
+      availableHeight / Math.max(options.widget.height, 1),
+    ),
+    minScale,
+    maxScale,
+  );
+
+  return createWorkbenchViewportCenteredOnWidget({
+    widget: options.widget,
+    scale: targetScale,
+    frameWidth: options.frameWidth,
+    frameHeight: options.frameHeight,
+  });
+}
 
 export interface WorkbenchRenderLayerMap {
   byWidgetId: ReadonlyMap<string, number>;
@@ -291,7 +339,7 @@ export function findNearestWidget(
   return best;
 }
 
-export function clampScale(scale: number, min = 0.45, max = 2.2): number {
+export function clampScale(scale: number, min = WORKBENCH_MIN_SCALE, max = WORKBENCH_MAX_SCALE): number {
   return Math.max(min, Math.min(max, scale));
 }
 

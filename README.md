@@ -98,6 +98,8 @@ The shared `workbench` package owns the infinite-canvas chrome plus widget regis
 
 Starting with `v0.36.8`, workbench widgets can also opt into `renderMode: 'projected_surface'`. Projected widgets keep their world-space position, persistence, and z-order semantics, but their business DOM no longer lives inside the canvas scale transform ancestor. Instead, the canvas exposes a live viewport overlay layer and the widget body receives `surfaceMetrics` with projected screen geometry. This is the preferred path for rich surfaces such as Monaco, terminals, embedded previews, and other widgets that need a stable pixel-space host while the surrounding workbench still pans and zooms.
 
+Starting with `v0.36.12`, workbench surfaces expose explicit selection clearing plus separate navigation intents for centering, fitting, and overview zoom. `focusWidget(...)` keeps the existing center-only activation behavior, `fitWidget(...)` centers and scales a widget fully into the viewport, and `overviewWidget(...)` centers the widget at the minimum canvas scale. Context menus now also use a menu-owned `pointerdown capture` outside-dismiss boundary so menu actions remain clickable inside transformed or portal-heavy surfaces.
+
 `CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
 
 Optional local variations:

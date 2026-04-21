@@ -237,7 +237,26 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 - world model 和 pixel-space host 必须显式分层。
 - rich widget 不能再依赖 canvas transform 祖先承担 DOM runtime 几何。
 
-### 3.11 Monaco standalone runtime contract
+### 3.11 Workbench selection / navigation contract
+
+workbench 的选择态、导航态与菜单关闭态必须保持在共享模型里，而不是由下游产品各自手写一份相近但不一致的 canvas math。
+
+规则如下：
+
+1. `selectedWidgetId` 仍然是 persisted workbench state 的唯一选择态字段；不新增 transient wheel / pointer state 到持久化结构。
+2. 共享 surface API 必须显式提供 `clearSelection()`，让下游在“点击空白画布”等产品语义下清空选择态，而不是伪造 widget focus。
+3. `focusWidget(...)` 保留 center-only 语义，用于 shell activation、keyboard navigation、ensure-widget 等不应改变 zoom level 的入口。
+4. `fitWidget(...)` 表示“将 widget 完整 fit 到当前 viewport”，必须通过共享 helper 计算目标 scale 与中心点，禁止下游重复手写公式。
+5. `overviewWidget(...)` 表示“将 widget 置中并回到最小 canvas scale”，用于从局部工作状态回到全局空间感。
+6. context menu root 必须声明显式菜单边界；outside-dismiss 使用 `pointerdown capture`，并统一覆盖 Escape、scroll、resize。
+7. backdrop 只能参与视觉遮罩和右键 retarget，不应再依赖 backdrop `click` 作为唯一关闭机制，否则 transformed / portal 场景下容易抢走 menu item click。
+
+结论：
+
+- 选择态仍然是共享 workbench state 的一部分。
+- wheel ownership 可以由下游产品根据业务 widget 边界做薄适配，但 viewport navigation math 必须复用共享 helper。
+
+### 3.12 Monaco standalone runtime contract
 
 `CodeEditor` 这类共享 surface 不允许再假设所有 standalone service 都应无条件加载。
 
