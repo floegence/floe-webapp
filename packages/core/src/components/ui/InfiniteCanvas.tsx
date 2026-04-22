@@ -3,6 +3,8 @@ import { cn } from '../../utils/cn';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import {
   DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
+  type SurfaceInteractionTargetRole,
+  type SurfaceWheelRoutingDecision,
   resolveSurfaceInteractionTargetRole,
   resolveSurfaceWheelRouting,
 } from './localInteractionSurface';
@@ -50,6 +52,22 @@ export interface InfiniteCanvasProps {
   interactiveSelector?: string;
   panSurfaceSelector?: string;
   wheelInteractiveSelector?: string;
+  resolveTargetRole?: (args: {
+    target: EventTarget | null;
+    interactiveSelector: string;
+    panSurfaceSelector: string;
+  }) => SurfaceInteractionTargetRole;
+  resolveWheelRouting?: (args: {
+    target: EventTarget | null;
+    disablePanZoom: boolean;
+    wheelInteractiveSelector: string;
+  }) => SurfaceWheelRoutingDecision | {
+    kind: 'local_surface';
+    reason: string;
+  } | {
+    kind: 'ignore';
+    reason: string;
+  };
   minScale?: number;
   maxScale?: number;
   wheelZoomSpeed?: number;
@@ -159,7 +177,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   };
 
   const resolveTargetRole = (target: EventTarget | null) => {
-    return resolveSurfaceInteractionTargetRole({
+    return (props.resolveTargetRole ?? resolveSurfaceInteractionTargetRole)({
       target,
       interactiveSelector: interactiveSelector(),
       panSurfaceSelector: panSurfaceSelector(),
@@ -314,7 +332,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   const handleWheel = (event: WheelEvent) => {
     const rect = rootRef?.getBoundingClientRect();
     if (!rect) return;
-    const routing = resolveSurfaceWheelRouting({
+    const routing = (props.resolveWheelRouting ?? resolveSurfaceWheelRouting)({
       target: event.target,
       disablePanZoom: !!props.disablePanZoom,
       wheelInteractiveSelector: wheelInteractiveSelector(),

@@ -4,13 +4,17 @@ import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
   WORKBENCH_WIDGET_SHELL_ATTR,
-  resolveWorkbenchWidgetEventOwnership,
   shouldActivateWorkbenchWidgetLocalTarget,
 } from '../ui/localInteractionSurface';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
+import {
+  resolveWorkbenchInteractionAdapter,
+  type ResolvedWorkbenchInteractionAdapter,
+} from './workbenchInteractionAdapter';
 import type {
   WorkbenchViewport,
+  WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetItem,
@@ -47,8 +51,6 @@ interface LocalResizeState {
 /** Minimum widget footprint in world-space pixels. */
 const MIN_WIDTH = 220;
 const MIN_HEIGHT = 160;
-const WORKBENCH_WIDGET_INTERACTIVE_SELECTOR = '[data-floe-canvas-interactive="true"]';
-const WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR = '[data-floe-canvas-pan-surface="true"]';
 
 export interface WorkbenchWidgetProps {
   definition: WorkbenchWidgetDefinition;
@@ -70,6 +72,7 @@ export interface WorkbenchWidgetProps {
   layoutMode?: WorkbenchWidgetRenderMode;
   projectedViewport?: WorkbenchViewport;
   surfaceReady?: boolean;
+  interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelect: (widgetId: string) => void;
   onContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onStartOptimisticFront: (widgetId: string) => void;
@@ -79,9 +82,14 @@ export interface WorkbenchWidgetProps {
   onRequestOverview: (item: WorkbenchWidgetItem) => void;
   onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
+  onLayoutInteractionStart?: () => void;
+  onLayoutInteractionEnd?: () => void;
 }
 
 export function WorkbenchWidget(props: WorkbenchWidgetProps) {
+  const interactionAdapter = createMemo(() =>
+    resolveWorkbenchInteractionAdapter(props.interactionAdapter)
+  );
   const [dragState, setDragState] = createSignal<LocalDragState | null>(null);
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
   const [bodyActivation, setBodyActivation] =
@@ -89,6 +97,17 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
   let widgetRootEl: HTMLElement | undefined;
+  const startTrackedLayoutInteraction = (kind: 'drag' | 'resize', cursor: string) => {
+    const stopHotInteraction = startHotInteraction({ kind, cursor });
+    let stopped = false;
+    untrack(() => props.onLayoutInteractionStart?.());
+    return () => {
+      if (stopped) return;
+      stopped = true;
+      stopHotInteraction();
+      untrack(() => props.onLayoutInteractionEnd?.());
+    };
+  };
 
   onCleanup(() => {
     dragSession?.stop({ reason: 'manual_stop', commit: false });
@@ -102,11 +121,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
   const resolveEventOwnership = (target: EventTarget | null) =>
-    resolveWorkbenchWidgetEventOwnership({
+    interactionAdapter().resolveWidgetEventOwnership({
       target,
       widgetRoot: widgetRootEl ?? null,
-      interactiveSelector: WORKBENCH_WIDGET_INTERACTIVE_SELECTOR,
-      panSurfaceSelector: WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR,
+      interactiveSelector: interactionAdapter().interactiveSelector,
+      panSurfaceSelector: interactionAdapter().panSurfaceSelector,
     });
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
@@ -125,8 +144,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       !shouldActivateWorkbenchWidgetLocalTarget({
         target: event.target,
         widgetRoot: widgetRootEl ?? null,
-        interactiveSelector: WORKBENCH_WIDGET_INTERACTIVE_SELECTOR,
-        panSurfaceSelector: WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR,
+        interactiveSelector: interactionAdapter().interactiveSelector,
+        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
       })
     ) {
       return;
@@ -245,7 +264,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     widgetRootEl?.focus({ preventScroll: true });
     props.onStartOptimisticFront(props.widgetId);
 
-    const stopInteraction = startHotInteraction({ kind: 'drag', cursor: 'grabbing' });
+    const stopInteraction = startTrackedLayoutInteraction('drag', 'grabbing');
     const scale = Math.max(props.viewportScale, 0.001);
 
     setDragState({
@@ -314,7 +333,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     resizeSession?.stop({ reason: 'manual_stop', commit: false });
     props.onStartOptimisticFront(props.widgetId);
 
-    const stopInteraction = startHotInteraction({ kind: 'drag', cursor: 'nwse-resize' });
+    const stopInteraction = startTrackedLayoutInteraction('resize', 'nwse-resize');
     const scale = Math.max(props.viewportScale, 0.001);
 
     setResizeState({
@@ -364,8 +383,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         'is-projected-surface': props.layoutMode === 'projected_surface',
         'is-locked': props.locked,
       }}
-      data-floe-dialog-surface-host="true"
+      {...{ [interactionAdapter().dialogSurfaceHostAttr]: 'true' }}
       data-floe-workbench-widget-id={props.widgetId}
+      {...{ [interactionAdapter().widgetRootAttr]: 'true' }}
+      {...{ [interactionAdapter().widgetIdAttr]: props.widgetId }}
       data-workbench-widget-type={props.widgetType}
       data-floe-workbench-render-mode={props.layoutMode ?? 'canvas_scaled'}
       {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: props.selected ? 'true' : undefined }}

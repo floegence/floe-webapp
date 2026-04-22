@@ -4,7 +4,12 @@ import {
   type InfiniteCanvasContextMenuEvent,
   type InfiniteCanvasPoint,
 } from '../../ui';
+import {
+  resolveWorkbenchInteractionAdapter,
+  type ResolvedWorkbenchInteractionAdapter,
+} from './workbenchInteractionAdapter';
 import type {
+  WorkbenchInteractionAdapter,
   WorkbenchViewport,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
@@ -27,6 +32,7 @@ export interface WorkbenchCanvasProps {
   optimisticFrontWidgetId: string | null;
   locked: boolean;
   filters: Record<WorkbenchWidgetType, boolean>;
+  interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   setCanvasFrameRef: (el: HTMLDivElement | undefined) => void;
   onViewportCommit: (viewport: WorkbenchViewport) => void;
   onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
@@ -41,6 +47,8 @@ export interface WorkbenchCanvasProps {
   onRequestOverview: (item: WorkbenchWidgetItem) => void;
   onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
+  onLayoutInteractionStart?: () => void;
+  onLayoutInteractionEnd?: () => void;
 }
 
 interface WorkbenchProjectedWidgetSlotProps extends Omit<
@@ -81,6 +89,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       viewportScale={props.projectedViewport.scale}
       locked={props.locked}
       filtered={!props.filters[item().type]}
+      interactionAdapter={props.interactionAdapter}
       layoutMode="projected_surface"
       projectedViewport={props.projectedViewport}
       surfaceReady={props.surfaceReady}
@@ -93,11 +102,16 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       onRequestOverview={props.onRequestOverview}
       onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
+      onLayoutInteractionStart={props.onLayoutInteractionStart}
+      onLayoutInteractionEnd={props.onLayoutInteractionEnd}
     />
   );
 }
 
 export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
+  const interactionAdapter = createMemo(() =>
+    resolveWorkbenchInteractionAdapter(props.interactionAdapter)
+  );
   const widgetById = createMemo(
     () => new Map(props.widgets.map((item) => [item.id, item] as const))
   );
@@ -134,6 +148,17 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         onViewportInteractionStart={props.onViewportInteractionStart}
         onCanvasContextMenu={props.onCanvasContextMenu}
         onCanvasPointerDown={props.onCanvasPointerDown}
+        resolveTargetRole={(args) => interactionAdapter().resolveSurfaceTargetRole({
+          target: args.target,
+          interactiveSelector: args.interactiveSelector,
+          panSurfaceSelector: args.panSurfaceSelector,
+        })}
+        resolveWheelRouting={(args) => interactionAdapter().resolveWheelRouting({
+          target: args.target,
+          disablePanZoom: args.disablePanZoom,
+          selectedWidgetId: props.selectedWidgetId,
+          wheelInteractiveSelector: args.wheelInteractiveSelector,
+        })}
         disablePanZoom={props.locked}
         overlay={(liveViewport) => (
           <Show when={projectedWidgetIds().length > 0}>
@@ -150,6 +175,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                     optimisticFrontWidgetId={props.optimisticFrontWidgetId}
                     locked={props.locked}
                     filters={props.filters}
+                    interactionAdapter={interactionAdapter()}
                     setCanvasFrameRef={props.setCanvasFrameRef}
                     onViewportCommit={props.onViewportCommit}
                     onCanvasContextMenu={props.onCanvasContextMenu}
@@ -162,6 +188,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                     onRequestOverview={props.onRequestOverview}
                     onRequestFit={props.onRequestFit}
                     onRequestDelete={props.onRequestDelete}
+                    onLayoutInteractionStart={props.onLayoutInteractionStart}
+                    onLayoutInteractionEnd={props.onLayoutInteractionEnd}
                     projectedViewport={liveViewport}
                     surfaceReady={projectedSurfaceReady()}
                   />
@@ -179,6 +207,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           viewportScale={props.viewport.scale}
           locked={props.locked}
           filters={props.filters}
+          interactionAdapter={interactionAdapter()}
           onSelectWidget={props.onSelectWidget}
           onWidgetContextMenu={props.onWidgetContextMenu}
           onStartOptimisticFront={props.onStartOptimisticFront}
@@ -188,6 +217,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           onRequestOverview={props.onRequestOverview}
           onRequestFit={props.onRequestFit}
           onRequestDelete={props.onRequestDelete}
+          onLayoutInteractionStart={props.onLayoutInteractionStart}
+          onLayoutInteractionEnd={props.onLayoutInteractionEnd}
         />
       </InfiniteCanvas>
     </div>

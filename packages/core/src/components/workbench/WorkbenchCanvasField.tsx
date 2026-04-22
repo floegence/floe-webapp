@@ -1,5 +1,14 @@
 import { For, createMemo } from 'solid-js';
-import type { WorkbenchWidgetDefinition, WorkbenchWidgetItem, WorkbenchWidgetType } from './types';
+import {
+  resolveWorkbenchInteractionAdapter,
+  type ResolvedWorkbenchInteractionAdapter,
+} from './workbenchInteractionAdapter';
+import type {
+  WorkbenchInteractionAdapter,
+  WorkbenchWidgetDefinition,
+  WorkbenchWidgetItem,
+  WorkbenchWidgetType,
+} from './types';
 import { createWorkbenchRenderLayerMap } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
 import { WorkbenchWidget } from './WorkbenchWidget';
@@ -12,6 +21,7 @@ export interface WorkbenchCanvasFieldProps {
   viewportScale: number;
   locked: boolean;
   filters: Record<WorkbenchWidgetType, boolean>;
+  interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelectWidget: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onStartOptimisticFront: (widgetId: string) => void;
@@ -21,6 +31,8 @@ export interface WorkbenchCanvasFieldProps {
   onRequestOverview: (item: WorkbenchWidgetItem) => void;
   onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
+  onLayoutInteractionStart?: () => void;
+  onLayoutInteractionEnd?: () => void;
 }
 
 interface WorkbenchCanvasWidgetSlotProps extends WorkbenchCanvasFieldProps {
@@ -56,6 +68,7 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       viewportScale={props.viewportScale}
       locked={props.locked}
       filtered={!props.filters[item().type]}
+      interactionAdapter={props.interactionAdapter}
       onSelect={props.onSelectWidget}
       onContextMenu={props.onWidgetContextMenu}
       onStartOptimisticFront={props.onStartOptimisticFront}
@@ -65,11 +78,16 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       onRequestOverview={props.onRequestOverview}
       onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
+      onLayoutInteractionStart={props.onLayoutInteractionStart}
+      onLayoutInteractionEnd={props.onLayoutInteractionEnd}
     />
   );
 }
 
 export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
+  const interactionAdapter = createMemo(() =>
+    resolveWorkbenchInteractionAdapter(props.interactionAdapter)
+  );
   const widgetIds = createMemo(() => props.widgets.map((item) => item.id));
   const widgetById = createMemo(
     () => new Map(props.widgets.map((item) => [item.id, item] as const))
@@ -93,6 +111,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             viewportScale={props.viewportScale}
             locked={props.locked}
             filters={props.filters}
+            interactionAdapter={interactionAdapter()}
             onSelectWidget={props.onSelectWidget}
             onWidgetContextMenu={props.onWidgetContextMenu}
             onStartOptimisticFront={props.onStartOptimisticFront}
@@ -102,6 +121,8 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             onRequestOverview={props.onRequestOverview}
             onRequestFit={props.onRequestFit}
             onRequestDelete={props.onRequestDelete}
+            onLayoutInteractionStart={props.onLayoutInteractionStart}
+            onLayoutInteractionEnd={props.onLayoutInteractionEnd}
           />
         )}
       </For>

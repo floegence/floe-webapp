@@ -423,6 +423,8 @@ let workbenchApi: WorkbenchSurfaceApi | undefined;
   state={state}
   setState={setState}
   widgetDefinitions={widgetDefinitions}
+  launcherWidgetTypes={['ops.logs']}
+  interactionAdapter={appWorkbenchInteractionAdapter}
   onApiReady={(api) => {
     workbenchApi = api;
   }}
@@ -439,7 +441,16 @@ workbenchApi?.overviewWidget(widget);
 
 // Clear selection when the host surface treats a pointer event as blank-canvas intent.
 workbenchApi?.clearSelection();
+
+// Create a new widget instance at a specific world-space location.
+workbenchApi?.createWidget('ops.logs', { worldX: 480, worldY: 220 });
+
+// Resolve/update multi-instance widgets without forking the surface shell.
+const logsWidget = workbenchApi?.findWidgetById('widget-logs-1');
+workbenchApi?.updateWidgetTitle('widget-logs-1', 'Errors');
 ```
+
+`launcherWidgetTypes` lets a product hide programmatic widget types from the dock/context-menu create affordances, while `interactionAdapter` is the thin extension point for product-specific wheel/focus/hotkey ownership without forking the shared canvas/widget/surface stack.
 
 ---
 

@@ -1,5 +1,10 @@
 import type { Component } from 'solid-js';
 import type { WorkbenchThemeId } from './workbenchThemes';
+import type {
+  SurfaceInteractionTargetRole,
+  SurfaceWheelLocalReason,
+  WorkbenchWidgetEventOwnership,
+} from '../ui/localInteractionSurface';
 
 export type BuiltinWorkbenchWidgetType =
   | 'terminal'
@@ -19,6 +24,65 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
 ];
 
 export type WorkbenchWidgetRenderMode = 'canvas_scaled' | 'projected_surface';
+
+export type WorkbenchCanvasOwnerReason = 'initial' | 'background_pointer' | 'background_focus' | (string & {});
+export type WorkbenchWidgetOwnerReason = 'pointer' | 'focus' | 'activation' | (string & {});
+
+export type WorkbenchInputOwner =
+  | { kind: 'canvas'; reason: WorkbenchCanvasOwnerReason }
+  | { kind: 'widget'; widgetId: string; reason: WorkbenchWidgetOwnerReason };
+
+export type WorkbenchWheelLocalReason =
+  | SurfaceWheelLocalReason
+  | 'selected_widget'
+  | (string & {});
+
+export type WorkbenchWheelRoutingDecision =
+  | { kind: 'canvas_zoom' }
+  | { kind: 'local_surface'; reason: WorkbenchWheelLocalReason }
+  | { kind: 'ignore'; reason: 'pan_zoom_disabled' | (string & {}) };
+
+export interface WorkbenchInteractionAdapter {
+  surfaceRootAttr?: string;
+  widgetRootAttr?: string;
+  widgetIdAttr?: string;
+  dialogSurfaceHostAttr?: string;
+  interactiveSelector?: string;
+  panSurfaceSelector?: string;
+  wheelInteractiveSelector?: string;
+  createInitialInputOwner?: () => WorkbenchInputOwner;
+  createCanvasInputOwner?: (reason: WorkbenchCanvasOwnerReason) => WorkbenchInputOwner;
+  createWidgetInputOwner?: (
+    widgetId: string,
+    reason: WorkbenchWidgetOwnerReason,
+  ) => WorkbenchInputOwner;
+  findWidgetRoot?: (target: EventTarget | null) => HTMLElement | null;
+  readWidgetId?: (element: Element | null) => string | null;
+  focusWidgetElement?: (root: ParentNode | null | undefined, widgetId: string) => boolean;
+  resolveSurfaceTargetRole?: (args: {
+    target: EventTarget | null;
+    interactiveSelector: string;
+    panSurfaceSelector: string;
+  }) => SurfaceInteractionTargetRole;
+  resolveWidgetEventOwnership?: (args: {
+    target: EventTarget | null;
+    widgetRoot: Element | EventTarget | null;
+    interactiveSelector: string;
+    panSurfaceSelector: string;
+  }) => WorkbenchWidgetEventOwnership;
+  resolveWheelRouting?: (args: {
+    target: EventTarget | null;
+    disablePanZoom: boolean;
+    selectedWidgetId: string | null;
+    wheelInteractiveSelector: string;
+  }) => WorkbenchWheelRoutingDecision;
+  shouldBypassGlobalHotkeys?: (args: {
+    root: HTMLElement | null | undefined;
+    target: EventTarget | null;
+    owner: WorkbenchInputOwner;
+    interactiveSelector: string;
+  }) => boolean;
+}
 
 export interface WorkbenchProjectedRect {
   widgetId: string;

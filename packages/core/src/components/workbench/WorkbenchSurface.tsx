@@ -1,6 +1,5 @@
-import { createEffect, onCleanup, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { isTypingElement } from '../../utils/dom';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu } from './WorkbenchContextMenu';
@@ -9,8 +8,14 @@ import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
+import {
+  resolveWorkbenchInteractionAdapter,
+  type ResolvedWorkbenchInteractionAdapter,
+} from './workbenchInteractionAdapter';
 import type {
   WorkbenchState,
+  WorkbenchInputOwner,
+  WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
@@ -18,6 +23,10 @@ import type {
 
 export interface WorkbenchSurfaceApi {
   ensureWidget: (
+    type: WorkbenchWidgetType,
+    options?: { centerViewport?: boolean; worldX?: number; worldY?: number }
+  ) => WorkbenchWidgetItem | null;
+  createWidget: (
     type: WorkbenchWidgetType,
     options?: { centerViewport?: boolean; worldX?: number; worldY?: number }
   ) => WorkbenchWidgetItem | null;
@@ -29,6 +38,8 @@ export interface WorkbenchSurfaceApi {
   fitWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
   overviewWidget: (widget: WorkbenchWidgetItem) => WorkbenchWidgetItem;
   findWidgetByType: (type: WorkbenchWidgetType) => WorkbenchWidgetItem | null;
+  findWidgetById: (widgetId: string) => WorkbenchWidgetItem | null;
+  updateWidgetTitle: (widgetId: string, title: string) => void;
 }
 
 export interface WorkbenchSurfaceProps {
@@ -50,7 +61,12 @@ export interface WorkbenchSurfaceProps {
    */
   class?: string;
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
+  launcherWidgetTypes?: readonly WorkbenchWidgetType[];
+  interactionAdapter?: WorkbenchInteractionAdapter;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
+  onRequestDelete?: (widgetId: string) => void;
+  onLayoutInteractionStart?: () => void;
+  onLayoutInteractionEnd?: () => void;
 }
 
 const DEFAULT_LOCK_SHORTCUT = 'F1';
@@ -66,15 +82,148 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   };
 
   const model = useWorkbenchModel(modelOptions);
+  const [surfaceRootEl, setSurfaceRootEl] = createSignal<HTMLDivElement | null>(null);
+  const interactionAdapter = createMemo<ResolvedWorkbenchInteractionAdapter>(() =>
+    resolveWorkbenchInteractionAdapter(props.interactionAdapter)
+  );
+  const [inputOwner, setInputOwner] = createSignal<WorkbenchInputOwner>(
+    untrack(() => interactionAdapter().createInitialInputOwner())
+  );
+  const manuallyAddableWidgetTypes = createMemo(() => {
+    const allowedTypes = props.launcherWidgetTypes;
+    if (!allowedTypes || allowedTypes.length <= 0) {
+      return null;
+    }
+    return new Set<WorkbenchWidgetType>(allowedTypes);
+  });
+  const filterBarWidgetDefinitions = createMemo(() => {
+    const definitions = model.widgetDefinitions();
+    const allowed = manuallyAddableWidgetTypes();
+    if (!allowed) {
+      return definitions;
+    }
+    return definitions.filter((entry) => allowed.has(entry.type));
+  });
+  const contextMenuItems = createMemo(() => {
+    const items = model.contextMenu.items();
+    const allowed = manuallyAddableWidgetTypes();
+    if (!allowed) {
+      return items;
+    }
+    return items.filter((item) => {
+      if (item.kind !== 'action') {
+        return true;
+      }
+      const addMatch = /^add-(.+)$/.exec(String(item.id ?? ''));
+      if (!addMatch) {
+        return true;
+      }
+      return allowed.has(addMatch[1] as WorkbenchWidgetType);
+    });
+  });
+
+  const updateInputOwnerFromTarget = (
+    target: EventTarget | null,
+    widgetReason: 'pointer' | 'focus' | 'activation',
+    canvasReason: 'background_pointer' | 'background_focus'
+  ): void => {
+    const adapter = interactionAdapter();
+    const widgetRoot = adapter.findWidgetRoot(target);
+    const widgetId = adapter.readWidgetId(widgetRoot);
+    if (widgetId) {
+      setInputOwner(adapter.createWidgetInputOwner(widgetId, widgetReason));
+      return;
+    }
+
+    const root = surfaceRootEl();
+    if (root && target instanceof Node && root.contains(target)) {
+      setInputOwner(adapter.createCanvasInputOwner(canvasReason));
+    }
+  };
+
+  const viewportWorldCenter = () => {
+    const frameEl = surfaceRootEl()?.querySelector(
+      '[data-floe-workbench-canvas-frame="true"]'
+    ) as HTMLElement | null;
+    const vp = model.viewport();
+    const rect = frameEl?.getBoundingClientRect();
+    const width = rect?.width ?? 0;
+    const height = rect?.height ?? 0;
+
+    return {
+      worldX: width > 0 ? (width / 2 - vp.x) / vp.scale : 240,
+      worldY: height > 0 ? (height / 2 - vp.y) / vp.scale : 180,
+    };
+  };
+
+  const activateWidgetRoot = (widgetId: string) => {
+    const adapter = untrack(interactionAdapter);
+    const root = untrack(surfaceRootEl);
+    queueMicrotask(() => {
+      adapter.focusWidgetElement(root, widgetId);
+      setInputOwner(adapter.createWidgetInputOwner(widgetId, 'activation'));
+    });
+  };
+
+  const focusWidgetForViewport = (widget: WorkbenchWidgetItem) => {
+    const focusedWidget = model.navigation.fitWidget(widget);
+    activateWidgetRoot(focusedWidget.id);
+  };
+
+  const overviewWidgetForViewport = (widget: WorkbenchWidgetItem) => {
+    const focusedWidget = model.navigation.overviewWidget(widget);
+    activateWidgetRoot(focusedWidget.id);
+  };
 
   createEffect(() => {
     props.onApiReady?.({
       ensureWidget: (type, options) => model.widgetActions.ensureWidget(type, options) ?? null,
+      createWidget: (type, options) => {
+        const center = viewportWorldCenter();
+        const widget = model.widgetActions.addWidgetAtCursor(
+          type,
+          options?.worldX ?? center.worldX,
+          options?.worldY ?? center.worldY
+        ) ?? null;
+        if (widget && options?.centerViewport !== false) {
+          model.navigation.centerOnWidget(widget);
+        }
+        return widget;
+      },
       clearSelection: () => model.selection.clear(),
-      focusWidget: (widget, options) => model.navigation.focusWidget(widget, options),
-      fitWidget: (widget) => model.navigation.fitWidget(widget),
-      overviewWidget: (widget) => model.navigation.overviewWidget(widget),
+      focusWidget: (widget, options) => {
+        const focusedWidget = model.navigation.focusWidget(widget, options);
+        activateWidgetRoot(focusedWidget.id);
+        return focusedWidget;
+      },
+      fitWidget: (widget) => {
+        const focusedWidget = model.navigation.fitWidget(widget);
+        activateWidgetRoot(focusedWidget.id);
+        return focusedWidget;
+      },
+      overviewWidget: (widget) => {
+        const focusedWidget = model.navigation.overviewWidget(widget);
+        activateWidgetRoot(focusedWidget.id);
+        return focusedWidget;
+      },
       findWidgetByType: (type) => model.queries.findWidgetByType(type),
+      findWidgetById: (widgetId) => model.queries.findWidgetById(widgetId),
+      updateWidgetTitle: (widgetId, title) => {
+        const normalizedWidgetId = String(widgetId ?? '').trim();
+        const normalizedTitle = String(title ?? '').trim();
+        if (!normalizedWidgetId || !normalizedTitle) {
+          return;
+        }
+
+        props.setState((previous) => ({
+          ...previous,
+          widgets: previous.widgets.map((widget) =>
+            widget.id === normalizedWidgetId && widget.title !== normalizedTitle
+              ? { ...widget, title: normalizedTitle }
+              : widget
+          ),
+        }));
+      },
     });
 
     onCleanup(() => {
@@ -97,6 +246,36 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     onCleanup(() => cleanup());
   });
 
+  createEffect(() => {
+    const owner = inputOwner();
+    if (owner.kind !== 'widget') return;
+
+    const widgetStillExists = model.widgets().some((widget) => widget.id === owner.widgetId);
+    if (!widgetStillExists) {
+      setInputOwner(interactionAdapter().createCanvasInputOwner('widget_removed'));
+    }
+  });
+
+  createEffect(() => {
+    const root = surfaceRootEl();
+    if (!root) return;
+
+    const handlePointerDownCapture = (event: PointerEvent) => {
+      updateInputOwnerFromTarget(event.target, 'pointer', 'background_pointer');
+    };
+    const handleFocusIn = (event: FocusEvent) => {
+      updateInputOwnerFromTarget(event.target, 'focus', 'background_focus');
+    };
+
+    root.addEventListener('pointerdown', handlePointerDownCapture, true);
+    root.addEventListener('focusin', handleFocusIn);
+
+    onCleanup(() => {
+      root.removeEventListener('pointerdown', handlePointerDownCapture, true);
+      root.removeEventListener('focusin', handleFocusIn);
+    });
+  });
+
   // Keyboard handler for arrow navigation, lock toggle, and deleting the selected widget.
   createEffect(() => {
     if (props.enableKeyboard === false) return;
@@ -113,8 +292,14 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         return;
       }
 
-      const target = event.target;
-      if (target instanceof Element && isTypingElement(target)) return;
+      if (interactionAdapter().shouldBypassGlobalHotkeys({
+        root: surfaceRootEl(),
+        target: event.target,
+        owner: inputOwner(),
+        interactiveSelector: interactionAdapter().interactiveSelector,
+      })) {
+        return;
+      }
 
       switch (event.key) {
         case 'ArrowUp':
@@ -151,7 +336,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   // Returns null when the cursor is outside the canvas frame, so callers can
   // distinguish "dropped on canvas" from "dropped outside".
   const clientToWorld = (clientX: number, clientY: number) => {
-    const frameEl = document.querySelector(
+    const frameEl = surfaceRootEl()?.querySelector(
       '[data-floe-workbench-canvas-frame="true"]'
     ) as HTMLElement | null;
     if (!frameEl) return null;
@@ -167,7 +352,9 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
 
   return (
     <div
+      ref={setSurfaceRootEl}
       class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
+      {...{ [interactionAdapter().surfaceRootAttr]: 'true' }}
       data-workbench-theme={model.theme()}
     >
       <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
@@ -180,6 +367,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           optimisticFrontWidgetId={model.optimisticFrontWidgetId()}
           locked={model.locked()}
           filters={model.filters()}
+          interactionAdapter={interactionAdapter()}
           setCanvasFrameRef={model.setCanvasFrameRef}
           onViewportCommit={model.canvas.commitViewport}
           onViewportInteractionStart={model.canvas.cancelViewportNavigation}
@@ -191,9 +379,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onCommitFront={model.canvas.commitFront}
           onCommitMove={model.canvas.commitMove}
           onCommitResize={model.canvas.commitResize}
-          onRequestOverview={model.navigation.overviewWidget}
-          onRequestFit={model.navigation.fitWidget}
-          onRequestDelete={model.widgetActions.deleteWidget}
+          onRequestOverview={overviewWidgetForViewport}
+          onRequestFit={focusWidgetForViewport}
+          onRequestDelete={props.onRequestDelete ?? model.widgetActions.deleteWidget}
+          onLayoutInteractionStart={props.onLayoutInteractionStart}
+          onLayoutInteractionEnd={props.onLayoutInteractionEnd}
         />
       </div>
 
@@ -204,7 +394,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       />
 
       <WorkbenchFilterBar
-        widgetDefinitions={model.widgetDefinitions()}
+        widgetDefinitions={filterBarWidgetDefinitions()}
         widgets={model.widgets()}
         filters={model.filters()}
         onSoloFilter={model.filter.solo}
@@ -230,7 +420,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           <WorkbenchContextMenu
             x={model.contextMenu.position()?.left ?? 0}
             y={model.contextMenu.position()?.top ?? 0}
-            items={model.contextMenu.items()}
+            items={contextMenuItems()}
           />
         </Portal>
       </Show>

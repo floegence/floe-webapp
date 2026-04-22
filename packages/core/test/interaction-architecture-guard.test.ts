@@ -111,7 +111,7 @@ describe('interaction architecture guard', () => {
     expect(pointerSessionSrc).toContain("reason: 'buttons_released'");
     expect(deckCellSrc).toContain('data-floe-dialog-surface-host="true"');
     expect(deckCellSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
-    expect(workbenchWidgetSrc).toContain('data-floe-dialog-surface-host="true"');
+    expect(workbenchWidgetSrc).toContain('dialogSurfaceHostAttr');
     expect(workbenchWidgetSrc).toContain('startPointerSession({');
     expect(workbenchFilterBarSrc).toContain('startPointerSession({');
 

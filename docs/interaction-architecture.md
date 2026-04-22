@@ -257,6 +257,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 4. projected widget 的可见几何必须来自共享 projected rect helper，禁止在下游各自手写 `x * scale + offset` 公式。
 5. rich widget body 必须通过 `surfaceMetrics` 感知自己的 projected rect 与 ready 状态，而不是自行猜测 mount host 是否稳定。
 6. projected surface 只解决“业务 DOM 不再处于 canvas scale transform 祖先”这个架构问题；selection、focus、fronting、drag、resize、context menu、persisted geometry 仍然保持 workbench 统一契约。
+7. 下游产品如果需要特殊的 wheel / focus / hotkey ownership，只能通过 `WorkbenchSurface` 的 `interactionAdapter` 做薄适配，禁止重新 fork 一套 canvas / widget / surface 壳层。
 
 结论：
 
