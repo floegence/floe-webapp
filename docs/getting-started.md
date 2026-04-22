@@ -454,11 +454,14 @@ workbenchApi?.updateWidgetTitle('widget-logs-1', 'Errors');
 
 Custom widget bodies also receive shared host-state hints through `WorkbenchWidgetBodyProps`: `activation` for local-pointer activation pulses, `surfaceMetrics` as an accessor for projected overlays, `selected` / `filtered` for shell state, `lifecycle` (`hot` / `warm` / `cold`) for lightweight pause/resume strategies, and `requestActivate()` when a body wants to re-enter the active shell path without reaching around the surface internals.
 
+If a widget uses terminal/editor-style virtual input with a proxy textarea or hidden focus helper, wrap that activation boundary with `data-floe-workbench-widget-activation-surface="true"`. The shared shell will then keep the first click on the widget-owned activation path instead of treating the helper node like a native typing target.
+
 When a widget opts into `renderMode: 'projected_surface'`, the recommended contract is:
 
 - keep the widget body mounted by `widget.id` and let the shared shell own geometry / z-order updates;
 - read `surfaceMetrics?.()` only in the few business widgets that truly need projected rect data;
-- avoid rebuilding projected subtrees on every viewport tick — the shared `InfiniteCanvas` / workbench host now keeps the projected layer stably mounted and updates viewport through accessors instead.
+- avoid rebuilding projected subtrees on every viewport tick — the shared `InfiniteCanvas` / workbench host now keeps the projected layer stably mounted and updates viewport through accessors instead;
+- rely on `clearSelection()` / blank-canvas pointerdown to hand focus and wheel authority back to the surface root instead of locally guessing when the canvas should reclaim input ownership.
 
 ---
 

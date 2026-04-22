@@ -25,7 +25,12 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
 
 export type WorkbenchWidgetRenderMode = 'canvas_scaled' | 'projected_surface';
 
-export type WorkbenchCanvasOwnerReason = 'initial' | 'background_pointer' | 'background_focus' | (string & {});
+export type WorkbenchCanvasOwnerReason =
+  | 'initial'
+  | 'background_pointer'
+  | 'background_focus'
+  | 'selection_cleared'
+  | (string & {});
 export type WorkbenchWidgetOwnerReason = 'pointer' | 'focus' | 'activation' | (string & {});
 
 export type WorkbenchInputOwner =

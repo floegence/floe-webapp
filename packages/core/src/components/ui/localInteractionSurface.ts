@@ -9,6 +9,10 @@ export const DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR =
 export const WORKBENCH_WIDGET_SHELL_ATTR = 'data-floe-workbench-widget-shell';
 export const DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR =
   `[${WORKBENCH_WIDGET_SHELL_ATTR}="true"]`;
+export const WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR =
+  'data-floe-workbench-widget-activation-surface';
+export const DEFAULT_WORKBENCH_WIDGET_ACTIVATION_SURFACE_SELECTOR =
+  `[${WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR}="true"]`;
 
 export type SurfaceInteractionTargetRole = 'canvas' | 'local_surface' | 'pan_surface';
 export type SurfaceWheelLocalReason =
@@ -36,8 +40,10 @@ export interface WorkbenchWidgetEventOwnershipOptions extends SurfaceInteraction
   shellSelector?: string;
 }
 
-export type WorkbenchWidgetLocalActivationTargetOptions =
-  WorkbenchWidgetEventOwnershipOptions;
+export interface WorkbenchWidgetLocalActivationTargetOptions
+  extends WorkbenchWidgetEventOwnershipOptions {
+  widgetActivationSurfaceSelector?: string;
+}
 
 export interface SurfaceWheelRoutingOptions {
   target: EventTarget | null;
@@ -192,6 +198,7 @@ export function shouldActivateWorkbenchWidgetLocalTarget(
     widgetRoot,
     shellSelector = DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
     localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+    widgetActivationSurfaceSelector = DEFAULT_WORKBENCH_WIDGET_ACTIVATION_SURFACE_SELECTOR,
   } = options;
 
   const widgetElement = resolveElement(widgetRoot);
@@ -210,6 +217,10 @@ export function shouldActivateWorkbenchWidgetLocalTarget(
 
   if (targetElement.closest(localInteractionSurfaceSelector) !== null) {
     return false;
+  }
+
+  if (targetElement.closest(widgetActivationSurfaceSelector) !== null) {
+    return resolveWorkbenchWidgetEventOwnership(options) === 'widget_local';
   }
 
   if (hasFocusableOrTypingTargetInsideWidget(targetElement, widgetElement)) {
@@ -226,6 +237,7 @@ export function resolveWorkbenchWidgetLocalTypingTarget(
     widgetRoot,
     shellSelector = DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
     localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+    widgetActivationSurfaceSelector = DEFAULT_WORKBENCH_WIDGET_ACTIVATION_SURFACE_SELECTOR,
   } = options;
 
   const widgetElement = resolveElement(widgetRoot);
@@ -243,6 +255,10 @@ export function resolveWorkbenchWidgetLocalTypingTarget(
   }
 
   if (targetElement.closest(localInteractionSurfaceSelector) !== null) {
+    return null;
+  }
+
+  if (targetElement.closest(widgetActivationSurfaceSelector) !== null) {
     return null;
   }
 

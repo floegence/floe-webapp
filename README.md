@@ -104,6 +104,8 @@ Workbench widget bodies now also receive an optional `activation` payload when a
 
 Starting with `v0.36.23`, that same workbench interaction contract also preserves first-click typing intent across same-event selection/front updates. Inactive widgets can now enter native inputs on the first click, while virtual-input widgets still receive their shared `activation` signal after the workbench shell captures the interaction.
 
+Starting with `v0.36.24`, blank-canvas pointer intent also hands runtime authority back to the canvas instead of only clearing `selectedWidgetId`. `WorkbenchSurface` now restores the surface root focus when the user clicks background space, so subsequent wheel input returns to canvas zoom until a widget explicitly regains local wheel ownership. Virtual-input widgets can also mark `data-floe-workbench-widget-activation-surface="true"` around proxy textareas or focus helpers, which keeps those nodes on the shared activation path instead of misclassifying them as native first-click typing targets.
+
 `CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
 
 Optional local variations:

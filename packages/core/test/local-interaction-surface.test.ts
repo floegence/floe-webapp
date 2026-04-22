@@ -5,10 +5,13 @@ import { describe, expect, it } from 'vitest';
 import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
   LOCAL_INTERACTION_SURFACE_ATTR,
+  WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR,
   WORKBENCH_WIDGET_SHELL_ATTR,
+  resolveWorkbenchWidgetLocalTypingTarget,
   resolveSurfaceWheelRouting,
   resolveWorkbenchWidgetEventOwnership,
   resolveSurfaceInteractionTargetRole,
+  shouldActivateWorkbenchWidgetLocalTarget,
 } from '../src/components/ui/localInteractionSurface';
 
 const INTERACTIVE_SELECTOR = '[data-floe-canvas-interactive="true"]';
@@ -24,6 +27,24 @@ function resolveRole(target: EventTarget | null) {
 
 function resolveWidgetOwnership(target: EventTarget | null, widgetRoot: Element | null) {
   return resolveWorkbenchWidgetEventOwnership({
+    target,
+    widgetRoot,
+    interactiveSelector: INTERACTIVE_SELECTOR,
+    panSurfaceSelector: PAN_SURFACE_SELECTOR,
+  });
+}
+
+function resolveLocalTypingTarget(target: EventTarget | null, widgetRoot: Element | null) {
+  return resolveWorkbenchWidgetLocalTypingTarget({
+    target,
+    widgetRoot,
+    interactiveSelector: INTERACTIVE_SELECTOR,
+    panSurfaceSelector: PAN_SURFACE_SELECTOR,
+  });
+}
+
+function shouldActivateLocalTarget(target: EventTarget | null, widgetRoot: Element | null) {
+  return shouldActivateWorkbenchWidgetLocalTarget({
     target,
     widgetRoot,
     interactiveSelector: INTERACTIVE_SELECTOR,
@@ -124,6 +145,33 @@ describe('local interaction surface routing', () => {
     widget.appendChild(body);
 
     expect(resolveWidgetOwnership(button, widget)).toBe('widget_local');
+  });
+
+  it('preserves native typing targets unless the subtree explicitly opts into widget-owned activation', () => {
+    const widget = document.createElement('article');
+    const body = document.createElement('div');
+    body.setAttribute('data-floe-canvas-interactive', 'true');
+    const input = document.createElement('textarea');
+    body.appendChild(input);
+    widget.appendChild(body);
+
+    expect(resolveLocalTypingTarget(input, widget)).toBe(input);
+    expect(shouldActivateLocalTarget(input, widget)).toBe(false);
+  });
+
+  it('treats activation-surface typing helpers as widget-owned activation targets', () => {
+    const widget = document.createElement('article');
+    const body = document.createElement('div');
+    body.setAttribute('data-floe-canvas-interactive', 'true');
+    const activationSurface = document.createElement('div');
+    activationSurface.setAttribute(WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR, 'true');
+    const helperTextarea = document.createElement('textarea');
+    activationSurface.appendChild(helperTextarea);
+    body.appendChild(activationSurface);
+    widget.appendChild(body);
+
+    expect(resolveLocalTypingTarget(helperTextarea, widget)).toBeNull();
+    expect(shouldActivateLocalTarget(helperTextarea, widget)).toBe(true);
   });
 
   it('treats targets outside the widget as outside widget ownership', () => {

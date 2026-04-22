@@ -5,7 +5,10 @@ import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchWidget } from '../src/components/workbench/WorkbenchWidget';
-import { resolveWorkbenchWidgetLocalTypingTarget } from '../src/components/ui/localInteractionSurface';
+import {
+  WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR,
+  resolveWorkbenchWidgetLocalTypingTarget,
+} from '../src/components/ui/localInteractionSurface';
 import type {
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetBodyProps,
@@ -147,6 +150,8 @@ function renderStatefulWidget(
       onCommitFront={() => setZIndex((value) => value + 1)}
       onCommitMove={() => {}}
       onCommitResize={() => {}}
+      onRequestOverview={() => {}}
+      onRequestFit={() => {}}
       onRequestDelete={() => {}}
     />
   ), host);
@@ -424,6 +429,68 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     expect(focusSpy).toHaveBeenCalled();
     expect(document.activeElement).toBe(widgetInput);
+  });
+
+  it.each([
+    { name: 'canvas-scaled', layoutMode: 'canvas_scaled' as const },
+    { name: 'projected-surface', layoutMode: 'projected_surface' as const },
+  ])('routes first-click helper typing targets inside activation surfaces through shared widget activation for inactive %s widgets', async ({ layoutMode }) => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const outsideInput = document.createElement('input');
+    document.body.appendChild(outsideInput);
+
+    const activations: number[] = [];
+    let helperTextarea: HTMLTextAreaElement | undefined;
+    const definition = renderActivationProbe((activation) => {
+      activations.push(activation.seq);
+    }, (props) => {
+      let lastSeq = 0;
+      createEffect(() => {
+        const activation = props.activation;
+        if (!activation || activation.seq === lastSeq) return;
+        lastSeq = activation.seq;
+        helperTextarea?.focus();
+      });
+
+      return (
+        <div
+          data-testid="widget-activation-surface"
+          {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}
+        >
+          <textarea
+            aria-label="Widget helper input"
+            data-testid="widget-helper-textarea"
+            ref={helperTextarea}
+          />
+        </div>
+      );
+    });
+
+    dispose = renderStatefulWidget(host, definition, { layoutMode });
+
+    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const helper = host.querySelector('[data-testid="widget-helper-textarea"]') as HTMLTextAreaElement | null;
+    expect(widgetRoot).toBeTruthy();
+    expect(helper).toBeTruthy();
+    expect(
+      resolveWorkbenchWidgetLocalTypingTarget({
+        target: helper,
+        widgetRoot,
+        interactiveSelector: '[data-floe-canvas-interactive="true"]',
+        panSurfaceSelector: '[data-floe-canvas-pan-surface="true"]',
+      })
+    ).toBeNull();
+
+    outsideInput.focus();
+    expect(document.activeElement).toBe(outsideInput);
+
+    dispatchPointerDown(helper!);
+    await flushWorkbenchInteraction();
+
+    expect(activations).toEqual([1]);
+    expect(document.activeElement).toBe(helper);
   });
 
   it('does not emit local activation from shell, native controls, local surfaces, or secondary presses', async () => {

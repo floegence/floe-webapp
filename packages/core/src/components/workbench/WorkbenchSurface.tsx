@@ -71,6 +71,16 @@ export interface WorkbenchSurfaceProps {
 
 const DEFAULT_LOCK_SHORTCUT = 'F1';
 
+function focusWorkbenchSurfaceRoot(root: HTMLElement | null): void {
+  if (!root) return;
+
+  try {
+    root.focus({ preventScroll: true });
+  } catch {
+    root.focus();
+  }
+}
+
 export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const modelOptions: UseWorkbenchModelOptions = {
     state: () => props.state(),
@@ -141,6 +151,32 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     }
   };
 
+  const handoffCanvasAuthority = (
+    reason: 'background_pointer' | 'selection_cleared' = 'selection_cleared',
+  ) => {
+    const adapter = interactionAdapter();
+    const root = surfaceRootEl();
+
+    model.selection.clear();
+    setInputOwner(adapter.createCanvasInputOwner(reason));
+
+    queueMicrotask(() => {
+      if (!root || typeof document === 'undefined') return;
+
+      const activeElement = document.activeElement;
+      if (!(activeElement instanceof HTMLElement) || !root.contains(activeElement)) {
+        focusWorkbenchSurfaceRoot(root);
+        return;
+      }
+
+      const activeWidgetRoot = adapter.findWidgetRoot(activeElement);
+      focusWorkbenchSurfaceRoot(root);
+      if (activeWidgetRoot && document.activeElement === activeElement && activeElement.isConnected) {
+        activeElement.blur();
+      }
+    });
+  };
+
   const viewportWorldCenter = () => {
     const frameEl = surfaceRootEl()?.querySelector(
       '[data-floe-workbench-canvas-frame="true"]'
@@ -190,7 +226,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         }
         return widget;
       },
-      clearSelection: () => model.selection.clear(),
+      clearSelection: () => handoffCanvasAuthority('selection_cleared'),
       focusWidget: (widget, options) => {
         const focusedWidget = model.navigation.focusWidget(widget, options);
         activateWidgetRoot(focusedWidget.id);
@@ -356,6 +392,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
       {...{ [interactionAdapter().surfaceRootAttr]: 'true' }}
       data-workbench-theme={model.theme()}
+      tabIndex={-1}
     >
       <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
         <WorkbenchCanvas
@@ -372,7 +409,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onViewportCommit={model.canvas.commitViewport}
           onViewportInteractionStart={model.canvas.cancelViewportNavigation}
           onCanvasContextMenu={model.canvas.openCanvasContextMenu}
-          onCanvasPointerDown={model.selection.clear}
+          onCanvasPointerDown={() => handoffCanvasAuthority('background_pointer')}
           onSelectWidget={model.canvas.selectWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}
           onStartOptimisticFront={model.canvas.startOptimisticFront}
