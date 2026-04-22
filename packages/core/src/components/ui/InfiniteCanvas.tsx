@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import {
@@ -40,7 +40,7 @@ export interface InfiniteCanvasContextMenuEvent {
 
 export interface InfiniteCanvasProps {
   children: JSX.Element;
-  overlay?: (viewport: InfiniteCanvasPoint) => JSX.Element;
+  overlay?: (viewport: Accessor<InfiniteCanvasPoint>) => JSX.Element;
   viewport: InfiniteCanvasPoint;
   onViewportChange?: (viewport: InfiniteCanvasPoint) => void;
   onViewportInteractionStart?: (kind: 'wheel' | 'pan') => void;
@@ -128,6 +128,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     if (!current.startedFromPanSurface) return true;
     return current.moved;
   };
+  const overlay = createMemo(() => props.overlay?.(liveViewport));
 
   const clearWheelCommitTimer = () => {
     if (wheelCommitTimer === undefined) return;
@@ -414,7 +415,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       >
         {props.children}
       </div>
-      {props.overlay?.(liveViewport())}
+      {overlay()}
     </div>
   );
 }

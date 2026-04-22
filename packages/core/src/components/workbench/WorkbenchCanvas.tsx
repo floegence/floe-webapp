@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from 'solid-js';
+import { For, Show, createMemo, type Accessor } from 'solid-js';
 import {
   InfiniteCanvas,
   type InfiniteCanvasContextMenuEvent,
@@ -58,7 +58,7 @@ interface WorkbenchProjectedWidgetSlotProps extends Omit<
   widgetId: string;
   widgetById: () => Map<string, WorkbenchWidgetItem>;
   renderLayers: () => ReturnType<typeof createWorkbenchRenderLayerMap>;
-  projectedViewport: InfiniteCanvasPoint;
+  projectedViewport: Accessor<InfiniteCanvasPoint>;
   surfaceReady: boolean;
 }
 
@@ -86,7 +86,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       selected={props.selectedWidgetId === props.widgetId}
       optimisticFront={props.optimisticFrontWidgetId === props.widgetId}
       topRenderLayer={props.renderLayers().topRenderLayer}
-      viewportScale={props.projectedViewport.scale}
+      viewportScale={props.projectedViewport().scale}
       locked={props.locked}
       filtered={!props.filters[item().type]}
       interactionAdapter={props.interactionAdapter}

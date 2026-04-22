@@ -452,7 +452,13 @@ workbenchApi?.updateWidgetTitle('widget-logs-1', 'Errors');
 
 `launcherWidgetTypes` lets a product hide programmatic widget types from the dock/context-menu create affordances, while `interactionAdapter` is the thin extension point for product-specific wheel/focus/hotkey ownership without forking the shared canvas/widget/surface stack.
 
-Custom widget bodies also receive shared host-state hints through `WorkbenchWidgetBodyProps`: `activation` for local-pointer activation pulses, `surfaceMetrics` for projected overlays, `selected` / `filtered` for shell state, `lifecycle` (`hot` / `warm` / `cold`) for lightweight pause/resume strategies, and `requestActivate()` when a body wants to re-enter the active shell path without reaching around the surface internals.
+Custom widget bodies also receive shared host-state hints through `WorkbenchWidgetBodyProps`: `activation` for local-pointer activation pulses, `surfaceMetrics` as an accessor for projected overlays, `selected` / `filtered` for shell state, `lifecycle` (`hot` / `warm` / `cold`) for lightweight pause/resume strategies, and `requestActivate()` when a body wants to re-enter the active shell path without reaching around the surface internals.
+
+When a widget opts into `renderMode: 'projected_surface'`, the recommended contract is:
+
+- keep the widget body mounted by `widget.id` and let the shared shell own geometry / z-order updates;
+- read `surfaceMetrics?.()` only in the few business widgets that truly need projected rect data;
+- avoid rebuilding projected subtrees on every viewport tick — the shared `InfiniteCanvas` / workbench host now keeps the projected layer stably mounted and updates viewport through accessors instead.
 
 ---
 

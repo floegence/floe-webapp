@@ -254,11 +254,13 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 1. widget definition 显式声明 `renderMode: 'projected_surface'`。
 2. projected widget 仍然使用相同的 world-space `x / y / width / height / z_index` 持久化模型，禁止改存 screen-space rect。
 3. `InfiniteCanvas` 必须提供 live viewport overlay 能力，让 projected widget 在 pan / zoom 过程中继续跟随实时 viewport，而不是只依赖节流后的 committed viewport。
-4. projected widget 的可见几何必须来自共享 projected rect helper，禁止在下游各自手写 `x * scale + offset` 公式。
-5. rich widget body 必须通过 `surfaceMetrics` 感知自己的 projected rect 与 ready 状态，而不是自行猜测 mount host 是否稳定。
-6. projected surface 只解决“业务 DOM 不再处于 canvas scale transform 祖先”这个架构问题；selection、focus、fronting、drag、resize、context menu、persisted geometry 仍然保持 workbench 统一契约。
-7. 下游产品如果需要特殊的 wheel / focus / hotkey ownership，只能通过 `WorkbenchSurface` 的 `interactionAdapter` 做薄适配，禁止重新 fork 一套 canvas / widget / surface 壳层。
-8. 如果 widget body 需要根据 shell 状态做 pause/resume、placeholder 或懒加载判断，应直接消费共享 `WorkbenchWidgetBodyProps` 里的 `selected` / `filtered` / `lifecycle` / `requestActivate()`，禁止下游重新 fork widget shell 只为了补这些 host hints。
+4. projected overlay subtree 必须稳定挂载；viewport 变化只能通过 accessor / context 驱动 shell 几何更新，禁止使用“每帧重新执行 overlay render callback”来重建 projected widget 树。
+5. projected widget 的可见几何必须来自共享 projected rect helper，禁止在下游各自手写 `x * scale + offset` 公式。
+5. projected widget shell 与 rich body 必须显式分层：shell 负责 `left / top / size / z-index` 投影、drag、resize、selection、focus；body 保持按 `widget.id` 稳定挂载，禁止因为 viewport 或 sibling 几何变化而 remount。
+6. rich widget body 必须通过 `surfaceMetrics` accessor 感知自己的 projected rect 与 ready 状态，而不是自行猜测 mount host 是否稳定，也禁止把每帧新建的 metrics 对象直接作为 value prop 广播给全部 body。
+7. projected surface 只解决“业务 DOM 不再处于 canvas scale transform 祖先”这个架构问题；selection、focus、fronting、drag、resize、context menu、persisted geometry 仍然保持 workbench 统一契约。
+8. 下游产品如果需要特殊的 wheel / focus / hotkey ownership，只能通过 `WorkbenchSurface` 的 `interactionAdapter` 做薄适配，禁止重新 fork 一套 canvas / widget / surface 壳层。
+9. 如果 widget body 需要根据 shell 状态做 pause/resume、placeholder 或懒加载判断，应直接消费共享 `WorkbenchWidgetBodyProps` 里的 `selected` / `filtered` / `lifecycle` / `requestActivate()`，禁止下游重新 fork widget shell 只为了补这些 host hints。
 
 结论：
 

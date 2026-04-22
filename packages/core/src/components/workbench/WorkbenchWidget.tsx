@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
+import { createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
@@ -71,7 +71,7 @@ export interface WorkbenchWidgetProps {
   locked: boolean;
   filtered: boolean;
   layoutMode?: WorkbenchWidgetRenderMode;
-  projectedViewport?: WorkbenchViewport;
+  projectedViewport?: Accessor<WorkbenchViewport>;
   surfaceReady?: boolean;
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelect: (widgetId: string) => void;
@@ -192,7 +192,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       worldY: livePosition().y,
       worldWidth: liveSize().width,
       worldHeight: liveSize().height,
-      viewport: props.projectedViewport,
+      viewport: props.projectedViewport(),
       ready: props.surfaceReady ?? true,
     });
   });
@@ -519,7 +519,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
               widgetId={props.widgetId}
               title={props.widgetTitle}
               type={props.widgetType}
-              surfaceMetrics={surfaceMetrics()}
+              surfaceMetrics={surfaceMetrics}
               activation={bodyActivation()}
               lifecycle={lifecycle()}
               selected={props.selected}

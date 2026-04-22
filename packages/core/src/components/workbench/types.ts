@@ -1,4 +1,4 @@
-import type { Component } from 'solid-js';
+import type { Accessor, Component } from 'solid-js';
 import type { WorkbenchThemeId } from './workbenchThemes';
 import type {
   SurfaceInteractionTargetRole,
@@ -116,7 +116,7 @@ export interface WorkbenchWidgetBodyProps<TWidgetType extends string = Workbench
   widgetId: string;
   title: string;
   type: TWidgetType;
-  surfaceMetrics?: WorkbenchWidgetSurfaceMetrics;
+  surfaceMetrics?: Accessor<WorkbenchWidgetSurfaceMetrics | undefined>;
   activation?: WorkbenchWidgetBodyActivation;
   lifecycle?: WorkbenchWidgetLifecycle;
   selected?: boolean;
