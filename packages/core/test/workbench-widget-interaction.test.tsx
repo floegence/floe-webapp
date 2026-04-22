@@ -52,7 +52,7 @@ function dispatchPointerEvent(
     button?: number;
     pointerType?: string;
   } = {},
-): void {
+): Event {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
     bubbles: true,
@@ -77,6 +77,7 @@ function dispatchPointerEvent(
     });
   }
   target.dispatchEvent(event);
+  return event;
 }
 
 function dispatchPointerDown(target: EventTarget): void {
@@ -387,6 +388,38 @@ describe('WorkbenchWidget interaction ownership', () => {
     await flushWorkbenchInteraction();
 
     expect(activations).toEqual([{ seq: 1, selected: true }]);
+  });
+
+  it('selects inactive widgets without swallowing the original target click', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const clicks: boolean[] = [];
+    const definition = {
+      ...filesWidgetDefinition,
+      body: (props: WorkbenchWidgetBodyProps) => (
+        <button
+          type="button"
+          data-testid="widget-body-button"
+          onClick={() => clicks.push(Boolean(props.selected))}
+        >
+          Open
+        </button>
+      ),
+    } satisfies WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>;
+
+    dispose = renderStatefulWidget(host, definition);
+
+    const bodyButton = host.querySelector('[data-testid="widget-body-button"]') as HTMLButtonElement | null;
+    expect(bodyButton).toBeTruthy();
+
+    const pointerDown = dispatchPointerEvent('pointerdown', bodyButton!, { pointerId: 21 });
+    dispatchPointerEvent('pointerup', bodyButton!, { pointerId: 21 });
+    await Promise.resolve();
+    bodyButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    expect(pointerDown.defaultPrevented).toBe(false);
+    expect(clicks).toEqual([true]);
   });
 
   it.each([

@@ -17,7 +17,11 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
     type: 'custom.scroll-panel',
     label: 'Scroll Panel',
     icon: () => null,
-    body: () => <div data-testid="widget-body">Scrollable panel body</div>,
+    body: () => (
+      <div data-testid="widget-body" {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: 'true' }}>
+        Scrollable panel body
+      </div>
+    ),
     defaultTitle: 'Scroll Panel',
     defaultSize: { width: 320, height: 220 },
   },
@@ -44,6 +48,28 @@ function createWorkbenchState(): WorkbenchState {
     filters: createWorkbenchFilterState(widgetDefinitions),
     selectedWidgetId: null,
     theme: 'default',
+  };
+}
+
+function createTwoWidgetWorkbenchState(): WorkbenchState {
+  const base = createWorkbenchState();
+  return {
+    ...base,
+    widgets: [
+      ...base.widgets,
+      {
+        id: 'widget-scroll-2',
+        type: 'custom.scroll-panel',
+        title: 'Scroll Panel 2',
+        x: 460,
+        y: 64,
+        width: 320,
+        height: 220,
+        z_index: 2,
+        created_at_unix_ms: 2,
+      },
+    ],
+    selectedWidgetId: 'widget-scroll-1',
   };
 }
 
@@ -208,6 +234,71 @@ describe('Workbench wheel ownership', () => {
     expect(wheelAfterCanvasSelection.defaultPrevented).toBe(true);
 
     vi.runOnlyPendingTimers();
+    dispose();
+  });
+
+  it('keeps wheel ownership on the canvas when hovering an unselected widget', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const dispose = render(() => {
+      const [state, setState] = createSignal(createTwoWidgetWorkbenchState());
+
+      return (
+        <WorkbenchCanvas
+          widgetDefinitions={widgetDefinitions}
+          widgets={state().widgets}
+          viewport={state().viewport}
+          canvasFrameSize={{ width: 960, height: 640 }}
+          selectedWidgetId={state().selectedWidgetId}
+          optimisticFrontWidgetId={null}
+          locked={state().locked}
+          filters={state().filters}
+          setCanvasFrameRef={() => {}}
+          onViewportCommit={(viewport) => {
+            setState((prev) => ({ ...prev, viewport }));
+          }}
+          onCanvasContextMenu={vi.fn()}
+          onCanvasPointerDown={() => {
+            setState((prev) => ({ ...prev, selectedWidgetId: null }));
+          }}
+          onSelectWidget={(widgetId) => {
+            setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
+          }}
+          onWidgetContextMenu={vi.fn()}
+          onStartOptimisticFront={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onRequestOverview={vi.fn()}
+          onRequestFit={vi.fn()}
+          onRequestDelete={vi.fn()}
+        />
+      );
+    }, host);
+
+    await Promise.resolve();
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLElement | null;
+    const selectedWidgetBody = host
+      .querySelector('[data-floe-workbench-widget-id="widget-scroll-1"]')
+      ?.querySelector('[data-testid="widget-body"]') as HTMLElement | null;
+    const unselectedWidgetBody = host
+      .querySelector('[data-floe-workbench-widget-id="widget-scroll-2"]')
+      ?.querySelector('[data-testid="widget-body"]') as HTMLElement | null;
+
+    expect(canvas).toBeTruthy();
+    expect(selectedWidgetBody).toBeTruthy();
+    expect(unselectedWidgetBody).toBeTruthy();
+
+    mockCanvasRect(canvas!);
+
+    const wheelOnSelectedWidget = dispatchWheel(selectedWidgetBody!, -120);
+    expect(wheelOnSelectedWidget.defaultPrevented).toBe(false);
+
+    const wheelOnUnselectedWidget = dispatchWheel(unselectedWidgetBody!, -120);
+    expect(wheelOnUnselectedWidget.defaultPrevented).toBe(true);
+
     dispose();
   });
 });

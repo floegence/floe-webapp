@@ -62,9 +62,10 @@ export function findWorkbenchWidgetRoot(
   target: EventTarget | null,
   widgetRootAttr = DEFAULT_WORKBENCH_WIDGET_ROOT_ATTR,
 ): HTMLElement | null {
-  if (!(target instanceof Element)) return null;
+  const element = resolveElement(target);
+  if (!element) return null;
 
-  const widgetRoot = target.closest(`[${widgetRootAttr}="true"]`);
+  const widgetRoot = element.closest(`[${widgetRootAttr}="true"]`);
   return widgetRoot instanceof HTMLElement ? widgetRoot : null;
 }
 
@@ -119,8 +120,23 @@ function createWidgetInputOwner(
 function resolveDefaultWheelRouting(args: {
   target: EventTarget | null;
   disablePanZoom: boolean;
+  selectedWidgetId: string | null;
   wheelInteractiveSelector: string;
+  findWidgetRoot: (target: EventTarget | null) => HTMLElement | null;
+  readWidgetId: (element: Element | null) => string | null;
 }): WorkbenchWheelRoutingDecision {
+  const widgetRoot = args.findWidgetRoot(args.target);
+  if (widgetRoot) {
+    const ownerWidgetId = args.readWidgetId(widgetRoot);
+    if (ownerWidgetId !== null && ownerWidgetId === args.selectedWidgetId) {
+      return { kind: 'local_surface', reason: 'selected_widget' };
+    }
+    if (args.disablePanZoom) {
+      return { kind: 'ignore', reason: 'pan_zoom_disabled' };
+    }
+    return { kind: 'canvas_zoom' };
+  }
+
   const routing = resolveSurfaceWheelRouting({
     target: args.target,
     disablePanZoom: args.disablePanZoom,
@@ -195,7 +211,10 @@ export function resolveWorkbenchInteractionAdapter(
       ?? ((args) => resolveDefaultWheelRouting({
         target: args.target,
         disablePanZoom: args.disablePanZoom,
+        selectedWidgetId: args.selectedWidgetId,
         wheelInteractiveSelector: args.wheelInteractiveSelector,
+        findWidgetRoot,
+        readWidgetId,
       })),
     shouldBypassGlobalHotkeys:
       adapter?.shouldBypassGlobalHotkeys
