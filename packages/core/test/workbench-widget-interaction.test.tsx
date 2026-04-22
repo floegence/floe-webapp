@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { createEffect, type JSX } from 'solid-js';
+import { createEffect, createSignal, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchWidget } from '../src/components/workbench/WorkbenchWidget';
+import { resolveWorkbenchWidgetLocalTypingTarget } from '../src/components/ui/localInteractionSurface';
 import type {
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetBodyProps,
@@ -79,6 +80,14 @@ function dispatchPointerDown(target: EventTarget): void {
   dispatchPointerEvent('pointerdown', target);
 }
 
+async function flushWorkbenchInteraction(): Promise<void> {
+  await Promise.resolve();
+  if (typeof requestAnimationFrame === 'function') {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+  await Promise.resolve();
+}
+
 function renderActivationProbe(
   onActivation: (activation: WorkbenchWidgetBodyActivation) => void,
   children: (props: WorkbenchWidgetBodyProps) => JSX.Element,
@@ -95,6 +104,52 @@ function renderActivationProbe(
       return children(props);
     },
   };
+}
+
+function renderStatefulWidget(
+  host: HTMLElement,
+  definition: WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>,
+  options: {
+    layoutMode?: 'canvas_scaled' | 'projected_surface';
+  } = {},
+) {
+  const [selected, setSelected] = createSignal(false);
+  const [zIndex, setZIndex] = createSignal(7);
+
+  return render(() => (
+    <WorkbenchWidget
+      definition={definition}
+      widgetId="widget-files-1"
+      widgetTitle="Files"
+      widgetType={FILES_WIDGET_TYPE}
+      x={0}
+      y={0}
+      width={480}
+      height={320}
+      renderLayer={zIndex()}
+      itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: zIndex() })}
+      selected={selected()}
+      optimisticFront={false}
+      topRenderLayer={zIndex() + 1}
+      viewportScale={1}
+      locked={false}
+      filtered={false}
+      layoutMode={options.layoutMode}
+      projectedViewport={
+        options.layoutMode === 'projected_surface'
+          ? () => ({ x: 24, y: 16, scale: 1.1 })
+          : undefined
+      }
+      surfaceReady={options.layoutMode === 'projected_surface' ? true : undefined}
+      onSelect={() => setSelected(true)}
+      onContextMenu={() => {}}
+      onStartOptimisticFront={() => {}}
+      onCommitFront={() => setZIndex((value) => value + 1)}
+      onCommitMove={() => {}}
+      onCommitResize={() => {}}
+      onRequestDelete={() => {}}
+    />
+  ), host);
 }
 
 describe('WorkbenchWidget interaction ownership', () => {
@@ -296,6 +351,79 @@ describe('WorkbenchWidget interaction ownership', () => {
         source: 'local_pointer',
       })
     );
+  });
+
+  it('delivers first-click local activation after inactive widget selection settles', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const activations: Array<{ seq: number; selected: boolean }> = [];
+    const definition = {
+      ...filesWidgetDefinition,
+      body: (props: WorkbenchWidgetBodyProps) => {
+        let lastSeq = 0;
+        createEffect(() => {
+          const activation = props.activation;
+          if (!activation || activation.seq === lastSeq) return;
+          lastSeq = activation.seq;
+          activations.push({ seq: activation.seq, selected: Boolean(props.selected) });
+        });
+
+        return <div data-testid="widget-activation-body">Body</div>;
+      },
+    } satisfies WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>;
+
+    dispose = renderStatefulWidget(host, definition);
+
+    const widgetBody = host.querySelector('[data-testid="widget-activation-body"]') as HTMLElement | null;
+    expect(widgetBody).toBeTruthy();
+
+    dispatchPointerDown(widgetBody!);
+    await flushWorkbenchInteraction();
+
+    expect(activations).toEqual([{ seq: 1, selected: true }]);
+  });
+
+  it.each([
+    { name: 'canvas-scaled', layoutMode: 'canvas_scaled' as const },
+    { name: 'projected-surface', layoutMode: 'projected_surface' as const },
+  ])('restores first-click typing focus for inactive %s widgets', async ({ layoutMode }) => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const outsideInput = document.createElement('input');
+    document.body.appendChild(outsideInput);
+
+    const definition = {
+      ...filesWidgetDefinition,
+      body: () => <input aria-label="Workbench input" data-testid="widget-input" />,
+    } satisfies WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>;
+
+    dispose = renderStatefulWidget(host, definition, { layoutMode });
+
+    const widgetInput = host.querySelector('[data-testid="widget-input"]') as HTMLInputElement | null;
+    expect(widgetInput).toBeTruthy();
+    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    expect(
+      resolveWorkbenchWidgetLocalTypingTarget({
+        target: widgetInput,
+        widgetRoot,
+        interactiveSelector: '[data-floe-canvas-interactive="true"]',
+        panSurfaceSelector: '[data-floe-canvas-pan-surface="true"]',
+      })
+    ).toBe(widgetInput);
+    const nativeFocus = widgetInput!.focus.bind(widgetInput);
+    const focusSpy = vi.fn((options?: FocusOptions) => nativeFocus(options));
+    widgetInput!.focus = focusSpy as typeof widgetInput.focus;
+
+    outsideInput.focus();
+    expect(document.activeElement).toBe(outsideInput);
+
+    dispatchPointerDown(widgetInput!);
+    await flushWorkbenchInteraction();
+
+    expect(focusSpy).toHaveBeenCalled();
+    expect(document.activeElement).toBe(widgetInput);
   });
 
   it('does not emit local activation from shell, native controls, local surfaces, or secondary presses', async () => {

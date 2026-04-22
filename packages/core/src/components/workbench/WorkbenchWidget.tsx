@@ -4,6 +4,7 @@ import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
   WORKBENCH_WIDGET_SHELL_ATTR,
+  resolveWorkbenchWidgetLocalTypingTarget,
   shouldActivateWorkbenchWidgetLocalTarget,
 } from '../ui/localInteractionSurface';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
@@ -47,6 +48,20 @@ interface LocalResizeState {
   height: number;
   scale: number;
   stopInteraction: () => void;
+}
+
+interface ScheduledLocalBodyActivation {
+  token: number;
+  pointerId: number;
+  pointerType?: string;
+  timestamp: number;
+}
+
+interface ScheduledLocalTypingFocusRestore {
+  token: number;
+  pointerId: number;
+  target: HTMLElement;
+  timestamp: number;
 }
 
 /** Minimum widget footprint in world-space pixels. */
@@ -97,6 +112,9 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     createSignal<WorkbenchWidgetBodyActivation>();
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
+  let pendingLocalInteractionToken = 0;
+  let pendingLocalBodyActivation: ScheduledLocalBodyActivation | null = null;
+  let pendingLocalTypingFocusRestore: ScheduledLocalTypingFocusRestore | null = null;
   let widgetRootEl: HTMLElement | undefined;
   const startTrackedLayoutInteraction = (kind: 'drag' | 'resize', cursor: string) => {
     const stopHotInteraction = startHotInteraction({ kind, cursor });
@@ -139,35 +157,111 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     props.onCommitFront(props.widgetId);
     widgetRootEl?.focus({ preventScroll: true });
   };
+  const emitBodyActivation = (pointerType?: string) => {
+    setBodyActivation((previous) => ({
+      seq: (previous?.seq ?? 0) + 1,
+      source: 'local_pointer',
+      pointerType,
+    }));
+  };
+  const restoreTypingTargetFocus = (target: HTMLElement) => {
+    if (!widgetRootEl || !target.isConnected || !widgetRootEl.contains(target)) {
+      return;
+    }
+
+    try {
+      target.focus({ preventScroll: true });
+    } catch {
+      target.focus();
+    }
+  };
+  const scheduleBodyActivation = (pointerId: number, pointerType?: string) => {
+    pendingLocalBodyActivation = {
+      token: ++pendingLocalInteractionToken,
+      pointerId,
+      pointerType,
+      timestamp: Date.now(),
+    };
+    const scheduled = pendingLocalBodyActivation;
+    queueMicrotask(() => {
+      if (!scheduled || pendingLocalBodyActivation?.token !== scheduled.token) return;
+      emitBodyActivation(scheduled.pointerType);
+      pendingLocalBodyActivation = null;
+    });
+  };
+  const scheduleTypingTargetFocusRestore = (pointerId: number, target: HTMLElement) => {
+    pendingLocalTypingFocusRestore = {
+      token: ++pendingLocalInteractionToken,
+      pointerId,
+      target,
+      timestamp: Date.now(),
+    };
+    const scheduled = pendingLocalTypingFocusRestore;
+    queueMicrotask(() => {
+      const flush = () => {
+        if (!scheduled || pendingLocalTypingFocusRestore?.token !== scheduled.token) return;
+        restoreTypingTargetFocus(scheduled.target);
+        pendingLocalTypingFocusRestore = null;
+      };
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => flush());
+        return;
+      }
+      flush();
+    });
+  };
+
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
+
+    const wasSelected = props.selected;
+    const ownership = resolveEventOwnership(event.target);
+    const localTypingTarget = ownership === 'widget_local'
+      ? resolveWorkbenchWidgetLocalTypingTarget({
+        target: event.target,
+        widgetRoot: widgetRootEl ?? null,
+        interactiveSelector: interactionAdapter().interactiveSelector,
+        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
+      })
+      : null;
+    const shouldActivateLocalTarget =
+      ownership === 'widget_local'
+      && !localTypingTarget
+      && shouldActivateWorkbenchWidgetLocalTarget({
+        target: event.target,
+        widgetRoot: widgetRootEl ?? null,
+        interactiveSelector: interactionAdapter().interactiveSelector,
+        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
+      });
 
     props.onSelect(props.widgetId);
     props.onCommitFront(props.widgetId);
 
-    const ownership = resolveEventOwnership(event.target);
     if (ownership === 'widget_shell') {
       widgetRootEl?.focus({ preventScroll: true });
       return;
     }
 
     if (ownership !== 'widget_local') return;
-    if (
-      !shouldActivateWorkbenchWidgetLocalTarget({
-        target: event.target,
-        widgetRoot: widgetRootEl ?? null,
-        interactiveSelector: interactionAdapter().interactiveSelector,
-        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
-      })
-    ) {
+    if (localTypingTarget) {
+      pendingLocalBodyActivation = null;
+      if (!wasSelected) {
+        scheduleTypingTargetFocusRestore(event.pointerId, localTypingTarget);
+      }
       return;
     }
 
-    setBodyActivation((previous) => ({
-      seq: (previous?.seq ?? 0) + 1,
-      source: 'local_pointer',
-      pointerType: event.pointerType || undefined,
-    }));
+    if (!shouldActivateLocalTarget) {
+      return;
+    }
+
+    pendingLocalTypingFocusRestore = null;
+    if (wasSelected) {
+      emitBodyActivation(event.pointerType || undefined);
+      return;
+    }
+
+    scheduleBodyActivation(event.pointerId, event.pointerType || undefined);
   };
 
   const livePosition = createMemo(() => {

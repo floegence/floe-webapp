@@ -102,6 +102,8 @@ Starting with `v0.36.12`, workbench surfaces expose explicit selection clearing 
 
 Workbench widget bodies now also receive an optional `activation` payload when a primary pointerdown lands on a widget-local, non-focusable, non-overlay surface. This lets virtual-input widgets such as terminals or projected editor surfaces reclaim their own internal focus on the first click without reverting the shell-vs-local interaction contract, while native inputs, buttons, dropdowns, dialogs, and header chrome continue using their existing browser or component-owned focus behavior.
 
+Starting with `v0.36.23`, that same workbench interaction contract also preserves first-click typing intent across same-event selection/front updates. Inactive widgets can now enter native inputs on the first click, while virtual-input widgets still receive their shared `activation` signal after the workbench shell captures the interaction.
+
 `CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
 
 Optional local variations:

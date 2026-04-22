@@ -261,6 +261,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 8. projected surface 只解决“业务 DOM 不再处于 canvas scale transform 祖先”这个架构问题；selection、focus、fronting、drag、resize、context menu、persisted geometry 仍然保持 workbench 统一契约。
 9. 下游产品如果需要特殊的 wheel / focus / hotkey ownership，只能通过 `WorkbenchSurface` 的 `interactionAdapter` 做薄适配，禁止重新 fork 一套 canvas / widget / surface 壳层。
 10. 如果 widget body 需要根据 shell 状态做 pause/resume、placeholder 或懒加载判断，应直接消费共享 `WorkbenchWidgetBodyProps` 里的 `selected` / `filtered` / `lifecycle` / `requestActivate()`，禁止下游重新 fork widget shell 只为了补这些 host hints。
+11. inactive workbench widget 的第一次本地点击如果命中 typing target，shared widget shell 必须先在状态更新前捕获该 target，再在同次 `select + front` 收口后恢复/确认焦点；如果命中的是 terminal/editor 这类非原生输入表面，则应在同一轮收口后再分发共享 `activation`，避免下游组件自己用白名单特判去抢修 first-click focus。
 
 结论：
 

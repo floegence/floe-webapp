@@ -218,3 +218,44 @@ export function shouldActivateWorkbenchWidgetLocalTarget(
 
   return resolveWorkbenchWidgetEventOwnership(options) === 'widget_local';
 }
+
+export function resolveWorkbenchWidgetLocalTypingTarget(
+  options: WorkbenchWidgetLocalActivationTargetOptions,
+): HTMLElement | null {
+  const {
+    widgetRoot,
+    shellSelector = DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
+    localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+  } = options;
+
+  const widgetElement = resolveElement(widgetRoot);
+  const targetElement = resolveElement(options.target);
+  if (!widgetElement || !targetElement || !widgetElement.contains(targetElement)) {
+    return null;
+  }
+
+  if (targetElement === widgetElement || targetElement.closest(shellSelector) !== null) {
+    return null;
+  }
+
+  if (targetElement.closest(options.panSurfaceSelector) !== null) {
+    return null;
+  }
+
+  if (targetElement.closest(localInteractionSurfaceSelector) !== null) {
+    return null;
+  }
+
+  let currentElement: Element | null = targetElement;
+  while (currentElement && currentElement !== widgetElement) {
+    if (
+      currentElement instanceof HTMLElement
+      && isTypingElement(currentElement)
+    ) {
+      return currentElement;
+    }
+    currentElement = currentElement.parentElement;
+  }
+
+  return null;
+}
