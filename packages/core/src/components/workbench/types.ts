@@ -110,12 +110,18 @@ export interface WorkbenchWidgetBodyActivation {
   pointerType?: string;
 }
 
+export type WorkbenchWidgetLifecycle = 'hot' | 'warm' | 'cold';
+
 export interface WorkbenchWidgetBodyProps<TWidgetType extends string = WorkbenchWidgetType> {
   widgetId: string;
   title: string;
   type: TWidgetType;
   surfaceMetrics?: WorkbenchWidgetSurfaceMetrics;
   activation?: WorkbenchWidgetBodyActivation;
+  lifecycle?: WorkbenchWidgetLifecycle;
+  selected?: boolean;
+  filtered?: boolean;
+  requestActivate?: () => void;
 }
 
 export interface WorkbenchWidgetDefinition<TWidgetType extends string = WorkbenchWidgetType> {

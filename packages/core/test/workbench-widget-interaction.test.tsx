@@ -365,6 +365,63 @@ describe('WorkbenchWidget interaction ownership', () => {
     expect(onActivation).not.toHaveBeenCalled();
   });
 
+  it('passes lifecycle, selection state, and requestActivate through the shared body contract', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const onSelect = vi.fn();
+    const onCommitFront = vi.fn();
+    const seen: Array<WorkbenchWidgetBodyProps> = [];
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={{
+          ...filesWidgetDefinition,
+          body: (props) => {
+            seen.push(props);
+            return <div data-testid="widget-body">Body</div>;
+          },
+        }}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected={false}
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        onSelect={onSelect}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={onCommitFront}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ), host);
+
+    expect(seen[0]).toMatchObject({
+      lifecycle: 'warm',
+      selected: false,
+      filtered: false,
+    });
+
+    seen[0]!.requestActivate?.();
+    await Promise.resolve();
+
+    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    expect(onSelect).toHaveBeenCalledWith('widget-files-1');
+    expect(onCommitFront).toHaveBeenCalledWith('widget-files-1');
+    expect(document.activeElement).toBe(widgetRoot);
+  });
+
   it('commits widget drag once when release is only observable through a later buttons=0 move', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

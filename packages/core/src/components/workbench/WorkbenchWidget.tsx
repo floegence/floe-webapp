@@ -17,6 +17,7 @@ import type {
   WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetBodyActivation,
+  WorkbenchWidgetLifecycle,
   WorkbenchWidgetItem,
   WorkbenchWidgetRenderMode,
   WorkbenchWidgetSurfaceMetrics,
@@ -120,6 +121,12 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
+  const lifecycle = createMemo<WorkbenchWidgetLifecycle>(() => {
+    if (props.filtered) {
+      return 'cold';
+    }
+    return props.selected ? 'hot' : 'warm';
+  });
   const resolveEventOwnership = (target: EventTarget | null) =>
     interactionAdapter().resolveWidgetEventOwnership({
       target,
@@ -127,6 +134,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       interactiveSelector: interactionAdapter().interactiveSelector,
       panSurfaceSelector: interactionAdapter().panSurfaceSelector,
     });
+  const requestActivate = () => {
+    props.onSelect(props.widgetId);
+    props.onCommitFront(props.widgetId);
+    widgetRootEl?.focus({ preventScroll: true });
+  };
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
 
@@ -509,6 +521,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
               type={props.widgetType}
               surfaceMetrics={surfaceMetrics()}
               activation={bodyActivation()}
+              lifecycle={lifecycle()}
+              selected={props.selected}
+              filtered={props.filtered}
+              requestActivate={requestActivate}
             />
           );
         })()}
