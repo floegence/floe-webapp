@@ -232,9 +232,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       const rect = surfaceMetrics()?.rect;
       return {
         ...shared,
-        left: `${rect?.screenX ?? 0}px`,
-        top: `${rect?.screenY ?? 0}px`,
-        '--floe-workbench-projected-scale': `${rect?.viewportScale ?? Math.max(props.viewportScale, 0.001)}`,
+        transform: `translate3d(${rect?.screenX ?? 0}px, ${rect?.screenY ?? 0}px, 0) scale(${rect?.viewportScale ?? Math.max(props.viewportScale, 0.001)})`,
       };
     }
 

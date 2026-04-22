@@ -278,7 +278,7 @@
   }
 
   .workbench-widget.is-projected-surface {
-    zoom: var(--floe-workbench-projected-scale, 1);
+    transform-origin: 0 0;
   }
 
   .workbench-widget.is-dragging {

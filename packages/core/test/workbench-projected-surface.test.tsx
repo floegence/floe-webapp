@@ -163,9 +163,9 @@ describe('Workbench projected surfaces', () => {
     expect(projectedLayer?.contains(projectedWidget!)).toBe(true);
 
     expect(projectedWidget?.dataset.floeWorkbenchRenderMode).toBe('projected_surface');
-    expect(projectedWidget?.style.left).toBe('130px');
-    expect(projectedWidget?.style.top).toBe('95px');
-    expect(projectedWidget?.getAttribute('style')).toContain('--floe-workbench-projected-scale: 1.5;');
+    expect(projectedWidget?.style.left).toBe('');
+    expect(projectedWidget?.style.top).toBe('');
+    expect(projectedWidget?.style.transform).toBe('translate3d(130px, 95px, 0) scale(1.5)');
 
     expect(observedProjectedMetrics.at(-1)).toEqual({
       ready: true,
@@ -201,6 +201,13 @@ describe('Workbench projected surfaces', () => {
             onClick={() => setViewport((current) => ({ ...current, x: current.x + 80, y: current.y + 40 }))}
           >
             Shift viewport
+          </button>
+          <button
+            type="button"
+            data-testid="zoom-viewport"
+            onClick={() => setViewport((current) => ({ ...current, scale: 1.7 }))}
+          >
+            Zoom viewport
           </button>
           <WorkbenchCanvas
             widgetDefinitions={widgetDefinitions}
@@ -259,6 +266,28 @@ describe('Workbench projected surfaces', () => {
       rect: {
         screenX: 204,
         screenY: 126,
+      },
+    });
+    const projectedWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-preview"]'
+    ) as HTMLElement | null;
+    expect(projectedWidget?.style.transform).toBe('translate3d(204px, 126px, 0) scale(1.2)');
+
+    const zoomButton = host.querySelector('[data-testid="zoom-viewport"]') as HTMLButtonElement | null;
+    expect(zoomButton).toBeTruthy();
+    zoomButton!.click();
+    await Promise.resolve();
+
+    expect(bodyMounts.get('widget-preview')).toBe(1);
+    expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
+    expect(projectedWidget?.style.transform).toBe('translate3d(214px, 141px, 0) scale(1.7)');
+    expect(observedProjectedMetrics.at(-1)).toMatchObject({
+      rect: {
+        screenX: 214,
+        screenY: 141,
+        screenWidth: 680,
+        screenHeight: 442,
+        viewportScale: 1.7,
       },
     });
 
