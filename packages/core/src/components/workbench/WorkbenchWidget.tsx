@@ -50,13 +50,6 @@ interface LocalResizeState {
   stopInteraction: () => void;
 }
 
-interface ScheduledLocalBodyActivation {
-  token: number;
-  pointerId: number;
-  pointerType?: string;
-  timestamp: number;
-}
-
 interface ScheduledLocalTypingFocusRestore {
   token: number;
   pointerId: number;
@@ -67,6 +60,7 @@ interface ScheduledLocalTypingFocusRestore {
 interface PendingPointerOwnershipPreclaim {
   token: number;
   wasSelected: boolean;
+  ownership: ReturnType<ResolvedWorkbenchInteractionAdapter['resolveWidgetEventOwnership']>;
 }
 
 /** Minimum widget footprint in world-space pixels. */
@@ -115,11 +109,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
   const [bodyActivation, setBodyActivation] =
     createSignal<WorkbenchWidgetBodyActivation>();
+  const [localSelectionClaim, setLocalSelectionClaim] = createSignal(false);
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
   let pendingLocalInteractionToken = 0;
   let pendingPointerOwnershipPreclaimToken = 0;
-  let pendingLocalBodyActivation: ScheduledLocalBodyActivation | null = null;
   let pendingLocalTypingFocusRestore: ScheduledLocalTypingFocusRestore | null = null;
   const pendingPointerOwnershipPreclaims = new Map<number, PendingPointerOwnershipPreclaim>();
   let widgetRootEl: HTMLElement | undefined;
@@ -145,21 +139,33 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   });
 
   const commitWidgetSelectionAndFront = () => {
+    setLocalSelectionClaim(false);
     props.onSelect(props.widgetId);
     props.onCommitFront(props.widgetId);
   };
-  const preclaimPointerOwnership = (pointerId: number, wasSelected: boolean) => {
+  const clearLocalSelectionClaim = () => {
+    setLocalSelectionClaim(false);
+  };
+  const selected = createMemo(() => props.selected || localSelectionClaim());
+  const preclaimPointerOwnership = (
+    pointerId: number,
+    wasSelected: boolean,
+    ownership: ReturnType<ResolvedWorkbenchInteractionAdapter['resolveWidgetEventOwnership']>,
+  ) => {
     const preclaim = {
       token: ++pendingPointerOwnershipPreclaimToken,
       wasSelected,
+      ownership,
     };
     pendingPointerOwnershipPreclaims.set(pointerId, preclaim);
+    if (!wasSelected && ownership === 'widget_local') {
+      setLocalSelectionClaim(true);
+    }
     queueMicrotask(() => {
       const current = pendingPointerOwnershipPreclaims.get(pointerId);
       if (current?.token !== preclaim.token) return;
       pendingPointerOwnershipPreclaims.delete(pointerId);
     });
-    commitWidgetSelectionAndFront();
   };
   const consumePointerOwnershipPreclaim = (
     pointerId: number,
@@ -177,12 +183,35 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     const handlePointerDownCapture = (event: PointerEvent) => {
       if (event.button !== 0) return;
-      preclaimPointerOwnership(event.pointerId, props.selected);
+      preclaimPointerOwnership(
+        event.pointerId,
+        selected(),
+        resolveEventOwnership(event.target),
+      );
+    };
+    const handleClickCapture = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      if (!localSelectionClaim()) return;
+      if (resolveEventOwnership(event.target) !== 'widget_local') return;
+      commitWidgetSelectionAndFront();
+    };
+    const handlePointerUp = () => {
+      setTimeout(() => {
+        if (!props.selected) {
+          clearLocalSelectionClaim();
+        }
+      }, 0);
     };
 
     root.addEventListener('pointerdown', handlePointerDownCapture, true);
+    root.addEventListener('click', handleClickCapture, true);
+    root.addEventListener('pointerup', handlePointerUp);
+    root.addEventListener('pointercancel', clearLocalSelectionClaim);
     onCleanup(() => {
       root.removeEventListener('pointerdown', handlePointerDownCapture, true);
+      root.removeEventListener('click', handleClickCapture, true);
+      root.removeEventListener('pointerup', handlePointerUp);
+      root.removeEventListener('pointercancel', clearLocalSelectionClaim);
     });
   });
 
@@ -192,7 +221,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     if (props.filtered) {
       return 'cold';
     }
-    return props.selected ? 'hot' : 'warm';
+    return selected() ? 'hot' : 'warm';
   });
   const resolveEventOwnership = (target: EventTarget | null) =>
     interactionAdapter().resolveWidgetEventOwnership({
@@ -223,20 +252,6 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       target.focus();
     }
   };
-  const scheduleBodyActivation = (pointerId: number, pointerType?: string) => {
-    pendingLocalBodyActivation = {
-      token: ++pendingLocalInteractionToken,
-      pointerId,
-      pointerType,
-      timestamp: Date.now(),
-    };
-    const scheduled = pendingLocalBodyActivation;
-    queueMicrotask(() => {
-      if (!scheduled || pendingLocalBodyActivation?.token !== scheduled.token) return;
-      emitBodyActivation(scheduled.pointerType);
-      pendingLocalBodyActivation = null;
-    });
-  };
   const scheduleTypingTargetFocusRestore = (pointerId: number, target: HTMLElement) => {
     pendingLocalTypingFocusRestore = {
       token: ++pendingLocalInteractionToken,
@@ -264,7 +279,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     const pointerOwnershipPreclaim = consumePointerOwnershipPreclaim(event.pointerId);
     const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? props.selected;
-    const ownership = resolveEventOwnership(event.target);
+    const ownership = pointerOwnershipPreclaim?.ownership ?? resolveEventOwnership(event.target);
     const localTypingTarget = ownership === 'widget_local'
       ? resolveWorkbenchWidgetLocalTypingTarget({
         target: event.target,
@@ -283,18 +298,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         panSurfaceSelector: interactionAdapter().panSurfaceSelector,
       });
 
-    if (!pointerOwnershipPreclaim) {
-      commitWidgetSelectionAndFront();
-    }
-
     if (ownership === 'widget_shell') {
+      commitWidgetSelectionAndFront();
       widgetRootEl?.focus({ preventScroll: true });
       return;
     }
 
     if (ownership !== 'widget_local') return;
     if (localTypingTarget) {
-      pendingLocalBodyActivation = null;
       if (!wasSelected) {
         scheduleTypingTargetFocusRestore(event.pointerId, localTypingTarget);
       }
@@ -311,7 +322,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       return;
     }
 
-    scheduleBodyActivation(event.pointerId, event.pointerType || undefined);
+    commitWidgetSelectionAndFront();
+    emitBodyActivation(event.pointerType || undefined);
   };
 
   const livePosition = createMemo(() => {
@@ -530,7 +542,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       ref={widgetRootEl}
       class="workbench-widget"
       classList={{
-        'is-selected': props.selected,
+        'is-selected': selected(),
         'is-dragging': isDragging(),
         'is-resizing': isResizing(),
         'is-filtered-out': props.filtered,
@@ -543,10 +555,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       {...{ [interactionAdapter().widgetIdAttr]: props.widgetId }}
       data-workbench-widget-type={props.widgetType}
       data-floe-workbench-render-mode={props.layoutMode ?? 'canvas_scaled'}
-      {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: props.selected ? 'true' : undefined }}
+      {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: selected() ? 'true' : undefined }}
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onFocus={() => {
+        if (localSelectionClaim()) return;
         props.onSelect(props.widgetId);
       }}
       onContextMenu={(event) => {
@@ -664,7 +677,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
               surfaceMetrics={surfaceMetrics}
               activation={bodyActivation()}
               lifecycle={lifecycle()}
-              selected={props.selected}
+              selected={selected()}
               filtered={props.filtered}
               requestActivate={requestActivate}
             />

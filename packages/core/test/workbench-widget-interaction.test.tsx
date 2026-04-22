@@ -4,11 +4,13 @@ import { createEffect, createSignal, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { WorkbenchCanvas } from '../src/components/workbench/WorkbenchCanvas';
 import { WorkbenchWidget } from '../src/components/workbench/WorkbenchWidget';
 import {
   WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR,
   resolveWorkbenchWidgetLocalTypingTarget,
 } from '../src/components/ui/localInteractionSurface';
+import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
 import type {
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetBodyProps,
@@ -156,6 +158,87 @@ function renderStatefulWidget(
       onRequestDelete={() => {}}
     />
   ), host);
+}
+
+const PROJECTED_CLICK_WIDGET_TYPE = 'custom.projected-click';
+
+function renderProjectedInteractionHarness(
+  host: HTMLElement,
+  definition: WorkbenchWidgetDefinition<typeof PROJECTED_CLICK_WIDGET_TYPE>,
+  options: {
+    initiallySelectedWidgetId?: string | null;
+  } = {},
+) {
+  const widgetDefinitions = [definition] satisfies readonly WorkbenchWidgetDefinition[];
+  const [selectedWidgetId, setSelectedWidgetId] = createSignal<string | null>(
+    options.initiallySelectedWidgetId ?? 'widget-a'
+  );
+  const [widgets, setWidgets] = createSignal<WorkbenchWidgetItem<typeof PROJECTED_CLICK_WIDGET_TYPE>[]>([
+    {
+      id: 'widget-a',
+      type: PROJECTED_CLICK_WIDGET_TYPE,
+      title: 'Widget A',
+      x: 40,
+      y: 20,
+      width: 320,
+      height: 220,
+      z_index: 2,
+      created_at_unix_ms: 1,
+    },
+    {
+      id: 'widget-b',
+      type: PROJECTED_CLICK_WIDGET_TYPE,
+      title: 'Widget B',
+      x: 420,
+      y: 60,
+      width: 320,
+      height: 220,
+      z_index: 1,
+      created_at_unix_ms: 2,
+    },
+  ]);
+  const filters = createWorkbenchFilterState(widgetDefinitions);
+  const commitFront = vi.fn((widgetId: string) => {
+    setWidgets((current) => {
+      const topZIndex = current.reduce((top, widget) => Math.max(top, widget.z_index), 1);
+      return current.map((widget) =>
+        widget.id === widgetId && widget.z_index < topZIndex
+          ? { ...widget, z_index: topZIndex + 1 }
+          : widget
+      );
+    });
+  });
+
+  const dispose = render(() => (
+    <WorkbenchCanvas
+      widgetDefinitions={widgetDefinitions}
+      widgets={widgets()}
+      viewport={{ x: 100, y: 50, scale: 1.2 }}
+      canvasFrameSize={{ width: 1200, height: 800 }}
+      selectedWidgetId={selectedWidgetId()}
+      optimisticFrontWidgetId={null}
+      locked={false}
+      filters={filters}
+      setCanvasFrameRef={() => {}}
+      onViewportCommit={() => {}}
+      onCanvasContextMenu={() => {}}
+      onSelectWidget={setSelectedWidgetId}
+      onWidgetContextMenu={() => {}}
+      onStartOptimisticFront={() => {}}
+      onCommitFront={commitFront}
+      onCommitMove={() => {}}
+      onCommitResize={() => {}}
+      onRequestOverview={() => {}}
+      onRequestFit={() => {}}
+      onRequestDelete={() => {}}
+    />
+  ), host);
+
+  return {
+    dispose,
+    selectedWidgetId,
+    commitFront,
+  };
 }
 
 describe('WorkbenchWidget interaction ownership', () => {
@@ -424,6 +507,58 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     expect(pointerDown.defaultPrevented).toBe(false);
     expect(events).toEqual(['pointerdown:true', 'click:true']);
+  });
+
+  it('defers projected-surface front commits until the original local click dispatch begins', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const events: string[] = [];
+    const definition = {
+      type: PROJECTED_CLICK_WIDGET_TYPE,
+      label: 'Projected Click',
+      icon: () => null,
+      renderMode: 'projected_surface',
+      defaultTitle: 'Projected Click',
+      defaultSize: { width: 320, height: 220 },
+      body: (props) => (
+        <button
+          type="button"
+          data-testid={`projected-click-${props.widgetId}`}
+          onPointerDown={() => events.push(`pointerdown:${props.widgetId}:${Boolean(props.selected)}`)}
+          onClick={() => events.push(`click:${props.widgetId}:${Boolean(props.selected)}`)}
+        >
+          Trigger
+        </button>
+      ),
+    } satisfies WorkbenchWidgetDefinition<typeof PROJECTED_CLICK_WIDGET_TYPE>;
+
+    const { dispose: harnessDispose, selectedWidgetId, commitFront } =
+      renderProjectedInteractionHarness(host, definition);
+
+    const button = host.querySelector('[data-testid="projected-click-widget-b"]') as HTMLButtonElement | null;
+    expect(button).toBeTruthy();
+    expect(selectedWidgetId()).toBe('widget-a');
+
+    dispatchPointerEvent('pointerdown', button!, { pointerId: 9 });
+    await Promise.resolve();
+
+    expect(events).toEqual(['pointerdown:widget-b:true']);
+    expect(selectedWidgetId()).toBe('widget-a');
+    expect(commitFront).not.toHaveBeenCalled();
+
+    dispatchPointerEvent('pointerup', button!, { pointerId: 9, buttons: 0 });
+    button!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await Promise.resolve();
+
+    expect(events).toEqual([
+      'pointerdown:widget-b:true',
+      'click:widget-b:true',
+    ]);
+    expect(selectedWidgetId()).toBe('widget-b');
+    expect(commitFront).toHaveBeenCalledWith('widget-b');
+
+    harnessDispose();
   });
 
   it.each([
