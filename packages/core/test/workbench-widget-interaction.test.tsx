@@ -394,14 +394,18 @@ describe('WorkbenchWidget interaction ownership', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const clicks: boolean[] = [];
+    const events: string[] = [];
     const definition = {
       ...filesWidgetDefinition,
       body: (props: WorkbenchWidgetBodyProps) => (
         <button
           type="button"
           data-testid="widget-body-button"
-          onClick={() => clicks.push(Boolean(props.selected))}
+          onPointerDown={(event) => {
+            events.push(`pointerdown:${Boolean(props.selected)}`);
+            event.stopPropagation();
+          }}
+          onClick={() => events.push(`click:${Boolean(props.selected)}`)}
         >
           Open
         </button>
@@ -419,7 +423,7 @@ describe('WorkbenchWidget interaction ownership', () => {
     bodyButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
     expect(pointerDown.defaultPrevented).toBe(false);
-    expect(clicks).toEqual([true]);
+    expect(events).toEqual(['pointerdown:true', 'click:true']);
   });
 
   it.each([

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
@@ -64,6 +64,11 @@ interface ScheduledLocalTypingFocusRestore {
   timestamp: number;
 }
 
+interface PendingPointerOwnershipPreclaim {
+  token: number;
+  wasSelected: boolean;
+}
+
 /** Minimum widget footprint in world-space pixels. */
 const MIN_WIDTH = 220;
 const MIN_HEIGHT = 160;
@@ -113,8 +118,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
   let pendingLocalInteractionToken = 0;
+  let pendingPointerOwnershipPreclaimToken = 0;
   let pendingLocalBodyActivation: ScheduledLocalBodyActivation | null = null;
   let pendingLocalTypingFocusRestore: ScheduledLocalTypingFocusRestore | null = null;
+  const pendingPointerOwnershipPreclaims = new Map<number, PendingPointerOwnershipPreclaim>();
   let widgetRootEl: HTMLElement | undefined;
   const startTrackedLayoutInteraction = (kind: 'drag' | 'resize', cursor: string) => {
     const stopHotInteraction = startHotInteraction({ kind, cursor });
@@ -137,6 +144,48 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     untrack(resizeState)?.stopInteraction();
   });
 
+  const commitWidgetSelectionAndFront = () => {
+    props.onSelect(props.widgetId);
+    props.onCommitFront(props.widgetId);
+  };
+  const preclaimPointerOwnership = (pointerId: number, wasSelected: boolean) => {
+    const preclaim = {
+      token: ++pendingPointerOwnershipPreclaimToken,
+      wasSelected,
+    };
+    pendingPointerOwnershipPreclaims.set(pointerId, preclaim);
+    queueMicrotask(() => {
+      const current = pendingPointerOwnershipPreclaims.get(pointerId);
+      if (current?.token !== preclaim.token) return;
+      pendingPointerOwnershipPreclaims.delete(pointerId);
+    });
+    commitWidgetSelectionAndFront();
+  };
+  const consumePointerOwnershipPreclaim = (
+    pointerId: number,
+  ): PendingPointerOwnershipPreclaim | null => {
+    const preclaim = pendingPointerOwnershipPreclaims.get(pointerId) ?? null;
+    if (preclaim) {
+      pendingPointerOwnershipPreclaims.delete(pointerId);
+    }
+    return preclaim;
+  };
+
+  createEffect(() => {
+    const root = widgetRootEl;
+    if (!root) return;
+
+    const handlePointerDownCapture = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      preclaimPointerOwnership(event.pointerId, props.selected);
+    };
+
+    root.addEventListener('pointerdown', handlePointerDownCapture, true);
+    onCleanup(() => {
+      root.removeEventListener('pointerdown', handlePointerDownCapture, true);
+    });
+  });
+
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
   const lifecycle = createMemo<WorkbenchWidgetLifecycle>(() => {
@@ -153,8 +202,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       panSurfaceSelector: interactionAdapter().panSurfaceSelector,
     });
   const requestActivate = () => {
-    props.onSelect(props.widgetId);
-    props.onCommitFront(props.widgetId);
+    commitWidgetSelectionAndFront();
     widgetRootEl?.focus({ preventScroll: true });
   };
   const emitBodyActivation = (pointerType?: string) => {
@@ -214,7 +262,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
 
-    const wasSelected = props.selected;
+    const pointerOwnershipPreclaim = consumePointerOwnershipPreclaim(event.pointerId);
+    const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? props.selected;
     const ownership = resolveEventOwnership(event.target);
     const localTypingTarget = ownership === 'widget_local'
       ? resolveWorkbenchWidgetLocalTypingTarget({
@@ -234,8 +283,9 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         panSurfaceSelector: interactionAdapter().panSurfaceSelector,
       });
 
-    props.onSelect(props.widgetId);
-    props.onCommitFront(props.widgetId);
+    if (!pointerOwnershipPreclaim) {
+      commitWidgetSelectionAndFront();
+    }
 
     if (ownership === 'widget_shell') {
       widgetRootEl?.focus({ preventScroll: true });
