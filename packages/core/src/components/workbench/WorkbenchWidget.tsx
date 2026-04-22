@@ -5,12 +5,14 @@ import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
   WORKBENCH_WIDGET_SHELL_ATTR,
   resolveWorkbenchWidgetEventOwnership,
+  shouldActivateWorkbenchWidgetLocalTarget,
 } from '../ui/localInteractionSurface';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
 import type {
   WorkbenchViewport,
   WorkbenchWidgetDefinition,
+  WorkbenchWidgetBodyActivation,
   WorkbenchWidgetItem,
   WorkbenchWidgetRenderMode,
   WorkbenchWidgetSurfaceMetrics,
@@ -82,6 +84,8 @@ export interface WorkbenchWidgetProps {
 export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [dragState, setDragState] = createSignal<LocalDragState | null>(null);
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
+  const [bodyActivation, setBodyActivation] =
+    createSignal<WorkbenchWidgetBodyActivation>();
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
   let widgetRootEl: HTMLElement | undefined;
@@ -110,8 +114,29 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     props.onSelect(props.widgetId);
     props.onCommitFront(props.widgetId);
 
-    if (resolveEventOwnership(event.target) !== 'widget_shell') return;
-    widgetRootEl?.focus({ preventScroll: true });
+    const ownership = resolveEventOwnership(event.target);
+    if (ownership === 'widget_shell') {
+      widgetRootEl?.focus({ preventScroll: true });
+      return;
+    }
+
+    if (ownership !== 'widget_local') return;
+    if (
+      !shouldActivateWorkbenchWidgetLocalTarget({
+        target: event.target,
+        widgetRoot: widgetRootEl ?? null,
+        interactiveSelector: WORKBENCH_WIDGET_INTERACTIVE_SELECTOR,
+        panSurfaceSelector: WORKBENCH_WIDGET_PAN_SURFACE_SELECTOR,
+      })
+    ) {
+      return;
+    }
+
+    setBodyActivation((previous) => ({
+      seq: (previous?.seq ?? 0) + 1,
+      source: 'local_pointer',
+      pointerType: event.pointerType || undefined,
+    }));
   };
 
   const livePosition = createMemo(() => {
@@ -462,6 +487,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
               title={props.widgetTitle}
               type={props.widgetType}
               surfaceMetrics={surfaceMetrics()}
+              activation={bodyActivation()}
             />
           );
         })()}

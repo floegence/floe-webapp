@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 
+import { createEffect, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchWidget } from '../src/components/workbench/WorkbenchWidget';
 import type {
+  WorkbenchWidgetBodyActivation,
+  WorkbenchWidgetBodyProps,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
 } from '../src/components/workbench/types';
@@ -42,12 +45,14 @@ function dispatchPointerEvent(
     clientX?: number;
     clientY?: number;
     buttons?: number;
+    button?: number;
+    pointerType?: string;
   } = {},
 ): void {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
     bubbles: true,
-    button: 0,
+    button: options.button ?? 0,
     clientX: options.clientX ?? 0,
     clientY: options.clientY ?? 0,
   });
@@ -61,11 +66,35 @@ function dispatchPointerEvent(
     configurable: true,
     value: options.buttons ?? 1,
   });
+  if (!('pointerType' in event)) {
+    Object.defineProperty(event, 'pointerType', {
+      configurable: true,
+      value: options.pointerType ?? 'mouse',
+    });
+  }
   target.dispatchEvent(event);
 }
 
 function dispatchPointerDown(target: EventTarget): void {
   dispatchPointerEvent('pointerdown', target);
+}
+
+function renderActivationProbe(
+  onActivation: (activation: WorkbenchWidgetBodyActivation) => void,
+  children: (props: WorkbenchWidgetBodyProps) => JSX.Element,
+): WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE> {
+  return {
+    ...filesWidgetDefinition,
+    icon: () => <svg aria-hidden="true" />,
+    body: (props) => {
+      createEffect(() => {
+        const activation = props.activation;
+        if (activation) onActivation(activation);
+      });
+
+      return children(props);
+    },
+  };
 }
 
 describe('WorkbenchWidget interaction ownership', () => {
@@ -198,6 +227,142 @@ describe('WorkbenchWidget interaction ownership', () => {
     await Promise.resolve();
 
     expect(onWidgetContextMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits local body activation without stealing shell focus', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const outsideInput = document.createElement('input');
+    document.body.appendChild(outsideInput);
+
+    const onActivation = vi.fn();
+    const definition = renderActivationProbe(onActivation, () => (
+      <div data-testid="widget-activation-body">Body</div>
+    ));
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={definition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected={false}
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        onSelect={() => {}}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ), host);
+
+    const widgetBody = host.querySelector('[data-testid="widget-activation-body"]') as HTMLElement | null;
+    expect(widgetBody).toBeTruthy();
+
+    outsideInput.focus();
+    dispatchPointerDown(widgetBody!);
+    await Promise.resolve();
+
+    expect(document.activeElement).toBe(outsideInput);
+    expect(onActivation).toHaveBeenCalledTimes(1);
+    expect(onActivation).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        seq: 1,
+        source: 'local_pointer',
+        pointerType: 'mouse',
+      })
+    );
+
+    dispatchPointerDown(widgetBody!);
+    await Promise.resolve();
+
+    expect(onActivation).toHaveBeenCalledTimes(2);
+    expect(onActivation).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        seq: 2,
+        source: 'local_pointer',
+      })
+    );
+  });
+
+  it('does not emit local activation from shell, native controls, local surfaces, or secondary presses', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const onActivation = vi.fn();
+    const definition = renderActivationProbe(onActivation, () => (
+      <div data-testid="widget-body-with-controls">
+        <button type="button" data-testid="native-button">
+          <span data-testid="native-button-label">Native button</span>
+        </button>
+        <input aria-label="Native input" data-testid="native-input" />
+        <div data-floe-local-interaction-surface="true" data-testid="local-surface">
+          Local surface
+        </div>
+        <div data-testid="secondary-target">Secondary target</div>
+      </div>
+    ));
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={definition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected={false}
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        onSelect={() => {}}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ), host);
+
+    const widgetHeader = host.querySelector('.workbench-widget__header') as HTMLElement | null;
+    const nativeButtonLabel = host.querySelector('[data-testid="native-button-label"]') as HTMLElement | null;
+    const nativeInput = host.querySelector('[data-testid="native-input"]') as HTMLElement | null;
+    const localSurface = host.querySelector('[data-testid="local-surface"]') as HTMLElement | null;
+    const secondaryTarget = host.querySelector('[data-testid="secondary-target"]') as HTMLElement | null;
+    expect(widgetHeader).toBeTruthy();
+    expect(nativeButtonLabel).toBeTruthy();
+    expect(nativeInput).toBeTruthy();
+    expect(localSurface).toBeTruthy();
+    expect(secondaryTarget).toBeTruthy();
+
+    dispatchPointerDown(widgetHeader!);
+    dispatchPointerDown(nativeButtonLabel!);
+    dispatchPointerDown(nativeInput!);
+    dispatchPointerDown(localSurface!);
+    dispatchPointerEvent('pointerdown', secondaryTarget!, { button: 2, buttons: 2 });
+    await Promise.resolve();
+
+    expect(onActivation).not.toHaveBeenCalled();
   });
 
   it('commits widget drag once when release is only observable through a later buttons=0 move', async () => {

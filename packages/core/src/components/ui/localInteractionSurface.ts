@@ -36,6 +36,9 @@ export interface WorkbenchWidgetEventOwnershipOptions extends SurfaceInteraction
   shellSelector?: string;
 }
 
+export type WorkbenchWidgetLocalActivationTargetOptions =
+  WorkbenchWidgetEventOwnershipOptions;
+
 export interface SurfaceWheelRoutingOptions {
   target: EventTarget | null;
   disablePanZoom: boolean;
@@ -51,6 +54,34 @@ function resolveElement(target: Element | EventTarget | null): Element | null {
     return target.parentElement;
   }
   return null;
+}
+
+function isFocusableElement(element: Element | null): boolean {
+  if (!element || typeof HTMLElement === 'undefined' || !(element instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (element.matches('button, input, select, textarea, summary')) return true;
+  if (element.matches('a[href], area[href]')) return true;
+  if (element.matches('iframe, [contenteditable="true"]')) return true;
+
+  const tabIndex = element.getAttribute('tabindex');
+  return tabIndex !== null && tabIndex !== '-1';
+}
+
+function hasFocusableOrTypingTargetInsideWidget(
+  targetElement: Element,
+  widgetElement: Element,
+): boolean {
+  let currentElement: Element | null = targetElement;
+  while (currentElement && currentElement !== widgetElement) {
+    if (isTypingElement(currentElement) || isFocusableElement(currentElement)) {
+      return true;
+    }
+    currentElement = currentElement.parentElement;
+  }
+
+  return false;
 }
 
 export function resolveSurfaceInteractionTargetRole(
@@ -152,4 +183,38 @@ export function resolveWorkbenchWidgetEventOwnership(
   }
 
   return 'widget_local';
+}
+
+export function shouldActivateWorkbenchWidgetLocalTarget(
+  options: WorkbenchWidgetLocalActivationTargetOptions,
+): boolean {
+  const {
+    widgetRoot,
+    shellSelector = DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
+    localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+  } = options;
+
+  const widgetElement = resolveElement(widgetRoot);
+  const targetElement = resolveElement(options.target);
+  if (!widgetElement || !targetElement || !widgetElement.contains(targetElement)) {
+    return false;
+  }
+
+  if (targetElement === widgetElement || targetElement.closest(shellSelector) !== null) {
+    return false;
+  }
+
+  if (targetElement.closest(options.panSurfaceSelector) !== null) {
+    return false;
+  }
+
+  if (targetElement.closest(localInteractionSurfaceSelector) !== null) {
+    return false;
+  }
+
+  if (hasFocusableOrTypingTargetInsideWidget(targetElement, widgetElement)) {
+    return false;
+  }
+
+  return resolveWorkbenchWidgetEventOwnership(options) === 'widget_local';
 }

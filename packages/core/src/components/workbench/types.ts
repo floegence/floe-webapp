@@ -38,11 +38,20 @@ export interface WorkbenchWidgetSurfaceMetrics {
   rect: WorkbenchProjectedRect;
 }
 
+export type WorkbenchWidgetBodyActivationSource = 'local_pointer';
+
+export interface WorkbenchWidgetBodyActivation {
+  seq: number;
+  source: WorkbenchWidgetBodyActivationSource;
+  pointerType?: string;
+}
+
 export interface WorkbenchWidgetBodyProps<TWidgetType extends string = WorkbenchWidgetType> {
   widgetId: string;
   title: string;
   type: TWidgetType;
   surfaceMetrics?: WorkbenchWidgetSurfaceMetrics;
+  activation?: WorkbenchWidgetBodyActivation;
 }
 
 export interface WorkbenchWidgetDefinition<TWidgetType extends string = WorkbenchWidgetType> {

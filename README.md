@@ -100,6 +100,8 @@ Starting with `v0.36.8`, workbench widgets can also opt into `renderMode: 'proje
 
 Starting with `v0.36.12`, workbench surfaces expose explicit selection clearing plus separate navigation intents for centering, fitting, and overview zoom. `focusWidget(...)` keeps the existing center-only activation behavior, `fitWidget(...)` centers and scales a widget fully into the viewport, and `overviewWidget(...)` centers the widget at the minimum canvas scale. Context menus now also use a menu-owned `pointerdown capture` outside-dismiss boundary so menu actions remain clickable inside transformed or portal-heavy surfaces.
 
+Workbench widget bodies now also receive an optional `activation` payload when a primary pointerdown lands on a widget-local, non-focusable, non-overlay surface. This lets virtual-input widgets such as terminals or projected editor surfaces reclaim their own internal focus on the first click without reverting the shell-vs-local interaction contract, while native inputs, buttons, dropdowns, dialogs, and header chrome continue using their existing browser or component-owned focus behavior.
+
 `CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
 
 Optional local variations:

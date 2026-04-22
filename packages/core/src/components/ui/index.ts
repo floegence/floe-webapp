@@ -60,6 +60,7 @@ export {
   resolveSurfaceInteractionTargetRole,
   resolveSurfaceWheelRouting,
   resolveWorkbenchWidgetEventOwnership,
+  shouldActivateWorkbenchWidgetLocalTarget,
   type SurfaceInteractionRoutingOptions,
   type SurfaceInteractionTargetRole,
   type SurfaceWheelLocalReason,
@@ -67,6 +68,7 @@ export {
   type SurfaceWheelRoutingOptions,
   type WorkbenchWidgetEventOwnership,
   type WorkbenchWidgetEventOwnershipOptions,
+  type WorkbenchWidgetLocalActivationTargetOptions,
 } from './localInteractionSurface';
 export {
   DIALOG_SURFACE_HOST_ATTR,
