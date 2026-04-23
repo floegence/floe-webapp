@@ -21,6 +21,12 @@ export {
   type DropdownItem,
   type SelectProps,
 } from './Dropdown';
+export {
+  SurfaceFloatingLayer,
+  type SurfaceFloatingLayerPosition,
+  type SurfaceFloatingLayerProps,
+  type SurfaceFloatingLayerSize,
+} from './SurfaceFloatingLayer';
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { CommandPalette } from './CommandPalette';
 export {

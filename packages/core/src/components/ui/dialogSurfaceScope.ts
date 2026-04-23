@@ -61,6 +61,10 @@ function handleFocusInCapture(event: FocusEvent): void {
   captureInteractionTarget(event.target);
 }
 
+function handleContextMenuCapture(event: MouseEvent): void {
+  captureInteractionTarget(event.target);
+}
+
 export function ensureDialogSurfaceInteractionTracking(): void {
   ensureSurfacePortalInteractionTracking();
 }
@@ -72,10 +76,12 @@ export function ensureSurfacePortalInteractionTracking(): void {
   if (trackedDocument) {
     trackedDocument.removeEventListener('pointerdown', handlePointerDownCapture, true);
     trackedDocument.removeEventListener('focusin', handleFocusInCapture, true);
+    trackedDocument.removeEventListener('contextmenu', handleContextMenuCapture, true);
   }
 
   document.addEventListener('pointerdown', handlePointerDownCapture, true);
   document.addEventListener('focusin', handleFocusInCapture, true);
+  document.addEventListener('contextmenu', handleContextMenuCapture, true);
   trackedDocument = document;
 }
 

@@ -6,6 +6,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/dropdown-surface-scope.test.tsx',
   'packages/core/test/file-context-menu-surface-scope.test.tsx',
+  'packages/core/test/surface-floating-layer.test.tsx',
   'packages/core/test/pointer-session.test.ts',
   'packages/core/test/infinite-canvas-wheel-routing.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
