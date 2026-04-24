@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference -- ambient Monaco shims must load for direct source consumers. */
 /// <reference path="../../monaco-internals.d.ts" />
 
+type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');
+
 export interface MonacoRuntimeFeatureSet {
   suggestMemory: boolean;
   codeLensCache: boolean;
@@ -42,7 +44,7 @@ export interface ResolvedMonacoRuntimeRequest {
   blueprint: MonacoStandaloneRuntimeBlueprint;
 }
 
-type MonacoStandaloneRuntimeLoader = (request: ResolvedMonacoRuntimeRequest) => Promise<unknown>;
+type MonacoStandaloneRuntimeLoader = (request: ResolvedMonacoRuntimeRequest) => Promise<void>;
 
 export function normalizeMonacoRuntimeFeatureSet(
   standaloneFeatures?: Partial<MonacoRuntimeFeatureSet>,
@@ -53,12 +55,35 @@ export function normalizeMonacoRuntimeFeatureSet(
   };
 }
 
-const MONACO_EDITOR_FULL_MODULES: readonly MonacoStandaloneRuntimeModuleDescriptor[] = [
+const MONACO_STANDALONE_BASELINE_MODULES: readonly MonacoStandaloneRuntimeModuleDescriptor[] = [
   {
-    id: 'editor.main',
-    load: () => import('monaco-editor/esm/vs/editor/editor.main.js'),
+    id: 'edcore.main',
+    load: () => import('monaco-editor/esm/vs/editor/edcore.main.js'),
+  },
+  {
+    id: 'suggestMemory',
+    load: () => import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js'),
+  },
+  {
+    id: 'codeLensCache',
+    load: () => import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js'),
+  },
+  {
+    id: 'inlayHintsContribution',
+    load: () => import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js'),
+  },
+  {
+    id: 'treeViewsDndService',
+    load: () => import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js'),
+  },
+  {
+    id: 'actionWidget',
+    load: () => import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js'),
   },
 ];
+
+const MONACO_EDITOR_FULL_MODULES = MONACO_STANDALONE_BASELINE_MODULES;
+const MONACO_PREVIEW_BASIC_MODULES = MONACO_STANDALONE_BASELINE_MODULES;
 
 export const MONACO_RUNTIME_BLUEPRINTS: Record<MonacoRuntimeProfileName, MonacoStandaloneRuntimeBlueprint> = {
   editor_full: {
@@ -67,7 +92,7 @@ export const MONACO_RUNTIME_BLUEPRINTS: Record<MonacoRuntimeProfileName, MonacoS
   },
   preview_basic: {
     profile: 'preview_basic',
-    modules: [],
+    modules: MONACO_PREVIEW_BASIC_MODULES,
   },
 };
 
@@ -133,10 +158,31 @@ export function createMonacoStandaloneRuntime(
   };
 }
 
-function loadMonacoStandaloneRuntime(request: ResolvedMonacoRuntimeRequest): Promise<unknown> {
-  return Promise.all(request.blueprint.modules.map((module) => module.load()));
+function loadMonacoStandaloneRuntime(request: ResolvedMonacoRuntimeRequest): Promise<void> {
+  return Promise.all(request.blueprint.modules.map((module) => module.load()))
+    .then(() => undefined);
 }
 
 export const ensureMonacoStandaloneRuntime = createMonacoStandaloneRuntime(
   loadMonacoStandaloneRuntime,
 );
+
+let pendingMonacoEditorApi: Promise<MonacoEditorApi> | null = null;
+
+export async function loadMonacoEditorApi(
+  options?: CodeEditorRuntimeOptions,
+): Promise<MonacoEditorApi> {
+  await ensureMonacoStandaloneRuntime(options);
+
+  if (pendingMonacoEditorApi) {
+    return pendingMonacoEditorApi;
+  }
+
+  pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')
+    .catch((error) => {
+      pendingMonacoEditorApi = null;
+      throw error;
+    });
+
+  return pendingMonacoEditorApi;
+}

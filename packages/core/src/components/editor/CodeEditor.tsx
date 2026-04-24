@@ -1,18 +1,25 @@
 import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
+import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 import { useTheme } from '../../context/ThemeContext';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 
 import 'monaco-editor/min/vs/editor/editor.main.css';
 
 import { resolveCodeEditorLanguageSpec } from './languages';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
 import {
-  ensureMonacoStandaloneRuntime,
+  loadMonacoEditorApi,
   type CodeEditorRuntimeOptions,
 } from './monacoStandaloneRuntime';
 
-const DEFAULT_EDITOR_OPTIONS: monaco.editor.IStandaloneEditorConstructionOptions = {
+type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');
+type MonacoEditorOptions = Monaco.editor.IStandaloneEditorConstructionOptions;
+type MonacoStandaloneCodeEditor = Monaco.editor.IStandaloneCodeEditor;
+type MonacoTextModel = Monaco.editor.ITextModel;
+type MonacoModelContentChangedEvent = Monaco.editor.IModelContentChangedEvent;
+type MonacoDisposable = Monaco.IDisposable;
+
+const DEFAULT_EDITOR_OPTIONS: MonacoEditorOptions = {
   readOnly: true,
   automaticLayout: false,
   minimap: { enabled: false },
@@ -29,31 +36,31 @@ export interface CodeEditorProps {
   path: string;
   language?: string;
   value: string;
-  options?: monaco.editor.IStandaloneEditorConstructionOptions;
+  options?: MonacoEditorOptions;
   runtimeOptions?: CodeEditorRuntimeOptions;
   class?: string;
   style?: JSX.CSSProperties;
   onReady?: (api: CodeEditorApi) => void;
-  onContentChange?: (e: monaco.editor.IModelContentChangedEvent, api: CodeEditorApi) => void;
+  onContentChange?: (e: MonacoModelContentChangedEvent, api: CodeEditorApi) => void;
   onSelectionChange?: (selectionText: string, api: CodeEditorApi) => void;
   onChange?: (value: string) => void;
 }
 
 export interface CodeEditorApi {
-  editor: monaco.editor.IStandaloneCodeEditor;
-  model: monaco.editor.ITextModel;
+  editor: MonacoStandaloneCodeEditor;
+  model: MonacoTextModel;
   getValue: () => string;
   getSelectedText: () => string;
   focus: () => void;
 }
 
-function createModelUri(instanceId: number, path: string) {
+function createModelUri(monaco: MonacoEditorApi, instanceId: number, path: string) {
   return monaco.Uri.parse(`inmemory://model/${instanceId}/${encodeURIComponent(path)}`);
 }
 
 function readSelectedText(
-  editor: monaco.editor.IStandaloneCodeEditor | undefined,
-  model: monaco.editor.ITextModel | undefined,
+  editor: MonacoStandaloneCodeEditor | undefined,
+  model: MonacoTextModel | undefined,
 ): string {
   if (!editor || !model) return '';
   const selection = editor.getSelection();
@@ -66,8 +73,9 @@ export function CodeEditor(props: CodeEditorProps) {
   let container: HTMLDivElement | undefined;
   const instanceId = ++codeEditorInstanceId;
 
-  let editor: monaco.editor.IStandaloneCodeEditor | undefined;
-  let model: monaco.editor.ITextModel | undefined;
+  let monaco: MonacoEditorApi | undefined;
+  let editor: MonacoStandaloneCodeEditor | undefined;
+  let model: MonacoTextModel | undefined;
   let rafId: number | undefined;
   let lastReadyModelUri: string | null = null;
   let modelRequestSeq = 0;
@@ -75,6 +83,7 @@ export function CodeEditor(props: CodeEditorProps) {
   const size = useResizeObserver(() => container);
 
   const applyTheme = () => {
+    if (!monaco) return;
     monaco.editor.setTheme(theme.resolvedTheme() === 'dark' ? 'vs-dark' : 'vs');
   };
 
@@ -105,7 +114,7 @@ export function CodeEditor(props: CodeEditorProps) {
   };
 
   const ensureModel = async () => {
-    if (!editor) return;
+    if (!editor || !monaco) return;
 
     const requestSeq = ++modelRequestSeq;
     const spec = resolveCodeEditorLanguageSpec(props.language);
@@ -120,7 +129,7 @@ export function CodeEditor(props: CodeEditorProps) {
 
     if (!editor || requestSeq !== modelRequestSeq) return;
 
-    const uri = createModelUri(instanceId, props.path);
+    const uri = createModelUri(monaco, instanceId, props.path);
 
     if (model && model.uri.toString() === uri.toString()) {
       if (model.getLanguageId() !== languageId) {
@@ -144,14 +153,14 @@ export function CodeEditor(props: CodeEditorProps) {
 
   onMount(() => {
     let cancelled = false;
-    let contentDisposable: monaco.IDisposable | undefined;
-    let selectionDisposable: monaco.IDisposable | undefined;
+    let contentDisposable: MonacoDisposable | undefined;
+    let selectionDisposable: MonacoDisposable | undefined;
 
     const initializeEditor = async () => {
       if (!container) return;
 
       ensureMonacoEnvironment();
-      await ensureMonacoStandaloneRuntime(props.runtimeOptions);
+      monaco = await loadMonacoEditorApi(props.runtimeOptions);
       if (cancelled || !container) return;
 
       editor = monaco.editor.create(container, {
@@ -167,7 +176,7 @@ export function CodeEditor(props: CodeEditorProps) {
       const onContentChange = props.onContentChange;
       const onChange = props.onChange;
       const onSelectionChange = props.onSelectionChange;
-      contentDisposable = editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
+      contentDisposable = editor.onDidChangeModelContent((event: MonacoModelContentChangedEvent) => {
         const api = getApi();
         if (!api) return;
         onContentChange?.(event, api);
@@ -193,6 +202,7 @@ export function CodeEditor(props: CodeEditorProps) {
       if (rafId) cancelAnimationFrame(rafId);
       editor?.dispose();
       model?.dispose();
+      monaco = undefined;
       editor = undefined;
       model = undefined;
     });

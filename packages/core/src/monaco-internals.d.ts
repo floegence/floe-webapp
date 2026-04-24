@@ -13,6 +13,11 @@ declare module 'monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCac
   export default runtime;
 }
 
+declare module 'monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js' {
+  const runtime: unknown;
+  export default runtime;
+}
+
 declare module 'monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js' {
   const runtime: unknown;
   export default runtime;

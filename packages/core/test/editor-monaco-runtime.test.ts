@@ -49,7 +49,7 @@ describe('Monaco standalone runtime', () => {
   });
 
   it('maps the legacy all-disabled feature combination to the safe preview profile', () => {
-    expect(resolveMonacoRuntimeProfile({
+    const request = resolveMonacoRuntimeRequest({
       standaloneFeatures: {
         suggestMemory: false,
         codeLensCache: false,
@@ -57,7 +57,17 @@ describe('Monaco standalone runtime', () => {
         treeViewsDnd: false,
         actionWidget: false,
       },
-    })).toBe('preview_basic');
+    });
+
+    expect(request.profile).toBe('preview_basic');
+    expect(request.blueprint.modules.map((module) => module.id)).toEqual([
+      'edcore.main',
+      'suggestMemory',
+      'codeLensCache',
+      'inlayHintsContribution',
+      'treeViewsDndService',
+      'actionWidget',
+    ]);
   });
 
   it('keeps legacy partial feature overrides on the safe full editor profile', () => {
@@ -90,14 +100,24 @@ describe('Monaco standalone runtime', () => {
     expect(runtimeSrc).toContain("profile: 'preview_basic'");
     expect(runtimeSrc).toContain('resolveMonacoRuntimeRequest(options)');
     expect(runtimeSrc).toContain('cacheKey: `profile:${profile}`');
-    expect(runtimeSrc).toContain('return Promise.all(request.blueprint.modules.map((module) => module.load()));');
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/editor.main.js')");
-    expect(runtimeSrc).not.toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
+    expect(runtimeSrc).toContain('return Promise.all(request.blueprint.modules.map((module) => module.load()))');
+    expect(runtimeSrc).toContain('.then(() => undefined);');
+    expect(runtimeSrc).toContain("type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');");
+    expect(runtimeSrc).toContain("export async function loadMonacoEditorApi(");
+    expect(runtimeSrc).toContain("await ensureMonacoStandaloneRuntime(options);");
+    expect(runtimeSrc).toContain("pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js')");
     expect(runtimeSrc).toContain('const pendingByKey = new Map<string, Promise<void>>();');
     expect(runtimeSrc).toContain('areAllStandaloneFeaturesDisabled(features)');
 
-    expect(codeEditorSrc).toContain('await ensureMonacoStandaloneRuntime(props.runtimeOptions);');
-    expect(codeEditorSrc.indexOf('await ensureMonacoStandaloneRuntime(props.runtimeOptions);')).toBeLessThan(
+    expect(codeEditorSrc).toContain('monaco = await loadMonacoEditorApi(props.runtimeOptions);');
+    expect(codeEditorSrc).not.toContain("import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';");
+    expect(codeEditorSrc.indexOf('monaco = await loadMonacoEditorApi(props.runtimeOptions);')).toBeLessThan(
       codeEditorSrc.indexOf('editor = monaco.editor.create('),
     );
 

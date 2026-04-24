@@ -111,7 +111,7 @@ export default defineConfig(({ command }) => {
     },
     optimizeDeps: {
       // Don't pre-bundle workspace packages
-      exclude: ['@floegence/floe-webapp-core', '@floegence/floe-webapp-protocol'],
+      exclude: ['@floegence/floe-webapp-core', '@floegence/floe-webapp-protocol', 'monaco-editor'],
     },
   };
 });
