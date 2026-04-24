@@ -30,6 +30,19 @@ import {
 } from './widgets/widgetRegistry';
 import type { WorkbenchContextMenuItem } from './WorkbenchContextMenu';
 
+type WorkbenchCanvasMenuVerb = 'add' | 'go_to';
+
+type WorkbenchCanvasMenuAction = Readonly<{
+  id: string;
+  kind: 'action';
+  verb: WorkbenchCanvasMenuVerb;
+  widgetType: WorkbenchWidgetType;
+  label: string;
+  icon: WorkbenchWidgetDefinition['icon'];
+  existingWidgetId?: string;
+  onSelect: () => void;
+}>;
+
 export interface UseWorkbenchModelOptions {
   state: () => WorkbenchState;
   setState: (updater: (prev: WorkbenchState) => WorkbenchState) => void;
@@ -143,6 +156,41 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const findWidgetById = (widgetId: string) => state().widgets.find((widget) => widget.id === widgetId) ?? null;
   const findWidgetByType = (type: WorkbenchWidgetType) => state().widgets.find((widget) => widget.type === type) ?? null;
 
+  const buildCanvasContextMenuAction = (
+    entry: WorkbenchWidgetDefinition,
+    menu: WorkbenchContextMenuState,
+  ): WorkbenchCanvasMenuAction => {
+    const existing = entry.singleton ? findWidgetByType(entry.type) : null;
+    if (existing) {
+      return {
+        id: `goto-${entry.type}`,
+        kind: 'action',
+        verb: 'go_to',
+        widgetType: entry.type,
+        label: `Go to ${entry.label}`,
+        icon: entry.icon,
+        existingWidgetId: existing.id,
+        onSelect: () => {
+          focusWidget(existing, { centerViewport: true });
+          closeContextMenu();
+        },
+      };
+    }
+
+    return {
+      id: `add-${entry.type}`,
+      kind: 'action',
+      verb: 'add',
+      widgetType: entry.type,
+      label: `Add ${entry.label}`,
+      icon: entry.icon,
+      onSelect: () => {
+        addWidgetAtCursor(entry.type, menu.worldX, menu.worldY);
+        closeContextMenu();
+      },
+    };
+  };
+
   const contextMenuItems = createMemo<WorkbenchContextMenuItem[]>(() => {
     const menu = contextMenu();
     if (!menu) return [];
@@ -192,17 +240,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       return items;
     }
 
-    // Canvas context menu: add widget items (centered on cursor).
-    return widgetDefinitions().map((entry) => ({
-      id: `add-${entry.type}`,
-      kind: 'action' as const,
-      label: `Add ${entry.label}`,
-      icon: entry.icon,
-      onSelect: () => {
-        addWidgetAtCursor(entry.type, menu.worldX, menu.worldY);
-        closeContextMenu();
-      },
-    }));
+    // Canvas context menu: add or route widget items according to singleton state.
+    return widgetDefinitions().map((entry) => buildCanvasContextMenuAction(entry, menu));
   });
 
   const contextMenuPosition = createMemo(() => {

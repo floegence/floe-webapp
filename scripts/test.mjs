@@ -15,6 +15,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-projected-surface.test.tsx',
   'packages/core/test/workbench-navigation-center.test.ts',
   'packages/core/test/workbench-context-menu.test.tsx',
+  'packages/core/test/workbench-canvas-menu-verb.test.ts',
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',
   'packages/core/test/workbench-filter-bar-pointer-session.test.tsx',

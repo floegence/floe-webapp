@@ -106,6 +106,8 @@ Starting with `v0.36.23`, that same workbench interaction contract also preserve
 
 Starting with `v0.36.24`, blank-canvas pointer intent also hands runtime authority back to the canvas instead of only clearing `selectedWidgetId`. `WorkbenchSurface` now restores the surface root focus when the user clicks background space, so subsequent wheel input returns to canvas zoom until a widget explicitly regains local wheel ownership. Virtual-input widgets can also mark `data-floe-workbench-widget-activation-surface="true"` around proxy textareas or focus helpers, which keeps those nodes on the shared activation path instead of misclassifying them as native first-click typing targets.
 
+Workbench launcher affordances are also singleton-aware. When a widget definition declares `singleton: true`, the canvas context menu now says `Add X` only while that widget is absent and switches to `Go to X` once an instance already exists, reusing the shared focus/centering path instead of silently creating duplicates. The context menu also renders every widget icon inside a fixed icon slot so downstream branded glyphs stay visually aligned with built-in icons.
+
 `CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
 
 Optional local variations:

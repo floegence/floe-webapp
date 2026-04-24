@@ -452,6 +452,8 @@ workbenchApi?.updateWidgetTitle('widget-logs-1', 'Errors');
 
 `launcherWidgetTypes` lets a product hide programmatic widget types from the dock/context-menu create affordances, while `interactionAdapter` is the thin extension point for product-specific wheel/focus/hotkey ownership without forking the shared canvas/widget/surface stack.
 
+Singleton widget definitions now also get truthful launcher verbs automatically. A `singleton: true` widget appears as `Add <label>` only when no instance exists yet; once it exists, the canvas context menu changes to `Go to <label>` and reuses the same shared focus/centering contract that backs `focusWidget(...)`.
+
 Custom widget bodies also receive shared host-state hints through `WorkbenchWidgetBodyProps`: `activation` for local-pointer activation pulses, `surfaceMetrics` as an accessor for projected overlays, `selected` / `filtered` for shell state, `lifecycle` (`hot` / `warm` / `cold`) for lightweight pause/resume strategies, and `requestActivate()` when a body wants to re-enter the active shell path without reaching around the surface internals.
 
 If a widget uses terminal/editor-style virtual input with a proxy textarea or hidden focus helper, wrap that activation boundary with `data-floe-workbench-widget-activation-surface="true"`. The shared shell will then keep the first click on the widget-owned activation path instead of treating the helper node like a native typing target.

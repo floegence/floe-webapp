@@ -66,7 +66,9 @@ export function WorkbenchContextMenu(props: WorkbenchContextMenuProps) {
               onClick={item.onSelect}
               disabled={item.disabled}
             >
-              <Icon class="h-3.5 w-3.5" />
+              <span class="workbench-context-menu__icon" aria-hidden="true">
+                <Icon class="workbench-context-menu__icon-svg" />
+              </span>
               <span class="workbench-context-menu__label">{item.label}</span>
             </button>
           );

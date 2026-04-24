@@ -57,6 +57,8 @@ describe('WorkbenchContextMenu', () => {
 
     const deleteButton = host.querySelector('.workbench-context-menu__item') as HTMLButtonElement | null;
     expect(deleteButton).toBeTruthy();
+    expect(deleteButton?.querySelector('.workbench-context-menu__icon')).toBeTruthy();
+    expect(deleteButton?.querySelector('.workbench-context-menu__icon-svg')).toBeTruthy();
 
     dispatchPointerDown(deleteButton!);
     deleteButton!.click();
