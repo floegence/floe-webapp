@@ -453,7 +453,8 @@ describe('Workbench projected surfaces', () => {
     expect(projectedWidget).toBeTruthy();
     expect(projectedSurface).toBeTruthy();
     expect(projectedWidget?.style.transform).toBe('translate(130px, 95px) scale(1.5)');
-    expect(projectedSurface?.style.zoom).toBe('1');
+    expect(projectedWidget?.style.width).toBe('400px');
+    expect(projectedWidget?.style.height).toBe('260px');
     expect(bodyMounts.get('widget-preview')).toBe(1);
     expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
 
@@ -463,7 +464,6 @@ describe('Workbench projected surfaces', () => {
     expect(projectedWidget?.style.transform).toBe('translate(130px, 95px)');
     expect(projectedWidget?.style.width).toBe('600px');
     expect(projectedWidget?.style.height).toBe('390px');
-    expect(projectedSurface?.style.zoom).toBe('1.5');
     expect(bodyMounts.get('widget-preview')).toBe(1);
     expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
 
