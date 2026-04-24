@@ -108,7 +108,7 @@ Starting with `v0.36.24`, blank-canvas pointer intent also hands runtime authori
 
 Workbench launcher affordances are also singleton-aware. When a widget definition declares `singleton: true`, the canvas context menu now says `Add X` only while that widget is absent and switches to `Go to X` once an instance already exists, reusing the shared focus/centering path instead of silently creating duplicates. The context menu also renders every widget icon inside a fixed icon slot so downstream branded glyphs stay visually aligned with built-in icons.
 
-`CodeEditor` now also accepts `runtimeOptions.standaloneFeatures` so downstream preview surfaces can disable optional Monaco standalone services. Lightweight preview panes should pass only the features they actually need, while full editors can keep the default richer runtime.
+`CodeEditor` now exposes profile-first Monaco runtime bootstrapping through `runtimeOptions.profile`. Use `preview_basic` for lightweight preview/read-only surfaces that still need syntax highlighting, and keep `editor_full` for richer editor experiences. The older `runtimeOptions.standaloneFeatures` input remains as a compatibility shim and is normalized onto those safe profiles instead of letting downstream code toggle Monaco's low-level service graph directly.
 
 Optional local variations:
 
