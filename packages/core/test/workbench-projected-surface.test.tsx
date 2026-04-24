@@ -165,7 +165,7 @@ describe('Workbench projected surfaces', () => {
     expect(projectedWidget?.dataset.floeWorkbenchRenderMode).toBe('projected_surface');
     expect(projectedWidget?.style.left).toBe('');
     expect(projectedWidget?.style.top).toBe('');
-    expect(projectedWidget?.style.transform).toBe('translate3d(130px, 95px, 0) scale(1.5)');
+    expect(projectedWidget?.style.transform).toBe('translate(130px, 95px) scale(1.5)');
 
     expect(observedProjectedMetrics.at(-1)).toEqual({
       ready: true,
@@ -271,7 +271,7 @@ describe('Workbench projected surfaces', () => {
     const projectedWidget = host.querySelector(
       '[data-floe-workbench-widget-id="widget-preview"]'
     ) as HTMLElement | null;
-    expect(projectedWidget?.style.transform).toBe('translate3d(204px, 126px, 0) scale(1.2)');
+    expect(projectedWidget?.style.transform).toBe('translate(204px, 126px) scale(1.2)');
 
     const zoomButton = host.querySelector('[data-testid="zoom-viewport"]') as HTMLButtonElement | null;
     expect(zoomButton).toBeTruthy();
@@ -280,7 +280,7 @@ describe('Workbench projected surfaces', () => {
 
     expect(bodyMounts.get('widget-preview')).toBe(1);
     expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
-    expect(projectedWidget?.style.transform).toBe('translate3d(214px, 141px, 0) scale(1.7)');
+    expect(projectedWidget?.style.transform).toBe('translate(214px, 141px) scale(1.7)');
     expect(observedProjectedMetrics.at(-1)).toMatchObject({
       rect: {
         screenX: 214,
@@ -385,5 +385,89 @@ describe('Workbench projected surfaces', () => {
     expect(bodyCleanups.get('widget-preview-b') ?? 0).toBe(0);
 
     dispose();
+  });
+
+  it('switches opt-in projected surfaces to delayed sharp mode without remounting the body', async () => {
+    vi.useFakeTimers();
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const sharpWidgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
+      widgetDefinitions[0]!,
+      {
+        ...widgetDefinitions[1]!,
+        projectedSurfaceScaleBehavior: 'settle_sharp_zoom',
+      },
+    ];
+
+    const dispose = render(() => (
+      <WorkbenchCanvas
+        widgetDefinitions={sharpWidgetDefinitions}
+        widgets={[
+          {
+            id: 'widget-preview',
+            type: 'custom.preview',
+            title: 'Preview',
+            x: 20,
+            y: 30,
+            width: 400,
+            height: 260,
+            z_index: 2,
+            created_at_unix_ms: 2,
+          },
+        ]}
+        viewport={{ x: 100, y: 50, scale: 1.5 }}
+        canvasFrameSize={{ width: 1200, height: 800 }}
+        selectedWidgetId="widget-preview"
+        optimisticFrontWidgetId={null}
+        locked={false}
+        filters={{
+          'custom.canvas': true,
+          'custom.preview': true,
+        }}
+        setCanvasFrameRef={() => {}}
+        onViewportCommit={vi.fn()}
+        onCanvasContextMenu={vi.fn()}
+        onSelectWidget={vi.fn()}
+        onWidgetContextMenu={vi.fn()}
+        onStartOptimisticFront={vi.fn()}
+        onCommitFront={vi.fn()}
+        onCommitMove={vi.fn()}
+        onCommitResize={vi.fn()}
+        onRequestOverview={vi.fn()}
+        onRequestFit={vi.fn()}
+        onRequestDelete={vi.fn()}
+      />
+    ), host);
+
+    await Promise.resolve();
+
+    const projectedWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-preview"]'
+    ) as HTMLElement | null;
+    const projectedSurface = projectedWidget?.querySelector(
+      '.workbench-widget__surface'
+    ) as HTMLElement | null;
+
+    expect(projectedWidget).toBeTruthy();
+    expect(projectedSurface).toBeTruthy();
+    expect(projectedWidget?.style.transform).toBe('translate(130px, 95px) scale(1.5)');
+    expect(projectedSurface?.style.zoom).toBe('1');
+    expect(bodyMounts.get('widget-preview')).toBe(1);
+    expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
+
+    vi.advanceTimersByTime(160);
+    await Promise.resolve();
+
+    expect(projectedWidget?.style.transform).toBe('translate(130px, 95px)');
+    expect(projectedWidget?.style.width).toBe('600px');
+    expect(projectedWidget?.style.height).toBe('390px');
+    expect(projectedSurface?.style.zoom).toBe('1.5');
+    expect(bodyMounts.get('widget-preview')).toBe(1);
+    expect(bodyCleanups.get('widget-preview') ?? 0).toBe(0);
+
+    dispose();
+    vi.useRealTimers();
   });
 });

@@ -1,5 +1,6 @@
 import {
   DEFAULT_WORKBENCH_VIEWPORT,
+  type WorkbenchProjectedSurfaceScaleBehavior,
   type WorkbenchProjectedRect,
   type WorkbenchState,
   type WorkbenchViewport,
@@ -31,6 +32,12 @@ export function resolveWorkbenchWidgetRenderMode(
   return definition.renderMode ?? 'canvas_scaled';
 }
 
+export function resolveWorkbenchProjectedSurfaceScaleBehavior(
+  definition: WorkbenchWidgetDefinition,
+): WorkbenchProjectedSurfaceScaleBehavior {
+  return definition.projectedSurfaceScaleBehavior ?? 'stable_transform';
+}
+
 export interface CreateWorkbenchProjectedRectInput {
   widgetId: string;
   worldX: number;
@@ -45,6 +52,18 @@ export function createWorkbenchProjectedRect(
 ): WorkbenchProjectedRect {
   const viewportScale =
     Number.isFinite(input.viewport.scale) && input.viewport.scale > 0 ? input.viewport.scale : 1;
+  const devicePixelRatio =
+    typeof window !== 'undefined' &&
+    Number.isFinite(window.devicePixelRatio) &&
+    window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  const screenX =
+    Math.round((input.viewport.x + input.worldX * viewportScale) * devicePixelRatio) /
+    devicePixelRatio;
+  const screenY =
+    Math.round((input.viewport.y + input.worldY * viewportScale) * devicePixelRatio) /
+    devicePixelRatio;
 
   return {
     widgetId: input.widgetId,
@@ -52,8 +71,8 @@ export function createWorkbenchProjectedRect(
     worldY: input.worldY,
     worldWidth: input.worldWidth,
     worldHeight: input.worldHeight,
-    screenX: input.viewport.x + input.worldX * viewportScale,
-    screenY: input.viewport.y + input.worldY * viewportScale,
+    screenX,
+    screenY,
     screenWidth: input.worldWidth * viewportScale,
     screenHeight: input.worldHeight * viewportScale,
     viewportScale,

@@ -31,6 +31,7 @@ export {
   createWorkbenchViewportCenteredOnWidget,
   createWorkbenchViewportFitForWidget,
   createWorkbenchWidgetSurfaceMetrics,
+  resolveWorkbenchProjectedSurfaceScaleBehavior,
   resolveWorkbenchWidgetRenderMode,
   type WorkbenchRenderLayerMap,
 } from './workbenchHelpers';

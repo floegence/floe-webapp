@@ -8,7 +8,10 @@ import {
   shouldActivateWorkbenchWidgetLocalTarget,
 } from '../ui/localInteractionSurface';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
-import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
+import {
+  createWorkbenchWidgetSurfaceMetrics,
+  resolveWorkbenchProjectedSurfaceScaleBehavior,
+} from './workbenchHelpers';
 import {
   resolveWorkbenchInteractionAdapter,
   type ResolvedWorkbenchInteractionAdapter,
@@ -66,6 +69,7 @@ interface PendingPointerOwnershipPreclaim {
 /** Minimum widget footprint in world-space pixels. */
 const MIN_WIDTH = 220;
 const MIN_HEIGHT = 160;
+const PROJECTED_SHARP_SETTLE_MS = 160;
 
 export interface WorkbenchWidgetProps {
   definition: WorkbenchWidgetDefinition;
@@ -110,13 +114,26 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [bodyActivation, setBodyActivation] =
     createSignal<WorkbenchWidgetBodyActivation>();
   const [localSelectionClaim, setLocalSelectionClaim] = createSignal(false);
+  const [sharpProjection, setSharpProjection] = createSignal({
+    enabled: false,
+    scale: 1,
+  });
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
   let pendingLocalInteractionToken = 0;
   let pendingPointerOwnershipPreclaimToken = 0;
   let pendingLocalTypingFocusRestore: ScheduledLocalTypingFocusRestore | null = null;
+  let sharpProjectionTimer: number | undefined;
   const pendingPointerOwnershipPreclaims = new Map<number, PendingPointerOwnershipPreclaim>();
   let widgetRootEl: HTMLElement | undefined;
+  const clearSharpProjectionTimer = () => {
+    if (typeof window === 'undefined' || sharpProjectionTimer === undefined) {
+      return;
+    }
+
+    window.clearTimeout(sharpProjectionTimer);
+    sharpProjectionTimer = undefined;
+  };
   const startTrackedLayoutInteraction = (kind: 'drag' | 'resize', cursor: string) => {
     const stopHotInteraction = startHotInteraction({ kind, cursor });
     let stopped = false;
@@ -136,6 +153,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     resizeSession = undefined;
     untrack(dragState)?.stopInteraction();
     untrack(resizeState)?.stopInteraction();
+    clearSharpProjectionTimer();
   });
 
   const commitWidgetSelectionAndFront = () => {
@@ -352,6 +370,41 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       ready: props.surfaceReady ?? true,
     });
   });
+  const projectedScale = createMemo(
+    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(props.viewportScale, 0.001),
+  );
+  const projectedSharpEligible = createMemo(
+    () =>
+      props.layoutMode === 'projected_surface' &&
+      resolveWorkbenchProjectedSurfaceScaleBehavior(props.definition) === 'settle_sharp_zoom',
+  );
+  const projectedSharpActive = createMemo(
+    () =>
+      props.layoutMode === 'projected_surface' &&
+      projectedSharpEligible() &&
+      sharpProjection().enabled &&
+      sharpProjection().scale > 1.001,
+  );
+  const projectedSurfaceStyle = createMemo<JSX.CSSProperties | undefined>(() => {
+    if (props.layoutMode !== 'projected_surface') {
+      return undefined;
+    }
+
+    const scale = projectedScale();
+    if (projectedSharpActive()) {
+      return {
+        width: `${liveSize().width}px`,
+        height: `${liveSize().height}px`,
+        zoom: `${scale}`,
+      };
+    }
+
+    return {
+      width: '100%',
+      height: '100%',
+      zoom: '1',
+    };
+  });
   const widgetBadgeLabel = createMemo(() => {
     const zIndex = props.itemSnapshot().z_index;
     const normalizedIndex = Number.isFinite(zIndex)
@@ -376,8 +429,6 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   };
   const rootStyle = createMemo<JSX.CSSProperties>(() => {
     const shared = {
-      width: `${liveSize().width}px`,
-      height: `${liveSize().height}px`,
       'z-index':
         isDragging() || isResizing() || props.optimisticFront
           ? `${props.topRenderLayer + 1}`
@@ -386,16 +437,58 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     if (props.layoutMode === 'projected_surface') {
       const rect = surfaceMetrics()?.rect;
+      const scale = projectedScale();
+      const sharp = projectedSharpActive();
+      const width = sharp ? rect?.screenWidth ?? liveSize().width * scale : liveSize().width;
+      const height = sharp ? rect?.screenHeight ?? liveSize().height * scale : liveSize().height;
       return {
         ...shared,
-        transform: `translate3d(${rect?.screenX ?? 0}px, ${rect?.screenY ?? 0}px, 0) scale(${rect?.viewportScale ?? Math.max(props.viewportScale, 0.001)})`,
+        width: `${width}px`,
+        height: `${height}px`,
+        transform: sharp
+          ? `translate(${rect?.screenX ?? 0}px, ${rect?.screenY ?? 0}px)`
+          : `translate(${rect?.screenX ?? 0}px, ${rect?.screenY ?? 0}px) scale(${scale})`,
+        zoom: '1',
       };
     }
 
     return {
       ...shared,
+      width: `${liveSize().width}px`,
+      height: `${liveSize().height}px`,
       transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
     };
+  });
+
+  createEffect(() => {
+    if (!projectedSharpEligible()) {
+      clearSharpProjectionTimer();
+      setSharpProjection({ enabled: false, scale: 1 });
+      return;
+    }
+
+    const scale = projectedScale();
+    if (scale <= 1.001 || isDragging() || isResizing()) {
+      clearSharpProjectionTimer();
+      setSharpProjection({ enabled: false, scale });
+      return;
+    }
+
+    setSharpProjection({ enabled: false, scale });
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    clearSharpProjectionTimer();
+    const settleScale = scale;
+    sharpProjectionTimer = window.setTimeout(() => {
+      sharpProjectionTimer = undefined;
+      setSharpProjection((current) =>
+        Math.abs(current.scale - settleScale) < 0.001
+          ? { enabled: true, scale: settleScale }
+          : current,
+      );
+    }, PROJECTED_SHARP_SETTLE_MS);
   });
 
   const finishDrag = (commitMove: boolean) => {
@@ -570,134 +663,136 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       }}
       style={rootStyle()}
     >
-      <header
-        class="workbench-widget__header"
-        onPointerDown={beginDrag}
-        {...{ [WORKBENCH_WIDGET_SHELL_ATTR]: 'true' }}
-      >
-        <span class="workbench-widget__traffic" role="group" aria-label="Window controls">
-          <button
-            type="button"
-            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--close"
-            aria-label="Close widget"
-            title="Close widget"
-            data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleDelete}
-          >
-            <X class="workbench-widget__traffic-icon" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--min"
-            aria-label="Minimize widget to overview"
-            title="Minimize widget to overview"
-            data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleOverview}
-          >
-            <Minus class="workbench-widget__traffic-icon" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="workbench-widget__traffic-dot workbench-widget__traffic-dot--max"
-            aria-label="Zoom widget to fit viewport"
-            title="Zoom widget to fit viewport"
-            data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleFit}
-          >
-            <Maximize class="workbench-widget__traffic-icon" aria-hidden="true" />
-          </button>
-        </span>
-        <span class="workbench-widget__badge" aria-hidden="true">
-          {widgetBadgeLabel()}
-        </span>
-        <button
-          type="button"
-          class="workbench-widget__drag"
-          aria-label="Drag widget"
-          data-floe-canvas-interactive="true"
+      <div class="workbench-widget__surface" style={projectedSurfaceStyle()}>
+        <header
+          class="workbench-widget__header"
           onPointerDown={beginDrag}
+          {...{ [WORKBENCH_WIDGET_SHELL_ATTR]: 'true' }}
         >
-          <GripVertical class="w-3.5 h-3.5" />
-        </button>
-        <div class="workbench-widget__title-area">
-          <span class="workbench-widget__title-dot" aria-hidden="true" />
+          <span class="workbench-widget__traffic" role="group" aria-label="Window controls">
+            <button
+              type="button"
+              class="workbench-widget__traffic-dot workbench-widget__traffic-dot--close"
+              aria-label="Close widget"
+              title="Close widget"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleDelete}
+            >
+              <X class="workbench-widget__traffic-icon" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="workbench-widget__traffic-dot workbench-widget__traffic-dot--min"
+              aria-label="Minimize widget to overview"
+              title="Minimize widget to overview"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleOverview}
+            >
+              <Minus class="workbench-widget__traffic-icon" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="workbench-widget__traffic-dot workbench-widget__traffic-dot--max"
+              aria-label="Zoom widget to fit viewport"
+              title="Zoom widget to fit viewport"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleFit}
+            >
+              <Maximize class="workbench-widget__traffic-icon" aria-hidden="true" />
+            </button>
+          </span>
+          <span class="workbench-widget__badge" aria-hidden="true">
+            {widgetBadgeLabel()}
+          </span>
+          <button
+            type="button"
+            class="workbench-widget__drag"
+            aria-label="Drag widget"
+            data-floe-canvas-interactive="true"
+            onPointerDown={beginDrag}
+          >
+            <GripVertical class="w-3.5 h-3.5" />
+          </button>
+          <div class="workbench-widget__title-area">
+            <span class="workbench-widget__title-dot" aria-hidden="true" />
+            {(() => {
+              const Icon = props.definition.icon;
+              return <Icon class="w-3.5 h-3.5" />;
+            })()}
+            <span class="workbench-widget__title">{props.widgetTitle}</span>
+          </div>
+          <span class="workbench-widget__window-controls" role="group" aria-label="Window controls">
+            <button
+              type="button"
+              class="workbench-widget__window-control workbench-widget__window-control--min"
+              aria-label="Minimize widget to overview"
+              title="Minimize widget to overview"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleOverview}
+            >
+              <Minus class="workbench-widget__window-control-icon" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="workbench-widget__window-control workbench-widget__window-control--max"
+              aria-label="Zoom widget to fit viewport"
+              title="Zoom widget to fit viewport"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleFit}
+            >
+              <Maximize class="workbench-widget__window-control-icon" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="workbench-widget__window-control workbench-widget__window-control--close"
+              aria-label="Remove widget"
+              title="Remove widget"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={handleDelete}
+            >
+              <X class="workbench-widget__window-control-icon" aria-hidden="true" />
+            </button>
+          </span>
+        </header>
+        <div class="workbench-widget__body" data-floe-canvas-interactive="true">
           {(() => {
-            const Icon = props.definition.icon;
-            return <Icon class="w-3.5 h-3.5" />;
+            const Body = props.definition.body;
+            return (
+              <Body
+                widgetId={props.widgetId}
+                title={props.widgetTitle}
+                type={props.widgetType}
+                surfaceMetrics={surfaceMetrics}
+                activation={bodyActivation()}
+                lifecycle={lifecycle()}
+                selected={selected()}
+                filtered={props.filtered}
+                requestActivate={requestActivate}
+              />
+            );
           })()}
-          <span class="workbench-widget__title">{props.widgetTitle}</span>
         </div>
-        <span class="workbench-widget__window-controls" role="group" aria-label="Window controls">
-          <button
-            type="button"
-            class="workbench-widget__window-control workbench-widget__window-control--min"
-            aria-label="Minimize widget to overview"
-            title="Minimize widget to overview"
+        {props.locked ? null : (
+          <div
+            class="workbench-widget__resize"
+            aria-label="Resize widget"
             data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleOverview}
+            onPointerDown={beginResize}
           >
-            <Minus class="workbench-widget__window-control-icon" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="workbench-widget__window-control workbench-widget__window-control--max"
-            aria-label="Zoom widget to fit viewport"
-            title="Zoom widget to fit viewport"
-            data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleFit}
-          >
-            <Maximize class="workbench-widget__window-control-icon" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="workbench-widget__window-control workbench-widget__window-control--close"
-            aria-label="Remove widget"
-            title="Remove widget"
-            data-floe-canvas-interactive="true"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={handleDelete}
-          >
-            <X class="workbench-widget__window-control-icon" aria-hidden="true" />
-          </button>
-        </span>
-      </header>
-      <div class="workbench-widget__body" data-floe-canvas-interactive="true">
-        {(() => {
-          const Body = props.definition.body;
-          return (
-            <Body
-              widgetId={props.widgetId}
-              title={props.widgetTitle}
-              type={props.widgetType}
-              surfaceMetrics={surfaceMetrics}
-              activation={bodyActivation()}
-              lifecycle={lifecycle()}
-              selected={selected()}
-              filtered={props.filtered}
-              requestActivate={requestActivate}
-            />
-          );
-        })()}
+            <svg class="workbench-widget__resize-glyph" viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M12 0 L0 12" />
+              <path d="M12 4 L4 12" />
+              <path d="M12 8 L8 12" />
+            </svg>
+          </div>
+        )}
       </div>
-      {props.locked ? null : (
-        <div
-          class="workbench-widget__resize"
-          aria-label="Resize widget"
-          data-floe-canvas-interactive="true"
-          onPointerDown={beginResize}
-        >
-          <svg class="workbench-widget__resize-glyph" viewBox="0 0 12 12" aria-hidden="true">
-            <path d="M12 0 L0 12" />
-            <path d="M12 4 L4 12" />
-            <path d="M12 8 L8 12" />
-          </svg>
-        </div>
-      )}
     </article>
   );
 }

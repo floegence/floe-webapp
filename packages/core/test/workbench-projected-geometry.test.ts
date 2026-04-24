@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createWorkbenchProjectedRect,
+  resolveWorkbenchProjectedSurfaceScaleBehavior,
   resolveWorkbenchWidgetRenderMode,
 } from '../src/components/workbench';
 import type { WorkbenchWidgetDefinition } from '../src/components/workbench';
@@ -23,7 +24,7 @@ describe('workbench projected geometry helpers', () => {
       worldY: 24,
       worldWidth: 480,
       worldHeight: 320,
-      screenX: 112.5,
+      screenX: 113,
       screenY: 90,
       screenWidth: 600,
       screenHeight: 400,
@@ -42,11 +43,18 @@ describe('workbench projected geometry helpers', () => {
     };
 
     expect(resolveWorkbenchWidgetRenderMode(definition)).toBe('canvas_scaled');
+    expect(resolveWorkbenchProjectedSurfaceScaleBehavior(definition)).toBe('stable_transform');
     expect(
       resolveWorkbenchWidgetRenderMode({
         ...definition,
         renderMode: 'projected_surface',
       }),
     ).toBe('projected_surface');
+    expect(
+      resolveWorkbenchProjectedSurfaceScaleBehavior({
+        ...definition,
+        projectedSurfaceScaleBehavior: 'settle_sharp_zoom',
+      }),
+    ).toBe('settle_sharp_zoom');
   });
 });

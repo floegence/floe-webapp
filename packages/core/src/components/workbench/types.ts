@@ -24,6 +24,9 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
 ];
 
 export type WorkbenchWidgetRenderMode = 'canvas_scaled' | 'projected_surface';
+export type WorkbenchProjectedSurfaceScaleBehavior =
+  | 'stable_transform'
+  | 'settle_sharp_zoom';
 
 export type WorkbenchCanvasOwnerReason =
   | 'initial'
@@ -142,6 +145,7 @@ export interface WorkbenchWidgetDefinition<TWidgetType extends string = Workbenc
   group?: string;
   singleton?: boolean;
   renderMode?: WorkbenchWidgetRenderMode;
+  projectedSurfaceScaleBehavior?: WorkbenchProjectedSurfaceScaleBehavior;
 }
 
 export interface WorkbenchWidgetItem<TWidgetType extends string = WorkbenchWidgetType> {
