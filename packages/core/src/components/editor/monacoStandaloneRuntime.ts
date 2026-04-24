@@ -55,28 +55,8 @@ export function normalizeMonacoRuntimeFeatureSet(
 
 const MONACO_EDITOR_FULL_MODULES: readonly MonacoStandaloneRuntimeModuleDescriptor[] = [
   {
-    id: 'edcore.main',
-    load: () => import('monaco-editor/esm/vs/editor/edcore.main.js'),
-  },
-  {
-    id: 'suggestMemory',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js'),
-  },
-  {
-    id: 'codeLensCache',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js'),
-  },
-  {
-    id: 'inlayHintsContribution',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js'),
-  },
-  {
-    id: 'treeViewsDndService',
-    load: () => import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js'),
-  },
-  {
-    id: 'actionWidget',
-    load: () => import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js'),
+    id: 'editor.main',
+    load: () => import('monaco-editor/esm/vs/editor/editor.main.js'),
   },
 ];
 

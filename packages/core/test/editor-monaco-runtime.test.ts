@@ -91,12 +91,8 @@ describe('Monaco standalone runtime', () => {
     expect(runtimeSrc).toContain('resolveMonacoRuntimeRequest(options)');
     expect(runtimeSrc).toContain('cacheKey: `profile:${profile}`');
     expect(runtimeSrc).toContain('return Promise.all(request.blueprint.modules.map((module) => module.load()));');
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/editor.main.js')");
+    expect(runtimeSrc).not.toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
     expect(runtimeSrc).toContain('const pendingByKey = new Map<string, Promise<void>>();');
     expect(runtimeSrc).toContain('areAllStandaloneFeaturesDisabled(features)');
 
