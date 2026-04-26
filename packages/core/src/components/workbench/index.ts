@@ -5,6 +5,7 @@ export {
 export {
   WorkbenchSurface,
   type WorkbenchSurfaceApi,
+  type WorkbenchContextMenuItemsResolver,
   type WorkbenchSurfaceProps,
 } from './WorkbenchSurface';
 export {

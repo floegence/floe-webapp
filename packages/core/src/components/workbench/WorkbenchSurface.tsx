@@ -2,11 +2,16 @@ import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from
 import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
-import { WorkbenchContextMenu } from './WorkbenchContextMenu';
+import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
 import { WorkbenchFilterBar } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
+import {
+  createContextMenuPosition,
+  estimateContextMenuHeight,
+  WORKBENCH_CONTEXT_MENU_WIDTH_PX,
+} from './workbenchHelpers';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
 import {
   resolveWorkbenchInteractionAdapter,
@@ -14,12 +19,21 @@ import {
 } from './workbenchInteractionAdapter';
 import type {
   WorkbenchState,
+  WorkbenchContextMenuState,
   WorkbenchInputOwner,
   WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
 } from './types';
+
+export type WorkbenchContextMenuItemsResolver = (context: Readonly<{
+  menu: WorkbenchContextMenuState;
+  items: readonly WorkbenchContextMenuItem[];
+  widgets: readonly WorkbenchWidgetItem[];
+  widget: WorkbenchWidgetItem | null;
+  closeMenu: () => void;
+}>) => readonly WorkbenchContextMenuItem[];
 
 export interface WorkbenchSurfaceApi {
   ensureWidget: (
@@ -63,6 +77,7 @@ export interface WorkbenchSurfaceProps {
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
   launcherWidgetTypes?: readonly WorkbenchWidgetType[];
   interactionAdapter?: WorkbenchInteractionAdapter;
+  resolveContextMenuItems?: WorkbenchContextMenuItemsResolver;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
   onRequestDelete?: (widgetId: string) => void;
   onLayoutInteractionStart?: () => void;
@@ -114,21 +129,50 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     }
     return definitions.filter((entry) => allowed.has(entry.type));
   });
-  const contextMenuItems = createMemo(() => {
-    const items = model.contextMenu.items();
+  const contextMenuItems = createMemo<readonly WorkbenchContextMenuItem[]>(() => {
+    const menu = model.contextMenu.state();
+    const modelItems = model.contextMenu.items();
     const allowed = manuallyAddableWidgetTypes();
-    if (!allowed) {
-      return items;
+    const filteredItems = !allowed
+      ? modelItems
+      : modelItems.filter((item) => {
+        if (item.kind !== 'action') {
+          return true;
+        }
+        const addMatch = /^add-(.+)$/.exec(String(item.id ?? ''));
+        if (!addMatch) {
+          return true;
+        }
+        return allowed.has(addMatch[1] as WorkbenchWidgetType);
+      });
+
+    if (!menu || !props.resolveContextMenuItems) {
+      return filteredItems;
     }
-    return items.filter((item) => {
-      if (item.kind !== 'action') {
-        return true;
-      }
-      const addMatch = /^add-(.+)$/.exec(String(item.id ?? ''));
-      if (!addMatch) {
-        return true;
-      }
-      return allowed.has(addMatch[1] as WorkbenchWidgetType);
+
+    const widget = menu.widgetId
+      ? model.queries.findWidgetById(menu.widgetId)
+      : null;
+    return props.resolveContextMenuItems({
+      menu,
+      items: filteredItems,
+      widgets: model.widgets(),
+      widget,
+      closeMenu: model.contextMenu.close,
+    });
+  });
+  const contextMenuPosition = createMemo(() => {
+    const menu = model.contextMenu.state();
+    if (!menu) return undefined;
+
+    const items = contextMenuItems();
+    const actionCount = items.filter((item) => item.kind === 'action').length;
+    const separatorCount = items.filter((item) => item.kind === 'separator').length;
+    return createContextMenuPosition({
+      clientX: menu.clientX,
+      clientY: menu.clientY,
+      menuWidth: WORKBENCH_CONTEXT_MENU_WIDTH_PX,
+      menuHeight: estimateContextMenuHeight(actionCount, separatorCount),
     });
   });
 
@@ -455,8 +499,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
             onContextMenu={model.contextMenu.retarget}
           />
           <WorkbenchContextMenu
-            x={model.contextMenu.position()?.left ?? 0}
-            y={model.contextMenu.position()?.top ?? 0}
+            x={contextMenuPosition()?.left ?? 0}
+            y={contextMenuPosition()?.top ?? 0}
             items={contextMenuItems()}
           />
         </Portal>
