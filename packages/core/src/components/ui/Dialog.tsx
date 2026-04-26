@@ -1,4 +1,13 @@
-import { Show, createMemo, createUniqueId, type JSX } from 'solid-js';
+import {
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  onCleanup,
+  untrack,
+  type JSX,
+} from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { Button } from './Button';
@@ -13,6 +22,7 @@ import {
   resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalHost,
   resolveSurfacePortalMount,
+  type SurfacePortalBoundaryRect,
 } from './surfacePortalScope';
 
 export interface DialogProps {
@@ -26,6 +36,37 @@ export interface DialogProps {
   class?: string;
 }
 
+const DIALOG_OWNER_ANCHOR_STYLE: JSX.CSSProperties = {
+  display: 'none',
+};
+
+function scheduleDialogOwnerAnchorReady(callback: () => void): void {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback);
+    return;
+  }
+  void Promise.resolve().then(callback);
+}
+
+function surfacePortalRectKey(rect: SurfacePortalBoundaryRect): string {
+  return `${rect.left}|${rect.top}|${rect.right}|${rect.bottom}|${rect.width}|${rect.height}`;
+}
+
+function requestSurfacePortalFrame(callback: FrameRequestCallback): number {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    return window.requestAnimationFrame(callback);
+  }
+  return window.setTimeout(() => callback(Date.now()), 16);
+}
+
+function cancelSurfacePortalFrame(frameHandle: number): void {
+  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(frameHandle);
+    return;
+  }
+  window.clearTimeout(frameHandle);
+}
+
 /**
  * Modal dialog component
  */
@@ -34,17 +75,33 @@ export function Dialog(props: DialogProps) {
   const titleId = () => `dialog-${baseId}-title`;
   const descriptionId = () => `dialog-${baseId}-description`;
   let dialogRef: HTMLDivElement | undefined;
+  const [ownerAnchor, setOwnerAnchor] = createSignal<HTMLElement | null>(null);
+  const [ownerAnchorReadyVersion, setOwnerAnchorReadyVersion] = createSignal(0);
+  const [surfaceGeometryVersion, setSurfaceGeometryVersion] = createSignal(0);
+  const isMountedOpen = () => props.open && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
+  const setDialogOwnerAnchor = (element: HTMLElement): void => {
+    setOwnerAnchor(element);
+    scheduleDialogOwnerAnchorReady(() => {
+      if (untrack(ownerAnchor) === element) {
+        setOwnerAnchorReadyVersion((value) => value + 1);
+      }
+    });
+  };
   const surfaceHost = createMemo<ResolvedDialogSurfaceHost>(() =>
-    props.open
-      ? resolveSurfacePortalHost()
+    isMountedOpen()
+      ? resolveSurfacePortalHost({ owner: ownerAnchor() })
       : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const dialogBoundaryId = () => `dialog-boundary-${baseId}`;
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
   const portalMount = () => resolveSurfacePortalMount(surfaceHost());
-  const projectedBoundaryRect = createMemo(() =>
-    projectSurfacePortalRect(resolveSurfacePortalBoundaryRect(surfaceHost()), surfaceHost())
-  );
+  const readProjectedBoundaryRectForHost = (host: ResolvedDialogSurfaceHost) =>
+    projectSurfacePortalRect(resolveSurfacePortalBoundaryRect(host), host);
+  const readProjectedBoundaryRect = () => readProjectedBoundaryRectForHost(surfaceHost());
+  const projectedBoundaryRect = createMemo(() => {
+    surfaceGeometryVersion();
+    return readProjectedBoundaryRect();
+  });
 
   const isWithinDialogBoundary = (target: EventTarget | null) => {
     if (typeof Element !== 'undefined' && target instanceof Element) {
@@ -58,8 +115,52 @@ export function Dialog(props: DialogProps) {
     return false;
   };
 
+  createEffect(() => {
+    const currentHost = surfaceHost();
+    if (!isMountedOpen() || !isSurfacePortalMode(currentHost) || typeof window === 'undefined') {
+      return;
+    }
+
+    let disposed = false;
+    let frameHandle: number | null = null;
+    let lastGeometryKey = surfacePortalRectKey(readProjectedBoundaryRectForHost(currentHost));
+
+    const syncGeometry = () => {
+      if (disposed || !isSurfacePortalMode(currentHost)) {
+        return;
+      }
+
+      const nextGeometryKey = surfacePortalRectKey(readProjectedBoundaryRectForHost(currentHost));
+      if (nextGeometryKey === lastGeometryKey) {
+        return;
+      }
+      lastGeometryKey = nextGeometryKey;
+      setSurfaceGeometryVersion((value) => value + 1);
+    };
+
+    const requestNextFrame = () => {
+      if (disposed) {
+        return;
+      }
+
+      frameHandle = requestSurfacePortalFrame(() => {
+        syncGeometry();
+        requestNextFrame();
+      });
+    };
+
+    requestNextFrame();
+
+    onCleanup(() => {
+      disposed = true;
+      if (frameHandle !== null) {
+        cancelSurfacePortalFrame(frameHandle);
+      }
+    });
+  });
+
   useOverlayMask({
-    open: () => props.open,
+    open: isMountedOpen,
     root: () => dialogRef,
     containsTarget: (target) => isSurfaceMode() && isWithinDialogBoundary(target),
     onClose: () => props.onOpenChange(false),
@@ -74,100 +175,110 @@ export function Dialog(props: DialogProps) {
   });
 
   return (
-    <Show when={props.open}>
-      <Portal mount={portalMount()}>
-        <div
-          data-floe-dialog-overlay-root={baseId}
-          data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
-          {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
-          class={cn(isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4')}
-          style={
-            isSurfaceMode()
-              ? {
-                  left: `${projectedBoundaryRect().left}px`,
-                  top: `${projectedBoundaryRect().top}px`,
-                  width: `${projectedBoundaryRect().width}px`,
-                  height: `${projectedBoundaryRect().height}px`,
-                }
-              : undefined
-          }
-        >
-          {/* Backdrop */}
+    <>
+      <span
+        ref={setDialogOwnerAnchor}
+        aria-hidden="true"
+        data-floe-dialog-owner-anchor={baseId}
+        style={DIALOG_OWNER_ANCHOR_STYLE}
+      />
+      <Show when={isMountedOpen()}>
+        <Portal mount={portalMount()}>
           <div
-            data-floe-dialog-backdrop={baseId}
-            {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
+            data-floe-dialog-overlay-root={baseId}
+            data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
+            {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
             class={cn(
-              'absolute inset-0 cursor-pointer animate-in fade-in',
-              isSurfaceMode()
-                ? 'bg-background/72 backdrop-blur-[2px]'
-                : 'bg-background/80 backdrop-blur-sm'
+              isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4'
             )}
-            onClick={() => props.onOpenChange(false)}
-          />
-
-          {/* Dialog */}
-          <div class="relative z-[1] flex h-full w-full items-center justify-center">
+            style={
+              isSurfaceMode()
+                ? {
+                    left: `${projectedBoundaryRect().left}px`,
+                    top: `${projectedBoundaryRect().top}px`,
+                    width: `${projectedBoundaryRect().width}px`,
+                    height: `${projectedBoundaryRect().height}px`,
+                  }
+                : undefined
+            }
+          >
+            {/* Backdrop */}
             <div
-              ref={dialogRef}
-              data-floe-dialog-panel={baseId}
+              data-floe-dialog-backdrop={baseId}
               {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
               class={cn(
+                'absolute inset-0 cursor-pointer animate-in fade-in',
                 isSurfaceMode()
-                  ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
-                  : 'w-full max-w-md max-h-[85vh]',
-                'bg-card text-card-foreground rounded-md shadow-lg',
-                'border border-border',
-                'animate-in fade-in zoom-in-95',
-                'flex flex-col',
-                props.class
+                  ? 'bg-background/72 backdrop-blur-[2px]'
+                  : 'bg-background/80 backdrop-blur-sm'
               )}
-              role="dialog"
-              aria-modal={isSurfaceMode() ? undefined : 'true'}
-              aria-labelledby={props.title ? titleId() : undefined}
-              aria-describedby={props.description ? descriptionId() : undefined}
-              tabIndex={-1}
-            >
-              {/* Header */}
-              <Show when={props.title || props.description}>
-                <div class="flex items-start justify-between p-3 border-b border-border">
-                  <div>
-                    <Show when={props.title}>
-                      <h2 id={titleId()} class="text-sm font-semibold">
-                        {props.title}
-                      </h2>
-                    </Show>
-                    <Show when={props.description}>
-                      <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
-                        {props.description}
-                      </p>
-                    </Show>
+              onClick={() => props.onOpenChange(false)}
+            />
+
+            {/* Dialog */}
+            <div class="relative z-[1] flex h-full w-full items-center justify-center">
+              <div
+                ref={dialogRef}
+                data-floe-dialog-panel={baseId}
+                {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
+                class={cn(
+                  isSurfaceMode()
+                    ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
+                    : 'w-full max-w-md max-h-[85vh]',
+                  'bg-card text-card-foreground rounded-md shadow-lg',
+                  'border border-border',
+                  'animate-in fade-in zoom-in-95',
+                  'flex flex-col',
+                  props.class
+                )}
+                role="dialog"
+                aria-modal={isSurfaceMode() ? undefined : 'true'}
+                aria-labelledby={props.title ? titleId() : undefined}
+                aria-describedby={props.description ? descriptionId() : undefined}
+                tabIndex={-1}
+              >
+                {/* Header */}
+                <Show when={props.title || props.description}>
+                  <div class="flex items-start justify-between p-3 border-b border-border">
+                    <div>
+                      <Show when={props.title}>
+                        <h2 id={titleId()} class="text-sm font-semibold">
+                          {props.title}
+                        </h2>
+                      </Show>
+                      <Show when={props.description}>
+                        <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
+                          {props.description}
+                        </p>
+                      </Show>
+                    </div>
+                    <Button
+                      variant="ghost-destructive"
+                      size="icon"
+                      class="h-6 w-6 -mr-1"
+                      onClick={() => props.onOpenChange(false)}
+                      aria-label="Close"
+                    >
+                      <X class="w-3.5 h-3.5" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost-destructive"
-                    size="icon"
-                    class="h-6 w-6 -mr-1"
-                    onClick={() => props.onOpenChange(false)}
-                    aria-label="Close"
-                  >
-                    <X class="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </Show>
+                </Show>
 
-              {/* Content */}
-              <div class="flex-1 overflow-auto overscroll-contain p-3">{props.children}</div>
+                {/* Content */}
+                <div class="flex-1 overflow-auto overscroll-contain p-3">{props.children}</div>
 
-              {/* Footer */}
-              <Show when={props.footer}>
-                <div class="flex items-center justify-end gap-2 p-3 border-t border-border">
-                  {props.footer}
-                </div>
-              </Show>
+                {/* Footer */}
+                <Show when={props.footer}>
+                  <div class="flex items-center justify-end gap-2 p-3 border-t border-border">
+                    {props.footer}
+                  </div>
+                </Show>
+              </div>
             </div>
           </div>
-        </div>
-      </Portal>
-    </Show>
+        </Portal>
+      </Show>
+    </>
   );
 }
 

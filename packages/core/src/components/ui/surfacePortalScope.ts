@@ -13,6 +13,7 @@ export {
   projectSurfacePortalRect,
   __resetSurfacePortalScopeForTests,
   type SurfacePortalInteractionSnapshot,
+  type SurfacePortalHostResolutionOptions,
   type SurfacePortalMode,
   type ResolvedSurfacePortalHost,
   type SurfacePortalBoundaryRect,

@@ -26,6 +26,10 @@ export type ResolvedSurfacePortalHost = ResolvedDialogSurfaceHost;
 export type SurfacePortalBoundaryRect = SurfacePortalRect;
 export type { SurfacePortalRect };
 
+export type SurfacePortalHostResolutionOptions = Readonly<{
+  owner?: Element | null;
+}>;
+
 let lastInteractionSnapshot: DialogSurfaceInteractionSnapshot | null = null;
 let trackedDocument: Document | null = null;
 
@@ -96,25 +100,30 @@ function readFreshInteractionSnapshot(): DialogSurfaceInteractionSnapshot | null
 function findSurfaceHostFromElement(element: Element | null): HTMLElement | null {
   const host = element?.closest(`[${DIALOG_SURFACE_HOST_ATTR}="true"]`);
   if (typeof HTMLElement === 'undefined') return null;
-  return host instanceof HTMLElement && host.isConnected ? host : null;
+  return host instanceof HTMLElement ? host : null;
 }
 
 function findSurfacePortalLayerFromHost(host: HTMLElement | null): HTMLElement | null {
   if (!host) return null;
   const layer = host.closest(`[${SURFACE_PORTAL_LAYER_ATTR}="true"]`);
   if (typeof HTMLElement === 'undefined') return null;
-  return layer instanceof HTMLElement && layer.isConnected ? layer : null;
+  return layer instanceof HTMLElement ? layer : null;
 }
 
-export function resolveDialogSurfaceHost(): ResolvedDialogSurfaceHost {
-  return resolveSurfacePortalHost();
+export function resolveDialogSurfaceHost(
+  options: SurfacePortalHostResolutionOptions = {}
+): ResolvedDialogSurfaceHost {
+  return resolveSurfacePortalHost(options);
 }
 
-export function resolveSurfacePortalHost(): ResolvedSurfacePortalHost {
+export function resolveSurfacePortalHost(
+  options: SurfacePortalHostResolutionOptions = {}
+): ResolvedSurfacePortalHost {
   ensureDialogSurfaceInteractionTracking();
 
   const snapshot = readFreshInteractionSnapshot();
   const boundaryHost =
+    findSurfaceHostFromElement(options.owner ?? null) ??
     findSurfaceHostFromElement(snapshot?.target ?? null) ??
     findSurfaceHostFromElement(snapshot?.activeElement ?? null);
 

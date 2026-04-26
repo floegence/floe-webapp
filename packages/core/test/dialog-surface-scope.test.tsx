@@ -25,6 +25,20 @@ function flushMicrotasks(): Promise<void> {
   return Promise.resolve();
 }
 
+function rect(left: number, top: number, width: number, height: number): DOMRect {
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
+    x: left,
+    y: top,
+    toJSON: () => undefined,
+  } as DOMRect;
+}
+
 function dispatchEscape(target: EventTarget): void {
   target.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Escape',
@@ -84,6 +98,25 @@ function SurfaceDialogHarness(props: {
         Outside button
       </button>
     </>
+  );
+}
+
+function InitiallyOpenSurfaceDialogHarness() {
+  return (
+    <div
+      data-testid="surface-host"
+      data-floe-dialog-surface-host="true"
+      style={{ position: 'relative', width: '360px', height: '240px' }}
+    >
+      <Dialog
+        open
+        onOpenChange={() => undefined}
+        title="Owned dialog"
+        description="Surface ownership follows component location"
+      >
+        <button type="button" data-testid="dialog-action">Inside owned dialog</button>
+      </Dialog>
+    </div>
   );
 }
 
@@ -292,6 +325,23 @@ describe('dialog surface scope', () => {
     }
     document.body.innerHTML = '';
     __resetDialogSurfaceScopeForTests();
+    vi.unstubAllGlobals();
+  });
+
+  it('mounts an initially open dialog into its owner surface without a pointer snapshot', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <InitiallyOpenSurfaceDialogHarness />, host);
+
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLElement | null;
+    const overlayRoot = host.querySelector('[data-floe-dialog-overlay-root]') as HTMLElement | null;
+    expect(surfaceHost).toBeTruthy();
+    expect(overlayRoot).toBeTruthy();
+    expect(surfaceHost?.contains(overlayRoot ?? null)).toBe(true);
+    expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('surface');
   });
 
   it('mounts a widget dialog into the local surface host even when opened by a non-focusable trigger', async () => {
@@ -317,6 +367,12 @@ describe('dialog surface scope', () => {
   it('mounts a transformed-surface dialog into the nearest portal layer while keeping boundary-relative geometry', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
+    const rafCallbacks: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
     mount(() => <LayerScopedDialogHarness />, host);
 
     const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLElement | null;
@@ -367,6 +423,20 @@ describe('dialog surface scope', () => {
     expect(overlayRoot?.style.top).toBe('50px');
     expect(overlayRoot?.style.width).toBe('240px');
     expect(overlayRoot?.style.height).toBe('180px');
+
+    Object.defineProperty(surfaceHost!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => rect(160, 110, 180, 120),
+    });
+
+    expect(rafCallbacks.length).toBeGreaterThan(0);
+    rafCallbacks.shift()?.(16);
+    await flushMicrotasks();
+
+    expect(overlayRoot?.style.left).toBe('140px');
+    expect(overlayRoot?.style.top).toBe('80px');
+    expect(overlayRoot?.style.width).toBe('180px');
+    expect(overlayRoot?.style.height).toBe('120px');
 
     const action = surfaceLayer!.querySelector('[data-testid="layered-dialog-action"]') as HTMLButtonElement | null;
     expect(action).toBeTruthy();
