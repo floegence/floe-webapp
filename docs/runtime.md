@@ -129,6 +129,8 @@ const swScript = createProxyServiceWorkerScript({
 await registerServiceWorkerAndEnsureControl({ scriptUrl: '/_proxy/sw.js', scope: '/' });
 ```
 
+For `external_script` and `external_module` injection, `scriptUrl` is intentionally a root-relative current-origin path such as `/_proxy/inject.js`. Keep it on the same origin controlled by the Service Worker; Flowersec rejects absolute, protocol-relative, or attribute-breaking URLs before generating the worker script.
+
 Ownership boundary:
 
 - `@floegence/floe-webapp-boot` owns the browser bootstrap document helpers and first-party reconnect config assembly.
