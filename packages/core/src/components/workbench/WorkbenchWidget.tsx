@@ -14,6 +14,12 @@ import {
   resolveWorkbenchProjectedSurfaceScaleBehavior,
 } from './workbenchHelpers';
 import {
+  WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR,
+  createWorkbenchEdgeAutoPanController,
+  frameFromElement,
+  type WorkbenchEdgeAutoPanController,
+} from './workbenchEdgeAutoPan';
+import {
   resolveWorkbenchInteractionAdapter,
   type ResolvedWorkbenchInteractionAdapter,
 } from './workbenchInteractionAdapter';
@@ -37,6 +43,8 @@ interface LocalDragState {
   startWorldY: number;
   worldX: number;
   worldY: number;
+  autoPanWorldX: number;
+  autoPanWorldY: number;
   moved: boolean;
   scale: number;
   stopInteraction: () => void;
@@ -93,12 +101,15 @@ export interface WorkbenchWidgetProps {
   projectedViewport?: Accessor<WorkbenchViewport>;
   surfaceReady?: boolean;
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
+  viewport?: WorkbenchViewport;
   onSelect: (widgetId: string) => void;
   onContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onStartOptimisticFront: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
+  onViewportCommit?: (viewport: WorkbenchViewport) => void;
+  onViewportInteractionStart?: (kind: 'pan') => void;
   onRequestOverview: (item: WorkbenchWidgetItem) => void;
   onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
@@ -121,6 +132,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   });
   let dragSession: PointerSessionController | undefined;
   let resizeSession: PointerSessionController | undefined;
+  let edgeAutoPan: WorkbenchEdgeAutoPanController | undefined;
+  let edgeAutoPanViewport: WorkbenchViewport | null = null;
   let pendingLocalInteractionToken = 0;
   let pendingPointerOwnershipPreclaimToken = 0;
   let pendingLocalTypingFocusRestore: ScheduledLocalTypingFocusRestore | null = null;
@@ -146,8 +159,45 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       untrack(() => props.onLayoutInteractionEnd?.());
     };
   };
+  const stopEdgeAutoPan = () => {
+    edgeAutoPan?.stop();
+    edgeAutoPan = undefined;
+    edgeAutoPanViewport = null;
+  };
+  const startEdgeAutoPan = () => {
+    if (!props.viewport || !props.onViewportCommit) return;
+    edgeAutoPanViewport = props.viewport;
+    edgeAutoPan?.stop();
+    edgeAutoPan = createWorkbenchEdgeAutoPanController({
+      readFrame: () => {
+        const frame = widgetRootEl?.closest(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
+        return frame instanceof HTMLElement ? frameFromElement(frame) : null;
+      },
+      readViewport: () => edgeAutoPanViewport ?? props.viewport ?? null,
+      commitViewport: (viewport) => {
+        edgeAutoPanViewport = viewport;
+        props.onViewportCommit?.(viewport);
+      },
+      onPanStart: () => props.onViewportInteractionStart?.('pan'),
+      onPan: (step) => {
+        setDragState((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            autoPanWorldX: current.autoPanWorldX + step.worldDeltaX,
+            autoPanWorldY: current.autoPanWorldY + step.worldDeltaY,
+            worldX: current.worldX + step.worldDeltaX,
+            worldY: current.worldY + step.worldDeltaY,
+            moved: true,
+          };
+        });
+      },
+      shouldPan: () => dragState() !== null,
+    });
+  };
 
   onCleanup(() => {
+    stopEdgeAutoPan();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     dragSession = undefined;
     resizeSession?.stop({ reason: 'manual_stop', commit: false });
@@ -524,6 +574,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     }
 
     current.stopInteraction();
+    stopEdgeAutoPan();
     setDragState(null);
     dragSession = undefined;
   };
@@ -549,18 +600,26 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       startWorldY: props.y,
       worldX: props.x,
       worldY: props.y,
+      autoPanWorldX: 0,
+      autoPanWorldY: 0,
       moved: false,
       scale,
       stopInteraction,
     });
 
+    startEdgeAutoPan();
     const handleMove = (nextEvent: PointerEvent) => {
+      edgeAutoPan?.updatePointer(nextEvent.clientX, nextEvent.clientY);
       setDragState((current) => {
         if (!current || current.pointerId !== nextEvent.pointerId) return current;
         const worldX =
-          current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale;
+          current.startWorldX
+          + (nextEvent.clientX - current.startClientX) / current.scale
+          + current.autoPanWorldX;
         const worldY =
-          current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale;
+          current.startWorldY
+          + (nextEvent.clientY - current.startClientY) / current.scale
+          + current.autoPanWorldY;
         return {
           ...current,
           worldX,

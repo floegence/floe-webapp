@@ -478,8 +478,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         widgetDefinitions={filterBarWidgetDefinitions()}
         widgets={model.widgets()}
         filters={model.filters()}
+        viewport={model.viewport()}
         onSoloFilter={model.filter.solo}
         onShowAll={model.filter.showAll}
+        onViewportCommit={model.canvas.commitViewport}
+        onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
         onCreateAt={handleCreateAtClient}
       />
 

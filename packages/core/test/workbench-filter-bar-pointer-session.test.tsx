@@ -89,8 +89,19 @@ describe('WorkbenchFilterBar pointer session', () => {
   afterEach(() => {
     dispose?.();
     dispose = undefined;
+    vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
+
+  function mockAnimationFrames(): FrameRequestCallback[] {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    return callbacks;
+  }
 
   it('commits a dragged widget pill once when release is only observable through a later buttons=0 move', async () => {
     mockCanvasFrame();
@@ -142,5 +153,49 @@ describe('WorkbenchFilterBar pointer session', () => {
 
     expect(onCreateAt).toHaveBeenCalledTimes(1);
     expect(onCreateAt).toHaveBeenCalledWith('custom.files', 120, 120);
+  });
+
+  it('auto-pans the canvas while a widget pill is dragged against an edge', async () => {
+    mockCanvasFrame();
+    const callbacks = mockAnimationFrames();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onViewportCommit = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{ 'custom.files': true }}
+        viewport={{ x: 0, y: 0, scale: 1 }}
+        onSoloFilter={() => {}}
+        onShowAll={() => {}}
+        onViewportCommit={onViewportCommit}
+      />
+    ), host);
+
+    const filesButton = host.querySelector(
+      'button[aria-label="Files — click to solo, drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 19,
+      clientX: 20,
+      clientY: 20,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 19,
+      clientX: 790,
+      clientY: 300,
+      buttons: 1,
+    });
+    callbacks.shift()?.(0);
+    callbacks.shift()?.(120);
+    await Promise.resolve();
+
+    expect(onViewportCommit).toHaveBeenCalledTimes(1);
+    expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
   });
 });

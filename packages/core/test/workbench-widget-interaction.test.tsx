@@ -96,6 +96,33 @@ async function flushWorkbenchInteraction(): Promise<void> {
   await Promise.resolve();
 }
 
+function mockAnimationFrames(): FrameRequestCallback[] {
+  const callbacks: FrameRequestCallback[] = [];
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    callbacks.push(callback);
+    return callbacks.length;
+  });
+  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+  return callbacks;
+}
+
+function mockCanvasFrameRect(element: HTMLElement): void {
+  Object.defineProperty(element, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      left: 0,
+      top: 0,
+      right: 900,
+      bottom: 640,
+      width: 900,
+      height: 640,
+      x: 0,
+      y: 0,
+      toJSON: () => undefined,
+    }),
+  });
+}
+
 function renderActivationProbe(
   onActivation: (activation: WorkbenchWidgetBodyActivation) => void,
   children: (props: WorkbenchWidgetBodyProps) => JSX.Element,
@@ -249,6 +276,7 @@ describe('WorkbenchWidget interaction ownership', () => {
   afterEach(() => {
     dispose?.();
     dispose = undefined;
+    vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
 
@@ -918,6 +946,79 @@ describe('WorkbenchWidget interaction ownership', () => {
       x: 38,
       y: 24,
     });
+  });
+
+  it('keeps a dragged widget under the pointer while edge auto-pan reveals more canvas', async () => {
+    const callbacks = mockAnimationFrames();
+    const frame = document.createElement('div');
+    frame.setAttribute('data-floe-workbench-canvas-frame', 'true');
+    mockCanvasFrameRect(frame);
+    document.body.appendChild(frame);
+
+    const onCommitMove = vi.fn();
+    const onViewportCommit = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchWidget
+        definition={filesWidgetDefinition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={1}
+        itemSnapshot={createWidgetSnapshot}
+        selected
+        optimisticFront={false}
+        topRenderLayer={2}
+        viewportScale={1}
+        viewport={{ x: 0, y: 0, scale: 1 }}
+        locked={false}
+        filtered={false}
+        onSelect={() => {}}
+        onContextMenu={() => {}}
+        onStartOptimisticFront={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={onCommitMove}
+        onCommitResize={() => {}}
+        onViewportCommit={onViewportCommit}
+        onRequestOverview={() => {}}
+        onRequestFit={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ), frame);
+
+    const dragButton = frame.querySelector('.workbench-widget__drag') as HTMLElement | null;
+    expect(dragButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', dragButton!, {
+      pointerId: 17,
+      clientX: 850,
+      clientY: 300,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 17,
+      clientX: 890,
+      clientY: 300,
+      buttons: 1,
+    });
+    callbacks.shift()?.(0);
+    callbacks.shift()?.(120);
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 17,
+      clientX: 890,
+      clientY: 300,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(onViewportCommit).toHaveBeenCalledTimes(1);
+    expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
+    expect(onCommitMove).toHaveBeenCalledTimes(1);
+    expect(onCommitMove.mock.calls[0]![1].x).toBeGreaterThan(40);
   });
 
   it('commits widget resize once when release is only observable through a later buttons=0 move', async () => {

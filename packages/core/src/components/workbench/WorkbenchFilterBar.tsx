@@ -13,7 +13,14 @@ import { duration, easing } from '../../utils/animations';
 import { Layers, Plus } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
+import {
+  WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR,
+  createWorkbenchEdgeAutoPanController,
+  frameFromElement,
+  type WorkbenchEdgeAutoPanController,
+} from './workbenchEdgeAutoPan';
 import type {
+  WorkbenchViewport,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
@@ -32,6 +39,9 @@ export interface WorkbenchFilterBarProps {
    * new widget of that type. Coordinates are in client space (clientX/Y).
    */
   onCreateAt?: (type: WorkbenchWidgetType, clientX: number, clientY: number) => void;
+  viewport?: WorkbenchViewport;
+  onViewportCommit?: (viewport: WorkbenchViewport) => void;
+  onViewportInteractionStart?: (kind: 'pan') => void;
 }
 
 interface DragState {
@@ -49,10 +59,10 @@ interface DragState {
 }
 
 const DRAG_THRESHOLD_PX = 5;
-const CANVAS_FRAME_SELECTOR = '[data-floe-workbench-canvas-frame="true"]';
+const DOCK_SELECTOR = '.workbench-dock';
 
 function isOverCanvas(clientX: number, clientY: number): boolean {
-  const frame = document.querySelector(CANVAS_FRAME_SELECTOR);
+  const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
   if (!(frame instanceof HTMLElement)) return false;
   const rect = frame.getBoundingClientRect();
   return (
@@ -61,6 +71,12 @@ function isOverCanvas(clientX: number, clientY: number): boolean {
     clientY >= rect.top &&
     clientY <= rect.bottom
   );
+}
+
+function isOverDock(clientX: number, clientY: number): boolean {
+  if (typeof document.elementFromPoint !== 'function') return false;
+  const target = document.elementFromPoint(clientX, clientY);
+  return target instanceof Element && target.closest(DOCK_SELECTOR) !== null;
 }
 
 interface DockItemProps {
@@ -133,8 +149,11 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
   const [dragState, setDragState] = createSignal<DragState | null>(null);
 
   let dragSession: PointerSessionController | undefined;
+  let edgeAutoPan: WorkbenchEdgeAutoPanController | undefined;
+  let edgeAutoPanViewport: WorkbenchViewport | null = null;
 
   onCleanup(() => {
+    edgeAutoPan?.stop();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     dragSession = undefined;
     const current = dragState();
@@ -155,12 +174,41 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     return 0;
   };
 
+  const stopEdgeAutoPan = () => {
+    edgeAutoPan?.stop();
+    edgeAutoPan = undefined;
+    edgeAutoPanViewport = null;
+  };
+
+  const startEdgeAutoPan = () => {
+    if (!props.viewport || !props.onViewportCommit) return;
+    edgeAutoPanViewport = props.viewport;
+    edgeAutoPan?.stop();
+    edgeAutoPan = createWorkbenchEdgeAutoPanController({
+      readFrame: () => {
+        const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
+        return frame instanceof HTMLElement ? frameFromElement(frame) : null;
+      },
+      readViewport: () => edgeAutoPanViewport ?? props.viewport ?? null,
+      commitViewport: (viewport) => {
+        edgeAutoPanViewport = viewport;
+        props.onViewportCommit?.(viewport);
+      },
+      onPanStart: () => props.onViewportInteractionStart?.('pan'),
+      shouldPan: () => {
+        const current = dragState();
+        return Boolean(current?.moved && current.overCanvas);
+      },
+    });
+  };
+
   const finalizeDrag = (commitDrop: boolean) => {
     const current = dragState();
     if (!current) return;
 
     const isClick = !current.moved;
     current.stopInteraction();
+    stopEdgeAutoPan();
     setDragState(null);
     dragSession = undefined;
 
@@ -183,6 +231,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
   ) => {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
+    startEdgeAutoPan();
 
     setDragState({
       type,
@@ -199,6 +248,7 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     });
 
     const handleMove = (next: PointerEvent) => {
+      let shouldUpdateEdgeAutoPan = false;
       setDragState((current) => {
         if (!current || current.pointerId !== next.pointerId) return current;
         const dx = next.clientX - current.startClientX;
@@ -207,14 +257,21 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
           current.moved ||
           Math.abs(dx) > DRAG_THRESHOLD_PX ||
           Math.abs(dy) > DRAG_THRESHOLD_PX;
+        const overCanvas = moved
+          && isOverCanvas(next.clientX, next.clientY)
+          && !isOverDock(next.clientX, next.clientY);
+        shouldUpdateEdgeAutoPan = overCanvas;
         return {
           ...current,
           clientX: next.clientX,
           clientY: next.clientY,
           moved,
-          overCanvas: moved && isOverCanvas(next.clientX, next.clientY),
+          overCanvas,
         };
       });
+      if (shouldUpdateEdgeAutoPan) {
+        edgeAutoPan?.updatePointer(next.clientX, next.clientY);
+      }
     };
 
     dragSession = startPointerSession({

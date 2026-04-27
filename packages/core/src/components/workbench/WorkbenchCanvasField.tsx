@@ -5,6 +5,7 @@ import {
 } from './workbenchInteractionAdapter';
 import type {
   WorkbenchInteractionAdapter,
+  WorkbenchViewport,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
@@ -16,6 +17,7 @@ import { WorkbenchWidget } from './WorkbenchWidget';
 export interface WorkbenchCanvasFieldProps {
   widgetDefinitions: readonly WorkbenchWidgetDefinition[];
   widgets: readonly WorkbenchWidgetItem[];
+  viewport: WorkbenchViewport;
   selectedWidgetId: string | null;
   optimisticFrontWidgetId: string | null;
   viewportScale: number;
@@ -28,6 +30,8 @@ export interface WorkbenchCanvasFieldProps {
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
+  onViewportCommit: (viewport: WorkbenchViewport) => void;
+  onViewportInteractionStart?: (kind: 'pan') => void;
   onRequestOverview: (item: WorkbenchWidgetItem) => void;
   onRequestFit: (item: WorkbenchWidgetItem) => void;
   onRequestDelete: (widgetId: string) => void;
@@ -69,12 +73,15 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       locked={props.locked}
       filtered={!props.filters[item().type]}
       interactionAdapter={props.interactionAdapter}
+      viewport={props.viewport}
       onSelect={props.onSelectWidget}
       onContextMenu={props.onWidgetContextMenu}
       onStartOptimisticFront={props.onStartOptimisticFront}
       onCommitFront={props.onCommitFront}
       onCommitMove={props.onCommitMove}
       onCommitResize={props.onCommitResize}
+      onViewportCommit={props.onViewportCommit}
+      onViewportInteractionStart={props.onViewportInteractionStart}
       onRequestOverview={props.onRequestOverview}
       onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
@@ -106,6 +113,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             widgets={props.widgets}
             widgetById={widgetById}
             renderLayers={renderLayers}
+            viewport={props.viewport}
             selectedWidgetId={props.selectedWidgetId}
             optimisticFrontWidgetId={props.optimisticFrontWidgetId}
             viewportScale={props.viewportScale}
@@ -118,6 +126,8 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             onCommitFront={props.onCommitFront}
             onCommitMove={props.onCommitMove}
             onCommitResize={props.onCommitResize}
+            onViewportCommit={props.onViewportCommit}
+            onViewportInteractionStart={props.onViewportInteractionStart}
             onRequestOverview={props.onRequestOverview}
             onRequestFit={props.onRequestFit}
             onRequestDelete={props.onRequestDelete}

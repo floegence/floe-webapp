@@ -91,6 +91,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       filtered={!props.filters[item().type]}
       interactionAdapter={props.interactionAdapter}
       layoutMode="projected_surface"
+      viewport={props.projectedViewport()}
       projectedViewport={props.projectedViewport}
       surfaceReady={props.surfaceReady}
       onSelect={props.onSelectWidget}
@@ -99,6 +100,8 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       onCommitFront={props.onCommitFront}
       onCommitMove={props.onCommitMove}
       onCommitResize={props.onCommitResize}
+      onViewportCommit={props.onViewportCommit}
+      onViewportInteractionStart={props.onViewportInteractionStart}
       onRequestOverview={props.onRequestOverview}
       onRequestFit={props.onRequestFit}
       onRequestDelete={props.onRequestDelete}
@@ -202,6 +205,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         <WorkbenchCanvasField
           widgetDefinitions={props.widgetDefinitions}
           widgets={canvasWidgets()}
+          viewport={props.viewport}
           selectedWidgetId={props.selectedWidgetId}
           optimisticFrontWidgetId={props.optimisticFrontWidgetId}
           viewportScale={props.viewport.scale}
@@ -214,6 +218,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           onCommitFront={props.onCommitFront}
           onCommitMove={props.onCommitMove}
           onCommitResize={props.onCommitResize}
+          onViewportCommit={props.onViewportCommit}
+          onViewportInteractionStart={props.onViewportInteractionStart}
           onRequestOverview={props.onRequestOverview}
           onRequestFit={props.onRequestFit}
           onRequestDelete={props.onRequestDelete}
