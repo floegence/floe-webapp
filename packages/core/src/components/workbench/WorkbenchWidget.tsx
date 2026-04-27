@@ -3,6 +3,7 @@ import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
+  resolveWorkbenchWidgetTextSelectionTarget,
   WORKBENCH_WIDGET_SHELL_ATTR,
   resolveWorkbenchWidgetLocalTypingTarget,
   shouldActivateWorkbenchWidgetLocalTarget,
@@ -306,9 +307,18 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         panSurfaceSelector: interactionAdapter().panSurfaceSelector,
       })
       : null;
+    const localTextSelectionTarget = ownership === 'widget_local'
+      ? resolveWorkbenchWidgetTextSelectionTarget({
+        target: event.target,
+        widgetRoot: widgetRootEl ?? null,
+        interactiveSelector: interactionAdapter().interactiveSelector,
+        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
+      })
+      : null;
     const shouldActivateLocalTarget =
       ownership === 'widget_local'
       && !localTypingTarget
+      && !localTextSelectionTarget
       && shouldActivateWorkbenchWidgetLocalTarget({
         target: event.target,
         widgetRoot: widgetRootEl ?? null,
@@ -327,6 +337,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       if (!wasSelected) {
         scheduleTypingTargetFocusRestore(event.pointerId, localTypingTarget);
       }
+      return;
+    }
+
+    if (localTextSelectionTarget) {
+      pendingLocalTypingFocusRestore = null;
       return;
     }
 

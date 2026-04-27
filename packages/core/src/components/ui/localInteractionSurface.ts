@@ -13,6 +13,10 @@ export const WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR =
   'data-floe-workbench-widget-activation-surface';
 export const DEFAULT_WORKBENCH_WIDGET_ACTIVATION_SURFACE_SELECTOR =
   `[${WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR}="true"]`;
+export const WORKBENCH_TEXT_SELECTION_SURFACE_ATTR =
+  'data-floe-workbench-text-selection-surface';
+export const DEFAULT_WORKBENCH_TEXT_SELECTION_SURFACE_SELECTOR =
+  `[${WORKBENCH_TEXT_SELECTION_SURFACE_ATTR}="true"]`;
 
 export type SurfaceInteractionTargetRole = 'canvas' | 'local_surface' | 'pan_surface';
 export type SurfaceWheelLocalReason =
@@ -33,6 +37,7 @@ export interface SurfaceInteractionRoutingOptions {
   interactiveSelector: string;
   panSurfaceSelector: string;
   localInteractionSurfaceSelector?: string;
+  textSelectionSurfaceSelector?: string;
 }
 
 export interface WorkbenchWidgetEventOwnershipOptions extends SurfaceInteractionRoutingOptions {
@@ -98,6 +103,7 @@ export function resolveSurfaceInteractionTargetRole(
     interactiveSelector,
     panSurfaceSelector,
     localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+    textSelectionSurfaceSelector = DEFAULT_WORKBENCH_TEXT_SELECTION_SURFACE_SELECTOR,
   } = options;
 
   const element = target instanceof Element ? target : null;
@@ -110,7 +116,8 @@ export function resolveSurfaceInteractionTargetRole(
   if (
     isTypingElement(element) ||
     element.closest(interactiveSelector) !== null ||
-    element.closest(localInteractionSurfaceSelector) !== null
+    element.closest(localInteractionSurfaceSelector) !== null ||
+    element.closest(textSelectionSurfaceSelector) !== null
   ) {
     return 'local_surface';
   }
@@ -219,6 +226,10 @@ export function shouldActivateWorkbenchWidgetLocalTarget(
     return false;
   }
 
+  if (resolveWorkbenchWidgetTextSelectionTarget(options) !== null) {
+    return false;
+  }
+
   if (targetElement.closest(widgetActivationSurfaceSelector) !== null) {
     return resolveWorkbenchWidgetEventOwnership(options) === 'widget_local';
   }
@@ -228,6 +239,47 @@ export function shouldActivateWorkbenchWidgetLocalTarget(
   }
 
   return resolveWorkbenchWidgetEventOwnership(options) === 'widget_local';
+}
+
+export function resolveWorkbenchWidgetTextSelectionTarget(
+  options: WorkbenchWidgetLocalActivationTargetOptions,
+): HTMLElement | null {
+  const {
+    widgetRoot,
+    shellSelector = DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
+    localInteractionSurfaceSelector = DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
+    widgetActivationSurfaceSelector = DEFAULT_WORKBENCH_WIDGET_ACTIVATION_SURFACE_SELECTOR,
+    textSelectionSurfaceSelector = DEFAULT_WORKBENCH_TEXT_SELECTION_SURFACE_SELECTOR,
+  } = options;
+
+  const widgetElement = resolveElement(widgetRoot);
+  const targetElement = resolveElement(options.target);
+  if (!widgetElement || !targetElement || !widgetElement.contains(targetElement)) {
+    return null;
+  }
+
+  if (targetElement === widgetElement || targetElement.closest(shellSelector) !== null) {
+    return null;
+  }
+
+  if (targetElement.closest(options.panSurfaceSelector) !== null) {
+    return null;
+  }
+
+  const explicitSurface = targetElement.closest(textSelectionSurfaceSelector);
+  if (explicitSurface instanceof HTMLElement && widgetElement.contains(explicitSurface)) {
+    return explicitSurface;
+  }
+
+  if (targetElement.closest(localInteractionSurfaceSelector) !== null) {
+    return null;
+  }
+
+  if (targetElement.closest(widgetActivationSurfaceSelector) !== null) {
+    return null;
+  }
+
+  return null;
 }
 
 export function resolveWorkbenchWidgetLocalTypingTarget(

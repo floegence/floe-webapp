@@ -7,8 +7,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkbenchCanvas } from '../src/components/workbench/WorkbenchCanvas';
 import { WorkbenchWidget } from '../src/components/workbench/WorkbenchWidget';
 import {
+  WORKBENCH_TEXT_SELECTION_SURFACE_ATTR,
   WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR,
   resolveWorkbenchWidgetLocalTypingTarget,
+  resolveWorkbenchWidgetTextSelectionTarget,
 } from '../src/components/ui/localInteractionSurface';
 import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
 import type {
@@ -471,6 +473,65 @@ describe('WorkbenchWidget interaction ownership', () => {
     await flushWorkbenchInteraction();
 
     expect(activations).toEqual([{ seq: 1, selected: true }]);
+  });
+
+  it('lets explicit text-selection markers override widget activation surfaces', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const activations: number[] = [];
+    const definition = renderActivationProbe((activation) => {
+      activations.push(activation.seq);
+    }, () => (
+      <div {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}>
+        <span
+          data-testid="explicit-reading-text"
+          {...{ [WORKBENCH_TEXT_SELECTION_SURFACE_ATTR]: 'true' }}
+        >
+          Commit Overview
+        </span>
+      </div>
+    ));
+
+    dispose = renderStatefulWidget(host, definition);
+
+    const readingText = host.querySelector('[data-testid="explicit-reading-text"]') as HTMLElement | null;
+    expect(readingText).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', readingText!, { pointerId: 32 });
+    await flushWorkbenchInteraction();
+
+    expect(activations).toEqual([]);
+  });
+
+  it('resolves explicit text-selection candidates even when canvas-level CSS disables user selection', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const widgetRoot = document.createElement('div');
+    const textTarget = document.createElement('span');
+
+    textTarget.textContent = 'Top Processes';
+    textTarget.setAttribute(WORKBENCH_TEXT_SELECTION_SURFACE_ATTR, 'true');
+    widgetRoot.append(textTarget);
+    host.appendChild(widgetRoot);
+
+    const originalGetComputedStyle = window.getComputedStyle.bind(window);
+    const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+      const style = originalGetComputedStyle(element);
+      Object.defineProperty(style, 'userSelect', {
+        configurable: true,
+        value: 'none',
+      });
+      return style;
+    });
+
+    expect(resolveWorkbenchWidgetTextSelectionTarget({
+      target: textTarget,
+      widgetRoot,
+      interactiveSelector: '[data-test-interactive="true"]',
+      panSurfaceSelector: '[data-test-pan="true"]',
+    })).toBe(textTarget);
+    getComputedStyleSpy.mockRestore();
   });
 
   it('selects inactive widgets without swallowing the original target click', async () => {
