@@ -2,10 +2,10 @@ import type { WorkbenchViewport } from './types';
 
 export const WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR = '[data-floe-workbench-canvas-frame="true"]';
 
-const DEFAULT_EDGE_THRESHOLD_PX = 36;
-const DEFAULT_OUTSIDE_TOLERANCE_PX = 10;
-const DEFAULT_ACTIVATION_DELAY_MS = 100;
-const DEFAULT_MAX_SPEED_PX_PER_SECOND = 480;
+const DEFAULT_EDGE_THRESHOLD_PX = 72;
+const DEFAULT_OUTSIDE_ACCELERATION_PX = 96;
+const DEFAULT_ACTIVATION_DELAY_MS = 45;
+const DEFAULT_MAX_SPEED_PX_PER_SECOND = 680;
 const MAX_FRAME_DELTA_MS = 48;
 const MIN_SCALE = 0.001;
 
@@ -23,6 +23,10 @@ export interface WorkbenchEdgeAutoPanVelocityOptions {
   clientX: number;
   clientY: number;
   thresholdPx?: number;
+  /**
+   * Deprecated: edge auto-pan intentionally keeps moving after the pointer leaves
+   * the frame during an active drag.
+   */
   outsideTolerancePx?: number;
   maxSpeedPxPerSecond?: number;
 }
@@ -48,6 +52,10 @@ export interface WorkbenchEdgeAutoPanControllerOptions {
   onPanStart?: () => void;
   shouldPan?: () => boolean;
   thresholdPx?: number;
+  /**
+   * Deprecated: edge auto-pan intentionally keeps moving after the pointer leaves
+   * the frame during an active drag.
+   */
   outsideTolerancePx?: number;
   activationDelayMs?: number;
   maxSpeedPxPerSecond?: number;
@@ -62,35 +70,28 @@ function positiveFinite(value: number | undefined, fallback: number): number {
   return Number.isFinite(value) && Number(value) > 0 ? Number(value) : fallback;
 }
 
-function isPointNearFrame(args: {
-  frame: WorkbenchEdgeAutoPanFrame;
-  clientX: number;
-  clientY: number;
-  outsideTolerancePx: number;
-}): boolean {
-  const { frame, clientX, clientY, outsideTolerancePx } = args;
-  return (
-    clientX >= frame.left - outsideTolerancePx
-    && clientX <= frame.right + outsideTolerancePx
-    && clientY >= frame.top - outsideTolerancePx
-    && clientY <= frame.bottom + outsideTolerancePx
-  );
+function smoothstep(value: number): number {
+  const clamped = Math.max(0, Math.min(1, value));
+  return clamped * clamped * (3 - 2 * clamped);
 }
 
 function edgeFactor(distancePx: number, thresholdPx: number): number {
-  const raw = (thresholdPx - Math.max(0, distancePx)) / thresholdPx;
-  const clamped = Math.max(0, Math.min(1, raw));
-  return clamped * clamped;
+  if (distancePx >= thresholdPx) return 0;
+
+  if (distancePx >= 0) {
+    const insidePressure = ((thresholdPx - distancePx) / thresholdPx) * 0.78;
+    return smoothstep(insidePressure);
+  }
+
+  const outsideRamp = Math.max(DEFAULT_OUTSIDE_ACCELERATION_PX, thresholdPx);
+  const outsidePressure = Math.min(1, Math.abs(distancePx) / outsideRamp);
+  return smoothstep(0.78 + outsidePressure * 0.22);
 }
 
 export function resolveWorkbenchEdgeAutoPanVelocity(
   options: WorkbenchEdgeAutoPanVelocityOptions,
 ): WorkbenchEdgeAutoPanVelocity {
   const thresholdPx = positiveFinite(options.thresholdPx, DEFAULT_EDGE_THRESHOLD_PX);
-  const outsideTolerancePx = Math.max(0, positiveFinite(
-    options.outsideTolerancePx,
-    DEFAULT_OUTSIDE_TOLERANCE_PX,
-  ));
   const maxSpeedPxPerSecond = positiveFinite(
     options.maxSpeedPxPerSecond,
     DEFAULT_MAX_SPEED_PX_PER_SECOND,
@@ -101,12 +102,6 @@ export function resolveWorkbenchEdgeAutoPanVelocity(
     || frame.width <= 0
     || !Number.isFinite(frame.height)
     || frame.height <= 0
-    || !isPointNearFrame({
-      frame,
-      clientX: options.clientX,
-      clientY: options.clientY,
-      outsideTolerancePx,
-    })
   ) {
     return { viewportVelocityX: 0, viewportVelocityY: 0 };
   }
@@ -165,10 +160,6 @@ export function createWorkbenchEdgeAutoPanController(
   let started = false;
 
   const thresholdPx = () => positiveFinite(options.thresholdPx, DEFAULT_EDGE_THRESHOLD_PX);
-  const outsideTolerancePx = () => Math.max(0, positiveFinite(
-    options.outsideTolerancePx,
-    DEFAULT_OUTSIDE_TOLERANCE_PX,
-  ));
   const activationDelayMs = () => Math.max(0, positiveFinite(
     options.activationDelayMs,
     DEFAULT_ACTIVATION_DELAY_MS,
@@ -208,7 +199,6 @@ export function createWorkbenchEdgeAutoPanController(
       clientX: pointer.clientX,
       clientY: pointer.clientY,
       thresholdPx: thresholdPx(),
-      outsideTolerancePx: outsideTolerancePx(),
       maxSpeedPxPerSecond: maxSpeedPxPerSecond(),
     });
     if (velocity.viewportVelocityX === 0 && velocity.viewportVelocityY === 0) {

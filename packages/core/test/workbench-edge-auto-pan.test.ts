@@ -54,16 +54,53 @@ describe('Workbench edge auto-pan', () => {
     expect(leftTop.viewportVelocityY).toBeGreaterThan(0);
   });
 
-  it('does not keep panning once the pointer has clearly left the app frame', () => {
-    expect(resolveWorkbenchEdgeAutoPanVelocity({
+  it('keeps panning in the edge direction after the pointer leaves the app frame', () => {
+    const atEdge = resolveWorkbenchEdgeAutoPanVelocity({
       frame,
-      clientX: 940,
-      clientY: 700,
+      clientX: 900,
+      clientY: 380,
       outsideTolerancePx: 8,
-    })).toEqual({
-      viewportVelocityX: 0,
-      viewportVelocityY: 0,
     });
+    const outside = resolveWorkbenchEdgeAutoPanVelocity({
+      frame,
+      clientX: 980,
+      clientY: 380,
+      outsideTolerancePx: 8,
+    });
+
+    expect(atEdge.viewportVelocityX).toBeLessThan(0);
+    expect(outside.viewportVelocityX).toBeLessThan(atEdge.viewportVelocityX);
+    expect(outside.viewportVelocityY).toBe(0);
+  });
+
+  it('keeps ticking from the last outside-frame pointer position', () => {
+    const callbacks: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callbacks.push(callback);
+      return callbacks.length;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    const commits: Array<{ x: number; y: number; scale: number }> = [];
+    const controller = createWorkbenchEdgeAutoPanController({
+      readFrame: () => frame,
+      readViewport: () => commits[commits.length - 1] ?? { x: 0, y: 0, scale: 1 },
+      commitViewport: (viewport) => commits.push(viewport),
+      activationDelayMs: 45,
+      thresholdPx: 72,
+      maxSpeedPxPerSecond: 680,
+    });
+
+    controller.updatePointer(980, 380);
+    callbacks.shift()?.(0);
+    callbacks.shift()?.(60);
+    callbacks.shift()?.(108);
+
+    expect(commits).toHaveLength(2);
+    expect(commits[0]!.x).toBeLessThan(0);
+    expect(commits[1]!.x).toBeLessThan(commits[0]!.x);
+
+    controller.stop();
   });
 
   it('reports inverse world deltas so dragged widgets can stay under the pointer', () => {

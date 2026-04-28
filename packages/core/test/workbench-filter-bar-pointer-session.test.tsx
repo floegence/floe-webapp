@@ -198,4 +198,52 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onViewportCommit).toHaveBeenCalledTimes(1);
     expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
   });
+
+  it('keeps auto-panning when a fast widget-pill drag crosses the canvas and ends outside the frame', async () => {
+    mockCanvasFrame();
+    const callbacks = mockAnimationFrames();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onViewportCommit = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{ 'custom.files': true }}
+        viewport={{ x: 0, y: 0, scale: 1 }}
+        onSoloFilter={() => {}}
+        onShowAll={() => {}}
+        onViewportCommit={onViewportCommit}
+      />
+    ), host);
+
+    const filesButton = host.querySelector(
+      'button[aria-label="Files — click to solo, drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 23,
+      clientX: 20,
+      clientY: 650,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 23,
+      clientX: 860,
+      clientY: 300,
+      buttons: 1,
+    });
+    callbacks.shift()?.(0);
+    callbacks.shift()?.(80);
+    callbacks.shift()?.(128);
+    await Promise.resolve();
+
+    expect(onViewportCommit).toHaveBeenCalledTimes(2);
+    expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
+    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(
+      onViewportCommit.mock.calls[0]![0].x
+    );
+  });
 });

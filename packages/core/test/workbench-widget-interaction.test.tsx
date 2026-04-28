@@ -1007,18 +1007,28 @@ describe('WorkbenchWidget interaction ownership', () => {
     });
     callbacks.shift()?.(0);
     callbacks.shift()?.(120);
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 17,
+      clientX: 960,
+      clientY: 300,
+      buttons: 1,
+    });
+    callbacks.shift()?.(168);
     dispatchPointerEvent('pointerup', document, {
       pointerId: 17,
-      clientX: 890,
+      clientX: 960,
       clientY: 300,
       buttons: 0,
     });
     await Promise.resolve();
 
-    expect(onViewportCommit).toHaveBeenCalledTimes(1);
+    expect(onViewportCommit).toHaveBeenCalledTimes(2);
     expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
+    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(
+      onViewportCommit.mock.calls[0]![0].x
+    );
     expect(onCommitMove).toHaveBeenCalledTimes(1);
-    expect(onCommitMove.mock.calls[0]![1].x).toBeGreaterThan(40);
+    expect(onCommitMove.mock.calls[0]![1].x).toBeGreaterThan(110);
   });
 
   it('commits widget resize once when release is only observable through a later buttons=0 move', async () => {
