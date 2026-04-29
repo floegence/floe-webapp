@@ -23,6 +23,8 @@ export interface OverlayHostGeometry {
   scrollTop: number;
   clientLeft: number;
   clientTop: number;
+  scaleX?: number;
+  scaleY?: number;
 }
 
 export interface FileBrowserMarqueeSelectionOptions {
@@ -73,6 +75,8 @@ function isMarqueeBackgroundTarget(target: EventTarget | null): target is Elemen
 
 function readOverlayHostGeometry(host: HTMLElement): OverlayHostGeometry {
   const rect = host.getBoundingClientRect();
+  const borderBoxWidth = host.offsetWidth;
+  const borderBoxHeight = host.offsetHeight;
   return {
     left: rect.left,
     top: rect.top,
@@ -80,18 +84,26 @@ function readOverlayHostGeometry(host: HTMLElement): OverlayHostGeometry {
     scrollTop: host.scrollTop,
     clientLeft: host.clientLeft,
     clientTop: host.clientTop,
+    scaleX: borderBoxWidth > 0 && rect.width > 0 ? rect.width / borderBoxWidth : 1,
+    scaleY: borderBoxHeight > 0 && rect.height > 0 ? rect.height / borderBoxHeight : 1,
   };
+}
+
+function normalizeHostScale(value: number | undefined): number {
+  return Number.isFinite(value) && value !== undefined && value > 0 ? value : 1;
 }
 
 export function projectViewportRectToOverlayHost(
   rect: ViewportRect,
   geometry: OverlayHostGeometry,
 ): LocalOverlayRect {
+  const scaleX = normalizeHostScale(geometry.scaleX);
+  const scaleY = normalizeHostScale(geometry.scaleY);
   return {
-    left: rect.left - geometry.left + geometry.scrollLeft - geometry.clientLeft,
-    top: rect.top - geometry.top + geometry.scrollTop - geometry.clientTop,
-    width: rect.width,
-    height: rect.height,
+    left: (rect.left - geometry.left) / scaleX + geometry.scrollLeft - geometry.clientLeft,
+    top: (rect.top - geometry.top) / scaleY + geometry.scrollTop - geometry.clientTop,
+    width: rect.width / scaleX,
+    height: rect.height / scaleY,
   };
 }
 

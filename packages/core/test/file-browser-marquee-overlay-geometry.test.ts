@@ -55,4 +55,31 @@ describe('file browser marquee overlay geometry', () => {
       height: 0,
     });
   });
+
+  it('undoes transformed overlay host scale before writing local overlay pixels', () => {
+    const viewportRect: ViewportRect = {
+      left: 260,
+      top: 180,
+      width: 120,
+      height: 80,
+    };
+
+    const geometry: OverlayHostGeometry = {
+      left: 200,
+      top: 120,
+      scrollLeft: 24,
+      scrollTop: 12,
+      clientLeft: 2,
+      clientTop: 4,
+      scaleX: 0.5,
+      scaleY: 0.5,
+    };
+
+    expect(projectViewportRectToOverlayHost(viewportRect, geometry)).toEqual({
+      left: 142,
+      top: 128,
+      width: 240,
+      height: 160,
+    });
+  });
 });
