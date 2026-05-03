@@ -15,6 +15,12 @@ export {
 export { Dialog, ConfirmDialog, type DialogProps, type ConfirmDialogProps } from './Dialog';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
 export {
+  resolveFloatingWindowViewport,
+  type FloatingWindowRect,
+  type FloatingWindowViewport,
+  type FloatingWindowViewportInsets,
+} from './floatingWindowGeometry';
+export {
   Dropdown,
   Select,
   type DropdownProps,

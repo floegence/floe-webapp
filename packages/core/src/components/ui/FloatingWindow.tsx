@@ -16,9 +16,11 @@ import { X, Maximize, Restore } from '../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import {
   normalizeFloatingWindowRect,
+  resolveFloatingWindowViewport,
   resolveFloatingWindowRect,
   type FloatingWindowRect,
   type FloatingWindowResizeHandle,
+  type FloatingWindowViewportInsets,
 } from './floatingWindowGeometry';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import { SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
@@ -42,6 +44,8 @@ export interface FloatingWindowProps {
   minSize?: { width: number; height: number };
   /** Maximum window size */
   maxSize?: { width: number; height: number };
+  /** Safe area inside the browser viewport that the floating window should avoid */
+  viewportInsets?: FloatingWindowViewportInsets;
   /** Whether the window can be resized */
   resizable?: boolean;
   /** Whether the window can be dragged */
@@ -64,6 +68,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const draggable = () => props.draggable ?? true;
   const minSize = () => props.minSize ?? { width: 200, height: 150 };
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
+  const viewportInsets = () => props.viewportInsets ?? {};
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
 
@@ -198,6 +203,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       minSize: minSize(),
       maxSize: maxSize(),
       viewport: { width: window.innerWidth, height: window.innerHeight },
+      viewportInsets: viewportInsets(),
       mobile: isMobile(),
       mobilePadding: MOBILE_PADDING,
     }));
@@ -208,12 +214,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     if (isMaximized()) {
-      setCommittedRect({
-        x: 0,
-        y: 0,
-        width: viewport.width,
-        height: viewport.height,
-      });
+      setCommittedRect(resolveFloatingWindowViewport(viewport, viewportInsets()));
       return;
     }
 
@@ -222,6 +223,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       minSize: minSize(),
       maxSize: maxSize(),
       viewport,
+      viewportInsets: viewportInsets(),
       mobile: isMobile(),
       mobilePadding: MOBILE_PADDING,
       center: options?.center ?? false,
@@ -285,6 +287,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
       return;
     }
     requestAnimationFrame(syncAfterFrame);
+  });
+
+  createEffect(() => {
+    if (!props.open || !hasOpenedOnce || activePointerId !== null) return;
+    viewportInsets();
+    syncRectToViewport({ center: false });
   });
 
   createEffect(() => {
@@ -436,6 +444,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
           minSize: minSize(),
           maxSize: maxSize(),
           viewport: { width: window.innerWidth, height: window.innerHeight },
+          viewportInsets: viewportInsets(),
           mobile: isMobile(),
           mobilePadding: MOBILE_PADDING,
           center: false,
@@ -450,7 +459,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
       position: { x: currentRect.x, y: currentRect.y },
       size: { width: currentRect.width, height: currentRect.height },
     });
-    setCommittedRect({ x: 0, y: 0, width: window.innerWidth, height: window.innerHeight });
+    setCommittedRect(resolveFloatingWindowViewport(
+      { width: window.innerWidth, height: window.innerHeight },
+      viewportInsets(),
+    ));
     setIsMaximized(true);
   };
 

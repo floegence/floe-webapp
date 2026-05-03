@@ -27,6 +27,7 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('data-floe-dialog-surface-boundary');
     expect(architectureDoc).toContain('data-floe-local-interaction-surface="true"');
     expect(architectureDoc).toContain('data-floe-canvas-wheel-interactive="true"');
+    expect(architectureDoc).toContain('viewportInsets');
     expect(architectureDoc).toContain('局部 dialog');
     expect(architectureDoc).toContain('pointerdown capture');
     expect(architectureDoc).toContain('Canvas wheel ownership contract');

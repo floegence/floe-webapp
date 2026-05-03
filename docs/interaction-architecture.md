@@ -230,6 +230,7 @@ Deck 的几何交互必须额外遵守下面三条共享约束：
 2. 几何根节点必须覆盖 resize handles 等不在可见内容面板内部的热区，避免这些热区因为 DOM 结构在表面边界外侧而重新落回 canvas 手势。
 3. 这样做不是为了“兼容某个页面特判”，而是为了覆盖 portal + delegated events 的统一运行时事实：即使浮窗 DOM 被 portal 到 `document.body`，上层交互容器仍可能通过事件委托看见这次 `pointerdown`，所以浮窗必须自己声明“我是局部交互面”。
 4. 任何 app-owned wrapper 都只能做薄适配；共享 `FloatingWindow` 本身仍然是这条契约的单一事实来源。
+5. 如果宿主存在不可侵入区域（例如桌面壳层标题栏、系统窗口控制区、内嵌安全边距），必须通过共享 `viewportInsets` contract 传入 `FloatingWindow`。默认定位、持久化恢复、拖拽、resize、maximize / restore 都必须使用同一个 safe viewport 计算，禁止在下游产品里分别给按钮、拖拽或最大化路径写补丁式 clamp。
 
 ### 3.10 Canvas wheel ownership contract
 
