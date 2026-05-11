@@ -8,8 +8,11 @@ import { WORKBENCH_THEMES, sanitizeWorkbenchState } from '@floegence/floe-webapp
 import {
   DEMO_WORKBENCH_TEXT_DEFAULTS,
   DEMO_WORKBENCH_TEXT_FONT,
+  REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES,
+  REDEVEN_PARITY_WORKBENCH_WIDGETS,
   WorkbenchDemoProvider,
   normalizeWorkbenchDemoState,
+  sanitizeWorkbenchDemoState,
   useWorkbenchDemo,
 } from './WorkbenchDemoContext';
 
@@ -28,6 +31,7 @@ const WORKBENCH_THEME_STYLE_SOURCE = resolve(
 );
 const DEMO_VITE_CONFIG_SOURCE = resolve(__dirname, '../../../vite.config.ts');
 const DEMO_WORKSPACE_TAILWIND_SOURCE = resolve(__dirname, '../../core-workspace-tailwind.css');
+const ROOT_VITEST_CONFIG_SOURCE = resolve(__dirname, '../../../../../vitest.config.ts');
 
 function DemoProviders(props: { children: JSX.Element }) {
   return (
@@ -66,12 +70,12 @@ function AddWidgetProbe() {
       ...prev.widgets,
       {
         id: 'wb-test-widget',
-        type: 'log-viewer' as const,
-        title: 'Test Log',
+        type: 'redeven.monitor' as const,
+        title: 'Test Monitor',
         x: 320,
         y: 220,
-        width: 420,
-        height: 260,
+        width: 1040,
+        height: 640,
         z_index: 99,
         created_at_unix_ms: 1700000000000,
       },
@@ -228,7 +232,7 @@ describe('demo workbench shared adapter', () => {
       </DemoProviders>
     ));
 
-    expect(html).toContain('1|5|terminal|unlocked|all-on|1.00|45|demo-sans');
+    expect(html).toContain('1|4|redeven.terminal|unlocked|all-on|0.36|45|demo-sans');
   });
 
   it('allows programmatic state updates through the demo store', () => {
@@ -238,7 +242,81 @@ describe('demo workbench shared adapter', () => {
       </DemoProviders>
     ));
 
-    expect(html).toContain('6|Test Log|log-viewer|99');
+    expect(html).toContain('5|Test Monitor|redeven.monitor|99');
+  });
+
+  it('falls back to the Redeven-parity registry when older demo state contains built-in widgets', () => {
+    const sanitized = sanitizeWorkbenchDemoState({
+      version: 1,
+      widgets: [
+        {
+          id: 'legacy-terminal',
+          type: 'terminal',
+          title: 'Terminal',
+          x: 0,
+          y: 0,
+          width: 480,
+          height: 320,
+          z_index: 1,
+          created_at_unix_ms: 1,
+        },
+      ],
+      viewport: { x: 0, y: 0, scale: 1 },
+      locked: false,
+      filters: {},
+      selectedWidgetId: 'legacy-terminal',
+      selectedObject: { kind: 'widget', id: 'legacy-terminal' },
+      theme: 'default',
+    });
+
+    expect(sanitized.widgets.map((widget: { type: string }) => widget.type)).toEqual([
+      'redeven.terminal',
+      'redeven.files',
+      'redeven.ai',
+      'redeven.codex',
+    ]);
+  });
+
+  it('mirrors Redeven workbench widget composition in the demo seed', () => {
+    expect(REDEVEN_PARITY_WORKBENCH_WIDGETS.map((definition) => definition.type)).toEqual([
+      'redeven.files',
+      'redeven.terminal',
+      'redeven.preview',
+      'redeven.monitor',
+      'redeven.codespaces',
+      'redeven.ports',
+      'redeven.ai',
+      'redeven.codex',
+    ]);
+    expect(REDEVEN_PARITY_WORKBENCH_WIDGETS.every((definition) => definition.renderMode === 'projected_surface')).toBe(true);
+    expect(new Set(REDEVEN_PARITY_WORKBENCH_WIDGETS.map((definition) => definition.body)).size).toBe(
+      REDEVEN_PARITY_WORKBENCH_WIDGETS.length
+    );
+    expect(renderToString(() => {
+      const filesDefinition = REDEVEN_PARITY_WORKBENCH_WIDGETS.find((definition) => definition.type === 'redeven.files')!;
+      const FilesBody = filesDefinition.body;
+      return (
+        <FloeProvider config={{ storage: { enabled: false } }}>
+          <FilesBody
+            widgetId="files-probe"
+            title="Files"
+            type="redeven.files"
+            lifecycle="hot"
+            selected={true}
+          />
+        </FloeProvider>
+      );
+    })).toContain('workbench-demo-file-browser');
+    expect(REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES).toEqual([
+      'redeven.files',
+      'redeven.terminal',
+      'redeven.monitor',
+      'redeven.codespaces',
+      'redeven.ports',
+      'redeven.ai',
+      'redeven.codex',
+    ]);
+    expect(REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES).not.toContain('redeven.preview');
   });
 
   it('renders the demo page as a display-mode surface (no modal/portal chrome)', () => {
@@ -249,6 +327,10 @@ describe('demo workbench shared adapter', () => {
     );
     expect(source).toContain('useWorkbenchDemo');
     expect(source).toContain('DEMO_WORKBENCH_TEXT_DEFAULTS');
+    expect(source).toContain('REDEVEN_PARITY_WORKBENCH_WIDGETS');
+    expect(source).toContain('REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES');
+    expect(source).toContain('widgetDefinitions={REDEVEN_PARITY_WORKBENCH_WIDGETS}');
+    expect(source).toContain('launcherWidgetTypes={REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES}');
     expect(source).toContain('textAnnotationDefaults={DEMO_WORKBENCH_TEXT_DEFAULTS}');
     expect(source).toContain('<WorkbenchSurface');
     // Display-mode page must not use a Portal: it lives inline inside
@@ -264,6 +346,19 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain("replacement: resolve(repoRoot, 'packages/core/src/workbench.ts')");
   });
 
+  it('keeps Vitest aliases in sync with demo workbench subpath imports', () => {
+    const source = readFileSync(ROOT_VITEST_CONFIG_SOURCE, 'utf-8');
+
+    expect(source).toContain("find: '@floegence/floe-webapp-core/workbench'");
+    expect(source).toContain("replacement: resolve(__dirname, 'packages/core/src/workbench.ts')");
+    expect(source).toContain("find: '@floegence/floe-webapp-core/icons'");
+    expect(source).toContain("replacement: resolve(__dirname, 'packages/core/src/icons.ts')");
+    expect(source).toContain("find: '@floegence/floe-webapp-core/ui'");
+    expect(source).toContain("replacement: resolve(__dirname, 'packages/core/src/ui.ts')");
+    expect(source).toContain("find: '@floegence/floe-webapp-core/file-browser'");
+    expect(source).toContain("replacement: resolve(__dirname, 'packages/core/src/file-browser.ts')");
+  });
+
   it('loads page-mode and workbench styles in workspace dev mode', () => {
     const source = readFileSync(DEMO_WORKSPACE_TAILWIND_SOURCE, 'utf-8');
 
@@ -273,5 +368,6 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain(
       "@import '../../../packages/core/src/components/workbench/workbench.css';"
     );
+    expect(source).toContain("@import './demo/workbench/workbench-demo.css';");
   });
 });

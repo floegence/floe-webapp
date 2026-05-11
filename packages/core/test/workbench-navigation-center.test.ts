@@ -4,7 +4,10 @@ import { createRoot, createSignal, untrack } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useWorkbenchModel } from '../src/components/workbench/useWorkbenchModel';
-import { WORKBENCH_MIN_SCALE } from '../src/components/workbench/workbenchHelpers';
+import {
+  WORKBENCH_COMPOSITION_MIN_SCALE,
+  WORKBENCH_WORK_MIN_SCALE,
+} from '../src/components/workbench/workbenchHelpers';
 import type {
   WorkbenchState,
   WorkbenchWidgetDefinition,
@@ -313,9 +316,38 @@ describe('workbench navigation centering', () => {
       flushLatestAnimationFrame();
 
       expect(untrack(state).selectedWidgetId).toBe(widget.id);
-      expect(untrack(state).viewport.x).toBeCloseTo(260, 6);
-      expect(untrack(state).viewport.y).toBeCloseTo(288, 6);
-      expect(untrack(state).viewport.scale).toBeCloseTo(WORKBENCH_MIN_SCALE, 6);
+      expect(untrack(state).viewport.x).toBeCloseTo(155, 6);
+      expect(untrack(state).viewport.y).toBeCloseTo(279, 6);
+      expect(untrack(state).viewport.scale).toBeCloseTo(WORKBENCH_WORK_MIN_SCALE, 6);
+
+      dispose();
+    });
+  });
+
+  it('keeps composition zoom low but transitions back to the work minimum when work mode resumes', () => {
+    createRoot((dispose) => {
+      const widget = createWidget('widget-right', 600, 0);
+      const [state, setState] = createSignal({
+        ...createWorkbenchState([widget], null),
+        mode: 'background' as const,
+        viewport: { x: 80, y: 40, scale: WORKBENCH_COMPOSITION_MIN_SCALE },
+      });
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+      const frame = createFrameHarness(800, 600);
+
+      model.setCanvasFrameRef(frame.element);
+      model.modes.setMode('work');
+      flushLatestAnimationFrame();
+
+      expect(untrack(state).mode).toBe('work');
+      expect(untrack(state).viewport.scale).toBeCloseTo(WORKBENCH_WORK_MIN_SCALE, 6);
+      expect(untrack(state).viewport.x).toBeCloseTo(-160, 6);
+      expect(untrack(state).viewport.y).toBeCloseTo(-155, 6);
 
       dispose();
     });

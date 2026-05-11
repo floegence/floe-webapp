@@ -531,6 +531,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
       {...{ [interactionAdapter().surfaceRootAttr]: 'true' }}
       data-workbench-theme={model.theme()}
+      data-workbench-mode={model.mode()}
       tabIndex={-1}
     >
       <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">

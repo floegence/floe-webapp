@@ -38,14 +38,18 @@ import {
   clampScale,
   createContextMenuPosition,
   createWorkbenchId,
+  createWorkbenchViewportAtScale,
   createWorkbenchViewportCenteredOnWidget,
   createWorkbenchViewportFitForWidget,
   estimateContextMenuHeight,
   findNearestWidget,
+  normalizeWorkbenchInteractionMode,
+  resolveWorkbenchModeStrategy,
   sanitizeFilters,
   WORKBENCH_CANVAS_ZOOM_STEP,
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
-  WORKBENCH_MIN_SCALE,
+  WORKBENCH_WORK_MIN_SCALE,
+  WORKBENCH_MAX_SCALE,
 } from './workbenchHelpers';
 import {
   getWidgetEntry,
@@ -242,6 +246,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     state().selectedWidgetId ? { kind: 'widget', id: state().selectedWidgetId! } : null
   ));
   const mode = createMemo(() => state().mode ?? 'work');
+  const modeStrategy = createMemo(() => resolveWorkbenchModeStrategy(mode()));
   const activeTool = createMemo(() => state().activeTool ?? 'select');
   const theme = createMemo(() => state().theme);
   const topZIndex = createMemo(() => getTopWorkZIndex(widgets(), stickyNotes()));
@@ -992,8 +997,60 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   // --- Viewport ---
+  let navigationAnimToken = 0;
+
   const commitViewport = (next: WorkbenchViewport) => {
     options.setState((prev) => ({ ...prev, viewport: next }));
+  };
+
+  const cancelViewportNavigation = () => {
+    navigationAnimToken += 1;
+  };
+
+  const animateViewportTo = (target: WorkbenchViewport) => {
+    const vp = viewport();
+    const startX = vp.x;
+    const startY = vp.y;
+    const startScale = vp.scale;
+    const startTime = performance.now();
+    const animDuration = 360;
+    const token = ++navigationAnimToken;
+
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (now: number) => {
+      if (token !== navigationAnimToken) return;
+      const elapsed = now - startTime;
+      const t = Math.min(Math.max(elapsed / animDuration, 0), 1);
+      const e = easeOutCubic(t);
+
+      commitViewport({
+        x: startX + (target.x - startX) * e,
+        y: startY + (target.y - startY) * e,
+        scale: startScale + (target.scale - startScale) * e,
+      });
+
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      }
+    };
+
+    requestAnimationFrame(tick);
+  };
+
+  const transitionViewportToMode = (nextMode: WorkbenchInteractionMode) => {
+    const strategy = resolveWorkbenchModeStrategy(nextMode);
+    const currentViewport = viewport();
+    if (currentViewport.scale >= strategy.minScale) return;
+
+    const frame = readCanvasFrameSize();
+    animateViewportTo(createWorkbenchViewportAtScale({
+      viewport: currentViewport,
+      scale: strategy.minScale,
+      minScale: strategy.minScale,
+      frameWidth: frame.width,
+      frameHeight: frame.height,
+    }));
   };
 
   const adjustZoom = (direction: 'in' | 'out') => {
@@ -1004,7 +1061,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     const nextScale = clampScale(
       direction === 'in'
         ? vp.scale * WORKBENCH_CANVAS_ZOOM_STEP
-        : vp.scale / WORKBENCH_CANVAS_ZOOM_STEP
+        : vp.scale / WORKBENCH_CANVAS_ZOOM_STEP,
+      modeStrategy().minScale,
+      WORKBENCH_MAX_SCALE,
     );
 
     const next: WorkbenchViewport = {
@@ -1115,7 +1174,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const setMode = (nextMode: WorkbenchInteractionMode) => {
-    const normalizedMode: WorkbenchInteractionMode = nextMode === 'annotation' ? 'background' : nextMode;
+    const normalizedMode = normalizeWorkbenchInteractionMode(nextMode);
     options.setState((prev) => ({
       ...prev,
       mode: normalizedMode,
@@ -1137,6 +1196,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
             ? prev.selectedObject
             : null,
     }));
+    transitionViewportToMode(normalizedMode);
   };
 
   const setActiveTool = (tool: WorkbenchDockToolId) => {
@@ -1171,43 +1231,6 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     };
   };
 
-  let navigationAnimToken = 0;
-
-  const cancelViewportNavigation = () => {
-    navigationAnimToken += 1;
-  };
-
-  const animateViewportTo = (target: WorkbenchViewport) => {
-    const vp = viewport();
-    const startX = vp.x;
-    const startY = vp.y;
-    const startScale = vp.scale;
-    const startTime = performance.now();
-    const animDuration = 360;
-    const token = ++navigationAnimToken;
-
-    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-
-    const tick = (now: number) => {
-      if (token !== navigationAnimToken) return;
-      const elapsed = now - startTime;
-      const t = Math.min(Math.max(elapsed / animDuration, 0), 1);
-      const e = easeOutCubic(t);
-
-      commitViewport({
-        x: startX + (target.x - startX) * e,
-        y: startY + (target.y - startY) * e,
-        scale: startScale + (target.scale - startScale) * e,
-      });
-
-      if (t < 1) {
-        requestAnimationFrame(tick);
-      }
-    };
-
-    requestAnimationFrame(tick);
-  };
-
   const centerViewportOnWidget = (widget: WorkbenchWidgetItem) => {
     const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
@@ -1234,7 +1257,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     if (frame.width === 0 || frame.height === 0) return;
     animateViewportTo(createWorkbenchViewportCenteredOnWidget({
       widget,
-      scale: WORKBENCH_MIN_SCALE,
+      scale: WORKBENCH_WORK_MIN_SCALE,
       frameWidth: frame.width,
       frameHeight: frame.height,
     }));

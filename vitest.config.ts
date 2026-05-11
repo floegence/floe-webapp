@@ -8,6 +8,9 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@floegence/floe-webapp-core/app', replacement: resolve(__dirname, 'packages/core/src/app.ts') },
+      { find: '@floegence/floe-webapp-core/ui', replacement: resolve(__dirname, 'packages/core/src/ui.ts') },
+      { find: '@floegence/floe-webapp-core/icons', replacement: resolve(__dirname, 'packages/core/src/icons.ts') },
+      { find: '@floegence/floe-webapp-core/file-browser', replacement: resolve(__dirname, 'packages/core/src/file-browser.ts') },
       { find: '@floegence/floe-webapp-core/notes', replacement: resolve(__dirname, 'packages/core/src/notes.ts') },
       { find: '@floegence/floe-webapp-core/workbench', replacement: resolve(__dirname, 'packages/core/src/workbench.ts') },
       { find: '@floegence/floe-webapp-core', replacement: resolve(__dirname, 'packages/core/src/index.ts') },

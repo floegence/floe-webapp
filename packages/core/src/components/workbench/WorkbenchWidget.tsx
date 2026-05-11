@@ -23,6 +23,7 @@ import {
   resolveWorkbenchInteractionAdapter,
   type ResolvedWorkbenchInteractionAdapter,
 } from './workbenchInteractionAdapter';
+import { createOwnerSafePropAccessor } from './workbenchOwnerSafeAccessors';
 import type {
   WorkbenchViewport,
   WorkbenchInteractionAdapter,
@@ -118,9 +119,42 @@ export interface WorkbenchWidgetProps {
 }
 
 export function WorkbenchWidget(props: WorkbenchWidgetProps) {
+  const definition = createOwnerSafePropAccessor(() => props.definition);
+  const widgetId = createOwnerSafePropAccessor(() => props.widgetId);
+  const widgetTitle = createOwnerSafePropAccessor(() => props.widgetTitle);
+  const widgetType = createOwnerSafePropAccessor(() => props.widgetType);
+  const itemSnapshot = createOwnerSafePropAccessor(() => props.itemSnapshot);
+  const renderLayer = createOwnerSafePropAccessor(() => props.renderLayer);
+  const optimisticFront = createOwnerSafePropAccessor(() => props.optimisticFront);
+  const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport);
+  const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
+  const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
+  const onStartOptimisticFront = createOwnerSafePropAccessor(() => props.onStartOptimisticFront);
+  const onCommitFront = createOwnerSafePropAccessor(() => props.onCommitFront);
+  const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
+  const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
+  const onViewportCommit = createOwnerSafePropAccessor(() => props.onViewportCommit);
+  const onViewportInteractionStart =
+    createOwnerSafePropAccessor(() => props.onViewportInteractionStart);
+  const onRequestOverview = createOwnerSafePropAccessor(() => props.onRequestOverview);
+  const onRequestFit = createOwnerSafePropAccessor(() => props.onRequestFit);
+  const onRequestDelete = createOwnerSafePropAccessor(() => props.onRequestDelete);
+  const onLayoutInteractionStart =
+    createOwnerSafePropAccessor(() => props.onLayoutInteractionStart);
+  const onLayoutInteractionEnd = createOwnerSafePropAccessor(() => props.onLayoutInteractionEnd);
   const interactionAdapter = createMemo(() =>
     resolveWorkbenchInteractionAdapter(props.interactionAdapter)
   );
+  const externallySelected = createOwnerSafePropAccessor(() => props.selected);
+  const locked = createOwnerSafePropAccessor(() => props.locked);
+  const filtered = createOwnerSafePropAccessor(() => props.filtered);
+  const layoutMode = createOwnerSafePropAccessor(() => props.layoutMode ?? 'canvas_scaled');
+  const projectedViewport = createOwnerSafePropAccessor(() => props.projectedViewport);
+  const surfaceReady = createOwnerSafePropAccessor(() => props.surfaceReady ?? true);
+  const position = createOwnerSafePropAccessor(() => ({ x: props.x, y: props.y }));
+  const size = createOwnerSafePropAccessor(() => ({ width: props.width, height: props.height }));
+  const viewportScale = createOwnerSafePropAccessor(() => Math.max(props.viewportScale, 0.001));
   const [dragState, setDragState] = createSignal<LocalDragState | null>(null);
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
   const [bodyActivation, setBodyActivation] =
@@ -151,12 +185,12 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const startTrackedLayoutInteraction = (kind: 'drag' | 'resize', cursor: string) => {
     const stopHotInteraction = startHotInteraction({ kind, cursor });
     let stopped = false;
-    untrack(() => props.onLayoutInteractionStart?.());
+    untrack(() => onLayoutInteractionStart()?.());
     return () => {
       if (stopped) return;
       stopped = true;
       stopHotInteraction();
-      untrack(() => props.onLayoutInteractionEnd?.());
+      untrack(() => onLayoutInteractionEnd()?.());
     };
   };
   const stopEdgeAutoPan = () => {
@@ -165,20 +199,23 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     edgeAutoPanViewport = null;
   };
   const startEdgeAutoPan = () => {
-    if (!props.viewport || !props.onViewportCommit) return;
-    edgeAutoPanViewport = props.viewport;
+    const currentViewport = viewport();
+    const commitViewport = onViewportCommit();
+    const notifyViewportInteractionStart = onViewportInteractionStart();
+    if (!currentViewport || !commitViewport) return;
+    edgeAutoPanViewport = currentViewport;
     edgeAutoPan?.stop();
     edgeAutoPan = createWorkbenchEdgeAutoPanController({
       readFrame: () => {
         const frame = widgetRootEl?.closest(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
         return frame instanceof HTMLElement ? frameFromElement(frame) : null;
       },
-      readViewport: () => edgeAutoPanViewport ?? props.viewport ?? null,
-      commitViewport: (viewport) => {
-        edgeAutoPanViewport = viewport;
-        props.onViewportCommit?.(viewport);
+      readViewport: () => edgeAutoPanViewport ?? currentViewport,
+      commitViewport: (nextViewport) => {
+        edgeAutoPanViewport = nextViewport;
+        commitViewport(nextViewport);
       },
-      onPanStart: () => props.onViewportInteractionStart?.('pan'),
+      onPanStart: () => notifyViewportInteractionStart?.('pan'),
       onPan: (step) => {
         setDragState((current) => {
           if (!current) return current;
@@ -209,13 +246,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const commitWidgetSelectionAndFront = () => {
     setLocalSelectionClaim(false);
-    props.onSelect(props.widgetId);
-    props.onCommitFront(props.widgetId);
+    const currentWidgetId = widgetId();
+    onSelect()(currentWidgetId);
+    onCommitFront()(currentWidgetId);
   };
   const clearLocalSelectionClaim = () => {
     setLocalSelectionClaim(false);
   };
-  const selected = createMemo(() => props.selected || localSelectionClaim());
+  const selected = createMemo(() => externallySelected() || localSelectionClaim());
   const preclaimPointerOwnership = (
     pointerId: number,
     wasSelected: boolean,
@@ -266,7 +304,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     };
     const handlePointerUp = () => {
       setTimeout(() => {
-        if (!props.selected) {
+        if (!externallySelected()) {
           clearLocalSelectionClaim();
         }
       }, 0);
@@ -287,7 +325,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
   const lifecycle = createMemo<WorkbenchWidgetLifecycle>(() => {
-    if (props.filtered || props.locked) {
+    if (filtered() || locked()) {
       return 'cold';
     }
     return selected() ? 'hot' : 'warm';
@@ -345,10 +383,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
-    if (props.locked) return;
+    if (locked()) return;
 
     const pointerOwnershipPreclaim = consumePointerOwnershipPreclaim(event.pointerId);
-    const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? props.selected;
+    const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? externallySelected();
     const ownership = pointerOwnershipPreclaim?.ownership ?? resolveEventOwnership(event.target);
     const localTypingTarget = ownership === 'widget_local'
       ? resolveWorkbenchWidgetLocalTypingTarget({
@@ -412,47 +450,48 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const livePosition = createMemo(() => {
     const current = dragState();
-    if (!current) return { x: props.x, y: props.y };
+    if (!current) return position();
     return { x: current.worldX, y: current.worldY };
   });
 
   const liveSize = createMemo(() => {
     const current = resizeState();
-    if (!current) return { width: props.width, height: props.height };
+    if (!current) return size();
     return { width: current.width, height: current.height };
   });
   const surfaceMetrics = createMemo<WorkbenchWidgetSurfaceMetrics | undefined>(() => {
-    if (props.layoutMode !== 'projected_surface' || !props.projectedViewport) {
+    const viewportAccessor = projectedViewport();
+    if (layoutMode() !== 'projected_surface' || !viewportAccessor) {
       return undefined;
     }
 
     return createWorkbenchWidgetSurfaceMetrics({
-      widgetId: props.widgetId,
+      widgetId: widgetId(),
       worldX: livePosition().x,
       worldY: livePosition().y,
       worldWidth: liveSize().width,
       worldHeight: liveSize().height,
-      viewport: props.projectedViewport(),
-      ready: props.surfaceReady ?? true,
+      viewport: viewportAccessor(),
+      ready: surfaceReady(),
     });
   });
   const projectedScale = createMemo(
-    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(props.viewportScale, 0.001),
+    () => surfaceMetrics()?.rect.viewportScale ?? viewportScale(),
   );
   const projectedSharpEligible = createMemo(
     () =>
-      props.layoutMode === 'projected_surface' &&
-      resolveWorkbenchProjectedSurfaceScaleBehavior(props.definition) === 'settle_sharp_zoom',
+      layoutMode() === 'projected_surface' &&
+      resolveWorkbenchProjectedSurfaceScaleBehavior(definition()) === 'settle_sharp_zoom',
   );
   const projectedSharpActive = createMemo(
     () =>
-      props.layoutMode === 'projected_surface' &&
+      layoutMode() === 'projected_surface' &&
       projectedSharpEligible() &&
       sharpProjection().enabled &&
       sharpProjection().scale > 1.001,
   );
   const projectedSurfaceStyle = createMemo<JSX.CSSProperties | undefined>(() => {
-    if (props.layoutMode !== 'projected_surface') {
+    if (layoutMode() !== 'projected_surface') {
       return undefined;
     }
 
@@ -472,7 +511,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     };
   });
   const widgetBadgeLabel = createMemo(() => {
-    const zIndex = props.itemSnapshot().z_index;
+    const zIndex = itemSnapshot()().z_index;
     const normalizedIndex = Number.isFinite(zIndex)
       ? Math.max(1, Math.min(99, Math.round(zIndex)))
       : 1;
@@ -481,27 +520,27 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const handleOverview: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    props.onRequestOverview(props.itemSnapshot());
+    onRequestOverview()(itemSnapshot()());
   };
   const handleFit: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    props.onRequestFit(props.itemSnapshot());
+    onRequestFit()(itemSnapshot()());
   };
   const handleDelete: JSX.EventHandler<HTMLElement, MouseEvent | PointerEvent> = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    props.onRequestDelete(props.widgetId);
+    onRequestDelete()(widgetId());
   };
   const rootStyle = createMemo<JSX.CSSProperties>(() => {
     const shared = {
       'z-index':
-        isDragging() || isResizing() || props.optimisticFront
-          ? `${props.topRenderLayer + 1}`
-          : `${props.renderLayer}`,
+        isDragging() || isResizing() || optimisticFront()
+          ? `${topRenderLayer() + 1}`
+          : `${renderLayer()}`,
     } satisfies JSX.CSSProperties;
 
-    if (props.layoutMode === 'projected_surface') {
+    if (layoutMode() === 'projected_surface') {
       const rect = surfaceMetrics()?.rect;
       const scale = projectedScale();
       const sharp = projectedSharpActive();
@@ -569,9 +608,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     // Commit position FIRST so the parent snapshot reflects the final value
     // before we release the local drag state. Otherwise livePosition would
     // snap back to stale props for a frame.
-    props.onCommitFront(props.widgetId);
+    const currentWidgetId = widgetId();
+    onCommitFront()(currentWidgetId);
     if (shouldCommitMove) {
-      props.onCommitMove(props.widgetId, next);
+      onCommitMove()(currentWidgetId, next);
     }
 
     current.stopInteraction();
@@ -581,26 +621,28 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   };
 
   const beginDrag: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
-    if (event.button !== 0 || props.locked) return;
+    if (event.button !== 0 || locked()) return;
 
     event.preventDefault();
     event.stopPropagation();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
-    props.onSelect(props.widgetId);
+    const currentWidgetId = widgetId();
+    onSelect()(currentWidgetId);
     widgetRootEl?.focus({ preventScroll: true });
-    props.onStartOptimisticFront(props.widgetId);
+    onStartOptimisticFront()(currentWidgetId);
 
     const stopInteraction = startTrackedLayoutInteraction('drag', 'grabbing');
-    const scale = Math.max(props.viewportScale, 0.001);
+    const scale = viewportScale();
+    const startPosition = position();
 
     setDragState({
       pointerId: event.pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
-      startWorldX: props.x,
-      startWorldY: props.y,
-      worldX: props.x,
-      worldY: props.y,
+      startWorldX: startPosition.x,
+      startWorldY: startPosition.y,
+      worldX: startPosition.x,
+      worldY: startPosition.y,
       autoPanWorldX: 0,
       autoPanWorldY: 0,
       moved: false,
@@ -651,7 +693,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       Math.abs(current.height - current.startHeight) > 1;
 
     if (commit && changed) {
-      props.onCommitResize(props.widgetId, nextSize);
+      onCommitResize()(widgetId(), nextSize);
     }
 
     current.stopInteraction();
@@ -660,24 +702,25 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   };
 
   const beginResize: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
-    if (event.button !== 0 || props.locked) return;
+    if (event.button !== 0 || locked()) return;
 
     event.preventDefault();
     event.stopPropagation();
     resizeSession?.stop({ reason: 'manual_stop', commit: false });
-    props.onStartOptimisticFront(props.widgetId);
+    onStartOptimisticFront()(widgetId());
 
     const stopInteraction = startTrackedLayoutInteraction('resize', 'nwse-resize');
-    const scale = Math.max(props.viewportScale, 0.001);
+    const scale = viewportScale();
+    const startSize = size();
 
     setResizeState({
       pointerId: event.pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
-      startWidth: props.width,
-      startHeight: props.height,
-      width: props.width,
-      height: props.height,
+      startWidth: startSize.width,
+      startHeight: startSize.height,
+      width: startSize.width,
+      height: startSize.height,
       scale,
       stopInteraction,
     });
@@ -713,28 +756,28 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         'is-selected': selected(),
         'is-dragging': isDragging(),
         'is-resizing': isResizing(),
-        'is-filtered-out': props.filtered,
-        'is-projected-surface': props.layoutMode === 'projected_surface',
-        'is-locked': props.locked,
+        'is-filtered-out': filtered(),
+        'is-projected-surface': layoutMode() === 'projected_surface',
+        'is-locked': locked(),
       }}
       {...{ [interactionAdapter().dialogSurfaceHostAttr]: 'true' }}
-      data-floe-workbench-widget-id={props.widgetId}
+      data-floe-workbench-widget-id={widgetId()}
       {...{ [interactionAdapter().widgetRootAttr]: 'true' }}
-      {...{ [interactionAdapter().widgetIdAttr]: props.widgetId }}
-      data-workbench-widget-type={props.widgetType}
-      data-floe-workbench-render-mode={props.layoutMode ?? 'canvas_scaled'}
+      {...{ [interactionAdapter().widgetIdAttr]: widgetId() }}
+      data-workbench-widget-type={widgetType()}
+      data-floe-workbench-render-mode={layoutMode()}
       {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: selected() ? 'true' : undefined }}
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onFocus={() => {
         if (localSelectionClaim()) return;
-        props.onSelect(props.widgetId);
+        onSelect()(widgetId());
       }}
       onContextMenu={(event) => {
         if (resolveEventOwnership(event.target) !== 'widget_shell') return;
         event.preventDefault();
         event.stopPropagation();
-        props.onContextMenu(event, props.itemSnapshot());
+        onContextMenu()(event, itemSnapshot()());
       }}
       style={rootStyle()}
     >
@@ -794,10 +837,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
           <div class="workbench-widget__title-area">
             <span class="workbench-widget__title-dot" aria-hidden="true" />
             {(() => {
-              const Icon = props.definition.icon;
+              const Icon = definition().icon;
               return <Icon class="w-3.5 h-3.5" />;
             })()}
-            <span class="workbench-widget__title">{props.widgetTitle}</span>
+            <span class="workbench-widget__title">{widgetTitle()}</span>
           </div>
           <span class="workbench-widget__window-controls" role="group" aria-label="Window controls">
             <button
@@ -837,23 +880,23 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         </header>
         <div class="workbench-widget__body" data-floe-canvas-interactive="true">
           {(() => {
-            const Body = props.definition.body;
+            const Body = definition().body;
             return (
               <Body
-                widgetId={props.widgetId}
-                title={props.widgetTitle}
-                type={props.widgetType}
+                widgetId={widgetId()}
+                title={widgetTitle()}
+                type={widgetType()}
                 surfaceMetrics={surfaceMetrics}
                 activation={bodyActivation()}
                 lifecycle={lifecycle()}
                 selected={selected()}
-                filtered={props.filtered}
+                filtered={filtered()}
                 requestActivate={requestActivate}
               />
             );
           })()}
         </div>
-        {props.locked ? null : (
+        {locked() ? null : (
           <div
             class="workbench-widget__resize"
             aria-label="Resize widget"

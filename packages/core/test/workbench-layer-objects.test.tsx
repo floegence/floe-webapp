@@ -560,6 +560,59 @@ describe('Workbench layer objects', () => {
     dispose();
   });
 
+  it('renders every region visibility outline in the top overlay without replacing selection chrome', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const selectedRegion = createRegionItem();
+    const coveredRegion: WorkbenchBackgroundLayer = {
+      ...createRegionItem(),
+      id: 'region-2',
+      x: 132,
+      y: 116,
+      width: 360,
+      height: 220,
+      z_index: 2,
+      created_at_unix_ms: 2,
+      updated_at_unix_ms: 2,
+    };
+
+    const dispose = render(() => (
+      <WorkbenchLayerControlOverlayView
+        annotations={[]}
+        backgroundLayers={[selectedRegion, coveredRegion]}
+        selectedObject={{ kind: 'background_layer', id: selectedRegion.id }}
+        editable={true}
+        showRegionOutlines={true}
+        viewport={{ x: 12, y: 18, scale: 0.5 }}
+        projection="screen"
+        onCommitAnnotationMove={vi.fn()}
+        onCommitAnnotationResize={vi.fn()}
+        onUpdateTextAnnotation={vi.fn()}
+        onDeleteAnnotation={vi.fn()}
+        onCommitBackgroundResize={vi.fn()}
+        onUpdateBackgroundLayer={vi.fn()}
+        onDeleteBackgroundLayer={vi.fn()}
+      />
+    ), host);
+
+    const overlay = host.querySelector('.workbench-control-overlay-layer') as HTMLElement | null;
+    const outlineLayer = host.querySelector('.workbench-region-visibility-outline-layer') as HTMLElement | null;
+    const outlines = host.querySelectorAll('.workbench-region-visibility-outline');
+    const selectedOutline = host.querySelector('.workbench-region-visibility-outline.is-selected-region') as HTMLElement | null;
+    const selectionChrome = host.querySelector('.workbench-layer-control__selection.is-region') as HTMLElement | null;
+
+    expect(overlay).toBeTruthy();
+    expect(outlineLayer?.parentElement).toBe(overlay);
+    expect(outlines).toHaveLength(2);
+    expect(selectedOutline?.dataset.wbObjectId).toBe(selectedRegion.id);
+    expect(selectionChrome).toBeTruthy();
+    expect((outlines[0] as HTMLElement).style.transform).toBe('translate(62px, 58px)');
+    expect((outlines[0] as HTMLElement).style.width).toBe('280px');
+    expect((outlines[0] as HTMLElement).style.height).toBe('180px');
+
+    dispose();
+  });
+
   it('shares overlay resize previews with the background region body', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

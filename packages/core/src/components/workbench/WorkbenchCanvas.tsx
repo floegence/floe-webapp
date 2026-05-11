@@ -1,4 +1,4 @@
-import { For, Show, createMemo, type Accessor } from 'solid-js';
+import { For, Show, createMemo, createSignal, type Accessor } from 'solid-js';
 import {
   InfiniteCanvas,
   type InfiniteCanvasContextMenuEvent,
@@ -10,6 +10,8 @@ import {
 } from './workbenchInteractionAdapter';
 import {
   WORKBENCH_STICKY_FILTER_ID,
+  WORKBENCH_TEXT_FILTER_ID,
+  WORKBENCH_BACKGROUND_REGION_FILTER_ID,
   type WorkbenchAnnotationItem,
   type WorkbenchBackgroundLayer,
   type WorkbenchInteractionMode,
@@ -22,11 +24,18 @@ import {
   type WorkbenchWidgetItem,
 } from './types';
 import { WorkbenchCanvasField } from './WorkbenchCanvasField';
-import { WorkbenchStickyNote } from './WorkbenchLayerObjects';
+import {
+  WorkbenchAnnotationLayerView,
+  WorkbenchBackgroundLayerView,
+  WorkbenchLayerControlOverlayView,
+  WorkbenchStickyNote,
+  createWorkbenchTextEditorRegistry,
+  type WorkbenchLayerGeometryPreview,
+} from './WorkbenchLayerObjects';
 import { WorkbenchWidget } from './WorkbenchWidget';
 import {
-  WORKBENCH_MIN_SCALE,
   createWorkbenchRenderLayerMap,
+  resolveWorkbenchModeStrategy,
   resolveWorkbenchWidgetRenderMode,
 } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
@@ -127,7 +136,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       topRenderLayer={props.renderLayers().topRenderLayer}
       viewportScale={props.projectedViewport().scale}
       locked={props.locked}
-      filtered={props.mode !== 'background' && props.filters[item().type] === false}
+      filtered={!props.locked && props.filters[item().type] === false}
       interactionAdapter={props.interactionAdapter}
       layoutMode="projected_surface"
       viewport={props.projectedViewport()}
@@ -220,8 +229,12 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
   const renderLayers = createMemo(() =>
     createWorkbenchRenderLayerMap([...props.widgets, ...(props.stickyNotes ?? [])])
   );
-  const workLayerLocked = createMemo(() => props.mode === 'background');
-  const backgroundLayerEditable = createMemo(() => props.mode === 'background');
+  const textEditorRegistry = createWorkbenchTextEditorRegistry();
+  const [layerGeometryPreview, setLayerGeometryPreview] =
+    createSignal<WorkbenchLayerGeometryPreview | null>(null);
+  const modeStrategy = createMemo(() => resolveWorkbenchModeStrategy(props.mode));
+  const workLayerLocked = createMemo(() => modeStrategy().workLayerLocked);
+  const backgroundLayerEditable = createMemo(() => modeStrategy().layerEditingEnabled);
   const canvasWidgets = createMemo(() =>
     props.widgets.filter((item) => {
       const definition = getWidgetEntry(item.type, props.widgetDefinitions);
@@ -242,13 +255,14 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
   );
   const projectedSurfaceReady = () =>
     props.canvasFrameSize.width > 0 && props.canvasFrameSize.height > 0;
+  const useProjectedCompositor = hasProjectedWidgets;
 
   return (
     <div
       class="workbench-canvas"
       classList={{
         'is-locked': props.locked,
-        'is-background-mode': workLayerLocked(),
+        'is-composition-mode': backgroundLayerEditable(),
       }}
       ref={props.setCanvasFrameRef}
     >
@@ -257,7 +271,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         ariaLabel="Workbench canvas"
         class="workbench-canvas__infinite"
         viewport={props.viewport}
-        minScale={WORKBENCH_MIN_SCALE}
+        minScale={modeStrategy().minScale}
         onViewportChange={props.onViewportCommit}
         onViewportInteractionStart={props.onViewportInteractionStart}
         onCanvasContextMenu={props.onCanvasContextMenu}
@@ -277,68 +291,117 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
         })}
         disablePanZoom={props.locked}
         overlay={(liveViewport) => (
-          <Show when={hasProjectedWidgets()}>
+          <Show when={useProjectedCompositor()}>
             <div
               class="workbench-canvas__projected-layer"
               classList={{ 'is-work-layer-locked': workLayerLocked() }}
             >
-              <For each={projectedWidgetIds()}>
-                {(widgetId) => (
-                  <WorkbenchProjectedWidgetSlot
-                    widgetId={widgetId}
-                    widgetDefinitions={props.widgetDefinitions}
-                    canvasFrameSize={props.canvasFrameSize}
-                    widgetById={widgetById}
-                    renderLayers={renderLayers}
-                    selectedWidgetId={props.selectedObject?.kind === 'widget' ? props.selectedObject.id : props.selectedWidgetId}
-                    optimisticFrontWidgetId={props.optimisticFrontWidgetId}
-                    locked={props.locked || workLayerLocked()}
-                    filters={props.filters}
-                    interactionAdapter={interactionAdapter()}
-                    setCanvasFrameRef={props.setCanvasFrameRef}
-                    onViewportCommit={props.onViewportCommit}
-                    onCanvasContextMenu={props.onCanvasContextMenu}
-                    onSelectWidget={props.onSelectWidget}
-                    onWidgetContextMenu={props.onWidgetContextMenu}
-                    onStartOptimisticFront={props.onStartOptimisticFront}
-                    onCommitFront={props.onCommitFront}
-                    onCommitMove={props.onCommitMove}
-                    onCommitResize={props.onCommitResize}
-                    onRequestOverview={props.onRequestOverview}
-                    onRequestFit={props.onRequestFit}
-                    onRequestDelete={props.onRequestDelete}
-                    onLayoutInteractionStart={props.onLayoutInteractionStart}
-                    onLayoutInteractionEnd={props.onLayoutInteractionEnd}
-                    projectedViewport={liveViewport}
-                    surfaceReady={projectedSurfaceReady()}
-                  />
-                )}
-              </For>
-              <For each={stickyNoteIds()}>
-                {(noteId) => (
-                  <WorkbenchProjectedStickyNoteSlot
-                    noteId={noteId}
-                    stickyNoteById={stickyNoteById}
-                    selectedObject={props.selectedObject}
-                    renderLayers={renderLayers}
-                    projectedViewport={liveViewport}
-                    optimisticFrontWidgetId={props.optimisticFrontWidgetId}
-                    locked={props.locked || workLayerLocked()}
-                    filtered={!workLayerLocked() && props.filters[WORKBENCH_STICKY_FILTER_ID] === false}
-                    onSelectStickyNote={props.onSelectStickyNote}
-                    onStickyNoteContextMenu={props.onStickyNoteContextMenu}
-                    onStartStickyOptimisticFront={props.onStartStickyOptimisticFront}
-                    onCommitStickyFront={props.onCommitStickyFront}
-                    onCommitStickyMove={props.onCommitStickyMove}
-                    onCommitStickyResize={props.onCommitStickyResize}
-                    onUpdateStickyNote={props.onUpdateStickyNote}
-                    onDeleteStickyNote={props.onDeleteStickyNote}
-                    onLayoutInteractionStart={props.onLayoutInteractionStart}
-                    onLayoutInteractionEnd={props.onLayoutInteractionEnd}
-                    surfaceReady={projectedSurfaceReady()}
-                  />
-                )}
-              </For>
+              <WorkbenchBackgroundLayerView
+                items={props.backgroundLayers ?? []}
+                selectedObject={props.selectedObject ?? null}
+                editable={backgroundLayerEditable() && !props.locked}
+                filtered={props.filters[WORKBENCH_BACKGROUND_REGION_FILTER_ID] === false}
+                projection="screen"
+                preview={layerGeometryPreview()}
+                onPreviewGeometry={setLayerGeometryPreview}
+                viewport={liveViewport()}
+                onSelect={(layerId) => props.onSelectBackgroundLayer?.(layerId)}
+                onContextMenu={(event, item) => props.onBackgroundLayerContextMenu?.(event, item)}
+                onCommitMove={(layerId, position) => props.onCommitBackgroundMove?.(layerId, position)}
+              />
+              <WorkbenchAnnotationLayerView
+                items={props.annotations ?? []}
+                selectedObject={props.selectedObject ?? null}
+                editable={backgroundLayerEditable() && !props.locked}
+                filtered={props.filters[WORKBENCH_TEXT_FILTER_ID] === false}
+                projection="screen"
+                preview={layerGeometryPreview()}
+                onPreviewGeometry={setLayerGeometryPreview}
+                textEditorRegistry={textEditorRegistry}
+                viewport={liveViewport()}
+                onSelect={(annotationId) => props.onSelectAnnotation?.(annotationId)}
+                onContextMenu={(event, item) => props.onAnnotationContextMenu?.(event, item)}
+                onCommitMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
+                onUpdate={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
+              />
+              <div class="workbench-canvas__projected-work-layer">
+                <For each={projectedWidgetIds()}>
+                  {(widgetId) => (
+                    <WorkbenchProjectedWidgetSlot
+                      widgetId={widgetId}
+                      widgetDefinitions={props.widgetDefinitions}
+                      canvasFrameSize={props.canvasFrameSize}
+                      widgetById={widgetById}
+                      renderLayers={renderLayers}
+                      selectedWidgetId={props.selectedObject?.kind === 'widget' ? props.selectedObject.id : props.selectedWidgetId}
+                      optimisticFrontWidgetId={props.optimisticFrontWidgetId}
+                      locked={props.locked || workLayerLocked()}
+                      filters={props.filters}
+                      interactionAdapter={interactionAdapter()}
+                      setCanvasFrameRef={props.setCanvasFrameRef}
+                      onViewportCommit={props.onViewportCommit}
+                      onCanvasContextMenu={props.onCanvasContextMenu}
+                      onSelectWidget={props.onSelectWidget}
+                      onWidgetContextMenu={props.onWidgetContextMenu}
+                      onStartOptimisticFront={props.onStartOptimisticFront}
+                      onCommitFront={props.onCommitFront}
+                      onCommitMove={props.onCommitMove}
+                      onCommitResize={props.onCommitResize}
+                      onRequestOverview={props.onRequestOverview}
+                      onRequestFit={props.onRequestFit}
+                      onRequestDelete={props.onRequestDelete}
+                      onLayoutInteractionStart={props.onLayoutInteractionStart}
+                      onLayoutInteractionEnd={props.onLayoutInteractionEnd}
+                      projectedViewport={liveViewport}
+                      surfaceReady={projectedSurfaceReady()}
+                    />
+                  )}
+                </For>
+                <For each={stickyNoteIds()}>
+                  {(noteId) => (
+                    <WorkbenchProjectedStickyNoteSlot
+                      noteId={noteId}
+                      stickyNoteById={stickyNoteById}
+                      selectedObject={props.selectedObject}
+                      renderLayers={renderLayers}
+                      projectedViewport={liveViewport}
+                      optimisticFrontWidgetId={props.optimisticFrontWidgetId}
+                      locked={props.locked || workLayerLocked()}
+                      filtered={!workLayerLocked() && props.filters[WORKBENCH_STICKY_FILTER_ID] === false}
+                      onSelectStickyNote={props.onSelectStickyNote}
+                      onStickyNoteContextMenu={props.onStickyNoteContextMenu}
+                      onStartStickyOptimisticFront={props.onStartStickyOptimisticFront}
+                      onCommitStickyFront={props.onCommitStickyFront}
+                      onCommitStickyMove={props.onCommitStickyMove}
+                      onCommitStickyResize={props.onCommitStickyResize}
+                      onUpdateStickyNote={props.onUpdateStickyNote}
+                      onDeleteStickyNote={props.onDeleteStickyNote}
+                      onLayoutInteractionStart={props.onLayoutInteractionStart}
+                      onLayoutInteractionEnd={props.onLayoutInteractionEnd}
+                      surfaceReady={projectedSurfaceReady()}
+                    />
+                  )}
+                </For>
+              </div>
+              <WorkbenchLayerControlOverlayView
+                annotations={props.annotations ?? []}
+                backgroundLayers={props.backgroundLayers ?? []}
+                selectedObject={props.selectedObject ?? null}
+                editable={backgroundLayerEditable() && !props.locked}
+                showRegionOutlines={backgroundLayerEditable()}
+                projection="screen"
+                viewport={liveViewport()}
+                preview={layerGeometryPreview()}
+                onPreviewGeometry={setLayerGeometryPreview}
+                textEditorRegistry={textEditorRegistry}
+                onCommitAnnotationMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
+                onCommitAnnotationResize={(annotationId, size) => props.onCommitAnnotationResize?.(annotationId, size)}
+                onUpdateTextAnnotation={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
+                onDeleteAnnotation={(annotationId) => props.onDeleteAnnotation?.(annotationId)}
+                onCommitBackgroundResize={(layerId, size) => props.onCommitBackgroundResize?.(layerId, size)}
+                onUpdateBackgroundLayer={(layerId, patch) => props.onUpdateBackgroundLayer?.(layerId, patch)}
+                onDeleteBackgroundLayer={(layerId) => props.onDeleteBackgroundLayer?.(layerId)}
+              />
             </div>
           </Show>
         )}
@@ -356,6 +419,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           workLayerLocked={workLayerLocked()}
           annotationLayerEditable={backgroundLayerEditable()}
           backgroundLayerEditable={backgroundLayerEditable()}
+          showRegionOutlines={backgroundLayerEditable()}
+          renderFreeformLayers={!useProjectedCompositor()}
           viewportScale={props.viewport.scale}
           locked={props.locked}
           filters={props.filters}
@@ -393,6 +458,9 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           onRequestDelete={props.onRequestDelete}
           onLayoutInteractionStart={props.onLayoutInteractionStart}
           onLayoutInteractionEnd={props.onLayoutInteractionEnd}
+          layerGeometryPreview={layerGeometryPreview()}
+          onLayerGeometryPreview={setLayerGeometryPreview}
+          textEditorRegistry={textEditorRegistry}
         />
       </InfiniteCanvas>
     </div>

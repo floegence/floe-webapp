@@ -68,6 +68,8 @@ describe('interaction architecture guard', () => {
     const pointerSessionSrc = read('../src/components/ui/pointerSession.ts');
     const deckCellSrc = read('../src/components/deck/DeckCell.tsx');
     const workbenchWidgetSrc = read('../src/components/workbench/WorkbenchWidget.tsx');
+    const workbenchLayerObjectsSrc = read('../src/components/workbench/WorkbenchLayerObjects.tsx');
+    const workbenchStylesSrc = read('../src/components/workbench/workbench.css');
     const workbenchFilterBarSrc = read('../src/components/workbench/WorkbenchFilterBar.tsx');
     const notesBoardNoteSrc = read('../src/components/notes/NotesBoardNote.tsx');
 
@@ -114,6 +116,12 @@ describe('interaction architecture guard', () => {
     expect(deckCellSrc).toContain('SURFACE_PORTAL_LAYER_ATTR');
     expect(workbenchWidgetSrc).toContain('dialogSurfaceHostAttr');
     expect(workbenchWidgetSrc).toContain('startPointerSession({');
+    expect(workbenchWidgetSrc).toContain('createOwnerSafePropAccessor');
+    expect(workbenchLayerObjectsSrc).toContain('createOwnerSafePropAccessor');
+    expect(workbenchLayerObjectsSrc).toContain('function useLayerDrag');
+    expect(workbenchLayerObjectsSrc).toContain('function useLayerResize');
+    expect(workbenchStylesSrc).toContain('.workbench-canvas__projected-work-layer > .workbench-widget,');
+    expect(workbenchStylesSrc).toContain('.workbench-canvas__projected-work-layer > .workbench-sticky');
     expect(workbenchFilterBarSrc).toContain('startPointerSession({');
 
     expect(notesBoardNoteSrc).toContain('data-floe-geometry-surface="notes-note"');

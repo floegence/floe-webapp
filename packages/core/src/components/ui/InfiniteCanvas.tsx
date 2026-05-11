@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import { createEffect, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import {
@@ -128,7 +128,6 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     if (!current.startedFromPanSurface) return true;
     return current.moved;
   };
-  const overlay = createMemo(() => props.overlay?.(liveViewport));
 
   const clearWheelCommitTimer = () => {
     if (wheelCommitTimer === undefined) return;
@@ -415,7 +414,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       >
         {props.children}
       </div>
-      {overlay()}
+      {props.overlay?.(liveViewport)}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import { For, Show, batch, createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { Check, ChevronDown, Copy, GripVertical, Minus, Plus, Trash } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
@@ -24,6 +24,7 @@ import {
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from './workbenchOptions';
 import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
+import { createOwnerSafePropAccessor } from './workbenchOwnerSafeAccessors';
 
 type LayerDragState = {
   pointerId: number;
@@ -57,6 +58,19 @@ export type WorkbenchLayerGeometryPreview = {
   y: number;
   width: number;
   height: number;
+};
+
+export type WorkbenchLayerProjectionMode = 'world' | 'screen';
+
+type WorkbenchLayerWorldGeometry = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type WorkbenchLayerVisualGeometry = WorkbenchLayerWorldGeometry & {
+  scale: number;
 };
 
 const NOTE_MIN_WIDTH = 190;
@@ -297,16 +311,82 @@ function readPreviewGeometry(
   return preview?.kind === kind && preview.id === id ? preview : null;
 }
 
+function snapScreenPixel(value: number): number {
+  const devicePixelRatio =
+    typeof window !== 'undefined' &&
+    Number.isFinite(window.devicePixelRatio) &&
+    window.devicePixelRatio > 0
+      ? window.devicePixelRatio
+      : 1;
+  return Math.round(value * devicePixelRatio) / devicePixelRatio;
+}
+
+function projectLayerGeometry(args: {
+  geometry: WorkbenchLayerWorldGeometry;
+  viewport: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
+}): WorkbenchLayerVisualGeometry {
+  const scale = Math.max(args.viewport.scale, 0.001);
+  if (args.projection !== 'screen') {
+    return { ...args.geometry, scale };
+  }
+
+  return {
+    x: snapScreenPixel(args.viewport.x + args.geometry.x * scale),
+    y: snapScreenPixel(args.viewport.y + args.geometry.y * scale),
+    width: Math.max(1, snapScreenPixel(args.geometry.width * scale)),
+    height: Math.max(1, snapScreenPixel(args.geometry.height * scale)),
+    scale: 1,
+  };
+}
+
+function createLayerTransformStyle(geometry: WorkbenchLayerVisualGeometry): Pick<
+  JSX.CSSProperties,
+  'width' | 'height' | 'transform'
+> {
+  return {
+    width: `${geometry.width}px`,
+    height: `${geometry.height}px`,
+    transform: `translate(${geometry.x}px, ${geometry.y}px)`,
+  };
+}
+
+function createLayerWorldGeometry(args: {
+  preview: WorkbenchLayerGeometryPreview | null;
+  position: { x: number; y: number };
+  width: number;
+  height: number;
+}): WorkbenchLayerWorldGeometry {
+  return {
+    x: args.preview?.x ?? args.position.x,
+    y: args.preview?.y ?? args.position.y,
+    width: args.preview?.width ?? args.width,
+    height: args.preview?.height ?? args.height,
+  };
+}
+
 function useLayerDrag(args: {
   viewportScale: () => number;
   readPosition: () => { x: number; y: number };
+  readGeometry?: () => { width: number; height: number };
   onCommitMove: (position: { x: number; y: number }) => void;
-  onPreviewMove?: (position: { x: number; y: number }) => void;
+  onPreviewMove?: (geometry: { x: number; y: number; width: number; height: number }) => void;
   onPreviewEnd?: () => void;
   onInteractionStart?: () => void;
   onInteractionEnd?: () => void;
   onCommitStart?: (position: { x: number; y: number }) => void;
 }) {
+  const committedPosition = createOwnerSafePropAccessor(() => args.readPosition());
+  const committedGeometry = createOwnerSafePropAccessor(() =>
+    args.readGeometry?.() ?? { width: 0, height: 0 }
+  );
+  const viewportScale = createOwnerSafePropAccessor(() => args.viewportScale());
+  const commitMove = createOwnerSafePropAccessor(() => args.onCommitMove);
+  const previewMove = createOwnerSafePropAccessor(() => args.onPreviewMove);
+  const previewEnd = createOwnerSafePropAccessor(() => args.onPreviewEnd);
+  const interactionStart = createOwnerSafePropAccessor(() => args.onInteractionStart);
+  const interactionEnd = createOwnerSafePropAccessor(() => args.onInteractionEnd);
+  const commitStart = createOwnerSafePropAccessor(() => args.onCommitStart);
   const [dragState, setDragState] = createSignal<LayerDragState | null>(null);
   let session: PointerSessionController | undefined;
 
@@ -318,7 +398,7 @@ function useLayerDrag(args: {
 
   const position = createMemo(() => {
     const current = dragState();
-    return current ? { x: current.worldX, y: current.worldY } : args.readPosition();
+    return current ? { x: current.worldX, y: current.worldY } : committedPosition();
   });
 
   const beginDrag: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
@@ -326,17 +406,22 @@ function useLayerDrag(args: {
     event.preventDefault();
     event.stopPropagation();
     session?.stop({ reason: 'manual_stop', commit: false });
-    const start = args.readPosition();
-    const scale = Math.max(args.viewportScale(), 0.001);
+    const start = committedPosition();
+    const scale = Math.max(viewportScale(), 0.001);
     const stopHotInteraction = startHotInteraction({ kind: 'drag', cursor: 'grabbing' });
     let interactionStopped = false;
-    args.onInteractionStart?.();
+    interactionStart()?.();
     const stopInteraction = () => {
       if (interactionStopped) return;
       interactionStopped = true;
       stopHotInteraction();
-      args.onInteractionEnd?.();
+      interactionEnd()?.();
     };
+    const geometrySnapshot = committedGeometry();
+    const previewMoveHandler = previewMove();
+    const previewEndHandler = previewEnd();
+    const commitStartHandler = commitStart();
+    const commitMoveHandler = commitMove();
     setDragState({
       pointerId: event.pointerId,
       startClientX: event.clientX,
@@ -353,40 +438,50 @@ function useLayerDrag(args: {
       pointerEvent: event,
       captureEl: event.currentTarget,
       onMove: (nextEvent) => {
-        let nextPosition: { x: number; y: number } | null = null;
-        setDragState((current) => {
-          if (!current || current.pointerId !== nextEvent.pointerId) return current;
-          nextPosition = {
-            x: current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale,
-            y: current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale,
-          };
-          return {
-            ...current,
-            worldX: nextPosition.x,
-            worldY: nextPosition.y,
-            moved:
-              current.moved ||
-              Math.abs(nextPosition.x - current.startWorldX) > 2 ||
-              Math.abs(nextPosition.y - current.startWorldY) > 2,
-          };
+        let nextGeometry: { x: number; y: number; width: number; height: number } | null = null;
+        batch(() => {
+          setDragState((current) => {
+            if (!current || current.pointerId !== nextEvent.pointerId) return current;
+            const nextPosition = {
+              x: current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale,
+              y: current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale,
+            };
+            nextGeometry = {
+              x: current.startWorldX + (nextEvent.clientX - current.startClientX) / current.scale,
+              y: current.startWorldY + (nextEvent.clientY - current.startClientY) / current.scale,
+              width: geometrySnapshot.width,
+              height: geometrySnapshot.height,
+            };
+            return {
+              ...current,
+              worldX: nextPosition.x,
+              worldY: nextPosition.y,
+              moved:
+                current.moved ||
+                Math.abs(nextPosition.x - current.startWorldX) > 2 ||
+                Math.abs(nextPosition.y - current.startWorldY) > 2,
+            };
+          });
+          if (nextGeometry) {
+            previewMoveHandler?.(nextGeometry);
+          }
         });
-        if (nextPosition) {
-          args.onPreviewMove?.(nextPosition);
-        }
       },
       onEnd: ({ commit }) => {
         const current = untrack(dragState);
-        if (current && commit) {
-          const position = { x: current.worldX, y: current.worldY };
-          args.onCommitStart?.(position);
-          if (current.moved) {
-            args.onCommitMove(position);
+        batch(() => {
+          if (current && commit) {
+            const position = { x: current.worldX, y: current.worldY };
+            commitStartHandler?.(position);
+            if (current.moved) {
+              commitMoveHandler(position);
+            }
           }
-        }
-        current?.stopInteraction();
-        setDragState(null);
-        session = undefined;
-        args.onPreviewEnd?.();
+          current?.stopInteraction();
+          setDragState(null);
+          session = undefined;
+          previewEndHandler?.();
+        });
       },
     });
   };
@@ -409,6 +504,13 @@ function useLayerResize(args: {
   onInteractionStart?: () => void;
   onInteractionEnd?: () => void;
 }) {
+  const committedSize = createOwnerSafePropAccessor(() => args.readSize());
+  const viewportScale = createOwnerSafePropAccessor(() => args.viewportScale());
+  const commitResize = createOwnerSafePropAccessor(() => args.onCommitResize);
+  const previewResize = createOwnerSafePropAccessor(() => args.onPreviewResize);
+  const previewEnd = createOwnerSafePropAccessor(() => args.onPreviewEnd);
+  const interactionStart = createOwnerSafePropAccessor(() => args.onInteractionStart);
+  const interactionEnd = createOwnerSafePropAccessor(() => args.onInteractionEnd);
   const [resizeState, setResizeState] = createSignal<LayerResizeState | null>(null);
   let session: PointerSessionController | undefined;
 
@@ -420,7 +522,7 @@ function useLayerResize(args: {
 
   const size = createMemo(() => {
     const current = resizeState();
-    return current ? { width: current.width, height: current.height } : args.readSize();
+    return current ? { width: current.width, height: current.height } : committedSize();
   });
 
   const beginResize: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
@@ -428,17 +530,20 @@ function useLayerResize(args: {
     event.preventDefault();
     event.stopPropagation();
     session?.stop({ reason: 'manual_stop', commit: false });
-    const start = args.readSize();
-    const scale = Math.max(args.viewportScale(), 0.001);
+    const start = committedSize();
+    const scale = Math.max(viewportScale(), 0.001);
     const stopHotInteraction = startHotInteraction({ kind: 'resize', cursor: 'nwse-resize' });
     let interactionStopped = false;
-    args.onInteractionStart?.();
+    interactionStart()?.();
     const stopInteraction = () => {
       if (interactionStopped) return;
       interactionStopped = true;
       stopHotInteraction();
-      args.onInteractionEnd?.();
+      interactionEnd()?.();
     };
+    const previewResizeHandler = previewResize();
+    const previewEndHandler = previewEnd();
+    const commitResizeHandler = commitResize();
     setResizeState({
       pointerId: event.pointerId,
       startClientX: event.clientX,
@@ -455,37 +560,41 @@ function useLayerResize(args: {
       captureEl: event.currentTarget,
       onMove: (nextEvent) => {
         let nextSize: { width: number; height: number } | null = null;
-        setResizeState((current) => {
-          if (!current || current.pointerId !== nextEvent.pointerId) return current;
-          nextSize = {
-            width: Math.max(
-              args.minWidth,
-              current.startWidth + (nextEvent.clientX - current.startClientX) / current.scale,
-            ),
-            height: Math.max(
-              args.minHeight,
-              current.startHeight + (nextEvent.clientY - current.startClientY) / current.scale,
-            ),
-          };
-          return {
-            ...current,
-            width: nextSize.width,
-            height: nextSize.height,
-          };
+        batch(() => {
+          setResizeState((current) => {
+            if (!current || current.pointerId !== nextEvent.pointerId) return current;
+            nextSize = {
+              width: Math.max(
+                args.minWidth,
+                current.startWidth + (nextEvent.clientX - current.startClientX) / current.scale,
+              ),
+              height: Math.max(
+                args.minHeight,
+                current.startHeight + (nextEvent.clientY - current.startClientY) / current.scale,
+              ),
+            };
+            return {
+              ...current,
+              width: nextSize.width,
+              height: nextSize.height,
+            };
+          });
+          if (nextSize) {
+            previewResizeHandler?.(nextSize);
+          }
         });
-        if (nextSize) {
-          args.onPreviewResize?.(nextSize);
-        }
       },
       onEnd: ({ commit }) => {
         const current = untrack(resizeState);
-        if (current && commit) {
-          args.onCommitResize({ width: current.width, height: current.height });
-        }
-        current?.stopInteraction();
-        setResizeState(null);
-        session = undefined;
-        args.onPreviewEnd?.();
+        batch(() => {
+          if (current && commit) {
+            commitResizeHandler({ width: current.width, height: current.height });
+          }
+          current?.stopInteraction();
+          setResizeState(null);
+          session = undefined;
+          previewEndHandler?.();
+        });
       },
     });
   };
@@ -519,9 +628,30 @@ export function WorkbenchStickyNote(props: {
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
 }) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const selected = createOwnerSafePropAccessor(() => props.selected);
+  const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
+  const projectedViewport = createOwnerSafePropAccessor(() => props.projectedViewport);
+  const surfaceReady = createOwnerSafePropAccessor(() => props.surfaceReady ?? true);
+  const renderLayer = createOwnerSafePropAccessor(() => props.renderLayer);
+  const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
+  const locked = createOwnerSafePropAccessor(() => props.locked);
+  const filtered = createOwnerSafePropAccessor(() => props.filtered);
+  const optimisticFront = createOwnerSafePropAccessor(() => props.optimisticFront ?? false);
+  const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
+  const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
+  const onStartOptimisticFront = createOwnerSafePropAccessor(() => props.onStartOptimisticFront);
+  const onCommitFront = createOwnerSafePropAccessor(() => props.onCommitFront);
+  const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
+  const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
+  const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
+  const onDelete = createOwnerSafePropAccessor(() => props.onDelete);
+  const onLayoutInteractionStart =
+    createOwnerSafePropAccessor(() => props.onLayoutInteractionStart);
+  const onLayoutInteractionEnd = createOwnerSafePropAccessor(() => props.onLayoutInteractionEnd);
   const bodyEditor = usePlainTextEditor({
-    value: () => props.item.body,
-    onCommit: (body) => props.onUpdate(props.item.id, { body }),
+    value: () => item().body,
+    onCommit: (body) => onUpdate()(item().id, { body }),
   });
   const [copied, setCopied] = createSignal(false);
   let copiedTimer: number | undefined;
@@ -548,63 +678,65 @@ export function WorkbenchStickyNote(props: {
 
   const handleStickyPointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
-    props.onSelect(props.item.id);
-    if (props.locked) return;
+    const currentItem = item();
+    onSelect()(currentItem.id);
+    if (locked()) return;
     if (
       event.target instanceof Element &&
       event.target.closest('[data-floe-workbench-sticky-local="true"]')
     ) {
       return;
     }
-    props.onStartOptimisticFront?.(props.item.id);
+    onStartOptimisticFront()?.(currentItem.id);
     drag.beginDrag(event);
   };
 
   const drag = useLayerDrag({
-    viewportScale: () => props.viewportScale,
-    readPosition: () => ({ x: props.item.x, y: props.item.y }),
-    onCommitMove: (position) => props.onCommitMove(props.item.id, position),
-    onCommitStart: () => props.onCommitFront?.(props.item.id),
-    onInteractionStart: () => props.onLayoutInteractionStart?.(),
-    onInteractionEnd: () => props.onLayoutInteractionEnd?.(),
+    viewportScale,
+    readPosition: () => ({ x: item().x, y: item().y }),
+    onCommitMove: (position) => onCommitMove()(item().id, position),
+    onCommitStart: () => onCommitFront()?.(item().id),
+    onInteractionStart: () => onLayoutInteractionStart()?.(),
+    onInteractionEnd: () => onLayoutInteractionEnd()?.(),
   });
   const resize = useLayerResize({
-    viewportScale: () => props.viewportScale,
-    readSize: () => ({ width: props.item.width, height: props.item.height }),
+    viewportScale,
+    readSize: () => ({ width: item().width, height: item().height }),
     minWidth: NOTE_MIN_WIDTH,
     minHeight: NOTE_MIN_HEIGHT,
-    onCommitResize: (size) => props.onCommitResize(props.item.id, size),
-    onInteractionStart: () => props.onLayoutInteractionStart?.(),
-    onInteractionEnd: () => props.onLayoutInteractionEnd?.(),
+    onCommitResize: (size) => onCommitResize()(item().id, size),
+    onInteractionStart: () => onLayoutInteractionStart()?.(),
+    onInteractionEnd: () => onLayoutInteractionEnd()?.(),
   });
   const livePosition = createMemo(() => drag.position());
   const liveSize = createMemo(() => resize.size());
   const surfaceMetrics = createMemo<WorkbenchWidgetSurfaceMetrics | undefined>(() => {
-    if (!props.projectedViewport) return undefined;
+    const viewportAccessor = projectedViewport();
+    if (!viewportAccessor) return undefined;
     return createWorkbenchWidgetSurfaceMetrics({
-      widgetId: props.item.id,
+      widgetId: item().id,
       worldX: livePosition().x,
       worldY: livePosition().y,
       worldWidth: liveSize().width,
       worldHeight: liveSize().height,
-      viewport: props.projectedViewport(),
-      ready: props.surfaceReady ?? true,
+      viewport: viewportAccessor(),
+      ready: surfaceReady(),
     });
   });
   const projectedScale = createMemo(
-    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(props.viewportScale, 0.001),
+    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(viewportScale(), 0.001),
   );
   const style = createMemo<JSX.CSSProperties>(() => ({
     width: `${liveSize().width}px`,
     height: `${liveSize().height}px`,
-    transform: props.projectedViewport
+    transform: projectedViewport()
       ? `translate(${surfaceMetrics()?.rect.screenX ?? 0}px, ${surfaceMetrics()?.rect.screenY ?? 0}px) scale(${projectedScale()})`
       : `translate(${livePosition().x}px, ${livePosition().y}px)`,
     'transform-origin': '0 0',
     'z-index': `${
-      props.selected || props.optimisticFront || drag.isDragging() || resize.isResizing()
-        ? props.topRenderLayer + 1
-        : props.renderLayer
+      selected() || optimisticFront() || drag.isDragging() || resize.isResizing()
+        ? topRenderLayer() + 1
+        : renderLayer()
     }`,
   }));
 
@@ -612,29 +744,29 @@ export function WorkbenchStickyNote(props: {
     <article
       class="workbench-sticky"
       classList={{
-        'is-selected': props.selected,
-        'is-locked': props.locked,
-        'is-filtered-out': props.filtered,
+        'is-selected': selected(),
+        'is-locked': locked(),
+        'is-filtered-out': filtered(),
         'is-dragging': drag.isDragging(),
         'is-resizing': resize.isResizing(),
         'is-copied': copied(),
-        [STICKY_COLOR_CLASS[props.item.color]]: true,
+        [STICKY_COLOR_CLASS[item().color]]: true,
       }}
       data-floe-canvas-interactive="true"
       data-floe-workbench-widget-root="true"
-      data-floe-workbench-widget-id={props.item.id}
+      data-floe-workbench-widget-id={item().id}
       data-wb-plane="work"
       data-wb-object-kind="sticky"
-      data-wb-object-id={props.item.id}
-      data-floe-workbench-sticky-id={props.item.id}
+      data-wb-object-id={item().id}
+      data-floe-workbench-sticky-id={item().id}
       style={style()}
       tabIndex={0}
       onPointerDown={handleStickyPointerDown}
-      onFocus={() => props.onSelect(props.item.id)}
+      onFocus={() => onSelect()(item().id)}
       onContextMenu={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        props.onContextMenu?.(event, props.item);
+        onContextMenu()?.(event, item());
       }}
     >
       <div class="workbench-sticky__surface">
@@ -646,8 +778,9 @@ export function WorkbenchStickyNote(props: {
             data-floe-workbench-sticky-local="true"
             data-wb-part="move"
             onPointerDown={(event) => {
-              props.onSelect(props.item.id);
-              props.onStartOptimisticFront?.(props.item.id);
+              const currentItem = item();
+              onSelect()(currentItem.id);
+              onStartOptimisticFront()?.(currentItem.id);
               drag.beginDrag(event);
             }}
           >
@@ -657,10 +790,10 @@ export function WorkbenchStickyNote(props: {
         <div
           ref={bodyEditor.bind}
           class="workbench-sticky__body"
-          contentEditable={props.locked ? false : 'plaintext-only'}
+          contentEditable={locked() ? false : 'plaintext-only'}
           role="textbox"
           aria-multiline="true"
-          aria-disabled={props.locked ? 'true' : undefined}
+          aria-disabled={locked() ? 'true' : undefined}
           aria-label="Sticky note body"
           spellcheck={false}
           data-floe-workbench-text-selection-surface="true"
@@ -669,7 +802,7 @@ export function WorkbenchStickyNote(props: {
           data-wb-part="content"
           onPointerDown={(event) => {
             event.stopPropagation();
-            props.onSelect(props.item.id);
+            onSelect()(item().id);
           }}
           onFocus={bodyEditor.handleFocus}
           onBlur={bodyEditor.handleBlur}
@@ -678,7 +811,7 @@ export function WorkbenchStickyNote(props: {
           onCompositionEnd={bodyEditor.handleCompositionEnd}
         />
       </div>
-      <Show when={props.selected && !props.locked}>
+      <Show when={selected() && !locked()}>
         <div class="workbench-sticky__actions" data-floe-workbench-sticky-local="true">
           <button
             type="button"
@@ -704,10 +837,11 @@ export function WorkbenchStickyNote(props: {
             onPointerDown={stopLayerButtonPointer}
             onClick={(event) => {
               stopLayerButtonClick(event);
-              props.onUpdate(props.item.id, {
+              const currentItem = item();
+              onUpdate()(currentItem.id, {
                 color: nextValue<WorkbenchStickyNoteColor>(
                   WORKBENCH_STICKY_NOTE_COLORS,
-                  props.item.color,
+                  currentItem.color,
                 ),
               });
             }}
@@ -722,14 +856,14 @@ export function WorkbenchStickyNote(props: {
             onPointerDown={stopLayerButtonPointer}
             onClick={(event) => {
               stopLayerButtonClick(event);
-              props.onDelete(props.item.id);
+              onDelete()(item().id);
             }}
           >
             <Trash class="w-3.5 h-3.5" />
           </button>
         </div>
       </Show>
-      <Show when={!props.locked}>
+      <Show when={!locked()}>
         <button
           type="button"
           class="workbench-layer-resize workbench-sticky__resize"
@@ -746,6 +880,8 @@ export function WorkbenchTextAnnotation(props: {
   selected: boolean;
   editable: boolean;
   viewportScale: number;
+  viewport?: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   textEditorRegistry?: WorkbenchTextEditorRegistry;
@@ -757,14 +893,27 @@ export function WorkbenchTextAnnotation(props: {
     patch: WorkbenchTextAnnotationPatch,
   ) => void;
 }) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const selected = createOwnerSafePropAccessor(() => props.selected);
+  const editable = createOwnerSafePropAccessor(() => props.editable);
+  const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
+  const projection = createOwnerSafePropAccessor(() => props.projection);
+  const preview = createOwnerSafePropAccessor(() => props.preview);
+  const textEditorRegistry = createOwnerSafePropAccessor(() => props.textEditorRegistry);
+  const onPreviewGeometry = createOwnerSafePropAccessor(() => props.onPreviewGeometry);
+  const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
+  const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
+  const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
+  const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
   const textEditor = usePlainTextEditor({
-    value: () => props.item.text,
-    onCommit: (text) => props.onUpdate(props.item.id, { text }),
+    value: () => item().text,
+    onCommit: (text) => onUpdate()(item().id, { text }),
   });
   createEffect(() => {
-    const registry = props.textEditorRegistry;
+    const registry = textEditorRegistry();
     if (!registry) return;
-    const unregister = registry.register(props.item.id, {
+    const unregister = registry.register(item().id, {
       focus: textEditor.focus,
       insertTextAtSelection: textEditor.insertTextAtSelection,
       readText: textEditor.readText,
@@ -772,41 +921,42 @@ export function WorkbenchTextAnnotation(props: {
     onCleanup(unregister);
   });
   const drag = useLayerDrag({
-    viewportScale: () => props.viewportScale,
-    readPosition: () => ({ x: props.item.x, y: props.item.y }),
-    onCommitMove: (position) => props.onCommitMove(props.item.id, position),
-    onPreviewMove: (position) => props.onPreviewGeometry?.({
+    viewportScale,
+    readPosition: () => ({ x: item().x, y: item().y }),
+    readGeometry: () => ({ width: item().width, height: item().height }),
+    onCommitMove: (position) => onCommitMove()(item().id, position),
+    onPreviewMove: (geometry) => onPreviewGeometry()?.({
       kind: 'annotation',
-      id: props.item.id,
-      x: position.x,
-      y: position.y,
-      width: props.item.width,
-      height: props.item.height,
+      id: item().id,
+      ...geometry,
     }),
-    onPreviewEnd: () => props.onPreviewGeometry?.(null),
+    onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
-    const preview = readPreviewGeometry(props.preview, 'annotation', props.item.id);
-    return {
-      x: preview?.x ?? drag.position().x,
-      y: preview?.y ?? drag.position().y,
-      width: preview?.width ?? props.item.width,
-      height: preview?.height ?? props.item.height,
-    };
+    const currentItem = item();
+    const currentPreview = readPreviewGeometry(preview(), 'annotation', currentItem.id);
+    return projectLayerGeometry({
+      geometry: createLayerWorldGeometry({
+        preview: currentPreview,
+        position: drag.position(),
+        width: currentItem.width,
+        height: currentItem.height,
+      }),
+      viewport: viewport(),
+      projection: projection(),
+    });
   });
   const style = createMemo<JSX.CSSProperties>(() => ({
-    width: `${visualGeometry().width}px`,
-    height: `${visualGeometry().height}px`,
-    transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
-    'z-index': `${props.item.z_index}`,
-    '--workbench-text-color': props.item.color,
-    '--workbench-text-size': `${props.item.font_size}px`,
-    '--workbench-text-weight': `${props.item.font_weight}`,
-    '--workbench-text-align': props.item.align,
-    '--workbench-text-family': props.item.font_family,
+    ...createLayerTransformStyle(visualGeometry()),
+    'z-index': `${item().z_index}`,
+    '--workbench-text-color': item().color,
+    '--workbench-text-size': `${item().font_size}px`,
+    '--workbench-text-weight': `${item().font_weight}`,
+    '--workbench-text-align': item().align,
+    '--workbench-text-family': item().font_family,
   }));
   const handleTextFramePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
-    if (!props.editable || event.button !== 0) return;
+    if (!editable() || event.button !== 0) return;
     if (
       event.target instanceof Element &&
       event.target.closest(
@@ -816,47 +966,47 @@ export function WorkbenchTextAnnotation(props: {
       return;
     }
     event.stopPropagation();
-    props.onSelect(props.item.id);
+    onSelect()(item().id);
   };
 
   return (
     <article
       class="workbench-text-annotation"
-      classList={{ 'is-selected': props.selected, 'is-editable': props.editable }}
-      data-floe-canvas-interactive={props.editable ? 'true' : undefined}
+      classList={{ 'is-selected': selected(), 'is-editable': editable() }}
+      data-floe-canvas-interactive={editable() ? 'true' : undefined}
       data-wb-plane="annotation"
       data-wb-object-kind="text"
-      data-wb-object-id={props.item.id}
+      data-wb-object-id={item().id}
       data-wb-part="body"
       style={style()}
       onPointerDown={handleTextFramePointerDown}
       onContextMenu={(event) => {
-        if (!props.editable) return;
+        if (!editable()) return;
         event.preventDefault();
         event.stopPropagation();
-        props.onSelect(props.item.id);
-        props.onContextMenu?.(event, props.item);
+        onSelect()(item().id);
+        onContextMenu()?.(event, item());
       }}
     >
       <div
         ref={textEditor.bind}
         class="workbench-text-annotation__content"
-        contentEditable={props.editable ? 'plaintext-only' : false}
-        tabIndex={props.editable ? 0 : undefined}
-        role={props.editable ? 'textbox' : undefined}
-        aria-multiline={props.editable ? 'true' : undefined}
-        aria-disabled={props.editable ? undefined : 'true'}
+        contentEditable={editable() ? 'plaintext-only' : false}
+        tabIndex={editable() ? 0 : undefined}
+        role={editable() ? 'textbox' : undefined}
+        aria-multiline={editable() ? 'true' : undefined}
+        aria-disabled={editable() ? undefined : 'true'}
         spellcheck={false}
         data-floe-workbench-text-selection-surface="true"
         data-wb-text-editor="plain"
         data-wb-part="content"
         onPointerDown={(event) => {
-          if (!props.editable || event.button !== 0) return;
-          props.onSelect(props.item.id);
+          if (!editable() || event.button !== 0) return;
+          onSelect()(item().id);
         }}
         onFocus={(event) => {
           textEditor.handleFocus(event);
-          if (props.editable) props.onSelect(props.item.id);
+          if (editable()) onSelect()(item().id);
         }}
         onBlur={textEditor.handleBlur}
         onInput={textEditor.handleInput}
@@ -872,51 +1022,65 @@ export function WorkbenchBackgroundRegion(props: {
   selected: boolean;
   editable: boolean;
   viewportScale: number;
+  viewport?: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   onSelect: (layerId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchBackgroundLayer) => void;
   onCommitMove: (layerId: string, position: { x: number; y: number }) => void;
 }) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const selected = createOwnerSafePropAccessor(() => props.selected);
+  const editable = createOwnerSafePropAccessor(() => props.editable);
+  const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
+  const projection = createOwnerSafePropAccessor(() => props.projection);
+  const preview = createOwnerSafePropAccessor(() => props.preview);
+  const onPreviewGeometry = createOwnerSafePropAccessor(() => props.onPreviewGeometry);
+  const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
+  const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
+  const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
   const drag = useLayerDrag({
-    viewportScale: () => props.viewportScale,
-    readPosition: () => ({ x: props.item.x, y: props.item.y }),
-    onCommitMove: (position) => props.onCommitMove(props.item.id, position),
-    onPreviewMove: (position) => props.onPreviewGeometry?.({
+    viewportScale,
+    readPosition: () => ({ x: item().x, y: item().y }),
+    readGeometry: () => ({ width: item().width, height: item().height }),
+    onCommitMove: (position) => onCommitMove()(item().id, position),
+    onPreviewMove: (geometry) => onPreviewGeometry()?.({
       kind: 'background_layer',
-      id: props.item.id,
-      x: position.x,
-      y: position.y,
-      width: props.item.width,
-      height: props.item.height,
+      id: item().id,
+      ...geometry,
     }),
-    onPreviewEnd: () => props.onPreviewGeometry?.(null),
+    onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
-    const preview = readPreviewGeometry(props.preview, 'background_layer', props.item.id);
-    return {
-      x: preview?.x ?? drag.position().x,
-      y: preview?.y ?? drag.position().y,
-      width: preview?.width ?? props.item.width,
-      height: preview?.height ?? props.item.height,
-    };
+    const currentItem = item();
+    const currentPreview = readPreviewGeometry(preview(), 'background_layer', currentItem.id);
+    return projectLayerGeometry({
+      geometry: createLayerWorldGeometry({
+        preview: currentPreview,
+        position: drag.position(),
+        width: currentItem.width,
+        height: currentItem.height,
+      }),
+      viewport: viewport(),
+      projection: projection(),
+    });
   });
   const style = createMemo<JSX.CSSProperties>(() => ({
-    width: `${visualGeometry().width}px`,
-    height: `${visualGeometry().height}px`,
-    transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
-    'z-index': `${props.item.z_index}`,
-    ...createRegionRenderVars(props.item),
+    ...createLayerTransformStyle(visualGeometry()),
+    'z-index': `${item().z_index}`,
+    ...createRegionRenderVars(item()),
   }));
   const handleRegionPointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
-    if (!props.editable || event.button !== 0) return;
+    if (!editable() || event.button !== 0) return;
     if (
       event.target instanceof Element &&
       event.target.closest('.workbench-background-region__toolbar, .workbench-layer-resize')
     ) {
       return;
     }
-    props.onSelect(props.item.id);
+    onSelect()(item().id);
     drag.beginDrag(event);
   };
 
@@ -924,26 +1088,26 @@ export function WorkbenchBackgroundRegion(props: {
     <article
       class="workbench-background-region"
       classList={{
-        'is-selected': props.selected,
-        'is-editable': props.editable,
+        'is-selected': selected(),
+        'is-editable': editable(),
         'is-transforming': drag.isDragging(),
-        [`is-material-${props.item.material}`]: true,
+        [`is-material-${item().material}`]: true,
       }}
-      data-floe-canvas-interactive={props.editable ? 'true' : undefined}
+      data-floe-canvas-interactive={editable() ? 'true' : undefined}
       data-wb-plane="background"
       data-wb-object-kind="region"
-      data-wb-object-id={props.item.id}
+      data-wb-object-id={item().id}
       data-wb-part="body"
       style={style()}
-      tabIndex={props.editable ? 0 : undefined}
+      tabIndex={editable() ? 0 : undefined}
       onPointerDown={handleRegionPointerDown}
-      onFocus={() => props.editable && props.onSelect(props.item.id)}
+      onFocus={() => editable() && onSelect()(item().id)}
       onContextMenu={(event) => {
-        if (!props.editable) return;
+        if (!editable()) return;
         event.preventDefault();
         event.stopPropagation();
-        props.onSelect(props.item.id);
-        props.onContextMenu?.(event, props.item);
+        onSelect()(item().id);
+        onContextMenu()?.(event, item());
       }}
     />
   );
@@ -952,6 +1116,8 @@ export function WorkbenchBackgroundRegion(props: {
 function WorkbenchTextAnnotationControls(props: {
   item: WorkbenchTextAnnotationItem;
   viewportScale: number;
+  viewport?: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   textEditorRegistry?: WorkbenchTextEditorRegistry;
@@ -963,6 +1129,17 @@ function WorkbenchTextAnnotationControls(props: {
   ) => void;
   onDelete: (annotationId: string) => void;
 }) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
+  const projection = createOwnerSafePropAccessor(() => props.projection);
+  const preview = createOwnerSafePropAccessor(() => props.preview);
+  const textEditorRegistry = createOwnerSafePropAccessor(() => props.textEditorRegistry);
+  const onPreviewGeometry = createOwnerSafePropAccessor(() => props.onPreviewGeometry);
+  const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
+  const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
+  const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
+  const onDelete = createOwnerSafePropAccessor(() => props.onDelete);
   let sizeInputEl: HTMLInputElement | undefined;
   let fontPickerEl: HTMLDivElement | undefined;
   let emojiPickerEl: HTMLDivElement | undefined;
@@ -970,62 +1147,63 @@ function WorkbenchTextAnnotationControls(props: {
   const [fontPickerOpen, setFontPickerOpen] = createSignal(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = createSignal(false);
   const activeFont = createMemo(() =>
-    WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === props.item.font_family)
+    WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === item().font_family)
       ?? WORKBENCH_TEXT_FONT_OPTIONS[0]!
   );
   const move = useLayerDrag({
-    viewportScale: () => props.viewportScale,
-    readPosition: () => ({ x: props.item.x, y: props.item.y }),
-    onCommitMove: (position) => props.onCommitMove(props.item.id, position),
-    onPreviewMove: (position) => props.onPreviewGeometry?.({
+    viewportScale,
+    readPosition: () => ({ x: item().x, y: item().y }),
+    readGeometry: () => ({ width: item().width, height: item().height }),
+    onCommitMove: (position) => onCommitMove()(item().id, position),
+    onPreviewMove: (geometry) => onPreviewGeometry()?.({
       kind: 'annotation',
-      id: props.item.id,
-      x: position.x,
-      y: position.y,
-      width: props.item.width,
-      height: props.item.height,
+      id: item().id,
+      ...geometry,
     }),
-    onPreviewEnd: () => props.onPreviewGeometry?.(null),
+    onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const resize = useLayerResize({
-    viewportScale: () => props.viewportScale,
-    readSize: () => ({ width: props.item.width, height: props.item.height }),
+    viewportScale,
+    readSize: () => ({ width: item().width, height: item().height }),
     minWidth: TEXT_MIN_WIDTH,
     minHeight: TEXT_MIN_HEIGHT,
-    onCommitResize: (size) => props.onCommitResize(props.item.id, size),
-    onPreviewResize: (size) => props.onPreviewGeometry?.({
+    onCommitResize: (size) => onCommitResize()(item().id, size),
+    onPreviewResize: (size) => onPreviewGeometry()?.({
       kind: 'annotation',
-      id: props.item.id,
-      x: props.item.x,
-      y: props.item.y,
+      id: item().id,
+      x: item().x,
+      y: item().y,
       width: size.width,
       height: size.height,
     }),
-    onPreviewEnd: () => props.onPreviewGeometry?.(null),
+    onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
-    const preview = readPreviewGeometry(props.preview, 'annotation', props.item.id);
-    return {
-      x: preview?.x ?? move.position().x,
-      y: preview?.y ?? move.position().y,
-      width: resize.size().width,
-      height: resize.size().height,
-    };
+    const currentItem = item();
+    const currentPreview = readPreviewGeometry(preview(), 'annotation', currentItem.id);
+    return projectLayerGeometry({
+      geometry: createLayerWorldGeometry({
+        preview: currentPreview,
+        position: move.position(),
+        width: resize.size().width,
+        height: resize.size().height,
+      }),
+      viewport: viewport(),
+      projection: projection(),
+    });
   });
   const style = createMemo<JSX.CSSProperties>(() => ({
-    width: `${visualGeometry().width}px`,
-    height: `${visualGeometry().height}px`,
-    transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
-    'z-index': `${props.item.z_index}`,
-    '--workbench-layer-control-inverse-scale': `${1 / Math.max(props.viewportScale, 0.001)}`,
+    ...createLayerTransformStyle(visualGeometry()),
+    'z-index': `${item().z_index}`,
+    '--workbench-layer-control-inverse-scale': `${1 / Math.max(visualGeometry().scale, 0.001)}`,
   }));
   const nextAlign = (): WorkbenchTextAnnotationAlign =>
-    nextValue<WorkbenchTextAnnotationAlign>(['left', 'center', 'right'], props.item.align);
+    nextValue<WorkbenchTextAnnotationAlign>(['left', 'center', 'right'], item().align);
   const updateFontSize = (value: number) => {
     if (!Number.isFinite(value)) return;
     const next = clampTextFontSize(value);
     setFontSizeDraft(String(next));
-    props.onUpdate(props.item.id, { font_size: next });
+    onUpdate()(item().id, { font_size: next });
   };
   const commitFontSizeDraft = () => {
     const raw = fontSizeDraft().trim();
@@ -1034,12 +1212,12 @@ function WorkbenchTextAnnotationControls(props: {
       updateFontSize(next);
       return;
     }
-    setFontSizeDraft(String(props.item.font_size));
+    setFontSizeDraft(String(item().font_size));
   };
 
   createEffect(() => {
     if (typeof document !== 'undefined' && document.activeElement === sizeInputEl) return;
-    setFontSizeDraft(String(props.item.font_size));
+    setFontSizeDraft(String(item().font_size));
   });
 
   useLayerPopoverDismiss(
@@ -1059,7 +1237,7 @@ function WorkbenchTextAnnotationControls(props: {
       data-floe-canvas-interactive="true"
       data-wb-plane="overlay"
       data-wb-object-kind="text"
-      data-wb-object-id={props.item.id}
+      data-wb-object-id={item().id}
       data-wb-part="toolbar"
       style={style()}
     >
@@ -1120,15 +1298,15 @@ function WorkbenchTextAnnotationControls(props: {
                   <button
                     type="button"
                     role="menuitemradio"
-                    aria-checked={props.item.font_family === font.fontFamily}
+                    aria-checked={item().font_family === font.fontFamily}
                     aria-label={`Use ${font.label} bold font`}
                     title={`${font.label} bold`}
                     class="workbench-text-font-option"
-                    classList={{ 'is-active': props.item.font_family === font.fontFamily }}
+                    classList={{ 'is-active': item().font_family === font.fontFamily }}
                     onPointerDown={stopLayerButtonPointer}
                     onClick={(event) => {
                       stopLayerButtonClick(event);
-                      props.onUpdate(props.item.id, {
+                      onUpdate()(item().id, {
                         font_family: font.fontFamily,
                         font_weight: font.fontWeight,
                       });
@@ -1166,7 +1344,7 @@ function WorkbenchTextAnnotationControls(props: {
             onPointerDown={stopLayerButtonPointer}
             onClick={(event) => {
               stopLayerButtonClick(event);
-              updateFontSize(props.item.font_size - 1);
+              updateFontSize(item().font_size - 1);
             }}
           >
             <Minus class="w-3 h-3" />
@@ -1198,7 +1376,7 @@ function WorkbenchTextAnnotationControls(props: {
             onPointerDown={stopLayerButtonPointer}
             onClick={(event) => {
               stopLayerButtonClick(event);
-              updateFontSize(props.item.font_size + 1);
+              updateFontSize(item().font_size + 1);
             }}
           >
             <Plus class="w-3 h-3" />
@@ -1210,12 +1388,12 @@ function WorkbenchTextAnnotationControls(props: {
               type="button"
               aria-label={`Use text color ${color}`}
               class="workbench-layer-swatch"
-              classList={{ 'is-active': props.item.color === color }}
+              classList={{ 'is-active': item().color === color }}
               style={{ background: color }}
               onPointerDown={stopLayerButtonPointer}
               onClick={(event) => {
                 stopLayerButtonClick(event);
-                props.onUpdate(props.item.id, { color });
+                onUpdate()(item().id, { color });
               }}
             />
           )}
@@ -1255,7 +1433,7 @@ function WorkbenchTextAnnotationControls(props: {
                     onPointerDown={stopLayerButtonPointer}
                     onClick={(event) => {
                       stopLayerButtonClick(event);
-                      props.textEditorRegistry?.get(props.item.id)?.insertTextAtSelection(emoji);
+                      textEditorRegistry()?.get(item().id)?.insertTextAtSelection(emoji);
                       setEmojiPickerOpen(false);
                     }}
                   >
@@ -1272,10 +1450,10 @@ function WorkbenchTextAnnotationControls(props: {
           onPointerDown={stopLayerButtonPointer}
           onClick={(event) => {
             stopLayerButtonClick(event);
-            props.onUpdate(props.item.id, { align: nextAlign() });
+            onUpdate()(item().id, { align: nextAlign() });
           }}
         >
-          {props.item.align}
+          {item().align}
         </button>
         <button
           type="button"
@@ -1284,7 +1462,7 @@ function WorkbenchTextAnnotationControls(props: {
           onPointerDown={stopLayerButtonPointer}
           onClick={(event) => {
             stopLayerButtonClick(event);
-            props.onDelete(props.item.id);
+            onDelete()(item().id);
           }}
         >
           <Trash class="w-3.5 h-3.5" />
@@ -1304,6 +1482,8 @@ function WorkbenchTextAnnotationControls(props: {
 function WorkbenchBackgroundRegionControls(props: {
   item: WorkbenchBackgroundLayer;
   viewportScale: number;
+  viewport?: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   onCommitResize: (layerId: string, size: { width: number; height: number }) => void;
@@ -1313,38 +1493,50 @@ function WorkbenchBackgroundRegionControls(props: {
   ) => void;
   onDelete: (layerId: string) => void;
 }) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
+  const projection = createOwnerSafePropAccessor(() => props.projection);
+  const preview = createOwnerSafePropAccessor(() => props.preview);
+  const onPreviewGeometry = createOwnerSafePropAccessor(() => props.onPreviewGeometry);
+  const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
+  const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
+  const onDelete = createOwnerSafePropAccessor(() => props.onDelete);
   const resize = useLayerResize({
-    viewportScale: () => props.viewportScale,
-    readSize: () => ({ width: props.item.width, height: props.item.height }),
+    viewportScale,
+    readSize: () => ({ width: item().width, height: item().height }),
     minWidth: REGION_MIN_WIDTH,
     minHeight: REGION_MIN_HEIGHT,
-    onCommitResize: (size) => props.onCommitResize(props.item.id, size),
-    onPreviewResize: (size) => props.onPreviewGeometry?.({
+    onCommitResize: (size) => onCommitResize()(item().id, size),
+    onPreviewResize: (size) => onPreviewGeometry()?.({
       kind: 'background_layer',
-      id: props.item.id,
-      x: props.item.x,
-      y: props.item.y,
+      id: item().id,
+      x: item().x,
+      y: item().y,
       width: size.width,
       height: size.height,
     }),
-    onPreviewEnd: () => props.onPreviewGeometry?.(null),
+    onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
-    const preview = readPreviewGeometry(props.preview, 'background_layer', props.item.id);
-    return {
-      x: preview?.x ?? props.item.x,
-      y: preview?.y ?? props.item.y,
-      width: resize.size().width,
-      height: resize.size().height,
-    };
+    const currentItem = item();
+    const currentPreview = readPreviewGeometry(preview(), 'background_layer', currentItem.id);
+    return projectLayerGeometry({
+      geometry: createLayerWorldGeometry({
+        preview: currentPreview,
+        position: { x: currentItem.x, y: currentItem.y },
+        width: resize.size().width,
+        height: resize.size().height,
+      }),
+      viewport: viewport(),
+      projection: projection(),
+    });
   });
   const style = createMemo<JSX.CSSProperties>(() => ({
-    width: `${visualGeometry().width}px`,
-    height: `${visualGeometry().height}px`,
-    transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
-    'z-index': `${props.item.z_index}`,
-    '--workbench-layer-control-inverse-scale': `${1 / Math.max(props.viewportScale, 0.001)}`,
-    ...createRegionRenderVars(props.item),
+    ...createLayerTransformStyle(visualGeometry()),
+    'z-index': `${item().z_index}`,
+    '--workbench-layer-control-inverse-scale': `${1 / Math.max(visualGeometry().scale, 0.001)}`,
+    ...createRegionRenderVars(item()),
   }));
 
   return (
@@ -1353,7 +1545,7 @@ function WorkbenchBackgroundRegionControls(props: {
       data-floe-canvas-interactive="true"
       data-wb-plane="overlay"
       data-wb-object-kind="region"
-      data-wb-object-id={props.item.id}
+      data-wb-object-id={item().id}
       data-wb-part="toolbar"
       style={style()}
     >
@@ -1370,12 +1562,12 @@ function WorkbenchBackgroundRegionControls(props: {
               type="button"
               aria-label={`Use region color ${fill}`}
               class="workbench-layer-swatch workbench-layer-swatch--region"
-              classList={{ 'is-active': props.item.fill === fill }}
+              classList={{ 'is-active': item().fill === fill }}
               style={{ background: fill }}
               onPointerDown={stopLayerButtonPointer}
               onClick={(event) => {
                 stopLayerButtonClick(event);
-                props.onUpdate(props.item.id, { fill });
+                onUpdate()(item().id, { fill });
               }}
             />
           )}
@@ -1395,13 +1587,13 @@ function WorkbenchBackgroundRegionControls(props: {
                 title={BACKGROUND_MATERIAL_LABEL[material]}
                 class="workbench-region-material"
                 classList={{
-                  'is-active': props.item.material === material,
+                  'is-active': item().material === material,
                   [`is-${material}`]: true,
                 }}
                 onPointerDown={stopLayerButtonPointer}
                 onClick={(event) => {
                   stopLayerButtonClick(event);
-                  props.onUpdate(props.item.id, { material });
+                  onUpdate()(item().id, { material });
                 }}
               >
                 <span class="workbench-region-material__sample" aria-hidden="true" />
@@ -1415,12 +1607,12 @@ function WorkbenchBackgroundRegionControls(props: {
           onPointerDown={stopLayerButtonPointer}
           onClick={(event) => {
             stopLayerButtonClick(event);
-            props.onUpdate(props.item.id, {
-              opacity: props.item.opacity >= 0.88 ? 0.42 : props.item.opacity + 0.18,
+            onUpdate()(item().id, {
+              opacity: item().opacity >= 0.88 ? 0.42 : item().opacity + 0.18,
             });
           }}
         >
-          {Math.round(props.item.opacity * 100)}%
+          {Math.round(item().opacity * 100)}%
         </button>
         <button
           type="button"
@@ -1429,7 +1621,7 @@ function WorkbenchBackgroundRegionControls(props: {
           onPointerDown={stopLayerButtonPointer}
           onClick={(event) => {
             stopLayerButtonClick(event);
-            props.onDelete(props.item.id);
+            onDelete()(item().id);
           }}
         >
           <Trash class="w-3.5 h-3.5" />
@@ -1446,11 +1638,94 @@ function WorkbenchBackgroundRegionControls(props: {
   );
 }
 
+function WorkbenchRegionVisibilityOutline(props: {
+  item: WorkbenchBackgroundLayer;
+  selected: boolean;
+  viewport: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
+  preview?: WorkbenchLayerGeometryPreview | null;
+}) {
+  const item = createOwnerSafePropAccessor(() => props.item);
+  const viewport = createOwnerSafePropAccessor(() => props.viewport);
+  const projection = createOwnerSafePropAccessor(() => props.projection);
+  const preview = createOwnerSafePropAccessor(() => props.preview);
+  const visualGeometry = createMemo(() => {
+    const currentItem = item();
+    const currentPreview = readPreviewGeometry(preview(), 'background_layer', currentItem.id);
+    return projectLayerGeometry({
+      geometry: createLayerWorldGeometry({
+        preview: currentPreview,
+        position: { x: currentItem.x, y: currentItem.y },
+        width: currentItem.width,
+        height: currentItem.height,
+      }),
+      viewport: viewport(),
+      projection: projection(),
+    });
+  });
+  const style = createMemo<JSX.CSSProperties>(() => ({
+    ...createLayerTransformStyle(visualGeometry()),
+    '--workbench-region-outline-scale': `${1 / Math.max(visualGeometry().scale, 0.001)}`,
+    ...createRegionRenderVars(item()),
+  }));
+
+  return (
+    <div
+      class="workbench-region-visibility-outline"
+      classList={{ 'is-selected-region': props.selected }}
+      aria-hidden="true"
+      data-wb-plane="overlay"
+      data-wb-object-kind="region-outline"
+      data-wb-object-id={item().id}
+      style={style()}
+    />
+  );
+}
+
+function WorkbenchRegionVisibilityOutlineLayer(props: {
+  items: readonly WorkbenchBackgroundLayer[];
+  selectedObject: WorkbenchSelection | null;
+  viewport: WorkbenchViewport;
+  projection?: WorkbenchLayerProjectionMode;
+  preview?: WorkbenchLayerGeometryPreview | null;
+}) {
+  const itemById = createMemo(() => createItemMap(props.items));
+  const itemIds = createMemo(() => sortByLayer(props.items).map((item) => item.id));
+
+  return (
+    <div class="workbench-region-visibility-outline-layer" aria-hidden="true">
+      <For each={itemIds()}>
+        {(itemId) => {
+          const item = createMemo(() => itemById().get(itemId) ?? null);
+
+          return (
+            <Show when={item()}>
+              {(entry) => (
+                <WorkbenchRegionVisibilityOutline
+                  item={entry()}
+                  selected={
+                    props.selectedObject?.kind === 'background_layer' &&
+                    props.selectedObject.id === itemId
+                  }
+                  viewport={props.viewport}
+                  projection={props.projection}
+                  preview={props.preview}
+                />
+              )}
+            </Show>
+          );
+        }}
+      </For>
+    </div>
+  );
+}
+
 export function WorkbenchBackgroundLayerView(props: {
   items: readonly WorkbenchBackgroundLayer[];
   selectedObject: WorkbenchSelection | null;
   editable: boolean;
   filtered: boolean;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   viewport: WorkbenchViewport;
@@ -1478,6 +1753,8 @@ export function WorkbenchBackgroundLayerView(props: {
                   selected={props.selectedObject?.kind === 'background_layer' && props.selectedObject.id === itemId}
                   editable={props.editable}
                   viewportScale={props.viewport.scale}
+                  viewport={props.viewport}
+                  projection={props.projection}
                   preview={props.preview}
                   onPreviewGeometry={props.onPreviewGeometry}
                   onSelect={props.onSelect}
@@ -1498,6 +1775,7 @@ export function WorkbenchAnnotationLayerView(props: {
   selectedObject: WorkbenchSelection | null;
   editable: boolean;
   filtered: boolean;
+  projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   textEditorRegistry?: WorkbenchTextEditorRegistry;
@@ -1530,6 +1808,8 @@ export function WorkbenchAnnotationLayerView(props: {
                   selected={props.selectedObject?.kind === 'annotation' && props.selectedObject.id === itemId}
                   editable={props.editable}
                   viewportScale={props.viewport.scale}
+                  viewport={props.viewport}
+                  projection={props.projection}
                   preview={props.preview}
                   onPreviewGeometry={props.onPreviewGeometry}
                   textEditorRegistry={props.textEditorRegistry}
@@ -1552,6 +1832,8 @@ export function WorkbenchLayerControlOverlayView(props: {
   backgroundLayers: readonly WorkbenchBackgroundLayer[];
   selectedObject: WorkbenchSelection | null;
   editable: boolean;
+  showRegionOutlines?: boolean;
+  projection?: WorkbenchLayerProjectionMode;
   viewport: WorkbenchViewport;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
@@ -1587,11 +1869,22 @@ export function WorkbenchLayerControlOverlayView(props: {
       classList={{ 'is-editable': props.editable }}
       data-wb-plane="overlay"
     >
+      <Show when={props.showRegionOutlines}>
+        <WorkbenchRegionVisibilityOutlineLayer
+          items={props.backgroundLayers}
+          selectedObject={props.selectedObject}
+          viewport={props.viewport}
+          projection={props.projection}
+          preview={props.preview}
+        />
+      </Show>
       <Show when={props.editable && selectedRegion()}>
         {(item) => (
           <WorkbenchBackgroundRegionControls
             item={item()}
             viewportScale={props.viewport.scale}
+            viewport={props.viewport}
+            projection={props.projection}
             preview={props.preview}
             onPreviewGeometry={props.onPreviewGeometry}
             onCommitResize={props.onCommitBackgroundResize}
@@ -1605,6 +1898,8 @@ export function WorkbenchLayerControlOverlayView(props: {
           <WorkbenchTextAnnotationControls
             item={item()}
             viewportScale={props.viewport.scale}
+            viewport={props.viewport}
+            projection={props.projection}
             preview={props.preview}
             onPreviewGeometry={props.onPreviewGeometry}
             textEditorRegistry={props.textEditorRegistry}

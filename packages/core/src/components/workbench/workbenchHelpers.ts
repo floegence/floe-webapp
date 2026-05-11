@@ -120,6 +120,17 @@ export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefine
   };
 }
 
+export function sanitizeWorkbenchViewportForMode(
+  viewport: Partial<WorkbenchViewport> | undefined,
+  mode: WorkbenchInteractionMode,
+): WorkbenchViewport {
+  const next = sanitizeViewport(viewport);
+  return {
+    ...next,
+    scale: clampScale(next.scale, resolveWorkbenchModeStrategy(mode).minScale, WORKBENCH_MAX_SCALE),
+  };
+}
+
 export function sanitizeFilters(
   filters: Partial<Record<string, boolean>> | undefined,
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[]
@@ -155,7 +166,7 @@ function normalizeObjectId(value: unknown, prefix: string): string {
 }
 
 function sanitizeWorkbenchMode(value: unknown): WorkbenchInteractionMode {
-  return value === 'annotation' || value === 'background' ? value : 'work';
+  return normalizeWorkbenchInteractionMode(value);
 }
 
 function sanitizeActiveTool(value: unknown, mode: WorkbenchInteractionMode): WorkbenchDockToolId {
@@ -358,11 +369,12 @@ export function sanitizeWorkbenchState(
   const annotations = sanitizeAnnotations(state.annotations);
   const backgroundLayers = sanitizeBackgroundLayers(state.backgroundLayers);
   const mode = sanitizeWorkbenchMode(state.mode);
+  const viewport = sanitizeWorkbenchViewportForMode(state.viewport, mode);
 
   return {
     version: 1,
     widgets,
-    viewport: sanitizeViewport(state.viewport),
+    viewport,
     locked: typeof state.locked === 'boolean' ? state.locked : false,
     filters: sanitizeFilters(state.filters, widgetDefinitions),
     selectedWidgetId,
@@ -479,9 +491,70 @@ export function createDefaultWorkbenchState(
 
 export const WORKBENCH_CANVAS_ZOOM_STEP = 1.18;
 export const WORKBENCH_CONTEXT_MENU_WIDTH_PX = 200;
-export const WORKBENCH_MIN_SCALE = 0.2;
+export const WORKBENCH_WORK_MIN_SCALE = 0.35;
+export const WORKBENCH_COMPOSITION_MIN_SCALE = 0.2;
+export const WORKBENCH_MIN_SCALE = WORKBENCH_WORK_MIN_SCALE;
 export const WORKBENCH_MAX_SCALE = 2.2;
 export const WORKBENCH_VIEWPORT_FIT_PADDING_PX = 48;
+
+export interface WorkbenchModeStrategy {
+  mode: WorkbenchInteractionMode;
+  label: string;
+  minScale: number;
+  workLayerLocked: boolean;
+  layerEditingEnabled: boolean;
+}
+
+export function normalizeWorkbenchInteractionMode(value: unknown): WorkbenchInteractionMode {
+  return value === 'annotation' || value === 'background' ? 'background' : 'work';
+}
+
+export function resolveWorkbenchModeStrategy(mode: unknown): WorkbenchModeStrategy {
+  const normalized = normalizeWorkbenchInteractionMode(mode);
+  if (normalized === 'background') {
+    return {
+      mode: 'background',
+      label: 'Composition Mode',
+      minScale: WORKBENCH_COMPOSITION_MIN_SCALE,
+      workLayerLocked: true,
+      layerEditingEnabled: true,
+    };
+  }
+
+  return {
+    mode: 'work',
+    label: 'Work Mode',
+    minScale: WORKBENCH_WORK_MIN_SCALE,
+    workLayerLocked: false,
+    layerEditingEnabled: false,
+  };
+}
+
+export function createWorkbenchViewportAtScale(options: {
+  viewport: WorkbenchViewport;
+  scale: number;
+  frameWidth: number;
+  frameHeight: number;
+  minScale?: number;
+}): WorkbenchViewport {
+  const nextScale = clampScale(
+    options.scale,
+    options.minScale ?? WORKBENCH_COMPOSITION_MIN_SCALE,
+    WORKBENCH_MAX_SCALE,
+  );
+  if (options.frameWidth <= 0 || options.frameHeight <= 0 || options.viewport.scale <= 0) {
+    return { ...options.viewport, scale: nextScale };
+  }
+
+  const centerWorldX = (options.frameWidth / 2 - options.viewport.x) / options.viewport.scale;
+  const centerWorldY = (options.frameHeight / 2 - options.viewport.y) / options.viewport.scale;
+
+  return {
+    x: options.frameWidth / 2 - centerWorldX * nextScale,
+    y: options.frameHeight / 2 - centerWorldY * nextScale,
+    scale: nextScale,
+  };
+}
 
 export function createWorkbenchViewportCenteredOnWidget(options: {
   widget: WorkbenchWidgetItem;

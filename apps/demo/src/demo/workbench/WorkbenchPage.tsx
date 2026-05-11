@@ -2,6 +2,8 @@ import type { Component } from 'solid-js';
 import { WorkbenchSurface } from '@floegence/floe-webapp-core/workbench';
 import {
   DEMO_WORKBENCH_TEXT_DEFAULTS,
+  REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES,
+  REDEVEN_PARITY_WORKBENCH_WIDGETS,
   useWorkbenchDemo,
 } from './WorkbenchDemoContext';
 
@@ -17,6 +19,8 @@ export const WorkbenchPage: Component = () => {
     <WorkbenchSurface
       state={demo.state}
       setState={demo.setState}
+      widgetDefinitions={REDEVEN_PARITY_WORKBENCH_WIDGETS}
+      launcherWidgetTypes={REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES}
       textAnnotationDefaults={DEMO_WORKBENCH_TEXT_DEFAULTS}
     />
   );

@@ -27,6 +27,7 @@ import {
   WorkbenchStickyNote,
   createWorkbenchTextEditorRegistry,
   type WorkbenchLayerGeometryPreview,
+  type WorkbenchTextEditorRegistry,
 } from './WorkbenchLayerObjects';
 
 export interface WorkbenchCanvasFieldProps {
@@ -42,6 +43,8 @@ export interface WorkbenchCanvasFieldProps {
   workLayerLocked?: boolean;
   annotationLayerEditable?: boolean;
   backgroundLayerEditable?: boolean;
+  showRegionOutlines?: boolean;
+  renderFreeformLayers?: boolean;
   viewportScale: number;
   locked: boolean;
   filters: Record<string, boolean>;
@@ -85,6 +88,9 @@ export interface WorkbenchCanvasFieldProps {
   onRequestDelete: (widgetId: string) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
+  layerGeometryPreview?: WorkbenchLayerGeometryPreview | null;
+  onLayerGeometryPreview?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
 }
 
 interface WorkbenchCanvasWidgetSlotProps extends WorkbenchCanvasFieldProps {
@@ -204,7 +210,8 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
   const stickyNoteById = createMemo(
     () => new Map((props.stickyNotes ?? []).map((item) => [item.id, item] as const))
   );
-  const textEditorRegistry = createWorkbenchTextEditorRegistry();
+  const fallbackTextEditorRegistry = createWorkbenchTextEditorRegistry();
+  const textEditorRegistry = createMemo(() => props.textEditorRegistry ?? fallbackTextEditorRegistry);
   const renderLayers = createMemo(() =>
     createWorkbenchRenderLayerMap([...props.widgets, ...(props.stickyNotes ?? [])])
   );
@@ -212,7 +219,21 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
     props.selectedObject?.kind === 'widget' ? props.selectedObject.id : props.selectedWidgetId
   );
   const workLocked = createMemo(() => props.locked || Boolean(props.workLayerLocked));
-  const [layerGeometryPreview, setLayerGeometryPreview] = createSignal<WorkbenchLayerGeometryPreview | null>(null);
+  const [localLayerGeometryPreview, setLocalLayerGeometryPreview] =
+    createSignal<WorkbenchLayerGeometryPreview | null>(null);
+  const layerGeometryPreview = createMemo(() =>
+    props.layerGeometryPreview === undefined
+      ? localLayerGeometryPreview()
+      : props.layerGeometryPreview
+  );
+  const setLayerGeometryPreview = (preview: WorkbenchLayerGeometryPreview | null) => {
+    if (props.onLayerGeometryPreview) {
+      props.onLayerGeometryPreview(preview);
+      return;
+    }
+    setLocalLayerGeometryPreview(preview);
+  };
+  const renderFreeformLayers = createMemo(() => props.renderFreeformLayers !== false);
 
   return (
     <div
@@ -220,32 +241,36 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
       classList={{ 'is-work-layer-muted': Boolean(props.workLayerLocked) }}
     >
       <div class="workbench-canvas__grid" aria-hidden="true" />
-      <WorkbenchBackgroundLayerView
-        items={props.backgroundLayers ?? []}
-        selectedObject={props.selectedObject ?? null}
-        editable={Boolean(props.backgroundLayerEditable) && !props.locked}
-        filtered={props.filters[WORKBENCH_BACKGROUND_REGION_FILTER_ID] === false}
-        preview={layerGeometryPreview()}
-        onPreviewGeometry={setLayerGeometryPreview}
-        viewport={props.viewport}
-        onSelect={(layerId) => props.onSelectBackgroundLayer?.(layerId)}
-        onContextMenu={(event, item) => props.onBackgroundLayerContextMenu?.(event, item)}
-        onCommitMove={(layerId, position) => props.onCommitBackgroundMove?.(layerId, position)}
-      />
-      <WorkbenchAnnotationLayerView
-        items={props.annotations ?? []}
-        selectedObject={props.selectedObject ?? null}
-        editable={Boolean(props.annotationLayerEditable) && !props.locked}
-        filtered={props.filters[WORKBENCH_TEXT_FILTER_ID] === false}
-        preview={layerGeometryPreview()}
-        onPreviewGeometry={setLayerGeometryPreview}
-        textEditorRegistry={textEditorRegistry}
-        viewport={props.viewport}
-        onSelect={(annotationId) => props.onSelectAnnotation?.(annotationId)}
-        onContextMenu={(event, item) => props.onAnnotationContextMenu?.(event, item)}
-        onCommitMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
-        onUpdate={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
-      />
+      {renderFreeformLayers() ? (
+        <>
+          <WorkbenchBackgroundLayerView
+            items={props.backgroundLayers ?? []}
+            selectedObject={props.selectedObject ?? null}
+            editable={Boolean(props.backgroundLayerEditable) && !props.locked}
+            filtered={props.filters[WORKBENCH_BACKGROUND_REGION_FILTER_ID] === false}
+            preview={layerGeometryPreview()}
+            onPreviewGeometry={setLayerGeometryPreview}
+            viewport={props.viewport}
+            onSelect={(layerId) => props.onSelectBackgroundLayer?.(layerId)}
+            onContextMenu={(event, item) => props.onBackgroundLayerContextMenu?.(event, item)}
+            onCommitMove={(layerId, position) => props.onCommitBackgroundMove?.(layerId, position)}
+          />
+          <WorkbenchAnnotationLayerView
+            items={props.annotations ?? []}
+            selectedObject={props.selectedObject ?? null}
+            editable={Boolean(props.annotationLayerEditable) && !props.locked}
+            filtered={props.filters[WORKBENCH_TEXT_FILTER_ID] === false}
+            preview={layerGeometryPreview()}
+            onPreviewGeometry={setLayerGeometryPreview}
+            textEditorRegistry={textEditorRegistry()}
+            viewport={props.viewport}
+            onSelect={(annotationId) => props.onSelectAnnotation?.(annotationId)}
+            onContextMenu={(event, item) => props.onAnnotationContextMenu?.(event, item)}
+            onCommitMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
+            onUpdate={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
+          />
+        </>
+      ) : null}
       <div class="workbench-work-layer">
         {/* Keep widget subtree ownership keyed by widget.id so z-index or geometry updates do not remount business widgets. */}
         <For each={widgetIds()}>
@@ -304,23 +329,26 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
           )}
         </For>
       </div>
-      <WorkbenchLayerControlOverlayView
-        annotations={props.annotations ?? []}
-        backgroundLayers={props.backgroundLayers ?? []}
-        selectedObject={props.selectedObject ?? null}
-        editable={(Boolean(props.annotationLayerEditable) || Boolean(props.backgroundLayerEditable)) && !props.locked}
-        viewport={props.viewport}
-        preview={layerGeometryPreview()}
-        onPreviewGeometry={setLayerGeometryPreview}
-        textEditorRegistry={textEditorRegistry}
-        onCommitAnnotationMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
-        onCommitAnnotationResize={(annotationId, size) => props.onCommitAnnotationResize?.(annotationId, size)}
-        onUpdateTextAnnotation={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
-        onDeleteAnnotation={(annotationId) => props.onDeleteAnnotation?.(annotationId)}
-        onCommitBackgroundResize={(layerId, size) => props.onCommitBackgroundResize?.(layerId, size)}
-        onUpdateBackgroundLayer={(layerId, patch) => props.onUpdateBackgroundLayer?.(layerId, patch)}
-        onDeleteBackgroundLayer={(layerId) => props.onDeleteBackgroundLayer?.(layerId)}
-      />
+      {renderFreeformLayers() ? (
+        <WorkbenchLayerControlOverlayView
+          annotations={props.annotations ?? []}
+          backgroundLayers={props.backgroundLayers ?? []}
+          selectedObject={props.selectedObject ?? null}
+          editable={(Boolean(props.annotationLayerEditable) || Boolean(props.backgroundLayerEditable)) && !props.locked}
+          showRegionOutlines={Boolean(props.showRegionOutlines)}
+          viewport={props.viewport}
+          preview={layerGeometryPreview()}
+          onPreviewGeometry={setLayerGeometryPreview}
+          textEditorRegistry={textEditorRegistry()}
+          onCommitAnnotationMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
+          onCommitAnnotationResize={(annotationId, size) => props.onCommitAnnotationResize?.(annotationId, size)}
+          onUpdateTextAnnotation={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
+          onDeleteAnnotation={(annotationId) => props.onDeleteAnnotation?.(annotationId)}
+          onCommitBackgroundResize={(layerId, size) => props.onCommitBackgroundResize?.(layerId, size)}
+          onUpdateBackgroundLayer={(layerId, patch) => props.onUpdateBackgroundLayer?.(layerId, patch)}
+          onDeleteBackgroundLayer={(layerId) => props.onDeleteBackgroundLayer?.(layerId)}
+        />
+      ) : null}
     </div>
   );
 }

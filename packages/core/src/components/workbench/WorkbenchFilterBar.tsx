@@ -81,8 +81,8 @@ const WORKBENCH_MODE_ITEMS: readonly {
   },
   {
     mode: 'background',
-    label: 'Background Mode',
-    description: 'Edit regions and canvas text',
+    label: 'Composition Mode',
+    description: 'Arrange regions and canvas text',
     icon: Layers,
   },
 ];
