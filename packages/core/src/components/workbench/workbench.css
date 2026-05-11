@@ -871,8 +871,8 @@
   .workbench-text-annotation__content {
     display: block;
     box-sizing: border-box;
-    width: 100%;
-    height: 100%;
+    width: calc(100% * var(--workbench-text-content-inverse-scale, 1));
+    height: calc(100% * var(--workbench-text-content-inverse-scale, 1));
     padding: 0;
     border: 0 !important;
     border-radius: 0;
@@ -893,6 +893,8 @@
     -webkit-user-select: text;
     user-select: text;
     caret-color: var(--workbench-text-color);
+    transform: scale(var(--workbench-text-content-scale, 1));
+    transform-origin: 0 0;
   }
 
   .floe-infinite-canvas .workbench-text-annotation__content,
@@ -901,8 +903,8 @@
   .workbench-text-annotation__content:active {
     display: block;
     box-sizing: border-box;
-    width: 100%;
-    height: 100%;
+    width: calc(100% * var(--workbench-text-content-inverse-scale, 1));
+    height: calc(100% * var(--workbench-text-content-inverse-scale, 1));
     padding: 0;
     border: 0 !important;
     border-radius: 0;
@@ -923,6 +925,8 @@
     -webkit-user-select: text;
     user-select: text;
     caret-color: var(--workbench-text-color);
+    transform: scale(var(--workbench-text-content-scale, 1));
+    transform-origin: 0 0;
   }
 
   .workbench-text-annotation__size-input {

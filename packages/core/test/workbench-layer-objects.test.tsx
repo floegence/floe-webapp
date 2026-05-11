@@ -297,6 +297,61 @@ describe('Workbench layer objects', () => {
     dispose();
   });
 
+  it('projects text annotations and selection chrome from the same screen rect while scaling content proportionally', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const text = createTextItem();
+
+    const dispose = render(() => (
+      <>
+        <WorkbenchAnnotationLayerView
+          items={[text]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          filtered={false}
+          projection="screen"
+          viewport={{ x: 12, y: 18, scale: 0.5 }}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onUpdate={vi.fn()}
+        />
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          projection="screen"
+          viewport={{ x: 12, y: 18, scale: 0.5 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      </>
+    ), host);
+
+    const annotation = host.querySelector('.workbench-text-annotation') as HTMLElement | null;
+    const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
+    const control = host.querySelector('.workbench-layer-control--text') as HTMLElement | null;
+    expect(annotation).toBeTruthy();
+    expect(content).toBeTruthy();
+    expect(control).toBeTruthy();
+    expect(annotation?.style.transform).toBe('translate(17px, 28px)');
+    expect(control?.style.transform).toBe('translate(17px, 28px)');
+    expect(annotation?.style.width).toBe('140px');
+    expect(annotation?.style.height).toBe('42px');
+    expect(control?.style.width).toBe('140px');
+    expect(control?.style.height).toBe('42px');
+    expect(annotation?.style.getPropertyValue('--workbench-text-size')).toBe('30px');
+    expect(annotation?.style.getPropertyValue('--workbench-text-content-scale')).toBe('0.5');
+    expect(annotation?.style.getPropertyValue('--workbench-text-content-inverse-scale')).toBe('2');
+
+    dispose();
+  });
+
   it('keeps emoji text input in the native plaintext editor state path', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

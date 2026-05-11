@@ -946,6 +946,9 @@ export function WorkbenchTextAnnotation(props: {
       projection: projection(),
     });
   });
+  const contentScale = createMemo(() =>
+    projection() === 'screen' ? Math.max(viewport().scale, 0.001) : 1
+  );
   const style = createMemo<JSX.CSSProperties>(() => ({
     ...createLayerTransformStyle(visualGeometry()),
     'z-index': `${item().z_index}`,
@@ -954,6 +957,8 @@ export function WorkbenchTextAnnotation(props: {
     '--workbench-text-weight': `${item().font_weight}`,
     '--workbench-text-align': item().align,
     '--workbench-text-family': item().font_family,
+    '--workbench-text-content-scale': `${contentScale()}`,
+    '--workbench-text-content-inverse-scale': `${1 / contentScale()}`,
   }));
   const handleTextFramePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (!editable() || event.button !== 0) return;
