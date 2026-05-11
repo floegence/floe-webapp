@@ -316,16 +316,24 @@
     top: 0;
     left: 0;
     box-sizing: border-box;
+  }
+
+  .workbench-text-annotation,
+  .workbench-sticky {
     will-change: transform;
   }
 
   .workbench-background-region {
     border-radius: 0;
-    background: var(--workbench-region-fill);
-    opacity: var(--workbench-region-opacity);
+    background-color: var(--workbench-region-surface, var(--workbench-region-fill));
+    opacity: 1;
     border: none;
     box-shadow: none;
     pointer-events: none;
+  }
+
+  .workbench-background-region.is-transforming {
+    will-change: transform;
   }
 
   .workbench-background-region.is-editable {
@@ -335,34 +343,31 @@
 
   .workbench-background-region.is-material-dotted {
     background-image:
-      radial-gradient(circle, color-mix(in srgb, var(--workbench-region-ink) 70%, transparent) 1.45px, transparent 1.65px),
-      linear-gradient(var(--workbench-region-fill), var(--workbench-region-fill));
-    background-position: 0 0, 0 0;
-    background-size: 11px 11px, auto;
+      radial-gradient(circle, var(--workbench-region-ink) 1.45px, transparent 1.65px);
+    background-position: 0 0;
+    background-size: 11px 11px;
   }
 
   .workbench-background-region.is-material-grid {
     background-image:
-      linear-gradient(color-mix(in srgb, var(--workbench-region-ink) 42%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in srgb, var(--workbench-region-ink) 42%, transparent) 1px, transparent 1px),
-      linear-gradient(var(--workbench-region-fill), var(--workbench-region-fill));
-    background-size: 28px 28px, 28px 28px, auto;
+      linear-gradient(var(--workbench-region-ink) 1px, transparent 1px),
+      linear-gradient(90deg, var(--workbench-region-ink) 1px, transparent 1px);
+    background-size: 28px 28px, 28px 28px;
   }
 
   .workbench-background-region.is-material-hatched {
     background-image:
       repeating-linear-gradient(
         135deg,
-        color-mix(in srgb, var(--workbench-region-ink) 48%, transparent) 0 1.2px,
+        var(--workbench-region-ink) 0 1.2px,
         transparent 1.2px 9px
-      ),
-      linear-gradient(var(--workbench-region-fill), var(--workbench-region-fill));
+      );
   }
 
   .workbench-background-region.is-material-glass {
     background:
-      linear-gradient(135deg, color-mix(in srgb, white 18%, transparent), transparent 58%),
-      color-mix(in srgb, var(--workbench-region-fill) 64%, transparent);
+      linear-gradient(135deg, var(--workbench-region-highlight), transparent 58%),
+      var(--workbench-region-surface, var(--workbench-region-fill));
   }
 
   .workbench-background-region__toolbar,

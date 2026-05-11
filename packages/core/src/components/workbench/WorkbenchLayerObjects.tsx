@@ -253,6 +253,25 @@ function clampTextFontSize(value: number): number {
   return Math.max(8, Math.min(160, Math.round(value)));
 }
 
+function clampRegionOpacity(value: number): number {
+  return Math.max(0.08, Math.min(1, value));
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(clampRegionOpacity(value) * 1000) / 10}%`;
+}
+
+function createRegionRenderVars(item: WorkbenchBackgroundLayer): JSX.CSSProperties {
+  const opacity = clampRegionOpacity(item.opacity);
+  const surface = `color-mix(in srgb, ${item.fill} ${Math.round(opacity * 100)}%, transparent)`;
+  return {
+    '--workbench-region-fill': item.fill,
+    '--workbench-region-surface': surface,
+    '--workbench-region-ink': `color-mix(in srgb, color-mix(in srgb, ${item.fill} 48%, var(--foreground, #111) 52%) ${formatPercent(Math.max(opacity, 0.42) * 0.72)}, transparent)`,
+    '--workbench-region-highlight': `color-mix(in srgb, white ${formatPercent(Math.max(opacity, 0.32) * 0.2)}, transparent)`,
+  };
+}
+
 function stopLayerControlPointer(event: PointerEvent): void {
   event.stopPropagation();
 }
@@ -887,9 +906,7 @@ export function WorkbenchBackgroundRegion(props: {
     height: `${visualGeometry().height}px`,
     transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
     'z-index': `${props.item.z_index}`,
-    '--workbench-region-fill': props.item.fill,
-    '--workbench-region-ink': `color-mix(in srgb, ${props.item.fill} 48%, var(--foreground, #111) 52%)`,
-    '--workbench-region-opacity': `${props.item.opacity}`,
+    ...createRegionRenderVars(props.item),
   }));
   const handleRegionPointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (!props.editable || event.button !== 0) return;
@@ -909,6 +926,7 @@ export function WorkbenchBackgroundRegion(props: {
       classList={{
         'is-selected': props.selected,
         'is-editable': props.editable,
+        'is-transforming': drag.isDragging(),
         [`is-material-${props.item.material}`]: true,
       }}
       data-floe-canvas-interactive={props.editable ? 'true' : undefined}
@@ -1326,8 +1344,7 @@ function WorkbenchBackgroundRegionControls(props: {
     transform: `translate(${visualGeometry().x}px, ${visualGeometry().y}px)`,
     'z-index': `${props.item.z_index}`,
     '--workbench-layer-control-inverse-scale': `${1 / Math.max(props.viewportScale, 0.001)}`,
-    '--workbench-region-fill': props.item.fill,
-    '--workbench-region-ink': `color-mix(in srgb, ${props.item.fill} 48%, var(--foreground, #111) 52%)`,
+    ...createRegionRenderVars(props.item),
   }));
 
   return (

@@ -459,6 +459,8 @@ describe('Workbench layer objects', () => {
     const region = host.querySelector('.workbench-background-region') as HTMLElement | null;
     expect(region).toBeTruthy();
     expect(region!.style.getPropertyValue('--workbench-region-ink')).toContain('#9da8a1');
+    expect(region!.style.getPropertyValue('--workbench-region-surface')).toContain('#9da8a1 72%');
+    expect(region!.style.getPropertyValue('--workbench-region-opacity')).toBe('');
     mockPointerCapture(region!);
 
     dispatchPointerEvent('pointerdown', region!, {
@@ -1039,12 +1041,18 @@ describe('Workbench layer objects', () => {
     expect(css).toContain('height: 10px;');
   });
 
-  it('keeps region dotted material visible and sticky notes visually brighter than regions', () => {
+  it('keeps region paint stable while dotted material remains visible', () => {
     const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
     const css = readFileSync(cssPath, 'utf8');
 
-    expect(css).toContain('radial-gradient(circle, color-mix(in srgb, var(--workbench-region-ink) 70%, transparent) 1.45px');
-    expect(css).toContain('background-size: 11px 11px, auto;');
+    expect(css).toContain('background-color: var(--workbench-region-surface, var(--workbench-region-fill));');
+    expect(css).toContain('opacity: 1;');
+    expect(css).toContain('radial-gradient(circle, var(--workbench-region-ink) 1.45px');
+    expect(css).toContain('background-size: 11px 11px;');
+    expect(css).toContain('.workbench-background-region.is-transforming {');
+    expect(css).toContain('will-change: transform;');
+    expect(css).not.toContain('opacity: var(--workbench-region-opacity);');
+    expect(css).not.toContain('background-size: 11px 11px, auto;');
     expect(css).toContain('--workbench-sticky-surface: #fff2bd;');
     expect(css).toContain('--workbench-sticky-accent: #8fae72;');
     expect(css).toContain('--workbench-sticky-ink: #302616;');
