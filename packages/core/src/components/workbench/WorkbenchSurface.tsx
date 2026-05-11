@@ -21,6 +21,7 @@ import type {
   WorkbenchState,
   WorkbenchAnnotationItem,
   WorkbenchBackgroundLayer,
+  WorkbenchBackgroundLayerDefaults,
   WorkbenchBackgroundLayerPatch,
   WorkbenchContextMenuState,
   WorkbenchDockToolId,
@@ -106,6 +107,7 @@ export interface WorkbenchSurfaceProps {
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
   launcherWidgetTypes?: readonly WorkbenchWidgetType[];
   textAnnotationDefaults?: WorkbenchTextAnnotationDefaults;
+  backgroundLayerDefaults?: WorkbenchBackgroundLayerDefaults;
   interactionAdapter?: WorkbenchInteractionAdapter;
   resolveContextMenuItems?: WorkbenchContextMenuItemsResolver;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
@@ -132,6 +134,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     setState: (updater) => props.setState(updater),
     widgetDefinitions: () => props.widgetDefinitions,
     textAnnotationDefaults: () => props.textAnnotationDefaults,
+    backgroundLayerDefaults: () => props.backgroundLayerDefaults,
     onClose: () => {
       // Page mode has no "close" — surface is a permanent display, not a modal.
     },

@@ -5,6 +5,7 @@ import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  WORKBENCH_REGION_FILL_OPTIONS,
   WorkbenchSurface,
   createDefaultWorkbenchState,
   type WorkbenchSurfaceApi,
@@ -241,5 +242,51 @@ describe('WorkbenchSurface api', () => {
     expect(surfaceApi!.findBackgroundLayerById(region!.id)).toBeNull();
     expect(readState().stickyNotes?.some((item) => item.id === sticky!.id)).toBe(false);
     expect(readState().backgroundLayers?.some((item) => item.id === region!.id)).toBe(false);
+  });
+
+  it('applies host background layer defaults when creating regions', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+
+    render(() => {
+      const [state, setState] = createSignal(createDefaultWorkbenchState(widgetDefinitions));
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={widgetDefinitions}
+          backgroundLayerDefaults={{
+            fill: WORKBENCH_REGION_FILL_OPTIONS[1],
+            opacity: 0.42,
+            material: 'solid',
+            name: 'Planning area',
+            width: 620,
+            height: 420,
+          }}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await Promise.resolve();
+
+    const region = surfaceApi!.createBackgroundLayer({ worldX: 640, worldY: 360 });
+    await Promise.resolve();
+
+    expect(region).toMatchObject({
+      name: 'Planning area',
+      fill: WORKBENCH_REGION_FILL_OPTIONS[1],
+      opacity: 0.42,
+      material: 'solid',
+      x: 330,
+      y: 150,
+      width: 620,
+      height: 420,
+    });
   });
 });

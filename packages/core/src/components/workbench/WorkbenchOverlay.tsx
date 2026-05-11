@@ -12,6 +12,7 @@ type WorkbenchOverlaySurfaceProps = Pick<
   | 'widgetDefinitions'
   | 'launcherWidgetTypes'
   | 'textAnnotationDefaults'
+  | 'backgroundLayerDefaults'
   | 'interactionAdapter'
   | 'resolveContextMenuItems'
   | 'onApiReady'
@@ -114,6 +115,7 @@ export function WorkbenchOverlay(props: WorkbenchOverlayProps) {
               widgetDefinitions={props.widgetDefinitions}
               launcherWidgetTypes={props.launcherWidgetTypes}
               textAnnotationDefaults={props.textAnnotationDefaults}
+              backgroundLayerDefaults={props.backgroundLayerDefaults}
               interactionAdapter={props.interactionAdapter}
               resolveContextMenuItems={props.resolveContextMenuItems}
               onApiReady={props.onApiReady}

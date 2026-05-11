@@ -8,6 +8,7 @@ import {
   type WorkbenchSelection,
   type WorkbenchState,
   type WorkbenchAnnotationItem,
+  type WorkbenchBackgroundLayerDefaults,
   type WorkbenchBackgroundLayerPatch,
   type WorkbenchStickyNoteItem,
   type WorkbenchStickyNotePatch,
@@ -31,6 +32,7 @@ import {
   WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
   WORKBENCH_DEFAULT_TEXT_COLOR,
   WORKBENCH_DEFAULT_TEXT_FONT,
+  WORKBENCH_REGION_FILL_OPTIONS,
   WORKBENCH_STICKY_NOTE_COLORS,
 } from './workbenchOptions';
 import type { WorkbenchThemeId } from './workbenchThemes';
@@ -78,6 +80,7 @@ export interface UseWorkbenchModelOptions {
     | readonly WorkbenchWidgetDefinition[]
     | (() => readonly WorkbenchWidgetDefinition[] | undefined);
   textAnnotationDefaults?: WorkbenchTextAnnotationDefaults | (() => WorkbenchTextAnnotationDefaults | undefined);
+  backgroundLayerDefaults?: WorkbenchBackgroundLayerDefaults | (() => WorkbenchBackgroundLayerDefaults | undefined);
 }
 
 type WorkbenchWorkItem = WorkbenchWidgetItem | WorkbenchStickyNoteItem;
@@ -89,6 +92,16 @@ function nextValue<T>(values: readonly T[], current: T): T {
 
 function positiveFinite(value: number | undefined, fallback: number): number {
   return Number.isFinite(value) && value! > 0 ? value! : fallback;
+}
+
+function stringOption<T extends string>(values: readonly T[], value: unknown, fallback: T): T {
+  const normalized = String(value ?? '').trim();
+  return values.includes(normalized as T) ? normalized as T : fallback;
+}
+
+function opacityValue(value: unknown, fallback: number): number {
+  const next = Number(value);
+  return Number.isFinite(next) ? Math.max(0.08, Math.min(1, next)) : fallback;
 }
 
 function nextStickyNoteColor(current: WorkbenchStickyNoteColor): WorkbenchStickyNoteColor {
@@ -194,18 +207,26 @@ function duplicateTextAnnotation(item: WorkbenchTextAnnotationItem): WorkbenchTe
   };
 }
 
-function createBackgroundLayerAt(worldX: number, worldY: number, zIndex: number): WorkbenchBackgroundLayer {
+function createBackgroundLayerAt(
+  worldX: number,
+  worldY: number,
+  zIndex: number,
+  defaults: WorkbenchBackgroundLayerDefaults | undefined,
+): WorkbenchBackgroundLayer {
   const now = Date.now();
+  const width = positiveFinite(defaults?.width, 560);
+  const height = positiveFinite(defaults?.height, 360);
+  const name = String(defaults?.name ?? '').trim() || 'Focus area';
   return {
     id: createWorkbenchId(),
-    name: 'Focus area',
-    fill: WORKBENCH_DEFAULT_REGION_FILL,
-    opacity: 0.72,
-    material: WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
-    x: worldX - 280,
-    y: worldY - 180,
-    width: 560,
-    height: 360,
+    name,
+    fill: stringOption(WORKBENCH_REGION_FILL_OPTIONS, defaults?.fill, WORKBENCH_DEFAULT_REGION_FILL),
+    opacity: opacityValue(defaults?.opacity, 0.72),
+    material: stringOption(WORKBENCH_BACKGROUND_MATERIALS, defaults?.material, WORKBENCH_DEFAULT_BACKGROUND_MATERIAL),
+    x: worldX - width / 2,
+    y: worldY - height / 2,
+    width,
+    height,
     z_index: zIndex,
     created_at_unix_ms: now,
     updated_at_unix_ms: now,
@@ -259,6 +280,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     typeof options.textAnnotationDefaults === 'function'
       ? options.textAnnotationDefaults()
       : options.textAnnotationDefaults;
+  const readBackgroundLayerDefaults = () =>
+    typeof options.backgroundLayerDefaults === 'function'
+      ? options.backgroundLayerDefaults()
+      : options.backgroundLayerDefaults;
   const widgetDefinitions = createMemo(() =>
     resolveWorkbenchWidgetDefinitions(readWidgetDefinitions())
   );
@@ -759,7 +784,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const addBackgroundLayerAtCursor = (worldX: number, worldY: number) => {
-    const layer = createBackgroundLayerAt(worldX, worldY, getTopLayerIndex(backgroundLayers()) + 1);
+    const layer = createBackgroundLayerAt(
+      worldX,
+      worldY,
+      getTopLayerIndex(backgroundLayers()) + 1,
+      readBackgroundLayerDefaults(),
+    );
     options.setState((prev) => ({
       ...prev,
       backgroundLayers: [...(prev.backgroundLayers ?? []), layer],

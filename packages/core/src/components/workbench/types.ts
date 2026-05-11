@@ -274,6 +274,11 @@ export type WorkbenchBackgroundLayerPatch = Partial<Pick<
   'fill' | 'opacity' | 'material' | 'name'
 >>;
 
+export type WorkbenchBackgroundLayerDefaults = Partial<Pick<
+  WorkbenchBackgroundLayer,
+  'fill' | 'opacity' | 'material' | 'name' | 'width' | 'height'
+>>;
+
 export interface WorkbenchViewport {
   x: number;
   y: number;

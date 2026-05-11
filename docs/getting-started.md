@@ -401,6 +401,7 @@ Use the shared `workbench` exports when the host app needs custom widgets but sh
 
 ```tsx
 import type {
+  WorkbenchBackgroundLayerDefaults,
   WorkbenchSurfaceApi,
   WorkbenchTextAnnotationDefaults,
   WorkbenchWidgetDefinition,
@@ -425,6 +426,11 @@ const textAnnotationDefaults: WorkbenchTextAnnotationDefaults = {
   font_weight: 800,
   width: 460,
 };
+const backgroundLayerDefaults: WorkbenchBackgroundLayerDefaults = {
+  fill: '#a79d8e',
+  opacity: 0.42,
+  material: 'solid',
+};
 
 <WorkbenchSurface
   state={state}
@@ -432,6 +438,7 @@ const textAnnotationDefaults: WorkbenchTextAnnotationDefaults = {
   widgetDefinitions={widgetDefinitions}
   launcherWidgetTypes={['ops.logs']}
   textAnnotationDefaults={textAnnotationDefaults}
+  backgroundLayerDefaults={backgroundLayerDefaults}
   interactionAdapter={appWorkbenchInteractionAdapter}
   onApiReady={(api) => {
     workbenchApi = api;
