@@ -1,14 +1,35 @@
 import { createMemo, createSignal, onCleanup } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
-import { ArrowUp, Copy, Trash } from '../../icons';
+import { ArrowUp, Copy, FileText, Highlighter, MessageSquare, Trash } from '../../icons';
 import {
   type WorkbenchWidgetDefinition,
   type WorkbenchContextMenuState,
+  type WorkbenchContextMenuTarget,
+  type WorkbenchSelection,
   type WorkbenchState,
+  type WorkbenchAnnotationItem,
+  type WorkbenchStickyNoteItem,
   type WorkbenchViewport,
   type WorkbenchWidgetItem,
   type WorkbenchWidgetType,
+  type WorkbenchBackgroundMaterial,
+  type WorkbenchBackgroundLayer,
+  type WorkbenchDockToolId,
+  type WorkbenchInteractionMode,
+  type WorkbenchStickyNoteColor,
+  type WorkbenchTextAnnotationItem,
+  type WorkbenchTextAnnotationPatch,
+  WORKBENCH_STICKY_FILTER_ID,
 } from './types';
+import {
+  WORKBENCH_BACKGROUND_MATERIALS,
+  WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+  WORKBENCH_DEFAULT_REGION_FILL,
+  WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
+  WORKBENCH_DEFAULT_TEXT_COLOR,
+  WORKBENCH_DEFAULT_TEXT_FONT,
+  WORKBENCH_STICKY_NOTE_COLORS,
+} from './workbenchOptions';
 import type { WorkbenchThemeId } from './workbenchThemes';
 import {
   clampScale,
@@ -18,13 +39,12 @@ import {
   createWorkbenchViewportFitForWidget,
   estimateContextMenuHeight,
   findNearestWidget,
-  getTopZIndex,
+  sanitizeFilters,
   WORKBENCH_CANVAS_ZOOM_STEP,
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
   WORKBENCH_MIN_SCALE,
 } from './workbenchHelpers';
 import {
-  createWorkbenchFilterState,
   getWidgetEntry,
   resolveWorkbenchWidgetDefinitions,
 } from './widgets/widgetRegistry';
@@ -52,6 +72,141 @@ export interface UseWorkbenchModelOptions {
     | (() => readonly WorkbenchWidgetDefinition[] | undefined);
 }
 
+type WorkbenchWorkItem = WorkbenchWidgetItem | WorkbenchStickyNoteItem;
+
+function nextValue<T>(values: readonly T[], current: T): T {
+  const index = values.findIndex((value) => value === current);
+  return values[(index + 1) % values.length] ?? values[0]!;
+}
+
+function nextStickyNoteColor(current: WorkbenchStickyNoteColor): WorkbenchStickyNoteColor {
+  return nextValue<WorkbenchStickyNoteColor>(WORKBENCH_STICKY_NOTE_COLORS, current);
+}
+
+function nextBackgroundMaterial(current: WorkbenchBackgroundMaterial): WorkbenchBackgroundMaterial {
+  return nextValue(WORKBENCH_BACKGROUND_MATERIALS, current);
+}
+
+function isWidgetWorkItem(item: WorkbenchWorkItem): item is WorkbenchWidgetItem {
+  return !('kind' in item);
+}
+
+function compareLayeredItemOrder(
+  left: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
+  right: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
+): number {
+  if (left.z_index !== right.z_index) return left.z_index - right.z_index;
+  if (left.created_at_unix_ms !== right.created_at_unix_ms) {
+    return left.created_at_unix_ms - right.created_at_unix_ms;
+  }
+  return left.id.localeCompare(right.id);
+}
+
+function getTopLayerIndex(items: readonly { z_index: number }[]): number {
+  return items.reduce((max, item) => Math.max(max, item.z_index), 1);
+}
+
+function getTopWorkZIndex(widgets: readonly WorkbenchWidgetItem[], stickyNotes: readonly WorkbenchStickyNoteItem[]): number {
+  return getTopLayerIndex([...widgets, ...stickyNotes]);
+}
+
+function stickyNoteAsNavigationWidget(item: WorkbenchStickyNoteItem): WorkbenchWidgetItem {
+  return {
+    id: item.id,
+    type: 'sticky_note',
+    title: 'Sticky note',
+    x: item.x,
+    y: item.y,
+    width: item.width,
+    height: item.height,
+    z_index: item.z_index,
+    created_at_unix_ms: item.created_at_unix_ms,
+  };
+}
+
+function createStickyNoteAt(worldX: number, worldY: number, zIndex: number): WorkbenchStickyNoteItem {
+  const now = Date.now();
+  return {
+    id: createWorkbenchId(),
+    kind: 'sticky_note',
+    body: 'Capture the thought, decision, or next step here.',
+    color: WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
+    x: worldX - 130,
+    y: worldY - 92,
+    width: 260,
+    height: 184,
+    z_index: zIndex,
+    created_at_unix_ms: now,
+    updated_at_unix_ms: now,
+  };
+}
+
+function createTextAnnotationAt(worldX: number, worldY: number, zIndex: number): WorkbenchTextAnnotationItem {
+  const now = Date.now();
+  return {
+    id: createWorkbenchId(),
+    kind: 'text',
+    text: 'Label this area',
+    font_family: WORKBENCH_DEFAULT_TEXT_FONT.fontFamily,
+    font_size: 30,
+    font_weight: WORKBENCH_DEFAULT_TEXT_FONT.fontWeight,
+    color: WORKBENCH_DEFAULT_TEXT_COLOR,
+    align: 'left',
+    x: worldX - 140,
+    y: worldY - 42,
+    width: 280,
+    height: 84,
+    z_index: zIndex,
+    created_at_unix_ms: now,
+    updated_at_unix_ms: now,
+  };
+}
+
+function duplicateTextAnnotation(item: WorkbenchTextAnnotationItem): WorkbenchTextAnnotationItem {
+  const now = Date.now();
+  return {
+    ...item,
+    id: createWorkbenchId(),
+    x: item.x + 28,
+    y: item.y + 28,
+    z_index: item.z_index + 1,
+    created_at_unix_ms: now,
+    updated_at_unix_ms: now,
+  };
+}
+
+function createBackgroundLayerAt(worldX: number, worldY: number, zIndex: number): WorkbenchBackgroundLayer {
+  const now = Date.now();
+  return {
+    id: createWorkbenchId(),
+    name: 'Focus area',
+    fill: WORKBENCH_DEFAULT_REGION_FILL,
+    opacity: 0.72,
+    material: WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+    x: worldX - 280,
+    y: worldY - 180,
+    width: 560,
+    height: 360,
+    z_index: zIndex,
+    created_at_unix_ms: now,
+    updated_at_unix_ms: now,
+  };
+}
+
+function duplicateBackgroundLayer(item: WorkbenchBackgroundLayer): WorkbenchBackgroundLayer {
+  const now = Date.now();
+  return {
+    ...item,
+    id: createWorkbenchId(),
+    name: item.name,
+    x: item.x + 36,
+    y: item.y + 36,
+    z_index: item.z_index + 1,
+    created_at_unix_ms: now,
+    updated_at_unix_ms: now,
+  };
+}
+
 export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const [contextMenu, setContextMenu] = createSignal<WorkbenchContextMenuState | null>(null);
   const [optimisticFrontWidgetId, setOptimisticFrontWidgetId] = createSignal<string | null>(null);
@@ -61,12 +216,20 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const state = options.state;
   const widgets = createMemo(() => state().widgets);
+  const stickyNotes = createMemo(() => state().stickyNotes ?? []);
+  const annotations = createMemo(() => state().annotations ?? []);
+  const backgroundLayers = createMemo(() => state().backgroundLayers ?? []);
   const viewport = createMemo(() => state().viewport);
   const locked = createMemo(() => state().locked);
   const filters = createMemo(() => state().filters);
   const selectedWidgetId = createMemo(() => state().selectedWidgetId);
+  const selectedObject = createMemo<WorkbenchSelection | null>(() => state().selectedObject ?? (
+    state().selectedWidgetId ? { kind: 'widget', id: state().selectedWidgetId! } : null
+  ));
+  const mode = createMemo(() => state().mode ?? 'work');
+  const activeTool = createMemo(() => state().activeTool ?? 'select');
   const theme = createMemo(() => state().theme);
-  const topZIndex = createMemo(() => getTopZIndex(widgets()));
+  const topZIndex = createMemo(() => getTopWorkZIndex(widgets(), stickyNotes()));
   const scaleLabel = createMemo(() => `${Math.round(viewport().scale * 100)}%`);
   const readWidgetDefinitions = () =>
     typeof options.widgetDefinitions === 'function'
@@ -138,6 +301,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       clientY: event.clientY,
       worldX: event.worldX,
       worldY: event.worldY,
+      target: { kind: 'canvas', mode: mode() },
     });
   };
 
@@ -148,13 +312,58 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       clientY: event.clientY,
       worldX: item.x,
       worldY: item.y,
+      target: { kind: 'widget', id: item.id },
       widgetId: item.id,
+    });
+  };
+
+  const openStickyNoteContextMenu = (event: MouseEvent, item: WorkbenchStickyNoteItem) => {
+    commitStickyFront(item.id);
+    setContextMenu({
+      clientX: event.clientX,
+      clientY: event.clientY,
+      worldX: item.x,
+      worldY: item.y,
+      target: { kind: 'sticky_note', id: item.id },
+      widgetId: item.id,
+    });
+  };
+
+  const openAnnotationContextMenu = (event: MouseEvent, item: WorkbenchAnnotationItem) => {
+    setContextMenu({
+      clientX: event.clientX,
+      clientY: event.clientY,
+      worldX: item.x,
+      worldY: item.y,
+      target: { kind: 'annotation', id: item.id },
+    });
+  };
+
+  const openBackgroundLayerContextMenu = (event: MouseEvent, item: WorkbenchBackgroundLayer) => {
+    setContextMenu({
+      clientX: event.clientX,
+      clientY: event.clientY,
+      worldX: item.x,
+      worldY: item.y,
+      target: { kind: 'background_layer', id: item.id },
     });
   };
 
   const closeContextMenu = () => setContextMenu(null);
   const findWidgetById = (widgetId: string) => state().widgets.find((widget) => widget.id === widgetId) ?? null;
   const findWidgetByType = (type: WorkbenchWidgetType) => state().widgets.find((widget) => widget.type === type) ?? null;
+  const findStickyNoteById = (noteId: string) => state().stickyNotes?.find((item) => item.id === noteId) ?? null;
+  const findAnnotationById = (annotationId: string) => state().annotations?.find((item) => item.id === annotationId) ?? null;
+  const findBackgroundLayerById = (layerId: string) => state().backgroundLayers?.find((item) => item.id === layerId) ?? null;
+  const resolveContextMenuTarget = (menu: WorkbenchContextMenuState): WorkbenchContextMenuTarget => {
+    if (menu.target) return menu.target;
+    if (menu.widgetId) {
+      return findStickyNoteById(menu.widgetId)
+        ? { kind: 'sticky_note', id: menu.widgetId }
+        : { kind: 'widget', id: menu.widgetId };
+    }
+    return { kind: 'canvas', mode: mode() };
+  };
 
   const buildCanvasContextMenuAction = (
     entry: WorkbenchWidgetDefinition,
@@ -195,8 +404,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     const menu = contextMenu();
     if (!menu) return [];
 
-    if (menu.widgetId) {
-      const widget = widgets().find((w) => w.id === menu.widgetId);
+    const target = resolveContextMenuTarget(menu);
+
+    if (target.kind === 'widget') {
+      const widget = widgets().find((w) => w.id === target.id);
       const items: WorkbenchContextMenuItem[] = [];
 
       if (widget) {
@@ -230,9 +441,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
         icon: Trash,
         destructive: true,
         onSelect: () => {
-          if (menu.widgetId) {
-            deleteWidget(menu.widgetId);
-          }
+          deleteWidget(target.id);
           closeContextMenu();
         },
       });
@@ -240,8 +449,175 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       return items;
     }
 
-    // Canvas context menu: add or route widget items according to singleton state.
-    return widgetDefinitions().map((entry) => buildCanvasContextMenuAction(entry, menu));
+    if (target.kind === 'sticky_note') {
+      const note = findStickyNoteById(target.id);
+      const items: WorkbenchContextMenuItem[] = [];
+
+      if (note) {
+        items.push({
+          id: 'bring-to-front',
+          kind: 'action',
+          label: 'Bring to Front',
+          icon: ArrowUp,
+          onSelect: () => {
+            commitStickyFront(note.id);
+            closeContextMenu();
+          },
+        });
+        items.push({
+          id: 'copy-content',
+          kind: 'action',
+          label: 'Copy Content',
+          icon: Copy,
+          onSelect: () => {
+            if (typeof navigator !== 'undefined') {
+              void navigator.clipboard?.writeText(note.body);
+            }
+            closeContextMenu();
+          },
+        });
+        items.push({
+          id: 'change-color',
+          kind: 'action',
+          label: 'Change Color',
+          icon: MessageSquare,
+          onSelect: () => {
+            updateStickyNote(note.id, { color: nextStickyNoteColor(note.color) });
+            closeContextMenu();
+          },
+        });
+      }
+
+      items.push({ id: 'separator-delete', kind: 'separator' });
+      items.push({
+        id: 'delete',
+        kind: 'action',
+        label: 'Delete',
+        icon: Trash,
+        destructive: true,
+        onSelect: () => {
+          deleteStickyNote(target.id);
+          closeContextMenu();
+        },
+      });
+
+      return items;
+    }
+
+    if (target.kind === 'annotation') {
+      const annotation = findAnnotationById(target.id);
+      const items: WorkbenchContextMenuItem[] = [];
+
+      if (annotation?.kind === 'text') {
+        items.push({
+          id: 'duplicate',
+          kind: 'action',
+          label: 'Duplicate Text',
+          icon: Copy,
+          onSelect: () => {
+            duplicateTextAnnotationFrom(annotation);
+            closeContextMenu();
+          },
+        });
+      }
+
+      items.push({ id: 'separator-delete', kind: 'separator' });
+      items.push({
+        id: 'delete',
+        kind: 'action',
+        label: 'Delete Text',
+        icon: Trash,
+        destructive: true,
+        onSelect: () => {
+          deleteAnnotation(target.id);
+          closeContextMenu();
+        },
+      });
+
+      return items;
+    }
+
+    if (target.kind === 'background_layer') {
+      const layer = findBackgroundLayerById(target.id);
+      const items: WorkbenchContextMenuItem[] = [];
+
+      if (layer) {
+        items.push({
+          id: 'duplicate',
+          kind: 'action',
+          label: 'Duplicate Region',
+          icon: Copy,
+          onSelect: () => {
+            duplicateBackgroundLayerFrom(layer);
+            closeContextMenu();
+          },
+        });
+        items.push({
+          id: 'change-material',
+          kind: 'action',
+          label: 'Change Material',
+          icon: Highlighter,
+          onSelect: () => {
+            updateBackgroundLayer(layer.id, { material: nextBackgroundMaterial(layer.material) });
+            closeContextMenu();
+          },
+        });
+      }
+
+      items.push({ id: 'separator-delete', kind: 'separator' });
+      items.push({
+        id: 'delete',
+        kind: 'action',
+        label: 'Delete Region',
+        icon: Trash,
+        destructive: true,
+        onSelect: () => {
+          deleteBackgroundLayer(target.id);
+          closeContextMenu();
+        },
+      });
+
+      return items;
+    }
+
+    if (target.mode === 'background') {
+      return [
+        {
+          id: 'create-background-region',
+          kind: 'action',
+          label: 'Add Region',
+          icon: Highlighter,
+          onSelect: () => {
+            addBackgroundLayerAtCursor(menu.worldX, menu.worldY);
+            closeContextMenu();
+          },
+        },
+        {
+          id: 'create-text',
+          kind: 'action',
+          label: 'Add Text',
+          icon: FileText,
+          onSelect: () => {
+            addTextAnnotationAtCursor(menu.worldX, menu.worldY);
+            closeContextMenu();
+          },
+        },
+      ];
+    }
+
+    return [
+      {
+        id: 'create-sticky-note',
+        kind: 'action',
+        label: 'Add Sticky',
+        icon: MessageSquare,
+        onSelect: () => {
+          addStickyNoteAtCursor(menu.worldX, menu.worldY);
+          closeContextMenu();
+        },
+      },
+      ...widgetDefinitions().map((entry) => buildCanvasContextMenuAction(entry, menu)),
+    ];
   });
 
   const contextMenuPosition = createMemo(() => {
@@ -285,6 +661,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       ...prev,
       widgets: [...prev.widgets, newWidget],
       selectedWidgetId: newWidget.id,
+      selectedObject: { kind: 'widget', id: newWidget.id },
+      mode: 'work',
+      activeTool: 'select',
     }));
 
     return newWidget;
@@ -304,7 +683,76 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       ...prev,
       widgets: prev.widgets.filter((w) => w.id !== widgetId),
       selectedWidgetId: prev.selectedWidgetId === widgetId ? null : prev.selectedWidgetId,
+      selectedObject:
+        prev.selectedObject?.kind === 'widget' && prev.selectedObject.id === widgetId
+          ? null
+          : prev.selectedObject ?? null,
     }));
+  };
+
+  const addStickyNoteAtCursor = (worldX: number, worldY: number) => {
+    const stickyNote = createStickyNoteAt(worldX, worldY, topZIndex() + 1);
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: [...(prev.stickyNotes ?? []), stickyNote],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'sticky_note', id: stickyNote.id },
+      mode: 'work',
+      activeTool: 'select',
+    }));
+    return stickyNote;
+  };
+
+  const addTextAnnotationAtCursor = (worldX: number, worldY: number) => {
+    const annotation = createTextAnnotationAt(worldX, worldY, getTopLayerIndex(annotations()) + 1);
+    options.setState((prev) => ({
+      ...prev,
+      annotations: [...(prev.annotations ?? []), annotation],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'annotation', id: annotation.id },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+    return annotation;
+  };
+
+  const duplicateTextAnnotationFrom = (item: WorkbenchTextAnnotationItem) => {
+    const annotation = duplicateTextAnnotation(item);
+    options.setState((prev) => ({
+      ...prev,
+      annotations: [...(prev.annotations ?? []), annotation],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'annotation', id: annotation.id },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+    return annotation;
+  };
+
+  const addBackgroundLayerAtCursor = (worldX: number, worldY: number) => {
+    const layer = createBackgroundLayerAt(worldX, worldY, getTopLayerIndex(backgroundLayers()) + 1);
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: [...(prev.backgroundLayers ?? []), layer],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'background_layer', id: layer.id },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+    return layer;
+  };
+
+  const duplicateBackgroundLayerFrom = (item: WorkbenchBackgroundLayer) => {
+    const layer = duplicateBackgroundLayer(item);
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: [...(prev.backgroundLayers ?? []), layer],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'background_layer', id: layer.id },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+    return layer;
   };
 
   // --- Front / Move ---
@@ -326,6 +774,19 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }
   };
 
+  const commitStickyFront = (noteId: string) => {
+    setOptimisticFrontWidgetId(noteId);
+    const top = topZIndex();
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+        item.id === noteId && item.z_index < top
+          ? { ...item, z_index: top + 1, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
   const commitMove = (widgetId: string, position: { x: number; y: number }) => {
     options.setState((prev) => ({
       ...prev,
@@ -341,6 +802,168 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       widgets: prev.widgets.map((w) =>
         w.id === widgetId ? { ...w, width: size.width, height: size.height } : w
       ),
+    }));
+  };
+
+  const commitStickyMove = (noteId: string, position: { x: number; y: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+        item.id === noteId
+          ? { ...item, x: position.x, y: position.y, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const commitStickyResize = (noteId: string, size: { width: number; height: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+        item.id === noteId
+          ? { ...item, width: size.width, height: size.height, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const updateStickyNote = (
+    noteId: string,
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>,
+  ) => {
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+        item.id === noteId
+          ? {
+            ...item,
+            ...(typeof patch.body === 'string' ? { body: patch.body } : {}),
+            ...(patch.color ? { color: patch.color } : {}),
+            updated_at_unix_ms: Date.now(),
+          }
+          : item
+      ),
+    }));
+  };
+
+  const deleteStickyNote = (noteId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: (prev.stickyNotes ?? []).filter((item) => item.id !== noteId),
+      selectedObject:
+        prev.selectedObject?.kind === 'sticky_note' && prev.selectedObject.id === noteId
+          ? null
+          : prev.selectedObject ?? null,
+    }));
+  };
+
+  const commitAnnotationMove = (annotationId: string, position: { x: number; y: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      annotations: (prev.annotations ?? []).map((item) =>
+        item.id === annotationId
+          ? { ...item, x: position.x, y: position.y, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const commitAnnotationResize = (annotationId: string, size: { width: number; height: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      annotations: (prev.annotations ?? []).map((item) =>
+        item.id === annotationId
+          ? { ...item, width: size.width, height: size.height, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const updateTextAnnotation = (
+    annotationId: string,
+    patch: WorkbenchTextAnnotationPatch,
+  ) => {
+    options.setState((prev) => ({
+      ...prev,
+      annotations: (prev.annotations ?? []).map((item) =>
+        item.id === annotationId && item.kind === 'text'
+          ? {
+            ...item,
+            ...(typeof patch.text === 'string' ? { text: patch.text } : {}),
+            ...(typeof patch.font_family === 'string' ? { font_family: patch.font_family } : {}),
+            ...(typeof patch.font_size === 'number' ? { font_size: patch.font_size } : {}),
+            ...(typeof patch.font_weight === 'number' ? { font_weight: patch.font_weight } : {}),
+            ...(typeof patch.color === 'string' ? { color: patch.color } : {}),
+            ...(patch.align ? { align: patch.align } : {}),
+            updated_at_unix_ms: Date.now(),
+          }
+          : item
+      ),
+    }));
+  };
+
+  const deleteAnnotation = (annotationId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      annotations: (prev.annotations ?? []).filter((item) => item.id !== annotationId),
+      selectedObject:
+        prev.selectedObject?.kind === 'annotation' && prev.selectedObject.id === annotationId
+          ? null
+          : prev.selectedObject ?? null,
+    }));
+  };
+
+  const commitBackgroundMove = (layerId: string, position: { x: number; y: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: (prev.backgroundLayers ?? []).map((item) =>
+        item.id === layerId
+          ? { ...item, x: position.x, y: position.y, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const commitBackgroundResize = (layerId: string, size: { width: number; height: number }) => {
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: (prev.backgroundLayers ?? []).map((item) =>
+        item.id === layerId
+          ? { ...item, width: size.width, height: size.height, updated_at_unix_ms: Date.now() }
+          : item
+      ),
+    }));
+  };
+
+  const updateBackgroundLayer = (
+    layerId: string,
+    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>,
+  ) => {
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: (prev.backgroundLayers ?? []).map((item) =>
+        item.id === layerId
+          ? {
+            ...item,
+            ...(typeof patch.fill === 'string' ? { fill: patch.fill } : {}),
+            ...(typeof patch.opacity === 'number' ? { opacity: patch.opacity } : {}),
+            ...(typeof patch.material === 'string' ? { material: patch.material } : {}),
+            ...(typeof patch.name === 'string' ? { name: patch.name } : {}),
+            updated_at_unix_ms: Date.now(),
+          }
+          : item
+      ),
+    }));
+  };
+
+  const deleteBackgroundLayer = (layerId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      backgroundLayers: (prev.backgroundLayers ?? []).filter((item) => item.id !== layerId),
+      selectedObject:
+        prev.selectedObject?.kind === 'background_layer' && prev.selectedObject.id === layerId
+          ? null
+          : prev.selectedObject ?? null,
     }));
   };
 
@@ -375,7 +998,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   // --- Filters ---
-  const toggleFilter = (type: WorkbenchWidgetType) => {
+  const toggleFilter = (type: string) => {
     options.setState((prev) => ({
       ...prev,
       filters: { ...prev.filters, [type]: !prev.filters[type] },
@@ -383,37 +1006,135 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   /**
-   * Solo a single widget type: show only this type, hide all others.
-   * If the type is already soloed, clicking again is a no-op (the "All"
-   * pill is the escape hatch).
+   * Solo a single dock component inside the active mode scope. If the same
+   * component is already soloed, restore all components in that scope.
    */
-  const soloFilter = (type: WorkbenchWidgetType) => {
+  const soloFilter = (type: string, scope: readonly string[]) => {
     options.setState((prev) => {
-      const next: Record<WorkbenchWidgetType, boolean> = { ...prev.filters };
-      for (const key of Object.keys(next) as WorkbenchWidgetType[]) {
-        next[key] = key === type;
+      const next: Record<string, boolean> = { ...prev.filters };
+      const scopedKeys = [...new Set(scope.map((key) => String(key)).filter(Boolean))];
+      const alreadySoloed = scopedKeys.length > 1 && scopedKeys.every((key) =>
+        next[key] !== false === (key === type)
+      );
+      for (const key of scopedKeys) {
+        next[key] = alreadySoloed ? true : key === type;
       }
       return { ...prev, filters: next };
     });
   };
 
   const showAll = () => {
-    const nextFilters = createWorkbenchFilterState(widgetDefinitions());
     options.setState((prev) => ({
       ...prev,
-      filters: nextFilters,
+      filters: sanitizeFilters(undefined, widgetDefinitions()),
     }));
   };
 
   // --- Selection / Navigation ---
   const selectWidget = (widgetId: string) => {
-    options.setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
+    options.setState((prev) => ({
+      ...prev,
+      selectedWidgetId: widgetId,
+      selectedObject: { kind: 'widget', id: widgetId },
+      mode: prev.mode === 'background' ? 'work' : prev.mode,
+      activeTool: 'select',
+    }));
   };
 
   const clearSelection = () => {
     options.setState((prev) =>
-      prev.selectedWidgetId === null ? prev : { ...prev, selectedWidgetId: null }
+      prev.selectedWidgetId === null && !prev.selectedObject
+        ? prev
+        : { ...prev, selectedWidgetId: null, selectedObject: null }
     );
+  };
+
+  const selectObject = (selection: WorkbenchSelection | null) => {
+    options.setState((prev) => ({
+      ...prev,
+      selectedObject: selection,
+      selectedWidgetId: selection?.kind === 'widget' ? selection.id : null,
+      activeTool: 'select',
+    }));
+  };
+
+  const selectStickyNote = (noteId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      selectedWidgetId: null,
+      selectedObject: { kind: 'sticky_note', id: noteId },
+      mode: 'work',
+      activeTool: 'select',
+    }));
+    commitStickyFront(noteId);
+  };
+
+  const selectAnnotation = (annotationId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      selectedWidgetId: null,
+      selectedObject: { kind: 'annotation', id: annotationId },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+  };
+
+  const selectBackgroundLayer = (layerId: string) => {
+    options.setState((prev) => ({
+      ...prev,
+      selectedWidgetId: null,
+      selectedObject: { kind: 'background_layer', id: layerId },
+      mode: 'background',
+      activeTool: 'select',
+    }));
+  };
+
+  const setMode = (nextMode: WorkbenchInteractionMode) => {
+    const normalizedMode: WorkbenchInteractionMode = nextMode === 'annotation' ? 'background' : nextMode;
+    options.setState((prev) => ({
+      ...prev,
+      mode: normalizedMode,
+      activeTool: 'select',
+      selectedWidgetId:
+        normalizedMode === 'work'
+          ? prev.selectedObject?.kind === 'widget'
+            ? prev.selectedObject.id
+            : prev.selectedWidgetId
+          : null,
+      selectedObject:
+        normalizedMode === 'work'
+          ? prev.selectedObject?.kind === 'widget' || prev.selectedObject?.kind === 'sticky_note'
+            ? prev.selectedObject
+            : prev.selectedWidgetId
+              ? { kind: 'widget', id: prev.selectedWidgetId }
+              : null
+          : prev.selectedObject?.kind === 'background_layer' || prev.selectedObject?.kind === 'annotation'
+            ? prev.selectedObject
+            : null,
+    }));
+  };
+
+  const setActiveTool = (tool: WorkbenchDockToolId) => {
+    options.setState((prev) => ({
+      ...prev,
+      activeTool: tool,
+      mode:
+        tool === 'text'
+          ? 'background'
+          : tool === 'background-region'
+            ? 'background'
+            : tool === 'sticky-note'
+              ? 'work'
+              : prev.mode ?? 'work',
+    }));
+  };
+
+  const createActiveToolAt = (worldX: number, worldY: number) => {
+    const tool = activeTool();
+    if (tool === 'sticky-note') return addStickyNoteAtCursor(worldX, worldY);
+    if (tool === 'text') return addTextAnnotationAtCursor(worldX, worldY);
+    if (tool === 'background-region') return addBackgroundLayerAtCursor(worldX, worldY);
+    return null;
   };
 
   const viewportWorldCenter = () => {
@@ -542,20 +1263,38 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const handleArrowNavigation = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const current = selectedObject();
+    const workItems = [
+      ...widgets(),
+      ...stickyNotes().map((item) => stickyNoteAsNavigationWidget(item)),
+    ].sort(compareLayeredItemOrder);
     const target = findNearestWidget(
-      widgets(),
-      selectedWidgetId(),
+      workItems,
+      current?.kind === 'widget' || current?.kind === 'sticky_note' ? current.id : null,
       direction,
-      filters()
+      Object.fromEntries(
+        workItems.map((item) => [
+          isWidgetWorkItem(item) ? item.type : 'sticky_note',
+          isWidgetWorkItem(item) ? filters()[item.type] !== false : filters()[WORKBENCH_STICKY_FILTER_ID] !== false,
+        ])
+      )
     );
     if (target) {
-      focusWidget(target);
+      if (widgets().some((widget) => widget.id === target.id)) {
+        focusWidget(target);
+      } else {
+        selectStickyNote(target.id);
+      }
     }
   };
 
   const deleteSelected = () => {
-    const id = selectedWidgetId();
-    if (id) deleteWidget(id);
+    const selected = selectedObject();
+    if (!selected) return;
+    if (selected.kind === 'widget') deleteWidget(selected.id);
+    if (selected.kind === 'sticky_note') deleteStickyNote(selected.id);
+    if (selected.kind === 'annotation') deleteAnnotation(selected.id);
+    if (selected.kind === 'background_layer') deleteBackgroundLayer(selected.id);
   };
 
   // --- Close ---
@@ -575,11 +1314,17 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   return {
     widgets,
+    stickyNotes,
+    annotations,
+    backgroundLayers,
     viewport,
     canvasFrameSize,
     locked,
     filters,
     selectedWidgetId,
+    selectedObject,
+    mode,
+    activeTool,
     theme,
     topZIndex,
     scaleLabel,
@@ -607,12 +1352,26 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     canvas: {
       openCanvasContextMenu,
       openWidgetContextMenu,
+      openStickyNoteContextMenu,
+      openAnnotationContextMenu,
+      openBackgroundLayerContextMenu,
       selectWidget,
+      selectObject,
+      selectStickyNote,
+      selectAnnotation,
+      selectBackgroundLayer,
       clearSelection,
       startOptimisticFront,
       commitFront,
       commitMove,
       commitResize,
+      commitStickyFront,
+      commitStickyMove,
+      commitStickyResize,
+      commitAnnotationMove,
+      commitAnnotationResize,
+      commitBackgroundMove,
+      commitBackgroundResize,
       commitViewport,
       cancelViewportNavigation,
     },
@@ -647,19 +1406,39 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     widgetActions: {
       deleteSelected,
       deleteWidget,
+      deleteStickyNote,
+      deleteAnnotation,
+      deleteBackgroundLayer,
       addWidget,
       addWidgetAtCursor,
       addWidgetCentered,
+      addStickyNoteAtCursor,
+      addTextAnnotationAtCursor,
+      duplicateTextAnnotationFrom,
+      addBackgroundLayerAtCursor,
+      duplicateBackgroundLayerFrom,
+      createActiveToolAt,
       ensureWidget,
+      updateStickyNote,
+      updateTextAnnotation,
+      updateBackgroundLayer,
     },
 
     queries: {
       findWidgetByType,
       findWidgetById,
+      findStickyNoteById,
+      findAnnotationById,
+      findBackgroundLayerById,
     },
 
     appearance: {
       setTheme,
+    },
+
+    modes: {
+      setMode,
+      setActiveTool,
     },
 
     handleCloseRequest,

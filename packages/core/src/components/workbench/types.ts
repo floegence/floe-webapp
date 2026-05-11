@@ -160,6 +160,105 @@ export interface WorkbenchWidgetItem<TWidgetType extends string = WorkbenchWidge
   created_at_unix_ms: number;
 }
 
+export type WorkbenchInteractionMode = 'work' | 'annotation' | 'background';
+
+export const WORKBENCH_STICKY_FILTER_ID = 'sticky-note';
+export const WORKBENCH_TEXT_FILTER_ID = 'text';
+export const WORKBENCH_BACKGROUND_REGION_FILTER_ID = 'background-region';
+
+export const WORKBENCH_LAYER_COMPONENT_FILTER_IDS = [
+  WORKBENCH_STICKY_FILTER_ID,
+  WORKBENCH_TEXT_FILTER_ID,
+  WORKBENCH_BACKGROUND_REGION_FILTER_ID,
+] as const;
+
+export type WorkbenchLayerComponentFilterId =
+  typeof WORKBENCH_LAYER_COMPONENT_FILTER_IDS[number];
+
+export type WorkbenchDockToolId =
+  | 'select'
+  | 'text'
+  | 'sticky-note'
+  | 'background-region'
+  | (string & {});
+
+export type WorkbenchSelection =
+  | { kind: 'widget'; id: string }
+  | { kind: 'sticky_note'; id: string }
+  | { kind: 'annotation'; id: string }
+  | { kind: 'background_layer'; id: string };
+
+export type WorkbenchStickyNoteColor =
+  | 'graphite'
+  | 'sage'
+  | 'amber'
+  | 'azure'
+  | 'coral'
+  | 'rose';
+
+export interface WorkbenchStickyNoteItem {
+  id: string;
+  kind: 'sticky_note';
+  body: string;
+  color: WorkbenchStickyNoteColor;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z_index: number;
+  created_at_unix_ms: number;
+  updated_at_unix_ms: number;
+}
+
+export type WorkbenchTextAnnotationAlign = 'left' | 'center' | 'right';
+
+export interface WorkbenchTextAnnotationItem {
+  id: string;
+  kind: 'text';
+  text: string;
+  font_family: string;
+  font_size: number;
+  font_weight: number;
+  color: string;
+  align: WorkbenchTextAnnotationAlign;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z_index: number;
+  created_at_unix_ms: number;
+  updated_at_unix_ms: number;
+}
+
+export type WorkbenchTextAnnotationPatch = Partial<Pick<
+  WorkbenchTextAnnotationItem,
+  'text' | 'font_family' | 'font_size' | 'font_weight' | 'color' | 'align'
+>>;
+
+export type WorkbenchAnnotationItem = WorkbenchTextAnnotationItem;
+
+export type WorkbenchBackgroundMaterial =
+  | 'solid'
+  | 'dotted'
+  | 'grid'
+  | 'hatched'
+  | 'glass';
+
+export interface WorkbenchBackgroundLayer {
+  id: string;
+  name: string;
+  fill: string;
+  opacity: number;
+  material: WorkbenchBackgroundMaterial;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z_index: number;
+  created_at_unix_ms: number;
+  updated_at_unix_ms: number;
+}
+
 export interface WorkbenchViewport {
   x: number;
   y: number;
@@ -171,16 +270,30 @@ export interface WorkbenchState<TWidgetType extends string = WorkbenchWidgetType
   widgets: WorkbenchWidgetItem<TWidgetType>[];
   viewport: WorkbenchViewport;
   locked: boolean;
-  filters: Record<TWidgetType, boolean>;
+  filters: Record<string, boolean>;
   selectedWidgetId: string | null;
   theme: WorkbenchThemeId;
+  mode?: WorkbenchInteractionMode;
+  activeTool?: WorkbenchDockToolId;
+  selectedObject?: WorkbenchSelection | null;
+  stickyNotes?: WorkbenchStickyNoteItem[];
+  annotations?: WorkbenchAnnotationItem[];
+  backgroundLayers?: WorkbenchBackgroundLayer[];
 }
+
+export type WorkbenchContextMenuTarget =
+  | { kind: 'canvas'; mode: WorkbenchInteractionMode }
+  | { kind: 'widget'; id: string }
+  | { kind: 'sticky_note'; id: string }
+  | { kind: 'annotation'; id: string }
+  | { kind: 'background_layer'; id: string };
 
 export interface WorkbenchContextMenuState {
   clientX: number;
   clientY: number;
   worldX: number;
   worldY: number;
+  target?: WorkbenchContextMenuTarget;
   widgetId?: string | null;
 }
 

@@ -67,10 +67,10 @@ export function resolveWorkbenchWidgetDefinitions(
 
 export function createWorkbenchFilterState(
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[],
-  filters?: Partial<Record<WorkbenchWidgetType, boolean>>
-): Record<WorkbenchWidgetType, boolean> {
+  filters?: Partial<Record<string, boolean>>
+): Record<string, boolean> {
   const resolved = resolveWorkbenchWidgetDefinitions(widgetDefinitions);
-  const next = {} as Record<WorkbenchWidgetType, boolean>;
+  const next: Record<string, boolean> = {};
 
   for (const entry of resolved) {
     next[entry.type] = typeof filters?.[entry.type] === 'boolean' ? Boolean(filters[entry.type]) : true;

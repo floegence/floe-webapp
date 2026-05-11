@@ -21,7 +21,7 @@ const WorkbenchDemoContext = createContext<WorkbenchDemoContextValue>();
 
 export function WorkbenchDemoProvider(props: { children: JSX.Element }) {
   const [persistedState, setPersistedState] = usePersisted<WorkbenchState>(
-    'demo.workbench.state.v1',
+    'demo.workbench.layered-state.v1',
     sanitizeWorkbenchState(undefined)
   );
 

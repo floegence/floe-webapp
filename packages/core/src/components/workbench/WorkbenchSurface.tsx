@@ -3,7 +3,7 @@ import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
-import { WorkbenchFilterBar } from './WorkbenchFilterBar';
+import { WorkbenchDock } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
@@ -20,6 +20,7 @@ import {
 import type {
   WorkbenchState,
   WorkbenchContextMenuState,
+  WorkbenchDockToolId,
   WorkbenchInputOwner,
   WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
@@ -150,8 +151,14 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       return filteredItems;
     }
 
-    const widget = menu.widgetId
-      ? model.queries.findWidgetById(menu.widgetId)
+    const widgetTargetId =
+      menu.target?.kind === 'widget'
+        ? menu.target.id
+        : !menu.target && menu.widgetId
+          ? menu.widgetId
+          : null;
+    const widget = widgetTargetId
+      ? model.queries.findWidgetById(widgetTargetId)
       : null;
     return props.resolveContextMenuItems({
       menu,
@@ -185,6 +192,10 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     const widgetRoot = adapter.findWidgetRoot(target);
     const widgetId = adapter.readWidgetId(widgetRoot);
     if (widgetId) {
+      if (model.queries.findStickyNoteById(widgetId)) {
+        setInputOwner(adapter.createCanvasInputOwner(widgetReason === 'focus' ? 'background_focus' : 'background_pointer'));
+        return;
+      }
       setInputOwner(adapter.createWidgetInputOwner(widgetId, widgetReason));
       return;
     }
@@ -400,7 +411,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           break;
         case 'Delete':
         case 'Backspace':
-          if (model.selectedWidgetId()) {
+          if (model.selectedObject()) {
             event.preventDefault();
             model.widgetActions.deleteSelected();
           }
@@ -430,6 +441,27 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     model.widgetActions.addWidgetAtCursor(type, world.worldX, world.worldY);
   };
 
+  const handleCreateToolAtClient = (tool: WorkbenchDockToolId, clientX: number, clientY: number) => {
+    const world = clientToWorld(clientX, clientY);
+    if (!world) return;
+    if (tool === 'sticky-note') {
+      model.widgetActions.addStickyNoteAtCursor(world.worldX, world.worldY);
+      return;
+    }
+    if (tool === 'text') {
+      model.widgetActions.addTextAnnotationAtCursor(world.worldX, world.worldY);
+      return;
+    }
+    if (tool === 'background-region') {
+      model.widgetActions.addBackgroundLayerAtCursor(world.worldX, world.worldY);
+    }
+  };
+
+  const handleCanvasPointerDown = (event: PointerEvent) => {
+    if (event.button !== 0) return;
+    handoffCanvasAuthority('background_pointer');
+  };
+
   return (
     <div
       ref={setSurfaceRootEl}
@@ -442,9 +474,14 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         <WorkbenchCanvas
           widgetDefinitions={model.widgetDefinitions()}
           widgets={model.widgets()}
+          stickyNotes={model.stickyNotes()}
+          annotations={model.annotations()}
+          backgroundLayers={model.backgroundLayers()}
           viewport={model.viewport()}
           canvasFrameSize={model.canvasFrameSize()}
           selectedWidgetId={model.selectedWidgetId()}
+          selectedObject={model.selectedObject()}
+          mode={model.mode()}
           optimisticFrontWidgetId={model.optimisticFrontWidgetId()}
           locked={model.locked()}
           filters={model.filters()}
@@ -453,13 +490,33 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onViewportCommit={model.canvas.commitViewport}
           onViewportInteractionStart={model.canvas.cancelViewportNavigation}
           onCanvasContextMenu={model.canvas.openCanvasContextMenu}
-          onCanvasPointerDown={() => handoffCanvasAuthority('background_pointer')}
+          onCanvasPointerDown={handleCanvasPointerDown}
           onSelectWidget={model.canvas.selectWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}
           onStartOptimisticFront={model.canvas.startOptimisticFront}
           onCommitFront={model.canvas.commitFront}
           onCommitMove={model.canvas.commitMove}
           onCommitResize={model.canvas.commitResize}
+          onSelectStickyNote={model.canvas.selectStickyNote}
+          onStickyNoteContextMenu={model.canvas.openStickyNoteContextMenu}
+          onStartStickyOptimisticFront={model.canvas.startOptimisticFront}
+          onCommitStickyFront={model.canvas.commitStickyFront}
+          onCommitStickyMove={model.canvas.commitStickyMove}
+          onCommitStickyResize={model.canvas.commitStickyResize}
+          onUpdateStickyNote={model.widgetActions.updateStickyNote}
+          onDeleteStickyNote={model.widgetActions.deleteStickyNote}
+          onSelectAnnotation={model.canvas.selectAnnotation}
+          onAnnotationContextMenu={model.canvas.openAnnotationContextMenu}
+          onCommitAnnotationMove={model.canvas.commitAnnotationMove}
+          onCommitAnnotationResize={model.canvas.commitAnnotationResize}
+          onUpdateTextAnnotation={model.widgetActions.updateTextAnnotation}
+          onDeleteAnnotation={model.widgetActions.deleteAnnotation}
+          onSelectBackgroundLayer={model.canvas.selectBackgroundLayer}
+          onBackgroundLayerContextMenu={model.canvas.openBackgroundLayerContextMenu}
+          onCommitBackgroundMove={model.canvas.commitBackgroundMove}
+          onCommitBackgroundResize={model.canvas.commitBackgroundResize}
+          onUpdateBackgroundLayer={model.widgetActions.updateBackgroundLayer}
+          onDeleteBackgroundLayer={model.widgetActions.deleteBackgroundLayer}
           onRequestOverview={overviewWidgetForViewport}
           onRequestFit={focusWidgetForViewport}
           onRequestDelete={props.onRequestDelete ?? model.widgetActions.deleteWidget}
@@ -474,16 +531,18 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         shortcutLabel={lockShortcut() ?? undefined}
       />
 
-      <WorkbenchFilterBar
+      <WorkbenchDock
         widgetDefinitions={filterBarWidgetDefinitions()}
         widgets={model.widgets()}
         filters={model.filters()}
+        mode={model.mode()}
         viewport={model.viewport()}
         onSoloFilter={model.filter.solo}
-        onShowAll={model.filter.showAll}
+        onSelectMode={model.modes.setMode}
         onViewportCommit={model.canvas.commitViewport}
         onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
         onCreateAt={handleCreateAtClient}
+        onCreateToolAt={handleCreateToolAtClient}
       />
 
       <WorkbenchHud

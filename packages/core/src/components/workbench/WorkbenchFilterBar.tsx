@@ -1,6 +1,7 @@
 import {
   For,
   Show,
+  createEffect,
   createMemo,
   createSignal,
   onCleanup,
@@ -10,7 +11,7 @@ import {
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
-import { Layers, Plus } from '../../icons';
+import { FileText, Highlighter, Layers, LayoutDashboard, MessageSquare, Plus } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import {
@@ -20,6 +21,8 @@ import {
   type WorkbenchEdgeAutoPanController,
 } from './workbenchEdgeAutoPan';
 import type {
+  WorkbenchDockToolId,
+  WorkbenchInteractionMode,
   WorkbenchViewport,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
@@ -29,23 +32,25 @@ import type {
 export interface WorkbenchFilterBarProps {
   widgetDefinitions: readonly WorkbenchWidgetDefinition[];
   widgets: readonly WorkbenchWidgetItem[];
-  filters: Record<WorkbenchWidgetType, boolean>;
-  /** Solo a single widget type — only this type remains visible. */
-  onSoloFilter: (type: WorkbenchWidgetType) => void;
-  /** Reset filters so every widget type is visible again. */
-  onShowAll: () => void;
+  filters: Record<string, boolean>;
+  mode?: WorkbenchInteractionMode;
+  /** Solo a single dock component in the supplied mode scope; soloing it again shows the full scope. */
+  onSoloFilter: (id: string, scope: readonly string[]) => void;
+  onSelectMode?: (mode: WorkbenchInteractionMode) => void;
   /**
    * Called when the user drags a widget pill onto the canvas to create a
    * new widget of that type. Coordinates are in client space (clientX/Y).
    */
   onCreateAt?: (type: WorkbenchWidgetType, clientX: number, clientY: number) => void;
+  onCreateToolAt?: (tool: WorkbenchDockToolId, clientX: number, clientY: number) => void;
   viewport?: WorkbenchViewport;
   onViewportCommit?: (viewport: WorkbenchViewport) => void;
   onViewportInteractionStart?: (kind: 'pan') => void;
 }
 
 interface DragState {
-  type: WorkbenchWidgetType;
+  kind: 'widget' | 'tool';
+  id: WorkbenchWidgetType | WorkbenchDockToolId;
   label: string;
   icon: Component<{ class?: string }>;
   pointerId: number;
@@ -61,6 +66,43 @@ interface DragState {
 
 const DRAG_THRESHOLD_PX = 5;
 const DOCK_SELECTOR = '.workbench-dock';
+
+const WORKBENCH_MODE_ITEMS: readonly {
+  mode: WorkbenchInteractionMode;
+  label: string;
+  description: string;
+  icon: Component<{ class?: string }>;
+}[] = [
+  {
+    mode: 'work',
+    label: 'Work Mode',
+    description: 'Operate windows and sticky notes',
+    icon: LayoutDashboard,
+  },
+  {
+    mode: 'background',
+    label: 'Background Mode',
+    description: 'Edit regions and canvas text',
+    icon: Layers,
+  },
+];
+
+const WORKBENCH_WORK_TOOL_ITEMS: readonly {
+  tool: WorkbenchDockToolId;
+  label: string;
+  icon: Component<{ class?: string }>;
+}[] = [
+  { tool: 'sticky-note', label: 'Sticky', icon: MessageSquare },
+];
+
+const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
+  tool: WorkbenchDockToolId;
+  label: string;
+  icon: Component<{ class?: string }>;
+}[] = [
+  { tool: 'background-region', label: 'Region', icon: Highlighter },
+  { tool: 'text', label: 'Text', icon: FileText },
+];
 
 function readCanvasFrameRect(): DOMRect | null {
   const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
@@ -126,17 +168,24 @@ function isOverDock(clientX: number, clientY: number): boolean {
 }
 
 interface DockItemProps {
-  type: WorkbenchWidgetType;
+  id: string;
+  kind: DragState['kind'];
   label: string;
   icon: Component<{ class?: string }>;
   active: boolean;
+  visible: boolean;
   /** -1 = hovered, ±1 = adjacent (with -2 sentinel for left neighbor). */
   hoverOffset: number;
   isDragging: boolean;
   onEnter: () => void;
   onLeave: () => void;
-  onSolo: () => void;
-  onDragBegin: (event: PointerEvent, type: WorkbenchWidgetType, label: string, icon: Component<{ class?: string }>) => void;
+  onDragBegin: (
+    event: PointerEvent,
+    kind: DragState['kind'],
+    id: WorkbenchWidgetType | WorkbenchDockToolId,
+    label: string,
+    icon: Component<{ class?: string }>,
+  ) => void;
 }
 
 function DockItem(props: DockItemProps) {
@@ -151,7 +200,13 @@ function DockItem(props: DockItemProps) {
 
   const handlePointerDown: JSX.EventHandler<HTMLButtonElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
-    props.onDragBegin(event, props.type, props.label, props.icon);
+    props.onDragBegin(
+      event,
+      props.kind,
+      props.id as WorkbenchWidgetType | WorkbenchDockToolId,
+      props.label,
+      props.icon,
+    );
   };
 
   return (
@@ -160,6 +215,7 @@ function DockItem(props: DockItemProps) {
       class="workbench-dock__item"
       classList={{
         'is-active': props.active,
+        'is-filter-muted': !props.visible,
         'is-hovered': isHovered(),
         'is-source-dragging': props.isDragging,
       }}
@@ -190,10 +246,12 @@ function DockItem(props: DockItemProps) {
   );
 }
 
-export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
+export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const [hoveredIndex, setHoveredIndex] = createSignal<number | null>(null);
   const [dragState, setDragState] = createSignal<DragState | null>(null);
+  const [modeMenuOpen, setModeMenuOpen] = createSignal(false);
 
+  let dockRootEl: HTMLDivElement | undefined;
   let dragSession: PointerSessionController | undefined;
   let edgeAutoPan: WorkbenchEdgeAutoPanController | undefined;
   let edgeAutoPanViewport: WorkbenchViewport | null = null;
@@ -206,11 +264,31 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     current?.stopInteraction();
   });
 
-  const allActive = createMemo(() =>
-    props.widgetDefinitions.every((entry) => props.filters[entry.type])
-  );
+  createEffect(() => {
+    if (!modeMenuOpen()) return;
+    if (typeof window === 'undefined') return;
 
-  // "All" pill = slot 0; widget types = slots 1..N.
+    const handlePointerDown = (event: PointerEvent) => {
+      if (dockRootEl && event.target instanceof Node && dockRootEl.contains(event.target)) {
+        return;
+      }
+      setModeMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setModeMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown, true);
+    window.addEventListener('keydown', handleKeyDown, true);
+    onCleanup(() => {
+      window.removeEventListener('pointerdown', handlePointerDown, true);
+      window.removeEventListener('keydown', handleKeyDown, true);
+    });
+  });
+
+  // Mode switcher = slot 0; visible component types = slots 1..N.
   const offsetFor = (slot: number): number => {
     const hovered = hoveredIndex();
     if (hovered === null) return 0;
@@ -263,19 +341,23 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     dragSession = undefined;
 
     if (isClick) {
-      // No movement → treat as solo click.
-      props.onSoloFilter(current.type);
+      props.onSoloFilter(String(current.id), componentScope());
       return;
     }
 
     if (commitDrop && current.overCanvas) {
-      props.onCreateAt?.(current.type, current.clientX, current.clientY);
+      if (current.kind === 'widget') {
+        props.onCreateAt?.(current.id as WorkbenchWidgetType, current.clientX, current.clientY);
+      } else {
+        props.onCreateToolAt?.(current.id as WorkbenchDockToolId, current.clientX, current.clientY);
+      }
     }
   };
 
-  const beginDragGesture = (
+  const beginItemDragGesture = (
     event: PointerEvent,
-    type: WorkbenchWidgetType,
+    kind: DragState['kind'],
+    id: WorkbenchWidgetType | WorkbenchDockToolId,
     label: string,
     icon: Component<{ class?: string }>
   ) => {
@@ -284,7 +366,8 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     startEdgeAutoPan();
 
     setDragState({
-      type,
+      kind,
+      id,
       label,
       icon,
       pointerId: event.pointerId,
@@ -339,67 +422,148 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     });
   };
 
-  const draggingType = (): WorkbenchWidgetType | null => dragState()?.type ?? null;
+  const draggingWidgetType = (): WorkbenchWidgetType | null =>
+    dragState()?.kind === 'widget' ? dragState()!.id as WorkbenchWidgetType : null;
+  const draggingTool = (): WorkbenchDockToolId | null =>
+    dragState()?.kind === 'tool' ? dragState()!.id as WorkbenchDockToolId : null;
+  const activeMode = (): WorkbenchInteractionMode =>
+    props.mode === 'background' || props.mode === 'annotation' ? 'background' : 'work';
+  const activeModeItem = createMemo(() =>
+    WORKBENCH_MODE_ITEMS.find((item) => item.mode === activeMode()) ?? WORKBENCH_MODE_ITEMS[0]!
+  );
+  const componentItems = createMemo(() => {
+    if (activeMode() === 'background') {
+      return WORKBENCH_BACKGROUND_TOOL_ITEMS.map((item) => ({
+        id: item.tool,
+        kind: 'tool' as const,
+        label: item.label,
+        icon: item.icon,
+      }));
+    }
+
+    return [
+      ...WORKBENCH_WORK_TOOL_ITEMS.map((item) => ({
+        id: item.tool,
+        kind: 'tool' as const,
+        label: item.label,
+        icon: item.icon,
+      })),
+      ...props.widgetDefinitions.map((entry) => ({
+        id: entry.type,
+        kind: 'widget' as const,
+        label: entry.label,
+        icon: entry.icon,
+      })),
+    ];
+  });
+  const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
+  const componentVisible = (id: string): boolean => props.filters[id] !== false;
+  const componentSoloed = (id: string): boolean => {
+    const scope = componentScope();
+    return scope.length > 1 && scope.every((key) => (props.filters[key] !== false) === (key === id));
+  };
+  const modeTriggerHovered = () => hoveredIndex() === 0;
+  const modeTriggerMotion = () => ({
+    scale: modeTriggerHovered() || modeMenuOpen() ? 1.26 : 1,
+    y: modeTriggerHovered() || modeMenuOpen() ? -6 : 0,
+    x: hoveredIndex() === 1 ? -5 : 0,
+  });
 
   return (
     <>
       <div
+        ref={dockRootEl}
         class="workbench-dock"
         data-floe-canvas-interactive="true"
         onPointerLeave={() => setHoveredIndex(null)}
       >
-        <button
-          type="button"
-          class="workbench-dock__item"
-          classList={{ 'is-active': allActive(), 'is-hovered': hoveredIndex() === 0 }}
-          aria-label="Show all widgets"
-          aria-pressed={allActive()}
-          onPointerEnter={() => setHoveredIndex(0)}
-          onPointerLeave={() =>
-            setHoveredIndex((current) => (current === 0 ? null : current))
-          }
-          onClick={() => props.onShowAll()}
-        >
-          <Motion.span
-            class="workbench-dock__tile"
-            animate={{
-              scale: hoveredIndex() === 0 ? 1.26 : 1,
-              y: hoveredIndex() === 0 ? -6 : 0,
-              x: hoveredIndex() === 1 ? -5 : 0,
+        <div class="workbench-dock__mode-switcher">
+          <button
+            type="button"
+            class="workbench-dock__item workbench-dock__mode-trigger"
+            classList={{
+              'is-active': activeMode() === 'background',
+              'is-hovered': modeTriggerHovered() || modeMenuOpen(),
             }}
-            transition={{ duration: duration.fast, easing: easing.easeOut }}
+            aria-label="Switch canvas mode"
+            aria-haspopup="menu"
+            aria-expanded={modeMenuOpen()}
+            onPointerEnter={() => setHoveredIndex(0)}
+            onPointerLeave={() =>
+              setHoveredIndex((current) => (current === 0 ? null : current))
+            }
+            onClick={() => setModeMenuOpen((open) => !open)}
           >
-            <Layers class="workbench-dock__icon" />
-          </Motion.span>
-          <Motion.span
-            class="workbench-dock__tooltip"
-            animate={{
-              opacity: hoveredIndex() === 0 ? 1 : 0,
-              y: hoveredIndex() === 0 ? -6 : 0,
-            }}
-            transition={{ duration: duration.fast, easing: easing.easeOut }}
-          >
-            Show all widgets
-          </Motion.span>
-        </button>
+            <Motion.span
+              class="workbench-dock__tile"
+              animate={modeTriggerMotion()}
+              transition={{ duration: duration.fast, easing: easing.easeOut }}
+            >
+              <Layers class="workbench-dock__icon" />
+            </Motion.span>
+            <Motion.span
+              class="workbench-dock__tooltip"
+              animate={{
+                opacity: modeTriggerHovered() && !modeMenuOpen() ? 1 : 0,
+                y: modeTriggerHovered() && !modeMenuOpen() ? -6 : 0,
+              }}
+              transition={{ duration: duration.fast, easing: easing.easeOut }}
+            >
+              {activeModeItem().label}
+            </Motion.span>
+          </button>
+          <Show when={modeMenuOpen()}>
+            <div class="workbench-dock__mode-popover" role="menu" aria-label="Canvas mode">
+              <For each={WORKBENCH_MODE_ITEMS}>
+                {(item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      type="button"
+                      class="workbench-dock__mode-option"
+                      classList={{ 'is-active': activeMode() === item.mode }}
+                      role="menuitemradio"
+                      aria-checked={activeMode() === item.mode}
+                      onClick={() => {
+                        props.onSelectMode?.(item.mode);
+                        setModeMenuOpen(false);
+                      }}
+                    >
+                      <span class="workbench-dock__mode-option-icon">
+                        <Icon class="workbench-dock__mode-icon" />
+                      </span>
+                      <span class="workbench-dock__mode-option-copy">
+                        <span class="workbench-dock__mode-option-label">{item.label}</span>
+                        <span class="workbench-dock__mode-option-description">{item.description}</span>
+                      </span>
+                    </button>
+                  );
+                }}
+              </For>
+            </div>
+          </Show>
+        </div>
         <span class="workbench-dock__divider" aria-hidden="true" />
-        <For each={props.widgetDefinitions}>
+        <For each={componentItems()}>
           {(entry, index) => {
             const slot = () => index() + 1;
             return (
               <DockItem
-                type={entry.type}
+                id={String(entry.id)}
+                kind={entry.kind}
                 label={entry.label}
                 icon={entry.icon}
-                active={props.filters[entry.type]}
+                active={componentSoloed(String(entry.id))}
+                visible={componentVisible(String(entry.id))}
                 hoverOffset={offsetFor(slot())}
-                isDragging={draggingType() === entry.type}
+                isDragging={entry.kind === 'widget'
+                  ? draggingWidgetType() === entry.id
+                  : draggingTool() === entry.id}
                 onEnter={() => setHoveredIndex(slot())}
                 onLeave={() =>
                   setHoveredIndex((current) => (current === slot() ? null : current))
                 }
-                onSolo={() => props.onSoloFilter(entry.type)}
-                onDragBegin={beginDragGesture}
+                onDragBegin={beginItemDragGesture}
               />
             );
           }}
@@ -412,6 +576,8 @@ export function WorkbenchFilterBar(props: WorkbenchFilterBarProps) {
     </>
   );
 }
+
+export const WorkbenchFilterBar = WorkbenchDock;
 
 interface DragGhostProps {
   /**

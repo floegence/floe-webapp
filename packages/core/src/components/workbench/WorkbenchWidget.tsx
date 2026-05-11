@@ -287,7 +287,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
   const lifecycle = createMemo<WorkbenchWidgetLifecycle>(() => {
-    if (props.filtered) {
+    if (props.filtered || props.locked) {
       return 'cold';
     }
     return selected() ? 'hot' : 'warm';
@@ -345,6 +345,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
   const handlePointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
     if (event.button !== 0) return;
+    if (props.locked) return;
 
     const pointerOwnershipPreclaim = consumePointerOwnershipPreclaim(event.pointerId);
     const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? props.selected;

@@ -1,15 +1,38 @@
 import {
   DEFAULT_WORKBENCH_VIEWPORT,
+  WORKBENCH_BACKGROUND_REGION_FILTER_ID,
+  WORKBENCH_LAYER_COMPONENT_FILTER_IDS,
+  type WorkbenchAnnotationItem,
+  type WorkbenchBackgroundLayer,
+  type WorkbenchBackgroundMaterial,
+  type WorkbenchDockToolId,
+  type WorkbenchInteractionMode,
   type WorkbenchProjectedSurfaceScaleBehavior,
   type WorkbenchProjectedRect,
+  type WorkbenchSelection,
   type WorkbenchState,
+  type WorkbenchStickyNoteColor,
+  type WorkbenchStickyNoteItem,
+  type WorkbenchTextAnnotationAlign,
+  type WorkbenchTextAnnotationItem,
   type WorkbenchViewport,
   type WorkbenchWidgetDefinition,
   type WorkbenchWidgetItem,
   type WorkbenchWidgetRenderMode,
   type WorkbenchWidgetSurfaceMetrics,
-  type WorkbenchWidgetType,
 } from './types';
+import {
+  WORKBENCH_BACKGROUND_MATERIALS,
+  WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+  WORKBENCH_DEFAULT_REGION_FILL,
+  WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
+  WORKBENCH_DEFAULT_TEXT_COLOR,
+  WORKBENCH_DEFAULT_TEXT_FONT,
+  WORKBENCH_REGION_FILL_OPTIONS,
+  WORKBENCH_STICKY_NOTE_COLORS,
+  WORKBENCH_TEXT_COLOR_OPTIONS,
+  resolveWorkbenchTextFontOption,
+} from './workbenchOptions';
 import {
   createWorkbenchFilterState,
   getWidgetEntry,
@@ -98,10 +121,195 @@ export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefine
 }
 
 export function sanitizeFilters(
-  filters: Partial<Record<WorkbenchWidgetType, boolean>> | undefined,
+  filters: Partial<Record<string, boolean>> | undefined,
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[]
-): Record<WorkbenchWidgetType, boolean> {
-  return createWorkbenchFilterState(widgetDefinitions, filters);
+): Record<string, boolean> {
+  const next = createWorkbenchFilterState(widgetDefinitions, filters);
+  for (const id of WORKBENCH_LAYER_COMPONENT_FILTER_IDS) {
+    next[id] = typeof filters?.[id] === 'boolean' ? Boolean(filters[id]) : true;
+  }
+  return next;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function compact(value: unknown): string {
+  return String(value ?? '').trim();
+}
+
+function finiteNumber(value: unknown, fallback: number): number {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : fallback;
+}
+
+function positiveNumber(value: unknown, fallback: number): number {
+  const next = finiteNumber(value, fallback);
+  return next > 0 ? next : fallback;
+}
+
+function normalizeObjectId(value: unknown, prefix: string): string {
+  const id = compact(value);
+  return id.length > 0 && id.length <= 128 ? id : `${prefix}-${createWorkbenchId()}`;
+}
+
+function sanitizeWorkbenchMode(value: unknown): WorkbenchInteractionMode {
+  return value === 'annotation' || value === 'background' ? value : 'work';
+}
+
+function sanitizeActiveTool(value: unknown, mode: WorkbenchInteractionMode): WorkbenchDockToolId {
+  const tool = compact(value);
+  if (tool) return tool as WorkbenchDockToolId;
+  if (mode === 'annotation' || mode === 'background') return WORKBENCH_BACKGROUND_REGION_FILTER_ID;
+  return 'select';
+}
+
+function sanitizeStringOption<T extends string>(
+  value: unknown,
+  options: readonly T[],
+  fallback: T,
+): T {
+  const next = compact(value);
+  return options.includes(next as T) ? next as T : fallback;
+}
+
+function sanitizeStickyNoteColor(value: unknown): WorkbenchStickyNoteColor {
+  return sanitizeStringOption(value, WORKBENCH_STICKY_NOTE_COLORS, WORKBENCH_DEFAULT_STICKY_NOTE_COLOR);
+}
+
+function sanitizeStickyNote(value: unknown): WorkbenchStickyNoteItem | null {
+  if (!isRecord(value)) return null;
+  const now = Date.now();
+  const id = normalizeObjectId(value.id, 'sticky');
+  return {
+    id,
+    kind: 'sticky_note',
+    body: compact(value.body) || 'Untitled note',
+    color: sanitizeStickyNoteColor(value.color),
+    x: finiteNumber(value.x, 0),
+    y: finiteNumber(value.y, 0),
+    width: positiveNumber(value.width, 260),
+    height: positiveNumber(value.height, 190),
+    z_index: Math.max(0, Math.trunc(finiteNumber(value.z_index, 1))),
+    created_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.created_at_unix_ms, now))),
+    updated_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.updated_at_unix_ms, now))),
+  };
+}
+
+function sanitizeStickyNotes(value: unknown): WorkbenchStickyNoteItem[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map((entry) => sanitizeStickyNote(entry))
+    .filter((entry): entry is WorkbenchStickyNoteItem => {
+      if (!entry || seen.has(entry.id)) return false;
+      seen.add(entry.id);
+      return true;
+    });
+}
+
+const TEXT_ALIGNS: readonly WorkbenchTextAnnotationAlign[] = ['left', 'center', 'right'];
+
+function sanitizeTextAlign(value: unknown): WorkbenchTextAnnotationAlign {
+  return TEXT_ALIGNS.includes(value as WorkbenchTextAnnotationAlign)
+    ? value as WorkbenchTextAnnotationAlign
+    : 'left';
+}
+
+function sanitizeTextAnnotation(value: unknown): WorkbenchTextAnnotationItem | null {
+  if (!isRecord(value)) return null;
+  const now = Date.now();
+  const font = resolveWorkbenchTextFontOption(value.font_family);
+  return {
+    id: normalizeObjectId(value.id, 'text'),
+    kind: 'text',
+    text: compact(value.text) || 'Text',
+    font_family: font.fontFamily,
+    font_size: Math.max(8, Math.min(160, Math.round(finiteNumber(value.font_size, 28)))),
+    font_weight: font.fontWeight,
+    color: sanitizeStringOption(value.color, WORKBENCH_TEXT_COLOR_OPTIONS, WORKBENCH_DEFAULT_TEXT_COLOR),
+    align: sanitizeTextAlign(value.align),
+    x: finiteNumber(value.x, 0),
+    y: finiteNumber(value.y, 0),
+    width: positiveNumber(value.width, 280),
+    height: positiveNumber(value.height, 84),
+    z_index: Math.max(0, Math.trunc(finiteNumber(value.z_index, 1))),
+    created_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.created_at_unix_ms, now))),
+    updated_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.updated_at_unix_ms, now))),
+  };
+}
+
+function sanitizeAnnotations(value: unknown): WorkbenchAnnotationItem[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map((entry) => sanitizeTextAnnotation(entry))
+    .filter((entry): entry is WorkbenchTextAnnotationItem => {
+      if (!entry || seen.has(entry.id)) return false;
+      seen.add(entry.id);
+      return true;
+    });
+}
+
+function sanitizeBackgroundMaterial(value: unknown): WorkbenchBackgroundMaterial {
+  return sanitizeStringOption(
+    value,
+    WORKBENCH_BACKGROUND_MATERIALS,
+    WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+  );
+}
+
+function sanitizeBackgroundLayer(value: unknown): WorkbenchBackgroundLayer | null {
+  if (!isRecord(value)) return null;
+  const now = Date.now();
+  return {
+    id: normalizeObjectId(value.id, 'region'),
+    name: compact(value.name) || 'Canvas region',
+    fill: sanitizeStringOption(value.fill, WORKBENCH_REGION_FILL_OPTIONS, WORKBENCH_DEFAULT_REGION_FILL),
+    opacity: Math.max(0.08, Math.min(1, finiteNumber(value.opacity, 0.72))),
+    material: sanitizeBackgroundMaterial(value.material),
+    x: finiteNumber(value.x, 0),
+    y: finiteNumber(value.y, 0),
+    width: positiveNumber(value.width, 560),
+    height: positiveNumber(value.height, 360),
+    z_index: Math.max(0, Math.trunc(finiteNumber(value.z_index, 1))),
+    created_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.created_at_unix_ms, now))),
+    updated_at_unix_ms: Math.max(0, Math.trunc(finiteNumber(value.updated_at_unix_ms, now))),
+  };
+}
+
+function sanitizeBackgroundLayers(value: unknown): WorkbenchBackgroundLayer[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map((entry) => sanitizeBackgroundLayer(entry))
+    .filter((entry): entry is WorkbenchBackgroundLayer => {
+      if (!entry || seen.has(entry.id)) return false;
+      seen.add(entry.id);
+      return true;
+    });
+}
+
+function sanitizeSelection(
+  value: unknown,
+  widgets: readonly WorkbenchWidgetItem[],
+  stickyNotes: readonly WorkbenchStickyNoteItem[],
+  annotations: readonly WorkbenchAnnotationItem[],
+  backgroundLayers: readonly WorkbenchBackgroundLayer[],
+  fallbackWidgetId: string | null,
+): WorkbenchSelection | null {
+  if (isRecord(value)) {
+    const kind = compact(value.kind);
+    const id = compact(value.id);
+    if (kind === 'widget' && widgets.some((item) => item.id === id)) return { kind, id };
+    if (kind === 'sticky_note' && stickyNotes.some((item) => item.id === id)) return { kind, id };
+    if (kind === 'annotation' && annotations.some((item) => item.id === id)) return { kind, id };
+    if (kind === 'background_layer' && backgroundLayers.some((item) => item.id === id)) {
+      return { kind, id };
+    }
+  }
+  return fallbackWidgetId ? { kind: 'widget', id: fallbackWidgetId } : null;
 }
 
 export interface SanitizeWorkbenchStateOptions {
@@ -146,6 +354,10 @@ export function sanitizeWorkbenchState(
   const selectedWidgetId = typeof state.selectedWidgetId === 'string' && widgets.some((widget) => widget.id === state.selectedWidgetId)
     ? state.selectedWidgetId
     : null;
+  const stickyNotes = sanitizeStickyNotes(state.stickyNotes);
+  const annotations = sanitizeAnnotations(state.annotations);
+  const backgroundLayers = sanitizeBackgroundLayers(state.backgroundLayers);
+  const mode = sanitizeWorkbenchMode(state.mode);
 
   return {
     version: 1,
@@ -155,6 +367,19 @@ export function sanitizeWorkbenchState(
     filters: sanitizeFilters(state.filters, widgetDefinitions),
     selectedWidgetId,
     theme: isWorkbenchThemeId(state.theme) ? state.theme : DEFAULT_WORKBENCH_THEME,
+    mode,
+    activeTool: sanitizeActiveTool(state.activeTool, mode),
+    selectedObject: sanitizeSelection(
+      state.selectedObject,
+      widgets,
+      stickyNotes,
+      annotations,
+      backgroundLayers,
+      selectedWidgetId,
+    ),
+    stickyNotes,
+    annotations,
+    backgroundLayers,
   };
 }
 
@@ -196,12 +421,65 @@ export function createDefaultWorkbenchState(
     filters: createWorkbenchFilterState(definitions),
     selectedWidgetId: widgets[0]?.id ?? null,
     theme: DEFAULT_WORKBENCH_THEME,
+    mode: 'work',
+    activeTool: 'select',
+    selectedObject: widgets[0] ? { kind: 'widget', id: widgets[0].id } : null,
+    stickyNotes: [
+      {
+        id: 'wb-seed-sticky-1',
+        kind: 'sticky_note',
+        body: 'Confirm the rollout checklist before touching production.',
+        color: WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
+        x: 930,
+        y: 620,
+        width: 270,
+        height: 170,
+        z_index: widgets.length + 1,
+        created_at_unix_ms: now - 250000,
+        updated_at_unix_ms: now - 250000,
+      },
+    ],
+    annotations: [
+      {
+        id: 'wb-seed-text-1',
+        kind: 'text',
+        text: 'Release focus',
+        font_family: WORKBENCH_DEFAULT_TEXT_FONT.fontFamily,
+        font_size: 34,
+        font_weight: WORKBENCH_DEFAULT_TEXT_FONT.fontWeight,
+        color: WORKBENCH_DEFAULT_TEXT_COLOR,
+        align: 'left',
+        x: 588,
+        y: 378,
+        width: 320,
+        height: 82,
+        z_index: 1,
+        created_at_unix_ms: now - 240000,
+        updated_at_unix_ms: now - 240000,
+      },
+    ],
+    backgroundLayers: [
+      {
+        id: 'wb-seed-region-1',
+        name: 'Review lane',
+        fill: WORKBENCH_DEFAULT_REGION_FILL,
+        opacity: 0.58,
+        material: WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+        x: 512,
+        y: 360,
+        width: 760,
+        height: 520,
+        z_index: 1,
+        created_at_unix_ms: now - 260000,
+        updated_at_unix_ms: now - 260000,
+      },
+    ],
   };
 }
 
 export const WORKBENCH_CANVAS_ZOOM_STEP = 1.18;
 export const WORKBENCH_CONTEXT_MENU_WIDTH_PX = 200;
-export const WORKBENCH_MIN_SCALE = 0.45;
+export const WORKBENCH_MIN_SCALE = 0.2;
 export const WORKBENCH_MAX_SCALE = 2.2;
 export const WORKBENCH_VIEWPORT_FIT_PADDING_PX = 48;
 
@@ -255,9 +533,9 @@ export interface WorkbenchRenderLayerMap {
   topRenderLayer: number;
 }
 
-function compareWorkbenchWidgetRenderOrder(
-  left: WorkbenchWidgetItem,
-  right: WorkbenchWidgetItem,
+function compareWorkbenchLayerRenderOrder(
+  left: Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
+  right: Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
 ): number {
   if (left.z_index !== right.z_index) {
     return left.z_index - right.z_index;
@@ -269,13 +547,13 @@ function compareWorkbenchWidgetRenderOrder(
 }
 
 export function createWorkbenchRenderLayerMap(
-  widgets: readonly WorkbenchWidgetItem[],
+  widgets: readonly Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>[],
 ): WorkbenchRenderLayerMap {
-  const ordered = [...widgets].sort(compareWorkbenchWidgetRenderOrder);
+  const ordered = [...widgets].sort(compareWorkbenchLayerRenderOrder);
   const byWidgetId = new Map<string, number>();
 
-  for (const [index, widget] of ordered.entries()) {
-    byWidgetId.set(widget.id, index + 1);
+  for (const [index, item] of ordered.entries()) {
+    byWidgetId.set(item.id, index + 1);
   }
 
   return {
@@ -314,7 +592,7 @@ export function findNearestWidget(
   widgets: readonly WorkbenchWidgetItem[],
   currentId: string | null,
   direction: 'up' | 'down' | 'left' | 'right',
-  filters: Record<WorkbenchWidgetType, boolean>
+  filters: Record<string, boolean>
 ): WorkbenchWidgetItem | null {
   const visible = widgets.filter((w) => filters[w.type]);
   if (visible.length === 0) return null;
