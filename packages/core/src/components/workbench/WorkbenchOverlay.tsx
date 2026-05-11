@@ -3,10 +3,24 @@ import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { X } from '../../icons';
-import { WorkbenchSurface } from './WorkbenchSurface';
+import { WorkbenchSurface, type WorkbenchSurfaceProps } from './WorkbenchSurface';
 import type { WorkbenchState } from './types';
 
-export interface WorkbenchOverlayProps {
+type WorkbenchOverlaySurfaceProps = Pick<
+  WorkbenchSurfaceProps,
+  | 'enableKeyboard'
+  | 'widgetDefinitions'
+  | 'launcherWidgetTypes'
+  | 'textAnnotationDefaults'
+  | 'interactionAdapter'
+  | 'resolveContextMenuItems'
+  | 'onApiReady'
+  | 'onRequestDelete'
+  | 'onLayoutInteractionStart'
+  | 'onLayoutInteractionEnd'
+>;
+
+export interface WorkbenchOverlayProps extends WorkbenchOverlaySurfaceProps {
   open: boolean;
   onClose: () => void;
   state: () => WorkbenchState;
@@ -96,6 +110,16 @@ export function WorkbenchOverlay(props: WorkbenchOverlayProps) {
               state={props.state}
               setState={props.setState}
               lockShortcut={props.lockShortcut}
+              enableKeyboard={props.enableKeyboard}
+              widgetDefinitions={props.widgetDefinitions}
+              launcherWidgetTypes={props.launcherWidgetTypes}
+              textAnnotationDefaults={props.textAnnotationDefaults}
+              interactionAdapter={props.interactionAdapter}
+              resolveContextMenuItems={props.resolveContextMenuItems}
+              onApiReady={props.onApiReady}
+              onRequestDelete={props.onRequestDelete}
+              onLayoutInteractionStart={props.onLayoutInteractionStart}
+              onLayoutInteractionEnd={props.onLayoutInteractionEnd}
             />
           </div>
         </Motion.div>

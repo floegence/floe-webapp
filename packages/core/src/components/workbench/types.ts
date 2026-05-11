@@ -210,6 +210,11 @@ export interface WorkbenchStickyNoteItem {
   updated_at_unix_ms: number;
 }
 
+export type WorkbenchStickyNotePatch = Partial<Pick<
+  WorkbenchStickyNoteItem,
+  'body' | 'color'
+>>;
+
 export type WorkbenchTextAnnotationAlign = 'left' | 'center' | 'right';
 
 export interface WorkbenchTextAnnotationItem {
@@ -235,6 +240,11 @@ export type WorkbenchTextAnnotationPatch = Partial<Pick<
   'text' | 'font_family' | 'font_size' | 'font_weight' | 'color' | 'align'
 >>;
 
+export type WorkbenchTextAnnotationDefaults = Partial<Pick<
+  WorkbenchTextAnnotationItem,
+  'font_family' | 'font_size' | 'font_weight' | 'color' | 'align' | 'width' | 'height'
+>>;
+
 export type WorkbenchAnnotationItem = WorkbenchTextAnnotationItem;
 
 export type WorkbenchBackgroundMaterial =
@@ -258,6 +268,11 @@ export interface WorkbenchBackgroundLayer {
   created_at_unix_ms: number;
   updated_at_unix_ms: number;
 }
+
+export type WorkbenchBackgroundLayerPatch = Partial<Pick<
+  WorkbenchBackgroundLayer,
+  'fill' | 'opacity' | 'material' | 'name'
+>>;
 
 export interface WorkbenchViewport {
   x: number;

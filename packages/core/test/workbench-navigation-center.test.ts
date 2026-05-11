@@ -4,6 +4,7 @@ import { createRoot, createSignal, untrack } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useWorkbenchModel } from '../src/components/workbench/useWorkbenchModel';
+import { WORKBENCH_MIN_SCALE } from '../src/components/workbench/workbenchHelpers';
 import type {
   WorkbenchState,
   WorkbenchWidgetDefinition,
@@ -312,9 +313,9 @@ describe('workbench navigation centering', () => {
       flushLatestAnimationFrame();
 
       expect(untrack(state).selectedWidgetId).toBe(widget.id);
-      expect(untrack(state).viewport.x).toBeCloseTo(85, 6);
-      expect(untrack(state).viewport.y).toBeCloseTo(273, 6);
-      expect(untrack(state).viewport.scale).toBeCloseTo(0.45, 6);
+      expect(untrack(state).viewport.x).toBeCloseTo(260, 6);
+      expect(untrack(state).viewport.y).toBeCloseTo(288, 6);
+      expect(untrack(state).viewport.scale).toBeCloseTo(WORKBENCH_MIN_SCALE, 6);
 
       dispose();
     });

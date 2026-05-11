@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useWorkbenchModel } from '../src/components/workbench/useWorkbenchModel';
 import type { InfiniteCanvasContextMenuEvent } from '../src/ui';
 import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
+import { Region, TextTool } from '../src/components/icons';
 import type {
   WorkbenchBackgroundLayer,
   WorkbenchStickyNoteItem,
@@ -262,6 +263,12 @@ describe('workbench canvas menu verbs', () => {
         .filter((item) => item.kind === 'action')
         .map((item) => item.label);
       expect(labels).toEqual(['Add Region', 'Add Text']);
+      expect(
+        model.contextMenu.items().find((item) => item.kind === 'action' && item.label === 'Add Region')
+      ).toMatchObject({ icon: Region });
+      expect(
+        model.contextMenu.items().find((item) => item.kind === 'action' && item.label === 'Add Text')
+      ).toMatchObject({ icon: TextTool });
 
       dispose();
     });

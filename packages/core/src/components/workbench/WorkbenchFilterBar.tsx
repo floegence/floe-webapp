@@ -11,7 +11,7 @@ import {
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
-import { FileText, Highlighter, Layers, LayoutDashboard, MessageSquare, Plus } from '../../icons';
+import { Layers, LayoutDashboard, MessageSquare, Plus, Region, TextTool } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import {
@@ -100,8 +100,8 @@ const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
   label: string;
   icon: Component<{ class?: string }>;
 }[] = [
-  { tool: 'background-region', label: 'Region', icon: Highlighter },
-  { tool: 'text', label: 'Text', icon: FileText },
+  { tool: 'background-region', label: 'Region', icon: Region },
+  { tool: 'text', label: 'Text', icon: TextTool },
 ];
 
 function readCanvasFrameRect(): DOMRect | null {

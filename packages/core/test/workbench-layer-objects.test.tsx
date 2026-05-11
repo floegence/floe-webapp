@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { render } from 'solid-js/web';
-import { createSignal } from 'solid-js';
+import { createSignal, untrack } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -13,6 +13,7 @@ import {
   WorkbenchLayerControlOverlayView,
   WorkbenchStickyNote,
   WorkbenchTextAnnotation,
+  createWorkbenchTextEditorRegistry,
 } from '../src/components/workbench/WorkbenchLayerObjects';
 import { WorkbenchCanvasField } from '../src/components/workbench/WorkbenchCanvasField';
 import { sanitizeWorkbenchState } from '../src/components/workbench/workbenchHelpers';
@@ -29,6 +30,7 @@ import {
   WORKBENCH_DEFAULT_TEXT_FONT,
   WORKBENCH_REGION_FILL_OPTIONS,
   WORKBENCH_TEXT_COLOR_OPTIONS,
+  WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from '../src/components/workbench/workbenchOptions';
 
@@ -291,6 +293,39 @@ describe('Workbench layer objects', () => {
     expect(nextContent).toBe(content);
     expect(document.activeElement).toBe(content);
     expect(nextContent!.textContent).toBe('Editable label!');
+
+    dispose();
+  });
+
+  it('keeps emoji text input in the native plaintext editor state path', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onUpdate = vi.fn();
+
+    const dispose = render(() => (
+      <WorkbenchTextAnnotation
+        item={createTextItem()}
+        selected={true}
+        editable={true}
+        viewportScale={1}
+        onSelect={vi.fn()}
+        onCommitMove={vi.fn()}
+        onCommitResize={vi.fn()}
+        onUpdate={onUpdate}
+        onDelete={vi.fn()}
+      />
+    ), host);
+
+    const content = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    expect(content).toBeTruthy();
+
+    content!.focus();
+    content!.textContent = 'Editable label ✨';
+    dispatchTextInput(content!, { data: '✨', inputType: 'insertText' });
+    await Promise.resolve();
+
+    expect(onUpdate).toHaveBeenCalledWith('text-1', { text: 'Editable label ✨' });
+    expect(content!.getAttribute('contenteditable')).toBe('plaintext-only');
 
     dispose();
   });
@@ -780,6 +815,83 @@ describe('Workbench layer objects', () => {
       font_weight: roundFont.fontWeight,
     });
     expect(fontTrigger?.getAttribute('aria-expanded')).toBe('false');
+
+    dispose();
+  });
+
+  it('inserts emoji from the text toolbar at the current caret position', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const [items, setItems] = createSignal<WorkbenchTextAnnotationItem[]>([createTextItem()]);
+    const registry = createWorkbenchTextEditorRegistry();
+
+    const dispose = render(() => (
+      <>
+        <WorkbenchAnnotationLayerView
+          items={items()}
+          selectedObject={{ kind: 'annotation', id: 'text-1' }}
+          editable={true}
+          filtered={false}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          textEditorRegistry={registry}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onUpdate={(annotationId, patch) => {
+            setItems((previous) => previous.map((item) =>
+              item.id === annotationId && typeof patch.text === 'string'
+                ? { ...item, text: patch.text, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
+                : item
+            ));
+          }}
+        />
+        <WorkbenchLayerControlOverlayView
+          annotations={items()}
+          backgroundLayers={[]}
+          selectedObject={{ kind: 'annotation', id: 'text-1' }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          textEditorRegistry={registry}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      </>
+    ), host);
+
+    const content = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    expect(content?.firstChild).toBeTruthy();
+
+    content!.focus();
+    const range = document.createRange();
+    range.setStart(content!.firstChild!, 'Editable '.length);
+    range.collapse(true);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    const emojiTrigger = host.querySelector('button[aria-label="Insert emoji"]') as HTMLButtonElement | null;
+    expect(emojiTrigger).toBeTruthy();
+    expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('false');
+
+    emojiTrigger!.click();
+    expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('true');
+    expect(host.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(WORKBENCH_TEXT_EMOJI_OPTIONS.length);
+    expect(Math.ceil(WORKBENCH_TEXT_EMOJI_OPTIONS.length / 6)).toBeGreaterThanOrEqual(5);
+
+    const emoji = WORKBENCH_TEXT_EMOJI_OPTIONS[0];
+    const emojiButton = host.querySelector(`button[aria-label="Insert emoji ${emoji}"]`) as HTMLButtonElement | null;
+    expect(emojiButton).toBeTruthy();
+    emojiButton!.click();
+    await Promise.resolve();
+
+    const [updatedItem] = untrack(items);
+    expect(updatedItem?.text).toBe(`Editable ${emoji}label`);
+    expect(content!.textContent).toBe(`Editable ${emoji}label`);
+    expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('false');
 
     dispose();
   });

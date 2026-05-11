@@ -1,6 +1,6 @@
 import { createMemo, createSignal, onCleanup } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
-import { ArrowUp, Copy, FileText, Highlighter, MessageSquare, Trash } from '../../icons';
+import { ArrowUp, Copy, MessageSquare, Region, TextTool, Trash } from '../../icons';
 import {
   type WorkbenchWidgetDefinition,
   type WorkbenchContextMenuState,
@@ -8,7 +8,9 @@ import {
   type WorkbenchSelection,
   type WorkbenchState,
   type WorkbenchAnnotationItem,
+  type WorkbenchBackgroundLayerPatch,
   type WorkbenchStickyNoteItem,
+  type WorkbenchStickyNotePatch,
   type WorkbenchViewport,
   type WorkbenchWidgetItem,
   type WorkbenchWidgetType,
@@ -17,6 +19,7 @@ import {
   type WorkbenchDockToolId,
   type WorkbenchInteractionMode,
   type WorkbenchStickyNoteColor,
+  type WorkbenchTextAnnotationDefaults,
   type WorkbenchTextAnnotationItem,
   type WorkbenchTextAnnotationPatch,
   WORKBENCH_STICKY_FILTER_ID,
@@ -70,6 +73,7 @@ export interface UseWorkbenchModelOptions {
   widgetDefinitions?:
     | readonly WorkbenchWidgetDefinition[]
     | (() => readonly WorkbenchWidgetDefinition[] | undefined);
+  textAnnotationDefaults?: WorkbenchTextAnnotationDefaults | (() => WorkbenchTextAnnotationDefaults | undefined);
 }
 
 type WorkbenchWorkItem = WorkbenchWidgetItem | WorkbenchStickyNoteItem;
@@ -77,6 +81,10 @@ type WorkbenchWorkItem = WorkbenchWidgetItem | WorkbenchStickyNoteItem;
 function nextValue<T>(values: readonly T[], current: T): T {
   const index = values.findIndex((value) => value === current);
   return values[(index + 1) % values.length] ?? values[0]!;
+}
+
+function positiveFinite(value: number | undefined, fallback: number): number {
+  return Number.isFinite(value) && value! > 0 ? value! : fallback;
 }
 
 function nextStickyNoteColor(current: WorkbenchStickyNoteColor): WorkbenchStickyNoteColor {
@@ -141,21 +149,28 @@ function createStickyNoteAt(worldX: number, worldY: number, zIndex: number): Wor
   };
 }
 
-function createTextAnnotationAt(worldX: number, worldY: number, zIndex: number): WorkbenchTextAnnotationItem {
+function createTextAnnotationAt(
+  worldX: number,
+  worldY: number,
+  zIndex: number,
+  defaults: WorkbenchTextAnnotationDefaults | undefined,
+): WorkbenchTextAnnotationItem {
   const now = Date.now();
+  const width = positiveFinite(defaults?.width, 360);
+  const height = positiveFinite(defaults?.height, 96);
   return {
     id: createWorkbenchId(),
     kind: 'text',
     text: 'Label this area',
-    font_family: WORKBENCH_DEFAULT_TEXT_FONT.fontFamily,
-    font_size: 30,
-    font_weight: WORKBENCH_DEFAULT_TEXT_FONT.fontWeight,
-    color: WORKBENCH_DEFAULT_TEXT_COLOR,
-    align: 'left',
-    x: worldX - 140,
-    y: worldY - 42,
-    width: 280,
-    height: 84,
+    font_family: defaults?.font_family ?? WORKBENCH_DEFAULT_TEXT_FONT.fontFamily,
+    font_size: defaults?.font_size ?? 30,
+    font_weight: defaults?.font_weight ?? WORKBENCH_DEFAULT_TEXT_FONT.fontWeight,
+    color: defaults?.color ?? WORKBENCH_DEFAULT_TEXT_COLOR,
+    align: defaults?.align ?? 'left',
+    x: worldX - width / 2,
+    y: worldY - height / 2,
+    width,
+    height,
     z_index: zIndex,
     created_at_unix_ms: now,
     updated_at_unix_ms: now,
@@ -235,6 +250,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     typeof options.widgetDefinitions === 'function'
       ? options.widgetDefinitions()
       : options.widgetDefinitions;
+  const readTextAnnotationDefaults = () =>
+    typeof options.textAnnotationDefaults === 'function'
+      ? options.textAnnotationDefaults()
+      : options.textAnnotationDefaults;
   const widgetDefinitions = createMemo(() =>
     resolveWorkbenchWidgetDefinitions(readWidgetDefinitions())
   );
@@ -556,7 +575,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           id: 'change-material',
           kind: 'action',
           label: 'Change Material',
-          icon: Highlighter,
+          icon: Region,
           onSelect: () => {
             updateBackgroundLayer(layer.id, { material: nextBackgroundMaterial(layer.material) });
             closeContextMenu();
@@ -586,7 +605,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           id: 'create-background-region',
           kind: 'action',
           label: 'Add Region',
-          icon: Highlighter,
+          icon: Region,
           onSelect: () => {
             addBackgroundLayerAtCursor(menu.worldX, menu.worldY);
             closeContextMenu();
@@ -596,7 +615,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           id: 'create-text',
           kind: 'action',
           label: 'Add Text',
-          icon: FileText,
+          icon: TextTool,
           onSelect: () => {
             addTextAnnotationAtCursor(menu.worldX, menu.worldY);
             closeContextMenu();
@@ -704,7 +723,12 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const addTextAnnotationAtCursor = (worldX: number, worldY: number) => {
-    const annotation = createTextAnnotationAt(worldX, worldY, getTopLayerIndex(annotations()) + 1);
+    const annotation = createTextAnnotationAt(
+      worldX,
+      worldY,
+      getTopLayerIndex(annotations()) + 1,
+      readTextAnnotationDefaults(),
+    );
     options.setState((prev) => ({
       ...prev,
       annotations: [...(prev.annotations ?? []), annotation],
@@ -829,7 +853,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const updateStickyNote = (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>,
+    patch: WorkbenchStickyNotePatch,
   ) => {
     options.setState((prev) => ({
       ...prev,
@@ -937,7 +961,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const updateBackgroundLayer = (
     layerId: string,
-    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>,
+    patch: WorkbenchBackgroundLayerPatch,
   ) => {
     options.setState((prev) => ({
       ...prev,
@@ -1024,9 +1048,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const showAll = () => {
+    const definitions = widgetDefinitions();
     options.setState((prev) => ({
       ...prev,
-      filters: sanitizeFilters(undefined, widgetDefinitions()),
+      filters: sanitizeFilters(undefined, definitions),
     }));
   };
 

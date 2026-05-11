@@ -19,14 +19,30 @@ import {
 } from './workbenchInteractionAdapter';
 import type {
   WorkbenchState,
+  WorkbenchAnnotationItem,
+  WorkbenchBackgroundLayer,
+  WorkbenchBackgroundLayerPatch,
   WorkbenchContextMenuState,
   WorkbenchDockToolId,
   WorkbenchInputOwner,
   WorkbenchInteractionAdapter,
+  WorkbenchStickyNoteItem,
+  WorkbenchStickyNotePatch,
+  WorkbenchTextAnnotationDefaults,
+  WorkbenchTextAnnotationPatch,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetItem,
   WorkbenchWidgetType,
 } from './types';
+
+export interface WorkbenchCreateAtOptions {
+  worldX?: number;
+  worldY?: number;
+}
+
+export interface WorkbenchCreateWidgetOptions extends WorkbenchCreateAtOptions {
+  centerViewport?: boolean;
+}
 
 export type WorkbenchContextMenuItemsResolver = (context: Readonly<{
   menu: WorkbenchContextMenuState;
@@ -39,11 +55,11 @@ export type WorkbenchContextMenuItemsResolver = (context: Readonly<{
 export interface WorkbenchSurfaceApi {
   ensureWidget: (
     type: WorkbenchWidgetType,
-    options?: { centerViewport?: boolean; worldX?: number; worldY?: number }
+    options?: WorkbenchCreateWidgetOptions
   ) => WorkbenchWidgetItem | null;
   createWidget: (
     type: WorkbenchWidgetType,
-    options?: { centerViewport?: boolean; worldX?: number; worldY?: number }
+    options?: WorkbenchCreateWidgetOptions
   ) => WorkbenchWidgetItem | null;
   clearSelection: () => void;
   focusWidget: (
@@ -55,6 +71,18 @@ export interface WorkbenchSurfaceApi {
   findWidgetByType: (type: WorkbenchWidgetType) => WorkbenchWidgetItem | null;
   findWidgetById: (widgetId: string) => WorkbenchWidgetItem | null;
   updateWidgetTitle: (widgetId: string, title: string) => void;
+  createStickyNote: (options?: WorkbenchCreateAtOptions) => WorkbenchStickyNoteItem | null;
+  findStickyNoteById: (noteId: string) => WorkbenchStickyNoteItem | null;
+  updateStickyNote: (noteId: string, patch: WorkbenchStickyNotePatch) => void;
+  deleteStickyNote: (noteId: string) => void;
+  createTextAnnotation: (options?: WorkbenchCreateAtOptions) => WorkbenchAnnotationItem | null;
+  findAnnotationById: (annotationId: string) => WorkbenchAnnotationItem | null;
+  updateTextAnnotation: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
+  deleteAnnotation: (annotationId: string) => void;
+  createBackgroundLayer: (options?: WorkbenchCreateAtOptions) => WorkbenchBackgroundLayer | null;
+  findBackgroundLayerById: (layerId: string) => WorkbenchBackgroundLayer | null;
+  updateBackgroundLayer: (layerId: string, patch: WorkbenchBackgroundLayerPatch) => void;
+  deleteBackgroundLayer: (layerId: string) => void;
 }
 
 export interface WorkbenchSurfaceProps {
@@ -77,6 +105,7 @@ export interface WorkbenchSurfaceProps {
   class?: string;
   widgetDefinitions?: readonly WorkbenchWidgetDefinition[];
   launcherWidgetTypes?: readonly WorkbenchWidgetType[];
+  textAnnotationDefaults?: WorkbenchTextAnnotationDefaults;
   interactionAdapter?: WorkbenchInteractionAdapter;
   resolveContextMenuItems?: WorkbenchContextMenuItemsResolver;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
@@ -102,6 +131,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     state: () => props.state(),
     setState: (updater) => props.setState(updater),
     widgetDefinitions: () => props.widgetDefinitions,
+    textAnnotationDefaults: () => props.textAnnotationDefaults,
     onClose: () => {
       // Page mode has no "close" — surface is a permanent display, not a modal.
     },
@@ -281,6 +311,27 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         }
         return widget;
       },
+      createTextAnnotation: (options) => {
+        const center = viewportWorldCenter();
+        return model.widgetActions.addTextAnnotationAtCursor(
+          options?.worldX ?? center.worldX,
+          options?.worldY ?? center.worldY
+        ) ?? null;
+      },
+      createStickyNote: (options) => {
+        const center = viewportWorldCenter();
+        return model.widgetActions.addStickyNoteAtCursor(
+          options?.worldX ?? center.worldX,
+          options?.worldY ?? center.worldY
+        ) ?? null;
+      },
+      createBackgroundLayer: (options) => {
+        const center = viewportWorldCenter();
+        return model.widgetActions.addBackgroundLayerAtCursor(
+          options?.worldX ?? center.worldX,
+          options?.worldY ?? center.worldY
+        ) ?? null;
+      },
       clearSelection: () => handoffCanvasAuthority('selection_cleared'),
       focusWidget: (widget, options) => {
         const focusedWidget = model.navigation.focusWidget(widget, options);
@@ -299,6 +350,9 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       },
       findWidgetByType: (type) => model.queries.findWidgetByType(type),
       findWidgetById: (widgetId) => model.queries.findWidgetById(widgetId),
+      findStickyNoteById: (noteId) => model.queries.findStickyNoteById(noteId),
+      findAnnotationById: (annotationId) => model.queries.findAnnotationById(annotationId),
+      findBackgroundLayerById: (layerId) => model.queries.findBackgroundLayerById(layerId),
       updateWidgetTitle: (widgetId, title) => {
         const normalizedWidgetId = String(widgetId ?? '').trim();
         const normalizedTitle = String(title ?? '').trim();
@@ -315,6 +369,15 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           ),
         }));
       },
+      updateStickyNote: (noteId, patch) => model.widgetActions.updateStickyNote(noteId, patch),
+      updateTextAnnotation: (annotationId, patch) =>
+        model.widgetActions.updateTextAnnotation(annotationId, patch),
+      updateBackgroundLayer: (layerId, patch) =>
+        model.widgetActions.updateBackgroundLayer(layerId, patch),
+      deleteStickyNote: (noteId) => model.widgetActions.deleteStickyNote(noteId),
+      deleteAnnotation: (annotationId) => model.widgetActions.deleteAnnotation(annotationId),
+      deleteBackgroundLayer: (layerId) =>
+        model.widgetActions.deleteBackgroundLayer(layerId),
     });
 
     onCleanup(() => {

@@ -402,6 +402,7 @@ Use the shared `workbench` exports when the host app needs custom widgets but sh
 ```tsx
 import type {
   WorkbenchSurfaceApi,
+  WorkbenchTextAnnotationDefaults,
   WorkbenchWidgetDefinition,
 } from '@floegence/floe-webapp-core/workbench';
 
@@ -418,12 +419,19 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
 ];
 
 let workbenchApi: WorkbenchSurfaceApi | undefined;
+const textAnnotationDefaults: WorkbenchTextAnnotationDefaults = {
+  font_family: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  font_size: 45,
+  font_weight: 800,
+  width: 460,
+};
 
 <WorkbenchSurface
   state={state}
   setState={setState}
   widgetDefinitions={widgetDefinitions}
   launcherWidgetTypes={['ops.logs']}
+  textAnnotationDefaults={textAnnotationDefaults}
   interactionAdapter={appWorkbenchInteractionAdapter}
   onApiReady={(api) => {
     workbenchApi = api;
@@ -445,12 +453,24 @@ workbenchApi?.clearSelection();
 // Create a new widget instance at a specific world-space location.
 workbenchApi?.createWidget('ops.logs', { worldX: 480, worldY: 220 });
 
+// Create layered canvas objects without reaching into the internal model.
+const createdText = workbenchApi?.createTextAnnotation({ worldX: 520, worldY: 260 });
+const createdRegion = workbenchApi?.createBackgroundLayer({ worldX: 520, worldY: 260 });
+const createdSticky = workbenchApi?.createStickyNote({ worldX: 520, worldY: 260 });
+
 // Resolve/update multi-instance widgets without forking the surface shell.
 const logsWidget = workbenchApi?.findWidgetById('widget-logs-1');
 workbenchApi?.updateWidgetTitle('widget-logs-1', 'Errors');
+
+// Resolve and update layered objects through the same public surface API.
+workbenchApi?.updateTextAnnotation(createdText?.id ?? '', { text: 'Release note ✨' });
+workbenchApi?.updateBackgroundLayer(createdRegion?.id ?? '', { material: 'dotted' });
+workbenchApi?.updateStickyNote(createdSticky?.id ?? '', { body: 'Follow up with runtime' });
 ```
 
 `launcherWidgetTypes` lets a product hide programmatic widget types from the dock/context-menu create affordances, while `interactionAdapter` is the thin extension point for product-specific wheel/focus/hotkey ownership without forking the shared canvas/widget/surface stack.
+
+`WorkbenchSurfaceApi` is also the integration boundary for layered canvas objects: `createStickyNote(...)`, `createTextAnnotation(...)`, and `createBackgroundLayer(...)` create work-layer notes, annotation text, and background regions at world-space coordinates; the matching `find*`, `update*`, and `delete*` methods let a host sync persistence, command palette actions, or external shortcuts without importing the internal workbench model. `WorkbenchOverlay` forwards the same widget, adapter, defaults, and API props as `WorkbenchSurface`, so transient overlay usage and page-mode usage stay on one contract.
 
 Singleton widget definitions now also get truthful launcher verbs automatically. A `singleton: true` widget appears as `Add <label>` only when no instance exists yet; once it exists, the canvas context menu changes to `Go to <label>` and reuses the same shared focus/centering contract that backs `focusWidget(...)`.
 

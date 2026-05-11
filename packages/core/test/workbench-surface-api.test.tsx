@@ -108,4 +108,138 @@ describe('WorkbenchSurface api', () => {
     ) as HTMLElement | null;
     expect(widgetRoot).toBeTruthy();
   });
+
+  it('applies text annotation defaults when creating text through the surface api', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+    let readState: () => WorkbenchState = () => createDefaultWorkbenchState(widgetDefinitions);
+
+    render(() => {
+      const [state, setState] = createSignal(createDefaultWorkbenchState(widgetDefinitions));
+      readState = state;
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={widgetDefinitions}
+          textAnnotationDefaults={{
+            font_family: 'ui-sans-serif',
+            font_size: 45,
+            font_weight: 800,
+            width: 460,
+            height: 108,
+          }}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await Promise.resolve();
+    const annotation = surfaceApi!.createTextAnnotation({
+      worldX: 600,
+      worldY: 320,
+    });
+    await Promise.resolve();
+
+    expect(annotation).toMatchObject({
+      kind: 'text',
+      font_family: 'ui-sans-serif',
+      font_size: 45,
+      font_weight: 800,
+      width: 460,
+      height: 108,
+      x: 370,
+      y: 266,
+    });
+    const storedAnnotation = readState().annotations?.find((item) => item.id === annotation!.id);
+    expect(storedAnnotation).toMatchObject({
+      id: annotation!.id,
+      width: 460,
+      height: 108,
+    });
+
+    surfaceApi!.updateTextAnnotation(annotation!.id, {
+      text: 'Ship layered canvas ✨',
+      color: '#64748b',
+    });
+    await Promise.resolve();
+
+    expect(surfaceApi!.findAnnotationById(annotation!.id)).toMatchObject({
+      text: 'Ship layered canvas ✨',
+      color: '#64748b',
+    });
+  });
+
+  it('exposes sticky note and background layer helpers for downstream hosts', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+    let readState: () => WorkbenchState = () => createDefaultWorkbenchState(widgetDefinitions);
+
+    render(() => {
+      const [state, setState] = createSignal(createDefaultWorkbenchState(widgetDefinitions));
+      readState = state;
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={widgetDefinitions}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await Promise.resolve();
+
+    const sticky = surfaceApi!.createStickyNote({ worldX: 300, worldY: 240 });
+    const region = surfaceApi!.createBackgroundLayer({ worldX: 640, worldY: 360 });
+    await Promise.resolve();
+
+    expect(sticky).toMatchObject({
+      kind: 'sticky_note',
+      x: 170,
+      y: 148,
+    });
+    expect(region).toMatchObject({
+      name: 'Focus area',
+      x: 360,
+      y: 180,
+    });
+
+    surfaceApi!.updateStickyNote(sticky!.id, { body: 'Runtime integration note', color: 'sage' });
+    surfaceApi!.updateBackgroundLayer(region!.id, {
+      fill: '#8fa1aa',
+      material: 'grid',
+      opacity: 0.5,
+    });
+    await Promise.resolve();
+
+    expect(surfaceApi!.findStickyNoteById(sticky!.id)).toMatchObject({
+      body: 'Runtime integration note',
+      color: 'sage',
+    });
+    expect(surfaceApi!.findBackgroundLayerById(region!.id)).toMatchObject({
+      fill: '#8fa1aa',
+      material: 'grid',
+      opacity: 0.5,
+    });
+
+    surfaceApi!.deleteStickyNote(sticky!.id);
+    surfaceApi!.deleteBackgroundLayer(region!.id);
+    await Promise.resolve();
+
+    expect(surfaceApi!.findStickyNoteById(sticky!.id)).toBeNull();
+    expect(surfaceApi!.findBackgroundLayerById(region!.id)).toBeNull();
+    expect(readState().stickyNotes?.some((item) => item.id === sticky!.id)).toBe(false);
+    expect(readState().backgroundLayers?.some((item) => item.id === region!.id)).toBe(false);
+  });
 });

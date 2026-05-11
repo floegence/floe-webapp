@@ -38,6 +38,7 @@ function createWorkbenchState(selectedWidgetId: string | null): WorkbenchState {
     locked: false,
     filters: createWorkbenchFilterState(definitions),
     selectedWidgetId,
+    selectedObject: selectedWidgetId ? { kind: 'widget', id: selectedWidgetId } : null,
   };
 }
 

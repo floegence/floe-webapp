@@ -51,6 +51,43 @@ export type WorkbenchTextFontOption = typeof WORKBENCH_TEXT_FONT_OPTIONS[number]
 
 export const WORKBENCH_DEFAULT_TEXT_FONT = WORKBENCH_TEXT_FONT_OPTIONS[0];
 
+export const WORKBENCH_TEXT_EMOJI_OPTIONS = [
+  '✨',
+  '✅',
+  '⚠️',
+  '🔥',
+  '💡',
+  '🚀',
+  '🎯',
+  '📌',
+  '🧭',
+  '🧪',
+  '🛠️',
+  '📝',
+  '👀',
+  '🔎',
+  '💬',
+  '❓',
+  '❗',
+  '⭐',
+  '❤️',
+  '🔒',
+  '🔗',
+  '📎',
+  '📅',
+  '⏱️',
+  '📊',
+  '📈',
+  '🏁',
+  '🔖',
+  '🧩',
+  '⚙️',
+  '🚧',
+  '🧯',
+  '📦',
+  '🎉',
+] as const;
+
 export function resolveWorkbenchTextFontOption(
   fontFamily: unknown,
 ): WorkbenchTextFontOption {

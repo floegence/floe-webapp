@@ -5,7 +5,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FloeProvider } from '@floegence/floe-webapp-core/app';
 import { WORKBENCH_THEMES, sanitizeWorkbenchState } from '@floegence/floe-webapp-core/workbench';
-import { WorkbenchDemoProvider, useWorkbenchDemo } from './WorkbenchDemoContext';
+import {
+  DEMO_WORKBENCH_TEXT_DEFAULTS,
+  DEMO_WORKBENCH_TEXT_FONT,
+  WorkbenchDemoProvider,
+  normalizeWorkbenchDemoState,
+  useWorkbenchDemo,
+} from './WorkbenchDemoContext';
 
 const WORKBENCH_PAGE_SOURCE = resolve(__dirname, 'WorkbenchPage.tsx');
 const WORKBENCH_WIDGET_SOURCE = resolve(
@@ -34,6 +40,7 @@ function DemoProviders(props: { children: JSX.Element }) {
 function StateProbe() {
   const demo = useWorkbenchDemo();
   const state = demo.state();
+  const seedText = (state.annotations ?? []).find((annotation) => annotation.id === 'wb-seed-text-1');
 
   return (
     <div>
@@ -44,6 +51,8 @@ function StateProbe() {
         state.locked ? 'locked' : 'unlocked',
         Object.values(state.filters).every(Boolean) ? 'all-on' : 'mixed',
         state.viewport.scale.toFixed(2),
+        seedText?.font_size ?? -1,
+        seedText?.font_family === DEMO_WORKBENCH_TEXT_FONT.fontFamily ? 'demo-sans' : 'other-font',
       ].join('|')}
     </div>
   );
@@ -86,11 +95,72 @@ function AddWidgetProbe() {
 
 describe('demo workbench shared adapter', () => {
   it('seeds sensible default state from sanitizeWorkbenchState', () => {
-    const seed = sanitizeWorkbenchState(undefined);
+    const seed = normalizeWorkbenchDemoState(sanitizeWorkbenchState(undefined));
+    const seedText = (seed.annotations ?? []).find((annotation) => annotation.id === 'wb-seed-text-1');
+
     expect(seed.version).toBe(1);
     expect(seed.widgets.length).toBeGreaterThan(0);
     expect(seed.locked).toBe(false);
     expect(Object.values(seed.filters).every(Boolean)).toBe(true);
+    expect(seedText).toMatchObject(DEMO_WORKBENCH_TEXT_DEFAULTS);
+    expect(seedText?.width).toBeGreaterThanOrEqual(460);
+  });
+
+  it('migrates the built-in demo text sample without changing user text annotations', () => {
+    const oldState = sanitizeWorkbenchState(undefined);
+    const migrated = normalizeWorkbenchDemoState({
+      ...oldState,
+      annotations: [
+        {
+          ...(oldState.annotations ?? [])[0]!,
+          font_size: 34,
+          width: 320,
+        },
+        {
+          ...(oldState.annotations ?? [])[0]!,
+          id: 'user-text-1',
+          font_size: 28,
+        },
+      ],
+    });
+
+    expect(migrated.annotations?.[0]).toMatchObject(DEMO_WORKBENCH_TEXT_DEFAULTS);
+    expect(migrated.annotations?.[0]?.width).toBe(460);
+    expect(migrated.annotations?.[1]?.font_size).toBe(28);
+  });
+
+  it('widens the previous demo text sample when it has not been user-edited', () => {
+    const oldState = sanitizeWorkbenchState(undefined);
+    const migrated = normalizeWorkbenchDemoState({
+      ...oldState,
+      annotations: [
+        {
+          ...(oldState.annotations ?? [])[0]!,
+          ...DEMO_WORKBENCH_TEXT_DEFAULTS,
+          width: 390,
+        },
+      ],
+    });
+
+    expect(migrated.annotations?.[0]?.width).toBe(460);
+    expect(migrated.annotations?.[0]?.height).toBe(108);
+  });
+
+  it('keeps later edits to the demo text sample user-controlled', () => {
+    const oldState = sanitizeWorkbenchState(undefined);
+    const migrated = normalizeWorkbenchDemoState({
+      ...oldState,
+      annotations: [
+        {
+          ...(oldState.annotations ?? [])[0]!,
+          ...DEMO_WORKBENCH_TEXT_DEFAULTS,
+          updated_at_unix_ms: (oldState.annotations ?? [])[0]!.updated_at_unix_ms + 1,
+          font_size: 52,
+        },
+      ],
+    });
+
+    expect(migrated.annotations?.[0]?.font_size).toBe(52);
   });
 
   it('keeps the five demo theme directions available in the selector', () => {
@@ -158,7 +228,7 @@ describe('demo workbench shared adapter', () => {
       </DemoProviders>
     ));
 
-    expect(html).toContain('1|5|terminal|unlocked|all-on|1.00');
+    expect(html).toContain('1|5|terminal|unlocked|all-on|1.00|45|demo-sans');
   });
 
   it('allows programmatic state updates through the demo store', () => {
@@ -177,7 +247,9 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain(
       "import { WorkbenchSurface } from '@floegence/floe-webapp-core/workbench';"
     );
-    expect(source).toContain("import { useWorkbenchDemo } from './WorkbenchDemoContext';");
+    expect(source).toContain('useWorkbenchDemo');
+    expect(source).toContain('DEMO_WORKBENCH_TEXT_DEFAULTS');
+    expect(source).toContain('textAnnotationDefaults={DEMO_WORKBENCH_TEXT_DEFAULTS}');
     expect(source).toContain('<WorkbenchSurface');
     // Display-mode page must not use a Portal: it lives inline inside
     // DisplayModePageShell, not pop up over arbitrary content.

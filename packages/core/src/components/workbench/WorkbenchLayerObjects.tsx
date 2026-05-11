@@ -20,6 +20,7 @@ import {
   WORKBENCH_REGION_FILL_OPTIONS,
   WORKBENCH_STICKY_NOTE_COLORS,
   WORKBENCH_TEXT_COLOR_OPTIONS,
+  WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from './workbenchOptions';
 import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
@@ -80,6 +81,34 @@ const STICKY_COLOR_CLASS: Record<WorkbenchStickyNoteColor, string> = {
   graphite: 'is-graphite',
 };
 
+export interface WorkbenchTextEditorHandle {
+  focus: () => void;
+  insertTextAtSelection: (text: string) => void;
+  readText: () => string;
+}
+
+export interface WorkbenchTextEditorRegistry {
+  register: (annotationId: string, handle: WorkbenchTextEditorHandle) => () => void;
+  get: (annotationId: string) => WorkbenchTextEditorHandle | undefined;
+}
+
+export function createWorkbenchTextEditorRegistry(): WorkbenchTextEditorRegistry {
+  const handles = new Map<string, WorkbenchTextEditorHandle>();
+  return {
+    register(annotationId, handle) {
+      handles.set(annotationId, handle);
+      return () => {
+        if (handles.get(annotationId) === handle) {
+          handles.delete(annotationId);
+        }
+      };
+    },
+    get(annotationId) {
+      return handles.get(annotationId);
+    },
+  };
+}
+
 function sortByLayer<T extends { id: string; z_index: number; created_at_unix_ms: number }>(
   items: readonly T[],
 ): T[] {
@@ -99,6 +128,41 @@ function createItemMap<T extends { id: string }>(items: readonly T[]): Map<strin
 function nextValue<T>(values: readonly T[], current: T): T {
   const index = values.findIndex((value) => value === current);
   return values[(index + 1) % values.length] ?? values[0]!;
+}
+
+function useLayerPopoverDismiss(
+  open: Accessor<boolean>,
+  root: Accessor<HTMLElement | undefined>,
+  close: () => void,
+): void {
+  createEffect(() => {
+    if (!open()) return;
+    if (typeof document === 'undefined') return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const rootElement = root();
+      if (rootElement && event.target instanceof Node && rootElement.contains(event.target)) {
+        return;
+      }
+      close();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    });
+  });
+}
+
+function selectionBelongsToNode(selection: Selection | null, node: Node): selection is Selection {
+  if (!selection || selection.rangeCount <= 0) return false;
+  const ancestor = selection.getRangeAt(0).commonAncestorContainer;
+  return ancestor === node || node.contains(ancestor);
 }
 
 function usePlainTextEditor(args: {
@@ -147,10 +211,36 @@ function usePlainTextEditor(args: {
     commitCurrentText(event.currentTarget);
     setIsComposing(false);
   };
+  const focus = () => element()?.focus();
+  const insertTextAtSelection = (text: string): void => {
+    const node = element();
+    if (!node) return;
+    node.focus();
+    const selection = document.getSelection();
+    const ownsSelection = selectionBelongsToNode(selection, node);
+    const range = ownsSelection && selection
+      ? selection.getRangeAt(0)
+      : document.createRange();
+    if (!ownsSelection) {
+      range.selectNodeContents(node);
+      range.collapse(false);
+    }
+
+    range.deleteContents();
+    const textNode = document.createTextNode(text);
+    range.insertNode(textNode);
+    range.setStartAfter(textNode);
+    range.collapse(true);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    commitCurrentText(node);
+  };
 
   return {
     bind,
     readText,
+    focus,
+    insertTextAtSelection,
     handleFocus,
     handleBlur,
     handleInput,
@@ -639,6 +729,7 @@ export function WorkbenchTextAnnotation(props: {
   viewportScale: number;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
   onSelect: (annotationId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchAnnotationItem) => void;
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
@@ -650,6 +741,16 @@ export function WorkbenchTextAnnotation(props: {
   const textEditor = usePlainTextEditor({
     value: () => props.item.text,
     onCommit: (text) => props.onUpdate(props.item.id, { text }),
+  });
+  createEffect(() => {
+    const registry = props.textEditorRegistry;
+    if (!registry) return;
+    const unregister = registry.register(props.item.id, {
+      focus: textEditor.focus,
+      insertTextAtSelection: textEditor.insertTextAtSelection,
+      readText: textEditor.readText,
+    });
+    onCleanup(unregister);
   });
   const drag = useLayerDrag({
     viewportScale: () => props.viewportScale,
@@ -835,6 +936,7 @@ function WorkbenchTextAnnotationControls(props: {
   viewportScale: number;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
   onCommitResize: (annotationId: string, size: { width: number; height: number }) => void;
   onUpdate: (
@@ -845,8 +947,10 @@ function WorkbenchTextAnnotationControls(props: {
 }) {
   let sizeInputEl: HTMLInputElement | undefined;
   let fontPickerEl: HTMLDivElement | undefined;
-  const [fontSizeDraft, setFontSizeDraft] = createSignal(String(props.item.font_size));
+  let emojiPickerEl: HTMLDivElement | undefined;
+  const [fontSizeDraft, setFontSizeDraft] = createSignal('');
   const [fontPickerOpen, setFontPickerOpen] = createSignal(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = createSignal(false);
   const activeFont = createMemo(() =>
     WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === props.item.font_family)
       ?? WORKBENCH_TEXT_FONT_OPTIONS[0]!
@@ -920,29 +1024,16 @@ function WorkbenchTextAnnotationControls(props: {
     setFontSizeDraft(String(props.item.font_size));
   });
 
-  createEffect(() => {
-    if (!fontPickerOpen()) return;
-    if (typeof document === 'undefined') return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (fontPickerEl && event.target instanceof Node && fontPickerEl.contains(event.target)) {
-        return;
-      }
-      setFontPickerOpen(false);
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setFontPickerOpen(false);
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown, true);
-    document.addEventListener('keydown', handleKeyDown);
-    onCleanup(() => {
-      document.removeEventListener('pointerdown', handlePointerDown, true);
-      document.removeEventListener('keydown', handleKeyDown);
-    });
-  });
+  useLayerPopoverDismiss(
+    fontPickerOpen,
+    () => fontPickerEl,
+    () => setFontPickerOpen(false),
+  );
+  useLayerPopoverDismiss(
+    emojiPickerOpen,
+    () => emojiPickerEl,
+    () => setEmojiPickerOpen(false),
+  );
 
   return (
     <div
@@ -1111,6 +1202,52 @@ function WorkbenchTextAnnotationControls(props: {
             />
           )}
         </For>
+        <div
+          ref={emojiPickerEl}
+          class="workbench-text-emoji-picker"
+          data-floe-canvas-interactive="true"
+          onPointerDown={stopLayerControlPointer}
+          onClick={stopLayerControlClick}
+        >
+          <button
+            type="button"
+            aria-label="Insert emoji"
+            aria-haspopup="menu"
+            aria-expanded={emojiPickerOpen()}
+            title="Insert emoji"
+            class="workbench-text-emoji-trigger"
+            onPointerDown={stopLayerButtonPointer}
+            onClick={(event) => {
+              stopLayerButtonClick(event);
+              setEmojiPickerOpen((open) => !open);
+            }}
+          >
+            ✨
+          </button>
+          <Show when={emojiPickerOpen()}>
+            <div class="workbench-text-emoji-popover" role="menu" aria-label="Emoji">
+              <For each={WORKBENCH_TEXT_EMOJI_OPTIONS}>
+                {(emoji) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    aria-label={`Insert emoji ${emoji}`}
+                    title={`Insert ${emoji}`}
+                    class="workbench-text-emoji-option"
+                    onPointerDown={stopLayerButtonPointer}
+                    onClick={(event) => {
+                      stopLayerButtonClick(event);
+                      props.textEditorRegistry?.get(props.item.id)?.insertTextAtSelection(emoji);
+                      setEmojiPickerOpen(false);
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                )}
+              </For>
+            </div>
+          </Show>
+        </div>
         <button
           type="button"
           class="workbench-layer-mini-button"
@@ -1346,6 +1483,7 @@ export function WorkbenchAnnotationLayerView(props: {
   filtered: boolean;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
   viewport: WorkbenchViewport;
   onSelect: (annotationId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchAnnotationItem) => void;
@@ -1377,6 +1515,7 @@ export function WorkbenchAnnotationLayerView(props: {
                   viewportScale={props.viewport.scale}
                   preview={props.preview}
                   onPreviewGeometry={props.onPreviewGeometry}
+                  textEditorRegistry={props.textEditorRegistry}
                   onSelect={props.onSelect}
                   onContextMenu={props.onContextMenu}
                   onCommitMove={props.onCommitMove}
@@ -1399,6 +1538,7 @@ export function WorkbenchLayerControlOverlayView(props: {
   viewport: WorkbenchViewport;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
   onCommitAnnotationMove: (annotationId: string, position: { x: number; y: number }) => void;
   onCommitAnnotationResize: (annotationId: string, size: { width: number; height: number }) => void;
   onUpdateTextAnnotation: (
@@ -1450,6 +1590,7 @@ export function WorkbenchLayerControlOverlayView(props: {
             viewportScale={props.viewport.scale}
             preview={props.preview}
             onPreviewGeometry={props.onPreviewGeometry}
+            textEditorRegistry={props.textEditorRegistry}
             onCommitMove={props.onCommitAnnotationMove}
             onCommitResize={props.onCommitAnnotationResize}
             onUpdate={props.onUpdateTextAnnotation}

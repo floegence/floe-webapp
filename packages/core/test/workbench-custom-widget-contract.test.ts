@@ -6,6 +6,11 @@ import {
   sanitizeWorkbenchState,
 } from '../src/components/workbench';
 import type { WorkbenchWidgetDefinition } from '../src/components/workbench';
+import {
+  WORKBENCH_BACKGROUND_REGION_FILTER_ID,
+  WORKBENCH_STICKY_FILTER_ID,
+  WORKBENCH_TEXT_FILTER_ID,
+} from '../src/components/workbench/types';
 
 const definitions: readonly WorkbenchWidgetDefinition[] = [
   {
@@ -70,8 +75,11 @@ describe('custom workbench widget contract', () => {
     expect(state.widgets[0]?.width).toBe(640);
     expect(state.widgets[0]?.height).toBe(360);
     expect(state.filters).toEqual({
+      [WORKBENCH_BACKGROUND_REGION_FILTER_ID]: true,
       'custom.logs': false,
       'custom.queue': true,
+      [WORKBENCH_STICKY_FILTER_ID]: true,
+      [WORKBENCH_TEXT_FILTER_ID]: true,
     });
     expect(createWorkbenchFilterState(definitions)).toEqual({
       'custom.logs': true,

@@ -556,6 +556,84 @@
     line-height: 1;
   }
 
+  .workbench-text-emoji-picker {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .workbench-text-emoji-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--card, #fff) 88%, transparent);
+    color: var(--foreground, #111);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      transform 140ms ease;
+  }
+
+  .workbench-text-emoji-trigger:hover,
+  .workbench-text-emoji-trigger[aria-expanded='true'] {
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 50%, transparent);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 10%, var(--card, #fff));
+  }
+
+  .workbench-text-emoji-trigger:active {
+    transform: translateY(1px);
+  }
+
+  .workbench-text-emoji-popover {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 7px);
+    display: grid;
+    grid-template-columns: repeat(6, 28px);
+    gap: 4px;
+    padding: 6px;
+    border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 78%, transparent);
+    background: color-mix(in srgb, var(--popover, var(--card, #fff)) 96%, transparent);
+    box-shadow:
+      0 16px 34px -18px color-mix(in srgb, var(--foreground, #000) 34%, transparent),
+      0 1px 0 color-mix(in srgb, white 50%, transparent) inset;
+    z-index: 30;
+  }
+
+  .workbench-text-emoji-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      background-color 120ms ease,
+      border-color 120ms ease,
+      transform 120ms ease;
+  }
+
+  .workbench-text-emoji-option:hover {
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 34%, transparent);
+    background: color-mix(in srgb, var(--primary, #3b82f6) 10%, transparent);
+    transform: translateY(-1px);
+  }
+
   .workbench-text-size-stepper__button {
     display: inline-flex;
     align-items: center;

@@ -1,6 +1,9 @@
 import type { Component } from 'solid-js';
 import { WorkbenchSurface } from '@floegence/floe-webapp-core/workbench';
-import { useWorkbenchDemo } from './WorkbenchDemoContext';
+import {
+  DEMO_WORKBENCH_TEXT_DEFAULTS,
+  useWorkbenchDemo,
+} from './WorkbenchDemoContext';
 
 /**
  * Workbench display-mode page.
@@ -10,5 +13,11 @@ import { useWorkbenchDemo } from './WorkbenchDemoContext';
  */
 export const WorkbenchPage: Component = () => {
   const demo = useWorkbenchDemo();
-  return <WorkbenchSurface state={demo.state} setState={demo.setState} />;
+  return (
+    <WorkbenchSurface
+      state={demo.state}
+      setState={demo.setState}
+      textAnnotationDefaults={DEMO_WORKBENCH_TEXT_DEFAULTS}
+    />
+  );
 };

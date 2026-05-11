@@ -25,6 +25,7 @@ import {
   WorkbenchBackgroundLayerView,
   WorkbenchLayerControlOverlayView,
   WorkbenchStickyNote,
+  createWorkbenchTextEditorRegistry,
   type WorkbenchLayerGeometryPreview,
 } from './WorkbenchLayerObjects';
 
@@ -203,6 +204,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
   const stickyNoteById = createMemo(
     () => new Map((props.stickyNotes ?? []).map((item) => [item.id, item] as const))
   );
+  const textEditorRegistry = createWorkbenchTextEditorRegistry();
   const renderLayers = createMemo(() =>
     createWorkbenchRenderLayerMap([...props.widgets, ...(props.stickyNotes ?? [])])
   );
@@ -237,6 +239,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
         filtered={props.filters[WORKBENCH_TEXT_FILTER_ID] === false}
         preview={layerGeometryPreview()}
         onPreviewGeometry={setLayerGeometryPreview}
+        textEditorRegistry={textEditorRegistry}
         viewport={props.viewport}
         onSelect={(annotationId) => props.onSelectAnnotation?.(annotationId)}
         onContextMenu={(event, item) => props.onAnnotationContextMenu?.(event, item)}
@@ -309,6 +312,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
         viewport={props.viewport}
         preview={layerGeometryPreview()}
         onPreviewGeometry={setLayerGeometryPreview}
+        textEditorRegistry={textEditorRegistry}
         onCommitAnnotationMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
         onCommitAnnotationResize={(annotationId, size) => props.onCommitAnnotationResize?.(annotationId, size)}
         onUpdateTextAnnotation={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
