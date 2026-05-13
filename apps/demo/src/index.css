@@ -5,3 +5,6 @@
 
 /* Floe core provides a Tailwind entry that scans core dist + injects tokens/utilities. */
 @import '@floegence/floe-webapp-core/tailwind';
+
+/* Demo-only component styles belong to the demo app entry in both dev and production builds. */
+@import './demo/workbench/workbench-demo.css';

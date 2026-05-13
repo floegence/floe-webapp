@@ -29,6 +29,7 @@ const WORKBENCH_THEME_STYLE_SOURCE = resolve(
   __dirname,
   '../../../../../packages/core/src/components/workbench/workbench-themes.css'
 );
+const DEMO_INDEX_STYLE_SOURCE = resolve(__dirname, '../../index.css');
 const DEMO_VITE_CONFIG_SOURCE = resolve(__dirname, '../../../vite.config.ts');
 const DEMO_WORKSPACE_TAILWIND_SOURCE = resolve(__dirname, '../../core-workspace-tailwind.css');
 const ROOT_VITEST_CONFIG_SOURCE = resolve(__dirname, '../../../../../vitest.config.ts');
@@ -359,7 +360,16 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain("replacement: resolve(__dirname, 'packages/core/src/file-browser.ts')");
   });
 
-  it('loads page-mode and workbench styles in workspace dev mode', () => {
+  it('loads demo workbench styles from the production app CSS entry', () => {
+    const indexSource = readFileSync(DEMO_INDEX_STYLE_SOURCE, 'utf-8');
+    const workspaceSource = readFileSync(DEMO_WORKSPACE_TAILWIND_SOURCE, 'utf-8');
+
+    expect(indexSource).toContain("@import '@floegence/floe-webapp-core/tailwind';");
+    expect(indexSource).toContain("@import './demo/workbench/workbench-demo.css';");
+    expect(workspaceSource).not.toContain("@import './demo/workbench/workbench-demo.css';");
+  });
+
+  it('loads page-mode and workbench core styles in workspace dev mode', () => {
     const source = readFileSync(DEMO_WORKSPACE_TAILWIND_SOURCE, 'utf-8');
 
     expect(source).toContain(
@@ -368,6 +378,5 @@ describe('demo workbench shared adapter', () => {
     expect(source).toContain(
       "@import '../../../packages/core/src/components/workbench/workbench.css';"
     );
-    expect(source).toContain("@import './demo/workbench/workbench-demo.css';");
   });
 });
