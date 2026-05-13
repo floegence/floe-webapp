@@ -16,6 +16,7 @@ import {
   type WorkbenchTextAnnotationPatch,
   type WorkbenchViewport,
   type WorkbenchWidgetDefinition,
+  type WorkbenchWidgetMotionIntent,
 } from './types';
 import { createWorkbenchRenderLayerMap } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
@@ -48,6 +49,7 @@ export interface WorkbenchCanvasFieldProps {
   viewportScale: number;
   locked: boolean;
   filters: Record<string, boolean>;
+  widgetMotionById?: Record<string, WorkbenchWidgetMotionIntent | null | undefined>;
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelectWidget: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
@@ -122,6 +124,7 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       itemSnapshot={item}
       selected={props.selectedWidgetId === props.widgetId}
       optimisticFront={props.optimisticFrontWidgetId === props.widgetId}
+      motion={props.widgetMotionById?.[props.widgetId] ?? null}
       topRenderLayer={props.renderLayers().topRenderLayer}
       viewportScale={props.viewportScale}
       locked={props.locked}
@@ -287,6 +290,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               viewportScale={props.viewportScale}
               locked={workLocked()}
               filters={props.filters}
+              widgetMotionById={props.widgetMotionById}
               interactionAdapter={interactionAdapter()}
               onSelectWidget={props.onSelectWidget}
               onWidgetContextMenu={props.onWidgetContextMenu}

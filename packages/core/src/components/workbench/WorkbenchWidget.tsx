@@ -31,6 +31,7 @@ import type {
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetLifecycle,
   WorkbenchWidgetItem,
+  WorkbenchWidgetMotionIntent,
   WorkbenchWidgetRenderMode,
   WorkbenchWidgetSurfaceMetrics,
   WorkbenchWidgetType,
@@ -94,6 +95,7 @@ export interface WorkbenchWidgetProps {
   itemSnapshot: () => WorkbenchWidgetItem;
   selected: boolean;
   optimisticFront: boolean;
+  motion?: WorkbenchWidgetMotionIntent | null;
   topRenderLayer: number;
   viewportScale: number;
   locked: boolean;
@@ -126,6 +128,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const itemSnapshot = createOwnerSafePropAccessor(() => props.itemSnapshot);
   const renderLayer = createOwnerSafePropAccessor(() => props.renderLayer);
   const optimisticFront = createOwnerSafePropAccessor(() => props.optimisticFront);
+  const motion = createOwnerSafePropAccessor(() => props.motion ?? null);
   const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
   const viewport = createOwnerSafePropAccessor(() => props.viewport);
   const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
@@ -564,6 +567,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       transform: `translate(${livePosition().x}px, ${livePosition().y}px)`,
     };
   });
+  const enterMotionActive = createMemo(() => motion()?.phase === 'enter');
 
   createEffect(() => {
     if (!projectedSharpEligible()) {
@@ -759,6 +763,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
         'is-filtered-out': filtered(),
         'is-projected-surface': layoutMode() === 'projected_surface',
         'is-locked': locked(),
+        'is-entering': enterMotionActive(),
       }}
       {...{ [interactionAdapter().dialogSurfaceHostAttr]: 'true' }}
       data-floe-workbench-widget-id={widgetId()}
@@ -766,6 +771,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       {...{ [interactionAdapter().widgetIdAttr]: widgetId() }}
       data-workbench-widget-type={widgetType()}
       data-floe-workbench-render-mode={layoutMode()}
+      data-workbench-widget-motion={enterMotionActive() ? 'enter' : undefined}
       {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: selected() ? 'true' : undefined }}
       tabIndex={0}
       onPointerDown={handlePointerDown}
@@ -889,6 +895,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
                 surfaceMetrics={surfaceMetrics}
                 activation={bodyActivation()}
                 lifecycle={lifecycle()}
+                motion={motion()}
                 selected={selected()}
                 filtered={filtered()}
                 requestActivate={requestActivate}

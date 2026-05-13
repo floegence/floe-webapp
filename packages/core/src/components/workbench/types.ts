@@ -120,6 +120,14 @@ export interface WorkbenchWidgetBodyActivation {
 
 export type WorkbenchWidgetLifecycle = 'hot' | 'warm' | 'cold';
 
+export type WorkbenchWidgetMotionPhase = 'enter';
+
+export interface WorkbenchWidgetMotionIntent {
+  widgetId: string;
+  phase: WorkbenchWidgetMotionPhase;
+  reason?: string;
+}
+
 export interface WorkbenchWidgetBodyProps<TWidgetType extends string = WorkbenchWidgetType> {
   widgetId: string;
   title: string;
@@ -127,6 +135,7 @@ export interface WorkbenchWidgetBodyProps<TWidgetType extends string = Workbench
   surfaceMetrics?: Accessor<WorkbenchWidgetSurfaceMetrics | undefined>;
   activation?: WorkbenchWidgetBodyActivation;
   lifecycle?: WorkbenchWidgetLifecycle;
+  motion?: WorkbenchWidgetMotionIntent | null;
   selected?: boolean;
   filtered?: boolean;
   requestActivate?: () => void;

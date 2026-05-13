@@ -270,12 +270,64 @@ function renderProjectedInteractionHarness(
   };
 }
 
+function renderWidgetEnterMotionHarness(host: HTMLElement) {
+  const widgetDefinitions = [filesWidgetDefinition] satisfies readonly WorkbenchWidgetDefinition[];
+  const filters = createWorkbenchFilterState(widgetDefinitions);
+  const [widgets, setWidgets] = createSignal<WorkbenchWidgetItem<typeof FILES_WIDGET_TYPE>[]>([
+    createWidgetSnapshot(),
+  ]);
+
+  const dispose = render(() => (
+    <WorkbenchCanvas
+      widgetDefinitions={widgetDefinitions}
+      widgets={widgets()}
+      viewport={{ x: 0, y: 0, scale: 1 }}
+      canvasFrameSize={{ width: 900, height: 640 }}
+      selectedWidgetId={null}
+      optimisticFrontWidgetId={null}
+      locked={false}
+      filters={filters}
+      setCanvasFrameRef={(element) => {
+        if (element) mockCanvasFrameRect(element);
+      }}
+      onViewportCommit={() => {}}
+      onCanvasContextMenu={() => {}}
+      onSelectWidget={() => {}}
+      onWidgetContextMenu={() => {}}
+      onStartOptimisticFront={() => {}}
+      onCommitFront={() => {}}
+      onCommitMove={() => {}}
+      onCommitResize={() => {}}
+      onRequestOverview={() => {}}
+      onRequestFit={() => {}}
+      onRequestDelete={() => {}}
+    />
+  ), host);
+
+  return {
+    dispose,
+    addWidget: () => {
+      setWidgets((current) => [
+        ...current,
+        {
+          ...createWidgetSnapshot(),
+          id: 'widget-files-2',
+          title: 'Files 2',
+          x: 520,
+          created_at_unix_ms: 2,
+        },
+      ]);
+    },
+  };
+}
+
 describe('WorkbenchWidget interaction ownership', () => {
   let dispose: (() => void) | undefined;
 
   afterEach(() => {
     dispose?.();
     dispose = undefined;
+    vi.useRealTimers();
     vi.restoreAllMocks();
     document.body.innerHTML = '';
   });
@@ -339,6 +391,36 @@ describe('WorkbenchWidget interaction ownership', () => {
     await Promise.resolve();
 
     expect(document.activeElement).toBe(widgetRoot);
+  });
+
+  it('applies a short enter motion only to widgets added after initial hydration', async () => {
+    vi.useFakeTimers();
+
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const harness = renderWidgetEnterMotionHarness(host);
+    dispose = harness.dispose;
+    await Promise.resolve();
+
+    const initialWidget = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    expect(initialWidget).toBeTruthy();
+    expect(initialWidget?.getAttribute('data-workbench-widget-motion')).toBeNull();
+    expect(initialWidget?.classList.contains('is-entering')).toBe(false);
+
+    harness.addWidget();
+    await Promise.resolve();
+
+    const addedWidget = host.querySelector('[data-floe-workbench-widget-id="widget-files-2"]') as HTMLElement | null;
+    expect(addedWidget).toBeTruthy();
+    expect(addedWidget?.getAttribute('data-workbench-widget-motion')).toBe('enter');
+    expect(addedWidget?.classList.contains('is-entering')).toBe(true);
+
+    vi.advanceTimersByTime(140);
+    await Promise.resolve();
+
+    expect(addedWidget?.getAttribute('data-workbench-widget-motion')).toBeNull();
+    expect(addedWidget?.classList.contains('is-entering')).toBe(false);
   });
 
   it('opens the workbench context menu only from shell-owned zones', async () => {

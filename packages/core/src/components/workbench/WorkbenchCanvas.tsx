@@ -22,6 +22,7 @@ import {
   type WorkbenchViewport,
   type WorkbenchWidgetDefinition,
   type WorkbenchWidgetItem,
+  type WorkbenchWidgetMotionIntent,
 } from './types';
 import { WorkbenchCanvasField } from './WorkbenchCanvasField';
 import {
@@ -38,6 +39,7 @@ import {
   resolveWorkbenchModeStrategy,
   resolveWorkbenchWidgetRenderMode,
 } from './workbenchHelpers';
+import { createWorkbenchWidgetEnterMotionTracker } from './workbenchMotion';
 import { getWidgetEntry } from './widgets/widgetRegistry';
 
 export interface WorkbenchCanvasProps {
@@ -54,6 +56,7 @@ export interface WorkbenchCanvasProps {
   optimisticFrontWidgetId: string | null;
   locked: boolean;
   filters: Record<string, boolean>;
+  widgetMotionById?: Record<string, WorkbenchWidgetMotionIntent | null | undefined>;
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   setCanvasFrameRef: (el: HTMLDivElement | undefined) => void;
   onViewportCommit: (viewport: WorkbenchViewport) => void;
@@ -133,6 +136,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       itemSnapshot={item}
       selected={props.selectedWidgetId === props.widgetId}
       optimisticFront={props.optimisticFrontWidgetId === props.widgetId}
+      motion={props.widgetMotionById?.[props.widgetId] ?? null}
       topRenderLayer={props.renderLayers().topRenderLayer}
       viewportScale={props.projectedViewport().scale}
       locked={props.locked}
@@ -219,6 +223,25 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
   const interactionAdapter = createMemo(() =>
     resolveWorkbenchInteractionAdapter(props.interactionAdapter)
   );
+  const internalWidgetMotionById = createWorkbenchWidgetEnterMotionTracker(
+    () => props.widgets.map((item) => item.id),
+  );
+  const widgetMotionById = createMemo(() => {
+    const external = props.widgetMotionById;
+    if (!external) {
+      return internalWidgetMotionById();
+    }
+
+    const next: Record<string, WorkbenchWidgetMotionIntent | null | undefined> = {
+      ...internalWidgetMotionById(),
+    };
+    for (const [widgetId, motion] of Object.entries(external)) {
+      if (motion !== undefined) {
+        next[widgetId] = motion;
+      }
+    }
+    return next;
+  });
   const widgetById = createMemo(
     () => new Map(props.widgets.map((item) => [item.id, item] as const))
   );
@@ -333,6 +356,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                       canvasFrameSize={props.canvasFrameSize}
                       widgetById={widgetById}
                       renderLayers={renderLayers}
+                      widgetMotionById={widgetMotionById()}
                       selectedWidgetId={props.selectedObject?.kind === 'widget' ? props.selectedObject.id : props.selectedWidgetId}
                       optimisticFrontWidgetId={props.optimisticFrontWidgetId}
                       locked={props.locked || workLayerLocked()}
@@ -424,6 +448,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           viewportScale={props.viewport.scale}
           locked={props.locked}
           filters={props.filters}
+          widgetMotionById={widgetMotionById()}
           interactionAdapter={interactionAdapter()}
           onSelectWidget={props.onSelectWidget}
           onWidgetContextMenu={props.onWidgetContextMenu}
