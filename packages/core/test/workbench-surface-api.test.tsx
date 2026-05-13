@@ -93,6 +93,12 @@ describe('WorkbenchSurface api', () => {
 
     const [widget] = readState().widgets;
     expect(widget?.type).toBe('custom.files');
+    expect(widget).toMatchObject({
+      x: 20,
+      y: 0,
+      width: 360,
+      height: 240,
+    });
     expect(surfaceApi!.findWidgetById(widget!.id)).toMatchObject({
       id: widget!.id,
       title: 'Files',

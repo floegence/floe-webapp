@@ -61,10 +61,20 @@ describe('WorkbenchContextMenu', () => {
     expect(deleteButton?.querySelector('.workbench-context-menu__icon-svg')).toBeTruthy();
 
     dispatchPointerDown(deleteButton!);
-    deleteButton!.click();
+    deleteButton!.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      clientX: 220,
+      clientY: 260,
+      detail: 1,
+    }));
     await Promise.resolve();
 
     expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith({
+      source: 'pointer',
+      clientX: 220,
+      clientY: 260,
+    });
   });
 
   it('dismisses only when pointerdown lands outside the menu boundary', () => {

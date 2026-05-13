@@ -1,5 +1,6 @@
 import { createMemo, createSignal, onCleanup } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
+import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { ArrowUp, Copy, MessageSquare, Region, TextTool, Trash } from '../../icons';
 import {
   type WorkbenchWidgetDefinition,
@@ -43,6 +44,7 @@ import {
   createWorkbenchViewportAtScale,
   createWorkbenchViewportCenteredOnWidget,
   createWorkbenchViewportFitForWidget,
+  createWorkbenchWidgetFrame,
   estimateContextMenuHeight,
   findNearestWidget,
   normalizeWorkbenchInteractionMode,
@@ -52,12 +54,16 @@ import {
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
   WORKBENCH_WORK_MIN_SCALE,
   WORKBENCH_MAX_SCALE,
+  type WorkbenchWidgetPlacement,
 } from './workbenchHelpers';
 import {
   getWidgetEntry,
   resolveWorkbenchWidgetDefinitions,
 } from './widgets/widgetRegistry';
-import type { WorkbenchContextMenuItem } from './WorkbenchContextMenu';
+import type {
+  WorkbenchContextMenuItem,
+  WorkbenchContextMenuSelectEvent,
+} from './WorkbenchContextMenu';
 
 type WorkbenchCanvasMenuVerb = 'add' | 'go_to';
 
@@ -69,7 +75,7 @@ type WorkbenchCanvasMenuAction = Readonly<{
   label: string;
   icon: WorkbenchWidgetDefinition['icon'];
   existingWidgetId?: string;
-  onSelect: () => void;
+  onSelect: (event?: WorkbenchContextMenuSelectEvent) => void;
 }>;
 
 export interface UseWorkbenchModelOptions {
@@ -413,6 +419,28 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }
     return { kind: 'canvas', mode: mode() };
   };
+  const resolveCanvasMenuCreationPoint = (
+    menu: WorkbenchContextMenuState,
+    activation?: WorkbenchContextMenuSelectEvent,
+  ) => {
+    if (activation?.source === 'pointer') {
+      const rect = canvasFrameEl?.getBoundingClientRect();
+      const point = rect
+        ? clientToCanvasWorld(rect, viewport(), {
+          clientX: activation.clientX,
+          clientY: activation.clientY,
+        })
+        : null;
+      if (point) {
+        return point;
+      }
+    }
+
+    return {
+      worldX: menu.worldX,
+      worldY: menu.worldY,
+    };
+  };
 
   const buildCanvasContextMenuAction = (
     entry: WorkbenchWidgetDefinition,
@@ -442,8 +470,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       widgetType: entry.type,
       label: `Add ${entry.label}`,
       icon: entry.icon,
-      onSelect: () => {
-        addWidgetAtCursor(entry.type, menu.worldX, menu.worldY);
+      onSelect: (activation) => {
+        const point = resolveCanvasMenuCreationPoint(menu, activation);
+        addWidgetAtWorldCenter(entry.type, point.worldX, point.worldY);
         closeContextMenu();
       },
     };
@@ -476,7 +505,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           label: 'Duplicate',
           icon: Copy,
           onSelect: () => {
-            addWidgetCentered(widget.type, widget.x + 32, widget.y + 32);
+            addWidgetAtWorldTopLeft(widget.type, widget.x + 32, widget.y + 32);
             closeContextMenu();
           },
         });
@@ -636,8 +665,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           kind: 'action',
           label: 'Add Region',
           icon: Region,
-          onSelect: () => {
-            addBackgroundLayerAtCursor(menu.worldX, menu.worldY);
+          onSelect: (activation) => {
+            const point = resolveCanvasMenuCreationPoint(menu, activation);
+            addBackgroundLayerAtCursor(point.worldX, point.worldY);
             closeContextMenu();
           },
         },
@@ -646,8 +676,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
           kind: 'action',
           label: 'Add Text',
           icon: TextTool,
-          onSelect: () => {
-            addTextAnnotationAtCursor(menu.worldX, menu.worldY);
+          onSelect: (activation) => {
+            const point = resolveCanvasMenuCreationPoint(menu, activation);
+            addTextAnnotationAtCursor(point.worldX, point.worldY);
             closeContextMenu();
           },
         },
@@ -660,8 +691,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
         kind: 'action',
         label: 'Add Sticky',
         icon: MessageSquare,
-        onSelect: () => {
-          addStickyNoteAtCursor(menu.worldX, menu.worldY);
+        onSelect: (activation) => {
+          const point = resolveCanvasMenuCreationPoint(menu, activation);
+          addStickyNoteAtCursor(point.worldX, point.worldY);
           closeContextMenu();
         },
       },
@@ -686,22 +718,25 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   });
 
   // --- Widget CRUD ---
-  const addWidget = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
+  const addWidgetFromPlacement = (
+    type: WorkbenchWidgetType,
+    placement: WorkbenchWidgetPlacement,
+  ) => {
     const entry = getWidgetEntry(type, widgetDefinitions());
     const existing = entry.singleton ? findWidgetByType(type) : null;
     if (existing) {
       return focusWidget(existing, { centerViewport: true });
     }
 
-    const dims = entry.defaultSize;
+    const frame = createWorkbenchWidgetFrame(entry, placement);
     const newWidget: WorkbenchWidgetItem = {
       id: createWorkbenchId(),
       type,
       title: entry.defaultTitle,
-      x: worldX,
-      y: worldY,
-      width: dims.width,
-      height: dims.height,
+      x: frame.x,
+      y: frame.y,
+      width: frame.width,
+      height: frame.height,
       z_index: topZIndex() + 1,
       created_at_unix_ms: Date.now(),
     };
@@ -718,13 +753,28 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     return newWidget;
   };
 
-  const addWidgetAtCursor = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
-    const dims = getWidgetEntry(type, widgetDefinitions()).defaultSize;
-    return addWidget(type, worldX - dims.width / 2, worldY - dims.height / 2);
+  const addWidget = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
+    return addWidgetFromPlacement(type, {
+      anchor: 'top_left',
+      worldX,
+      worldY,
+    });
   };
 
-  const addWidgetCentered = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
-    return addWidget(type, worldX, worldY);
+  const addWidgetAtWorldTopLeft = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
+    return addWidgetFromPlacement(type, {
+      anchor: 'top_left',
+      worldX,
+      worldY,
+    });
+  };
+
+  const addWidgetAtWorldCenter = (type: WorkbenchWidgetType, worldX: number, worldY: number) => {
+    return addWidgetFromPlacement(type, {
+      anchor: 'center',
+      worldX,
+      worldY,
+    });
   };
 
   const deleteWidget = (widgetId: string) => {
@@ -1329,7 +1379,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }
 
     const center = viewportWorldCenter();
-    const widget = addWidgetAtCursor(
+    const widget = addWidgetAtWorldCenter(
       type,
       ensureOptions?.worldX ?? center.worldX,
       ensureOptions?.worldY ?? center.worldY
@@ -1488,8 +1538,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       deleteAnnotation,
       deleteBackgroundLayer,
       addWidget,
-      addWidgetAtCursor,
-      addWidgetCentered,
+      addWidgetAtWorldTopLeft,
+      addWidgetAtWorldCenter,
       addStickyNoteAtCursor,
       addTextAnnotationAtCursor,
       duplicateTextAnnotationFrom,

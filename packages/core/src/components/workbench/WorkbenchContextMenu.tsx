@@ -2,12 +2,18 @@ import { For, type Component } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { WORKBENCH_CONTEXT_MENU_ATTR } from './workbenchContextMenuDismiss';
 
+export type WorkbenchContextMenuSelectEvent = Readonly<{
+  source: 'pointer' | 'keyboard';
+  clientX: number;
+  clientY: number;
+}>;
+
 type WorkbenchContextMenuActionItem = Readonly<{
   id: string;
   kind: 'action';
   label: string;
   icon: Component<{ class?: string }>;
-  onSelect: () => void;
+  onSelect: (event?: WorkbenchContextMenuSelectEvent) => void;
   disabled?: boolean;
   destructive?: boolean;
 }>;
@@ -63,7 +69,13 @@ export function WorkbenchContextMenu(props: WorkbenchContextMenuProps) {
                 'workbench-context-menu__item',
                 item.destructive && 'is-destructive'
               )}
-              onClick={item.onSelect}
+              onClick={(event) => {
+                item.onSelect({
+                  source: event.detail === 0 ? 'keyboard' : 'pointer',
+                  clientX: event.clientX,
+                  clientY: event.clientY,
+                });
+              }}
               disabled={item.disabled}
             >
               <span class="workbench-context-menu__icon" aria-hidden="true">

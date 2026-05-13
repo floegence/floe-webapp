@@ -33,10 +33,13 @@ export {
   createWorkbenchRenderLayerMap,
   createWorkbenchViewportCenteredOnWidget,
   createWorkbenchViewportFitForWidget,
+  createWorkbenchWidgetFrame,
   createWorkbenchWidgetSurfaceMetrics,
   resolveWorkbenchProjectedSurfaceScaleBehavior,
   resolveWorkbenchWidgetRenderMode,
   type WorkbenchRenderLayerMap,
+  type WorkbenchWidgetFrame,
+  type WorkbenchWidgetPlacement,
 } from './workbenchHelpers';
 export {
   WORKBENCH_BACKGROUND_MATERIALS,

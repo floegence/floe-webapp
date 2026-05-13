@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createWorkbenchWidgetFrame,
   createWorkbenchProjectedRect,
   resolveWorkbenchProjectedSurfaceScaleBehavior,
   resolveWorkbenchWidgetRenderMode,
@@ -29,6 +30,38 @@ describe('workbench projected geometry helpers', () => {
       screenWidth: 600,
       screenHeight: 400,
       viewportScale: 1.25,
+    });
+  });
+
+  it('resolves widget creation frames from explicit world anchors', () => {
+    const definition: Pick<WorkbenchWidgetDefinition, 'defaultSize'> = {
+      defaultSize: { width: 640, height: 360 },
+    };
+
+    expect(
+      createWorkbenchWidgetFrame(definition, {
+        anchor: 'center',
+        worldX: 520,
+        worldY: 360,
+      }),
+    ).toEqual({
+      x: 200,
+      y: 180,
+      width: 640,
+      height: 360,
+    });
+
+    expect(
+      createWorkbenchWidgetFrame(definition, {
+        anchor: 'top_left',
+        worldX: 152,
+        worldY: 116,
+      }),
+    ).toEqual({
+      x: 152,
+      y: 116,
+      width: 640,
+      height: 360,
     });
   });
 

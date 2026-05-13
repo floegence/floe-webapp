@@ -304,7 +304,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       ensureWidget: (type, options) => model.widgetActions.ensureWidget(type, options) ?? null,
       createWidget: (type, options) => {
         const center = viewportWorldCenter();
-        const widget = model.widgetActions.addWidgetAtCursor(
+        const widget = model.widgetActions.addWidgetAtWorldCenter(
           type,
           options?.worldX ?? center.worldX,
           options?.worldY ?? center.worldY
@@ -504,7 +504,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const handleCreateAtClient = (type: WorkbenchWidgetType, clientX: number, clientY: number) => {
     const world = clientToWorld(clientX, clientY);
     if (!world) return;
-    model.widgetActions.addWidgetAtCursor(type, world.worldX, world.worldY);
+    model.widgetActions.addWidgetAtWorldCenter(type, world.worldX, world.worldY);
   };
 
   const handleCreateToolAtClient = (tool: WorkbenchDockToolId, clientX: number, clientY: number) => {

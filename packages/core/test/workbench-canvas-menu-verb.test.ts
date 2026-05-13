@@ -113,10 +113,32 @@ function openCanvasMenu(model: ReturnType<typeof useWorkbenchModel>, worldX = 48
   const event: InfiniteCanvasContextMenuEvent = {
     clientX: 16,
     clientY: 24,
+    localX: 16,
+    localY: 24,
     worldX,
     worldY,
   };
   model.canvas.openCanvasContextMenu(event);
+}
+
+function attachCanvasFrame(model: ReturnType<typeof useWorkbenchModel>, rect: DOMRectInit): HTMLDivElement {
+  const frame = document.createElement('div');
+  Object.defineProperty(frame, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      left: rect.x ?? 0,
+      top: rect.y ?? 0,
+      right: (rect.x ?? 0) + (rect.width ?? 0),
+      bottom: (rect.y ?? 0) + (rect.height ?? 0),
+      width: rect.width ?? 0,
+      height: rect.height ?? 0,
+      x: rect.x ?? 0,
+      y: rect.y ?? 0,
+      toJSON: () => undefined,
+    }),
+  });
+  model.setCanvasFrameRef(frame);
+  return frame;
 }
 
 describe('workbench canvas menu verbs', () => {
@@ -212,9 +234,59 @@ describe('workbench canvas menu verbs', () => {
       }
 
       expect(untrack(state).widgets).toHaveLength(1);
-      expect(untrack(state).widgets[0]?.type).toBe('custom.logs');
-      expect(untrack(state).selectedWidgetId).toBe(untrack(state).widgets[0]?.id ?? null);
+      const widget = untrack(state).widgets[0];
+      expect(widget?.type).toBe('custom.logs');
+      expect(widget).toMatchObject({
+        x: 200,
+        y: 180,
+        width: 640,
+        height: 360,
+      });
+      expect((widget?.x ?? 0) + (widget?.width ?? 0) / 2).toBe(520);
+      expect((widget?.y ?? 0) + (widget?.height ?? 0) / 2).toBe(360);
+      expect(untrack(state).selectedWidgetId).toBe(widget?.id ?? null);
       expect(model.contextMenu.state()).toBeNull();
+
+      dispose();
+    });
+  });
+
+  it('anchors pointer-selected Add actions at the menu click point on the canvas', () => {
+    createRoot((dispose) => {
+      const [state, setState] = createSignal({
+        ...createWorkbenchState([]),
+        viewport: { x: 120, y: 84, scale: 1 },
+      });
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+      attachCanvasFrame(model, { x: 100, y: 50, width: 1200, height: 800 });
+
+      openCanvasMenu(model, 0, 0);
+
+      const action = model.contextMenu.items().find((item) => item.kind === 'action' && item.label === 'Add Logs');
+      expect(action).toBeTruthy();
+      if (action?.kind === 'action') {
+        action.onSelect({
+          source: 'pointer',
+          clientX: 900,
+          clientY: 450,
+        });
+      }
+
+      const widget = untrack(state).widgets[0];
+      expect(widget).toMatchObject({
+        type: 'custom.logs',
+        x: 360,
+        y: 136,
+        width: 640,
+        height: 360,
+      });
+      expect((widget?.x ?? 0) + (widget?.width ?? 0) / 2).toBe(680);
+      expect((widget?.y ?? 0) + (widget?.height ?? 0) / 2).toBe(316);
 
       dispose();
     });

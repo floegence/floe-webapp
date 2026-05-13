@@ -111,6 +111,42 @@ export function createWorkbenchWidgetSurfaceMetrics(
   };
 }
 
+export type WorkbenchWidgetPlacement = Readonly<{
+  anchor: 'top_left' | 'center';
+  worldX: number;
+  worldY: number;
+}>;
+
+export type WorkbenchWidgetFrame = Readonly<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}>;
+
+export function createWorkbenchWidgetFrame(
+  definition: Pick<WorkbenchWidgetDefinition, 'defaultSize'>,
+  placement: WorkbenchWidgetPlacement,
+): WorkbenchWidgetFrame {
+  const { width, height } = definition.defaultSize;
+  switch (placement.anchor) {
+    case 'center':
+      return {
+        x: placement.worldX - width / 2,
+        y: placement.worldY - height / 2,
+        width,
+        height,
+      };
+    case 'top_left':
+      return {
+        x: placement.worldX,
+        y: placement.worldY,
+        width,
+        height,
+      };
+  }
+}
+
 export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefined): WorkbenchViewport {
   if (!viewport) return { ...DEFAULT_WORKBENCH_VIEWPORT };
   return {
