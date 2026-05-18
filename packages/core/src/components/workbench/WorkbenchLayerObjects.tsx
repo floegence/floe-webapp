@@ -804,7 +804,7 @@ export function WorkbenchStickyNote(props: {
         <div
           ref={bodyEditor.bind}
           class="workbench-sticky__body"
-          contentEditable={locked() ? false : 'true'}
+          contentEditable={locked() ? false : true}
           role="textbox"
           aria-multiline="true"
           aria-disabled={locked() ? 'true' : undefined}
