@@ -174,6 +174,7 @@ interface DockItemProps {
   icon: Component<{ class?: string }>;
   active: boolean;
   visible: boolean;
+  filterable: boolean;
   /** -1 = hovered, ±1 = adjacent (with -2 sentinel for left neighbor). */
   hoverOffset: number;
   isDragging: boolean;
@@ -215,11 +216,13 @@ function DockItem(props: DockItemProps) {
       class="workbench-dock__item"
       classList={{
         'is-active': props.active,
-        'is-filter-muted': !props.visible,
+        'is-filter-muted': props.filterable && !props.visible,
         'is-hovered': isHovered(),
         'is-source-dragging': props.isDragging,
       }}
-      aria-label={`${props.label} — click to solo, drag to canvas to create`}
+      aria-label={props.filterable
+        ? `${props.label} — click to solo, drag to canvas to create`
+        : `${props.label} — drag to canvas to create`}
       aria-pressed={props.active}
       onPointerEnter={() => props.onEnter()}
       onPointerLeave={() => props.onLeave()}
@@ -341,7 +344,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragSession = undefined;
 
     if (isClick) {
-      props.onSoloFilter(String(current.id), componentScope());
+      if (activeMode() !== 'background') {
+        props.onSoloFilter(String(current.id), componentScope());
+      }
       return;
     }
 
@@ -457,8 +462,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     ];
   });
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
-  const componentVisible = (id: string): boolean => props.filters[id] !== false;
+  const componentFilterable = (): boolean => activeMode() !== 'background';
+  const componentVisible = (id: string): boolean =>
+    !componentFilterable() || props.filters[id] !== false;
   const componentSoloed = (id: string): boolean => {
+    if (!componentFilterable()) {
+      return false;
+    }
     const scope = componentScope();
     return scope.length > 1 && scope.every((key) => (props.filters[key] !== false) === (key === id));
   };
@@ -555,6 +565,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                 icon={entry.icon}
                 active={componentSoloed(String(entry.id))}
                 visible={componentVisible(String(entry.id))}
+                filterable={componentFilterable()}
                 hoverOffset={offsetFor(slot())}
                 isDragging={entry.kind === 'widget'
                   ? draggingWidgetType() === entry.id

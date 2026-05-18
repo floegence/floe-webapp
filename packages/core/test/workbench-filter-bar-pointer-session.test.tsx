@@ -246,4 +246,43 @@ describe('WorkbenchFilterBar pointer session', () => {
       onViewportCommit.mock.calls[0]![0].x
     );
   });
+
+  it('keeps composition tools visible and does not treat plain clicks as layer filtering', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onSoloFilter = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{
+          'background-region': false,
+          text: false,
+        }}
+        mode="background"
+        onSoloFilter={onSoloFilter}
+      />
+    ), host);
+
+    const regionButton = host.querySelector(
+      'button[aria-label="Region — drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    const textButton = host.querySelector(
+      'button[aria-label="Text — drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+
+    expect(regionButton).toBeTruthy();
+    expect(textButton).toBeTruthy();
+    expect(regionButton!.classList.contains('is-filter-muted')).toBe(false);
+    expect(textButton!.classList.contains('is-filter-muted')).toBe(false);
+
+    dispatchPointerEvent('pointerdown', regionButton!, { pointerId: 31 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 31, buttons: 0 });
+    dispatchPointerEvent('pointerdown', textButton!, { pointerId: 32 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 32, buttons: 0 });
+    await Promise.resolve();
+
+    expect(onSoloFilter).not.toHaveBeenCalled();
+  });
 });
