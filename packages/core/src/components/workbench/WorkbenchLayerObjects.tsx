@@ -187,10 +187,10 @@ function usePlainTextEditor(args: {
   const [isComposing, setIsComposing] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(false);
 
-  const readText = () => element()?.textContent ?? args.value();
+  const readText = () => element()?.textContent ?? '';
   const bind = (node: HTMLDivElement) => setElement(node);
   const commitCurrentText = (node: HTMLDivElement) => {
-    const nextValue = node.textContent ?? '';
+    const nextValue = node.innerHTML ?? '';
     if (nextValue === args.value()) return;
     args.onCommit(nextValue);
   };
@@ -201,8 +201,8 @@ function usePlainTextEditor(args: {
     if (isComposing()) return;
     if (isFocused()) return;
     const nextValue = args.value();
-    if ((node.textContent ?? '') === nextValue) return;
-    node.textContent = nextValue;
+    if ((node.innerHTML ?? '') === nextValue) return;
+    node.innerHTML = nextValue;
   });
 
   const handleFocus: JSX.EventHandler<HTMLDivElement, FocusEvent> = () => {
@@ -217,6 +217,19 @@ function usePlainTextEditor(args: {
   const handleInput: JSX.EventHandler<HTMLDivElement, InputEvent> = (event) => {
     if (isComposing() || event.isComposing) return;
     commitCurrentText(event.currentTarget);
+  };
+  const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
+    if (isComposing()) return;
+    const mod = event.ctrlKey || event.metaKey;
+    if (mod && event.key === 'b') {
+      event.preventDefault();
+      document.execCommand('bold', false);
+      commitCurrentText(event.currentTarget);
+    } else if (mod && event.key === 'i') {
+      event.preventDefault();
+      document.execCommand('italic', false);
+      commitCurrentText(event.currentTarget);
+    }
   };
   const handleCompositionStart: JSX.EventHandler<HTMLDivElement, CompositionEvent> = () => {
     setIsComposing(true);
@@ -258,6 +271,7 @@ function usePlainTextEditor(args: {
     handleFocus,
     handleBlur,
     handleInput,
+    handleKeyDown,
     handleCompositionStart,
     handleCompositionEnd,
   };
@@ -790,7 +804,7 @@ export function WorkbenchStickyNote(props: {
         <div
           ref={bodyEditor.bind}
           class="workbench-sticky__body"
-          contentEditable={locked() ? false : 'plaintext-only'}
+          contentEditable={locked() ? false : 'true'}
           role="textbox"
           aria-multiline="true"
           aria-disabled={locked() ? 'true' : undefined}
@@ -807,6 +821,7 @@ export function WorkbenchStickyNote(props: {
           onFocus={bodyEditor.handleFocus}
           onBlur={bodyEditor.handleBlur}
           onInput={bodyEditor.handleInput}
+          onKeyDown={bodyEditor.handleKeyDown}
           onCompositionStart={bodyEditor.handleCompositionStart}
           onCompositionEnd={bodyEditor.handleCompositionEnd}
         />

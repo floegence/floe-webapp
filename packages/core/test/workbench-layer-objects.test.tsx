@@ -1192,7 +1192,7 @@ describe('Workbench layer objects', () => {
 
     const body = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
     expect(body).toBeTruthy();
-    expect(body!.getAttribute('contenteditable')).toBe('plaintext-only');
+    expect(body!.getAttribute('contenteditable')).toBe('true');
 
     body!.focus();
     dispatchCompositionEvent('compositionstart', body!);
