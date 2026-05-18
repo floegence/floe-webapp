@@ -3,7 +3,7 @@ import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
-import { WorkbenchDock } from './WorkbenchFilterBar';
+import { WorkbenchDock, type WorkbenchDockDragPreview } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
@@ -12,6 +12,10 @@ import {
   estimateContextMenuHeight,
   WORKBENCH_CONTEXT_MENU_WIDTH_PX,
 } from './workbenchHelpers';
+import {
+  resolveWorkbenchToolPlacementPreview,
+  resolveWorkbenchWidgetPlacementPreview,
+} from './workbenchPlacement';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
 import {
   resolveWorkbenchInteractionAdapter,
@@ -45,13 +49,15 @@ export interface WorkbenchCreateWidgetOptions extends WorkbenchCreateAtOptions {
   centerViewport?: boolean;
 }
 
-export type WorkbenchContextMenuItemsResolver = (context: Readonly<{
-  menu: WorkbenchContextMenuState;
-  items: readonly WorkbenchContextMenuItem[];
-  widgets: readonly WorkbenchWidgetItem[];
-  widget: WorkbenchWidgetItem | null;
-  closeMenu: () => void;
-}>) => readonly WorkbenchContextMenuItem[];
+export type WorkbenchContextMenuItemsResolver = (
+  context: Readonly<{
+    menu: WorkbenchContextMenuState;
+    items: readonly WorkbenchContextMenuItem[];
+    widgets: readonly WorkbenchWidgetItem[];
+    widget: WorkbenchWidgetItem | null;
+    closeMenu: () => void;
+  }>
+) => readonly WorkbenchContextMenuItem[];
 
 export interface WorkbenchSurfaceApi {
   ensureWidget: (
@@ -142,6 +148,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
 
   const model = useWorkbenchModel(modelOptions);
   const [surfaceRootEl, setSurfaceRootEl] = createSignal<HTMLDivElement | null>(null);
+  const [dockDragPreview, setDockDragPreview] = createSignal<WorkbenchDockDragPreview | null>(null);
   const interactionAdapter = createMemo<ResolvedWorkbenchInteractionAdapter>(() =>
     resolveWorkbenchInteractionAdapter(props.interactionAdapter)
   );
@@ -170,15 +177,15 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     const filteredItems = !allowed
       ? modelItems
       : modelItems.filter((item) => {
-        if (item.kind !== 'action') {
-          return true;
-        }
-        const addMatch = /^add-(.+)$/.exec(String(item.id ?? ''));
-        if (!addMatch) {
-          return true;
-        }
-        return allowed.has(addMatch[1] as WorkbenchWidgetType);
-      });
+          if (item.kind !== 'action') {
+            return true;
+          }
+          const addMatch = /^add-(.+)$/.exec(String(item.id ?? ''));
+          if (!addMatch) {
+            return true;
+          }
+          return allowed.has(addMatch[1] as WorkbenchWidgetType);
+        });
 
     if (!menu || !props.resolveContextMenuItems) {
       return filteredItems;
@@ -190,9 +197,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         : !menu.target && menu.widgetId
           ? menu.widgetId
           : null;
-    const widget = widgetTargetId
-      ? model.queries.findWidgetById(widgetTargetId)
-      : null;
+    const widget = widgetTargetId ? model.queries.findWidgetById(widgetTargetId) : null;
     return props.resolveContextMenuItems({
       menu,
       items: filteredItems,
@@ -226,7 +231,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     const widgetId = adapter.readWidgetId(widgetRoot);
     if (widgetId) {
       if (model.queries.findStickyNoteById(widgetId)) {
-        setInputOwner(adapter.createCanvasInputOwner(widgetReason === 'focus' ? 'background_focus' : 'background_pointer'));
+        setInputOwner(
+          adapter.createCanvasInputOwner(
+            widgetReason === 'focus' ? 'background_focus' : 'background_pointer'
+          )
+        );
         return;
       }
       setInputOwner(adapter.createWidgetInputOwner(widgetId, widgetReason));
@@ -240,7 +249,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   };
 
   const handoffCanvasAuthority = (
-    reason: 'background_pointer' | 'selection_cleared' = 'selection_cleared',
+    reason: 'background_pointer' | 'selection_cleared' = 'selection_cleared'
   ) => {
     const adapter = interactionAdapter();
     const root = surfaceRootEl();
@@ -259,7 +268,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
 
       const activeWidgetRoot = adapter.findWidgetRoot(activeElement);
       focusWorkbenchSurfaceRoot(root);
-      if (activeWidgetRoot && document.activeElement === activeElement && activeElement.isConnected) {
+      if (
+        activeWidgetRoot &&
+        document.activeElement === activeElement &&
+        activeElement.isConnected
+      ) {
         activeElement.blur();
       }
     });
@@ -304,11 +317,12 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       ensureWidget: (type, options) => model.widgetActions.ensureWidget(type, options) ?? null,
       createWidget: (type, options) => {
         const center = viewportWorldCenter();
-        const widget = model.widgetActions.addWidgetAtWorldCenter(
-          type,
-          options?.worldX ?? center.worldX,
-          options?.worldY ?? center.worldY
-        ) ?? null;
+        const widget =
+          model.widgetActions.addWidgetAtWorldCenter(
+            type,
+            options?.worldX ?? center.worldX,
+            options?.worldY ?? center.worldY
+          ) ?? null;
         if (widget && options?.centerViewport !== false) {
           model.navigation.centerOnWidget(widget);
         }
@@ -316,24 +330,30 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       },
       createTextAnnotation: (options) => {
         const center = viewportWorldCenter();
-        return model.widgetActions.addTextAnnotationAtCursor(
-          options?.worldX ?? center.worldX,
-          options?.worldY ?? center.worldY
-        ) ?? null;
+        return (
+          model.widgetActions.addTextAnnotationAtCursor(
+            options?.worldX ?? center.worldX,
+            options?.worldY ?? center.worldY
+          ) ?? null
+        );
       },
       createStickyNote: (options) => {
         const center = viewportWorldCenter();
-        return model.widgetActions.addStickyNoteAtCursor(
-          options?.worldX ?? center.worldX,
-          options?.worldY ?? center.worldY
-        ) ?? null;
+        return (
+          model.widgetActions.addStickyNoteAtCursor(
+            options?.worldX ?? center.worldX,
+            options?.worldY ?? center.worldY
+          ) ?? null
+        );
       },
       createBackgroundLayer: (options) => {
         const center = viewportWorldCenter();
-        return model.widgetActions.addBackgroundLayerAtCursor(
-          options?.worldX ?? center.worldX,
-          options?.worldY ?? center.worldY
-        ) ?? null;
+        return (
+          model.widgetActions.addBackgroundLayerAtCursor(
+            options?.worldX ?? center.worldX,
+            options?.worldY ?? center.worldY
+          ) ?? null
+        );
       },
       clearSelection: () => handoffCanvasAuthority('selection_cleared'),
       focusWidget: (widget, options) => {
@@ -379,8 +399,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         model.widgetActions.updateBackgroundLayer(layerId, patch),
       deleteStickyNote: (noteId) => model.widgetActions.deleteStickyNote(noteId),
       deleteAnnotation: (annotationId) => model.widgetActions.deleteAnnotation(annotationId),
-      deleteBackgroundLayer: (layerId) =>
-        model.widgetActions.deleteBackgroundLayer(layerId),
+      deleteBackgroundLayer: (layerId) => model.widgetActions.deleteBackgroundLayer(layerId),
     });
 
     onCleanup(() => {
@@ -449,12 +468,14 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         return;
       }
 
-      if (interactionAdapter().shouldBypassGlobalHotkeys({
-        root: surfaceRootEl(),
-        target: event.target,
-        owner: inputOwner(),
-        interactiveSelector: interactionAdapter().interactiveSelector,
-      })) {
+      if (
+        interactionAdapter().shouldBypassGlobalHotkeys({
+          root: surfaceRootEl(),
+          target: event.target,
+          owner: inputOwner(),
+          interactiveSelector: interactionAdapter().interactiveSelector,
+        })
+      ) {
         return;
       }
 
@@ -507,7 +528,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     model.widgetActions.addWidgetAtWorldCenter(type, world.worldX, world.worldY);
   };
 
-  const handleCreateToolAtClient = (tool: WorkbenchDockToolId, clientX: number, clientY: number) => {
+  const handleCreateToolAtClient = (
+    tool: WorkbenchDockToolId,
+    clientX: number,
+    clientY: number
+  ) => {
     const world = clientToWorld(clientX, clientY);
     if (!world) return;
     if (tool === 'sticky-note') {
@@ -528,6 +553,29 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     handoffCanvasAuthority('background_pointer');
   };
 
+  const placementPreview = createMemo(() => {
+    const preview = dockDragPreview();
+    if (!preview) return null;
+    const world = clientToWorld(preview.clientX, preview.clientY);
+    if (!world) return null;
+    if (preview.kind === 'widget') {
+      return resolveWorkbenchWidgetPlacementPreview({
+        type: preview.id as WorkbenchWidgetType,
+        widgetDefinitions: model.widgetDefinitions(),
+        worldX: world.worldX,
+        worldY: world.worldY,
+      });
+    }
+    return resolveWorkbenchToolPlacementPreview({
+      tool: preview.id as WorkbenchDockToolId,
+      label: preview.label,
+      worldX: world.worldX,
+      worldY: world.worldY,
+      textDefaults: props.textAnnotationDefaults,
+      backgroundDefaults: props.backgroundLayerDefaults,
+    });
+  });
+
   return (
     <div
       ref={setSurfaceRootEl}
@@ -544,6 +592,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           stickyNotes={model.stickyNotes()}
           annotations={model.annotations()}
           backgroundLayers={model.backgroundLayers()}
+          placementPreview={placementPreview()}
           viewport={model.viewport()}
           canvasFrameSize={model.canvasFrameSize()}
           selectedWidgetId={model.selectedWidgetId()}
@@ -610,6 +659,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
         onCreateAt={handleCreateAtClient}
         onCreateToolAt={handleCreateToolAtClient}
+        onDragPreviewChange={setDockDragPreview}
       />
 
       <WorkbenchHud

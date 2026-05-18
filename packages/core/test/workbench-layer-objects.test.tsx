@@ -1155,7 +1155,7 @@ describe('Workbench layer objects', () => {
 
     expect(css).toContain('background-color: var(--workbench-region-surface, var(--workbench-region-fill));');
     expect(css).toContain('opacity: 1;');
-    expect(css).toContain('radial-gradient(circle, var(--workbench-region-ink) 1.45px');
+    expect(css).toContain('var(--workbench-region-ink) 1.45px');
     expect(css).toContain('background-size: 11px 11px;');
     expect(css).toContain('.workbench-background-region.is-transforming {');
     expect(css).toContain('will-change: transform;');

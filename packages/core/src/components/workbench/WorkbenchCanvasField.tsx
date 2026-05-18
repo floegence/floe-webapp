@@ -21,6 +21,8 @@ import {
 import { createWorkbenchRenderLayerMap } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
 import { WorkbenchWidget } from './WorkbenchWidget';
+import { WorkbenchPlacementPreview } from './WorkbenchPlacementPreview';
+import type { WorkbenchPlacementPreviewFrame } from './workbenchPlacement';
 import {
   WorkbenchAnnotationLayerView,
   WorkbenchBackgroundLayerView,
@@ -37,6 +39,7 @@ export interface WorkbenchCanvasFieldProps {
   stickyNotes?: readonly WorkbenchStickyNoteItem[];
   annotations?: readonly WorkbenchAnnotationItem[];
   backgroundLayers?: readonly WorkbenchBackgroundLayer[];
+  placementPreview?: WorkbenchPlacementPreviewFrame | null;
   viewport: WorkbenchViewport;
   selectedObject?: WorkbenchSelection | null;
   selectedWidgetId: string | null;
@@ -63,16 +66,19 @@ export interface WorkbenchCanvasFieldProps {
   onCommitStickyFront?: (noteId: string) => void;
   onCommitStickyMove?: (noteId: string, position: { x: number; y: number }) => void;
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
-  onUpdateStickyNote?: (noteId: string, patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>) => void;
+  onUpdateStickyNote?: (
+    noteId: string,
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+  ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onSelectAnnotation?: (annotationId: string) => void;
   onAnnotationContextMenu?: (event: MouseEvent, item: WorkbenchAnnotationItem) => void;
   onCommitAnnotationMove?: (annotationId: string, position: { x: number; y: number }) => void;
-  onCommitAnnotationResize?: (annotationId: string, size: { width: number; height: number }) => void;
-  onUpdateTextAnnotation?: (
+  onCommitAnnotationResize?: (
     annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
+    size: { width: number; height: number }
   ) => void;
+  onUpdateTextAnnotation?: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
   onDeleteAnnotation?: (annotationId: string) => void;
   onSelectBackgroundLayer?: (layerId: string) => void;
   onBackgroundLayerContextMenu?: (event: MouseEvent, item: WorkbenchBackgroundLayer) => void;
@@ -80,7 +86,7 @@ export interface WorkbenchCanvasFieldProps {
   onCommitBackgroundResize?: (layerId: string, size: { width: number; height: number }) => void;
   onUpdateBackgroundLayer?: (
     layerId: string,
-    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>,
+    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>
   ) => void;
   onDeleteBackgroundLayer?: (layerId: string) => void;
   onViewportCommit: (viewport: WorkbenchViewport) => void;
@@ -163,7 +169,10 @@ interface WorkbenchCanvasStickyNoteSlotProps {
   onCommitStickyFront?: (noteId: string) => void;
   onCommitStickyMove?: (noteId: string, position: { x: number; y: number }) => void;
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
-  onUpdateStickyNote?: (noteId: string, patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>) => void;
+  onUpdateStickyNote?: (
+    noteId: string,
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+  ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
@@ -180,9 +189,13 @@ function WorkbenchCanvasStickyNoteSlot(props: WorkbenchCanvasStickyNoteSlotProps
   return (
     <WorkbenchStickyNote
       item={item()}
-      selected={props.selectedObject?.kind === 'sticky_note' && props.selectedObject.id === props.noteId}
+      selected={
+        props.selectedObject?.kind === 'sticky_note' && props.selectedObject.id === props.noteId
+      }
       viewportScale={props.viewportScale}
-      renderLayer={props.renderLayers().byWidgetId.get(props.noteId) ?? props.renderLayers().topRenderLayer}
+      renderLayer={
+        props.renderLayers().byWidgetId.get(props.noteId) ?? props.renderLayers().topRenderLayer
+      }
       topRenderLayer={props.renderLayers().topRenderLayer}
       locked={props.locked}
       filtered={props.filtered}
@@ -214,7 +227,9 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
     () => new Map((props.stickyNotes ?? []).map((item) => [item.id, item] as const))
   );
   const fallbackTextEditorRegistry = createWorkbenchTextEditorRegistry();
-  const textEditorRegistry = createMemo(() => props.textEditorRegistry ?? fallbackTextEditorRegistry);
+  const textEditorRegistry = createMemo(
+    () => props.textEditorRegistry ?? fallbackTextEditorRegistry
+  );
   const renderLayers = createMemo(() =>
     createWorkbenchRenderLayerMap([...props.widgets, ...(props.stickyNotes ?? [])])
   );
@@ -269,7 +284,9 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
             viewport={props.viewport}
             onSelect={(annotationId) => props.onSelectAnnotation?.(annotationId)}
             onContextMenu={(event, item) => props.onAnnotationContextMenu?.(event, item)}
-            onCommitMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
+            onCommitMove={(annotationId, position) =>
+              props.onCommitAnnotationMove?.(annotationId, position)
+            }
             onUpdate={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
           />
         </>
@@ -317,7 +334,9 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               optimisticFrontWidgetId={props.optimisticFrontWidgetId}
               viewportScale={props.viewportScale}
               locked={workLocked()}
-              filtered={!props.workLayerLocked && props.filters[WORKBENCH_STICKY_FILTER_ID] === false}
+              filtered={
+                !props.workLayerLocked && props.filters[WORKBENCH_STICKY_FILTER_ID] === false
+              }
               onSelectStickyNote={props.onSelectStickyNote}
               onStickyNoteContextMenu={props.onStickyNoteContextMenu}
               onStartStickyOptimisticFront={props.onStartStickyOptimisticFront}
@@ -338,21 +357,39 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
           annotations={props.annotations ?? []}
           backgroundLayers={props.backgroundLayers ?? []}
           selectedObject={props.selectedObject ?? null}
-          editable={(Boolean(props.annotationLayerEditable) || Boolean(props.backgroundLayerEditable)) && !props.locked}
+          editable={
+            (Boolean(props.annotationLayerEditable) || Boolean(props.backgroundLayerEditable)) &&
+            !props.locked
+          }
           showRegionOutlines={Boolean(props.showRegionOutlines)}
           viewport={props.viewport}
           preview={layerGeometryPreview()}
           onPreviewGeometry={setLayerGeometryPreview}
           textEditorRegistry={textEditorRegistry()}
-          onCommitAnnotationMove={(annotationId, position) => props.onCommitAnnotationMove?.(annotationId, position)}
-          onCommitAnnotationResize={(annotationId, size) => props.onCommitAnnotationResize?.(annotationId, size)}
-          onUpdateTextAnnotation={(annotationId, patch) => props.onUpdateTextAnnotation?.(annotationId, patch)}
+          onCommitAnnotationMove={(annotationId, position) =>
+            props.onCommitAnnotationMove?.(annotationId, position)
+          }
+          onCommitAnnotationResize={(annotationId, size) =>
+            props.onCommitAnnotationResize?.(annotationId, size)
+          }
+          onUpdateTextAnnotation={(annotationId, patch) =>
+            props.onUpdateTextAnnotation?.(annotationId, patch)
+          }
           onDeleteAnnotation={(annotationId) => props.onDeleteAnnotation?.(annotationId)}
-          onCommitBackgroundResize={(layerId, size) => props.onCommitBackgroundResize?.(layerId, size)}
-          onUpdateBackgroundLayer={(layerId, patch) => props.onUpdateBackgroundLayer?.(layerId, patch)}
+          onCommitBackgroundResize={(layerId, size) =>
+            props.onCommitBackgroundResize?.(layerId, size)
+          }
+          onUpdateBackgroundLayer={(layerId, patch) =>
+            props.onUpdateBackgroundLayer?.(layerId, patch)
+          }
           onDeleteBackgroundLayer={(layerId) => props.onDeleteBackgroundLayer?.(layerId)}
         />
       ) : null}
+      <WorkbenchPlacementPreview
+        preview={props.placementPreview}
+        projection="world"
+        viewport={props.viewport}
+      />
     </div>
   );
 }

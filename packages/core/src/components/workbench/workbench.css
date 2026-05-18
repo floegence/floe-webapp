@@ -225,6 +225,92 @@
     z-index: 10;
   }
 
+  .workbench-placement-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 18;
+    border: 1.5px solid color-mix(in srgb, var(--primary, #3b82f6) 78%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary, #3b82f6) 9%, transparent);
+    box-shadow:
+      0 18px 44px -22px color-mix(in srgb, var(--primary, #3b82f6) 42%, transparent),
+      0 0 0 1px color-mix(in srgb, white 36%, transparent) inset;
+    will-change: transform, width, height;
+  }
+
+  .workbench-placement-preview.is-sticky-note {
+    border-color: color-mix(in srgb, #d6a734 76%, transparent);
+    background: color-mix(in srgb, #f5d972 16%, transparent);
+  }
+
+  .workbench-placement-preview.is-text {
+    border-color: color-mix(in srgb, var(--wb-text, #111827) 72%, transparent);
+    background: color-mix(in srgb, var(--wb-text, #111827) 7%, transparent);
+  }
+
+  .workbench-placement-preview.is-background-region {
+    border-style: dashed;
+    border-color: color-mix(in srgb, #27a7b7 82%, transparent);
+    background: color-mix(in srgb, #27a7b7 10%, transparent);
+  }
+
+  .workbench-placement-preview__crosshair {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 52%, transparent);
+    color: color-mix(in srgb, var(--primary, #3b82f6) 82%, var(--wb-text, #111827));
+    opacity: 0.78;
+  }
+
+  .workbench-placement-preview__crosshair::before,
+  .workbench-placement-preview__crosshair::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: currentColor;
+    opacity: 0.74;
+    transform: translate(-50%, -50%);
+  }
+
+  .workbench-placement-preview__crosshair::before {
+    width: 1px;
+    height: 30px;
+  }
+
+  .workbench-placement-preview__crosshair::after {
+    width: 30px;
+    height: 1px;
+  }
+
+  .workbench-placement-preview__label {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    max-width: calc(100% - 20px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 7px;
+    padding: 4px 7px;
+    background: color-mix(in srgb, var(--card, #fff) 86%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border, #d4d4d8) 70%, transparent);
+    color: color-mix(in srgb, var(--wb-text, #111827) 88%, var(--primary, #3b82f6));
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: 0;
+    box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--foreground, #000) 32%, transparent);
+  }
+
   .workbench-canvas__projected-layer.is-work-layer-locked
     .workbench-canvas__projected-work-layer
     > .workbench-widget,
@@ -354,8 +440,11 @@
   }
 
   .workbench-background-region.is-material-dotted {
-    background-image:
-      radial-gradient(circle, var(--workbench-region-ink) 1.45px, transparent 1.65px);
+    background-image: radial-gradient(
+      circle,
+      var(--workbench-region-ink) 1.45px,
+      transparent 1.65px
+    );
     background-position: 0 0;
     background-size: 11px 11px;
   }
@@ -364,16 +453,17 @@
     background-image:
       linear-gradient(var(--workbench-region-ink) 1px, transparent 1px),
       linear-gradient(90deg, var(--workbench-region-ink) 1px, transparent 1px);
-    background-size: 28px 28px, 28px 28px;
+    background-size:
+      28px 28px,
+      28px 28px;
   }
 
   .workbench-background-region.is-material-hatched {
-    background-image:
-      repeating-linear-gradient(
-        135deg,
-        var(--workbench-region-ink) 0 1.2px,
-        transparent 1.2px 9px
-      );
+    background-image: repeating-linear-gradient(
+      135deg,
+      var(--workbench-region-ink) 0 1.2px,
+      transparent 1.2px 9px
+    );
   }
 
   .workbench-background-region.is-material-glass {
@@ -727,17 +817,33 @@
 
   .workbench-region-material.is-dotted .workbench-region-material__sample {
     background:
-      radial-gradient(circle, color-mix(in srgb, var(--workbench-region-ink) 72%, transparent) 1px, transparent 1.12px),
+      radial-gradient(
+        circle,
+        color-mix(in srgb, var(--workbench-region-ink) 72%, transparent) 1px,
+        transparent 1.12px
+      ),
       var(--workbench-region-fill);
-    background-size: 5px 5px, auto;
+    background-size:
+      5px 5px,
+      auto;
   }
 
   .workbench-region-material.is-grid .workbench-region-material__sample {
     background:
-      linear-gradient(color-mix(in srgb, var(--workbench-region-ink) 64%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in srgb, var(--workbench-region-ink) 64%, transparent) 1px, transparent 1px),
+      linear-gradient(
+        color-mix(in srgb, var(--workbench-region-ink) 64%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--workbench-region-ink) 64%, transparent) 1px,
+        transparent 1px
+      ),
       var(--workbench-region-fill);
-    background-size: 6px 6px, 6px 6px, auto;
+    background-size:
+      6px 6px,
+      6px 6px,
+      auto;
   }
 
   .workbench-region-material.is-hatched .workbench-region-material__sample {
@@ -766,8 +872,18 @@
     border: none;
     border-radius: 6px 0 0 0;
     background:
-      linear-gradient(135deg, transparent 45%, color-mix(in srgb, var(--foreground, #111) 42%, transparent) 46% 54%, transparent 55%),
-      linear-gradient(135deg, transparent 64%, color-mix(in srgb, var(--foreground, #111) 30%, transparent) 65% 73%, transparent 74%);
+      linear-gradient(
+        135deg,
+        transparent 45%,
+        color-mix(in srgb, var(--foreground, #111) 42%, transparent) 46% 54%,
+        transparent 55%
+      ),
+      linear-gradient(
+        135deg,
+        transparent 64%,
+        color-mix(in srgb, var(--foreground, #111) 30%, transparent) 65% 73%,
+        transparent 74%
+      );
     cursor: nwse-resize;
     transform: scale(var(--workbench-layer-control-inverse-scale, 1));
     transform-origin: bottom right;
@@ -805,9 +921,8 @@
   .workbench-region-visibility-outline.is-selected-region {
     z-index: 2;
     border-color: color-mix(in srgb, var(--workbench-region-ink) 52%, transparent);
-    box-shadow:
-      0 0 0 calc(1px * var(--workbench-region-outline-scale, 1))
-        color-mix(in srgb, var(--background, #fff) 64%, transparent);
+    box-shadow: 0 0 0 calc(1px * var(--workbench-region-outline-scale, 1))
+      color-mix(in srgb, var(--background, #fff) 64%, transparent);
   }
 
   .workbench-layer-control__selection {
@@ -953,7 +1068,11 @@
     --workbench-sticky-accent: #d8b25a;
     --workbench-sticky-surface: #fff2bd;
     --workbench-sticky-surface-strong: #ffe9a6;
-    --workbench-sticky-border: color-mix(in srgb, var(--workbench-sticky-accent) 32%, var(--border, #e5e5e5));
+    --workbench-sticky-border: color-mix(
+      in srgb,
+      var(--workbench-sticky-accent) 32%,
+      var(--border, #e5e5e5)
+    );
     --workbench-sticky-ink: #302616;
     --workbench-sticky-ribbon: #c89734;
     display: flex;
@@ -1006,7 +1125,11 @@
   .workbench-sticky.is-graphite {
     --workbench-sticky-accent: oklch(0.5 0.03 250);
     --workbench-sticky-surface: color-mix(in srgb, #2b3038 92%, var(--workbench-sticky-accent) 8%);
-    --workbench-sticky-surface-strong: color-mix(in srgb, #343a44 88%, var(--workbench-sticky-accent) 12%);
+    --workbench-sticky-surface-strong: color-mix(
+      in srgb,
+      #343a44 88%,
+      var(--workbench-sticky-accent) 12%
+    );
     --workbench-sticky-border: color-mix(in srgb, white 16%, var(--workbench-sticky-accent) 84%);
     --workbench-sticky-ink: #f4f4f5;
     --workbench-sticky-ribbon: color-mix(in srgb, #111827 72%, white 28%);
@@ -1058,7 +1181,11 @@
       linear-gradient(
         135deg,
         var(--workbench-sticky-surface-strong),
-        color-mix(in srgb, var(--workbench-sticky-surface-strong) 82%, var(--workbench-sticky-accent) 18%)
+        color-mix(
+          in srgb,
+          var(--workbench-sticky-surface-strong) 82%,
+          var(--workbench-sticky-accent) 18%
+        )
       );
     box-shadow:
       0 20px 34px color-mix(in srgb, var(--foreground, #000) 10%, transparent),
@@ -1170,7 +1297,8 @@
     align-items: center;
     gap: 4px;
     padding: 4px;
-    border: 1px solid color-mix(in srgb, var(--workbench-sticky-accent) 18%, var(--workbench-sticky-border));
+    border: 1px solid
+      color-mix(in srgb, var(--workbench-sticky-accent) 18%, var(--workbench-sticky-border));
     border-radius: 999px;
     background: color-mix(in srgb, var(--background, #fff) 80%, transparent);
     backdrop-filter: blur(12px);
@@ -1199,7 +1327,11 @@
   }
 
   .workbench-sticky__tool.is-danger:hover {
-    border-color: color-mix(in srgb, var(--destructive, #ef4444) 28%, var(--workbench-sticky-border));
+    border-color: color-mix(
+      in srgb,
+      var(--destructive, #ef4444) 28%,
+      var(--workbench-sticky-border)
+    );
     background: color-mix(in srgb, var(--destructive, #ef4444) 10%, var(--background, #fff));
   }
 
@@ -1260,8 +1392,18 @@
     height: 10px;
     border-radius: 3px 0 4px 0;
     background:
-      linear-gradient(135deg, transparent 54%, color-mix(in srgb, var(--workbench-sticky-ink) 38%, transparent) 55% 62%, transparent 63%),
-      linear-gradient(135deg, transparent 72%, color-mix(in srgb, var(--workbench-sticky-ink) 26%, transparent) 73% 80%, transparent 81%);
+      linear-gradient(
+        135deg,
+        transparent 54%,
+        color-mix(in srgb, var(--workbench-sticky-ink) 38%, transparent) 55% 62%,
+        transparent 63%
+      ),
+      linear-gradient(
+        135deg,
+        transparent 72%,
+        color-mix(in srgb, var(--workbench-sticky-ink) 26%, transparent) 73% 80%,
+        transparent 81%
+      );
     pointer-events: none;
   }
 
@@ -1352,12 +1494,11 @@
     z-index: 30;
     pointer-events: none;
     opacity: 0;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--background, #fff) 82%, transparent),
-        color-mix(in srgb, var(--background, #fff) 74%, transparent)
-      );
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--background, #fff) 82%, transparent),
+      color-mix(in srgb, var(--background, #fff) 74%, transparent)
+    );
     transition: opacity 160ms ease;
   }
 
@@ -1610,9 +1751,7 @@
     display: inline-flex;
     align-items: stretch;
     gap: 0;
-    height: calc(
-      100% + var(--wb-window-control-bleed) + var(--wb-window-control-bleed)
-    );
+    height: calc(100% + var(--wb-window-control-bleed) + var(--wb-window-control-bleed));
     margin-block: var(--wb-window-control-bleed-negative);
     margin-left: auto;
     flex-shrink: 0;

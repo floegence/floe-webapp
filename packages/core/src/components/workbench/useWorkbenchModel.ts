@@ -56,10 +56,12 @@ import {
   WORKBENCH_MAX_SCALE,
   type WorkbenchWidgetPlacement,
 } from './workbenchHelpers';
+import { getWidgetEntry, resolveWorkbenchWidgetDefinitions } from './widgets/widgetRegistry';
 import {
-  getWidgetEntry,
-  resolveWorkbenchWidgetDefinitions,
-} from './widgets/widgetRegistry';
+  resolveBackgroundLayerDefaultSize,
+  resolveStickyNoteDefaultSize,
+  resolveTextAnnotationDefaultSize,
+} from './workbenchPlacement';
 import type {
   WorkbenchContextMenuItem,
   WorkbenchContextMenuSelectEvent,
@@ -85,8 +87,12 @@ export interface UseWorkbenchModelOptions {
   widgetDefinitions?:
     | readonly WorkbenchWidgetDefinition[]
     | (() => readonly WorkbenchWidgetDefinition[] | undefined);
-  textAnnotationDefaults?: WorkbenchTextAnnotationDefaults | (() => WorkbenchTextAnnotationDefaults | undefined);
-  backgroundLayerDefaults?: WorkbenchBackgroundLayerDefaults | (() => WorkbenchBackgroundLayerDefaults | undefined);
+  textAnnotationDefaults?:
+    | WorkbenchTextAnnotationDefaults
+    | (() => WorkbenchTextAnnotationDefaults | undefined);
+  backgroundLayerDefaults?:
+    | WorkbenchBackgroundLayerDefaults
+    | (() => WorkbenchBackgroundLayerDefaults | undefined);
 }
 
 type WorkbenchWorkItem = WorkbenchWidgetItem | WorkbenchStickyNoteItem;
@@ -96,13 +102,9 @@ function nextValue<T>(values: readonly T[], current: T): T {
   return values[(index + 1) % values.length] ?? values[0]!;
 }
 
-function positiveFinite(value: number | undefined, fallback: number): number {
-  return Number.isFinite(value) && value! > 0 ? value! : fallback;
-}
-
 function stringOption<T extends string>(values: readonly T[], value: unknown, fallback: T): T {
   const normalized = String(value ?? '').trim();
-  return values.includes(normalized as T) ? normalized as T : fallback;
+  return values.includes(normalized as T) ? (normalized as T) : fallback;
 }
 
 function opacityValue(value: unknown, fallback: number): number {
@@ -124,7 +126,7 @@ function isWidgetWorkItem(item: WorkbenchWorkItem): item is WorkbenchWidgetItem 
 
 function compareLayeredItemOrder(
   left: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
-  right: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
+  right: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>
 ): number {
   if (left.z_index !== right.z_index) return left.z_index - right.z_index;
   if (left.created_at_unix_ms !== right.created_at_unix_ms) {
@@ -137,7 +139,10 @@ function getTopLayerIndex(items: readonly { z_index: number }[]): number {
   return items.reduce((max, item) => Math.max(max, item.z_index), 1);
 }
 
-function getTopWorkZIndex(widgets: readonly WorkbenchWidgetItem[], stickyNotes: readonly WorkbenchStickyNoteItem[]): number {
+function getTopWorkZIndex(
+  widgets: readonly WorkbenchWidgetItem[],
+  stickyNotes: readonly WorkbenchStickyNoteItem[]
+): number {
   return getTopLayerIndex([...widgets, ...stickyNotes]);
 }
 
@@ -155,17 +160,22 @@ function stickyNoteAsNavigationWidget(item: WorkbenchStickyNoteItem): WorkbenchW
   };
 }
 
-function createStickyNoteAt(worldX: number, worldY: number, zIndex: number): WorkbenchStickyNoteItem {
+function createStickyNoteAt(
+  worldX: number,
+  worldY: number,
+  zIndex: number
+): WorkbenchStickyNoteItem {
   const now = Date.now();
+  const { width, height } = resolveStickyNoteDefaultSize();
   return {
     id: createWorkbenchId(),
     kind: 'sticky_note',
     body: 'Capture the thought, decision, or next step here.',
     color: WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
-    x: worldX - 130,
-    y: worldY - 92,
-    width: 260,
-    height: 184,
+    x: worldX - width / 2,
+    y: worldY - height / 2,
+    width,
+    height,
     z_index: zIndex,
     created_at_unix_ms: now,
     updated_at_unix_ms: now,
@@ -176,11 +186,10 @@ function createTextAnnotationAt(
   worldX: number,
   worldY: number,
   zIndex: number,
-  defaults: WorkbenchTextAnnotationDefaults | undefined,
+  defaults: WorkbenchTextAnnotationDefaults | undefined
 ): WorkbenchTextAnnotationItem {
   const now = Date.now();
-  const width = positiveFinite(defaults?.width, 360);
-  const height = positiveFinite(defaults?.height, 96);
+  const { width, height } = resolveTextAnnotationDefaultSize(defaults);
   return {
     id: createWorkbenchId(),
     kind: 'text',
@@ -217,18 +226,25 @@ function createBackgroundLayerAt(
   worldX: number,
   worldY: number,
   zIndex: number,
-  defaults: WorkbenchBackgroundLayerDefaults | undefined,
+  defaults: WorkbenchBackgroundLayerDefaults | undefined
 ): WorkbenchBackgroundLayer {
   const now = Date.now();
-  const width = positiveFinite(defaults?.width, 560);
-  const height = positiveFinite(defaults?.height, 360);
+  const { width, height } = resolveBackgroundLayerDefaultSize(defaults);
   const name = String(defaults?.name ?? '').trim() || 'Focus area';
   return {
     id: createWorkbenchId(),
     name,
-    fill: stringOption(WORKBENCH_REGION_FILL_OPTIONS, defaults?.fill, WORKBENCH_DEFAULT_REGION_FILL),
+    fill: stringOption(
+      WORKBENCH_REGION_FILL_OPTIONS,
+      defaults?.fill,
+      WORKBENCH_DEFAULT_REGION_FILL
+    ),
     opacity: opacityValue(defaults?.opacity, 0.72),
-    material: stringOption(WORKBENCH_BACKGROUND_MATERIALS, defaults?.material, WORKBENCH_DEFAULT_BACKGROUND_MATERIAL),
+    material: stringOption(
+      WORKBENCH_BACKGROUND_MATERIALS,
+      defaults?.material,
+      WORKBENCH_DEFAULT_BACKGROUND_MATERIAL
+    ),
     x: worldX - width / 2,
     y: worldY - height / 2,
     width,
@@ -269,9 +285,11 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const locked = createMemo(() => state().locked);
   const filters = createMemo(() => state().filters);
   const selectedWidgetId = createMemo(() => state().selectedWidgetId);
-  const selectedObject = createMemo<WorkbenchSelection | null>(() => state().selectedObject ?? (
-    state().selectedWidgetId ? { kind: 'widget', id: state().selectedWidgetId! } : null
-  ));
+  const selectedObject = createMemo<WorkbenchSelection | null>(
+    () =>
+      state().selectedObject ??
+      (state().selectedWidgetId ? { kind: 'widget', id: state().selectedWidgetId! } : null)
+  );
   const mode = createMemo(() => state().mode ?? 'work');
   const modeStrategy = createMemo(() => resolveWorkbenchModeStrategy(mode()));
   const activeTool = createMemo(() => state().activeTool ?? 'select');
@@ -338,7 +356,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       const entry = entries[0];
       setMeasuredCanvasFrameSize(
         entry?.contentRect.width ?? canvasFrameEl?.clientWidth ?? 0,
-        entry?.contentRect.height ?? canvasFrameEl?.clientHeight ?? 0,
+        entry?.contentRect.height ?? canvasFrameEl?.clientHeight ?? 0
       );
     });
     canvasFrameObserver.observe(canvasFrameEl);
@@ -405,12 +423,19 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const closeContextMenu = () => setContextMenu(null);
-  const findWidgetById = (widgetId: string) => state().widgets.find((widget) => widget.id === widgetId) ?? null;
-  const findWidgetByType = (type: WorkbenchWidgetType) => state().widgets.find((widget) => widget.type === type) ?? null;
-  const findStickyNoteById = (noteId: string) => state().stickyNotes?.find((item) => item.id === noteId) ?? null;
-  const findAnnotationById = (annotationId: string) => state().annotations?.find((item) => item.id === annotationId) ?? null;
-  const findBackgroundLayerById = (layerId: string) => state().backgroundLayers?.find((item) => item.id === layerId) ?? null;
-  const resolveContextMenuTarget = (menu: WorkbenchContextMenuState): WorkbenchContextMenuTarget => {
+  const findWidgetById = (widgetId: string) =>
+    state().widgets.find((widget) => widget.id === widgetId) ?? null;
+  const findWidgetByType = (type: WorkbenchWidgetType) =>
+    state().widgets.find((widget) => widget.type === type) ?? null;
+  const findStickyNoteById = (noteId: string) =>
+    state().stickyNotes?.find((item) => item.id === noteId) ?? null;
+  const findAnnotationById = (annotationId: string) =>
+    state().annotations?.find((item) => item.id === annotationId) ?? null;
+  const findBackgroundLayerById = (layerId: string) =>
+    state().backgroundLayers?.find((item) => item.id === layerId) ?? null;
+  const resolveContextMenuTarget = (
+    menu: WorkbenchContextMenuState
+  ): WorkbenchContextMenuTarget => {
     if (menu.target) return menu.target;
     if (menu.widgetId) {
       return findStickyNoteById(menu.widgetId)
@@ -421,15 +446,15 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
   const resolveCanvasMenuCreationPoint = (
     menu: WorkbenchContextMenuState,
-    activation?: WorkbenchContextMenuSelectEvent,
+    activation?: WorkbenchContextMenuSelectEvent
   ) => {
     if (activation?.source === 'pointer') {
       const rect = canvasFrameEl?.getBoundingClientRect();
       const point = rect
         ? clientToCanvasWorld(rect, viewport(), {
-          clientX: activation.clientX,
-          clientY: activation.clientY,
-        })
+            clientX: activation.clientX,
+            clientY: activation.clientY,
+          })
         : null;
       if (point) {
         return point;
@@ -444,7 +469,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const buildCanvasContextMenuAction = (
     entry: WorkbenchWidgetDefinition,
-    menu: WorkbenchContextMenuState,
+    menu: WorkbenchContextMenuState
   ): WorkbenchCanvasMenuAction => {
     const existing = entry.singleton ? findWidgetByType(entry.type) : null;
     if (existing) {
@@ -720,7 +745,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   // --- Widget CRUD ---
   const addWidgetFromPlacement = (
     type: WorkbenchWidgetType,
-    placement: WorkbenchWidgetPlacement,
+    placement: WorkbenchWidgetPlacement
   ) => {
     const entry = getWidgetEntry(type, widgetDefinitions());
     const existing = entry.singleton ? findWidgetByType(type) : null;
@@ -785,7 +810,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       selectedObject:
         prev.selectedObject?.kind === 'widget' && prev.selectedObject.id === widgetId
           ? null
-          : prev.selectedObject ?? null,
+          : (prev.selectedObject ?? null),
     }));
   };
 
@@ -807,7 +832,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       worldX,
       worldY,
       getTopLayerIndex(annotations()) + 1,
-      readTextAnnotationDefaults(),
+      readTextAnnotationDefaults()
     );
     options.setState((prev) => ({
       ...prev,
@@ -838,7 +863,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       worldX,
       worldY,
       getTopLayerIndex(backgroundLayers()) + 1,
-      readBackgroundLayerDefaults(),
+      readBackgroundLayerDefaults()
     );
     options.setState((prev) => ({
       ...prev,
@@ -876,9 +901,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     if (widget && widget.z_index < top) {
       options.setState((prev) => ({
         ...prev,
-        widgets: prev.widgets.map((w) =>
-          w.id === widgetId ? { ...w, z_index: top + 1 } : w
-        ),
+        widgets: prev.widgets.map((w) => (w.id === widgetId ? { ...w, z_index: top + 1 } : w)),
       }));
     }
   };
@@ -936,20 +959,17 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }));
   };
 
-  const updateStickyNote = (
-    noteId: string,
-    patch: WorkbenchStickyNotePatch,
-  ) => {
+  const updateStickyNote = (noteId: string, patch: WorkbenchStickyNotePatch) => {
     options.setState((prev) => ({
       ...prev,
       stickyNotes: (prev.stickyNotes ?? []).map((item) =>
         item.id === noteId
           ? {
-            ...item,
-            ...(typeof patch.body === 'string' ? { body: patch.body } : {}),
-            ...(patch.color ? { color: patch.color } : {}),
-            updated_at_unix_ms: Date.now(),
-          }
+              ...item,
+              ...(typeof patch.body === 'string' ? { body: patch.body } : {}),
+              ...(patch.color ? { color: patch.color } : {}),
+              updated_at_unix_ms: Date.now(),
+            }
           : item
       ),
     }));
@@ -962,7 +982,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       selectedObject:
         prev.selectedObject?.kind === 'sticky_note' && prev.selectedObject.id === noteId
           ? null
-          : prev.selectedObject ?? null,
+          : (prev.selectedObject ?? null),
     }));
   };
 
@@ -977,7 +997,10 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }));
   };
 
-  const commitAnnotationResize = (annotationId: string, size: { width: number; height: number }) => {
+  const commitAnnotationResize = (
+    annotationId: string,
+    size: { width: number; height: number }
+  ) => {
     options.setState((prev) => ({
       ...prev,
       annotations: (prev.annotations ?? []).map((item) =>
@@ -988,24 +1011,21 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }));
   };
 
-  const updateTextAnnotation = (
-    annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
-  ) => {
+  const updateTextAnnotation = (annotationId: string, patch: WorkbenchTextAnnotationPatch) => {
     options.setState((prev) => ({
       ...prev,
       annotations: (prev.annotations ?? []).map((item) =>
         item.id === annotationId && item.kind === 'text'
           ? {
-            ...item,
-            ...(typeof patch.text === 'string' ? { text: patch.text } : {}),
-            ...(typeof patch.font_family === 'string' ? { font_family: patch.font_family } : {}),
-            ...(typeof patch.font_size === 'number' ? { font_size: patch.font_size } : {}),
-            ...(typeof patch.font_weight === 'number' ? { font_weight: patch.font_weight } : {}),
-            ...(typeof patch.color === 'string' ? { color: patch.color } : {}),
-            ...(patch.align ? { align: patch.align } : {}),
-            updated_at_unix_ms: Date.now(),
-          }
+              ...item,
+              ...(typeof patch.text === 'string' ? { text: patch.text } : {}),
+              ...(typeof patch.font_family === 'string' ? { font_family: patch.font_family } : {}),
+              ...(typeof patch.font_size === 'number' ? { font_size: patch.font_size } : {}),
+              ...(typeof patch.font_weight === 'number' ? { font_weight: patch.font_weight } : {}),
+              ...(typeof patch.color === 'string' ? { color: patch.color } : {}),
+              ...(patch.align ? { align: patch.align } : {}),
+              updated_at_unix_ms: Date.now(),
+            }
           : item
       ),
     }));
@@ -1018,7 +1038,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       selectedObject:
         prev.selectedObject?.kind === 'annotation' && prev.selectedObject.id === annotationId
           ? null
-          : prev.selectedObject ?? null,
+          : (prev.selectedObject ?? null),
     }));
   };
 
@@ -1044,22 +1064,19 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     }));
   };
 
-  const updateBackgroundLayer = (
-    layerId: string,
-    patch: WorkbenchBackgroundLayerPatch,
-  ) => {
+  const updateBackgroundLayer = (layerId: string, patch: WorkbenchBackgroundLayerPatch) => {
     options.setState((prev) => ({
       ...prev,
       backgroundLayers: (prev.backgroundLayers ?? []).map((item) =>
         item.id === layerId
           ? {
-            ...item,
-            ...(typeof patch.fill === 'string' ? { fill: patch.fill } : {}),
-            ...(typeof patch.opacity === 'number' ? { opacity: patch.opacity } : {}),
-            ...(typeof patch.material === 'string' ? { material: patch.material } : {}),
-            ...(typeof patch.name === 'string' ? { name: patch.name } : {}),
-            updated_at_unix_ms: Date.now(),
-          }
+              ...item,
+              ...(typeof patch.fill === 'string' ? { fill: patch.fill } : {}),
+              ...(typeof patch.opacity === 'number' ? { opacity: patch.opacity } : {}),
+              ...(typeof patch.material === 'string' ? { material: patch.material } : {}),
+              ...(typeof patch.name === 'string' ? { name: patch.name } : {}),
+              updated_at_unix_ms: Date.now(),
+            }
           : item
       ),
     }));
@@ -1072,7 +1089,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       selectedObject:
         prev.selectedObject?.kind === 'background_layer' && prev.selectedObject.id === layerId
           ? null
-          : prev.selectedObject ?? null,
+          : (prev.selectedObject ?? null),
     }));
   };
 
@@ -1124,13 +1141,15 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     if (currentViewport.scale >= strategy.minScale) return;
 
     const frame = readCanvasFrameSize();
-    animateViewportTo(createWorkbenchViewportAtScale({
-      viewport: currentViewport,
-      scale: strategy.minScale,
-      minScale: strategy.minScale,
-      frameWidth: frame.width,
-      frameHeight: frame.height,
-    }));
+    animateViewportTo(
+      createWorkbenchViewportAtScale({
+        viewport: currentViewport,
+        scale: strategy.minScale,
+        minScale: strategy.minScale,
+        frameWidth: frame.width,
+        frameHeight: frame.height,
+      })
+    );
   };
 
   const adjustZoom = (direction: 'in' | 'out') => {
@@ -1143,7 +1162,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
         ? vp.scale * WORKBENCH_CANVAS_ZOOM_STEP
         : vp.scale / WORKBENCH_CANVAS_ZOOM_STEP,
       modeStrategy().minScale,
-      WORKBENCH_MAX_SCALE,
+      WORKBENCH_MAX_SCALE
     );
 
     const next: WorkbenchViewport = {
@@ -1176,9 +1195,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     options.setState((prev) => {
       const next: Record<string, boolean> = { ...prev.filters };
       const scopedKeys = [...new Set(scope.map((key) => String(key)).filter(Boolean))];
-      const alreadySoloed = scopedKeys.length > 1 && scopedKeys.every((key) =>
-        next[key] !== false === (key === type)
-      );
+      const alreadySoloed =
+        scopedKeys.length > 1 &&
+        scopedKeys.every((key) => (next[key] !== false) === (key === type));
       for (const key of scopedKeys) {
         next[key] = alreadySoloed ? true : key === type;
       }
@@ -1272,7 +1291,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
             : prev.selectedWidgetId
               ? { kind: 'widget', id: prev.selectedWidgetId }
               : null
-          : prev.selectedObject?.kind === 'background_layer' || prev.selectedObject?.kind === 'annotation'
+          : prev.selectedObject?.kind === 'background_layer' ||
+              prev.selectedObject?.kind === 'annotation'
             ? prev.selectedObject
             : null,
     }));
@@ -1290,7 +1310,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
             ? 'background'
             : tool === 'sticky-note'
               ? 'work'
-              : prev.mode ?? 'work',
+              : (prev.mode ?? 'work'),
     }));
   };
 
@@ -1314,39 +1334,42 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const centerViewportOnWidget = (widget: WorkbenchWidgetItem) => {
     const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
-    animateViewportTo(createWorkbenchViewportCenteredOnWidget({
-      widget,
-      scale: viewport().scale,
-      frameWidth: frame.width,
-      frameHeight: frame.height,
-    }));
+    animateViewportTo(
+      createWorkbenchViewportCenteredOnWidget({
+        widget,
+        scale: viewport().scale,
+        frameWidth: frame.width,
+        frameHeight: frame.height,
+      })
+    );
   };
 
   const fitViewportOnWidget = (widget: WorkbenchWidgetItem) => {
     const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
-    animateViewportTo(createWorkbenchViewportFitForWidget({
-      widget,
-      frameWidth: frame.width,
-      frameHeight: frame.height,
-    }));
+    animateViewportTo(
+      createWorkbenchViewportFitForWidget({
+        widget,
+        frameWidth: frame.width,
+        frameHeight: frame.height,
+      })
+    );
   };
 
   const overviewViewportOnWidget = (widget: WorkbenchWidgetItem) => {
     const frame = readCanvasFrameSize();
     if (frame.width === 0 || frame.height === 0) return;
-    animateViewportTo(createWorkbenchViewportCenteredOnWidget({
-      widget,
-      scale: WORKBENCH_WORK_MIN_SCALE,
-      frameWidth: frame.width,
-      frameHeight: frame.height,
-    }));
+    animateViewportTo(
+      createWorkbenchViewportCenteredOnWidget({
+        widget,
+        scale: WORKBENCH_WORK_MIN_SCALE,
+        frameWidth: frame.width,
+        frameHeight: frame.height,
+      })
+    );
   };
 
-  const focusWidget = (
-    widget: WorkbenchWidgetItem,
-    options: { centerViewport?: boolean } = {}
-  ) => {
+  const focusWidget = (widget: WorkbenchWidgetItem, options: { centerViewport?: boolean } = {}) => {
     selectWidget(widget.id);
     commitFront(widget.id);
     if (options.centerViewport !== false) {
@@ -1403,7 +1426,9 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       Object.fromEntries(
         workItems.map((item) => [
           isWidgetWorkItem(item) ? item.type : 'sticky_note',
-          isWidgetWorkItem(item) ? filters()[item.type] !== false : filters()[WORKBENCH_STICKY_FILTER_ID] !== false,
+          isWidgetWorkItem(item)
+            ? filters()[item.type] !== false
+            : filters()[WORKBENCH_STICKY_FILTER_ID] !== false,
         ])
       )
     );

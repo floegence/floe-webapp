@@ -40,7 +40,7 @@ function dispatchPointerEvent(
     clientX?: number;
     clientY?: number;
     buttons?: number;
-  } = {},
+  } = {}
 ): void {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -109,16 +109,19 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.appendChild(host);
     const onCreateAt = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        onSoloFilter={() => {}}
-        onShowAll={() => {}}
-        onCreateAt={onCreateAt}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          onShowAll={() => {}}
+          onCreateAt={onCreateAt}
+        />
+      ),
+      host
+    );
 
     const filesButton = host.querySelector(
       'button[aria-label="Files — click to solo, drag to canvas to create"]'
@@ -162,17 +165,20 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.appendChild(host);
     const onViewportCommit = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onSoloFilter={() => {}}
-        onShowAll={() => {}}
-        onViewportCommit={onViewportCommit}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onSoloFilter={() => {}}
+          onShowAll={() => {}}
+          onViewportCommit={onViewportCommit}
+        />
+      ),
+      host
+    );
 
     const filesButton = host.querySelector(
       'button[aria-label="Files — click to solo, drag to canvas to create"]'
@@ -206,17 +212,20 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.appendChild(host);
     const onViewportCommit = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onSoloFilter={() => {}}
-        onShowAll={() => {}}
-        onViewportCommit={onViewportCommit}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onSoloFilter={() => {}}
+          onShowAll={() => {}}
+          onViewportCommit={onViewportCommit}
+        />
+      ),
+      host
+    );
 
     const filesButton = host.querySelector(
       'button[aria-label="Files — click to solo, drag to canvas to create"]'
@@ -242,9 +251,7 @@ describe('WorkbenchFilterBar pointer session', () => {
 
     expect(onViewportCommit).toHaveBeenCalledTimes(2);
     expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
-    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(
-      onViewportCommit.mock.calls[0]![0].x
-    );
+    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(onViewportCommit.mock.calls[0]![0].x);
   });
 
   it('keeps composition tools visible and does not treat plain clicks as layer filtering', async () => {
@@ -252,18 +259,21 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.appendChild(host);
     const onSoloFilter = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{
-          'background-region': false,
-          text: false,
-        }}
-        mode="background"
-        onSoloFilter={onSoloFilter}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{
+            'background-region': false,
+            text: false,
+          }}
+          mode="background"
+          onSoloFilter={onSoloFilter}
+        />
+      ),
+      host
+    );
 
     const regionButton = host.querySelector(
       'button[aria-label="Region — drag to canvas to create"]'
@@ -284,5 +294,69 @@ describe('WorkbenchFilterBar pointer session', () => {
     await Promise.resolve();
 
     expect(onSoloFilter).not.toHaveBeenCalled();
+  });
+
+  it('publishes a canvas placement preview only while the dragged pill is over the canvas', async () => {
+    mockCanvasFrame();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onDragPreviewChange = vi.fn();
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          onDragPreviewChange={onDragPreviewChange}
+        />
+      ),
+      host
+    );
+
+    const filesButton = host.querySelector(
+      'button[aria-label="Files — click to solo, drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 41,
+      clientX: 820,
+      clientY: 620,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 41,
+      clientX: 850,
+      clientY: 640,
+      buttons: 1,
+    });
+    await Promise.resolve();
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
+
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 41,
+      clientX: 420,
+      clientY: 260,
+      buttons: 1,
+    });
+    await Promise.resolve();
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Files',
+      clientX: 420,
+      clientY: 260,
+    });
+
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 41,
+      clientX: 420,
+      clientY: 260,
+      buttons: 0,
+    });
+    await Promise.resolve();
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
   });
 });

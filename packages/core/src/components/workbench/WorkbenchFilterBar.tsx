@@ -43,10 +43,19 @@ export interface WorkbenchFilterBarProps {
    */
   onCreateAt?: (type: WorkbenchWidgetType, clientX: number, clientY: number) => void;
   onCreateToolAt?: (tool: WorkbenchDockToolId, clientX: number, clientY: number) => void;
+  onDragPreviewChange?: (preview: WorkbenchDockDragPreview | null) => void;
   viewport?: WorkbenchViewport;
   onViewportCommit?: (viewport: WorkbenchViewport) => void;
   onViewportInteractionStart?: (kind: 'pan') => void;
 }
+
+export type WorkbenchDockDragPreview = Readonly<{
+  kind: 'widget' | 'tool';
+  id: WorkbenchWidgetType | WorkbenchDockToolId;
+  label: string;
+  clientX: number;
+  clientY: number;
+}>;
 
 interface DragState {
   kind: 'widget' | 'tool';
@@ -61,6 +70,7 @@ interface DragState {
   moved: boolean;
   overCanvas: boolean;
   hasEnteredCanvas: boolean;
+  preview: WorkbenchDockDragPreview | null;
   stopInteraction: () => void;
 }
 
@@ -91,9 +101,7 @@ const WORKBENCH_WORK_TOOL_ITEMS: readonly {
   tool: WorkbenchDockToolId;
   label: string;
   icon: Component<{ class?: string }>;
-}[] = [
-  { tool: 'sticky-note', label: 'Sticky', icon: MessageSquare },
-];
+}[] = [{ tool: 'sticky-note', label: 'Sticky', icon: MessageSquare }];
 
 const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
   tool: WorkbenchDockToolId;
@@ -112,10 +120,7 @@ function readCanvasFrameRect(): DOMRect | null {
 
 function isPointInRect(clientX: number, clientY: number, rect: DOMRect): boolean {
   return (
-    clientX >= rect.left &&
-    clientX <= rect.right &&
-    clientY >= rect.top &&
-    clientY <= rect.bottom
+    clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
   );
 }
 
@@ -128,11 +133,14 @@ function didSegmentEnterCanvas(
   startClientX: number,
   startClientY: number,
   endClientX: number,
-  endClientY: number,
+  endClientY: number
 ): boolean {
   const rect = readCanvasFrameRect();
   if (!rect) return false;
-  if (isPointInRect(startClientX, startClientY, rect) || isPointInRect(endClientX, endClientY, rect)) {
+  if (
+    isPointInRect(startClientX, startClientY, rect) ||
+    isPointInRect(endClientX, endClientY, rect)
+  ) {
     return true;
   }
 
@@ -185,7 +193,7 @@ interface DockItemProps {
     kind: DragState['kind'],
     id: WorkbenchWidgetType | WorkbenchDockToolId,
     label: string,
-    icon: Component<{ class?: string }>,
+    icon: Component<{ class?: string }>
   ) => void;
 }
 
@@ -206,7 +214,7 @@ function DockItem(props: DockItemProps) {
       props.kind,
       props.id as WorkbenchWidgetType | WorkbenchDockToolId,
       props.label,
-      props.icon,
+      props.icon
     );
   };
 
@@ -220,9 +228,11 @@ function DockItem(props: DockItemProps) {
         'is-hovered': isHovered(),
         'is-source-dragging': props.isDragging,
       }}
-      aria-label={props.filterable
-        ? `${props.label} — click to solo, drag to canvas to create`
-        : `${props.label} — drag to canvas to create`}
+      aria-label={
+        props.filterable
+          ? `${props.label} — click to solo, drag to canvas to create`
+          : `${props.label} — drag to canvas to create`
+      }
       aria-pressed={props.active}
       onPointerEnter={() => props.onEnter()}
       onPointerLeave={() => props.onLeave()}
@@ -265,6 +275,11 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragSession = undefined;
     const current = dragState();
     current?.stopInteraction();
+    props.onDragPreviewChange?.(null);
+  });
+
+  createEffect(() => {
+    props.onDragPreviewChange?.(dragState()?.preview ?? null);
   });
 
   createEffect(() => {
@@ -325,9 +340,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       shouldPan: () => {
         const current = dragState();
         return Boolean(
-          current?.moved
-          && current.hasEnteredCanvas
-          && !isOverDock(current.clientX, current.clientY),
+          current?.moved &&
+          current.hasEnteredCanvas &&
+          !isOverDock(current.clientX, current.clientY)
         );
       },
     });
@@ -383,6 +398,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       moved: false,
       overCanvas: false,
       hasEnteredCanvas: false,
+      preview: null,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
     });
 
@@ -393,16 +409,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const dx = next.clientX - current.startClientX;
         const dy = next.clientY - current.startClientY;
         const moved =
-          current.moved ||
-          Math.abs(dx) > DRAG_THRESHOLD_PX ||
-          Math.abs(dy) > DRAG_THRESHOLD_PX;
+          current.moved || Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX;
         const overDock = isOverDock(next.clientX, next.clientY);
-        const overCanvas = moved
-          && isOverCanvas(next.clientX, next.clientY)
-          && !overDock;
-        const crossedCanvas = moved
-          && !overDock
-          && didSegmentEnterCanvas(current.clientX, current.clientY, next.clientX, next.clientY);
+        const overCanvas = moved && isOverCanvas(next.clientX, next.clientY) && !overDock;
+        const crossedCanvas =
+          moved &&
+          !overDock &&
+          didSegmentEnterCanvas(current.clientX, current.clientY, next.clientX, next.clientY);
         const hasEnteredCanvas = current.hasEnteredCanvas || overCanvas || crossedCanvas;
         shouldUpdateEdgeAutoPan = moved && hasEnteredCanvas && !overDock;
         return {
@@ -412,6 +425,15 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           moved,
           overCanvas,
           hasEnteredCanvas,
+          preview: overCanvas
+            ? {
+                kind: current.kind,
+                id: current.id,
+                label: current.label,
+                clientX: next.clientX,
+                clientY: next.clientY,
+              }
+            : null,
         };
       });
       if (shouldUpdateEdgeAutoPan) {
@@ -428,13 +450,14 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   };
 
   const draggingWidgetType = (): WorkbenchWidgetType | null =>
-    dragState()?.kind === 'widget' ? dragState()!.id as WorkbenchWidgetType : null;
+    dragState()?.kind === 'widget' ? (dragState()!.id as WorkbenchWidgetType) : null;
   const draggingTool = (): WorkbenchDockToolId | null =>
-    dragState()?.kind === 'tool' ? dragState()!.id as WorkbenchDockToolId : null;
+    dragState()?.kind === 'tool' ? (dragState()!.id as WorkbenchDockToolId) : null;
   const activeMode = (): WorkbenchInteractionMode =>
     props.mode === 'background' || props.mode === 'annotation' ? 'background' : 'work';
-  const activeModeItem = createMemo(() =>
-    WORKBENCH_MODE_ITEMS.find((item) => item.mode === activeMode()) ?? WORKBENCH_MODE_ITEMS[0]!
+  const activeModeItem = createMemo(
+    () =>
+      WORKBENCH_MODE_ITEMS.find((item) => item.mode === activeMode()) ?? WORKBENCH_MODE_ITEMS[0]!
   );
   const componentItems = createMemo(() => {
     if (activeMode() === 'background') {
@@ -470,7 +493,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       return false;
     }
     const scope = componentScope();
-    return scope.length > 1 && scope.every((key) => (props.filters[key] !== false) === (key === id));
+    return (
+      scope.length > 1 && scope.every((key) => (props.filters[key] !== false) === (key === id))
+    );
   };
   const modeTriggerHovered = () => hoveredIndex() === 0;
   const modeTriggerMotion = () => ({
@@ -499,9 +524,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             aria-haspopup="menu"
             aria-expanded={modeMenuOpen()}
             onPointerEnter={() => setHoveredIndex(0)}
-            onPointerLeave={() =>
-              setHoveredIndex((current) => (current === 0 ? null : current))
-            }
+            onPointerLeave={() => setHoveredIndex((current) => (current === 0 ? null : current))}
             onClick={() => setModeMenuOpen((open) => !open)}
           >
             <Motion.span
@@ -544,7 +567,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                       </span>
                       <span class="workbench-dock__mode-option-copy">
                         <span class="workbench-dock__mode-option-label">{item.label}</span>
-                        <span class="workbench-dock__mode-option-description">{item.description}</span>
+                        <span class="workbench-dock__mode-option-description">
+                          {item.description}
+                        </span>
                       </span>
                     </button>
                   );
@@ -567,13 +592,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                 visible={componentVisible(String(entry.id))}
                 filterable={componentFilterable()}
                 hoverOffset={offsetFor(slot())}
-                isDragging={entry.kind === 'widget'
-                  ? draggingWidgetType() === entry.id
-                  : draggingTool() === entry.id}
-                onEnter={() => setHoveredIndex(slot())}
-                onLeave={() =>
-                  setHoveredIndex((current) => (current === slot() ? null : current))
+                isDragging={
+                  entry.kind === 'widget'
+                    ? draggingWidgetType() === entry.id
+                    : draggingTool() === entry.id
                 }
+                onEnter={() => setHoveredIndex(slot())}
+                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
                 onDragBegin={beginItemDragGesture}
               />
             );

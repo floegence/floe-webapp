@@ -17,7 +17,10 @@ vi.mock('solid-motionone', () => ({
   Motion: new Proxy(
     {},
     {
-      get: () => ({ children }: { children?: unknown }) => children ?? null,
+      get:
+        () =>
+        ({ children }: { children?: unknown }) =>
+          children ?? null,
     }
   ),
 }));
@@ -40,6 +43,57 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
     defaultSize: { width: 420, height: 260 },
   },
 ];
+
+function dispatchPointerEvent(
+  type: string,
+  target: EventTarget,
+  options: {
+    pointerId?: number;
+    clientX?: number;
+    clientY?: number;
+    buttons?: number;
+  } = {}
+): void {
+  const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
+  const event = new EventCtor(type, {
+    bubbles: true,
+    button: 0,
+    clientX: options.clientX ?? 0,
+    clientY: options.clientY ?? 0,
+  });
+  if (!('pointerId' in event)) {
+    Object.defineProperty(event, 'pointerId', {
+      configurable: true,
+      value: options.pointerId ?? 1,
+    });
+  }
+  Object.defineProperty(event, 'buttons', {
+    configurable: true,
+    value: options.buttons ?? 1,
+  });
+  target.dispatchEvent(event);
+}
+
+function mockWorkbenchCanvasFrame(host: HTMLElement): void {
+  const frame = host.querySelector(
+    '[data-floe-workbench-canvas-frame="true"]'
+  ) as HTMLElement | null;
+  expect(frame).toBeTruthy();
+  Object.defineProperty(frame, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      left: 100,
+      top: 50,
+      right: 900,
+      bottom: 650,
+      width: 800,
+      height: 600,
+      x: 100,
+      y: 50,
+      toJSON: () => undefined,
+    }),
+  });
+}
 
 describe('WorkbenchSurface api', () => {
   afterEach(() => {
@@ -291,6 +345,84 @@ describe('WorkbenchSurface api', () => {
       material: 'solid',
       x: 330,
       y: 150,
+      width: 620,
+      height: 420,
+    });
+  });
+
+  it('renders a drag placement preview that matches the committed region frame', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let readState: () => WorkbenchState = () => createDefaultWorkbenchState(widgetDefinitions);
+
+    render(() => {
+      const [state, setState] = createSignal({
+        ...createDefaultWorkbenchState(widgetDefinitions),
+        mode: 'background' as const,
+        activeTool: 'background-region' as const,
+      });
+      readState = state;
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={widgetDefinitions}
+          backgroundLayerDefaults={{
+            width: 620,
+            height: 420,
+            name: 'Planning area',
+          }}
+        />
+      );
+    }, host);
+
+    await Promise.resolve();
+    mockWorkbenchCanvasFrame(host);
+
+    const regionButton = host.querySelector(
+      'button[aria-label="Region — drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(regionButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', regionButton!, {
+      pointerId: 51,
+      clientX: 130,
+      clientY: 620,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 51,
+      clientX: 500,
+      clientY: 350,
+      buttons: 1,
+    });
+    await Promise.resolve();
+
+    const preview = host.querySelector(
+      '.workbench-placement-preview.is-background-region'
+    ) as HTMLElement | null;
+    expect(preview).toBeTruthy();
+    expect(preview!.style.width).toBe('620px');
+    expect(preview!.style.height).toBe('420px');
+    expect(preview!.style.transform).toBe('translate3d(10px, 30px, 0)');
+
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 51,
+      clientX: 500,
+      clientY: 350,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(host.querySelector('.workbench-placement-preview')).toBeNull();
+    const createdRegion = readState().backgroundLayers?.find(
+      (item) => item.name === 'Planning area'
+    );
+    expect(createdRegion).toMatchObject({
+      name: 'Planning area',
+      x: 10,
+      y: 30,
       width: 620,
       height: 420,
     });
