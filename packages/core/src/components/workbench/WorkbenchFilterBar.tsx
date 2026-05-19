@@ -606,7 +606,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         </For>
       </div>
 
-      <Show when={(dragState()?.moved ?? false) as boolean}>
+      <Show when={Boolean(dragState()?.moved && !dragState()?.overCanvas)}>
         <DragGhost state={dragState} />
       </Show>
     </>
@@ -635,7 +635,6 @@ function DragGhost(props: DragGhostProps) {
     return `translate3d(${state.clientX + 14}px, ${state.clientY - 56}px, 0)`;
   };
 
-  const overCanvas = () => props.state()?.overCanvas ?? false;
   const label = () => props.state()?.label ?? '';
   const Icon = () => props.state()?.icon;
 
@@ -643,7 +642,6 @@ function DragGhost(props: DragGhostProps) {
     <Portal>
       <div
         class="workbench-dock-ghost"
-        classList={{ 'is-over-canvas': overCanvas() }}
         style={{ transform: transform() }}
         aria-hidden="true"
       >
@@ -661,7 +659,7 @@ function DragGhost(props: DragGhostProps) {
             <div class="workbench-dock-ghost__title">{label()}</div>
             <div class="workbench-dock-ghost__hint">
               <Plus class="w-3 h-3" />
-              <span>{overCanvas() ? 'Drop to create' : 'Drag onto canvas'}</span>
+              <span>Drag onto canvas</span>
             </div>
           </div>
         </div>

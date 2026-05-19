@@ -296,7 +296,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSoloFilter).not.toHaveBeenCalled();
   });
 
-  it('publishes a canvas placement preview only while the dragged pill is over the canvas', async () => {
+  it('hands visual feedback from the dock ghost to the canvas placement preview', async () => {
     mockCanvasFrame();
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -334,6 +334,10 @@ describe('WorkbenchFilterBar pointer session', () => {
     });
     await Promise.resolve();
     expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeTruthy();
+    expect(document.body.querySelector('.workbench-dock-ghost')?.textContent).toContain(
+      'Drag onto canvas'
+    );
 
     dispatchPointerEvent('pointermove', document, {
       pointerId: 41,
@@ -349,6 +353,7 @@ describe('WorkbenchFilterBar pointer session', () => {
       clientX: 420,
       clientY: 260,
     });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
 
     dispatchPointerEvent('pointerup', document, {
       pointerId: 41,
