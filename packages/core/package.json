@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.36.54",
+  "version": "0.36.55",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -112,3 +112,4 @@
     "vite-plugin-solid": "^2.11.10"
   }
 }
+Bumped: 0.36.54 -> 0.36.55

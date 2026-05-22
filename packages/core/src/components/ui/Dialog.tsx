@@ -162,7 +162,7 @@ export function Dialog(props: DialogProps) {
   useOverlayMask({
     open: isMountedOpen,
     root: () => dialogRef,
-    containsTarget: (target) => isSurfaceMode() && isWithinDialogBoundary(target),
+    containsTarget: isSurfaceMode() ? (target) => isWithinDialogBoundary(target) : undefined,
     onClose: () => props.onOpenChange(false),
     lockBodyScroll: () => !isSurfaceMode(),
     trapFocus: true,
