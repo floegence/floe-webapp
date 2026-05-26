@@ -191,6 +191,44 @@ type ContextMenuPortalLayout = Readonly<{
   ) => Readonly<{ x: number; y: number }>;
 }>;
 
+type ContextMenuPlacementPhase = 'closed' | 'measuring' | 'positioned';
+
+type ContextMenuPlacementState = Readonly<{
+  phase: ContextMenuPlacementPhase;
+  requestId: number;
+  anchor: Readonly<{ x: number; y: number }>;
+  position: Readonly<{ x: number; y: number }>;
+}>;
+
+const OFFSCREEN_MENU_POSITION = { x: -9999, y: -9999 } as const;
+
+function createMenuPlacement(
+  phase: ContextMenuPlacementPhase,
+  requestId = 0,
+  anchor: Readonly<{ x: number; y: number }> = OFFSCREEN_MENU_POSITION,
+  position: Readonly<{ x: number; y: number }> = anchor
+): ContextMenuPlacementState {
+  return { phase, requestId, anchor, position };
+}
+
+function isMenuPositioned(placement: ContextMenuPlacementState): boolean {
+  return placement.phase === 'positioned';
+}
+
+function scheduleMenuPlacement(callback: FrameRequestCallback): number | undefined {
+  if (typeof requestAnimationFrame !== 'function') {
+    callback(0);
+    return undefined;
+  }
+
+  return requestAnimationFrame(callback);
+}
+
+function cancelMenuPlacement(frame: number | undefined): void {
+  if (frame === undefined || typeof cancelAnimationFrame !== 'function') return;
+  cancelAnimationFrame(frame);
+}
+
 export function createDefaultContextMenuItems(callbacks?: ContextMenuCallbacks): ContextMenuItem[] {
   const hasAskAgent = !!callbacks?.onAskAgent;
   const hasCopyName = !!callbacks?.onCopyName;
@@ -413,25 +451,35 @@ export function installContextMenuDismissListeners(options: {
 }
 
 function ContextMenuEntry(props: ContextMenuEntryProps) {
-  const [submenuOpen, setSubmenuOpen] = createSignal(false);
-  const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
+  const [submenuPlacement, setSubmenuPlacement] = createSignal<ContextMenuPlacementState>(
+    createMenuPlacement('closed', 0)
+  );
   let itemRef: HTMLDivElement | undefined;
   let buttonRef: HTMLButtonElement | undefined;
   let submenuRef: HTMLDivElement | undefined;
   let hoverTimeout: ReturnType<typeof setTimeout> | undefined;
+  let submenuPlacementFrame: number | undefined;
+  let submenuPlacementRequestId = 0;
+  let restoreFocusFrame: number | undefined;
 
   const hasChildren = () => (props.item.children?.length ?? 0) > 0;
+  const submenuIsOpen = () => submenuPlacement().phase !== 'closed';
+  const submenuIsPositioned = () => isMenuPositioned(submenuPlacement());
 
-  const updateSubmenuPosition = () => {
-    if (!itemRef || !submenuRef) return;
+  const resolveSubmenuAnchor = () => {
+    if (!itemRef) return OFFSCREEN_MENU_POSITION;
+    const parentRect = itemRef.getBoundingClientRect();
+    return { x: parentRect.right, y: parentRect.top };
+  };
+
+  const calculateAdjustedSubmenuPosition = (
+    fallback: Readonly<{ x: number; y: number }>,
+    boundaryRect: MenuBoundaryRect
+  ) => {
+    if (!itemRef || !submenuRef) return fallback;
     const parentRect = itemRef.getBoundingClientRect();
     const submenuRect = submenuRef.getBoundingClientRect();
-    const pos = calculateSubmenuPosition(
-      parentRect,
-      submenuRect,
-      props.portalLayout.boundaryRect()
-    );
-    setSubmenuPosition(pos);
+    return calculateSubmenuPosition(parentRect, submenuRect, boundaryRect);
   };
 
   const clearHoverTimeout = () => {
@@ -440,20 +488,49 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
     hoverTimeout = undefined;
   };
 
+  const cancelSubmenuPlacementFrame = () => {
+    cancelMenuPlacement(submenuPlacementFrame);
+    submenuPlacementFrame = undefined;
+  };
+
+  const cancelRestoreFocusFrame = () => {
+    cancelMenuPlacement(restoreFocusFrame);
+    restoreFocusFrame = undefined;
+  };
+
   const openSubmenu = (focusMode: 'first' | 'last' = 'first') => {
     if (!hasChildren() || props.item.disabled) return;
     clearHoverTimeout();
-    setSubmenuOpen(true);
-    requestAnimationFrame(() => {
-      updateSubmenuPosition();
+    cancelSubmenuPlacementFrame();
+    cancelRestoreFocusFrame();
+
+    const requestId = ++submenuPlacementRequestId;
+    const anchor = resolveSubmenuAnchor();
+    const readBoundaryRect = props.portalLayout.boundaryRect;
+    setSubmenuPlacement(createMenuPlacement('measuring', requestId, anchor));
+
+    submenuPlacementFrame = scheduleMenuPlacement(() => {
+      submenuPlacementFrame = undefined;
+      if (submenuPlacementRequestId !== requestId) return;
+
+      const adjusted = calculateAdjustedSubmenuPosition(anchor, readBoundaryRect());
+      setSubmenuPlacement(createMenuPlacement('positioned', requestId, anchor, adjusted));
       focusMenuItem(submenuRef, focusMode);
     });
   };
 
-  const closeSubmenu = () => {
+  const closeSubmenu = (options: { restoreFocus?: boolean } = {}) => {
     clearHoverTimeout();
-    setSubmenuOpen(false);
-    requestAnimationFrame(() => buttonRef?.focus());
+    cancelSubmenuPlacementFrame();
+    setSubmenuPlacement(createMenuPlacement('closed', ++submenuPlacementRequestId));
+
+    if (options.restoreFocus ?? true) {
+      cancelRestoreFocusFrame();
+      restoreFocusFrame = scheduleMenuPlacement(() => {
+        restoreFocusFrame = undefined;
+        buttonRef?.focus();
+      });
+    }
   };
 
   const handleMouseEnter = () => {
@@ -468,7 +545,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
     if (!hasChildren()) return;
     clearHoverTimeout();
     hoverTimeout = setTimeout(() => {
-      setSubmenuOpen(false);
+      closeSubmenu({ restoreFocus: false });
     }, 150);
   };
 
@@ -477,7 +554,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
     if (hasChildren()) {
       event.preventDefault();
       event.stopPropagation();
-      if (submenuOpen()) {
+      if (submenuIsOpen()) {
         closeSubmenu();
       } else {
         openSubmenu('first');
@@ -489,9 +566,12 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
 
   onCleanup(() => {
     clearHoverTimeout();
+    cancelSubmenuPlacementFrame();
+    cancelRestoreFocusFrame();
   });
 
-  const projectedSubmenuPosition = () => props.portalLayout.projectPosition(submenuPosition());
+  const projectedSubmenuPosition = () =>
+    props.portalLayout.projectPosition(submenuPlacement().position);
 
   return (
     <div
@@ -525,7 +605,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
         )}
         role="menuitem"
         aria-haspopup={hasChildren() ? 'menu' : undefined}
-        aria-expanded={hasChildren() ? submenuOpen() : undefined}
+        aria-expanded={hasChildren() ? submenuIsOpen() : undefined}
       >
         <Show when={props.item.icon}>
           {(Icon) => <Dynamic component={Icon()} class="w-3.5 h-3.5 opacity-60" />}
@@ -539,7 +619,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
         </Show>
       </button>
 
-      <Show when={submenuOpen() && hasChildren()}>
+      <Show when={submenuIsOpen() && hasChildren()}>
         <Portal mount={props.portalLayout.mount()}>
           <div
             ref={submenuRef}
@@ -548,7 +628,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
                 ? 'absolute z-20 min-w-[180px] py-1'
                 : 'fixed z-50 min-w-[180px] py-1',
               'bg-popover border border-border rounded-lg shadow-lg',
-              'animate-in fade-in slide-in-from-left-1'
+              submenuIsPositioned() && 'animate-in fade-in slide-in-from-left-1'
             )}
             data-floe-context-menu={props.contextMenuId}
             {...{
@@ -559,8 +639,11 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
             style={{
               left: `${projectedSubmenuPosition().x}px`,
               top: `${projectedSubmenuPosition().y}px`,
+              visibility: submenuIsPositioned() ? 'visible' : 'hidden',
+              'pointer-events': submenuIsPositioned() ? 'auto' : 'none',
             }}
             role="menu"
+            aria-hidden={submenuIsPositioned() ? undefined : 'true'}
             onMouseEnter={clearHoverTimeout}
             onMouseLeave={handleMouseLeave}
             onKeyDown={(event) =>
@@ -603,7 +686,11 @@ export function FileContextMenu(props: FileContextMenuProps) {
   const isServer = typeof window === 'undefined' || typeof document === 'undefined';
   const contextMenuId = `floe-context-menu-${(fileContextMenuIdSeq += 1)}`;
 
-  const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
+  const [placement, setPlacement] = createSignal<ContextMenuPlacementState>(
+    createMenuPlacement('closed')
+  );
+  let placementFrame: number | undefined;
+  let placementRequestId = 0;
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
     ctx.contextMenu()
       ? resolveSurfacePortalHost()
@@ -654,16 +741,16 @@ export function FileContextMenu(props: FileContextMenuProps) {
     });
   };
 
-  const calculateAdjustedPosition = () => {
-    const menu = ctx.contextMenu();
-    if (!menu || !menuRef) return { x: menu?.x ?? 0, y: menu?.y ?? 0 };
+  const calculateAdjustedPosition = (anchor: Readonly<{ x: number; y: number }>) => {
+    if (!menuRef) return anchor;
 
     const rect = menuRef.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
-      return { x: menu.x, y: menu.y };
-    }
+    return clampMenuPosition(anchor, rect, portalLayout.boundaryRect());
+  };
 
-    return clampMenuPosition({ x: menu.x, y: menu.y }, rect, portalLayout.boundaryRect());
+  const cancelPlacementFrame = () => {
+    cancelMenuPlacement(placementFrame);
+    placementFrame = undefined;
   };
 
   createEffect(() => {
@@ -682,20 +769,33 @@ export function FileContextMenu(props: FileContextMenuProps) {
   createEffect(() => {
     const menu = ctx.contextMenu();
     if (!menu) {
-      setPosition({ x: -9999, y: -9999 });
+      cancelPlacementFrame();
+      setPlacement(createMenuPlacement('closed', ++placementRequestId));
       return;
     }
 
-    setPosition({ x: menu.x, y: menu.y });
+    cancelPlacementFrame();
 
-    requestAnimationFrame(() => {
-      const adjusted = calculateAdjustedPosition();
-      setPosition(adjusted);
+    const requestId = ++placementRequestId;
+    const anchor = { x: menu.x, y: menu.y };
+    setPlacement(createMenuPlacement('measuring', requestId, anchor));
+
+    placementFrame = scheduleMenuPlacement(() => {
+      placementFrame = undefined;
+      if (placementRequestId !== requestId) return;
+
+      const adjusted = calculateAdjustedPosition(anchor);
+      setPlacement(createMenuPlacement('positioned', requestId, anchor, adjusted));
       focusMenuItem(menuRef, 'first');
     });
   });
 
-  const projectedPosition = () => portalLayout.projectPosition(position());
+  onCleanup(() => {
+    cancelPlacementFrame();
+  });
+
+  const isPositioned = () => isMenuPositioned(placement());
+  const projectedPosition = () => portalLayout.projectPosition(placement().position);
 
   const MenuPanel = (panelProps: { menu: () => ContextMenuEvent }) => (
     <div
@@ -705,15 +805,18 @@ export function FileContextMenu(props: FileContextMenuProps) {
           ? 'absolute z-20 min-w-[180px] py-1'
           : 'fixed z-50 min-w-[180px] py-1',
         'bg-popover border border-border rounded-lg shadow-lg',
-        'animate-in fade-in zoom-in-95 duration-100'
+        isPositioned() && 'animate-in fade-in zoom-in-95 duration-100'
       )}
       data-floe-context-menu={contextMenuId}
       {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: portalLayout.isSurfaceMode() ? 'true' : undefined }}
       style={{
         left: `${projectedPosition().x}px`,
         top: `${projectedPosition().y}px`,
+        visibility: isPositioned() ? 'visible' : 'hidden',
+        'pointer-events': isPositioned() ? 'auto' : 'none',
       }}
       role="menu"
+      aria-hidden={isPositioned() ? undefined : 'true'}
       aria-orientation="vertical"
       onKeyDown={(event) => handlePanelKeyDown(event, { onDismiss: ctx.hideContextMenu })}
     >

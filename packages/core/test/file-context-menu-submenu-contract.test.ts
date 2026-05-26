@@ -44,7 +44,9 @@ describe('FileContextMenu submenu contract', () => {
     expect(typesSrc).toContain('children?: ContextMenuItem[]');
     expect(src).toContain('calculateSubmenuPosition');
     expect(src).toContain('<ChevronRight');
-    expect(src).toContain('submenuOpen() && hasChildren()');
+    expect(src).toContain('submenuPlacement');
+    expect(src).toContain("submenuPlacement().phase !== 'closed'");
+    expect(src).toContain('aria-hidden={submenuIsPositioned() ? undefined :');
     expect(src).toContain('isEventInsideContextMenu');
     expect(src).toContain('installContextMenuDismissListeners');
     expect(src).toContain("ownerWindow.addEventListener('pointerdown', handlePointerOutside, true);");
