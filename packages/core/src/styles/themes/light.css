@@ -34,11 +34,11 @@
   --terminal-panel-border: var(--chrome-border);
 
   /* Card */
-  --card: hsl(36 12% 96%);
+  --card: hsl(0 0% 100%);
   --card-foreground: hsl(215 40% 13%);
 
   /* Popover */
-  --popover: hsl(36 12% 96%);
+  --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(215 40% 13%);
 
   /* Status colors - Using OKLCH for perceptual consistency */

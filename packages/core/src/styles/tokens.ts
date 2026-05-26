@@ -141,7 +141,7 @@ export const floeColorTokenCategories = [
       {
         name: 'Card',
         variable: '--card',
-        lightValue: 'hsl(36 12% 96%)',
+        lightValue: 'hsl(0 0% 100%)',
         darkValue: 'hsl(222 28% 10%)',
         description: 'Card background surface.',
       },
@@ -155,7 +155,7 @@ export const floeColorTokenCategories = [
       {
         name: 'Popover',
         variable: '--popover',
-        lightValue: 'hsl(36 12% 96%)',
+        lightValue: 'hsl(0 0% 100%)',
         darkValue: 'hsl(222 28% 10%)',
         description: 'Popover and floating panel background.',
       },
