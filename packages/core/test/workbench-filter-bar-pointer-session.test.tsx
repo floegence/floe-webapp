@@ -305,7 +305,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSoloFilter).not.toHaveBeenCalled();
   });
 
-  it('shows the canvas placement preview as soon as a widget drag enters the canvas frame', async () => {
+  it('shows the canvas placement preview as soon as a widget drag is armed', async () => {
     mockCanvasFrame();
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -342,9 +342,15 @@ describe('WorkbenchFilterBar pointer session', () => {
       buttons: 1,
     });
     await Promise.resolve();
-    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
-    expect(document.body.querySelector('.workbench-dock-ghost')).toBeTruthy();
-    expect(document.body.querySelector('.workbench-dock-ghost')?.textContent).toContain('Files');
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Files',
+      clientX: 800,
+      clientY: 600,
+      dropAllowed: false,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
 
     dispatchPointerEvent('pointermove', document, {
       pointerId: 41,
@@ -442,5 +448,58 @@ describe('WorkbenchFilterBar pointer session', () => {
 
     expect(onCreateAt).not.toHaveBeenCalled();
     expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
+  });
+
+  it('shows a disallowed placement preview instead of a dock ghost while dragging over the dock', async () => {
+    mockCanvasFrame();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onDragPreviewChange = vi.fn();
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          onDragPreviewChange={onDragPreviewChange}
+        />
+      ),
+      host
+    );
+
+    const filesButton = host.querySelector(
+      'button[aria-label="Files — click to solo, drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn(() => filesButton),
+    });
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 47,
+      clientX: 120,
+      clientY: 560,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 47,
+      clientX: 120,
+      clientY: 568,
+      buttons: 1,
+    });
+    await Promise.resolve();
+
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Files',
+      clientX: 120,
+      clientY: 568,
+      dropAllowed: false,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
   });
 });

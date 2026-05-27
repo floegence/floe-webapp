@@ -150,6 +150,10 @@ function isOverCanvas(
   return frame ? isPointInFrame(clientX, clientY, frame) : false;
 }
 
+function clampToFrame(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 function didSegmentEnterCanvas(
   frame: WorkbenchEdgeAutoPanFrame | null,
   startClientX: number,
@@ -460,8 +464,14 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             next.clientX,
             next.clientY
           );
-        const hasEnteredCanvas = current.hasEnteredCanvas || overCanvas || crossedCanvas;
+        const hasEnteredCanvas = current.hasEnteredCanvas || insideCanvas || crossedCanvas;
         shouldUpdateEdgeAutoPan = moved && hasEnteredCanvas && !overDock;
+        const previewClientX = canvasFrame
+          ? clampToFrame(next.clientX, canvasFrame.left, canvasFrame.right)
+          : next.clientX;
+        const previewClientY = canvasFrame
+          ? clampToFrame(next.clientY, canvasFrame.top, canvasFrame.bottom)
+          : next.clientY;
         return {
           ...current,
           clientX: next.clientX,
@@ -469,13 +479,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           moved,
           overCanvas,
           hasEnteredCanvas,
-          preview: insideCanvas && canvasFrame
+          preview: moved && canvasFrame
             ? {
                 kind: current.kind,
                 id: current.id,
                 label: current.label,
-                clientX: next.clientX,
-                clientY: next.clientY,
+                clientX: previewClientX,
+                clientY: previewClientY,
                 dropAllowed: overCanvas,
                 canvasFrame,
               }
