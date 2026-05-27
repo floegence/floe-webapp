@@ -4,6 +4,24 @@ export interface IconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
   size?: number | string;
 }
 
+export {
+  DockTerminal,
+  DockFolder,
+  DockCpu,
+  DockActivity,
+  DockFileCode,
+  DockSearch,
+  DockGlobe,
+  DockSparkles,
+  DockBot,
+  DockCode,
+  DockMessageSquare,
+  DockRegion,
+  DockText,
+  DockLayoutDashboard,
+  DockLayers,
+} from './DockIcons';
+
 // Region icon (for canvas background areas)
 export const Region = (props: IconProps = {}) => (
   <svg

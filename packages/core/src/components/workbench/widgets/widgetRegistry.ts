@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js';
-import { Terminal, Folder, Cpu, FileCode, Activity } from '../../../icons';
+import { DockTerminal, DockFolder, DockCpu, DockFileCode, DockActivity } from '../../../icons';
 import type {
   WorkbenchWidgetDefinition,
   WorkbenchWidgetType,
@@ -20,7 +20,7 @@ export const WIDGET_REGISTRY: readonly WidgetRegistryEntry[] = [
   {
     type: 'terminal',
     label: 'Terminal',
-    icon: Terminal,
+    icon: DockTerminal,
     body: TerminalWidget,
     defaultTitle: 'Terminal',
     defaultSize: { width: 480, height: 320 },
@@ -28,7 +28,7 @@ export const WIDGET_REGISTRY: readonly WidgetRegistryEntry[] = [
   {
     type: 'file-browser',
     label: 'File Browser',
-    icon: Folder,
+    icon: DockFolder,
     body: FileBrowserWidget,
     defaultTitle: 'File Browser',
     defaultSize: { width: 360, height: 400 },
@@ -36,7 +36,7 @@ export const WIDGET_REGISTRY: readonly WidgetRegistryEntry[] = [
   {
     type: 'system-monitor',
     label: 'System Monitor',
-    icon: Cpu,
+    icon: DockCpu,
     body: SystemMonitorWidget,
     defaultTitle: 'System Monitor',
     defaultSize: { width: 340, height: 280 },
@@ -44,7 +44,7 @@ export const WIDGET_REGISTRY: readonly WidgetRegistryEntry[] = [
   {
     type: 'log-viewer',
     label: 'Log Viewer',
-    icon: Activity,
+    icon: DockActivity,
     body: LogViewerWidget,
     defaultTitle: 'Log Viewer',
     defaultSize: { width: 500, height: 300 },
@@ -52,7 +52,7 @@ export const WIDGET_REGISTRY: readonly WidgetRegistryEntry[] = [
   {
     type: 'code-editor',
     label: 'Code Editor',
-    icon: FileCode,
+    icon: DockFileCode,
     body: CodeEditorWidget,
     defaultTitle: 'Code Editor',
     defaultSize: { width: 520, height: 380 },

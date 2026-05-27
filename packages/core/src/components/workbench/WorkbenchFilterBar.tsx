@@ -11,7 +11,7 @@ import {
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
-import { Layers, LayoutDashboard, MessageSquare, Plus, Region, TextTool } from '../../icons';
+import { DockLayers, DockLayoutDashboard, DockMessageSquare, DockRegion, DockText, Plus } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import {
@@ -87,13 +87,13 @@ const WORKBENCH_MODE_ITEMS: readonly {
     mode: 'work',
     label: 'Work Mode',
     description: 'Operate windows and sticky notes',
-    icon: LayoutDashboard,
+    icon: DockLayoutDashboard,
   },
   {
     mode: 'background',
     label: 'Composition Mode',
     description: 'Arrange regions and canvas text',
-    icon: Layers,
+    icon: DockLayers,
   },
 ];
 
@@ -101,15 +101,15 @@ const WORKBENCH_WORK_TOOL_ITEMS: readonly {
   tool: WorkbenchDockToolId;
   label: string;
   icon: Component<{ class?: string }>;
-}[] = [{ tool: 'sticky-note', label: 'Sticky', icon: MessageSquare }];
+}[] = [{ tool: 'sticky-note', label: 'Sticky', icon: DockMessageSquare }];
 
 const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
   tool: WorkbenchDockToolId;
   label: string;
   icon: Component<{ class?: string }>;
 }[] = [
-  { tool: 'background-region', label: 'Region', icon: Region },
-  { tool: 'text', label: 'Text', icon: TextTool },
+  { tool: 'background-region', label: 'Region', icon: DockRegion },
+  { tool: 'text', label: 'Text', icon: DockText },
 ];
 
 function readCanvasFrameRect(): DOMRect | null {
@@ -532,7 +532,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
               animate={modeTriggerMotion()}
               transition={{ duration: duration.fast, easing: easing.easeOut }}
             >
-              <Layers class="workbench-dock__icon" />
+              {(() => {
+                const ModeIcon = activeModeItem().icon;
+                return <ModeIcon class="workbench-dock__icon" />;
+              })()}
             </Motion.span>
             <Motion.span
               class="workbench-dock__tooltip"

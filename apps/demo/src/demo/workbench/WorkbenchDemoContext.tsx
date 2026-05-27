@@ -18,15 +18,21 @@ import {
   Clock,
   Code,
   Database,
+  DockActivity,
+  DockBot,
+  DockCode,
+  DockFolder,
+  DockGlobe,
+  DockSearch,
+  DockSparkles,
+  DockTerminal,
   FileCode,
-  Files,
   GitBranch,
   Globe,
   Hash,
   Package,
   Search,
   Sparkles,
-  Terminal,
   Zap,
 } from '@floegence/floe-webapp-core/icons';
 import { cn, usePersisted } from '@floegence/floe-webapp-core';
@@ -532,14 +538,14 @@ function makeRedevenParityWidget(
 }
 
 export const REDEVEN_PARITY_WORKBENCH_WIDGETS: readonly WorkbenchWidgetDefinition[] = [
-  makeRedevenParityWidget('redeven.files', 'Files', Files, 'Files', 1080, 700),
-  makeRedevenParityWidget('redeven.terminal', 'Terminal', Terminal, 'Terminal', 1120, 680),
-  makeRedevenParityWidget('redeven.preview', 'Preview', Search, 'Preview', 1080, 700),
-  makeRedevenParityWidget('redeven.monitor', 'Monitoring', Activity, 'Monitoring', 1040, 640, true),
-  makeRedevenParityWidget('redeven.codespaces', 'Codespaces', Code, 'Codespaces', 1040, 660),
-  makeRedevenParityWidget('redeven.ports', 'Ports', Globe, 'Ports', 1000, 620, true),
-  makeRedevenParityWidget('redeven.ai', 'Flower', Sparkles, 'Flower', 1200, 760),
-  makeRedevenParityWidget('redeven.codex', 'Codex', Bot, 'Codex', 1200, 760),
+  makeRedevenParityWidget('redeven.files', 'Files', DockFolder, 'Files', 1080, 700),
+  makeRedevenParityWidget('redeven.terminal', 'Terminal', DockTerminal, 'Terminal', 1120, 680),
+  makeRedevenParityWidget('redeven.preview', 'Preview', DockSearch, 'Preview', 1080, 700),
+  makeRedevenParityWidget('redeven.monitor', 'Monitoring', DockActivity, 'Monitoring', 1040, 640, true),
+  makeRedevenParityWidget('redeven.codespaces', 'Codespaces', DockCode, 'Codespaces', 1040, 660),
+  makeRedevenParityWidget('redeven.ports', 'Ports', DockGlobe, 'Ports', 1000, 620, true),
+  makeRedevenParityWidget('redeven.ai', 'Flower', DockSparkles, 'Flower', 1200, 760),
+  makeRedevenParityWidget('redeven.codex', 'Codex', DockBot, 'Codex', 1200, 760),
 ];
 
 export const REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES = [
