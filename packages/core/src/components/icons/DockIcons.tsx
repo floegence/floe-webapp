@@ -63,23 +63,33 @@ export const DockFolder = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Monitor — dramatic chart curve + subtle grid ──────────────────── */
+/* ── Monitor — smooth curve + gradient area fill (floe chart style) ── */
 export const DockCpu = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="c" tint="#0d6b5c" />
+    <defs>
+      <linearGradient id="c-area" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--chart-4)" stop-opacity=".35" />
+        <stop offset="100%" stop-color="var(--chart-4)" stop-opacity=".03" />
+      </linearGradient>
+    </defs>
     <Glass id="c" />
-    {/* subtle grid behind the curve */}
-    <line x1="8" y1="15" x2="40" y2="15" stroke="var(--foreground)" stroke-opacity=".06" stroke-width=".7" />
-    <line x1="8" y1="24" x2="40" y2="24" stroke="var(--foreground)" stroke-opacity=".08" stroke-width=".7" />
-    <line x1="8" y1="33" x2="40" y2="33" stroke="var(--foreground)" stroke-opacity=".06" stroke-width=".7" />
-    {/* the curve */}
-    <polyline points="6,34 8,34 12,18 17,36 23,22 28,28 32,28 42,28"
-              fill="none" stroke="var(--foreground)" stroke-opacity=".7" stroke-width="2.6"
+    {/* subtle grid */}
+    <line x1="8" y1="14" x2="40" y2="14" stroke="var(--foreground)" stroke-opacity=".05" stroke-width=".6" />
+    <line x1="8" y1="22" x2="40" y2="22" stroke="var(--foreground)" stroke-opacity=".07" stroke-width=".6" />
+    <line x1="8" y1="30" x2="40" y2="30" stroke="var(--foreground)" stroke-opacity=".05" stroke-width=".6" />
+    <line x1="8" y1="38" x2="40" y2="38" stroke="var(--foreground)" stroke-opacity=".04" stroke-width=".6" />
+    {/* area fill — curve closed to baseline */}
+    <path d="M6,36 L9,36 L14,18 L20,34 L26,22 L30,26 L34,26 L42,30 L42,42 L6,42 Z"
+          fill="url(#c-area)" />
+    {/* the curve line */}
+    <polyline points="6,36 9,36 14,18 20,34 26,22 30,26 34,26 42,30"
+              fill="none" stroke="var(--chart-4)" stroke-opacity=".85" stroke-width="2.2"
               stroke-linecap="round" stroke-linejoin="round" />
-    {/* endpoint glow */}
-    <circle cx="42" cy="28" r="3.2" fill="var(--foreground)" fill-opacity=".15" />
-    <circle cx="42" cy="28" r="1.8" fill="var(--foreground)" fill-opacity=".65" />
+    {/* endpoint dot */}
+    <circle cx="42" cy="30" r="2.8" fill="var(--chart-4)" fill-opacity=".2" />
+    <circle cx="42" cy="30" r="1.5" fill="var(--chart-4)" fill-opacity=".85" />
   </svg>
 );
 
