@@ -180,23 +180,29 @@ export const DockBot = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Code / Codespaces — card with green badge ─────────────────────── */
+/* ── Code / Codespaces — indented code lines with syntax colours ───── */
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="cd" tint="#3038a0" />
+    <Defs id="cd" tint="#242c5c" />
     <Glass id="cd" />
-    {/* one prominent card */}
-    <rect x="7" y="8" width="34" height="32" rx="4"
-          fill="var(--foreground)" fill-opacity=".06"
-          stroke="var(--foreground)" stroke-opacity=".12" stroke-width="1" />
-    <circle cx="13" cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".22" />
-    <rect x="18" y="12" width="16" height="2.5" rx="1.25" fill="var(--foreground)" opacity=".18" />
-    <rect x="18" y="17" width="12" height="2" rx="1" fill="var(--foreground)" opacity=".11" />
-    {/* green running badge */}
-    <rect x="10" y="26" width="28" height="10" rx="5" fill="#2f855a" opacity=".2" />
-    <circle cx="17" cy="31" r="2" fill="#4ade80" />
-    <rect x="22" y="29" width="11" height="2.5" rx="1.25" fill="var(--foreground)" opacity=".35" />
+    {/* line 1 — keyword + fn */}
+    <rect x="8" y="9" width="7" height="2" rx="1" fill="#c678dd" opacity=".65" />
+    <rect x="17" y="9" width="9" height="2" rx="1" fill="#61afef" opacity=".55" />
+    <rect x="28" y="9" width="12" height="2" rx="1" fill="var(--foreground)" opacity=".12" />
+    {/* line 2 — indented string */}
+    <rect x="13" y="14" width="10" height="2" rx="1" fill="#98c379" opacity=".5" />
+    <rect x="25" y="14" width="10" height="2" rx="1" fill="var(--foreground)" opacity=".1" />
+    {/* line 3 — indented number */}
+    <rect x="13" y="19" width="5" height="2" rx="1" fill="#d19a66" opacity=".5" />
+    <rect x="20" y="19" width="15" height="2" rx="1" fill="var(--foreground)" opacity=".12" />
+    {/* line 4 — deeper indent + fn */}
+    <rect x="18" y="24" width="8" height="2" rx="1" fill="#61afef" opacity=".5" />
+    <rect x="27" y="24" width="6" height="2" rx="1" fill="var(--foreground)" opacity=".12" />
+    {/* line 5 — return/close */}
+    <rect x="8" y="29" width="7" height="2" rx="1" fill="#c678dd" opacity=".45" />
+    {/* line 6 — faint */}
+    <rect x="8" y="34" width="18" height="2" rx="1" fill="var(--foreground)" opacity=".08" />
   </svg>
 );
 
