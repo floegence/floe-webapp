@@ -138,33 +138,30 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — proxy switch: multi-port → node → multi-port ──── */
+/* ── Globe / Ports — elegant proxy forwarding with bezier curves ───── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    <g fill="none" stroke="var(--foreground)" stroke-opacity=".6" stroke-width="2"
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".55" stroke-width="1.8"
        stroke-linecap="round">
-      {/* left ports → lines going into the switch */}
-      <line x1="6" y1="14" x2="20" y2="18" />
-      <line x1="6" y1="24" x2="20" y2="24" />
-      <line x1="6" y1="34" x2="20" y2="30" />
-      {/* left port dots */}
-      <circle cx="5" cy="14" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
-      <circle cx="5" cy="24" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
-      <circle cx="5" cy="34" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
-      {/* switch node */}
-      <rect x="18" y="15" width="12" height="18" rx="4" fill="var(--foreground)" fill-opacity=".08" />
-      {/* right ports → lines going out of the switch to different ports */}
-      <line x1="30" y1="16" x2="42" y2="14" />
-      <line x1="30" y1="24" x2="42" y2="24" />
-      <line x1="30" y1="32" x2="42" y2="34" />
-      {/* right port dots — different sizes to show mapping change */}
-      <circle cx="43" cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
-      <circle cx="43" cy="24" r="1.6" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
-      <circle cx="43" cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      {/* graceful bezier curves — left ports flowing through centre to right ports */}
+      <path d="M5 14 Q18 14 22 20 Q26 26 30 20 Q34 14 43 14" />
+      <path d="M5 24 Q14 24 20 24 Q28 24 34 24 Q40 24 43 24" />
+      <path d="M5 34 Q18 34 22 28 Q26 22 30 28 Q34 34 43 34" />
     </g>
+    {/* port endpoints — left */}
+    <circle cx="5"  cy="14" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="5"  cy="24" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="5"  cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    {/* port endpoints — right, subtly different sizes */}
+    <circle cx="43" cy="14" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="43" cy="24" r="2.8" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="43" cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    {/* centre hub */}
+    <circle cx="24" cy="24" r="5" fill="var(--foreground)" fill-opacity=".1"
+            stroke="var(--foreground)" stroke-opacity=".45" stroke-width="1.8" />
   </svg>
 );
 
