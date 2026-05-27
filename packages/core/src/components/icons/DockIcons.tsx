@@ -144,24 +144,21 @@ export const DockGlobe = (props: DockIconProps = {}) => (
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    <g fill="none" stroke="var(--foreground)" stroke-opacity=".55" stroke-width="1.8"
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".55" stroke-width="2.5"
        stroke-linecap="round">
-      {/* graceful bezier curves — left ports flowing through centre to right ports */}
       <path d="M5 14 Q18 14 22 20 Q26 26 30 20 Q34 14 43 14" />
       <path d="M5 24 Q14 24 20 24 Q28 24 34 24 Q40 24 43 24" />
       <path d="M5 34 Q18 34 22 28 Q26 22 30 28 Q34 34 43 34" />
     </g>
-    {/* port endpoints — left */}
-    <circle cx="5"  cy="14" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="5"  cy="24" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="5"  cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    {/* port endpoints — right, subtly different sizes */}
-    <circle cx="43" cy="14" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="43" cy="24" r="2.8" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="43" cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    {/* centre hub */}
-    <circle cx="24" cy="24" r="5" fill="var(--foreground)" fill-opacity=".1"
-            stroke="var(--foreground)" stroke-opacity=".45" stroke-width="1.8" />
+    {/* port endpoints */}
+    <circle cx="5"  cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="5"  cy="24" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="5"  cy="34" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="43" cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="43" cy="24" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="43" cy="34" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
+    {/* centre hub — solid, distinct colour */}
+    <circle cx="24" cy="24" r="4.5" fill="var(--chart-4)" fill-opacity=".5" />
   </svg>
 );
 
