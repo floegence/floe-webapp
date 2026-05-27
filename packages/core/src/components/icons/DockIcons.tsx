@@ -236,16 +236,19 @@ export const DockRegion = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Text — literal "Text" wordmark ────────────────────────────────── */
+/* ── Text — "Text" wordmark with cursor bar ────────────────────────── */
 export const DockText = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="tx" tint="#3c4c60" />
     <Glass id="tx" />
-    <text x="24" y="29" text-anchor="middle"
+    {/* the word "Text" — centred */}
+    <text x="24" y="28" text-anchor="middle" dominant-baseline="middle"
           font-family="'Inter','SF Pro Display',-apple-system,sans-serif"
-          font-size="15" font-weight="700" letter-spacing="-0.3"
+          font-size="14" font-weight="700" letter-spacing="0"
           fill="var(--foreground)" fill-opacity=".7">Text</text>
+    {/* thin decorative rule below */}
+    <rect x="16" y="33" width="16" height="2" rx="1" fill="var(--foreground)" fill-opacity=".2" />
   </svg>
 );
 
