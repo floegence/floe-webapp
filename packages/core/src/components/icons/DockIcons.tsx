@@ -187,18 +187,18 @@ export const DockBot = (props: DockIconProps = {}) => (
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="cd" tint="#242c58" strength={3} />
+    <Defs id="cd" tint="#242c58" strength={1.5} />
     <Glass id="cd" />
     {/* editor area — 2 syntax-coloured lines */}
-    <rect x="9"  y="10" width="8"  height="2.8" rx="1.4" fill="#c678dd" opacity=".6" />
-    <rect x="19" y="10" width="12" height="2.8" rx="1.4" fill="var(--foreground)" opacity=".12" />
-    <rect x="12" y="16" width="14" height="2.8" rx="1.4" fill="#61afef" opacity=".5" />
+    <rect x="9"  y="10" width="8"  height="2.8" rx="1.4" fill="#a05dc0" opacity=".8" />
+    <rect x="19" y="10" width="12" height="2.8" rx="1.4" fill="var(--foreground)" opacity=".18" />
+    <rect x="12" y="16" width="14" height="2.8" rx="1.4" fill="#4088d8" opacity=".7" />
     {/* subtle divider */}
-    <line x1="9" y1="23" x2="39" y2="23" stroke="var(--foreground)" stroke-opacity=".1" stroke-width="1" />
+    <line x1="9" y1="23" x2="39" y2="23" stroke="var(--foreground)" stroke-opacity=".12" stroke-width="1" />
     {/* terminal area — green prompt */}
     <text x="9" y="33" font-family="'SF Mono',monospace" font-size="9" font-weight="700"
-          fill="#78d984">$</text>
-    <rect x="15" y="29" width="16" height="3" rx="1.5" fill="var(--foreground)" opacity=".1" />
+          fill="#3cac4e">$</text>
+    <rect x="15" y="29" width="16" height="3" rx="1.5" fill="var(--foreground)" opacity=".15" />
   </svg>
 );
 
