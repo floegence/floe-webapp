@@ -190,15 +190,15 @@ export const DockCode = (props: DockIconProps = {}) => (
     <Defs id="cd" tint="#242c58" strength={1.5} />
     <Glass id="cd" />
     {/* line 1 — keyword + function */}
-    <rect x="8"  y="10" width="9"  height="3" rx="1.5" fill="#b06fd0" opacity=".75" />
-    <rect x="20" y="10" width="15" height="3" rx="1.5" fill="#5098e0" opacity=".65" />
+    <rect x="8"  y="10" width="9"  height="3" rx="1.5" fill="#8b3fa8" opacity=".85" />
+    <rect x="20" y="10" width="15" height="3" rx="1.5" fill="#2b6cb8" opacity=".8" />
     {/* line 2 — indented string */}
-    <rect x="13" y="17" width="18" height="3" rx="1.5" fill="#60b878" opacity=".6" />
-    {/* line 3 — deeper indent + number + operator */}
-    <rect x="18" y="24" width="6"  height="3" rx="1.5" fill="#d0a050" opacity=".6" />
-    <rect x="26" y="24" width="14" height="3" rx="1.5" fill="var(--foreground)" opacity=".15" />
+    <rect x="13" y="17" width="18" height="3" rx="1.5" fill="#2d7a4a" opacity=".75" />
+    {/* line 3 — deeper indent + number */}
+    <rect x="18" y="24" width="6"  height="3" rx="1.5" fill="#b07020" opacity=".75" />
+    <rect x="26" y="24" width="14" height="3" rx="1.5" fill="var(--foreground)" opacity=".2" />
     {/* line 4 — return keyword */}
-    <rect x="8"  y="31" width="16" height="3" rx="1.5" fill="#b06fd0" opacity=".55" />
+    <rect x="8"  y="31" width="16" height="3" rx="1.5" fill="#8b3fa8" opacity=".7" />
   </svg>
 );
 
