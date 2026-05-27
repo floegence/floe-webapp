@@ -138,29 +138,24 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — network hub with radial ports ─────────────────── */
+/* ── Globe / Ports — stacked gateway, pure filled shapes ───────────── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    {/* connection lines — 4 spokes */}
-    <g fill="none" stroke="var(--foreground)" stroke-opacity=".4" stroke-width="2.2"
-       stroke-linecap="round">
-      <line x1="24" y1="24" x2="10" y2="10" />
-      <line x1="24" y1="24" x2="38" y2="10" />
-      <line x1="24" y1="24" x2="10" y2="38" />
-      <line x1="24" y1="24" x2="38" y2="38" />
-    </g>
-    {/* port nodes — 4 corner points */}
-    <circle cx="10" cy="10" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
-    <circle cx="38" cy="10" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
-    <circle cx="10" cy="38" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
-    <circle cx="38" cy="38" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
-    {/* centre hub — solid green */}
-    <circle cx="24" cy="24" r="5" fill="var(--chart-4)" fill-opacity=".5" />
-    {/* hub inner highlight */}
-    <circle cx="24" cy="24" r="2" fill="white" fill-opacity=".25" />
+    {/* left port block */}
+    <rect x="6"  y="16" width="10" height="16" rx="4" fill="var(--foreground)" fill-opacity=".14" />
+    <rect x="8"  y="20" width="3"  height="4"  rx="1.5" fill="var(--foreground)" fill-opacity=".3" />
+    <rect x="8"  y="26" width="3"  height="2"  rx="1" fill="var(--foreground)" fill-opacity=".2" />
+    {/* right port block */}
+    <rect x="32" y="16" width="10" height="16" rx="4" fill="var(--foreground)" fill-opacity=".14" />
+    <rect x="37" y="20" width="3"  height="4"  rx="1.5" fill="var(--foreground)" fill-opacity=".3" />
+    <rect x="37" y="26" width="3"  height="2"  rx="1" fill="var(--foreground)" fill-opacity=".2" />
+    {/* centre gateway — solid green */}
+    <rect x="18" y="14" width="12" height="20" rx="5" fill="var(--chart-4)" fill-opacity=".45" />
+    <rect x="22" y="20" width="4"  height="4"  rx="2" fill="white" fill-opacity=".3" />
+    <rect x="22" y="26" width="4"  height="2"  rx="1" fill="white" fill-opacity=".18" />
   </svg>
 );
 
