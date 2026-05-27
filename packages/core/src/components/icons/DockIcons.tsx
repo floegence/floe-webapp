@@ -144,12 +144,12 @@ export const DockGlobe = (props: DockIconProps = {}) => (
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    {/* left circle — translucent */}
-    <circle cx="15" cy="24" r="9" fill="var(--foreground)" fill-opacity=".08" />
-    {/* right circle — translucent */}
-    <circle cx="33" cy="24" r="9" fill="var(--foreground)" fill-opacity=".08" />
+    {/* left circle */}
+    <circle cx="15" cy="24" r="9" fill="var(--foreground)" fill-opacity=".18" />
+    {/* right circle */}
+    <circle cx="33" cy="24" r="9" fill="var(--foreground)" fill-opacity=".18" />
     {/* centre circle — green proxy */}
-    <circle cx="24" cy="24" r="7" fill="var(--chart-4)" fill-opacity=".4" />
+    <circle cx="24" cy="24" r="6.5" fill="var(--chart-4)" fill-opacity=".65" />
   </svg>
 );
 
