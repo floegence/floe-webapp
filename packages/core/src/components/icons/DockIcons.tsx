@@ -10,19 +10,20 @@ export interface DockIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
    The single hero glyph is semi-transparent — legible on any background.
    ====================================================================== */
 
-function Defs(props: { id: string; tint: string; strength?: number }) {
-  const s = props.strength ?? 1;
+function Defs(p: { id: string; tint: string; strength?: number }) {
+  const { id, tint, strength } = p;
+  const s = strength ?? 1;
   const topPct = Math.round(8 * s);
   const botPct = Math.round(18 * s);
   return (
     <defs>
-      <linearGradient id={`${props.id}-bg`} x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"
-              stop-color={`color-mix(in srgb, var(--card), ${props.tint} ${topPct}%)`} />
+              stop-color={`color-mix(in srgb, var(--card), ${tint} ${topPct}%)`} />
         <stop offset="100%"
-              stop-color={`color-mix(in srgb, var(--card), ${props.tint} ${botPct}%)`} />
+              stop-color={`color-mix(in srgb, var(--card), ${tint} ${botPct}%)`} />
       </linearGradient>
-      <linearGradient id={`${props.id}-rim`} x1="0" y1="0" x2="0" y2=".35">
+      <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="0" y2=".35">
         <stop offset="0%" stop-color="white" stop-opacity=".14" />
         <stop offset="100%" stop-color="white" stop-opacity="0" />
       </linearGradient>
