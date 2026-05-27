@@ -5,12 +5,9 @@ export interface DockIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
 }
 
 /* ======================================================================
-   Liquid Glass icons — WWDC 2025 / macOS Tahoe design language.
-
-   • The squircle IS the icon — no inner frames, bezels, or containers.
-   • Flat, frontal, bold shapes integrated into tinted glass.
-   • Top rim highlight catches light on the glass edge.
-   • One glyph per icon — clean, iconic, immediate.
+   Each icon faithfully depicts the actual component it represents.
+   The squircle background is a complementary tint — distinct from the
+   component's own colours so the miniature "window" reads clearly.
    ====================================================================== */
 
 function Defs(props: { id: string; top: string; bot: string }) {
@@ -21,7 +18,7 @@ function Defs(props: { id: string; top: string; bot: string }) {
         <stop offset="100%" stop-color={props.bot} />
       </linearGradient>
       <linearGradient id={`${props.id}-rim`} x1="0" y1="0" x2="0" y2=".4">
-        <stop offset="0%" stop-color="white" stop-opacity=".22" />
+        <stop offset="0%" stop-color="white" stop-opacity=".2" />
         <stop offset="100%" stop-color="white" stop-opacity="0" />
       </linearGradient>
     </defs>
@@ -37,239 +34,335 @@ function Glass(props: { id: string }) {
   );
 }
 
-/* ── Terminal ──────────────────────────────────────────────────────── */
+/* ── Terminal — dark screen, green prompt, traffic lights ────────────
+   Background: warm grey (contrasts with the cool dark screen) */
 export const DockTerminal = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="t" top="#3d3d4d" bot="#1a1a24" />
+    <Defs id="t" top="#353540" bot="#1e1e28" />
     <Glass id="t" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2.8"
-       stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="13,13 23,24 13,35" />
-      <line x1="27" y1="37" x2="36" y2="37" />
-    </g>
+    {/* terminal screen */}
+    <rect x="8" y="9" width="32" height="28" rx="3" fill="#0d0d1a" />
+    {/* traffic lights */}
+    <circle cx="12" cy="13" r="1.8" fill="#ff6b6b" />
+    <circle cx="17" cy="13" r="1.8" fill="#ffd93d" />
+    <circle cx="22" cy="13" r="1.8" fill="#6bff8d" />
+    {/* prompt */}
+    <text x="11" y="20" font-family="'SF Mono',monospace" font-size="7" font-weight="700"
+          fill="#78d984">$</text>
+    <rect x="16" y="15.5" width="16" height="4" rx="1.5" fill="#78d984" opacity=".55" />
+    {/* output lines */}
+    <rect x="11" y="26" width="22" height="1" rx=".5" fill="white" opacity=".14" />
+    <rect x="11" y="29" width="14" height="1" rx=".5" fill="white" opacity=".1" />
+    <rect x="11" y="32" width="18" height="1" rx=".5" fill="white" opacity=".07" />
   </svg>
 );
 
-/* ── Folder — amber/yellow, matches file browser `--warning` ───────── */
+/* ── Folder — amber folder (matches file browser --warning),
+   on a cool slate background ───────────────────────────────────────── */
 export const DockFolder = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="f" top="#f0c040" bot="#c88018" />
+    <Defs id="f" top="#4c586c" bot="#2a3440" />
     <Glass id="f" />
-    <path d="M10 14.5a3 3 0 0 1 3-3h4l3.5 2.5H35a3 3 0 0 1 3 3V31a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3V14.5Z"
-          fill="white" fill-opacity=".88" />
+    {/* folder body — amber like --warning */}
+    <path d="M11 14a2.5 2.5 0 0 1 2.5-2.5h4l3 2H35a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1-2.5 2.5H13.5A2.5 2.5 0 0 1 11 29V14Z"
+          fill="#e8b830" />
+    {/* folder highlight */}
+    <path d="M13.5 11.5h4l3 2H35" fill="none" stroke="#f0d060" stroke-width="1"
+          stroke-linecap="round" />
+    {/* inner shadow depth */}
+    <path d="M13.5 14v15a2.5 2.5 0 0 0 2.5 2.5h19a2.5 2.5 0 0 0 2.5-2.5V18H19l-2.5-2h-3Z"
+          fill="black" fill-opacity=".12" />
   </svg>
 );
 
-/* ── CPU ───────────────────────────────────────────────────────────── */
+/* ── CPU / System Monitor — teal bg, multi-color progress bars ───────
+   faithful to the actual monitor widget (CPU blue, Mem amber, Disk green) */
 export const DockCpu = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="c" top="#22b89c" bot="#0a6858" />
+    <Defs id="c" top="#234a44" bot="#142c28" />
     <Glass id="c" />
-    <g stroke="white" stroke-opacity=".88" stroke-width="2.2" stroke-linecap="round">
-      <line x1="19" y1="9"  x2="19" y2="13" /><line x1="24" y1="9"  x2="24" y2="13" /><line x1="29" y1="9"  x2="29" y2="13" />
-      <line x1="19" y1="39" x2="19" y2="35" /><line x1="24" y1="39" x2="24" y2="35" /><line x1="29" y1="39" x2="29" y2="35" />
-      <line x1="9"  y1="19" x2="13" y2="19" /><line x1="9"  y1="24" x2="13" y2="24" /><line x1="9"  y1="29" x2="13" y2="29" />
-      <line x1="39" y1="19" x2="35" y2="19" /><line x1="39" y1="24" x2="35" y2="24" /><line x1="39" y1="29" x2="35" y2="29" />
-    </g>
-    <rect x="14" y="14" width="20" height="20" rx="3.5" fill="white" fill-opacity=".18"
-          stroke="white" stroke-opacity=".65" stroke-width="2.2" />
-    <rect x="19" y="19" width="10" height="10" rx="2" fill="white" fill-opacity=".45" />
+    {/* monitor panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#0f1c1a" />
+    {/* CPU row — blue bar */}
+    <rect x="12" y="13" width="18" height="4" rx="2" fill="white" opacity=".08" />
+    <rect x="12" y="13" width="7" height="4" rx="2" fill="#3b82f6" />
+    {/* Memory row — amber bar */}
+    <rect x="12" y="20" width="18" height="4" rx="2" fill="white" opacity=".08" />
+    <rect x="12" y="20" width="12" height="4" rx="2" fill="#f59e0b" />
+    {/* Disk row — green bar */}
+    <rect x="12" y="27" width="18" height="4" rx="2" fill="white" opacity=".08" />
+    <rect x="12" y="27" width="5.5" height="4" rx="2" fill="#10b981" />
   </svg>
 );
 
-/* ── Activity ──────────────────────────────────────────────────────── */
+/* ── Activity / Log Viewer — dark bg, coloured log lines ─────────────
+   faithful to the log viewer: blue info, amber warn, red error */
 export const DockActivity = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="a" top="#f08840" bot="#b44010" />
+    <Defs id="a" top="#3d3028" bot="#221a14" />
     <Glass id="a" />
-    <polyline points="7,26 14,26 18,16 22,33 27,20 31,26 41,26"
-              fill="none" stroke="white" stroke-opacity=".88" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round" />
+    {/* log viewer panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#14100e" />
+    {/* info line — blue */}
+    <rect x="10" y="12" width="6" height="2" rx="1" fill="#3b82f6" opacity=".6" />
+    <rect x="18" y="12" width="18" height="2" rx="1" fill="white" opacity=".15" />
+    {/* warn line — amber */}
+    <rect x="10" y="17" width="6" height="2" rx="1" fill="#f59e0b" opacity=".6" />
+    <rect x="18" y="17" width="14" height="2" rx="1" fill="white" opacity=".12" />
+    {/* error line — red */}
+    <rect x="10" y="22" width="6" height="2" rx="1" fill="#ef4444" opacity=".6" />
+    <rect x="18" y="22" width="20" height="2" rx="1" fill="white" opacity=".15" />
+    {/* info line */}
+    <rect x="10" y="27" width="6" height="2" rx="1" fill="#3b82f6" opacity=".5" />
+    <rect x="18" y="27" width="16" height="2" rx="1" fill="white" opacity=".1" />
+    {/* debug line */}
+    <rect x="10" y="32" width="6" height="2" rx="1" fill="#94a3b8" opacity=".4" />
+    <rect x="18" y="32" width="10" height="2" rx="1" fill="white" opacity=".08" />
   </svg>
 );
 
-/* ── FileCode ──────────────────────────────────────────────────────── */
+/* ── FileCode — dark editor, syntax-highlighted code ─────────────────
+   faithful to the code editor: purple keyword, blue fn, green string */
 export const DockFileCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="fc" top="#5e84e0" bot="#2848b0" />
+    <Defs id="fc" top="#344058" bot="#1c2436" />
     <Glass id="fc" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2.8"
-       stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="14,12 6,24 14,36" />
-      <polyline points="34,12 42,24 34,36" />
-    </g>
+    {/* editor panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#141a24" />
+    {/* line numbers */}
+    <rect x="8" y="9" width="9" height="29" rx="3" fill="#0e121a" />
+    <text x="11" y="17" font-family="'SF Mono',monospace" font-size="4.5" fill="white" opacity=".25">1</text>
+    <text x="11" y="22" font-family="'SF Mono',monospace" font-size="4.5" fill="white" opacity=".2">2</text>
+    <text x="11" y="27" font-family="'SF Mono',monospace" font-size="4.5" fill="white" opacity=".2">3</text>
+    {/* syntax-coloured code */}
+    <rect x="20" y="14" width="6" height="1.5" rx=".75" fill="#c678dd" opacity=".7" />
+    <rect x="27" y="14" width="10" height="1.5" rx=".75" fill="#61afef" opacity=".65" />
+    <rect x="20" y="19" width="8" height="1.5" rx=".75" fill="#98c379" opacity=".55" />
+    <rect x="20" y="24" width="12" height="1.5" rx=".75" fill="#e5c07b" opacity=".55" />
+    <rect x="20" y="29" width="6" height="1.5" rx=".75" fill="#d19a66" opacity=".5" />
+    <rect x="20" y="34" width="14" height="1.5" rx=".75" fill="white" opacity=".15" />
   </svg>
 );
 
-/* ── Search ────────────────────────────────────────────────────────── */
+/* ── Search / Preview — centred layout with magnifying glass ───────── */
 export const DockSearch = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="s" top="#3cc494" bot="#0a6c48" />
+    <Defs id="s" top="#2c403c" bot="#162420" />
     <Glass id="s" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="3" stroke-linecap="round">
-      <circle cx="19" cy="19" r="10" />
-      <line x1="27" y1="27" x2="37" y2="37" />
+    {/* preview panel */}
+    <rect x="9" y="10" width="30" height="27" rx="3" fill="#121c1a" />
+    {/* search icon */}
+    <g fill="none" stroke="white" stroke-opacity=".35" stroke-width="2" stroke-linecap="round">
+      <circle cx="24" cy="20" r="5" />
+      <line x1="28" y1="24" x2="31" y2="27" />
     </g>
+    {/* title line */}
+    <rect x="16" y="29" width="16" height="1.5" rx=".75" fill="white" opacity=".18" />
+    {/* url line */}
+    <rect x="13" y="33" width="22" height="1" rx=".5" fill="white" opacity=".08" />
   </svg>
 );
 
-/* ── Globe ─────────────────────────────────────────────────────────── */
+/* ── Globe / Ports — port list with numbers & status ───────────────── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="g" top="#2cbed2" bot="#0a6478" />
+    <Defs id="g" top="#2c3c44" bot="#18242c" />
     <Glass id="g" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2">
-      <circle cx="24" cy="24" r="11" />
-      <ellipse cx="24" cy="24" rx="11" ry="4.5" stroke-opacity=".4" />
-      <ellipse cx="24" cy="24" rx="4.5" ry="11" stroke-opacity=".4" />
-      <circle cx="20" cy="20" r="1.8" fill="white" fill-opacity=".6" stroke="none" />
-      <circle cx="28" cy="22" r="1.8" fill="white" fill-opacity=".6" stroke="none" />
-    </g>
+    {/* ports panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#101c24" />
+    {/* port row 1 */}
+    <text x="11" y="17" font-family="'SF Mono',monospace" font-size="6" font-weight="700"
+          fill="#60a0f0">:5173</text>
+    <rect x="32" y="12" width="6" height="3" rx="1.5" fill="white" opacity=".12" />
+    <circle cx="37" cy="16" r="1.5" fill="#2f855a" />
+    {/* port row 2 */}
+    <text x="11" y="24" font-family="'SF Mono',monospace" font-size="6" font-weight="700"
+          fill="#60a0f0">:4550</text>
+    <rect x="32" y="19" width="6" height="3" rx="1.5" fill="white" opacity=".12" />
+    <circle cx="37" cy="23" r="1.5" fill="#b7791f" />
+    {/* port row 3 */}
+    <text x="11" y="31" font-family="'SF Mono',monospace" font-size="6" font-weight="700"
+          fill="#60a0f0">:3000</text>
+    <rect x="32" y="26" width="6" height="3" rx="1.5" fill="white" opacity=".12" />
+    <circle cx="37" cy="30" r="1.5" fill="#2f855a" />
   </svg>
 );
 
-/* ── Sparkles ──────────────────────────────────────────────────────── */
+/* ── Sparkles / Flower AI — hero section + analysis cards ──────────── */
 export const DockSparkles = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="sp" top="#e4a428" bot="#b07010" />
+    <Defs id="sp" top="#403048" bot="#241c30" />
     <Glass id="sp" />
-    <path d="M24 9l4 11 12 4-12 4-4 11-4-11-12-4 12-4z"
-          fill="white" fill-opacity=".25" stroke="white" stroke-opacity=".88"
-          stroke-width="2" stroke-linejoin="round" />
+    {/* AI panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#1a1424" />
+    {/* hero highlight */}
+    <rect x="10" y="11" width="28" height="10" rx="2.5" fill="white" opacity=".06" />
+    {/* sparkle icon */}
+    <path d="M18 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"
+          fill="white" fill-opacity=".5" stroke="none" />
+    {/* hero title */}
+    <rect x="24" y="12" width="10" height="2" rx="1" fill="white" opacity=".25" />
+    <rect x="24" y="16" width="14" height="1.5" rx=".75" fill="white" opacity=".12" />
+    {/* cards */}
+    <rect x="10" y="22" width="28" height="5" rx="1.5" fill="white" opacity=".05" stroke="white" stroke-opacity=".08" stroke-width=".6" />
+    <circle cx="13" cy="24.5" r="1.2" fill="white" opacity=".25" />
+    <rect x="16" y="23" width="12" height="1.5" rx=".75" fill="white" opacity=".2" />
+    <rect x="10" y="28.5" width="28" height="5" rx="1.5" fill="white" opacity=".04" stroke="white" stroke-opacity=".06" stroke-width=".6" />
+    <circle cx="13" cy="31" r="1.2" fill="white" opacity=".2" />
+    <rect x="16" y="29.5" width="10" height="1.5" rx=".75" fill="white" opacity=".15" />
+    <rect x="10" y="35" width="28" height="5" rx="1.5" fill="white" opacity=".03" stroke="white" stroke-opacity=".05" stroke-width=".6" />
+    <circle cx="13" cy="37.5" r="1.2" fill="white" opacity=".15" />
+    <rect x="16" y="36" width="8" height="1.5" rx=".75" fill="white" opacity=".1" />
   </svg>
 );
 
-/* ── Bot ───────────────────────────────────────────────────────────── */
+/* ── Bot / Codex — hero + task list with icons ─────────────────────── */
 export const DockBot = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="b" top="#6490b8" bot="#305478" />
+    <Defs id="b" top="#343050" bot="#1e1834" />
     <Glass id="b" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2.2"
-       stroke-linecap="round" stroke-linejoin="round">
-      <rect x="12" y="14" width="24" height="18" rx="5.5" />
-      <line x1="24" y1="14" x2="24" y2="8" />
-      <circle cx="24" cy="7" r="2" fill="white" fill-opacity=".4" stroke="none" />
-      <circle cx="18" cy="22" r="2.5" fill="white" fill-opacity=".3" stroke="none" />
-      <circle cx="30" cy="22" r="2.5" fill="white" fill-opacity=".3" stroke="none" />
-      <circle cx="18" cy="22" r="1" fill="white" fill-opacity=".85" stroke="none" />
-      <circle cx="30" cy="22" r="1" fill="white" fill-opacity=".85" stroke="none" />
-      <path d="M20 27 Q24 30 28 27" stroke-opacity=".5" />
-    </g>
+    {/* codex panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#161226" />
+    {/* hero */}
+    <rect x="10" y="11" width="28" height="9" rx="2.5" fill="white" opacity=".05" />
+    <rect x="13" y="12" width="3" height="3" rx="1.5" fill="white" opacity=".3" />
+    <rect x="18" y="12" width="14" height="2.5" rx="1.25" fill="white" opacity=".22" />
+    <rect x="18" y="16.5" width="18" height="1.5" rx=".75" fill="white" opacity=".1" />
+    {/* task rows */}
+    <rect x="10" y="22" width="28" height="5" rx="1.5" fill="white" opacity=".04" />
+    <text x="13" y="25.5" font-family="'SF Mono',monospace" font-size="5" fill="white" opacity=".25">#</text>
+    <rect x="17" y="24" width="14" height="1.3" rx=".65" fill="white" opacity=".15" />
+    <rect x="10" y="28" width="28" height="5" rx="1.5" fill="white" opacity=".03" />
+    <text x="13" y="31.5" font-family="'SF Mono',monospace" font-size="5" fill="white" opacity=".2">{'</>'}</text>
+    <rect x="17" y="30" width="12" height="1.3" rx=".65" fill="white" opacity=".12" />
+    <rect x="10" y="34" width="28" height="5" rx="1.5" fill="white" opacity=".02" />
+    <text x="13" y="37.5" font-family="'SF Mono',monospace" font-size="5" fill="white" opacity=".15">z</text>
+    <rect x="17" y="36" width="10" height="1.3" rx=".65" fill="white" opacity=".1" />
   </svg>
 );
 
-/* ── Code ──────────────────────────────────────────────────────────── */
+/* ── Code / Codespaces — card list with status badges ──────────────── */
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="cd" top="#5880c0" bot="#304888" />
+    <Defs id="cd" top="#303848" bot="#1a2030" />
     <Glass id="cd" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2.5"
-       stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="14,13 7,24 14,35" />
-      <polyline points="34,13 41,24 34,35" />
-    </g>
+    {/* codespaces panel */}
+    <rect x="8" y="9" width="32" height="29" rx="3" fill="#121824" />
+    {/* card 1 */}
+    <rect x="10" y="11" width="28" height="7" rx="2" fill="white" opacity=".06" stroke="white" stroke-opacity=".08" stroke-width=".5" />
+    <circle cx="13" cy="14.5" r="1.5" fill="white" opacity=".25" />
+    <rect x="17" y="12.5" width="14" height="2" rx="1" fill="white" opacity=".2" />
+    <rect x="17" y="16.5" width="8" height="1.5" rx=".75" fill="#2f855a" opacity=".5" />
+    {/* card 2 */}
+    <rect x="10" y="19.5" width="28" height="7" rx="2" fill="white" opacity=".04" stroke="white" stroke-opacity=".06" stroke-width=".5" />
+    <circle cx="13" cy="23" r="1.5" fill="white" opacity=".2" />
+    <rect x="17" y="21" width="12" height="2" rx="1" fill="white" opacity=".15" />
+    <rect x="17" y="25" width="10" height="1.5" rx=".75" fill="#b7791f" opacity=".4" />
+    {/* card 3 */}
+    <rect x="10" y="28" width="28" height="7" rx="2" fill="white" opacity=".03" stroke="white" stroke-opacity=".05" stroke-width=".5" />
+    <circle cx="13" cy="31.5" r="1.5" fill="white" opacity=".15" />
+    <rect x="17" y="29.5" width="10" height="2" rx="1" fill="white" opacity=".12" />
   </svg>
 );
 
-/* ── Sticky — red pushpin piercing a yellow note ───────────────────── */
+/* ── Sticky — yellow note + red pushpin on a cool-tone background ────
+   Background is NOT yellow — the note stands out clearly */
 export const DockMessageSquare = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="ms" top="#ecc434" bot="#b07810" />
+    <Defs id="ms" top="#484050" bot="#2a2430" />
     <Glass id="ms" />
-    {/* note body — slight perspective tilt */}
-    <rect x="9" y="13" width="30" height="24" rx="3"
-          fill="white" fill-opacity=".32" />
+    {/* yellow note body */}
+    <rect x="10" y="14" width="27" height="22" rx="3" fill="#f0d060" />
     {/* pin shadow on paper */}
-    <ellipse cx="24" cy="18" rx="4" ry="2" fill="black" fill-opacity=".08" />
+    <ellipse cx="24" cy="18" rx="3.5" ry="1.8" fill="#b89020" opacity=".3" />
     {/* pin needle */}
-    <line x1="24" y1="10" x2="24" y2="16" stroke="white" stroke-opacity=".5" stroke-width="1.2" />
-    {/* pin head */}
-    <circle cx="24" cy="10" r="4.5" fill="#e04040" />
-    <circle cx="24" cy="10" r="4.5" fill="url(#ms-pin)" />
-    <circle cx="23" cy="9" r="1.2" fill="white" fill-opacity=".35" />
-    <defs>
-      <radialGradient id="ms-pin" cx="38%" cy="32%" r="55%">
-        <stop offset="0%" stop-color="#ff7070" />
-        <stop offset="100%" stop-color="#c02020" />
-      </radialGradient>
-    </defs>
+    <line x1="24" y1="10" x2="24" y2="16" stroke="#c0c0c8" stroke-width="1" />
+    {/* red pin head */}
+    <circle cx="24" cy="10" r="4" fill="#e04040" />
+    <circle cx="23" cy="9" r="1.2" fill="white" opacity=".3" />
     {/* fold corner */}
-    <path d="M31 13l8 8h-5a3 3 0 0 1-3-3V13Z" fill="white" fill-opacity=".18" />
-    {/* text lines */}
-    <rect x="14" y="19" width="16" height="1.8" rx=".9" fill="white" fill-opacity=".5" />
-    <rect x="14" y="23" width="18" height="1.8" rx=".9" fill="white" fill-opacity=".4" />
-    <rect x="14" y="27" width="10" height="1.8" rx=".9" fill="white" fill-opacity=".28" />
-    <rect x="14" y="31" width="14" height="1.8" rx=".9" fill="white" fill-opacity=".18" />
+    <path d="M30 14l7 7h-4.5a2.5 2.5 0 0 1-2.5-2.5V14Z" fill="#d4b838" />
+    {/* handwritten lines */}
+    <line x1="14" y1="19.5" x2="28" y2="19" stroke="#8b6810" opacity=".4" stroke-width="1" stroke-linecap="round" />
+    <line x1="14" y1="23" x2="26" y2="23" stroke="#8b6810" opacity=".3" stroke-width="1" stroke-linecap="round" />
+    <line x1="14" y1="26.5" x2="22" y2="26.5" stroke="#8b6810" opacity=".25" stroke-width="1" stroke-linecap="round" />
+    <line x1="14" y1="30" x2="24" y2="30" stroke="#8b6810" opacity=".2" stroke-width="1" stroke-linecap="round" />
   </svg>
 );
 
-/* ── Region ────────────────────────────────────────────────────────── */
+/* ── Region — dashed frame + handles on a dark bg ──────────────────── */
 export const DockRegion = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="r" top="#ec5880" bot="#ac1c44" />
+    <Defs id="r" top="#483840" bot="#281c24" />
     <Glass id="r" />
-    <g fill="none" stroke="white" stroke-opacity=".88" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round">
-      <rect x="10" y="13" width="28" height="22" rx="2.5" stroke-dasharray="4 4" stroke-opacity=".7" />
-      <rect x="7" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" stroke="none" />
-      <rect x="35" y="10" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" stroke="none" />
-      <rect x="7" y="32" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" stroke="none" />
-      <rect x="35" y="32" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" stroke="none" />
-    </g>
+    {/* dark viewfinder */}
+    <rect x="8" y="9" width="32" height="29" rx="2.5" fill="#180e14" />
+    {/* dashed marquee */}
+    <rect x="12" y="14" width="24" height="19" rx="2" fill="none" stroke="white"
+          stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="4 3.5" />
+    {/* corner handles */}
+    <rect x="9" y="11" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" />
+    <rect x="33" y="11" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" />
+    <rect x="9" y="30" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" />
+    <rect x="33" y="30" width="6" height="6" rx="1.5" fill="white" fill-opacity=".8" />
   </svg>
 );
 
-/* ── Text ──────────────────────────────────────────────────────────── */
+/* ── Text — document with lines on a neutral bg ────────────────────── */
 export const DockText = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="tx" top="#647c94" bot="#2c4050" />
+    <Defs id="tx" top="#444c58" bot="#28303a" />
     <Glass id="tx" />
-    <rect x="12" y="14" width="14" height="2.8" rx="1.4" fill="white" fill-opacity=".65" />
-    <rect x="12" y="20" width="24" height="1.8" rx=".9" fill="white" fill-opacity=".42" />
-    <rect x="12" y="25" width="20" height="1.8" rx=".9" fill="white" fill-opacity=".35" />
-    <rect x="12" y="30" width="22" height="1.8" rx=".9" fill="white" fill-opacity=".28" />
-    <rect x="12" y="35" width="15" height="1.8" rx=".9" fill="white" fill-opacity=".2" />
+    {/* document */}
+    <rect x="9" y="11" width="30" height="27" rx="2.5" fill="#f4f4f8" />
+    {/* title */}
+    <rect x="14" y="15" width="14" height="2.5" rx="1.25" fill="#1a1a2a" opacity=".55" />
+    {/* body */}
+    <rect x="14" y="20" width="20" height="1.5" rx=".75" fill="#1a1a2a" opacity=".3" />
+    <rect x="14" y="24" width="16" height="1.5" rx=".75" fill="#1a1a2a" opacity=".25" />
+    <rect x="14" y="28" width="18" height="1.5" rx=".75" fill="#1a1a2a" opacity=".2" />
+    <rect x="14" y="32" width="12" height="1.5" rx=".75" fill="#1a1a2a" opacity=".15" />
   </svg>
 );
 
-/* ── LayoutDashboard ───────────────────────────────────────────────── */
+/* ── LayoutDashboard — 2×2 grid ────────────────────────────────────── */
 export const DockLayoutDashboard = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="ld" top="#6888e0" bot="#344cb0" />
+    <Defs id="ld" top="#384458" bot="#1c2838" />
     <Glass id="ld" />
     <g fill="white">
-      <rect x="10" y="12" width="12" height="11" rx="2.8" fill-opacity=".38" />
-      <rect x="25" y="12" width="12" height="11" rx="2.8" fill-opacity=".15" />
-      <rect x="10" y="26" width="12" height="11" rx="2.8" fill-opacity=".15" />
-      <rect x="25" y="26" width="12" height="11" rx="2.8" fill-opacity=".22" />
+      <rect x="10" y="12" width="12" height="11" rx="2.8" fill-opacity=".35" />
+      <rect x="25" y="12" width="12" height="11" rx="2.8" fill-opacity=".14" />
+      <rect x="10" y="26" width="12" height="11" rx="2.8" fill-opacity=".14" />
+      <rect x="25" y="26" width="12" height="11" rx="2.8" fill-opacity=".2" />
     </g>
   </svg>
 );
 
-/* ── Layers ────────────────────────────────────────────────────────── */
+/* ── Layers — three stacked rounded rects ──────────────────────────── */
 export const DockLayers = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="l" top="#50a0b0" bot="#206470" />
+    <Defs id="l" top="#384c44" bot="#1c3028" />
     <Glass id="l" />
     <g fill="white" stroke="white" stroke-width="1.6" stroke-linejoin="round">
-      <rect x="8"  y="28" width="26" height="11" rx="3.5" fill-opacity=".1"  stroke-opacity=".25" />
-      <rect x="10" y="21" width="26" height="11" rx="3.5" fill-opacity=".2"  stroke-opacity=".4"  />
-      <rect x="12" y="14" width="26" height="11" rx="3.5" fill-opacity=".35" stroke-opacity=".65" />
+      <rect x="8"  y="28" width="26" height="11" rx="3.5" fill-opacity=".1"  stroke-opacity=".22" />
+      <rect x="10" y="21" width="26" height="11" rx="3.5" fill-opacity=".18" stroke-opacity=".38" />
+      <rect x="12" y="14" width="26" height="11" rx="3.5" fill-opacity=".32" stroke-opacity=".6"  />
     </g>
   </svg>
 );
