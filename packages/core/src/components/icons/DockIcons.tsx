@@ -183,21 +183,22 @@ export const DockBot = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Code / Codespaces — curly-brace code block ─────────────────────── */
+/* ── Code / Codespaces — IDE panel: editor + terminal ─────────────── */
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="cd" tint="#2a3070" strength={3.2} />
+    <Defs id="cd" tint="#242c58" strength={3} />
     <Glass id="cd" />
-    <g fill="none" stroke="var(--foreground)" stroke-opacity=".75" stroke-width="3"
-       stroke-linecap="round" stroke-linejoin="round">
-      {/* opening brace */}
-      <path d="M22 11 C16 11 14 17 14 24 C14 31 16 37 22 37" />
-      {/* closing brace */}
-      <path d="M26 11 C32 11 34 17 34 24 C34 31 32 37 26 37" />
-    </g>
-    {/* indented content line between braces */}
-    <rect x="19" y="22" width="10" height="3" rx="1.5" fill="var(--foreground)" opacity=".3" />
+    {/* editor area — 2 syntax-coloured lines */}
+    <rect x="9"  y="10" width="8"  height="2.8" rx="1.4" fill="#c678dd" opacity=".6" />
+    <rect x="19" y="10" width="12" height="2.8" rx="1.4" fill="var(--foreground)" opacity=".12" />
+    <rect x="12" y="16" width="14" height="2.8" rx="1.4" fill="#61afef" opacity=".5" />
+    {/* subtle divider */}
+    <line x1="9" y1="23" x2="39" y2="23" stroke="var(--foreground)" stroke-opacity=".1" stroke-width="1" />
+    {/* terminal area — green prompt */}
+    <text x="9" y="33" font-family="'SF Mono',monospace" font-size="9" font-weight="700"
+          fill="#78d984">$</text>
+    <rect x="15" y="29" width="16" height="3" rx="1.5" fill="var(--foreground)" opacity=".1" />
   </svg>
 );
 
