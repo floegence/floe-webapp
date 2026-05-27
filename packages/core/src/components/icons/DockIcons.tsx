@@ -138,24 +138,27 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — triple-dot proxy: port → hub → port ──────────── */
+/* ── Globe / Ports — git-compare inspired: A ⇢ hub ⇢ B ───────────── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    {/* bridging shapes — subtle translucent rounded bars between circles */}
-    <rect x="16" y="22" width="8"  height="4" rx="2" fill="var(--foreground)" fill-opacity=".12" />
-    <rect x="24" y="22" width="8"  height="4" rx="2" fill="var(--foreground)" fill-opacity=".12" />
     {/* left port */}
-    <circle cx="15" cy="24" r="4.5" fill="var(--foreground)" fill-opacity=".18" />
-    <circle cx="15" cy="24" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
+    <circle cx="11" cy="24" r="3.8" fill="var(--foreground)" fill-opacity=".22" />
+    <circle cx="11" cy="24" r="1.8" fill="var(--foreground)" fill-opacity=".45" />
     {/* right port */}
-    <circle cx="33" cy="24" r="4.5" fill="var(--foreground)" fill-opacity=".18" />
-    <circle cx="33" cy="24" r="2.2" fill="var(--foreground)" fill-opacity=".4" />
-    {/* centre hub — solid green, larger */}
-    <circle cx="24" cy="24" r="5.5" fill="var(--chart-4)" fill-opacity=".45" />
-    <circle cx="24" cy="24" r="2.5" fill="var(--chart-4)" fill-opacity=".7" />
+    <circle cx="37" cy="24" r="3.8" fill="var(--foreground)" fill-opacity=".22" />
+    <circle cx="37" cy="24" r="1.8" fill="var(--foreground)" fill-opacity=".45" />
+    {/* centre hub */}
+    <circle cx="24" cy="24" r="5.5" fill="var(--chart-4)" fill-opacity=".5" />
+    <circle cx="24" cy="24" r="2.2" fill="var(--chart-4)" fill-opacity=".75" />
+      {/* left arrowhead — pointing right toward hub */}
+    <path d="M17 21 L21 24 L17 27" fill="none" stroke="var(--foreground)"
+          stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    {/* right arrowhead — pointing right away from hub */}
+    <path d="M28 21 L32 24 L28 27" fill="none" stroke="var(--foreground)"
+          stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
 );
 
