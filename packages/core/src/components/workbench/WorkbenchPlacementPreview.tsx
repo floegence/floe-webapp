@@ -42,6 +42,7 @@ export function WorkbenchPlacementPreview(props: WorkbenchPlacementPreviewProps)
             'is-sticky-note': preview().kind === 'sticky-note',
             'is-text': preview().kind === 'text',
             'is-background-region': preview().kind === 'background-region',
+            'is-drop-armed': preview().dropAllowed !== false,
           }}
           style={{
             transform: `translate3d(${geometry()?.x ?? 0}px, ${geometry()?.y ?? 0}px, 0)`,

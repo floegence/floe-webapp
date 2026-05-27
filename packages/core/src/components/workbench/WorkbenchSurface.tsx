@@ -3,7 +3,11 @@ import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
-import { WorkbenchDock, type WorkbenchDockDragPreview } from './WorkbenchFilterBar';
+import {
+  WorkbenchDock,
+  type WorkbenchDockDragPreview,
+  type WorkbenchDockDropContext,
+} from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
 import { installWorkbenchContextMenuDismissListeners } from './workbenchContextMenuDismiss';
@@ -513,7 +517,14 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   // Convert a client (viewport) point into world coords inside the canvas.
   // Returns null when the cursor is outside the canvas frame, so callers can
   // distinguish "dropped on canvas" from "dropped outside".
-  const clientToWorld = (clientX: number, clientY: number) => {
+  const clientToWorld = (
+    clientX: number,
+    clientY: number,
+    context?: Pick<WorkbenchDockDropContext, 'canvasFrame'>
+  ) => {
+    if (context?.canvasFrame) {
+      return clientToCanvasWorld(context.canvasFrame, model.viewport(), { clientX, clientY });
+    }
     const frameEl = surfaceRootEl()?.querySelector(
       '[data-floe-workbench-canvas-frame="true"]'
     ) as HTMLElement | null;
@@ -522,8 +533,13 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     return clientToCanvasWorld(rect, model.viewport(), { clientX, clientY });
   };
 
-  const handleCreateAtClient = (type: WorkbenchWidgetType, clientX: number, clientY: number) => {
-    const world = clientToWorld(clientX, clientY);
+  const handleCreateAtClient = (
+    type: WorkbenchWidgetType,
+    clientX: number,
+    clientY: number,
+    context?: WorkbenchDockDropContext
+  ) => {
+    const world = clientToWorld(clientX, clientY, context);
     if (!world) return;
     model.widgetActions.addWidgetAtWorldCenter(type, world.worldX, world.worldY);
   };
@@ -531,9 +547,10 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const handleCreateToolAtClient = (
     tool: WorkbenchDockToolId,
     clientX: number,
-    clientY: number
+    clientY: number,
+    context?: WorkbenchDockDropContext
   ) => {
-    const world = clientToWorld(clientX, clientY);
+    const world = clientToWorld(clientX, clientY, context);
     if (!world) return;
     if (tool === 'sticky-note') {
       model.widgetActions.addStickyNoteAtCursor(world.worldX, world.worldY);
@@ -556,7 +573,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const placementPreview = createMemo(() => {
     const preview = dockDragPreview();
     if (!preview) return null;
-    const world = clientToWorld(preview.clientX, preview.clientY);
+    const world = clientToWorld(preview.clientX, preview.clientY, preview);
     if (!world) return null;
     if (preview.kind === 'widget') {
       return resolveWorkbenchWidgetPlacementPreview({
@@ -564,6 +581,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         widgetDefinitions: model.widgetDefinitions(),
         worldX: world.worldX,
         worldY: world.worldY,
+        dropAllowed: preview.dropAllowed,
       });
     }
     return resolveWorkbenchToolPlacementPreview({
@@ -571,6 +589,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       label: preview.label,
       worldX: world.worldX,
       worldY: world.worldY,
+      dropAllowed: preview.dropAllowed,
       textDefaults: props.textAnnotationDefaults,
       backgroundDefaults: props.backgroundLayerDefaults,
     });

@@ -19,6 +19,7 @@ import {
   createWorkbenchEdgeAutoPanController,
   frameFromElement,
   type WorkbenchEdgeAutoPanController,
+  type WorkbenchEdgeAutoPanFrame,
 } from './workbenchEdgeAutoPan';
 import type {
   WorkbenchDockToolId,
@@ -41,8 +42,18 @@ export interface WorkbenchFilterBarProps {
    * Called when the user drags a widget pill onto the canvas to create a
    * new widget of that type. Coordinates are in client space (clientX/Y).
    */
-  onCreateAt?: (type: WorkbenchWidgetType, clientX: number, clientY: number) => void;
-  onCreateToolAt?: (tool: WorkbenchDockToolId, clientX: number, clientY: number) => void;
+  onCreateAt?: (
+    type: WorkbenchWidgetType,
+    clientX: number,
+    clientY: number,
+    context?: WorkbenchDockDropContext
+  ) => void;
+  onCreateToolAt?: (
+    tool: WorkbenchDockToolId,
+    clientX: number,
+    clientY: number,
+    context?: WorkbenchDockDropContext
+  ) => void;
   onDragPreviewChange?: (preview: WorkbenchDockDragPreview | null) => void;
   viewport?: WorkbenchViewport;
   onViewportCommit?: (viewport: WorkbenchViewport) => void;
@@ -55,6 +66,13 @@ export type WorkbenchDockDragPreview = Readonly<{
   label: string;
   clientX: number;
   clientY: number;
+  dropAllowed: boolean;
+  canvasFrame: WorkbenchEdgeAutoPanFrame;
+}>;
+
+export type WorkbenchDockDropContext = Readonly<{
+  dropAllowed: boolean;
+  canvasFrame: WorkbenchEdgeAutoPanFrame;
 }>;
 
 interface DragState {
@@ -70,6 +88,7 @@ interface DragState {
   moved: boolean;
   overCanvas: boolean;
   hasEnteredCanvas: boolean;
+  canvasFrame: WorkbenchEdgeAutoPanFrame | null;
   preview: WorkbenchDockDragPreview | null;
   stopInteraction: () => void;
 }
@@ -112,34 +131,36 @@ const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
   { tool: 'text', label: 'Text', icon: DockText },
 ];
 
-function readCanvasFrameRect(): DOMRect | null {
+function readCanvasFrame(): WorkbenchEdgeAutoPanFrame | null {
   const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
-  if (!(frame instanceof HTMLElement)) return null;
-  return frame.getBoundingClientRect();
+  return frame instanceof HTMLElement ? frameFromElement(frame) : null;
 }
 
-function isPointInRect(clientX: number, clientY: number, rect: DOMRect): boolean {
+function isPointInFrame(clientX: number, clientY: number, frame: WorkbenchEdgeAutoPanFrame): boolean {
   return (
-    clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+    clientX >= frame.left && clientX <= frame.right && clientY >= frame.top && clientY <= frame.bottom
   );
 }
 
-function isOverCanvas(clientX: number, clientY: number): boolean {
-  const rect = readCanvasFrameRect();
-  return rect ? isPointInRect(clientX, clientY, rect) : false;
+function isOverCanvas(
+  clientX: number,
+  clientY: number,
+  frame: WorkbenchEdgeAutoPanFrame | null
+): boolean {
+  return frame ? isPointInFrame(clientX, clientY, frame) : false;
 }
 
 function didSegmentEnterCanvas(
+  frame: WorkbenchEdgeAutoPanFrame | null,
   startClientX: number,
   startClientY: number,
   endClientX: number,
   endClientY: number
 ): boolean {
-  const rect = readCanvasFrameRect();
-  if (!rect) return false;
+  if (!frame) return false;
   if (
-    isPointInRect(startClientX, startClientY, rect) ||
-    isPointInRect(endClientX, endClientY, rect)
+    isPointInFrame(startClientX, startClientY, frame) ||
+    isPointInFrame(endClientX, endClientY, frame)
   ) {
     return true;
   }
@@ -162,10 +183,10 @@ function didSegmentEnterCanvas(
   };
 
   return (
-    clip(-dx, startClientX - rect.left) &&
-    clip(dx, rect.right - startClientX) &&
-    clip(-dy, startClientY - rect.top) &&
-    clip(dy, rect.bottom - startClientY)
+    clip(-dx, startClientX - frame.left) &&
+    clip(dx, frame.right - startClientX) &&
+    clip(-dy, startClientY - frame.top) &&
+    clip(dy, frame.bottom - startClientY)
   );
 }
 
@@ -366,10 +387,23 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     }
 
     if (commitDrop && current.overCanvas) {
+      const context = current.canvasFrame
+        ? { dropAllowed: current.overCanvas, canvasFrame: current.canvasFrame }
+        : undefined;
       if (current.kind === 'widget') {
-        props.onCreateAt?.(current.id as WorkbenchWidgetType, current.clientX, current.clientY);
+        props.onCreateAt?.(
+          current.id as WorkbenchWidgetType,
+          current.clientX,
+          current.clientY,
+          context
+        );
       } else {
-        props.onCreateToolAt?.(current.id as WorkbenchDockToolId, current.clientX, current.clientY);
+        props.onCreateToolAt?.(
+          current.id as WorkbenchDockToolId,
+          current.clientX,
+          current.clientY,
+          context
+        );
       }
     }
   };
@@ -384,6 +418,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     startEdgeAutoPan();
+    const canvasFrame = readCanvasFrame();
 
     setDragState({
       kind,
@@ -398,6 +433,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       moved: false,
       overCanvas: false,
       hasEnteredCanvas: false,
+      canvasFrame,
       preview: null,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
     });
@@ -411,11 +447,19 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const moved =
           current.moved || Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX;
         const overDock = isOverDock(next.clientX, next.clientY);
-        const overCanvas = moved && isOverCanvas(next.clientX, next.clientY) && !overDock;
+        const canvasFrame = current.canvasFrame;
+        const insideCanvas = moved && isOverCanvas(next.clientX, next.clientY, canvasFrame);
+        const overCanvas = insideCanvas && !overDock;
         const crossedCanvas =
           moved &&
           !overDock &&
-          didSegmentEnterCanvas(current.clientX, current.clientY, next.clientX, next.clientY);
+          didSegmentEnterCanvas(
+            canvasFrame,
+            current.clientX,
+            current.clientY,
+            next.clientX,
+            next.clientY
+          );
         const hasEnteredCanvas = current.hasEnteredCanvas || overCanvas || crossedCanvas;
         shouldUpdateEdgeAutoPan = moved && hasEnteredCanvas && !overDock;
         return {
@@ -425,13 +469,15 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           moved,
           overCanvas,
           hasEnteredCanvas,
-          preview: overCanvas
+          preview: insideCanvas && canvasFrame
             ? {
                 kind: current.kind,
                 id: current.id,
                 label: current.label,
                 clientX: next.clientX,
                 clientY: next.clientY,
+                dropAllowed: overCanvas,
+                canvasFrame,
               }
             : null,
         };
@@ -609,7 +655,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         </For>
       </div>
 
-      <Show when={Boolean(dragState()?.moved && !dragState()?.overCanvas)}>
+      <Show when={Boolean(dragState()?.moved && !dragState()?.preview)}>
         <DragGhost state={dragState} />
       </Show>
     </>

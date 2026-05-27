@@ -155,7 +155,16 @@ describe('WorkbenchFilterBar pointer session', () => {
     await Promise.resolve();
 
     expect(onCreateAt).toHaveBeenCalledTimes(1);
-    expect(onCreateAt).toHaveBeenCalledWith('custom.files', 120, 120);
+    expect(onCreateAt.mock.calls[0]?.slice(0, 3)).toEqual(['custom.files', 120, 120]);
+    expect(onCreateAt.mock.calls[0]?.[3]).toMatchObject({
+      dropAllowed: true,
+      canvasFrame: {
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 600,
+      },
+    });
   });
 
   it('auto-pans the canvas while a widget pill is dragged against an edge', async () => {
@@ -296,7 +305,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSoloFilter).not.toHaveBeenCalled();
   });
 
-  it('hands visual feedback from the dock ghost to the canvas placement preview', async () => {
+  it('shows the canvas placement preview as soon as a widget drag enters the canvas frame', async () => {
     mockCanvasFrame();
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -335,9 +344,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     await Promise.resolve();
     expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
     expect(document.body.querySelector('.workbench-dock-ghost')).toBeTruthy();
-    expect(document.body.querySelector('.workbench-dock-ghost')?.textContent).toContain(
-      'Drag onto canvas'
-    );
+    expect(document.body.querySelector('.workbench-dock-ghost')?.textContent).toContain('Files');
 
     dispatchPointerEvent('pointermove', document, {
       pointerId: 41,
@@ -352,6 +359,7 @@ describe('WorkbenchFilterBar pointer session', () => {
       label: 'Files',
       clientX: 420,
       clientY: 260,
+      dropAllowed: true,
     });
     expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
 
@@ -362,6 +370,77 @@ describe('WorkbenchFilterBar pointer session', () => {
       buttons: 0,
     });
     await Promise.resolve();
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
+  });
+
+  it('keeps the widget placement preview visible above the dock without committing there', async () => {
+    mockCanvasFrame();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onCreateAt = vi.fn();
+    const onDragPreviewChange = vi.fn();
+
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn(() => {
+        return host.querySelector(
+          'button[aria-label="Files — click to solo, drag to canvas to create"]'
+        );
+      }),
+    });
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          onCreateAt={onCreateAt}
+          onDragPreviewChange={onDragPreviewChange}
+        />
+      ),
+      host
+    );
+
+    const filesButton = host.querySelector(
+      'button[aria-label="Files — click to solo, drag to canvas to create"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 43,
+      clientX: 120,
+      clientY: 560,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 43,
+      clientX: 180,
+      clientY: 560,
+      buttons: 1,
+    });
+    await Promise.resolve();
+
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Files',
+      clientX: 180,
+      clientY: 560,
+      dropAllowed: false,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 43,
+      clientX: 180,
+      clientY: 560,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(onCreateAt).not.toHaveBeenCalled();
     expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
   });
 });

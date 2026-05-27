@@ -239,6 +239,16 @@
       0 18px 44px -22px color-mix(in srgb, var(--primary, #3b82f6) 42%, transparent),
       0 0 0 1px color-mix(in srgb, white 36%, transparent) inset;
     will-change: transform, width, height;
+    opacity: 0.72;
+    transition:
+      opacity 120ms ease,
+      border-color 120ms ease,
+      background 120ms ease,
+      box-shadow 120ms ease;
+  }
+
+  .workbench-placement-preview.is-drop-armed {
+    opacity: 1;
   }
 
   .workbench-placement-preview.is-sticky-note {

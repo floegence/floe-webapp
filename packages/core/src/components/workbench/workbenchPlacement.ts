@@ -17,6 +17,7 @@ export type WorkbenchPlacementPreviewFrame = Readonly<{
   y: number;
   width: number;
   height: number;
+  dropAllowed?: boolean;
 }>;
 
 export function positiveFinite(value: number | undefined, fallback: number): number {
@@ -52,6 +53,7 @@ function centerFrame(input: {
   worldY: number;
   width: number;
   height: number;
+  dropAllowed?: boolean;
 }): WorkbenchPlacementPreviewFrame {
   return {
     kind: input.kind,
@@ -60,6 +62,7 @@ function centerFrame(input: {
     y: input.worldY - input.height / 2,
     width: input.width,
     height: input.height,
+    dropAllowed: input.dropAllowed,
   };
 }
 
@@ -68,6 +71,7 @@ export function resolveWorkbenchWidgetPlacementPreview(input: {
   widgetDefinitions: readonly WorkbenchWidgetDefinition[];
   worldX: number;
   worldY: number;
+  dropAllowed?: boolean;
 }): WorkbenchPlacementPreviewFrame {
   const entry = getWidgetEntry(input.type, input.widgetDefinitions);
   const frame = createWorkbenchWidgetFrame(entry, {
@@ -82,6 +86,7 @@ export function resolveWorkbenchWidgetPlacementPreview(input: {
     y: frame.y,
     width: frame.width,
     height: frame.height,
+    dropAllowed: input.dropAllowed,
   };
 }
 
@@ -90,6 +95,7 @@ export function resolveWorkbenchToolPlacementPreview(input: {
   label: string;
   worldX: number;
   worldY: number;
+  dropAllowed?: boolean;
   textDefaults?: WorkbenchTextAnnotationDefaults;
   backgroundDefaults?: WorkbenchBackgroundLayerDefaults;
 }): WorkbenchPlacementPreviewFrame {
@@ -100,6 +106,7 @@ export function resolveWorkbenchToolPlacementPreview(input: {
       label: input.label,
       worldX: input.worldX,
       worldY: input.worldY,
+      dropAllowed: input.dropAllowed,
       ...size,
     });
   }
@@ -110,6 +117,7 @@ export function resolveWorkbenchToolPlacementPreview(input: {
       label: input.label,
       worldX: input.worldX,
       worldY: input.worldY,
+      dropAllowed: input.dropAllowed,
       ...size,
     });
   }
@@ -120,6 +128,7 @@ export function resolveWorkbenchToolPlacementPreview(input: {
     label: input.label,
     worldX: input.worldX,
     worldY: input.worldY,
+    dropAllowed: input.dropAllowed,
     ...size,
   });
 }
