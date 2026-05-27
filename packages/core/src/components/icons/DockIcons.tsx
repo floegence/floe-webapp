@@ -10,14 +10,17 @@ export interface DockIconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
    The single hero glyph is semi-transparent — legible on any background.
    ====================================================================== */
 
-function Defs(props: { id: string; tint: string }) {
+function Defs(props: { id: string; tint: string; strength?: number }) {
+  const s = props.strength ?? 1;
+  const topPct = Math.round(8 * s);
+  const botPct = Math.round(18 * s);
   return (
     <defs>
       <linearGradient id={`${props.id}-bg`} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%"
-              stop-color={`color-mix(in srgb, var(--card), ${props.tint} 8%)`} />
+              stop-color={`color-mix(in srgb, var(--card), ${props.tint} ${topPct}%)`} />
         <stop offset="100%"
-              stop-color={`color-mix(in srgb, var(--card), ${props.tint} 18%)`} />
+              stop-color={`color-mix(in srgb, var(--card), ${props.tint} ${botPct}%)`} />
       </linearGradient>
       <linearGradient id={`${props.id}-rim`} x1="0" y1="0" x2="0" y2=".35">
         <stop offset="0%" stop-color="white" stop-opacity=".14" />
@@ -180,20 +183,21 @@ export const DockBot = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Code / Codespaces — 3 bold code lines with syntax colours ─────── */
+/* ── Code / Codespaces — curly-brace code block ─────────────────────── */
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
-    <Defs id="cd" tint="#242c5c" />
+    <Defs id="cd" tint="#2a3070" strength={3.2} />
     <Glass id="cd" />
-    {/* line 1 — keyword + function */}
-    <rect x="9"  y="11" width="8"  height="3.5" rx="1.7" fill="#c678dd" opacity=".65" />
-    <rect x="20" y="11" width="14" height="3.5" rx="1.7" fill="#61afef" opacity=".55" />
-    {/* line 2 — indented string literal */}
-    <rect x="15" y="18.5" width="12" height="3.5" rx="1.7" fill="#98c379" opacity=".5" />
-    {/* line 3 — deeper indent + number */}
-    <rect x="21" y="26" width="6"  height="3.5" rx="1.7" fill="#d19a66" opacity=".5" />
-    <rect x="29" y="26" width="10" height="3.5" rx="1.7" fill="var(--foreground)" opacity=".12" />
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".75" stroke-width="3"
+       stroke-linecap="round" stroke-linejoin="round">
+      {/* opening brace */}
+      <path d="M22 11 C16 11 14 17 14 24 C14 31 16 37 22 37" />
+      {/* closing brace */}
+      <path d="M26 11 C32 11 34 17 34 24 C34 31 32 37 26 37" />
+    </g>
+    {/* indented content line between braces */}
+    <rect x="19" y="22" width="10" height="3" rx="1.5" fill="var(--foreground)" opacity=".3" />
   </svg>
 );
 
