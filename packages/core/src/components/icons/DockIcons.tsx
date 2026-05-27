@@ -138,27 +138,29 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — elegant proxy forwarding with bezier curves ───── */
+/* ── Globe / Ports — network hub with radial ports ─────────────────── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    <g fill="none" stroke="var(--foreground)" stroke-opacity=".55" stroke-width="2.5"
+    {/* connection lines — 4 spokes */}
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".4" stroke-width="2.2"
        stroke-linecap="round">
-      <path d="M5 14 Q18 14 22 20 Q26 26 30 20 Q34 14 43 14" />
-      <path d="M5 24 Q14 24 20 24 Q28 24 34 24 Q40 24 43 24" />
-      <path d="M5 34 Q18 34 22 28 Q26 22 30 28 Q34 34 43 34" />
+      <line x1="24" y1="24" x2="10" y2="10" />
+      <line x1="24" y1="24" x2="38" y2="10" />
+      <line x1="24" y1="24" x2="10" y2="38" />
+      <line x1="24" y1="24" x2="38" y2="38" />
     </g>
-    {/* port endpoints */}
-    <circle cx="5"  cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="5"  cy="24" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="5"  cy="34" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="43" cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="43" cy="24" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    <circle cx="43" cy="34" r="2.5" fill="var(--foreground)" fill-opacity=".4" />
-    {/* centre hub — solid, distinct colour */}
-    <circle cx="24" cy="24" r="4.5" fill="var(--chart-4)" fill-opacity=".5" />
+    {/* port nodes — 4 corner points */}
+    <circle cx="10" cy="10" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
+    <circle cx="38" cy="10" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
+    <circle cx="10" cy="38" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
+    <circle cx="38" cy="38" r="2.2" fill="var(--foreground)" fill-opacity=".35" />
+    {/* centre hub — solid green */}
+    <circle cx="24" cy="24" r="5" fill="var(--chart-4)" fill-opacity=".5" />
+    {/* hub inner highlight */}
+    <circle cx="24" cy="24" r="2" fill="white" fill-opacity=".25" />
   </svg>
 );
 
