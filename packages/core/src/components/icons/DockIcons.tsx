@@ -138,16 +138,25 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — port number + status ──────────────────────────── */
+/* ── Globe / Ports — proxy relay: A → ● → B ───────────────────────── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    <text x="24" y="26" text-anchor="middle"
-          font-family="'SF Mono',monospace" font-size="14" font-weight="700"
-          fill="var(--foreground)" fill-opacity=".7">:5173</text>
-    <circle cx="24" cy="35" r="2.5" fill="#2f855a" />
+    {/* left endpoint */}
+    <circle cx="10" cy="24" r="3" fill="var(--foreground)" fill-opacity=".5" />
+    {/* right endpoint */}
+    <circle cx="38" cy="24" r="3" fill="var(--foreground)" fill-opacity=".5" />
+    {/* proxy node — centre */}
+    <circle cx="24" cy="24" r="4.5" fill="var(--foreground)" fill-opacity=".15"
+            stroke="var(--foreground)" stroke-opacity=".5" stroke-width="2" />
+    {/* forward arrow: left → proxy */}
+    <path d="M14 21 L20 24 L14 27" fill="none" stroke="var(--foreground)"
+          stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    {/* forward arrow: proxy → right */}
+    <path d="M28 21 L34 24 L28 27" fill="none" stroke="var(--foreground)"
+          stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
 );
 
