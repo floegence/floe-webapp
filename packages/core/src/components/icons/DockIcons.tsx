@@ -236,19 +236,21 @@ export const DockRegion = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Text — document with lines ────────────────────────────────────── */
+/* ── Text — bold "Aa" typography mark ──────────────────────────────── */
 export const DockText = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="tx" tint="#3c4c60" />
     <Glass id="tx" />
-    <rect x="9" y="11" width="30" height="27" rx="2.5"
-          fill="var(--background)" stroke="var(--foreground)" stroke-opacity=".12" stroke-width=".8" />
-    <rect x="14" y="15" width="14" height="2.5" rx="1.25" fill="var(--foreground)" opacity=".5" />
-    <rect x="14" y="20" width="20" height="1.5" rx=".75" fill="var(--foreground)" opacity=".28" />
-    <rect x="14" y="24" width="16" height="1.5" rx=".75" fill="var(--foreground)" opacity=".22" />
-    <rect x="14" y="28" width="18" height="1.5" rx=".75" fill="var(--foreground)" opacity=".18" />
-    <rect x="14" y="32" width="12" height="1.5" rx=".75" fill="var(--foreground)" opacity=".13" />
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".7" stroke-width="2.8"
+       stroke-linecap="round" stroke-linejoin="round">
+      {/* capital A — left side */}
+      <path d="M12 36 L17 14 L22 36" />
+      <line x1="14" y1="27" x2="20" y2="27" />
+      {/* lowercase a — right side */}
+      <path d="M28 28 Q28 19 34 19 Q39 19 39 25 Q39 36 28 36" />
+      <line x1="32" y1="28" x2="32" y2="36" />
+    </g>
   </svg>
 );
 
