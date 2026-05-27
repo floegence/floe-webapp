@@ -183,22 +183,22 @@ export const DockBot = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Code / Codespaces — IDE panel: editor + terminal ─────────────── */
+/* ── Code / Codespaces — syntax-highlighted code lines ─────────────── */
 export const DockCode = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="cd" tint="#242c58" strength={1.5} />
     <Glass id="cd" />
-    {/* editor area — 2 syntax-coloured lines */}
-    <rect x="9"  y="10" width="8"  height="2.8" rx="1.4" fill="#a05dc0" opacity=".8" />
-    <rect x="19" y="10" width="12" height="2.8" rx="1.4" fill="var(--foreground)" opacity=".18" />
-    <rect x="12" y="16" width="14" height="2.8" rx="1.4" fill="#4088d8" opacity=".7" />
-    {/* subtle divider */}
-    <line x1="9" y1="23" x2="39" y2="23" stroke="var(--foreground)" stroke-opacity=".12" stroke-width="1" />
-    {/* terminal area — green prompt */}
-    <text x="9" y="33" font-family="'SF Mono',monospace" font-size="9" font-weight="700"
-          fill="#3cac4e">$</text>
-    <rect x="15" y="29" width="16" height="3" rx="1.5" fill="var(--foreground)" opacity=".15" />
+    {/* line 1 — keyword + function */}
+    <rect x="8"  y="10" width="9"  height="3" rx="1.5" fill="#b06fd0" opacity=".75" />
+    <rect x="20" y="10" width="15" height="3" rx="1.5" fill="#5098e0" opacity=".65" />
+    {/* line 2 — indented string */}
+    <rect x="13" y="17" width="18" height="3" rx="1.5" fill="#60b878" opacity=".6" />
+    {/* line 3 — deeper indent + number + operator */}
+    <rect x="18" y="24" width="6"  height="3" rx="1.5" fill="#d0a050" opacity=".6" />
+    <rect x="26" y="24" width="14" height="3" rx="1.5" fill="var(--foreground)" opacity=".15" />
+    {/* line 4 — return keyword */}
+    <rect x="8"  y="31" width="16" height="3" rx="1.5" fill="#b06fd0" opacity=".55" />
   </svg>
 );
 
