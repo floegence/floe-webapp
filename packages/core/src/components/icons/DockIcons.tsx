@@ -138,25 +138,33 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — proxy relay: A → ● → B ───────────────────────── */
+/* ── Globe / Ports — proxy switch: multi-port → node → multi-port ──── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    {/* left endpoint */}
-    <circle cx="10" cy="24" r="3" fill="var(--foreground)" fill-opacity=".5" />
-    {/* right endpoint */}
-    <circle cx="38" cy="24" r="3" fill="var(--foreground)" fill-opacity=".5" />
-    {/* proxy node — centre */}
-    <circle cx="24" cy="24" r="4.5" fill="var(--foreground)" fill-opacity=".15"
-            stroke="var(--foreground)" stroke-opacity=".5" stroke-width="2" />
-    {/* forward arrow: left → proxy */}
-    <path d="M14 21 L20 24 L14 27" fill="none" stroke="var(--foreground)"
-          stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-    {/* forward arrow: proxy → right */}
-    <path d="M28 21 L34 24 L28 27" fill="none" stroke="var(--foreground)"
-          stroke-opacity=".55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    <g fill="none" stroke="var(--foreground)" stroke-opacity=".6" stroke-width="2"
+       stroke-linecap="round">
+      {/* left ports → lines going into the switch */}
+      <line x1="6" y1="14" x2="20" y2="18" />
+      <line x1="6" y1="24" x2="20" y2="24" />
+      <line x1="6" y1="34" x2="20" y2="30" />
+      {/* left port dots */}
+      <circle cx="5" cy="14" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      <circle cx="5" cy="24" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      <circle cx="5" cy="34" r="2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      {/* switch node */}
+      <rect x="18" y="15" width="12" height="18" rx="4" fill="var(--foreground)" fill-opacity=".08" />
+      {/* right ports → lines going out of the switch to different ports */}
+      <line x1="30" y1="16" x2="42" y2="14" />
+      <line x1="30" y1="24" x2="42" y2="24" />
+      <line x1="30" y1="32" x2="42" y2="34" />
+      {/* right port dots — different sizes to show mapping change */}
+      <circle cx="43" cy="14" r="2.5" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      <circle cx="43" cy="24" r="1.6" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+      <circle cx="43" cy="34" r="2.2" fill="var(--foreground)" fill-opacity=".45" stroke="none" />
+    </g>
   </svg>
 );
 
