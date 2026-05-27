@@ -138,27 +138,18 @@ export const DockSearch = (props: DockIconProps = {}) => (
   </svg>
 );
 
-/* ── Globe / Ports — git-compare inspired: A ⇢ hub ⇢ B ───────────── */
+/* ── Globe / Ports — overlapping circles, pure fill, zero strokes ──── */
 export const DockGlobe = (props: DockIconProps = {}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={props.size ?? 48} height={props.size ?? 48}
        viewBox="0 0 48 48" fill="none" class={props.class}>
     <Defs id="g" tint="#0c6478" />
     <Glass id="g" />
-    {/* left port */}
-    <circle cx="11" cy="24" r="3.8" fill="var(--foreground)" fill-opacity=".22" />
-    <circle cx="11" cy="24" r="1.8" fill="var(--foreground)" fill-opacity=".45" />
-    {/* right port */}
-    <circle cx="37" cy="24" r="3.8" fill="var(--foreground)" fill-opacity=".22" />
-    <circle cx="37" cy="24" r="1.8" fill="var(--foreground)" fill-opacity=".45" />
-    {/* centre hub */}
-    <circle cx="24" cy="24" r="5.5" fill="var(--chart-4)" fill-opacity=".5" />
-    <circle cx="24" cy="24" r="2.2" fill="var(--chart-4)" fill-opacity=".75" />
-      {/* left arrowhead — pointing right toward hub */}
-    <path d="M17 21 L21 24 L17 27" fill="none" stroke="var(--foreground)"
-          stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-    {/* right arrowhead — pointing right away from hub */}
-    <path d="M28 21 L32 24 L28 27" fill="none" stroke="var(--foreground)"
-          stroke-opacity=".3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+    {/* left circle — translucent */}
+    <circle cx="15" cy="24" r="9" fill="var(--foreground)" fill-opacity=".08" />
+    {/* right circle — translucent */}
+    <circle cx="33" cy="24" r="9" fill="var(--foreground)" fill-opacity=".08" />
+    {/* centre circle — green proxy */}
+    <circle cx="24" cy="24" r="7" fill="var(--chart-4)" fill-opacity=".4" />
   </svg>
 );
 
