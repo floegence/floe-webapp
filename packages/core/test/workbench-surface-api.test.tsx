@@ -51,16 +51,6 @@ const projectedWidgetDefinitions: readonly WorkbenchWidgetDefinition[] = widgetD
   })
 );
 
-const projectedClickableWidgetDefinitions: readonly WorkbenchWidgetDefinition[] =
-  projectedWidgetDefinitions.map((definition) => ({
-    ...definition,
-    body: (props) => (
-      <button type="button" data-testid={`projected-click-${props.widgetId}`}>
-        {definition.label}
-      </button>
-    ),
-  }));
-
 async function flushWorkbenchEffects(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
@@ -305,77 +295,6 @@ describe('WorkbenchSurface api', () => {
 
     const filesRoot = findWidgetRoot(host, files!.id);
     const terminalRoot = findWidgetRoot(host, terminal!.id);
-
-    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
-  });
-
-  it('lets a clicked persistent-top projected widget reclaim visual front ownership', async () => {
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-
-    let surfaceApi: WorkbenchSurfaceApi | null = null;
-
-    render(() => {
-      const [state, setState] = createSignal(
-        createDefaultWorkbenchState(projectedClickableWidgetDefinitions)
-      );
-
-      return (
-        <WorkbenchSurface
-          state={state}
-          setState={setState}
-          widgetDefinitions={projectedClickableWidgetDefinitions}
-          onApiReady={(api) => {
-            surfaceApi = api;
-          }}
-        />
-      );
-    }, host);
-
-    await flushWorkbenchEffects();
-
-    const files = surfaceApi!.createWidget('custom.files', {
-      centerViewport: false,
-      worldX: 260,
-      worldY: 180,
-    });
-    const terminal = surfaceApi!.createWidget('custom.terminal', {
-      centerViewport: false,
-      worldX: 300,
-      worldY: 220,
-    });
-    await flushWorkbenchEffects();
-
-    surfaceApi!.focusWidget(files!, { centerViewport: false });
-    await flushWorkbenchEffects();
-    surfaceApi!.focusWidget(terminal!, { centerViewport: false });
-    await flushWorkbenchEffects();
-
-    const filesRoot = findWidgetRoot(host, files!.id);
-    const terminalRoot = findWidgetRoot(host, terminal!.id);
-
-    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
-
-    const filesButton = host.querySelector(
-      `[data-testid="projected-click-${files!.id}"]`
-    ) as HTMLButtonElement | null;
-    const terminalButton = host.querySelector(
-      `[data-testid="projected-click-${terminal!.id}"]`
-    ) as HTMLButtonElement | null;
-    expect(filesButton).toBeTruthy();
-    expect(terminalButton).toBeTruthy();
-
-    dispatchPointerEvent('pointerdown', filesButton!, { pointerId: 91 });
-    dispatchPointerEvent('pointerup', filesButton!, { pointerId: 91, buttons: 0 });
-    filesButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
-    await flushWorkbenchEffects();
-
-    expect(readElementZIndex(filesRoot)).toBeGreaterThan(readElementZIndex(terminalRoot));
-
-    dispatchPointerEvent('pointerdown', terminalButton!, { pointerId: 92 });
-    dispatchPointerEvent('pointerup', terminalButton!, { pointerId: 92, buttons: 0 });
-    terminalButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
-    await flushWorkbenchEffects();
 
     expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
   });

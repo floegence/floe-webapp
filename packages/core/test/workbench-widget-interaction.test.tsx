@@ -210,6 +210,7 @@ function renderProjectedInteractionHarness(
   const [selectedWidgetId, setSelectedWidgetId] = createSignal<string | null>(
     options.initiallySelectedWidgetId ?? 'widget-a'
   );
+  const [visualFrontOwnerId, setVisualFrontOwnerId] = createSignal<string | null>(null);
   const [widgets, setWidgets] = createSignal<
     WorkbenchWidgetItem<typeof PROJECTED_CLICK_WIDGET_TYPE>[]
   >([
@@ -256,7 +257,7 @@ function renderProjectedInteractionHarness(
         viewport={{ x: 100, y: 50, scale: 1.2 }}
         canvasFrameSize={{ width: 1200, height: 800 }}
         selectedWidgetId={selectedWidgetId()}
-        visualFrontOwnerId={null}
+        visualFrontOwnerId={visualFrontOwnerId()}
         locked={false}
         filters={filters}
         setCanvasFrameRef={() => {}}
@@ -264,7 +265,7 @@ function renderProjectedInteractionHarness(
         onCanvasContextMenu={() => {}}
         onSelectWidget={setSelectedWidgetId}
         onWidgetContextMenu={() => {}}
-        onClaimVisualFrontOwner={() => {}}
+        onClaimVisualFrontOwner={setVisualFrontOwnerId}
         onCommitFront={commitFront}
         onCommitMove={() => {}}
         onCommitResize={() => {}}
@@ -279,6 +280,8 @@ function renderProjectedInteractionHarness(
   return {
     dispose,
     selectedWidgetId,
+    visualFrontOwnerId,
+    widgets,
     commitFront,
   };
 }
@@ -826,6 +829,61 @@ describe('WorkbenchWidget interaction ownership', () => {
     expect(events).toEqual(['pointerdown:widget-b:true', 'click:widget-b:true']);
     expect(selectedWidgetId()).toBe('widget-b');
     expect(commitFront).toHaveBeenCalledWith('widget-b');
+
+    harnessDispose();
+  });
+
+  it('reclaims visual front for selected persistent-top projected local clicks', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const definition = {
+      type: PROJECTED_CLICK_WIDGET_TYPE,
+      label: 'Projected Click',
+      icon: () => null,
+      renderMode: 'projected_surface',
+      defaultTitle: 'Projected Click',
+      defaultSize: { width: 320, height: 220 },
+      body: (props) => (
+        <button
+          type="button"
+          data-testid={`projected-click-${props.widgetId}`}
+          onClick={() => undefined}
+        >
+          Trigger
+        </button>
+      ),
+    } satisfies WorkbenchWidgetDefinition<typeof PROJECTED_CLICK_WIDGET_TYPE>;
+
+    const {
+      dispose: harnessDispose,
+      visualFrontOwnerId,
+      widgets,
+      commitFront,
+    } = renderProjectedInteractionHarness(host, definition, {
+      initiallySelectedWidgetId: 'widget-a',
+    });
+
+    const root = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-a"]'
+    ) as HTMLElement | null;
+    const button = host.querySelector(
+      '[data-testid="projected-click-widget-a"]'
+    ) as HTMLButtonElement | null;
+    expect(root).toBeTruthy();
+    expect(button).toBeTruthy();
+    expect(root!.style.zIndex).toBe('2');
+    expect(visualFrontOwnerId()).toBeNull();
+
+    dispatchPointerEvent('pointerdown', button!, { pointerId: 93 });
+    dispatchPointerEvent('pointerup', button!, { pointerId: 93, buttons: 0 });
+    button!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await Promise.resolve();
+
+    expect(commitFront).not.toHaveBeenCalled();
+    expect(widgets().find((widget) => widget.id === 'widget-a')?.z_index).toBe(2);
+    expect(visualFrontOwnerId()).toBe('widget-a');
+    expect(root!.style.zIndex).toBe('3');
 
     harnessDispose();
   });
