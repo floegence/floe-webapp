@@ -44,6 +44,40 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
   },
 ];
 
+const projectedWidgetDefinitions: readonly WorkbenchWidgetDefinition[] = widgetDefinitions.map(
+  (definition) => ({
+    ...definition,
+    renderMode: 'projected_surface',
+  })
+);
+
+const projectedClickableWidgetDefinitions: readonly WorkbenchWidgetDefinition[] =
+  projectedWidgetDefinitions.map((definition) => ({
+    ...definition,
+    body: (props) => (
+      <button type="button" data-testid={`projected-click-${props.widgetId}`}>
+        {definition.label}
+      </button>
+    ),
+  }));
+
+async function flushWorkbenchEffects(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+function findWidgetRoot(host: ParentNode, widgetId: string): HTMLElement {
+  const root = host.querySelector(
+    `[data-floe-workbench-widget-id="${widgetId}"]`
+  ) as HTMLElement | null;
+  expect(root).toBeTruthy();
+  return root!;
+}
+
+function readElementZIndex(element: HTMLElement): number {
+  return Number.parseInt(element.style.zIndex || '0', 10);
+}
+
 function dispatchPointerEvent(
   type: string,
   target: EventTarget,
@@ -168,6 +202,182 @@ describe('WorkbenchSurface api', () => {
       `[data-test-workbench-widget-root="true"][data-test-workbench-widget-id="${widget!.id}"]`
     ) as HTMLElement | null;
     expect(widgetRoot).toBeTruthy();
+  });
+
+  it('moves visual front ownership to the newest projected widget when it is created', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+
+    render(() => {
+      const [state, setState] = createSignal(
+        createDefaultWorkbenchState(projectedWidgetDefinitions)
+      );
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={projectedWidgetDefinitions}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await flushWorkbenchEffects();
+
+    const files = surfaceApi!.createWidget('custom.files', {
+      centerViewport: false,
+      worldX: 260,
+      worldY: 180,
+    });
+    await flushWorkbenchEffects();
+    const terminal = surfaceApi!.createWidget('custom.terminal', {
+      centerViewport: false,
+      worldX: 300,
+      worldY: 220,
+    });
+    await flushWorkbenchEffects();
+
+    const filesRoot = findWidgetRoot(host, files!.id);
+    const terminalRoot = findWidgetRoot(host, terminal!.id);
+
+    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
+  });
+
+  it('drops a stale visual front owner when another projected widget becomes persistent top', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+    let writeState: (updater: (prev: WorkbenchState) => WorkbenchState) => void = () => {};
+
+    render(() => {
+      const [state, setState] = createSignal(
+        createDefaultWorkbenchState(projectedWidgetDefinitions)
+      );
+      writeState = setState;
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={projectedWidgetDefinitions}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await flushWorkbenchEffects();
+
+    const files = surfaceApi!.createWidget('custom.files', {
+      centerViewport: false,
+      worldX: 260,
+      worldY: 180,
+    });
+    const terminal = surfaceApi!.createWidget('custom.terminal', {
+      centerViewport: false,
+      worldX: 300,
+      worldY: 220,
+    });
+    await flushWorkbenchEffects();
+
+    surfaceApi!.focusWidget(files!, { centerViewport: false });
+    await flushWorkbenchEffects();
+
+    writeState((prev) => {
+      const topZIndex = prev.widgets.reduce((max, widget) => Math.max(max, widget.z_index), 1) + 1;
+      return {
+        ...prev,
+        widgets: prev.widgets.map((widget) =>
+          widget.id === terminal!.id ? { ...widget, z_index: topZIndex } : widget
+        ),
+        selectedWidgetId: terminal!.id,
+        selectedObject: { kind: 'widget', id: terminal!.id },
+      };
+    });
+    await flushWorkbenchEffects();
+
+    const filesRoot = findWidgetRoot(host, files!.id);
+    const terminalRoot = findWidgetRoot(host, terminal!.id);
+
+    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
+  });
+
+  it('lets a clicked persistent-top projected widget reclaim visual front ownership', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    let surfaceApi: WorkbenchSurfaceApi | null = null;
+
+    render(() => {
+      const [state, setState] = createSignal(
+        createDefaultWorkbenchState(projectedClickableWidgetDefinitions)
+      );
+
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={projectedClickableWidgetDefinitions}
+          onApiReady={(api) => {
+            surfaceApi = api;
+          }}
+        />
+      );
+    }, host);
+
+    await flushWorkbenchEffects();
+
+    const files = surfaceApi!.createWidget('custom.files', {
+      centerViewport: false,
+      worldX: 260,
+      worldY: 180,
+    });
+    const terminal = surfaceApi!.createWidget('custom.terminal', {
+      centerViewport: false,
+      worldX: 300,
+      worldY: 220,
+    });
+    await flushWorkbenchEffects();
+
+    surfaceApi!.focusWidget(files!, { centerViewport: false });
+    await flushWorkbenchEffects();
+    surfaceApi!.focusWidget(terminal!, { centerViewport: false });
+    await flushWorkbenchEffects();
+
+    const filesRoot = findWidgetRoot(host, files!.id);
+    const terminalRoot = findWidgetRoot(host, terminal!.id);
+
+    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
+
+    const filesButton = host.querySelector(
+      `[data-testid="projected-click-${files!.id}"]`
+    ) as HTMLButtonElement | null;
+    const terminalButton = host.querySelector(
+      `[data-testid="projected-click-${terminal!.id}"]`
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+    expect(terminalButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', filesButton!, { pointerId: 91 });
+    dispatchPointerEvent('pointerup', filesButton!, { pointerId: 91, buttons: 0 });
+    filesButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    await flushWorkbenchEffects();
+
+    expect(readElementZIndex(filesRoot)).toBeGreaterThan(readElementZIndex(terminalRoot));
+
+    dispatchPointerEvent('pointerdown', terminalButton!, { pointerId: 92 });
+    dispatchPointerEvent('pointerup', terminalButton!, { pointerId: 92, buttons: 0 });
+    terminalButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    await flushWorkbenchEffects();
+
+    expect(readElementZIndex(terminalRoot)).toBeGreaterThan(readElementZIndex(filesRoot));
   });
 
   it('applies text annotation defaults when creating text through the surface api', async () => {

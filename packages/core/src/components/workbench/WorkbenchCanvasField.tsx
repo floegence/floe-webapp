@@ -43,7 +43,7 @@ export interface WorkbenchCanvasFieldProps {
   viewport: WorkbenchViewport;
   selectedObject?: WorkbenchSelection | null;
   selectedWidgetId: string | null;
-  optimisticFrontWidgetId: string | null;
+  visualFrontOwnerId: string | null;
   workLayerLocked?: boolean;
   annotationLayerEditable?: boolean;
   backgroundLayerEditable?: boolean;
@@ -56,13 +56,13 @@ export interface WorkbenchCanvasFieldProps {
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelectWidget: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
-  onStartOptimisticFront: (widgetId: string) => void;
+  onClaimVisualFrontOwner: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
   onSelectStickyNote?: (noteId: string) => void;
   onStickyNoteContextMenu?: (event: MouseEvent, item: WorkbenchStickyNoteItem) => void;
-  onStartStickyOptimisticFront?: (noteId: string) => void;
+  onClaimStickyVisualFrontOwner?: (noteId: string) => void;
   onCommitStickyFront?: (noteId: string) => void;
   onCommitStickyMove?: (noteId: string, position: { x: number; y: number }) => void;
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
@@ -129,7 +129,7 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       renderLayer={props.renderLayers().byWidgetId.get(props.widgetId) ?? 1}
       itemSnapshot={item}
       selected={props.selectedWidgetId === props.widgetId}
-      optimisticFront={props.optimisticFrontWidgetId === props.widgetId}
+      visualFront={props.visualFrontOwnerId === props.widgetId}
       motion={props.widgetMotionById?.[props.widgetId] ?? null}
       topRenderLayer={props.renderLayers().topRenderLayer}
       viewportScale={props.viewportScale}
@@ -139,7 +139,7 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       viewport={props.viewport}
       onSelect={props.onSelectWidget}
       onContextMenu={props.onWidgetContextMenu}
-      onStartOptimisticFront={props.onStartOptimisticFront}
+      onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
       onCommitFront={props.onCommitFront}
       onCommitMove={props.onCommitMove}
       onCommitResize={props.onCommitResize}
@@ -159,13 +159,13 @@ interface WorkbenchCanvasStickyNoteSlotProps {
   stickyNoteById: () => Map<string, WorkbenchStickyNoteItem>;
   renderLayers: () => ReturnType<typeof createWorkbenchRenderLayerMap>;
   selectedObject?: WorkbenchSelection | null;
-  optimisticFrontWidgetId: string | null;
+  visualFrontOwnerId: string | null;
   viewportScale: number;
   locked: boolean;
   filtered: boolean;
   onSelectStickyNote?: (noteId: string) => void;
   onStickyNoteContextMenu?: (event: MouseEvent, item: WorkbenchStickyNoteItem) => void;
-  onStartStickyOptimisticFront?: (noteId: string) => void;
+  onClaimStickyVisualFrontOwner?: (noteId: string) => void;
   onCommitStickyFront?: (noteId: string) => void;
   onCommitStickyMove?: (noteId: string, position: { x: number; y: number }) => void;
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
@@ -199,10 +199,10 @@ function WorkbenchCanvasStickyNoteSlot(props: WorkbenchCanvasStickyNoteSlotProps
       topRenderLayer={props.renderLayers().topRenderLayer}
       locked={props.locked}
       filtered={props.filtered}
-      optimisticFront={props.optimisticFrontWidgetId === props.noteId}
+      visualFront={props.visualFrontOwnerId === props.noteId}
       onSelect={(noteId) => props.onSelectStickyNote?.(noteId)}
       onContextMenu={(event, note) => props.onStickyNoteContextMenu?.(event, note)}
-      onStartOptimisticFront={(noteId) => props.onStartStickyOptimisticFront?.(noteId)}
+      onClaimVisualFrontOwner={(noteId) => props.onClaimStickyVisualFrontOwner?.(noteId)}
       onCommitFront={(noteId) => props.onCommitStickyFront?.(noteId)}
       onCommitMove={(noteId, position) => props.onCommitStickyMove?.(noteId, position)}
       onCommitResize={(noteId, size) => props.onCommitStickyResize?.(noteId, size)}
@@ -303,7 +303,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               renderLayers={renderLayers}
               viewport={props.viewport}
               selectedWidgetId={selectedWidgetId()}
-              optimisticFrontWidgetId={props.optimisticFrontWidgetId}
+              visualFrontOwnerId={props.visualFrontOwnerId}
               viewportScale={props.viewportScale}
               locked={workLocked()}
               filters={props.filters}
@@ -311,7 +311,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               interactionAdapter={interactionAdapter()}
               onSelectWidget={props.onSelectWidget}
               onWidgetContextMenu={props.onWidgetContextMenu}
-              onStartOptimisticFront={props.onStartOptimisticFront}
+              onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
               onCommitFront={props.onCommitFront}
               onCommitMove={props.onCommitMove}
               onCommitResize={props.onCommitResize}
@@ -331,7 +331,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               noteId={noteId}
               stickyNoteById={stickyNoteById}
               selectedObject={props.selectedObject}
-              optimisticFrontWidgetId={props.optimisticFrontWidgetId}
+              visualFrontOwnerId={props.visualFrontOwnerId}
               viewportScale={props.viewportScale}
               locked={workLocked()}
               filtered={
@@ -339,7 +339,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               }
               onSelectStickyNote={props.onSelectStickyNote}
               onStickyNoteContextMenu={props.onStickyNoteContextMenu}
-              onStartStickyOptimisticFront={props.onStartStickyOptimisticFront}
+              onClaimStickyVisualFrontOwner={props.onClaimStickyVisualFrontOwner}
               onCommitStickyFront={props.onCommitStickyFront}
               onCommitStickyMove={props.onCommitStickyMove}
               onCommitStickyResize={props.onCommitStickyResize}

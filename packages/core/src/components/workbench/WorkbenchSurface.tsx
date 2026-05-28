@@ -617,7 +617,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           selectedWidgetId={model.selectedWidgetId()}
           selectedObject={model.selectedObject()}
           mode={model.mode()}
-          optimisticFrontWidgetId={model.optimisticFrontWidgetId()}
+          visualFrontOwnerId={model.visualFrontOwnerId()}
           locked={model.locked()}
           filters={model.filters()}
           interactionAdapter={interactionAdapter()}
@@ -628,13 +628,13 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onCanvasPointerDown={handleCanvasPointerDown}
           onSelectWidget={model.canvas.selectWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}
-          onStartOptimisticFront={model.canvas.startOptimisticFront}
+          onClaimVisualFrontOwner={model.canvas.claimVisualFrontOwner}
           onCommitFront={model.canvas.commitFront}
           onCommitMove={model.canvas.commitMove}
           onCommitResize={model.canvas.commitResize}
           onSelectStickyNote={model.canvas.selectStickyNote}
           onStickyNoteContextMenu={model.canvas.openStickyNoteContextMenu}
-          onStartStickyOptimisticFront={model.canvas.startOptimisticFront}
+          onClaimStickyVisualFrontOwner={model.canvas.claimVisualFrontOwner}
           onCommitStickyFront={model.canvas.commitStickyFront}
           onCommitStickyMove={model.canvas.commitStickyMove}
           onCommitStickyResize={model.canvas.commitStickyResize}

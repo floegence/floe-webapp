@@ -23,7 +23,7 @@ function dispatchPointerEvent(
     clientY?: number;
     buttons?: number;
     button?: number;
-  } = {},
+  } = {}
 ): void {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -93,59 +93,64 @@ describe('Workbench projected surfaces', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const dispose = render(() => (
-      <WorkbenchCanvas
-        widgetDefinitions={widgetDefinitions}
-        widgets={[
-          {
-            id: 'widget-canvas',
-            type: 'custom.canvas',
-            title: 'Canvas',
-            x: 40,
-            y: 20,
-            width: 320,
-            height: 220,
-            z_index: 1,
-            created_at_unix_ms: 1,
-          },
-          {
-            id: 'widget-preview',
-            type: 'custom.preview',
-            title: 'Preview',
-            x: 20,
-            y: 30,
-            width: 400,
-            height: 260,
-            z_index: 2,
-            created_at_unix_ms: 2,
-          },
-        ]}
-        viewport={{ x: 100, y: 50, scale: 1.5 }}
-        canvasFrameSize={{ width: 1200, height: 800 }}
-        selectedWidgetId="widget-preview"
-        optimisticFrontWidgetId={null}
-        locked={false}
-        filters={{
-          'custom.canvas': true,
-          'custom.preview': true,
-        }}
-        setCanvasFrameRef={() => {}}
-        onViewportCommit={vi.fn()}
-        onCanvasContextMenu={vi.fn()}
-        onSelectWidget={vi.fn()}
-        onWidgetContextMenu={vi.fn()}
-        onStartOptimisticFront={vi.fn()}
-        onCommitFront={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onRequestDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchCanvas
+          widgetDefinitions={widgetDefinitions}
+          widgets={[
+            {
+              id: 'widget-canvas',
+              type: 'custom.canvas',
+              title: 'Canvas',
+              x: 40,
+              y: 20,
+              width: 320,
+              height: 220,
+              z_index: 1,
+              created_at_unix_ms: 1,
+            },
+            {
+              id: 'widget-preview',
+              type: 'custom.preview',
+              title: 'Preview',
+              x: 20,
+              y: 30,
+              width: 400,
+              height: 260,
+              z_index: 2,
+              created_at_unix_ms: 2,
+            },
+          ]}
+          viewport={{ x: 100, y: 50, scale: 1.5 }}
+          canvasFrameSize={{ width: 1200, height: 800 }}
+          selectedWidgetId="widget-preview"
+          visualFrontOwnerId={null}
+          locked={false}
+          filters={{
+            'custom.canvas': true,
+            'custom.preview': true,
+          }}
+          setCanvasFrameRef={() => {}}
+          onViewportCommit={vi.fn()}
+          onCanvasContextMenu={vi.fn()}
+          onSelectWidget={vi.fn()}
+          onWidgetContextMenu={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onRequestDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     await Promise.resolve();
 
     const viewport = host.querySelector('.floe-infinite-canvas__viewport') as HTMLElement | null;
-    const projectedLayer = host.querySelector('.workbench-canvas__projected-layer') as HTMLElement | null;
+    const projectedLayer = host.querySelector(
+      '.workbench-canvas__projected-layer'
+    ) as HTMLElement | null;
     const projectedWidget = host.querySelector(
       '[data-floe-workbench-widget-id="widget-preview"]'
     ) as HTMLElement | null;
@@ -198,7 +203,9 @@ describe('Workbench projected surfaces', () => {
           <button
             type="button"
             data-testid="shift-viewport"
-            onClick={() => setViewport((current) => ({ ...current, x: current.x + 80, y: current.y + 40 }))}
+            onClick={() =>
+              setViewport((current) => ({ ...current, x: current.x + 80, y: current.y + 40 }))
+            }
           >
             Shift viewport
           </button>
@@ -227,7 +234,7 @@ describe('Workbench projected surfaces', () => {
             viewport={viewport()}
             canvasFrameSize={{ width: 1200, height: 800 }}
             selectedWidgetId="widget-preview"
-            optimisticFrontWidgetId={null}
+            visualFrontOwnerId={null}
             locked={false}
             filters={{
               'custom.canvas': true,
@@ -238,7 +245,7 @@ describe('Workbench projected surfaces', () => {
             onCanvasContextMenu={vi.fn()}
             onSelectWidget={vi.fn()}
             onWidgetContextMenu={vi.fn()}
-            onStartOptimisticFront={vi.fn()}
+            onClaimVisualFrontOwner={vi.fn()}
             onCommitFront={vi.fn()}
             onCommitMove={vi.fn()}
             onCommitResize={vi.fn()}
@@ -273,7 +280,9 @@ describe('Workbench projected surfaces', () => {
     ) as HTMLElement | null;
     expect(projectedWidget?.style.transform).toBe('translate(204px, 126px) scale(1.2)');
 
-    const zoomButton = host.querySelector('[data-testid="zoom-viewport"]') as HTMLButtonElement | null;
+    const zoomButton = host.querySelector(
+      '[data-testid="zoom-viewport"]'
+    ) as HTMLButtonElement | null;
     expect(zoomButton).toBeTruthy();
     zoomButton!.click();
     await Promise.resolve();
@@ -298,56 +307,59 @@ describe('Workbench projected surfaces', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const dispose = render(() => (
-      <WorkbenchCanvas
-        widgetDefinitions={widgetDefinitions}
-        widgets={[
-          {
-            id: 'widget-preview-a',
-            type: 'custom.preview',
-            title: 'Preview A',
-            x: 20,
-            y: 30,
-            width: 400,
-            height: 260,
-            z_index: 2,
-            created_at_unix_ms: 2,
-          },
-          {
-            id: 'widget-preview-b',
-            type: 'custom.preview',
-            title: 'Preview B',
-            x: 480,
-            y: 60,
-            width: 400,
-            height: 260,
-            z_index: 3,
-            created_at_unix_ms: 3,
-          },
-        ]}
-        viewport={{ x: 100, y: 50, scale: 1.5 }}
-        canvasFrameSize={{ width: 1200, height: 800 }}
-        selectedWidgetId="widget-preview-a"
-        optimisticFrontWidgetId={null}
-        locked={false}
-        filters={{
-          'custom.canvas': true,
-          'custom.preview': true,
-        }}
-        setCanvasFrameRef={() => {}}
-        onViewportCommit={vi.fn()}
-        onCanvasContextMenu={vi.fn()}
-        onSelectWidget={vi.fn()}
-        onWidgetContextMenu={vi.fn()}
-        onStartOptimisticFront={vi.fn()}
-        onCommitFront={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onRequestOverview={vi.fn()}
-        onRequestFit={vi.fn()}
-        onRequestDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchCanvas
+          widgetDefinitions={widgetDefinitions}
+          widgets={[
+            {
+              id: 'widget-preview-a',
+              type: 'custom.preview',
+              title: 'Preview A',
+              x: 20,
+              y: 30,
+              width: 400,
+              height: 260,
+              z_index: 2,
+              created_at_unix_ms: 2,
+            },
+            {
+              id: 'widget-preview-b',
+              type: 'custom.preview',
+              title: 'Preview B',
+              x: 480,
+              y: 60,
+              width: 400,
+              height: 260,
+              z_index: 3,
+              created_at_unix_ms: 3,
+            },
+          ]}
+          viewport={{ x: 100, y: 50, scale: 1.5 }}
+          canvasFrameSize={{ width: 1200, height: 800 }}
+          selectedWidgetId="widget-preview-a"
+          visualFrontOwnerId={null}
+          locked={false}
+          filters={{
+            'custom.canvas': true,
+            'custom.preview': true,
+          }}
+          setCanvasFrameRef={() => {}}
+          onViewportCommit={vi.fn()}
+          onCanvasContextMenu={vi.fn()}
+          onSelectWidget={vi.fn()}
+          onWidgetContextMenu={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onRequestOverview={vi.fn()}
+          onRequestFit={vi.fn()}
+          onRequestDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     await Promise.resolve();
 
@@ -401,45 +413,48 @@ describe('Workbench projected surfaces', () => {
       },
     ];
 
-    const dispose = render(() => (
-      <WorkbenchCanvas
-        widgetDefinitions={sharpWidgetDefinitions}
-        widgets={[
-          {
-            id: 'widget-preview',
-            type: 'custom.preview',
-            title: 'Preview',
-            x: 20,
-            y: 30,
-            width: 400,
-            height: 260,
-            z_index: 2,
-            created_at_unix_ms: 2,
-          },
-        ]}
-        viewport={{ x: 100, y: 50, scale: 1.5 }}
-        canvasFrameSize={{ width: 1200, height: 800 }}
-        selectedWidgetId="widget-preview"
-        optimisticFrontWidgetId={null}
-        locked={false}
-        filters={{
-          'custom.canvas': true,
-          'custom.preview': true,
-        }}
-        setCanvasFrameRef={() => {}}
-        onViewportCommit={vi.fn()}
-        onCanvasContextMenu={vi.fn()}
-        onSelectWidget={vi.fn()}
-        onWidgetContextMenu={vi.fn()}
-        onStartOptimisticFront={vi.fn()}
-        onCommitFront={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onRequestOverview={vi.fn()}
-        onRequestFit={vi.fn()}
-        onRequestDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchCanvas
+          widgetDefinitions={sharpWidgetDefinitions}
+          widgets={[
+            {
+              id: 'widget-preview',
+              type: 'custom.preview',
+              title: 'Preview',
+              x: 20,
+              y: 30,
+              width: 400,
+              height: 260,
+              z_index: 2,
+              created_at_unix_ms: 2,
+            },
+          ]}
+          viewport={{ x: 100, y: 50, scale: 1.5 }}
+          canvasFrameSize={{ width: 1200, height: 800 }}
+          selectedWidgetId="widget-preview"
+          visualFrontOwnerId={null}
+          locked={false}
+          filters={{
+            'custom.canvas': true,
+            'custom.preview': true,
+          }}
+          setCanvasFrameRef={() => {}}
+          onViewportCommit={vi.fn()}
+          onCanvasContextMenu={vi.fn()}
+          onSelectWidget={vi.fn()}
+          onWidgetContextMenu={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onRequestOverview={vi.fn()}
+          onRequestFit={vi.fn()}
+          onRequestDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     await Promise.resolve();
 

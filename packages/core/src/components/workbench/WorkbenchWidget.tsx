@@ -1,4 +1,12 @@
-import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  untrack,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { GripVertical, Maximize, Minus, X } from '../../icons';
 import {
@@ -94,7 +102,7 @@ export interface WorkbenchWidgetProps {
   renderLayer: number;
   itemSnapshot: () => WorkbenchWidgetItem;
   selected: boolean;
-  optimisticFront: boolean;
+  visualFront: boolean;
   motion?: WorkbenchWidgetMotionIntent | null;
   topRenderLayer: number;
   viewportScale: number;
@@ -107,7 +115,7 @@ export interface WorkbenchWidgetProps {
   viewport?: WorkbenchViewport;
   onSelect: (widgetId: string) => void;
   onContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
-  onStartOptimisticFront: (widgetId: string) => void;
+  onClaimVisualFrontOwner: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
   onCommitMove: (widgetId: string, position: { x: number; y: number }) => void;
   onCommitResize: (widgetId: string, size: { width: number; height: number }) => void;
@@ -127,24 +135,26 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const widgetType = createOwnerSafePropAccessor(() => props.widgetType);
   const itemSnapshot = createOwnerSafePropAccessor(() => props.itemSnapshot);
   const renderLayer = createOwnerSafePropAccessor(() => props.renderLayer);
-  const optimisticFront = createOwnerSafePropAccessor(() => props.optimisticFront);
+  const visualFront = createOwnerSafePropAccessor(() => props.visualFront);
   const motion = createOwnerSafePropAccessor(() => props.motion ?? null);
   const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
   const viewport = createOwnerSafePropAccessor(() => props.viewport);
   const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
   const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
-  const onStartOptimisticFront = createOwnerSafePropAccessor(() => props.onStartOptimisticFront);
+  const onClaimVisualFrontOwner = createOwnerSafePropAccessor(() => props.onClaimVisualFrontOwner);
   const onCommitFront = createOwnerSafePropAccessor(() => props.onCommitFront);
   const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
   const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
   const onViewportCommit = createOwnerSafePropAccessor(() => props.onViewportCommit);
-  const onViewportInteractionStart =
-    createOwnerSafePropAccessor(() => props.onViewportInteractionStart);
+  const onViewportInteractionStart = createOwnerSafePropAccessor(
+    () => props.onViewportInteractionStart
+  );
   const onRequestOverview = createOwnerSafePropAccessor(() => props.onRequestOverview);
   const onRequestFit = createOwnerSafePropAccessor(() => props.onRequestFit);
   const onRequestDelete = createOwnerSafePropAccessor(() => props.onRequestDelete);
-  const onLayoutInteractionStart =
-    createOwnerSafePropAccessor(() => props.onLayoutInteractionStart);
+  const onLayoutInteractionStart = createOwnerSafePropAccessor(
+    () => props.onLayoutInteractionStart
+  );
   const onLayoutInteractionEnd = createOwnerSafePropAccessor(() => props.onLayoutInteractionEnd);
   const interactionAdapter = createMemo(() =>
     resolveWorkbenchInteractionAdapter(props.interactionAdapter)
@@ -160,8 +170,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const viewportScale = createOwnerSafePropAccessor(() => Math.max(props.viewportScale, 0.001));
   const [dragState, setDragState] = createSignal<LocalDragState | null>(null);
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
-  const [bodyActivation, setBodyActivation] =
-    createSignal<WorkbenchWidgetBodyActivation>();
+  const [bodyActivation, setBodyActivation] = createSignal<WorkbenchWidgetBodyActivation>();
   const [localSelectionClaim, setLocalSelectionClaim] = createSignal(false);
   const [sharpProjection, setSharpProjection] = createSignal({
     enabled: false,
@@ -254,7 +263,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     onCommitFront()(currentWidgetId);
   };
   const commitWidgetFrontIfBehind = () => {
-    if (renderLayer() >= topRenderLayer()) return;
+    if (renderLayer() >= topRenderLayer()) {
+      onClaimVisualFrontOwner()(widgetId());
+      return;
+    }
     onCommitFront()(widgetId());
   };
   const clearLocalSelectionClaim = () => {
@@ -264,7 +276,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const preclaimPointerOwnership = (
     pointerId: number,
     wasSelected: boolean,
-    ownership: ReturnType<ResolvedWorkbenchInteractionAdapter['resolveWidgetEventOwnership']>,
+    ownership: ReturnType<ResolvedWorkbenchInteractionAdapter['resolveWidgetEventOwnership']>
   ) => {
     const preclaim = {
       token: ++pendingPointerOwnershipPreclaimToken,
@@ -282,7 +294,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     });
   };
   const consumePointerOwnershipPreclaim = (
-    pointerId: number,
+    pointerId: number
   ): PendingPointerOwnershipPreclaim | null => {
     const preclaim = pendingPointerOwnershipPreclaims.get(pointerId) ?? null;
     if (preclaim) {
@@ -297,11 +309,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
 
     const handlePointerDownCapture = (event: PointerEvent) => {
       if (event.button !== 0) return;
-      preclaimPointerOwnership(
-        event.pointerId,
-        selected(),
-        resolveEventOwnership(event.target),
-      );
+      preclaimPointerOwnership(event.pointerId, selected(), resolveEventOwnership(event.target));
     };
     const handleClickCapture = (event: MouseEvent) => {
       if (event.button !== 0) return;
@@ -400,27 +408,29 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     const pointerOwnershipPreclaim = consumePointerOwnershipPreclaim(event.pointerId);
     const wasSelected = pointerOwnershipPreclaim?.wasSelected ?? externallySelected();
     const ownership = pointerOwnershipPreclaim?.ownership ?? resolveEventOwnership(event.target);
-    const localTypingTarget = ownership === 'widget_local'
-      ? resolveWorkbenchWidgetLocalTypingTarget({
-        target: event.target,
-        widgetRoot: widgetRootEl ?? null,
-        interactiveSelector: interactionAdapter().interactiveSelector,
-        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
-      })
-      : null;
-    const localTextSelectionTarget = ownership === 'widget_local'
-      ? resolveWorkbenchWidgetTextSelectionTarget({
-        target: event.target,
-        widgetRoot: widgetRootEl ?? null,
-        interactiveSelector: interactionAdapter().interactiveSelector,
-        panSurfaceSelector: interactionAdapter().panSurfaceSelector,
-      })
-      : null;
-    const shouldActivateLocalTarget =
+    const localTypingTarget =
       ownership === 'widget_local'
-      && !localTypingTarget
-      && !localTextSelectionTarget
-      && shouldActivateWorkbenchWidgetLocalTarget({
+        ? resolveWorkbenchWidgetLocalTypingTarget({
+            target: event.target,
+            widgetRoot: widgetRootEl ?? null,
+            interactiveSelector: interactionAdapter().interactiveSelector,
+            panSurfaceSelector: interactionAdapter().panSurfaceSelector,
+          })
+        : null;
+    const localTextSelectionTarget =
+      ownership === 'widget_local'
+        ? resolveWorkbenchWidgetTextSelectionTarget({
+            target: event.target,
+            widgetRoot: widgetRootEl ?? null,
+            interactiveSelector: interactionAdapter().interactiveSelector,
+            panSurfaceSelector: interactionAdapter().panSurfaceSelector,
+          })
+        : null;
+    const shouldActivateLocalTarget =
+      ownership === 'widget_local' &&
+      !localTypingTarget &&
+      !localTextSelectionTarget &&
+      shouldActivateWorkbenchWidgetLocalTarget({
         target: event.target,
         widgetRoot: widgetRootEl ?? null,
         interactiveSelector: interactionAdapter().interactiveSelector,
@@ -487,20 +497,18 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       ready: surfaceReady(),
     });
   });
-  const projectedScale = createMemo(
-    () => surfaceMetrics()?.rect.viewportScale ?? viewportScale(),
-  );
+  const projectedScale = createMemo(() => surfaceMetrics()?.rect.viewportScale ?? viewportScale());
   const projectedSharpEligible = createMemo(
     () =>
       layoutMode() === 'projected_surface' &&
-      resolveWorkbenchProjectedSurfaceScaleBehavior(definition()) === 'settle_sharp_zoom',
+      resolveWorkbenchProjectedSurfaceScaleBehavior(definition()) === 'settle_sharp_zoom'
   );
   const projectedSharpActive = createMemo(
     () =>
       layoutMode() === 'projected_surface' &&
       projectedSharpEligible() &&
       sharpProjection().enabled &&
-      sharpProjection().scale > 1.001,
+      sharpProjection().scale > 1.001
   );
   const projectedSurfaceStyle = createMemo<JSX.CSSProperties | undefined>(() => {
     if (layoutMode() !== 'projected_surface') {
@@ -547,7 +555,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const rootStyle = createMemo<JSX.CSSProperties>(() => {
     const shared = {
       'z-index':
-        isDragging() || isResizing() || optimisticFront()
+        isDragging() || isResizing() || visualFront()
           ? `${topRenderLayer() + 1}`
           : `${renderLayer()}`,
     } satisfies JSX.CSSProperties;
@@ -556,8 +564,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       const rect = surfaceMetrics()?.rect;
       const scale = projectedScale();
       const sharp = projectedSharpActive();
-      const width = sharp ? rect?.screenWidth ?? liveSize().width * scale : liveSize().width;
-      const height = sharp ? rect?.screenHeight ?? liveSize().height * scale : liveSize().height;
+      const width = sharp ? (rect?.screenWidth ?? liveSize().width * scale) : liveSize().width;
+      const height = sharp ? (rect?.screenHeight ?? liveSize().height * scale) : liveSize().height;
       return {
         ...shared,
         width: `${width}px`,
@@ -604,7 +612,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       setSharpProjection((current) =>
         Math.abs(current.scale - settleScale) < 0.001
           ? { enabled: true, scale: settleScale }
-          : current,
+          : current
       );
     }, PROJECTED_SHARP_SETTLE_MS);
   });
@@ -642,7 +650,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     const currentWidgetId = widgetId();
     onSelect()(currentWidgetId);
     widgetRootEl?.focus({ preventScroll: true });
-    onStartOptimisticFront()(currentWidgetId);
+    onClaimVisualFrontOwner()(currentWidgetId);
 
     const stopInteraction = startTrackedLayoutInteraction('drag', 'grabbing');
     const scale = viewportScale();
@@ -669,13 +677,13 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       setDragState((current) => {
         if (!current || current.pointerId !== nextEvent.pointerId) return current;
         const worldX =
-          current.startWorldX
-          + (nextEvent.clientX - current.startClientX) / current.scale
-          + current.autoPanWorldX;
+          current.startWorldX +
+          (nextEvent.clientX - current.startClientX) / current.scale +
+          current.autoPanWorldX;
         const worldY =
-          current.startWorldY
-          + (nextEvent.clientY - current.startClientY) / current.scale
-          + current.autoPanWorldY;
+          current.startWorldY +
+          (nextEvent.clientY - current.startClientY) / current.scale +
+          current.autoPanWorldY;
         return {
           ...current,
           worldX,
@@ -720,7 +728,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     event.preventDefault();
     event.stopPropagation();
     resizeSession?.stop({ reason: 'manual_stop', commit: false });
-    onStartOptimisticFront()(widgetId());
+    onClaimVisualFrontOwner()(widgetId());
 
     const stopInteraction = startTrackedLayoutInteraction('resize', 'nwse-resize');
     const scale = viewportScale();

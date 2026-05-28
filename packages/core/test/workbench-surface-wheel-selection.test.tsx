@@ -5,10 +5,7 @@ import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchCanvas } from '../src/components/workbench/WorkbenchCanvas';
-import type {
-  WorkbenchState,
-  WorkbenchWidgetDefinition,
-} from '../src/components/workbench/types';
+import type { WorkbenchState, WorkbenchWidgetDefinition } from '../src/components/workbench/types';
 import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
 import { CANVAS_WHEEL_INTERACTIVE_ATTR } from '../src/components/ui/localInteractionSurface';
 
@@ -81,7 +78,7 @@ function dispatchPointerEvent(
     pointerId?: number;
     clientX?: number;
     clientY?: number;
-  } = {},
+  } = {}
 ): void {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -166,7 +163,7 @@ describe('Workbench wheel ownership', () => {
             viewport={state().viewport}
             canvasFrameSize={{ width: 960, height: 640 }}
             selectedWidgetId={state().selectedWidgetId}
-            optimisticFrontWidgetId={null}
+            visualFrontOwnerId={null}
             locked={state().locked}
             filters={state().filters}
             setCanvasFrameRef={() => {}}
@@ -181,7 +178,7 @@ describe('Workbench wheel ownership', () => {
               setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
             }}
             onWidgetContextMenu={vi.fn()}
-            onStartOptimisticFront={vi.fn()}
+            onClaimVisualFrontOwner={vi.fn()}
             onCommitFront={vi.fn()}
             onCommitMove={vi.fn()}
             onCommitResize={vi.fn()}
@@ -217,7 +214,9 @@ describe('Workbench wheel ownership', () => {
     dispatchPointerEvent('pointerdown', widgetBody!, { pointerId: 2 });
     await Promise.resolve();
 
-    expect(host.querySelector('[data-testid="selected-widget-id"]')?.textContent).toBe('widget-scroll-1');
+    expect(host.querySelector('[data-testid="selected-widget-id"]')?.textContent).toBe(
+      'widget-scroll-1'
+    );
     expect(widgetRoot?.getAttribute(CANVAS_WHEEL_INTERACTIVE_ATTR)).toBe('true');
 
     const wheelAfterWidgetSelection = dispatchWheel(widgetBody!, -120);
@@ -251,7 +250,7 @@ describe('Workbench wheel ownership', () => {
           viewport={state().viewport}
           canvasFrameSize={{ width: 960, height: 640 }}
           selectedWidgetId={state().selectedWidgetId}
-          optimisticFrontWidgetId={null}
+          visualFrontOwnerId={null}
           locked={state().locked}
           filters={state().filters}
           setCanvasFrameRef={() => {}}
@@ -266,7 +265,7 @@ describe('Workbench wheel ownership', () => {
             setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
           }}
           onWidgetContextMenu={vi.fn()}
-          onStartOptimisticFront={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
           onCommitFront={vi.fn()}
           onCommitMove={vi.fn()}
           onCommitResize={vi.fn()}

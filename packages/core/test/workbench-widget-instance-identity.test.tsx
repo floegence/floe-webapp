@@ -16,10 +16,16 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
     icon: () => null,
     body: (props) => {
       onMount(() => {
-        bodyLifecycle.mounts.set(props.widgetId, (bodyLifecycle.mounts.get(props.widgetId) ?? 0) + 1);
+        bodyLifecycle.mounts.set(
+          props.widgetId,
+          (bodyLifecycle.mounts.get(props.widgetId) ?? 0) + 1
+        );
       });
       onCleanup(() => {
-        bodyLifecycle.cleanups.set(props.widgetId, (bodyLifecycle.cleanups.get(props.widgetId) ?? 0) + 1);
+        bodyLifecycle.cleanups.set(
+          props.widgetId,
+          (bodyLifecycle.cleanups.get(props.widgetId) ?? 0) + 1
+        );
       });
       return <div data-testid={`body-${props.widgetId}`}>Primary widget body</div>;
     },
@@ -44,7 +50,7 @@ const bodyLifecycle = {
 function dispatchPointerEvent(
   type: string,
   target: EventTarget,
-  options: { pointerId?: number; button?: number; buttons?: number } = {},
+  options: { pointerId?: number; button?: number; buttons?: number } = {}
 ): Event {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -114,77 +120,78 @@ function createInitialState(): WorkbenchState {
 function renderWorkbenchHarness(host: HTMLDivElement) {
   const [state, setState] = createSignal(createInitialState());
 
-  const dispose = render(() => (
-    <>
-      <button
-        type="button"
-        data-testid="move-primary"
-        onClick={() => {
-          setState((prev) => ({
-            ...prev,
-            widgets: prev.widgets.map((widget) => (
-              widget.id === 'widget-primary'
-                ? { ...widget, x: widget.x + 48, y: widget.y + 12 }
-                : widget
-            )),
-          }));
-        }}
-      >
-        Move primary
-      </button>
-      <WorkbenchCanvasField
-        widgetDefinitions={widgetDefinitions}
-        widgets={state().widgets}
-        selectedWidgetId={state().selectedWidgetId}
-        optimisticFrontWidgetId={null}
-        viewportScale={state().viewport.scale}
-        locked={state().locked}
-        filters={state().filters}
-        onSelectWidget={(widgetId) => {
-          setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
-        }}
-        onWidgetContextMenu={vi.fn()}
-        onStartOptimisticFront={vi.fn()}
-        onCommitFront={(widgetId) => {
-          const resolution = resolveWorkbenchLayerFront(state().widgets, widgetId);
-          setState((prev) => ({
-            ...prev,
-            widgets: prev.widgets.map((widget) => (
-              widget.id === widgetId && resolution && !resolution.isTop
-                ? { ...widget, z_index: resolution.nextZIndex }
-                : widget
-            )),
-          }));
-        }}
-        onCommitMove={(widgetId, position) => {
-          setState((prev) => ({
-            ...prev,
-            widgets: prev.widgets.map((widget) => (
-              widget.id === widgetId
-                ? { ...widget, x: position.x, y: position.y }
-                : widget
-            )),
-          }));
-        }}
-        onCommitResize={(widgetId, size) => {
-          setState((prev) => ({
-            ...prev,
-            widgets: prev.widgets.map((widget) => (
-              widget.id === widgetId
-                ? { ...widget, width: size.width, height: size.height }
-                : widget
-            )),
-          }));
-        }}
-        onRequestDelete={(widgetId) => {
-          setState((prev) => ({
-            ...prev,
-            widgets: prev.widgets.filter((widget) => widget.id !== widgetId),
-          }));
-        }}
-      />
-    </>
-  ), host);
+  const dispose = render(
+    () => (
+      <>
+        <button
+          type="button"
+          data-testid="move-primary"
+          onClick={() => {
+            setState((prev) => ({
+              ...prev,
+              widgets: prev.widgets.map((widget) =>
+                widget.id === 'widget-primary'
+                  ? { ...widget, x: widget.x + 48, y: widget.y + 12 }
+                  : widget
+              ),
+            }));
+          }}
+        >
+          Move primary
+        </button>
+        <WorkbenchCanvasField
+          widgetDefinitions={widgetDefinitions}
+          widgets={state().widgets}
+          selectedWidgetId={state().selectedWidgetId}
+          visualFrontOwnerId={null}
+          viewportScale={state().viewport.scale}
+          locked={state().locked}
+          filters={state().filters}
+          onSelectWidget={(widgetId) => {
+            setState((prev) => ({ ...prev, selectedWidgetId: widgetId }));
+          }}
+          onWidgetContextMenu={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
+          onCommitFront={(widgetId) => {
+            const resolution = resolveWorkbenchLayerFront(state().widgets, widgetId);
+            setState((prev) => ({
+              ...prev,
+              widgets: prev.widgets.map((widget) =>
+                widget.id === widgetId && resolution && !resolution.isTop
+                  ? { ...widget, z_index: resolution.nextZIndex }
+                  : widget
+              ),
+            }));
+          }}
+          onCommitMove={(widgetId, position) => {
+            setState((prev) => ({
+              ...prev,
+              widgets: prev.widgets.map((widget) =>
+                widget.id === widgetId ? { ...widget, x: position.x, y: position.y } : widget
+              ),
+            }));
+          }}
+          onCommitResize={(widgetId, size) => {
+            setState((prev) => ({
+              ...prev,
+              widgets: prev.widgets.map((widget) =>
+                widget.id === widgetId
+                  ? { ...widget, width: size.width, height: size.height }
+                  : widget
+              ),
+            }));
+          }}
+          onRequestDelete={(widgetId) => {
+            setState((prev) => ({
+              ...prev,
+              widgets: prev.widgets.filter((widget) => widget.id !== widgetId),
+            }));
+          }}
+        />
+      </>
+    ),
+    host
+  );
 
   return { dispose, state };
 }
@@ -205,7 +212,9 @@ describe('WorkbenchCanvas widget instance identity', () => {
 
     expect(bodyLifecycle.mounts.get('widget-primary')).toBe(1);
 
-    const header = host.querySelector('[data-floe-workbench-widget-id="widget-primary"] .workbench-widget__header') as HTMLElement | null;
+    const header = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-primary"] .workbench-widget__header'
+    ) as HTMLElement | null;
     expect(header).toBeTruthy();
     mockPointerCapture(header!);
     dispatchPointerEvent('pointerdown', header!, { pointerId: 8 });
@@ -228,7 +237,9 @@ describe('WorkbenchCanvas widget instance identity', () => {
 
     expect(bodyLifecycle.mounts.get('widget-primary')).toBe(1);
 
-    const moveButton = host.querySelector('[data-testid="move-primary"]') as HTMLButtonElement | null;
+    const moveButton = host.querySelector(
+      '[data-testid="move-primary"]'
+    ) as HTMLButtonElement | null;
     expect(moveButton).toBeTruthy();
     moveButton!.click();
     await Promise.resolve();
@@ -246,8 +257,12 @@ describe('WorkbenchCanvas widget instance identity', () => {
     const { dispose } = renderWorkbenchHarness(host);
     await Promise.resolve();
 
-    const primaryWidget = host.querySelector('[data-floe-workbench-widget-id="widget-primary"]') as HTMLElement | null;
-    const secondaryWidget = host.querySelector('[data-floe-workbench-widget-id="widget-secondary"]') as HTMLElement | null;
+    const primaryWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-primary"]'
+    ) as HTMLElement | null;
+    const secondaryWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-secondary"]'
+    ) as HTMLElement | null;
     expect(primaryWidget).toBeTruthy();
     expect(secondaryWidget).toBeTruthy();
 

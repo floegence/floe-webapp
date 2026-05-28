@@ -43,7 +43,7 @@ function dispatchPointerEvent(
     pointerId?: number;
     clientX?: number;
     clientY?: number;
-  } = {},
+  } = {}
 ): Event {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -99,7 +99,7 @@ function dispatchTextInput(
     data?: string;
     inputType?: string;
     isComposing?: boolean;
-  } = {},
+  } = {}
 ): Event {
   const EventCtor = typeof InputEvent === 'function' ? InputEvent : Event;
   const event = new EventCtor('input', {
@@ -120,9 +120,7 @@ function dispatchTextInput(
 
 function hexChannelToLinear(value: number): number {
   const channel = value / 255;
-  return channel <= 0.03928
-    ? channel / 12.92
-    : ((channel + 0.055) / 1.055) ** 2.4;
+  return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
 }
 
 function relativeLuminance(hex: string): number {
@@ -210,19 +208,22 @@ describe('Workbench layer objects', () => {
     const onSelect = vi.fn();
     const onCommitMove = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchTextAnnotation
-        item={createTextItem()}
-        selected={false}
-        editable={true}
-        viewportScale={2}
-        onSelect={onSelect}
-        onCommitMove={onCommitMove}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchTextAnnotation
+          item={createTextItem()}
+          selected={false}
+          editable={true}
+          viewportScale={2}
+          onSelect={onSelect}
+          onCommitMove={onCommitMove}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
     expect(content).toBeTruthy();
@@ -256,26 +257,33 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const [items, setItems] = createSignal<WorkbenchTextAnnotationItem[]>([createTextItem()]);
 
-    const dispose = render(() => (
-      <WorkbenchAnnotationLayerView
-        items={items()}
-        selectedObject={{ kind: 'annotation', id: 'text-1' }}
-        editable={true}
-        filtered={false}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onSelect={vi.fn()}
-        onCommitMove={vi.fn()}
-        onUpdate={(annotationId, patch) => {
-          setItems((previous) => previous.map((item) =>
-            item.id === annotationId && typeof patch.text === 'string'
-              ? { ...item, text: patch.text, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
-              : item
-          ));
-        }}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchAnnotationLayerView
+          items={items()}
+          selectedObject={{ kind: 'annotation', id: 'text-1' }}
+          editable={true}
+          filtered={false}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onUpdate={(annotationId, patch) => {
+            setItems((previous) =>
+              previous.map((item) =>
+                item.id === annotationId && typeof patch.text === 'string'
+                  ? { ...item, text: patch.text, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
+                  : item
+              )
+            );
+          }}
+        />
+      ),
+      host
+    );
 
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    const content = host.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLDivElement | null;
     expect(content).toBeTruthy();
 
     content!.focus();
@@ -286,10 +294,14 @@ describe('Workbench layer objects', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
     content!.textContent = 'Editable label!';
-    content!.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: '!' }));
+    content!.dispatchEvent(
+      new InputEvent('input', { bubbles: true, inputType: 'insertText', data: '!' })
+    );
     await Promise.resolve();
 
-    const nextContent = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    const nextContent = host.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLDivElement | null;
     expect(nextContent).toBe(content);
     expect(document.activeElement).toBe(content);
     expect(nextContent!.textContent).toBe('Editable label!');
@@ -302,36 +314,39 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const text = createTextItem();
 
-    const dispose = render(() => (
-      <>
-        <WorkbenchAnnotationLayerView
-          items={[text]}
-          selectedObject={{ kind: 'annotation', id: text.id }}
-          editable={true}
-          filtered={false}
-          projection="screen"
-          viewport={{ x: 12, y: 18, scale: 0.5 }}
-          onSelect={vi.fn()}
-          onCommitMove={vi.fn()}
-          onUpdate={vi.fn()}
-        />
-        <WorkbenchLayerControlOverlayView
-          annotations={[text]}
-          backgroundLayers={[]}
-          selectedObject={{ kind: 'annotation', id: text.id }}
-          editable={true}
-          projection="screen"
-          viewport={{ x: 12, y: 18, scale: 0.5 }}
-          onCommitAnnotationMove={vi.fn()}
-          onCommitAnnotationResize={vi.fn()}
-          onUpdateTextAnnotation={vi.fn()}
-          onDeleteAnnotation={vi.fn()}
-          onCommitBackgroundResize={vi.fn()}
-          onUpdateBackgroundLayer={vi.fn()}
-          onDeleteBackgroundLayer={vi.fn()}
-        />
-      </>
-    ), host);
+    const dispose = render(
+      () => (
+        <>
+          <WorkbenchAnnotationLayerView
+            items={[text]}
+            selectedObject={{ kind: 'annotation', id: text.id }}
+            editable={true}
+            filtered={false}
+            projection="screen"
+            viewport={{ x: 12, y: 18, scale: 0.5 }}
+            onSelect={vi.fn()}
+            onCommitMove={vi.fn()}
+            onUpdate={vi.fn()}
+          />
+          <WorkbenchLayerControlOverlayView
+            annotations={[text]}
+            backgroundLayers={[]}
+            selectedObject={{ kind: 'annotation', id: text.id }}
+            editable={true}
+            projection="screen"
+            viewport={{ x: 12, y: 18, scale: 0.5 }}
+            onCommitAnnotationMove={vi.fn()}
+            onCommitAnnotationResize={vi.fn()}
+            onUpdateTextAnnotation={vi.fn()}
+            onDeleteAnnotation={vi.fn()}
+            onCommitBackgroundResize={vi.fn()}
+            onUpdateBackgroundLayer={vi.fn()}
+            onDeleteBackgroundLayer={vi.fn()}
+          />
+        </>
+      ),
+      host
+    );
 
     const annotation = host.querySelector('.workbench-text-annotation') as HTMLElement | null;
     const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
@@ -357,21 +372,26 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const onUpdate = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchTextAnnotation
-        item={createTextItem()}
-        selected={true}
-        editable={true}
-        viewportScale={1}
-        onSelect={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onUpdate={onUpdate}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchTextAnnotation
+          item={createTextItem()}
+          selected={true}
+          editable={true}
+          viewportScale={1}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onUpdate={onUpdate}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    const content = host.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLDivElement | null;
     expect(content).toBeTruthy();
 
     content!.focus();
@@ -390,19 +410,22 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const onCommitMove = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchTextAnnotation
-        item={createTextItem()}
-        selected={true}
-        editable={true}
-        viewportScale={2}
-        onSelect={vi.fn()}
-        onCommitMove={onCommitMove}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchTextAnnotation
+          item={createTextItem()}
+          selected={true}
+          editable={true}
+          viewportScale={2}
+          onSelect={vi.fn()}
+          onCommitMove={onCommitMove}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
     expect(content).toBeTruthy();
@@ -447,24 +470,29 @@ describe('Workbench layer objects', () => {
     const onCommitMove = vi.fn();
     const text = createTextItem();
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[text]}
-        backgroundLayers={[]}
-        selectedObject={{ kind: 'annotation', id: text.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 2 }}
-        onCommitAnnotationMove={onCommitMove}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={vi.fn()}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 2 }}
+          onCommitAnnotationMove={onCommitMove}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
-    const move = host.querySelector('.workbench-layer-control--text .workbench-layer-move-handle') as HTMLElement | null;
+    const move = host.querySelector(
+      '.workbench-layer-control--text .workbench-layer-move-handle'
+    ) as HTMLElement | null;
     expect(move).toBeTruthy();
     mockPointerCapture(move!);
 
@@ -497,19 +525,22 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const onCommitMove = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchBackgroundRegion
-        item={createRegionItem()}
-        selected={true}
-        editable={true}
-        viewportScale={2}
-        onSelect={vi.fn()}
-        onCommitMove={onCommitMove}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchBackgroundRegion
+          item={createRegionItem()}
+          selected={true}
+          editable={true}
+          viewportScale={2}
+          onSelect={vi.fn()}
+          onCommitMove={onCommitMove}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const region = host.querySelector('.workbench-background-region') as HTMLElement | null;
     expect(region).toBeTruthy();
@@ -549,28 +580,39 @@ describe('Workbench layer objects', () => {
     const onUpdate = vi.fn();
     const region = createRegionItem();
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[]}
-        backgroundLayers={[region]}
-        selectedObject={{ kind: 'background_layer', id: region.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 2 }}
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={vi.fn()}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={onCommitResize}
-        onUpdateBackgroundLayer={onUpdate}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[]}
+          backgroundLayers={[region]}
+          selectedObject={{ kind: 'background_layer', id: region.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 2 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={onCommitResize}
+          onUpdateBackgroundLayer={onUpdate}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const control = host.querySelector('.workbench-layer-control--region') as HTMLElement | null;
-    const resize = host.querySelector('.workbench-layer-control--region .workbench-layer-resize') as HTMLElement | null;
-    const color = host.querySelector('button[aria-label="Use region color #a79d8e"]') as HTMLButtonElement | null;
-    const material = host.querySelector('button[aria-label="Use region material Grid"]') as HTMLButtonElement | null;
-    const materialGroup = host.querySelector('.workbench-region-material-group') as HTMLElement | null;
+    const resize = host.querySelector(
+      '.workbench-layer-control--region .workbench-layer-resize'
+    ) as HTMLElement | null;
+    const color = host.querySelector(
+      'button[aria-label="Use region color #a79d8e"]'
+    ) as HTMLButtonElement | null;
+    const material = host.querySelector(
+      'button[aria-label="Use region material Grid"]'
+    ) as HTMLButtonElement | null;
+    const materialGroup = host.querySelector(
+      '.workbench-region-material-group'
+    ) as HTMLElement | null;
 
     expect(control?.getAttribute('data-wb-plane')).toBe('overlay');
     expect(control?.style.transform).toBe('translate(100px, 80px)');
@@ -631,30 +673,39 @@ describe('Workbench layer objects', () => {
       updated_at_unix_ms: 2,
     };
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[]}
-        backgroundLayers={[selectedRegion, coveredRegion]}
-        selectedObject={{ kind: 'background_layer', id: selectedRegion.id }}
-        editable={true}
-        showRegionOutlines={true}
-        viewport={{ x: 12, y: 18, scale: 0.5 }}
-        projection="screen"
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={vi.fn()}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[]}
+          backgroundLayers={[selectedRegion, coveredRegion]}
+          selectedObject={{ kind: 'background_layer', id: selectedRegion.id }}
+          editable={true}
+          showRegionOutlines={true}
+          viewport={{ x: 12, y: 18, scale: 0.5 }}
+          projection="screen"
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const overlay = host.querySelector('.workbench-control-overlay-layer') as HTMLElement | null;
-    const outlineLayer = host.querySelector('.workbench-region-visibility-outline-layer') as HTMLElement | null;
+    const outlineLayer = host.querySelector(
+      '.workbench-region-visibility-outline-layer'
+    ) as HTMLElement | null;
     const outlines = host.querySelectorAll('.workbench-region-visibility-outline');
-    const selectedOutline = host.querySelector('.workbench-region-visibility-outline.is-selected-region') as HTMLElement | null;
-    const selectionChrome = host.querySelector('.workbench-layer-control__selection.is-region') as HTMLElement | null;
+    const selectedOutline = host.querySelector(
+      '.workbench-region-visibility-outline.is-selected-region'
+    ) as HTMLElement | null;
+    const selectionChrome = host.querySelector(
+      '.workbench-layer-control__selection.is-region'
+    ) as HTMLElement | null;
 
     expect(overlay).toBeTruthy();
     expect(outlineLayer?.parentElement).toBe(overlay);
@@ -675,43 +726,48 @@ describe('Workbench layer objects', () => {
     const region = createRegionItem();
     let preview: Parameters<typeof WorkbenchBackgroundLayerView>[0]['preview'] = null;
 
-    const dispose = render(() => (
-      <>
-        <WorkbenchBackgroundLayerView
-          items={[region]}
-          selectedObject={{ kind: 'background_layer', id: region.id }}
-          editable={true}
-          filtered={false}
-          preview={preview}
-          onPreviewGeometry={(next) => {
-            preview = next;
-          }}
-          viewport={{ x: 0, y: 0, scale: 2 }}
-          onSelect={vi.fn()}
-          onCommitMove={vi.fn()}
-        />
-        <WorkbenchLayerControlOverlayView
-          annotations={[]}
-          backgroundLayers={[region]}
-          selectedObject={{ kind: 'background_layer', id: region.id }}
-          editable={true}
-          viewport={{ x: 0, y: 0, scale: 2 }}
-          preview={preview}
-          onPreviewGeometry={(next) => {
-            preview = next;
-          }}
-          onCommitAnnotationMove={vi.fn()}
-          onCommitAnnotationResize={vi.fn()}
-          onUpdateTextAnnotation={vi.fn()}
-          onDeleteAnnotation={vi.fn()}
-          onCommitBackgroundResize={onCommitResize}
-          onUpdateBackgroundLayer={vi.fn()}
-          onDeleteBackgroundLayer={vi.fn()}
-        />
-      </>
-    ), host);
+    const dispose = render(
+      () => (
+        <>
+          <WorkbenchBackgroundLayerView
+            items={[region]}
+            selectedObject={{ kind: 'background_layer', id: region.id }}
+            editable={true}
+            filtered={false}
+            preview={preview}
+            onPreviewGeometry={(next) => {
+              preview = next;
+            }}
+            viewport={{ x: 0, y: 0, scale: 2 }}
+            onSelect={vi.fn()}
+            onCommitMove={vi.fn()}
+          />
+          <WorkbenchLayerControlOverlayView
+            annotations={[]}
+            backgroundLayers={[region]}
+            selectedObject={{ kind: 'background_layer', id: region.id }}
+            editable={true}
+            viewport={{ x: 0, y: 0, scale: 2 }}
+            preview={preview}
+            onPreviewGeometry={(next) => {
+              preview = next;
+            }}
+            onCommitAnnotationMove={vi.fn()}
+            onCommitAnnotationResize={vi.fn()}
+            onUpdateTextAnnotation={vi.fn()}
+            onDeleteAnnotation={vi.fn()}
+            onCommitBackgroundResize={onCommitResize}
+            onUpdateBackgroundLayer={vi.fn()}
+            onDeleteBackgroundLayer={vi.fn()}
+          />
+        </>
+      ),
+      host
+    );
 
-    const resize = host.querySelector('.workbench-layer-control--region .workbench-layer-resize') as HTMLElement | null;
+    const resize = host.querySelector(
+      '.workbench-layer-control--region .workbench-layer-resize'
+    ) as HTMLElement | null;
     expect(resize).toBeTruthy();
     mockPointerCapture(resize!);
 
@@ -760,44 +816,49 @@ describe('Workbench layer objects', () => {
     const text = createTextItem();
     let preview: Parameters<typeof WorkbenchAnnotationLayerView>[0]['preview'] = null;
 
-    const dispose = render(() => (
-      <>
-        <WorkbenchAnnotationLayerView
-          items={[text]}
-          selectedObject={{ kind: 'annotation', id: text.id }}
-          editable={true}
-          filtered={false}
-          preview={preview}
-          onPreviewGeometry={(next) => {
-            preview = next;
-          }}
-          viewport={{ x: 0, y: 0, scale: 2 }}
-          onSelect={vi.fn()}
-          onCommitMove={vi.fn()}
-          onUpdate={vi.fn()}
-        />
-        <WorkbenchLayerControlOverlayView
-          annotations={[text]}
-          backgroundLayers={[]}
-          selectedObject={{ kind: 'annotation', id: text.id }}
-          editable={true}
-          viewport={{ x: 0, y: 0, scale: 2 }}
-          preview={preview}
-          onPreviewGeometry={(next) => {
-            preview = next;
-          }}
-          onCommitAnnotationMove={vi.fn()}
-          onCommitAnnotationResize={onCommitResize}
-          onUpdateTextAnnotation={vi.fn()}
-          onDeleteAnnotation={vi.fn()}
-          onCommitBackgroundResize={vi.fn()}
-          onUpdateBackgroundLayer={vi.fn()}
-          onDeleteBackgroundLayer={vi.fn()}
-        />
-      </>
-    ), host);
+    const dispose = render(
+      () => (
+        <>
+          <WorkbenchAnnotationLayerView
+            items={[text]}
+            selectedObject={{ kind: 'annotation', id: text.id }}
+            editable={true}
+            filtered={false}
+            preview={preview}
+            onPreviewGeometry={(next) => {
+              preview = next;
+            }}
+            viewport={{ x: 0, y: 0, scale: 2 }}
+            onSelect={vi.fn()}
+            onCommitMove={vi.fn()}
+            onUpdate={vi.fn()}
+          />
+          <WorkbenchLayerControlOverlayView
+            annotations={[text]}
+            backgroundLayers={[]}
+            selectedObject={{ kind: 'annotation', id: text.id }}
+            editable={true}
+            viewport={{ x: 0, y: 0, scale: 2 }}
+            preview={preview}
+            onPreviewGeometry={(next) => {
+              preview = next;
+            }}
+            onCommitAnnotationMove={vi.fn()}
+            onCommitAnnotationResize={onCommitResize}
+            onUpdateTextAnnotation={vi.fn()}
+            onDeleteAnnotation={vi.fn()}
+            onCommitBackgroundResize={vi.fn()}
+            onUpdateBackgroundLayer={vi.fn()}
+            onDeleteBackgroundLayer={vi.fn()}
+          />
+        </>
+      ),
+      host
+    );
 
-    const resize = host.querySelector('.workbench-layer-control--text .workbench-layer-resize') as HTMLElement | null;
+    const resize = host.querySelector(
+      '.workbench-layer-control--text .workbench-layer-resize'
+    ) as HTMLElement | null;
     expect(resize).toBeTruthy();
     mockPointerCapture(resize!);
 
@@ -845,27 +906,36 @@ describe('Workbench layer objects', () => {
     const text = createTextItem();
     const onUpdate = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[text]}
-        backgroundLayers={[]}
-        selectedObject={{ kind: 'annotation', id: text.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={onUpdate}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={onUpdate}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const stepper = host.querySelector('.workbench-text-size-stepper') as HTMLElement | null;
-    const input = host.querySelector('.workbench-text-size-stepper .workbench-text-annotation__size-input') as HTMLInputElement | null;
-    const readableSwatch = host.querySelector(`button[aria-label="Use text color ${WORKBENCH_TEXT_COLOR_OPTIONS[1]}"]`) as HTMLButtonElement | null;
-    const decrease = host.querySelector('button[aria-label="Decrease text size"]') as HTMLButtonElement | null;
+    const input = host.querySelector(
+      '.workbench-text-size-stepper .workbench-text-annotation__size-input'
+    ) as HTMLInputElement | null;
+    const readableSwatch = host.querySelector(
+      `button[aria-label="Use text color ${WORKBENCH_TEXT_COLOR_OPTIONS[1]}"]`
+    ) as HTMLButtonElement | null;
+    const decrease = host.querySelector(
+      'button[aria-label="Decrease text size"]'
+    ) as HTMLButtonElement | null;
 
     expect(stepper?.getAttribute('role')).toBe('group');
     expect(input).toBeTruthy();
@@ -888,24 +958,29 @@ describe('Workbench layer objects', () => {
     const text = createTextItem();
     const onUpdate = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[text]}
-        backgroundLayers={[]}
-        selectedObject={{ kind: 'annotation', id: text.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={onUpdate}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={onUpdate}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
-    const fontTrigger = host.querySelector('button[aria-label="Choose bold font"]') as HTMLButtonElement | null;
+    const fontTrigger = host.querySelector(
+      'button[aria-label="Choose bold font"]'
+    ) as HTMLButtonElement | null;
     expect(fontTrigger).toBeTruthy();
     expect(fontTrigger?.getAttribute('aria-expanded')).toBe('false');
     expect(host.querySelectorAll('.workbench-text-font-option')).toHaveLength(0);
@@ -913,10 +988,14 @@ describe('Workbench layer objects', () => {
     fontTrigger!.click();
     expect(fontTrigger?.getAttribute('aria-expanded')).toBe('true');
     expect(host.querySelector('.workbench-text-font-popover')?.getAttribute('role')).toBe('menu');
-    expect(host.querySelectorAll('.workbench-text-font-option')).toHaveLength(WORKBENCH_TEXT_FONT_OPTIONS.length);
+    expect(host.querySelectorAll('.workbench-text-font-option')).toHaveLength(
+      WORKBENCH_TEXT_FONT_OPTIONS.length
+    );
 
     const roundFont = WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.id === 'round')!;
-    const roundButton = host.querySelector(`button[aria-label="Use ${roundFont.label} bold font"]`) as HTMLButtonElement | null;
+    const roundButton = host.querySelector(
+      `button[aria-label="Use ${roundFont.label} bold font"]`
+    ) as HTMLButtonElement | null;
     expect(roundButton).toBeTruthy();
     roundButton!.click();
 
@@ -935,44 +1014,51 @@ describe('Workbench layer objects', () => {
     const [items, setItems] = createSignal<WorkbenchTextAnnotationItem[]>([createTextItem()]);
     const registry = createWorkbenchTextEditorRegistry();
 
-    const dispose = render(() => (
-      <>
-        <WorkbenchAnnotationLayerView
-          items={items()}
-          selectedObject={{ kind: 'annotation', id: 'text-1' }}
-          editable={true}
-          filtered={false}
-          viewport={{ x: 0, y: 0, scale: 1 }}
-          textEditorRegistry={registry}
-          onSelect={vi.fn()}
-          onCommitMove={vi.fn()}
-          onUpdate={(annotationId, patch) => {
-            setItems((previous) => previous.map((item) =>
-              item.id === annotationId && typeof patch.text === 'string'
-                ? { ...item, text: patch.text, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
-                : item
-            ));
-          }}
-        />
-        <WorkbenchLayerControlOverlayView
-          annotations={items()}
-          backgroundLayers={[]}
-          selectedObject={{ kind: 'annotation', id: 'text-1' }}
-          editable={true}
-          viewport={{ x: 0, y: 0, scale: 1 }}
-          textEditorRegistry={registry}
-          onCommitAnnotationMove={vi.fn()}
-          onCommitAnnotationResize={vi.fn()}
-          onUpdateTextAnnotation={vi.fn()}
-          onDeleteAnnotation={vi.fn()}
-          onCommitBackgroundResize={vi.fn()}
-          onUpdateBackgroundLayer={vi.fn()}
-          onDeleteBackgroundLayer={vi.fn()}
-        />
-      </>
-    ), host);
+    const dispose = render(
+      () => (
+        <>
+          <WorkbenchAnnotationLayerView
+            items={items()}
+            selectedObject={{ kind: 'annotation', id: 'text-1' }}
+            editable={true}
+            filtered={false}
+            viewport={{ x: 0, y: 0, scale: 1 }}
+            textEditorRegistry={registry}
+            onSelect={vi.fn()}
+            onCommitMove={vi.fn()}
+            onUpdate={(annotationId, patch) => {
+              setItems((previous) =>
+                previous.map((item) =>
+                  item.id === annotationId && typeof patch.text === 'string'
+                    ? { ...item, text: patch.text, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
+                    : item
+                )
+              );
+            }}
+          />
+          <WorkbenchLayerControlOverlayView
+            annotations={items()}
+            backgroundLayers={[]}
+            selectedObject={{ kind: 'annotation', id: 'text-1' }}
+            editable={true}
+            viewport={{ x: 0, y: 0, scale: 1 }}
+            textEditorRegistry={registry}
+            onCommitAnnotationMove={vi.fn()}
+            onCommitAnnotationResize={vi.fn()}
+            onUpdateTextAnnotation={vi.fn()}
+            onDeleteAnnotation={vi.fn()}
+            onCommitBackgroundResize={vi.fn()}
+            onUpdateBackgroundLayer={vi.fn()}
+            onDeleteBackgroundLayer={vi.fn()}
+          />
+        </>
+      ),
+      host
+    );
 
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLDivElement | null;
+    const content = host.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLDivElement | null;
     expect(content?.firstChild).toBeTruthy();
 
     content!.focus();
@@ -983,17 +1069,23 @@ describe('Workbench layer objects', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    const emojiTrigger = host.querySelector('button[aria-label="Insert emoji"]') as HTMLButtonElement | null;
+    const emojiTrigger = host.querySelector(
+      'button[aria-label="Insert emoji"]'
+    ) as HTMLButtonElement | null;
     expect(emojiTrigger).toBeTruthy();
     expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('false');
 
     emojiTrigger!.click();
     expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(host.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(WORKBENCH_TEXT_EMOJI_OPTIONS.length);
+    expect(host.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(
+      WORKBENCH_TEXT_EMOJI_OPTIONS.length
+    );
     expect(Math.ceil(WORKBENCH_TEXT_EMOJI_OPTIONS.length / 6)).toBeGreaterThanOrEqual(5);
 
     const emoji = WORKBENCH_TEXT_EMOJI_OPTIONS[0];
-    const emojiButton = host.querySelector(`button[aria-label="Insert emoji ${emoji}"]`) as HTMLButtonElement | null;
+    const emojiButton = host.querySelector(
+      `button[aria-label="Insert emoji ${emoji}"]`
+    ) as HTMLButtonElement | null;
     expect(emojiButton).toBeTruthy();
     emojiButton!.click();
     await Promise.resolve();
@@ -1012,22 +1104,25 @@ describe('Workbench layer objects', () => {
     const text = createTextItem();
     const region = createRegionItem();
 
-    const dispose = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[text]}
-        backgroundLayers={[region]}
-        selectedObject={{ kind: 'annotation', id: text.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={vi.fn()}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[region]}
+          selectedObject={{ kind: 'annotation', id: text.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
 
     for (const color of WORKBENCH_TEXT_COLOR_OPTIONS) {
       expect(host.querySelector(`button[aria-label="Use text color ${color}"]`)).toBeTruthy();
@@ -1041,25 +1136,30 @@ describe('Workbench layer objects', () => {
 
     const regionHost = document.createElement('div');
     document.body.appendChild(regionHost);
-    const disposeRegion = render(() => (
-      <WorkbenchLayerControlOverlayView
-        annotations={[text]}
-        backgroundLayers={[region]}
-        selectedObject={{ kind: 'background_layer', id: region.id }}
-        editable={true}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        onCommitAnnotationMove={vi.fn()}
-        onCommitAnnotationResize={vi.fn()}
-        onUpdateTextAnnotation={vi.fn()}
-        onDeleteAnnotation={vi.fn()}
-        onCommitBackgroundResize={vi.fn()}
-        onUpdateBackgroundLayer={vi.fn()}
-        onDeleteBackgroundLayer={vi.fn()}
-      />
-    ), regionHost);
+    const disposeRegion = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[text]}
+          backgroundLayers={[region]}
+          selectedObject={{ kind: 'background_layer', id: region.id }}
+          editable={true}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      regionHost
+    );
 
     for (const fill of WORKBENCH_REGION_FILL_OPTIONS) {
-      expect(regionHost.querySelector(`button[aria-label="Use region color ${fill}"]`)).toBeTruthy();
+      expect(
+        regionHost.querySelector(`button[aria-label="Use region color ${fill}"]`)
+      ).toBeTruthy();
     }
 
     disposeRegion();
@@ -1094,22 +1194,25 @@ describe('Workbench layer objects', () => {
       value: { writeText },
     });
 
-    const dispose = render(() => (
-      <WorkbenchStickyNote
-        item={createStickyItem()}
-        selected={true}
-        viewportScale={1}
-        renderLayer={1}
-        topRenderLayer={3}
-        locked={false}
-        filtered={false}
-        onSelect={onSelect}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchStickyNote
+          item={createStickyItem()}
+          selected={true}
+          viewportScale={1}
+          renderLayer={1}
+          topRenderLayer={3}
+          locked={false}
+          filtered={false}
+          onSelect={onSelect}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     expect(host.querySelector('.workbench-sticky__label')).toBeNull();
     expect(host.querySelector('.workbench-sticky__number')).toBeNull();
@@ -1122,7 +1225,9 @@ describe('Workbench layer objects', () => {
     body!.click();
     expect(onSelect).toHaveBeenCalledWith('sticky-1');
 
-    const copy = host.querySelector('button[aria-label="Copy sticky note content"]') as HTMLElement | null;
+    const copy = host.querySelector(
+      'button[aria-label="Copy sticky note content"]'
+    ) as HTMLElement | null;
     expect(copy).toBeTruthy();
     dispatchPointerEvent('pointerdown', copy!, { pointerId: 21, clientX: 62, clientY: 72 });
     copy!.click();
@@ -1153,7 +1258,9 @@ describe('Workbench layer objects', () => {
     const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
     const css = readFileSync(cssPath, 'utf8');
 
-    expect(css).toContain('background-color: var(--workbench-region-surface, var(--workbench-region-fill));');
+    expect(css).toContain(
+      'background-color: var(--workbench-region-surface, var(--workbench-region-fill));'
+    );
     expect(css).toContain('opacity: 1;');
     expect(css).toContain('var(--workbench-region-ink) 1.45px');
     expect(css).toContain('background-size: 11px 11px;');
@@ -1173,22 +1280,25 @@ describe('Workbench layer objects', () => {
     document.body.appendChild(host);
     const onUpdate = vi.fn();
 
-    const dispose = render(() => (
-      <WorkbenchStickyNote
-        item={createStickyItem()}
-        selected={true}
-        viewportScale={1}
-        renderLayer={1}
-        topRenderLayer={3}
-        locked={false}
-        filtered={false}
-        onSelect={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onUpdate={onUpdate}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchStickyNote
+          item={createStickyItem()}
+          selected={true}
+          viewportScale={1}
+          renderLayer={1}
+          topRenderLayer={3}
+          locked={false}
+          filtered={false}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onUpdate={onUpdate}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const body = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
     expect(body).toBeTruthy();
@@ -1200,7 +1310,9 @@ describe('Workbench layer objects', () => {
     dispatchTextInput(body!, { data: '输', inputType: 'insertCompositionText', isComposing: true });
     await Promise.resolve();
 
-    const bodyDuringComposition = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
+    const bodyDuringComposition = host.querySelector(
+      '.workbench-sticky__body'
+    ) as HTMLDivElement | null;
     expect(bodyDuringComposition).toBe(body);
     expect(bodyDuringComposition!.textContent).toBe('中文输入');
     expect(onUpdate).not.toHaveBeenCalled();
@@ -1224,25 +1336,30 @@ describe('Workbench layer objects', () => {
       value: { writeText },
     });
 
-    const dispose = render(() => (
-      <WorkbenchStickyNote
-        item={createStickyItem()}
-        selected={true}
-        viewportScale={1}
-        renderLayer={1}
-        topRenderLayer={3}
-        locked={false}
-        filtered={false}
-        onSelect={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchStickyNote
+          item={createStickyItem()}
+          selected={true}
+          viewportScale={1}
+          renderLayer={1}
+          topRenderLayer={3}
+          locked={false}
+          filtered={false}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const body = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
-    const copy = host.querySelector('button[aria-label="Copy sticky note content"]') as HTMLElement | null;
+    const copy = host.querySelector(
+      'button[aria-label="Copy sticky note content"]'
+    ) as HTMLElement | null;
     expect(body).toBeTruthy();
     expect(copy).toBeTruthy();
 
@@ -1263,29 +1380,32 @@ describe('Workbench layer objects', () => {
     const onCommitMove = vi.fn(() => calls.push('move'));
     const onCommitFront = vi.fn(() => calls.push('front'));
 
-    const dispose = render(() => (
-      <WorkbenchStickyNote
-        item={createStickyItem()}
-        selected={true}
-        viewportScale={2}
-        renderLayer={1}
-        topRenderLayer={3}
-        locked={false}
-        filtered={false}
-        onSelect={vi.fn()}
-        onStartOptimisticFront={(noteId) => {
-          expect(noteId).toBe('sticky-1');
-          calls.push('optimistic');
-        }}
-        onCommitFront={onCommitFront}
-        onCommitMove={onCommitMove}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-        onLayoutInteractionStart={() => calls.push('layout-start')}
-        onLayoutInteractionEnd={() => calls.push('layout-end')}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchStickyNote
+          item={createStickyItem()}
+          selected={true}
+          viewportScale={2}
+          renderLayer={1}
+          topRenderLayer={3}
+          locked={false}
+          filtered={false}
+          onSelect={vi.fn()}
+          onClaimVisualFrontOwner={(noteId) => {
+            expect(noteId).toBe('sticky-1');
+            calls.push('visual-front');
+          }}
+          onCommitFront={onCommitFront}
+          onCommitMove={onCommitMove}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+          onLayoutInteractionStart={() => calls.push('layout-start')}
+          onLayoutInteractionEnd={() => calls.push('layout-end')}
+        />
+      ),
+      host
+    );
 
     const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
     const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;
@@ -1316,7 +1436,7 @@ describe('Workbench layer objects', () => {
 
     expect(onCommitFront).toHaveBeenCalledWith('sticky-1');
     expect(onCommitMove).toHaveBeenCalledWith('sticky-1', { x: 55, y: 61 });
-    expect(calls).toEqual(['optimistic', 'layout-start', 'front', 'move', 'layout-end']);
+    expect(calls).toEqual(['visual-front', 'layout-start', 'front', 'move', 'layout-end']);
 
     dispose();
   });
@@ -1325,24 +1445,27 @@ describe('Workbench layer objects', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const dispose = render(() => (
-      <WorkbenchStickyNote
-        item={createStickyItem()}
-        selected={true}
-        viewportScale={2}
-        projectedViewport={() => ({ x: 100, y: 200, scale: 2 })}
-        renderLayer={1}
-        topRenderLayer={3}
-        locked={false}
-        filtered={false}
-        onSelect={vi.fn()}
-        onCommitFront={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onUpdate={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchStickyNote
+          item={createStickyItem()}
+          selected={true}
+          viewportScale={2}
+          projectedViewport={() => ({ x: 100, y: 200, scale: 2 })}
+          renderLayer={1}
+          topRenderLayer={3}
+          locked={false}
+          filtered={false}
+          onSelect={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onUpdate={vi.fn()}
+          onDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
     const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;
@@ -1382,44 +1505,53 @@ describe('Workbench layer objects', () => {
     const [notes, setNotes] = createSignal<WorkbenchStickyNoteItem[]>([createStickyItem()]);
     const [selectedObject, setSelectedObject] = createSignal<WorkbenchSelection | null>(null);
 
-    const dispose = render(() => (
-      <WorkbenchCanvasField
-        widgetDefinitions={[]}
-        widgets={[]}
-        stickyNotes={notes()}
-        viewport={{ x: 0, y: 0, scale: 2 }}
-        selectedWidgetId={null}
-        selectedObject={selectedObject()}
-        optimisticFrontWidgetId={selectedObject()?.id ?? null}
-        viewportScale={2}
-        locked={false}
-        filters={{ [WORKBENCH_STICKY_FILTER_ID]: true }}
-        onSelectWidget={vi.fn()}
-        onWidgetContextMenu={vi.fn()}
-        onStartOptimisticFront={vi.fn()}
-        onCommitFront={vi.fn()}
-        onCommitMove={vi.fn()}
-        onCommitResize={vi.fn()}
-        onSelectStickyNote={(noteId) => {
-          setSelectedObject({ kind: 'sticky_note', id: noteId });
-          setNotes((previous) => previous.map((item) =>
-            item.id === noteId
-              ? { ...item, z_index: item.z_index + 1, updated_at_unix_ms: item.updated_at_unix_ms + 1 }
-              : item
-          ));
-        }}
-        onStartStickyOptimisticFront={vi.fn()}
-        onCommitStickyFront={vi.fn()}
-        onCommitStickyMove={vi.fn()}
-        onCommitStickyResize={vi.fn()}
-        onUpdateStickyNote={vi.fn()}
-        onDeleteStickyNote={vi.fn()}
-        onViewportCommit={vi.fn()}
-        onRequestOverview={vi.fn()}
-        onRequestFit={vi.fn()}
-        onRequestDelete={vi.fn()}
-      />
-    ), host);
+    const dispose = render(
+      () => (
+        <WorkbenchCanvasField
+          widgetDefinitions={[]}
+          widgets={[]}
+          stickyNotes={notes()}
+          viewport={{ x: 0, y: 0, scale: 2 }}
+          selectedWidgetId={null}
+          selectedObject={selectedObject()}
+          visualFrontOwnerId={selectedObject()?.id ?? null}
+          viewportScale={2}
+          locked={false}
+          filters={{ [WORKBENCH_STICKY_FILTER_ID]: true }}
+          onSelectWidget={vi.fn()}
+          onWidgetContextMenu={vi.fn()}
+          onClaimVisualFrontOwner={vi.fn()}
+          onCommitFront={vi.fn()}
+          onCommitMove={vi.fn()}
+          onCommitResize={vi.fn()}
+          onSelectStickyNote={(noteId) => {
+            setSelectedObject({ kind: 'sticky_note', id: noteId });
+            setNotes((previous) =>
+              previous.map((item) =>
+                item.id === noteId
+                  ? {
+                      ...item,
+                      z_index: item.z_index + 1,
+                      updated_at_unix_ms: item.updated_at_unix_ms + 1,
+                    }
+                  : item
+              )
+            );
+          }}
+          onClaimStickyVisualFrontOwner={vi.fn()}
+          onCommitStickyFront={vi.fn()}
+          onCommitStickyMove={vi.fn()}
+          onCommitStickyResize={vi.fn()}
+          onUpdateStickyNote={vi.fn()}
+          onDeleteStickyNote={vi.fn()}
+          onViewportCommit={vi.fn()}
+          onRequestOverview={vi.fn()}
+          onRequestFit={vi.fn()}
+          onRequestDelete={vi.fn()}
+        />
+      ),
+      host
+    );
 
     const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
     const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;

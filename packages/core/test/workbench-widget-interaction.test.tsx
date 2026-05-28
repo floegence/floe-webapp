@@ -56,7 +56,7 @@ function dispatchPointerEvent(
     buttons?: number;
     button?: number;
     pointerType?: string;
-  } = {},
+  } = {}
 ): Event {
   const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
   const event = new EventCtor(type, {
@@ -126,7 +126,7 @@ function mockCanvasFrameRect(element: HTMLElement): void {
 
 function renderActivationProbe(
   onActivation: (activation: WorkbenchWidgetBodyActivation) => void,
-  children: (props: WorkbenchWidgetBodyProps) => JSX.Element,
+  children: (props: WorkbenchWidgetBodyProps) => JSX.Element
 ): WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE> {
   return {
     ...filesWidgetDefinition,
@@ -150,48 +150,51 @@ function renderStatefulWidget(
     initiallySelected?: boolean;
     initialRenderLayer?: number;
     topRenderLayer?: number;
-  } = {},
+  } = {}
 ) {
   const [selected, setSelected] = createSignal(options.initiallySelected ?? false);
   const [zIndex, setZIndex] = createSignal(options.initialRenderLayer ?? 7);
   const topRenderLayer = () => options.topRenderLayer ?? zIndex() + 1;
 
-  return render(() => (
-    <WorkbenchWidget
-      definition={definition}
-      widgetId="widget-files-1"
-      widgetTitle="Files"
-      widgetType={FILES_WIDGET_TYPE}
-      x={0}
-      y={0}
-      width={480}
-      height={320}
-      renderLayer={zIndex()}
-      itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: zIndex() })}
-      selected={selected()}
-      optimisticFront={false}
-      topRenderLayer={topRenderLayer()}
-      viewportScale={1}
-      locked={false}
-      filtered={false}
-      layoutMode={options.layoutMode}
-      projectedViewport={
-        options.layoutMode === 'projected_surface'
-          ? () => ({ x: 24, y: 16, scale: 1.1 })
-          : undefined
-      }
-      surfaceReady={options.layoutMode === 'projected_surface' ? true : undefined}
-      onSelect={() => setSelected(true)}
-      onContextMenu={() => {}}
-      onStartOptimisticFront={() => {}}
-      onCommitFront={() => setZIndex((value) => value + 1)}
-      onCommitMove={() => {}}
-      onCommitResize={() => {}}
-      onRequestOverview={() => {}}
-      onRequestFit={() => {}}
-      onRequestDelete={() => {}}
-    />
-  ), host);
+  return render(
+    () => (
+      <WorkbenchWidget
+        definition={definition}
+        widgetId="widget-files-1"
+        widgetTitle="Files"
+        widgetType={FILES_WIDGET_TYPE}
+        x={0}
+        y={0}
+        width={480}
+        height={320}
+        renderLayer={zIndex()}
+        itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: zIndex() })}
+        selected={selected()}
+        visualFront={false}
+        topRenderLayer={topRenderLayer()}
+        viewportScale={1}
+        locked={false}
+        filtered={false}
+        layoutMode={options.layoutMode}
+        projectedViewport={
+          options.layoutMode === 'projected_surface'
+            ? () => ({ x: 24, y: 16, scale: 1.1 })
+            : undefined
+        }
+        surfaceReady={options.layoutMode === 'projected_surface' ? true : undefined}
+        onSelect={() => setSelected(true)}
+        onContextMenu={() => {}}
+        onClaimVisualFrontOwner={() => {}}
+        onCommitFront={() => setZIndex((value) => value + 1)}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestOverview={() => {}}
+        onRequestFit={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ),
+    host
+  );
 }
 
 const PROJECTED_CLICK_WIDGET_TYPE = 'custom.projected-click';
@@ -201,13 +204,15 @@ function renderProjectedInteractionHarness(
   definition: WorkbenchWidgetDefinition<typeof PROJECTED_CLICK_WIDGET_TYPE>,
   options: {
     initiallySelectedWidgetId?: string | null;
-  } = {},
+  } = {}
 ) {
   const widgetDefinitions = [definition] satisfies readonly WorkbenchWidgetDefinition[];
   const [selectedWidgetId, setSelectedWidgetId] = createSignal<string | null>(
     options.initiallySelectedWidgetId ?? 'widget-a'
   );
-  const [widgets, setWidgets] = createSignal<WorkbenchWidgetItem<typeof PROJECTED_CLICK_WIDGET_TYPE>[]>([
+  const [widgets, setWidgets] = createSignal<
+    WorkbenchWidgetItem<typeof PROJECTED_CLICK_WIDGET_TYPE>[]
+  >([
     {
       id: 'widget-a',
       type: PROJECTED_CLICK_WIDGET_TYPE,
@@ -243,30 +248,33 @@ function renderProjectedInteractionHarness(
     });
   });
 
-  const dispose = render(() => (
-    <WorkbenchCanvas
-      widgetDefinitions={widgetDefinitions}
-      widgets={widgets()}
-      viewport={{ x: 100, y: 50, scale: 1.2 }}
-      canvasFrameSize={{ width: 1200, height: 800 }}
-      selectedWidgetId={selectedWidgetId()}
-      optimisticFrontWidgetId={null}
-      locked={false}
-      filters={filters}
-      setCanvasFrameRef={() => {}}
-      onViewportCommit={() => {}}
-      onCanvasContextMenu={() => {}}
-      onSelectWidget={setSelectedWidgetId}
-      onWidgetContextMenu={() => {}}
-      onStartOptimisticFront={() => {}}
-      onCommitFront={commitFront}
-      onCommitMove={() => {}}
-      onCommitResize={() => {}}
-      onRequestOverview={() => {}}
-      onRequestFit={() => {}}
-      onRequestDelete={() => {}}
-    />
-  ), host);
+  const dispose = render(
+    () => (
+      <WorkbenchCanvas
+        widgetDefinitions={widgetDefinitions}
+        widgets={widgets()}
+        viewport={{ x: 100, y: 50, scale: 1.2 }}
+        canvasFrameSize={{ width: 1200, height: 800 }}
+        selectedWidgetId={selectedWidgetId()}
+        visualFrontOwnerId={null}
+        locked={false}
+        filters={filters}
+        setCanvasFrameRef={() => {}}
+        onViewportCommit={() => {}}
+        onCanvasContextMenu={() => {}}
+        onSelectWidget={setSelectedWidgetId}
+        onWidgetContextMenu={() => {}}
+        onClaimVisualFrontOwner={() => {}}
+        onCommitFront={commitFront}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestOverview={() => {}}
+        onRequestFit={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ),
+    host
+  );
 
   return {
     dispose,
@@ -282,32 +290,35 @@ function renderWidgetEnterMotionHarness(host: HTMLElement) {
     createWidgetSnapshot(),
   ]);
 
-  const dispose = render(() => (
-    <WorkbenchCanvas
-      widgetDefinitions={widgetDefinitions}
-      widgets={widgets()}
-      viewport={{ x: 0, y: 0, scale: 1 }}
-      canvasFrameSize={{ width: 900, height: 640 }}
-      selectedWidgetId={null}
-      optimisticFrontWidgetId={null}
-      locked={false}
-      filters={filters}
-      setCanvasFrameRef={(element) => {
-        if (element) mockCanvasFrameRect(element);
-      }}
-      onViewportCommit={() => {}}
-      onCanvasContextMenu={() => {}}
-      onSelectWidget={() => {}}
-      onWidgetContextMenu={() => {}}
-      onStartOptimisticFront={() => {}}
-      onCommitFront={() => {}}
-      onCommitMove={() => {}}
-      onCommitResize={() => {}}
-      onRequestOverview={() => {}}
-      onRequestFit={() => {}}
-      onRequestDelete={() => {}}
-    />
-  ), host);
+  const dispose = render(
+    () => (
+      <WorkbenchCanvas
+        widgetDefinitions={widgetDefinitions}
+        widgets={widgets()}
+        viewport={{ x: 0, y: 0, scale: 1 }}
+        canvasFrameSize={{ width: 900, height: 640 }}
+        selectedWidgetId={null}
+        visualFrontOwnerId={null}
+        locked={false}
+        filters={filters}
+        setCanvasFrameRef={(element) => {
+          if (element) mockCanvasFrameRect(element);
+        }}
+        onViewportCommit={() => {}}
+        onCanvasContextMenu={() => {}}
+        onSelectWidget={() => {}}
+        onWidgetContextMenu={() => {}}
+        onClaimVisualFrontOwner={() => {}}
+        onCommitFront={() => {}}
+        onCommitMove={() => {}}
+        onCommitResize={() => {}}
+        onRequestOverview={() => {}}
+        onRequestFit={() => {}}
+        onRequestDelete={() => {}}
+      />
+    ),
+    host
+  );
 
   return {
     dispose,
@@ -347,35 +358,40 @@ describe('WorkbenchWidget interaction ownership', () => {
     const onSelect = vi.fn();
     const onCommitFront = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={filesWidgetDefinition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected={false}
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={onSelect}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={onCommitFront}
-        onCommitMove={() => {}}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={filesWidgetDefinition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected={false}
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={onSelect}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={onCommitFront}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
-    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const widgetRoot = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-1"]'
+    ) as HTMLElement | null;
     const widgetHeader = host.querySelector('.workbench-widget__header') as HTMLElement | null;
     const widgetBody = host.querySelector('[data-testid="widget-body"]') as HTMLElement | null;
     expect(widgetRoot).toBeTruthy();
@@ -408,7 +424,9 @@ describe('WorkbenchWidget interaction ownership', () => {
     dispose = harness.dispose;
     await Promise.resolve();
 
-    const initialWidget = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const initialWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-1"]'
+    ) as HTMLElement | null;
     expect(initialWidget).toBeTruthy();
     expect(initialWidget?.getAttribute('data-workbench-widget-motion')).toBeNull();
     expect(initialWidget?.classList.contains('is-entering')).toBe(false);
@@ -416,7 +434,9 @@ describe('WorkbenchWidget interaction ownership', () => {
     harness.addWidget();
     await Promise.resolve();
 
-    const addedWidget = host.querySelector('[data-floe-workbench-widget-id="widget-files-2"]') as HTMLElement | null;
+    const addedWidget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-2"]'
+    ) as HTMLElement | null;
     expect(addedWidget).toBeTruthy();
     expect(addedWidget?.getAttribute('data-workbench-widget-motion')).toBe('enter');
     expect(addedWidget?.classList.contains('is-entering')).toBe(true);
@@ -435,46 +455,55 @@ describe('WorkbenchWidget interaction ownership', () => {
     const onWidgetContextMenu = vi.fn();
     const onBodyContextMenu = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={{
-          ...filesWidgetDefinition,
-          icon: () => <svg aria-hidden="true" />,
-          body: () => (
-            <div data-floe-canvas-interactive="true">
-              <button type="button" data-testid="widget-body-button" onContextMenu={onBodyContextMenu}>
-                Body
-              </button>
-            </div>
-          ),
-        }}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: 7 })}
-        selected={false}
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={onWidgetContextMenu}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={() => {}}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={{
+            ...filesWidgetDefinition,
+            icon: () => <svg aria-hidden="true" />,
+            body: () => (
+              <div data-floe-canvas-interactive="true">
+                <button
+                  type="button"
+                  data-testid="widget-body-button"
+                  onContextMenu={onBodyContextMenu}
+                >
+                  Body
+                </button>
+              </div>
+            ),
+          }}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: 7 })}
+          selected={false}
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={onWidgetContextMenu}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
     const widgetHeader = host.querySelector('.workbench-widget__header') as HTMLElement | null;
-    const bodyButton = host.querySelector('[data-testid="widget-body-button"]') as HTMLButtonElement | null;
+    const bodyButton = host.querySelector(
+      '[data-testid="widget-body-button"]'
+    ) as HTMLButtonElement | null;
     expect(widgetHeader).toBeTruthy();
     expect(bodyButton).toBeTruthy();
 
@@ -502,35 +531,40 @@ describe('WorkbenchWidget interaction ownership', () => {
       <div data-testid="widget-activation-body">Body</div>
     ));
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={definition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected={false}
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={() => {}}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={definition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected={false}
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
-    const widgetBody = host.querySelector('[data-testid="widget-activation-body"]') as HTMLElement | null;
+    const widgetBody = host.querySelector(
+      '[data-testid="widget-activation-body"]'
+    ) as HTMLElement | null;
     expect(widgetBody).toBeTruthy();
 
     outsideInput.focus();
@@ -581,7 +615,9 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     dispose = renderStatefulWidget(host, definition);
 
-    const widgetBody = host.querySelector('[data-testid="widget-activation-body"]') as HTMLElement | null;
+    const widgetBody = host.querySelector(
+      '[data-testid="widget-activation-body"]'
+    ) as HTMLElement | null;
     expect(widgetBody).toBeTruthy();
 
     dispatchPointerDown(widgetBody!);
@@ -595,22 +631,27 @@ describe('WorkbenchWidget interaction ownership', () => {
     document.body.appendChild(host);
 
     const activations: number[] = [];
-    const definition = renderActivationProbe((activation) => {
-      activations.push(activation.seq);
-    }, () => (
-      <div {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}>
-        <span
-          data-testid="explicit-reading-text"
-          {...{ [WORKBENCH_TEXT_SELECTION_SURFACE_ATTR]: 'true' }}
-        >
-          Commit Overview
-        </span>
-      </div>
-    ));
+    const definition = renderActivationProbe(
+      (activation) => {
+        activations.push(activation.seq);
+      },
+      () => (
+        <div {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}>
+          <span
+            data-testid="explicit-reading-text"
+            {...{ [WORKBENCH_TEXT_SELECTION_SURFACE_ATTR]: 'true' }}
+          >
+            Commit Overview
+          </span>
+        </div>
+      )
+    );
 
     dispose = renderStatefulWidget(host, definition);
 
-    const readingText = host.querySelector('[data-testid="explicit-reading-text"]') as HTMLElement | null;
+    const readingText = host.querySelector(
+      '[data-testid="explicit-reading-text"]'
+    ) as HTMLElement | null;
     expect(readingText).toBeTruthy();
 
     dispatchPointerEvent('pointerdown', readingText!, { pointerId: 32 });
@@ -631,21 +672,25 @@ describe('WorkbenchWidget interaction ownership', () => {
     host.appendChild(widgetRoot);
 
     const originalGetComputedStyle = window.getComputedStyle.bind(window);
-    const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
-      const style = originalGetComputedStyle(element);
-      Object.defineProperty(style, 'userSelect', {
-        configurable: true,
-        value: 'none',
+    const getComputedStyleSpy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation((element) => {
+        const style = originalGetComputedStyle(element);
+        Object.defineProperty(style, 'userSelect', {
+          configurable: true,
+          value: 'none',
+        });
+        return style;
       });
-      return style;
-    });
 
-    expect(resolveWorkbenchWidgetTextSelectionTarget({
-      target: textTarget,
-      widgetRoot,
-      interactiveSelector: '[data-test-interactive="true"]',
-      panSurfaceSelector: '[data-test-pan="true"]',
-    })).toBe(textTarget);
+    expect(
+      resolveWorkbenchWidgetTextSelectionTarget({
+        target: textTarget,
+        widgetRoot,
+        interactiveSelector: '[data-test-interactive="true"]',
+        panSurfaceSelector: '[data-test-pan="true"]',
+      })
+    ).toBe(textTarget);
     getComputedStyleSpy.mockRestore();
   });
 
@@ -673,7 +718,9 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     dispose = renderStatefulWidget(host, definition);
 
-    const bodyButton = host.querySelector('[data-testid="widget-body-button"]') as HTMLButtonElement | null;
+    const bodyButton = host.querySelector(
+      '[data-testid="widget-body-button"]'
+    ) as HTMLButtonElement | null;
     expect(bodyButton).toBeTruthy();
 
     const pointerDown = dispatchPointerEvent('pointerdown', bodyButton!, { pointerId: 21 });
@@ -710,7 +757,9 @@ describe('WorkbenchWidget interaction ownership', () => {
       topRenderLayer: 2,
     });
 
-    const bodyButton = host.querySelector('[data-testid="widget-body-button"]') as HTMLButtonElement | null;
+    const bodyButton = host.querySelector(
+      '[data-testid="widget-body-button"]'
+    ) as HTMLButtonElement | null;
     expect(bodyButton).toBeTruthy();
 
     dispatchPointerEvent('pointerdown', bodyButton!, { pointerId: 22 });
@@ -719,7 +768,9 @@ describe('WorkbenchWidget interaction ownership', () => {
     await Promise.resolve();
 
     expect(events).toEqual(['pointerdown', 'click']);
-    const widget = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const widget = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-1"]'
+    ) as HTMLElement | null;
     expect(widget?.style.zIndex).toBe('2');
   });
 
@@ -739,7 +790,9 @@ describe('WorkbenchWidget interaction ownership', () => {
         <button
           type="button"
           data-testid={`projected-click-${props.widgetId}`}
-          onPointerDown={() => events.push(`pointerdown:${props.widgetId}:${Boolean(props.selected)}`)}
+          onPointerDown={() =>
+            events.push(`pointerdown:${props.widgetId}:${Boolean(props.selected)}`)
+          }
           onClick={() => events.push(`click:${props.widgetId}:${Boolean(props.selected)}`)}
         >
           Trigger
@@ -747,10 +800,15 @@ describe('WorkbenchWidget interaction ownership', () => {
       ),
     } satisfies WorkbenchWidgetDefinition<typeof PROJECTED_CLICK_WIDGET_TYPE>;
 
-    const { dispose: harnessDispose, selectedWidgetId, commitFront } =
-      renderProjectedInteractionHarness(host, definition);
+    const {
+      dispose: harnessDispose,
+      selectedWidgetId,
+      commitFront,
+    } = renderProjectedInteractionHarness(host, definition);
 
-    const button = host.querySelector('[data-testid="projected-click-widget-b"]') as HTMLButtonElement | null;
+    const button = host.querySelector(
+      '[data-testid="projected-click-widget-b"]'
+    ) as HTMLButtonElement | null;
     expect(button).toBeTruthy();
     expect(selectedWidgetId()).toBe('widget-a');
 
@@ -765,10 +823,7 @@ describe('WorkbenchWidget interaction ownership', () => {
     button!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     await Promise.resolve();
 
-    expect(events).toEqual([
-      'pointerdown:widget-b:true',
-      'click:widget-b:true',
-    ]);
+    expect(events).toEqual(['pointerdown:widget-b:true', 'click:widget-b:true']);
     expect(selectedWidgetId()).toBe('widget-b');
     expect(commitFront).toHaveBeenCalledWith('widget-b');
 
@@ -792,9 +847,13 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     dispose = renderStatefulWidget(host, definition, { layoutMode });
 
-    const widgetInput = host.querySelector('[data-testid="widget-input"]') as HTMLInputElement | null;
+    const widgetInput = host.querySelector(
+      '[data-testid="widget-input"]'
+    ) as HTMLInputElement | null;
     expect(widgetInput).toBeTruthy();
-    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const widgetRoot = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-1"]'
+    ) as HTMLElement | null;
     expect(
       resolveWorkbenchWidgetLocalTypingTarget({
         target: widgetInput,
@@ -820,64 +879,74 @@ describe('WorkbenchWidget interaction ownership', () => {
   it.each([
     { name: 'canvas-scaled', layoutMode: 'canvas_scaled' as const },
     { name: 'projected-surface', layoutMode: 'projected_surface' as const },
-  ])('routes first-click helper typing targets inside activation surfaces through shared widget activation for inactive %s widgets', async ({ layoutMode }) => {
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+  ])(
+    'routes first-click helper typing targets inside activation surfaces through shared widget activation for inactive %s widgets',
+    async ({ layoutMode }) => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
 
-    const outsideInput = document.createElement('input');
-    document.body.appendChild(outsideInput);
+      const outsideInput = document.createElement('input');
+      document.body.appendChild(outsideInput);
 
-    const activations: number[] = [];
-    let helperTextarea: HTMLTextAreaElement | undefined;
-    const definition = renderActivationProbe((activation) => {
-      activations.push(activation.seq);
-    }, (props) => {
-      let lastSeq = 0;
-      createEffect(() => {
-        const activation = props.activation;
-        if (!activation || activation.seq === lastSeq) return;
-        lastSeq = activation.seq;
-        helperTextarea?.focus();
-      });
+      const activations: number[] = [];
+      let helperTextarea: HTMLTextAreaElement | undefined;
+      const definition = renderActivationProbe(
+        (activation) => {
+          activations.push(activation.seq);
+        },
+        (props) => {
+          let lastSeq = 0;
+          createEffect(() => {
+            const activation = props.activation;
+            if (!activation || activation.seq === lastSeq) return;
+            lastSeq = activation.seq;
+            helperTextarea?.focus();
+          });
 
-      return (
-        <div
-          data-testid="widget-activation-surface"
-          {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}
-        >
-          <textarea
-            aria-label="Widget helper input"
-            data-testid="widget-helper-textarea"
-            ref={helperTextarea}
-          />
-        </div>
+          return (
+            <div
+              data-testid="widget-activation-surface"
+              {...{ [WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR]: 'true' }}
+            >
+              <textarea
+                aria-label="Widget helper input"
+                data-testid="widget-helper-textarea"
+                ref={helperTextarea}
+              />
+            </div>
+          );
+        }
       );
-    });
 
-    dispose = renderStatefulWidget(host, definition, { layoutMode });
+      dispose = renderStatefulWidget(host, definition, { layoutMode });
 
-    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
-    const helper = host.querySelector('[data-testid="widget-helper-textarea"]') as HTMLTextAreaElement | null;
-    expect(widgetRoot).toBeTruthy();
-    expect(helper).toBeTruthy();
-    expect(
-      resolveWorkbenchWidgetLocalTypingTarget({
-        target: helper,
-        widgetRoot,
-        interactiveSelector: '[data-floe-canvas-interactive="true"]',
-        panSurfaceSelector: '[data-floe-canvas-pan-surface="true"]',
-      })
-    ).toBeNull();
+      const widgetRoot = host.querySelector(
+        '[data-floe-workbench-widget-id="widget-files-1"]'
+      ) as HTMLElement | null;
+      const helper = host.querySelector(
+        '[data-testid="widget-helper-textarea"]'
+      ) as HTMLTextAreaElement | null;
+      expect(widgetRoot).toBeTruthy();
+      expect(helper).toBeTruthy();
+      expect(
+        resolveWorkbenchWidgetLocalTypingTarget({
+          target: helper,
+          widgetRoot,
+          interactiveSelector: '[data-floe-canvas-interactive="true"]',
+          panSurfaceSelector: '[data-floe-canvas-pan-surface="true"]',
+        })
+      ).toBeNull();
 
-    outsideInput.focus();
-    expect(document.activeElement).toBe(outsideInput);
+      outsideInput.focus();
+      expect(document.activeElement).toBe(outsideInput);
 
-    dispatchPointerDown(helper!);
-    await flushWorkbenchInteraction();
+      dispatchPointerDown(helper!);
+      await flushWorkbenchInteraction();
 
-    expect(activations).toEqual([1]);
-    expect(document.activeElement).toBe(helper);
-  });
+      expect(activations).toEqual([1]);
+      expect(document.activeElement).toBe(helper);
+    }
+  );
 
   it('does not emit local activation from shell, native controls, local surfaces, or secondary presses', async () => {
     const host = document.createElement('div');
@@ -897,39 +966,46 @@ describe('WorkbenchWidget interaction ownership', () => {
       </div>
     ));
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={definition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected={false}
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={() => {}}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={definition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected={false}
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
     const widgetHeader = host.querySelector('.workbench-widget__header') as HTMLElement | null;
-    const nativeButtonLabel = host.querySelector('[data-testid="native-button-label"]') as HTMLElement | null;
+    const nativeButtonLabel = host.querySelector(
+      '[data-testid="native-button-label"]'
+    ) as HTMLElement | null;
     const nativeInput = host.querySelector('[data-testid="native-input"]') as HTMLElement | null;
     const localSurface = host.querySelector('[data-testid="local-surface"]') as HTMLElement | null;
-    const secondaryTarget = host.querySelector('[data-testid="secondary-target"]') as HTMLElement | null;
+    const secondaryTarget = host.querySelector(
+      '[data-testid="secondary-target"]'
+    ) as HTMLElement | null;
     expect(widgetHeader).toBeTruthy();
     expect(nativeButtonLabel).toBeTruthy();
     expect(nativeInput).toBeTruthy();
@@ -954,39 +1030,42 @@ describe('WorkbenchWidget interaction ownership', () => {
     const onCommitFront = vi.fn();
     const seen: Array<WorkbenchWidgetBodyProps> = [];
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={{
-          ...filesWidgetDefinition,
-          body: (props) => {
-            seen.push(props);
-            return <div data-testid="widget-body">Body</div>;
-          },
-        }}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected={false}
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={onSelect}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={onCommitFront}
-        onCommitMove={() => {}}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={{
+            ...filesWidgetDefinition,
+            body: (props) => {
+              seen.push(props);
+              return <div data-testid="widget-body">Body</div>;
+            },
+          }}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected={false}
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={onSelect}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={onCommitFront}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
     expect(seen[0]).toMatchObject({
       lifecycle: 'warm',
@@ -997,7 +1076,9 @@ describe('WorkbenchWidget interaction ownership', () => {
     seen[0]!.requestActivate?.();
     await Promise.resolve();
 
-    const widgetRoot = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    const widgetRoot = host.querySelector(
+      '[data-floe-workbench-widget-id="widget-files-1"]'
+    ) as HTMLElement | null;
     expect(onSelect).toHaveBeenCalledWith('widget-files-1');
     expect(onCommitFront).toHaveBeenCalledWith('widget-files-1');
     expect(document.activeElement).toBe(widgetRoot);
@@ -1009,33 +1090,36 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     const onCommitMove = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={filesWidgetDefinition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={onCommitMove}
-        onCommitResize={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={filesWidgetDefinition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={onCommitMove}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
     const dragButton = host.querySelector('.workbench-widget__drag') as HTMLElement | null;
     expect(dragButton).toBeTruthy();
@@ -1083,37 +1167,40 @@ describe('WorkbenchWidget interaction ownership', () => {
     const onCommitMove = vi.fn();
     const onViewportCommit = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={filesWidgetDefinition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        viewport={{ x: 0, y: 0, scale: 1 }}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={onCommitMove}
-        onCommitResize={() => {}}
-        onViewportCommit={onViewportCommit}
-        onRequestOverview={() => {}}
-        onRequestFit={() => {}}
-        onRequestDelete={() => {}}
-      />
-    ), frame);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={filesWidgetDefinition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={onCommitMove}
+          onCommitResize={() => {}}
+          onViewportCommit={onViewportCommit}
+          onRequestOverview={() => {}}
+          onRequestFit={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      frame
+    );
 
     const dragButton = frame.querySelector('.workbench-widget__drag') as HTMLElement | null;
     expect(dragButton).toBeTruthy();
@@ -1149,9 +1236,7 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     expect(onViewportCommit).toHaveBeenCalledTimes(2);
     expect(onViewportCommit.mock.calls[0]![0].x).toBeLessThan(0);
-    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(
-      onViewportCommit.mock.calls[0]![0].x
-    );
+    expect(onViewportCommit.mock.calls[1]![0].x).toBeLessThan(onViewportCommit.mock.calls[0]![0].x);
     expect(onCommitMove).toHaveBeenCalledTimes(1);
     expect(onCommitMove.mock.calls[0]![1].x).toBeGreaterThan(110);
   });
@@ -1162,33 +1247,36 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     const onCommitResize = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchWidget
-        definition={filesWidgetDefinition}
-        widgetId="widget-files-1"
-        widgetTitle="Files"
-        widgetType={FILES_WIDGET_TYPE}
-        x={0}
-        y={0}
-        width={480}
-        height={320}
-        renderLayer={1}
-        itemSnapshot={createWidgetSnapshot}
-        selected
-        optimisticFront={false}
-        topRenderLayer={2}
-        viewportScale={1}
-        locked={false}
-        filtered={false}
-        onSelect={() => {}}
-        onContextMenu={() => {}}
-        onStartOptimisticFront={() => {}}
-        onCommitFront={() => {}}
-        onCommitMove={() => {}}
-        onCommitResize={onCommitResize}
-        onRequestDelete={() => {}}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={filesWidgetDefinition}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected
+          visualFront={false}
+          topRenderLayer={2}
+          viewportScale={1}
+          locked={false}
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={() => {}}
+          onCommitResize={onCommitResize}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
 
     const resizeHandle = host.querySelector('.workbench-widget__resize') as HTMLElement | null;
     expect(resizeHandle).toBeTruthy();

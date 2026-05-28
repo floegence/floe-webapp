@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup } from 'solid-js';
+import { batch, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { InfiniteCanvasContextMenuEvent } from '../../ui';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import { ArrowUp, Copy, MessageSquare, Region, TextTool, Trash } from '../../icons';
@@ -262,7 +262,7 @@ function duplicateBackgroundLayer(item: WorkbenchBackgroundLayer): WorkbenchBack
 
 export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const [contextMenu, setContextMenu] = createSignal<WorkbenchContextMenuState | null>(null);
-  const [optimisticFrontWidgetId, setOptimisticFrontWidgetId] = createSignal<string | null>(null);
+  const [visualFrontOwnerId, setVisualFrontOwnerId] = createSignal<string | null>(null);
   const [canvasFrameSize, setCanvasFrameSize] = createSignal({ width: 0, height: 0 });
   let canvasFrameEl: HTMLDivElement | null = null;
   let canvasFrameObserver: ResizeObserver | null = null;
@@ -286,7 +286,22 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const activeTool = createMemo(() => state().activeTool ?? 'select');
   const theme = createMemo(() => state().theme);
   const topZIndex = createMemo(() => getTopWorkZIndex(widgets(), stickyNotes()));
+  const topLayerItemId = createMemo(() => {
+    const ordered = [...widgets(), ...stickyNotes()].sort(compareWorkbenchLayerRenderOrder);
+    return ordered.at(-1)?.id ?? null;
+  });
   const scaleLabel = createMemo(() => `${Math.round(viewport().scale * 100)}%`);
+
+  createEffect(() => {
+    const ownerId = visualFrontOwnerId();
+    if (ownerId && ownerId !== topLayerItemId()) {
+      setVisualFrontOwnerId(null);
+    }
+  });
+
+  const claimVisualFrontOwner = (itemId: string) => {
+    setVisualFrontOwnerId(itemId);
+  };
   const readWidgetDefinitions = () =>
     typeof options.widgetDefinitions === 'function'
       ? options.widgetDefinitions()
@@ -757,14 +772,17 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       created_at_unix_ms: Date.now(),
     };
 
-    options.setState((prev) => ({
-      ...prev,
-      widgets: [...prev.widgets, newWidget],
-      selectedWidgetId: newWidget.id,
-      selectedObject: { kind: 'widget', id: newWidget.id },
-      mode: 'work',
-      activeTool: 'select',
-    }));
+    batch(() => {
+      options.setState((prev) => ({
+        ...prev,
+        widgets: [...prev.widgets, newWidget],
+        selectedWidgetId: newWidget.id,
+        selectedObject: { kind: 'widget', id: newWidget.id },
+        mode: 'work',
+        activeTool: 'select',
+      }));
+      claimVisualFrontOwner(newWidget.id);
+    });
 
     return newWidget;
   };
@@ -807,14 +825,17 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
 
   const addStickyNoteAtCursor = (worldX: number, worldY: number) => {
     const stickyNote = createStickyNoteAt(worldX, worldY, topZIndex() + 1);
-    options.setState((prev) => ({
-      ...prev,
-      stickyNotes: [...(prev.stickyNotes ?? []), stickyNote],
-      selectedWidgetId: null,
-      selectedObject: { kind: 'sticky_note', id: stickyNote.id },
-      mode: 'work',
-      activeTool: 'select',
-    }));
+    batch(() => {
+      options.setState((prev) => ({
+        ...prev,
+        stickyNotes: [...(prev.stickyNotes ?? []), stickyNote],
+        selectedWidgetId: null,
+        selectedObject: { kind: 'sticky_note', id: stickyNote.id },
+        mode: 'work',
+        activeTool: 'select',
+      }));
+      claimVisualFrontOwner(stickyNote.id);
+    });
     return stickyNote;
   };
 
@@ -881,24 +902,22 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   // --- Front / Move ---
-  const startOptimisticFront = (widgetId: string) => {
-    setOptimisticFrontWidgetId(widgetId);
-  };
-
   const commitFront = (widgetId: string) => {
     const resolution = resolveWorkbenchLayerFront([...widgets(), ...stickyNotes()], widgetId);
     if (!resolution) {
       return;
     }
-    setOptimisticFrontWidgetId(widgetId);
-    if (!resolution.isTop) {
-      options.setState((prev) => ({
-        ...prev,
-        widgets: prev.widgets.map((w) =>
-          w.id === widgetId ? { ...w, z_index: resolution.nextZIndex } : w
-        ),
-      }));
-    }
+    batch(() => {
+      if (!resolution.isTop) {
+        options.setState((prev) => ({
+          ...prev,
+          widgets: prev.widgets.map((w) =>
+            w.id === widgetId ? { ...w, z_index: resolution.nextZIndex } : w
+          ),
+        }));
+      }
+      claimVisualFrontOwner(widgetId);
+    });
   };
 
   const commitStickyFront = (noteId: string) => {
@@ -906,17 +925,19 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     if (!resolution) {
       return;
     }
-    setOptimisticFrontWidgetId(noteId);
-    if (!resolution.isTop) {
-      options.setState((prev) => ({
-        ...prev,
-        stickyNotes: (prev.stickyNotes ?? []).map((item) =>
-          item.id === noteId
-            ? { ...item, z_index: resolution.nextZIndex, updated_at_unix_ms: Date.now() }
-            : item
-        ),
-      }));
-    }
+    batch(() => {
+      if (!resolution.isTop) {
+        options.setState((prev) => ({
+          ...prev,
+          stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+            item.id === noteId
+              ? { ...item, z_index: resolution.nextZIndex, updated_at_unix_ms: Date.now() }
+              : item
+          ),
+        }));
+      }
+      claimVisualFrontOwner(noteId);
+    });
   };
 
   const commitMove = (widgetId: string, position: { x: number; y: number }) => {
@@ -1481,7 +1502,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     theme,
     topZIndex,
     scaleLabel,
-    optimisticFrontWidgetId,
+    visualFrontOwnerId,
     widgetDefinitions,
     setCanvasFrameRef,
 
@@ -1514,7 +1535,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       selectAnnotation,
       selectBackgroundLayer,
       clearSelection,
-      startOptimisticFront,
+      claimVisualFrontOwner,
       commitFront,
       commitMove,
       commitResize,

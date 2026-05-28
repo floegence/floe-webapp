@@ -1,4 +1,15 @@
-import { For, Show, batch, createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import {
+  For,
+  Show,
+  batch,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  untrack,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
 import { Check, ChevronDown, Copy, GripVertical, Minus, Plus, Trash } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
@@ -127,7 +138,7 @@ export function createWorkbenchTextEditorRegistry(): WorkbenchTextEditorRegistry
 }
 
 function sortByLayer<T extends { id: string; z_index: number; created_at_unix_ms: number }>(
-  items: readonly T[],
+  items: readonly T[]
 ): T[] {
   return [...items].sort(compareWorkbenchLayerRenderOrder);
 }
@@ -144,7 +155,7 @@ function nextValue<T>(values: readonly T[], current: T): T {
 function useLayerPopoverDismiss(
   open: Accessor<boolean>,
   root: Accessor<HTMLElement | undefined>,
-  close: () => void,
+  close: () => void
 ): void {
   createEffect(() => {
     if (!open()) return;
@@ -176,10 +187,7 @@ function selectionBelongsToNode(selection: Selection | null, node: Node): select
   return ancestor === node || node.contains(ancestor);
 }
 
-function usePlainTextEditor(args: {
-  value: Accessor<string>;
-  onCommit: (value: string) => void;
-}) {
+function usePlainTextEditor(args: { value: Accessor<string>; onCommit: (value: string) => void }) {
   const [element, setElement] = createSignal<HTMLDivElement>();
   const [isComposing, setIsComposing] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(false);
@@ -242,9 +250,7 @@ function usePlainTextEditor(args: {
     node.focus();
     const selection = document.getSelection();
     const ownsSelection = selectionBelongsToNode(selection, node);
-    const range = ownsSelection && selection
-      ? selection.getRangeAt(0)
-      : document.createRange();
+    const range = ownsSelection && selection ? selection.getRangeAt(0) : document.createRange();
     if (!ownsSelection) {
       range.selectNodeContents(node);
       range.collapse(false);
@@ -317,7 +323,7 @@ function stopLayerButtonClick(event: MouseEvent): void {
 function readPreviewGeometry(
   preview: WorkbenchLayerGeometryPreview | null | undefined,
   kind: WorkbenchLayerGeometryPreview['kind'],
-  id: string,
+  id: string
 ): WorkbenchLayerGeometryPreview | null {
   return preview?.kind === kind && preview.id === id ? preview : null;
 }
@@ -351,10 +357,9 @@ function projectLayerGeometry(args: {
   };
 }
 
-function createLayerTransformStyle(geometry: WorkbenchLayerVisualGeometry): Pick<
-  JSX.CSSProperties,
-  'width' | 'height' | 'transform'
-> {
+function createLayerTransformStyle(
+  geometry: WorkbenchLayerVisualGeometry
+): Pick<JSX.CSSProperties, 'width' | 'height' | 'transform'> {
   return {
     width: `${geometry.width}px`,
     height: `${geometry.height}px`,
@@ -388,8 +393,8 @@ function useLayerDrag(args: {
   onCommitStart?: (position: { x: number; y: number }) => void;
 }) {
   const committedPosition = createOwnerSafePropAccessor(() => args.readPosition());
-  const committedGeometry = createOwnerSafePropAccessor(() =>
-    args.readGeometry?.() ?? { width: 0, height: 0 }
+  const committedGeometry = createOwnerSafePropAccessor(
+    () => args.readGeometry?.() ?? { width: 0, height: 0 }
   );
   const viewportScale = createOwnerSafePropAccessor(() => args.viewportScale());
   const commitMove = createOwnerSafePropAccessor(() => args.onCommitMove);
@@ -577,11 +582,11 @@ function useLayerResize(args: {
             nextSize = {
               width: Math.max(
                 args.minWidth,
-                current.startWidth + (nextEvent.clientX - current.startClientX) / current.scale,
+                current.startWidth + (nextEvent.clientX - current.startClientX) / current.scale
               ),
               height: Math.max(
                 args.minHeight,
-                current.startHeight + (nextEvent.clientY - current.startClientY) / current.scale,
+                current.startHeight + (nextEvent.clientY - current.startClientY) / current.scale
               ),
             };
             return {
@@ -627,14 +632,17 @@ export function WorkbenchStickyNote(props: {
   topRenderLayer: number;
   locked: boolean;
   filtered: boolean;
-  optimisticFront?: boolean;
+  visualFront?: boolean;
   onSelect: (noteId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchStickyNoteItem) => void;
-  onStartOptimisticFront?: (noteId: string) => void;
+  onClaimVisualFrontOwner?: (noteId: string) => void;
   onCommitFront?: (noteId: string) => void;
   onCommitMove: (noteId: string, position: { x: number; y: number }) => void;
   onCommitResize: (noteId: string, size: { width: number; height: number }) => void;
-  onUpdate: (noteId: string, patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>) => void;
+  onUpdate: (
+    noteId: string,
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+  ) => void;
   onDelete: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
@@ -648,17 +656,18 @@ export function WorkbenchStickyNote(props: {
   const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
   const locked = createOwnerSafePropAccessor(() => props.locked);
   const filtered = createOwnerSafePropAccessor(() => props.filtered);
-  const optimisticFront = createOwnerSafePropAccessor(() => props.optimisticFront ?? false);
+  const visualFront = createOwnerSafePropAccessor(() => props.visualFront ?? false);
   const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
   const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
-  const onStartOptimisticFront = createOwnerSafePropAccessor(() => props.onStartOptimisticFront);
+  const onClaimVisualFrontOwner = createOwnerSafePropAccessor(() => props.onClaimVisualFrontOwner);
   const onCommitFront = createOwnerSafePropAccessor(() => props.onCommitFront);
   const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
   const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
   const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
   const onDelete = createOwnerSafePropAccessor(() => props.onDelete);
-  const onLayoutInteractionStart =
-    createOwnerSafePropAccessor(() => props.onLayoutInteractionStart);
+  const onLayoutInteractionStart = createOwnerSafePropAccessor(
+    () => props.onLayoutInteractionStart
+  );
   const onLayoutInteractionEnd = createOwnerSafePropAccessor(() => props.onLayoutInteractionEnd);
   const bodyEditor = usePlainTextEditor({
     value: () => item().body,
@@ -698,7 +707,7 @@ export function WorkbenchStickyNote(props: {
     ) {
       return;
     }
-    onStartOptimisticFront()?.(currentItem.id);
+    onClaimVisualFrontOwner()?.(currentItem.id);
     drag.beginDrag(event);
   };
 
@@ -735,7 +744,7 @@ export function WorkbenchStickyNote(props: {
     });
   });
   const projectedScale = createMemo(
-    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(viewportScale(), 0.001),
+    () => surfaceMetrics()?.rect.viewportScale ?? Math.max(viewportScale(), 0.001)
   );
   const style = createMemo<JSX.CSSProperties>(() => ({
     width: `${liveSize().width}px`,
@@ -745,7 +754,7 @@ export function WorkbenchStickyNote(props: {
       : `translate(${livePosition().x}px, ${livePosition().y}px)`,
     'transform-origin': '0 0',
     'z-index': `${
-      selected() || optimisticFront() || drag.isDragging() || resize.isResizing()
+      selected() || visualFront() || drag.isDragging() || resize.isResizing()
         ? topRenderLayer() + 1
         : renderLayer()
     }`,
@@ -791,7 +800,7 @@ export function WorkbenchStickyNote(props: {
             onPointerDown={(event) => {
               const currentItem = item();
               onSelect()(currentItem.id);
-              onStartOptimisticFront()?.(currentItem.id);
+              onClaimVisualFrontOwner()?.(currentItem.id);
               drag.beginDrag(event);
             }}
           >
@@ -853,7 +862,7 @@ export function WorkbenchStickyNote(props: {
               onUpdate()(currentItem.id, {
                 color: nextValue<WorkbenchStickyNoteColor>(
                   WORKBENCH_STICKY_NOTE_COLORS,
-                  currentItem.color,
+                  currentItem.color
                 ),
               });
             }}
@@ -900,10 +909,7 @@ export function WorkbenchTextAnnotation(props: {
   onSelect: (annotationId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchAnnotationItem) => void;
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
-  onUpdate: (
-    annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
-  ) => void;
+  onUpdate: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
 }) {
   const item = createOwnerSafePropAccessor(() => props.item);
   const selected = createOwnerSafePropAccessor(() => props.selected);
@@ -937,11 +943,12 @@ export function WorkbenchTextAnnotation(props: {
     readPosition: () => ({ x: item().x, y: item().y }),
     readGeometry: () => ({ width: item().width, height: item().height }),
     onCommitMove: (position) => onCommitMove()(item().id, position),
-    onPreviewMove: (geometry) => onPreviewGeometry()?.({
-      kind: 'annotation',
-      id: item().id,
-      ...geometry,
-    }),
+    onPreviewMove: (geometry) =>
+      onPreviewGeometry()?.({
+        kind: 'annotation',
+        id: item().id,
+        ...geometry,
+      }),
     onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
@@ -976,9 +983,7 @@ export function WorkbenchTextAnnotation(props: {
     if (!editable() || event.button !== 0) return;
     if (
       event.target instanceof Element &&
-      event.target.closest(
-        '.workbench-text-annotation__content',
-      )
+      event.target.closest('.workbench-text-annotation__content')
     ) {
       return;
     }
@@ -1063,11 +1068,12 @@ export function WorkbenchBackgroundRegion(props: {
     readPosition: () => ({ x: item().x, y: item().y }),
     readGeometry: () => ({ width: item().width, height: item().height }),
     onCommitMove: (position) => onCommitMove()(item().id, position),
-    onPreviewMove: (geometry) => onPreviewGeometry()?.({
-      kind: 'background_layer',
-      id: item().id,
-      ...geometry,
-    }),
+    onPreviewMove: (geometry) =>
+      onPreviewGeometry()?.({
+        kind: 'background_layer',
+        id: item().id,
+        ...geometry,
+      }),
     onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
@@ -1140,10 +1146,7 @@ function WorkbenchTextAnnotationControls(props: {
   textEditorRegistry?: WorkbenchTextEditorRegistry;
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
   onCommitResize: (annotationId: string, size: { width: number; height: number }) => void;
-  onUpdate: (
-    annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
-  ) => void;
+  onUpdate: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
   onDelete: (annotationId: string) => void;
 }) {
   const item = createOwnerSafePropAccessor(() => props.item);
@@ -1163,20 +1166,22 @@ function WorkbenchTextAnnotationControls(props: {
   const [fontSizeDraft, setFontSizeDraft] = createSignal('');
   const [fontPickerOpen, setFontPickerOpen] = createSignal(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = createSignal(false);
-  const activeFont = createMemo(() =>
-    WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === item().font_family)
-      ?? WORKBENCH_TEXT_FONT_OPTIONS[0]!
+  const activeFont = createMemo(
+    () =>
+      WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === item().font_family) ??
+      WORKBENCH_TEXT_FONT_OPTIONS[0]!
   );
   const move = useLayerDrag({
     viewportScale,
     readPosition: () => ({ x: item().x, y: item().y }),
     readGeometry: () => ({ width: item().width, height: item().height }),
     onCommitMove: (position) => onCommitMove()(item().id, position),
-    onPreviewMove: (geometry) => onPreviewGeometry()?.({
-      kind: 'annotation',
-      id: item().id,
-      ...geometry,
-    }),
+    onPreviewMove: (geometry) =>
+      onPreviewGeometry()?.({
+        kind: 'annotation',
+        id: item().id,
+        ...geometry,
+      }),
     onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const resize = useLayerResize({
@@ -1185,14 +1190,15 @@ function WorkbenchTextAnnotationControls(props: {
     minWidth: TEXT_MIN_WIDTH,
     minHeight: TEXT_MIN_HEIGHT,
     onCommitResize: (size) => onCommitResize()(item().id, size),
-    onPreviewResize: (size) => onPreviewGeometry()?.({
-      kind: 'annotation',
-      id: item().id,
-      x: item().x,
-      y: item().y,
-      width: size.width,
-      height: size.height,
-    }),
+    onPreviewResize: (size) =>
+      onPreviewGeometry()?.({
+        kind: 'annotation',
+        id: item().id,
+        x: item().x,
+        y: item().y,
+        width: size.width,
+        height: size.height,
+      }),
     onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
@@ -1240,12 +1246,12 @@ function WorkbenchTextAnnotationControls(props: {
   useLayerPopoverDismiss(
     fontPickerOpen,
     () => fontPickerEl,
-    () => setFontPickerOpen(false),
+    () => setFontPickerOpen(false)
   );
   useLayerPopoverDismiss(
     emojiPickerOpen,
     () => emojiPickerEl,
-    () => setEmojiPickerOpen(false),
+    () => setEmojiPickerOpen(false)
   );
 
   return (
@@ -1506,7 +1512,7 @@ function WorkbenchBackgroundRegionControls(props: {
   onCommitResize: (layerId: string, size: { width: number; height: number }) => void;
   onUpdate: (
     layerId: string,
-    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>,
+    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>
   ) => void;
   onDelete: (layerId: string) => void;
 }) {
@@ -1525,14 +1531,15 @@ function WorkbenchBackgroundRegionControls(props: {
     minWidth: REGION_MIN_WIDTH,
     minHeight: REGION_MIN_HEIGHT,
     onCommitResize: (size) => onCommitResize()(item().id, size),
-    onPreviewResize: (size) => onPreviewGeometry()?.({
-      kind: 'background_layer',
-      id: item().id,
-      x: item().x,
-      y: item().y,
-      width: size.width,
-      height: size.height,
-    }),
+    onPreviewResize: (size) =>
+      onPreviewGeometry()?.({
+        kind: 'background_layer',
+        id: item().id,
+        x: item().x,
+        y: item().y,
+        width: size.width,
+        height: size.height,
+      }),
     onPreviewEnd: () => onPreviewGeometry()?.(null),
   });
   const visualGeometry = createMemo(() => {
@@ -1767,7 +1774,10 @@ export function WorkbenchBackgroundLayerView(props: {
               {(entry) => (
                 <WorkbenchBackgroundRegion
                   item={entry()}
-                  selected={props.selectedObject?.kind === 'background_layer' && props.selectedObject.id === itemId}
+                  selected={
+                    props.selectedObject?.kind === 'background_layer' &&
+                    props.selectedObject.id === itemId
+                  }
                   editable={props.editable}
                   viewportScale={props.viewport.scale}
                   viewport={props.viewport}
@@ -1800,10 +1810,7 @@ export function WorkbenchAnnotationLayerView(props: {
   onSelect: (annotationId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchAnnotationItem) => void;
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
-  onUpdate: (
-    annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
-  ) => void;
+  onUpdate: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
 }) {
   const itemById = createMemo(() => createItemMap(props.items));
   const itemIds = createMemo(() => sortByLayer(props.items).map((item) => item.id));
@@ -1822,7 +1829,10 @@ export function WorkbenchAnnotationLayerView(props: {
               {(entry) => (
                 <WorkbenchTextAnnotation
                   item={entry()}
-                  selected={props.selectedObject?.kind === 'annotation' && props.selectedObject.id === itemId}
+                  selected={
+                    props.selectedObject?.kind === 'annotation' &&
+                    props.selectedObject.id === itemId
+                  }
                   editable={props.editable}
                   viewportScale={props.viewport.scale}
                   viewport={props.viewport}
@@ -1857,26 +1867,25 @@ export function WorkbenchLayerControlOverlayView(props: {
   textEditorRegistry?: WorkbenchTextEditorRegistry;
   onCommitAnnotationMove: (annotationId: string, position: { x: number; y: number }) => void;
   onCommitAnnotationResize: (annotationId: string, size: { width: number; height: number }) => void;
-  onUpdateTextAnnotation: (
-    annotationId: string,
-    patch: WorkbenchTextAnnotationPatch,
-  ) => void;
+  onUpdateTextAnnotation: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
   onDeleteAnnotation: (annotationId: string) => void;
   onCommitBackgroundResize: (layerId: string, size: { width: number; height: number }) => void;
   onUpdateBackgroundLayer: (
     layerId: string,
-    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>,
+    patch: Partial<Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>>
   ) => void;
   onDeleteBackgroundLayer: (layerId: string) => void;
 }) {
   const selectedText = createMemo(() =>
     props.selectedObject?.kind === 'annotation'
-      ? props.annotations.find((item) => item.id === props.selectedObject?.id && item.kind === 'text') ?? null
+      ? (props.annotations.find(
+          (item) => item.id === props.selectedObject?.id && item.kind === 'text'
+        ) ?? null)
       : null
   );
   const selectedRegion = createMemo(() =>
     props.selectedObject?.kind === 'background_layer'
-      ? props.backgroundLayers.find((item) => item.id === props.selectedObject?.id) ?? null
+      ? (props.backgroundLayers.find((item) => item.id === props.selectedObject?.id) ?? null)
       : null
   );
 
