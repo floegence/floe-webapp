@@ -5,6 +5,7 @@ import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchCanvasField } from '../src/components/workbench/WorkbenchCanvasField';
+import { resolveWorkbenchLayerFront } from '../src/components/workbench/workbenchHelpers';
 import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
 import type { WorkbenchState, WorkbenchWidgetDefinition } from '../src/components/workbench/types';
 
@@ -39,6 +40,42 @@ const bodyLifecycle = {
   mounts: new Map<string, number>(),
   cleanups: new Map<string, number>(),
 };
+
+function dispatchPointerEvent(
+  type: string,
+  target: EventTarget,
+  options: { pointerId?: number; button?: number; buttons?: number } = {},
+): Event {
+  const EventCtor = typeof PointerEvent === 'function' ? PointerEvent : MouseEvent;
+  const event = new EventCtor(type, {
+    bubbles: true,
+    cancelable: true,
+    button: options.button ?? 0,
+  });
+  if (!('pointerId' in event)) {
+    Object.defineProperty(event, 'pointerId', {
+      configurable: true,
+      value: options.pointerId ?? 1,
+    });
+  }
+  Object.defineProperty(event, 'buttons', {
+    configurable: true,
+    value: options.buttons ?? 1,
+  });
+  target.dispatchEvent(event);
+  return event;
+}
+
+function mockPointerCapture(element: HTMLElement): void {
+  Object.defineProperty(element, 'setPointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(element, 'releasePointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
 
 function createInitialState(): WorkbenchState {
   return {
@@ -77,8 +114,6 @@ function createInitialState(): WorkbenchState {
 function renderWorkbenchHarness(host: HTMLDivElement) {
   const [state, setState] = createSignal(createInitialState());
 
-  const topZIndex = () => state().widgets.reduce((max, widget) => Math.max(max, widget.z_index), 1);
-
   const dispose = render(() => (
     <>
       <button
@@ -111,12 +146,12 @@ function renderWorkbenchHarness(host: HTMLDivElement) {
         onWidgetContextMenu={vi.fn()}
         onStartOptimisticFront={vi.fn()}
         onCommitFront={(widgetId) => {
-          const top = topZIndex();
+          const resolution = resolveWorkbenchLayerFront(state().widgets, widgetId);
           setState((prev) => ({
             ...prev,
             widgets: prev.widgets.map((widget) => (
-              widget.id === widgetId && widget.z_index < top
-                ? { ...widget, z_index: top + 1 }
+              widget.id === widgetId && resolution && !resolution.isTop
+                ? { ...widget, z_index: resolution.nextZIndex }
                 : widget
             )),
           }));
@@ -151,7 +186,7 @@ function renderWorkbenchHarness(host: HTMLDivElement) {
     </>
   ), host);
 
-  return { dispose };
+  return { dispose, state };
 }
 
 describe('WorkbenchCanvas widget instance identity', () => {
@@ -165,16 +200,19 @@ describe('WorkbenchCanvas widget instance identity', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    const { dispose } = renderWorkbenchHarness(host);
+    const { dispose, state } = renderWorkbenchHarness(host);
     await Promise.resolve();
 
     expect(bodyLifecycle.mounts.get('widget-primary')).toBe(1);
 
-    const widget = host.querySelector('[data-floe-workbench-widget-id="widget-primary"]') as HTMLElement | null;
-    expect(widget).toBeTruthy();
-    widget!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const header = host.querySelector('[data-floe-workbench-widget-id="widget-primary"] .workbench-widget__header') as HTMLElement | null;
+    expect(header).toBeTruthy();
+    mockPointerCapture(header!);
+    dispatchPointerEvent('pointerdown', header!, { pointerId: 8 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 8, buttons: 0 });
     await Promise.resolve();
 
+    expect(state().widgets.find((item) => item.id === 'widget-primary')?.z_index).toBe(421);
     expect(bodyLifecycle.mounts.get('widget-primary')).toBe(1);
     expect(bodyLifecycle.cleanups.get('widget-primary') ?? 0).toBe(0);
 

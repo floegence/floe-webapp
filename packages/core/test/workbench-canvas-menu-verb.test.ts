@@ -50,7 +50,11 @@ beforeEach(() => {
   });
 });
 
-function createWidget(id: string, type: 'custom.logs' | 'custom.monitor'): WorkbenchWidgetItem {
+function createWidget(
+  id: string,
+  type: 'custom.logs' | 'custom.monitor',
+  options: Partial<Pick<WorkbenchWidgetItem, 'z_index' | 'created_at_unix_ms'>> = {},
+): WorkbenchWidgetItem {
   return {
     id,
     type,
@@ -59,8 +63,8 @@ function createWidget(id: string, type: 'custom.logs' | 'custom.monitor'): Workb
     y: 84,
     width: type === 'custom.logs' ? 640 : 560,
     height: type === 'custom.logs' ? 360 : 320,
-    z_index: 1,
-    created_at_unix_ms: 1,
+    z_index: options.z_index ?? 1,
+    created_at_unix_ms: options.created_at_unix_ms ?? 1,
   };
 }
 
@@ -76,9 +80,11 @@ function createWorkbenchState(widgets: readonly WorkbenchWidgetItem[]) {
   };
 }
 
-function createStickyNote(): WorkbenchStickyNoteItem {
+function createStickyNote(
+  options: Partial<Pick<WorkbenchStickyNoteItem, 'id' | 'z_index' | 'created_at_unix_ms'>> = {},
+): WorkbenchStickyNoteItem {
   return {
-    id: 'sticky-1',
+    id: options.id ?? 'sticky-1',
     kind: 'sticky_note',
     body: 'A dedicated note',
     color: 'amber',
@@ -86,8 +92,8 @@ function createStickyNote(): WorkbenchStickyNoteItem {
     y: 180,
     width: 260,
     height: 184,
-    z_index: 2,
-    created_at_unix_ms: 2,
+    z_index: options.z_index ?? 2,
+    created_at_unix_ms: options.created_at_unix_ms ?? 2,
     updated_at_unix_ms: 2,
   };
 }
@@ -210,6 +216,74 @@ describe('workbench canvas menu verbs', () => {
       expect(untrack(state).widgets[0]?.id).toBe('logs-1');
       expect(untrack(state).selectedWidgetId).toBe('logs-1');
       expect(model.contextMenu.state()).toBeNull();
+
+      dispose();
+    });
+  });
+
+  it('promotes Go to targets that are below another item with the same z-index', () => {
+    createRoot((dispose) => {
+      const logs = createWidget('logs-1', 'custom.logs', {
+        z_index: 7,
+        created_at_unix_ms: 10,
+      });
+      const monitor = createWidget('monitor-1', 'custom.monitor', {
+        z_index: 7,
+        created_at_unix_ms: 20,
+      });
+      const [state, setState] = createSignal(createWorkbenchState([logs, monitor]));
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+
+      openCanvasMenu(model);
+
+      const action = model.contextMenu.items().find((item) => item.kind === 'action' && item.label === 'Go to Logs');
+      expect(action).toBeTruthy();
+      if (action?.kind === 'action') {
+        action.onSelect();
+      }
+
+      const promoted = untrack(state).widgets.find((widget) => widget.id === 'logs-1');
+      const unchanged = untrack(state).widgets.find((widget) => widget.id === 'monitor-1');
+      expect(promoted?.z_index).toBe(8);
+      expect(unchanged?.z_index).toBe(7);
+      expect(untrack(state).widgets.map((widget) => widget.id)).toEqual(['logs-1', 'monitor-1']);
+
+      dispose();
+    });
+  });
+
+  it('promotes Go to targets blocked only by the id tie-breaker', () => {
+    createRoot((dispose) => {
+      const logs = createWidget('logs-1', 'custom.logs', {
+        z_index: 7,
+        created_at_unix_ms: 10,
+      });
+      const monitor = createWidget('z-monitor-1', 'custom.monitor', {
+        z_index: 7,
+        created_at_unix_ms: 10,
+      });
+      const [state, setState] = createSignal(createWorkbenchState([logs, monitor]));
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+
+      openCanvasMenu(model);
+
+      const action = model.contextMenu.items().find((item) => item.kind === 'action' && item.label === 'Go to Logs');
+      expect(action).toBeTruthy();
+      if (action?.kind === 'action') {
+        action.onSelect();
+      }
+
+      expect(untrack(state).widgets.find((widget) => widget.id === 'logs-1')?.z_index).toBe(8);
 
       dispose();
     });
@@ -378,6 +452,40 @@ describe('workbench canvas menu verbs', () => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('A dedicated note');
       expect(untrack(state).stickyNotes).toHaveLength(1);
       expect(model.contextMenu.state()).toBeNull();
+
+      dispose();
+    });
+  });
+
+  it('promotes sticky note context menu targets using the shared work-layer order', () => {
+    createRoot((dispose) => {
+      const sticky = createStickyNote({
+        z_index: 7,
+        created_at_unix_ms: 10,
+      });
+      const widget = createWidget('monitor-1', 'custom.monitor', {
+        z_index: 7,
+        created_at_unix_ms: 20,
+      });
+      const [state, setState] = createSignal({
+        ...createWorkbenchState([widget]),
+        stickyNotes: [sticky],
+      });
+      const model = useWorkbenchModel({
+        state,
+        setState,
+        onClose: vi.fn(),
+        widgetDefinitions: definitions,
+      });
+
+      model.canvas.openStickyNoteContextMenu(
+        new MouseEvent('contextmenu', { clientX: 32, clientY: 40 }),
+        sticky,
+      );
+
+      const promoted = untrack(state).stickyNotes?.find((item) => item.id === 'sticky-1');
+      expect(promoted?.z_index).toBe(8);
+      expect(untrack(state).widgets[0]?.z_index).toBe(7);
 
       dispose();
     });

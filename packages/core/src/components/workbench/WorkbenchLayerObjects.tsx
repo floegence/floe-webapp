@@ -23,7 +23,10 @@ import {
   WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from './workbenchOptions';
-import { createWorkbenchWidgetSurfaceMetrics } from './workbenchHelpers';
+import {
+  compareWorkbenchLayerRenderOrder,
+  createWorkbenchWidgetSurfaceMetrics,
+} from './workbenchHelpers';
 import { createOwnerSafePropAccessor } from './workbenchOwnerSafeAccessors';
 
 type LayerDragState = {
@@ -126,13 +129,7 @@ export function createWorkbenchTextEditorRegistry(): WorkbenchTextEditorRegistry
 function sortByLayer<T extends { id: string; z_index: number; created_at_unix_ms: number }>(
   items: readonly T[],
 ): T[] {
-  return [...items].sort((left, right) => {
-    if (left.z_index !== right.z_index) return left.z_index - right.z_index;
-    if (left.created_at_unix_ms !== right.created_at_unix_ms) {
-      return left.created_at_unix_ms - right.created_at_unix_ms;
-    }
-    return left.id.localeCompare(right.id);
-  });
+  return [...items].sort(compareWorkbenchLayerRenderOrder);
 }
 
 function createItemMap<T extends { id: string }>(items: readonly T[]): Map<string, T> {

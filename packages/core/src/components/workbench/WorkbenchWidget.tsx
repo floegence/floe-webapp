@@ -253,6 +253,10 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     onSelect()(currentWidgetId);
     onCommitFront()(currentWidgetId);
   };
+  const commitWidgetFrontIfBehind = () => {
+    if (renderLayer() >= topRenderLayer()) return;
+    onCommitFront()(widgetId());
+  };
   const clearLocalSelectionClaim = () => {
     setLocalSelectionClaim(false);
   };
@@ -301,9 +305,14 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     };
     const handleClickCapture = (event: MouseEvent) => {
       if (event.button !== 0) return;
-      if (!localSelectionClaim()) return;
       if (resolveEventOwnership(event.target) !== 'widget_local') return;
-      commitWidgetSelectionAndFront();
+      if (localSelectionClaim()) {
+        commitWidgetSelectionAndFront();
+        return;
+      }
+      if (externallySelected()) {
+        commitWidgetFrontIfBehind();
+      }
     };
     const handlePointerUp = () => {
       setTimeout(() => {

@@ -13,6 +13,7 @@ import {
   resolveWorkbenchWidgetTextSelectionTarget,
 } from '../src/components/ui/localInteractionSurface';
 import { createWorkbenchFilterState } from '../src/components/workbench/widgets/widgetRegistry';
+import { resolveWorkbenchLayerFront } from '../src/components/workbench/workbenchHelpers';
 import type {
   WorkbenchWidgetBodyActivation,
   WorkbenchWidgetBodyProps,
@@ -146,10 +147,14 @@ function renderStatefulWidget(
   definition: WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>,
   options: {
     layoutMode?: 'canvas_scaled' | 'projected_surface';
+    initiallySelected?: boolean;
+    initialRenderLayer?: number;
+    topRenderLayer?: number;
   } = {},
 ) {
-  const [selected, setSelected] = createSignal(false);
-  const [zIndex, setZIndex] = createSignal(7);
+  const [selected, setSelected] = createSignal(options.initiallySelected ?? false);
+  const [zIndex, setZIndex] = createSignal(options.initialRenderLayer ?? 7);
+  const topRenderLayer = () => options.topRenderLayer ?? zIndex() + 1;
 
   return render(() => (
     <WorkbenchWidget
@@ -165,7 +170,7 @@ function renderStatefulWidget(
       itemSnapshot={() => ({ ...createWidgetSnapshot(), z_index: zIndex() })}
       selected={selected()}
       optimisticFront={false}
-      topRenderLayer={zIndex() + 1}
+      topRenderLayer={topRenderLayer()}
       viewportScale={1}
       locked={false}
       filtered={false}
@@ -229,10 +234,10 @@ function renderProjectedInteractionHarness(
   const filters = createWorkbenchFilterState(widgetDefinitions);
   const commitFront = vi.fn((widgetId: string) => {
     setWidgets((current) => {
-      const topZIndex = current.reduce((top, widget) => Math.max(top, widget.z_index), 1);
+      const resolution = resolveWorkbenchLayerFront(current, widgetId);
       return current.map((widget) =>
-        widget.id === widgetId && widget.z_index < topZIndex
-          ? { ...widget, z_index: topZIndex + 1 }
+        widget.id === widgetId && resolution && !resolution.isTop
+          ? { ...widget, z_index: resolution.nextZIndex }
           : widget
       );
     });
@@ -678,6 +683,44 @@ describe('WorkbenchWidget interaction ownership', () => {
 
     expect(pointerDown.defaultPrevented).toBe(false);
     expect(events).toEqual(['pointerdown:true', 'click:true']);
+  });
+
+  it('commits front during selected local clicks when the widget is behind another layer', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const events: string[] = [];
+    const definition = {
+      ...filesWidgetDefinition,
+      body: () => (
+        <button
+          type="button"
+          data-testid="widget-body-button"
+          onPointerDown={() => events.push('pointerdown')}
+          onClick={() => events.push('click')}
+        >
+          Open
+        </button>
+      ),
+    } satisfies WorkbenchWidgetDefinition<typeof FILES_WIDGET_TYPE>;
+
+    dispose = renderStatefulWidget(host, definition, {
+      initiallySelected: true,
+      initialRenderLayer: 1,
+      topRenderLayer: 2,
+    });
+
+    const bodyButton = host.querySelector('[data-testid="widget-body-button"]') as HTMLButtonElement | null;
+    expect(bodyButton).toBeTruthy();
+
+    dispatchPointerEvent('pointerdown', bodyButton!, { pointerId: 22 });
+    dispatchPointerEvent('pointerup', bodyButton!, { pointerId: 22, buttons: 0 });
+    bodyButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await Promise.resolve();
+
+    expect(events).toEqual(['pointerdown', 'click']);
+    const widget = host.querySelector('[data-floe-workbench-widget-id="widget-files-1"]') as HTMLElement | null;
+    expect(widget?.style.zIndex).toBe('2');
   });
 
   it('defers projected-surface front commits until the original local click dispatch begins', async () => {

@@ -642,9 +642,19 @@ export interface WorkbenchRenderLayerMap {
   topRenderLayer: number;
 }
 
-function compareWorkbenchLayerRenderOrder(
-  left: Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
-  right: Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
+export type WorkbenchLayerOrderItem = Pick<
+  WorkbenchWidgetItem,
+  'id' | 'z_index' | 'created_at_unix_ms'
+>;
+
+export interface WorkbenchLayerFrontResolution {
+  isTop: boolean;
+  nextZIndex: number;
+}
+
+export function compareWorkbenchLayerRenderOrder(
+  left: WorkbenchLayerOrderItem,
+  right: WorkbenchLayerOrderItem,
 ): number {
   if (left.z_index !== right.z_index) {
     return left.z_index - right.z_index;
@@ -656,7 +666,7 @@ function compareWorkbenchLayerRenderOrder(
 }
 
 export function createWorkbenchRenderLayerMap(
-  widgets: readonly Pick<WorkbenchWidgetItem, 'id' | 'z_index' | 'created_at_unix_ms'>[],
+  widgets: readonly WorkbenchLayerOrderItem[],
 ): WorkbenchRenderLayerMap {
   const ordered = [...widgets].sort(compareWorkbenchLayerRenderOrder);
   const byWidgetId = new Map<string, number>();
@@ -668,6 +678,33 @@ export function createWorkbenchRenderLayerMap(
   return {
     byWidgetId,
     topRenderLayer: Math.max(ordered.length, 1),
+  };
+}
+
+export function isWorkbenchLayerItemAbove(
+  left: WorkbenchLayerOrderItem,
+  right: WorkbenchLayerOrderItem,
+): boolean {
+  return compareWorkbenchLayerRenderOrder(left, right) > 0;
+}
+
+export function resolveWorkbenchLayerFront(
+  items: readonly WorkbenchLayerOrderItem[],
+  targetId: string,
+): WorkbenchLayerFrontResolution | null {
+  const target = items.find((item) => item.id === targetId);
+  if (!target) {
+    return null;
+  }
+
+  const maxZIndex = items.reduce((max, item) => Math.max(max, item.z_index), 1);
+  const hasItemAbove = items.some((item) =>
+    item.id !== targetId && isWorkbenchLayerItemAbove(item, target)
+  );
+
+  return {
+    isTop: !hasItemAbove,
+    nextZIndex: maxZIndex + 1,
   };
 }
 
@@ -690,10 +727,6 @@ export function createContextMenuPosition(options: {
   }
 
   return { left, top };
-}
-
-export function getTopZIndex(widgets: readonly WorkbenchWidgetItem[]): number {
-  return widgets.reduce((max, w) => Math.max(max, w.z_index), 1);
 }
 
 /** Spatial navigation: find nearest widget in a direction. */

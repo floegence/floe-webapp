@@ -47,7 +47,9 @@ import {
   createWorkbenchWidgetFrame,
   estimateContextMenuHeight,
   findNearestWidget,
+  compareWorkbenchLayerRenderOrder,
   normalizeWorkbenchInteractionMode,
+  resolveWorkbenchLayerFront,
   resolveWorkbenchModeStrategy,
   sanitizeFilters,
   WORKBENCH_CANVAS_ZOOM_STEP,
@@ -122,17 +124,6 @@ function nextBackgroundMaterial(current: WorkbenchBackgroundMaterial): Workbench
 
 function isWidgetWorkItem(item: WorkbenchWorkItem): item is WorkbenchWidgetItem {
   return !('kind' in item);
-}
-
-function compareLayeredItemOrder(
-  left: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>,
-  right: Pick<WorkbenchWorkItem, 'id' | 'z_index' | 'created_at_unix_ms'>
-): number {
-  if (left.z_index !== right.z_index) return left.z_index - right.z_index;
-  if (left.created_at_unix_ms !== right.created_at_unix_ms) {
-    return left.created_at_unix_ms - right.created_at_unix_ms;
-  }
-  return left.id.localeCompare(right.id);
 }
 
 function getTopLayerIndex(items: readonly { z_index: number }[]): number {
@@ -895,28 +886,37 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const commitFront = (widgetId: string) => {
+    const resolution = resolveWorkbenchLayerFront([...widgets(), ...stickyNotes()], widgetId);
+    if (!resolution) {
+      return;
+    }
     setOptimisticFrontWidgetId(widgetId);
-    const top = topZIndex();
-    const widget = widgets().find((w) => w.id === widgetId);
-    if (widget && widget.z_index < top) {
+    if (!resolution.isTop) {
       options.setState((prev) => ({
         ...prev,
-        widgets: prev.widgets.map((w) => (w.id === widgetId ? { ...w, z_index: top + 1 } : w)),
+        widgets: prev.widgets.map((w) =>
+          w.id === widgetId ? { ...w, z_index: resolution.nextZIndex } : w
+        ),
       }));
     }
   };
 
   const commitStickyFront = (noteId: string) => {
+    const resolution = resolveWorkbenchLayerFront([...widgets(), ...stickyNotes()], noteId);
+    if (!resolution) {
+      return;
+    }
     setOptimisticFrontWidgetId(noteId);
-    const top = topZIndex();
-    options.setState((prev) => ({
-      ...prev,
-      stickyNotes: (prev.stickyNotes ?? []).map((item) =>
-        item.id === noteId && item.z_index < top
-          ? { ...item, z_index: top + 1, updated_at_unix_ms: Date.now() }
-          : item
-      ),
-    }));
+    if (!resolution.isTop) {
+      options.setState((prev) => ({
+        ...prev,
+        stickyNotes: (prev.stickyNotes ?? []).map((item) =>
+          item.id === noteId
+            ? { ...item, z_index: resolution.nextZIndex, updated_at_unix_ms: Date.now() }
+            : item
+        ),
+      }));
+    }
   };
 
   const commitMove = (widgetId: string, position: { x: number; y: number }) => {
@@ -1418,7 +1418,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     const workItems = [
       ...widgets(),
       ...stickyNotes().map((item) => stickyNoteAsNavigationWidget(item)),
-    ].sort(compareLayeredItemOrder);
+    ].sort(compareWorkbenchLayerRenderOrder);
     const target = findNearestWidget(
       workItems,
       current?.kind === 'widget' || current?.kind === 'sticky_note' ? current.id : null,
