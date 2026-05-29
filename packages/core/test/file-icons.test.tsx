@@ -268,6 +268,14 @@ describe('file icons', () => {
     expect(audioFromName).toContain('data-file-icon-kind="audio"');
   });
 
+  it('VideoFileIcon should use a dedicated purple accent instead of the product primary color', () => {
+    const html = renderToString(() => <VideoFileIcon class="w-4 h-4" />);
+
+    expect(html).toContain('color-mix(in srgb, #8b5cf6 86%, var(--foreground))');
+    expect(html).toContain('data-file-icon-kind="video"');
+    expect(html).not.toContain('var(--primary)');
+  });
+
   it('FileItemIcon should resolve special filenames and variants before generic category fallback', () => {
     const dockerHtml = renderItemIcon({
       id: 'Dockerfile',

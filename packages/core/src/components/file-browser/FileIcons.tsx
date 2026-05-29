@@ -58,6 +58,7 @@ const GENERIC_CODE_FILE_EXTENSIONS = new Set([
 const FILE_SHELL_PATH = 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z';
 const FILE_SHELL_CORNER_POINTS = '14 2 14 8 20 8';
 const CODE_BADGE_FONT_STACK = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const VIDEO_FILE_ACCENT = 'color-mix(in srgb, #8b5cf6 86%, var(--foreground))';
 const CODE_BADGE_TONE_COLOR: Record<CodeBadgeTone, string> = {
   warning: 'var(--warning)',
   primary: 'var(--primary)',
@@ -505,7 +506,7 @@ export const ImageFileIcon = (props: FileIconProps) => (
 
 // Video file icon
 export const VideoFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--primary)">
+  <FileShellIcon class={props.class} accent={VIDEO_FILE_ACCENT}>
     <g data-file-icon-kind="video">
       <rect
         x="6.75"
@@ -513,16 +514,16 @@ export const VideoFileIcon = (props: FileIconProps) => (
         width="10.5"
         height="6.25"
         rx="1.5"
-        fill="var(--primary)"
-        opacity="0.12"
-        stroke="var(--primary)"
+        fill={VIDEO_FILE_ACCENT}
+        opacity="0.14"
+        stroke={VIDEO_FILE_ACCENT}
         stroke-width="1.2"
       />
       <path
-        fill="var(--primary)"
+        fill={VIDEO_FILE_ACCENT}
         d="M10.75 13.7v2.85a.45.45 0 0 0 .68.39l2.45-1.43a.45.45 0 0 0 0-.78l-2.45-1.42a.45.45 0 0 0-.68.39z"
       />
-      <line x1="8" y1="19.5" x2="16" y2="19.5" stroke="var(--primary)" stroke-width="1.2" stroke-linecap="round" opacity="0.72" />
+      <line x1="8" y1="19.5" x2="16" y2="19.5" stroke={VIDEO_FILE_ACCENT} stroke-width="1.2" stroke-linecap="round" opacity="0.72" />
     </g>
   </FileShellIcon>
 );
