@@ -5,6 +5,8 @@ import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 export interface BottomBarProps {
   children?: JSX.Element;
   class?: string;
+  /** Height class, defaults to 'h-5' (20px). Use Tailwind height classes like 'h-7' (28px). */
+  height?: string;
 }
 
 /**
@@ -15,7 +17,8 @@ export function BottomBar(props: BottomBarProps) {
     <footer
       data-floe-shell-slot="bottom-bar"
       class={cn(
-        'h-5 shrink-0 flex items-center justify-between px-1.5',
+        props.height ?? 'h-5',
+        'shrink-0 flex items-center justify-between px-1.5',
         'bg-background border-t border-border',
         'text-[10px] text-muted-foreground font-mono',
         props.class

@@ -30,6 +30,8 @@ export interface ShellSlotClassNames {
   main?: string;
   terminalPanel?: string;
   bottomBar?: string;
+  /** Height class for the bottom bar, defaults to 'h-5' (20px). Use Tailwind height classes like 'h-7' (28px). */
+  bottomBarHeight?: string;
   mobileTabBar?: string;
 }
 
@@ -490,7 +492,7 @@ export function Shell(props: ShellProps) {
 
       {/* Bottom Bar / Mobile Tab Bar */}
       <Show when={!isMobile()}>
-        <BottomBar class={props.slotClassNames?.bottomBar}>{bottomBarContent()}</BottomBar>
+        <BottomBar class={props.slotClassNames?.bottomBar} height={props.slotClassNames?.bottomBarHeight}>{bottomBarContent()}</BottomBar>
       </Show>
       <Show when={isMobile() && activityItems().length > 0}>
         <MobileTabBar
