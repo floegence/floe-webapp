@@ -21,6 +21,8 @@ export {
   TypeScriptFileIcon,
   ShellScriptFileIcon,
   ImageFileIcon,
+  VideoFileIcon,
+  AudioFileIcon,
   DocumentFileIcon,
   ConfigFileIcon,
   StyleFileIcon,

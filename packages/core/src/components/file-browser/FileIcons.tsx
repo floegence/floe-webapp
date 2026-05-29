@@ -20,6 +20,8 @@ export interface ResolveFileItemIconOptions {
 }
 
 const IMAGE_FILE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp']);
+const VIDEO_FILE_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'm4v', 'ogv', 'mkv']);
+const AUDIO_FILE_EXTENSIONS = new Set(['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga', 'opus', 'flac']);
 const DOCUMENT_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf']);
 const CONFIG_FILE_EXTENSIONS = new Set(['json', 'yaml', 'yml', 'toml', 'xml', 'ini', 'env', 'config', 'cfg', 'conf', 'properties']);
 const STYLE_FILE_EXTENSIONS = new Set(['css', 'scss', 'sass', 'less', 'styl']);
@@ -501,6 +503,48 @@ export const ImageFileIcon = (props: FileIconProps) => (
   </FileShellIcon>
 );
 
+// Video file icon
+export const VideoFileIcon = (props: FileIconProps) => (
+  <FileShellIcon class={props.class} accent="var(--primary)">
+    <g data-file-icon-kind="video">
+      <rect
+        x="6.75"
+        y="12"
+        width="10.5"
+        height="6.25"
+        rx="1.5"
+        fill="var(--primary)"
+        opacity="0.12"
+        stroke="var(--primary)"
+        stroke-width="1.2"
+      />
+      <path
+        fill="var(--primary)"
+        d="M10.75 13.7v2.85a.45.45 0 0 0 .68.39l2.45-1.43a.45.45 0 0 0 0-.78l-2.45-1.42a.45.45 0 0 0-.68.39z"
+      />
+      <line x1="8" y1="19.5" x2="16" y2="19.5" stroke="var(--primary)" stroke-width="1.2" stroke-linecap="round" opacity="0.72" />
+    </g>
+  </FileShellIcon>
+);
+
+// Audio file icon
+export const AudioFileIcon = (props: FileIconProps) => (
+  <FileShellIcon class={props.class} accent="var(--info)">
+    <g data-file-icon-kind="audio">
+      <path
+        fill="none"
+        stroke="var(--info)"
+        stroke-width="1.45"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M9 16.25v-5.2l5.5-1.15v5.15"
+      />
+      <ellipse cx="8.2" cy="17.2" rx="1.75" ry="1.25" fill="var(--info)" opacity="0.2" stroke="var(--info)" stroke-width="1.1" />
+      <ellipse cx="13.7" cy="16" rx="1.75" ry="1.25" fill="var(--info)" opacity="0.2" stroke="var(--info)" stroke-width="1.1" />
+    </g>
+  </FileShellIcon>
+);
+
 // Document file icon (PDF, DOC, etc.)
 export const DocumentFileIcon = (props: FileIconProps) => (
   <FileShellIcon class={props.class} accent="var(--error)">
@@ -554,6 +598,14 @@ export function getFileIcon(extension?: string): FileIconComponent {
 
   if (normalizedExtension && IMAGE_FILE_EXTENSIONS.has(normalizedExtension)) {
     return ImageFileIcon;
+  }
+
+  if (normalizedExtension && VIDEO_FILE_EXTENSIONS.has(normalizedExtension)) {
+    return VideoFileIcon;
+  }
+
+  if (normalizedExtension && AUDIO_FILE_EXTENSIONS.has(normalizedExtension)) {
+    return AudioFileIcon;
   }
 
   if (normalizedExtension && DOCUMENT_FILE_EXTENSIONS.has(normalizedExtension)) {

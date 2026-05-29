@@ -4,6 +4,7 @@ import type { FileItem } from '../src/components/file-browser/types';
 import {
   CodeFileIcon,
   ConfigFileIcon,
+  AudioFileIcon,
   BrokenSymlinkIcon,
   DocumentFileIcon,
   FileIcon,
@@ -18,6 +19,7 @@ import {
   SymlinkFolderIcon,
   SymlinkFolderOpenIcon,
   TypeScriptFileIcon,
+  VideoFileIcon,
   getFileIcon,
   resolveFileItemIcon,
 } from '../src/components/file-browser/FileIcons';
@@ -92,6 +94,10 @@ describe('file icons', () => {
 
   it('getFileIcon should preserve non-code category icons and generic code fallback', () => {
     expect(getFileIcon('png')).toBe(ImageFileIcon);
+    expect(getFileIcon('mp4')).toBe(VideoFileIcon);
+    expect(getFileIcon('webm')).toBe(VideoFileIcon);
+    expect(getFileIcon('mp3')).toBe(AudioFileIcon);
+    expect(getFileIcon('flac')).toBe(AudioFileIcon);
     expect(getFileIcon('pdf')).toBe(DocumentFileIcon);
     expect(getFileIcon('json')).toBe(ConfigFileIcon);
     expect(getFileIcon('css')).toBe(StyleFileIcon);
@@ -226,6 +232,40 @@ describe('file icons', () => {
     });
 
     expectCodeBadge(html, 'TS', 'primary');
+  });
+
+  it('FileItemIcon should render dedicated media icons from extension metadata or filenames', () => {
+    const videoFromExtension = renderItemIcon({
+      id: 'trailer.m4v',
+      name: 'trailer.m4v',
+      type: 'file',
+      path: '/trailer.m4v',
+      extension: 'm4v',
+    });
+    const videoFromName = renderItemIcon({
+      id: 'demo.webm',
+      name: 'demo.webm',
+      type: 'file',
+      path: '/demo.webm',
+    });
+    const audioFromExtension = renderItemIcon({
+      id: 'interview.m4a',
+      name: 'interview.m4a',
+      type: 'file',
+      path: '/interview.m4a',
+      extension: 'm4a',
+    });
+    const audioFromName = renderItemIcon({
+      id: 'mix.opus',
+      name: 'mix.opus',
+      type: 'file',
+      path: '/mix.opus',
+    });
+
+    expect(videoFromExtension).toContain('data-file-icon-kind="video"');
+    expect(videoFromName).toContain('data-file-icon-kind="video"');
+    expect(audioFromExtension).toContain('data-file-icon-kind="audio"');
+    expect(audioFromName).toContain('data-file-icon-kind="audio"');
   });
 
   it('FileItemIcon should resolve special filenames and variants before generic category fallback', () => {
