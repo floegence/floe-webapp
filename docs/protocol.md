@@ -101,6 +101,7 @@ Best practice:
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
 - `@floegence/floe-webapp-boot` is the recommended first-party place for browser bootstrap helpers such as `ArtifactSource` and artifact-first reconnect config assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
+- Current docs target `@floegence/flowersec-core@0.19.9`; package manifests should use `^0.19.9` or a later compatible release when relying on canonical `connect_artifact` helpers.
 
 Notes:
 
@@ -218,6 +219,13 @@ Errors:
 
 - `ProtocolNotConnectedError` when the provider is currently detached from a live RPC client
 - `RpcError` for transport errors and remote errors
+
+Notify semantics:
+
+- `useRpc().notify()` is strict. It throws `ProtocolNotConnectedError` when no live RPC client is attached, so product flows that must observe delivery failures can fail fast instead of silently losing state.
+- `useRpc().notifyBestEffort()` keeps the legacy detached-drop behavior. Use it only for telemetry, presence hints, opportunistic cache invalidation, or other signals where losing the notification while disconnected is acceptable.
+- Both notify helpers still throw `RpcError` for non-detached transport failures. Best-effort only relaxes the detached state, not active transport errors.
+- Do not use `notifyBestEffort()` for state-changing commands, grant/session lifecycle events, writes, or user-visible workflow transitions; those should use `notify()` or an RPC call whose failure is surfaced to the product.
 
 Reconnect behavior:
 

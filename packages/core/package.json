@@ -1,11 +1,14 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.36.66",
+  "version": "0.36.67",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/floegence/floe-webapp",

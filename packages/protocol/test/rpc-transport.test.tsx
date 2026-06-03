@@ -2,7 +2,7 @@ import { createComponent, createRoot } from 'solid-js';
 import { describe, expect, it, vi } from 'vitest';
 import { ProtocolProvider } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
-import { ProtocolNotConnectedError, useRpc } from '../src/rpc';
+import { ProtocolNotConnectedError, RpcError, useRpc } from '../src/rpc';
 
 type ReconnectState = {
   status: 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -44,6 +44,7 @@ vi.mock('@floegence/flowersec-core/reconnect', () => {
 
 class FakeRpcClient {
   private readonly handlers = new Map<number, Set<(payload: unknown) => void>>();
+  notifyImpl: (typeId: number, payload: unknown) => Promise<void> | void = () => {};
 
   onNotify(typeId: number, handler: (payload: unknown) => void): () => void {
     const tid = typeId >>> 0;
@@ -62,7 +63,9 @@ class FakeRpcClient {
     return { payload: { typeId, payload } };
   }
 
-  async notify(): Promise<void> {}
+  async notify(typeId: number, payload: unknown): Promise<void> {
+    await this.notifyImpl(typeId, payload);
+  }
 
   trigger(typeId: number, payload: unknown): void {
     const set = this.handlers.get(typeId >>> 0);
@@ -153,6 +156,58 @@ describe('useRpc stable transport', () => {
     const { rpc, dispose } = mountRpcHarness();
     try {
       await expect(rpc.call(1, { ping: true })).rejects.toBeInstanceOf(ProtocolNotConnectedError);
+    } finally {
+      dispose();
+    }
+  });
+
+  it('surfaces strict detached notify as ProtocolNotConnectedError', async () => {
+    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
+    // @ts-expect-error -- test-only mock helper
+    reconnectMod.__mock.reset();
+
+    const { rpc, dispose } = mountRpcHarness();
+    try {
+      await expect(rpc.notify(2, { changed: true })).rejects.toBeInstanceOf(ProtocolNotConnectedError);
+    } finally {
+      dispose();
+    }
+  });
+
+  it('keeps best-effort detached notify silent', async () => {
+    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
+    // @ts-expect-error -- test-only mock helper
+    reconnectMod.__mock.reset();
+
+    const { rpc, dispose } = mountRpcHarness();
+    try {
+      await expect(rpc.notifyBestEffort(3, { changed: true })).resolves.toBeUndefined();
+    } finally {
+      dispose();
+    }
+  });
+
+  it('wraps connected notify transport errors as RpcError', async () => {
+    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
+    // @ts-expect-error -- test-only mock helper
+    reconnectMod.__mock.reset();
+
+    const client = new FakeRpcClient();
+    client.notifyImpl = () => {
+      throw new Error('socket write failed');
+    };
+
+    const { rpc, dispose } = mountRpcHarness();
+    try {
+      // @ts-expect-error -- test-only mock helper
+      reconnectMod.__mock.emit({ status: 'connected', error: null, client: createClient(client) });
+
+      await expect(rpc.notify(4, { changed: true })).rejects.toMatchObject({
+        name: 'RpcError',
+        code: -1,
+        typeId: 4,
+      });
+      await expect(rpc.notifyBestEffort(5, { changed: true })).rejects.toBeInstanceOf(RpcError);
     } finally {
       dispose();
     }

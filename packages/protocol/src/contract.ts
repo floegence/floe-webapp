@@ -12,7 +12,10 @@ export interface RpcClientLike {
 
 export interface RpcHelpers {
   call: <Req, Res>(typeId: number, payload: Req) => Promise<Res>;
+  /** Strict notification: detached transports fail with ProtocolNotConnectedError. */
   notify: <Req>(typeId: number, payload: Req) => Promise<void>;
+  /** Best-effort notification: detached transports are treated as already dropped. */
+  notifyBestEffort: <Req>(typeId: number, payload: Req) => Promise<void>;
   onNotify: <Payload>(typeId: number, handler: (payload: Payload) => void) => () => void;
 }
 

@@ -18,5 +18,8 @@ describe('protocol docs', () => {
     expect(doc).toContain('connect_artifact');
     expect(doc).toContain('/v1/connect/artifact');
     expect(doc).toContain('/v1/connect/artifact/entry');
+    expect(doc).toContain('notifyBestEffort');
+    expect(doc).toContain('ProtocolNotConnectedError');
+    expect(doc).toContain('RpcError');
   });
 });

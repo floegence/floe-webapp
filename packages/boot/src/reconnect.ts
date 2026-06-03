@@ -28,13 +28,38 @@ export type DirectArtifactReconnectOptions = SharedArtifactReconnectOptions &
     connect?: DirectArtifactConnectOptions;
   }>;
 
+export class FixedArtifactAutoReconnectError extends Error {
+  constructor() {
+    super(
+      'Fixed artifact sources cannot be used with enabled autoReconnect unless allowAutoReconnect is explicitly set.',
+    );
+    this.name = 'FixedArtifactAutoReconnectError';
+  }
+}
+
 function createGetArtifact(artifactSource: ArtifactSource) {
   return async (ctx: ArtifactRequestContext) => artifactSource.getArtifact(ctx);
+}
+
+function isAutoReconnectEnabled(autoReconnect: AutoReconnectConfig | undefined): boolean {
+  return autoReconnect?.enabled === true;
+}
+
+function assertArtifactReconnectPolicy(options: SharedArtifactReconnectOptions): void {
+  if (
+    options.artifactSource.kind === 'fixed' &&
+    isAutoReconnectEnabled(options.autoReconnect) &&
+    options.artifactSource.metadata?.allowAutoReconnect !== true
+  ) {
+    throw new FixedArtifactAutoReconnectError();
+  }
 }
 
 export function createArtifactTunnelReconnectConfig(
   options: TunnelArtifactReconnectOptions,
 ): TunnelBrowserReconnectConfig {
+  assertArtifactReconnectPolicy(options);
+
   return {
     mode: 'tunnel',
     getArtifact: createGetArtifact(options.artifactSource),
@@ -60,6 +85,8 @@ export function createProxyRuntimeTunnelReconnectConfig(
 export function createArtifactDirectReconnectConfig(
   options: DirectArtifactReconnectOptions,
 ): DirectBrowserReconnectConfig {
+  assertArtifactReconnectPolicy(options);
+
   return {
     mode: 'direct',
     getArtifact: createGetArtifact(options.artifactSource),

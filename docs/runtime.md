@@ -11,6 +11,8 @@ Best practice:
 - Use `@floegence/floe-webapp-boot` for first-party browser bootstrap concerns such as `ArtifactSource`, shared reconnect config assembly, and shared `proxy.runtime` scope validation.
 - For proxy runtime mode (Service Worker + HTML injection + WS patch), keep the runtime itself integrated directly via `@floegence/flowersec-core/proxy`.
 
+This document is aligned with `@floegence/flowersec-core@0.19.9`. Consumers should depend on `^0.19.9` or a later compatible release before adopting the artifact-first reconnect contracts described below.
+
 ---
 
 ## @floegence/floe-webapp-boot
@@ -105,6 +107,37 @@ const reconnectConfig = createProxyRuntimeTunnelReconnectConfig({
 - product-owned factories (`createArtifactSourceFromFactory`)
 
 This keeps `connect_artifact` acquisition reusable while leaving product policy outside the shared package.
+
+### Fixed artifacts and auto reconnect
+
+Fixed artifact sources are for single-use demos, tests, or product flows that already own artifact freshness outside this package. A fixed artifact is reused verbatim, so `createArtifactTunnelReconnectConfig()` and `createArtifactDirectReconnectConfig()` reject `artifactSource.kind === 'fixed'` when `autoReconnect.enabled` is true.
+
+That rejection is intentional: auto reconnect normally means the browser can request a fresh artifact for each reconnect attempt. A fixed artifact cannot refresh expiry, one-time grants, trace correlation, or server-side revocation state by itself.
+
+Use a controlplane-backed or factory source for normal reconnecting production flows:
+
+```ts
+const artifactSource = createEntryControlplaneArtifactSource({
+  baseUrl: 'https://region.example.com',
+  endpointId: 'env_demo',
+  entryTicket: '<entry-ticket>',
+});
+
+const reconnectConfig = createArtifactTunnelReconnectConfig({
+  artifactSource,
+  autoReconnect: { enabled: true },
+});
+```
+
+Only opt in when the product explicitly guarantees that reusing the exact artifact across reconnect attempts is valid and within its security model:
+
+```ts
+const artifactSource = createFixedArtifactSource(artifact, {
+  allowAutoReconnect: true,
+});
+```
+
+`allowAutoReconnect` is an escape hatch, not the production default. Prefer a controlplane-backed source or `createArtifactSourceFromFactory()` for products that need reconnect after ticket rotation, grant expiry, user changes, or endpoint rebinding.
 
 ---
 

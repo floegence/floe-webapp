@@ -80,4 +80,15 @@ describe('boot artifact sources', () => {
     expect(factorySource.kind).toBe('factory');
     expect(factory).toHaveBeenCalledWith({ traceId: 'trace-1' });
   });
+
+  it('marks fixed artifact autoReconnect opt-in explicitly', async () => {
+    const artifact = { v: 1, transport: 'tunnel' } as const;
+
+    const mod = await import('../src/index');
+    const defaultFixed = mod.createFixedArtifactSource(artifact as never);
+    const optedInFixed = mod.createFixedArtifactSource(artifact as never, { allowAutoReconnect: true });
+
+    expect(defaultFixed.metadata?.allowAutoReconnect).toBeUndefined();
+    expect(optedInFixed.metadata).toMatchObject({ allowAutoReconnect: true });
+  });
 });

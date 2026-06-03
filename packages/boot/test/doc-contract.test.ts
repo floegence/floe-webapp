@@ -15,5 +15,8 @@ describe('boot docs', () => {
     expect(doc).toContain('createEntryControlplaneArtifactSource');
     expect(doc).toContain('createProxyRuntimeTunnelReconnectConfig');
     expect(doc).toContain('@floegence/flowersec-core/proxy');
+    expect(doc).toContain('Fixed artifacts and auto reconnect');
+    expect(doc).toContain('allowAutoReconnect');
+    expect(doc).toContain('createFixedArtifactSource');
   });
 });

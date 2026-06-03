@@ -66,4 +66,73 @@ describe('boot reconnect helpers', () => {
     expect(config.connect).toMatchObject({ keepaliveIntervalMs: 10_000 });
     expect(config.connect?.scopeResolvers).toBeUndefined();
   });
+
+  it('rejects fixed artifact sources when autoReconnect is enabled by default', async () => {
+    const mod = await import('../src/index');
+    const artifactSource = mod.createFixedArtifactSource({ v: 1, transport: 'tunnel' } as never);
+
+    expect(() =>
+      mod.createArtifactTunnelReconnectConfig({
+        artifactSource,
+        autoReconnect: { enabled: true },
+      }),
+    ).toThrow(mod.FixedArtifactAutoReconnectError);
+  });
+
+  it('rejects direct fixed artifact sources when autoReconnect is enabled by default', async () => {
+    const mod = await import('../src/index');
+    const artifactSource = mod.createFixedArtifactSource({ v: 1, transport: 'direct' } as never);
+
+    expect(() =>
+      mod.createArtifactDirectReconnectConfig({
+        artifactSource,
+        autoReconnect: { enabled: true },
+      }),
+    ).toThrow(mod.FixedArtifactAutoReconnectError);
+  });
+
+  it('allows fixed artifact autoReconnect only with explicit opt-in', async () => {
+    const mod = await import('../src/index');
+    const artifactSource = mod.createFixedArtifactSource(
+      { v: 1, transport: 'tunnel' } as never,
+      { allowAutoReconnect: true },
+    );
+
+    const config = mod.createArtifactTunnelReconnectConfig({
+      artifactSource,
+      autoReconnect: { enabled: true },
+    });
+
+    expect(config.mode).toBe('tunnel');
+    expect(config.autoReconnect).toMatchObject({ enabled: true });
+  });
+
+  it('allows direct fixed artifact autoReconnect only with explicit opt-in', async () => {
+    const mod = await import('../src/index');
+    const artifactSource = mod.createFixedArtifactSource(
+      { v: 1, transport: 'direct' } as never,
+      { allowAutoReconnect: true },
+    );
+
+    const config = mod.createArtifactDirectReconnectConfig({
+      artifactSource,
+      autoReconnect: { enabled: true },
+    });
+
+    expect(config.mode).toBe('direct');
+    expect(config.autoReconnect).toMatchObject({ enabled: true });
+  });
+
+  it('keeps dynamic artifact sources compatible with enabled autoReconnect', async () => {
+    const mod = await import('../src/index');
+    const artifactSource = mod.createArtifactSourceFromFactory(async () => ({ v: 1, transport: 'direct' }) as never);
+
+    const config = mod.createArtifactDirectReconnectConfig({
+      artifactSource,
+      autoReconnect: { enabled: true },
+    });
+
+    expect(config.mode).toBe('direct');
+    expect(config.autoReconnect).toMatchObject({ enabled: true });
+  });
 });

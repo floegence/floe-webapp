@@ -12,13 +12,22 @@ export type ArtifactRequestContext = Readonly<{
 
 export type ArtifactSourceKind = 'controlplane' | 'entry_controlplane' | 'fixed' | 'factory';
 
+export type ArtifactSourceMetadata = Readonly<{
+  allowAutoReconnect?: boolean;
+}>;
+
 export type ArtifactSource = Readonly<{
   kind: ArtifactSourceKind;
+  metadata?: ArtifactSourceMetadata;
   getArtifact: (ctx: ArtifactRequestContext) => Promise<ConnectArtifact>;
 }>;
 
 type ArtifactRequestCorrelation = Readonly<{
   traceId?: string;
+}>;
+
+export type FixedArtifactSourceOptions = Readonly<{
+  allowAutoReconnect?: boolean;
 }>;
 
 function resolveCorrelation(
@@ -33,15 +42,24 @@ function resolveCorrelation(
 export function createArtifactSourceFromFactory(
   getArtifact: (ctx: ArtifactRequestContext) => Promise<ConnectArtifact>,
   kind: ArtifactSourceKind = 'factory',
+  metadata?: ArtifactSourceMetadata,
 ): ArtifactSource {
   return {
     kind,
+    ...(metadata === undefined ? {} : { metadata }),
     getArtifact,
   };
 }
 
-export function createFixedArtifactSource(artifact: ConnectArtifact): ArtifactSource {
-  return createArtifactSourceFromFactory(async () => artifact, 'fixed');
+export function createFixedArtifactSource(
+  artifact: ConnectArtifact,
+  options?: FixedArtifactSourceOptions,
+): ArtifactSource {
+  return createArtifactSourceFromFactory(
+    async () => artifact,
+    'fixed',
+    options?.allowAutoReconnect ? { allowAutoReconnect: true } : undefined,
+  );
 }
 
 export function createControlplaneArtifactSource(config: ConnectArtifactRequestConfig): ArtifactSource {

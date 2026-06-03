@@ -52,14 +52,29 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     return response.payload as Res;
   };
 
-  const notify: RpcHelpers['notify'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+  const runNotify = async <Req>(
+    typeId: number,
+    payload: Req,
+    options: { detached: 'throw' | 'ignore' },
+  ): Promise<void> => {
     const transport = protocol.rpcTransport();
     try {
       await transport.rpc.notify(typeId, payload);
     } catch (err) {
-      if (err instanceof RpcProxyDetachedError) return;
+      if (err instanceof RpcProxyDetachedError) {
+        if (options.detached === 'ignore') return;
+        throw new ProtocolNotConnectedError();
+      }
       throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
     }
+  };
+
+  const notify: RpcHelpers['notify'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+    await runNotify(typeId, payload, { detached: 'throw' });
+  };
+
+  const notifyBestEffort: RpcHelpers['notifyBestEffort'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+    await runNotify(typeId, payload, { detached: 'ignore' });
   };
 
   const onNotify: RpcHelpers['onNotify'] = <Payload>(
@@ -73,7 +88,7 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     });
   };
 
-  return { call, notify, onNotify };
+  return { call, notify, notifyBestEffort, onNotify };
 }
 
 export type UseRpcOptions<TApi extends object> = {

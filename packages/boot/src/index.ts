@@ -8,6 +8,8 @@ export type { WaitForMessageOptions } from './messaging';
 export { postMessageToOrigins, waitForMessage } from './messaging';
 export { getSessionStorage, removeSessionStorage, setSessionStorage } from './storage';
 export type {
+  ArtifactSourceMetadata,
+  FixedArtifactSourceOptions,
   ArtifactRequestContext,
   ArtifactSource,
   ArtifactSourceKind,
@@ -26,6 +28,7 @@ export {
   createArtifactDirectReconnectConfig,
   createArtifactTunnelReconnectConfig,
   createProxyRuntimeTunnelReconnectConfig,
+  FixedArtifactAutoReconnectError,
 } from './reconnect';
 export type { ScopeEnvelope, ScopeResolver, ScopeResolverMap } from './scope';
 export {
