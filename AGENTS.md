@@ -1,5 +1,13 @@
 # Floe Webapp Workbench Interaction Contract
 
+## Git Merge Semantics
+
+- Resolve merge and rebase conflicts by preserving the semantic intent of all involved branches, not just by producing text that compiles.
+- Before resolving conflicts, review the substantive commits on each side for new features, bug fixes, behavior changes, tests, and user-facing workflows.
+- Do not drop, overwrite, or silently weaken current or historical functionality unless the user explicitly approves that product decision.
+- If two branches introduce incompatible behavior, surface the product or architecture tradeoff instead of choosing one side silently.
+- After resolving conflicts, run focused checks for the affected behavior in addition to the repository quality gate.
+
 ## Workbench Wheel Ownership
 
 - Inside Workbench, wheel / trackpad scrolling belongs to the canvas by default. Blank canvas areas and unselected widget bounds may zoom the canvas.
