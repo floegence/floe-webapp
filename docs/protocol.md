@@ -101,7 +101,7 @@ Best practice:
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
 - `@floegence/floe-webapp-boot` is the recommended first-party place for browser bootstrap helpers such as `ArtifactSource` and artifact-first reconnect config assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
-- Current docs target `@floegence/flowersec-core@0.19.9`; package manifests should use `^0.19.9` or a later compatible release when relying on canonical `connect_artifact` helpers.
+- Current docs target `@floegence/flowersec-core@0.19.10`; package manifests should use `^0.19.10` or a later compatible release when relying on canonical `connect_artifact` helpers.
 
 Notes:
 
