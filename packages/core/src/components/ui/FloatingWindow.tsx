@@ -7,6 +7,7 @@ import {
   createEffect,
   onCleanup,
   onMount,
+  untrack,
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
@@ -155,8 +156,16 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   const setCommittedRect = (rect: FloatingWindowRect) => {
     liveRect = rect;
-    setPosition({ x: rect.x, y: rect.y });
-    setSize({ width: rect.width, height: rect.height });
+    setPosition((current) => (
+      current.x === rect.x && current.y === rect.y
+        ? current
+        : { x: rect.x, y: rect.y }
+    ));
+    setSize((current) => (
+      current.width === rect.width && current.height === rect.height
+        ? current
+        : { width: rect.width, height: rect.height }
+    ));
   };
 
   const focusWindowRoot = () => {
@@ -292,7 +301,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   createEffect(() => {
     if (!props.open || !hasOpenedOnce || activePointerId !== null) return;
     viewportInsets();
-    syncRectToViewport({ center: false });
+    untrack(() => syncRectToViewport({ center: false }));
   });
 
   createEffect(() => {
