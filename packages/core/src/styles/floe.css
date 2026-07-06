@@ -429,6 +429,9 @@
   .floe-floating-presence {
     --floe-floating-enter-duration: 140ms;
     --floe-floating-exit-duration: 110ms;
+    --floe-floating-presence-x: 0;
+    --floe-floating-presence-y: 0;
+    --floe-floating-presence-scale: 1;
     --floe-floating-enter-x: 0;
     --floe-floating-enter-y: 0;
     --floe-floating-exit-x: 0;
@@ -436,31 +439,30 @@
     --floe-floating-enter-scale: 0.98;
     --floe-floating-exit-scale: 0.985;
     opacity: 1;
-    translate: 0 0;
-    scale: 1;
+    transform: translate(var(--floe-floating-presence-x), var(--floe-floating-presence-y)) scale(var(--floe-floating-presence-scale));
     transform-origin: var(--floe-floating-origin, center);
     transition:
       opacity var(--floe-floating-enter-duration) ease-out,
-      translate var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.8, 0.2, 1),
-      scale var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
-    will-change: opacity, translate, scale;
+      transform var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: opacity, transform;
   }
 
   .floe-floating-presence[data-floating-presence='entering'] {
     opacity: 0;
-    translate: var(--floe-floating-enter-x) var(--floe-floating-enter-y);
-    scale: var(--floe-floating-enter-scale);
+    --floe-floating-presence-x: var(--floe-floating-enter-x);
+    --floe-floating-presence-y: var(--floe-floating-enter-y);
+    --floe-floating-presence-scale: var(--floe-floating-enter-scale);
   }
 
   .floe-floating-presence[data-floating-presence='exiting'] {
     opacity: 0;
     pointer-events: none;
-    translate: var(--floe-floating-exit-x) var(--floe-floating-exit-y);
-    scale: var(--floe-floating-exit-scale);
+    --floe-floating-presence-x: var(--floe-floating-exit-x);
+    --floe-floating-presence-y: var(--floe-floating-exit-y);
+    --floe-floating-presence-scale: var(--floe-floating-exit-scale);
     transition:
       opacity var(--floe-floating-exit-duration) ease-in,
-      translate var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 1, 1),
-      scale var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 1, 1);
+      transform var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 1, 1);
   }
 
   .floe-floating-presence--suspended {
@@ -563,8 +565,9 @@
   @media (prefers-reduced-motion: reduce) {
     .floe-floating-presence {
       transition: opacity 1ms linear;
-      translate: none !important;
-      scale: none !important;
+      --floe-floating-presence-x: 0 !important;
+      --floe-floating-presence-y: 0 !important;
+      --floe-floating-presence-scale: 1 !important;
       will-change: opacity;
     }
   }

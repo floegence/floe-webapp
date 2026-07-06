@@ -170,4 +170,24 @@ describe('interaction architecture guard', () => {
     expect(notesModelSrc).toContain('options.controller.setViewport(preview);');
     expect(workbenchModelSrc).toContain('cancelViewportNavigation');
   });
+
+  it('keeps floating presence motion composable with Tailwind positioning utilities', () => {
+    const stylesSrc = read('../src/styles/floe.css');
+    const commandPaletteSrc = read('../src/components/ui/CommandPalette.tsx');
+    const presenceBlock = stylesSrc.slice(
+      stylesSrc.indexOf('  .floe-floating-presence {'),
+      stylesSrc.indexOf("  .floe-floating-presence[data-floating-presence='entering']")
+    );
+
+    expect(commandPaletteSrc).toContain("'fixed left-1/2 top-[20%] z-50 -translate-x-1/2'");
+    expect(commandPaletteSrc).toContain("'floe-floating-presence floe-floating-dialog-panel'");
+
+    expect(stylesSrc).toContain(
+      'transform: translate(var(--floe-floating-presence-x), var(--floe-floating-presence-y)) scale(var(--floe-floating-presence-scale));'
+    );
+    expect(presenceBlock).not.toContain('\n    translate:');
+    expect(presenceBlock).not.toContain('\n    scale:');
+    expect(stylesSrc).not.toContain('translate: none !important;');
+    expect(stylesSrc).not.toContain('scale: none !important;');
+  });
 });
