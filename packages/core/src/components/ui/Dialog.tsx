@@ -24,6 +24,7 @@ import {
   resolveSurfacePortalMount,
   type SurfacePortalBoundaryRect,
 } from './surfacePortalScope';
+import { createFloatingPresence } from './floatingPresence';
 
 export interface DialogProps {
   open: boolean;
@@ -79,6 +80,12 @@ export function Dialog(props: DialogProps) {
   const [ownerAnchorReadyVersion, setOwnerAnchorReadyVersion] = createSignal(0);
   const [surfaceGeometryVersion, setSurfaceGeometryVersion] = createSignal(0);
   const isMountedOpen = () => props.open && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
+  const dialogPresence = createFloatingPresence({
+    open: isMountedOpen,
+    exitDurationMs: 120,
+  });
+  const isPresenceMounted = () =>
+    dialogPresence.mounted() && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
   const setDialogOwnerAnchor = (element: HTMLElement): void => {
     setOwnerAnchor(element);
     scheduleDialogOwnerAnchorReady(() => {
@@ -88,7 +95,7 @@ export function Dialog(props: DialogProps) {
     });
   };
   const surfaceHost = createMemo<ResolvedDialogSurfaceHost>(() =>
-    isMountedOpen()
+    isPresenceMounted()
       ? resolveSurfacePortalHost({ owner: ownerAnchor() })
       : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
@@ -117,7 +124,7 @@ export function Dialog(props: DialogProps) {
 
   createEffect(() => {
     const currentHost = surfaceHost();
-    if (!isMountedOpen() || !isSurfacePortalMode(currentHost) || typeof window === 'undefined') {
+    if (!isPresenceMounted() || !isSurfacePortalMode(currentHost) || typeof window === 'undefined') {
       return;
     }
 
@@ -182,14 +189,17 @@ export function Dialog(props: DialogProps) {
         data-floe-dialog-owner-anchor={baseId}
         style={DIALOG_OWNER_ANCHOR_STYLE}
       />
-      <Show when={isMountedOpen()}>
+      <Show when={isPresenceMounted()}>
         <Portal mount={portalMount()}>
           <div
             data-floe-dialog-overlay-root={baseId}
             data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
+            data-floating-presence={dialogPresence.state()}
+            aria-hidden={dialogPresence.exiting() ? 'true' : undefined}
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
             class={cn(
-              isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4'
+              isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4',
+              dialogPresence.exiting() && 'pointer-events-none'
             )}
             style={
               isSurfaceMode()
@@ -206,8 +216,9 @@ export function Dialog(props: DialogProps) {
             <div
               data-floe-dialog-backdrop={baseId}
               {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
+              data-floating-presence={dialogPresence.state()}
               class={cn(
-                'absolute inset-0 cursor-pointer animate-in fade-in',
+                'absolute inset-0 cursor-pointer floe-floating-presence floe-floating-backdrop',
                 isSurfaceMode()
                   ? 'bg-background/72 backdrop-blur-[2px]'
                   : 'bg-background/80 backdrop-blur-sm'
@@ -227,10 +238,11 @@ export function Dialog(props: DialogProps) {
                     : 'w-full max-w-md max-h-[85vh]',
                   'bg-card text-card-foreground rounded-md shadow-lg',
                   'border border-border',
-                  'animate-in fade-in zoom-in-95',
+                  'floe-floating-presence floe-floating-dialog-panel',
                   'flex flex-col',
                   props.class
                 )}
+                data-floating-presence={dialogPresence.state()}
                 role="dialog"
                 aria-modal={isSurfaceMode() ? undefined : 'true'}
                 aria-labelledby={props.title ? titleId() : undefined}

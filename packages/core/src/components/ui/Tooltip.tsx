@@ -1,5 +1,6 @@
 import { Show, createSignal, onCleanup, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { createFloatingPresence } from './floatingPresence';
 
 export interface TooltipProps {
   content: string | JSX.Element;
@@ -14,6 +15,10 @@ export interface TooltipProps {
  */
 export function Tooltip(props: TooltipProps) {
   const [visible, setVisible] = createSignal(false);
+  const tooltipPresence = createFloatingPresence({
+    open: visible,
+    exitDurationMs: 80,
+  });
   let timeout: ReturnType<typeof setTimeout> | undefined;
 
   onCleanup(() => {
@@ -64,16 +69,18 @@ export function Tooltip(props: TooltipProps) {
       onFocusOut={hide}
     >
       {props.children}
-      <Show when={visible()}>
+      <Show when={tooltipPresence.mounted()}>
         <div
           class={cn(
             'absolute z-50 px-2 py-1',
             'bg-popover text-popover-foreground text-xs rounded shadow-md',
             'whitespace-nowrap',
-            'animate-in fade-in zoom-in-95',
+            'floe-floating-presence floe-floating-tooltip',
             placementStyles[props.placement ?? 'top'],
             props.class
           )}
+          data-floating-presence={tooltipPresence.state()}
+          aria-hidden={tooltipPresence.exiting() ? 'true' : undefined}
           role="tooltip"
         >
           {props.content}

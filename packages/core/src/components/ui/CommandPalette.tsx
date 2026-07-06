@@ -6,6 +6,7 @@ import { Search } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { matchKeybind } from '../../utils/keybind';
+import { createFloatingPresence } from './floatingPresence';
 
 /**
  * Command palette / search modal
@@ -16,6 +17,10 @@ export function CommandPalette() {
   let inputRef: HTMLInputElement | undefined;
   let rootRef: HTMLDivElement | undefined;
   const [selectedIndex, setSelectedIndex] = createSignal(0);
+  const palettePresence = createFloatingPresence({
+    open: command.isOpen,
+    exitDurationMs: 120,
+  });
 
   useOverlayMask({
     open: command.isOpen,
@@ -91,11 +96,13 @@ export function CommandPalette() {
   });
 
   return (
-    <Show when={command.isOpen()}>
+    <Show when={palettePresence.mounted()}>
       <Portal>
         {/* Backdrop */}
         <div
-          class="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm animate-in fade-in"
+          class="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm floe-floating-presence floe-floating-backdrop"
+          data-floating-presence={palettePresence.state()}
+          aria-hidden={palettePresence.exiting() ? 'true' : undefined}
           onClick={() => command.close()}
         />
 
@@ -107,9 +114,11 @@ export function CommandPalette() {
             'w-full max-w-xl',
             'bg-popover text-popover-foreground rounded-lg shadow-2xl',
             'border border-border',
-            'animate-in fade-in slide-in-from-top-4',
+            'floe-floating-presence floe-floating-dialog-panel',
             'overflow-hidden'
           )}
+          data-floating-presence={palettePresence.state()}
+          aria-hidden={palettePresence.exiting() ? 'true' : undefined}
           onKeyDown={handleKeyDown}
         >
           {/* Search input */}

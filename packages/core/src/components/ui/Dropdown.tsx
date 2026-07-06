@@ -20,6 +20,7 @@ import {
   resolveSurfacePortalMount,
   type ResolvedSurfacePortalHost,
 } from './surfacePortalScope';
+import { createFloatingPresence } from './floatingPresence';
 
 export interface DropdownItem {
   id: string;
@@ -95,13 +96,17 @@ export function resolveDropdownTriggerKeyAction(
  */
 export function Dropdown(props: DropdownProps) {
   const [open, setOpen] = createSignal(false);
+  const menuPresence = createFloatingPresence({
+    open,
+    exitDurationMs: 100,
+  });
   const [menuPosition, setMenuPosition] = createSignal({ x: -9999, y: -9999 });
   let triggerRef: HTMLDivElement | undefined;
   let menuRef: HTMLDivElement | undefined;
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
   const menuId = `${dropdownId}-menu`;
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
-    open()
+    menuPresence.mounted()
       ? resolveSurfacePortalHost()
       : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
@@ -128,10 +133,11 @@ export function Dropdown(props: DropdownProps) {
 
   // Close on click outside (including portal-rendered submenus)
   createEffect(() => {
-    if (!open()) {
+    if (!menuPresence.mounted()) {
       setMenuPosition({ x: -9999, y: -9999 });
       return;
     }
+    if (!open()) return;
 
     const handleClickOutside = (e: PointerEvent) => {
       const target = e.target as HTMLElement | null;
@@ -258,7 +264,7 @@ export function Dropdown(props: DropdownProps) {
       </div>
 
       {/* Menu - rendered via Portal */}
-      <Show when={open()}>
+      <Show when={menuPresence.mounted()}>
         <Portal mount={portalLayout.mount()}>
           <div
             ref={menuRef}
@@ -268,9 +274,11 @@ export function Dropdown(props: DropdownProps) {
                 : 'fixed z-50 min-w-36 py-0.5',
               'bg-popover text-popover-foreground',
               'rounded border border-border shadow-md',
-              'animate-in fade-in slide-in-from-top-2'
+              'floe-floating-presence floe-floating-menu'
             )}
             data-floe-dropdown={dropdownId}
+            data-floating-presence={menuPresence.state()}
+            aria-hidden={menuPresence.exiting() ? 'true' : undefined}
             {...{
               [LOCAL_INTERACTION_SURFACE_ATTR]: portalLayout.isSurfaceMode() ? 'true' : undefined,
             }}
@@ -317,6 +325,12 @@ interface DropdownMenuItemProps {
 
 function DropdownMenuItem(props: DropdownMenuItemProps) {
   const [submenuOpen, setSubmenuOpen] = createSignal(false);
+  const hasChildren = () => props.item.children && props.item.children.length > 0;
+  const submenuActive = () => Boolean(submenuOpen() && hasChildren());
+  const submenuPresence = createFloatingPresence({
+    open: submenuActive,
+    exitDurationMs: 100,
+  });
   const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
   let itemRef: HTMLDivElement | undefined;
   let buttonRef: HTMLButtonElement | undefined;
@@ -324,7 +338,11 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   let hoverTimeout: ReturnType<typeof setTimeout> | undefined;
   const menuItemId = `floe-dropdown-item-${(dropdownMenuItemIdSeq += 1)}`;
 
-  const hasChildren = () => props.item.children && props.item.children.length > 0;
+  createEffect(() => {
+    if (!submenuPresence.mounted()) {
+      setSubmenuPosition({ x: -9999, y: -9999 });
+    }
+  });
 
   // Update submenu position
   const updateSubmenuPosition = () => {
@@ -457,7 +475,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       </Show>
 
       {/* Submenu */}
-      <Show when={submenuOpen() && hasChildren()}>
+      <Show when={submenuPresence.mounted() && hasChildren()}>
         <Portal mount={props.portalLayout.mount()}>
           <div
             ref={submenuRef}
@@ -467,9 +485,11 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                 : 'fixed z-50 min-w-36 py-0.5',
               'bg-popover text-popover-foreground',
               'rounded border border-border shadow-md',
-              'animate-in fade-in slide-in-from-left-1'
+              'floe-floating-presence floe-floating-menu floe-floating-submenu'
             )}
             data-floe-dropdown={props.dropdownId}
+            data-floating-presence={submenuPresence.state()}
+            aria-hidden={submenuPresence.exiting() ? 'true' : undefined}
             {...{
               [LOCAL_INTERACTION_SURFACE_ATTR]: props.portalLayout.isSurfaceMode()
                 ? 'true'

@@ -23,6 +23,7 @@ import {
   type FloatingWindowResizeHandle,
   type FloatingWindowViewportInsets,
 } from './floatingWindowGeometry';
+import { createFloatingPresence } from './floatingPresence';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import { SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
 
@@ -84,6 +85,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [isDragging, setIsDragging] = createSignal(false);
   const [isResizing, setIsResizing] = createSignal(false);
   const [isActive, setIsActive] = createSignal(false);
+  const windowPresence = createFloatingPresence({
+    open: () => props.open,
+    exitDurationMs: 120,
+  });
   const [preMaximizeState, setPreMaximizeState] = createSignal<{
     position: { x: number; y: number };
     size: { width: number; height: number };
@@ -500,15 +505,18 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   return (
-    <Show when={props.open}>
+    <Show when={windowPresence.mounted()}>
       <Portal>
         <div
           ref={windowRef}
           data-floe-geometry-surface="floating-window"
+          data-floating-presence={windowPresence.state()}
+          aria-hidden={windowPresence.exiting() ? 'true' : undefined}
           {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
           class={cn(
             'fixed left-0 top-0 z-[100] flex flex-col',
-            (isDragging() || isResizing()) && 'select-none'
+            (isDragging() || isResizing()) && 'select-none',
+            windowPresence.exiting() && 'pointer-events-none'
           )}
           style={{
             width: `${size().width}px`,
@@ -535,10 +543,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
               'relative flex h-full w-full flex-col overflow-hidden',
               'text-card-foreground rounded-md',
               'border',
-              'animate-in fade-in duration-150',
+              'floe-floating-presence floe-floating-window-motion',
+              (isDragging() || isResizing()) && 'floe-floating-presence--suspended',
               isMaximized() && 'rounded-none',
               props.class
             )}
+            data-floating-presence={windowPresence.state()}
           >
             <div
               data-floe-floating-window-titlebar="true"

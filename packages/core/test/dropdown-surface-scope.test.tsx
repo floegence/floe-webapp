@@ -115,11 +115,25 @@ describe('Dropdown surface scope', () => {
 
     dispatchPointerDown(bravoButton!);
     bravoButton!.click();
-    vi.runAllTimers();
     await Promise.resolve();
 
+    const exitingMenu = surfaceHost!.querySelector(
+      '[data-floe-dropdown][role="menu"]'
+    ) as HTMLDivElement | null;
+    expect(exitingMenu).toBeTruthy();
+    expect(exitingMenu?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingMenu?.getAttribute('aria-hidden')).toBe('true');
+    expect(exitingMenu?.style.left).not.toBe('-9999px');
+
+    vi.advanceTimersByTime(99);
+    await Promise.resolve();
+    expect(surfaceHost!.querySelector('[data-floe-dropdown][role="menu"]')).toBeTruthy();
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('bravo');
+
+    vi.advanceTimersByTime(1);
+    await Promise.resolve();
+    expect(surfaceHost!.querySelector('[data-floe-dropdown][role="menu"]')).toBeNull();
   });
 
   it('mounts transformed-host dropdowns into the nearest portal layer and projects trigger geometry against that layer', async () => {

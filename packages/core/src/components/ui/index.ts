@@ -15,6 +15,12 @@ export {
 export { Dialog, ConfirmDialog, type DialogProps, type ConfirmDialogProps } from './Dialog';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
 export {
+  createFloatingPresence,
+  type FloatingPresence,
+  type FloatingPresenceOptions,
+  type FloatingPresenceState,
+} from './floatingPresence';
+export {
   resolveFloatingWindowViewport,
   type FloatingWindowRect,
   type FloatingWindowViewport,

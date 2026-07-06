@@ -96,10 +96,19 @@ describe('FloatingWindow open cycle', () => {
 
     setOpen!(false);
     await Promise.resolve();
-    expect(document.querySelector('[data-testid="preview-body"]')).toBeNull();
+    const exitingWindow = document.querySelector(
+      '[data-floe-geometry-surface="floating-window"]'
+    ) as HTMLElement | null;
+    expect(exitingWindow?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingWindow?.getAttribute('aria-hidden')).toBe('true');
+    expect(document.querySelector('[data-testid="preview-body"]')).toBeTruthy();
 
     expect(() => setOpen!(true)).not.toThrow();
     await flushAnimationFrame();
+    const reopenedWindow = document.querySelector(
+      '[data-floe-geometry-surface="floating-window"]'
+    ) as HTMLElement | null;
+    expect(reopenedWindow?.style.transform).toBe('translate3d(20px, 28px, 0)');
     expect(document.querySelector('[data-testid="preview-body"]')).toBeTruthy();
   });
 });

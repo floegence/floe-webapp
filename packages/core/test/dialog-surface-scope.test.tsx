@@ -25,6 +25,11 @@ function flushMicrotasks(): Promise<void> {
   return Promise.resolve();
 }
 
+async function flushFloatingExit(durationMs = 130): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, durationMs));
+  await flushMicrotasks();
+}
+
 function rect(left: number, top: number, width: number, height: number): DOMRect {
   return {
     left,
@@ -430,8 +435,10 @@ describe('dialog surface scope', () => {
     });
 
     expect(rafCallbacks.length).toBeGreaterThan(0);
-    rafCallbacks.shift()?.(16);
-    await flushMicrotasks();
+    for (let index = 0; index < 3 && overlayRoot?.style.left !== '140px'; index += 1) {
+      rafCallbacks.shift()?.((index + 1) * 16);
+      await flushMicrotasks();
+    }
 
     expect(overlayRoot?.style.left).toBe('140px');
     expect(overlayRoot?.style.top).toBe('80px');
@@ -470,6 +477,12 @@ describe('dialog surface scope', () => {
     backdrop!.click();
     await flushMicrotasks();
 
+    const exitingOverlay = host.querySelector('[data-floe-dialog-overlay-root]') as HTMLElement | null;
+    expect(exitingOverlay?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingOverlay?.getAttribute('aria-hidden')).toBe('true');
+    expect(exitingOverlay?.classList.contains('pointer-events-none')).toBe(true);
+
+    await flushFloatingExit();
     expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
   });
 
@@ -521,6 +534,11 @@ describe('dialog surface scope', () => {
     dispatchEscape(dialogAction!);
     await flushMicrotasks();
 
+    const exitingOverlay = host.querySelector('[data-floe-dialog-overlay-root]') as HTMLElement | null;
+    expect(exitingOverlay?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingOverlay?.getAttribute('aria-hidden')).toBe('true');
+
+    await flushFloatingExit();
     expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
   });
 
@@ -652,6 +670,11 @@ describe('dialog surface scope', () => {
 
     dispatchEscape(floatingWindow!);
     await flushMicrotasks();
+    const exitingWindow = document.querySelector('[data-floe-geometry-surface="floating-window"]') as HTMLElement | null;
+    expect(exitingWindow?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingWindow?.getAttribute('aria-hidden')).toBe('true');
+
+    await flushFloatingExit();
     expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBeNull();
   });
 });
