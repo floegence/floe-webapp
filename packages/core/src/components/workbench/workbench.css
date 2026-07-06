@@ -121,7 +121,7 @@
     );
     --wb-font-display: var(--wb-font-body);
     --wb-font-mono: 'SF Mono', 'Cascadia Code', Menlo, Consolas, ui-monospace, monospace;
-    --wb-accent: var(--primary, #3b82f6);
+    --wb-accent: var(--primary, #202a37);
     --wb-accent-strong: color-mix(in srgb, var(--wb-accent) 82%, black);
     --wb-accent-soft: color-mix(in srgb, var(--wb-accent) 12%, transparent);
     --wb-accent-ring: color-mix(in srgb, var(--wb-accent) 28%, transparent);
@@ -138,23 +138,31 @@
     --wb-atmosphere: none;
     --wb-atmosphere-opacity: 0;
     --wb-atmosphere-blend: normal;
-    --wb-terminal-bg: linear-gradient(180deg, #1d1f2b 0%, #121322 100%);
-    --wb-terminal-toolbar: rgba(0, 0, 0, 0.15);
-    --wb-terminal-text: #d6dee7;
-    --wb-terminal-muted: #7e87a4;
-    --wb-terminal-prompt: #6bff8d;
-    --wb-chart-cpu: #3b82f6;
-    --wb-chart-memory: #f59e0b;
-    --wb-chart-disk: #10b981;
-    --wb-log-info: #3b82f6;
-    --wb-log-warn: #f59e0b;
-    --wb-log-error: #ef4444;
-    --wb-log-debug: #94a3b8;
-    --wb-syntax-keyword: #c678dd;
-    --wb-syntax-string: #98c379;
-    --wb-syntax-fn: #61afef;
-    --wb-syntax-number: #d19a66;
-    --wb-syntax-attr: #e5c07b;
+    --wb-terminal-bg: var(--terminal-background, #202a37);
+    --wb-terminal-toolbar: color-mix(
+      in srgb,
+      var(--terminal-background, #202a37) 88%,
+      var(--terminal-foreground, #d6dee7)
+    );
+    --wb-terminal-text: var(--terminal-foreground, #d6dee7);
+    --wb-terminal-muted: color-mix(
+      in srgb,
+      var(--terminal-foreground, #d6dee7) 58%,
+      var(--terminal-background, #202a37)
+    );
+    --wb-terminal-prompt: var(--success, #10b981);
+    --wb-chart-cpu: var(--info, #3b82f6);
+    --wb-chart-memory: var(--warning, #f59e0b);
+    --wb-chart-disk: var(--success, #10b981);
+    --wb-log-info: var(--info, #3b82f6);
+    --wb-log-warn: var(--warning, #f59e0b);
+    --wb-log-error: var(--error, #ef4444);
+    --wb-log-debug: var(--muted-foreground, #64748b);
+    --wb-syntax-keyword: var(--info, #3b82f6);
+    --wb-syntax-string: var(--success, #10b981);
+    --wb-syntax-fn: var(--info, #3b82f6);
+    --wb-syntax-number: var(--warning, #f59e0b);
+    --wb-syntax-attr: var(--muted-foreground, #64748b);
   }
 
   .workbench-surface__body {

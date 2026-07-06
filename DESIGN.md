@@ -21,7 +21,7 @@ This is a framework design system, not a single-screen brand campaign. The shell
 
 The palette is built around two complementary atmospheres:
 
-- **Light Theme:** warm paper `--background` (`hsl(36 15% 93%)`) with deep blue-black ink `--foreground` (`hsl(215 40% 13%)`).
+- **Light Theme:** warm paper `--background` (`hsl(34 24% 94%)`) with deep blue-black ink `--foreground` (`hsl(214 26% 17%)`), stepped through soft clay-gray rails and off-white panels.
 - **Dark Theme:** blue-black ink `--background` (`hsl(222 30% 8%)`) with near-white text `--foreground` (`hsl(210 20% 98%)`).
 
 Semantic color is mandatory. Shared components must consume exported tokens rather than ad hoc Tailwind colors or hard-coded hex values.
@@ -32,7 +32,7 @@ Semantic color is mandatory. Shared components must consume exported tokens rath
 
 1. Use semantic variables such as `--background`, `--card`, `--border`, `--sidebar`, `--activity-bar`, `--success`, `--warning`, `--error`, and `--info`.
 2. If a component needs a new visual role, add a token before adding a one-off color.
-3. Status colors should remain semantic and perceptually balanced; Floe uses OKLCH for success, warning, error, and info states.
+3. Status colors should remain semantic and perceptually balanced; theme-specific values may use OKLCH or HSL when an accent must align with the system palette.
 
 ### The Seam Rule
 

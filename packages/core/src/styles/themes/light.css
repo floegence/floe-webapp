@@ -1,54 +1,54 @@
-/* Light theme - Warm paper aesthetic */
+/* Light theme - Redeven warm paper aesthetic */
 :root,
 .light {
   color-scheme: light;
 
-  /* Base - Warm beige paper (aligned with Console light theme) */
-  --background: hsl(36 15% 93%);
-  --foreground: hsl(215 40% 13%);
+  /* Base - Warm paper and blue-black ink */
+  --background: hsl(34 24% 94%);
+  --foreground: hsl(214 26% 17%);
 
   /* Primary - Deep blue-black ink */
-  --primary: hsl(215 40% 13%);
-  --primary-foreground: hsl(0 0% 98%);
+  --primary: hsl(214 26% 17%);
+  --primary-foreground: hsl(36 100% 99%);
 
   /* Secondary - Warm muted */
-  --secondary: hsl(36 10% 88%);
-  --secondary-foreground: hsl(215 30% 26%);
+  --secondary: hsl(36 15% 94%);
+  --secondary-foreground: hsl(214 25% 25%);
 
   /* Muted - Warm gray */
-  --muted: hsl(36 10% 88%);
-  --muted-foreground: hsl(215 20% 42%);
+  --muted: hsl(36 15% 94%);
+  --muted-foreground: hsl(215 16% 42%);
 
   /* Accent - Subtle warm highlight */
-  --accent: hsl(36 10% 88%);
-  --accent-foreground: hsl(215 40% 13%);
+  --accent: hsl(34 11% 88%);
+  --accent-foreground: hsl(214 26% 17%);
 
   /* Border - Warm gray */
-  --border: hsl(36 10% 82%);
-  --input: hsl(36 10% 82%);
-  --ring: hsl(215 40% 13%);
-  --chrome-border: var(--border);
+  --border: hsl(35 13% 82%);
+  --input: hsl(37 15% 76%);
+  --ring: hsl(214 26% 17%);
+  --chrome-border: hsl(33 11% 84%);
   --top-bar-border: var(--chrome-border);
   --activity-bar-border: var(--chrome-border);
   --bottom-bar-border: var(--chrome-border);
   --terminal-panel-border: var(--chrome-border);
 
   /* Card */
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(215 40% 13%);
+  --card: hsl(36 100% 99%);
+  --card-foreground: hsl(214 26% 17%);
 
   /* Popover */
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(215 40% 13%);
+  --popover: hsl(36 100% 99%);
+  --popover-foreground: hsl(214 26% 17%);
 
-  /* Status colors - Using OKLCH for perceptual consistency */
+  /* Status colors */
   --success: oklch(0.68 0.16 150);
   --success-foreground: hsl(0 0% 100%);
-  --warning: oklch(0.78 0.14 80);
-  --warning-foreground: hsl(240 5% 10%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(214 26% 17%);
   --error: oklch(0.65 0.2 25);
   --error-foreground: hsl(0 0% 100%);
-  --info: oklch(0.65 0.13 250);
+  --info: hsl(217 91% 60%);
   --info-foreground: hsl(0 0% 100%);
 
   /* Highlight block accents - deeper than shared status tokens */
@@ -59,33 +59,33 @@
   --highlight-block-note-accent: oklch(0.52 0.16 285);
   --highlight-block-tip-accent: oklch(0.52 0.12 175);
 
-  /* Sidebar - Slightly warmer */
-  --sidebar: hsl(36 12% 91%);
-  --sidebar-foreground: hsl(215 40% 13%);
-  --sidebar-primary: hsl(215 40% 13%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(36 12% 86%);
-  --sidebar-accent-foreground: hsl(215 40% 13%);
-  --sidebar-border: hsl(36 8% 84%);
-  --sidebar-ring: hsl(215 40% 13%);
+  /* Sidebar */
+  --sidebar: hsl(36 13% 92%);
+  --sidebar-foreground: hsl(214 26% 17%);
+  --sidebar-primary: hsl(214 26% 17%);
+  --sidebar-primary-foreground: hsl(36 100% 99%);
+  --sidebar-accent: hsl(34 11% 88%);
+  --sidebar-accent-foreground: hsl(214 26% 17%);
+  --sidebar-border: hsl(33 11% 84%);
+  --sidebar-ring: hsl(214 26% 17%);
 
   /* Activity bar */
-  --activity-bar: hsl(36 10% 90%);
-  --activity-bar-foreground: hsl(215 20% 42%);
-  --activity-bar-foreground-active: hsl(215 40% 13%);
-  --activity-bar-badge: hsl(215 40% 13%);
-  --activity-bar-badge-foreground: hsl(0 0% 98%);
+  --activity-bar: hsl(36 13% 92%);
+  --activity-bar-foreground: hsl(215 16% 42%);
+  --activity-bar-foreground-active: hsl(214 26% 17%);
+  --activity-bar-badge: hsl(214 26% 17%);
+  --activity-bar-badge-foreground: hsl(36 100% 99%);
 
   /* Terminal */
-  --terminal-background: hsl(215 40% 13%);
+  --terminal-background: hsl(214 26% 17%);
   --terminal-foreground: hsl(0 0% 92%);
 
   /* Chart colors */
-  --chart-1: hsl(215 40% 13%);
-  --chart-2: hsl(36 15% 60%);
-  --chart-3: oklch(0.65 0.13 250);
+  --chart-1: hsl(214 26% 17%);
+  --chart-2: hsl(215 16% 42%);
+  --chart-3: hsl(217 91% 60%);
   --chart-4: oklch(0.68 0.16 150);
-  --chart-5: oklch(0.78 0.14 80);
+  --chart-5: hsl(38 92% 50%);
 
   /* ============================================
      Selection Colors
@@ -98,14 +98,14 @@
   */
 
   /* Default selection */
-  --selection-bg: hsl(215 80% 55%);
+  --selection-bg: hsl(217 91% 60%);
   --selection-fg: hsl(0 0% 100%);
 
   /* Selection on primary backgrounds
-     In light theme, primary is dark (hsl(215 40% 13%)),
-     so we use a bright selection to keep contrast. */
-  --selection-on-primary-bg: hsl(45 100% 55%);
-  --selection-on-primary-fg: hsl(0 0% 0%);
+     In light theme, primary is dark (hsl(214 26% 17%)),
+     so we use a warm amber selection to keep contrast. */
+  --selection-on-primary-bg: hsl(38 92% 50%);
+  --selection-on-primary-fg: hsl(214 26% 17%);
 
   /* Code-block selection (code blocks use a dark background: #0d1117) */
   --selection-code-bg: hsl(212 100% 67%);
