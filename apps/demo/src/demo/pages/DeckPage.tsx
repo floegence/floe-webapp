@@ -6,21 +6,58 @@ import { MetricsWidget, TerminalWidget } from '@floegence/floe-webapp-core/widge
 import { Files, LayoutDashboard, Terminal } from '@floegence/floe-webapp-core/icons';
 
 const now = Date.now();
+const modifiedDecoration = {
+  badge: { label: 'M', tone: 'info', title: 'Modified in Git' },
+  nameTone: 'info',
+} as const;
+const addedDecoration = {
+  badge: { label: 'A', tone: 'success', title: 'Added in Git' },
+  nameTone: 'success',
+} as const;
+const modifiedDirectoryDecoration = {
+  badge: { label: 'M', tone: 'info', title: 'Contains modified Git changes' },
+  nameTone: 'info',
+} as const;
+const addedDirectoryDecoration = {
+  badge: { label: 'A', tone: 'success', title: 'Added in Git' },
+  nameTone: 'success',
+} as const;
+
 const demoFileTree: FileItem[] = [
   {
     id: '/src',
     name: 'src',
     type: 'folder',
     path: '/src',
+    decoration: modifiedDirectoryDecoration,
     children: [
-      { id: '/src/main.tsx', name: 'main.tsx', type: 'file', path: '/src/main.tsx', extension: 'tsx', size: 1423, modifiedAt: new Date(now - 1 * 3600_000) },
-      { id: '/src/App.tsx', name: 'App.tsx', type: 'file', path: '/src/App.tsx', extension: 'tsx', size: 3921, modifiedAt: new Date(now - 2 * 3600_000) },
+      {
+        id: '/src/main.tsx',
+        name: 'main.tsx',
+        type: 'file',
+        path: '/src/main.tsx',
+        extension: 'tsx',
+        size: 1423,
+        modifiedAt: new Date(now - 1 * 3600_000),
+        decoration: addedDecoration,
+      },
+      {
+        id: '/src/App.tsx',
+        name: 'App.tsx',
+        type: 'file',
+        path: '/src/App.tsx',
+        extension: 'tsx',
+        size: 3921,
+        modifiedAt: new Date(now - 2 * 3600_000),
+        decoration: modifiedDecoration,
+      },
       { id: '/src/bootstrap.sh', name: 'bootstrap.sh', type: 'file', path: '/src/bootstrap.sh', extension: 'sh', size: 612, modifiedAt: new Date(now - 90 * 60_000) },
       {
         id: '/src/components',
         name: 'components',
         type: 'folder',
         path: '/src/components',
+        decoration: modifiedDirectoryDecoration,
         children: Array.from({ length: 40 }, (_, i) => ({
           id: `/src/components/Component${String(i + 1).padStart(2, '0')}.tsx`,
           name: `Component${String(i + 1).padStart(2, '0')}.tsx`,
@@ -29,7 +66,28 @@ const demoFileTree: FileItem[] = [
           extension: 'tsx',
           size: 800 + i * 17,
           modifiedAt: new Date(now - (i + 3) * 3600_000),
+          decoration: i === 0 ? modifiedDecoration : undefined,
         })),
+      },
+      {
+        id: '/src/new-feature',
+        name: 'new-feature',
+        type: 'folder',
+        path: '/src/new-feature',
+        modifiedAt: new Date(now - 34 * 60_000),
+        decoration: addedDirectoryDecoration,
+        children: [
+          {
+            id: '/src/new-feature/Panel.tsx',
+            name: 'Panel.tsx',
+            type: 'file',
+            path: '/src/new-feature/Panel.tsx',
+            extension: 'tsx',
+            size: 1840,
+            modifiedAt: new Date(now - 34 * 60_000),
+            decoration: addedDecoration,
+          },
+        ],
       },
     ],
   },
@@ -55,7 +113,7 @@ function DemoFileBrowserWidget(_props: WidgetProps) {
   return (
     <FileBrowser
       files={demoFileTree}
-      initialPath="/"
+      initialPath="/src"
       initialViewMode="list"
       sidebarWidth={220}
       class="h-full border-0 rounded-none shadow-none"

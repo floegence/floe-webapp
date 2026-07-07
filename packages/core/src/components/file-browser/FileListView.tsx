@@ -7,6 +7,7 @@ import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
 import { FileItemIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
+import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';
 import { ChevronDown } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { ResizeHandle } from '../layout/ResizeHandle';
@@ -26,7 +27,7 @@ export interface FileListViewProps {
 /**
  * Render file name with highlighted matched characters
  */
-function HighlightedName(props: { name: string; match: FilterMatchInfo | null }) {
+function HighlightedName(props: { name: string; match: FilterMatchInfo | null; class?: string }) {
   const segments = createMemo(() => {
     if (!props.match || props.match.matchedIndices.length === 0) {
       return [{ text: props.name, highlight: false }];
@@ -58,7 +59,7 @@ function HighlightedName(props: { name: string; match: FilterMatchInfo | null })
   });
 
   return (
-    <span class="truncate">
+    <span class={cn('truncate', props.class)}>
       <For each={segments()}>
         {(seg) => (
           <Show when={seg.highlight} fallback={<>{seg.text}</>}>
@@ -864,10 +865,15 @@ function FileListItem(props: FileListItemProps) {
     >
       {/* Name column */}
       <div class="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5">
-        <span class="flex-shrink-0 w-4 h-4">
+        <span class="relative flex-shrink-0 w-4 h-4">
           <FileItemIcon item={props.item} class="w-4 h-4" />
+          <FileItemDecorationBadge item={props.item} size="xs" />
         </span>
-        <HighlightedName name={props.item.name} match={filterMatch()} />
+        <HighlightedName
+          name={props.item.name}
+          match={filterMatch()}
+          class={fileItemDecorationNameClass(props.item)}
+        />
       </div>
 
       {/* Modified column */}

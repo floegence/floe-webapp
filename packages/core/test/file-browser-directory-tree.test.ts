@@ -25,4 +25,15 @@ describe('DirectoryTree', () => {
     expect(src).toContain("import { FileItemIcon } from './FileIcons';");
     expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
   });
+
+  it('should render folder decoration badges and name tones in the tree', () => {
+    const here = fileURLToPath(import.meta.url);
+    const dir = path.dirname(here);
+    const target = path.resolve(dir, '../src/components/file-browser/DirectoryTree.tsx');
+    const src = fs.readFileSync(target, 'utf8');
+
+    expect(src).toContain("import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';");
+    expect(src).toContain('<FileItemDecorationBadge item={props.item} size="xs" />');
+    expect(src).toContain("class={cn('truncate', fileItemDecorationNameClass(props.item))}");
+  });
 });

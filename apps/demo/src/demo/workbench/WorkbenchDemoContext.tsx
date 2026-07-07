@@ -87,6 +87,19 @@ const REDEVEN_PARITY_WIDGET_TYPES = [
 type RedevenParityWidgetType = typeof REDEVEN_PARITY_WIDGET_TYPES[number];
 
 const demoNow = Date.now();
+const gitModifiedDecoration = {
+  badge: { label: 'M', tone: 'info', title: 'Modified in Git' },
+  nameTone: 'info',
+} as const;
+const gitAddedDecoration = {
+  badge: { label: 'A', tone: 'success', title: 'Added in Git' },
+  nameTone: 'success',
+} as const;
+const gitModifiedDirectoryDecoration = {
+  badge: { label: 'M', tone: 'info', title: 'Contains modified Git changes' },
+  nameTone: 'info',
+} as const;
+
 const DEMO_FILE_TREE: FileItem[] = [
   {
     id: '/Users/dev/redeven',
@@ -94,6 +107,7 @@ const DEMO_FILE_TREE: FileItem[] = [
     type: 'folder',
     path: '/Users/dev/redeven',
     modifiedAt: new Date(demoNow - 11 * 60_000),
+    decoration: gitModifiedDirectoryDecoration,
     children: [
       {
         id: '/Users/dev/redeven/frontend',
@@ -101,6 +115,7 @@ const DEMO_FILE_TREE: FileItem[] = [
         type: 'folder',
         path: '/Users/dev/redeven/frontend',
         modifiedAt: new Date(demoNow - 24 * 60_000),
+        decoration: gitModifiedDirectoryDecoration,
         children: [
           {
             id: '/Users/dev/redeven/frontend/workbench',
@@ -108,6 +123,7 @@ const DEMO_FILE_TREE: FileItem[] = [
             type: 'folder',
             path: '/Users/dev/redeven/frontend/workbench',
             modifiedAt: new Date(demoNow - 19 * 60_000),
+            decoration: gitModifiedDirectoryDecoration,
             children: [
               {
                 id: '/Users/dev/redeven/frontend/workbench/Workbench.tsx',
@@ -117,6 +133,7 @@ const DEMO_FILE_TREE: FileItem[] = [
                 extension: 'tsx',
                 size: 48240,
                 modifiedAt: new Date(demoNow - 9 * 60_000),
+                decoration: gitModifiedDecoration,
               },
               {
                 id: '/Users/dev/redeven/frontend/workbench/layers.ts',
@@ -126,6 +143,7 @@ const DEMO_FILE_TREE: FileItem[] = [
                 extension: 'ts',
                 size: 12880,
                 modifiedAt: new Date(demoNow - 17 * 60_000),
+                decoration: gitAddedDecoration,
               },
               {
                 id: '/Users/dev/redeven/frontend/workbench/regions.css',
@@ -135,6 +153,7 @@ const DEMO_FILE_TREE: FileItem[] = [
                 extension: 'css',
                 size: 6412,
                 modifiedAt: new Date(demoNow - 32 * 60_000),
+                decoration: gitModifiedDecoration,
               },
             ],
           },

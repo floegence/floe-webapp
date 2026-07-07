@@ -6,6 +6,7 @@ import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
 import { FileItemIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
+import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
 import { createItemContextMenuEvent } from './contextMenuEvent';
@@ -633,6 +634,7 @@ function FileGridItem(props: FileGridItemProps) {
       <div
         class={cn(
           'w-12 h-12 flex items-center justify-center rounded-lg',
+          'relative',
           'transition-transform duration-200',
           'group-hover:scale-110',
           props.item.type === 'folder'
@@ -641,6 +643,7 @@ function FileGridItem(props: FileGridItemProps) {
         )}
       >
         <FileItemIcon item={props.item} class="w-8 h-8" />
+        <FileItemDecorationBadge item={props.item} size="md" />
       </div>
 
       {/* Name */}
@@ -648,6 +651,7 @@ function FileGridItem(props: FileGridItemProps) {
         class={cn(
           'block w-full min-w-0 truncate px-1 text-xs text-center',
           'transition-colors duration-150',
+          fileItemDecorationNameClass(props.item),
           isSelected() && 'font-medium'
         )}
       >

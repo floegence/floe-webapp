@@ -9,6 +9,29 @@ export interface FileItemLinkMeta {
   targetType: FileItemLinkTargetType;
 }
 
+export type FileItemDecorationTone =
+  | 'default'
+  | 'primary'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'muted';
+
+export interface FileItemDecorationBadge {
+  /** Short visible marker, for example "M" or "A". Keep this compact. */
+  label: string;
+  tone?: FileItemDecorationTone;
+  title?: string;
+}
+
+export interface FileItemDecoration {
+  /** Optional badge rendered over the file or folder icon. */
+  badge?: FileItemDecorationBadge;
+  /** Optional tone applied to the visible item name. */
+  nameTone?: FileItemDecorationTone;
+}
+
 /**
  * Represents a file or folder item in the browser
  */
@@ -24,6 +47,8 @@ export interface FileItem {
   icon?: FileItemIconOverride;
   /** Optional link metadata for rendering symbolic links distinctly from plain entries. */
   link?: FileItemLinkMeta;
+  /** Optional visual decoration for host-specific state such as Git status. */
+  decoration?: FileItemDecoration;
 }
 
 /**

@@ -4,6 +4,7 @@ import { useFileBrowser } from './FileBrowserContext';
 import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
 import { FileItemIcon } from './FileIcons';
 import type { FileItem } from './types';
+import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';
 import { ChevronRight } from '../icons';
 import { createLongPressContextMenuHandlers } from './longPressContextMenu';
 import { fileBrowserTouchTargetAttrs } from './touchInteractionGuard';
@@ -262,12 +263,13 @@ function FolderTreeItem(props: TreeItemProps) {
           )}
         >
           {/* Folder icon */}
-          <span class="flex-shrink-0 w-4 h-4">
+          <span class="relative flex-shrink-0 w-4 h-4">
             <FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />
+            <FileItemDecorationBadge item={props.item} size="xs" />
           </span>
 
           {/* Folder name */}
-          <span class="truncate">{props.item.name}</span>
+          <span class={cn('truncate', fileItemDecorationNameClass(props.item))}>{props.item.name}</span>
 
           {/* Subfolder count badge */}
           <Show when={hasSubfolders()}>

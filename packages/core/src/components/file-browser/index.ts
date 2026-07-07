@@ -33,6 +33,9 @@ export {
 export type {
   FileItem,
   FileItemIconOverride,
+  FileItemDecoration,
+  FileItemDecorationBadge,
+  FileItemDecorationTone,
   FileItemLinkKind,
   FileItemLinkTargetType,
   FileItemLinkMeta,
