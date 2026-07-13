@@ -14,11 +14,17 @@ describe('boot reconnect helpers', () => {
     const mod = await import('../src/index');
     const config = mod.createArtifactTunnelReconnectConfig({
       artifactSource,
-      connect: { keepaliveIntervalMs: 15_000 },
+      connect: {
+        keepaliveIntervalMs: 15_000,
+        transportSecurityPolicy: 'require_tls',
+      },
     });
 
     expect(config.mode).toBe('tunnel');
-    expect(config.connect).toMatchObject({ keepaliveIntervalMs: 15_000 });
+    expect(config.connect).toMatchObject({
+      keepaliveIntervalMs: 15_000,
+      transportSecurityPolicy: 'require_tls',
+    });
     await expect(config.getArtifact?.({ traceId: 'trace-1' })).resolves.toMatchObject({
       v: 1,
       transport: 'tunnel',
@@ -59,11 +65,17 @@ describe('boot reconnect helpers', () => {
     const mod = await import('../src/index');
     const config = mod.createArtifactDirectReconnectConfig({
       artifactSource,
-      connect: { keepaliveIntervalMs: 10_000 },
+      connect: {
+        keepaliveIntervalMs: 10_000,
+        transportSecurityPolicy: 'allow_plaintext_for_loopback',
+      },
     });
 
     expect(config.mode).toBe('direct');
-    expect(config.connect).toMatchObject({ keepaliveIntervalMs: 10_000 });
+    expect(config.connect).toMatchObject({
+      keepaliveIntervalMs: 10_000,
+      transportSecurityPolicy: 'allow_plaintext_for_loopback',
+    });
     expect(config.connect?.scopeResolvers).toBeUndefined();
   });
 

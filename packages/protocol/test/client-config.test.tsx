@@ -75,6 +75,7 @@ describe('ProtocolProvider connect config delegation', () => {
       getDirectInfo: async () => ({ ws_url: 'wss://direct.example.com/ws' } as never),
       connect: {
         handshakeTimeoutMs: 4_000,
+        transportSecurityPolicy: 'allow_plaintext_for_loopback',
       },
       autoReconnect: { enabled: false },
     };
@@ -125,6 +126,7 @@ describe('ProtocolProvider connect config delegation', () => {
       },
       connect: {
         keepaliveIntervalMs: 30_000,
+        transportSecurityPolicy: 'require_tls',
       },
     };
 

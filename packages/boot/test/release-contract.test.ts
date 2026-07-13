@@ -55,7 +55,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.36.73');
+    expect(corePkg.version).toBe('0.36.74');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -66,9 +66,9 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const lockfile = readText('pnpm-lock.yaml');
 
-    expect(bootPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.19.10');
-    expect(protocolPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.19.10');
-    expect(lockfile).toContain("'@floegence/flowersec-core@0.19.10':");
+    expect(bootPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.19.11');
+    expect(protocolPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.19.11');
+    expect(lockfile).toContain("'@floegence/flowersec-core@0.19.11':");
     expect(lockfile).toContain("engines: {node: '>=24.0.0'}");
 
     const manifests = [bootPkg, protocolPkg];
@@ -80,6 +80,6 @@ describe('release dependency and runtime contract', () => {
     expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: workspace:");
     expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: file:");
     expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: link:");
-    expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: ^0.19.10\n        version: link:");
+    expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: ^0.19.11\n        version: link:");
   });
 });
