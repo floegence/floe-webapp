@@ -4,6 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@floegence/floe-webapp-boot": ["../../packages/boot/src/index.ts"],
       "@floegence/floe-webapp-core": ["../../packages/core/src/index.ts"],
       "@floegence/floe-webapp-core/app": ["../../packages/core/src/app.ts"],
       "@floegence/floe-webapp-core/full": ["../../packages/core/src/full.ts"],

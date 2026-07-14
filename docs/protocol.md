@@ -92,37 +92,46 @@ Type reference:
 `ConnectConfig` directly reuses the Flowersec browser reconnect adapter shape:
 
 - `ConnectConfig = BrowserReconnectConfig`
-- connection timeouts / keepalive live under `connect`
-- tunnel helpers support the canonical artifact flow (`artifactControlplane`, `getArtifact`, `artifact`) and still keep the legacy grant flow (`controlplane`, `getGrant`, `grant`) for compatibility
-- direct helpers still use `directInfo` / `getDirectInfo`, and can also opt into the canonical artifact flow through `artifactControlplane`, `getArtifact`, or `artifact`
+- every connection uses exactly one discriminated `source`
+- connection timeouts, transport security, resource limits, and liveness live under `connect`
+- the acquired `ConnectArtifact` selects tunnel or direct transport without a separate mode field
+
+```ts
+type ArtifactSource =
+  | { kind: 'once'; artifact: ConnectArtifact }
+  | {
+      kind: 'refreshable';
+      acquire(context: ArtifactAcquireContext): Promise<ConnectArtifact>;
+    };
+```
 
 Best practice:
 
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
-- `@floegence/floe-webapp-boot` is the recommended first-party place for browser bootstrap helpers such as `ArtifactSource` and artifact-first reconnect config assembly.
+- Flowersec owns `ArtifactSource`; `@floegence/floe-webapp-boot` reexports that contract and provides first-party browser bootstrap assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
-- Current docs target `@floegence/flowersec-core@0.19.10`; package manifests should use `^0.19.10` or a later compatible release when relying on canonical `connect_artifact` helpers.
+- These docs target `@floegence/flowersec-core@0.20.0`; package manifests must use `^0.20.0` or a later compatible release.
 
 Notes:
 
 - `connect()` is intentionally idempotent: it should not tear down a healthy connection.
 - Use `reconnect()` when you need to force a hard restart (e.g. token rotation, suspected half-open state, manual retry).
+- Reusing the same config also reuses the same Flowersec reconnect adapter, preserving one-time source consumption and reconnect trace correlation.
+- A `once` source cannot enable automatic reconnect. Pass a new config with a fresh artifact for another connection.
 
-### Tunnel mode (canonical connect artifact, recommended)
+### Refreshable controlplane source
 
-Flowersec v0.19.x treats the canonical `connect_artifact` envelope as the recommended browser contract.
-When your control plane can mint that stable envelope, prefer wiring `artifactControlplane` so reconnects keep using the same public contract.
-
-For first-party application bootstrap flows, prefer building the `getArtifact` / reconnect config boundary via `@floegence/floe-webapp-boot` and let this protocol package stay focused on context + RPC wiring.
+Use the shared controlplane helper when a reconnect attempt must acquire a fresh artifact. The same helper accepts normal and entry-ticket request inputs.
 
 ```ts
+import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
+
 await protocol.connect({
-  mode: 'tunnel',
-  artifactControlplane: {
+  source: createControlplaneArtifactSource({
     baseUrl: 'https://<controlplane>',
     endpointId: '<endpoint-id>',
     entryTicket: '<entry-ticket>',
-  },
+  }),
   connect: {
     handshakeTimeoutMs: 10_000,
   },
@@ -144,68 +153,33 @@ Public helper exports:
 - `requestEntryConnectArtifact`
 - `assertConnectArtifact`
 
-### Tunnel mode (controlplane, legacy grant envelope)
+### One-time source
 
 ```ts
 await protocol.connect({
-  mode: 'tunnel',
-  controlplane: {
-    baseUrl: 'https://<controlplane>',
-    endpointId: '<endpoint-id>',
-  },
-  connect: {
-    handshakeTimeoutMs: 10_000,
-  },
-  autoReconnect: { enabled: true },
-});
-```
-
-Controlplane contract (used by the compatibility helper `requestChannelGrant`):
-
-- `POST ${baseUrl}/v1/channel/init`
-- body: `{ "endpoint_id": "<endpointId>" }`
-- response: `{ "grant_client": <ChannelInitGrant> }`
-- non-2xx failures surface as `ControlplaneRequestError`, preserving `status`, `code`, and the server message from Flowersec
-
-Implementation references:
-
-- `packages/protocol/src/controlplane.ts`
-- `packages/protocol/src/client.tsx`
-
-### Tunnel mode (dynamic grant provider)
-
-When your auth flow still requires a fresh legacy grant after disconnects (e.g. `entry_ticket -> /v1/channel/init/entry -> grant_client`),
-you should use `getGrant()` so every reconnect attempt uses a new `ChannelInitGrant`.
-
-```ts
-await protocol.connect({
-  mode: 'tunnel',
-  getGrant: async () => {
-    // Your own flow here:
-    // 1) exchange broker_token -> entry_ticket
-    // 2) POST /v1/channel/init/entry -> grant_client
-    // 3) return grant_client
-    return grantClient;
-  },
-  autoReconnect: { enabled: true },
-});
-```
-
-### Direct mode
-
-```ts
-await protocol.connect({
-  mode: 'direct',
-  getDirectInfo: async () => {
-    // Re-mint a fresh direct connect payload when needed.
-    return directInfo;
-  },
+  source: { kind: 'once', artifact },
   connect: {
     connectTimeoutMs: 10_000,
   },
-  autoReconnect: { enabled: true },
 });
 ```
+
+Do not combine a one-time source with `autoReconnect.enabled`. Flowersec consumes the source once and rejects automatic reconnect at configuration time.
+
+### Transport security and liveness
+
+High-level Flowersec connections require TLS by default. Local `ws://` development must explicitly select `allow_plaintext_for_loopback`; unrestricted plaintext must be an explicit product decision.
+
+Tunnel connections derive acknowledged Yamux liveness defaults from the artifact idle timeout. Direct connections do not run periodic probes unless configured:
+
+```ts
+connect: {
+  liveness: { intervalMs: 10_000, timeoutMs: 10_000 },
+  transportSecurityPolicy: 'allow_plaintext_for_loopback',
+}
+```
+
+Use `client().probeLiveness()` for an acknowledged round trip. `client().ping()` only confirms that the encrypted ping record was accepted locally for sending.
 
 ## RPC Wrapper (useRpc)
 

@@ -5,12 +5,11 @@ import type {
   TunnelConnectBrowserOptions,
 } from '@floegence/flowersec-core/browser';
 import type { ClientObserverLike } from '@floegence/flowersec-core/observability';
-import type { AutoReconnectConfig } from '@floegence/flowersec-core/reconnect';
-import type { ArtifactRequestContext, ArtifactSource } from './artifactSource';
+import type { ArtifactSource, AutoReconnectConfig } from '@floegence/flowersec-core/reconnect';
 import { createBootstrapScopeResolvers, type ScopeResolverMap } from './scope';
 
 type SharedArtifactReconnectOptions = Readonly<{
-  artifactSource: ArtifactSource;
+  source: ArtifactSource;
   observer?: ClientObserverLike;
   autoReconnect?: AutoReconnectConfig;
 }>;
@@ -28,41 +27,11 @@ export type DirectArtifactReconnectOptions = SharedArtifactReconnectOptions &
     connect?: DirectArtifactConnectOptions;
   }>;
 
-export class FixedArtifactAutoReconnectError extends Error {
-  constructor() {
-    super(
-      'Fixed artifact sources cannot be used with enabled autoReconnect unless allowAutoReconnect is explicitly set.',
-    );
-    this.name = 'FixedArtifactAutoReconnectError';
-  }
-}
-
-function createGetArtifact(artifactSource: ArtifactSource) {
-  return async (ctx: ArtifactRequestContext) => artifactSource.getArtifact(ctx);
-}
-
-function isAutoReconnectEnabled(autoReconnect: AutoReconnectConfig | undefined): boolean {
-  return autoReconnect?.enabled === true;
-}
-
-function assertArtifactReconnectPolicy(options: SharedArtifactReconnectOptions): void {
-  if (
-    options.artifactSource.kind === 'fixed' &&
-    isAutoReconnectEnabled(options.autoReconnect) &&
-    options.artifactSource.metadata?.allowAutoReconnect !== true
-  ) {
-    throw new FixedArtifactAutoReconnectError();
-  }
-}
-
 export function createArtifactTunnelReconnectConfig(
-  options: TunnelArtifactReconnectOptions,
+  options: TunnelArtifactReconnectOptions
 ): TunnelBrowserReconnectConfig {
-  assertArtifactReconnectPolicy(options);
-
   return {
-    mode: 'tunnel',
-    getArtifact: createGetArtifact(options.artifactSource),
+    source: options.source,
     ...(options.observer === undefined ? {} : { observer: options.observer }),
     ...(options.autoReconnect === undefined ? {} : { autoReconnect: options.autoReconnect }),
     ...(options.connect === undefined ? {} : { connect: options.connect }),
@@ -70,26 +39,25 @@ export function createArtifactTunnelReconnectConfig(
 }
 
 export function createProxyRuntimeTunnelReconnectConfig(
-  options: TunnelArtifactReconnectOptions,
+  options: TunnelArtifactReconnectOptions
 ): TunnelBrowserReconnectConfig {
   const connect = options.connect;
   return createArtifactTunnelReconnectConfig({
     ...options,
     connect: {
       ...(connect ?? {}),
-      scopeResolvers: createBootstrapScopeResolvers(connect?.scopeResolvers as ScopeResolverMap | undefined),
+      scopeResolvers: createBootstrapScopeResolvers(
+        connect?.scopeResolvers as ScopeResolverMap | undefined
+      ),
     },
   });
 }
 
 export function createArtifactDirectReconnectConfig(
-  options: DirectArtifactReconnectOptions,
+  options: DirectArtifactReconnectOptions
 ): DirectBrowserReconnectConfig {
-  assertArtifactReconnectPolicy(options);
-
   return {
-    mode: 'direct',
-    getArtifact: createGetArtifact(options.artifactSource),
+    source: options.source,
     ...(options.observer === undefined ? {} : { observer: options.observer }),
     ...(options.autoReconnect === undefined ? {} : { autoReconnect: options.autoReconnect }),
     ...(options.connect === undefined ? {} : { connect: options.connect }),

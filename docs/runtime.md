@@ -8,10 +8,10 @@ Best practice:
 
 - Keep low-level Flowersec building blocks in `@floegence/flowersec-core` (source of truth).
 - Keep Floe Webapp packages focused on UI/protocol glue plus reusable browser bootstrap orchestration.
-- Use `@floegence/floe-webapp-boot` for first-party browser bootstrap concerns such as `ArtifactSource`, shared reconnect config assembly, and shared `proxy.runtime` scope validation.
+- Use `@floegence/floe-webapp-boot` for first-party browser bootstrap concerns such as shared reconnect config assembly and shared `proxy.runtime` scope validation.
 - For proxy runtime mode (Service Worker + HTML injection + WS patch), keep the runtime itself integrated directly via `@floegence/flowersec-core/proxy`.
 
-This document is aligned with `@floegence/flowersec-core@0.19.10`. Consumers should depend on `^0.19.10` or a later compatible release before adopting the artifact-first reconnect contracts described below.
+This document is aligned with `@floegence/flowersec-core@0.20.0`. Consumers must depend on `^0.20.0` or a later compatible release before adopting the artifact-first reconnect contracts described below.
 
 ---
 
@@ -26,10 +26,8 @@ Exports:
 - `getSessionStorage(key)` / `setSessionStorage(key, value)` / `removeSessionStorage(key)`
 - `postMessageToOrigins(target, origins, message)`
 - `waitForMessage({ expectedOrigins, expectedSource, timeoutMs, accept })`
-- `createArtifactSourceFromFactory(getArtifact, kind?)`
-- `createFixedArtifactSource(artifact)`
+- Flowersec `ArtifactSource` and `ArtifactAcquireContext` types
 - `createControlplaneArtifactSource(config)`
-- `createEntryControlplaneArtifactSource(config)`
 - `createArtifactTunnelReconnectConfig(options)`
 - `createProxyRuntimeTunnelReconnectConfig(options)`
 - `createArtifactDirectReconnectConfig(options)`
@@ -39,7 +37,11 @@ Exports:
 ### Example: read payload from hash and clear it
 
 ```ts
-import { parseBase64UrlJsonFromHash, setSessionStorage, clearLocationHash } from '@floegence/floe-webapp-boot';
+import {
+  parseBase64UrlJsonFromHash,
+  setSessionStorage,
+  clearLocationHash,
+} from '@floegence/floe-webapp-boot';
 
 type BootPayload = { token: string; endpointId: string };
 
@@ -75,22 +77,22 @@ const init = await waitForMessage({
 
 ```ts
 import {
-  createEntryControlplaneArtifactSource,
+  createControlplaneArtifactSource,
   createProxyRuntimeTunnelReconnectConfig,
 } from '@floegence/floe-webapp-boot';
 
-const artifactSource = createEntryControlplaneArtifactSource({
+const source = createControlplaneArtifactSource({
   baseUrl: 'https://region.example.com',
   endpointId: 'env_demo',
   entryTicket: '<entry-ticket>',
   credentials: 'omit',
   payload: {
-    floe_app: 'com.floegence.redeven.agent',
+    app: 'example',
   },
 });
 
 const reconnectConfig = createProxyRuntimeTunnelReconnectConfig({
-  artifactSource,
+  source,
   connect: {
     handshakeTimeoutMs: 10_000,
   },
@@ -100,44 +102,52 @@ const reconnectConfig = createProxyRuntimeTunnelReconnectConfig({
 });
 ```
 
-`ArtifactSource` is the shared boundary for browser bootstrap documents:
+Flowersec owns the shared `ArtifactSource` boundary and Boot reexports it unchanged:
 
-- controlplane-backed sources (`createControlplaneArtifactSource`, `createEntryControlplaneArtifactSource`)
-- fixed artifacts (`createFixedArtifactSource`)
-- product-owned factories (`createArtifactSourceFromFactory`)
+```ts
+type ArtifactSource =
+  | { kind: 'once'; artifact: ConnectArtifact }
+  | {
+      kind: 'refreshable';
+      acquire(context: ArtifactAcquireContext): Promise<ConnectArtifact>;
+    };
+```
 
 This keeps `connect_artifact` acquisition reusable while leaving product policy outside the shared package.
 
-### Fixed artifacts and auto reconnect
+### One-time and refreshable sources
 
-Fixed artifact sources are for single-use demos, tests, or product flows that already own artifact freshness outside this package. A fixed artifact is reused verbatim, so `createArtifactTunnelReconnectConfig()` and `createArtifactDirectReconnectConfig()` reject `artifactSource.kind === 'fixed'` when `autoReconnect.enabled` is true.
-
-That rejection is intentional: auto reconnect normally means the browser can request a fresh artifact for each reconnect attempt. A fixed artifact cannot refresh expiry, one-time grants, trace correlation, or server-side revocation state by itself.
-
-Use a controlplane-backed or factory source for normal reconnecting production flows:
+Use a one-time source for a single connection attempt:
 
 ```ts
-const artifactSource = createEntryControlplaneArtifactSource({
+const source: ArtifactSource = { kind: 'once', artifact };
+```
+
+One-time sources are consumed once and cannot enable automatic reconnect. There is no opt-in that permits reusing the same artifact.
+
+Use a refreshable controlplane source for reconnecting flows:
+
+```ts
+const source = createControlplaneArtifactSource({
   baseUrl: 'https://region.example.com',
   endpointId: 'env_demo',
   entryTicket: '<entry-ticket>',
 });
 
 const reconnectConfig = createArtifactTunnelReconnectConfig({
-  artifactSource,
+  source,
   autoReconnect: { enabled: true },
 });
 ```
 
-Only opt in when the product explicitly guarantees that reusing the exact artifact across reconnect attempts is valid and within its security model:
+Product-owned acquisition is expressed directly with the shared refreshable contract:
 
 ```ts
-const artifactSource = createFixedArtifactSource(artifact, {
-  allowAutoReconnect: true,
-});
+const source: ArtifactSource = {
+  kind: 'refreshable',
+  acquire: async ({ signal, traceId }) => acquireArtifact({ signal, traceId }),
+};
 ```
-
-`allowAutoReconnect` is an escape hatch, not the production default. Prefer a controlplane-backed source or `createArtifactSourceFromFactory()` for products that need reconnect after ticket rotation, grant expiry, user changes, or endpoint rebinding.
 
 ---
 
@@ -146,7 +156,11 @@ const artifactSource = createFixedArtifactSource(artifact, {
 Use `@floegence/flowersec-core` directly:
 
 ```ts
-import { createProxyRuntime, createProxyServiceWorkerScript, registerServiceWorkerAndEnsureControl } from '@floegence/flowersec-core/proxy';
+import {
+  createProxyRuntime,
+  createProxyServiceWorkerScript,
+  registerServiceWorkerAndEnsureControl,
+} from '@floegence/flowersec-core/proxy';
 
 // `client` is a Flowersec Client (e.g. from `useProtocol().client()`).
 const runtime = createProxyRuntime({ client });
@@ -156,7 +170,11 @@ const runtime = createProxyRuntime({ client });
 const swScript = createProxyServiceWorkerScript({
   sameOriginOnly: true,
   passthrough: { prefixes: ['/assets/', '/api/'], paths: ['/_proxy/sw.js'] },
-  injectHTML: { mode: 'external_script', scriptUrl: '/_proxy/inject.js', excludePathPrefixes: ['/_proxy/'] },
+  injectHTML: {
+    mode: 'external_script',
+    scriptUrl: '/_proxy/inject.js',
+    excludePathPrefixes: ['/_proxy/'],
+  },
 });
 
 await registerServiceWorkerAndEnsureControl({ scriptUrl: '/_proxy/sw.js', scope: '/' });
@@ -166,6 +184,6 @@ For `external_script` and `external_module` injection, `scriptUrl` is intentiona
 
 Ownership boundary:
 
-- `@floegence/floe-webapp-boot` owns the browser bootstrap document helpers and first-party reconnect config assembly.
+- Flowersec owns `ArtifactSource`; `@floegence/floe-webapp-boot` reexports it and owns first-party browser bootstrap assembly.
 - `@floegence/flowersec-core/proxy` still owns the proxy runtime itself.
 - Product repositories still own trusted-launcher routing, entry-ticket policy, recovery UX, and runtime-isolation payloads.

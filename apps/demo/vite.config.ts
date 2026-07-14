@@ -10,6 +10,11 @@ export default defineConfig(({ command }) => {
 
   const workspaceAliases = useWorkspaceSources
     ? [
+        {
+          find: '@floegence/floe-webapp-boot',
+          replacement: resolve(repoRoot, 'packages/boot/src/index.ts'),
+        },
+
         // CSS entry: avoid dist rebuild loops in dev (Tailwind scans core src).
         {
           find: '@floegence/floe-webapp-core/tailwind',
@@ -111,7 +116,12 @@ export default defineConfig(({ command }) => {
     },
     optimizeDeps: {
       // Don't pre-bundle workspace packages
-      exclude: ['@floegence/floe-webapp-core', '@floegence/floe-webapp-protocol', 'monaco-editor'],
+      exclude: [
+        '@floegence/floe-webapp-boot',
+        '@floegence/floe-webapp-core',
+        '@floegence/floe-webapp-protocol',
+        'monaco-editor',
+      ],
     },
   };
 });

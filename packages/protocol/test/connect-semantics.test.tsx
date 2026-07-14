@@ -46,7 +46,9 @@ describe('ProtocolProvider connect semantics', () => {
 
     function Harness() {
       const p = useProtocol();
-      void p.connect({ mode: 'direct', directInfo: {} as never });
+      void p.connect({
+        source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
+      });
       return null;
     }
 
@@ -69,7 +71,9 @@ describe('ProtocolProvider connect semantics', () => {
 
     function Harness() {
       const p = useProtocol();
-      void p.reconnect({ mode: 'direct', directInfo: {} as never });
+      void p.reconnect({
+        source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
+      });
       return null;
     }
 
@@ -83,4 +87,3 @@ describe('ProtocolProvider connect semantics', () => {
     expect(reconnectMod.__mock.getConnectCalls()).toBe(1);
   });
 });
-

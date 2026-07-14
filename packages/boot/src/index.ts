@@ -7,28 +7,13 @@ export {
 export type { WaitForMessageOptions } from './messaging';
 export { postMessageToOrigins, waitForMessage } from './messaging';
 export { getSessionStorage, removeSessionStorage, setSessionStorage } from './storage';
-export type {
-  ArtifactSourceMetadata,
-  FixedArtifactSourceOptions,
-  ArtifactRequestContext,
-  ArtifactSource,
-  ArtifactSourceKind,
-} from './artifactSource';
-export {
-  createArtifactSourceFromFactory,
-  createControlplaneArtifactSource,
-  createEntryControlplaneArtifactSource,
-  createFixedArtifactSource,
-} from './artifactSource';
-export type {
-  DirectArtifactReconnectOptions,
-  TunnelArtifactReconnectOptions,
-} from './reconnect';
+export type { ArtifactAcquireContext, ArtifactSource } from '@floegence/flowersec-core/reconnect';
+export { createControlplaneArtifactSource } from '@floegence/flowersec-core/reconnect';
+export type { DirectArtifactReconnectOptions, TunnelArtifactReconnectOptions } from './reconnect';
 export {
   createArtifactDirectReconnectConfig,
   createArtifactTunnelReconnectConfig,
   createProxyRuntimeTunnelReconnectConfig,
-  FixedArtifactAutoReconnectError,
 } from './reconnect';
 export type { ScopeEnvelope, ScopeResolver, ScopeResolverMap } from './scope';
 export {

@@ -213,6 +213,8 @@ function main() {
   assertFile('packages/core/dist/components/ui/Button.js');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
+  assertFile('packages/boot/dist/index.js');
+  assertFile('packages/boot/dist/index.d.ts');
   assertFile('packages/init/dist/index.mjs');
 
   // Release artifacts must include the latest close-button hover behavior.
@@ -220,6 +222,7 @@ function main() {
   assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
+  assertFileContains('packages/boot/dist/index.js', '@floegence/flowersec-core/reconnect');
   const distInteractionAudit = auditInteractionUtilities({
     sourceRoot: 'packages/core/dist',
     cssPath: 'packages/core/dist/floe.css',
@@ -229,6 +232,7 @@ function main() {
 
   // Package entrypoints must point to dist
   const corePkg = readJson('packages/core/package.json');
+  const bootPkg = readJson('packages/boot/package.json');
   const protocolPkg = readJson('packages/protocol/package.json');
   const initPkg = readJson('packages/init/package.json');
   assertSkillContract(corePkg);
@@ -292,6 +296,18 @@ function main() {
   assert(
     protocolPkg.exports?.['.']?.types?.startsWith('./dist/'),
     '@floegence/floe-webapp-protocol exports["."].types must point to ./dist/*'
+  );
+
+  assert(bootPkg.name === '@floegence/floe-webapp-boot', '@floegence/floe-webapp-boot package name mismatch');
+  assert(bootPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-boot main must point to ./dist/*');
+  assert(bootPkg.types?.startsWith('./dist/'), '@floegence/floe-webapp-boot types must point to ./dist/*');
+  assert(
+    bootPkg.exports?.['.']?.import?.startsWith('./dist/'),
+    '@floegence/floe-webapp-boot exports["."].import must point to ./dist/*'
+  );
+  assert(
+    bootPkg.exports?.['.']?.types?.startsWith('./dist/'),
+    '@floegence/floe-webapp-boot exports["."].types must point to ./dist/*'
   );
 
   assert(initPkg.name === '@floegence/floe-webapp-init', '@floegence/floe-webapp-init package name mismatch');

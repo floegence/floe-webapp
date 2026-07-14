@@ -1,11 +1,15 @@
 import { createContext, useContext, onCleanup, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { Client } from '@floegence/flowersec-core';
-import { createBrowserReconnectConfig, type BrowserReconnectConfig } from '@floegence/flowersec-core/browser';
+import {
+  createBrowserReconnectConfig,
+  type BrowserReconnectConfig,
+} from '@floegence/flowersec-core/browser';
 import { RpcProxy } from '@floegence/flowersec-core/rpc';
 import {
   createReconnectManager,
   type AutoReconnectConfig,
+  type ConnectConfig as ReconnectConnectConfig,
   type ConnectionStatus,
 } from '@floegence/flowersec-core/reconnect';
 import type { ProtocolContract, RpcClientLike } from './contract';
@@ -71,11 +75,21 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
   // Last desired config (used by reconnect()).
   let lastConfig: ConnectConfig | null = null;
+  let lastConnectArgs: ReconnectConnectConfig | null = null;
   let connectInFlight: Promise<void> | null = null;
 
-  const connectWithConfig = async (config: ConnectConfig, mode: 'hard' | 'if_needed') => {
-    const connectArgs = createBrowserReconnectConfig(config);
+  const resolveConnectArgs = (config: ConnectConfig): ReconnectConnectConfig => {
+    if (lastConfig !== config || lastConnectArgs === null) {
+      lastConfig = config;
+      lastConnectArgs = createBrowserReconnectConfig(config);
+    }
+    return lastConnectArgs;
+  };
 
+  const connectWithArgs = async (
+    connectArgs: ReconnectConnectConfig,
+    mode: 'hard' | 'if_needed'
+  ) => {
     if (mode === 'hard') {
       await mgr.connect(connectArgs);
       return;
@@ -88,12 +102,12 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     if (!effective) {
       throw new Error('reconnect() requires a config before the first connect() call');
     }
+    const connectArgs = resolveConnectArgs(effective);
 
     // Deduplicate calls from multiple lifecycle events (focus/visibility/online).
     if (connectInFlight) return connectInFlight;
 
-    lastConfig = effective;
-    connectInFlight = connectWithConfig(effective, 'hard').finally(() => {
+    connectInFlight = connectWithArgs(connectArgs, 'hard').finally(() => {
       connectInFlight = null;
     });
     return connectInFlight;
@@ -102,7 +116,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   // connect() is intentionally idempotent: it should not tear down a healthy connection.
   // Consumers that need a hard restart must call reconnect().
   const connect = async (config: ConnectConfig) => {
-    lastConfig = config;
+    const connectArgs = resolveConnectArgs(config);
 
     const st = mgr.state();
     if (st.status === 'connected' && st.client) return;
@@ -116,7 +130,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
       return;
     }
 
-    connectInFlight = connectWithConfig(config, 'if_needed').finally(() => {
+    connectInFlight = connectWithArgs(connectArgs, 'if_needed').finally(() => {
       connectInFlight = null;
     });
     await connectInFlight;
@@ -144,11 +158,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     mgr.disconnect();
   });
 
-  return (
-    <ProtocolContext.Provider value={value}>
-      {props.children}
-    </ProtocolContext.Provider>
-  );
+  return <ProtocolContext.Provider value={value}>{props.children}</ProtocolContext.Provider>;
 }
 
 export function useProtocol(): ProtocolContextValue {

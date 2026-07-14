@@ -11,6 +11,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
+      external: [/^@floegence\/flowersec-core(?:\/.*)?$/],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',
@@ -18,4 +19,3 @@ export default defineConfig({
     },
   },
 });
-

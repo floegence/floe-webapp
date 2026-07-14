@@ -12,11 +12,13 @@ describe('boot docs', () => {
 
     expect(doc).toContain('@floegence/floe-webapp-boot');
     expect(doc).toContain('ArtifactSource');
-    expect(doc).toContain('createEntryControlplaneArtifactSource');
+    expect(doc).toContain("kind: 'once'");
+    expect(doc).toContain("kind: 'refreshable'");
+    expect(doc).toContain('createControlplaneArtifactSource');
     expect(doc).toContain('createProxyRuntimeTunnelReconnectConfig');
     expect(doc).toContain('@floegence/flowersec-core/proxy');
-    expect(doc).toContain('Fixed artifacts and auto reconnect');
-    expect(doc).toContain('allowAutoReconnect');
-    expect(doc).toContain('createFixedArtifactSource');
+    expect(doc).toContain('There is no opt-in that permits reusing the same artifact.');
+    expect(doc).not.toContain('allowAutoReconnect');
+    expect(doc).not.toContain('createFixedArtifactSource');
   });
 });

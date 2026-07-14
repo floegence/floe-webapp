@@ -5,21 +5,22 @@ import type { ProtocolContract } from '../src/contract';
 
 vi.mock('@floegence/flowersec-core/browser', () => {
   let calls: ConnectConfig[] = [];
-  const connectArgs = {
-    connectOnce: vi.fn(),
-  };
+  let connectArgs: Array<{ connectOnce: ReturnType<typeof vi.fn> }> = [];
 
   return {
     createBrowserReconnectConfig: vi.fn((config: ConnectConfig) => {
       calls.push(config);
-      return connectArgs;
+      const args = { connectOnce: vi.fn() };
+      connectArgs.push(args);
+      return args;
     }),
     __mock: {
       reset: () => {
         calls = [];
+        connectArgs = [];
       },
       getCalls: () => calls.slice(),
-      getConnectArgs: () => connectArgs,
+      getConnectArgs: () => connectArgs.slice(),
     },
   };
 });
@@ -71,8 +72,7 @@ describe('ProtocolProvider connect config delegation', () => {
     reconnectMod.__mock.reset();
 
     const config: ConnectConfig = {
-      mode: 'direct',
-      getDirectInfo: async () => ({ ws_url: 'wss://direct.example.com/ws' } as never),
+      source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
       connect: {
         handshakeTimeoutMs: 4_000,
         transportSecurityPolicy: 'allow_plaintext_for_loopback',
@@ -104,7 +104,7 @@ describe('ProtocolProvider connect config delegation', () => {
     // @ts-expect-error -- test-only mock helper
     expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([
       // @ts-expect-error -- test-only mock helper
-      browserMod.__mock.getConnectArgs(),
+      browserMod.__mock.getConnectArgs()[0],
     ]);
     // @ts-expect-error -- test-only mock helper
     expect(reconnectMod.__mock.getConnectCalls()).toEqual([]);
@@ -119,13 +119,12 @@ describe('ProtocolProvider connect config delegation', () => {
     reconnectMod.__mock.reset();
 
     const config: ConnectConfig = {
-      mode: 'tunnel',
-      artifactControlplane: {
-        baseUrl: 'https://cp.example.com',
-        endpointId: 'endpoint-1',
+      source: {
+        kind: 'refreshable',
+        acquire: async () => ({ v: 1, transport: 'tunnel' }) as never,
       },
       connect: {
-        keepaliveIntervalMs: 30_000,
+        liveness: { intervalMs: 30_000, timeoutMs: 10_000 },
         transportSecurityPolicy: 'require_tls',
       },
     };
@@ -154,9 +153,51 @@ describe('ProtocolProvider connect config delegation', () => {
     // @ts-expect-error -- test-only mock helper
     expect(reconnectMod.__mock.getConnectCalls()).toEqual([
       // @ts-expect-error -- test-only mock helper
-      browserMod.__mock.getConnectArgs(),
+      browserMod.__mock.getConnectArgs()[0],
     ]);
     // @ts-expect-error -- test-only mock helper
     expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([]);
+  });
+
+  it('reuses one compiled reconnect adapter across connect and hard reconnect', async () => {
+    const browserMod = await import('@floegence/flowersec-core/browser');
+    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
+    // @ts-expect-error -- test-only mock helper
+    browserMod.__mock.reset();
+    // @ts-expect-error -- test-only mock helper
+    reconnectMod.__mock.reset();
+
+    const config: ConnectConfig = {
+      source: {
+        kind: 'refreshable',
+        acquire: async () => ({ v: 1, transport: 'tunnel' }) as never,
+      },
+      autoReconnect: { enabled: true },
+    };
+    let flow: Promise<void> | null = null;
+
+    function Harness() {
+      const protocol = useProtocol();
+      flow = protocol.connect(config).then(() => protocol.reconnect());
+      return null;
+    }
+
+    renderToString(() => (
+      <ProtocolProvider contract={dummyContract}>
+        <Harness />
+      </ProtocolProvider>
+    ));
+
+    if (!flow) throw new Error('connection flow was not started');
+    await flow;
+
+    // @ts-expect-error -- test-only mock helper
+    expect(browserMod.__mock.getCalls()).toEqual([config]);
+    // @ts-expect-error -- test-only mock helper
+    const [compiled] = browserMod.__mock.getConnectArgs();
+    // @ts-expect-error -- test-only mock helper
+    expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([compiled]);
+    // @ts-expect-error -- test-only mock helper
+    expect(reconnectMod.__mock.getConnectCalls()).toEqual([compiled]);
   });
 });

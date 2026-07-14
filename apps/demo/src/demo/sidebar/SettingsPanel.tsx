@@ -3,6 +3,7 @@ import { useNotification, useTheme } from '@floegence/floe-webapp-core';
 import { SidebarContent, SidebarSection } from '@floegence/floe-webapp-core/layout';
 import { Button } from '@floegence/floe-webapp-core/ui';
 import { Moon, Sun } from '@floegence/floe-webapp-core/icons';
+import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 import { ChartThemePicker } from '../components/ChartThemePicker';
 
@@ -25,8 +26,7 @@ export function SettingsPanel() {
 
     try {
       const config: ConnectConfig = {
-        mode: 'tunnel',
-        artifactControlplane: { baseUrl, endpointId },
+        source: createControlplaneArtifactSource({ baseUrl, endpointId }),
       };
       await protocol.connect(config);
       notifications.success('Connected', 'Flowersec tunnel established.');
