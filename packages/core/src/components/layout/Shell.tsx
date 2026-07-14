@@ -18,7 +18,13 @@ import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
 import { KeepAliveStack, type KeepAliveView } from './KeepAliveStack';
 import type { SidebarVisibilityMotion } from '../../context/LayoutContext';
 import { resolveShellSidebarActiveTabChange } from './sidebarVisibilityMotion';
-import { createUIFirstSelection } from '../../utils/uiFirstSelection';
+import { createUIFirstSelection, type UIFirstSelectionEvent } from '../../utils/uiFirstSelection';
+
+export type ActivitySelectionMetadata = {
+  source: 'activity-bar' | 'mobile-tab-bar';
+  opts?: { openSidebar?: boolean };
+  mobileSidebarOpen?: boolean;
+};
 
 export interface ShellSlotClassNames {
   root?: string;
@@ -56,6 +62,7 @@ export interface ShellProps {
   sidebarContent?: (activeTab: string) => JSX.Element;
   /** Defer user-requested Activity content commits until the selected control has painted. */
   activitySelectionMode?: 'sync' | 'ui-first';
+  onActivitySelectionEvent?: (event: UIFirstSelectionEvent<string, ActivitySelectionMetadata>) => void;
   resolveSidebarVisibilityMotion?: (args: {
     currentActiveId: string;
     nextActiveId: string;
@@ -112,10 +119,6 @@ export function Shell(props: ShellProps) {
     });
     layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion });
   };
-  type ActivitySelectionMetadata = {
-    opts?: { openSidebar?: boolean };
-    mobileSidebarOpen?: boolean;
-  };
   const activitySelection = createUIFirstSelection<string, ActivitySelectionMetadata>({
     committed: layout.sidebarActiveTab,
     commit: (id, metadata) => {
@@ -126,6 +129,7 @@ export function Shell(props: ShellProps) {
         }
       });
     },
+    onEvent: (event) => props.onActivitySelectionEvent?.(event),
   });
   const activityVisualActiveId = () => (
     props.activitySelectionMode === 'ui-first'
@@ -134,7 +138,7 @@ export function Shell(props: ShellProps) {
   );
   const requestSidebarActiveTab = (id: string, opts?: { openSidebar?: boolean }) => {
     if (props.activitySelectionMode === 'ui-first') {
-      activitySelection.request(id, { opts });
+      activitySelection.request(id, { source: 'activity-bar', opts });
       return;
     }
     setSidebarActiveTab(id, opts);
@@ -289,7 +293,10 @@ export function Shell(props: ShellProps) {
 
     if (layout.sidebarActiveTab() !== nextActiveId) {
       if (props.activitySelectionMode === 'ui-first') {
-        activitySelection.request(nextActiveId, { mobileSidebarOpen: nextMobileSidebarOpen });
+        activitySelection.request(nextActiveId, {
+          source: 'mobile-tab-bar',
+          mobileSidebarOpen: nextMobileSidebarOpen,
+        });
         return;
       }
       setSidebarActiveTab(nextActiveId);
