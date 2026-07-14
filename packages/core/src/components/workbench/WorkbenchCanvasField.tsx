@@ -55,6 +55,7 @@ export interface WorkbenchCanvasFieldProps {
   widgetMotionById?: Record<string, WorkbenchWidgetMotionIntent | null | undefined>;
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   onSelectWidget: (widgetId: string) => void;
+  onActivateWidget?: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onClaimVisualFrontOwner: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
@@ -138,6 +139,7 @@ function WorkbenchCanvasWidgetSlot(props: WorkbenchCanvasWidgetSlotProps) {
       interactionAdapter={props.interactionAdapter}
       viewport={props.viewport}
       onSelect={props.onSelectWidget}
+      onActivate={props.onActivateWidget}
       onContextMenu={props.onWidgetContextMenu}
       onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
       onCommitFront={props.onCommitFront}
@@ -310,6 +312,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               widgetMotionById={props.widgetMotionById}
               interactionAdapter={interactionAdapter()}
               onSelectWidget={props.onSelectWidget}
+              onActivateWidget={props.onActivateWidget}
               onWidgetContextMenu={props.onWidgetContextMenu}
               onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
               onCommitFront={props.onCommitFront}

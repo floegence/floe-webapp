@@ -114,6 +114,7 @@ export interface WorkbenchWidgetProps {
   interactionAdapter?: WorkbenchInteractionAdapter | ResolvedWorkbenchInteractionAdapter;
   viewport?: WorkbenchViewport;
   onSelect: (widgetId: string) => void;
+  onActivate?: (widgetId: string) => void;
   onContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onClaimVisualFrontOwner: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
@@ -140,6 +141,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const topRenderLayer = createOwnerSafePropAccessor(() => props.topRenderLayer);
   const viewport = createOwnerSafePropAccessor(() => props.viewport);
   const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
+  const onActivate = createOwnerSafePropAccessor(() => props.onActivate);
   const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
   const onClaimVisualFrontOwner = createOwnerSafePropAccessor(() => props.onClaimVisualFrontOwner);
   const onCommitFront = createOwnerSafePropAccessor(() => props.onCommitFront);
@@ -172,6 +174,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const [resizeState, setResizeState] = createSignal<LocalResizeState | null>(null);
   const [bodyActivation, setBodyActivation] = createSignal<WorkbenchWidgetBodyActivation>();
   const [localSelectionClaim, setLocalSelectionClaim] = createSignal(false);
+  const [localActivationPending, setLocalActivationPending] = createSignal(false);
   const [sharpProjection, setSharpProjection] = createSignal({
     enabled: false,
     scale: 1,
@@ -257,8 +260,15 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   });
 
   const commitWidgetSelectionAndFront = () => {
-    setLocalSelectionClaim(false);
     const currentWidgetId = widgetId();
+    const activate = onActivate();
+    if (activate) {
+      setLocalSelectionClaim(true);
+      setLocalActivationPending(true);
+      activate(currentWidgetId);
+      return;
+    }
+    setLocalSelectionClaim(false);
     onSelect()(currentWidgetId);
     onCommitFront()(currentWidgetId);
   };
@@ -273,6 +283,11 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     setLocalSelectionClaim(false);
   };
   const selected = createMemo(() => externallySelected() || localSelectionClaim());
+  createEffect(() => {
+    if (!localActivationPending() || !externallySelected()) return;
+    setLocalActivationPending(false);
+    setLocalSelectionClaim(false);
+  });
   const preclaimPointerOwnership = (
     pointerId: number,
     wasSelected: boolean,
@@ -793,7 +808,7 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       tabIndex={0}
       onPointerDown={handlePointerDown}
       onFocus={() => {
-        if (localSelectionClaim()) return;
+        if (localSelectionClaim() || localActivationPending()) return;
         onSelect()(widgetId());
       }}
       onContextMenu={(event) => {

@@ -74,4 +74,53 @@ describe('createUIFirstSelection', () => {
       dispose();
     });
   });
+
+  it('keeps pending intent when a derived canonical accessor reruns without changing value', () => {
+    const scheduled: Array<() => void> = [];
+    const phases: UIFirstSelectionPhase[] = [];
+
+    createRoot((dispose) => {
+      const [state, setState] = createSignal({ selected: 'files', revision: 0 });
+      const selection = createUIFirstSelection({
+        committed: () => state().selected,
+        commit: (selected: string) => setState((current) => ({ ...current, selected })),
+        scheduleAfterPaint: (callback) => scheduled.push(callback),
+        onEvent: (event) => phases.push(event.phase),
+      });
+
+      selection.request('terminal');
+      setState((current) => ({ ...current, revision: current.revision + 1 }));
+      expect(selection.visual()).toBe('terminal');
+      expect(selection.pending()).toBe(true);
+      expect(phases).toEqual(['requested']);
+
+      scheduled.shift()?.();
+      scheduled.shift()?.();
+      expect(selection.committed()).toBe('terminal');
+      expect(selection.pending()).toBe(false);
+      dispose();
+    });
+  });
+
+  it('can defer activation side effects for a value that is already canonical', () => {
+    const scheduled: Array<() => void> = [];
+    const commit = vi.fn();
+
+    createRoot((dispose) => {
+      const [committed] = createSignal('files');
+      const selection = createUIFirstSelection({
+        committed,
+        commit,
+        commitEqualRequests: true,
+        scheduleAfterPaint: (callback) => scheduled.push(callback),
+      });
+
+      selection.request('files');
+      expect(selection.pending()).toBe(true);
+      expect(commit).not.toHaveBeenCalled();
+      scheduled.shift()?.();
+      expect(commit).toHaveBeenCalledWith('files', undefined);
+      dispose();
+    });
+  });
 });

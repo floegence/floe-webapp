@@ -1,6 +1,10 @@
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
+import {
+  createUIFirstSelection,
+  type UIFirstSelectionEvent,
+} from '../../utils/uiFirstSelection';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
 import {
@@ -124,6 +128,11 @@ export interface WorkbenchSurfaceProps {
   onRequestDelete?: (widgetId: string) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
+  /** Defer pointer/focus widget activation until the visual selection has painted. */
+  widgetActivationMode?: 'sync' | 'after-paint';
+  onWidgetActivationEvent?: (
+    event: UIFirstSelectionEvent<string | null, { bringToFront: boolean }>
+  ) => void;
 }
 
 const DEFAULT_LOCK_SHORTCUT = 'F1';
@@ -151,6 +160,48 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   };
 
   const model = useWorkbenchModel(modelOptions);
+  const widgetSelection = createUIFirstSelection<string | null, { bringToFront: boolean }>({
+    committed: model.selectedWidgetId,
+    commitEqualRequests: true,
+    commit: (widgetId, metadata) => {
+      if (!widgetId) {
+        model.canvas.clearSelection();
+        return;
+      }
+      model.canvas.selectWidget(widgetId);
+      if (metadata?.bringToFront) model.canvas.commitFront(widgetId);
+    },
+    onEvent: (event) => props.onWidgetActivationEvent?.(event),
+  });
+  const selectedWidgetId = () => (
+    props.widgetActivationMode === 'after-paint'
+      ? widgetSelection.visual()
+      : model.selectedWidgetId()
+  );
+  const selectedObject = () => {
+    if (props.widgetActivationMode !== 'after-paint' || !widgetSelection.pending()) {
+      return model.selectedObject();
+    }
+    const widgetId = widgetSelection.visual();
+    return widgetId ? { kind: 'widget' as const, id: widgetId } : null;
+  };
+  const selectWidget = (widgetId: string) => {
+    if (props.widgetActivationMode === 'after-paint') {
+      if (widgetSelection.pending() && widgetSelection.visual() === widgetId) return;
+      widgetSelection.request(widgetId, { bringToFront: false });
+      return;
+    }
+    model.canvas.selectWidget(widgetId);
+  };
+  const activateWidget = (widgetId: string) => {
+    if (props.widgetActivationMode === 'after-paint') {
+      if (widgetSelection.pending() && widgetSelection.visual() === widgetId) return;
+      widgetSelection.request(widgetId, { bringToFront: true });
+      return;
+    }
+    model.canvas.selectWidget(widgetId);
+    model.canvas.commitFront(widgetId);
+  };
   const [surfaceRootEl, setSurfaceRootEl] = createSignal<HTMLDivElement | null>(null);
   const [dockDragPreview, setDockDragPreview] = createSignal<WorkbenchDockDragPreview | null>(null);
   const interactionAdapter = createMemo<ResolvedWorkbenchInteractionAdapter>(() =>
@@ -567,6 +618,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
 
   const handleCanvasPointerDown = (event: PointerEvent) => {
     if (event.button !== 0) return;
+    if (interactionAdapter().findWidgetRoot(event.target)) return;
     handoffCanvasAuthority('background_pointer');
   };
 
@@ -614,8 +666,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           placementPreview={placementPreview()}
           viewport={model.viewport()}
           canvasFrameSize={model.canvasFrameSize()}
-          selectedWidgetId={model.selectedWidgetId()}
-          selectedObject={model.selectedObject()}
+          selectedWidgetId={selectedWidgetId()}
+          selectedObject={selectedObject()}
           mode={model.mode()}
           visualFrontOwnerId={model.visualFrontOwnerId()}
           locked={model.locked()}
@@ -626,7 +678,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
           onViewportInteractionStart={model.canvas.cancelViewportNavigation}
           onCanvasContextMenu={model.canvas.openCanvasContextMenu}
           onCanvasPointerDown={handleCanvasPointerDown}
-          onSelectWidget={model.canvas.selectWidget}
+          onSelectWidget={selectWidget}
+          onActivateWidget={activateWidget}
           onWidgetContextMenu={model.canvas.openWidgetContextMenu}
           onClaimVisualFrontOwner={model.canvas.claimVisualFrontOwner}
           onCommitFront={model.canvas.commitFront}

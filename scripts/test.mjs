@@ -26,6 +26,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-surface-canvas-authority.test.tsx',
   'packages/core/test/workbench-surface-wheel-selection.test.tsx',
   'packages/core/test/workbench-surface-api.test.tsx',
+  'packages/core/test/workbench-ui-first-activation.test.tsx',
 ];
 
 function isFlag(arg) {

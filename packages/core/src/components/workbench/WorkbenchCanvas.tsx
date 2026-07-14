@@ -67,6 +67,7 @@ export interface WorkbenchCanvasProps {
   onCanvasContextMenu: (event: InfiniteCanvasContextMenuEvent) => void;
   onCanvasPointerDown?: (event: PointerEvent) => void;
   onSelectWidget: (widgetId: string) => void;
+  onActivateWidget?: (widgetId: string) => void;
   onWidgetContextMenu: (event: MouseEvent, item: WorkbenchWidgetItem) => void;
   onClaimVisualFrontOwner: (widgetId: string) => void;
   onCommitFront: (widgetId: string) => void;
@@ -151,6 +152,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       projectedViewport={props.projectedViewport}
       surfaceReady={props.surfaceReady}
       onSelect={props.onSelectWidget}
+      onActivate={props.onActivateWidget}
       onContextMenu={props.onWidgetContextMenu}
       onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
       onCommitFront={props.onCommitFront}
@@ -396,6 +398,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                         onViewportCommit={props.onViewportCommit}
                         onCanvasContextMenu={props.onCanvasContextMenu}
                         onSelectWidget={props.onSelectWidget}
+                        onActivateWidget={props.onActivateWidget}
                         onWidgetContextMenu={props.onWidgetContextMenu}
                         onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
                         onCommitFront={props.onCommitFront}
@@ -504,6 +507,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           widgetMotionById={widgetMotionById()}
           interactionAdapter={interactionAdapter()}
           onSelectWidget={props.onSelectWidget}
+          onActivateWidget={props.onActivateWidget}
           onWidgetContextMenu={props.onWidgetContextMenu}
           onClaimVisualFrontOwner={props.onClaimVisualFrontOwner}
           onCommitFront={props.onCommitFront}

@@ -23,6 +23,8 @@ export interface CreateUIFirstSelectionOptions<T, M = undefined> {
   committed: Accessor<T>;
   commit: (value: T, metadata: M | undefined) => void;
   equals?: (left: T, right: T) => boolean;
+  /** Run the deferred commit even when the requested value already equals canonical state. */
+  commitEqualRequests?: boolean;
   onEvent?: (event: UIFirstSelectionEvent<T, M>) => void;
   scheduleAfterPaint?: (callback: () => void) => void;
 }
@@ -57,7 +59,8 @@ export function createUIFirstSelection<T, M = undefined>(
 ): UIFirstSelectionController<T, M> {
   const equals = options.equals ?? Object.is;
   const scheduleAfterPaint = options.scheduleAfterPaint ?? deferAfterPaint;
-  const [visual, setVisual] = createSignal<T>(untrack(options.committed), { equals });
+  let observedCanonical = untrack(options.committed);
+  const [visual, setVisual] = createSignal<T>(observedCanonical, { equals });
   const [pending, setPending] = createSignal(false);
   let transaction: SelectionTransaction<T, M> | null = null;
   let nextTransactionId = 1;
@@ -92,7 +95,7 @@ export function createUIFirstSelection<T, M = undefined>(
     previewed = false;
     setVisual(() => value);
 
-    if (equals(value, options.committed())) {
+    if (equals(value, options.committed()) && !options.commitEqualRequests) {
       setPending(false);
       return;
     }
@@ -140,9 +143,11 @@ export function createUIFirstSelection<T, M = undefined>(
 
   createEffect(() => {
     const canonical = options.committed();
+    const canonicalChanged = !equals(canonical, observedCanonical);
+    observedCanonical = canonical;
     const current = transaction;
     if (current && current.committing && equals(canonical, current.value)) return;
-    if (current && !equals(canonical, current.value)) {
+    if (current && canonicalChanged && !equals(canonical, current.value)) {
       cancelTransaction(false);
     }
     if (!transaction || !equals(canonical, transaction.value)) {
