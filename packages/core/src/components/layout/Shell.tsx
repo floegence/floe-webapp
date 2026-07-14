@@ -1,4 +1,4 @@
-import { Show, For, createEffect, createMemo, createSignal, type JSX } from 'solid-js';
+import { Show, For, batch, createEffect, createMemo, createSignal, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
@@ -18,6 +18,7 @@ import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
 import { KeepAliveStack, type KeepAliveView } from './KeepAliveStack';
 import type { SidebarVisibilityMotion } from '../../context/LayoutContext';
 import { resolveShellSidebarActiveTabChange } from './sidebarVisibilityMotion';
+import { createUIFirstSelection } from '../../utils/uiFirstSelection';
 
 export interface ShellSlotClassNames {
   root?: string;
@@ -53,6 +54,8 @@ export interface ShellProps {
   topBarActions?: JSX.Element;
   bottomBarItems?: JSX.Element;
   sidebarContent?: (activeTab: string) => JSX.Element;
+  /** Defer user-requested Activity content commits until the selected control has painted. */
+  activitySelectionMode?: 'sync' | 'ui-first';
   resolveSidebarVisibilityMotion?: (args: {
     currentActiveId: string;
     nextActiveId: string;
@@ -108,6 +111,33 @@ export function Shell(props: ShellProps) {
       resolveSidebarVisibilityMotion: props.resolveSidebarVisibilityMotion,
     });
     layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion });
+  };
+  type ActivitySelectionMetadata = {
+    opts?: { openSidebar?: boolean };
+    mobileSidebarOpen?: boolean;
+  };
+  const activitySelection = createUIFirstSelection<string, ActivitySelectionMetadata>({
+    committed: layout.sidebarActiveTab,
+    commit: (id, metadata) => {
+      batch(() => {
+        setSidebarActiveTab(id, metadata?.opts);
+        if (typeof metadata?.mobileSidebarOpen === 'boolean') {
+          setMobileSidebarOpen(metadata.mobileSidebarOpen);
+        }
+      });
+    },
+  });
+  const activityVisualActiveId = () => (
+    props.activitySelectionMode === 'ui-first'
+      ? activitySelection.visual()
+      : layout.sidebarActiveTab()
+  );
+  const requestSidebarActiveTab = (id: string, opts?: { openSidebar?: boolean }) => {
+    if (props.activitySelectionMode === 'ui-first') {
+      activitySelection.request(id, { opts });
+      return;
+    }
+    setSidebarActiveTab(id, opts);
   };
 
   // Sidebar is a structural part of the layout. When disabled, force-close the mobile drawer.
@@ -258,6 +288,10 @@ export function Shell(props: ShellProps) {
     });
 
     if (layout.sidebarActiveTab() !== nextActiveId) {
+      if (props.activitySelectionMode === 'ui-first') {
+        activitySelection.request(nextActiveId, { mobileSidebarOpen: nextMobileSidebarOpen });
+        return;
+      }
       setSidebarActiveTab(nextActiveId);
     }
     setMobileSidebarOpen(nextMobileSidebarOpen);
@@ -386,8 +420,8 @@ export function Shell(props: ShellProps) {
             <ActivityBar
               items={activityItems()}
               bottomItems={props.activityBottomItems}
-              activeId={layout.sidebarActiveTab()}
-              onActiveChange={setSidebarActiveTab}
+              activeId={activityVisualActiveId()}
+              onActiveChange={requestSidebarActiveTab}
               collapsed={effectiveSidebarCollapsed()}
               onCollapsedChange={sidebarHidden() ? undefined : layout.setSidebarCollapsed}
               ariaLabel={accessibility().primaryNavigationLabel}
@@ -498,10 +532,13 @@ export function Shell(props: ShellProps) {
         <MobileTabBar
           items={activityItems()}
           activeId={resolveMobileTabActiveId({
-            activeId: layout.sidebarActiveTab(),
-            mobileSidebarOpen: mobileSidebarOpen(),
-            activeIsFullScreen: isFullScreen(),
-            activeIsPage: activeIsPage(),
+            activeId: activityVisualActiveId(),
+            mobileSidebarOpen: activitySelection.pending() ? true : mobileSidebarOpen(),
+            activeIsFullScreen: registry?.getComponent(activityVisualActiveId())?.sidebar?.fullScreen ?? isFullScreen(),
+            activeIsPage: (() => {
+              const sidebar = registry?.getComponent(activityVisualActiveId())?.sidebar;
+              return sidebar ? sidebar.fullScreen === true || sidebar.renderIn === 'main' : activeIsPage();
+            })(),
           })}
           onSelect={handleMobileTabSelect}
           ariaLabel={accessibility().mobileNavigationLabel}

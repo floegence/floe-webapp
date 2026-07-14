@@ -7,3 +7,4 @@ export * from './dom';
 export * from './gridCollision';
 export * from './gridLayout';
 export * from './hotInteraction';
+export * from './uiFirstSelection';

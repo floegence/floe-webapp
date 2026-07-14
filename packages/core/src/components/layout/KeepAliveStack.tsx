@@ -1,6 +1,7 @@
-import { For, createEffect, createMemo, createSignal, untrack, type Accessor, type JSX } from 'solid-js';
+import { For, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { ViewActivationProvider } from '../../context/ViewActivationContext';
 import { cn } from '../../utils/cn';
+import { deferAfterPaint } from '../../utils/defer';
 
 export interface KeepAliveView {
   id: string;
@@ -18,6 +19,9 @@ export interface KeepAliveStackProps {
 
   /** When true, mounted views stay mounted after deactivation (default: true). */
   keepMounted?: boolean;
+
+  /** Publish activation effects synchronously or after the visible view has painted. */
+  activationMode?: 'sync' | 'after-paint';
 }
 
 function normalizeId(id: unknown): string {
@@ -55,21 +59,41 @@ function buildViewMap(order: string[], views: KeepAliveView[]): Map<string, Keep
 function KeepAliveItem(props: {
   id: string;
   active: Accessor<boolean>;
+  activationMode: Accessor<'sync' | 'after-paint'>;
   class?: string;
   children: JSX.Element;
 }) {
   const [activationSeq, setActivationSeq] = createSignal(0);
-  let prevActive = false;
+  const [activationActive, setActivationActive] = createSignal(false);
+  let activationRequest = 0;
 
-  createEffect(() => {
+  createRenderEffect(() => {
     const next = props.active();
-    if (next && !prevActive) {
-      setActivationSeq((v) => v + 1);
+    const mode = props.activationMode();
+    activationRequest += 1;
+    const request = activationRequest;
+    if (!next) {
+      setActivationActive(false);
+      return;
     }
-    prevActive = next;
+    const activate = () => {
+      if (request !== activationRequest || !props.active()) return;
+      if (untrack(activationActive)) return;
+      setActivationActive(true);
+      setActivationSeq((v) => v + 1);
+    };
+    if (mode === 'after-paint') {
+      deferAfterPaint(activate);
+    } else {
+      activate();
+    }
   });
 
-  const value = untrack(() => ({ id: props.id, active: props.active, activationSeq }));
+  onCleanup(() => {
+    activationRequest += 1;
+  });
+
+  const value = untrack(() => ({ id: props.id, active: activationActive, activationSeq }));
 
   return (
     <ViewActivationProvider value={value}>
@@ -83,6 +107,7 @@ function KeepAliveItem(props: {
 export function KeepAliveStack(props: KeepAliveStackProps) {
   const lazyMount = () => props.lazyMount !== false;
   const keepMounted = () => props.keepMounted !== false;
+  const activationMode = () => props.activationMode ?? 'sync';
 
   const viewOrder = createMemo(() => normalizeViewOrder(props.views));
   const [cachedById, setCachedById] = createSignal<Map<string, KeepAliveView>>(
@@ -200,7 +225,7 @@ export function KeepAliveStack(props: KeepAliveStackProps) {
           const isActive = () => activeId() === id;
 
           return (
-            <KeepAliveItem id={id} active={isActive} class={cn('absolute inset-0', view()?.class)}>
+            <KeepAliveItem id={id} active={isActive} activationMode={activationMode} class={cn('absolute inset-0', view()?.class)}>
               {view()?.render()}
             </KeepAliveItem>
           );

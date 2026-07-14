@@ -11,6 +11,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/surface-floating-layer.test.tsx',
   'packages/core/test/pointer-session.test.ts',
   'packages/core/test/infinite-canvas-wheel-routing.test.tsx',
+  'packages/core/test/keep-alive-activation.test.tsx',
   'packages/core/test/notes-overlay.test.tsx',
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
   'packages/core/test/tabs-slider-geometry.test.tsx',

@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
+import { createUIFirstSelection } from '../../utils/uiFirstSelection';
 import { useViewActivation } from '../../context/ViewActivationContext';
 import { Plus, X, ChevronRight } from '../icons';
 
@@ -361,12 +362,14 @@ export function Tabs(props: TabsProps) {
   // Get the current active id (controlled or uncontrolled)
   const currentActiveId = () => (isControlled() ? local.activeId! : internalActiveId());
 
-  // Optimistic UI: update active highlight immediately on click, then notify parent after paint.
-  const [optimisticActiveId, setOptimisticActiveId] = createSignal(currentActiveId());
-
-  createEffect(() => {
-    setOptimisticActiveId(currentActiveId());
+  const activeSelection = createUIFirstSelection<string>({
+    committed: currentActiveId,
+    commit: (id) => {
+      if (!isControlled()) setInternalActiveId(id);
+      changeHandler()?.(id);
+    },
   });
+  const optimisticActiveId = activeSelection.visual;
 
   // Keep slider indicator aligned with the optimistic active tab.
   createEffect(() => {
@@ -463,26 +466,15 @@ export function Tabs(props: TabsProps) {
   // Handle tab click with UI-first response
   const handleTabClick = (id: string, disabled?: boolean) => {
     if (disabled) return;
-    const handler = changeHandler();
 
-    // UI first: highlight immediately.
-    setOptimisticActiveId(id);
+    activeSelection.request(id);
     // Keep the slider indicator in sync with the optimistic highlight.
     // Do it synchronously for snappy feedback.
     if (isSliderIndicator()) {
       updateSliderIndicatorForId(id);
     }
 
-    // Update internal state for uncontrolled mode
-    if (!isControlled()) {
-      setInternalActiveId(id);
-    }
-
-    // Notify parent after paint
-    if (handler) {
-      const nextId = id;
-      deferAfterPaint(() => handler(nextId));
-    }
+    // The shared selection transaction commits internal and controlled state after paint.
   };
 
   const focusAndSelectById = (id: string) => {

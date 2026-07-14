@@ -27,6 +27,9 @@ export interface ActivityAppsMainProps<TProtocol = unknown> {
 
   /** Forwarded to KeepAliveStack (default: true). */
   keepMounted?: KeepAliveStackProps['keepMounted'];
+
+  /** Forwarded to KeepAliveStack (default: sync). */
+  activationMode?: KeepAliveStackProps['activationMode'];
 }
 
 function defaultInclude<TProtocol>(component: FloeComponent<TProtocol>): boolean {
@@ -65,6 +68,7 @@ export function ActivityAppsMain<TProtocol = unknown>(props: ActivityAppsMainPro
       activeId={activeId()}
       lazyMount={props.lazyMount}
       keepMounted={props.keepMounted}
+      activationMode={props.activationMode}
       class={props.class}
     />
   );
