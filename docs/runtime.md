@@ -11,7 +11,7 @@ Best practice:
 - Use `@floegence/floe-webapp-boot` for first-party browser bootstrap concerns such as shared reconnect config assembly and shared `proxy.runtime` scope validation.
 - For proxy runtime mode (Service Worker + HTML injection + WS patch), keep the runtime itself integrated directly via `@floegence/flowersec-core/proxy`.
 
-This document is aligned with `@floegence/flowersec-core@0.21.1`. Consumers must depend on `^0.21.1` or a later compatible release before adopting the artifact-first reconnect contracts described below.
+This document is aligned with `@floegence/flowersec-core@0.25.0`. Consumers must depend on `^0.25.0` or a later compatible release before adopting the artifact-first reconnect contracts described below.
 
 ---
 
