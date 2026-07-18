@@ -15,6 +15,9 @@ describe('boot docs', () => {
     expect(doc).toContain("kind: 'once'");
     expect(doc).toContain("kind: 'refreshable'");
     expect(doc).toContain('createControlplaneArtifactSource');
+    expect(doc).toContain('@floegence/flowersec-core@0.26.0');
+    expect(doc).toContain('HTTPS by default');
+    expect(doc).toContain('allowLoopbackHTTP: true');
     expect(doc).toContain('createProxyRuntimeTunnelReconnectConfig');
     expect(doc).toContain('@floegence/flowersec-core/proxy');
     expect(doc).toContain('There is no opt-in that permits reusing the same artifact.');

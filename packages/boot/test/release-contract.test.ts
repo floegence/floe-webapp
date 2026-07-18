@@ -55,7 +55,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.37.3');
+    expect(corePkg.version).toBe('0.37.4');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -66,9 +66,9 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const lockfile = readText('pnpm-lock.yaml');
 
-    expect(bootPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.25.0');
-    expect(protocolPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.25.0');
-    expect(lockfile).toContain("'@floegence/flowersec-core@0.25.0':");
+    expect(bootPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.26.0');
+    expect(protocolPkg.dependencies?.['@floegence/flowersec-core']).toBe('^0.26.0');
+    expect(lockfile).toContain("'@floegence/flowersec-core@0.26.0':");
     expect(lockfile).toContain("engines: {node: '>=24.0.0'}");
 
     const manifests = [bootPkg, protocolPkg];
@@ -81,7 +81,15 @@ describe('release dependency and runtime contract', () => {
     expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: file:");
     expect(lockfile).not.toContain("'@floegence/flowersec-core':\n        specifier: link:");
     expect(lockfile).not.toContain(
-      "'@floegence/flowersec-core':\n        specifier: ^0.25.0\n        version: link:"
+      "'@floegence/flowersec-core':\n        specifier: ^0.26.0\n        version: link:"
     );
+    expect(lockfile).not.toMatch(/(?:@floegence\/flowersec-core|@floegence\+flowersec-core)@0\.25\./u);
+  });
+
+  it('validates the frozen dependency graph before running the local quality gate', () => {
+    const makefile = readText('Makefile');
+
+    expect(makefile).toMatch(/^check: install lint typecheck test build verify$/mu);
+    expect(makefile).toMatch(/^install:\n\tpnpm install --frozen-lockfile$/mu);
   });
 });

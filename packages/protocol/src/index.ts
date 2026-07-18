@@ -10,9 +10,9 @@ export {
   requestEntryChannelGrant,
   requestEntryConnectArtifact,
   type ConnectArtifact,
-  type ConnectArtifactRequestConfig,
   type ControlplaneConfig,
-  type EntryConnectArtifactRequestConfig,
   type EntryControlplaneConfig,
+  type RequestConnectArtifactInput,
+  type RequestEntryConnectArtifactInput,
 } from './controlplane';
 export type { ProtocolContract, RpcClientLike, RpcHelpers } from './contract';

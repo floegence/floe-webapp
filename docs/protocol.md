@@ -110,7 +110,7 @@ Best practice:
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
 - Flowersec owns `ArtifactSource`; `@floegence/floe-webapp-boot` reexports that contract and provides first-party browser bootstrap assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
-- These docs target `@floegence/flowersec-core@0.25.0`; package manifests must use `^0.25.0` or a later compatible release.
+- These docs target `@floegence/flowersec-core@0.26.0`; package manifests must use `^0.26.0` or a later compatible release.
 
 Notes:
 
@@ -138,6 +138,18 @@ await protocol.connect({
   autoReconnect: { enabled: true },
 });
 ```
+
+Artifact requests use HTTPS by default and reject redirects. For local development only, literal loopback HTTP can be enabled explicitly:
+
+```ts
+const localSource = createControlplaneArtifactSource({
+  baseUrl: 'http://127.0.0.1:8787',
+  endpointId: '<endpoint-id>',
+  allowLoopbackHTTP: true,
+});
+```
+
+The option does not permit HTTP for network hosts.
 
 Canonical artifact contract (used by `requestConnectArtifact` / `requestEntryConnectArtifact` from `@floegence/flowersec-core/controlplane`):
 
@@ -168,7 +180,7 @@ Do not combine a one-time source with `autoReconnect.enabled`. Flowersec consume
 
 ### Transport security and liveness
 
-High-level Flowersec connections require TLS by default. Local `ws://` development must explicitly select `allow_plaintext_for_loopback`; unrestricted plaintext must be an explicit product decision.
+High-level Flowersec connections require TLS by default. Local `ws://` development must explicitly select `allow_plaintext_for_loopback`; network plaintext requires an explicit host-scoped policy and risk acceptance.
 
 Tunnel connections derive acknowledged Yamux liveness defaults from the artifact idle timeout. Direct connections do not run periodic probes unless configured:
 

@@ -223,6 +223,10 @@ function main() {
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
   assertFileContains('packages/boot/dist/index.js', '@floegence/flowersec-core/reconnect');
+  assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/controlplane');
+  assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/browser');
+  assertFileContains('packages/protocol/dist/index.d.ts', 'RequestConnectArtifactInput');
+  assertFileContains('packages/protocol/dist/index.d.ts', 'RequestEntryConnectArtifactInput');
   const distInteractionAudit = auditInteractionUtilities({
     sourceRoot: 'packages/core/dist',
     cssPath: 'packages/core/dist/floe.css',

@@ -17,6 +17,9 @@ describe('protocol docs', () => {
     expect(doc).toContain('@floegence/flowersec-core/controlplane');
     expect(doc).toContain('requestConnectArtifact');
     expect(doc).toContain('requestEntryConnectArtifact');
+    expect(doc).toContain('@floegence/flowersec-core@0.26.0');
+    expect(doc).toContain('HTTPS by default');
+    expect(doc).toContain('allowLoopbackHTTP: true');
     expect(doc).toContain('connect_artifact');
     expect(doc).toContain('/v1/connect/artifact');
     expect(doc).toContain('/v1/connect/artifact/entry');
@@ -24,5 +27,6 @@ describe('protocol docs', () => {
     expect(doc).toContain('notifyBestEffort');
     expect(doc).toContain('ProtocolNotConnectedError');
     expect(doc).toContain('RpcError');
+    expect(doc).not.toContain('unrestricted plaintext');
   });
 });
