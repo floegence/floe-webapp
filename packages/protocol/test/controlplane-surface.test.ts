@@ -10,8 +10,6 @@ import type {
 
 const requestConnectArtifact = vi.fn();
 const requestEntryConnectArtifact = vi.fn();
-const requestChannelGrant = vi.fn();
-const requestEntryChannelGrant = vi.fn();
 const assertConnectArtifact = vi.fn();
 
 class MockControlplaneRequestError extends Error {}
@@ -25,24 +23,36 @@ vi.mock('@floegence/flowersec-core/controlplane', () => ({
 
 vi.mock('@floegence/flowersec-core/browser', () => ({
   assertConnectArtifact,
-  requestChannelGrant,
-  requestEntryChannelGrant,
 }));
 
 describe('protocol controlplane surface', () => {
-  it('reexports artifact requests from controlplane and browser-owned artifact and grant contracts', async () => {
+  it('reexports only the artifact-first controlplane surface', async () => {
     const shared = await import('@floegence/flowersec-core/controlplane');
     const browser = await import('@floegence/flowersec-core/browser');
     const local = await import('../src/controlplane');
+    const publicPackage = await import('../src/index');
 
     expect(local.assertConnectArtifact).toBe(browser.assertConnectArtifact);
     expect(local.requestConnectArtifact).toBe(shared.requestConnectArtifact);
     expect(local.requestEntryConnectArtifact).toBe(shared.requestEntryConnectArtifact);
     expect(local.ControlplaneRequestError).toBe(shared.ControlplaneRequestError);
-    expect(local.requestChannelGrant).toBe(browser.requestChannelGrant);
-    expect(local.requestEntryChannelGrant).toBe(browser.requestEntryChannelGrant);
+    expect(local).not.toHaveProperty('requestChannelGrant');
+    expect(local).not.toHaveProperty('requestEntryChannelGrant');
+    expect(publicPackage).not.toHaveProperty('requestChannelGrant');
+    expect(publicPackage).not.toHaveProperty('requestEntryChannelGrant');
 
     expectTypeOf<RequestConnectArtifactInput>().toEqualTypeOf<FlowersecRequestConnectArtifactInput>();
     expectTypeOf<RequestEntryConnectArtifactInput>().toEqualTypeOf<FlowersecRequestEntryConnectArtifactInput>();
+
+    type LegacyControlplaneExports = Extract<
+      keyof typeof local,
+      'requestChannelGrant' | 'requestEntryChannelGrant'
+    >;
+    type LegacyPackageExports = Extract<
+      keyof typeof publicPackage,
+      'requestChannelGrant' | 'requestEntryChannelGrant'
+    >;
+    expectTypeOf<LegacyControlplaneExports>().toEqualTypeOf<never>();
+    expectTypeOf<LegacyPackageExports>().toEqualTypeOf<never>();
   });
 });

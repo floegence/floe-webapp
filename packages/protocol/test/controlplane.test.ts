@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  ControlplaneRequestError,
-  requestChannelGrant,
   requestConnectArtifact,
-  requestEntryChannelGrant,
   requestEntryConnectArtifact,
 } from '../src/controlplane';
 
@@ -33,100 +30,6 @@ function makeTunnelArtifact(channelId: string) {
     },
   };
 }
-
-describe('requestChannelGrant', () => {
-  it('should POST to /v1/channel/init and return validated grant', async () => {
-    const grant = makeTunnelGrant('channel-1');
-
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ grant_client: grant }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
-
-    const result = await requestChannelGrant({ baseUrl: 'https://cp.example.com', endpointId: 'endpoint-1' });
-
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy.mock.calls[0]?.[0]).toBe('https://cp.example.com/v1/channel/init');
-    const init = spy.mock.calls[0]?.[1];
-    expect(init && typeof init === 'object' ? (init as RequestInit).method : undefined).toBe('POST');
-    expect(init && typeof init === 'object' ? (init as RequestInit).credentials : undefined).toBe('omit');
-    expect(init && typeof init === 'object' ? (init as RequestInit).cache : undefined).toBe('no-store');
-    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ endpoint_id: 'endpoint-1' });
-    expect(result).toEqual(grant);
-
-    spy.mockRestore();
-  });
-
-  it('should throw on non-2xx response', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('nope', { status: 500 })
-    );
-
-    let error: unknown = null;
-    try {
-      await requestChannelGrant({ baseUrl: 'https://cp.example.com', endpointId: 'endpoint-1' });
-    } catch (nextError) {
-      error = nextError;
-    }
-
-    expect(error).toBeInstanceOf(ControlplaneRequestError);
-    expect(error).toMatchObject({
-      status: 500,
-      message: 'nope',
-      responseBody: 'nope',
-    });
-
-    spy.mockRestore();
-  });
-
-  it('should throw on missing grant_client', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
-
-    await expect(
-      requestChannelGrant({ baseUrl: 'https://cp.example.com', endpointId: 'endpoint-1' })
-    ).rejects.toThrow('Invalid controlplane response: missing `grant_client`');
-
-    spy.mockRestore();
-  });
-});
-
-describe('requestEntryChannelGrant', () => {
-  it('should POST to /v1/channel/init/entry and return validated grant', async () => {
-    const grant = makeTunnelGrant('channel-2');
-
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ grant_client: grant }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    );
-
-    const result = await requestEntryChannelGrant({
-      baseUrl: 'https://cp.example.com',
-      endpointId: 'endpoint-1',
-      entryTicket: 'ticket-1',
-    });
-
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy.mock.calls[0]?.[0]).toBe('https://cp.example.com/v1/channel/init/entry?endpoint_id=endpoint-1');
-    const init = spy.mock.calls[0]?.[1];
-    expect(init && typeof init === 'object' ? (init as RequestInit).method : undefined).toBe('POST');
-    expect(init && typeof init === 'object' ? (init as RequestInit).credentials : undefined).toBe('omit');
-    const headers = new Headers((init as RequestInit).headers);
-    expect(headers.get('Authorization')).toBe('Bearer ticket-1');
-    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ endpoint_id: 'endpoint-1' });
-    expect(result).toEqual(grant);
-
-    spy.mockRestore();
-  });
-});
 
 describe('requestConnectArtifact', () => {
   it('should POST to /v1/connect/artifact and return validated artifact', async () => {

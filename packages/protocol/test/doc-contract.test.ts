@@ -17,7 +17,9 @@ describe('protocol docs', () => {
     expect(doc).toContain('@floegence/flowersec-core/controlplane');
     expect(doc).toContain('requestConnectArtifact');
     expect(doc).toContain('requestEntryConnectArtifact');
-    expect(doc).toContain('@floegence/flowersec-core@0.26.0');
+    expect(doc).toContain('@floegence/flowersec-core@0.27.0');
+    expect(doc).not.toContain('requestChannelGrant');
+    expect(doc).not.toContain('requestEntryChannelGrant');
     expect(doc).toContain('HTTPS by default');
     expect(doc).toContain('allowLoopbackHTTP: true');
     expect(doc).toContain('connect_artifact');

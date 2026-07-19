@@ -110,7 +110,7 @@ Best practice:
 - `@floegence/floe-webapp-protocol` is Solid-specific UI glue (context + contract wiring).
 - Flowersec owns `ArtifactSource`; `@floegence/floe-webapp-boot` reexports that contract and provides first-party browser bootstrap assembly.
 - For framework-agnostic reconnect/state machines, use `@floegence/flowersec-core/reconnect` directly.
-- These docs target `@floegence/flowersec-core@0.26.0`; package manifests must use `^0.26.0` or a later compatible release.
+- These docs target `@floegence/flowersec-core@0.27.0`; package manifests must use `^0.27.0` or a later compatible release.
 
 Notes:
 

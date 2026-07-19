@@ -36,6 +36,13 @@ function assertFileContains(path, snippet) {
   assert(content.includes(snippet), `Expected build output ${path} to contain: ${snippet}`);
 }
 
+function assertFileExcludes(path, snippets) {
+  const abs = resolve(process.cwd(), path);
+  const content = readFileSync(abs, 'utf-8');
+  const present = snippets.filter((snippet) => content.includes(snippet));
+  assert(present.length === 0, `Expected build output ${path} to exclude: ${present.join(', ')}`);
+}
+
 function assertIncludesAll(content, snippets, label) {
   const missing = snippets.filter((snippet) => !content.includes(snippet));
   assert(missing.length === 0, `${label} is missing required snippets: ${missing.join(', ')}`);
@@ -227,6 +234,16 @@ function main() {
   assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/browser');
   assertFileContains('packages/protocol/dist/index.d.ts', 'RequestConnectArtifactInput');
   assertFileContains('packages/protocol/dist/index.d.ts', 'RequestEntryConnectArtifactInput');
+  assertFileExcludes('packages/protocol/dist/index.js', [
+    'requestChannelGrant',
+    'requestEntryChannelGrant',
+  ]);
+  assertFileExcludes('packages/protocol/dist/index.d.ts', [
+    'ControlplaneConfig',
+    'EntryControlplaneConfig',
+    'requestChannelGrant',
+    'requestEntryChannelGrant',
+  ]);
   const distInteractionAudit = auditInteractionUtilities({
     sourceRoot: 'packages/core/dist',
     cssPath: 'packages/core/dist/floe.css',

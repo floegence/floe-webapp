@@ -5,13 +5,9 @@ export { useRpc, RpcError, ProtocolNotConnectedError } from './rpc';
 export {
   assertConnectArtifact,
   ControlplaneRequestError,
-  requestChannelGrant,
   requestConnectArtifact,
-  requestEntryChannelGrant,
   requestEntryConnectArtifact,
   type ConnectArtifact,
-  type ControlplaneConfig,
-  type EntryControlplaneConfig,
   type RequestConnectArtifactInput,
   type RequestEntryConnectArtifactInput,
 } from './controlplane';
