@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.39.1",
+  "version": "0.39.2",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -77,7 +77,8 @@
     },
     "./themes": {
       "types": "./dist/themes.d.ts",
-      "import": "./dist/themes.js"
+      "import": "./dist/themes.js",
+      "default": "./dist/themes.js"
     },
     "./workbench": {
       "types": "./dist/workbench.d.ts",

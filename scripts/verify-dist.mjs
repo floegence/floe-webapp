@@ -310,6 +310,10 @@ function main() {
       `@floegence/floe-webapp-core exports["./${key}"].types must be ./dist/${key}.d.ts`
     );
   }
+  assert(
+    corePkg.exports?.['./themes']?.default === './dist/themes.js',
+    '@floegence/floe-webapp-core exports["./themes"].default must support Node CommonJS consumers'
+  );
 
   assert(
     protocolPkg.name === '@floegence/floe-webapp-protocol',
