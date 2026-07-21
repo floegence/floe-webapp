@@ -13,6 +13,22 @@ import {
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 
+function readResolvedClassicTokens(mode: 'light' | 'dark'): Record<string, string | undefined> {
+  const source = readFileSync(resolve(testDir, `../src/styles/themes/${mode}.css`), 'utf8');
+  const tokens = Object.fromEntries(
+    [...source.matchAll(/^\s*(--[\w-]+):\s*([^;]+);/gmu)]
+      .map((match) => [match[1], match[2].trim()]),
+  );
+  const resolveValue = (name: string, seen = new Set<string>()): string | undefined => {
+    const value = tokens[name];
+    const reference = /^var\((--[\w-]+)\)$/u.exec(value ?? '')?.[1];
+    if (!reference || seen.has(name)) return value;
+    seen.add(name);
+    return resolveValue(reference, seen);
+  };
+  return Object.fromEntries(Object.keys(tokens).map((name) => [name, resolveValue(name)]));
+}
+
 describe('built-in shell theme presets', () => {
   it('ships the original pair plus ten distinct presets for each mode', () => {
     expect(builtInShellThemePresets).toHaveLength(22);
@@ -23,6 +39,11 @@ describe('built-in shell theme presets', () => {
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';
       const tokens = preset.tokens?.[mode] ?? {};
+      expect(
+        REQUIRED_SHELL_THEME_TOKENS.every(
+          (name) => typeof preset.semanticTokens?.[name] === 'string'
+        )
+      ).toBe(true);
       if (preset.inheritsBaseTokens) {
         expect(preset.tokens).toBeUndefined();
       } else {
@@ -84,6 +105,17 @@ describe('built-in shell theme presets', () => {
         for (const token of REQUIRED_SHELL_THEME_TOKENS) {
           expect(css).toContain(`${token}: ${tokens[token]};`.toLowerCase());
         }
+      }
+    }
+  });
+
+  it('keeps Classic adapter metadata identical to the inherited renderer CSS', () => {
+    for (const [name, mode] of [['classic-light', 'light'], ['classic-dark', 'dark']] as const) {
+      const preset = builtInShellThemePresets.find((entry) => entry.name === name);
+      const cssTokens = readResolvedClassicTokens(mode);
+      expect(preset?.inheritsBaseTokens).toBe(true);
+      for (const token of REQUIRED_SHELL_THEME_TOKENS) {
+        expect(preset?.semanticTokens?.[token], `${name}:${token}`).toBe(cssTokens[token]);
       }
     }
   });

@@ -36,6 +36,12 @@ export interface FloeThemePreset {
     border?: string;
     colors: readonly [string, string, string, string, string];
   };
+  /**
+   * Complete resolved shell tokens for non-renderer adapters such as Electron's main process.
+   * Unlike `tokens`, this also contains the inherited Classic baseline without applying it as
+   * an inline renderer override.
+   */
+  semanticTokens?: Readonly<FloeThemeTokenMap>;
   /** Optional Monaco definitions keyed by resolved light/dark mode. */
   monaco?: Partial<Record<'light' | 'dark', FloeMonacoThemeDefinition>>;
   tokens?: FloeThemeTokenOverrides;

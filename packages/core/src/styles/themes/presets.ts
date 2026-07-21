@@ -1,4 +1,8 @@
 import type { FloeThemePreset, FloeThemePresetMode, FloeThemeTokenMap } from './index';
+import {
+  CLASSIC_DARK_SEMANTIC_TOKENS,
+  CLASSIC_LIGHT_SEMANTIC_TOKENS,
+} from './classicSemanticTokens.ts';
 
 export type FloeShellThemeMode = 'light' | 'dark';
 
@@ -294,6 +298,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
       border: definition.border,
       colors: definition.chart,
     },
+    semanticTokens: tokenMap,
     monaco: {
       [definition.mode]: {
         base: definition.mode === 'light' ? 'vs' : 'vs-dark',
@@ -392,6 +397,7 @@ const classicLightPreset = {
     },
   }),
   inheritsBaseTokens: true,
+  semanticTokens: CLASSIC_LIGHT_SEMANTIC_TOKENS,
   tokens: undefined,
 } satisfies FloeThemePreset;
 
@@ -427,6 +433,7 @@ const classicDarkPreset = {
     },
   }),
   inheritsBaseTokens: true,
+  semanticTokens: CLASSIC_DARK_SEMANTIC_TOKENS,
   tokens: undefined,
 } satisfies FloeThemePreset;
 

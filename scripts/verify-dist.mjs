@@ -212,6 +212,8 @@ function main() {
   assertFile('packages/core/dist/widgets.d.ts');
   assertFile('packages/core/dist/terminal.js');
   assertFile('packages/core/dist/terminal.d.ts');
+  assertFile('packages/core/dist/themes.js');
+  assertFile('packages/core/dist/themes.d.ts');
   assertFile('packages/core/dist/styles.css');
   assertFile('packages/core/dist/tailwind.css');
   assertFile('packages/core/dist/floe.css');
