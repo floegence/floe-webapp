@@ -187,6 +187,7 @@ Scaffolded projects include the same `./skills/floe-webapp/` package at project 
 - Build command: `pnpm build:demo`
 - Build output directory: `apps/demo/dist`
 - Root directory: leave empty so the monorepo builds from repo root
+- Environment variable: set `NODE_VERSION` to `24` for both production and preview builds
 - `wrangler.toml` is only for Wrangler Direct Upload, not the Git-integrated Pages flow
 
 </details>

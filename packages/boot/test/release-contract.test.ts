@@ -37,6 +37,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const ci = readText('.github/workflows/ci.yml');
     const release = readText('.github/workflows/release.yml');
+    const nodeVersion = readText('.node-version').trim();
     const initBuild = readText('packages/init/build.config.ts');
 
     expect(rootPkg.engines?.node).toBe('>=24.0.0');
@@ -46,6 +47,7 @@ describe('release dependency and runtime contract', () => {
     expect(initPkg.engines?.node).toBe('>=24.0.0');
     expect(ci).toContain('node-version: 24');
     expect(release).toContain('node-version: 24');
+    expect(nodeVersion).toBe('24');
     expect(initBuild).toContain("target: 'node24'");
   });
 
