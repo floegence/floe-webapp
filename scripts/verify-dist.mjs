@@ -217,6 +217,7 @@ function main() {
   assertFile('packages/core/dist/floe.css');
   assertFile('packages/core/dist/themes/light.css');
   assertFile('packages/core/dist/themes/dark.css');
+  assertFile('packages/core/dist/themes/shell-presets.generated.css');
   assertFile('packages/core/dist/components/ui/Button.js');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
@@ -229,6 +230,10 @@ function main() {
   assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
+  assertFileContains(
+    'packages/core/dist/themes/shell-presets.generated.css',
+    "[data-floe-shell-theme='monokai']"
+  );
   assertFileContains('packages/boot/dist/index.js', '@floegence/flowersec-core/reconnect');
   assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/controlplane');
   assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/browser');

@@ -1,5 +1,19 @@
 export type ThemeType = 'light' | 'dark' | 'system';
+export type FloeThemePresetMode = 'light' | 'dark' | 'both';
 export type FloeThemeTokenMap = Partial<Record<`--${string}`, string>>;
+
+export interface FloeMonacoTokenRule {
+  token: string;
+  foreground: string;
+  fontStyle?: string;
+}
+
+export interface FloeMonacoThemeDefinition {
+  base: 'vs' | 'vs-dark';
+  inherit: boolean;
+  rules: readonly FloeMonacoTokenRule[];
+  colors: Readonly<Record<string, string>>;
+}
 
 export interface FloeThemeTokenOverrides {
   shared?: FloeThemeTokenMap;
@@ -11,6 +25,19 @@ export interface FloeThemePreset {
   name: string;
   displayName: string;
   description?: string;
+  mode?: FloeThemePresetMode;
+  /** Uses the base light.css/dark.css tokens without shell-level overrides. */
+  inheritsBaseTokens?: boolean;
+  preview?: {
+    background: string;
+    surface: string;
+    primary: string;
+    sidebar?: string;
+    border?: string;
+    colors: readonly [string, string, string, string, string];
+  };
+  /** Optional Monaco definitions keyed by resolved light/dark mode. */
+  monaco?: Partial<Record<'light' | 'dark', FloeMonacoThemeDefinition>>;
   tokens?: FloeThemeTokenOverrides;
 }
 
@@ -24,6 +51,8 @@ export interface ThemeTarget {
     setProperty: (property: string, value: string) => void;
     removeProperty: (property: string) => void;
   };
+  setAttribute?: (qualifiedName: string, value: string) => void;
+  removeAttribute?: (qualifiedName: string) => void;
 }
 
 export interface FloeTheme {
@@ -36,6 +65,10 @@ export const builtInThemes: FloeTheme[] = [
   { name: 'light', displayName: 'Light', type: 'light' },
   { name: 'dark', displayName: 'Dark', type: 'dark' },
 ];
+
+export function isThemeType(value: unknown): value is ThemeType {
+  return value === 'light' || value === 'dark' || value === 'system';
+}
 
 export function getSystemTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light';
@@ -58,7 +91,9 @@ export function resolveThemeTokenOverrides(
   };
 }
 
-export function mergeThemeTokenMaps(...maps: Array<FloeThemeTokenMap | undefined>): FloeThemeTokenMap {
+export function mergeThemeTokenMaps(
+  ...maps: Array<FloeThemeTokenMap | undefined>
+): FloeThemeTokenMap {
   return Object.assign({}, ...maps.filter(Boolean));
 }
 
@@ -66,7 +101,9 @@ export function resolveThemeTokens(
   resolvedTheme: 'light' | 'dark',
   ...tokenSources: Array<FloeThemeTokenOverrides | undefined>
 ): FloeThemeTokenMap {
-  return mergeThemeTokenMaps(...tokenSources.map((tokens) => resolveThemeTokenOverrides(tokens, resolvedTheme)));
+  return mergeThemeTokenMaps(
+    ...tokenSources.map((tokens) => resolveThemeTokenOverrides(tokens, resolvedTheme))
+  );
 }
 
 export function applyTheme(theme: ThemeType, target?: ThemeTarget): void {
@@ -78,6 +115,20 @@ export function applyTheme(theme: ThemeType, target?: ThemeTarget): void {
   root.classList.remove('light', 'dark');
   root.classList.add(resolved);
   root.style.colorScheme = resolved;
+}
+
+export function applyShellThemeAttribute(
+  presetName: string | undefined,
+  target?: ThemeTarget
+): void {
+  const root = resolveThemeTarget(target);
+  if (!root) return;
+
+  if (presetName) {
+    root.setAttribute?.('data-floe-shell-theme', presetName);
+  } else {
+    root.removeAttribute?.('data-floe-shell-theme');
+  }
 }
 
 export function syncThemeTokenOverrides(
@@ -106,3 +157,5 @@ export function syncThemeTokenOverrides(
 
   return [...nextTokenNames];
 }
+
+export * from './presets';

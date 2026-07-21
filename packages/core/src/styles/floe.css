@@ -15,6 +15,7 @@
 /* Import theme definitions - they define the CSS variables */
 @import './themes/light.css';
 @import './themes/dark.css';
+@import './themes/shell-presets.generated.css';
 
 :root {
   --radius: 0.375rem;

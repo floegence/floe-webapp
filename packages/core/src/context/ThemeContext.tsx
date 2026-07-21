@@ -2,10 +2,16 @@ import { createMemo, createSignal, createEffect, onCleanup, type Accessor } from
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import {
+  applyShellThemeAttribute,
   applyTheme,
   getSystemTheme,
+  isThemeType,
+  normalizeShellThemeSelection,
+  presetSupportsMode,
   resolveThemeTokens,
   syncThemeTokenOverrides,
+  type FloeShellThemeMode,
+  type FloeShellThemeSelection,
   type FloeThemePreset,
   type ThemeType,
 } from '../styles/themes';
@@ -18,6 +24,11 @@ export interface ThemeContextValue {
   themePresets: Accessor<readonly FloeThemePreset[]>;
   themePreset: Accessor<FloeThemePreset | undefined>;
   setThemePreset: (presetName: string | undefined) => void;
+  shellPresets: Accessor<readonly FloeThemePreset[]>;
+  shellPreset: Accessor<FloeThemePreset | undefined>;
+  shellPresetForMode: (mode: FloeShellThemeMode) => FloeThemePreset | undefined;
+  setShellPreset: (presetName: string) => void;
+  selectShellTheme: (mode: FloeShellThemeMode, presetName: string) => void;
 }
 
 function resolvePresetName(
@@ -27,7 +38,8 @@ function resolvePresetName(
 ): string | undefined {
   if (presets.length === 0) return undefined;
   if (presetName && presets.some((preset) => preset.name === presetName)) return presetName;
-  if (fallbackPresetName && presets.some((preset) => preset.name === fallbackPresetName)) return fallbackPresetName;
+  if (fallbackPresetName && presets.some((preset) => preset.name === fallbackPresetName))
+    return fallbackPresetName;
   return presets[0]?.name;
 }
 
@@ -38,19 +50,36 @@ export function createThemeService(): ThemeContextValue {
   const themeTokens = () => floe.config.theme.tokens;
   const themePresets = () => floe.config.theme.presets ?? [];
   const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
-  const defaultPresetName = () => resolvePresetName(floe.config.theme.defaultPreset, themePresets());
+  const defaultPresetName = () =>
+    resolvePresetName(floe.config.theme.defaultPreset, themePresets());
+  const shellPresets = () => floe.config.theme.shellPresets ?? [];
+  const shellPresetStorageKey = () =>
+    floe.config.theme.shellPresetStorageKey ?? `${storageKey()}-shell-preset`;
+  const defaultShellPreset = () => floe.config.theme.defaultShellPreset ?? {};
 
-  const storedTheme = floe.persist.load<ThemeType>(storageKey(), defaultTheme());
+  const storedThemeValue = floe.persist.load<unknown>(storageKey(), defaultTheme());
+  const storedTheme = isThemeType(storedThemeValue) ? storedThemeValue : defaultTheme();
   const [theme, setThemeSignal] = createSignal<ThemeType>(storedTheme);
-  const storedPreset = floe.persist.load<string | undefined>(presetStorageKey(), defaultPresetName());
+  const storedPreset = floe.persist.load<string | undefined>(
+    presetStorageKey(),
+    defaultPresetName()
+  );
   const [themePresetName, setThemePresetSignal] = createSignal<string | undefined>(
     resolvePresetName(storedPreset, themePresets(), defaultPresetName())
+  );
+  const storedShellSelection = floe.persist.load<unknown>(shellPresetStorageKey(), undefined);
+  const [shellThemeSelection, setShellThemeSelection] = createSignal<FloeShellThemeSelection>(
+    normalizeShellThemeSelection(storedShellSelection, shellPresets(), defaultShellPreset())
   );
   const [systemTheme, setSystemTheme] = createSignal<'light' | 'dark'>(getSystemTheme());
   let appliedTokenNames: string[] = [];
 
   const themePreset = createMemo(() => {
-    const resolvedPresetName = resolvePresetName(themePresetName(), themePresets(), defaultPresetName());
+    const resolvedPresetName = resolvePresetName(
+      themePresetName(),
+      themePresets(),
+      defaultPresetName()
+    );
     if (!resolvedPresetName) return undefined;
     return themePresets().find((preset) => preset.name === resolvedPresetName);
   });
@@ -64,10 +93,32 @@ export function createThemeService(): ThemeContextValue {
     return current;
   };
 
+  const shellPresetForMode = (mode: FloeShellThemeMode): FloeThemePreset | undefined => {
+    const presetName = shellThemeSelection()[mode];
+    if (!presetName) return undefined;
+    return shellPresets().find(
+      (preset) => preset.name === presetName && presetSupportsMode(preset, mode)
+    );
+  };
+
+  const shellPreset = createMemo(() => shellPresetForMode(resolvedTheme()));
+
   createEffect(() => {
-    const nextPresetName = resolvePresetName(themePresetName(), themePresets(), defaultPresetName());
+    const nextPresetName = resolvePresetName(
+      themePresetName(),
+      themePresets(),
+      defaultPresetName()
+    );
     if (themePresetName() !== nextPresetName) {
       setThemePresetSignal(nextPresetName);
+    }
+  });
+
+  createEffect(() => {
+    const current = shellThemeSelection();
+    const next = normalizeShellThemeSelection(current, shellPresets(), defaultShellPreset());
+    if (current.light !== next.light || current.dark !== next.dark) {
+      setShellThemeSelection(next);
     }
   });
 
@@ -86,14 +137,17 @@ export function createThemeService(): ThemeContextValue {
   createEffect(() => {
     const currentTheme = theme();
     const resolved = resolvedTheme();
+    const activeShellPreset = shellPreset();
     applyTheme(currentTheme);
+    applyShellThemeAttribute(activeShellPreset?.name);
     appliedTokenNames = syncThemeTokenOverrides(
-      resolveThemeTokens(resolved, themeTokens(), themePreset()?.tokens),
+      resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens),
       appliedTokenNames
     );
   });
 
   onCleanup(() => {
+    applyShellThemeAttribute(undefined);
     appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames);
   });
 
@@ -117,6 +171,32 @@ export function createThemeService(): ThemeContextValue {
     floe.persist.debouncedSave(presetStorageKey(), nextPresetName);
   };
 
+  const updateShellPreset = (mode: FloeShellThemeMode, presetName: string): boolean => {
+    const preset = shellPresets().find(
+      (candidate) => candidate.name === presetName && presetSupportsMode(candidate, mode)
+    );
+    if (!preset) return false;
+
+    const current = shellThemeSelection();
+    if (current[mode] === preset.name) return true;
+    const next: FloeShellThemeSelection = { ...current, version: 1, [mode]: preset.name };
+    setShellThemeSelection(next);
+    floe.persist.debouncedSave(shellPresetStorageKey(), next);
+    return true;
+  };
+
+  const setShellPreset = (presetName: string) => {
+    const preset = shellPresets().find((candidate) => candidate.name === presetName);
+    if (!preset) return;
+    const mode = preset.mode === 'light' || preset.mode === 'dark' ? preset.mode : resolvedTheme();
+    updateShellPreset(mode, presetName);
+  };
+
+  const selectShellTheme = (mode: FloeShellThemeMode, presetName: string) => {
+    if (!updateShellPreset(mode, presetName)) return;
+    setTheme(mode);
+  };
+
   return {
     theme,
     resolvedTheme,
@@ -125,6 +205,11 @@ export function createThemeService(): ThemeContextValue {
     themePresets,
     themePreset,
     setThemePreset,
+    shellPresets,
+    shellPreset,
+    shellPresetForMode,
+    setShellPreset,
+    selectShellTheme,
   };
 }
 

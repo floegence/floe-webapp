@@ -14,6 +14,8 @@ import {
   FileBrowserDragProvider,
   FloeProvider,
   NotificationContainer,
+  BUILT_IN_SHELL_THEME_DEFAULTS,
+  builtInShellThemePresets,
   deferAfterPaint,
   useComponentContextFactory,
   useComponentRegistry,
@@ -748,17 +750,8 @@ function AppContent() {
   const HeaderActions: Component = () => (
     <div class="flex items-center gap-2">
       <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => theme.toggleTheme()}
-        title="Toggle theme"
-      >
-        {theme.resolvedTheme() === 'light' ? (
-          <Moon class="w-4 h-4" />
-        ) : (
-          <Sun class="w-4 h-4" />
-        )}
+      <Button variant="ghost" size="icon" onClick={() => theme.toggleTheme()} title="Toggle theme">
+        {theme.resolvedTheme() === 'light' ? <Moon class="w-4 h-4" /> : <Sun class="w-4 h-4" />}
       </Button>
     </div>
   );
@@ -840,6 +833,8 @@ export function App() {
     theme: {
       defaultPreset: 'default',
       presets: demoChartThemePresets,
+      shellPresets: builtInShellThemePresets,
+      defaultShellPreset: BUILT_IN_SHELL_THEME_DEFAULTS,
     },
     deck: {
       storageKey: 'deck',

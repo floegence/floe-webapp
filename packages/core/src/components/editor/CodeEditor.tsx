@@ -6,11 +6,9 @@ import { useResizeObserver } from '../../hooks/useResizeObserver';
 import 'monaco-editor/min/vs/editor/editor.main.css';
 
 import { resolveCodeEditorLanguageSpec } from './languages';
+import { applyFloeMonacoTheme } from './monacoTheme';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
-import {
-  loadMonacoEditorApi,
-  type CodeEditorRuntimeOptions,
-} from './monacoStandaloneRuntime';
+import { loadMonacoEditorApi, type CodeEditorRuntimeOptions } from './monacoStandaloneRuntime';
 
 type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');
 type MonacoEditorOptions = Monaco.editor.IStandaloneEditorConstructionOptions;
@@ -60,7 +58,7 @@ function createModelUri(monaco: MonacoEditorApi, instanceId: number, path: strin
 
 function readSelectedText(
   editor: MonacoStandaloneCodeEditor | undefined,
-  model: MonacoTextModel | undefined,
+  model: MonacoTextModel | undefined
 ): string {
   if (!editor || !model) return '';
   const selection = editor.getSelection();
@@ -83,8 +81,10 @@ export function CodeEditor(props: CodeEditorProps) {
   const size = useResizeObserver(() => container);
 
   const applyTheme = () => {
+    const resolvedTheme = theme.resolvedTheme();
+    const shellPreset = theme.shellPreset();
     if (!monaco) return;
-    monaco.editor.setTheme(theme.resolvedTheme() === 'dark' ? 'vs-dark' : 'vs');
+    applyFloeMonacoTheme(monaco.editor, resolvedTheme, shellPreset);
   };
 
   const getApi = (): CodeEditorApi | null => {
@@ -176,14 +176,16 @@ export function CodeEditor(props: CodeEditorProps) {
       const onContentChange = props.onContentChange;
       const onChange = props.onChange;
       const onSelectionChange = props.onSelectionChange;
-      contentDisposable = editor.onDidChangeModelContent((event: MonacoModelContentChangedEvent) => {
-        const api = getApi();
-        if (!api) return;
-        onContentChange?.(event, api);
-        if (onChange) {
-          onChange(api.getValue());
+      contentDisposable = editor.onDidChangeModelContent(
+        (event: MonacoModelContentChangedEvent) => {
+          const api = getApi();
+          if (!api) return;
+          onContentChange?.(event, api);
+          if (onChange) {
+            onChange(api.getValue());
+          }
         }
-      });
+      );
       selectionDisposable = editor.onDidChangeCursorSelection(() => {
         const api = getApi();
         if (!api) return;

@@ -1,5 +1,16 @@
 export { CodeEditor, type CodeEditorProps, type CodeEditorApi } from './CodeEditor';
-export { resolveCodeEditorLanguageSpec, isCodeEditorLanguageSupported, type CodeEditorLanguageSpec } from './languages';
+export {
+  resolveCodeEditorLanguageSpec,
+  isCodeEditorLanguageSupported,
+  type CodeEditorLanguageSpec,
+} from './languages';
+export {
+  applyFloeMonacoTheme,
+  resolveFloeMonacoTheme,
+  type MonacoThemeData,
+  type MonacoThemeRegistry,
+  type ResolvedFloeMonacoTheme,
+} from './monacoTheme';
 export {
   DEFAULT_MONACO_RUNTIME_PROFILE,
   DEFAULT_MONACO_STANDALONE_FEATURES,

@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.38.0",
+  "version": "0.39.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -87,8 +87,9 @@
   ],
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
-    "build": "pnpm clean && vite build && tsc -p tsconfig.build.json && pnpm build:styles && pnpm build:assets",
+    "build": "pnpm clean && pnpm build:shell-theme-css && vite build && tsc -p tsconfig.build.json && pnpm build:styles && pnpm build:assets",
     "build:assets": "node ./scripts/copy-style-assets.mjs",
+    "build:shell-theme-css": "node ./scripts/generate-shell-theme-css.mjs",
     "build:styles": "vite build -c vite.styles.config.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist *.tsbuildinfo"

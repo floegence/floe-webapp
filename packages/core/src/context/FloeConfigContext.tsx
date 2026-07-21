@@ -80,6 +80,12 @@ export interface FloeThemeConfig {
   defaultPreset?: string;
   /** Optional named token presets for switching visual palettes without changing light/dark mode. */
   presets?: readonly FloeThemePreset[];
+  /** Optional shell-wide presets. Kept separate from product-scoped presets such as chart palettes. */
+  shellPresets?: readonly FloeThemePreset[];
+  /** Optional per-mode defaults for shell presets. Falls back to the first compatible preset. */
+  defaultShellPreset?: Partial<Record<'light' | 'dark', string>>;
+  /** Storage key for the versioned per-mode shell preset selection map. */
+  shellPresetStorageKey?: string;
   /**
    * Optional CSS variable overrides applied at the document root.
    * `shared` applies to both themes, while `light` / `dark` only apply
@@ -445,7 +451,13 @@ function mergeDeep<T>(base: T, override?: DeepPartial<T>): T {
   for (const [k, v] of Object.entries(override as Record<string, unknown>)) {
     if (v === undefined) continue;
     const prev = (base as Record<string, unknown>)[k];
-    if (typeof prev === 'object' && prev !== null && typeof v === 'object' && v !== null && !Array.isArray(v)) {
+    if (
+      typeof prev === 'object' &&
+      prev !== null &&
+      typeof v === 'object' &&
+      v !== null &&
+      !Array.isArray(v)
+    ) {
       out[k] = mergeDeep(prev, v as DeepPartial<typeof prev>);
     } else {
       out[k] = v;
@@ -462,7 +474,9 @@ export interface FloeConfigProviderProps {
 }
 
 export function FloeConfigProvider(props: FloeConfigProviderProps) {
-  const merged = createMemo<FloeConfig>(() => mergeDeep<FloeConfig>(DEFAULT_FLOE_CONFIG, props.config));
+  const merged = createMemo<FloeConfig>(() =>
+    mergeDeep<FloeConfig>(DEFAULT_FLOE_CONFIG, props.config)
+  );
   const persist = createMemo(() => createPersist(merged().storage));
 
   // Ensure pending debounced saves are not lost when the page is refreshed/closed.
@@ -485,7 +499,9 @@ export function FloeConfigProvider(props: FloeConfigProviderProps) {
 export function useFloeConfig(): FloeConfigValue {
   const ctx = useContext(FloeConfigContext);
   if (!ctx) {
-    throw new Error('FloeConfigContext not found. Make sure to wrap your app with FloeConfigProvider (or FloeProvider).');
+    throw new Error(
+      'FloeConfigContext not found. Make sure to wrap your app with FloeConfigProvider (or FloeProvider).'
+    );
   }
   return ctx;
 }

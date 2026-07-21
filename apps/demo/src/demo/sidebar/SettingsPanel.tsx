@@ -1,14 +1,13 @@
 import { Show } from 'solid-js';
-import { useNotification, useTheme } from '@floegence/floe-webapp-core';
+import { useNotification } from '@floegence/floe-webapp-core';
 import { SidebarContent, SidebarSection } from '@floegence/floe-webapp-core/layout';
 import { Button } from '@floegence/floe-webapp-core/ui';
-import { Moon, Sun } from '@floegence/floe-webapp-core/icons';
 import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 import { ChartThemePicker } from '../components/ChartThemePicker';
+import { ShellThemePicker } from '../components/ShellThemePicker';
 
 export function SettingsPanel() {
-  const theme = useTheme();
   const notifications = useNotification();
   const protocol = useProtocol();
 
@@ -66,24 +65,7 @@ export function SettingsPanel() {
       </SidebarSection>
 
       <SidebarSection title="Shell Theme">
-        <div class="flex gap-1.5">
-          <Button
-            variant={theme.resolvedTheme() === 'light' ? 'default' : 'outline'}
-            size="sm"
-            icon={Sun}
-            onClick={() => theme.setTheme('light')}
-          >
-            Light
-          </Button>
-          <Button
-            variant={theme.resolvedTheme() === 'dark' ? 'default' : 'outline'}
-            size="sm"
-            icon={Moon}
-            onClick={() => theme.setTheme('dark')}
-          >
-            Dark
-          </Button>
-        </div>
+        <ShellThemePicker />
       </SidebarSection>
 
       <SidebarSection title="Chart Theme">

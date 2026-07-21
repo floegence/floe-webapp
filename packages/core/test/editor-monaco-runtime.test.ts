@@ -40,11 +40,11 @@ describe('Monaco standalone runtime', () => {
     expect(loader).toHaveBeenCalledTimes(2);
     expect(loader).toHaveBeenNthCalledWith(
       1,
-      resolveMonacoRuntimeRequest({ profile: 'preview_basic' }),
+      resolveMonacoRuntimeRequest({ profile: 'preview_basic' })
     );
     expect(loader).toHaveBeenNthCalledWith(
       2,
-      resolveMonacoRuntimeRequest({ profile: 'editor_full' }),
+      resolveMonacoRuntimeRequest({ profile: 'editor_full' })
     );
   });
 
@@ -71,15 +71,18 @@ describe('Monaco standalone runtime', () => {
   });
 
   it('keeps legacy partial feature overrides on the safe full editor profile', () => {
-    expect(resolveMonacoRuntimeProfile({
-      standaloneFeatures: {
-        actionWidget: false,
-      },
-    })).toBe(DEFAULT_MONACO_RUNTIME_PROFILE);
+    expect(
+      resolveMonacoRuntimeProfile({
+        standaloneFeatures: {
+          actionWidget: false,
+        },
+      })
+    ).toBe(DEFAULT_MONACO_RUNTIME_PROFILE);
   });
 
   it('allows retrying the bootstrap after a failed load', async () => {
-    const loader = vi.fn()
+    const loader = vi
+      .fn()
       .mockRejectedValueOnce(new Error('runtime bootstrap failed'))
       .mockResolvedValueOnce(undefined);
     const ensureRuntime = createMonacoStandaloneRuntime(loader);
@@ -95,61 +98,90 @@ describe('Monaco standalone runtime', () => {
     const codeEditorSrc = read('../src/components/editor/CodeEditor.tsx');
     const languagesSrc = read('../src/components/editor/languages.ts');
 
-    expect(runtimeSrc).toContain("export type MonacoRuntimeProfileName = 'editor_full' | 'preview_basic';");
-    expect(runtimeSrc).toContain("export const DEFAULT_MONACO_RUNTIME_PROFILE: MonacoRuntimeProfileName = 'editor_full';");
+    expect(runtimeSrc).toContain(
+      "export type MonacoRuntimeProfileName = 'editor_full' | 'preview_basic';"
+    );
+    expect(runtimeSrc).toContain(
+      "export const DEFAULT_MONACO_RUNTIME_PROFILE: MonacoRuntimeProfileName = 'editor_full';"
+    );
     expect(runtimeSrc).toContain("profile: 'preview_basic'");
     expect(runtimeSrc).toContain('resolveMonacoRuntimeRequest(options)');
     expect(runtimeSrc).toContain('cacheKey: `profile:${profile}`');
-    expect(runtimeSrc).toContain('return Promise.all(request.blueprint.modules.map((module) => module.load()))');
+    expect(runtimeSrc).toContain(
+      'return Promise.all(request.blueprint.modules.map((module) => module.load()))'
+    );
     expect(runtimeSrc).toContain('.then(() => undefined);');
-    expect(runtimeSrc).toContain("type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');");
-    expect(runtimeSrc).toContain("export async function loadMonacoEditorApi(");
-    expect(runtimeSrc).toContain("await ensureMonacoStandaloneRuntime(options);");
-    expect(runtimeSrc).toContain("pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')");
+    expect(runtimeSrc).toContain(
+      "type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');"
+    );
+    expect(runtimeSrc).toContain('export async function loadMonacoEditorApi(');
+    expect(runtimeSrc).toContain('await ensureMonacoStandaloneRuntime(options);');
+    expect(runtimeSrc).toContain(
+      "pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')"
+    );
     expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js')");
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js')");
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js')"
+    );
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js')"
+    );
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js')"
+    );
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js')"
+    );
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js')"
+    );
     expect(runtimeSrc).toContain('const pendingByKey = new Map<string, Promise<void>>();');
     expect(runtimeSrc).toContain('areAllStandaloneFeaturesDisabled(features)');
 
     expect(codeEditorSrc).toContain('monaco = await loadMonacoEditorApi(props.runtimeOptions);');
-    expect(codeEditorSrc).not.toContain("import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';");
-    expect(codeEditorSrc.indexOf('monaco = await loadMonacoEditorApi(props.runtimeOptions);')).toBeLessThan(
-      codeEditorSrc.indexOf('editor = monaco.editor.create('),
+    expect(codeEditorSrc).not.toContain(
+      "import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';"
     );
+    expect(codeEditorSrc).toContain(
+      'applyFloeMonacoTheme(monaco.editor, resolvedTheme, shellPreset);'
+    );
+    expect(codeEditorSrc).toContain('const resolvedTheme = theme.resolvedTheme();');
+    expect(codeEditorSrc.indexOf('const resolvedTheme = theme.resolvedTheme();')).toBeLessThan(
+      codeEditorSrc.indexOf('if (!monaco) return;')
+    );
+    expect(
+      codeEditorSrc.indexOf('monaco = await loadMonacoEditorApi(props.runtimeOptions);')
+    ).toBeLessThan(codeEditorSrc.indexOf('editor = monaco.editor.create('));
 
     expect(languagesSrc).toContain(
-      "javascript: () => import('monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js')",
+      "javascript: () => import('monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js')",
+      "typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/html/html.contribution.js')",
+      "() => import('monaco-editor/esm/vs/basic-languages/html/html.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/language/html/monaco.contribution.js')",
+      "() => import('monaco-editor/esm/vs/language/html/monaco.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/css/css.contribution.js')",
+      "() => import('monaco-editor/esm/vs/basic-languages/css/css.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/scss/scss.contribution.js')",
+      "() => import('monaco-editor/esm/vs/basic-languages/scss/scss.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/less/less.contribution.js')",
+      "() => import('monaco-editor/esm/vs/basic-languages/less/less.contribution.js')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/language/css/monaco.contribution.js')",
+      "() => import('monaco-editor/esm/vs/language/css/monaco.contribution.js')"
     );
     expect(languagesSrc).not.toContain(
-      "javascript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')",
+      "javascript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')"
     );
     expect(languagesSrc).not.toContain(
-      "typescript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')",
+      "typescript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')"
     );
   });
 });
