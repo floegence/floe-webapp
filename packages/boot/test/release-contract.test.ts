@@ -25,6 +25,7 @@ type PackageJson = {
   version?: string;
   engines?: Record<string, string>;
   packageManager?: string;
+  scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
 };
 
@@ -61,6 +62,14 @@ describe('release dependency and runtime contract', () => {
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
+  });
+
+  it('builds the demo and all of its workspace dependencies for Pages', () => {
+    const rootPkg = readJson<PackageJson>('package.json');
+
+    expect(rootPkg.scripts?.['build:demo']).toBe(
+      "NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter '@floegence/floe-webapp-demo...' build"
+    );
   });
 
   it('uses the published flowersec-core release without local dependency shortcuts', () => {
