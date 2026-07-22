@@ -128,4 +128,68 @@ describe('Dropdown accessibility', () => {
     root.remove();
     outside.remove();
   });
+
+  it('optionally navigates and activates focusable aria-disabled items', () => {
+    const root = document.createElement('div');
+    root.setAttribute('role', 'menu');
+    root.innerHTML = `
+      <button role="menuitem">Alpha</button>
+      <button role="menuitem" aria-disabled="true">Unavailable with reason</button>
+      <button role="menuitem" disabled>Native disabled</button>
+    `;
+    document.body.append(root);
+
+    const defaultItems = getMenuItems(root);
+    expect(defaultItems.map((item) => item.textContent)).toEqual(['Alpha']);
+
+    const navigationOptions = { includeAriaDisabledItems: true } as const;
+    const focusableItems = getMenuItems(root, navigationOptions);
+    expect(focusableItems.map((item) => item.textContent)).toEqual([
+      'Alpha',
+      'Unavailable with reason',
+    ]);
+    expect(focusMenuItem(root, 'last', navigationOptions)).toBe(true);
+    expect(document.activeElement).toBe(focusableItems[1]);
+
+    const activations: HTMLElement[] = [];
+    const dismissReasons: string[] = [];
+    const disabledEnterWithoutActivation = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    focusableItems[1]?.dispatchEvent(disabledEnterWithoutActivation);
+    expect(handleMenuKeyboardNavigation(disabledEnterWithoutActivation, {
+      ...navigationOptions,
+      onDismiss: () => {},
+    })).toBe(true);
+    expect(disabledEnterWithoutActivation.defaultPrevented).toBe(true);
+
+    const dispatch = (key: string, shiftKey = false) => {
+      const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+      document.activeElement?.dispatchEvent(event);
+      handleMenuKeyboardNavigation(event, {
+        ...navigationOptions,
+        onActivate: (item) => activations.push(item),
+        onDismiss: (reason) => dismissReasons.push(reason),
+        preventDefaultOnTab: true,
+      });
+      return event;
+    };
+
+    expect(dispatch('Enter').defaultPrevented).toBe(true);
+    expect(activations).toEqual([]);
+    expect(dispatch('ArrowDown').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(focusableItems[0]);
+    expect(dispatch(' ').defaultPrevented).toBe(true);
+    expect(activations).toEqual([focusableItems[0]]);
+
+    const tabEvent = dispatch('Tab');
+    const shiftTabEvent = dispatch('Tab', true);
+    expect(tabEvent.defaultPrevented).toBe(true);
+    expect(shiftTabEvent.defaultPrevented).toBe(true);
+    expect(dismissReasons).toEqual(['tab', 'shift-tab']);
+
+    root.remove();
+  });
 });

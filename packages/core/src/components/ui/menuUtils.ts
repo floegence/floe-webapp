@@ -13,8 +13,14 @@ export type MenuFocusMode = 'first' | 'last' | 'selected';
 
 export type MenuDismissReason = 'escape' | 'tab' | 'shift-tab';
 
-export type MenuKeyboardNavigationOptions = Readonly<{
+export type MenuItemNavigationOptions = Readonly<{
+  includeAriaDisabledItems?: boolean;
+}>;
+
+export type MenuKeyboardNavigationOptions = MenuItemNavigationOptions & Readonly<{
   onDismiss: (reason: MenuDismissReason) => void;
+  onActivate?: (item: HTMLElement) => void;
+  preventDefaultOnTab?: boolean;
 }>;
 
 export function resolveViewportMenuBoundaryRect(): MenuBoundaryRect {
@@ -147,18 +153,25 @@ export function getWrappedMenuItemIndex(
   return (currentIndex + delta + length) % length;
 }
 
-export function getMenuItems(root: ParentNode | null | undefined): HTMLElement[] {
+export function getMenuItems(
+  root: ParentNode | null | undefined,
+  options: MenuItemNavigationOptions = {}
+): HTMLElement[] {
   if (!root || typeof HTMLElement === 'undefined') return [];
-  return Array.from(root.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR)).filter(
+  const selector = options.includeAriaDisabledItems
+    ? '[role="menuitem"]:not([disabled])'
+    : MENU_ITEM_SELECTOR;
+  return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
     (item) => item instanceof HTMLElement
   );
 }
 
 export function focusMenuItem(
   root: ParentNode | null | undefined,
-  mode: MenuFocusMode = 'first'
+  mode: MenuFocusMode = 'first',
+  options: MenuItemNavigationOptions = {}
 ): boolean {
-  const items = getMenuItems(root);
+  const items = getMenuItems(root, options);
   if (!items.length) return false;
 
   let target = items[0]!;
@@ -175,9 +188,10 @@ export function focusMenuItem(
 export function moveMenuFocus(
   root: ParentNode | null | undefined,
   current: HTMLElement | null,
-  delta: 1 | -1
+  delta: 1 | -1,
+  options: MenuItemNavigationOptions = {}
 ): boolean {
-  const items = getMenuItems(root);
+  const items = getMenuItems(root, options);
   if (!items.length) return false;
   const currentIndex = current ? items.indexOf(current) : -1;
   const nextIndex = getWrappedMenuItemIndex(items.length, currentIndex, delta);
@@ -195,24 +209,37 @@ export function handleMenuKeyboardNavigation(
     : null;
   const menu = target?.closest('[role="menu"]');
   if (!menu) return false;
-  const activeItem = target?.closest(MENU_ITEM_SELECTOR) as HTMLElement | null;
+  const items = getMenuItems(menu, options);
+  const activeCandidate = target?.closest('[role="menuitem"]') as HTMLElement | null;
+  const activeItem = activeCandidate && items.includes(activeCandidate) ? activeCandidate : null;
 
   switch (event.key) {
     case 'ArrowDown':
       event.preventDefault();
-      moveMenuFocus(menu, activeItem, 1);
+      moveMenuFocus(menu, activeItem, 1, options);
       return true;
     case 'ArrowUp':
       event.preventDefault();
-      moveMenuFocus(menu, activeItem, -1);
+      moveMenuFocus(menu, activeItem, -1, options);
       return true;
     case 'Home':
       event.preventDefault();
-      focusMenuItem(menu, 'first');
+      focusMenuItem(menu, 'first', options);
       return true;
     case 'End':
       event.preventDefault();
-      focusMenuItem(menu, 'last');
+      focusMenuItem(menu, 'last', options);
+      return true;
+    case 'Enter':
+    case ' ':
+      if (!activeItem) return false;
+      if (activeItem.getAttribute('aria-disabled') === 'true') {
+        event.preventDefault();
+        return true;
+      }
+      if (!options.onActivate) return false;
+      event.preventDefault();
+      options.onActivate(activeItem);
       return true;
     case 'Escape':
       event.preventDefault();
@@ -220,6 +247,7 @@ export function handleMenuKeyboardNavigation(
       options.onDismiss('escape');
       return true;
     case 'Tab':
+      if (options.preventDefaultOnTab) event.preventDefault();
       options.onDismiss(event.shiftKey ? 'shift-tab' : 'tab');
       return true;
     default:

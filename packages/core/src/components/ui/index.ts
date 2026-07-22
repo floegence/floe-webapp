@@ -28,6 +28,7 @@ export {
   moveMenuFocus,
   type MenuDismissReason,
   type MenuFocusMode,
+  type MenuItemNavigationOptions,
   type MenuKeyboardNavigationOptions,
 } from './menuUtils';
 export {
