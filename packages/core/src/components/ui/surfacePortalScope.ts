@@ -2,6 +2,7 @@ export {
   DIALOG_SURFACE_HOST_ATTR,
   SURFACE_PORTAL_HOST_ATTR,
   SURFACE_PORTAL_LAYER_ATTR,
+  SURFACE_FLOATING_LAYER_ATTR,
   DIALOG_SURFACE_BOUNDARY_ATTR,
   ensureSurfacePortalInteractionTracking,
   resolveSurfacePortalHost,

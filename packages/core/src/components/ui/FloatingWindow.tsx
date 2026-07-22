@@ -25,7 +25,7 @@ import {
 } from './floatingWindowGeometry';
 import { createFloatingPresence } from './floatingPresence';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
-import { SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
+import { SURFACE_FLOATING_LAYER_ATTR, SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
 
 export interface FloatingWindowProps {
   /** Whether the window is open */
@@ -190,6 +190,13 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const isTargetInsideWindow = (target: EventTarget | null) =>
     !!windowRef && target instanceof Node && windowRef.contains(target);
 
+  const isTargetInsideNestedFloatingMenu = (target: EventTarget | null) => {
+    const element = target instanceof Element ? target : null;
+    const menu = element?.closest('[role="menu"]');
+    const floatingLayer = menu?.closest(`[${SURFACE_FLOATING_LAYER_ATTR}="true"]`);
+    return Boolean(floatingLayer && windowRef?.contains(floatingLayer));
+  };
+
   const readLiveRectFromDom = (): FloatingWindowRect | null => {
     if (!windowRef) return null;
     const rect = windowRef.getBoundingClientRect();
@@ -317,6 +324,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
       const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
       if (!isTargetInsideWindow(e.target) && !isTargetInsideWindow(activeElement)) return;
+      if (isTargetInsideNestedFloatingMenu(e.target)) return;
 
       e.preventDefault();
       if (typeof e.stopImmediatePropagation === 'function') {

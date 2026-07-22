@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSignal } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
 import { Dialog } from '../src/components/ui/Dialog';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
 import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
+import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import { __resetDialogSurfaceScopeForTests } from '../src/components/ui/dialogSurfaceScope';
+import { handleMenuKeyboardNavigation } from '../src/components/ui/menuUtils';
 
 vi.mock('../src/context/LayoutContext', () => ({
   useLayout: () => ({
@@ -240,6 +242,51 @@ function FloatingWindowEscapeHarness() {
         <div class="h-full min-h-0 p-3">Floating content</div>
       </FloatingWindow>
     </>
+  );
+}
+
+function FloatingWindowMenuEscapeHarness() {
+  const [windowOpen, setWindowOpen] = createSignal(true);
+  const [menuOpen, setMenuOpen] = createSignal(false);
+
+  return (
+    <FloatingWindow open={windowOpen()} onOpenChange={setWindowOpen} title="Nested menu escape">
+      <button
+        type="button"
+        data-testid="floating-menu-trigger"
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setMenuOpen(true);
+        }}
+      >
+        Menu trigger
+      </button>
+      <Show when={menuOpen()}>
+        <SurfaceFloatingLayer position={{ x: 20, y: 20 }}>
+          <div
+            role="menu"
+            aria-label="Nested actions"
+            onKeyDown={(event) => handleMenuKeyboardNavigation(event, {
+              onDismiss: () => setMenuOpen(false),
+            })}
+          >
+            <button type="button" role="menuitem" data-testid="floating-menu-action">Action</button>
+          </div>
+        </SurfaceFloatingLayer>
+      </Show>
+    </FloatingWindow>
+  );
+}
+
+function FloatingWindowStaticMenuEscapeHarness() {
+  const [open, setOpen] = createSignal(true);
+
+  return (
+    <FloatingWindow open={open()} onOpenChange={setOpen} title="Static menu escape">
+      <div role="menu" aria-label="Static actions">
+        <button type="button" role="menuitem" data-testid="static-menu-action">Action</button>
+      </div>
+    </FloatingWindow>
   );
 }
 
@@ -676,5 +723,52 @@ describe('dialog surface scope', () => {
 
     await flushFloatingExit();
     expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBeNull();
+  });
+
+  it('lets a nested surface menu handle Escape before the floating window', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <FloatingWindowMenuEscapeHarness />, host);
+
+    const trigger = document.querySelector('[data-testid="floating-menu-trigger"]') as HTMLButtonElement | null;
+    const floatingWindow = document.querySelector('[data-floe-geometry-surface="floating-window"]') as HTMLElement | null;
+    const portalLayer = floatingWindow?.querySelector('[data-floe-surface-portal-layer="true"]') as HTMLElement | null;
+    expect(trigger).toBeTruthy();
+    expect(floatingWindow).toBeTruthy();
+    expect(portalLayer).toBeTruthy();
+    trigger!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await flushMicrotasks();
+
+    const menuAction = document.querySelector('[data-testid="floating-menu-action"]') as HTMLButtonElement | null;
+    const menu = document.querySelector('[role="menu"]') as HTMLElement | null;
+    expect(menuAction).toBeTruthy();
+    expect(menu).toBeTruthy();
+    expect(floatingWindow!.contains(menu)).toBe(true);
+    expect(portalLayer!.contains(menu)).toBe(true);
+    menuAction!.focus();
+    dispatchEscape(menuAction!);
+    await flushMicrotasks();
+
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    expect(floatingWindow!.getAttribute('data-floating-presence')).not.toBe('exiting');
+    expect(floatingWindow!.getAttribute('aria-hidden')).toBeNull();
+    await flushFloatingExit();
+    expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBe(floatingWindow);
+  });
+
+  it('keeps the floating-window Escape behavior for a static ARIA menu', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <FloatingWindowStaticMenuEscapeHarness />, host);
+
+    const menuAction = document.querySelector('[data-testid="static-menu-action"]') as HTMLButtonElement | null;
+    expect(menuAction).toBeTruthy();
+    menuAction!.focus();
+    dispatchEscape(menuAction!);
+    await flushMicrotasks();
+
+    const exitingWindow = document.querySelector('[data-floe-geometry-surface="floating-window"]') as HTMLElement | null;
+    expect(exitingWindow?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(exitingWindow?.getAttribute('aria-hidden')).toBe('true');
   });
 });

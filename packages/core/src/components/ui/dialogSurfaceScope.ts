@@ -3,6 +3,7 @@ import type { SurfacePortalRect } from './surfacePortalTypes';
 export const DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host';
 export const SURFACE_PORTAL_HOST_ATTR = DIALOG_SURFACE_HOST_ATTR;
 export const SURFACE_PORTAL_LAYER_ATTR = 'data-floe-surface-portal-layer';
+export const SURFACE_FLOATING_LAYER_ATTR = 'data-floe-surface-floating-layer';
 export const DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary';
 
 const SURFACE_PORTAL_INTERACTION_TTL_MS = 1600;

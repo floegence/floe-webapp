@@ -9,6 +9,7 @@ import {
   resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalHost,
   resolveSurfacePortalMount,
+  SURFACE_FLOATING_LAYER_ATTR,
   type SurfacePortalBoundaryRect,
 } from './surfacePortalScope';
 
@@ -80,6 +81,7 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
         {...rest}
         class={cn(isSurfaceMode() ? 'absolute z-20' : 'fixed z-50', local.class)}
         style={layerStyle()}
+        {...{ [SURFACE_FLOATING_LAYER_ATTR]: 'true' }}
         {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
       >
         {local.children}
