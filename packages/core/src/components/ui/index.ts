@@ -21,6 +21,16 @@ export {
   type FloatingPresenceState,
 } from './floatingPresence';
 export {
+  MENU_ITEM_SELECTOR,
+  focusMenuItem,
+  getMenuItems,
+  handleMenuKeyboardNavigation,
+  moveMenuFocus,
+  type MenuDismissReason,
+  type MenuFocusMode,
+  type MenuKeyboardNavigationOptions,
+} from './menuUtils';
+export {
   resolveFloatingWindowViewport,
   type FloatingWindowRect,
   type FloatingWindowViewport,

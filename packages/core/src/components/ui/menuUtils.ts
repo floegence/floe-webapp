@@ -11,6 +11,12 @@ export type MenuBoundaryRect = Readonly<{
 
 export type MenuFocusMode = 'first' | 'last' | 'selected';
 
+export type MenuDismissReason = 'escape' | 'tab' | 'shift-tab';
+
+export type MenuKeyboardNavigationOptions = Readonly<{
+  onDismiss: (reason: MenuDismissReason) => void;
+}>;
+
 export function resolveViewportMenuBoundaryRect(): MenuBoundaryRect {
   if (typeof window === 'undefined') {
     return {
@@ -178,4 +184,45 @@ export function moveMenuFocus(
   if (nextIndex === null) return false;
   items[nextIndex]?.focus();
   return true;
+}
+
+export function handleMenuKeyboardNavigation(
+  event: KeyboardEvent,
+  options: MenuKeyboardNavigationOptions
+): boolean {
+  const target = typeof HTMLElement !== 'undefined' && event.target instanceof HTMLElement
+    ? event.target
+    : null;
+  const menu = target?.closest('[role="menu"]');
+  if (!menu) return false;
+  const activeItem = target?.closest(MENU_ITEM_SELECTOR) as HTMLElement | null;
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      moveMenuFocus(menu, activeItem, 1);
+      return true;
+    case 'ArrowUp':
+      event.preventDefault();
+      moveMenuFocus(menu, activeItem, -1);
+      return true;
+    case 'Home':
+      event.preventDefault();
+      focusMenuItem(menu, 'first');
+      return true;
+    case 'End':
+      event.preventDefault();
+      focusMenuItem(menu, 'last');
+      return true;
+    case 'Escape':
+      event.preventDefault();
+      event.stopPropagation();
+      options.onDismiss('escape');
+      return true;
+    case 'Tab':
+      options.onDismiss(event.shiftKey ? 'shift-tab' : 'tab');
+      return true;
+    default:
+      return false;
+  }
 }

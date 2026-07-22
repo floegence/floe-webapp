@@ -1,10 +1,17 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
 import {
   Dropdown,
   resolveDropdownTriggerKeyAction,
 } from '../src/components/ui/Dropdown';
-import { getWrappedMenuItemIndex } from '../src/components/ui/menuUtils';
+import {
+  focusMenuItem,
+  getMenuItems,
+  getWrappedMenuItemIndex,
+  handleMenuKeyboardNavigation,
+} from '../src/components/ui/menuUtils';
 
 describe('Dropdown accessibility', () => {
   it('renders a semantic trigger wrapper with explicit labeling hooks', () => {
@@ -64,5 +71,61 @@ describe('Dropdown accessibility', () => {
     expect(getWrappedMenuItemIndex(3, 2, 1)).toBe(0);
     expect(getWrappedMenuItemIndex(3, 0, -1)).toBe(2);
     expect(getWrappedMenuItemIndex(0, -1, 1)).toBeNull();
+  });
+
+  it('navigates enabled menu items and exposes dismissal intent', () => {
+    const root = document.createElement('div');
+    root.setAttribute('role', 'menu');
+    root.innerHTML = `
+      <button role="menuitem">Alpha</button>
+      <button role="menuitem" disabled>Disabled</button>
+      <div role="separator"></div>
+      <button role="menuitem">Bravo</button>
+    `;
+    document.body.append(root);
+
+    const items = getMenuItems(root);
+    expect(items.map((item) => item.textContent)).toEqual(['Alpha', 'Bravo']);
+    expect(focusMenuItem(root, 'first')).toBe(true);
+    expect(document.activeElement).toBe(items[0]);
+
+    const dismissReasons: string[] = [];
+    const dispatch = (key: string, shiftKey = false) => {
+      const event = new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true });
+      items.find((item) => item === document.activeElement)?.dispatchEvent(event);
+      handleMenuKeyboardNavigation(event, {
+        onDismiss: (reason) => dismissReasons.push(reason),
+      });
+      return event;
+    };
+
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const outsideEvent = new KeyboardEvent('keydown', { key: 'ArrowDown', cancelable: true });
+    outside.dispatchEvent(outsideEvent);
+    expect(handleMenuKeyboardNavigation(outsideEvent, { onDismiss: () => {} })).toBe(false);
+    expect(outsideEvent.defaultPrevented).toBe(false);
+
+    expect(dispatch('ArrowDown').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(items[1]);
+    expect(dispatch('ArrowDown').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(items[0]);
+    expect(dispatch('End').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(items[1]);
+    expect(dispatch('Home').defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(items[0]);
+
+    const escapeEvent = dispatch('Escape');
+    expect(escapeEvent.defaultPrevented).toBe(true);
+    expect(dismissReasons).toEqual(['escape']);
+
+    const tabEvent = dispatch('Tab');
+    const shiftTabEvent = dispatch('Tab', true);
+    expect(tabEvent.defaultPrevented).toBe(false);
+    expect(shiftTabEvent.defaultPrevented).toBe(false);
+    expect(dismissReasons).toEqual(['escape', 'tab', 'shift-tab']);
+
+    root.remove();
+    outside.remove();
   });
 });
