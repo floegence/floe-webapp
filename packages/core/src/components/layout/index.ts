@@ -15,6 +15,12 @@ export {
 export { TopBar, type TopBarProps } from './TopBar';
 export { TopBarIconButton, type TopBarIconButtonProps } from './TopBarIconButton';
 export { BottomBar, BottomBarItem, StatusIndicator, type BottomBarProps, type BottomBarItemProps, type StatusIndicatorProps } from './BottomBar';
+export {
+  BottomBarCompanion,
+  type BottomBarCompanionDismissReason,
+  type BottomBarCompanionPhase,
+  type BottomBarCompanionProps,
+} from './BottomBarCompanion';
 export { MobileTabBar, type MobileTabBarItem, type MobileTabBarProps } from './MobileTabBar';
 export { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 export { SidebarPane, type SidebarPaneProps } from './SidebarPane';

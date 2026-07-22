@@ -221,6 +221,9 @@ function main() {
   assertFile('packages/core/dist/themes/dark.css');
   assertFile('packages/core/dist/themes/shell-presets.generated.css');
   assertFile('packages/core/dist/components/ui/Button.js');
+  assertFile('packages/core/dist/components/layout/BottomBarCompanion.js');
+  assertFile('packages/core/dist/components/layout/BottomBarCompanion.d.ts');
+  assertFile('packages/core/dist/components/layout/index.d.ts');
   assertFile('packages/protocol/dist/index.js');
   assertFile('packages/protocol/dist/index.d.ts');
   assertFile('packages/boot/dist/index.js');
@@ -232,6 +235,12 @@ function main() {
   assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
+  assertFileContains('packages/core/dist/styles.css', '.floe-bottom-bar-companion');
+  assertFileContains('packages/core/dist/layout.d.ts', "export * from './components/layout'");
+  assertFileContains('packages/core/dist/components/layout/index.d.ts', 'BottomBarCompanion');
+  assertFileContains('packages/core/dist/components/layout/BottomBarCompanion.d.ts', 'BottomBarCompanionProps');
+  assertFileExcludes('packages/core/dist/index.d.ts', ['BottomBarCompanion']);
+  assertFileExcludes('packages/core/dist/ui.d.ts', ['BottomBarCompanion']);
   assertFileContains(
     'packages/core/dist/themes/shell-presets.generated.css',
     "[data-floe-shell-theme='monokai']"

@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.39.5",
+  "version": "0.39.6",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

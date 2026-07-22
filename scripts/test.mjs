@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process';
 
 const CORE_CLIENT_TEST_ROOT_PATHS = [
+  'packages/core/test/bottom-bar-companion.test.tsx',
   'packages/core/test/deck-pointer-session.test.tsx',
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/dropdown-surface-scope.test.tsx',

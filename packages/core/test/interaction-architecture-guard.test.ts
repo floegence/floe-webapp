@@ -37,6 +37,19 @@ describe('interaction architecture guard', () => {
     expect(architectureDoc).toContain('详细落地 checklist');
   });
 
+  it('keeps BottomBarCompanion independent from window and modal overlay primitives', () => {
+    const companionSrc = read('../src/components/layout/BottomBarCompanion.tsx');
+    const architectureDoc = read('../../../docs/interaction-architecture.md');
+
+    expect(companionSrc).not.toContain("from '../ui/FloatingWindow'");
+    expect(companionSrc).not.toContain("from '../ui/SurfaceFloatingLayer'");
+    expect(companionSrc).not.toContain('useOverlayMask');
+    expect(companionSrc).not.toContain('document.body');
+    expect(companionSrc).not.toContain('transition-all');
+    expect(architectureDoc).toContain('non-modal anchored companion');
+    expect(architectureDoc).toContain('BottomBarCompanion');
+  });
+
   it('defines one shared hot interaction runtime and geometry-surface style guard', () => {
     const runtimeSrc = read('../src/utils/hotInteraction.ts');
     const stylesSrc = read('../src/styles/floe.css');

@@ -92,13 +92,15 @@ done
 ```bash
 for dir in apps packages src; do
   [ -d "$dir" ] || continue
-  rg "useOverlayMask|startHotInteraction|deferAfterPaint|deferNonBlocking|data-floe-geometry-surface|hiddenOnMobile|renderIn|fullScreen|collapseBehavior" "$dir" --hidden
+  rg "useOverlayMask|BottomBarCompanion|startHotInteraction|deferAfterPaint|deferNonBlocking|data-floe-geometry-surface|hiddenOnMobile|renderIn|fullScreen|collapseBehavior" "$dir" --hidden
 done
 ```
 
 2. Apply the current guardrails from `docs/interaction-architecture.md`:
 - UI first for click/open/selection flows.
-- `useOverlayMask()` for overlays and drawers.
+- Classify modal overlays separately from non-modal anchored companions.
+- `useOverlayMask()` for modal overlays and modal drawers.
+- `BottomBarCompanion` from `@floegence/floe-webapp-core/layout` for a persistent Bottom Bar disclosure that grows from one explicit anchor into one stable shell. Keep `retained`, `visible`, and `open` orthogonal, provide an explicit mount, and do not wrap it with `FloatingWindow`, `SurfaceFloatingLayer`, or `useOverlayMask()`.
 - `startHotInteraction()` plus preview/commit separation for drag or resize flows.
 - No hot-path `transition-all` or geometry-following animation regressions.
 3. Validate responsive behavior manually in browser devtools at:
