@@ -394,6 +394,11 @@ describe('dialog surface scope', () => {
     expect(overlayRoot).toBeTruthy();
     expect(surfaceHost?.contains(overlayRoot ?? null)).toBe(true);
     expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('surface');
+    const closeButton = host.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
+    expect(closeButton?.className).toContain('h-[46px]');
+    expect(closeButton?.className).toContain('w-[46px]');
+    expect(closeButton?.className).toContain('sm:h-6');
+    expect(closeButton?.className).toContain('sm:w-6');
   });
 
   it('mounts a widget dialog into the local surface host even when opened by a non-focusable trigger', async () => {

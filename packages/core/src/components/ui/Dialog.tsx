@@ -267,7 +267,7 @@ export function Dialog(props: DialogProps) {
                     <Button
                       variant="ghost-destructive"
                       size="icon"
-                      class="h-6 w-6 -mr-1"
+                      class="-my-2 -mr-2 h-[46px] w-[46px] sm:my-0 sm:-mr-1 sm:h-6 sm:w-6"
                       onClick={() => props.onOpenChange(false)}
                       aria-label="Close"
                     >
