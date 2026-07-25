@@ -1,4 +1,4 @@
-import { type Component, For, Show, createMemo } from 'solid-js';
+import { type Component, For, Show, createMemo, onCleanup, onMount } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -11,6 +11,14 @@ export interface ActivityBarItem {
   label: string;
   badge?: number | string | (() => number | string | undefined);
   onClick?: () => void;
+  /** Receives the concrete trigger button for anchored product surfaces. */
+  buttonRef?: (button: HTMLButtonElement | null) => void;
+  /** ARIA disclosure state for a surface controlled by this item. */
+  ariaExpanded?: boolean | (() => boolean | undefined);
+  /** ID of the surface controlled by this item. */
+  ariaControls?: string;
+  /** Semantic kind of popup opened by this item. */
+  ariaHasPopup?: 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog' | boolean;
   /**
    * How this item should affect the sidebar collapsed state when clicked.
    *
@@ -121,13 +129,23 @@ interface ActivityBarButtonProps {
 }
 
 function ActivityBarButton(props: ActivityBarButtonProps) {
+  let buttonRef: HTMLButtonElement | undefined;
   const badgeValue = () => (
     typeof props.item.badge === 'function' ? props.item.badge() : props.item.badge
   );
+  const expanded = () => (
+    typeof props.item.ariaExpanded === 'function'
+      ? props.item.ariaExpanded()
+      : props.item.ariaExpanded
+  );
+
+  onMount(() => props.item.buttonRef?.(buttonRef ?? null));
+  onCleanup(() => props.item.buttonRef?.(null));
 
   return (
     <Tooltip content={props.item.label} placement="right" delay={0}>
       <button
+        ref={buttonRef}
         type="button"
         class={cn(
           'relative w-full aspect-square flex items-center justify-center cursor-pointer',
@@ -139,6 +157,9 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         onClick={() => props.onClick()}
         aria-label={props.item.label}
         aria-pressed={props.isActive}
+        aria-expanded={expanded()}
+        aria-controls={props.item.ariaControls}
+        aria-haspopup={props.item.ariaHasPopup}
       >
         {/* Active indicator - positioned at left edge, full height */}
         <Show when={props.isActive}>
