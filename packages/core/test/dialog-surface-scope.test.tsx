@@ -397,6 +397,7 @@ describe('dialog surface scope', () => {
     const closeButton = host.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
     expect(closeButton?.className).toContain('h-[46px]');
     expect(closeButton?.className).toContain('w-[46px]');
+    expect(closeButton?.className).toContain('shrink-0');
     expect(closeButton?.className).toContain('sm:h-6');
     expect(closeButton?.className).toContain('sm:w-6');
   });
