@@ -7,7 +7,6 @@ import { FloeProvider } from '@floegence/floe-webapp-core/app';
 import { WORKBENCH_THEMES, sanitizeWorkbenchState } from '@floegence/floe-webapp-core/workbench';
 import {
   DEMO_WORKBENCH_TEXT_DEFAULTS,
-  DEMO_WORKBENCH_TEXT_FONT,
   REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES,
   REDEVEN_PARITY_WORKBENCH_WIDGETS,
   WorkbenchDemoProvider,
@@ -45,7 +44,6 @@ function DemoProviders(props: { children: JSX.Element }) {
 function StateProbe() {
   const demo = useWorkbenchDemo();
   const state = demo.state();
-  const seedText = (state.annotations ?? []).find((annotation) => annotation.id === 'wb-seed-text-1');
 
   return (
     <div>
@@ -56,8 +54,8 @@ function StateProbe() {
         state.locked ? 'locked' : 'unlocked',
         Object.values(state.filters).every(Boolean) ? 'all-on' : 'mixed',
         state.viewport.scale.toFixed(2),
-        seedText?.font_size ?? -1,
-        seedText?.font_family === DEMO_WORKBENCH_TEXT_FONT.fontFamily ? 'demo-sans' : 'other-font',
+        state.mode,
+        state.activeTool,
       ].join('|')}
     </div>
   );
@@ -233,7 +231,28 @@ describe('demo workbench shared adapter', () => {
       </DemoProviders>
     ));
 
-    expect(html).toContain('1|4|redeven.terminal|unlocked|all-on|0.36|45|demo-sans');
+    expect(html).toContain('1|4|redeven.terminal|unlocked|all-on|0.50|work|select');
+  });
+
+  it('opens in work mode with a clean non-overlapping widget layout', () => {
+    const state = sanitizeWorkbenchDemoState(undefined);
+
+    expect(state.mode).toBe('work');
+    expect(state.activeTool).toBe('select');
+    expect(state.backgroundLayers).toEqual([]);
+    expect(state.stickyNotes).toEqual([]);
+    expect(state.annotations).toEqual([]);
+
+    for (const [index, widget] of state.widgets.entries()) {
+      for (const other of state.widgets.slice(index + 1)) {
+        const overlaps =
+          widget.x < other.x + other.width &&
+          widget.x + widget.width > other.x &&
+          widget.y < other.y + other.height &&
+          widget.y + widget.height > other.y;
+        expect(overlaps, `${widget.title} overlaps ${other.title}`).toBe(false);
+      }
+    }
   });
 
   it('allows programmatic state updates through the demo store', () => {
