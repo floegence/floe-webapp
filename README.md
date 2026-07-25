@@ -1,193 +1,176 @@
 <p align="center">
-  <img src="apps/demo/public/logo.svg" alt="Floe Webapp" width="72">
-</p>
-
-# Floe Webapp
-
-<p align="center">
-  <strong>Build workspace-style web apps with a VS Code-inspired shell, reusable UI primitives, and optional Flowersec protocol wiring.</strong>
+  <img src="./assets/readme/hero.svg" width="100%" alt="Floe Webapp, a Solid.js workspace framework for application shells, deck layouts, workbench canvases, and typed protocol wiring">
 </p>
 
 <p align="center">
-  <a href="https://webapp-demo.floegence.io">Open Live Demo</a> |
-  <a href="#quick-start">Quick Start</a> |
-  <a href="#capabilities">Explore Capabilities</a> |
-  <a href="#docs-by-task">Open Docs</a>
+  <a href="https://webapp-demo.floegence.io"><strong>Live Demo</strong></a>
+  &nbsp;&middot;&nbsp;
+  <a href="#quick-start">Quick Start</a>
+  &nbsp;&middot;&nbsp;
+  <a href="#surfaces">Surfaces</a>
+  &nbsp;&middot;&nbsp;
+  <a href="#documentation">Documentation</a>
 </p>
 
-Floe Webapp helps teams ship multi-panel product experiences faster. Instead of rebuilding application chrome from scratch, you start from a shared shell, command palette, theme system, notifications, and extension points for your own pages, commands, and status surfaces.
+<p align="center">
+  <code>Solid.js</code> &middot; <code>TypeScript</code> &middot; <code>Activity</code> &middot; <code>Deck</code> &middot; <code>Workbench</code>
+</p>
 
-This repository contains the public Solid.js packages, demo app, scaffolding CLI, and optional Flowersec integration that back those experiences.
+Floe Webapp is a composable application framework for products that need more than a page and a sidebar. It provides the shared chrome, interaction contracts, workspace surfaces, and extension points behind file-centric tools, operator consoles, browser companions, and connected SaaS applications.
 
-## Why teams use Floe
+Your product keeps control of its routes, business state, RPC contract, and branded experience. Floe supplies the reusable system around them.
 
-- Start from a familiar app shell with a top bar, activity bar, sidebar, bottom bar, resizable panels, and mobile navigation.
-- Add product-specific navigation, commands, and status items through a component registry instead of forking the shell.
-- Reuse higher-level building blocks such as file browsing, launchpad flows, deck layouts, workbench canvases, display-mode page shells, chat blocks, editor surfaces, and terminal integration points.
-- Keep theming, keyboard behavior, notifications, and shared accessibility patterns consistent across the whole app.
-- Connect the same shell to Flowersec-backed sessions and typed RPC contracts when the product needs remote capabilities.
+## One Shell, Three Ways To Work
 
-## Capabilities
+Workbench gives product-owned tools a persistent canvas with shared window chrome, navigation, themes, focus behavior, and widget lifecycle semantics. The demo opens in work mode with a clean, non-overlapping layout.
 
-| Surface              | What teams get                                                                                                                                                                                                                                            | Why it matters                                                                                                                                                                                                                                                                                                                       | Docs                                                                                                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `App Shell`          | `Shell`, `FloeApp`, activity bar, sidebar, top bar, bottom bar, command palette, notifications, mobile tab bar, `DisplayModeSwitcher`, `DisplayModePageShell`                                                                                             | Gives workspace-style products one shared navigation and layout model across desktop and mobile breakpoints, including page-mode surfaces such as Deck and Workbench                                                                                                                                                                 | [`docs/getting-started.md`](docs/getting-started.md), [`docs/configuration.md`](docs/configuration.md)                                                                                   |
-| `UI Primitives`      | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, theme tokens                                                                                                                                                                         | Keeps core interactions and visual language consistent while leaving room for product-owned features, including surface-scoped dialogs that stay inside the nearest deck/workbench/floating host when opened from local workspace widgets and mark themselves as local interaction surfaces so outer canvas gestures yield correctly | [`docs/getting-started.md`](docs/getting-started.md)                                                                                                                                     |
-| `Workspace Surfaces` | File browser, launchpad, deck layout, chat UI blocks, editor surface, terminal extension helpers, widget hooks, controller-driven Notes overlay primitives with shared overlay/gesture contracts, plus directory-aware context menus with submenu support | Speeds up file-centric, operator-style, and multi-tool experiences without forcing a single product shape, including grid-native Deck drag/resize interactions that stay on one snapped layout truth and always tear down through a shared document-level pointer session fallback                                                                                                   | [`docs/component-registry.md`](docs/component-registry.md), [`docs/interaction-architecture.md`](docs/interaction-architecture.md), [`docs/getting-started.md`](docs/getting-started.md) |
-| `Protocol Layer`     | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC wiring                                                                                                                                                                         | Lets apps attach connection state and remote capabilities without baking business contracts into the framework                                                                                                                                                                                                                       | [`docs/protocol.md`](docs/protocol.md)                                                                                                                                                   |
-| `Boot Helpers`       | Hash/session helpers and `postMessage` handshake utilities                                                                                                                                                                                                | Helps multi-window and sandbox-style launch flows stay consistent                                                                                                                                                                                                                                                                    | [`docs/runtime.md`](docs/runtime.md)                                                                                                                                                     |
+<p align="center">
+  <img src="./assets/readme/workbench-dark.webp" width="100%" alt="Floe Workbench in dark mode with Terminal, Files, Flower, and Codex widgets arranged in a two-by-two workspace">
+</p>
 
-### File browser link semantics
+<table>
+  <tr>
+    <td width="50%">
+      <img src="./assets/readme/activity-dark.webp" width="100%" alt="Floe Activity mode in dark theme with activity bar, file tree, and Monaco editor">
+    </td>
+    <td width="50%">
+      <img src="./assets/readme/deck-dark.webp" width="100%" alt="Floe Deck mode in dark theme with file browser and terminal widgets">
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Activity</strong><br>Familiar navigation, sidebar contributions, commands, search, settings, and focused pages.</td>
+    <td><strong>Deck</strong><br>Resizable grid layouts for tools that belong side by side, with shared drag and resize behavior.</td>
+  </tr>
+</table>
 
-The file browser keeps `FileItem.type` focused on interaction (`'file' | 'folder'`) and uses optional `FileItem.link` metadata to represent symbolic links separately. That means symlink-to-folder items can stay navigable while still rendering with dedicated link-aware icons, and downstream apps can distinguish symbolic links without forking the core file-browser behavior.
+## Why Floe
 
-The same file-browser surface now also accepts a controlled `revealRequest` flow, so downstream apps can clear a blocking filter when needed, scroll a newly created item into view, and reuse the built-in single-selection state instead of wiring product-specific DOM reveal logic.
-
-Selection behavior follows one shared contract across list and grid views: single-click replaces selection, `Shift+click` expands from the current anchor, `Cmd/Ctrl+click` toggles individual items, dragging across empty space performs marquee selection, and right-click keeps an existing selection when the target is already selected.
-
-## What you can build
-
-| Use case                               | Floe fit                                                                                                   |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Internal tools and operator consoles   | Combine navigation, command search, settings, notifications, and product pages inside one consistent shell |
-| File-centric workspaces                | Pair the shared shell with file browsing, search, editor views, and status surfaces                        |
-| Browser-based companion apps           | Add chat, deck, widget, and launchpad-style surfaces without rebuilding base chrome                        |
-| Connected products with remote actions | Inject a custom Flowersec contract and typed RPC layer when the UI needs live endpoint or service access   |
+- **Start with a complete product shell.** Top bar, activity bar, sidebar, bottom bar, mobile navigation, command palette, notifications, and display modes share one layout model.
+- **Compose instead of forking.** Register product pages, navigation, commands, status items, and Workbench widgets through public extension contracts.
+- **Reuse real workspace surfaces.** File browsing, Monaco editing, terminal integration, chat blocks, Notes, launchpad flows, Deck, and Workbench are built to live together.
+- **Keep interaction behavior coherent.** Themes, keyboard navigation, focus, local scrolling, text selection, dialogs, menus, and accessibility patterns are owned at the right surface boundary.
+- **Connect only when needed.** The optional protocol package adds reconnect-aware typed RPC without coupling the UI framework to one business contract.
 
 ## Quick Start
 
-### 1. Create a new app
+Create a new application with the scaffolding CLI:
 
 ```bash
 npx @floegence/floe-webapp-init my-app
-
-# Or start from the fuller sample app
-npx @floegence/floe-webapp-init my-app --template full
-
 cd my-app
 pnpm install
 pnpm dev
 ```
 
-Template guide:
+The default `minimal` template starts with `FloeApp` and one page. Use the fuller reference application when you want sample pages, settings, and theme switching:
 
-- `minimal` gives you `FloeApp` with a single page.
-- `full` adds sample pages, settings, and theme toggling.
+```bash
+npx @floegence/floe-webapp-init my-app --template full
+```
 
-### 2. Explore this repository's demo
+To add Floe to an existing Solid.js application:
+
+```bash
+pnpm add @floegence/floe-webapp-core solid-js
+```
+
+Add `@floegence/floe-webapp-protocol` only when the application needs Flowersec-backed sessions or typed remote capabilities. See the [getting started guide](docs/getting-started.md) for styles, providers, and a complete `FloeApp` example.
+
+## Surfaces
+
+| Surface   | What it provides                                                                         | Start here                                       |
+| --------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| App shell | `FloeApp`, `Shell`, navigation bars, panels, commands, notifications, mobile navigation  | [Getting started](docs/getting-started.md)       |
+| UI system | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, menus, theme tokens | [Configuration](docs/configuration.md)           |
+| Workspace | File browser, launchpad, chat, editor, terminal helpers, Notes, Deck, Workbench          | [Component registry](docs/component-registry.md) |
+| Protocol  | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC               | [Protocol](docs/protocol.md)                     |
+| Boot      | Session, hash, and `postMessage` helpers for multi-window and sandbox flows              | [Runtime](docs/runtime.md)                       |
+
+### Activity
+
+Use Activity mode for focused pages inside a familiar application frame. The component registry lets a product contribute sidebar views, commands, settings, and status surfaces without taking ownership of the shell implementation.
+
+### Deck
+
+Use Deck when several tools need stable grid placement. Floe owns snapped drag and resize behavior, shared top-bar integration, and widget chrome while product code supplies the widget bodies.
+
+### Workbench
+
+Use Workbench for a persistent spatial workspace. Product-defined widgets share canvas navigation, window actions, focus and selection semantics, themes, filtering, and optional projected surfaces for pixel-stable editors, terminals, and previews.
+
+Workbench also exposes explicit APIs for centering, fitting, overview navigation, annotations, text, sticky notes, and background regions. The interaction architecture keeps canvas zoom, local scrolling, native text selection, and widget activation separate so rich embedded tools remain predictable.
+
+## How It Fits Together
+
+```text
+Your product
+  routes + business state + branded views + RPC contract
+       |
+       v
+@floegence/floe-webapp-core
+  FloeApp + registry + UI + Activity + Deck + Workbench
+       |
+       +---- @floegence/floe-webapp-protocol  typed remote capabilities
+       |
+       +---- @floegence/floe-webapp-boot      multi-window boot helpers
+```
+
+The packages are independently consumable:
+
+| Package                           | Role                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| `@floegence/floe-webapp-core`     | Shell, UI primitives, workspace surfaces, themes, and extension contracts |
+| `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring                     |
+| `@floegence/floe-webapp-boot`     | Session and handshake helpers for multi-window launches                   |
+| `@floegence/floe-webapp-init`     | CLI and templates for new Floe applications                               |
+
+## Documentation
+
+| Goal                                                                | Guide                                                        |
+| ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Build and run the first app                                         | [Getting started](docs/getting-started.md)                   |
+| Configure strings, storage, keybindings, themes, and shell defaults | [Configuration](docs/configuration.md)                       |
+| Register views, commands, navigation, and status contributions      | [Component registry](docs/component-registry.md)             |
+| Understand wheel, focus, activation, and selection ownership        | [Interaction architecture](docs/interaction-architecture.md) |
+| Adopt the shared accessibility baseline                             | [Accessibility](docs/accessibility.md)                       |
+| Connect sessions and typed RPC contracts                            | [Protocol](docs/protocol.md)                                 |
+| Build multi-window and sandbox launch flows                         | [Runtime](docs/runtime.md)                                   |
+| Work with canonical picker paths                                    | [Picker path semantics](docs/picker-paths.md)                |
+
+## Develop This Repository
+
+Requirements: Node.js `>= 24` and pnpm `>= 9`.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-The demo shows how Floe can host multiple product surfaces in one shell:
-
-- `Showcase`: core UI components, layout primitives, and loading states
-- `Files`: Monaco-powered source viewing over demo workspace files
-- `Search`: workspace search that jumps into the file view
-- `Settings`: protocol connect/disconnect plus shell and chart theme controls
-- `Chat`, `Deck`, `Workbench`, `Notes`, and `Design Tokens`: reference surfaces for richer app experiences
-
-The shared `layout` package now also owns the demo's page-mode shell primitives:
-
-- `DisplayModeSwitcher` for the top-bar activity/deck/workbench mode contract
-- `DisplayModePageShell` for full-page surfaces that reuse the shared top bar without rendering the activity bar or sidebar
-
-The shared `workbench` package owns the infinite-canvas chrome plus widget registry contract. Downstream apps can inject custom widget definitions into the same workbench shell instead of forking its canvas, dock, widget chrome, or context menu behavior. Within a mounted workbench session, the widget lifecycle boundary is the stable `widget.id`: fronting, focus, and geometry updates mutate the visible snapshot without remounting the business widget subtree. Starting with `v0.36.7`, workbench viewport centering also depends on a live canvas-frame measurement contract, so arrow-key navigation, `focusWidget(...)`, and `ensureWidget(...)` continue centering the target widget correctly after mount-time zero-size layouts or later container resizes.
-
-Starting with `v0.36.8`, workbench widgets can also opt into `renderMode: 'projected_surface'`. Projected widgets keep their world-space position, persistence, and z-order semantics, but their business DOM no longer lives inside the canvas scale transform ancestor. Instead, the canvas exposes a live viewport overlay layer and the widget body receives `surfaceMetrics` with projected screen geometry. This is the preferred path for rich surfaces such as Monaco, terminals, embedded previews, and other widgets that need a stable pixel-space host while the surrounding workbench still pans and zooms.
-
-Starting with `v0.36.12`, workbench surfaces expose explicit selection clearing plus separate navigation intents for centering, fitting, and overview zoom. `focusWidget(...)` keeps the existing center-only activation behavior, `fitWidget(...)` centers and scales a widget fully into the viewport, and `overviewWidget(...)` centers the widget at the minimum canvas scale. Context menus now also use a menu-owned `pointerdown capture` outside-dismiss boundary so menu actions remain clickable inside transformed or portal-heavy surfaces.
-
-Workbench widget bodies now also receive an optional `activation` payload when a primary pointerdown lands on a widget-local, non-focusable, non-overlay surface. This lets virtual-input widgets such as terminals or projected editor surfaces reclaim their own internal focus on the first click without reverting the shell-vs-local interaction contract, while native inputs, buttons, dropdowns, dialogs, and header chrome continue using their existing browser or component-owned focus behavior.
-
-Starting with `v0.36.23`, that same workbench interaction contract also preserves first-click typing intent across same-event selection/front updates. Inactive widgets can now enter native inputs on the first click, while virtual-input widgets still receive their shared `activation` signal after the workbench shell captures the interaction.
-
-Starting with `v0.36.24`, blank-canvas pointer intent also hands runtime authority back to the canvas instead of only clearing `selectedWidgetId`. `WorkbenchSurface` now restores the surface root focus when the user clicks background space, so subsequent wheel input returns to canvas zoom until a widget explicitly regains local wheel ownership. Virtual-input widgets can also mark `data-floe-workbench-widget-activation-surface="true"` around proxy textareas or focus helpers, which keeps those nodes on the shared activation path instead of misclassifying them as native first-click typing targets.
-
-Workbench launcher affordances are also singleton-aware. When a widget definition declares `singleton: true`, the canvas context menu now says `Add X` only while that widget is absent and switches to `Go to X` once an instance already exists, reusing the shared focus/centering path instead of silently creating duplicates. The context menu also renders every widget icon inside a fixed icon slot so downstream branded glyphs stay visually aligned with built-in icons.
-
-Starting with `v0.36.43`, Workbench includes the layered canvas compositor for background regions, annotation text, and sticky notes. `WorkbenchSurfaceApi` is the public integration boundary for those objects: downstream apps can create, find, update, and delete `Sticky`, `Text`, and `Region` entries without importing the internal workbench model, and `WorkbenchOverlay` forwards the same widget definitions, interaction adapter, text defaults, and API callback as `WorkbenchSurface`.
-
-`CodeEditor` now exposes profile-first Monaco runtime bootstrapping through `runtimeOptions.profile`. Use `preview_basic` for lightweight preview/read-only surfaces that still need syntax highlighting; today it resolves to the shared Monaco standalone baseline that explicitly registers the service modules Monaco actually touches in standalone mode, while the preview-specific lightness still comes from editor options instead of a half-loaded runtime. Keep `editor_full` for richer editor experiences. The older `runtimeOptions.standaloneFeatures` input remains as a compatibility shim and is normalized onto those safe profiles instead of letting downstream code toggle Monaco's low-level service graph directly.
-
-Optional local variations:
-
-- `pnpm dev -- --host 0.0.0.0 --port 5173` to expose the demo on your LAN
-- `pnpm dev:dist` to run the demo against built package outputs instead of source imports
-
-## Docs By Task
-
-| I want to...                                             | Read                                                                   |
-| -------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Start a new app and understand the demo                  | [`docs/getting-started.md`](docs/getting-started.md)                   |
-| Configure shell defaults, strings, storage, and keybinds | [`docs/configuration.md`](docs/configuration.md)                       |
-| Add sidebar views, commands, and status contributions    | [`docs/component-registry.md`](docs/component-registry.md)             |
-| Understand shared interaction and layout guardrails      | [`docs/interaction-architecture.md`](docs/interaction-architecture.md) |
-| Adopt the shared accessibility contract                  | [`docs/accessibility.md`](docs/accessibility.md)                       |
-| Connect Flowersec sessions and typed RPC contracts       | [`docs/protocol.md`](docs/protocol.md)                                 |
-| Wire multi-window or sandbox boot flows                  | [`docs/runtime.md`](docs/runtime.md)                                   |
-
-## Accessibility And Integration At A Glance
-
-- Floe Webapp targets a reusable WCAG 2.2 AA baseline for shared shell chrome and core interaction primitives.
-- Shared navigation patterns such as tabs, mobile tabs, dropdowns, skip links, and shell landmarks are built into the framework so product teams can extend them instead of reimplementing them.
-- Theming is token-driven, with local shell customization hooks such as `theme.tokens`, `slotClassNames`, and `data-floe-shell-slot`.
-- The protocol package is optional and contract-driven: Floe ships the UI glue and reconnect behavior, while the host app owns the business RPC contract.
-
-## For Developers
-
-<details>
-<summary>Local development</summary>
-
-### Prerequisites
-
-- Node.js `>= 24`
-- pnpm `>= 9`
-
-### Main commands
+Useful commands:
 
 ```bash
-pnpm install
-pnpm dev
-pnpm dev:dist
-make check
+pnpm dev:dist     # run the demo against built package outputs
+make check        # lint, typecheck, test, build, and verify distributions
 ```
 
-`make check` runs the local CI entrypoint: lint, typecheck, test, build, and dist verification.
-
-### Workspace packages
-
-| Package                           | Purpose                                                              |
-| --------------------------------- | -------------------------------------------------------------------- |
-| `@floegence/floe-webapp-core`     | Shared shell, UI primitives, workspace surfaces, and theme utilities |
-| `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring                |
-| `@floegence/floe-webapp-boot`     | Boot helpers for multi-window and sandbox flows                      |
-| `@floegence/floe-webapp-init`     | CLI scaffolding for new Floe apps                                    |
-
-</details>
+The live workspace development server imports `packages/*` source directly for fast startup and HMR. For the Cloudflare Pages demo, build with `pnpm build:demo` and publish `apps/demo/dist` with `NODE_VERSION=24`.
 
 <details>
-<summary>AI coding agents and repo-local skills</summary>
+<summary><strong>AI coding agents</strong></summary>
 
-If your workflow uses coding agents, load the Floe skill package before implementation:
+Load the repository-local Floe skill before implementation:
 
 - `skills/floe-webapp/SKILL.md`
 - `skills/floe-webapp/references/playbooks.md`
 
-Scaffolded projects include the same `./skills/floe-webapp/` package at project root.
+Scaffolded projects include the same skill package at `./skills/floe-webapp`.
 
 </details>
 
-<details>
-<summary>Cloudflare Pages demo deploy</summary>
+## Accessibility
 
-- Recommended: Cloudflare Pages with Git integration
-- Build command: `pnpm build:demo`
-- Build output directory: `apps/demo/dist`
-- Root directory: leave empty so the monorepo builds from repo root
-- Environment variable: set `NODE_VERSION` to `24` for both production and preview builds
-- `wrangler.toml` is only for Wrangler Direct Upload, not the Git-integrated Pages flow
+Floe targets a reusable WCAG 2.2 AA baseline for shared shell chrome and core interaction primitives. Tabs, menus, dialogs, skip links, landmarks, keyboard navigation, focus ownership, and mobile navigation are designed as framework contracts so downstream products can extend them consistently.
 
-</details>
+## License
+
+[MIT](LICENSE)
