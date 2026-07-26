@@ -197,4 +197,69 @@ describe('SurfaceFloatingLayer', () => {
     expect(layer?.style.left).toBe('312px');
     expect(layer?.style.top).toBe('202px');
   });
+
+  it('uses an explicit owner after the implicit interaction snapshot expires', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let now = 1_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+
+    function Harness() {
+      const [open, setOpen] = createSignal(false);
+      let trigger!: HTMLButtonElement;
+      return (
+        <div
+          data-testid="surface-host"
+          data-floe-dialog-surface-host="true"
+          style={{ position: 'relative', width: '320px', height: '240px' }}
+        >
+          <button
+            ref={trigger}
+            type="button"
+            data-testid="trigger"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') setOpen(true);
+            }}
+          >
+            Open layer
+          </button>
+          {open() && (
+            <SurfaceFloatingLayer
+              owner={trigger}
+              position={{ x: 88, y: 96 }}
+              estimatedSize={{ width: 120, height: 80 }}
+              role="region"
+              data-testid="floating-layer"
+            >
+              Shared layout details
+            </SurfaceFloatingLayer>
+          )}
+        </div>
+      );
+    }
+
+    mount(() => <Harness />, host);
+    const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
+    const trigger = host.querySelector('[data-testid="trigger"]') as HTMLButtonElement | null;
+    expect(surfaceHost).toBeTruthy();
+    expect(trigger).toBeTruthy();
+    mockRect(surfaceHost!, {
+      left: 0,
+      top: 0,
+      right: 320,
+      bottom: 240,
+      width: 320,
+      height: 240,
+    });
+
+    trigger!.focus();
+    now += 2_000;
+    trigger!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await Promise.resolve();
+
+    const layer = surfaceHost!.querySelector('[data-testid="floating-layer"]') as HTMLDivElement | null;
+    expect(layer).toBeTruthy();
+    expect(layer?.className).toContain('absolute');
+    expect(layer?.getAttribute('data-floe-local-interaction-surface')).toBe('true');
+  });
 });

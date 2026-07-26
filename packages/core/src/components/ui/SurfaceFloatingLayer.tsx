@@ -26,6 +26,8 @@ export type SurfaceFloatingLayerSize = Readonly<{
 export interface SurfaceFloatingLayerProps
   extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'style' | 'ref'> {
   position: SurfaceFloatingLayerPosition;
+  /** Stable trigger or anchor used to resolve the owning projected surface. */
+  owner?: Element | null;
   estimatedSize?: SurfaceFloatingLayerSize;
   clamp?: boolean;
   class?: string;
@@ -51,6 +53,7 @@ function emptyBoundaryRect(): SurfacePortalBoundaryRect {
 export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   const [local, rest] = splitProps(props, [
     'position',
+    'owner',
     'estimatedSize',
     'clamp',
     'class',
@@ -58,7 +61,7 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
     'children',
     'layerRef',
   ]);
-  const surfaceHost = createMemo(() => resolveSurfacePortalHost());
+  const surfaceHost = createMemo(() => resolveSurfacePortalHost({ owner: local.owner ?? null }));
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
   const boundaryRect = () => resolveSurfacePortalBoundaryRect(surfaceHost()) ?? emptyBoundaryRect();
   const shouldClamp = () => local.clamp !== false && Boolean(local.estimatedSize);
