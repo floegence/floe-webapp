@@ -516,7 +516,7 @@
   }
 
   .processing-text-glow {
-    color: var(--primary);
+    color: var(--glow);
     animation: text-glow 2s ease-in-out infinite;
   }
 

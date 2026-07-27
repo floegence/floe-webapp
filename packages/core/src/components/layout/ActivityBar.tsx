@@ -151,8 +151,8 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           'relative w-full aspect-square flex items-center justify-center cursor-pointer',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
           props.isActive
-            ? 'text-activity-bar-foreground-active bg-accent/80'
-            : 'text-activity-bar-foreground transition-[color,background-color] duration-100 hover:text-activity-bar-foreground-active hover:bg-accent/40'
+            ? 'text-activity-bar-foreground-active bg-accent'
+            : 'text-activity-bar-foreground transition-[color,background-color] duration-100 hover:text-activity-bar-foreground-active hover:bg-accent/50'
         )}
         onClick={() => props.onClick()}
         aria-label={props.item.label}

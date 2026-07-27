@@ -62,6 +62,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #243447;
 }
 :root[data-floe-shell-theme='mist'] {
   --background: #eef3f7;
@@ -126,6 +127,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #234e63;
 }
 :root[data-floe-shell-theme='meadow'] {
   --background: #eef4ec;
@@ -190,6 +192,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #24523d;
 }
 :root[data-floe-shell-theme='citrus'] {
   --background: #fff5e1;
@@ -254,6 +257,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #874000;
 }
 :root[data-floe-shell-theme='lilac'] {
   --background: #f5f0fa;
@@ -318,6 +322,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #51407e;
 }
 :root[data-floe-shell-theme='light-plus'] {
   --background: #ffffff;
@@ -382,6 +387,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #005fb8;
 }
 :root[data-floe-shell-theme='quiet-light'] {
   --background: #f5f5f5;
@@ -446,6 +452,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #4b61b9;
 }
 :root[data-floe-shell-theme='solarized-light'] {
   --background: #fdf6e3;
@@ -510,6 +517,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #075e73;
 }
 :root[data-floe-shell-theme='github-light'] {
   --background: #f6f8fa;
@@ -574,6 +582,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #0969da;
 }
 :root[data-floe-shell-theme='hc-light'] {
   --background: #ffffff;
@@ -638,6 +647,7 @@
   --selection-on-primary-fg: #243447;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #0000a8;
 }
 :root[data-floe-shell-theme='ink'] {
   --background: #0b1420;
@@ -702,6 +712,7 @@
   --selection-on-primary-fg: #eaf2f7;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #395c9f;
 }
 :root[data-floe-shell-theme='slate'] {
   --background: #171b22;
@@ -766,6 +777,7 @@
   --selection-on-primary-fg: #eef1f5;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #52677e;
 }
 :root[data-floe-shell-theme='forest'] {
   --background: #0b1a17;
@@ -830,6 +842,7 @@
   --selection-on-primary-fg: #edf6f1;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #2d7d67;
 }
 :root[data-floe-shell-theme='ember'] {
   --background: #1d1115;
@@ -894,6 +907,7 @@
   --selection-on-primary-fg: #fff1f1;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #a94632;
 }
 :root[data-floe-shell-theme='ocean'] {
   --background: #071a25;
@@ -958,6 +972,7 @@
   --selection-on-primary-fg: #e9f7fc;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #176c8e;
 }
 :root[data-floe-shell-theme='dark-plus'] {
   --background: #1e1e1e;
@@ -1022,6 +1037,7 @@
   --selection-on-primary-fg: #d4d4d4;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #264f78;
 }
 :root[data-floe-shell-theme='monokai'] {
   --background: #272822;
@@ -1086,6 +1102,7 @@
   --selection-on-primary-fg: #f8f8f2;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #5a594e;
 }
 :root[data-floe-shell-theme='nord'] {
   --background: #2e3440;
@@ -1150,6 +1167,7 @@
   --selection-on-primary-fg: #eceff4;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #4c668a;
 }
 :root[data-floe-shell-theme='dracula'] {
   --background: #282a36;
@@ -1214,6 +1232,7 @@
   --selection-on-primary-fg: #f8f8f2;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #52566d;
 }
 :root[data-floe-shell-theme='abyss'] {
   --background: #000c18;
@@ -1278,4 +1297,5 @@
   --selection-on-primary-fg: #ddeeff;
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
+  --glow: #005a8d;
 }

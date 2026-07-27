@@ -32,7 +32,7 @@ export function TopBar(props: TopBarProps) {
       style={{ 'border-bottom-color': 'var(--top-bar-border)' }}
       aria-label={props.ariaLabel}
     >
-      <div class="h-10 flex items-center gap-3 px-3">
+      <div class="h-10 flex items-center gap-2 px-3">
         {/* Logo */}
         <div class="flex items-center gap-2 flex-shrink-0">
           {props.logo || (
@@ -41,7 +41,7 @@ export function TopBar(props: TopBarProps) {
             </div>
           )}
           <Show when={props.title}>
-            <span class="font-medium text-xs hidden sm:inline">{props.title}</span>
+            <span class="font-medium text-[11px] tracking-tight hidden sm:inline">{props.title}</span>
           </Show>
         </div>
 
@@ -50,28 +50,28 @@ export function TopBar(props: TopBarProps) {
           type="button"
           disabled={!paletteEnabled()}
           class={cn(
-            'flex-1 max-w-sm flex items-center gap-2 h-7 px-2.5',
+            'flex-1 max-w-sm flex items-center gap-2 h-[26px] px-2.5',
             paletteEnabled() ? 'cursor-pointer' : 'cursor-not-allowed',
-            'text-xs text-muted-foreground',
-            'bg-muted/40 hover:bg-muted/70 rounded',
-            'border border-transparent hover:border-border/50',
+            'text-[11px] text-muted-foreground tracking-tight',
+            'bg-muted/30 hover:bg-muted/60 rounded-md',
+            'border border-border/40 hover:border-border/70',
             'transition-colors duration-100',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-            !paletteEnabled() && 'opacity-60 hover:bg-muted/40'
+            !paletteEnabled() && 'opacity-50 hover:bg-muted/30'
           )}
           onClick={() => paletteEnabled() && command.open()}
         >
-          <Search class="w-3.5 h-3.5 shrink-0" />
+          <Search class="w-3 h-3 shrink-0" />
           <span class="flex-1 text-left hidden sm:inline truncate">{floe.config.strings.topBar.searchPlaceholder}</span>
           <Show when={paletteEnabled()}>
-            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/80 border border-border/50 font-mono shrink-0">
+            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/60 border border-border/40 font-mono shrink-0 leading-none">
               {command.getKeybindDisplay(floe.config.commands.palette.keybind)}
             </kbd>
           </Show>
         </button>
 
         {/* Actions */}
-        <div class="flex items-center gap-1">{props.actions}</div>
+        <div class="flex items-center gap-0.5">{props.actions}</div>
       </div>
     </header>
   );

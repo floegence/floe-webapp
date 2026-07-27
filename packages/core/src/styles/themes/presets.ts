@@ -76,7 +76,8 @@ type ShellThemeTokenName =
   | '--selection-on-primary-bg'
   | '--selection-on-primary-fg'
   | '--selection-code-bg'
-  | '--selection-code-fg';
+  | '--selection-code-fg'
+  | '--glow';
 
 export const REQUIRED_SHELL_THEME_TOKENS: readonly ShellThemeTokenName[] = [
   '--background',
@@ -141,6 +142,7 @@ export const REQUIRED_SHELL_THEME_TOKENS: readonly ShellThemeTokenName[] = [
   '--selection-on-primary-fg',
   '--selection-code-bg',
   '--selection-code-fg',
+  '--glow',
 ];
 
 interface ShellThemePaletteDefinition {
@@ -163,6 +165,15 @@ interface ShellThemePaletteDefinition {
   selectionBackground: string;
   selectionForeground: string;
   chart: readonly [string, string, string, string, string];
+  /**
+   * Explicit glow accent color for glow/bloom effects. Optional.
+   *
+   * When omitted, the system auto-assigns based on mode:
+   * - Light mode: `primary` (dark ink reads as a depth accent, not harsh)
+   * - Dark mode: `selectionBackground` (already a theme-tuned saturated accent,
+   *   avoids the white-bloom problem that comes from using a near-white primary)
+   */
+  glow?: string;
   syntax?: {
     comment: string;
     keyword: string;
@@ -283,6 +294,9 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     '--selection-on-primary-fg': selectionOnPrimary.foreground,
     '--selection-code-bg': '#58A6FF',
     '--selection-code-fg': '#08111D',
+    // Glow: light mode uses primary (dark ink as depth accent); dark mode uses
+    // selectionBackground so we don't inherit a near-white primary as glow source.
+    '--glow': definition.glow ?? (definition.mode === 'light' ? definition.primary : definition.selectionBackground),
   };
 
   return {

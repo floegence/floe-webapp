@@ -162,9 +162,13 @@ export function Card(props: CardProps) {
 
   const glowStyles = (): JSX.CSSProperties => {
     if (variant() !== 'glow') return {};
-    const color = local.glowColor ?? 'var(--primary)';
+    const color = local.glowColor ?? 'var(--glow)';
     return {
-      'box-shadow': `0 0 0 1px ${color}, 0 0 20px -5px ${color}, 0 0 40px -10px ${color}`,
+      'box-shadow': [
+        `0 0 0 1px color-mix(in srgb, ${color} 55%, transparent)`,
+        `0 0 16px -4px color-mix(in srgb, ${color} 50%, transparent)`,
+        `0 0 28px -8px color-mix(in srgb, ${color} 28%, transparent)`,
+      ].join(', '),
     };
   };
 
@@ -358,7 +362,7 @@ export function Interactive3DCard(props: Interactive3DCardProps) {
       class={cn(
         'relative rounded-xl bg-card border border-border overflow-hidden',
         'transition-all duration-200 ease-out',
-        local.borderGlow && isHovered() && 'shadow-[0_0_30px_-5px_var(--primary)]',
+        local.borderGlow && isHovered() && 'shadow-[0_0_18px_-6px_var(--glow)]',
         local.class
       )}
       style={{
@@ -455,7 +459,7 @@ export interface NeonCardProps extends JSX.HTMLAttributes<HTMLDivElement> {
 export function NeonCard(props: NeonCardProps) {
   const [local, rest] = splitProps(props, ['color', 'pulse', 'class', 'children', 'style']);
 
-  const color = () => local.color ?? 'var(--primary)';
+  const color = () => local.color ?? 'var(--glow)';
 
   return (
     <div
@@ -467,7 +471,12 @@ export function NeonCard(props: NeonCardProps) {
       style={{
         ...(typeof local.style === 'object' ? local.style : {}),
         'border-color': color(),
-        'box-shadow': `0 0 5px ${color()}, 0 0 20px color-mix(in srgb, ${color()} 72%, transparent), 0 0 40px color-mix(in srgb, ${color()} 45%, transparent), inset 0 0 20px color-mix(in srgb, ${color()} 15%, transparent)`,
+        'box-shadow': [
+          `0 0 4px color-mix(in srgb, ${color()} 80%, transparent)`,
+          `0 0 14px color-mix(in srgb, ${color()} 50%, transparent)`,
+          `0 0 28px color-mix(in srgb, ${color()} 30%, transparent)`,
+          `inset 0 0 14px color-mix(in srgb, ${color()} 10%, transparent)`,
+        ].join(', '),
       }}
       {...rest}
     >

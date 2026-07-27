@@ -19,8 +19,8 @@
   --muted: hsl(36 15% 94%);
   --muted-foreground: hsl(215 16% 42%);
 
-  /* Accent - Subtle warm highlight */
-  --accent: hsl(34 11% 88%);
+  /* Accent - Subtle warm highlight, darker than sidebar for visible hover/active fills */
+  --accent: hsl(34 9% 85%);
   --accent-foreground: hsl(214 26% 17%);
 
   /* Border - Warm gray */
@@ -32,6 +32,9 @@
   --activity-bar-border: var(--chrome-border);
   --bottom-bar-border: var(--chrome-border);
   --terminal-panel-border: var(--chrome-border);
+
+  /* glow: in light mode primary is dark ink — works well as a depth/shadow glow accent */
+  --glow: var(--primary);
 
   /* Card */
   --card: hsl(36 100% 99%);
@@ -59,19 +62,19 @@
   --highlight-block-note-accent: oklch(0.52 0.16 285);
   --highlight-block-tip-accent: oklch(0.52 0.12 175);
 
-  /* Sidebar */
-  --sidebar: hsl(36 13% 92%);
+  /* Sidebar — distinct from background, slightly deeper */
+  --sidebar: hsl(34 13% 90%);
   --sidebar-foreground: hsl(214 26% 17%);
   --sidebar-primary: hsl(214 26% 17%);
   --sidebar-primary-foreground: hsl(36 100% 99%);
-  --sidebar-accent: hsl(34 11% 88%);
+  --sidebar-accent: hsl(34 9% 84%);
   --sidebar-accent-foreground: hsl(214 26% 17%);
-  --sidebar-border: hsl(33 11% 84%);
+  --sidebar-border: hsl(33 9% 82%);
   --sidebar-ring: hsl(214 26% 17%);
 
-  /* Activity bar */
-  --activity-bar: hsl(36 13% 92%);
-  --activity-bar-foreground: hsl(215 16% 42%);
+  /* Activity bar — deepest light-mode surface, clearly separate from sidebar */
+  --activity-bar: hsl(34 11% 87%);
+  --activity-bar-foreground: hsl(215 14% 46%);
   --activity-bar-foreground-active: hsl(214 26% 17%);
   --activity-bar-badge: hsl(214 26% 17%);
   --activity-bar-badge-foreground: hsl(36 100% 99%);

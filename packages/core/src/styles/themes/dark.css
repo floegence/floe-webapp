@@ -11,33 +11,39 @@
   --primary-foreground: hsl(222 30% 10%);
 
   /* Secondary */
-  --secondary: hsl(220 25% 14%);
+  --secondary: hsl(220 18% 15%);
   --secondary-foreground: hsl(210 20% 98%);
 
-  /* Muted */
-  --muted: hsl(220 25% 14%);
-  --muted-foreground: hsl(215 20% 60%);
+  /* Muted — hover/inactive fill, one step above card */
+  --muted: hsl(220 16% 16%);
+  --muted-foreground: hsl(215 16% 56%);
 
-  /* Accent */
-  --accent: hsl(220 25% 16%);
+  /* Accent — selected/active fill, one step above muted */
+  --accent: hsl(220 14% 19%);
   --accent-foreground: hsl(210 20% 98%);
 
   /* Border */
-  --border: hsl(220 20% 18%);
-  --input: hsl(220 25% 14%);
+  --border: hsl(220 16% 20%);
+  --input: hsl(220 18% 15%);
   --ring: hsl(215 25% 70%);
-  --chrome-border: var(--border);
+  /* chrome-border: hairline seams between shell chrome panels */
+  --chrome-border: hsl(220 16% 13%);
+  /* glow: dedicated accent color for glow/bloom effects.
+     --primary in dark mode is near-white (hsl 210 20% 98%), which creates
+     an overpowering white bloom when used as a glow source. This token
+     maps to a specific blue that reads as luminous without burning. */
+  --glow: hsl(217 65% 52%);
   --top-bar-border: var(--chrome-border);
   --activity-bar-border: var(--chrome-border);
   --bottom-bar-border: var(--chrome-border);
   --terminal-panel-border: var(--chrome-border);
 
-  /* Card */
-  --card: hsl(222 28% 10%);
+  /* Card — one clear step above sidebar */
+  --card: hsl(220 20% 13%);
   --card-foreground: hsl(210 20% 98%);
 
-  /* Popover */
-  --popover: hsl(222 28% 10%);
+  /* Popover — floating layer, one step above card */
+  --popover: hsl(220 18% 15%);
   --popover-foreground: hsl(210 20% 98%);
 
   /* Status colors */
@@ -58,20 +64,20 @@
   --highlight-block-note-accent: oklch(0.62 0.14 285);
   --highlight-block-tip-accent: oklch(0.6 0.1 175);
 
-  /* Sidebar */
-  --sidebar: hsl(222 28% 10%);
+  /* Sidebar — distinct structural plane between background and card */
+  --sidebar: hsl(221 22% 11%);
   --sidebar-foreground: hsl(210 20% 98%);
   --sidebar-primary: hsl(217 80% 55%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(220 25% 16%);
+  --sidebar-accent: hsl(220 14% 19%);
   --sidebar-accent-foreground: hsl(210 20% 98%);
-  --sidebar-border: hsl(220 20% 18%);
+  --sidebar-border: hsl(220 16% 13%);
   --sidebar-ring: hsl(217 80% 55%);
 
-  /* Activity bar */
-  --activity-bar: hsl(222 30% 9%);
-  --activity-bar-foreground: hsl(215 20% 55%);
-  --activity-bar-foreground-active: hsl(210 20% 98%);
+  /* Activity bar — deepest surface, anchors the left edge of the layout */
+  --activity-bar: hsl(222 28% 7%);
+  --activity-bar-foreground: hsl(215 16% 50%);
+  --activity-bar-foreground-active: hsl(210 20% 96%);
   --activity-bar-badge: hsl(217 80% 55%);
   --activity-bar-badge-foreground: hsl(0 0% 100%);
 

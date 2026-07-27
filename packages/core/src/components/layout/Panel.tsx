@@ -36,9 +36,9 @@ export function PanelHeader(props: PanelHeaderProps) {
   return (
     <div
       class={cn(
-        'flex items-center justify-between px-3 py-2',
+        'flex items-center justify-between px-3 py-1.5',
         'border-b border-border',
-        'text-sm font-medium',
+        'text-xs font-medium tracking-tight',
         props.class
       )}
     >
