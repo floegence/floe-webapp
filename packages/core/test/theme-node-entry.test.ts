@@ -10,7 +10,7 @@ describe('browser-neutral shell theme entrypoint', () => {
       light: 'classic-light',
       dark: 'classic-dark',
     });
-    expect(builtInShellThemePresets).toHaveLength(22);
+    expect(builtInShellThemePresets).toHaveLength(24);
     for (const preset of builtInShellThemePresets) {
       expect(preset.semanticTokens?.['--background'], preset.name).toBeTruthy();
       expect(preset.semanticTokens?.['--foreground'], preset.name).toBeTruthy();

@@ -31,10 +31,10 @@ function readResolvedClassicTokens(mode: 'light' | 'dark'): Record<string, strin
 
 describe('built-in shell theme presets', () => {
   it('ships the original pair plus ten distinct presets for each mode', () => {
-    expect(builtInShellThemePresets).toHaveLength(22);
+    expect(builtInShellThemePresets).toHaveLength(24);
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(11);
-    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(11);
-    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(22);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(13);
+    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(24);
 
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';

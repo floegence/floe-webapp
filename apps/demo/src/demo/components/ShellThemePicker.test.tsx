@@ -29,6 +29,6 @@ describe('ShellThemePicker', () => {
     for (const preset of builtInShellThemePresets) {
       expect(html).toContain(preset.displayName);
     }
-    expect(html.match(/role="radio"/g)).toHaveLength(22);
+    expect(html.match(/role="radio"/g)).toHaveLength(24);
   });
 });

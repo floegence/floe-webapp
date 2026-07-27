@@ -72,8 +72,9 @@
   --sidebar-border: hsl(33 9% 82%);
   --sidebar-ring: hsl(214 26% 17%);
 
-  /* Activity bar — deepest light-mode surface, clearly separate from sidebar */
-  --activity-bar: hsl(34 11% 87%);
+  /* Activity bar — deepest light-mode surface, clearly separate from sidebar.
+     L90% keeps --muted-foreground contrast ratio ≥ 4.5 on this surface (WCAG AA). */
+  --activity-bar: hsl(34 11% 90%);
   --activity-bar-foreground: hsl(215 14% 46%);
   --activity-bar-foreground-active: hsl(214 26% 17%);
   --activity-bar-badge: hsl(214 26% 17%);

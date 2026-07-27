@@ -94,7 +94,7 @@ export const floeColorTokenCategories = [
         name: 'Secondary',
         variable: '--secondary',
         lightValue: 'hsl(36 15% 94%)',
-        darkValue: 'hsl(220 25% 14%)',
+        darkValue: 'hsl(220 18% 15%)',
         description: 'Secondary surface color for lower-emphasis blocks.',
       },
       {
@@ -108,21 +108,21 @@ export const floeColorTokenCategories = [
         name: 'Muted',
         variable: '--muted',
         lightValue: 'hsl(36 15% 94%)',
-        darkValue: 'hsl(220 25% 14%)',
+        darkValue: 'hsl(220 16% 16%)',
         description: 'Muted surface color for subtle containers and fills.',
       },
       {
         name: 'Muted Foreground',
         variable: '--muted-foreground',
         lightValue: 'hsl(215 16% 42%)',
-        darkValue: 'hsl(215 20% 60%)',
+        darkValue: 'hsl(215 16% 56%)',
         description: 'Secondary text color for supporting copy.',
       },
       {
         name: 'Accent',
         variable: '--accent',
-        lightValue: 'hsl(34 11% 88%)',
-        darkValue: 'hsl(220 25% 16%)',
+        lightValue: 'hsl(34 9% 85%)',
+        darkValue: 'hsl(220 14% 19%)',
         description: 'Accent surface for hover states and light emphasis.',
       },
       {
@@ -142,7 +142,7 @@ export const floeColorTokenCategories = [
         name: 'Card',
         variable: '--card',
         lightValue: 'hsl(36 100% 99%)',
-        darkValue: 'hsl(222 28% 10%)',
+        darkValue: 'hsl(220 20% 13%)',
         description: 'Card background surface.',
       },
       {
@@ -156,7 +156,7 @@ export const floeColorTokenCategories = [
         name: 'Popover',
         variable: '--popover',
         lightValue: 'hsl(36 100% 99%)',
-        darkValue: 'hsl(222 28% 10%)',
+        darkValue: 'hsl(220 18% 15%)',
         description: 'Popover and floating panel background.',
       },
       {
@@ -170,14 +170,14 @@ export const floeColorTokenCategories = [
         name: 'Border',
         variable: '--border',
         lightValue: 'hsl(35 13% 82%)',
-        darkValue: 'hsl(220 20% 18%)',
+        darkValue: 'hsl(220 16% 20%)',
         description: 'Default border color.',
       },
       {
         name: 'Input',
         variable: '--input',
         lightValue: 'hsl(37 15% 76%)',
-        darkValue: 'hsl(220 25% 14%)',
+        darkValue: 'hsl(220 18% 15%)',
         description: 'Input border color.',
       },
       {
@@ -307,7 +307,7 @@ export const floeColorTokenCategories = [
         name: 'Chrome Border',
         variable: '--chrome-border',
         lightValue: 'hsl(33 11% 84%)',
-        darkValue: 'var(--border)',
+        darkValue: 'hsl(220 16% 13%)',
         description: 'Default shared shell divider color.',
       },
       {
@@ -347,8 +347,8 @@ export const floeColorTokenCategories = [
       {
         name: 'Sidebar',
         variable: '--sidebar',
-        lightValue: 'hsl(36 13% 92%)',
-        darkValue: 'hsl(222 28% 10%)',
+        lightValue: 'hsl(34 13% 90%)',
+        darkValue: 'hsl(221 22% 11%)',
         description: 'Sidebar background.',
       },
       {
@@ -375,8 +375,8 @@ export const floeColorTokenCategories = [
       {
         name: 'Sidebar Accent',
         variable: '--sidebar-accent',
-        lightValue: 'hsl(34 11% 88%)',
-        darkValue: 'hsl(220 25% 16%)',
+        lightValue: 'hsl(34 9% 84%)',
+        darkValue: 'hsl(220 14% 19%)',
         description: 'Accent surface used for sidebar hover and active states.',
       },
       {
@@ -389,8 +389,8 @@ export const floeColorTokenCategories = [
       {
         name: 'Sidebar Border',
         variable: '--sidebar-border',
-        lightValue: 'hsl(33 11% 84%)',
-        darkValue: 'hsl(220 20% 18%)',
+        lightValue: 'hsl(33 9% 82%)',
+        darkValue: 'hsl(220 16% 13%)',
         description: 'Sidebar inner border color.',
       },
       {
@@ -409,22 +409,22 @@ export const floeColorTokenCategories = [
       {
         name: 'Activity Bar',
         variable: '--activity-bar',
-        lightValue: 'hsl(36 13% 92%)',
-        darkValue: 'hsl(222 30% 9%)',
+        lightValue: 'hsl(34 11% 90%)',
+        darkValue: 'hsl(222 28% 7%)',
         description: 'Activity bar background.',
       },
       {
         name: 'Activity Bar Foreground',
         variable: '--activity-bar-foreground',
-        lightValue: 'hsl(215 16% 42%)',
-        darkValue: 'hsl(215 20% 55%)',
+        lightValue: 'hsl(215 14% 46%)',
+        darkValue: 'hsl(215 16% 50%)',
         description: 'Default activity bar icon color.',
       },
       {
         name: 'Activity Bar Foreground Active',
         variable: '--activity-bar-foreground-active',
         lightValue: 'hsl(214 26% 17%)',
-        darkValue: 'hsl(210 20% 98%)',
+        darkValue: 'hsl(210 20% 96%)',
         description: 'Active activity bar icon color.',
       },
       {

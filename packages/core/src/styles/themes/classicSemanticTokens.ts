@@ -23,7 +23,7 @@ const CLASSIC_LIGHT_CSS_TOKENS = {
   '--muted': 'hsl(36 15% 94%)', '--muted-foreground': 'hsl(215 16% 42%)',
   '--accent': 'hsl(34 9% 85%)', '--accent-foreground': 'hsl(214 26% 17%)',
   '--border': 'hsl(35 13% 82%)', '--input': 'hsl(37 15% 76%)',
-  '--ring': 'hsl(214 26% 17%)', '--chrome-border': 'hsl(33 9% 82%)',
+  '--ring': 'hsl(214 26% 17%)', '--chrome-border': 'hsl(33 11% 84%)',
   '--top-bar-border': 'var(--chrome-border)', '--activity-bar-border': 'var(--chrome-border)',
   '--bottom-bar-border': 'var(--chrome-border)', '--terminal-panel-border': 'var(--chrome-border)',
   '--card': 'hsl(36 100% 99%)', '--card-foreground': 'hsl(214 26% 17%)',
@@ -42,7 +42,7 @@ const CLASSIC_LIGHT_CSS_TOKENS = {
   '--sidebar-primary': 'hsl(214 26% 17%)', '--sidebar-primary-foreground': 'hsl(36 100% 99%)',
   '--sidebar-accent': 'hsl(34 9% 84%)', '--sidebar-accent-foreground': 'hsl(214 26% 17%)',
   '--sidebar-border': 'hsl(33 9% 82%)', '--sidebar-ring': 'hsl(214 26% 17%)',
-  '--activity-bar': 'hsl(34 11% 87%)', '--activity-bar-foreground': 'hsl(215 14% 46%)',
+  '--activity-bar': 'hsl(34 11% 90%)', '--activity-bar-foreground': 'hsl(215 14% 46%)',
   '--activity-bar-foreground-active': 'hsl(214 26% 17%)',
   '--activity-bar-badge': 'hsl(214 26% 17%)',
   '--activity-bar-badge-foreground': 'hsl(36 100% 99%)',
@@ -93,7 +93,7 @@ const CLASSIC_DARK_CSS_TOKENS = {
   '--selection-fg': 'hsl(0 0% 100%)', '--selection-on-primary-bg': 'hsl(215 80% 35%)',
   '--selection-on-primary-fg': 'hsl(0 0% 100%)',
   '--selection-code-bg': 'hsl(212 100% 67%)', '--selection-code-fg': 'hsl(220 20% 8%)',
-  '--glow': 'hsl(215 70% 50%)',
+  '--glow': 'hsl(217 65% 52%)',
 } as const satisfies FloeThemeTokenMap;
 
 export const CLASSIC_LIGHT_SEMANTIC_TOKENS = resolveTokenReferences(CLASSIC_LIGHT_CSS_TOKENS);
