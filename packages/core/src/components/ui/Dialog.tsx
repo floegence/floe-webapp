@@ -35,6 +35,8 @@ export interface DialogProps {
   children: JSX.Element;
   footer?: JSX.Element;
   class?: string;
+  /** Optional stacking layer for global dialogs. Surface-scoped dialogs remain locally layered. */
+  globalZIndex?: number;
 }
 
 const DIALOG_OWNER_ANCHOR_STYLE: JSX.CSSProperties = {
@@ -198,7 +200,12 @@ export function Dialog(props: DialogProps) {
             aria-hidden={dialogPresence.exiting() ? 'true' : undefined}
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
             class={cn(
-              isSurfaceMode() ? 'absolute z-20 box-border p-3' : 'fixed inset-0 box-border z-50 p-4',
+              isSurfaceMode()
+                ? 'absolute z-20 box-border p-3'
+                : cn(
+                    'fixed inset-0 box-border p-4',
+                    props.globalZIndex === undefined && 'z-50'
+                  ),
               dialogPresence.exiting() && 'pointer-events-none'
             )}
             style={
@@ -209,7 +216,7 @@ export function Dialog(props: DialogProps) {
                     width: `${projectedBoundaryRect().width}px`,
                     height: `${projectedBoundaryRect().height}px`,
                   }
-                : undefined
+                : { 'z-index': props.globalZIndex }
             }
           >
             {/* Backdrop */}
@@ -310,6 +317,8 @@ export interface ConfirmDialogProps {
   variant?: 'default' | 'destructive';
   onConfirm: () => void | Promise<void>;
   loading?: boolean;
+  /** Optional stacking layer for the underlying global dialog. */
+  globalZIndex?: number;
 }
 
 export function ConfirmDialog(props: ConfirmDialogProps) {
@@ -320,6 +329,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
       onOpenChange={props.onOpenChange}
       title={props.title}
       description={props.description}
+      globalZIndex={props.globalZIndex}
       footer={
         <>
           <Button

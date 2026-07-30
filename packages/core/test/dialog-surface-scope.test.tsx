@@ -118,12 +118,26 @@ function InitiallyOpenSurfaceDialogHarness() {
       <Dialog
         open
         onOpenChange={() => undefined}
+        globalZIndex={4000}
         title="Owned dialog"
         description="Surface ownership follows component location"
       >
         <button type="button" data-testid="dialog-action">Inside owned dialog</button>
       </Dialog>
     </div>
+  );
+}
+
+function InitiallyOpenGlobalDialogHarness(props: { globalZIndex?: number }) {
+  return (
+    <Dialog
+      open
+      onOpenChange={() => undefined}
+      globalZIndex={props.globalZIndex}
+      title="Global dialog"
+    >
+      <button type="button">Global action</button>
+    </Dialog>
   );
 }
 
@@ -394,12 +408,45 @@ describe('dialog surface scope', () => {
     expect(overlayRoot).toBeTruthy();
     expect(surfaceHost?.contains(overlayRoot ?? null)).toBe(true);
     expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('surface');
+    expect(overlayRoot?.className).toContain('z-20');
+    expect(overlayRoot?.style.zIndex).toBe('');
     const closeButton = host.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
     expect(closeButton?.className).toContain('h-[46px]');
     expect(closeButton?.className).toContain('w-[46px]');
     expect(closeButton?.className).toContain('shrink-0');
     expect(closeButton?.className).toContain('sm:h-6');
     expect(closeButton?.className).toContain('sm:w-6');
+  });
+
+  it('applies a custom stacking layer only to a global dialog root', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <InitiallyOpenGlobalDialogHarness globalZIndex={4000} />, host);
+
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const overlayRoot = document.body.querySelector(
+      '[data-floe-dialog-overlay-root]'
+    ) as HTMLElement | null;
+    expect(overlayRoot?.getAttribute('data-floe-dialog-mode')).toBe('global');
+    expect(overlayRoot?.style.zIndex).toBe('4000');
+    expect(overlayRoot?.className).not.toContain('z-50');
+  });
+
+  it('retains the legacy global dialog layer when no custom layer is supplied', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <InitiallyOpenGlobalDialogHarness />, host);
+
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    const overlayRoot = document.body.querySelector(
+      '[data-floe-dialog-overlay-root]'
+    ) as HTMLElement | null;
+    expect(overlayRoot?.className).toContain('z-50');
+    expect(overlayRoot?.style.zIndex).toBe('');
   });
 
   it('mounts a widget dialog into the local surface host even when opened by a non-focusable trigger', async () => {

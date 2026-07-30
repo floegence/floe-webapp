@@ -11,7 +11,12 @@ import { createFloatingPresence } from './floatingPresence';
 /**
  * Command palette / search modal
  */
-export function CommandPalette() {
+export interface CommandPaletteProps {
+  /** Optional global stacking layer shared by the backdrop and palette panel. */
+  zIndex?: number;
+}
+
+export function CommandPalette(props: CommandPaletteProps = {}) {
   const command = useCommand();
   const floe = useResolvedFloeConfig();
   let inputRef: HTMLInputElement | undefined;
@@ -100,7 +105,11 @@ export function CommandPalette() {
       <Portal>
         {/* Backdrop */}
         <div
-          class="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm floe-floating-presence floe-floating-backdrop"
+          class={cn(
+            'fixed inset-0 bg-background/60 backdrop-blur-sm floe-floating-presence floe-floating-backdrop',
+            props.zIndex === undefined && 'z-50'
+          )}
+          style={{ 'z-index': props.zIndex }}
           data-floating-presence={palettePresence.state()}
           aria-hidden={palettePresence.exiting() ? 'true' : undefined}
           onClick={() => command.close()}
@@ -110,13 +119,15 @@ export function CommandPalette() {
         <div
           ref={rootRef}
           class={cn(
-            'fixed left-1/2 top-[20%] z-50 -translate-x-1/2',
+            'fixed left-1/2 top-[20%] -translate-x-1/2',
+            props.zIndex === undefined && 'z-50',
             'w-full max-w-xl',
             'bg-popover text-popover-foreground rounded-lg shadow-2xl',
             'border border-border',
             'floe-floating-presence floe-floating-dialog-panel',
             'overflow-hidden'
           )}
+          style={{ 'z-index': props.zIndex }}
           data-floating-presence={palettePresence.state()}
           aria-hidden={palettePresence.exiting() ? 'true' : undefined}
           onKeyDown={handleKeyDown}

@@ -192,7 +192,8 @@ describe('interaction architecture guard', () => {
       stylesSrc.indexOf("  .floe-floating-presence[data-floating-presence='entering']")
     );
 
-    expect(commandPaletteSrc).toContain("'fixed left-1/2 top-[20%] z-50 -translate-x-1/2'");
+    expect(commandPaletteSrc).toContain("'fixed left-1/2 top-[20%] -translate-x-1/2'");
+    expect(commandPaletteSrc).toContain("style={{ 'z-index': props.zIndex }}");
     expect(commandPaletteSrc).toContain("'floe-floating-presence floe-floating-dialog-panel'");
 
     expect(stylesSrc).toContain(
