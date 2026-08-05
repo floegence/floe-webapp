@@ -1,8 +1,8 @@
 # E2EE Boot Utilities & Flowersec Proxy Integration
 
-This repo provides an optional helper package for bootstrapping Flowersec E2EE deployments (multi-window + sandbox flows):
+This repo provides an optional helper package for bootstrapping Flowersec E2EE deployments and consuming bounded browser event streams:
 
-- `@floegence/floe-webapp-boot`: small browser-side helpers for bootstrapping (hash/sessionStorage/postMessage).
+- `@floegence/floe-webapp-boot`: small browser-side helpers for bootstrapping (hash/sessionStorage/postMessage) and single-request fetch-SSE framing.
 
 Best practice:
 
@@ -33,6 +33,29 @@ Exports:
 - `createArtifactDirectReconnectConfig(options)`
 - `FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS`
 - `createBootstrapScopeResolvers(extra?)`
+- `fetchServerSentEvents(input, options)`
+- `ServerSentEventStreamError`
+
+### Example: consume one authenticated SSE response
+
+```ts
+import { fetchServerSentEvents } from '@floegence/floe-webapp-boot';
+
+for await (const event of fetchServerSentEvents('/api/events', {
+  headers: { authorization: `Bearer ${token}` },
+  signal: abortController.signal,
+  onActivity: () => markConnectionAlive(),
+})) {
+  consumeApplicationEvent(JSON.parse(event.data));
+}
+```
+
+The helper performs exactly one fetch and validates and decodes its
+`text/event-stream` response. It supports incremental UTF-8, LF and CRLF line
+endings, multiline `data`, comment heartbeats, cancellation, and bounded frame
+and pending-buffer sizes. It does not parse application JSON, reconnect,
+authenticate on behalf of the caller, or own application cursors. Products
+must make those policies explicit around the async iterable.
 
 ### Example: read payload from hash and clear it
 

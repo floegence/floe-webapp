@@ -84,7 +84,7 @@ Add `@floegence/floe-webapp-protocol` only when the application needs Flowersec-
 | UI system | Buttons, inputs, dialogs, dropdowns, tooltips, tabs, loading states, menus, theme tokens | [Configuration](docs/configuration.md)           |
 | Workspace | File browser, launchpad, chat, editor, terminal helpers, Notes, Deck, Workbench          | [Component registry](docs/component-registry.md) |
 | Protocol  | `ProtocolProvider`, `useProtocol()`, `useRpc()`, reconnect-aware typed RPC               | [Protocol](docs/protocol.md)                     |
-| Boot      | Session, hash, and `postMessage` helpers for multi-window and sandbox flows              | [Runtime](docs/runtime.md)                       |
+| Boot      | Session, handshake, and bounded fetch-SSE helpers for browser runtime flows              | [Runtime](docs/runtime.md)                       |
 
 ### Activity
 
@@ -121,7 +121,7 @@ The packages are independently consumable:
 | --------------------------------- | ------------------------------------------------------------------------- |
 | `@floegence/floe-webapp-core`     | Shell, UI primitives, workspace surfaces, themes, and extension contracts |
 | `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring                     |
-| `@floegence/floe-webapp-boot`     | Session and handshake helpers for multi-window launches                   |
+| `@floegence/floe-webapp-boot`     | Browser session, handshake, reconnect assembly, and fetch-SSE helpers      |
 | `@floegence/floe-webapp-init`     | CLI and templates for new Floe applications                               |
 
 ## Documentation

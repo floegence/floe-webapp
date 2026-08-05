@@ -24,4 +24,13 @@ describe('boot docs', () => {
     expect(doc).not.toContain('allowAutoReconnect');
     expect(doc).not.toContain('createFixedArtifactSource');
   });
+
+  it('documents bounded single-request SSE ownership', () => {
+    const doc = readRuntimeDoc();
+
+    expect(doc).toContain('fetchServerSentEvents');
+    expect(doc).toContain('text/event-stream');
+    expect(doc).toContain('performs exactly one fetch');
+    expect(doc).toContain('does not parse application JSON, reconnect');
+  });
 });

@@ -15,6 +15,15 @@ export {
   createArtifactTunnelReconnectConfig,
   createProxyRuntimeTunnelReconnectConfig,
 } from './reconnect';
+export type {
+  FetchServerSentEventsOptions,
+  ServerSentEvent,
+  ServerSentEventStreamErrorCode,
+} from './server-sent-events';
+export {
+  fetchServerSentEvents,
+  ServerSentEventStreamError,
+} from './server-sent-events';
 export type { ScopeEnvelope, ScopeResolver, ScopeResolverMap } from './scope';
 export {
   createBootstrapScopeResolvers,
