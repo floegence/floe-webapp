@@ -19,9 +19,12 @@ describe('@floegence/floe-webapp-boot package config', () => {
         types: './dist/index.d.ts',
         import: './dist/index.js',
       },
+      './artifact-source': {
+        types: './dist/artifact-source.d.ts',
+        import: './dist/artifact-source.js',
+      },
     });
 
     expect(pkg.files).toEqual(['dist']);
   });
 });
-

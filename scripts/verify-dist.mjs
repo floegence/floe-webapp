@@ -352,6 +352,16 @@ function main() {
     bootPkg.exports?.['.']?.types?.startsWith('./dist/'),
     '@floegence/floe-webapp-boot exports["."].types must point to ./dist/*'
   );
+  assert(
+    bootPkg.exports?.['./artifact-source']?.import === './dist/artifact-source.js',
+    '@floegence/floe-webapp-boot exports["./artifact-source"].import must be ./dist/artifact-source.js'
+  );
+  assert(
+    bootPkg.exports?.['./artifact-source']?.types === './dist/artifact-source.d.ts',
+    '@floegence/floe-webapp-boot exports["./artifact-source"].types must be ./dist/artifact-source.d.ts'
+  );
+  assertFile('packages/boot/dist/artifact-source.js');
+  assertFile('packages/boot/dist/artifact-source.d.ts');
 
   assert(initPkg.name === '@floegence/floe-webapp-init', '@floegence/floe-webapp-init package name mismatch');
   assert(initPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-init main must point to ./dist/*');
