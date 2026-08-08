@@ -11,6 +11,8 @@ import {
   WorkbenchDock,
   type WorkbenchDockDragPreview,
   type WorkbenchDockDropContext,
+  type WorkbenchDockItemActivation,
+  type WorkbenchDockAction,
 } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
@@ -126,6 +128,8 @@ export interface WorkbenchSurfaceProps {
   resolveContextMenuItems?: WorkbenchContextMenuItemsResolver;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
   onRequestDelete?: (widgetId: string) => void;
+  onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
+  dockActions?: readonly WorkbenchDockAction[];
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
   /** Defer pointer/focus widget activation until the visual selection has painted. */
@@ -731,6 +735,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
         onCreateAt={handleCreateAtClient}
         onCreateToolAt={handleCreateToolAtClient}
+        onItemClick={props.onDockItemClick}
+        dockActions={props.dockActions}
         onDragPreviewChange={setDockDragPreview}
       />
 

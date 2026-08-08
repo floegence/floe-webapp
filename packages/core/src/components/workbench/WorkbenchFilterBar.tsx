@@ -38,6 +38,7 @@ export interface WorkbenchFilterBarProps {
   /** Solo a single dock component in the supplied mode scope; soloing it again shows the full scope. */
   onSoloFilter: (id: string, scope: readonly string[]) => void;
   onSelectMode?: (mode: WorkbenchInteractionMode) => void;
+  dockActions?: readonly WorkbenchDockAction[];
   /**
    * Called when the user drags a widget pill onto the canvas to create a
    * new widget of that type. Coordinates are in client space (clientX/Y).
@@ -54,11 +55,31 @@ export interface WorkbenchFilterBarProps {
     clientY: number,
     context?: WorkbenchDockDropContext
   ) => void;
+  /**
+   * Handles a plain click on a dock item. Return true when the host consumed
+   * the click and the default filter-solo behavior should be skipped.
+   */
+  onItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   onDragPreviewChange?: (preview: WorkbenchDockDragPreview | null) => void;
   viewport?: WorkbenchViewport;
   onViewportCommit?: (viewport: WorkbenchViewport) => void;
   onViewportInteractionStart?: (kind: 'pan') => void;
 }
+
+export type WorkbenchDockAction = Readonly<{
+  id: string;
+  label: string;
+  icon: Component<{ class?: string }>;
+  active?: boolean;
+  onActivate: (trigger: HTMLButtonElement) => void;
+}>;
+
+export type WorkbenchDockItemActivation = Readonly<{
+  kind: 'widget' | 'tool';
+  id: WorkbenchWidgetType | WorkbenchDockToolId;
+  label: string;
+  trigger: HTMLButtonElement;
+}>;
 
 export type WorkbenchDockDragPreview = Readonly<{
   kind: 'widget' | 'tool';
@@ -91,6 +112,7 @@ interface DragState {
   canvasFrame: WorkbenchEdgeAutoPanFrame | null;
   preview: WorkbenchDockDragPreview | null;
   stopInteraction: () => void;
+  trigger: HTMLButtonElement;
 }
 
 const DRAG_THRESHOLD_PX = 5;
@@ -218,7 +240,8 @@ interface DockItemProps {
     kind: DragState['kind'],
     id: WorkbenchWidgetType | WorkbenchDockToolId,
     label: string,
-    icon: Component<{ class?: string }>
+    icon: Component<{ class?: string }>,
+    trigger: HTMLButtonElement,
   ) => void;
 }
 
@@ -239,7 +262,8 @@ function DockItem(props: DockItemProps) {
       props.kind,
       props.id as WorkbenchWidgetType | WorkbenchDockToolId,
       props.label,
-      props.icon
+      props.icon,
+      event.currentTarget,
     );
   };
 
@@ -279,6 +303,56 @@ function DockItem(props: DockItemProps) {
         transition={{ duration: duration.fast, easing: easing.easeOut }}
       >
         {props.label}
+      </Motion.span>
+    </button>
+  );
+}
+
+function DockAction(props: {
+  action: WorkbenchDockAction;
+  hoverOffset: number;
+  onEnter: () => void;
+  onLeave: () => void;
+}) {
+  const isHovered = () => props.hoverOffset === -1;
+  const tileMotion = () => {
+    if (props.hoverOffset === -1) return { scale: 1.26, y: -6, x: 0 };
+    if (props.hoverOffset === 1) return { scale: 1.08, y: -2, x: 5 };
+    if (props.hoverOffset === -2) return { scale: 1.08, y: -2, x: -5 };
+    return { scale: 1, y: 0, x: 0 };
+  };
+  const Icon = props.action.icon;
+
+  return (
+    <button
+      type="button"
+      draggable={false}
+      class="workbench-dock__item workbench-dock__action"
+      data-workbench-dock-action={props.action.id}
+      classList={{
+        'is-active': Boolean(props.action.active),
+        'is-hovered': isHovered(),
+      }}
+      aria-label={props.action.label}
+      aria-pressed={props.action.active}
+      onPointerEnter={props.onEnter}
+      onPointerLeave={props.onLeave}
+      onDragStart={(event) => event.preventDefault()}
+      onClick={(event) => props.action.onActivate(event.currentTarget)}
+    >
+      <Motion.span
+        class="workbench-dock__tile"
+        animate={tileMotion()}
+        transition={{ duration: duration.fast, easing: easing.easeOut }}
+      >
+        <Icon class="workbench-dock__icon" />
+      </Motion.span>
+      <Motion.span
+        class="workbench-dock__tooltip"
+        animate={{ opacity: isHovered() ? 1 : 0, y: isHovered() ? -6 : 0 }}
+        transition={{ duration: duration.fast, easing: easing.easeOut }}
+      >
+        {props.action.label}
       </Motion.span>
     </button>
   );
@@ -331,7 +405,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     });
   });
 
-  // Mode switcher = slot 0; visible component types = slots 1..N.
+  // Mode switcher = slot 0; host actions follow; draggable components come last.
   const offsetFor = (slot: number): number => {
     const hovered = hoveredIndex();
     if (hovered === null) return 0;
@@ -384,6 +458,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragSession = undefined;
 
     if (isClick) {
+      const consumed = props.onItemClick?.({
+        kind: current.kind,
+        id: current.id,
+        label: current.label,
+        trigger: current.trigger,
+      });
+      if (consumed) return;
       if (activeMode() !== 'background') {
         props.onSoloFilter(String(current.id), componentScope());
       }
@@ -417,7 +498,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     kind: DragState['kind'],
     id: WorkbenchWidgetType | WorkbenchDockToolId,
     label: string,
-    icon: Component<{ class?: string }>
+    icon: Component<{ class?: string }>,
+    trigger: HTMLButtonElement,
   ) => {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
@@ -440,6 +522,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       canvasFrame,
       preview: null,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
+      trigger,
     });
 
     const handleMove = (next: PointerEvent) => {
@@ -540,6 +623,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       })),
     ];
   });
+  const actionItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]);
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
   const componentFilterable = (): boolean => activeMode() !== 'background';
   const componentVisible = (id: string): boolean =>
@@ -637,10 +721,23 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             </div>
           </Show>
         </div>
+        <For each={actionItems()}>
+          {(action, index) => {
+            const slot = () => index() + 1;
+            return (
+              <DockAction
+                action={action}
+                hoverOffset={offsetFor(slot())}
+                onEnter={() => setHoveredIndex(slot())}
+                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
+              />
+            );
+          }}
+        </For>
         <span class="workbench-dock__divider" aria-hidden="true" />
         <For each={componentItems()}>
           {(entry, index) => {
-            const slot = () => index() + 1;
+            const slot = () => index() + actionItems().length + 1;
             return (
               <DockItem
                 id={String(entry.id)}

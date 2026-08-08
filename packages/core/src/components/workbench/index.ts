@@ -10,6 +10,7 @@ export {
   type WorkbenchContextMenuItemsResolver,
   type WorkbenchSurfaceProps,
 } from './WorkbenchSurface';
+export type { WorkbenchDockAction, WorkbenchDockItemActivation } from './WorkbenchFilterBar';
 export {
   WorkbenchContextMenu,
   type WorkbenchContextMenuItem,
