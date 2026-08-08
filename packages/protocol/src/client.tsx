@@ -1,14 +1,15 @@
 import { createContext, useContext, onCleanup, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import {
-  type ArtifactSource,
-  type ConnectionController,
-  type ConnectionControllerOptions,
-  type ConnectionState,
-  type Session,
+import type {
+  ArtifactSource,
+  ConnectionController,
+  ConnectionControllerOptions,
+  ConnectionState,
+  Session,
 } from '@floegence/flowersec-core';
-import { createConnectionController } from '@floegence/flowersec-core/browser';
 import type { ProtocolContract } from './contract';
+
+const loadBrowserRuntime = () => import('@floegence/flowersec-core/browser');
 
 interface ProtocolState {
   status: ConnectionState;
@@ -47,6 +48,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   let unsubscribe: (() => void) | null = null;
   let lastConfig: ConnectConfig | null = null;
   let operation: Promise<void> | null = null;
+  let lifecycleGeneration = 0;
 
   const publish = (snapshot: Parameters<Parameters<ConnectionController['subscribe']>[0]>[0]) => {
     const failure = snapshot.failure;
@@ -67,12 +69,17 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   };
 
   const start = async (config: ConnectConfig) => {
+    const generation = ++lifecycleGeneration;
     await closeController();
     lastConfig = config;
-    controller = createConnectionController(config.source, config.controller);
-    unsubscribe = controller.subscribe(publish);
-    controller.start();
-    await controller.waitForSession();
+    const { createConnectionController } = await loadBrowserRuntime();
+    if (generation !== lifecycleGeneration) return;
+
+    const nextController = createConnectionController(config.source, config.controller);
+    controller = nextController;
+    unsubscribe = nextController.subscribe(publish);
+    nextController.start();
+    await nextController.waitForSession();
   };
 
   const connect = async (config: ConnectConfig) => {
@@ -93,6 +100,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   };
 
   const disconnect = () => {
+    lifecycleGeneration += 1;
     void closeController();
   };
 
@@ -108,6 +116,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   };
 
   onCleanup(() => {
+    lifecycleGeneration += 1;
     unsubscribe?.();
     void controller?.close();
   });

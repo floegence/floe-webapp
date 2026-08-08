@@ -24,4 +24,11 @@ describe('@floegence/floe-webapp-protocol package config', () => {
 
     expect(pkg.files).toEqual(['dist']);
   });
+
+  it('loads the Flowersec browser runtime only when a connection starts', () => {
+    const source = readFileSync(resolve(__dirname, '../src/client.tsx'), 'utf-8');
+
+    expect(source).toContain("import('@floegence/flowersec-core/browser')");
+    expect(source).not.toMatch(/from ['"]@floegence\/flowersec-core\/browser['"]/u);
+  });
 });
