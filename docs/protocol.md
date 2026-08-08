@@ -21,10 +21,10 @@ function ConnectButton() {
 </ProtocolProvider>;
 ```
 
-`useProtocol()` exposes `status()`, `error()`, `session()`, `connect()`, `reconnect()`, and `disconnect()`. RPC calls use `session()?.rpc`; `useRpc()` supplies typed `call`, `notify`, `notifyBestEffort`, and `onNotify` helpers.
+`useProtocol()` exposes `status()`, `error()`, `session()`, `connect()`, `reconnect()`, and `disconnect()`. These are thin application-facing controls over one Flowersec `ConnectionController`; Flowersec remains the sole owner of connection and retry state. RPC calls use `session()?.rpc`; `useRpc()` supplies typed `call`, `notify`, `notifyBestEffort`, and `onNotify` helpers.
 
 Detached calls raise `ProtocolNotConnectedError`; transport failures are surfaced as `RpcError`.
 
-The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.0's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
+The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.1's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
 
-Flowersec 2.0 has no public `Client`, reconnect manager, or legacy `reconnect`, `controlplane`, `rpc`, or `observability` subpath. The package dependency is pinned to `@floegence/flowersec-core@2.0.0`.
+Flowersec 2.1 has no public `Client`, reconnect manager, or legacy `reconnect`, `controlplane`, `rpc`, or `observability` subpath. The package dependency is pinned to `@floegence/flowersec-core@2.1.0`.

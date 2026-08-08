@@ -13,7 +13,8 @@ describe('protocol docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('const source = createControlplaneArtifactSource');
     expect(doc).toContain('@floegence/floe-webapp-boot');
-    expect(doc).toContain('@floegence/flowersec-core@2.0.0');
+    expect(doc).toContain('@floegence/flowersec-core@2.1.0');
+    expect(doc).toContain('sole owner of connection and retry state');
     expect(doc).toContain('ConnectionController');
     expect(doc).not.toContain('@floegence/flowersec-core/controlplane');
     expect(doc).not.toContain('requestChannelGrant');
