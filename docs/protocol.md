@@ -25,6 +25,6 @@ function ConnectButton() {
 
 Detached calls raise `ProtocolNotConnectedError`; transport failures are surfaced as `RpcError`.
 
-The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.2's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
+The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.3's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
 
-Flowersec 2.2 has no public `Client`, reconnect manager, or legacy `reconnect`, `controlplane`, `rpc`, or `observability` subpath. The package dependency is pinned to `@floegence/flowersec-core@2.2.0`.
+Flowersec 2.3 has no public `Client`, reconnect manager, or legacy `reconnect`, `controlplane`, `rpc`, or `observability` subpath. The package dependency is pinned to `@floegence/flowersec-core@2.3.0`.
