@@ -1,151 +1,106 @@
 import { createContext, useContext, onCleanup, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import type { Client } from '@floegence/flowersec-core';
 import {
-  createBrowserReconnectConfig,
-  type BrowserReconnectConfig,
-} from '@floegence/flowersec-core/browser';
-import { RpcProxy } from '@floegence/flowersec-core/rpc';
-import {
-  createReconnectManager,
-  type AutoReconnectConfig,
-  type ConnectConfig as ReconnectConnectConfig,
-  type ConnectionStatus,
-} from '@floegence/flowersec-core/reconnect';
-import type { ProtocolContract, RpcClientLike } from './contract';
+  type ArtifactSource,
+  type ConnectionController,
+  type ConnectionControllerOptions,
+  type ConnectionState,
+  type Session,
+} from '@floegence/flowersec-core';
+import { createConnectionController } from '@floegence/flowersec-core/browser';
+import type { ProtocolContract } from './contract';
 
-/**
- * Protocol context state
- */
 interface ProtocolState {
-  status: ConnectionStatus;
+  status: ConnectionState;
   error: Error | null;
-  client: Client | null;
+  session: Session | null;
 }
 
 interface ProtocolContextValue {
-  status: () => ConnectionStatus;
+  status: () => ConnectionState;
   error: () => Error | null;
-  client: () => Client | null;
-  rpcTransport: () => RpcClientLike;
+  session: () => Session | null;
+  rpcTransport: () => Session['rpc'] | null;
   contract: () => ProtocolContract;
   connect: (config: ConnectConfig) => Promise<void>;
-  /** Force a hard reconnect (disconnect old client and build a new one). */
   reconnect: (config?: ConnectConfig) => Promise<void>;
   disconnect: () => void;
 }
 
-export type { AutoReconnectConfig, ConnectionStatus };
-export type ConnectConfig = BrowserReconnectConfig;
+export type ConnectConfig = Readonly<{
+  source: ArtifactSource;
+  controller?: ConnectionControllerOptions;
+}>;
 
 const ProtocolContext = createContext<ProtocolContextValue>();
 
 export function ProtocolProvider(props: { children: JSX.Element; contract: ProtocolContract }) {
-  const mgr = createReconnectManager();
-  const initialState = mgr.state();
   const [state, setState] = createStore<ProtocolState>({
-    status: initialState.status,
-    error: initialState.error,
-    client: initialState.client,
+    status: 'idle',
+    error: null,
+    session: null,
   });
 
-  // eslint-disable-next-line solid/reactivity -- contract is expected to be static for the provider lifetime.
+  // eslint-disable-next-line solid/reactivity -- the contract is fixed for the provider lifetime.
   const contract = props.contract;
-  const rpcProxy = new RpcProxy();
-  const rpcTransport: RpcClientLike = {
-    rpc: {
-      call: (typeId, payload) => rpcProxy.call(typeId, payload),
-      notify: (typeId, payload) => rpcProxy.notify(typeId, payload),
-      onNotify: (typeId, handler) => rpcProxy.onNotify(typeId, handler),
-    },
-  };
-
-  if (initialState.client) {
-    rpcProxy.attach(initialState.client.rpc);
-  }
-
-  const unsubscribe = mgr.subscribe((s) => {
-    if (s.client) {
-      rpcProxy.attach(s.client.rpc);
-    } else {
-      rpcProxy.detach();
-    }
-    setState({ status: s.status, error: s.error, client: s.client });
-  });
-
-  // Last desired config (used by reconnect()).
+  let controller: ConnectionController | null = null;
+  let unsubscribe: (() => void) | null = null;
   let lastConfig: ConnectConfig | null = null;
-  let lastConnectArgs: ReconnectConnectConfig | null = null;
-  let connectInFlight: Promise<void> | null = null;
+  let operation: Promise<void> | null = null;
 
-  const resolveConnectArgs = (config: ConnectConfig): ReconnectConnectConfig => {
-    if (lastConfig !== config || lastConnectArgs === null) {
-      lastConfig = config;
-      lastConnectArgs = createBrowserReconnectConfig(config);
-    }
-    return lastConnectArgs;
+  const publish = (snapshot: Parameters<Parameters<ConnectionController['subscribe']>[0]>[0]) => {
+    const failure = snapshot.failure;
+    setState({
+      status: snapshot.state,
+      session: snapshot.currentSession ?? null,
+      error: failure === undefined ? null : new Error(`${failure.phase}:${failure.code}`),
+    });
   };
 
-  const connectWithArgs = async (
-    connectArgs: ReconnectConnectConfig,
-    mode: 'hard' | 'if_needed'
-  ) => {
-    if (mode === 'hard') {
-      await mgr.connect(connectArgs);
-      return;
-    }
-    await mgr.connectIfNeeded(connectArgs);
+  const closeController = async () => {
+    unsubscribe?.();
+    unsubscribe = null;
+    const current = controller;
+    controller = null;
+    if (current) await current.close();
+    setState({ status: 'idle', session: null, error: null });
+  };
+
+  const start = async (config: ConnectConfig) => {
+    await closeController();
+    lastConfig = config;
+    controller = createConnectionController(config.source, config.controller);
+    unsubscribe = controller.subscribe(publish);
+    controller.start();
+    await controller.waitForSession();
+  };
+
+  const connect = async (config: ConnectConfig) => {
+    if (operation) return operation;
+    operation = (async () => {
+      if (controller && lastConfig?.source === config.source && controller.state === 'connected') return;
+      await start(config);
+    })().finally(() => {
+      operation = null;
+    });
+    return operation;
   };
 
   const reconnect = async (config?: ConnectConfig) => {
     const effective = config ?? lastConfig;
-    if (!effective) {
-      throw new Error('reconnect() requires a config before the first connect() call');
-    }
-    const connectArgs = resolveConnectArgs(effective);
-
-    // Deduplicate calls from multiple lifecycle events (focus/visibility/online).
-    if (connectInFlight) return connectInFlight;
-
-    connectInFlight = connectWithArgs(connectArgs, 'hard').finally(() => {
-      connectInFlight = null;
-    });
-    return connectInFlight;
-  };
-
-  // connect() is intentionally idempotent: it should not tear down a healthy connection.
-  // Consumers that need a hard restart must call reconnect().
-  const connect = async (config: ConnectConfig) => {
-    const connectArgs = resolveConnectArgs(config);
-
-    const st = mgr.state();
-    if (st.status === 'connected' && st.client) return;
-
-    // If the reconnect manager is already connecting (e.g. autoReconnect),
-    // avoid interfering with a hard reconnect when we don't have an in-flight handle.
-    if (st.status === 'connecting' && !connectInFlight) return;
-
-    if (connectInFlight) {
-      await connectInFlight;
-      return;
-    }
-
-    connectInFlight = connectWithArgs(connectArgs, 'if_needed').finally(() => {
-      connectInFlight = null;
-    });
-    await connectInFlight;
+    if (!effective) throw new Error('reconnect() requires a config before the first connect() call');
+    await connect(effective);
   };
 
   const disconnect = () => {
-    rpcProxy.detach();
-    mgr.disconnect();
+    void closeController();
   };
 
   const value: ProtocolContextValue = {
     status: () => state.status,
     error: () => state.error,
-    client: () => state.client,
-    rpcTransport: () => rpcTransport,
+    session: () => state.session,
+    rpcTransport: () => state.session?.rpc ?? null,
     contract: () => contract,
     connect,
     reconnect,
@@ -153,9 +108,8 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   };
 
   onCleanup(() => {
-    unsubscribe();
-    rpcProxy.detach();
-    mgr.disconnect();
+    unsubscribe?.();
+    void controller?.close();
   });
 
   return <ProtocolContext.Provider value={value}>{props.children}</ProtocolContext.Provider>;
@@ -163,8 +117,6 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
 export function useProtocol(): ProtocolContextValue {
   const ctx = useContext(ProtocolContext);
-  if (!ctx) {
-    throw new Error('useProtocol must be used within a ProtocolProvider');
-  }
+  if (!ctx) throw new Error('useProtocol must be used within a ProtocolProvider');
   return ctx;
 }

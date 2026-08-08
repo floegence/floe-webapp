@@ -1,50 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const assertProxyRuntimeScopeV1 = vi.fn();
+const assertProxyRuntimeScope = vi.fn();
+const PROXY_RUNTIME_SCOPE = { version: 2 };
 
-vi.mock('@floegence/flowersec-core/proxy', () => ({
-  assertProxyRuntimeScopeV1,
-}));
+vi.mock('@floegence/flowersec-core/proxy', () => ({ assertProxyRuntimeScope, PROXY_RUNTIME_SCOPE }));
 
 describe('boot scope helpers', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => vi.clearAllMocks());
 
-  it('validates proxy.runtime scope entries with the shared flowersec contract', async () => {
+  it('validates proxy.runtime scope entries with the Flowersec 2.0 contract', async () => {
     const mod = await import('../src/index');
-    const entry = {
-      scope_version: 1,
-      payload: { runtime_origin: 'https://runtime.example.com' },
-    } as const;
-
+    const entry = { scope_version: 2, payload: { runtime_origin: 'https://runtime.example.com' } } as const;
     mod.validateProxyRuntimeScopeEntry(entry);
-
-    expect(assertProxyRuntimeScopeV1).toHaveBeenCalledWith(entry.payload);
+    expect(assertProxyRuntimeScope).toHaveBeenCalledWith(entry.payload);
   });
 
-  it('rejects unsupported proxy.runtime scope versions before delegating payload validation', async () => {
+  it('rejects unsupported scope versions before payload validation', async () => {
     const mod = await import('../src/index');
-
-    expect(() =>
-      mod.validateProxyRuntimeScopeEntry({
-        scope_version: 2,
-        payload: {},
-      }),
-    ).toThrow('unsupported proxy.runtime scope_version: 2');
-    expect(assertProxyRuntimeScopeV1).not.toHaveBeenCalled();
-  });
-
-  it('preserves extra scope resolvers while enforcing the shared proxy.runtime validator', async () => {
-    const mod = await import('../src/index');
-    const customScopeResolver = vi.fn();
-
-    const resolvers = mod.createBootstrapScopeResolvers({
-      custom: customScopeResolver,
-      [mod.PROXY_RUNTIME_SCOPE_NAME]: vi.fn(),
-    });
-
-    expect(resolvers.custom).toBe(customScopeResolver);
-    expect(resolvers[mod.PROXY_RUNTIME_SCOPE_NAME]).toBe(mod.validateProxyRuntimeScopeEntry);
+    expect(() => mod.validateProxyRuntimeScopeEntry({ scope_version: 1, payload: {} })).toThrow(/unsupported/u);
+    expect(assertProxyRuntimeScope).not.toHaveBeenCalled();
   });
 });

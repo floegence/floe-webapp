@@ -250,7 +250,7 @@ Coverage: 87.5% statements, 82.3% branches`,
       {
         type: 'mermaid',
         content: `flowchart TB
-    subgraph Client["Client Layer"]
+    subgraph Session["Session Layer"]
         WEB[Web App]
         MOB[Mobile App]
         CLI[CLI Tool]

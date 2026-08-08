@@ -1,6 +1,6 @@
 import { useProtocol } from './client';
 import type { ProtocolContract, RpcHelpers } from './contract';
-import { RpcProxyDetachedError } from '@floegence/flowersec-core/rpc';
+import type { RpcResult } from '@floegence/flowersec-core';
 
 /**
  * RPC wrapper for typed remote calls.
@@ -29,18 +29,16 @@ export class RpcError extends Error {
 function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
   const call: RpcHelpers['call'] = async <Req, Res>(typeId: number, payload: Req): Promise<Res> => {
     const transport = protocol.rpcTransport();
+    if (!transport) throw new ProtocolNotConnectedError();
 
-    let response: Awaited<ReturnType<typeof transport.rpc.call>>;
+    let response: RpcResult<Res>;
     try {
-      response = await transport.rpc.call(typeId, payload);
+      response = await transport.call(typeId, payload, (value) => value as Res);
     } catch (err) {
-      if (err instanceof RpcProxyDetachedError) {
-        throw new ProtocolNotConnectedError();
-      }
       throw new RpcError({ typeId, code: -1, message: 'RPC transport error', cause: err });
     }
 
-    if (response.error) {
+    if (!response.ok) {
       throw new RpcError({
         typeId,
         code: response.error.code,
@@ -49,7 +47,7 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
       });
     }
 
-    return response.payload as Res;
+    return response.payload;
   };
 
   const runNotify = async <Req>(
@@ -58,13 +56,13 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     options: { detached: 'throw' | 'ignore' },
   ): Promise<void> => {
     const transport = protocol.rpcTransport();
+    if (!transport) {
+      if (options.detached === 'ignore') return;
+      throw new ProtocolNotConnectedError();
+    }
     try {
-      await transport.rpc.notify(typeId, payload);
+      await transport.notify(typeId, payload);
     } catch (err) {
-      if (err instanceof RpcProxyDetachedError) {
-        if (options.detached === 'ignore') return;
-        throw new ProtocolNotConnectedError();
-      }
       throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
     }
   };
@@ -82,8 +80,9 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     handler: (payload: Payload) => void
   ) => {
     const transport = protocol.rpcTransport();
+    if (!transport) return () => {};
 
-    return transport.rpc.onNotify(typeId, (payload) => {
+    return transport.onNotify(typeId, (payload) => {
       handler(payload as Payload);
     });
   };

@@ -356,7 +356,17 @@ function AppContent() {
     <BottomBarItem icon={<GitBranch class="w-3 h-3" />}>main</BottomBarItem>
   );
 
-  const DemoProtocolStatus: Component = () => <StatusIndicator status={protocol.status()} />;
+  const DemoProtocolStatus: Component = () => {
+    const state = protocol.status();
+    const status = state === 'connected'
+      ? 'connected'
+      : state === 'connecting' || state === 'waiting'
+        ? 'connecting'
+        : state === 'failed'
+          ? 'error'
+          : 'disconnected';
+    return <StatusIndicator status={status} />;
+  };
 
   const DemoActiveFileItem: Component = () => (
     <BottomBarItem>{activeFile().path.split('/').slice(-1)[0]}</BottomBarItem>

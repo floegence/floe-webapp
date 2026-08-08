@@ -1,203 +1,36 @@
 import { describe, expect, it, vi } from 'vitest';
-import { renderToString } from 'solid-js/web';
+import { createComponent, createRoot } from 'solid-js';
 import { ProtocolProvider, useProtocol, type ConnectConfig } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
 
-vi.mock('@floegence/flowersec-core/browser', () => {
-  let calls: ConnectConfig[] = [];
-  let connectArgs: Array<{ connectOnce: ReturnType<typeof vi.fn> }> = [];
-
-  return {
-    createBrowserReconnectConfig: vi.fn((config: ConnectConfig) => {
-      calls.push(config);
-      const args = { connectOnce: vi.fn() };
-      connectArgs.push(args);
-      return args;
-    }),
-    __mock: {
-      reset: () => {
-        calls = [];
-        connectArgs = [];
-      },
-      getCalls: () => calls.slice(),
-      getConnectArgs: () => connectArgs.slice(),
-    },
-  };
-});
-
-vi.mock('@floegence/flowersec-core/reconnect', () => {
-  let state = { status: 'disconnected', error: null as Error | null, client: null as unknown };
-  let connectCalls: unknown[] = [];
-  let connectIfNeededCalls: unknown[] = [];
-
-  return {
-    createReconnectManager: () => ({
-      state: () => state,
-      subscribe: () => () => {},
-      connect: async (config: unknown) => {
-        connectCalls.push(config);
-      },
-      connectIfNeeded: async (config: unknown) => {
-        connectIfNeededCalls.push(config);
-      },
-      disconnect: () => {},
-    }),
-    __mock: {
-      reset: () => {
-        state = { status: 'disconnected', error: null, client: null };
-        connectCalls = [];
-        connectIfNeededCalls = [];
-      },
-      setState: (next: typeof state) => {
-        state = next;
-      },
-      getConnectCalls: () => connectCalls.slice(),
-      getConnectIfNeededCalls: () => connectIfNeededCalls.slice(),
-    },
-  };
-});
-
-const dummyContract: ProtocolContract = {
-  id: 'test',
-  createRpc: () => ({}),
+const controller = {
+  state: 'connected' as const,
+  subscribe: vi.fn((listener: (snapshot: { state: 'connected'; currentSession: null }) => void) => {
+    listener({ state: 'connected', currentSession: null });
+    return () => {};
+  }),
+  start: vi.fn(),
+  waitForSession: vi.fn(async () => ({}) as never),
+  close: vi.fn(async () => {}),
 };
 
-describe('ProtocolProvider connect config delegation', () => {
-  it('should delegate connect() config to createBrowserReconnectConfig', async () => {
-    const browserMod = await import('@floegence/flowersec-core/browser');
-    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
-    // @ts-expect-error -- test-only mock helper
-    browserMod.__mock.reset();
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.reset();
+vi.mock('@floegence/flowersec-core/browser', () => ({
+  createConnectionController: vi.fn(() => controller),
+}));
 
-    const config: ConnectConfig = {
-      source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
-      connect: {
-        handshakeTimeoutMs: 4_000,
-        transportSecurityPolicy: 'allow_plaintext_for_loopback',
-      },
-      autoReconnect: { enabled: false },
-    };
+const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
-    let connectPromise: Promise<void> | null = null;
-
-    function Harness() {
-      const protocol = useProtocol();
-      connectPromise = protocol.connect(config);
-      return null;
-    }
-
-    renderToString(() => (
-      <ProtocolProvider contract={dummyContract}>
-        <Harness />
-      </ProtocolProvider>
-    ));
-
-    if (!connectPromise) {
-      throw new Error('connect() was not called');
-    }
-    await connectPromise;
-
-    // @ts-expect-error -- test-only mock helper
-    expect(browserMod.__mock.getCalls()).toEqual([config]);
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([
-      // @ts-expect-error -- test-only mock helper
-      browserMod.__mock.getConnectArgs()[0],
-    ]);
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectCalls()).toEqual([]);
-  });
-
-  it('should use a hard reconnect when reconnect() is called', async () => {
-    const browserMod = await import('@floegence/flowersec-core/browser');
-    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
-    // @ts-expect-error -- test-only mock helper
-    browserMod.__mock.reset();
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.reset();
-
-    const config: ConnectConfig = {
-      source: {
-        kind: 'refreshable',
-        acquire: async () => ({ v: 1, transport: 'tunnel' }) as never,
-      },
-      connect: {
-        liveness: { intervalMs: 30_000, timeoutMs: 10_000 },
-        transportSecurityPolicy: 'require_tls',
-      },
-    };
-
-    let reconnectPromise: Promise<void> | null = null;
-
-    function Harness() {
-      const protocol = useProtocol();
-      reconnectPromise = protocol.reconnect(config);
-      return null;
-    }
-
-    renderToString(() => (
-      <ProtocolProvider contract={dummyContract}>
-        <Harness />
-      </ProtocolProvider>
-    ));
-
-    if (!reconnectPromise) {
-      throw new Error('reconnect() was not called');
-    }
-    await reconnectPromise;
-
-    // @ts-expect-error -- test-only mock helper
-    expect(browserMod.__mock.getCalls()).toEqual([config]);
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectCalls()).toEqual([
-      // @ts-expect-error -- test-only mock helper
-      browserMod.__mock.getConnectArgs()[0],
-    ]);
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([]);
-  });
-
-  it('reuses one compiled reconnect adapter across connect and hard reconnect', async () => {
-    const browserMod = await import('@floegence/flowersec-core/browser');
-    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
-    // @ts-expect-error -- test-only mock helper
-    browserMod.__mock.reset();
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.reset();
-
-    const config: ConnectConfig = {
-      source: {
-        kind: 'refreshable',
-        acquire: async () => ({ v: 1, transport: 'tunnel' }) as never,
-      },
-      autoReconnect: { enabled: true },
-    };
-    let flow: Promise<void> | null = null;
-
-    function Harness() {
-      const protocol = useProtocol();
-      flow = protocol.connect(config).then(() => protocol.reconnect());
-      return null;
-    }
-
-    renderToString(() => (
-      <ProtocolProvider contract={dummyContract}>
-        <Harness />
-      </ProtocolProvider>
-    ));
-
-    if (!flow) throw new Error('connection flow was not started');
-    await flow;
-
-    // @ts-expect-error -- test-only mock helper
-    expect(browserMod.__mock.getCalls()).toEqual([config]);
-    // @ts-expect-error -- test-only mock helper
-    const [compiled] = browserMod.__mock.getConnectArgs();
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectIfNeededCalls()).toEqual([compiled]);
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectCalls()).toEqual([compiled]);
+describe('ProtocolProvider connection controller contract', () => {
+  it('passes source and controller options to Flowersec 2.0', async () => {
+    const browser = await import('@floegence/flowersec-core/browser');
+    const config: ConnectConfig = { source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) } as never, controller: { maximumAttempts: 1 } };
+    let pending!: Promise<void>;
+    function Harness() { pending = useProtocol().connect(config); return null; }
+    let dispose!: () => void;
+    createRoot((rootDispose) => { dispose = rootDispose; createComponent(ProtocolProvider, { contract, get children() { return createComponent(Harness, {}); } }); });
+    await pending;
+    expect(browser.createConnectionController).toHaveBeenCalledWith(config.source, config.controller);
+    expect(controller.start).toHaveBeenCalled();
+    dispose();
   });
 });

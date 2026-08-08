@@ -12,15 +12,14 @@ describe('boot docs', () => {
 
     expect(doc).toContain('@floegence/floe-webapp-boot');
     expect(doc).toContain('ArtifactSource');
-    expect(doc).toContain("kind: 'once'");
-    expect(doc).toContain("kind: 'refreshable'");
+    expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('createControlplaneArtifactSource');
-    expect(doc).toContain('@floegence/flowersec-core@0.27.0');
-    expect(doc).toContain('HTTPS by default');
+    expect(doc).toContain('@floegence/flowersec-core@2.0.0');
+    expect(doc).toContain('HTTPS is required by default');
     expect(doc).toContain('allowLoopbackHTTP: true');
-    expect(doc).toContain('createProxyRuntimeTunnelReconnectConfig');
+    expect(doc).toContain('createProxyRuntimeTunnelConnectionConfig');
     expect(doc).toContain('@floegence/flowersec-core/proxy');
-    expect(doc).toContain('There is no opt-in that permits reusing the same artifact.');
+    expect(doc).toContain('No option permits reuse of a consumed artifact lease.');
     expect(doc).not.toContain('allowAutoReconnect');
     expect(doc).not.toContain('createFixedArtifactSource');
   });
@@ -31,6 +30,6 @@ describe('boot docs', () => {
     expect(doc).toContain('fetchServerSentEvents');
     expect(doc).toContain('text/event-stream');
     expect(doc).toContain('performs exactly one fetch');
-    expect(doc).toContain('does not parse application JSON, reconnect');
+    expect(doc).toContain('does not parse application JSON or reconnect');
   });
 });

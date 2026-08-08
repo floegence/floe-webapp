@@ -10,14 +10,12 @@ describe('protocol docs', () => {
   it('documents the canonical connect artifact flow and public helpers', () => {
     const doc = readProtocolDoc();
 
-    expect(doc).toContain("kind: 'once'");
-    expect(doc).toContain("kind: 'refreshable'");
-    expect(doc).toContain('source: createControlplaneArtifactSource');
+    expect(doc).toContain('ArtifactSource');
+    expect(doc).toContain('const source = createControlplaneArtifactSource');
     expect(doc).toContain('@floegence/floe-webapp-boot');
-    expect(doc).toContain('@floegence/flowersec-core/controlplane');
-    expect(doc).toContain('requestConnectArtifact');
-    expect(doc).toContain('requestEntryConnectArtifact');
-    expect(doc).toContain('@floegence/flowersec-core@0.27.0');
+    expect(doc).toContain('@floegence/flowersec-core@2.0.0');
+    expect(doc).toContain('ConnectionController');
+    expect(doc).not.toContain('@floegence/flowersec-core/controlplane');
     expect(doc).not.toContain('requestChannelGrant');
     expect(doc).not.toContain('requestEntryChannelGrant');
     expect(doc).toContain('HTTPS by default');

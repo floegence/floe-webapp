@@ -1,4 +1,4 @@
-import { assertProxyRuntimeScopeV1 } from '@floegence/flowersec-core/proxy';
+import { assertProxyRuntimeScope, PROXY_RUNTIME_SCOPE } from '@floegence/flowersec-core/proxy';
 
 export const PROXY_RUNTIME_SCOPE_NAME = 'proxy.runtime';
 
@@ -12,10 +12,10 @@ export type ScopeResolver = (entry: ScopeEnvelope) => void;
 export type ScopeResolverMap = Readonly<Record<string, ScopeResolver>>;
 
 export function validateProxyRuntimeScopeEntry(entry: ScopeEnvelope): void {
-  if (entry.scope_version !== 1) {
+  if (entry.scope_version !== PROXY_RUNTIME_SCOPE.version) {
     throw new Error(`unsupported ${PROXY_RUNTIME_SCOPE_NAME} scope_version: ${entry.scope_version}`);
   }
-  assertProxyRuntimeScopeV1(entry.payload as Record<string, unknown>);
+  assertProxyRuntimeScope(entry.payload);
 }
 
 export const FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS = Object.freeze({

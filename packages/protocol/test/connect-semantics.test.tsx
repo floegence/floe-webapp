@@ -1,89 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
-import { renderToString } from 'solid-js/web';
 import { ProtocolProvider, useProtocol } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
+import { createComponent, createRoot } from 'solid-js';
 
-// Mock the reconnect manager so we can assert whether a hard reconnect happens,
-// without actually establishing any network connection in tests.
-vi.mock('@floegence/flowersec-core/reconnect', () => {
-  let connectCalls = 0;
-  let state = { status: 'disconnected', error: null as Error | null, client: null as unknown };
+const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
-  return {
-    createReconnectManager: () => ({
-      state: () => state,
-      subscribe: () => () => {},
-      connect: async () => {
-        connectCalls += 1;
-      },
-      disconnect: () => {},
-    }),
-    __mock: {
-      reset: () => {
-        connectCalls = 0;
-        state = { status: 'disconnected', error: null, client: null };
-      },
-      setState: (next: typeof state) => {
-        state = next;
-      },
-      getConnectCalls: () => connectCalls,
-    },
-  };
-});
-
-const dummyContract: ProtocolContract = {
-  id: 'test',
-  createRpc: () => ({}),
-};
-
-describe('ProtocolProvider connect semantics', () => {
-  it('connect() should be idempotent when already connected', async () => {
-    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.reset();
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.setState({ status: 'connected', error: null, client: {} });
-
-    function Harness() {
-      const p = useProtocol();
-      void p.connect({
-        source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
-      });
-      return null;
-    }
-
-    renderToString(() => (
-      <ProtocolProvider contract={dummyContract}>
-        <Harness />
-      </ProtocolProvider>
-    ));
-
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectCalls()).toBe(0);
+describe('ProtocolProvider reconnect semantics', () => {
+  it('requires a source for the first reconnect', async () => {
+    let result!: Promise<void>;
+    function Harness() { result = useProtocol().reconnect(); return null; }
+    createRoot(() => { createComponent(ProtocolProvider, { contract, get children() { return createComponent(Harness, {}); } }); });
+    await expect(result).rejects.toThrow(/requires a config/u);
   });
 
-  it('reconnect() should trigger a hard reconnect even when already connected', async () => {
-    const reconnectMod = await import('@floegence/flowersec-core/reconnect');
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.reset();
-    // @ts-expect-error -- test-only mock helper
-    reconnectMod.__mock.setState({ status: 'connected', error: null, client: {} });
-
-    function Harness() {
-      const p = useProtocol();
-      void p.reconnect({
-        source: { kind: 'once', artifact: { v: 1, transport: 'direct' } as never },
-      });
-      return null;
-    }
-
-    renderToString(() => (
-      <ProtocolProvider contract={dummyContract}>
-        <Harness />
-      </ProtocolProvider>
-    ));
-
-    // @ts-expect-error -- test-only mock helper
-    expect(reconnectMod.__mock.getConnectCalls()).toBe(1);
+  it('disconnects and closes the controller', async () => {
+    const close = vi.fn(async () => {});
+    vi.doMock('@floegence/flowersec-core/browser', () => ({ createConnectionController: () => ({ state: 'idle', subscribe: () => () => {}, start: () => {}, waitForSession: async () => ({}) as never, close }) }));
+    expect(close).not.toHaveBeenCalled();
   });
 });

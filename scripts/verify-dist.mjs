@@ -245,9 +245,8 @@ function main() {
     'packages/core/dist/themes/shell-presets.generated.css',
     "[data-floe-shell-theme='monokai']"
   );
-  assertFileContains('packages/boot/dist/index.js', '@floegence/flowersec-core/reconnect');
-  assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/controlplane');
-  assertFileContains('packages/protocol/dist/index.js', '@floegence/flowersec-core/browser');
+  assertFileContains('packages/boot/dist/index.d.ts', '@floegence/flowersec-core');
+  assertFileContains('packages/protocol/dist/index.d.ts', 'ProtocolNotConnectedError');
   assertFileContains('packages/protocol/dist/index.d.ts', 'RequestConnectArtifactInput');
   assertFileContains('packages/protocol/dist/index.d.ts', 'RequestEntryConnectArtifactInput');
   assertFileExcludes('packages/protocol/dist/index.js', [
@@ -259,6 +258,9 @@ function main() {
     'EntryControlplaneConfig',
     'requestChannelGrant',
     'requestEntryChannelGrant',
+    '@floegence/flowersec-core/reconnect',
+    '@floegence/flowersec-core/controlplane',
+    '@floegence/flowersec-core/rpc',
   ]);
   const distInteractionAudit = auditInteractionUtilities({
     sourceRoot: 'packages/core/dist',
