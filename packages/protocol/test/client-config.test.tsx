@@ -21,7 +21,7 @@ vi.mock('@floegence/flowersec-core/browser', () => ({
 const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
 describe('ProtocolProvider connection controller contract', () => {
-  it('passes source and controller options to Flowersec 2.3.4', async () => {
+  it('passes source and controller options to Flowersec 2.3.5', async () => {
     const browser = await import('@floegence/flowersec-core/browser');
     const config: ConnectConfig = { source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) } as never, controller: { maximumAttempts: 1 } };
     let pending!: Promise<void>;
