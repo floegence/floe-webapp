@@ -86,8 +86,8 @@ importers:
   packages/boot:
     dependencies:
       '@floegence/flowersec-core':
-        specifier: 2.3.0
-        version: 2.3.0
+        specifier: 2.3.4
+        version: 2.3.4
     devDependencies:
       typescript:
         specifier: ^5.9.3
@@ -167,8 +167,8 @@ importers:
   packages/protocol:
     dependencies:
       '@floegence/flowersec-core':
-        specifier: 2.3.0
-        version: 2.3.0
+        specifier: 2.3.4
+        version: 2.3.4
     devDependencies:
       solid-js:
         specifier: ^1.9.11
@@ -664,8 +664,8 @@ packages:
     resolution: {integrity: sha512-jBXB9TC7ItzhzXdSRSR8MbzvfdnQ7vuHiL4LFn2LGDc2nSsVdA9NWE1Zrf+XekbPlwK/K2trwXnQp6jOcw0OuA==}
     engines: {node: '>=20'}
 
-  '@floegence/flowersec-core@2.3.0':
-    resolution: {integrity: sha512-+nIBQJKimyIZotq87clU0uiZIBM/Lk8ezoUpYYqq2v17PcyUO50ANs7uG4lZ2FkK+n0ZvYikBD/2+uk3vf6B8Q==}
+  '@floegence/flowersec-core@2.3.4':
+    resolution: {integrity: sha512-AoTlEbd+pc17th/ru6LhGeMvSUKo21LfrtE16jlD7acXvzOKA5cEoXd9GYo6m2EJwVI4z3tLC6bgoSCw/pUkig==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
@@ -3581,7 +3581,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@floegence/flowersec-core@2.3.0':
+  '@floegence/flowersec-core@2.3.4':
     dependencies:
       '@fails-components/webtransport': 1.6.7
       '@fails-components/webtransport-transport-http3-quiche': 1.6.7

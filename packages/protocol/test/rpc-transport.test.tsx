@@ -6,7 +6,7 @@ import { ProtocolNotConnectedError, useRpc } from '../src/rpc';
 
 const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
-describe('useRpc Flowersec 2.0 session transport', () => {
+describe('useRpc Flowersec session transport', () => {
   it('returns ProtocolNotConnectedError while detached', async () => {
     let rpc!: ReturnType<typeof useRpc>;
     let dispose!: () => void;

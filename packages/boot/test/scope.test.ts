@@ -8,7 +8,7 @@ vi.mock('@floegence/flowersec-core/proxy', () => ({ assertProxyRuntimeScope, PRO
 describe('boot scope helpers', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('validates proxy.runtime scope entries with the Flowersec 2.0 contract', async () => {
+  it('validates proxy.runtime scope entries with the current Flowersec contract', async () => {
     const mod = await import('../src/index');
     const entry = { scope_version: 2, payload: { runtime_origin: 'https://runtime.example.com' } } as const;
     mod.validateProxyRuntimeScopeEntry(entry);
