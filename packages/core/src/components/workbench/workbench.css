@@ -2053,6 +2053,53 @@
     filter: brightness(1.08) drop-shadow(0 8px 16px rgb(0 0 0 / 0.18));
   }
 
+  .workbench-surface .workbench-dock .workbench-dock__mode-trigger.is-hovered .workbench-dock__tile,
+  .workbench-surface .workbench-dock [data-workbench-dock-action].is-hovered .workbench-dock__tile {
+    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 72%, transparent);
+    background: color-mix(in srgb, var(--accent, #f2f2f2) 58%, transparent);
+    filter: brightness(1.04);
+    box-shadow: none;
+  }
+
+  .workbench-surface .workbench-dock .workbench-dock__mode-trigger.is-active .workbench-dock__tile,
+  .workbench-surface .workbench-dock [data-workbench-dock-action].is-active .workbench-dock__tile {
+    box-shadow: none;
+    filter: none;
+  }
+
+  .workbench-dock.is-external-drop-target {
+    border-color: color-mix(in srgb, var(--primary, #3b82f6) 44%, var(--border, #e5e5e5));
+  }
+
+  .workbench-dock.is-external-drop-allowed {
+    background: color-mix(in srgb, var(--primary, #3b82f6) 10%, var(--card, #fff));
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 24%, transparent);
+  }
+
+  .workbench-dock__external-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px dashed color-mix(in srgb, var(--primary, #3b82f6) 52%, var(--border, #e5e5e5));
+    border-radius: 12px;
+    color: var(--muted-foreground, #888);
+    opacity: 0.56;
+  }
+
+  .workbench-dock__external-placeholder.is-drop-allowed {
+    border-style: solid;
+    color: var(--primary, #3b82f6);
+    opacity: 0.92;
+  }
+
+  .workbench-dock__external-placeholder .workbench-dock__icon {
+    width: 30px;
+    height: 30px;
+    filter: none;
+  }
+
   .workbench-dock__item.is-filter-muted .workbench-dock__tile {
     opacity: 0.4;
     filter: grayscale(0.6) drop-shadow(0 1px 3px rgb(0 0 0 / 0.06));
@@ -2845,6 +2892,10 @@
   }
 
   .workbench-dock-ghost.is-over-canvas .workbench-dock-ghost__halo {
+    opacity: 1;
+  }
+
+  .workbench-dock-ghost.is-over-dock .workbench-dock-ghost__halo {
     opacity: 1;
   }
 

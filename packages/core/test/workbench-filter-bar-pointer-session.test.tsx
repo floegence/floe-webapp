@@ -12,8 +12,8 @@ type MotionSpanProps = JSX.IntrinsicElements['span'] & {
 vi.mock('solid-motionone', () => ({
   Motion: {
     span: (props: MotionSpanProps) => {
-      const [, domProps] = splitProps(props, ['animate', 'transition']);
-      return <span {...domProps} />;
+      const [motionProps, domProps] = splitProps(props, ['animate', 'transition']);
+      return <span data-motion-animate={JSON.stringify(motionProps.animate)} {...domProps} />;
     },
   },
 }));
@@ -501,5 +501,188 @@ describe('WorkbenchFilterBar pointer session', () => {
       dropAllowed: false,
     });
     expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+  });
+
+  it('keeps non-draggable mode and host actions dimensionally stable on hover and active state', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          dockActions={[{
+            id: 'plugins',
+            label: 'Plugins',
+            icon: () => <svg aria-hidden="true" />,
+            active: true,
+            onActivate: () => {},
+          }]}
+        />
+      ),
+      host
+    );
+
+    const mode = host.querySelector<HTMLButtonElement>('.workbench-dock__mode-trigger')!;
+    const action = host.querySelector<HTMLButtonElement>('[data-workbench-dock-action="plugins"]')!;
+    dispatchPointerEvent('pointerenter', mode);
+    expect(mode.querySelector('.workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
+      JSON.stringify({ scale: 1, y: 0, x: 0 })
+    );
+    expect(host.querySelector('button[aria-label="Files — click to solo, drag to canvas to create"] .workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
+      JSON.stringify({ scale: 1, y: 0, x: 0 })
+    );
+    dispatchPointerEvent('pointerenter', action);
+    expect(action.querySelector('.workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
+      JSON.stringify({ scale: 1, y: 0, x: 0 })
+    );
+    expect(action.draggable).toBe(false);
+    expect(action.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('owns an external pointer source through the same threshold, ghost, Dock target, and Escape cancellation contract', async () => {
+    const host = document.createElement('div');
+    const source = document.createElement('button');
+    document.body.append(host, source);
+    const onExternalDrop = vi.fn();
+    let externalDragController: undefined | {
+      begin: (event: PointerEvent, item: { id: string; label: string; icon: () => JSX.Element }) => void;
+    };
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          registerExternalDockDragController={(controller) => { externalDragController = controller; }}
+          onExternalDockDrop={onExternalDrop}
+        />
+      ),
+      host
+    );
+
+    expect(externalDragController).toBeDefined();
+    const capture = vi.fn();
+    Object.defineProperty(source, 'setPointerCapture', { configurable: true, value: capture });
+    source.addEventListener('pointerdown', (event) => {
+      externalDragController!.begin(event, {
+        id: 'plugin:containers',
+        label: 'Containers',
+        icon: () => <svg aria-hidden="true" />,
+      });
+    });
+    dispatchPointerEvent('pointerdown', source, {
+      pointerId: 73,
+      clientX: 20,
+      clientY: 20,
+      buttons: 1,
+    });
+    expect(capture).toHaveBeenCalledWith(73);
+
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 73,
+      clientX: 24,
+      clientY: 20,
+      buttons: 1,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 73,
+      clientX: 32,
+      clientY: 20,
+      buttons: 1,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).not.toBeNull();
+    expect(host.querySelector('.workbench-dock__external-placeholder')).not.toBeNull();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+    expect(host.querySelector('.workbench-dock__external-placeholder')).toBeNull();
+    expect(onExternalDrop).not.toHaveBeenCalled();
+  });
+
+  it('commits an external item only over the Dock and suppresses the source click after dragging', async () => {
+    const host = document.createElement('div');
+    const source = document.createElement('button');
+    document.body.append(host, source);
+    const onExternalDrop = vi.fn();
+    const onSourceClick = vi.fn();
+    source.addEventListener('click', onSourceClick);
+    let controller: Parameters<NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>>[0];
+
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{ 'custom.files': true }}
+        onSoloFilter={() => {}}
+        registerExternalDockDragController={(value) => { controller = value; }}
+        onExternalDockDrop={onExternalDrop}
+      />
+    ), host);
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn(() => host.querySelector('.workbench-dock')),
+    });
+    source.addEventListener('pointerdown', (event) => controller?.begin(event, {
+      id: 'plugin:containers',
+      label: 'Containers',
+      icon: () => <svg aria-hidden="true" />,
+    }));
+
+    dispatchPointerEvent('pointerdown', source, { pointerId: 81, clientX: 10, clientY: 10 });
+    dispatchPointerEvent('pointermove', document, { pointerId: 81, clientX: 40, clientY: 20 });
+    expect(host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')).toBe(true);
+    dispatchPointerEvent('pointerup', document, { pointerId: 81, clientX: 40, clientY: 20, buttons: 0 });
+    source.click();
+
+    expect(onExternalDrop).toHaveBeenCalledTimes(1);
+    expect(onExternalDrop).toHaveBeenCalledWith(expect.objectContaining({ id: 'plugin:containers' }));
+    expect(onSourceClick).not.toHaveBeenCalled();
+    expect(host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')).toBe(false);
+  });
+
+  it.each([
+    ['pointer cancel', () => dispatchPointerEvent('pointercancel', document, { pointerId: 91, clientX: 44, clientY: 20, buttons: 0 })],
+    ['invalid drop', () => dispatchPointerEvent('pointerup', document, { pointerId: 91, clientX: 44, clientY: 20, buttons: 0 })],
+  ])('rolls back an external drag after %s', async (_name, finish) => {
+    const host = document.createElement('div');
+    const source = document.createElement('button');
+    document.body.append(host, source);
+    const onExternalDrop = vi.fn();
+    let controller: Parameters<NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>>[0];
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{ 'custom.files': true }}
+        onSoloFilter={() => {}}
+        registerExternalDockDragController={(value) => { controller = value; }}
+        onExternalDockDrop={onExternalDrop}
+      />
+    ), host);
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn(() => null),
+    });
+    source.addEventListener('pointerdown', (event) => controller?.begin(event, {
+      id: 'plugin:containers',
+      label: 'Containers',
+      icon: () => <svg aria-hidden="true" />,
+    }));
+
+    dispatchPointerEvent('pointerdown', source, { pointerId: 91, clientX: 10, clientY: 10 });
+    dispatchPointerEvent('pointermove', document, { pointerId: 91, clientX: 44, clientY: 20 });
+    finish();
+
+    expect(onExternalDrop).not.toHaveBeenCalled();
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+    expect(host.querySelector('.workbench-dock__external-placeholder')).toBeNull();
   });
 });

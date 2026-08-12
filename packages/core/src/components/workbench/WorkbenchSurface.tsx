@@ -13,6 +13,8 @@ import {
   type WorkbenchDockDropContext,
   type WorkbenchDockItemActivation,
   type WorkbenchDockAction,
+  type WorkbenchExternalDockDragController,
+  type WorkbenchExternalDockDragItem,
 } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
@@ -130,6 +132,8 @@ export interface WorkbenchSurfaceProps {
   onRequestDelete?: (widgetId: string) => void;
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   dockActions?: readonly WorkbenchDockAction[];
+  registerExternalDockDragController?: (controller: WorkbenchExternalDockDragController | null) => void;
+  onExternalDockDrop?: (item: WorkbenchExternalDockDragItem) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
   /** Defer pointer/focus widget activation until the visual selection has painted. */
@@ -737,6 +741,8 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         onCreateToolAt={handleCreateToolAtClient}
         onItemClick={props.onDockItemClick}
         dockActions={props.dockActions}
+        registerExternalDockDragController={props.registerExternalDockDragController}
+        onExternalDockDrop={props.onExternalDockDrop}
         onDragPreviewChange={setDockDragPreview}
       />
 
