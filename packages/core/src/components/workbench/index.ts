@@ -15,6 +15,7 @@ export type {
   WorkbenchDockItemActivation,
   WorkbenchExternalDockDragController,
   WorkbenchExternalDockDragItem,
+  WorkbenchHostDockItem,
 } from './WorkbenchFilterBar';
 export {
   WorkbenchContextMenu,

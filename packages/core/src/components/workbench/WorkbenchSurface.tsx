@@ -15,6 +15,7 @@ import {
   type WorkbenchDockAction,
   type WorkbenchExternalDockDragController,
   type WorkbenchExternalDockDragItem,
+  type WorkbenchHostDockItem,
 } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
 import { WorkbenchLockButton } from './WorkbenchLockButton';
@@ -132,6 +133,7 @@ export interface WorkbenchSurfaceProps {
   onRequestDelete?: (widgetId: string) => void;
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   dockActions?: readonly WorkbenchDockAction[];
+  dockItems?: readonly WorkbenchHostDockItem[];
   registerExternalDockDragController?: (controller: WorkbenchExternalDockDragController | null) => void;
   onExternalDockDrop?: (item: WorkbenchExternalDockDragItem) => void;
   onLayoutInteractionStart?: () => void;
@@ -741,6 +743,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         onCreateToolAt={handleCreateToolAtClient}
         onItemClick={props.onDockItemClick}
         dockActions={props.dockActions}
+        dockItems={props.dockItems}
         registerExternalDockDragController={props.registerExternalDockDragController}
         onExternalDockDrop={props.onExternalDockDrop}
         onDragPreviewChange={setDockDragPreview}

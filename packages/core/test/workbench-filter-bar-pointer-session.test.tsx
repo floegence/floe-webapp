@@ -685,4 +685,45 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
     expect(host.querySelector('.workbench-dock__external-placeholder')).toBeNull();
   });
+
+  it('renders host Dock items as draggable items with click activation and canvas drop semantics', async () => {
+    mockCanvasFrame();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onActivate = vi.fn();
+    const onDropToCanvas = vi.fn();
+
+    dispose = render(() => (
+      <WorkbenchFilterBar
+        widgetDefinitions={widgetDefinitions}
+        widgets={[]}
+        filters={{ 'custom.files': true }}
+        onSoloFilter={() => {}}
+        dockItems={[{
+          id: 'plugin:containers',
+          label: 'Containers',
+          icon: () => <svg aria-hidden="true" />,
+          onActivate,
+          onDropToCanvas,
+        }]}
+      />
+    ), host);
+
+    const item = host.querySelector<HTMLButtonElement>('[data-workbench-dock-item="plugin:containers"]');
+    expect(item).not.toBeNull();
+    expect(item?.draggable).toBe(false);
+    dispatchPointerEvent('pointerdown', item!, { pointerId: 101, clientX: 20, clientY: 20 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 101, clientX: 20, clientY: 20, buttons: 0 });
+    expect(onActivate).toHaveBeenCalledTimes(1);
+
+    dispatchPointerEvent('pointerdown', item!, { pointerId: 102, clientX: 20, clientY: 20 });
+    dispatchPointerEvent('pointermove', document, { pointerId: 102, clientX: 100, clientY: 100 });
+    expect(document.body.querySelector('.workbench-dock-ghost')).not.toBeNull();
+    dispatchPointerEvent('pointerup', document, { pointerId: 102, clientX: 100, clientY: 100, buttons: 0 });
+
+    expect(onActivate).toHaveBeenCalledTimes(1);
+    expect(onDropToCanvas).toHaveBeenCalledTimes(1);
+    expect(onDropToCanvas.mock.calls[0]?.slice(0, 2)).toEqual([100, 100]);
+    expect(onDropToCanvas.mock.calls[0]?.[2]).toMatchObject({ dropAllowed: true });
+  });
 });

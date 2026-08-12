@@ -39,6 +39,7 @@ export interface WorkbenchFilterBarProps {
   onSoloFilter: (id: string, scope: readonly string[]) => void;
   onSelectMode?: (mode: WorkbenchInteractionMode) => void;
   dockActions?: readonly WorkbenchDockAction[];
+  dockItems?: readonly WorkbenchHostDockItem[];
   registerExternalDockDragController?: (controller: WorkbenchExternalDockDragController | null) => void;
   onExternalDockDrop?: (item: WorkbenchExternalDockDragItem) => void;
   /**
@@ -74,6 +75,15 @@ export type WorkbenchDockAction = Readonly<{
   icon: Component<{ class?: string }>;
   active?: boolean;
   onActivate: (trigger: HTMLButtonElement) => void;
+}>;
+
+export type WorkbenchHostDockItem = Readonly<{
+  id: string;
+  label: string;
+  icon: Component<{ class?: string }>;
+  active?: boolean;
+  onActivate?: (trigger: HTMLButtonElement) => void;
+  onDropToCanvas?: (clientX: number, clientY: number, context?: WorkbenchDockDropContext) => void;
 }>;
 
 export type WorkbenchDockItemActivation = Readonly<{
@@ -127,8 +137,8 @@ interface DragStateBase {
 }
 
 type InternalDragState = DragStateBase & Readonly<{
-  kind: 'widget' | 'tool';
-  id: WorkbenchWidgetType | WorkbenchDockToolId;
+  kind: 'widget' | 'tool' | 'host';
+  id: WorkbenchWidgetType | WorkbenchDockToolId | string;
   trigger: HTMLButtonElement;
 }>;
 
@@ -263,7 +273,7 @@ interface DockItemProps {
   onDragBegin: (
     event: PointerEvent,
     kind: DragState['kind'],
-    id: WorkbenchWidgetType | WorkbenchDockToolId,
+    id: WorkbenchWidgetType | WorkbenchDockToolId | string,
     label: string,
     icon: Component<{ class?: string }>,
     trigger: HTMLButtonElement,
@@ -296,6 +306,7 @@ function DockItem(props: DockItemProps) {
     <button
       type="button"
       class="workbench-dock__item"
+      data-workbench-dock-item={props.kind === 'host' ? props.id : undefined}
       classList={{
         'is-active': props.active,
         'is-filter-muted': props.filterable && !props.visible,
@@ -494,6 +505,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
 
     if (isClick) {
       if (current.kind === 'external') return;
+      if (current.kind === 'host') {
+        props.dockItems?.find((item) => item.id === current.id)?.onActivate?.(current.trigger);
+        return;
+      }
       const consumed = props.onItemClick?.({
         kind: current.kind,
         id: current.id,
@@ -527,12 +542,21 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           current.clientY,
           context
         );
-      } else {
+      } else if (current.kind === 'tool') {
         props.onCreateToolAt?.(
           current.id as WorkbenchDockToolId,
           current.clientX,
           current.clientY,
           context
+        );
+      } else {
+        const context = current.canvasFrame
+          ? { dropAllowed: current.overCanvas, canvasFrame: current.canvasFrame }
+          : undefined;
+        props.dockItems?.find((item) => item.id === current.id)?.onDropToCanvas?.(
+          current.clientX,
+          current.clientY,
+          context,
         );
       }
     }
@@ -541,7 +565,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const beginItemDragGesture = (
     event: PointerEvent,
     kind: DragState['kind'],
-    id: WorkbenchWidgetType | WorkbenchDockToolId,
+    id: WorkbenchWidgetType | WorkbenchDockToolId | string,
     label: string,
     icon: Component<{ class?: string }>,
     trigger: HTMLButtonElement,
@@ -608,7 +632,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           moved,
           overCanvas,
           hasEnteredCanvas,
-          preview: moved && canvasFrame && current.kind !== 'external'
+          preview: moved && canvasFrame && (current.kind === 'widget' || current.kind === 'tool')
             ? {
                 kind: current.kind,
                 id: current.id,
@@ -744,6 +768,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       })),
     ];
   });
+  const hostDockItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]);
   const actionItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]);
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
   const componentFilterable = (): boolean => activeMode() !== 'background';
@@ -870,10 +895,31 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             </Show>
           </span>
         </Show>
+        <For each={hostDockItems()}>
+          {(item, index) => {
+            const slot = () => index() + actionItems().length + 1;
+            return (
+              <DockItem
+                id={item.id}
+                kind="host"
+                label={item.label}
+                icon={item.icon}
+                active={Boolean(item.active)}
+                visible
+                filterable={false}
+                hoverOffset={offsetFor(slot())}
+                isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
+                onEnter={() => setHoveredIndex(slot())}
+                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
+                onDragBegin={beginItemDragGesture}
+              />
+            );
+          }}
+        </For>
         <span class="workbench-dock__divider" aria-hidden="true" />
         <For each={componentItems()}>
           {(entry, index) => {
-            const slot = () => index() + actionItems().length + 1;
+            const slot = () => index() + actionItems().length + hostDockItems().length + 1;
             return (
               <DockItem
                 id={String(entry.id)}
