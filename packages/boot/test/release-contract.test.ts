@@ -60,7 +60,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.40.16');
+    expect(corePkg.version).toBe('0.40.17');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
