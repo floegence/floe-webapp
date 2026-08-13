@@ -30,7 +30,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '2.3.8';
+  const flowersecVersion = '2.3.9';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');

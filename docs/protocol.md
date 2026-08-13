@@ -1,6 +1,6 @@
 # Protocol Integration
 
-The protocol package uses Flowersec 2.3.6's opaque artifact and session APIs. A control-plane response is parsed into an `Artifact`, wrapped in an `ArtifactLease`, and consumed by a browser `ConnectionController`.
+The protocol package uses Flowersec 2.3.9's opaque artifact and session APIs. A control-plane response is parsed into an `Artifact`, wrapped in an `ArtifactLease`, and consumed by a browser `ConnectionController`.
 
 ```tsx
 import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
@@ -25,6 +25,6 @@ function ConnectButton() {
 
 Detached calls raise `ProtocolNotConnectedError`; transport failures are surfaced as `RpcError`.
 
-The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.3.6's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
+The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.3.9's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
 
-The package dependency is pinned to the published `@floegence/flowersec-core@2.3.6` package. Public protocol entrypoints use `ConnectionController`, `Session`, `RpcPeer`, `ByteStream`, and `StreamMetadata`.
+The package dependency is pinned to the published `@floegence/flowersec-core@2.3.9` package. Public protocol entrypoints use `ConnectionController`, `Session`, `RpcPeer`, `ByteStream`, and `StreamMetadata`.

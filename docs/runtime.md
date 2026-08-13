@@ -1,6 +1,6 @@
 # Runtime Bootstrap
 
-Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@2.3.6` package. It creates an `ArtifactSource` and passes it to the browser `createConnectionController` API. Flowersec's controller is the sole owner of connection and retry state.
+Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@2.3.9` package. It creates an `ArtifactSource` and passes it to the browser `createConnectionController` API. Flowersec's controller is the sole owner of connection and retry state.
 
 ```ts
 import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
