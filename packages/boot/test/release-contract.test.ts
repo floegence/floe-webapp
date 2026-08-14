@@ -30,7 +30,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '2.3.9';
+  const flowersecVersion = '2.3.10';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');
@@ -60,7 +60,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.40.17');
+    expect(corePkg.version).toBe('0.40.18');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
