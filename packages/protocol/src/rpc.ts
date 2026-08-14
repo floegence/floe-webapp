@@ -1,6 +1,6 @@
 import { useProtocol } from './client';
 import type { ProtocolContract, RpcHelpers } from './contract';
-import type { RpcResult } from '@floegence/flowersec-core';
+import type { JsonValue, RpcResult } from '@floegence/flowersec-core';
 
 /**
  * RPC wrapper for typed remote calls.
@@ -33,7 +33,7 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
 
     let response: RpcResult<Res>;
     try {
-      response = await transport.call(typeId, payload, (value) => value as Res);
+      response = await transport.call(typeId, payload as JsonValue, (value) => value as Res);
     } catch (err) {
       throw new RpcError({ typeId, code: -1, message: 'RPC transport error', cause: err });
     }
@@ -61,7 +61,7 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
       throw new ProtocolNotConnectedError();
     }
     try {
-      await transport.notify(typeId, payload);
+      await transport.notify(typeId, payload as JsonValue);
     } catch (err) {
       throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
     }
@@ -82,8 +82,8 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     const transport = protocol.rpcTransport();
     if (!transport) return () => {};
 
-    return transport.onNotify(typeId, (payload) => {
-      handler(payload as Payload);
+    return transport.onNotify(typeId, (payload) => payload as Payload, (payload) => {
+      handler(payload);
     });
   };
 
