@@ -145,7 +145,7 @@ function WorkbenchProjectedWidgetSlot(props: WorkbenchProjectedWidgetSlotProps) 
       topRenderLayer={props.renderLayers().topRenderLayer}
       viewportScale={props.projectedViewport().scale}
       locked={props.locked}
-      filtered={!props.locked && props.filters[item().type] === false}
+      filtered={props.filters[item().type] === false}
       interactionAdapter={props.interactionAdapter}
       layoutMode="projected_surface"
       viewport={props.projectedViewport()}

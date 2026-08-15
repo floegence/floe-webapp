@@ -81,12 +81,234 @@ const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
   },
 ];
 
+const visibilityWidgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
+  'custom.filtered',
+  'custom.visible',
+  'custom.default-visible',
+].map((type) => ({
+  type,
+  label: type,
+  icon: () => null,
+  body: () => <div>{type}</div>,
+  defaultTitle: type,
+  defaultSize: { width: 320, height: 220 },
+  renderMode: 'projected_surface' as const,
+}));
+
+function readWidgetIds(host: ParentNode, selector = '[data-floe-workbench-widget-id]'): string[] {
+  return Array.from(host.querySelectorAll<HTMLElement>(selector))
+    .map((element) => element.dataset.floeWorkbenchWidgetId ?? '')
+    .filter(Boolean)
+    .sort();
+}
+
+function mockCanvasRect(canvas: HTMLElement): void {
+  Object.defineProperty(canvas, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      left: 0,
+      top: 0,
+      right: 1200,
+      bottom: 800,
+      width: 1200,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => undefined,
+    }),
+  });
+}
+
+function dispatchWheel(target: EventTarget, deltaY: number): WheelEvent {
+  const event = new WheelEvent('wheel', {
+    bubbles: true,
+    cancelable: true,
+    clientX: 600,
+    clientY: 400,
+    deltaY,
+  });
+  target.dispatchEvent(event);
+  return event;
+}
+
 describe('Workbench projected surfaces', () => {
   afterEach(() => {
     observedProjectedMetrics.length = 0;
     bodyMounts.clear();
     bodyCleanups.clear();
+    vi.useRealTimers();
     document.body.innerHTML = '';
+  });
+
+  it('keeps projected widget filtering independent from the layout lock', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const dispose = render(() => {
+      const [locked, setLocked] = createSignal(true);
+
+      return (
+        <>
+          <button
+            type="button"
+            data-testid="toggle-lock"
+            onClick={() => setLocked((value) => !value)}
+          >
+            Toggle lock
+          </button>
+          <WorkbenchCanvas
+            widgetDefinitions={visibilityWidgetDefinitions}
+            widgets={[
+              {
+                id: 'widget-filtered',
+                type: 'custom.filtered',
+                title: 'Filtered',
+                x: 20,
+                y: 30,
+                width: 320,
+                height: 220,
+                z_index: 1,
+                created_at_unix_ms: 1,
+              },
+              {
+                id: 'widget-visible',
+                type: 'custom.visible',
+                title: 'Visible',
+                x: 380,
+                y: 30,
+                width: 320,
+                height: 220,
+                z_index: 2,
+                created_at_unix_ms: 2,
+              },
+              {
+                id: 'widget-default-visible',
+                type: 'custom.default-visible',
+                title: 'Default visible',
+                x: 740,
+                y: 30,
+                width: 320,
+                height: 220,
+                z_index: 3,
+                created_at_unix_ms: 3,
+              },
+            ]}
+            viewport={{ x: 0, y: 0, scale: 1 }}
+            canvasFrameSize={{ width: 1200, height: 800 }}
+            selectedWidgetId={null}
+            visualFrontOwnerId={null}
+            locked={locked()}
+            filters={{
+              'custom.filtered': false,
+              'custom.visible': true,
+            }}
+            setCanvasFrameRef={() => {}}
+            onViewportCommit={vi.fn()}
+            onCanvasContextMenu={vi.fn()}
+            onSelectWidget={vi.fn()}
+            onWidgetContextMenu={vi.fn()}
+            onClaimVisualFrontOwner={vi.fn()}
+            onCommitFront={vi.fn()}
+            onCommitMove={vi.fn()}
+            onCommitResize={vi.fn()}
+            onRequestOverview={vi.fn()}
+            onRequestFit={vi.fn()}
+            onRequestDelete={vi.fn()}
+          />
+        </>
+      );
+    }, host);
+
+    const toggleLock = host.querySelector('[data-testid="toggle-lock"]') as HTMLButtonElement;
+    const assertVisibility = () => {
+      expect(readWidgetIds(host, '.is-filtered-out[data-floe-workbench-widget-id]')).toEqual([
+        'widget-filtered',
+      ]);
+      expect(
+        readWidgetIds(host).filter(
+          (id) =>
+            !host
+              .querySelector(`[data-floe-workbench-widget-id="${id}"]`)
+              ?.classList.contains('is-filtered-out')
+        )
+      ).toEqual(['widget-default-visible', 'widget-visible']);
+    };
+
+    await Promise.resolve();
+    assertVisibility();
+
+    toggleLock.click();
+    await Promise.resolve();
+    assertVisibility();
+
+    toggleLock.click();
+    await Promise.resolve();
+    assertVisibility();
+
+    dispose();
+  });
+
+  it('keeps wheel zoom disabled while locked and enabled after unlocking', async () => {
+    vi.useFakeTimers();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let readViewport = () => ({ x: 0, y: 0, scale: 1 });
+
+    const dispose = render(() => {
+      const [locked, setLocked] = createSignal(true);
+      const [viewport, setViewport] = createSignal({ x: 0, y: 0, scale: 1 });
+      readViewport = viewport;
+
+      return (
+        <>
+          <button type="button" data-testid="unlock" onClick={() => setLocked(false)}>
+            Unlock
+          </button>
+          <WorkbenchCanvas
+            widgetDefinitions={[]}
+            widgets={[]}
+            viewport={viewport()}
+            canvasFrameSize={{ width: 1200, height: 800 }}
+            selectedWidgetId={null}
+            visualFrontOwnerId={null}
+            locked={locked()}
+            filters={{}}
+            setCanvasFrameRef={() => {}}
+            onViewportCommit={setViewport}
+            onCanvasContextMenu={vi.fn()}
+            onSelectWidget={vi.fn()}
+            onWidgetContextMenu={vi.fn()}
+            onClaimVisualFrontOwner={vi.fn()}
+            onCommitFront={vi.fn()}
+            onCommitMove={vi.fn()}
+            onCommitResize={vi.fn()}
+            onRequestOverview={vi.fn()}
+            onRequestFit={vi.fn()}
+            onRequestDelete={vi.fn()}
+          />
+        </>
+      );
+    }, host);
+
+    const canvas = host.querySelector('.floe-infinite-canvas') as HTMLElement;
+    mockCanvasRect(canvas);
+
+    const lockedWheel = dispatchWheel(canvas, -120);
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+    expect(lockedWheel.defaultPrevented).toBe(false);
+    expect(readViewport().scale).toBe(1);
+
+    (host.querySelector('[data-testid="unlock"]') as HTMLButtonElement).click();
+    await Promise.resolve();
+
+    const unlockedWheel = dispatchWheel(canvas, -120);
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+    expect(unlockedWheel.defaultPrevented).toBe(true);
+    expect(readViewport().scale).toBeGreaterThan(1);
+
+    dispose();
   });
 
   it('renders projected widgets outside the scaled viewport while preserving projected metrics', async () => {
