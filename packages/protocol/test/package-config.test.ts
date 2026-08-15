@@ -29,6 +29,6 @@ describe('@floegence/floe-webapp-protocol package config', () => {
     const source = readFileSync(resolve(__dirname, '../src/client.tsx'), 'utf-8');
 
     expect(source).toContain("import('@floegence/flowersec-core/browser')");
-    expect(source).not.toMatch(/from ['"]@floegence\/flowersec-core\/browser['"]/u);
+    expect(source).not.toMatch(/import\s+(?!type\s)[^;]+from ['"]@floegence\/flowersec-core\/browser['"]/u);
   });
 });

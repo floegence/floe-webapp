@@ -30,7 +30,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '2.4.2';
+  const flowersecVersion = '2.5.0';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');
@@ -60,7 +60,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.40.21');
+    expect(corePkg.version).toBe('0.41.0');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -78,6 +78,7 @@ describe('release dependency and runtime contract', () => {
     const bootPkg = readJson<PackageJson>('packages/boot/package.json');
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const lockfile = readText('pnpm-lock.yaml');
+    const release = readText('.github/workflows/release.yml');
 
     expect(bootPkg.dependencies?.['@floegence/flowersec-core']).toBe(flowersecVersion);
     expect(protocolPkg.dependencies?.['@floegence/flowersec-core']).toBe(flowersecVersion);
@@ -97,6 +98,9 @@ describe('release dependency and runtime contract', () => {
       `'@floegence/flowersec-core':\n        specifier: ${flowersecVersion}\n        version: link:`
     );
     expect(lockfile).not.toMatch(/(?:@floegence\/flowersec-core|@floegence\+flowersec-core)@0\.(?:25|26)\./u);
+    expect(release).toContain('scripts/verify-npm-release-package.mjs');
+    expect(release).toContain('scripts/verify-npm-release-consumer.mjs');
+    expect(release).toContain('Require a release tag ref');
   });
 
   it('validates the frozen dependency graph before running the local quality gate', () => {

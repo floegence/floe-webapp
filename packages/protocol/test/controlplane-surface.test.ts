@@ -1,11 +1,12 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('protocol controlplane surface', () => {
-  it('does not expose removed Flowersec subpath compatibility exports', async () => {
-    const local = await import('../src/controlplane');
+  it('keeps controlplane acquisition exclusively in Boot', async () => {
     const pkg = await import('../src/index');
-    expect(local).not.toHaveProperty('assertConnectArtifact');
-    expect(pkg).not.toHaveProperty('requestChannelGrant');
-    expect(pkg).not.toHaveProperty('requestEntryChannelGrant');
+    expect(pkg).not.toHaveProperty('requestConnectArtifact');
+    expect(pkg).not.toHaveProperty('requestEntryConnectArtifact');
+    expect(existsSync(resolve(__dirname, '../src/controlplane.ts'))).toBe(false);
   });
 });

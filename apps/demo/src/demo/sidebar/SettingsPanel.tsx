@@ -25,7 +25,18 @@ export function SettingsPanel() {
 
     try {
       const config: ConnectConfig = {
-        source: createControlplaneArtifactSource({ baseUrl, endpointId }),
+        source: createControlplaneArtifactSource({
+          baseUrl,
+          endpointId,
+          validateSpendBinding: (binding) => binding.artifactDigestB64u,
+          commitSpend: async (request) => {
+            const key = `floe-demo-spend:${request.artifactDigestB64u}`;
+            if (localStorage.getItem(key) !== null && localStorage.getItem(key) !== request.attemptId) {
+              throw new Error('artifact spend already committed');
+            }
+            localStorage.setItem(key, request.attemptId);
+          },
+        }),
       };
       await protocol.connect(config);
       notifications.success('Connected', 'Flowersec tunnel established.');

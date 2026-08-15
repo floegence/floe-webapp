@@ -93,6 +93,14 @@ function assertInitTemplates() {
       .join(', ')}`
   );
 
+  for (const template of ['minimal', 'full']) {
+    const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
+    assert(
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.41.0',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.41.0`
+    );
+  }
+
   const cssFiles = walkFiles(templatesRoot).filter((f) => /\.css$/i.test(f));
   const cssViolations = [];
 
@@ -247,8 +255,6 @@ function main() {
   );
   assertFileContains('packages/boot/dist/index.d.ts', '@floegence/flowersec-core');
   assertFileContains('packages/protocol/dist/index.d.ts', 'ProtocolNotConnectedError');
-  assertFileContains('packages/protocol/dist/index.d.ts', 'RequestConnectArtifactInput');
-  assertFileContains('packages/protocol/dist/index.d.ts', 'RequestEntryConnectArtifactInput');
   assertFileExcludes('packages/protocol/dist/index.js', [
     'requestChannelGrant',
     'requestEntryChannelGrant',
@@ -256,6 +262,8 @@ function main() {
   assertFileExcludes('packages/protocol/dist/index.d.ts', [
     'ControlplaneConfig',
     'EntryControlplaneConfig',
+    'RequestConnectArtifactInput',
+    'RequestEntryConnectArtifactInput',
     'requestChannelGrant',
     'requestEntryChannelGrant',
     '@floegence/flowersec-core/reconnect',
@@ -275,6 +283,10 @@ function main() {
   const protocolPkg = readJson('packages/protocol/package.json');
   const initPkg = readJson('packages/init/package.json');
   assertSkillContract(corePkg);
+  assert(
+    [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every((version) => version === '0.41.0'),
+    'Published Floe packages must all use version 0.41.0'
+  );
 
   assert(corePkg.name === '@floegence/floe-webapp-core', '@floegence/floe-webapp-core package name mismatch');
   assert(corePkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-core main must point to ./dist/*');

@@ -1,19 +1,22 @@
 # Protocol Integration
 
-The protocol package uses Flowersec 2.4.1's opaque artifact and session APIs. A control-plane response is parsed into an `Artifact`, wrapped in an `ArtifactLease`, and consumed by a browser `ConnectionController`.
+The protocol package consumes the published Flowersec 2.5.0 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
 
 ```tsx
-import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
+import { createControlplaneArtifactSource, createArtifactTunnelConnectionConfig } from '@floegence/floe-webapp-boot';
 import { ProtocolProvider, useProtocol } from '@floegence/floe-webapp-protocol';
 
 const source = createControlplaneArtifactSource({
   baseUrl: 'https://controlplane.example.com',
   endpointId: 'endpoint-1',
+  commitSpend: async (request) => { await fetch('/spend', { method: 'POST', body: JSON.stringify(request) }); },
+  validateSpendBinding: (binding) => binding.artifactDigestB64u,
 });
+const connection = createArtifactTunnelConnectionConfig({ source, controller: { maximumAttempts: 3, connectTimeoutMs: 10_000 } });
 
 function ConnectButton() {
   const protocol = useProtocol();
-  return <button onClick={() => protocol.connect({ source })}>Connect</button>;
+  return <button onClick={() => protocol.connect(connection)}>Connect</button>;
 }
 
 <ProtocolProvider contract={contract}>
@@ -21,10 +24,12 @@ function ConnectButton() {
 </ProtocolProvider>;
 ```
 
-`useProtocol()` exposes `status()`, `error()`, `session()`, `connect()`, `reconnect()`, and `disconnect()`. These are thin application-facing controls over one Flowersec `ConnectionController`; Flowersec remains the sole owner of connection and retry state. RPC calls use `session()?.rpc`; `useRpc()` supplies typed `call`, `notify`, `notifyBestEffort`, and `onNotify` helpers.
+`useProtocol()` exposes `status()`, the full `snapshot()`, `error()`, `session()`, `connect()`, `replaceConnection()`, `retryNow()`, and `disconnect()`. `replaceConnection()` is required when source/options identity changes. `retryNow()` delegates to the existing Flowersec controller and returns `false` while an absolute `retry_after` deadline is active.
 
-Detached calls raise `ProtocolNotConnectedError`; transport failures are surfaced as `RpcError`.
+An established `session()?.probeLiveness()` remains available for an application-level health check. The probe is a Flowersec session operation; Protocol does not implement a parallel liveness or reconnect loop around it.
 
-The source posts an envelope to `/v1/connect/artifact` (or `/v1/connect/artifact/entry` with an entry ticket). Responses must contain `connect_artifact`, which is parsed by Flowersec 2.4.1's root `parseArtifact` API. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set in the boot helper. A connected session exposes `probeLiveness()` and the RPC notifications include `notifyBestEffort`.
+RPC helpers are decoder-first: `call(typeId, payload, decodeResponse)`, `notify(typeId, payload)`, `notifyBestEffort(typeId, payload)`, and `onNotify(typeId, decodePayload, handler)`. Requests are `JsonValue`; application decoders validate exact wire shape before business code runs. `notifyBestEffort` treats a detached transport as an already dropped notification, while failures from an attached transport remain observable as `RpcError`. Detached calls and strict notifications raise `ProtocolNotConnectedError`; transport and decoder failures are surfaced as `RpcError`.
 
-The package dependency is pinned to the published `@floegence/flowersec-core@2.4.1` package. Public protocol entrypoints use `ConnectionController`, `Session`, `RpcPeer`, `ByteStream`, and `StreamMetadata`.
+The source posts to `/v1/connect/artifact` or `/v1/connect/artifact/entry` and requires an exact acquisition envelope containing an opaque string `connect_artifact`, a `proxy.runtime@2` critical projection, digests, and a spend receipt. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set. There is no default or no-op spend callback.
+
+The package dependency is pinned to the published `@floegence/flowersec-core@2.5.0` package. Protocol does not expose a second control-plane fetch/decode facade; all acquisition imports come from `@floegence/floe-webapp-boot`.

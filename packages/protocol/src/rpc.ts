@@ -1,12 +1,7 @@
-import { useProtocol } from './client';
-import type { ProtocolContract, RpcHelpers } from './contract';
 import type { JsonValue, RpcResult } from '@floegence/flowersec-core';
+import { useProtocol } from './client';
+import type { ProtocolContract, RpcDecoder, RpcHelpers } from './contract';
 
-/**
- * RPC wrapper for typed remote calls.
- *
- * This module is contract-driven: a contract defines TypeIds + wire codecs + domain surface.
- */
 export class ProtocolNotConnectedError extends Error {
   constructor() {
     super('Not connected');
@@ -27,15 +22,19 @@ export class RpcError extends Error {
 }
 
 function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
-  const call: RpcHelpers['call'] = async <Req, Res>(typeId: number, payload: Req): Promise<Res> => {
+  const call: RpcHelpers['call'] = async <Req extends JsonValue, Res>(
+    typeId: number,
+    payload: Req,
+    decodeResponse: RpcDecoder<Res>,
+  ): Promise<Res> => {
     const transport = protocol.rpcTransport();
     if (!transport) throw new ProtocolNotConnectedError();
 
     let response: RpcResult<Res>;
     try {
-      response = await transport.call(typeId, payload as JsonValue, (value) => value as Res);
-    } catch (err) {
-      throw new RpcError({ typeId, code: -1, message: 'RPC transport error', cause: err });
+      response = await transport.call(typeId, payload, decodeResponse);
+    } catch (error) {
+      throw new RpcError({ typeId, code: -1, message: 'RPC transport or response decode error', cause: error });
     }
 
     if (!response.ok) {
@@ -46,11 +45,10 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
         cause: response.error,
       });
     }
-
     return response.payload;
   };
 
-  const runNotify = async <Req>(
+  const runNotify = async <Req extends JsonValue>(
     typeId: number,
     payload: Req,
     options: { detached: 'throw' | 'ignore' },
@@ -61,30 +59,31 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
       throw new ProtocolNotConnectedError();
     }
     try {
-      await transport.notify(typeId, payload as JsonValue);
-    } catch (err) {
-      throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: err });
+      await transport.notify(typeId, payload);
+    } catch (error) {
+      throw new RpcError({ typeId, code: -1, message: 'RPC notify transport error', cause: error });
     }
   };
 
-  const notify: RpcHelpers['notify'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+  const notify: RpcHelpers['notify'] = async <Req extends JsonValue>(typeId: number, payload: Req): Promise<void> => {
     await runNotify(typeId, payload, { detached: 'throw' });
   };
 
-  const notifyBestEffort: RpcHelpers['notifyBestEffort'] = async <Req>(typeId: number, payload: Req): Promise<void> => {
+  const notifyBestEffort: RpcHelpers['notifyBestEffort'] = async <Req extends JsonValue>(
+    typeId: number,
+    payload: Req,
+  ): Promise<void> => {
     await runNotify(typeId, payload, { detached: 'ignore' });
   };
 
   const onNotify: RpcHelpers['onNotify'] = <Payload>(
     typeId: number,
-    handler: (payload: Payload) => void
+    decodePayload: RpcDecoder<Payload>,
+    handler: (payload: Payload) => void | Promise<void>,
   ) => {
     const transport = protocol.rpcTransport();
     if (!transport) return () => {};
-
-    return transport.onNotify(typeId, (payload) => payload as Payload, (payload) => {
-      handler(payload);
-    });
+    return transport.onNotify(typeId, decodePayload, handler);
   };
 
   return { call, notify, notifyBestEffort, onNotify };
@@ -97,10 +96,7 @@ export type UseRpcOptions<TApi extends object> = {
 export function useRpc<TApi extends object = Record<string, never>>(options?: UseRpcOptions<TApi>): TApi & RpcHelpers {
   const protocol = useProtocol();
   const contract = (options?.contract ?? protocol.contract()) as ProtocolContract<TApi>;
-
   const helpers = createHelpers(protocol);
   const api = contract.createRpc(helpers);
-
-  // Provide both: domain API + raw helpers.
   return Object.assign(api, helpers);
 }

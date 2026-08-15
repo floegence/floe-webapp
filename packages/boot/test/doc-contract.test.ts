@@ -14,13 +14,15 @@ describe('boot docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('createControlplaneArtifactSource');
-    expect(doc).toContain('@floegence/flowersec-core@2.4.1');
-    expect(doc).toContain('sole owner of connection and retry state');
+    expect(doc).toContain('@floegence/flowersec-core@2.5.0');
+    expect(doc).toContain('sole retry/backoff owner');
     expect(doc).toContain('HTTPS is required by default');
     expect(doc).toContain('allowLoopbackHTTP: true');
     expect(doc).toContain('createProxyRuntimeTunnelConnectionConfig');
     expect(doc).toContain('@floegence/flowersec-core/proxy');
-    expect(doc).toContain('No option permits reuse of a consumed artifact lease.');
+    expect(doc).toContain('No option permits reuse of a consumed artifact Lease.');
+    expect(doc).toContain('materializeIsolatedOneShot');
+    expect(doc).toContain('ConnectedAcquisition');
     expect(doc).not.toContain('allowAutoReconnect');
     expect(doc).not.toContain('createFixedArtifactSource');
   });

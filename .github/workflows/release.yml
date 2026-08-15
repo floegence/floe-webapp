@@ -45,8 +45,15 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Require a release tag ref
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != refs/tags/v*.*.* ]]; then
+            echo "Release publication requires a vX.Y.Z tag ref"
+            exit 1
+          fi
+
       - name: Validate tag matches package versions
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           set -euo pipefail
           TAG_VERSION="${GITHUB_REF_NAME#v}"
@@ -124,6 +131,11 @@ jobs:
         working-directory: packages/core
         run: npx -y npm@11.5.1 publish --access public
 
+      - name: Publish @floegence/floe-webapp-boot (npm Trusted Publisher)
+        if: steps.boot_exists.outputs.exists != 'true'
+        working-directory: packages/boot
+        run: npx -y npm@11.5.1 publish --access public
+
       - name: Publish @floegence/floe-webapp-protocol (npm Trusted Publisher)
         if: steps.protocol_exists.outputs.exists != 'true'
         working-directory: packages/protocol
@@ -134,13 +146,13 @@ jobs:
         working-directory: packages/init
         run: npx -y npm@11.5.1 publish --access public
 
-      - name: Publish @floegence/floe-webapp-boot (npm Trusted Publisher)
-        if: steps.boot_exists.outputs.exists != 'true'
-        working-directory: packages/boot
-        run: npx -y npm@11.5.1 publish --access public
+      - name: Verify npm metadata and tarball readback
+        run: node scripts/verify-npm-release-package.mjs
+
+      - name: Verify clean consumer and Flowersec singleton
+        run: node scripts/verify-npm-release-consumer.mjs
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes

@@ -25,12 +25,47 @@ afterEach(() => {
   createConnectionController.mockClear();
 });
 
-describe('ProtocolProvider reconnect semantics', () => {
-  it('requires a source for the first reconnect', async () => {
-    let result!: Promise<void>;
-    function Harness() { result = useProtocol().reconnect(); return null; }
-    createRoot(() => { createComponent(ProtocolProvider, { contract, get children() { return createComponent(Harness, {}); } }); });
-    await expect(result).rejects.toThrow(/requires a config/u);
+describe('ProtocolProvider controller ownership', () => {
+  it('does not rebuild a waiting or connected controller for ordinary connect calls', async () => {
+    const config = {
+      source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) },
+    } as never;
+    let connect!: (config: typeof config) => Promise<void>;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, { contract, get children() {
+        return createComponent(() => { connect = useProtocol().connect; return null; }, {});
+      } });
+    });
+    await connect(config);
+    await connect(config);
+    expect(createConnectionController).toHaveBeenCalledOnce();
+    dispose();
+  });
+
+  it('requires explicit replacement before changing the source identity', async () => {
+    const first = { source: { acquire: async () => ({ kind: 'failure', code: 'one', disposition: { kind: 'terminal' } }) } } as never;
+    const second = { source: { acquire: async () => ({ kind: 'failure', code: 'two', disposition: { kind: 'terminal' } }) } } as never;
+    let connect!: (config: typeof first) => Promise<void>;
+    let replace!: (config: typeof second) => Promise<void>;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, { contract, get children() {
+        return createComponent(() => {
+          const protocol = useProtocol();
+          connect = protocol.connect;
+          replace = protocol.replaceConnection;
+          return null;
+        }, {});
+      } });
+    });
+    await connect(first);
+    await expect(connect(second)).rejects.toThrow(/replaceConnection/u);
+    await replace(second);
+    expect(createConnectionController).toHaveBeenCalledTimes(2);
+    dispose();
   });
 
   it('disconnects and closes the controller', async () => {

@@ -21,9 +21,12 @@ vi.mock('@floegence/flowersec-core/browser', () => ({
 const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
 describe('ProtocolProvider connection controller contract', () => {
-  it('passes source and controller options to Flowersec 2.4.1', async () => {
+  it('passes browser controller options, including connectTimeoutMs, to Flowersec 2.5.0', async () => {
     const browser = await import('@floegence/flowersec-core/browser');
-    const config: ConnectConfig = { source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) } as never, controller: { maximumAttempts: 1 } };
+    const config: ConnectConfig = {
+      source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) } as never,
+      controller: { maximumAttempts: 1, connectTimeoutMs: 2500 },
+    };
     let pending!: Promise<void>;
     function Harness() { pending = useProtocol().connect(config); return null; }
     let dispose!: () => void;

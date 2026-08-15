@@ -1,12 +1,16 @@
 // Protocol package entry point
 
-export { ProtocolProvider, useProtocol, type ConnectConfig } from './client';
-export { useRpc, RpcError, ProtocolNotConnectedError } from './rpc';
 export {
-  ControlplaneRequestError,
-  requestConnectArtifact,
-  requestEntryConnectArtifact,
-  type RequestConnectArtifactInput,
-  type RequestEntryConnectArtifactInput,
-} from './controlplane';
-export type { ProtocolContract, RpcClientLike, RpcHelpers } from './contract';
+  ConnectionReplacementRequiredError,
+  ProtocolProvider,
+  useProtocol,
+  type ConnectConfig,
+  type ConnectionLifecycle,
+} from './client';
+export { useRpc, RpcError, ProtocolNotConnectedError } from './rpc';
+export type {
+  ProtocolContract,
+  RpcClientLike,
+  RpcDecoder,
+  RpcHelpers,
+} from './contract';

@@ -1,9 +1,17 @@
-import {
-  createArtifactLease,
-  parseArtifact,
-  type ArtifactSource,
-  type JsonObject,
+import type {
+  ArtifactSource,
+  JsonObject,
+  RetryDisposition,
 } from '@floegence/flowersec-core';
+import {
+  AcquisitionError,
+  materializeAcquisitionForSource,
+  registerAcquisitionSource,
+  type CommitSpend,
+  type ValidateSpendBinding,
+} from './acquisition';
+
+const BUSINESS_CODE_PATTERN = /^[a-z][a-z0-9_]{0,63}$/u;
 
 export type ControlplaneArtifactSourceOptions = Readonly<{
   baseUrl: string;
@@ -13,19 +21,30 @@ export type ControlplaneArtifactSourceOptions = Readonly<{
   entryTicket?: string;
   allowLoopbackHTTP?: boolean;
   fetch?: typeof globalThis.fetch;
+  commitSpend: CommitSpend;
+  validateSpendBinding: ValidateSpendBinding;
+  retryableBusinessCodes?: readonly string[];
 }>;
 
 export class ControlplaneRequestError extends Error {
-  readonly status: number;
-  readonly code: string;
-
-  constructor(status: number, code: string, message: string) {
-    super(message);
+  constructor(readonly status: number, readonly code: string) {
+    super(`Floe controlplane request failed (code=${code})`);
     this.name = 'ControlplaneRequestError';
-    this.status = status;
-    this.code = code;
   }
 }
+
+export type ControlplaneFailureInput = Readonly<{
+  status: number;
+  code: string;
+  retryAfter?: string | null;
+  retryableBusinessCodes?: readonly string[];
+  nowUnixMilliseconds?: number;
+}>;
+
+export type ClassifiedControlplaneFailure = Readonly<{
+  code: string;
+  disposition: RetryDisposition;
+}>;
 
 function isLoopbackHostname(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
@@ -33,9 +52,14 @@ function isLoopbackHostname(hostname: string): boolean {
 }
 
 function resolveBaseUrl(value: string, allowLoopbackHTTP: boolean): URL {
-  const url = new URL(value);
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
+  }
   if (url.protocol !== 'https:' && !(allowLoopbackHTTP && url.protocol === 'http:' && isLoopbackHostname(url.hostname))) {
-    throw new ControlplaneRequestError(0, 'transport_policy_denied', 'controlplane transport policy denied');
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
   }
   url.pathname = url.pathname.replace(/\/+$/u, '');
   return url;
@@ -46,19 +70,38 @@ function artifactEndpoint(baseUrl: URL, entryTicket?: string): string {
   return new URL(`${baseUrl.pathname}${suffix}`, baseUrl).toString();
 }
 
-function asArtifactEnvelope(value: unknown): string {
-  if (!value || typeof value !== 'object' || !('connect_artifact' in value)) {
-    throw new ControlplaneRequestError(200, 'invalid_request', 'Invalid controlplane response: missing `connect_artifact`');
+export function classifyControlplaneFailure(input: ControlplaneFailureInput): ClassifiedControlplaneFailure {
+  if (!BUSINESS_CODE_PATTERN.test(input.code)) {
+    return Object.freeze({ code: 'invalid_error_code', disposition: Object.freeze({ kind: 'terminal' }) });
   }
-  return JSON.stringify((value as { connect_artifact: unknown }).connect_artifact);
+  const retryableCodes = new Set(input.retryableBusinessCodes ?? []);
+  if (retryableCodes.has(input.code)) {
+    return Object.freeze({ code: input.code, disposition: Object.freeze({ kind: 'retryable' }) });
+  }
+  if (input.status === 429) {
+    const notBefore = parseRetryAfter(input.retryAfter, input.nowUnixMilliseconds ?? Date.now());
+    return Object.freeze({
+      code: input.code,
+      disposition: notBefore === undefined
+        ? Object.freeze({ kind: 'retryable' })
+        : Object.freeze({ kind: 'retry_after', notBeforeUnixMilliseconds: notBefore }),
+    });
+  }
+  if (input.status === 408 || input.status === 425 || input.status >= 500) {
+    return Object.freeze({ code: input.code, disposition: Object.freeze({ kind: 'retryable' }) });
+  }
+  return Object.freeze({ code: input.code, disposition: Object.freeze({ kind: 'terminal' }) });
 }
 
 export function createControlplaneArtifactSource(options: ControlplaneArtifactSourceOptions): ArtifactSource {
+  if (typeof options.commitSpend !== 'function') throw new TypeError('commitSpend is required');
+  if (typeof options.validateSpendBinding !== 'function') throw new TypeError('validateSpendBinding is required');
   const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== 'function') throw new TypeError('fetch is required');
   const baseUrl = resolveBaseUrl(options.baseUrl, options.allowLoopbackHTTP === true);
   const endpoint = artifactEndpoint(baseUrl, options.entryTicket);
 
-  return {
+  const source: ArtifactSource = {
     acquire: async ({ signal }) => {
       try {
         const body: Record<string, unknown> = {
@@ -81,27 +124,77 @@ export function createControlplaneArtifactSource(options: ControlplaneArtifactSo
           signal,
         });
         if (!response.ok) {
-          let code = 'request_failed';
-          try {
-            const errorBody = (await response.json()) as { error?: { code?: string } };
-            code = errorBody.error?.code ?? code;
-          } catch {
-            // Preserve the stable HTTP status when the response is not JSON.
-          }
-          throw new ControlplaneRequestError(response.status, code, `controlplane request failed: ${response.status}`);
+          const code = await responseErrorCode(response);
+          const failure = classifyControlplaneFailure({
+            status: response.status,
+            code,
+            retryAfter: response.headers.get('retry-after'),
+            retryableBusinessCodes: options.retryableBusinessCodes,
+          });
+          return { kind: 'failure' as const, ...failure };
         }
-        const artifact = parseArtifact(asArtifactEnvelope(await response.json()));
-        return {
-          kind: 'lease' as const,
-          lease: createArtifactLease(artifact, async () => undefined),
-        };
+        let envelope: unknown;
+        try {
+          envelope = await response.json() as unknown;
+        } catch {
+          return terminalFailure('invalid_controlplane_response');
+        }
+        const lease = await materializeAcquisitionForSource(source, envelope, {
+          commitSpend: options.commitSpend,
+          validateSpendBinding: options.validateSpendBinding,
+          expectedConsumer: 'trusted',
+        });
+        return Object.freeze({ kind: 'lease' as const, lease });
       } catch (error) {
+        if (signal.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
-        if (error instanceof ControlplaneRequestError) {
-          return { kind: 'failure' as const, code: error.code, disposition: { kind: 'retryable' as const } };
-        }
-        throw error;
+        if (error instanceof AcquisitionError) return terminalFailure(error.code);
+        if (error instanceof ControlplaneRequestError) return terminalFailure(error.code);
+        return Object.freeze({
+          kind: 'failure' as const,
+          code: 'network_error',
+          disposition: Object.freeze({ kind: 'retryable' as const }),
+        });
       }
     },
   };
+  registerAcquisitionSource(source);
+  return source;
+}
+
+async function responseErrorCode(response: Response): Promise<string> {
+  try {
+    const body = await response.json() as unknown;
+    if (body !== null && typeof body === 'object' && !Array.isArray(body)) {
+      const error = (body as Record<string, unknown>).error;
+      if (error !== null && typeof error === 'object' && !Array.isArray(error)) {
+        const code = (error as Record<string, unknown>).code;
+        if (typeof code === 'string') return code;
+      }
+    }
+  } catch {
+    // The status remains authoritative when the body is not valid JSON.
+  }
+  return 'request_failed';
+}
+
+function parseRetryAfter(value: string | null | undefined, now: number): number | undefined {
+  if (value === null || value === undefined) return undefined;
+  const trimmed = value.trim();
+  if (/^\d+$/u.test(trimmed)) {
+    const seconds = Number(trimmed);
+    if (!Number.isSafeInteger(seconds)) return undefined;
+    const result = now + seconds * 1_000;
+    return Number.isSafeInteger(result) && result > now ? result : undefined;
+  }
+  const parsed = Date.parse(trimmed);
+  return Number.isSafeInteger(parsed) && parsed > now ? parsed : undefined;
+}
+
+function terminalFailure(code: string): ClassifiedControlplaneFailure & Readonly<{ kind: 'failure' }> {
+  return Object.freeze({
+    kind: 'failure',
+    code: BUSINESS_CODE_PATTERN.test(code) ? code : 'invalid_error_code',
+    disposition: Object.freeze({ kind: 'terminal' }),
+  });
 }
