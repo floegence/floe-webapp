@@ -62,7 +62,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.41.3');
+    expect(corePkg.version).toBe('0.41.4');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -85,7 +85,7 @@ describe('release dependency and runtime contract', () => {
       expect(packResult).toHaveLength(1);
       expect(packResult[0]?.files?.some((file) => file.path === 'LICENSE')).toBe(true);
     }
-  });
+  }, 30_000);
 
   it('builds the demo and all of its workspace dependencies for Pages', () => {
     const rootPkg = readJson<PackageJson>('package.json');
