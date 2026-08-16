@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const packages = [
@@ -11,28 +13,53 @@ const packages = [
 ];
 const attempts = 12;
 const delayMs = 5_000;
+const expectedLicense = 'MIT';
+const expectedLicenseText = readFileSync('LICENSE', 'utf8');
 
-const packageVersions = new Map(packages.map((name) => {
-  const packagePath = name.split('/').at(-1);
-  const manifest = JSON.parse(readFileSync(`packages/${packagePath === 'floe-webapp-core' ? 'core' : packagePath === 'floe-webapp-boot' ? 'boot' : packagePath === 'floe-webapp-protocol' ? 'protocol' : 'init'}/package.json`, 'utf8'));
-  return [name, manifest.version];
-}));
+const packageVersions = new Map(
+  packages.map((name) => {
+    const packagePath = name.split('/').at(-1);
+    const manifest = JSON.parse(
+      readFileSync(
+        `packages/${packagePath === 'floe-webapp-core' ? 'core' : packagePath === 'floe-webapp-boot' ? 'boot' : packagePath === 'floe-webapp-protocol' ? 'protocol' : 'init'}/package.json`,
+        'utf8'
+      )
+    );
+    return [name, manifest.version];
+  })
+);
 
 for (const name of packages) {
   const version = packageVersions.get(name);
   const metadata = await retry(async () => {
-    const response = await globalThis.fetch(`https://registry.npmjs.org/${encodeURIComponent(name).replace('%2F', '/')}/${version}`);
+    const response = await globalThis.fetch(
+      `https://registry.npmjs.org/${encodeURIComponent(name).replace('%2F', '/')}/${version}`
+    );
     if (!response.ok) throw new Error(`registry returned ${response.status}`);
     return await response.json();
   });
-  if (metadata.version !== version || typeof metadata.dist?.tarball !== 'string' || typeof metadata.dist?.integrity !== 'string') {
+  if (
+    metadata.version !== version ||
+    typeof metadata.dist?.tarball !== 'string' ||
+    typeof metadata.dist?.integrity !== 'string'
+  ) {
     throw new Error(`registry metadata mismatch for ${name}@${version}`);
+  }
+  if (metadata.license !== expectedLicense) {
+    throw new Error(`registry license mismatch for ${name}@${version}`);
   }
   const tarballResponse = await globalThis.fetch(metadata.dist.tarball);
   if (!tarballResponse.ok) throw new Error(`tarball readback failed for ${name}@${version}`);
   const bytes = new Uint8Array(await tarballResponse.arrayBuffer());
   const digest = createHash('sha512').update(bytes).digest('base64');
-  if (metadata.dist.integrity !== `sha512-${digest}`) throw new Error(`tarball integrity mismatch for ${name}@${version}`);
+  if (metadata.dist.integrity !== `sha512-${digest}`)
+    throw new Error(`tarball integrity mismatch for ${name}@${version}`);
+  const packagedLicense = execFileSync('tar', ['-xOzf', '-', 'package/LICENSE'], {
+    input: Buffer.from(bytes),
+    encoding: 'utf8',
+  });
+  if (packagedLicense !== expectedLicenseText)
+    throw new Error(`tarball license mismatch for ${name}@${version}`);
   console.log(`verified ${name}@${version}`);
 }
 
@@ -43,7 +70,8 @@ async function retry(operation) {
       return await operation();
     } catch (error) {
       lastError = error;
-    if (attempt < attempts) await new Promise((resolve) => globalThis.setTimeout(resolve, delayMs));
+      if (attempt < attempts)
+        await new Promise((resolve) => globalThis.setTimeout(resolve, delayMs));
     }
   }
   throw lastError;

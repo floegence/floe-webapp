@@ -45,5 +45,5 @@ function walk(directory) {
 walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1) throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '2.5.1') throw new Error(`expected Flowersec 2.5.1, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '2.5.2') throw new Error(`expected Flowersec 2.5.2, found ${flowersecManifest.version}`);
 console.log(`verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`);

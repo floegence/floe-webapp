@@ -66,32 +66,48 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   let operation: Promise<void> | null = null;
   let lifecycleGeneration = 0;
 
-  const publish = (snapshot: ConnectionSnapshot) => {
-    const config = currentConfig;
-    if (config === null) return;
+  const ownsConnection = (
+    owner: ConnectionController,
+    config: ConnectConfig,
+    generation: number
+  ): boolean =>
+    controller === owner && currentConfig === config && lifecycleGeneration === generation;
+
+  const publish = (
+    snapshot: ConnectionSnapshot,
+    owner: ConnectionController,
+    config: ConnectConfig,
+    generation: number
+  ) => {
+    if (!ownsConnection(owner, config, generation)) return;
     try {
       config.lifecycle?.synchronize(snapshot);
+      if (!ownsConnection(owner, config, generation)) return;
       setState({
         snapshot,
         error: errorFromSnapshot(snapshot),
       });
     } catch (error) {
-      const normalized = error instanceof Error ? error : new Error('Floe connection binding failed');
+      const normalized =
+        error instanceof Error ? error : new Error('Floe connection binding failed');
       config.lifecycle?.dispose();
-      setState({
-        snapshot: Object.freeze({
-          state: 'failed',
-          attempt: snapshot.attempt,
-          failure: Object.freeze({ phase: 'artifact', code: 'connected_acquisition_failed' }),
-          retryDisposition: Object.freeze({ kind: 'terminal' }),
-        }),
-        error: normalized,
-      });
-      void controller?.close();
+      if (ownsConnection(owner, config, generation)) {
+        setState({
+          snapshot: Object.freeze({
+            state: 'failed',
+            attempt: snapshot.attempt,
+            failure: Object.freeze({ phase: 'artifact', code: 'connected_acquisition_failed' }),
+            retryDisposition: Object.freeze({ kind: 'terminal' }),
+          }),
+          error: normalized,
+        });
+      }
+      void owner.close();
     }
   };
 
   const closeController = async () => {
+    const generation = lifecycleGeneration;
     unsubscribe?.();
     unsubscribe = null;
     const activeController = controller;
@@ -100,7 +116,9 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     currentConfig = null;
     activeConfig?.lifecycle?.dispose();
     if (activeController !== null) await activeController.close();
-    setState({ snapshot: IDLE_SNAPSHOT, error: null });
+    if (generation === lifecycleGeneration && controller === null && currentConfig === null) {
+      setState({ snapshot: IDLE_SNAPSHOT, error: null });
+    }
   };
 
   const start = async (config: ConnectConfig) => {
@@ -110,13 +128,19 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     const nextController = createConnectionController(config.source, config.controller);
     currentConfig = config;
     controller = nextController;
-    unsubscribe = nextController.subscribe(publish);
+    unsubscribe = nextController.subscribe((snapshot) =>
+      publish(snapshot, nextController, config, generation)
+    );
     nextController.start();
     await nextController.waitForSession();
   };
 
   const connect = async (config: ConnectConfig) => {
-    if (controller !== null && currentConfig !== null && !sameConnectionConfig(currentConfig, config)) {
+    if (
+      controller !== null &&
+      currentConfig !== null &&
+      !sameConnectionConfig(currentConfig, config)
+    ) {
       throw new ConnectionReplacementRequiredError();
     }
     if (operation !== null) return operation;
@@ -174,7 +198,12 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     void controller?.close();
   });
 
-  return createComponent(ProtocolContext.Provider, { value, get children() { return props.children; } });
+  return createComponent(ProtocolContext.Provider, {
+    value,
+    get children() {
+      return props.children;
+    },
+  });
 }
 
 export function useProtocol(): ProtocolContextValue {
@@ -184,7 +213,11 @@ export function useProtocol(): ProtocolContextValue {
 }
 
 function sameConnectionConfig(left: ConnectConfig, right: ConnectConfig): boolean {
-  return left.source === right.source && left.controller === right.controller && left.lifecycle === right.lifecycle;
+  return (
+    left.source === right.source &&
+    left.controller === right.controller &&
+    left.lifecycle === right.lifecycle
+  );
 }
 
 function errorFromSnapshot(snapshot: ConnectionSnapshot): Error | null {

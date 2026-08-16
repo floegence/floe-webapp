@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -23,6 +24,7 @@ function readJson<T>(path: string): T {
 
 type PackageJson = {
   version?: string;
+  license?: string;
   engines?: Record<string, string>;
   packageManager?: string;
   scripts?: Record<string, string>;
@@ -30,7 +32,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '2.5.1';
+  const flowersecVersion = '2.5.2';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');
@@ -60,10 +62,29 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.41.2');
+    expect(corePkg.version).toBe('0.41.3');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
+  });
+
+  it('ships the repository MIT license in every published package', () => {
+    const rootLicense = readText('LICENSE');
+    for (const packageDir of ['core', 'boot', 'protocol', 'init']) {
+      const packagePath = `packages/${packageDir}`;
+      const manifest = readJson<PackageJson>(`${packagePath}/package.json`);
+      expect(manifest.license).toBe('MIT');
+      expect(readText(`${packagePath}/LICENSE`)).toBe(rootLicense);
+
+      const packResult = JSON.parse(
+        execFileSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], {
+          cwd: join(repoRoot(), packagePath),
+          encoding: 'utf-8',
+        })
+      ) as Array<{ files?: Array<{ path?: string }> }>;
+      expect(packResult).toHaveLength(1);
+      expect(packResult[0]?.files?.some((file) => file.path === 'LICENSE')).toBe(true);
+    }
   });
 
   it('builds the demo and all of its workspace dependencies for Pages', () => {
@@ -97,14 +118,18 @@ describe('release dependency and runtime contract', () => {
     expect(lockfile).not.toContain(
       `'@floegence/flowersec-core':\n        specifier: ${flowersecVersion}\n        version: link:`
     );
-    expect(lockfile).not.toMatch(/(?:@floegence\/flowersec-core|@floegence\+flowersec-core)@0\.(?:25|26)\./u);
+    expect(lockfile).not.toMatch(
+      /(?:@floegence\/flowersec-core|@floegence\+flowersec-core)@0\.(?:25|26)\./u
+    );
     expect(release).toContain('scripts/verify-npm-release-package.mjs');
     expect(release).toContain('scripts/verify-npm-release-consumer.mjs');
     expect(release).toContain('Require a release tag ref');
     const consumerSmoke = readText('scripts/verify-npm-release-consumer.mjs');
     expect(consumerSmoke).toContain("'solid-js@1.9.11'");
     expect(consumerSmoke).toContain("import.meta.resolve('${packageNames[0]}')");
-    expect(consumerSmoke).toContain("copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url)");
+    expect(consumerSmoke).toContain(
+      "copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url)"
+    );
     const runtimeConsumerSmoke = readText('scripts/verify-npm-release-runtime-consumer.mjs');
     expect(runtimeConsumerSmoke).toContain("from '@floegence/flowersec-core/node'");
     expect(runtimeConsumerSmoke).toContain("from '@floegence/floe-webapp-boot'");

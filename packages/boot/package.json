@@ -1,6 +1,7 @@
 {
   "name": "@floegence/floe-webapp-boot",
-  "version": "0.41.2",
+  "version": "0.41.3",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -34,7 +35,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@floegence/flowersec-core": "2.5.1"
+    "@floegence/flowersec-core": "2.5.2"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

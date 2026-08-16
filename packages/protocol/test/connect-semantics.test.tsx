@@ -12,7 +12,7 @@ const { close, createConnectionController } = vi.hoisted(() => {
       state: 'idle',
       subscribe: () => () => {},
       start: () => {},
-      waitForSession: async () => ({} as never),
+      waitForSession: async () => ({}) as never,
       close,
     })),
   };
@@ -28,15 +28,23 @@ afterEach(() => {
 describe('ProtocolProvider controller ownership', () => {
   it('does not rebuild a waiting or connected controller for ordinary connect calls', async () => {
     const config = {
-      source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) },
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }),
+      },
     } as never;
     let connect!: (config: typeof config) => Promise<void>;
     let dispose!: () => void;
     createRoot((rootDispose) => {
       dispose = rootDispose;
-      createComponent(ProtocolProvider, { contract, get children() {
-        return createComponent(() => { connect = useProtocol().connect; return null; }, {});
-      } });
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(() => {
+            connect = useProtocol().connect;
+            return null;
+          }, {});
+        },
+      });
     });
     await connect(config);
     await connect(config);
@@ -45,21 +53,32 @@ describe('ProtocolProvider controller ownership', () => {
   });
 
   it('requires explicit replacement before changing the source identity', async () => {
-    const first = { source: { acquire: async () => ({ kind: 'failure', code: 'one', disposition: { kind: 'terminal' } }) } } as never;
-    const second = { source: { acquire: async () => ({ kind: 'failure', code: 'two', disposition: { kind: 'terminal' } }) } } as never;
+    const first = {
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'one', disposition: { kind: 'terminal' } }),
+      },
+    } as never;
+    const second = {
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'two', disposition: { kind: 'terminal' } }),
+      },
+    } as never;
     let connect!: (config: typeof first) => Promise<void>;
     let replace!: (config: typeof second) => Promise<void>;
     let dispose!: () => void;
     createRoot((rootDispose) => {
       dispose = rootDispose;
-      createComponent(ProtocolProvider, { contract, get children() {
-        return createComponent(() => {
-          const protocol = useProtocol();
-          connect = protocol.connect;
-          replace = protocol.replaceConnection;
-          return null;
-        }, {});
-      } });
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(() => {
+            const protocol = useProtocol();
+            connect = protocol.connect;
+            replace = protocol.replaceConnection;
+            return null;
+          }, {});
+        },
+      });
     });
     await connect(first);
     await expect(connect(second)).rejects.toThrow(/replaceConnection/u);
@@ -70,7 +89,9 @@ describe('ProtocolProvider controller ownership', () => {
 
   it('disconnects and closes the controller', async () => {
     const config = {
-      source: { acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }) },
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }),
+      },
     } as never;
     let connect!: Promise<void>;
     let disconnect!: () => void;
@@ -83,12 +104,83 @@ describe('ProtocolProvider controller ownership', () => {
     let dispose!: () => void;
     createRoot((rootDispose) => {
       dispose = rootDispose;
-      createComponent(ProtocolProvider, { contract, get children() { return createComponent(Harness, {}); } });
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(Harness, {});
+        },
+      });
     });
     await connect;
 
     disconnect();
     await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+    dispose();
+  });
+
+  it('does not publish idle when a closing controller no longer owns the connection', async () => {
+    let finishFirstClose!: () => void;
+    const firstClosePending = new Promise<void>((resolve) => {
+      finishFirstClose = resolve;
+    });
+    const firstController = {
+      state: 'connected' as const,
+      subscribe: (listener: (snapshot: never) => void) => {
+        listener({ state: 'connected', attempt: 1, currentSession: {} } as never);
+        return () => {};
+      },
+      start: () => {},
+      waitForSession: async () => ({}) as never,
+      close: vi.fn(() => firstClosePending),
+    };
+    const secondController = {
+      state: 'connected' as const,
+      subscribe: (listener: (snapshot: never) => void) => {
+        listener({ state: 'connected', attempt: 1, currentSession: {} } as never);
+        return () => {};
+      },
+      start: () => {},
+      waitForSession: async () => ({}) as never,
+      close: vi.fn(async () => {}),
+    };
+    createConnectionController
+      .mockImplementationOnce(() => firstController)
+      .mockImplementationOnce(() => secondController);
+
+    const config = {
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }),
+      },
+    } as never;
+    let connect!: (config: typeof config) => Promise<void>;
+    let disconnect!: () => void;
+    let status!: () => string;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(() => {
+            const protocol = useProtocol();
+            connect = protocol.connect;
+            disconnect = protocol.disconnect;
+            status = protocol.status;
+            return null;
+          }, {});
+        },
+      });
+    });
+
+    await connect(config);
+    disconnect();
+    await connect(config);
+    expect(status()).toBe('connected');
+
+    finishFirstClose();
+    await firstClosePending;
+    await vi.waitFor(() => expect(firstController.close).toHaveBeenCalledOnce());
+    expect(status()).toBe('connected');
     dispose();
   });
 });
