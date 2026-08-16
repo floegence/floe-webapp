@@ -96,8 +96,8 @@ function assertInitTemplates() {
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.41.1',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.41.1`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.41.2',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.41.2`
     );
   }
 
@@ -284,8 +284,8 @@ function main() {
   const initPkg = readJson('packages/init/package.json');
   assertSkillContract(corePkg);
   assert(
-    [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every((version) => version === '0.41.1'),
-    'Published Floe packages must all use version 0.41.1'
+    [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every((version) => version === '0.41.2'),
+    'Published Floe packages must all use version 0.41.2'
   );
 
   assert(corePkg.name === '@floegence/floe-webapp-core', '@floegence/floe-webapp-core package name mismatch');

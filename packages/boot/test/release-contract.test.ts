@@ -60,7 +60,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.41.1');
+    expect(corePkg.version).toBe('0.41.2');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -101,6 +101,14 @@ describe('release dependency and runtime contract', () => {
     expect(release).toContain('scripts/verify-npm-release-package.mjs');
     expect(release).toContain('scripts/verify-npm-release-consumer.mjs');
     expect(release).toContain('Require a release tag ref');
+    const consumerSmoke = readText('scripts/verify-npm-release-consumer.mjs');
+    expect(consumerSmoke).toContain("'solid-js@1.9.11'");
+    expect(consumerSmoke).toContain("import.meta.resolve('${packageNames[0]}')");
+    expect(consumerSmoke).toContain("copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url)");
+    const runtimeConsumerSmoke = readText('scripts/verify-npm-release-runtime-consumer.mjs');
+    expect(runtimeConsumerSmoke).toContain("from '@floegence/flowersec-core/node'");
+    expect(runtimeConsumerSmoke).toContain("from '@floegence/floe-webapp-boot'");
+    expect(runtimeConsumerSmoke).toContain("from '@floegence/floe-webapp-protocol'");
   });
 
   it('validates the frozen dependency graph before running the local quality gate', () => {
