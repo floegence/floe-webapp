@@ -50,7 +50,7 @@ const context = {
   validateTargetBinding: vi.fn(),
 };
 
-async function buildRawHandoff(): Promise<string> {
+async function buildRawHandoff(spendAppOrigin = context.appOrigin): Promise<string> {
   const artifact = 'opaque-artifact';
   const projection = JSON.stringify({
     scope: 'proxy.runtime',
@@ -73,7 +73,7 @@ async function buildRawHandoff(): Promise<string> {
       projection_digest_b64u: await digest(projection),
       launcher_origin: context.launcherOrigin,
       runtime_origin: context.runtimeOrigin,
-      app_origin: context.appOrigin,
+      app_origin: spendAppOrigin,
       consumer: 'isolated' as const,
       target_binding: { env_public_id: context.envPublicId },
       expires_at: '2099-01-01T00:00:00Z',
@@ -142,5 +142,16 @@ describe('isolated one-shot acquisition', () => {
     expect(navigate).toHaveBeenCalledOnce();
     expect(commitSpend).not.toHaveBeenCalled();
     expect(leases).toHaveLength(0);
+  });
+
+  it('preserves the isolated cross-binding failure contract', async () => {
+    const mod = await import('../src/index');
+    await expect(mod.materializeIsolatedOneShot({
+      rawHandoff: await buildRawHandoff('https://other-app.example.com'),
+      clearSensitiveLocation: () => true,
+      navigateToLauncher: vi.fn(),
+      validationContext: context,
+      commitSpend: vi.fn(async () => {}),
+    })).rejects.toMatchObject({ code: 'isolated_spend_binding_mismatch' });
   });
 });

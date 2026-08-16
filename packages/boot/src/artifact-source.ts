@@ -141,7 +141,13 @@ export function createControlplaneArtifactSource(options: ControlplaneArtifactSo
         }
         const lease = await materializeAcquisitionForSource(source, envelope, {
           commitSpend: options.commitSpend,
-          validateSpendBinding: options.validateSpendBinding,
+          validateSpendBinding: (binding) => {
+            try {
+              return options.validateSpendBinding(binding);
+            } catch {
+              throw new AcquisitionError('invalid_spend_binding');
+            }
+          },
           expectedConsumer: 'trusted',
         });
         return Object.freeze({ kind: 'lease' as const, lease });

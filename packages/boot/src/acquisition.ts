@@ -378,7 +378,7 @@ async function validateAcquisitionEnvelope(value: unknown, options: MaterializeO
   }
   const binding = freezeBindingView(spendScope);
   const customBindingIdentity = options.validateSpendBinding(binding);
-  if (customBindingIdentity !== undefined && (customBindingIdentity.trim() === '' || customBindingIdentity !== customBindingIdentity.trim())) {
+  if (customBindingIdentity !== undefined && (typeof customBindingIdentity !== 'string' || customBindingIdentity.trim() === '' || customBindingIdentity !== customBindingIdentity.trim())) {
     throw new AcquisitionError('invalid_spend_binding_identity');
   }
   return Object.freeze({

@@ -1,6 +1,6 @@
 # Protocol Integration
 
-The protocol package consumes the published Flowersec 2.5.0 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
+The protocol package consumes the published Flowersec 2.5.1 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
 
 ```tsx
 import { createControlplaneArtifactSource, createArtifactTunnelConnectionConfig } from '@floegence/floe-webapp-boot';
@@ -32,4 +32,4 @@ RPC helpers are decoder-first: `call(typeId, payload, decodeResponse)`, `notify(
 
 The source posts to `/v1/connect/artifact` or `/v1/connect/artifact/entry` and requires an exact acquisition envelope containing an opaque string `connect_artifact`, a `proxy.runtime@2` critical projection, digests, and a spend receipt. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set. There is no default or no-op spend callback.
 
-The package dependency is pinned to the published `@floegence/flowersec-core@2.5.0` package. Protocol does not expose a second control-plane fetch/decode facade; all acquisition imports come from `@floegence/floe-webapp-boot`.
+The package dependency is pinned to the published `@floegence/flowersec-core@2.5.1` package. Protocol does not expose a second control-plane fetch/decode facade; all acquisition imports come from `@floegence/floe-webapp-boot`.

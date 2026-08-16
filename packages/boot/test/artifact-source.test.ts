@@ -130,6 +130,40 @@ describe('boot artifact source', () => {
     await expect(badSource.acquire({ signal: new AbortController().signal })).resolves.toMatchObject({ kind: 'failure', code: 'invalid_critical_scope_projection' });
   });
 
+  it('treats host spend-binding rejection as a terminal acquisition failure', async () => {
+    leases.length = 0;
+    const mod = await import('../src/index');
+    const source = mod.createControlplaneArtifactSource({
+      baseUrl: 'https://cp.example.com',
+      endpointId: 'demo',
+      fetch: vi.fn(async () => new Response(JSON.stringify(await envelope()), { status: 200 })),
+      commitSpend: vi.fn(async () => {}),
+      validateSpendBinding: () => {
+        throw new Error('host binding details must not escape');
+      },
+    });
+
+    await expect(source.acquire({ signal: new AbortController().signal })).resolves.toEqual({
+      kind: 'failure',
+      code: 'invalid_spend_binding',
+      disposition: { kind: 'terminal' },
+    });
+    expect(leases).toHaveLength(0);
+
+    const invalidIdentitySource = mod.createControlplaneArtifactSource({
+      baseUrl: 'https://cp.example.com',
+      endpointId: 'demo',
+      fetch: vi.fn(async () => new Response(JSON.stringify(await envelope()), { status: 200 })),
+      commitSpend: vi.fn(async () => {}),
+      validateSpendBinding: () => 1 as never,
+    });
+    await expect(invalidIdentitySource.acquire({ signal: new AbortController().signal })).resolves.toMatchObject({
+      kind: 'failure',
+      code: 'invalid_spend_binding_identity',
+      disposition: { kind: 'terminal' },
+    });
+  });
+
   it('classifies HTTP policy and Retry-After without exposing response bodies', async () => {
     const mod = await import('../src/index');
     expect(mod.classifyControlplaneFailure({ status: 401, code: 'unauthorized' })).toEqual({ code: 'unauthorized', disposition: { kind: 'terminal' } });
