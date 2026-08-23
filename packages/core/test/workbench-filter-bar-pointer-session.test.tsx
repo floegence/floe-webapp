@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { splitProps, type JSX } from 'solid-js';
+import { createSignal, splitProps, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -548,6 +548,49 @@ describe('WorkbenchFilterBar pointer session', () => {
     );
     expect(action.draggable).toBe(false);
     expect(action.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps a Dock action anchor connected when its active state changes', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let activatedTrigger: HTMLButtonElement | undefined;
+
+    function Harness() {
+      const [active, setActive] = createSignal(false);
+      return (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          dockActions={[
+            {
+              id: 'plugins',
+              label: 'Plugins',
+              icon: () => <svg aria-hidden="true" />,
+              active: active(),
+              onActivate: (trigger) => {
+                activatedTrigger = trigger;
+                setActive(true);
+              },
+            },
+          ]}
+        />
+      );
+    }
+
+    dispose = render(() => <Harness />, host);
+    const trigger = host.querySelector<HTMLButtonElement>(
+      '[data-workbench-dock-action="plugins"]'
+    )!;
+
+    trigger.click();
+    await Promise.resolve();
+
+    expect(activatedTrigger).toBe(trigger);
+    expect(trigger.isConnected).toBe(true);
+    expect(host.querySelector('[data-workbench-dock-action="plugins"]')).toBe(trigger);
+    expect(trigger.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('owns an external pointer source through the same threshold, ghost, Dock target, and Escape cancellation contract', async () => {

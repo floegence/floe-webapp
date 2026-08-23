@@ -1,5 +1,6 @@
 import {
   For,
+  Index,
   Show,
   createEffect,
   createMemo,
@@ -927,19 +928,19 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             </div>
           </Show>
         </div>
-        <For each={actionItems()}>
+        <Index each={actionItems()}>
           {(action, index) => {
-            const slot = () => index() + 1;
+            const slot = () => index + 1;
             return (
               <DockAction
-                action={action}
+                action={action()}
                 hoverOffset={offsetFor(slot())}
                 onEnter={() => setHoveredIndex(slot())}
                 onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
               />
             );
           }}
-        </For>
+        </Index>
         <Show when={Boolean(dragState()?.kind === 'external' && dragState()?.moved)}>
           <span
             class="workbench-dock__external-placeholder"
