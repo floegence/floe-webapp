@@ -179,6 +179,12 @@ type DragState = DragStateBase &
   }>;
 
 const DRAG_THRESHOLD_PX = 5;
+const EXTERNAL_DRAG_CLICK_SUPPRESSION_EXPIRY_MS = 1000;
+
+type ExternalDragClickSuppression = Readonly<{
+  clear: () => void;
+  expire: () => void;
+}>;
 const DOCK_SELECTOR = '.workbench-dock';
 
 const WORKBENCH_MODE_ITEMS: readonly {
@@ -438,7 +444,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
 
   let dockRootEl: HTMLDivElement | undefined;
   let dragSession: PointerSessionController | undefined;
-  let clearExternalClickSuppression: (() => void) | undefined;
+  let externalClickSuppression: ExternalDragClickSuppression | undefined;
   let edgeAutoPan: WorkbenchEdgeAutoPanController | undefined;
   let edgeAutoPanViewport: WorkbenchViewport | null = null;
 
@@ -446,8 +452,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     edgeAutoPan?.stop();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     dragSession = undefined;
-    clearExternalClickSuppression?.();
-    clearExternalClickSuppression = undefined;
+    externalClickSuppression?.clear();
+    externalClickSuppression = undefined;
     const current = dragState();
     current?.stopInteraction();
     props.onDragPreviewChange?.(null);
@@ -547,6 +553,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     setDragState(null);
     dragSession = undefined;
 
+    if (current.kind === 'external' && current.moved) {
+      externalClickSuppression?.expire();
+    }
+
     if (isClick) {
       if (current.kind === 'external') return;
       if (!(current.trigger instanceof HTMLButtonElement)) return;
@@ -643,21 +653,26 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const moved =
           current.moved || Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX;
         if (current.kind === 'external' && moved && !current.moved) {
+          let timeout: number | undefined;
+          const clear = () => {
+            if (timeout !== undefined) window.clearTimeout(timeout);
+            current.trigger.removeEventListener('click', suppressClick, true);
+            window.removeEventListener('pointerdown', clearOnNextPointerDown, true);
+            if (externalClickSuppression?.clear === clear) externalClickSuppression = undefined;
+          };
           const suppressClick = (click: MouseEvent) => {
             click.preventDefault();
             click.stopImmediatePropagation();
-            clearExternalClickSuppression?.();
+            clear();
           };
-          const timeout = window.setTimeout(() => {
-            if (clearExternalClickSuppression === clear) clear();
-          }, 0);
-          const clear = () => {
-            window.clearTimeout(timeout);
-            current.trigger.removeEventListener('click', suppressClick, true);
-            if (clearExternalClickSuppression === clear) clearExternalClickSuppression = undefined;
+          const clearOnNextPointerDown = () => clear();
+          const expire = () => {
+            if (timeout !== undefined) window.clearTimeout(timeout);
+            timeout = window.setTimeout(clear, EXTERNAL_DRAG_CLICK_SUPPRESSION_EXPIRY_MS);
           };
-          current.trigger.addEventListener('click', suppressClick, { capture: true, once: true });
-          clearExternalClickSuppression = clear;
+          current.trigger.addEventListener('click', suppressClick, true);
+          window.addEventListener('pointerdown', clearOnNextPointerDown, true);
+          externalClickSuppression = { clear, expire };
         }
         const overDock = isOverDock(next.clientX, next.clientY, dockRootEl);
         const canvasFrame = current.canvasFrame;
@@ -747,8 +762,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
 
   const beginExternalDockDrag: WorkbenchExternalDockDragController['begin'] = (event, item) => {
     if (event.button !== 0 || !(event.currentTarget instanceof HTMLElement)) return;
-    clearExternalClickSuppression?.();
-    clearExternalClickSuppression = undefined;
+    externalClickSuppression?.clear();
+    externalClickSuppression = undefined;
     beginItemDragGesture(
       event,
       'external',

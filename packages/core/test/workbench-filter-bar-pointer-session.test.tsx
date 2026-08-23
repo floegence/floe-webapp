@@ -670,6 +670,7 @@ describe('WorkbenchFilterBar pointer session', () => {
       clientY: 20,
       buttons: 0,
     });
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     source.click();
 
     expect(onExternalDrop).toHaveBeenCalledTimes(1);
@@ -778,6 +779,8 @@ describe('WorkbenchFilterBar pointer session', () => {
     const source = document.createElement('button');
     document.body.append(host, source);
     const onExternalDrop = vi.fn();
+    const onSourceClick = vi.fn();
+    source.addEventListener('click', onSourceClick);
     let controller: Parameters<
       NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>
     >[0];
@@ -811,10 +814,16 @@ describe('WorkbenchFilterBar pointer session', () => {
     dispatchPointerEvent('pointerdown', source, { pointerId: 91, clientX: 10, clientY: 10 });
     dispatchPointerEvent('pointermove', document, { pointerId: 91, clientX: 44, clientY: 20 });
     finish();
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+    source.click();
 
     expect(onExternalDrop).not.toHaveBeenCalled();
+    expect(onSourceClick).not.toHaveBeenCalled();
     expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
     expect(host.querySelector('.workbench-dock__external-placeholder')).toBeNull();
+
+    source.click();
+    expect(onSourceClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders host Dock items as draggable items with click activation and canvas drop semantics', async () => {
