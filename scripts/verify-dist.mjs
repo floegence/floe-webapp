@@ -2,7 +2,10 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { auditInteractionUtilities, formatInteractionUtilityAudit } from '../packages/core/scripts/interactionUtilityAudit.mjs';
+import {
+  auditInteractionUtilities,
+  formatInteractionUtilityAudit,
+} from '../packages/core/scripts/interactionUtilityAudit.mjs';
 
 function assert(condition, message) {
   if (!condition) {
@@ -27,7 +30,10 @@ function assertFileEquals(pathA, pathB, hint = '') {
   const absB = resolve(process.cwd(), pathB);
   const contentA = readFileSync(absA, 'utf-8');
   const contentB = readFileSync(absB, 'utf-8');
-  assert(contentA === contentB, `Skill mirror mismatch: ${pathA} != ${pathB}${hint ? ` (${hint})` : ''}`);
+  assert(
+    contentA === contentB,
+    `Skill mirror mismatch: ${pathA} != ${pathB}${hint ? ` (${hint})` : ''}`
+  );
 }
 
 function assertFileContains(path, snippet) {
@@ -49,7 +55,9 @@ function assertIncludesAll(content, snippets, label) {
 }
 
 function packageExportSpecifiers(packageName, exportsMap) {
-  return Object.keys(exportsMap).map((key) => (key === '.' ? packageName : `${packageName}/${key.slice(2)}`));
+  return Object.keys(exportsMap).map((key) =>
+    key === '.' ? packageName : `${packageName}/${key.slice(2)}`
+  );
 }
 
 function walkFiles(rootDir) {
@@ -96,8 +104,8 @@ function assertInitTemplates() {
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.41.4',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.41.4`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.42.0',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.42.0`
     );
   }
 
@@ -109,7 +117,8 @@ function assertInitTemplates() {
     if (content.includes('@floegence/floe-webapp-core/styles')) cssViolations.push(file);
     if (content.includes('@floegence/floe-webapp-core/tailwind')) continue;
     // Only enforce index.css (templates may add other plain CSS files later).
-    if (file.endsWith('/src/index.css') || file.endsWith('\\src\\index.css')) cssViolations.push(file);
+    if (file.endsWith('/src/index.css') || file.endsWith('\\src\\index.css'))
+      cssViolations.push(file);
   }
 
   assert(
@@ -182,8 +191,13 @@ function assertSkillContract(corePkg) {
     playbookPath
   );
 
-  const exportedSpecifiers = packageExportSpecifiers('@floegence/floe-webapp-core', corePkg.exports);
-  const missingSpecifiers = exportedSpecifiers.filter((specifier) => !combined.includes(`\`${specifier}\``));
+  const exportedSpecifiers = packageExportSpecifiers(
+    '@floegence/floe-webapp-core',
+    corePkg.exports
+  );
+  const missingSpecifiers = exportedSpecifiers.filter(
+    (specifier) => !combined.includes(`\`${specifier}\``)
+  );
   assert(
     missingSpecifiers.length === 0,
     `Skill package must mention every current public @floegence/floe-webapp-core specifier. Missing: ${missingSpecifiers.join(', ')}`
@@ -246,7 +260,10 @@ function main() {
   assertFileContains('packages/core/dist/styles.css', '.floe-bottom-bar-companion');
   assertFileContains('packages/core/dist/layout.d.ts', "export * from './components/layout'");
   assertFileContains('packages/core/dist/components/layout/index.d.ts', 'BottomBarCompanion');
-  assertFileContains('packages/core/dist/components/layout/BottomBarCompanion.d.ts', 'BottomBarCompanionProps');
+  assertFileContains(
+    'packages/core/dist/components/layout/BottomBarCompanion.d.ts',
+    'BottomBarCompanionProps'
+  );
   assertFileExcludes('packages/core/dist/index.d.ts', ['BottomBarCompanion']);
   assertFileExcludes('packages/core/dist/ui.d.ts', ['BottomBarCompanion']);
   assertFileContains(
@@ -275,7 +292,10 @@ function main() {
     cssPath: 'packages/core/dist/floe.css',
     extensions: ['.js'],
   });
-  assert(distInteractionAudit.missing.length === 0, formatInteractionUtilityAudit(distInteractionAudit, 'dist interaction utility audit'));
+  assert(
+    distInteractionAudit.missing.length === 0,
+    formatInteractionUtilityAudit(distInteractionAudit, 'dist interaction utility audit')
+  );
 
   // Package entrypoints must point to dist
   const corePkg = readJson('packages/core/package.json');
@@ -284,13 +304,24 @@ function main() {
   const initPkg = readJson('packages/init/package.json');
   assertSkillContract(corePkg);
   assert(
-    [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every((version) => version === '0.41.4'),
-    'Published Floe packages must all use version 0.41.4'
+    [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
+      (version) => version === '0.42.0'
+    ),
+    'Published Floe packages must all use version 0.42.0'
   );
 
-  assert(corePkg.name === '@floegence/floe-webapp-core', '@floegence/floe-webapp-core package name mismatch');
-  assert(corePkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-core main must point to ./dist/*');
-  assert(corePkg.types?.startsWith('./dist/'), '@floegence/floe-webapp-core types must point to ./dist/*');
+  assert(
+    corePkg.name === '@floegence/floe-webapp-core',
+    '@floegence/floe-webapp-core package name mismatch'
+  );
+  assert(
+    corePkg.main?.startsWith('./dist/'),
+    '@floegence/floe-webapp-core main must point to ./dist/*'
+  );
+  assert(
+    corePkg.types?.startsWith('./dist/'),
+    '@floegence/floe-webapp-core types must point to ./dist/*'
+  );
   assert(
     corePkg.exports?.['.']?.import?.startsWith('./dist/'),
     '@floegence/floe-webapp-core exports["."].import must point to ./dist/*'
@@ -342,8 +373,14 @@ function main() {
     protocolPkg.name === '@floegence/floe-webapp-protocol',
     '@floegence/floe-webapp-protocol package name mismatch'
   );
-  assert(protocolPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-protocol main must point to ./dist/*');
-  assert(protocolPkg.types?.startsWith('./dist/'), '@floegence/floe-webapp-protocol types must point to ./dist/*');
+  assert(
+    protocolPkg.main?.startsWith('./dist/'),
+    '@floegence/floe-webapp-protocol main must point to ./dist/*'
+  );
+  assert(
+    protocolPkg.types?.startsWith('./dist/'),
+    '@floegence/floe-webapp-protocol types must point to ./dist/*'
+  );
   assert(
     protocolPkg.exports?.['.']?.import?.startsWith('./dist/'),
     '@floegence/floe-webapp-protocol exports["."].import must point to ./dist/*'
@@ -353,9 +390,18 @@ function main() {
     '@floegence/floe-webapp-protocol exports["."].types must point to ./dist/*'
   );
 
-  assert(bootPkg.name === '@floegence/floe-webapp-boot', '@floegence/floe-webapp-boot package name mismatch');
-  assert(bootPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-boot main must point to ./dist/*');
-  assert(bootPkg.types?.startsWith('./dist/'), '@floegence/floe-webapp-boot types must point to ./dist/*');
+  assert(
+    bootPkg.name === '@floegence/floe-webapp-boot',
+    '@floegence/floe-webapp-boot package name mismatch'
+  );
+  assert(
+    bootPkg.main?.startsWith('./dist/'),
+    '@floegence/floe-webapp-boot main must point to ./dist/*'
+  );
+  assert(
+    bootPkg.types?.startsWith('./dist/'),
+    '@floegence/floe-webapp-boot types must point to ./dist/*'
+  );
   assert(
     bootPkg.exports?.['.']?.import?.startsWith('./dist/'),
     '@floegence/floe-webapp-boot exports["."].import must point to ./dist/*'
@@ -375,20 +421,44 @@ function main() {
   assertFile('packages/boot/dist/artifact-source.js');
   assertFile('packages/boot/dist/artifact-source.d.ts');
 
-  assert(initPkg.name === '@floegence/floe-webapp-init', '@floegence/floe-webapp-init package name mismatch');
-  assert(initPkg.main?.startsWith('./dist/'), '@floegence/floe-webapp-init main must point to ./dist/*');
-  assert(initPkg.bin?.['floe-webapp-init']?.startsWith('./dist/'), '@floegence/floe-webapp-init bin must point to ./dist/*');
-  assert(initPkg.files?.includes('templates'), '@floegence/floe-webapp-init must include templates in files');
-  assert(initPkg.files?.includes('skills'), '@floegence/floe-webapp-init must include skills in files');
-  assert(typeof readJson('package.json').scripts?.['sync:skills'] === 'string', 'root package.json must provide a sync:skills helper');
+  assert(
+    initPkg.name === '@floegence/floe-webapp-init',
+    '@floegence/floe-webapp-init package name mismatch'
+  );
+  assert(
+    initPkg.main?.startsWith('./dist/'),
+    '@floegence/floe-webapp-init main must point to ./dist/*'
+  );
+  assert(
+    initPkg.bin?.['floe-webapp-init']?.startsWith('./dist/'),
+    '@floegence/floe-webapp-init bin must point to ./dist/*'
+  );
+  assert(
+    initPkg.files?.includes('templates'),
+    '@floegence/floe-webapp-init must include templates in files'
+  );
+  assert(
+    initPkg.files?.includes('skills'),
+    '@floegence/floe-webapp-init must include skills in files'
+  );
+  assert(
+    typeof readJson('package.json').scripts?.['sync:skills'] === 'string',
+    'root package.json must provide a sync:skills helper'
+  );
 
   // Skill package must remain in sync across root + init + templates.
-  assert(fileExists('skills/floe-webapp/SKILL.md'), 'Missing root skill file: skills/floe-webapp/SKILL.md');
+  assert(
+    fileExists('skills/floe-webapp/SKILL.md'),
+    'Missing root skill file: skills/floe-webapp/SKILL.md'
+  );
   assert(
     fileExists('skills/floe-webapp/references/playbooks.md'),
     'Missing root skill reference: skills/floe-webapp/references/playbooks.md'
   );
-  assert(fileExists('packages/init/skills/floe-webapp/SKILL.md'), 'Missing init skill file: packages/init/skills/floe-webapp/SKILL.md');
+  assert(
+    fileExists('packages/init/skills/floe-webapp/SKILL.md'),
+    'Missing init skill file: packages/init/skills/floe-webapp/SKILL.md'
+  );
   assert(
     fileExists('packages/init/skills/floe-webapp/references/playbooks.md'),
     'Missing init skill reference: packages/init/skills/floe-webapp/references/playbooks.md'
@@ -402,9 +472,21 @@ function main() {
     'Missing minimal template skill file: packages/init/templates/minimal/skills/floe-webapp/SKILL.md'
   );
 
-  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/skills/floe-webapp/SKILL.md', 'run `pnpm sync:skills`');
-  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/templates/full/skills/floe-webapp/SKILL.md', 'run `pnpm sync:skills`');
-  assertFileEquals('skills/floe-webapp/SKILL.md', 'packages/init/templates/minimal/skills/floe-webapp/SKILL.md', 'run `pnpm sync:skills`');
+  assertFileEquals(
+    'skills/floe-webapp/SKILL.md',
+    'packages/init/skills/floe-webapp/SKILL.md',
+    'run `pnpm sync:skills`'
+  );
+  assertFileEquals(
+    'skills/floe-webapp/SKILL.md',
+    'packages/init/templates/full/skills/floe-webapp/SKILL.md',
+    'run `pnpm sync:skills`'
+  );
+  assertFileEquals(
+    'skills/floe-webapp/SKILL.md',
+    'packages/init/templates/minimal/skills/floe-webapp/SKILL.md',
+    'run `pnpm sync:skills`'
+  );
   assertFileEquals(
     'skills/floe-webapp/references/playbooks.md',
     'packages/init/skills/floe-webapp/references/playbooks.md',
@@ -432,7 +514,10 @@ function main() {
 
   const styles = readFileSync(resolve(process.cwd(), 'packages/core/dist/styles.css'), 'utf-8');
   assert(styles.length > 0, 'Expected @floegence/floe-webapp-core styles.css to be non-empty');
-  assert(styles.includes('--background'), 'Expected @floegence/floe-webapp-core styles.css to include theme variables');
+  assert(
+    styles.includes('--background'),
+    'Expected @floegence/floe-webapp-core styles.css to include theme variables'
+  );
 
   const tailwind = readFileSync(resolve(process.cwd(), 'packages/core/dist/tailwind.css'), 'utf-8');
   assert(tailwind.length > 0, 'Expected @floegence/floe-webapp-core tailwind.css to be non-empty');
@@ -440,7 +525,10 @@ function main() {
     !/^\s*@import\s+['"]tailwindcss['"]\s*;/m.test(tailwind),
     'Expected tailwind.css to not import tailwindcss'
   );
-  assert(tailwind.includes('@source'), 'Expected tailwind.css to include @source for scanning dist JS');
+  assert(
+    tailwind.includes('@source'),
+    'Expected tailwind.css to include @source for scanning dist JS'
+  );
 
   // Starter templates must stay aligned with public APIs.
   assertInitTemplates();

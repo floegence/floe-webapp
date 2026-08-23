@@ -102,6 +102,11 @@
     --wb-vib-shadow:
       0 1px 0 rgba(255, 255, 255, 0.66) inset, 0 12px 40px -14px rgba(22, 28, 45, 0.26),
       0 4px 10px -6px rgba(22, 28, 45, 0.12);
+    --wb-dock-material-background: rgba(255, 255, 255, 0.56);
+    --wb-dock-material-border: rgba(255, 255, 255, 0.46);
+    --wb-dock-material-border-top: var(--wb-dock-material-border);
+    --wb-dock-material-shadow: var(--wb-vib-shadow);
+    --wb-dock-material-filter: blur(36px) saturate(180%);
     --wb-accent: #3478f6;
     --wb-accent-strong: #1e6ae8;
     --wb-accent-soft: rgba(52, 120, 246, 0.14);
@@ -154,6 +159,8 @@
     --wb-vib-shadow:
       0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 20px 60px -14px rgba(0, 0, 0, 0.72),
       0 6px 14px -6px rgba(0, 0, 0, 0.46);
+    --wb-dock-material-background: rgba(36, 36, 40, 0.5);
+    --wb-dock-material-border: rgba(255, 255, 255, 0.1);
     --wb-accent: #5a9bff;
     --wb-accent-strong: #86b7ff;
     --wb-accent-soft: rgba(90, 155, 255, 0.16);
@@ -243,8 +250,7 @@
   }
 
   .workbench-surface[data-workbench-theme='vibrancy'] .workbench-hud,
-  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button,
-  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button {
     background: rgba(255, 255, 255, 0.56);
     border-color: rgba(255, 255, 255, 0.46);
     box-shadow: var(--wb-vib-shadow);
@@ -253,8 +259,7 @@
   }
 
   html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-hud,
-  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button,
-  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
+  html.dark .workbench-surface[data-workbench-theme='vibrancy'] .workbench-lock-button {
     background: rgba(36, 36, 40, 0.5);
     border-color: rgba(255, 255, 255, 0.1);
   }
@@ -300,6 +305,11 @@
     --wb-mica-divider: rgba(17, 24, 39, 0.08);
     --wb-mica-shadow:
       0 1px 0 rgba(255, 255, 255, 0.64) inset, 0 16px 42px -18px rgba(31, 41, 55, 0.28);
+    --wb-dock-material-background: color-mix(in srgb, var(--wb-mica-widget) 92%, transparent);
+    --wb-dock-material-border: var(--wb-mica-border);
+    --wb-dock-material-border-top: var(--wb-dock-material-border);
+    --wb-dock-material-shadow: 0 -12px 34px -22px rgba(17, 24, 39, 0.28);
+    --wb-dock-material-filter: blur(56px) saturate(180%);
     --wb-accent: #0078d4;
     --wb-accent-strong: #005fae;
     --wb-accent-soft: rgba(0, 120, 212, 0.12);
@@ -433,8 +443,7 @@
     width: 42px;
   }
 
-  .workbench-surface[data-workbench-theme='mica']
-    .workbench-widget__window-control--close:hover,
+  .workbench-surface[data-workbench-theme='mica'] .workbench-widget__window-control--close:hover,
   .workbench-surface[data-workbench-theme='mica']
     .workbench-widget__window-control--close:focus-visible {
     background: #c42b1c;
@@ -460,11 +469,6 @@
     border-bottom: 0;
     border-left: 0;
     border-radius: 0;
-    background: color-mix(in srgb, var(--wb-mica-widget) 92%, transparent);
-    border-color: var(--wb-mica-border);
-    box-shadow: 0 -12px 34px -22px rgba(17, 24, 39, 0.28);
-    backdrop-filter: blur(56px) saturate(180%);
-    -webkit-backdrop-filter: blur(56px) saturate(180%);
   }
 
   .workbench-surface[data-workbench-theme='mica'] .workbench-dock__tile {
@@ -507,6 +511,11 @@
     --wb-mid-border-strong: rgba(16, 16, 26, 0.14);
     --wb-mid-divider: rgba(16, 16, 26, 0.06);
     --wb-mid-shadow: 0 1px 2px rgba(16, 16, 26, 0.05), 0 10px 26px -14px rgba(16, 16, 26, 0.18);
+    --wb-dock-material-background: var(--wb-mid-widget);
+    --wb-dock-material-border: var(--wb-mid-border);
+    --wb-dock-material-border-top: var(--wb-dock-material-border);
+    --wb-dock-material-shadow: var(--wb-mid-shadow);
+    --wb-dock-material-filter: none;
     --wb-accent: #5e6ad2;
     --wb-accent-strong: #4c55a8;
     --wb-accent-soft: rgba(94, 106, 210, 0.1);
@@ -641,8 +650,7 @@
   }
 
   .workbench-surface[data-workbench-theme='midnight'] .workbench-hud,
-  .workbench-surface[data-workbench-theme='midnight'] .workbench-lock-button,
-  .workbench-surface[data-workbench-theme='midnight'] .workbench-dock {
+  .workbench-surface[data-workbench-theme='midnight'] .workbench-lock-button {
     background: var(--wb-mid-widget);
     border-color: var(--wb-mid-border);
     box-shadow: var(--wb-mid-shadow);
@@ -706,6 +714,11 @@
     --wb-aur-shadow:
       0 1px 0 var(--wb-aur-border-inner) inset, 0 20px 50px -14px rgba(67, 56, 202, 0.2),
       0 6px 16px -6px rgba(17, 15, 38, 0.1);
+    --wb-dock-material-background: var(--wb-aur-widget);
+    --wb-dock-material-border: var(--wb-aur-border);
+    --wb-dock-material-border-top: var(--wb-aur-border-inner);
+    --wb-dock-material-shadow: var(--wb-aur-shadow);
+    --wb-dock-material-filter: blur(50px) saturate(180%);
     --wb-accent: #6366f1;
     --wb-accent-strong: #4f46e5;
     --wb-accent-soft: rgba(99, 102, 241, 0.16);
@@ -853,8 +866,7 @@
   }
 
   .workbench-surface[data-workbench-theme='aurora'] .workbench-hud,
-  .workbench-surface[data-workbench-theme='aurora'] .workbench-lock-button,
-  .workbench-surface[data-workbench-theme='aurora'] .workbench-dock {
+  .workbench-surface[data-workbench-theme='aurora'] .workbench-lock-button {
     background: var(--wb-aur-widget);
     border: 1px solid var(--wb-aur-border);
     border-top-color: var(--wb-aur-border-inner);
@@ -901,6 +913,11 @@
     --wb-term-border: #d9d5cf;
     --wb-term-divider: #e9e5df;
     --wb-term-shadow: 0 1px 2px rgba(18, 18, 24, 0.05), 0 10px 24px -14px rgba(18, 18, 24, 0.12);
+    --wb-dock-material-background: var(--wb-term-widget);
+    --wb-dock-material-border: var(--wb-term-border);
+    --wb-dock-material-border-top: var(--wb-dock-material-border);
+    --wb-dock-material-shadow: var(--wb-term-shadow);
+    --wb-dock-material-filter: none;
     --wb-accent: #d63384;
     --wb-accent-strong: #b4236c;
     --wb-accent-soft: rgba(214, 51, 132, 0.12);
@@ -1041,8 +1058,7 @@
   }
 
   .workbench-surface[data-workbench-theme='terminal'] .workbench-hud,
-  .workbench-surface[data-workbench-theme='terminal'] .workbench-lock-button,
-  .workbench-surface[data-workbench-theme='terminal'] .workbench-dock {
+  .workbench-surface[data-workbench-theme='terminal'] .workbench-lock-button {
     background: var(--wb-term-widget);
     border-color: var(--wb-term-border);
     border-radius: 6px;
@@ -1055,6 +1071,7 @@
     align-items: center;
     gap: 4px;
     padding: 6px 10px;
+    border-radius: 6px;
   }
 
   .workbench-surface[data-workbench-theme='terminal'] .workbench-dock::after {

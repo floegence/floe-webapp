@@ -1,7 +1,8 @@
+export { WorkbenchOverlay, type WorkbenchOverlayProps } from './WorkbenchOverlay';
 export {
-  WorkbenchOverlay,
-  type WorkbenchOverlayProps,
-} from './WorkbenchOverlay';
+  WorkbenchDockPopoverSurface,
+  type WorkbenchDockPopoverSurfaceProps,
+} from './WorkbenchDockPopoverSurface';
 export {
   WorkbenchSurface,
   type WorkbenchSurfaceApi,
@@ -12,6 +13,9 @@ export {
 } from './WorkbenchSurface';
 export type {
   WorkbenchDockAction,
+  WorkbenchCanvasWidgetPlacement,
+  WorkbenchDockCanvasPlacement,
+  WorkbenchDockDropContext,
   WorkbenchDockItemActivation,
   WorkbenchExternalDockDragController,
   WorkbenchExternalDockDragItem,
@@ -71,7 +75,4 @@ export {
   type WorkbenchThemeMeta,
   type WorkbenchThemePreview,
 } from './workbenchThemes';
-export {
-  WorkbenchThemeSelector,
-  type WorkbenchThemeSelectorProps,
-} from './WorkbenchThemeSelector';
+export { WorkbenchThemeSelector, type WorkbenchThemeSelectorProps } from './WorkbenchThemeSelector';

@@ -1,10 +1,8 @@
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
-import {
-  createUIFirstSelection,
-  type UIFirstSelectionEvent,
-} from '../../utils/uiFirstSelection';
+import { DIALOG_SURFACE_HOST_ATTR, SURFACE_PORTAL_LAYER_ATTR } from '../ui/surfacePortalScope';
+import { createUIFirstSelection, type UIFirstSelectionEvent } from '../../utils/uiFirstSelection';
 import { WorkbenchCanvas } from './WorkbenchCanvas';
 import { WorkbenchContextMenu, type WorkbenchContextMenuItem } from './WorkbenchContextMenu';
 import {
@@ -14,7 +12,6 @@ import {
   type WorkbenchDockItemActivation,
   type WorkbenchDockAction,
   type WorkbenchExternalDockDragController,
-  type WorkbenchExternalDockDragItem,
   type WorkbenchHostDockItem,
 } from './WorkbenchFilterBar';
 import { WorkbenchHud } from './WorkbenchHud';
@@ -134,8 +131,9 @@ export interface WorkbenchSurfaceProps {
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   dockActions?: readonly WorkbenchDockAction[];
   dockItems?: readonly WorkbenchHostDockItem[];
-  registerExternalDockDragController?: (controller: WorkbenchExternalDockDragController | null) => void;
-  onExternalDockDrop?: (item: WorkbenchExternalDockDragItem) => void;
+  registerExternalDockDragController?: (
+    controller: WorkbenchExternalDockDragController | null
+  ) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
   /** Defer pointer/focus widget activation until the visual selection has painted. */
@@ -183,11 +181,10 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     },
     onEvent: (event) => props.onWidgetActivationEvent?.(event),
   });
-  const selectedWidgetId = () => (
+  const selectedWidgetId = () =>
     props.widgetActivationMode === 'after-paint'
       ? widgetSelection.visual()
-      : model.selectedWidgetId()
-  );
+      : model.selectedWidgetId();
   const selectedObject = () => {
     if (props.widgetActivationMode !== 'after-paint' || !widgetSelection.pending()) {
       return model.selectedObject();
@@ -581,8 +578,11 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   const clientToWorld = (
     clientX: number,
     clientY: number,
-    context?: Pick<WorkbenchDockDropContext, 'canvasFrame'>
+    context?: Pick<WorkbenchDockDropContext, 'canvasFrame' | 'worldPoint'>
   ) => {
+    if (context?.worldPoint) {
+      return context.worldPoint;
+    }
     if (context?.canvasFrame) {
       return clientToCanvasWorld(context.canvasFrame, model.viewport(), { clientX, clientY });
     }
@@ -661,7 +661,12 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     <div
       ref={setSurfaceRootEl}
       class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
-      {...{ [interactionAdapter().surfaceRootAttr]: 'true' }}
+      {...{
+        [interactionAdapter().surfaceRootAttr]: 'true',
+        [interactionAdapter().dialogSurfaceHostAttr]: 'true',
+        [DIALOG_SURFACE_HOST_ATTR]: 'true',
+        [SURFACE_PORTAL_LAYER_ATTR]: 'true',
+      }}
       data-workbench-theme={model.theme()}
       data-workbench-mode={model.mode()}
       tabIndex={-1}
@@ -745,7 +750,6 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         dockActions={props.dockActions}
         dockItems={props.dockItems}
         registerExternalDockDragController={props.registerExternalDockDragController}
-        onExternalDockDrop={props.onExternalDockDrop}
         onDragPreviewChange={setDockDragPreview}
       />
 

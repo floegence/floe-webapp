@@ -62,7 +62,7 @@ function dispatchPointerEvent(
   target.dispatchEvent(event);
 }
 
-function mockCanvasFrame(): HTMLElement {
+function mockCanvasFrame(parent: HTMLElement): HTMLElement {
   const frame = document.createElement('div');
   frame.setAttribute('data-floe-workbench-canvas-frame', 'true');
   Object.defineProperty(frame, 'getBoundingClientRect', {
@@ -79,8 +79,15 @@ function mockCanvasFrame(): HTMLElement {
       toJSON: () => undefined,
     }),
   });
-  document.body.appendChild(frame);
+  parent.appendChild(frame);
   return frame;
+}
+
+function createWorkbenchHost(): HTMLElement {
+  const host = document.createElement('div');
+  host.className = 'workbench-surface';
+  document.body.appendChild(host);
+  return host;
 }
 
 describe('WorkbenchFilterBar pointer session', () => {
@@ -104,9 +111,8 @@ describe('WorkbenchFilterBar pointer session', () => {
   }
 
   it('commits a dragged widget pill once when release is only observable through a later buttons=0 move', async () => {
-    mockCanvasFrame();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onCreateAt = vi.fn();
 
     dispose = render(
@@ -155,7 +161,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     await Promise.resolve();
 
     expect(onCreateAt).toHaveBeenCalledTimes(1);
-    expect(onCreateAt.mock.calls[0]?.slice(0, 3)).toEqual(['custom.files', 120, 120]);
+    expect(onCreateAt.mock.calls[0]?.slice(0, 3)).toEqual(['custom.files', 320, 320]);
     expect(onCreateAt.mock.calls[0]?.[3]).toMatchObject({
       dropAllowed: true,
       canvasFrame: {
@@ -168,10 +174,9 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('auto-pans the canvas while a widget pill is dragged against an edge', async () => {
-    mockCanvasFrame();
     const callbacks = mockAnimationFrames();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onViewportCommit = vi.fn();
 
     dispose = render(
@@ -215,10 +220,9 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('keeps auto-panning when a fast widget-pill drag crosses the canvas and ends outside the frame', async () => {
-    mockCanvasFrame();
     const callbacks = mockAnimationFrames();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onViewportCommit = vi.fn();
 
     dispose = render(
@@ -306,9 +310,8 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('shows the canvas placement preview as soon as a widget drag is armed', async () => {
-    mockCanvasFrame();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onDragPreviewChange = vi.fn();
 
     dispose = render(
@@ -380,9 +383,8 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('keeps the widget placement preview visible above the dock without committing there', async () => {
-    mockCanvasFrame();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onCreateAt = vi.fn();
     const onDragPreviewChange = vi.fn();
 
@@ -451,9 +453,8 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('shows a disallowed placement preview instead of a dock ghost while dragging over the dock', async () => {
-    mockCanvasFrame();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onDragPreviewChange = vi.fn();
 
     dispose = render(
@@ -514,13 +515,15 @@ describe('WorkbenchFilterBar pointer session', () => {
           widgets={[]}
           filters={{ 'custom.files': true }}
           onSoloFilter={() => {}}
-          dockActions={[{
-            id: 'plugins',
-            label: 'Plugins',
-            icon: () => <svg aria-hidden="true" />,
-            active: true,
-            onActivate: () => {},
-          }]}
+          dockActions={[
+            {
+              id: 'plugins',
+              label: 'Plugins',
+              icon: () => <svg aria-hidden="true" />,
+              active: true,
+              onActivate: () => {},
+            },
+          ]}
         />
       ),
       host
@@ -532,9 +535,13 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(mode.querySelector('.workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
       JSON.stringify({ scale: 1, y: 0, x: 0 })
     );
-    expect(host.querySelector('button[aria-label="Files — click to solo, drag to canvas to create"] .workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
-      JSON.stringify({ scale: 1, y: 0, x: 0 })
-    );
+    expect(
+      host
+        .querySelector(
+          'button[aria-label="Files — click to solo, drag to canvas to create"] .workbench-dock__tile'
+        )
+        ?.getAttribute('data-motion-animate')
+    ).toBe(JSON.stringify({ scale: 1, y: 0, x: 0 }));
     dispatchPointerEvent('pointerenter', action);
     expect(action.querySelector('.workbench-dock__tile')?.getAttribute('data-motion-animate')).toBe(
       JSON.stringify({ scale: 1, y: 0, x: 0 })
@@ -548,9 +555,14 @@ describe('WorkbenchFilterBar pointer session', () => {
     const source = document.createElement('button');
     document.body.append(host, source);
     const onExternalDrop = vi.fn();
-    let externalDragController: undefined | {
-      begin: (event: PointerEvent, item: { id: string; label: string; icon: () => JSX.Element }) => void;
-    };
+    let externalDragController:
+      | undefined
+      | {
+          begin: (
+            event: PointerEvent,
+            item: { id: string; label: string; icon: () => JSX.Element }
+          ) => void;
+        };
 
     dispose = render(
       () => (
@@ -559,8 +571,9 @@ describe('WorkbenchFilterBar pointer session', () => {
           widgets={[]}
           filters={{ 'custom.files': true }}
           onSoloFilter={() => {}}
-          registerExternalDockDragController={(controller) => { externalDragController = controller; }}
-          onExternalDockDrop={onExternalDrop}
+          registerExternalDockDragController={(controller) => {
+            externalDragController = controller;
+          }}
         />
       ),
       host
@@ -614,68 +627,186 @@ describe('WorkbenchFilterBar pointer session', () => {
     const onExternalDrop = vi.fn();
     const onSourceClick = vi.fn();
     source.addEventListener('click', onSourceClick);
-    let controller: Parameters<NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>>[0];
+    let controller: Parameters<
+      NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>
+    >[0];
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        onSoloFilter={() => {}}
-        registerExternalDockDragController={(value) => { controller = value; }}
-        onExternalDockDrop={onExternalDrop}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          registerExternalDockDragController={(value) => {
+            controller = value;
+          }}
+        />
+      ),
+      host
+    );
     Object.defineProperty(document, 'elementFromPoint', {
       configurable: true,
       value: vi.fn(() => host.querySelector('.workbench-dock')),
     });
-    source.addEventListener('pointerdown', (event) => controller?.begin(event, {
-      id: 'plugin:containers',
-      label: 'Containers',
-      icon: () => <svg aria-hidden="true" />,
-    }));
+    source.addEventListener('pointerdown', (event) =>
+      controller?.begin(event, {
+        id: 'plugin:containers',
+        label: 'Containers',
+        icon: () => <svg aria-hidden="true" />,
+        onDropToDock: onExternalDrop,
+      })
+    );
 
     dispatchPointerEvent('pointerdown', source, { pointerId: 81, clientX: 10, clientY: 10 });
     dispatchPointerEvent('pointermove', document, { pointerId: 81, clientX: 40, clientY: 20 });
-    expect(host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')).toBe(true);
-    dispatchPointerEvent('pointerup', document, { pointerId: 81, clientX: 40, clientY: 20, buttons: 0 });
+    await Promise.resolve();
+    expect(
+      host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')
+    ).toBe(true);
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 81,
+      clientX: 40,
+      clientY: 20,
+      buttons: 0,
+    });
     source.click();
 
     expect(onExternalDrop).toHaveBeenCalledTimes(1);
-    expect(onExternalDrop).toHaveBeenCalledWith(expect.objectContaining({ id: 'plugin:containers' }));
+    expect(onExternalDrop).toHaveBeenCalledWith();
     expect(onSourceClick).not.toHaveBeenCalled();
-    expect(host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')).toBe(false);
+    expect(
+      host.querySelector('.workbench-dock')?.classList.contains('is-external-drop-allowed')
+    ).toBe(false);
+  });
+
+  it('uses the shared widget preview and exact world point for an external canvas placement', async () => {
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
+    const source = document.createElement('button');
+    document.body.append(source);
+    const onDrop = vi.fn();
+    const onDragPreviewChange = vi.fn();
+    let controller: Parameters<
+      NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>
+    >[0];
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          viewport={{ x: 10, y: 20, scale: 0.5 }}
+          onSoloFilter={() => {}}
+          onDragPreviewChange={onDragPreviewChange}
+          registerExternalDockDragController={(value) => {
+            controller = value;
+          }}
+        />
+      ),
+      host
+    );
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: vi.fn(() => document.querySelector('[data-floe-workbench-canvas-frame="true"]')),
+    });
+    source.addEventListener('pointerdown', (event) =>
+      controller?.begin(event, {
+        id: 'plugin:containers',
+        label: 'Containers',
+        icon: () => <svg aria-hidden="true" />,
+        canvasPlacement: {
+          widgetType: 'custom.files',
+          onDrop,
+        },
+      })
+    );
+
+    dispatchPointerEvent('pointerdown', source, { pointerId: 82, clientX: 20, clientY: 20 });
+    dispatchPointerEvent('pointermove', document, { pointerId: 82, clientX: 100, clientY: 100 });
+
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Containers',
+      clientX: 100,
+      clientY: 100,
+      dropAllowed: true,
+    });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 82,
+      clientX: 140,
+      clientY: 140,
+      buttons: 0,
+    });
+
+    expect(onDrop).toHaveBeenCalledTimes(1);
+    expect(onDrop).toHaveBeenCalledWith({
+      widgetType: 'custom.files',
+      centerWorld: { worldX: 260, worldY: 240 },
+      frame: { x: 100, y: 130, width: 320, height: 220 },
+    });
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toBeNull();
   });
 
   it.each([
-    ['pointer cancel', () => dispatchPointerEvent('pointercancel', document, { pointerId: 91, clientX: 44, clientY: 20, buttons: 0 })],
-    ['invalid drop', () => dispatchPointerEvent('pointerup', document, { pointerId: 91, clientX: 44, clientY: 20, buttons: 0 })],
+    [
+      'pointer cancel',
+      () =>
+        dispatchPointerEvent('pointercancel', document, {
+          pointerId: 91,
+          clientX: 44,
+          clientY: 20,
+          buttons: 0,
+        }),
+    ],
+    [
+      'invalid drop',
+      () =>
+        dispatchPointerEvent('pointerup', document, {
+          pointerId: 91,
+          clientX: 44,
+          clientY: 20,
+          buttons: 0,
+        }),
+    ],
   ])('rolls back an external drag after %s', async (_name, finish) => {
     const host = document.createElement('div');
     const source = document.createElement('button');
     document.body.append(host, source);
     const onExternalDrop = vi.fn();
-    let controller: Parameters<NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>>[0];
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        onSoloFilter={() => {}}
-        registerExternalDockDragController={(value) => { controller = value; }}
-        onExternalDockDrop={onExternalDrop}
-      />
-    ), host);
+    let controller: Parameters<
+      NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>
+    >[0];
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          registerExternalDockDragController={(value) => {
+            controller = value;
+          }}
+        />
+      ),
+      host
+    );
     Object.defineProperty(document, 'elementFromPoint', {
       configurable: true,
       value: vi.fn(() => null),
     });
-    source.addEventListener('pointerdown', (event) => controller?.begin(event, {
-      id: 'plugin:containers',
-      label: 'Containers',
-      icon: () => <svg aria-hidden="true" />,
-    }));
+    source.addEventListener('pointerdown', (event) =>
+      controller?.begin(event, {
+        id: 'plugin:containers',
+        label: 'Containers',
+        icon: () => <svg aria-hidden="true" />,
+        onDropToDock: onExternalDrop,
+      })
+    );
 
     dispatchPointerEvent('pointerdown', source, { pointerId: 91, clientX: 10, clientY: 10 });
     dispatchPointerEvent('pointermove', document, { pointerId: 91, clientX: 44, clientY: 20 });
@@ -687,43 +818,74 @@ describe('WorkbenchFilterBar pointer session', () => {
   });
 
   it('renders host Dock items as draggable items with click activation and canvas drop semantics', async () => {
-    mockCanvasFrame();
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
     const onActivate = vi.fn();
-    const onDropToCanvas = vi.fn();
+    const onDrop = vi.fn();
+    const onDragPreviewChange = vi.fn();
 
-    dispose = render(() => (
-      <WorkbenchFilterBar
-        widgetDefinitions={widgetDefinitions}
-        widgets={[]}
-        filters={{ 'custom.files': true }}
-        onSoloFilter={() => {}}
-        dockItems={[{
-          id: 'plugin:containers',
-          label: 'Containers',
-          icon: () => <svg aria-hidden="true" />,
-          onActivate,
-          onDropToCanvas,
-        }]}
-      />
-    ), host);
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          viewport={{ x: 0, y: 0, scale: 1 }}
+          onSoloFilter={() => {}}
+          dockItems={[
+            {
+              id: 'plugin:containers',
+              label: 'Containers',
+              icon: () => <svg aria-hidden="true" />,
+              onActivate,
+              canvasPlacement: {
+                widgetType: 'custom.files',
+                onDrop,
+              },
+            },
+          ]}
+          onDragPreviewChange={onDragPreviewChange}
+        />
+      ),
+      host
+    );
 
-    const item = host.querySelector<HTMLButtonElement>('[data-workbench-dock-item="plugin:containers"]');
+    const item = host.querySelector<HTMLButtonElement>(
+      '[data-workbench-dock-item="plugin:containers"]'
+    );
     expect(item).not.toBeNull();
     expect(item?.draggable).toBe(false);
     dispatchPointerEvent('pointerdown', item!, { pointerId: 101, clientX: 20, clientY: 20 });
-    dispatchPointerEvent('pointerup', document, { pointerId: 101, clientX: 20, clientY: 20, buttons: 0 });
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 101,
+      clientX: 20,
+      clientY: 20,
+      buttons: 0,
+    });
     expect(onActivate).toHaveBeenCalledTimes(1);
 
     dispatchPointerEvent('pointerdown', item!, { pointerId: 102, clientX: 20, clientY: 20 });
     dispatchPointerEvent('pointermove', document, { pointerId: 102, clientX: 100, clientY: 100 });
-    expect(document.body.querySelector('.workbench-dock-ghost')).not.toBeNull();
-    dispatchPointerEvent('pointerup', document, { pointerId: 102, clientX: 100, clientY: 100, buttons: 0 });
+    expect(document.body.querySelector('.workbench-dock-ghost')).toBeNull();
+    expect(onDragPreviewChange.mock.calls.at(-1)?.[0]).toMatchObject({
+      kind: 'widget',
+      id: 'custom.files',
+      label: 'Containers',
+      dropAllowed: true,
+    });
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 102,
+      clientX: 100,
+      clientY: 100,
+      buttons: 0,
+    });
 
     expect(onActivate).toHaveBeenCalledTimes(1);
-    expect(onDropToCanvas).toHaveBeenCalledTimes(1);
-    expect(onDropToCanvas.mock.calls[0]?.slice(0, 2)).toEqual([100, 100]);
-    expect(onDropToCanvas.mock.calls[0]?.[2]).toMatchObject({ dropAllowed: true });
+    expect(onDrop).toHaveBeenCalledTimes(1);
+    expect(onDrop).toHaveBeenCalledWith({
+      widgetType: 'custom.files',
+      centerWorld: { worldX: 100, worldY: 100 },
+      frame: { x: -60, y: -10, width: 320, height: 220 },
+    });
   });
 });

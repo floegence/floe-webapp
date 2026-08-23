@@ -11,9 +11,19 @@ import {
 import { Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
-import { DockLayers, DockLayoutDashboard, DockMessageSquare, DockRegion, DockText, Plus } from '../../icons';
+import {
+  DockLayers,
+  DockLayoutDashboard,
+  DockMessageSquare,
+  DockRegion,
+  DockText,
+  Plus,
+} from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
+import { clientToCanvasWorld } from '../ui/canvasGeometry';
+import { createWorkbenchWidgetFrame, type WorkbenchWidgetFrame } from './workbenchHelpers';
+import { getWidgetEntry } from './widgets/widgetRegistry';
 import {
   WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR,
   createWorkbenchEdgeAutoPanController,
@@ -40,8 +50,9 @@ export interface WorkbenchFilterBarProps {
   onSelectMode?: (mode: WorkbenchInteractionMode) => void;
   dockActions?: readonly WorkbenchDockAction[];
   dockItems?: readonly WorkbenchHostDockItem[];
-  registerExternalDockDragController?: (controller: WorkbenchExternalDockDragController | null) => void;
-  onExternalDockDrop?: (item: WorkbenchExternalDockDragItem) => void;
+  registerExternalDockDragController?: (
+    controller: WorkbenchExternalDockDragController | null
+  ) => void;
   /**
    * Called when the user drags a widget pill onto the canvas to create a
    * new widget of that type. Coordinates are in client space (clientX/Y).
@@ -83,7 +94,7 @@ export type WorkbenchHostDockItem = Readonly<{
   icon: Component<{ class?: string }>;
   active?: boolean;
   onActivate?: (trigger: HTMLButtonElement) => void;
-  onDropToCanvas?: (clientX: number, clientY: number, context?: WorkbenchDockDropContext) => void;
+  canvasPlacement?: WorkbenchDockCanvasPlacement;
 }>;
 
 export type WorkbenchDockItemActivation = Readonly<{
@@ -97,6 +108,8 @@ export type WorkbenchExternalDockDragItem = Readonly<{
   id: string;
   label: string;
   icon: Component<{ class?: string }>;
+  canvasPlacement?: WorkbenchDockCanvasPlacement;
+  onDropToDock?: () => void;
 }>;
 
 export type WorkbenchExternalDockDragController = Readonly<{
@@ -116,6 +129,26 @@ export type WorkbenchDockDragPreview = Readonly<{
 export type WorkbenchDockDropContext = Readonly<{
   dropAllowed: boolean;
   canvasFrame: WorkbenchEdgeAutoPanFrame;
+  worldPoint?: Readonly<{ worldX: number; worldY: number }>;
+}>;
+
+export type WorkbenchDockCanvasPlacement = Readonly<{
+  widgetType: WorkbenchWidgetType;
+  onDrop: (placement: WorkbenchCanvasWidgetPlacement) => void;
+}>;
+
+export type WorkbenchCanvasWidgetPlacement = Readonly<{
+  widgetType: WorkbenchWidgetType;
+  centerWorld: Readonly<{ worldX: number; worldY: number }>;
+  frame: WorkbenchWidgetFrame;
+}>;
+
+type NormalizedWorkbenchCanvasPlacement = Readonly<{
+  preview: Readonly<{
+    kind: WorkbenchDockDragPreview['kind'];
+    id: WorkbenchDockDragPreview['id'];
+  }> | null;
+  onDrop: (clientX: number, clientY: number, context?: WorkbenchDockDropContext) => void;
 }>;
 
 interface DragStateBase {
@@ -132,23 +165,18 @@ interface DragStateBase {
   hasEnteredCanvas: boolean;
   canvasFrame: WorkbenchEdgeAutoPanFrame | null;
   preview: WorkbenchDockDragPreview | null;
+  canvasPlacement: NormalizedWorkbenchCanvasPlacement | null;
+  dockDrop: (() => void) | null;
   stopInteraction: () => void;
   overDock: boolean;
 }
 
-type InternalDragState = DragStateBase & Readonly<{
-  kind: 'widget' | 'tool' | 'host';
-  id: WorkbenchWidgetType | WorkbenchDockToolId | string;
-  trigger: HTMLButtonElement;
-}>;
-
-type ExternalDragState = DragStateBase & Readonly<{
-  kind: 'external';
-  id: string;
-  trigger: HTMLElement;
-}>;
-
-type DragState = InternalDragState | ExternalDragState;
+type DragState = DragStateBase &
+  Readonly<{
+    kind: 'widget' | 'tool' | 'host' | 'external';
+    id: WorkbenchWidgetType | WorkbenchDockToolId | string;
+    trigger: HTMLElement;
+  }>;
 
 const DRAG_THRESHOLD_PX = 5;
 const DOCK_SELECTOR = '.workbench-dock';
@@ -188,14 +216,22 @@ const WORKBENCH_BACKGROUND_TOOL_ITEMS: readonly {
   { tool: 'text', label: 'Text', icon: DockText },
 ];
 
-function readCanvasFrame(): WorkbenchEdgeAutoPanFrame | null {
-  const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
+function readCanvasFrame(dockRoot: HTMLElement | undefined): WorkbenchEdgeAutoPanFrame | null {
+  const surface = dockRoot?.closest('.workbench-surface');
+  const frame = surface?.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
   return frame instanceof HTMLElement ? frameFromElement(frame) : null;
 }
 
-function isPointInFrame(clientX: number, clientY: number, frame: WorkbenchEdgeAutoPanFrame): boolean {
+function isPointInFrame(
+  clientX: number,
+  clientY: number,
+  frame: WorkbenchEdgeAutoPanFrame
+): boolean {
   return (
-    clientX >= frame.left && clientX <= frame.right && clientY >= frame.top && clientY <= frame.bottom
+    clientX >= frame.left &&
+    clientX <= frame.right &&
+    clientY >= frame.top &&
+    clientY <= frame.bottom
   );
 }
 
@@ -251,10 +287,11 @@ function didSegmentEnterCanvas(
   );
 }
 
-function isOverDock(clientX: number, clientY: number): boolean {
+function isOverDock(clientX: number, clientY: number, dockRoot: HTMLElement | undefined): boolean {
+  if (!dockRoot) return false;
   if (typeof document.elementFromPoint !== 'function') return false;
   const target = document.elementFromPoint(clientX, clientY);
-  return target instanceof Element && target.closest(DOCK_SELECTOR) !== null;
+  return target instanceof Element && target.closest(DOCK_SELECTOR) === dockRoot;
 }
 
 interface DockItemProps {
@@ -270,6 +307,7 @@ interface DockItemProps {
   isDragging: boolean;
   onEnter: () => void;
   onLeave: () => void;
+  canvasPlacement: NormalizedWorkbenchCanvasPlacement | null;
   onDragBegin: (
     event: PointerEvent,
     kind: DragState['kind'],
@@ -277,6 +315,8 @@ interface DockItemProps {
     label: string,
     icon: Component<{ class?: string }>,
     trigger: HTMLButtonElement,
+    canvasPlacement: NormalizedWorkbenchCanvasPlacement | null,
+    dockDrop: (() => void) | null
   ) => void;
 }
 
@@ -299,6 +339,8 @@ function DockItem(props: DockItemProps) {
       props.label,
       props.icon,
       event.currentTarget,
+      props.canvasPlacement,
+      null
     );
   };
 
@@ -473,7 +515,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     edgeAutoPan?.stop();
     edgeAutoPan = createWorkbenchEdgeAutoPanController({
       readFrame: () => {
-        const frame = document.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
+        const surface = dockRootEl?.closest('.workbench-surface');
+        const frame = surface?.querySelector(WORKBENCH_EDGE_AUTO_PAN_FRAME_SELECTOR);
         return frame instanceof HTMLElement ? frameFromElement(frame) : null;
       },
       readViewport: () => edgeAutoPanViewport ?? props.viewport ?? null,
@@ -487,7 +530,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         return Boolean(
           current?.moved &&
           current.hasEnteredCanvas &&
-          !isOverDock(current.clientX, current.clientY)
+          !isOverDock(current.clientX, current.clientY, dockRootEl)
         );
       },
     });
@@ -498,6 +541,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     if (!current) return;
 
     const isClick = !current.moved;
+    const dropViewport = edgeAutoPanViewport ?? props.viewport;
     current.stopInteraction();
     stopEdgeAutoPan();
     setDragState(null);
@@ -505,6 +549,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
 
     if (isClick) {
       if (current.kind === 'external') return;
+      if (!(current.trigger instanceof HTMLButtonElement)) return;
       if (current.kind === 'host') {
         props.dockItems?.find((item) => item.id === current.id)?.onActivate?.(current.trigger);
         return;
@@ -522,43 +567,27 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       return;
     }
 
-    if (commitDrop && current.kind === 'external' && current.overDock) {
-      props.onExternalDockDrop?.({
-        id: current.id,
-        label: current.label,
-        icon: current.icon,
-      });
+    if (commitDrop && current.overDock && current.dockDrop) {
+      current.dockDrop();
       return;
     }
 
-    if (commitDrop && current.overCanvas) {
+    if (commitDrop && current.overCanvas && current.canvasPlacement) {
+      const worldPoint =
+        current.canvasFrame && dropViewport
+          ? clientToCanvasWorld(current.canvasFrame, dropViewport, {
+              clientX: current.clientX,
+              clientY: current.clientY,
+            })
+          : null;
       const context = current.canvasFrame
-        ? { dropAllowed: current.overCanvas, canvasFrame: current.canvasFrame }
+        ? {
+            dropAllowed: current.overCanvas,
+            canvasFrame: current.canvasFrame,
+            ...(worldPoint ? { worldPoint } : {}),
+          }
         : undefined;
-      if (current.kind === 'widget') {
-        props.onCreateAt?.(
-          current.id as WorkbenchWidgetType,
-          current.clientX,
-          current.clientY,
-          context
-        );
-      } else if (current.kind === 'tool') {
-        props.onCreateToolAt?.(
-          current.id as WorkbenchDockToolId,
-          current.clientX,
-          current.clientY,
-          context
-        );
-      } else {
-        const context = current.canvasFrame
-          ? { dropAllowed: current.overCanvas, canvasFrame: current.canvasFrame }
-          : undefined;
-        props.dockItems?.find((item) => item.id === current.id)?.onDropToCanvas?.(
-          current.clientX,
-          current.clientY,
-          context,
-        );
-      }
+      current.canvasPlacement.onDrop(current.clientX, current.clientY, context);
     }
   };
 
@@ -568,12 +597,14 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     id: WorkbenchWidgetType | WorkbenchDockToolId | string,
     label: string,
     icon: Component<{ class?: string }>,
-    trigger: HTMLButtonElement,
+    trigger: HTMLElement,
+    canvasPlacement: NormalizedWorkbenchCanvasPlacement | null,
+    dockDrop: (() => void) | null
   ) => {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     startEdgeAutoPan();
-    const canvasFrame = readCanvasFrame();
+    const canvasFrame = readCanvasFrame(dockRootEl);
 
     setDragState({
       kind,
@@ -590,12 +621,20 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       hasEnteredCanvas: false,
       canvasFrame,
       preview: null,
+      canvasPlacement,
+      dockDrop,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
       trigger,
       overDock: false,
     });
 
-    const handleMove = (next: PointerEvent) => {
+    const resolveDragAtClientPoint = (
+      next: Readonly<{
+        pointerId: number;
+        clientX: number;
+        clientY: number;
+      }>
+    ) => {
       let shouldUpdateEdgeAutoPan = false;
       setDragState((current) => {
         if (!current || current.pointerId !== next.pointerId) return current;
@@ -603,7 +642,24 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const dy = next.clientY - current.startClientY;
         const moved =
           current.moved || Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX;
-        const overDock = isOverDock(next.clientX, next.clientY);
+        if (current.kind === 'external' && moved && !current.moved) {
+          const suppressClick = (click: MouseEvent) => {
+            click.preventDefault();
+            click.stopImmediatePropagation();
+            clearExternalClickSuppression?.();
+          };
+          const timeout = window.setTimeout(() => {
+            if (clearExternalClickSuppression === clear) clear();
+          }, 0);
+          const clear = () => {
+            window.clearTimeout(timeout);
+            current.trigger.removeEventListener('click', suppressClick, true);
+            if (clearExternalClickSuppression === clear) clearExternalClickSuppression = undefined;
+          };
+          current.trigger.addEventListener('click', suppressClick, { capture: true, once: true });
+          clearExternalClickSuppression = clear;
+        }
+        const overDock = isOverDock(next.clientX, next.clientY, dockRootEl);
         const canvasFrame = current.canvasFrame;
         const insideCanvas = moved && isOverCanvas(next.clientX, next.clientY, canvasFrame);
         const overCanvas = insideCanvas && !overDock;
@@ -630,19 +686,21 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           clientX: next.clientX,
           clientY: next.clientY,
           moved,
+          overDock,
           overCanvas,
           hasEnteredCanvas,
-          preview: moved && canvasFrame && (current.kind === 'widget' || current.kind === 'tool')
-            ? {
-                kind: current.kind,
-                id: current.id,
-                label: current.label,
-                clientX: previewClientX,
-                clientY: previewClientY,
-                dropAllowed: overCanvas,
-                canvasFrame,
-              }
-            : null,
+          preview:
+            moved && canvasFrame && current.canvasPlacement?.preview
+              ? {
+                  kind: current.canvasPlacement.preview.kind,
+                  id: current.canvasPlacement.preview.id,
+                  label: current.label,
+                  clientX: previewClientX,
+                  clientY: previewClientY,
+                  dropAllowed: overCanvas,
+                  canvasFrame,
+                }
+              : null,
         };
       });
       if (shouldUpdateEdgeAutoPan) {
@@ -653,76 +711,54 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragSession = startPointerSession({
       pointerEvent: event,
       captureEl: event.currentTarget as HTMLElement,
-      onMove: handleMove,
-      onEnd: ({ commit }) => finalizeDrag(commit),
+      onMove: resolveDragAtClientPoint,
+      onEnd: ({ commit, snapshot }) => {
+        resolveDragAtClientPoint({
+          pointerId: snapshot.pointerId,
+          clientX: snapshot.latestClientX,
+          clientY: snapshot.latestClientY,
+        });
+        finalizeDrag(commit);
+      },
     });
+  };
+
+  const normalizeWidgetCanvasPlacement = (
+    placement: WorkbenchDockCanvasPlacement | undefined
+  ): NormalizedWorkbenchCanvasPlacement | null => {
+    if (!placement) return null;
+    return {
+      preview: { kind: 'widget', id: placement.widgetType },
+      onDrop: (_clientX, _clientY, context) => {
+        if (!context?.worldPoint) return;
+        const entry = getWidgetEntry(placement.widgetType, props.widgetDefinitions);
+        placement.onDrop({
+          widgetType: placement.widgetType,
+          centerWorld: context.worldPoint,
+          frame: createWorkbenchWidgetFrame(entry, {
+            anchor: 'center',
+            worldX: context.worldPoint.worldX,
+            worldY: context.worldPoint.worldY,
+          }),
+        });
+      },
+    };
   };
 
   const beginExternalDockDrag: WorkbenchExternalDockDragController['begin'] = (event, item) => {
     if (event.button !== 0 || !(event.currentTarget instanceof HTMLElement)) return;
-    event.preventDefault();
-    dragSession?.stop({ reason: 'manual_stop', commit: false });
     clearExternalClickSuppression?.();
     clearExternalClickSuppression = undefined;
-    const trigger = event.currentTarget;
-
-    setDragState({
-      kind: 'external',
-      id: item.id,
-      label: item.label,
-      icon: item.icon,
-      pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
-      clientX: event.clientX,
-      clientY: event.clientY,
-      moved: false,
-      overCanvas: false,
-      overDock: false,
-      hasEnteredCanvas: false,
-      canvasFrame: null,
-      preview: null,
-      stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
-      trigger,
-    });
-
-    dragSession = startPointerSession({
-      pointerEvent: event,
-      captureEl: trigger,
-      onMove: (next) => {
-        setDragState((current) => {
-          if (!current || current.kind !== 'external' || current.pointerId !== next.pointerId) return current;
-          const moved = current.moved
-            || Math.abs(next.clientX - current.startClientX) > DRAG_THRESHOLD_PX
-            || Math.abs(next.clientY - current.startClientY) > DRAG_THRESHOLD_PX;
-          if (moved && !current.moved) {
-            const suppressClick = (click: MouseEvent) => {
-              click.preventDefault();
-              click.stopImmediatePropagation();
-              clearExternalClickSuppression?.();
-            };
-            const timeout = window.setTimeout(() => {
-              if (clearExternalClickSuppression === clear) clear();
-            }, 0);
-            const clear = () => {
-              window.clearTimeout(timeout);
-              trigger.removeEventListener('click', suppressClick, true);
-              if (clearExternalClickSuppression === clear) clearExternalClickSuppression = undefined;
-            };
-            trigger.addEventListener('click', suppressClick, { capture: true, once: true });
-            clearExternalClickSuppression = clear;
-          }
-          return {
-            ...current,
-            clientX: next.clientX,
-            clientY: next.clientY,
-            moved,
-            overDock: moved && isOverDock(next.clientX, next.clientY),
-          };
-        });
-      },
-      onEnd: ({ commit }) => finalizeDrag(commit),
-    });
+    beginItemDragGesture(
+      event,
+      'external',
+      item.id,
+      item.label,
+      item.icon,
+      event.currentTarget,
+      normalizeWidgetCanvasPlacement(item.canvasPlacement),
+      item.onDropToDock ?? null
+    );
   };
 
   createEffect(() => {
@@ -734,9 +770,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragState()?.kind === 'widget' ? (dragState()!.id as WorkbenchWidgetType) : null;
   const draggingTool = (): WorkbenchDockToolId | null =>
     dragState()?.kind === 'tool' ? (dragState()!.id as WorkbenchDockToolId) : null;
-  const ExternalPlaceholderIcon = () => (
-    dragState()?.kind === 'external' ? dragState()?.icon : undefined
-  );
+  const ExternalPlaceholderIcon = () =>
+    dragState()?.kind === 'external' ? dragState()?.icon : undefined;
   const activeMode = (): WorkbenchInteractionMode =>
     props.mode === 'background' || props.mode === 'annotation' ? 'background' : 'work';
   const activeModeItem = createMemo(
@@ -768,8 +803,12 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       })),
     ];
   });
-  const hostDockItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]);
-  const actionItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]);
+  const hostDockItems = createMemo(() =>
+    activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]
+  );
+  const actionItems = createMemo(() =>
+    activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]
+  );
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
   const componentFilterable = (): boolean => activeMode() !== 'background';
   const componentVisible = (id: string): boolean =>
@@ -794,8 +833,13 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     <>
       <div
         ref={dockRootEl}
-        class="workbench-dock"
-        classList={{ 'is-external-drop-target': Boolean(dragState()?.kind === 'external' && dragState()?.moved), 'is-external-drop-allowed': Boolean(dragState()?.kind === 'external' && dragState()?.overDock) }}
+        class={`workbench-dock workbench-dock-material${
+          dragState()?.kind === 'external' && dragState()?.moved ? ' is-external-drop-target' : ''
+        }${
+          dragState()?.kind === 'external' && dragState()?.overDock
+            ? ' is-external-drop-allowed'
+            : ''
+        }`}
         data-floe-canvas-interactive="true"
         onPointerLeave={() => setHoveredIndex(null)}
       >
@@ -909,6 +953,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                 filterable={false}
                 hoverOffset={offsetFor(slot())}
                 isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
+                canvasPlacement={normalizeWidgetCanvasPlacement(item.canvasPlacement)}
                 onEnter={() => setHoveredIndex(slot())}
                 onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
                 onDragBegin={beginItemDragGesture}
@@ -934,6 +979,29 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                   entry.kind === 'widget'
                     ? draggingWidgetType() === entry.id
                     : draggingTool() === entry.id
+                }
+                canvasPlacement={
+                  entry.kind === 'widget'
+                    ? {
+                        preview: { kind: 'widget', id: entry.id },
+                        onDrop: (clientX, clientY, context) =>
+                          props.onCreateAt?.(
+                            entry.id as WorkbenchWidgetType,
+                            clientX,
+                            clientY,
+                            context
+                          ),
+                      }
+                    : {
+                        preview: { kind: 'tool', id: entry.id },
+                        onDrop: (clientX, clientY, context) =>
+                          props.onCreateToolAt?.(
+                            entry.id as WorkbenchDockToolId,
+                            clientX,
+                            clientY,
+                            context
+                          ),
+                      }
                 }
                 onEnter={() => setHoveredIndex(slot())}
                 onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
@@ -980,7 +1048,9 @@ function DragGhost(props: DragGhostProps) {
     <Portal>
       <div
         class="workbench-dock-ghost"
-        classList={{ 'is-over-dock': Boolean(props.state()?.kind === 'external' && props.state()?.overDock) }}
+        classList={{
+          'is-over-dock': Boolean(props.state()?.kind === 'external' && props.state()?.overDock),
+        }}
         style={{ transform: transform() }}
         aria-hidden="true"
       >

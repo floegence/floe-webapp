@@ -186,7 +186,10 @@ describe('WorkbenchSurface api', () => {
     await Promise.resolve();
 
     expect(readState().widgets[0]?.title).toBe('README.md');
-    expect(host.querySelector('[data-test-workbench-surface-root="true"]')).toBeTruthy();
+    const surfaceRoot = host.querySelector('[data-test-workbench-surface-root="true"]');
+    expect(surfaceRoot).toBeTruthy();
+    expect(surfaceRoot?.getAttribute('data-floe-dialog-surface-host')).toBe('true');
+    expect(surfaceRoot?.getAttribute('data-floe-surface-portal-layer')).toBe('true');
 
     const widgetRoot = host.querySelector(
       `[data-test-workbench-widget-root="true"][data-test-workbench-widget-id="${widget!.id}"]`

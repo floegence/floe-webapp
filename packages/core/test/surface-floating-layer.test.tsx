@@ -6,6 +6,7 @@ import { render as renderSolid } from 'solid-js/web';
 
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import { __resetSurfacePortalScopeForTests } from '../src/components/ui/surfacePortalScope';
+import { WorkbenchDockPopoverSurface } from '../src/components/workbench/WorkbenchDockPopoverSurface';
 
 const disposers: Array<() => void> = [];
 
@@ -113,7 +114,9 @@ describe('SurfaceFloatingLayer', () => {
     dispatchContextMenu(trigger!, 88, 96);
     await Promise.resolve();
 
-    const layer = surfaceHost!.querySelector('[data-testid="floating-layer"]') as HTMLDivElement | null;
+    const layer = surfaceHost!.querySelector(
+      '[data-testid="floating-layer"]'
+    ) as HTMLDivElement | null;
     expect(layer).toBeTruthy();
     expect(layer?.className).toContain('absolute');
     expect(layer?.getAttribute('data-floe-local-interaction-surface')).toBe('true');
@@ -136,7 +139,13 @@ describe('SurfaceFloatingLayer', () => {
           <div
             data-testid="surface-host"
             data-floe-dialog-surface-host="true"
-            style={{ position: 'absolute', left: '120px', top: '80px', width: '320px', height: '240px' }}
+            style={{
+              position: 'absolute',
+              left: '120px',
+              top: '80px',
+              width: '320px',
+              height: '240px',
+            }}
             onContextMenu={(event) => {
               event.preventDefault();
               setOpen(true);
@@ -162,7 +171,9 @@ describe('SurfaceFloatingLayer', () => {
 
     mount(() => <Harness />, host);
 
-    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLDivElement | null;
+    const surfaceLayer = host.querySelector(
+      '[data-testid="surface-layer"]'
+    ) as HTMLDivElement | null;
     const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
     const trigger = host.querySelector('[data-testid="trigger"]') as HTMLButtonElement | null;
     expect(surfaceLayer).toBeTruthy();
@@ -189,7 +200,9 @@ describe('SurfaceFloatingLayer', () => {
     dispatchContextMenu(trigger!, 420, 300);
     await Promise.resolve();
 
-    const layer = surfaceLayer!.querySelector('[data-testid="floating-layer"]') as HTMLDivElement | null;
+    const layer = surfaceLayer!.querySelector(
+      '[data-testid="floating-layer"]'
+    ) as HTMLDivElement | null;
     expect(layer).toBeTruthy();
     expect(surfaceLayer?.contains(layer ?? null)).toBe(true);
     expect(surfaceHost?.contains(layer ?? null)).toBe(false);
@@ -257,9 +270,86 @@ describe('SurfaceFloatingLayer', () => {
     trigger!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     await Promise.resolve();
 
-    const layer = surfaceHost!.querySelector('[data-testid="floating-layer"]') as HTMLDivElement | null;
+    const layer = surfaceHost!.querySelector(
+      '[data-testid="floating-layer"]'
+    ) as HTMLDivElement | null;
     expect(layer).toBeTruthy();
     expect(layer?.className).toContain('absolute');
     expect(layer?.getAttribute('data-floe-local-interaction-surface')).toBe('true');
+  });
+
+  it('mounts a Dock popover inside the owning Workbench surface with shared material', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      queueMicrotask(() => callback(0));
+      return 1;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    function Harness() {
+      const [open, setOpen] = createSignal(false);
+      let trigger!: HTMLButtonElement;
+      return (
+        <div
+          data-testid="workbench-surface"
+          data-floe-dialog-surface-host="true"
+          data-floe-surface-portal-layer="true"
+          style={{ position: 'relative', width: '520px', height: '360px' }}
+        >
+          <button ref={trigger} type="button" onClick={() => setOpen(true)}>
+            Plugins
+          </button>
+          {open() && (
+            <WorkbenchDockPopoverSurface
+              owner={trigger}
+              estimatedSize={{ width: 200, height: 120 }}
+              data-testid="dock-popover"
+            >
+              Plugin list
+            </WorkbenchDockPopoverSurface>
+          )}
+        </div>
+      );
+    }
+
+    mount(() => <Harness />, host);
+    const surface = host.querySelector('[data-testid="workbench-surface"]') as HTMLElement;
+    const trigger = host.querySelector('button') as HTMLButtonElement;
+    mockRect(surface, {
+      left: 100,
+      top: 80,
+      right: 620,
+      bottom: 440,
+      width: 520,
+      height: 360,
+    });
+    mockRect(trigger, {
+      left: 300,
+      top: 300,
+      right: 340,
+      bottom: 340,
+      width: 40,
+      height: 40,
+    });
+
+    trigger.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const layer = surface.querySelector(
+      '[data-floe-surface-floating-layer="true"]'
+    ) as HTMLElement | null;
+    const popover = surface.querySelector('[data-testid="dock-popover"]') as HTMLElement | null;
+    expect(layer).toBeTruthy();
+    expect(layer?.className).toContain('absolute');
+    expect(layer?.className).not.toContain('fixed');
+    expect(layer?.getAttribute('data-floe-local-interaction-surface')).toBe('true');
+    expect(layer?.style.left).toBe('120px');
+    expect(layer?.style.top).toBe('84px');
+    expect(popover?.classList.contains('workbench-dock-material')).toBe(true);
+    expect(layer?.querySelector('.workbench-dock-popover__arrow')).toBeTruthy();
+    expect(document.body.contains(layer)).toBe(true);
+    expect(surface.contains(layer)).toBe(true);
   });
 });
