@@ -248,6 +248,100 @@ describe('Workbench projected surfaces', () => {
     dispose();
   });
 
+  it('renders exactly one placement preview in projected and world modes', async () => {
+    const cases = [
+      {
+        name: 'projected',
+        widgets: [
+          {
+            id: 'widget-preview',
+            type: 'custom.preview',
+            title: 'Preview',
+            x: 20,
+            y: 30,
+            width: 400,
+            height: 260,
+            z_index: 1,
+            created_at_unix_ms: 1,
+          },
+        ],
+        transform: 'translate3d(130px, 95px, 0)',
+        width: '600px',
+        height: '390px',
+      },
+      {
+        name: 'world',
+        widgets: [
+          {
+            id: 'widget-canvas',
+            type: 'custom.canvas',
+            title: 'Canvas',
+            x: 20,
+            y: 30,
+            width: 320,
+            height: 220,
+            z_index: 1,
+            created_at_unix_ms: 1,
+          },
+        ],
+        transform: 'translate3d(20px, 30px, 0)',
+        width: '400px',
+        height: '260px',
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const dispose = render(
+        () => (
+          <WorkbenchCanvas
+            widgetDefinitions={widgetDefinitions}
+            widgets={testCase.widgets}
+            placementPreview={{
+              kind: 'widget',
+              label: 'Preview',
+              x: 20,
+              y: 30,
+              width: 400,
+              height: 260,
+              dropAllowed: true,
+            }}
+            viewport={{ x: 100, y: 50, scale: 1.5 }}
+            canvasFrameSize={{ width: 1200, height: 800 }}
+            selectedWidgetId={null}
+            visualFrontOwnerId={null}
+            locked={false}
+            filters={{}}
+            setCanvasFrameRef={() => {}}
+            onViewportCommit={vi.fn()}
+            onCanvasContextMenu={vi.fn()}
+            onSelectWidget={vi.fn()}
+            onWidgetContextMenu={vi.fn()}
+            onClaimVisualFrontOwner={vi.fn()}
+            onCommitFront={vi.fn()}
+            onCommitMove={vi.fn()}
+            onCommitResize={vi.fn()}
+            onRequestOverview={vi.fn()}
+            onRequestFit={vi.fn()}
+            onRequestDelete={vi.fn()}
+          />
+        ),
+        host
+      );
+
+      await Promise.resolve();
+      const previews = host.querySelectorAll<HTMLElement>('.workbench-placement-preview');
+      expect(previews, testCase.name).toHaveLength(1);
+      expect(previews[0]?.style.transform).toBe(testCase.transform);
+      expect(previews[0]?.style.width).toBe(testCase.width);
+      expect(previews[0]?.style.height).toBe(testCase.height);
+
+      dispose();
+      host.remove();
+    }
+  });
+
   it('keeps wheel zoom disabled while locked and enabled after unlocking', async () => {
     vi.useFakeTimers();
     const host = document.createElement('div');

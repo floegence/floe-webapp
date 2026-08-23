@@ -491,7 +491,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
           stickyNotes={canvasLayerStickyNotes()}
           annotations={props.annotations ?? []}
           backgroundLayers={props.backgroundLayers ?? []}
-          placementPreview={props.placementPreview}
+          placementPreview={useProjectedCompositor() ? null : props.placementPreview}
           viewport={props.viewport}
           selectedWidgetId={props.selectedWidgetId}
           selectedObject={props.selectedObject}
