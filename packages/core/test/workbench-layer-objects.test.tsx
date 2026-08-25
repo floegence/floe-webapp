@@ -1254,6 +1254,15 @@ describe('Workbench layer objects', () => {
     expect(css).toContain('height: 10px;');
   });
 
+  it('keeps the widget resize handle above widget-body overlays', () => {
+    const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
+    const css = readFileSync(cssPath, 'utf8');
+    const resizeBlock = css.match(/\.workbench-widget__resize \{[\s\S]*?\n\s{2}\}/u)?.[0] ?? '';
+
+    expect(resizeBlock).toContain('z-index: 40;');
+    expect(resizeBlock).not.toContain('z-index: 2;');
+  });
+
   it('keeps region paint stable while dotted material remains visible', () => {
     const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
     const css = readFileSync(cssPath, 'utf8');

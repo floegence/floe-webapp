@@ -1845,7 +1845,7 @@
     align-items: flex-end;
     justify-content: flex-end;
     padding: 2px;
-    z-index: 2;
+    z-index: 40;
     opacity: 0;
     transition:
       opacity 140ms ease,
