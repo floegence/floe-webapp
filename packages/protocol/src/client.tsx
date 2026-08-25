@@ -6,16 +6,13 @@ import type {
   ConnectionState,
   Session,
 } from '@floegence/flowersec-core';
-import {
-  ConnectionControllerError,
-  connectionDiagnostic,
-} from '@floegence/flowersec-core';
 import type { ConnectionControllerOptions } from '@floegence/flowersec-core/browser';
 import { createContext, createComponent, onCleanup, useContext, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { ProtocolContract } from './contract';
 
 const loadBrowserRuntime = () => import('@floegence/flowersec-core/browser');
+type FlowersecBrowserRuntime = Awaited<ReturnType<typeof loadBrowserRuntime>>;
 
 interface ProtocolState {
   snapshot: ConnectionSnapshot;
@@ -58,7 +55,7 @@ export class ConnectionReplacementRequiredError extends Error {
 const ProtocolContext = createContext<ProtocolContextValue>();
 
 const IDLE_SNAPSHOT: ConnectionSnapshot = Object.freeze({ state: 'idle', attempt: 0 });
-const IDLE_DIAGNOSTIC = connectionDiagnostic(IDLE_SNAPSHOT);
+const IDLE_DIAGNOSTIC: ConnectionDiagnostic = Object.freeze({ state: 'idle', attempt: 0 });
 
 export function ProtocolProvider(props: { children: JSX.Element; contract: ProtocolContract }) {
   const [state, setState] = createStore<ProtocolState>({
@@ -86,17 +83,18 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     snapshot: ConnectionSnapshot,
     owner: ConnectionController,
     config: ConnectConfig,
-    generation: number
+    generation: number,
+    runtime: FlowersecBrowserRuntime
   ) => {
     if (!ownsConnection(owner, config, generation)) return;
     try {
       config.lifecycle?.synchronize(snapshot);
       if (!ownsConnection(owner, config, generation)) return;
-      const diagnostic = connectionDiagnostic(snapshot);
+      const diagnostic = runtime.connectionDiagnostic(snapshot);
       setState({
         snapshot,
         diagnostic,
-        error: errorFromSnapshot(snapshot, diagnostic),
+        error: errorFromSnapshot(snapshot, diagnostic, runtime),
       });
     } catch (error) {
       const normalized =
@@ -111,7 +109,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
         });
         setState({
           snapshot: failedSnapshot,
-          diagnostic: connectionDiagnostic(failedSnapshot),
+          diagnostic: runtime.connectionDiagnostic(failedSnapshot),
           error: normalized,
         });
       }
@@ -136,9 +134,12 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
   const start = async (config: ConnectConfig) => {
     const generation = lifecycleGeneration;
-    const { createConnectionController } = await loadBrowserRuntime();
+    const runtime = await loadBrowserRuntime();
     if (generation !== lifecycleGeneration) return;
-    const nextController = await createConnectionController(config.source, config.controller);
+    const nextController = await runtime.createConnectionController(
+      config.source,
+      config.controller
+    );
     if (generation !== lifecycleGeneration) {
       await nextController.close();
       return;
@@ -146,7 +147,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     currentConfig = config;
     controller = nextController;
     unsubscribe = nextController.subscribe((snapshot) =>
-      publish(snapshot, nextController, config, generation)
+      publish(snapshot, nextController, config, generation, runtime)
     );
     nextController.start();
     await nextController.waitForSession();
@@ -241,14 +242,15 @@ function sameConnectionConfig(left: ConnectConfig, right: ConnectConfig): boolea
 function errorFromSnapshot(
   snapshot: ConnectionSnapshot,
   diagnostic: ConnectionDiagnostic,
+  runtime: FlowersecBrowserRuntime
 ): Error | null {
   const failure = snapshot.failure;
   return failure === undefined || (snapshot.state !== 'failed' && snapshot.state !== 'closed')
     ? null
-    : new ConnectionControllerError(
-      snapshot.state === 'closed' ? 'closed' : 'failed',
-      failure,
-      snapshot.retryDisposition,
-      diagnostic,
-    );
+    : new runtime.ConnectionControllerError(
+        snapshot.state === 'closed' ? 'closed' : 'failed',
+        failure,
+        snapshot.retryDisposition,
+        diagnostic
+      );
 }

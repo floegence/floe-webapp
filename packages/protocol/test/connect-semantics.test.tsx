@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConnectionControllerError } from '@floegence/flowersec-core';
+import { ConnectionControllerError } from '@floegence/flowersec-core/browser';
 import { ProtocolProvider, useProtocol } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
 import { createComponent, createRoot } from 'solid-js';
@@ -19,7 +19,10 @@ const { close, createConnectionController } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@floegence/flowersec-core/browser', () => ({ createConnectionController }));
+vi.mock('@floegence/flowersec-core/browser', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@floegence/flowersec-core/browser')>()),
+  createConnectionController,
+}));
 
 afterEach(() => {
   close.mockClear();

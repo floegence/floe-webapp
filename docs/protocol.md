@@ -1,6 +1,6 @@
 # Protocol Integration
 
-The protocol package consumes the published Flowersec 3.1.1 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
+The protocol package consumes the published Flowersec 3.1.1 browser API. Its initial static module graph contains no Flowersec runtime: the first connection dynamically imports the public `@floegence/flowersec-core/browser` entry and keeps that runtime for the Controller's publish and error paths. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
 
 ```tsx
 import { createControlplaneArtifactSource, createArtifactTunnelConnectionConfig } from '@floegence/floe-webapp-boot';
@@ -24,7 +24,7 @@ function ConnectButton() {
 </ProtocolProvider>;
 ```
 
-`useProtocol()` exposes `status()`, the full `snapshot()`, the session-free `diagnostic()`, terminal `error()`, `session()`, `connect()`, `replaceConnection()`, `retryNow()`, and `disconnect()`. Diagnostics are derived with Flowersec's public `connectionDiagnostic` helper, so logs and monitoring never retain the live Session. A retrying `waiting` state reports its failure and disposition only through `diagnostic()`; `error()` is reserved for terminal Controller states and local binding failures. `replaceConnection()` is required when source/options identity changes. `retryNow()` delegates to the existing Flowersec controller and returns `false` while an absolute `retry_after` deadline is active.
+`useProtocol()` exposes `status()`, the full `snapshot()`, the session-free `diagnostic()`, terminal `error()`, `session()`, `connect()`, `replaceConnection()`, `retryNow()`, and `disconnect()`. Diagnostics and structured terminal errors use Flowersec's public `connectionDiagnostic` and `ConnectionControllerError` APIs from that dynamically loaded runtime; Protocol does not copy diagnostic, retry, or error-classification logic. The pre-connection idle diagnostic is a fixed, session-free constant. A retrying `waiting` state reports its failure and disposition only through `diagnostic()`; `error()` is reserved for terminal Controller states and local binding failures. `replaceConnection()` is required when source/options identity changes. `retryNow()` delegates to the existing Flowersec controller and returns `false` while an absolute `retry_after` deadline is active.
 
 An established `session()?.probeLiveness()` remains available for an application-level health check. The probe is a Flowersec session operation; Protocol does not implement a parallel liveness or reconnect loop around it.
 

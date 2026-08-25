@@ -17,7 +17,8 @@ const connectedSession = {
   waitTermination: async () => ({ error: { code: 'closed' } }),
 };
 
-vi.mock('@floegence/flowersec-core/browser', () => ({
+vi.mock('@floegence/flowersec-core/browser', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@floegence/flowersec-core/browser')>()),
   createConnectionController: vi.fn(() => ({
     state: 'connected',
     currentSession: connectedSession,

@@ -30,5 +30,8 @@ describe('@floegence/floe-webapp-protocol package config', () => {
 
     expect(source).toContain("import('@floegence/flowersec-core/browser')");
     expect(source).not.toMatch(/import\s+(?!type\s)[^;]+from ['"]@floegence\/flowersec-core\/browser['"]/u);
+    expect(source).not.toMatch(/import\s+(?!type\s)[^;]+from ['"]@floegence\/flowersec-core['"]/u);
+    expect(source).toContain('runtime.connectionDiagnostic(snapshot)');
+    expect(source).toContain('new runtime.ConnectionControllerError(');
   });
 });

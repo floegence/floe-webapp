@@ -14,7 +14,8 @@ const controller = {
   close: vi.fn(async () => {}),
 };
 
-vi.mock('@floegence/flowersec-core/browser', () => ({
+vi.mock('@floegence/flowersec-core/browser', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@floegence/flowersec-core/browser')>()),
   createConnectionController: vi.fn(() => controller),
 }));
 
