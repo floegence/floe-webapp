@@ -30,6 +30,12 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
 
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.6
+          cache: false
+
       - name: Setup pnpm
         run: |
           set -euo pipefail
@@ -81,6 +87,12 @@ jobs:
 
       - name: Verify dist
         run: pnpm verify
+
+      - name: Verify Flowersec Go v3 smoke peer
+        working-directory: scripts/flowersec-v3-smoke-peer
+        run: |
+          GOWORK=off go test ./...
+          GOWORK=off go vet ./...
 
       - name: Check if @floegence/floe-webapp-core is already published
         id: core_exists

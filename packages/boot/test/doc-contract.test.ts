@@ -14,7 +14,7 @@ describe('boot docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('createControlplaneArtifactSource');
-    expect(doc).toContain('@floegence/flowersec-core@2.5.2');
+    expect(doc).toContain('@floegence/flowersec-core@3.1.1');
     expect(doc).toContain('sole retry/backoff owner');
     expect(doc).toContain('HTTPS is required by default');
     expect(doc).toContain('allowLoopbackHTTP: true');

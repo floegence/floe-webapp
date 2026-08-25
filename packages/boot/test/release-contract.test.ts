@@ -32,7 +32,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '2.5.2';
+  const flowersecVersion = '3.1.1';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');
@@ -52,6 +52,10 @@ describe('release dependency and runtime contract', () => {
     expect(initPkg.engines?.node).toBe('>=24.0.0');
     expect(ci).toContain('node-version: 24');
     expect(release).toContain('node-version: 24');
+    expect(ci).toContain('uses: actions/setup-go@v6');
+    expect(ci).toContain('go-version: 1.26.6');
+    expect(release).toContain('uses: actions/setup-go@v6');
+    expect(release).toContain('go-version: 1.26.6');
     expect(nodeVersion).toBe('24');
     expect(initBuild).toContain("target: 'node24'");
   });
@@ -62,7 +66,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.43.0');
+    expect(corePkg.version).toBe('0.44.0');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -130,16 +134,45 @@ describe('release dependency and runtime contract', () => {
     expect(consumerSmoke).toContain(
       "copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url)"
     );
+    expect(consumerSmoke).toContain('FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR');
+    expect(consumerSmoke).toContain("new URL('./flowersec-v3-smoke-peer/', import.meta.url)");
     const runtimeConsumerSmoke = readText('scripts/verify-npm-release-runtime-consumer.mjs');
-    expect(runtimeConsumerSmoke).toContain("from '@floegence/flowersec-core/node'");
     expect(runtimeConsumerSmoke).toContain("from '@floegence/floe-webapp-boot'");
     expect(runtimeConsumerSmoke).toContain("from '@floegence/floe-webapp-protocol'");
+    expect(runtimeConsumerSmoke).toContain("spawn('go', ['run', '.']");
+    expect(runtimeConsumerSmoke).toContain("GOWORK: 'off'");
+    expect(runtimeConsumerSmoke).not.toContain("from '@floegence/flowersec-core/node'");
+
+    const goModule = readText('scripts/flowersec-v3-smoke-peer/go.mod');
+    const goChecksums = readText('scripts/flowersec-v3-smoke-peer/go.sum');
+    const goPeer = readText('scripts/flowersec-v3-smoke-peer/main.go');
+    expect(goModule).toContain('go 1.26.6');
+    expect(goModule).toMatch(
+      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.1\.1$/mu
+    );
+    expect(goModule).not.toMatch(/^replace\s/mu);
+    expect(goModule).not.toContain('../');
+    expect(existsSync(join(repoRoot(), 'scripts/flowersec-v3-smoke-peer/go.work'))).toBe(false);
+    expect(goChecksums).toContain('flowersec-go/v3 v3.1.1');
+    expect(goPeer).toContain('flowersec.NewAcceptor');
+    expect(goPeer).toContain('flowersec.NewWebSocketHTTPServer');
+    expect(goPeer).toContain('controlplane.NewIssuer().IssueDirect');
+    expect(goPeer).toContain('controlplane.EndpointConfig');
+    expect(goPeer).toContain('controlplane.CAPolicy()');
+    expect(release).toContain('working-directory: scripts/flowersec-v3-smoke-peer');
+    expect(release).toContain('GOWORK=off go test ./...');
+    expect(release).toContain('GOWORK=off go vet ./...');
   });
 
   it('validates the frozen dependency graph before running the local quality gate', () => {
     const makefile = readText('Makefile');
 
-    expect(makefile).toMatch(/^check: install lint typecheck test build verify$/mu);
+    expect(makefile).toMatch(
+      /^check: install flowersec-smoke-peer lint typecheck test build verify$/mu
+    );
     expect(makefile).toMatch(/^install:\n\tpnpm install --frozen-lockfile$/mu);
+    expect(makefile).toMatch(
+      /^flowersec-smoke-peer:\n\tcd scripts\/flowersec-v3-smoke-peer && GOWORK=off go test \.\/\.\.\. && GOWORK=off go vet \.\/\.\.\.$/mu
+    );
   });
 });

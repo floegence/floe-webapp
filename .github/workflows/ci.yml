@@ -23,6 +23,12 @@ jobs:
         with:
           node-version: 24
 
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.26.6
+          cache: false
+
       - name: Setup pnpm
         run: |
           set -euo pipefail

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConnectionControllerError } from '@floegence/flowersec-core';
 import { ProtocolProvider, useProtocol } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
 import { createComponent, createRoot } from 'solid-js';
@@ -115,6 +116,76 @@ describe('ProtocolProvider controller ownership', () => {
 
     disconnect();
     await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+    dispose();
+  });
+
+  it('exposes session-free diagnostics and structured controller failures', async () => {
+    let publish!: (snapshot: never) => void;
+    const session = { rpc: {}, close: async () => {}, waitTermination: async () => ({ error: new Error('closed') }) } as never;
+    createConnectionController.mockImplementationOnce(() => ({
+      state: 'idle',
+      subscribe: (listener: (snapshot: never) => void) => {
+        publish = listener;
+        listener({ state: 'idle', attempt: 0 } as never);
+        return () => {};
+      },
+      start: () => {},
+      retryNow: () => false,
+      waitForSession: async () => session,
+      close,
+    }));
+
+    const config = {
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }),
+      },
+    } as never;
+    let protocol!: ReturnType<typeof useProtocol>;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(() => {
+            protocol = useProtocol();
+            return null;
+          }, {});
+        },
+      });
+    });
+
+    await protocol.connect(config);
+    publish({ state: 'connected', attempt: 1, currentSession: session } as never);
+    expect(protocol.diagnostic()).toEqual({ state: 'connected', attempt: 1 });
+    expect('currentSession' in protocol.diagnostic()).toBe(false);
+
+    publish({
+      state: 'waiting',
+      attempt: 2,
+      failure: { phase: 'connect', code: 'connection_failed' },
+      retryDisposition: { kind: 'retryable' },
+    } as never);
+    expect(protocol.diagnostic()).toMatchObject({
+      state: 'waiting',
+      failure: { phase: 'connect', code: 'connection_failed' },
+      retryDisposition: { kind: 'retryable' },
+    });
+    expect(protocol.error()).toBeNull();
+
+    publish({
+      state: 'failed',
+      attempt: 3,
+      failure: { phase: 'connect', code: 'connection_failed' },
+      retryDisposition: { kind: 'terminal' },
+    } as never);
+    expect(protocol.error()).toBeInstanceOf(ConnectionControllerError);
+    expect(protocol.error()).toMatchObject({
+      code: 'failed',
+      failure: { phase: 'connect', code: 'connection_failed' },
+      retryDisposition: { kind: 'terminal' },
+      diagnostic: protocol.diagnostic(),
+    });
     dispose();
   });
 

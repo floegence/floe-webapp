@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdtempSync, readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { URL } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 
 const packageNames = [
   '@floegence/floe-webapp-core',
@@ -31,7 +31,16 @@ execFileSync('node', [join(root, 'node_modules', '.bin', 'floe-webapp-init'), '-
 
 const runtimeSmoke = join(root, 'verify-runtime-consumer.mjs');
 copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url), runtimeSmoke);
-execFileSync(process.execPath, [runtimeSmoke], { cwd: root, stdio: 'inherit' });
+execFileSync(process.execPath, [runtimeSmoke], {
+  cwd: root,
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR: fileURLToPath(
+      new URL('./flowersec-v3-smoke-peer/', import.meta.url)
+    ),
+  },
+});
 
 const coreManifests = [];
 function walk(directory) {
@@ -45,5 +54,5 @@ function walk(directory) {
 walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1) throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '2.5.2') throw new Error(`expected Flowersec 2.5.2, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '3.1.1') throw new Error(`expected Flowersec 3.1.1, found ${flowersecManifest.version}`);
 console.log(`verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`);

@@ -1,6 +1,6 @@
 # Protocol Integration
 
-The protocol package consumes the published Flowersec 2.5.2 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
+The protocol package consumes the published Flowersec 3.1.1 browser API. Boot owns the exact control-plane acquisition envelope, durable `commitSpend` adapter, critical-scope projection, and isolated handoff materialization. Protocol owns one browser `ConnectionController` and never recreates it for ordinary retry; Flowersec remains the sole retry/backoff owner.
 
 ```tsx
 import { createControlplaneArtifactSource, createArtifactTunnelConnectionConfig } from '@floegence/floe-webapp-boot';
@@ -24,7 +24,7 @@ function ConnectButton() {
 </ProtocolProvider>;
 ```
 
-`useProtocol()` exposes `status()`, the full `snapshot()`, `error()`, `session()`, `connect()`, `replaceConnection()`, `retryNow()`, and `disconnect()`. `replaceConnection()` is required when source/options identity changes. `retryNow()` delegates to the existing Flowersec controller and returns `false` while an absolute `retry_after` deadline is active.
+`useProtocol()` exposes `status()`, the full `snapshot()`, the session-free `diagnostic()`, terminal `error()`, `session()`, `connect()`, `replaceConnection()`, `retryNow()`, and `disconnect()`. Diagnostics are derived with Flowersec's public `connectionDiagnostic` helper, so logs and monitoring never retain the live Session. A retrying `waiting` state reports its failure and disposition only through `diagnostic()`; `error()` is reserved for terminal Controller states and local binding failures. `replaceConnection()` is required when source/options identity changes. `retryNow()` delegates to the existing Flowersec controller and returns `false` while an absolute `retry_after` deadline is active.
 
 An established `session()?.probeLiveness()` remains available for an application-level health check. The probe is a Flowersec session operation; Protocol does not implement a parallel liveness or reconnect loop around it.
 
@@ -32,4 +32,4 @@ RPC helpers are decoder-first: `call(typeId, payload, decodeResponse)`, `notify(
 
 The source posts to `/v1/connect/artifact` or `/v1/connect/artifact/entry` and requires an exact acquisition envelope containing an opaque string `connect_artifact`, a `proxy.runtime@2` critical projection, digests, and a spend receipt. HTTPS by default is required; loopback HTTP is available only when `allowLoopbackHTTP: true` is explicitly set. There is no default or no-op spend callback.
 
-The package dependency is pinned to the published `@floegence/flowersec-core@2.5.2` package. Protocol does not expose a second control-plane fetch/decode facade; all acquisition imports come from `@floegence/floe-webapp-boot`.
+The package dependency is pinned to the published `@floegence/flowersec-core@3.1.1` package. Protocol does not expose a second control-plane fetch/decode facade; all acquisition imports come from `@floegence/floe-webapp-boot`.

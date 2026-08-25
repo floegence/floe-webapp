@@ -1,9 +1,14 @@
 import type {
   ArtifactSource,
+  ConnectionDiagnostic,
   ConnectionController,
   ConnectionSnapshot,
   ConnectionState,
   Session,
+} from '@floegence/flowersec-core';
+import {
+  ConnectionControllerError,
+  connectionDiagnostic,
 } from '@floegence/flowersec-core';
 import type { ConnectionControllerOptions } from '@floegence/flowersec-core/browser';
 import { createContext, createComponent, onCleanup, useContext, type JSX } from 'solid-js';
@@ -14,12 +19,14 @@ const loadBrowserRuntime = () => import('@floegence/flowersec-core/browser');
 
 interface ProtocolState {
   snapshot: ConnectionSnapshot;
+  diagnostic: ConnectionDiagnostic;
   error: Error | null;
 }
 
 interface ProtocolContextValue {
   status: () => ConnectionState;
   snapshot: () => ConnectionSnapshot;
+  diagnostic: () => ConnectionDiagnostic;
   error: () => Error | null;
   session: () => Session | null;
   rpcTransport: () => Session['rpc'] | null;
@@ -51,10 +58,12 @@ export class ConnectionReplacementRequiredError extends Error {
 const ProtocolContext = createContext<ProtocolContextValue>();
 
 const IDLE_SNAPSHOT: ConnectionSnapshot = Object.freeze({ state: 'idle', attempt: 0 });
+const IDLE_DIAGNOSTIC = connectionDiagnostic(IDLE_SNAPSHOT);
 
 export function ProtocolProvider(props: { children: JSX.Element; contract: ProtocolContract }) {
   const [state, setState] = createStore<ProtocolState>({
     snapshot: IDLE_SNAPSHOT,
+    diagnostic: IDLE_DIAGNOSTIC,
     error: null,
   });
 
@@ -83,22 +92,26 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     try {
       config.lifecycle?.synchronize(snapshot);
       if (!ownsConnection(owner, config, generation)) return;
+      const diagnostic = connectionDiagnostic(snapshot);
       setState({
         snapshot,
-        error: errorFromSnapshot(snapshot),
+        diagnostic,
+        error: errorFromSnapshot(snapshot, diagnostic),
       });
     } catch (error) {
       const normalized =
         error instanceof Error ? error : new Error('Floe connection binding failed');
       config.lifecycle?.dispose();
       if (ownsConnection(owner, config, generation)) {
+        const failedSnapshot: ConnectionSnapshot = Object.freeze({
+          state: 'failed',
+          attempt: snapshot.attempt,
+          failure: Object.freeze({ phase: 'artifact', code: 'connected_acquisition_failed' }),
+          retryDisposition: Object.freeze({ kind: 'terminal' }),
+        });
         setState({
-          snapshot: Object.freeze({
-            state: 'failed',
-            attempt: snapshot.attempt,
-            failure: Object.freeze({ phase: 'artifact', code: 'connected_acquisition_failed' }),
-            retryDisposition: Object.freeze({ kind: 'terminal' }),
-          }),
+          snapshot: failedSnapshot,
+          diagnostic: connectionDiagnostic(failedSnapshot),
           error: normalized,
         });
       }
@@ -117,7 +130,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     activeConfig?.lifecycle?.dispose();
     if (activeController !== null) await activeController.close();
     if (generation === lifecycleGeneration && controller === null && currentConfig === null) {
-      setState({ snapshot: IDLE_SNAPSHOT, error: null });
+      setState({ snapshot: IDLE_SNAPSHOT, diagnostic: IDLE_DIAGNOSTIC, error: null });
     }
   };
 
@@ -125,7 +138,11 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     const generation = lifecycleGeneration;
     const { createConnectionController } = await loadBrowserRuntime();
     if (generation !== lifecycleGeneration) return;
-    const nextController = createConnectionController(config.source, config.controller);
+    const nextController = await createConnectionController(config.source, config.controller);
+    if (generation !== lifecycleGeneration) {
+      await nextController.close();
+      return;
+    }
     currentConfig = config;
     controller = nextController;
     unsubscribe = nextController.subscribe((snapshot) =>
@@ -180,6 +197,7 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
   const value: ProtocolContextValue = {
     status: () => state.snapshot.state,
     snapshot: () => state.snapshot,
+    diagnostic: () => state.diagnostic,
     error: () => state.error,
     session: () => state.snapshot.currentSession ?? null,
     rpcTransport: () => state.snapshot.currentSession?.rpc ?? null,
@@ -220,7 +238,17 @@ function sameConnectionConfig(left: ConnectConfig, right: ConnectConfig): boolea
   );
 }
 
-function errorFromSnapshot(snapshot: ConnectionSnapshot): Error | null {
+function errorFromSnapshot(
+  snapshot: ConnectionSnapshot,
+  diagnostic: ConnectionDiagnostic,
+): Error | null {
   const failure = snapshot.failure;
-  return failure === undefined ? null : new Error(`${failure.phase}:${failure.code}`);
+  return failure === undefined || (snapshot.state !== 'failed' && snapshot.state !== 'closed')
+    ? null
+    : new ConnectionControllerError(
+      snapshot.state === 'closed' ? 'closed' : 'failed',
+      failure,
+      snapshot.retryDisposition,
+      diagnostic,
+    );
 }
