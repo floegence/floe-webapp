@@ -23,6 +23,11 @@ import {
 import { startHotInteraction } from '../../utils/hotInteraction';
 import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
+import {
+  isBarItemContextMenuKey,
+  keyboardBarItemContextMenuRequest,
+  type BarItemContextMenuHandler,
+} from '../layout/barItemContextMenu';
 import { createWorkbenchWidgetFrame, type WorkbenchWidgetFrame } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
 import {
@@ -95,6 +100,8 @@ export type WorkbenchHostDockItem = Readonly<{
   icon: Component<{ class?: string }>;
   active?: boolean;
   onActivate?: (trigger: HTMLButtonElement) => void;
+  /** Requests a product-owned context menu for this concrete Dock button. */
+  onContextMenu?: BarItemContextMenuHandler;
   canvasPlacement?: WorkbenchDockCanvasPlacement;
 }>;
 
@@ -315,6 +322,7 @@ interface DockItemProps {
   onEnter: () => void;
   onLeave: () => void;
   canvasPlacement: NormalizedWorkbenchCanvasPlacement | null;
+  onContextMenu?: BarItemContextMenuHandler;
   onDragBegin: (
     event: PointerEvent,
     kind: DragState['kind'],
@@ -351,6 +359,25 @@ function DockItem(props: DockItemProps) {
     );
   };
 
+  const handleContextMenu: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
+    if (!props.onContextMenu) return;
+    event.preventDefault();
+    event.stopPropagation();
+    props.onContextMenu({
+      trigger: event.currentTarget,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      source: 'pointer',
+    });
+  };
+
+  const handleKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (event) => {
+    if (!props.onContextMenu || !isBarItemContextMenuKey(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    props.onContextMenu(keyboardBarItemContextMenuRequest(event.currentTarget));
+  };
+
   return (
     <button
       type="button"
@@ -368,9 +395,12 @@ function DockItem(props: DockItemProps) {
           : `${props.label} — drag to canvas to create`
       }
       aria-pressed={props.active}
+      aria-haspopup={props.onContextMenu ? 'menu' : undefined}
       onPointerEnter={() => props.onEnter()}
       onPointerLeave={() => props.onLeave()}
       onPointerDown={handlePointerDown}
+      onContextMenu={handleContextMenu}
+      onKeyDown={handleKeyDown}
     >
       <Motion.span
         class="workbench-dock__tile"
@@ -970,6 +1000,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
                 hoverOffset={offsetFor(slot())}
                 isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
                 canvasPlacement={normalizeWidgetCanvasPlacement(item.canvasPlacement)}
+                onContextMenu={item.onContextMenu}
                 onEnter={() => setHoveredIndex(slot())}
                 onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
                 onDragBegin={beginItemDragGesture}

@@ -12,6 +12,7 @@ Recommended options:
 
 - Use `FloeApp` when you want the standard Shell + overlays wiring (it mounts and cleans up the registry for you).
 - Use `FloeRegistryRuntime` when you want a custom shell (Portal/EnvApp style) but still want registry lifecycle to be symmetric (register + mount + cleanup).
+- Add `FloeRegistryContributions` inside either runtime when contribution membership changes while the app is running.
 
 Notes:
 
@@ -21,6 +22,30 @@ Implementation references:
 
 - `packages/core/src/app/FloeApp.tsx`
 - `packages/core/src/app/FloeRegistryRuntime.tsx`
+- `packages/core/src/app/FloeRegistryContributions.tsx`
+
+### Dynamic contributions
+
+`FloeRegistryContributions` reconciles a reactive component list by stable `id`:
+
+```tsx
+import { ActivityAppsMain, FloeRegistryContributions } from '@floegence/floe-webapp-core/app';
+
+export function ProductActivities() {
+  return (
+    <>
+      <FloeRegistryContributions components={dynamicActivities()} />
+      <ActivityAppsMain />
+    </>
+  );
+}
+```
+
+- Adding an id registers and mounts it.
+- Removing an id waits for `onUnmount`, then unregisters it.
+- Lifecycle work is serialized, including changes received while an earlier mount or unmount is still pending.
+- Updating a retained id refreshes its registry projection without restarting lifecycle. Existing `ActivityAppsMain` / `KeepAliveStack` views therefore keep their mounted DOM and local state.
+- Empty, non-canonical, duplicate, or already-owned ids fail through `onError`; dynamic contributions never replace a separately registered component.
 
 ## FloeComponent
 
@@ -55,6 +80,8 @@ Rules:
   - `preserve`: tab switching does not mutate collapsed state.
   - default: `fullScreen` tabs use `preserve`, others use `toggle`.
 
+Product-owned context menus can be attached without moving menu policy into Floe. `ActivityBarItem.onContextMenu` and `WorkbenchHostDockItem.onContextMenu` receive the concrete trigger button, a viewport-space anchor, and a `pointer` or `keyboard` source. Floe handles right-click, the Context Menu key, Shift+F10, native-menu suppression, and `aria-haspopup="menu"`; the product owns menu contents, placement surface, focus restoration, and actions.
+
 ### fullScreen semantics
 
 `sidebar.fullScreen: true` means "this tab is a page":
@@ -78,7 +105,13 @@ import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
 
 const components: FloeComponent[] = [
   { id: 'home', name: 'Home', icon: HomeIcon, component: HomePage, sidebar: { fullScreen: true } },
-  { id: 'settings', name: 'Settings', icon: SettingsIcon, component: SettingsPage, sidebar: { fullScreen: true } },
+  {
+    id: 'settings',
+    name: 'Settings',
+    icon: SettingsIcon,
+    component: SettingsPage,
+    sidebar: { fullScreen: true },
+  },
 ];
 
 export function AppContent() {

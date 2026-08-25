@@ -1,9 +1,14 @@
-import { type Component, For, Show, createMemo, onCleanup, onMount } from 'solid-js';
+import { type Component, For, Show, createMemo, onCleanup, onMount, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { Tooltip } from '../ui/Tooltip';
 import { resolveActivityBarClick, type ActivityBarCollapseBehavior } from './activityBarBehavior';
+import {
+  isBarItemContextMenuKey,
+  keyboardBarItemContextMenuRequest,
+  type BarItemContextMenuHandler,
+} from './barItemContextMenu';
 
 export interface ActivityBarItem {
   id: string;
@@ -11,6 +16,8 @@ export interface ActivityBarItem {
   label: string;
   badge?: number | string | (() => number | string | undefined);
   onClick?: () => void;
+  /** Requests a product-owned context menu for this concrete Activity Bar button. */
+  onContextMenu?: BarItemContextMenuHandler;
   /** Receives the concrete trigger button for anchored product surfaces. */
   buttonRef?: (button: HTMLButtonElement | null) => void;
   /** ARIA disclosure state for a surface controlled by this item. */
@@ -130,17 +137,34 @@ interface ActivityBarButtonProps {
 
 function ActivityBarButton(props: ActivityBarButtonProps) {
   let buttonRef: HTMLButtonElement | undefined;
-  const badgeValue = () => (
-    typeof props.item.badge === 'function' ? props.item.badge() : props.item.badge
-  );
-  const expanded = () => (
+  const badgeValue = () =>
+    typeof props.item.badge === 'function' ? props.item.badge() : props.item.badge;
+  const expanded = () =>
     typeof props.item.ariaExpanded === 'function'
       ? props.item.ariaExpanded()
-      : props.item.ariaExpanded
-  );
+      : props.item.ariaExpanded;
 
   onMount(() => props.item.buttonRef?.(buttonRef ?? null));
   onCleanup(() => props.item.buttonRef?.(null));
+
+  const handleContextMenu: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
+    if (!props.item.onContextMenu) return;
+    event.preventDefault();
+    event.stopPropagation();
+    props.item.onContextMenu({
+      trigger: event.currentTarget,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      source: 'pointer',
+    });
+  };
+
+  const handleKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (event) => {
+    if (!props.item.onContextMenu || !isBarItemContextMenuKey(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    props.item.onContextMenu(keyboardBarItemContextMenuRequest(event.currentTarget));
+  };
 
   return (
     <Tooltip content={props.item.label} placement="right" delay={0}>
@@ -155,11 +179,13 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
             : 'text-activity-bar-foreground transition-[color,background-color] duration-100 hover:text-activity-bar-foreground-active hover:bg-accent/50'
         )}
         onClick={() => props.onClick()}
+        onContextMenu={handleContextMenu}
+        onKeyDown={handleKeyDown}
         aria-label={props.item.label}
         aria-pressed={props.isActive}
         aria-expanded={expanded()}
         aria-controls={props.item.ariaControls}
-        aria-haspopup={props.item.ariaHasPopup}
+        aria-haspopup={props.item.ariaHasPopup ?? (props.item.onContextMenu ? 'menu' : undefined)}
       >
         {/* Active indicator - positioned at left edge, full height */}
         <Show when={props.isActive}>

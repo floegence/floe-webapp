@@ -873,6 +873,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     const host = createWorkbenchHost();
     mockCanvasFrame(host);
     const onActivate = vi.fn();
+    const onContextMenu = vi.fn();
     const onDrop = vi.fn();
     const onDragPreviewChange = vi.fn();
 
@@ -890,6 +891,7 @@ describe('WorkbenchFilterBar pointer session', () => {
               label: 'Containers',
               icon: () => <svg aria-hidden="true" />,
               onActivate,
+              onContextMenu,
               canvasPlacement: {
                 widgetType: 'custom.files',
                 onDrop,
@@ -907,6 +909,42 @@ describe('WorkbenchFilterBar pointer session', () => {
     );
     expect(item).not.toBeNull();
     expect(item?.draggable).toBe(false);
+    expect(item?.getAttribute('aria-haspopup')).toBe('menu');
+    Object.defineProperty(item, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ left: 100, top: 200, width: 40, height: 20 }),
+    });
+
+    const pointerMenuRequest = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 321,
+      clientY: 456,
+    });
+    item!.dispatchEvent(pointerMenuRequest);
+    expect(pointerMenuRequest.defaultPrevented).toBe(true);
+    expect(onContextMenu).toHaveBeenNthCalledWith(1, {
+      trigger: item,
+      clientX: 321,
+      clientY: 456,
+      source: 'pointer',
+    });
+
+    const keyboardMenuRequest = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'F10',
+      shiftKey: true,
+    });
+    item!.dispatchEvent(keyboardMenuRequest);
+    expect(keyboardMenuRequest.defaultPrevented).toBe(true);
+    expect(onContextMenu).toHaveBeenNthCalledWith(2, {
+      trigger: item,
+      clientX: 120,
+      clientY: 210,
+      source: 'keyboard',
+    });
+
     dispatchPointerEvent('pointerdown', item!, { pointerId: 101, clientX: 20, clientY: 20 });
     dispatchPointerEvent('pointerup', document, {
       pointerId: 101,

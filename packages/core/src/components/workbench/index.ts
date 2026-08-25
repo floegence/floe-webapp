@@ -21,6 +21,11 @@ export type {
   WorkbenchExternalDockDragItem,
   WorkbenchHostDockItem,
 } from './WorkbenchFilterBar';
+export type {
+  BarItemContextMenuHandler,
+  BarItemContextMenuRequest,
+  BarItemContextMenuSource,
+} from '../layout/barItemContextMenu';
 export {
   WorkbenchContextMenu,
   type WorkbenchContextMenuItem,

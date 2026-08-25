@@ -10,6 +10,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/file-context-menu-surface-scope.test.tsx',
   'packages/core/test/floating-presence.test.tsx',
   'packages/core/test/floating-window-open-cycle.test.tsx',
+  'packages/core/test/floe-registry-contributions.test.tsx',
   'packages/core/test/surface-floating-layer.test.tsx',
   'packages/core/test/pointer-session.test.ts',
   'packages/core/test/infinite-canvas-wheel-routing.test.tsx',

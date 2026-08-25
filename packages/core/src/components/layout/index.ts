@@ -1,5 +1,10 @@
 export { Shell, type ShellProps, type ShellSlotClassNames } from './Shell';
 export { ActivityBar, type ActivityBarItem, type ActivityBarProps } from './ActivityBar';
+export type {
+  BarItemContextMenuHandler,
+  BarItemContextMenuRequest,
+  BarItemContextMenuSource,
+} from './barItemContextMenu';
 export {
   Sidebar,
   SidebarContent,
@@ -14,7 +19,14 @@ export {
 } from './Sidebar';
 export { TopBar, type TopBarProps } from './TopBar';
 export { TopBarIconButton, type TopBarIconButtonProps } from './TopBarIconButton';
-export { BottomBar, BottomBarItem, StatusIndicator, type BottomBarProps, type BottomBarItemProps, type StatusIndicatorProps } from './BottomBar';
+export {
+  BottomBar,
+  BottomBarItem,
+  StatusIndicator,
+  type BottomBarProps,
+  type BottomBarItemProps,
+  type StatusIndicatorProps,
+} from './BottomBar';
 export {
   BottomBarCompanion,
   type BottomBarCompanionDismissReason,
@@ -24,7 +36,14 @@ export {
 export { MobileTabBar, type MobileTabBarItem, type MobileTabBarProps } from './MobileTabBar';
 export { ResizeHandle, type ResizeHandleProps } from './ResizeHandle';
 export { SidebarPane, type SidebarPaneProps } from './SidebarPane';
-export { Panel, PanelHeader, PanelContent, type PanelProps, type PanelHeaderProps, type PanelContentProps } from './Panel';
+export {
+  Panel,
+  PanelHeader,
+  PanelContent,
+  type PanelProps,
+  type PanelHeaderProps,
+  type PanelContentProps,
+} from './Panel';
 export { KeepAliveStack, type KeepAliveStackProps, type KeepAliveView } from './KeepAliveStack';
 export {
   DisplayModeSwitcher,
