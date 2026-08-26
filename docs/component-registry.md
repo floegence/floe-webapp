@@ -82,6 +82,8 @@ Rules:
 
 Product-owned context menus can be attached without moving menu policy into Floe. `ActivityBarItem.onContextMenu` and `WorkbenchHostDockItem.onContextMenu` receive the concrete trigger button, a viewport-space anchor, and a `pointer` or `keyboard` source. Floe handles right-click, the Context Menu key, Shift+F10, native-menu suppression, and `aria-haspopup="menu"`; the product owns menu contents, placement surface, focus restoration, and actions.
 
+Workbench host items default to the leading host group. Set `WorkbenchHostDockItem.dockPlacement` to `after-components` to render an item after Floe's component group. External Dock drags use the same optional field on `WorkbenchExternalDockDragItem`, so their placeholder matches the final host-item position.
+
 ### fullScreen semantics
 
 `sidebar.fullScreen: true` means "this tab is a page":

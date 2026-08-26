@@ -16,6 +16,7 @@ export type {
   WorkbenchCanvasWidgetPlacement,
   WorkbenchDockCanvasPlacement,
   WorkbenchDockDropContext,
+  WorkbenchDockItemPlacement,
   WorkbenchDockItemActivation,
   WorkbenchExternalDockDragController,
   WorkbenchExternalDockDragItem,

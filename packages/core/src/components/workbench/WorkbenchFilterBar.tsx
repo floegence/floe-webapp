@@ -102,8 +102,12 @@ export type WorkbenchHostDockItem = Readonly<{
   onActivate?: (trigger: HTMLButtonElement) => void;
   /** Requests a product-owned context menu for this concrete Dock button. */
   onContextMenu?: BarItemContextMenuHandler;
+  /** Places the host item before or after Floe's built-in component group. */
+  dockPlacement?: WorkbenchDockItemPlacement;
   canvasPlacement?: WorkbenchDockCanvasPlacement;
 }>;
+
+export type WorkbenchDockItemPlacement = 'before-components' | 'after-components';
 
 export type WorkbenchDockItemActivation = Readonly<{
   kind: 'widget' | 'tool';
@@ -116,6 +120,8 @@ export type WorkbenchExternalDockDragItem = Readonly<{
   id: string;
   label: string;
   icon: Component<{ class?: string }>;
+  /** Places the Dock drop preview before or after Floe's built-in component group. */
+  dockPlacement?: WorkbenchDockItemPlacement;
   canvasPlacement?: WorkbenchDockCanvasPlacement;
   onDropToDock?: () => void;
 }>;
@@ -175,6 +181,7 @@ interface DragStateBase {
   preview: WorkbenchDockDragPreview | null;
   canvasPlacement: NormalizedWorkbenchCanvasPlacement | null;
   dockDrop: (() => void) | null;
+  dockPlacement: WorkbenchDockItemPlacement;
   stopInteraction: () => void;
   overDock: boolean;
 }
@@ -529,7 +536,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     });
   });
 
-  // Mode switcher = slot 0; host actions follow; draggable components come last.
+  // Mode switcher = slot 0; the remaining slots follow their visual Dock order.
   const offsetFor = (slot: number): number => {
     const hovered = hoveredIndex();
     if (hovered === null) return 0;
@@ -640,7 +647,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     icon: Component<{ class?: string }>,
     trigger: HTMLElement,
     canvasPlacement: NormalizedWorkbenchCanvasPlacement | null,
-    dockDrop: (() => void) | null
+    dockDrop: (() => void) | null,
+    dockPlacement: WorkbenchDockItemPlacement = 'before-components'
   ) => {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
@@ -664,6 +672,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       preview: null,
       canvasPlacement,
       dockDrop,
+      dockPlacement,
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
       trigger,
       overDock: false,
@@ -803,7 +812,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       item.icon,
       event.currentTarget,
       normalizeWidgetCanvasPlacement(item.canvasPlacement),
-      item.onDropToDock ?? null
+      item.onDropToDock ?? null,
+      item.dockPlacement ?? 'before-components'
     );
   };
 
@@ -852,6 +862,12 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const hostDockItems = createMemo(() =>
     activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]
   );
+  const leadingHostDockItems = createMemo(() =>
+    hostDockItems().filter((item) => item.dockPlacement !== 'after-components')
+  );
+  const trailingHostDockItems = createMemo(() =>
+    hostDockItems().filter((item) => item.dockPlacement === 'after-components')
+  );
   const actionItems = createMemo(() =>
     activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]
   );
@@ -874,6 +890,26 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     y: 0,
     x: 0,
   });
+  const showExternalPlaceholder = (placement: WorkbenchDockItemPlacement): boolean => {
+    const current = dragState();
+    return Boolean(
+      current?.kind === 'external' && current.moved && current.dockPlacement === placement
+    );
+  };
+  const ExternalDockPlaceholder = () => (
+    <span
+      class="workbench-dock__external-placeholder"
+      classList={{ 'is-drop-allowed': Boolean(dragState()?.overDock) }}
+      aria-hidden="true"
+    >
+      <Show when={ExternalPlaceholderIcon()}>
+        {(Icon) => {
+          const PlaceholderIcon = Icon();
+          return <PlaceholderIcon class="workbench-dock__icon" />;
+        }}
+      </Show>
+    </span>
+  );
 
   return (
     <>
@@ -971,21 +1007,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             );
           }}
         </Index>
-        <Show when={Boolean(dragState()?.kind === 'external' && dragState()?.moved)}>
-          <span
-            class="workbench-dock__external-placeholder"
-            classList={{ 'is-drop-allowed': Boolean(dragState()?.overDock) }}
-            aria-hidden="true"
-          >
-            <Show when={ExternalPlaceholderIcon()}>
-              {(Icon) => {
-                const PlaceholderIcon = Icon();
-                return <PlaceholderIcon class="workbench-dock__icon" />;
-              }}
-            </Show>
-          </span>
+        <Show when={showExternalPlaceholder('before-components')}>
+          <ExternalDockPlaceholder />
         </Show>
-        <For each={hostDockItems()}>
+        <For each={leadingHostDockItems()}>
           {(item, index) => {
             const slot = () => index() + actionItems().length + 1;
             return (
@@ -1011,7 +1036,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         <span class="workbench-dock__divider" aria-hidden="true" />
         <For each={componentItems()}>
           {(entry, index) => {
-            const slot = () => index() + actionItems().length + hostDockItems().length + 1;
+            const slot = () =>
+              index() + actionItems().length + leadingHostDockItems().length + 1;
             return (
               <DockItem
                 id={String(entry.id)}
@@ -1057,6 +1083,45 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             );
           }}
         </For>
+        <Show
+          when={
+            trailingHostDockItems().length > 0 ||
+            showExternalPlaceholder('after-components')
+          }
+        >
+          <span class="workbench-dock__divider" aria-hidden="true" />
+        </Show>
+        <For each={trailingHostDockItems()}>
+          {(item, index) => {
+            const slot = () =>
+              index() +
+              actionItems().length +
+              leadingHostDockItems().length +
+              componentItems().length +
+              1;
+            return (
+              <DockItem
+                id={item.id}
+                kind="host"
+                label={item.label}
+                icon={item.icon}
+                active={Boolean(item.active)}
+                visible
+                filterable={false}
+                hoverOffset={offsetFor(slot())}
+                isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
+                canvasPlacement={normalizeWidgetCanvasPlacement(item.canvasPlacement)}
+                onContextMenu={item.onContextMenu}
+                onEnter={() => setHoveredIndex(slot())}
+                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
+                onDragBegin={beginItemDragGesture}
+              />
+            );
+          }}
+        </For>
+        <Show when={showExternalPlaceholder('after-components')}>
+          <ExternalDockPlaceholder />
+        </Show>
       </div>
 
       <Show when={Boolean(dragState()?.moved && !dragState()?.preview)}>

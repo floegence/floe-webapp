@@ -283,6 +283,19 @@ describe('WorkbenchFilterBar pointer session', () => {
           }}
           mode="background"
           onSoloFilter={onSoloFilter}
+          dockItems={[
+            {
+              id: 'host:leading',
+              label: 'Leading host',
+              icon: () => <svg aria-hidden="true" />,
+            },
+            {
+              id: 'host:trailing',
+              label: 'Trailing host',
+              icon: () => <svg aria-hidden="true" />,
+              dockPlacement: 'after-components',
+            },
+          ]}
         />
       ),
       host
@@ -297,6 +310,9 @@ describe('WorkbenchFilterBar pointer session', () => {
 
     expect(regionButton).toBeTruthy();
     expect(textButton).toBeTruthy();
+    expect(host.querySelector('[data-workbench-dock-item="host:leading"]')).toBeNull();
+    expect(host.querySelector('[data-workbench-dock-item="host:trailing"]')).toBeNull();
+    expect(host.querySelectorAll('.workbench-dock__divider')).toHaveLength(1);
     expect(regionButton!.classList.contains('is-filter-muted')).toBe(false);
     expect(textButton!.classList.contains('is-filter-muted')).toBe(false);
 
@@ -869,6 +885,109 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSourceClick).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps legacy host items before components and appends trailing host items after components', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          dockItems={[
+            {
+              id: 'host:leading',
+              label: 'Leading host',
+              icon: () => <svg aria-hidden="true" />,
+            },
+            {
+              id: 'host:trailing-first',
+              label: 'Trailing first',
+              icon: () => <svg aria-hidden="true" />,
+              dockPlacement: 'after-components',
+            },
+            {
+              id: 'host:trailing-second',
+              label: 'Trailing second',
+              icon: () => <svg aria-hidden="true" />,
+              dockPlacement: 'after-components',
+            },
+          ]}
+        />
+      ),
+      host
+    );
+
+    const dock = host.querySelector('.workbench-dock')!;
+    const children = Array.from(dock.children);
+    const leading = host.querySelector('[data-workbench-dock-item="host:leading"]')!;
+    const component = host.querySelector('[aria-label^="Files —"]')!;
+    const trailingFirst = host.querySelector(
+      '[data-workbench-dock-item="host:trailing-first"]'
+    )!;
+    const trailingSecond = host.querySelector(
+      '[data-workbench-dock-item="host:trailing-second"]'
+    )!;
+
+    expect(children.indexOf(leading)).toBeLessThan(children.indexOf(component));
+    expect(children.indexOf(component)).toBeLessThan(children.indexOf(trailingFirst));
+    expect(children.indexOf(trailingFirst)).toBeLessThan(children.indexOf(trailingSecond));
+    expect(host.querySelectorAll('.workbench-dock__divider')).toHaveLength(2);
+  });
+
+  it('projects an after-components external Dock placeholder at the visual tail', () => {
+    const host = document.createElement('div');
+    const source = document.createElement('button');
+    document.body.append(host, source);
+    let controller: Parameters<
+      NonNullable<Parameters<typeof WorkbenchFilterBar>[0]['registerExternalDockDragController']>
+    >[0];
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          onSoloFilter={() => {}}
+          dockItems={[
+            {
+              id: 'plugin:existing',
+              label: 'Existing plugin',
+              icon: () => <svg aria-hidden="true" />,
+              dockPlacement: 'after-components',
+            },
+          ]}
+          registerExternalDockDragController={(value) => {
+            controller = value;
+          }}
+        />
+      ),
+      host
+    );
+    source.addEventListener('pointerdown', (event) =>
+      controller?.begin(event, {
+        id: 'plugin:new',
+        label: 'New plugin',
+        icon: () => <svg aria-hidden="true" />,
+        dockPlacement: 'after-components',
+      })
+    );
+
+    dispatchPointerEvent('pointerdown', source, { pointerId: 99, clientX: 10, clientY: 10 });
+    dispatchPointerEvent('pointermove', document, { pointerId: 99, clientX: 40, clientY: 20 });
+
+    const dock = host.querySelector('.workbench-dock')!;
+    const placeholder = dock.querySelector('.workbench-dock__external-placeholder')!;
+    const existing = dock.querySelector('[data-workbench-dock-item="plugin:existing"]')!;
+    const children = Array.from(dock.children);
+    expect(children.indexOf(existing)).toBeLessThan(children.indexOf(placeholder));
+    expect(children.at(-1)).toBe(placeholder);
+    expect(host.querySelectorAll('.workbench-dock__divider')).toHaveLength(2);
+  });
+
   it('renders host Dock items as draggable items with click activation and canvas drop semantics', async () => {
     const host = createWorkbenchHost();
     mockCanvasFrame(host);
@@ -890,6 +1009,7 @@ describe('WorkbenchFilterBar pointer session', () => {
               id: 'plugin:containers',
               label: 'Containers',
               icon: () => <svg aria-hidden="true" />,
+              dockPlacement: 'after-components',
               onActivate,
               onContextMenu,
               canvasPlacement: {
