@@ -1,4 +1,5 @@
 import type { ArtifactSource, ConnectionSnapshot } from '@floegence/flowersec-core';
+import type { PrivateLoopbackArtifactSourceV1 } from '@floegence/flowersec-core/browser';
 import {
   AcquisitionError,
   clearAcquisitionSource,
@@ -22,8 +23,8 @@ export type AcquisitionConnectionLifecycleOptions = Readonly<{
 }>;
 
 export function createAcquisitionConnectionLifecycle(
-  source: ArtifactSource,
-  options: AcquisitionConnectionLifecycleOptions = {},
+  source: ArtifactSource | PrivateLoopbackArtifactSourceV1,
+  options: AcquisitionConnectionLifecycleOptions = {}
 ): AcquisitionConnectionLifecycle {
   let disposed = false;
   let current: ConnectedAcquisition | null = null;
@@ -34,7 +35,8 @@ export function createAcquisitionConnectionLifecycle(
       if (snapshot.state === 'connected' && acquisition === null) {
         throw new AcquisitionError('connected_acquisition_missing');
       }
-      if (options.proxyBootstrap !== undefined) synchronizeProxyBootstrap(options.proxyBootstrap, acquisition);
+      if (options.proxyBootstrap !== undefined)
+        synchronizeProxyBootstrap(options.proxyBootstrap, acquisition);
       if (acquisition !== null && acquisition !== current) options.onConnected?.(acquisition);
       current = acquisition;
     },

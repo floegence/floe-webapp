@@ -1,11 +1,17 @@
 import type {
+  ArtifactLease,
   ArtifactSource,
   JsonObject,
   RetryDisposition,
 } from '@floegence/flowersec-core';
+import type {
+  PrivateLoopbackArtifactLeaseV1,
+  PrivateLoopbackArtifactSourceV1,
+} from '@floegence/flowersec-core/browser';
 import {
   AcquisitionError,
   materializeAcquisitionForSource,
+  materializePrivateLoopbackAcquisitionForSource,
   registerAcquisitionSource,
   type CommitSpend,
   type ValidateSpendBinding,
@@ -26,8 +32,16 @@ export type ControlplaneArtifactSourceOptions = Readonly<{
   retryableBusinessCodes?: readonly string[];
 }>;
 
+export type PrivateLoopbackControlplaneArtifactSourceOptions = Omit<
+  ControlplaneArtifactSourceOptions,
+  'allowLoopbackHTTP' | 'entryTicket'
+>;
+
 export class ControlplaneRequestError extends Error {
-  constructor(readonly status: number, readonly code: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string
+  ) {
     super(`Floe controlplane request failed (code=${code})`);
     this.name = 'ControlplaneRequestError';
   }
@@ -48,7 +62,12 @@ export type ClassifiedControlplaneFailure = Readonly<{
 
 function isLoopbackHostname(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
-  return normalized === 'localhost' || normalized === '::1' || normalized === '127.0.0.1' || normalized.startsWith('127.');
+  return (
+    normalized === 'localhost' ||
+    normalized === '::1' ||
+    normalized === '127.0.0.1' ||
+    normalized.startsWith('127.')
+  );
 }
 
 function resolveBaseUrl(value: string, allowLoopbackHTTP: boolean): URL {
@@ -58,7 +77,10 @@ function resolveBaseUrl(value: string, allowLoopbackHTTP: boolean): URL {
   } catch {
     throw new ControlplaneRequestError(0, 'transport_policy_denied');
   }
-  if (url.protocol !== 'https:' && !(allowLoopbackHTTP && url.protocol === 'http:' && isLoopbackHostname(url.hostname))) {
+  if (
+    url.protocol !== 'https:' &&
+    !(allowLoopbackHTTP && url.protocol === 'http:' && isLoopbackHostname(url.hostname))
+  ) {
     throw new ControlplaneRequestError(0, 'transport_policy_denied');
   }
   url.pathname = url.pathname.replace(/\/+$/u, '');
@@ -70,9 +92,14 @@ function artifactEndpoint(baseUrl: URL, entryTicket?: string): string {
   return new URL(`${baseUrl.pathname}${suffix}`, baseUrl).toString();
 }
 
-export function classifyControlplaneFailure(input: ControlplaneFailureInput): ClassifiedControlplaneFailure {
+export function classifyControlplaneFailure(
+  input: ControlplaneFailureInput
+): ClassifiedControlplaneFailure {
   if (!BUSINESS_CODE_PATTERN.test(input.code)) {
-    return Object.freeze({ code: 'invalid_error_code', disposition: Object.freeze({ kind: 'terminal' }) });
+    return Object.freeze({
+      code: 'invalid_error_code',
+      disposition: Object.freeze({ kind: 'terminal' }),
+    });
   }
   const retryableCodes = new Set(input.retryableBusinessCodes ?? []);
   if (retryableCodes.has(input.code)) {
@@ -82,9 +109,10 @@ export function classifyControlplaneFailure(input: ControlplaneFailureInput): Cl
     const notBefore = parseRetryAfter(input.retryAfter, input.nowUnixMilliseconds ?? Date.now());
     return Object.freeze({
       code: input.code,
-      disposition: notBefore === undefined
-        ? Object.freeze({ kind: 'retryable' })
-        : Object.freeze({ kind: 'retry_after', notBeforeUnixMilliseconds: notBefore }),
+      disposition:
+        notBefore === undefined
+          ? Object.freeze({ kind: 'retryable' })
+          : Object.freeze({ kind: 'retry_after', notBeforeUnixMilliseconds: notBefore }),
     });
   }
   if (input.status === 408 || input.status === 425 || input.status >= 500) {
@@ -93,15 +121,62 @@ export function classifyControlplaneFailure(input: ControlplaneFailureInput): Cl
   return Object.freeze({ code: input.code, disposition: Object.freeze({ kind: 'terminal' }) });
 }
 
-export function createControlplaneArtifactSource(options: ControlplaneArtifactSourceOptions): ArtifactSource {
+export function createControlplaneArtifactSource(
+  options: ControlplaneArtifactSourceOptions
+): ArtifactSource {
+  const source = createControlplaneSource<ArtifactLease>(options, materializeAcquisitionForSource);
+  registerAcquisitionSource(source);
+  return source;
+}
+
+export function createPrivateLoopbackControlplaneArtifactSource(
+  options: PrivateLoopbackControlplaneArtifactSourceOptions
+): PrivateLoopbackArtifactSourceV1 {
+  const candidate = privateLoopbackBaseURL(options.baseUrl);
+  const source = createControlplaneSource<PrivateLoopbackArtifactLeaseV1>(
+    { ...options, baseUrl: candidate.origin, allowLoopbackHTTP: true },
+    materializePrivateLoopbackAcquisitionForSource
+  );
+  registerAcquisitionSource(source);
+  return source;
+}
+
+type ArtifactSourceResultFor<Lease> =
+  | Readonly<{
+      kind: 'lease';
+      lease: Lease;
+    }>
+  | Readonly<{
+      kind: 'failure';
+      code: string;
+      disposition: RetryDisposition;
+    }>;
+
+type ArtifactSourceFor<Lease> = Readonly<{
+  acquire(options: Readonly<{ signal: AbortSignal }>): Promise<ArtifactSourceResultFor<Lease>>;
+}>;
+
+function createControlplaneSource<Lease>(
+  options: ControlplaneArtifactSourceOptions,
+  materialize: (
+    source: ArtifactSourceFor<Lease>,
+    value: unknown,
+    options: Readonly<{
+      commitSpend: CommitSpend;
+      validateSpendBinding: ValidateSpendBinding;
+      expectedConsumer: 'trusted';
+    }>
+  ) => Promise<Lease>
+): ArtifactSourceFor<Lease> {
   if (typeof options.commitSpend !== 'function') throw new TypeError('commitSpend is required');
-  if (typeof options.validateSpendBinding !== 'function') throw new TypeError('validateSpendBinding is required');
+  if (typeof options.validateSpendBinding !== 'function')
+    throw new TypeError('validateSpendBinding is required');
   const fetchImpl = options.fetch ?? globalThis.fetch;
   if (typeof fetchImpl !== 'function') throw new TypeError('fetch is required');
   const baseUrl = resolveBaseUrl(options.baseUrl, options.allowLoopbackHTTP === true);
   const endpoint = artifactEndpoint(baseUrl, options.entryTicket);
 
-  const source: ArtifactSource = {
+  const source: ArtifactSourceFor<Lease> = {
     acquire: async ({ signal }) => {
       try {
         const body: Record<string, unknown> = {
@@ -116,7 +191,9 @@ export function createControlplaneArtifactSource(options: ControlplaneArtifactSo
           headers: {
             accept: 'application/json',
             'content-type': 'application/json',
-            ...(options.entryTicket === undefined ? {} : { authorization: `Bearer ${options.entryTicket}` }),
+            ...(options.entryTicket === undefined
+              ? {}
+              : { authorization: `Bearer ${options.entryTicket}` }),
           },
           body: JSON.stringify(body),
           credentials: 'omit',
@@ -135,11 +212,11 @@ export function createControlplaneArtifactSource(options: ControlplaneArtifactSo
         }
         let envelope: unknown;
         try {
-          envelope = await response.json() as unknown;
+          envelope = (await response.json()) as unknown;
         } catch {
           return terminalFailure('invalid_controlplane_response');
         }
-        const lease = await materializeAcquisitionForSource(source, envelope, {
+        const lease = await materialize(source, envelope, {
           commitSpend: options.commitSpend,
           validateSpendBinding: (binding) => {
             try {
@@ -164,13 +241,42 @@ export function createControlplaneArtifactSource(options: ControlplaneArtifactSo
       }
     },
   };
-  registerAcquisitionSource(source);
   return source;
+}
+
+function privateLoopbackBaseURL(value: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
+  }
+  if (
+    value !== url.origin ||
+    url.protocol !== 'http:' ||
+    url.username !== '' ||
+    url.password !== '' ||
+    !privateLoopbackPort(url.port) ||
+    !numericLoopbackHostname(url.hostname)
+  ) {
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
+  }
+  return url;
+}
+
+function privateLoopbackPort(value: string): boolean {
+  if (!/^[1-9][0-9]*$/u.test(value)) return false;
+  const port = Number(value);
+  return Number.isSafeInteger(port) && port >= 1024 && port <= 65_535;
+}
+
+function numericLoopbackHostname(value: string): boolean {
+  return value === '127.0.0.1' || value === '[::1]';
 }
 
 async function responseErrorCode(response: Response): Promise<string> {
   try {
-    const body = await response.json() as unknown;
+    const body = (await response.json()) as unknown;
     if (body !== null && typeof body === 'object' && !Array.isArray(body)) {
       const error = (body as Record<string, unknown>).error;
       if (error !== null && typeof error === 'object' && !Array.isArray(error)) {
@@ -197,7 +303,9 @@ function parseRetryAfter(value: string | null | undefined, now: number): number 
   return Number.isSafeInteger(parsed) && parsed > now ? parsed : undefined;
 }
 
-function terminalFailure(code: string): ClassifiedControlplaneFailure & Readonly<{ kind: 'failure' }> {
+function terminalFailure(
+  code: string
+): ClassifiedControlplaneFailure & Readonly<{ kind: 'failure' }> {
   return Object.freeze({
     kind: 'failure',
     code: BUSINESS_CODE_PATTERN.test(code) ? code : 'invalid_error_code',

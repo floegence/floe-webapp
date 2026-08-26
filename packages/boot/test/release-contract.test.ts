@@ -32,7 +32,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '3.1.1';
+  const flowersecVersion = '3.2.0';
 
   it('keeps Node engine, CI, release, and build targets aligned on Node 24', () => {
     const rootPkg = readJson<PackageJson>('package.json');
@@ -66,7 +66,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.44.1');
+    expect(corePkg.version).toBe('0.44.2');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -148,12 +148,12 @@ describe('release dependency and runtime contract', () => {
     const goPeer = readText('scripts/flowersec-v3-smoke-peer/main.go');
     expect(goModule).toContain('go 1.26.6');
     expect(goModule).toMatch(
-      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.1\.1$/mu
+      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.2\.0$/mu
     );
     expect(goModule).not.toMatch(/^replace\s/mu);
     expect(goModule).not.toContain('../');
     expect(existsSync(join(repoRoot(), 'scripts/flowersec-v3-smoke-peer/go.work'))).toBe(false);
-    expect(goChecksums).toContain('flowersec-go/v3 v3.1.1');
+    expect(goChecksums).toContain('flowersec-go/v3 v3.2.0');
     expect(goPeer).toContain('flowersec.NewAcceptor');
     expect(goPeer).toContain('flowersec.NewWebSocketHTTPServer');
     expect(goPeer).toContain('controlplane.NewIssuer().IssueDirect');

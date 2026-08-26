@@ -1,17 +1,19 @@
-export {
-  clearLocationHash,
-  parseHashParam,
-} from './hash';
+export { clearLocationHash, parseHashParam } from './hash';
 export type { WaitForMessageOptions } from './messaging';
 export { postMessageToOrigins, waitForMessage } from './messaging';
 export { getSessionStorage, removeSessionStorage, setSessionStorage } from './storage';
 export type { ArtifactSource, ArtifactSourceResult } from '@floegence/flowersec-core';
-export { createControlplaneArtifactSource, ControlplaneRequestError } from './artifact-source';
+export {
+  createControlplaneArtifactSource,
+  createPrivateLoopbackControlplaneArtifactSource,
+  ControlplaneRequestError,
+} from './artifact-source';
 export { classifyControlplaneFailure } from './artifact-source';
 export type {
   ClassifiedControlplaneFailure,
   ControlplaneArtifactSourceOptions,
   ControlplaneFailureInput,
+  PrivateLoopbackControlplaneArtifactSourceOptions,
 } from './artifact-source';
 export {
   AcquisitionError,
@@ -19,6 +21,7 @@ export {
   connectIsolatedOneShot,
   ConnectedAcquisition,
   IsolatedOneShotAcquisition,
+  materializePrivateLoopbackAcquisitionForSource,
   materializeIsolatedOneShot,
   synchronizeAcquisitionSourceSnapshot,
 } from './acquisition';
@@ -42,12 +45,14 @@ export type {
 export type {
   DirectArtifactConnectionOptions,
   FlowersecConnectionConfig,
+  PrivateLoopbackDirectConnectionOptions,
   ProxyRuntimeTunnelConnectionOptions,
   TunnelArtifactConnectionOptions,
 } from './connection';
 export {
   createArtifactDirectConnectionConfig,
   createArtifactTunnelConnectionConfig,
+  createPrivateLoopbackDirectConnectionConfig,
   createProxyRuntimeTunnelConnectionConfig,
 } from './connection';
 export type {
@@ -55,10 +60,7 @@ export type {
   ServerSentEvent,
   ServerSentEventStreamErrorCode,
 } from './server-sent-events';
-export {
-  fetchServerSentEvents,
-  ServerSentEventStreamError,
-} from './server-sent-events';
+export { fetchServerSentEvents, ServerSentEventStreamError } from './server-sent-events';
 export {
   closeProxyBootstrap,
   createProxyBootstrapOwner,

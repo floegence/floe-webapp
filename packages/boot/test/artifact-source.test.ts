@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const leases: Array<{ artifact: unknown; commitSpend: (signal?: AbortSignal) => Promise<void> }> = [];
+const leases: Array<{ artifact: unknown; commitSpend: (signal?: AbortSignal) => Promise<void> }> =
+  [];
+const privateLeases: Array<{
+  artifact: unknown;
+  commitSpend: (signal?: AbortSignal) => Promise<void>;
+}> = [];
 
 vi.mock('@floegence/flowersec-core', () => ({
   parseArtifact: (value: string | Uint8Array) => ({ value }),
-  createArtifactLease: (artifact: unknown, commitSpend: (signal?: AbortSignal) => Promise<void>) => {
+  createArtifactLease: (
+    artifact: unknown,
+    commitSpend: (signal?: AbortSignal) => Promise<void>
+  ) => {
     const lease = { artifact, commitSpend };
     leases.push(lease);
     return lease;
@@ -14,6 +22,25 @@ vi.mock('@floegence/flowersec-core', () => ({
 vi.mock('@floegence/flowersec-core/proxy', () => ({
   assertProxyRuntimeScope: (payload: unknown) => payload,
   PROXY_RUNTIME_SCOPE: { name: 'proxy.runtime', version: 2 },
+}));
+
+vi.mock('@floegence/flowersec-core/browser', () => ({
+  validatePrivateLoopbackOriginV1: (raw: string) => {
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' || !/^(?:127(?:\.[0-9]{1,3}){3}|\[::1\])$/u.test(url.hostname)) {
+      throw new Error('invalid private loopback origin');
+    }
+    return url.origin;
+  },
+  parsePrivateLoopbackArtifactV1: (value: string | Uint8Array) => ({ privateValue: value }),
+  createPrivateLoopbackArtifactLeaseV1: (
+    artifact: unknown,
+    commitSpend: (signal?: AbortSignal) => Promise<void>
+  ) => {
+    const lease = { artifact, commitSpend };
+    privateLeases.push(lease);
+    return lease;
+  },
 }));
 
 function encodeBase64Url(bytes: Uint8Array): string {
@@ -28,12 +55,18 @@ async function digest(value: string): Promise<string> {
   return encodeBase64Url(new Uint8Array(result));
 }
 
-async function envelope(artifact = '{}', projection = JSON.stringify({
-  scope: 'proxy.runtime',
-  scope_version: 2,
-  critical: true,
-  payload: { mode: 'controller_bridge', controllerBridge: { allowedOrigins: ['https://app.example.com'] } },
-})): Promise<Record<string, unknown>> {
+async function envelope(
+  artifact = '{}',
+  projection = JSON.stringify({
+    scope: 'proxy.runtime',
+    scope_version: 2,
+    critical: true,
+    payload: {
+      mode: 'controller_bridge',
+      controllerBridge: { allowedOrigins: ['https://app.example.com'] },
+    },
+  })
+): Promise<Record<string, unknown>> {
   const receipt = `r1.k.${encodeBase64Url(new Uint8Array(32).fill(7))}`;
   return {
     v: 1,
@@ -60,7 +93,9 @@ describe('boot artifact source', () => {
     const mod = await import('../src/index');
     const commitSpend = vi.fn(async () => {});
     const validateSpendBinding = vi.fn(() => 'binding-1');
-    const fetch = vi.fn(async () => new Response(JSON.stringify(await envelope()), { status: 200 }));
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify(await envelope()), { status: 200 })
+    );
     const source = mod.createControlplaneArtifactSource({
       baseUrl: 'https://cp.example.com',
       endpointId: 'demo',
@@ -72,17 +107,67 @@ describe('boot artifact source', () => {
     const result = await source.acquire({ signal: new AbortController().signal });
     expect(result.kind).toBe('lease');
     expect(fetch).toHaveBeenCalledOnce();
-    expect(validateSpendBinding).toHaveBeenCalledWith(expect.objectContaining({ consumer: 'trusted' }));
+    expect(validateSpendBinding).toHaveBeenCalledWith(
+      expect.objectContaining({ consumer: 'trusted' })
+    );
     const lease = leases[0];
     expect(lease).toBeDefined();
     await lease!.commitSpend();
     expect(commitSpend).toHaveBeenCalledOnce();
-    expect(commitSpend.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
-      attemptId: expect.any(String),
-      receipt: expect.stringMatching(/^r1\./u),
-      artifactDigestB64u: expect.any(String),
-    }));
+    expect(commitSpend.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        attemptId: expect.any(String),
+        receipt: expect.stringMatching(/^r1\./u),
+        artifactDigestB64u: expect.any(String),
+      })
+    );
     await expect(lease!.commitSpend()).rejects.toMatchObject({ code: 'spend_binding_consumed' });
+  });
+
+  it('materializes a private-loopback Lease through the same spend and acquisition state', async () => {
+    privateLeases.length = 0;
+    const mod = await import('../src/index');
+    const commitSpend = vi.fn(async () => {});
+    const source = await mod.createPrivateLoopbackControlplaneArtifactSource({
+      baseUrl: 'http://127.0.0.1:43123',
+      endpointId: 'desktop-private',
+      fetch: vi.fn(async () => new Response(JSON.stringify(await envelope()), { status: 200 })),
+      commitSpend,
+      validateSpendBinding: () => 'private-binding',
+    });
+
+    const result = await source.acquire({ signal: new AbortController().signal });
+    expect(result.kind).toBe('lease');
+    expect(privateLeases).toHaveLength(1);
+    await privateLeases[0]!.commitSpend();
+    expect(commitSpend).toHaveBeenCalledOnce();
+    expect(() =>
+      mod.synchronizeAcquisitionSourceSnapshot(source, {
+        state: 'connected',
+        attempt: 1,
+        currentSession: {} as never,
+      })
+    ).not.toThrow();
+  });
+
+  it.each([
+    'http://localhost:43123',
+    'http://127.0.0.1',
+    'http://127.0.0.1:80',
+    'http://127.0.0.2:43123',
+    'https://127.0.0.1:43123',
+    'http://127.0.0.1:43123/path',
+    'http://127.0.0.1:43123/?query=1',
+  ])('rejects non-private source origin %s', async (baseUrl) => {
+    const mod = await import('../src/index');
+    expect(() =>
+      mod.createPrivateLoopbackControlplaneArtifactSource({
+        baseUrl,
+        endpointId: 'desktop-private',
+        commitSpend: vi.fn(async () => {}),
+        validateSpendBinding: vi.fn(),
+      })
+    ).toThrow(expect.objectContaining({ code: 'transport_policy_denied' }));
   });
 
   it('burns the spend binding and removes the pending acquisition when durability fails', async () => {
@@ -91,7 +176,9 @@ describe('boot artifact source', () => {
     const commitSpend = vi.fn(async () => {
       throw new Error('durability failed');
     });
-    const fetch = vi.fn(async () => new Response(JSON.stringify(await envelope()), { status: 200 }));
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify(await envelope()), { status: 200 })
+    );
     const source = mod.createControlplaneArtifactSource({
       baseUrl: 'https://cp.example.com',
       endpointId: 'demo',
@@ -106,10 +193,13 @@ describe('boot artifact source', () => {
     await expect(lease!.commitSpend()).rejects.toThrow('durability failed');
     await expect(lease!.commitSpend()).rejects.toMatchObject({ code: 'spend_binding_consumed' });
     expect(commitSpend).toHaveBeenCalledOnce();
-    expect(() => mod.synchronizeAcquisitionSourceSnapshot(
-      source,
-      { state: 'connected', attempt: 1, currentSession: {} as never },
-    )).toThrow(/connected_acquisition_mismatch/u);
+    expect(() =>
+      mod.synchronizeAcquisitionSourceSnapshot(source, {
+        state: 'connected',
+        attempt: 1,
+        currentSession: {} as never,
+      })
+    ).toThrow(/connected_acquisition_mismatch/u);
   });
 
   it('rejects digest-bound object artifacts and malformed projections', async () => {
@@ -120,14 +210,31 @@ describe('boot artifact source', () => {
       commitSpend: vi.fn(async () => {}),
       validateSpendBinding: vi.fn(),
     };
-    const objectFetch = vi.fn(async () => new Response(JSON.stringify({ ...(await envelope()), connect_artifact: {} }), { status: 200 }));
+    const objectFetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ ...(await envelope()), connect_artifact: {} }), {
+          status: 200,
+        })
+    );
     const objectSource = mod.createControlplaneArtifactSource({ ...options, fetch: objectFetch });
-    await expect(objectSource.acquire({ signal: new AbortController().signal })).resolves.toMatchObject({ kind: 'failure', code: 'invalid_acquisition_envelope' });
+    await expect(
+      objectSource.acquire({ signal: new AbortController().signal })
+    ).resolves.toMatchObject({ kind: 'failure', code: 'invalid_acquisition_envelope' });
 
-    const invalidProjection = JSON.stringify({ scope: 'proxy.runtime', scope_version: 1, critical: true, payload: {} });
-    const badFetch = vi.fn(async () => new Response(JSON.stringify(await envelope('{}', invalidProjection)), { status: 200 }));
+    const invalidProjection = JSON.stringify({
+      scope: 'proxy.runtime',
+      scope_version: 1,
+      critical: true,
+      payload: {},
+    });
+    const badFetch = vi.fn(
+      async () =>
+        new Response(JSON.stringify(await envelope('{}', invalidProjection)), { status: 200 })
+    );
     const badSource = mod.createControlplaneArtifactSource({ ...options, fetch: badFetch });
-    await expect(badSource.acquire({ signal: new AbortController().signal })).resolves.toMatchObject({ kind: 'failure', code: 'invalid_critical_scope_projection' });
+    await expect(
+      badSource.acquire({ signal: new AbortController().signal })
+    ).resolves.toMatchObject({ kind: 'failure', code: 'invalid_critical_scope_projection' });
   });
 
   it('treats host spend-binding rejection as a terminal acquisition failure', async () => {
@@ -157,7 +264,9 @@ describe('boot artifact source', () => {
       commitSpend: vi.fn(async () => {}),
       validateSpendBinding: () => 1 as never,
     });
-    await expect(invalidIdentitySource.acquire({ signal: new AbortController().signal })).resolves.toMatchObject({
+    await expect(
+      invalidIdentitySource.acquire({ signal: new AbortController().signal })
+    ).resolves.toMatchObject({
       kind: 'failure',
       code: 'invalid_spend_binding_identity',
       disposition: { kind: 'terminal' },
@@ -166,13 +275,28 @@ describe('boot artifact source', () => {
 
   it('classifies HTTP policy and Retry-After without exposing response bodies', async () => {
     const mod = await import('../src/index');
-    expect(mod.classifyControlplaneFailure({ status: 401, code: 'unauthorized' })).toEqual({ code: 'unauthorized', disposition: { kind: 'terminal' } });
-    expect(mod.classifyControlplaneFailure({ status: 503, code: 'temporarily_unavailable' })).toEqual({ code: 'temporarily_unavailable', disposition: { kind: 'retryable' } });
-    expect(mod.classifyControlplaneFailure({ status: 429, code: 'rate_limited', retryAfter: '5', nowUnixMilliseconds: 1_000 })).toEqual({
+    expect(mod.classifyControlplaneFailure({ status: 401, code: 'unauthorized' })).toEqual({
+      code: 'unauthorized',
+      disposition: { kind: 'terminal' },
+    });
+    expect(
+      mod.classifyControlplaneFailure({ status: 503, code: 'temporarily_unavailable' })
+    ).toEqual({ code: 'temporarily_unavailable', disposition: { kind: 'retryable' } });
+    expect(
+      mod.classifyControlplaneFailure({
+        status: 429,
+        code: 'rate_limited',
+        retryAfter: '5',
+        nowUnixMilliseconds: 1_000,
+      })
+    ).toEqual({
       code: 'rate_limited',
       disposition: { kind: 'retry_after', notBeforeUnixMilliseconds: 6_000 },
     });
-    expect(mod.classifyControlplaneFailure({ status: 500, code: 'Bad Code' })).toEqual({ code: 'invalid_error_code', disposition: { kind: 'terminal' } });
+    expect(mod.classifyControlplaneFailure({ status: 500, code: 'Bad Code' })).toEqual({
+      code: 'invalid_error_code',
+      disposition: { kind: 'terminal' },
+    });
   });
 
   it('denies loopback HTTP unless explicitly enabled and requires spend hooks', async () => {
@@ -182,7 +306,14 @@ describe('boot artifact source', () => {
       commitSpend: vi.fn(async () => {}),
       validateSpendBinding: vi.fn(),
     };
-    expect(() => mod.createControlplaneArtifactSource({ ...base, baseUrl: 'http://127.0.0.1:8787' })).toThrow(/transport_policy_denied/u);
-    expect(() => mod.createControlplaneArtifactSource({ baseUrl: 'https://cp.example.com', endpointId: 'demo' } as never)).toThrow(/commitSpend is required/u);
+    expect(() =>
+      mod.createControlplaneArtifactSource({ ...base, baseUrl: 'http://127.0.0.1:8787' })
+    ).toThrow(/transport_policy_denied/u);
+    expect(() =>
+      mod.createControlplaneArtifactSource({
+        baseUrl: 'https://cp.example.com',
+        endpointId: 'demo',
+      } as never)
+    ).toThrow(/commitSpend is required/u);
   });
 });

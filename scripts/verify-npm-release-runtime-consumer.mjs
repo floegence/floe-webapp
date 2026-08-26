@@ -67,11 +67,13 @@ try {
   const source = createControlplaneArtifactSource({
     baseUrl: 'https://controlplane.example.com',
     endpointId: 'floe-release-smoke',
-    fetch: async () => new globalThis.Response(JSON.stringify(envelope), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    }),
-    validateSpendBinding: (binding) => `${binding.artifactDigestB64u}.${binding.projectionDigestB64u}`,
+    fetch: async () =>
+      new globalThis.Response(JSON.stringify(envelope), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    validateSpendBinding: (binding) =>
+      `${binding.artifactDigestB64u}.${binding.projectionDigestB64u}`,
     commitSpend: async () => {
       spendCount += 1;
     },
@@ -115,14 +117,17 @@ function resolveSmokePeerDirectory() {
     throw new Error('FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR must be an absolute path');
   }
   const directory = realpathSync(configured);
-  if (!statSync(directory).isDirectory()) throw new Error('Flowersec smoke peer path must be a directory');
+  if (!statSync(directory).isDirectory())
+    throw new Error('Flowersec smoke peer path must be a directory');
   for (const file of ['go.mod', 'go.sum', 'main.go']) {
-    if (!existsSync(join(directory, file))) throw new Error(`Flowersec smoke peer is missing ${file}`);
+    if (!existsSync(join(directory, file)))
+      throw new Error(`Flowersec smoke peer is missing ${file}`);
   }
-  if (existsSync(join(directory, 'go.work'))) throw new Error('Flowersec smoke peer must not use go.work');
+  if (existsSync(join(directory, 'go.work')))
+    throw new Error('Flowersec smoke peer must not use go.work');
   const module = readFileSync(join(directory, 'go.mod'), 'utf8');
-  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.1\.1$/mu.test(module)) {
-    throw new Error('Flowersec smoke peer must pin flowersec-go/v3 v3.1.1');
+  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.2\.0$/mu.test(module)) {
+    throw new Error('Flowersec smoke peer must pin flowersec-go/v3 v3.2.0');
   }
   if (/^replace\s/mu.test(module) || /(?:^|\s)\.\.\//mu.test(module)) {
     throw new Error('Flowersec smoke peer must not use local dependency shortcuts');
@@ -164,10 +169,12 @@ async function waitForSmokePeerReady(peer) {
       reject(new Error(formatPeerFailure(message, peer.stderr())));
     };
     const onError = () => fail('Flowersec smoke peer could not start');
-    const onExit = (code, signal) => fail(`Flowersec smoke peer exited before ready (${code ?? signal})`);
+    const onExit = (code, signal) =>
+      fail(`Flowersec smoke peer exited before ready (${code ?? signal})`);
     const onData = (chunk) => {
       output += chunk;
-      if (output.length > 1_000_000) return fail('Flowersec smoke peer ready output exceeded its limit');
+      if (output.length > 1_000_000)
+        return fail('Flowersec smoke peer ready output exceeded its limit');
       const newline = output.indexOf('\n');
       if (newline === -1) return;
       let ready;
@@ -177,9 +184,12 @@ async function waitForSmokePeerReady(peer) {
         return fail('Flowersec smoke peer returned invalid ready JSON');
       }
       if (
-        ready === null || typeof ready !== 'object' ||
-        typeof ready.artifact !== 'string' || ready.artifact.length === 0 ||
-        typeof ready.ca_pem !== 'string' || ready.ca_pem.length === 0
+        ready === null ||
+        typeof ready !== 'object' ||
+        typeof ready.artifact !== 'string' ||
+        ready.artifact.length === 0 ||
+        typeof ready.ca_pem !== 'string' ||
+        ready.ca_pem.length === 0
       ) {
         return fail('Flowersec smoke peer returned an invalid ready contract');
       }
@@ -196,7 +206,9 @@ async function waitForSmokePeerExit(peer) {
   const { child } = peer;
   if (child.exitCode !== null) {
     if (child.exitCode !== 0) {
-      throw new Error(formatPeerFailure(`Flowersec smoke peer exited with ${child.exitCode}`, peer.stderr()));
+      throw new Error(
+        formatPeerFailure(`Flowersec smoke peer exited with ${child.exitCode}`, peer.stderr())
+      );
     }
     return;
   }
@@ -217,7 +229,12 @@ async function waitForSmokePeerExit(peer) {
     const onExit = (code, signal) => {
       cleanup();
       if (code === 0) resolve();
-      else reject(new Error(formatPeerFailure(`Flowersec smoke peer exited with ${code ?? signal}`, peer.stderr())));
+      else
+        reject(
+          new Error(
+            formatPeerFailure(`Flowersec smoke peer exited with ${code ?? signal}`, peer.stderr())
+          )
+        );
     };
     child.once('error', onError);
     child.once('exit', onExit);

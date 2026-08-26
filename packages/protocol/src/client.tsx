@@ -6,7 +6,11 @@ import type {
   ConnectionState,
   Session,
 } from '@floegence/flowersec-core';
-import type { ConnectionControllerOptions } from '@floegence/flowersec-core/browser';
+import type {
+  ConnectionControllerOptions,
+  PrivateLoopbackArtifactSourceV1,
+  PrivateLoopbackConnectionControllerOptionsV1,
+} from '@floegence/flowersec-core/browser';
 import { createContext, createComponent, onCleanup, useContext, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { ProtocolContract } from './contract';
@@ -39,11 +43,23 @@ export interface ConnectionLifecycle {
   dispose(): void;
 }
 
-export type ConnectConfig = Readonly<{
-  source: ArtifactSource;
-  controller?: ConnectionControllerOptions;
+type SharedConnectConfig = Readonly<{
   lifecycle?: ConnectionLifecycle;
 }>;
+
+export type ConnectConfig = SharedConnectConfig &
+  (
+    | Readonly<{
+        source: ArtifactSource;
+        controller?: ConnectionControllerOptions;
+        privateLoopback?: never;
+      }>
+    | Readonly<{
+        source: PrivateLoopbackArtifactSourceV1;
+        privateLoopback: PrivateLoopbackConnectionControllerOptionsV1;
+        controller?: never;
+      }>
+  );
 
 export class ConnectionReplacementRequiredError extends Error {
   constructor() {
@@ -136,10 +152,13 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     const generation = lifecycleGeneration;
     const runtime = await loadBrowserRuntime();
     if (generation !== lifecycleGeneration) return;
-    const nextController = await runtime.createConnectionController(
-      config.source,
-      config.controller
-    );
+    const nextController =
+      config.privateLoopback === undefined
+        ? await runtime.createConnectionController(config.source, config.controller)
+        : await runtime.createPrivateLoopbackConnectionControllerV1(
+            config.source,
+            config.privateLoopback
+          );
     if (generation !== lifecycleGeneration) {
       await nextController.close();
       return;
@@ -235,6 +254,7 @@ function sameConnectionConfig(left: ConnectConfig, right: ConnectConfig): boolea
   return (
     left.source === right.source &&
     left.controller === right.controller &&
+    left.privateLoopback === right.privateLoopback &&
     left.lifecycle === right.lifecycle
   );
 }
