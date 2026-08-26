@@ -28,9 +28,11 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-widget-interaction.test.tsx',
   'packages/core/test/workbench-widget-instance-identity.test.tsx',
   'packages/core/test/workbench-filter-bar-pointer-session.test.tsx',
+  'packages/core/test/workbench-dock-focus-cycle.test.ts',
   'packages/core/test/workbench-surface-canvas-authority.test.tsx',
   'packages/core/test/workbench-surface-wheel-selection.test.tsx',
   'packages/core/test/workbench-surface-api.test.tsx',
+  'packages/core/test/workbench-surface-dock-focus-cycle.test.tsx',
   'packages/core/test/workbench-ui-first-activation.test.tsx',
 ];
 

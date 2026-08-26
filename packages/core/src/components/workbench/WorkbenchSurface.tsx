@@ -10,6 +10,8 @@ import {
   type WorkbenchDockDragPreview,
   type WorkbenchDockDropContext,
   type WorkbenchDockItemActivation,
+  type WorkbenchDockItemActivationMode,
+  type WorkbenchDockItemPresentation,
   type WorkbenchDockAction,
   type WorkbenchExternalDockDragController,
   type WorkbenchHostDockItem,
@@ -28,6 +30,13 @@ import {
 } from './workbenchPlacement';
 import { useWorkbenchModel, type UseWorkbenchModelOptions } from './useWorkbenchModel';
 import {
+  resolveWorkbenchDockFocusCycle,
+  sortWorkbenchDockFocusCandidates,
+  workbenchDockFocusCandidateKey,
+  type WorkbenchDockFocusCandidate,
+  type WorkbenchDockFocusCycleSession,
+} from './workbenchDockFocusCycle';
+import {
   resolveWorkbenchInteractionAdapter,
   type ResolvedWorkbenchInteractionAdapter,
 } from './workbenchInteractionAdapter';
@@ -41,6 +50,7 @@ import type {
   WorkbenchDockToolId,
   WorkbenchInputOwner,
   WorkbenchInteractionAdapter,
+  WorkbenchSelection,
   WorkbenchStickyNoteItem,
   WorkbenchStickyNotePatch,
   WorkbenchTextAnnotationDefaults,
@@ -128,6 +138,11 @@ export interface WorkbenchSurfaceProps {
   resolveContextMenuItems?: WorkbenchContextMenuItemsResolver;
   onApiReady?: (api: WorkbenchSurfaceApi | null) => void;
   onRequestDelete?: (widgetId: string) => void;
+  /**
+   * Controls built-in Dock click behavior. Defaults to `solo-filter` for
+   * backward compatibility. Drag-to-create and host Dock items are unchanged.
+   */
+  dockItemActivationMode?: WorkbenchDockItemActivationMode;
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   dockActions?: readonly WorkbenchDockAction[];
   dockItems?: readonly WorkbenchHostDockItem[];
@@ -362,6 +377,206 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       adapter.focusWidgetElement(root, widgetId);
       setInputOwner(adapter.createWidgetInputOwner(widgetId, 'activation'));
     });
+  };
+
+  let dockFocusCycleSession: WorkbenchDockFocusCycleSession | null = null;
+
+  const dockItemKey = (item: Pick<WorkbenchDockItemActivation, 'kind' | 'id'>): string =>
+    `${item.kind}:${String(item.id)}`;
+
+  const toDockFocusCandidate = (
+    kind: WorkbenchSelection['kind'],
+    item: Readonly<{
+      id: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      created_at_unix_ms: number;
+    }>
+  ): WorkbenchDockFocusCandidate => ({
+    kind,
+    id: item.id,
+    x: item.x,
+    y: item.y,
+    width: item.width,
+    height: item.height,
+    createdAtUnixMs: item.created_at_unix_ms,
+  });
+
+  const dockFocusCandidatesFor = (
+    item: Pick<WorkbenchDockItemActivation, 'kind' | 'id'>
+  ): readonly WorkbenchDockFocusCandidate[] => {
+    if (item.kind === 'widget') {
+      return model
+        .widgets()
+        .filter((widget) => widget.type === item.id)
+        .map((widget) => toDockFocusCandidate('widget', widget));
+    }
+    if (item.id === 'sticky-note') {
+      return model.stickyNotes().map((note) => toDockFocusCandidate('sticky_note', note));
+    }
+    if (item.id === 'text') {
+      return model
+        .annotations()
+        .map((annotation) => toDockFocusCandidate('annotation', annotation));
+    }
+    if (item.id === 'background-region') {
+      return model
+        .backgroundLayers()
+        .map((layer) => toDockFocusCandidate('background_layer', layer));
+    }
+    return [];
+  };
+
+  const focusLayerObject = (candidate: WorkbenchDockFocusCandidate) => {
+    const root = untrack(surfaceRootEl);
+    queueMicrotask(() => {
+      if (!root) return;
+      const objectKind =
+        candidate.kind === 'sticky_note'
+          ? 'sticky'
+          : candidate.kind === 'annotation'
+            ? 'text'
+            : candidate.kind === 'background_layer'
+              ? 'region'
+              : null;
+      if (!objectKind) return;
+      const objectRoot = [...root.querySelectorAll('[data-wb-object-id]')].find(
+        (element) =>
+          element.getAttribute('data-wb-object-kind') === objectKind &&
+          element.getAttribute('data-wb-object-id') === candidate.id
+      );
+      if (!(objectRoot instanceof HTMLElement)) return;
+
+      const content = objectRoot.querySelector('[data-wb-part="content"]');
+      const contentEditable =
+        content instanceof HTMLElement &&
+        content.getAttribute('contenteditable') !== null &&
+        content.getAttribute('contenteditable') !== 'false';
+      const focusTarget = contentEditable ? content : objectRoot;
+      if (!focusTarget.hasAttribute('tabindex')) focusTarget.tabIndex = -1;
+      try {
+        focusTarget.focus({ preventScroll: true });
+      } catch {
+        focusTarget.focus();
+      }
+      setInputOwner(interactionAdapter().createCanvasInputOwner('background_focus'));
+    });
+  };
+
+  const centerDockFocusCandidate = (candidate: WorkbenchDockFocusCandidate) => {
+    model.navigation.centerOnWidget({
+      id: candidate.id,
+      type: 'dock-focus-target',
+      title: '',
+      x: candidate.x,
+      y: candidate.y,
+      width: candidate.width,
+      height: candidate.height,
+      z_index: 0,
+      created_at_unix_ms: candidate.createdAtUnixMs,
+    });
+  };
+
+  const activateDockFocusCandidate = (candidate: WorkbenchDockFocusCandidate) => {
+    if (candidate.kind === 'widget') {
+      const widget = model.queries.findWidgetById(candidate.id);
+      if (!widget) return;
+      activateWidget(widget.id);
+      model.navigation.centerOnWidget(widget);
+      activateWidgetRoot(widget.id);
+      return;
+    }
+    if (candidate.kind === 'sticky_note') {
+      model.canvas.selectStickyNote(candidate.id);
+    } else if (candidate.kind === 'annotation') {
+      model.canvas.selectAnnotation(candidate.id);
+    } else {
+      model.canvas.selectBackgroundLayer(candidate.id);
+    }
+    centerDockFocusCandidate(candidate);
+    focusLayerObject(candidate);
+  };
+
+  const createDockFocusCandidate = (
+    item: Pick<WorkbenchDockItemActivation, 'kind' | 'id'>
+  ): WorkbenchDockFocusCandidate | null => {
+    const center = viewportWorldCenter();
+    if (item.kind === 'widget') {
+      const widget = model.widgetActions.addWidgetAtWorldCenter(
+        item.id,
+        center.worldX,
+        center.worldY
+      );
+      return widget ? toDockFocusCandidate('widget', widget) : null;
+    }
+    if (item.id === 'sticky-note') {
+      return toDockFocusCandidate(
+        'sticky_note',
+        model.widgetActions.addStickyNoteAtCursor(center.worldX, center.worldY)
+      );
+    }
+    if (item.id === 'text') {
+      return toDockFocusCandidate(
+        'annotation',
+        model.widgetActions.addTextAnnotationAtCursor(center.worldX, center.worldY)
+      );
+    }
+    if (item.id === 'background-region') {
+      return toDockFocusCandidate(
+        'background_layer',
+        model.widgetActions.addBackgroundLayerAtCursor(center.worldX, center.worldY)
+      );
+    }
+    return null;
+  };
+
+  const handleDockFocusCycle = (item: WorkbenchDockItemActivation) => {
+    let candidates = dockFocusCandidatesFor(item);
+    let selection = selectedObject();
+    if (candidates.length === 0) {
+      const created = createDockFocusCandidate(item);
+      if (!created) {
+        dockFocusCycleSession = null;
+        return;
+      }
+      candidates = dockFocusCandidatesFor(item);
+      selection = { kind: created.kind, id: created.id };
+    }
+
+    const resolution = resolveWorkbenchDockFocusCycle({
+      dockItemKey: dockItemKey(item),
+      candidates,
+      selectedObject: selection,
+      session: dockFocusCycleSession,
+    });
+    dockFocusCycleSession = resolution.session;
+    if (resolution.target) activateDockFocusCandidate(resolution.target);
+  };
+
+  const resolveDockItemPresentation = (
+    item: Pick<WorkbenchDockItemActivation, 'kind' | 'id'>
+  ): WorkbenchDockItemPresentation => {
+    const candidates = sortWorkbenchDockFocusCandidates(dockFocusCandidatesFor(item));
+    const current = selectedObject();
+    const currentKey = current ? workbenchDockFocusCandidateKey(current) : null;
+    const currentIndex = currentKey
+      ? candidates.findIndex(
+          (candidate) => workbenchDockFocusCandidateKey(candidate) === currentKey
+        )
+      : -1;
+    return {
+      count: candidates.length,
+      currentIndex: currentIndex >= 0 ? currentIndex : null,
+      active: currentIndex >= 0,
+    };
+  };
+
+  const handleDockActivation = (item: Readonly<{ kind: string; id: string }>) => {
+    if (dockFocusCycleSession?.dockItemKey !== `${item.kind}:${item.id}`) {
+      dockFocusCycleSession = null;
+    }
   };
 
   const focusWidgetForViewport = (widget: WorkbenchWidgetItem) => {
@@ -739,8 +954,12 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         widgets={model.widgets()}
         filters={model.filters()}
         mode={model.mode()}
+        activationMode={props.dockItemActivationMode}
         viewport={model.viewport()}
         onSoloFilter={model.filter.solo}
+        onFocusCycleItem={handleDockFocusCycle}
+        resolveItemPresentation={resolveDockItemPresentation}
+        onDockActivation={handleDockActivation}
         onSelectMode={model.modes.setMode}
         onViewportCommit={model.canvas.commitViewport}
         onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}

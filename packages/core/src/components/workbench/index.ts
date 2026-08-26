@@ -18,6 +18,7 @@ export type {
   WorkbenchDockDropContext,
   WorkbenchDockItemPlacement,
   WorkbenchDockItemActivation,
+  WorkbenchDockItemActivationMode,
   WorkbenchExternalDockDragController,
   WorkbenchExternalDockDragItem,
   WorkbenchHostDockItem,

@@ -325,6 +325,107 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSoloFilter).not.toHaveBeenCalled();
   });
 
+  it('shares focus-cycle activation across pointer and keyboard while preserving host interception', async () => {
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
+    let consumed = true;
+    const onItemClick = vi.fn(() => consumed);
+    const onFocusCycleItem = vi.fn();
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': false }}
+          activationMode="focus-cycle"
+          onSoloFilter={() => {}}
+          onItemClick={onItemClick}
+          onFocusCycleItem={onFocusCycleItem}
+          resolveItemPresentation={() => ({ count: 3, currentIndex: 1, active: true })}
+        />
+      ),
+      host
+    );
+
+    const filesButton = host.querySelector(
+      'button[data-workbench-dock-component="custom.files"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton).toBeTruthy();
+    expect(filesButton!.getAttribute('aria-label')).toBe('Files 2/3');
+    expect(filesButton!.getAttribute('aria-pressed')).toBe('true');
+    expect(filesButton!.classList.contains('is-active')).toBe(true);
+    expect(filesButton!.classList.contains('is-filter-muted')).toBe(false);
+    expect(filesButton!.querySelector('.workbench-dock__badge')?.textContent).toBe('3');
+
+    dispatchPointerEvent('pointerdown', filesButton!, { pointerId: 35 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 35, buttons: 0 });
+    expect(onItemClick).toHaveBeenCalledTimes(1);
+    expect(onFocusCycleItem).not.toHaveBeenCalled();
+
+    consumed = false;
+    filesButton!.click();
+    expect(onItemClick).toHaveBeenCalledTimes(2);
+    expect(onFocusCycleItem).toHaveBeenCalledTimes(1);
+
+    dispatchPointerEvent('pointerdown', filesButton!, { pointerId: 36 });
+    dispatchPointerEvent('pointerup', document, { pointerId: 36, buttons: 0 });
+    filesButton!.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+    expect(onFocusCycleItem).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows an empty focus-cycle component as an accessible create target without activating after drag', async () => {
+    const host = createWorkbenchHost();
+    mockCanvasFrame(host);
+    const onFocusCycleItem = vi.fn();
+    const onCreateAt = vi.fn();
+
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{ 'custom.files': true }}
+          activationMode="focus-cycle"
+          onSoloFilter={() => {}}
+          onFocusCycleItem={onFocusCycleItem}
+          onCreateAt={onCreateAt}
+          resolveItemPresentation={() => ({ count: 0, currentIndex: null, active: false })}
+        />
+      ),
+      host
+    );
+
+    const filesButton = host.querySelector(
+      'button[data-workbench-dock-component="custom.files"]'
+    ) as HTMLButtonElement | null;
+    expect(filesButton?.getAttribute('aria-label')).toBe('Files +');
+    expect(filesButton?.querySelector('.workbench-dock__badge')?.textContent).toBe('+');
+
+    dispatchPointerEvent('pointerdown', filesButton!, {
+      pointerId: 37,
+      clientX: 20,
+      clientY: 20,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointermove', document, {
+      pointerId: 37,
+      clientX: 320,
+      clientY: 320,
+      buttons: 1,
+    });
+    dispatchPointerEvent('pointerup', document, {
+      pointerId: 37,
+      clientX: 320,
+      clientY: 320,
+      buttons: 0,
+    });
+    await Promise.resolve();
+
+    expect(onCreateAt).toHaveBeenCalledTimes(1);
+    expect(onFocusCycleItem).not.toHaveBeenCalled();
+  });
+
   it('shows the canvas placement preview as soon as a widget drag is armed', async () => {
     const host = createWorkbenchHost();
     mockCanvasFrame(host);
@@ -924,12 +1025,8 @@ describe('WorkbenchFilterBar pointer session', () => {
     const children = Array.from(dock.children);
     const leading = host.querySelector('[data-workbench-dock-item="host:leading"]')!;
     const component = host.querySelector('[aria-label^="Files —"]')!;
-    const trailingFirst = host.querySelector(
-      '[data-workbench-dock-item="host:trailing-first"]'
-    )!;
-    const trailingSecond = host.querySelector(
-      '[data-workbench-dock-item="host:trailing-second"]'
-    )!;
+    const trailingFirst = host.querySelector('[data-workbench-dock-item="host:trailing-first"]')!;
+    const trailingSecond = host.querySelector('[data-workbench-dock-item="host:trailing-second"]')!;
 
     expect(children.indexOf(leading)).toBeLessThan(children.indexOf(component));
     expect(children.indexOf(component)).toBeLessThan(children.indexOf(trailingFirst));

@@ -84,6 +84,8 @@ Product-owned context menus can be attached without moving menu policy into Floe
 
 Workbench host items default to the leading host group. Set `WorkbenchHostDockItem.dockPlacement` to `after-components` to render an item after Floe's component group. External Dock drags use the same optional field on `WorkbenchExternalDockDragItem`, so their placeholder matches the final host-item position.
 
+`WorkbenchSurface.dockItemActivationMode` applies only to Floe's built-in component items. It defaults to `solo-filter`; `focus-cycle` navigates spatially ordered widgets, sticky notes, text, and background regions, or creates an empty type at the viewport center. It does not change `WorkbenchHostDockItem`, external drag, Dock action, mode switcher, or context-menu behavior. `onDockItemClick` remains the host's first-priority interception point in either mode.
+
 ### fullScreen semantics
 
 `sidebar.fullScreen: true` means "this tab is a page":
