@@ -426,13 +426,6 @@ function DockItem(props: DockItemProps) {
     return props.label;
   };
 
-  const badge = () => {
-    const count = props.presentation?.count;
-    if (count === 0) return '+';
-    if (count !== undefined && count > 1) return String(count);
-    return null;
-  };
-
   return (
     <button
       type="button"
@@ -474,13 +467,6 @@ function DockItem(props: DockItemProps) {
           const Icon = props.icon;
           return <Icon class="workbench-dock__icon" />;
         })()}
-        <Show when={badge()}>
-          {(value) => (
-            <span class="workbench-dock__badge" aria-hidden="true">
-              {value()}
-            </span>
-          )}
-        </Show>
       </Motion.span>
       <Motion.span
         class="workbench-dock__tooltip"

@@ -325,7 +325,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onSoloFilter).not.toHaveBeenCalled();
   });
 
-  it('shares focus-cycle activation across pointer and keyboard while preserving host interception', async () => {
+  it('shares focus-cycle activation across pointer and keyboard without icon badges', async () => {
     const host = createWorkbenchHost();
     mockCanvasFrame(host);
     let consumed = true;
@@ -356,7 +356,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(filesButton!.getAttribute('aria-pressed')).toBe('true');
     expect(filesButton!.classList.contains('is-active')).toBe(true);
     expect(filesButton!.classList.contains('is-filter-muted')).toBe(false);
-    expect(filesButton!.querySelector('.workbench-dock__badge')?.textContent).toBe('3');
+    expect(filesButton!.querySelector('.workbench-dock__badge')).toBeNull();
 
     dispatchPointerEvent('pointerdown', filesButton!, { pointerId: 35 });
     dispatchPointerEvent('pointerup', document, { pointerId: 35, buttons: 0 });
@@ -374,7 +374,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(onFocusCycleItem).toHaveBeenCalledTimes(2);
   });
 
-  it('shows an empty focus-cycle component as an accessible create target without activating after drag', async () => {
+  it('keeps an empty focus-cycle component accessible without an icon badge or post-drag activation', async () => {
     const host = createWorkbenchHost();
     mockCanvasFrame(host);
     const onFocusCycleItem = vi.fn();
@@ -400,7 +400,7 @@ describe('WorkbenchFilterBar pointer session', () => {
       'button[data-workbench-dock-component="custom.files"]'
     ) as HTMLButtonElement | null;
     expect(filesButton?.getAttribute('aria-label')).toBe('Files +');
-    expect(filesButton?.querySelector('.workbench-dock__badge')?.textContent).toBe('+');
+    expect(filesButton?.querySelector('.workbench-dock__badge')).toBeNull();
 
     dispatchPointerEvent('pointerdown', filesButton!, {
       pointerId: 37,
