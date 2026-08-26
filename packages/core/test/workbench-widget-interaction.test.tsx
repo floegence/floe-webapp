@@ -1142,6 +1142,56 @@ describe('WorkbenchWidget interaction ownership', () => {
     expect(document.activeElement).toBe(widgetRoot);
   });
 
+  it('keeps the selected widget hot while the canvas is locked', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    const seen: WorkbenchWidgetBodyProps[] = [];
+
+    dispose = render(
+      () => (
+        <WorkbenchWidget
+          definition={{
+            ...filesWidgetDefinition,
+            body: (props) => {
+              seen.push(props);
+              return <div data-testid="widget-body">Body</div>;
+            },
+          }}
+          widgetId="widget-files-1"
+          widgetTitle="Files"
+          widgetType={FILES_WIDGET_TYPE}
+          x={0}
+          y={0}
+          width={480}
+          height={320}
+          renderLayer={1}
+          itemSnapshot={createWidgetSnapshot}
+          selected
+          visualFront
+          topRenderLayer={1}
+          viewportScale={1}
+          locked
+          filtered={false}
+          onSelect={() => {}}
+          onContextMenu={() => {}}
+          onClaimVisualFrontOwner={() => {}}
+          onCommitFront={() => {}}
+          onCommitMove={() => {}}
+          onCommitResize={() => {}}
+          onRequestDelete={() => {}}
+        />
+      ),
+      host
+    );
+
+    expect(seen[0]).toMatchObject({
+      lifecycle: 'hot',
+      selected: true,
+      filtered: false,
+    });
+  });
+
   it('commits widget drag once when release is only observable through a later buttons=0 move', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

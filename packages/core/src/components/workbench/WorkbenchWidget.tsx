@@ -360,10 +360,13 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
   const isDragging = () => dragState() !== null;
   const isResizing = () => resizeState() !== null;
   const lifecycle = createMemo<WorkbenchWidgetLifecycle>(() => {
-    if (filtered() || locked()) {
+    if (filtered()) {
       return 'cold';
     }
-    return selected() ? 'hot' : 'warm';
+    if (selected()) {
+      return 'hot';
+    }
+    return locked() ? 'cold' : 'warm';
   });
   const resolveEventOwnership = (target: EventTarget | null) =>
     interactionAdapter().resolveWidgetEventOwnership({
