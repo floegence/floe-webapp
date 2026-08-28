@@ -8,6 +8,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/dropdown-surface-scope.test.tsx',
   'packages/core/test/file-context-menu-surface-scope.test.tsx',
+  'packages/core/test/file-browser-status-bar.test.tsx',
   'packages/core/test/floating-presence.test.tsx',
   'packages/core/test/floating-window-open-cycle.test.tsx',
   'packages/core/test/floe-registry-contributions.test.tsx',

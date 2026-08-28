@@ -10,6 +10,7 @@ import { DirectoryTree } from './DirectoryTree';
 import { FileListView } from './FileListView';
 import { FileGridView } from './FileGridView';
 import { FileBrowserToolbar } from './FileBrowserToolbar';
+import { FileBrowserStatusBar } from './FileBrowserStatusBar';
 import { FileContextMenu, type FileContextMenuProps } from './FileContextMenu';
 import { FileBrowserDragPreview } from './DragPreview';
 import type {
@@ -299,19 +300,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
             </Show>
           </div>
 
-          {/* Status bar */}
-          <div class="flex items-center justify-between px-3 py-1 border-t border-border text-[10px] text-muted-foreground">
-            <span>
-              {ctx.currentFiles().length} items
-              <Show when={ctx.filterQueryApplied().trim()}>
-                {' '}(filtered)
-              </Show>
-              <Show when={ctx.selectedItems().size > 0}>
-                {' · '}{ctx.selectedItems().size} selected
-              </Show>
-            </span>
-            <span class="truncate max-w-[200px]">{ctx.currentPath()}</span>
-          </div>
+          <FileBrowserStatusBar />
         </div>
       </div>
 

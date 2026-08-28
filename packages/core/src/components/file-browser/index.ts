@@ -7,6 +7,7 @@ export { FileGridView, type FileGridViewProps } from './FileGridView';
 export { FileContextMenu, type FileContextMenuProps, type BuiltinContextMenuAction, type HideItemsValue } from './FileContextMenu';
 export { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
 export { FileBrowserToolbar, type FileBrowserToolbarProps } from './FileBrowserToolbar';
+export { FileBrowserStatusBar, type FileBrowserStatusBarProps } from './FileBrowserStatusBar';
 export { FileBrowserDragPreview } from './DragPreview';
 export {
   FolderIcon,
