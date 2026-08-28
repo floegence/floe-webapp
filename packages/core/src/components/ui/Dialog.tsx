@@ -242,7 +242,7 @@ export function Dialog(props: DialogProps) {
             />
 
             {/* Dialog */}
-            <div class="relative z-[1] flex h-full w-full items-center justify-center">
+            <div class="pointer-events-none relative z-[1] flex h-full w-full items-center justify-center">
               <div
                 ref={dialogRef}
                 data-floe-dialog-panel={baseId}
@@ -254,7 +254,7 @@ export function Dialog(props: DialogProps) {
                   'bg-card text-card-foreground rounded-md shadow-lg',
                   'border border-border',
                   'floe-floating-presence floe-floating-dialog-panel',
-                  'flex flex-col',
+                  'pointer-events-auto flex flex-col',
                   props.class
                 )}
                 data-floating-presence={dialogPresence.state()}

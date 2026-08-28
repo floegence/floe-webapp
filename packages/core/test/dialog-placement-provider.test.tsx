@@ -156,7 +156,10 @@ describe('dialog placement provider', () => {
     expect(surfaceHost.contains(overlayRoot)).toBe(false);
     expect(overlayRoot.dataset.floeDialogMode).toBe('global');
     expect(overlayRoot.style.zIndex).toBe('4000');
-    expect(overlayRoot.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true');
+    const panel = overlayRoot.querySelector('[role="dialog"]') as HTMLElement;
+    expect(panel.getAttribute('aria-modal')).toBe('true');
+    expect(panel.classList.contains('pointer-events-auto')).toBe(true);
+    expect(panel.parentElement?.classList.contains('pointer-events-none')).toBe(true);
 
     (overlayRoot.querySelector('[data-floe-dialog-backdrop]') as HTMLElement).click();
     await flushMicrotasks();
