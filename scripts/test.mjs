@@ -5,6 +5,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/activity-bar-trigger-context.test.tsx',
   'packages/core/test/bottom-bar-companion.test.tsx',
   'packages/core/test/deck-pointer-session.test.tsx',
+  'packages/core/test/dialog-placement-provider.test.tsx',
   'packages/core/test/dialog-surface-scope.test.tsx',
   'packages/core/test/dropdown-surface-scope.test.tsx',
   'packages/core/test/file-context-menu-surface-scope.test.tsx',

@@ -25,6 +25,7 @@ import {
   type SurfacePortalBoundaryRect,
 } from './surfacePortalScope';
 import { createFloatingPresence } from './floatingPresence';
+import { useDialogPlacement } from './DialogPlacementContext';
 
 export interface DialogProps {
   open: boolean;
@@ -35,7 +36,7 @@ export interface DialogProps {
   children: JSX.Element;
   footer?: JSX.Element;
   class?: string;
-  /** Optional stacking layer for global dialogs. Surface-scoped dialogs remain locally layered. */
+  /** Optional stacking layer for global dialogs. Overrides the placement provider default. */
   globalZIndex?: number;
 }
 
@@ -74,6 +75,7 @@ function cancelSurfacePortalFrame(frameHandle: number): void {
  * Modal dialog component
  */
 export function Dialog(props: DialogProps) {
+  const placement = useDialogPlacement();
   const baseId = createUniqueId();
   const titleId = () => `dialog-${baseId}-title`;
   const descriptionId = () => `dialog-${baseId}-description`;
@@ -102,8 +104,10 @@ export function Dialog(props: DialogProps) {
       : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const dialogBoundaryId = () => `dialog-boundary-${baseId}`;
-  const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
-  const portalMount = () => resolveSurfacePortalMount(surfaceHost());
+  const isSurfaceMode = () => placement.mode() === 'auto' && isSurfacePortalMode(surfaceHost());
+  const portalMount = () =>
+    isSurfaceMode() ? resolveSurfacePortalMount(surfaceHost()) : undefined;
+  const globalZIndex = () => props.globalZIndex ?? placement.globalZIndex();
   const readProjectedBoundaryRectForHost = (host: ResolvedDialogSurfaceHost) =>
     projectSurfacePortalRect(resolveSurfacePortalBoundaryRect(host), host);
   const readProjectedBoundaryRect = () => readProjectedBoundaryRectForHost(surfaceHost());
@@ -126,7 +130,7 @@ export function Dialog(props: DialogProps) {
 
   createEffect(() => {
     const currentHost = surfaceHost();
-    if (!isPresenceMounted() || !isSurfacePortalMode(currentHost) || typeof window === 'undefined') {
+    if (!isPresenceMounted() || !isSurfaceMode() || typeof window === 'undefined') {
       return;
     }
 
@@ -169,9 +173,16 @@ export function Dialog(props: DialogProps) {
   });
 
   useOverlayMask({
-    open: isMountedOpen,
+    open: isPresenceMounted,
     root: () => dialogRef,
-    containsTarget: isSurfaceMode() ? (target) => isWithinDialogBoundary(target) : undefined,
+    containsTarget: (target) => {
+      if (isSurfaceMode()) {
+        return isWithinDialogBoundary(target);
+      }
+      return typeof Node !== 'undefined' && target instanceof Node
+        ? Boolean(dialogRef?.contains(target))
+        : false;
+    },
     onClose: () => props.onOpenChange(false),
     lockBodyScroll: () => !isSurfaceMode(),
     trapFocus: true,
@@ -202,10 +213,7 @@ export function Dialog(props: DialogProps) {
             class={cn(
               isSurfaceMode()
                 ? 'absolute z-20 box-border p-3'
-                : cn(
-                    'fixed inset-0 box-border p-4',
-                    props.globalZIndex === undefined && 'z-50'
-                  ),
+                : cn('fixed inset-0 box-border p-4', globalZIndex() === undefined && 'z-50'),
               dialogPresence.exiting() && 'pointer-events-none'
             )}
             style={
@@ -216,7 +224,7 @@ export function Dialog(props: DialogProps) {
                     width: `${projectedBoundaryRect().width}px`,
                     height: `${projectedBoundaryRect().height}px`,
                   }
-                : { 'z-index': props.globalZIndex }
+                : { 'z-index': globalZIndex() }
             }
           >
             {/* Backdrop */}

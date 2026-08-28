@@ -13,6 +13,11 @@ export {
   type AffixOption,
 } from './Input';
 export { Dialog, ConfirmDialog, type DialogProps, type ConfirmDialogProps } from './Dialog';
+export {
+  DialogPlacementProvider,
+  type DialogPlacementMode,
+  type DialogPlacementProviderProps,
+} from './DialogPlacementContext';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
 export {
   createFloatingPresence,
