@@ -1143,6 +1143,25 @@ export const Stop = (props: IconProps = {}) => (
   </svg>
 );
 
+// CircleStop icon (stop an active process without looking like a checkbox)
+export const CircleStop = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={props.class}
+  >
+    <circle cx="12" cy="12" r="9" />
+    <rect x="9" y="9" width="6" height="6" rx="1" />
+  </svg>
+);
+
 // Volume icon
 export const Volume = (props: IconProps = {}) => (
   <svg

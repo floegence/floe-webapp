@@ -172,6 +172,13 @@ export {
 } from './DirectoryInput';
 export { FileSavePicker, type FileSavePickerProps } from './FileSavePicker';
 export {
+  FileOpenPicker,
+  normalizeFileOpenSelection,
+  updateFileOpenSelection,
+  type FileOpenPickerProps,
+  type FileOpenPickerSelectionMode,
+} from './FileOpenPicker';
+export {
   type BasePickerProps,
   type PickerEnsurePath,
   type PickerEnsurePathOptions,

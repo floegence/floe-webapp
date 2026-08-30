@@ -1659,6 +1659,87 @@ function Example() {
 };
 
 // ===========================
+// File Open Picker Component
+// ===========================
+export const fileOpenPickerDoc: ComponentDoc = {
+  name: 'FileOpenPicker',
+  description:
+    'Modal file selector with filters, ordered single or multiple selection, and a selection limit.',
+  props: [
+    {
+      name: 'open',
+      type: 'boolean',
+      required: true,
+      description: 'Whether the picker is open.',
+    },
+    {
+      name: 'onOpenChange',
+      type: '(open: boolean) => void',
+      required: true,
+      description: 'Callback when open state changes.',
+    },
+    {
+      name: 'files',
+      type: 'FileItem[]',
+      required: true,
+      description: 'File tree data to display.',
+    },
+    {
+      name: 'selectionMode',
+      type: "'single' | 'multiple'",
+      default: "'single'",
+      description: 'Whether one file or an ordered set may be selected.',
+    },
+    {
+      name: 'initialSelectedPaths',
+      type: 'readonly string[]',
+      description: 'Selected paths restored when the dialog opens.',
+    },
+    {
+      name: 'maxSelections',
+      type: 'number',
+      description: 'Maximum number of files in multiple mode.',
+    },
+    {
+      name: 'fileFilter',
+      type: '(item: FileItem) => boolean',
+      description: 'Filters selectable files without filtering folders.',
+    },
+    {
+      name: 'onSelect',
+      type: '(paths: string[]) => void',
+      required: true,
+      description: 'Returns selected paths in selection order.',
+    },
+  ],
+  usage: {
+    whenToUse: ['Opening one file', 'Selecting an ordered file set', 'Choosing files from a lazy tree'],
+    bestPractices: [
+      'Use a focused fileFilter',
+      'Set a clear selection limit for multi-select workflows',
+      'Provide an initial directory close to the expected files',
+    ],
+    avoid: ['Using for save destinations', 'Using file filters to control folder navigation'],
+  },
+  examples: [
+    {
+      title: 'Ordered YAML selection',
+      code: `import { FileOpenPicker } from '@floegence/floe-webapp-core/full';
+
+<FileOpenPicker
+  open={open()}
+  onOpenChange={setOpen}
+  files={fileTree}
+  selectionMode="multiple"
+  maxSelections={8}
+  fileFilter={(item) => /\\.ya?ml$/i.test(item.name)}
+  onSelect={(paths) => console.log(paths)}
+/>`,
+    },
+  ],
+};
+
+// ===========================
 // Directory Input Component
 // ===========================
 export const directoryInputDoc: ComponentDoc = {

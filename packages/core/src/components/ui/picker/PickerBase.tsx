@@ -1,5 +1,5 @@
 /**
- * Shared internals for DirectoryPicker and FileSavePicker.
+ * Shared internals for DirectoryPicker, FileOpenPicker, and FileSavePicker.
  * NOT exported from the package entry — these are implementation details.
  */
 import {
@@ -25,7 +25,7 @@ import type { FileItem } from '../../file-browser/types';
 // ─── Common Picker Props Interface ────────────────────────────────────────────
 
 /**
- * Base props shared by DirectoryPicker and FileSavePicker.
+ * Base props shared by the directory and file pickers.
  * Provides consistent API for file tree navigation.
  */
 export interface BasePickerProps {

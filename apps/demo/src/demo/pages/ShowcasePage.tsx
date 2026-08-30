@@ -23,6 +23,7 @@ import {
   // Picker components
   directoryPickerDoc,
   directoryInputDoc,
+  fileOpenPickerDoc,
   fileSavePickerDoc,
   fileBrowserDoc,
   // Window components
@@ -71,6 +72,7 @@ import {
   FileBrowser,
   type FileItem,
   Files,
+  FileOpenPicker,
   FileSavePicker,
   FloatingWindow,
   GitBranch,
@@ -163,6 +165,7 @@ import {
   Heart,
   Play,
   Pause,
+  CircleStop,
   Database,
   Cloud,
   Clock,
@@ -876,6 +879,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
   const [overlayVisible, setOverlayVisible] = createSignal(false);
   const [floatingWindowOpen, setFloatingWindowOpen] = createSignal(false);
   const [directoryPickerOpen, setDirectoryPickerOpen] = createSignal(false);
+  const [fileOpenPickerOpen, setFileOpenPickerOpen] = createSignal(false);
   const [fileSavePickerOpen, setFileSavePickerOpen] = createSignal(false);
   const [directoryInputValue, setDirectoryInputValue] = createSignal('');
 
@@ -1054,6 +1058,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
     { name: 'Heart', icon: Heart },
     { name: 'Play', icon: Play },
     { name: 'Pause', icon: Pause },
+    { name: 'CircleStop', icon: CircleStop },
     { name: 'Database', icon: Database },
     { name: 'Cloud', icon: Cloud },
     { name: 'Clock', icon: Clock },
@@ -3498,6 +3503,48 @@ export function ShowcasePage(props: ShowcasePageProps) {
           language="tsx"
         />
         <PropsTable props={directoryPickerDoc.props} componentName="DirectoryPicker" />
+      </div>
+
+      <div class="space-y-4">
+        <SectionHeader
+          id="ui-file-open-picker"
+          title="File Open Picker"
+          description="Modal file selector with filtering, ordered multi-selection, and responsive keyboard navigation."
+        />
+        <Panel class="border border-border rounded-md overflow-hidden">
+          <PanelContent class="flex flex-wrap gap-2 items-center">
+            <Button onClick={() => setFileOpenPickerOpen(true)}>Open File Picker</Button>
+            <p class="text-[11px] text-muted-foreground">
+              Features: single or multiple selection, file filters, order, limits, and lazy folders
+            </p>
+          </PanelContent>
+        </Panel>
+
+        <FileOpenPicker
+          open={fileOpenPickerOpen()}
+          onOpenChange={setFileOpenPickerOpen}
+          files={demoFileBrowserData}
+          initialPath="/src"
+          selectionMode="multiple"
+          maxSelections={3}
+          fileFilter={(item) => ['ts', 'tsx', 'json'].includes(item.extension ?? '')}
+          onSelect={(paths) => {
+            notifications.success('Files Selected', paths.join(', '));
+          }}
+          onCreateFolder={handleDemoCreateFolder}
+        />
+
+        <UsageGuidelines
+          whenToUse={fileOpenPickerDoc.usage.whenToUse}
+          bestPractices={fileOpenPickerDoc.usage.bestPractices}
+          avoid={fileOpenPickerDoc.usage.avoid}
+        />
+        <CodeSnippet
+          title="FileOpenPicker.tsx"
+          code={fileOpenPickerDoc.examples[0].code}
+          language="tsx"
+        />
+        <PropsTable props={fileOpenPickerDoc.props} componentName="FileOpenPicker" />
       </div>
 
       {/* DirectoryInput Section */}
