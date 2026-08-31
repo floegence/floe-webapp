@@ -1143,6 +1143,20 @@ export const Stop = (props: IconProps = {}) => (
   </svg>
 );
 
+// StopFilled icon (unambiguous media-style stop action)
+export const StopFilled = (props: IconProps = {}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={props.size ?? 24}
+    height={props.size ?? 24}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    class={props.class}
+  >
+    <rect x="6" y="6" width="12" height="12" rx="1.75" />
+  </svg>
+);
+
 // CircleStop icon (stop an active process without looking like a checkbox)
 export const CircleStop = (props: IconProps = {}) => (
   <svg
