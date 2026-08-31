@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-init",
-  "version": "0.46.6",
+  "version": "0.46.7",
   "license": "MIT",
   "type": "module",
   "description": "Scaffolding tool for Floe Webapp applications",
