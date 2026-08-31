@@ -26,6 +26,8 @@ export interface DropdownItem {
   id: string;
   label: string;
   icon?: () => JSX.Element;
+  /** Visual emphasis for destructive actions. */
+  tone?: 'default' | 'danger';
   disabled?: boolean;
   separator?: boolean;
   /** Submenu items for cascade dropdown */
@@ -421,7 +423,12 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       {/* Custom content */}
       <Show when={props.item.content}>
         <div
-          class={cn('w-full px-2 py-1.5', props.item.disabled && 'opacity-50 pointer-events-none')}
+          class={cn(
+            'w-full px-2 py-1.5',
+            props.item.tone === 'danger' && 'text-destructive',
+            props.item.disabled && 'opacity-50 pointer-events-none'
+          )}
+          data-tone={props.item.tone ?? 'default'}
           onClick={handleClick}
         >
           {props.item.content!()}
@@ -437,6 +444,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
             'w-full flex items-center gap-1.5 px-2 py-1 text-xs',
             'transition-colors duration-75',
             'focus:outline-none focus:bg-accent',
+            props.item.tone === 'danger' && 'text-destructive',
             props.item.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent cursor-pointer'
           )}
           role="menuitem"
@@ -445,6 +453,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
           aria-haspopup={hasChildren() ? 'menu' : undefined}
           aria-expanded={hasChildren() ? submenuOpen() : undefined}
           data-floe-selected={props.selected && !hasChildren() ? 'true' : undefined}
+          data-tone={props.item.tone ?? 'default'}
           onClick={handleClick}
           onKeyDown={(event) => {
             if (props.item.disabled) return;

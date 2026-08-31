@@ -223,4 +223,108 @@ describe('Dropdown surface scope', () => {
 
     expect(onSelect).toHaveBeenCalledWith('bravo');
   });
+
+  it('renders danger items with inherited destructive color in every interaction state', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+
+    mount(
+      () => (
+        <Dropdown
+          trigger={<span>Open menu</span>}
+          items={[
+            {
+              id: 'delete',
+              label: 'Delete',
+              tone: 'danger',
+              icon: () => <span data-testid="danger-icon">!</span>,
+            },
+            { id: 'disabled-delete', label: 'Disabled delete', tone: 'danger', disabled: true },
+          ]}
+          onSelect={() => {}}
+        />
+      ),
+      host
+    );
+
+    const trigger = host.querySelector('[data-floe-dropdown-trigger]') as HTMLDivElement;
+    trigger.click();
+    await Promise.resolve();
+
+    const items = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+    expect(items).toHaveLength(2);
+    expect(items[0]?.dataset.tone).toBe('danger');
+    expect(items[0]?.classList.contains('text-destructive')).toBe(true);
+    expect(items[0]?.querySelector('[data-testid="danger-icon"]')).toBeTruthy();
+    expect(items[1]?.disabled).toBe(true);
+    expect(items[1]?.classList.contains('text-destructive')).toBe(true);
+    expect(items[1]?.classList.contains('opacity-50')).toBe(true);
+  });
+
+  it('closes on outside pointer down and Escape without selecting an item', async () => {
+    const host = document.createElement('div');
+    const outside = document.createElement('button');
+    document.body.append(host, outside);
+    const onSelect = vi.fn();
+
+    mount(
+      () => (
+        <Dropdown
+          trigger={<span>Open menu</span>}
+          items={[{ id: 'delete', label: 'Delete', tone: 'danger' }]}
+          onSelect={onSelect}
+        />
+      ),
+      host
+    );
+
+    const trigger = host.querySelector('[data-floe-dropdown-trigger]') as HTMLDivElement;
+    trigger.click();
+    await Promise.resolve();
+    expect(document.querySelector('[role="menu"]')).toBeTruthy();
+
+    dispatchPointerDown(outside);
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+
+    trigger.click();
+    await Promise.resolve();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    vi.advanceTimersByTime(100);
+    await Promise.resolve();
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('selects a danger item with the keyboard and closes the menu', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onSelect = vi.fn();
+
+    mount(
+      () => (
+        <Dropdown
+          trigger={<span>Open menu</span>}
+          items={[{ id: 'delete', label: 'Delete', tone: 'danger' }]}
+          onSelect={onSelect}
+        />
+      ),
+      host
+    );
+
+    const trigger = host.querySelector('[data-floe-dropdown-trigger]') as HTMLDivElement;
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    await Promise.resolve();
+
+    const item = document.querySelector<HTMLButtonElement>('[role="menuitem"]');
+    expect(document.activeElement).toBe(item);
+    item?.click();
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    expect(onSelect).toHaveBeenCalledWith('delete');
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+  });
 });
