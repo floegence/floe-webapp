@@ -89,7 +89,11 @@ function resolveBaseUrl(value: string, allowLoopbackHTTP: boolean): URL {
 
 function artifactEndpoint(baseUrl: URL, entryTicket?: string): string {
   const suffix = entryTicket === undefined ? '/v1/connect/artifact' : '/v1/connect/artifact/entry';
-  return new URL(`${baseUrl.pathname}${suffix}`, baseUrl).toString();
+  // URL normalizes an empty pathname back to "/". Concatenating that root
+  // pathname with a slash-prefixed suffix would produce "//v1/...", which a
+  // browser interprets as the protocol-relative host "v1".
+  const basePath = baseUrl.pathname === '/' ? '' : baseUrl.pathname;
+  return new URL(`${basePath}${suffix}`, baseUrl).toString();
 }
 
 export function classifyControlplaneFailure(

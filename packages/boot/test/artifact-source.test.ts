@@ -88,6 +88,32 @@ async function envelope(
 }
 
 describe('boot artifact source', () => {
+  it.each([
+    ['https://cp.example.com', 'https://cp.example.com/v1/connect/artifact'],
+    ['https://cp.example.com/', 'https://cp.example.com/v1/connect/artifact'],
+    ['https://cp.example.com/control/', 'https://cp.example.com/control/v1/connect/artifact'],
+  ])(
+    'keeps artifact requests on the configured control-plane origin for %s',
+    async (baseUrl, expectedUrl) => {
+      const mod = await import('../src/index');
+      const fetch = vi.fn(
+        async () => new Response(JSON.stringify(await envelope()), { status: 200 })
+      );
+      const source = mod.createControlplaneArtifactSource({
+        baseUrl,
+        endpointId: 'demo',
+        fetch,
+        commitSpend: vi.fn(async () => {}),
+        validateSpendBinding: () => 'binding-origin',
+      });
+
+      await source.acquire({ signal: new AbortController().signal });
+
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(fetch.mock.calls[0]?.[0]).toBe(expectedUrl);
+    }
+  );
+
   it('commits an exact opaque artifact spend before the connector can consume it', async () => {
     leases.length = 0;
     const mod = await import('../src/index');
