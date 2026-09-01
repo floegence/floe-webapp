@@ -13,7 +13,7 @@ describe('protocol docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('const source = createControlplaneArtifactSource');
     expect(doc).toContain('@floegence/floe-webapp-boot');
-    expect(doc).toContain('@floegence/flowersec-core@3.2.0');
+    expect(doc).toContain('@floegence/flowersec-core@4.0.0');
     expect(doc).toContain('flowersec-private-loopback/1');
     expect(doc).toContain('createPrivateLoopbackDirectConnectionConfig');
     expect(doc).toContain('sole retry/backoff owner');
@@ -22,7 +22,7 @@ describe('protocol docs', () => {
     expect(doc).toContain('session-free `diagnostic()`');
     expect(doc).toContain('replaceConnection()');
     expect(doc).toContain('decodeResponse');
-    expect(doc).not.toContain('@floegence/flowersec-core/controlplane');
+    expect(doc).toContain('current root, browser, and proxy entrypoints');
     expect(doc).not.toContain('requestChannelGrant');
     expect(doc).not.toContain('requestEntryChannelGrant');
     expect(doc).toContain('HTTPS by default');

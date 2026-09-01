@@ -23,7 +23,7 @@ vi.mock('@floegence/flowersec-core/browser', async (importOriginal) => ({
 const contract: ProtocolContract = { id: 'test', createRpc: () => ({}) };
 
 describe('ProtocolProvider connection controller contract', () => {
-  it('passes browser controller options, including connectTimeoutMs, to Flowersec 3.2.0', async () => {
+  it('passes browser controller options, including connectTimeoutMs, to Flowersec', async () => {
     const browser = await import('@floegence/flowersec-core/browser');
     const config: ConnectConfig = {
       source: {

@@ -63,21 +63,9 @@ describe('@floegence/floe-webapp-protocol initial static graph', () => {
       .filter((chunk) => !initialFiles.has(chunk.fileName))
       .flatMap((chunk) => Object.keys(chunk.modules).map(normalize));
 
-    expect(initialModules.some((id) => id.includes('/@floegence/flowersec-core/dist/'))).toBe(
-      false
-    );
-    for (const forbiddenModule of [
-      '/flowersec-core/dist/facade.js',
-      '/flowersec-core/dist/connectionController.js',
-      '/flowersec-core/dist/v2/',
-    ]) {
-      expect(initialModules.some((id) => id.includes(forbiddenModule))).toBe(false);
-    }
+    expect(initialModules.filter((id) => id.includes('/flowersec-core/dist/'))).toEqual([]);
     expect(lazyModules).toEqual(
       expect.arrayContaining([expect.stringContaining('/flowersec-core/dist/browser/index.js')])
     );
-    expect(
-      lazyModules.some((id) => id.endsWith('/flowersec-core/dist/connectionController.js'))
-    ).toBe(true);
   });
 });

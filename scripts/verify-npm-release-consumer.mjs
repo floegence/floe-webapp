@@ -5,6 +5,7 @@ import {
   copyFileSync,
   mkdtempSync,
   readFileSync,
+  rmSync,
   writeFileSync,
   readdirSync,
   statSync,
@@ -21,6 +22,26 @@ const packageNames = [
 ];
 const version = JSON.parse(readFileSync('packages/core/package.json', 'utf8')).version;
 const root = mkdtempSync(join(tmpdir(), 'floe-webapp-release-consumer-'));
+process.once('exit', () => rmSync(root, { recursive: true, force: true }));
+const packageSpecs = process.argv.includes('--packed')
+  ? [
+      ['@floegence/floe-webapp-core', 'packages/core'],
+      ['@floegence/floe-webapp-boot', 'packages/boot'],
+      ['@floegence/floe-webapp-protocol', 'packages/protocol'],
+      ['@floegence/floe-webapp-init', 'packages/init'],
+    ].map(([name, directory]) => {
+      const packed = JSON.parse(
+        execFileSync(
+          'npm',
+          ['pack', '--json', '--ignore-scripts', '--pack-destination', root],
+          { cwd: directory, encoding: 'utf8' }
+        )
+      );
+      const filename = packed[0]?.filename;
+      if (typeof filename !== 'string') throw new Error(`npm pack did not produce ${name}`);
+      return join(root, filename);
+    })
+  : packageNames.map((name) => `${name}@${version}`);
 writeFileSync(
   join(root, 'package.json'),
   JSON.stringify({ name: 'floe-webapp-release-consumer', private: true }, null, 2)
@@ -34,7 +55,7 @@ execFileSync(
     '--no-audit',
     '--no-fund',
     '--ignore-scripts',
-    ...packageNames.map((name) => `${name}@${version}`),
+    ...packageSpecs,
     'solid-js@1.9.11',
   ],
   { stdio: 'inherit' }
@@ -67,8 +88,8 @@ execFileSync(process.execPath, [runtimeSmoke], {
   stdio: 'inherit',
   env: {
     ...process.env,
-    FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR: fileURLToPath(
-      new URL('./flowersec-v3-smoke-peer/', import.meta.url)
+    FLOE_FLOWERSEC_SMOKE_PEER_DIR: fileURLToPath(
+      new URL('./flowersec-smoke-peer/', import.meta.url)
     ),
   },
 });
@@ -90,8 +111,8 @@ walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1)
   throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '3.2.0')
-  throw new Error(`expected Flowersec 3.2.0, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '4.0.0')
+  throw new Error(`expected Flowersec 4.0.0, found ${flowersecManifest.version}`);
 console.log(
   `verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`
 );

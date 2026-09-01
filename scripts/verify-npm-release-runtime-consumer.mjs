@@ -112,9 +112,9 @@ try {
 }
 
 function resolveSmokePeerDirectory() {
-  const configured = process.env.FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR;
+  const configured = process.env.FLOE_FLOWERSEC_SMOKE_PEER_DIR;
   if (configured === undefined || !isAbsolute(configured)) {
-    throw new Error('FLOE_FLOWERSEC_V3_SMOKE_PEER_DIR must be an absolute path');
+    throw new Error('FLOE_FLOWERSEC_SMOKE_PEER_DIR must be an absolute path');
   }
   const directory = realpathSync(configured);
   if (!statSync(directory).isDirectory())
@@ -126,8 +126,8 @@ function resolveSmokePeerDirectory() {
   if (existsSync(join(directory, 'go.work')))
     throw new Error('Flowersec smoke peer must not use go.work');
   const module = readFileSync(join(directory, 'go.mod'), 'utf8');
-  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v3 v3\.2\.0$/mu.test(module)) {
-    throw new Error('Flowersec smoke peer must pin flowersec-go/v3 v3.2.0');
+  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v4 v4\.0\.0$/mu.test(module)) {
+    throw new Error('Flowersec smoke peer must pin flowersec-go/v4 v4.0.0');
   }
   if (/^replace\s/mu.test(module) || /(?:^|\s)\.\.\//mu.test(module)) {
     throw new Error('Flowersec smoke peer must not use local dependency shortcuts');

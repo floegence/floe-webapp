@@ -49,6 +49,23 @@ function assertFileExcludes(path, snippets) {
   assert(present.length === 0, `Expected build output ${path} to exclude: ${present.join(', ')}`);
 }
 
+function assertFlowersecPublicSpecifiers(path) {
+  const content = readFileSync(resolve(process.cwd(), path), 'utf-8');
+  const specifiers = [
+    ...content.matchAll(/@floegence\/flowersec-core(?:\/[A-Za-z0-9._-]+)?/gu),
+  ].map((match) => match[0]);
+  const allowed = new Set([
+    '@floegence/flowersec-core',
+    '@floegence/flowersec-core/browser',
+    '@floegence/flowersec-core/proxy',
+  ]);
+  const unsupported = [...new Set(specifiers.filter((specifier) => !allowed.has(specifier)))];
+  assert(
+    unsupported.length === 0,
+    `${path} uses unsupported Flowersec entrypoints: ${unsupported.join(', ')}`
+  );
+}
+
 function assertIncludesAll(content, snippets, label) {
   const missing = snippets.filter((snippet) => !content.includes(snippet));
   assert(missing.length === 0, `${label} is missing required snippets: ${missing.join(', ')}`);
@@ -104,8 +121,8 @@ function assertInitTemplates() {
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.46.8',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.46.8`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.47.0',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.47.0`
     );
   }
 
@@ -283,10 +300,15 @@ function main() {
     'RequestEntryConnectArtifactInput',
     'requestChannelGrant',
     'requestEntryChannelGrant',
-    '@floegence/flowersec-core/reconnect',
-    '@floegence/flowersec-core/controlplane',
-    '@floegence/flowersec-core/rpc',
   ]);
+  for (const path of [
+    'packages/boot/dist/index.js',
+    'packages/boot/dist/index.d.ts',
+    'packages/protocol/dist/index.js',
+    'packages/protocol/dist/index.d.ts',
+  ]) {
+    assertFlowersecPublicSpecifiers(path);
+  }
   const distInteractionAudit = auditInteractionUtilities({
     sourceRoot: 'packages/core/dist',
     cssPath: 'packages/core/dist/floe.css',
@@ -305,9 +327,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.46.8'
+      (version) => version === '0.47.0'
     ),
-    'Published Floe packages must all use version 0.46.8'
+    'Published Floe packages must all use version 0.47.0'
   );
 
   assert(
