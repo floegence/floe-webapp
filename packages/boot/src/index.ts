@@ -74,15 +74,3 @@ export type {
   ProxyBootstrapSnapshot,
   ServiceWorkerProxyBootstrapContext,
 } from './proxy-bootstrap';
-export type {
-  ScopeEnvelope,
-  ScopeResolver,
-  ScopeResolverMap,
-  ValidatedCriticalScopeProjection,
-} from './scope';
-export {
-  createBootstrapScopeResolvers,
-  FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS,
-  PROXY_RUNTIME_SCOPE_NAME,
-  validateProxyRuntimeScopeEntry,
-} from './scope';

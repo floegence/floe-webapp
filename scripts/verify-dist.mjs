@@ -121,8 +121,8 @@ function assertInitTemplates() {
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.47.1',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.47.1`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.48.0',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.48.0`
     );
   }
 
@@ -267,6 +267,11 @@ function main() {
   assertFile('packages/protocol/dist/index.d.ts');
   assertFile('packages/boot/dist/index.js');
   assertFile('packages/boot/dist/index.d.ts');
+  assert(
+    !existsSync(resolve(process.cwd(), 'packages/boot/dist/scope.js')) &&
+      !existsSync(resolve(process.cwd(), 'packages/boot/dist/scope.d.ts')),
+    'Boot dist must not contain the removed generic scope resolver'
+  );
   assertFile('packages/init/dist/index.mjs');
 
   // Release artifacts must include the latest close-button hover behavior.
@@ -288,6 +293,14 @@ function main() {
     "[data-floe-shell-theme='monokai']"
   );
   assertFileContains('packages/boot/dist/index.d.ts', '@floegence/flowersec-core');
+  assertFileExcludes('packages/boot/dist/index.d.ts', [
+    'BrowserControllerOptions',
+    'ScopeResolver',
+    'createBootstrapScopeResolvers',
+    'FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS',
+    'PROXY_RUNTIME_SCOPE_NAME',
+    'validateProxyRuntimeScopeEntry',
+  ]);
   assertFileContains('packages/protocol/dist/index.d.ts', 'ProtocolNotConnectedError');
   assertFileExcludes('packages/protocol/dist/index.js', [
     'requestChannelGrant',
@@ -327,9 +340,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.47.1'
+      (version) => version === '0.48.0'
     ),
-    'Published Floe packages must all use version 0.47.1'
+    'Published Floe packages must all use version 0.48.0'
   );
 
   assert(

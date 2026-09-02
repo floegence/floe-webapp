@@ -32,11 +32,11 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '4.0.0';
+  const flowersecVersion = '5.0.0';
   const nodeVersion = '24.20.0';
   const goVersion = '1.27.0';
 
-  it('keeps Node and Go requirements aligned with Flowersec 4', () => {
+  it('keeps Node and Go requirements aligned with Flowersec 5', () => {
     const rootPkg = readJson<PackageJson>('package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
     const corePkg = readJson<PackageJson>('packages/core/package.json');
@@ -68,10 +68,32 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.47.1');
+    expect(corePkg.version).toBe('0.48.0');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
+  });
+
+  it('keeps removed Boot compatibility APIs and Flowersec 4 paths out of release surfaces', () => {
+    const bootIndex = readText('packages/boot/src/index.ts');
+    const acquisition = readText('packages/boot/src/acquisition.ts');
+    const goModule = readText('scripts/flowersec-smoke-peer/go.mod');
+    const goPeer = readText('scripts/flowersec-smoke-peer/main.go');
+    const forbiddenBootApi = [
+      'BrowserControllerOptions',
+      'ScopeResolver',
+      'createBootstrapScopeResolvers',
+      'FLOWERSEC_BOOTSTRAP_SCOPE_RESOLVERS',
+      'PROXY_RUNTIME_SCOPE_NAME',
+      'validateProxyRuntimeScopeEntry',
+    ];
+
+    expect(existsSync(join(repoRoot(), 'packages/boot/src/scope.ts'))).toBe(false);
+    expect(existsSync(join(repoRoot(), 'packages/boot/test/scope.test.ts'))).toBe(false);
+    for (const symbol of forbiddenBootApi) expect(bootIndex).not.toContain(symbol);
+    expect(acquisition).not.toContain('BrowserControllerOptions');
+    expect(goModule).not.toMatch(/flowersec-go\/v[1-4](?:\s|$)/u);
+    expect(goPeer).not.toMatch(/flowersec-go\/v[1-4](?:\/|['"])/u);
   });
 
   it('ships the repository MIT license in every published package', () => {
@@ -153,12 +175,12 @@ describe('release dependency and runtime contract', () => {
     const goPeer = readText('scripts/flowersec-smoke-peer/main.go');
     expect(goModule).toContain(`go ${goVersion}`);
     expect(goModule).toMatch(
-      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v4 v4\.0\.0$/mu
+      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.0\.0$/mu
     );
     expect(goModule).not.toMatch(/^replace\s/mu);
     expect(goModule).not.toContain('../');
     expect(existsSync(join(repoRoot(), 'scripts/flowersec-smoke-peer/go.work'))).toBe(false);
-    expect(goChecksums).toContain('flowersec-go/v4 v4.0.0');
+    expect(goChecksums).toContain('flowersec-go/v5 v5.0.0');
     expect(goPeer).toContain('flowersec.NewAcceptor');
     expect(goPeer).toContain('flowersec.NewWebSocketHTTPServer');
     expect(goPeer).toContain('controlplane.NewIssuer().IssueDirect');

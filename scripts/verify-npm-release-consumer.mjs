@@ -31,11 +31,10 @@ const packageSpecs = process.argv.includes('--packed')
       ['@floegence/floe-webapp-init', 'packages/init'],
     ].map(([name, directory]) => {
       const packed = JSON.parse(
-        execFileSync(
-          'npm',
-          ['pack', '--json', '--ignore-scripts', '--pack-destination', root],
-          { cwd: directory, encoding: 'utf8' }
-        )
+        execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', root], {
+          cwd: directory,
+          encoding: 'utf8',
+        })
       );
       const filename = packed[0]?.filename;
       if (typeof filename !== 'string') throw new Error(`npm pack did not produce ${name}`);
@@ -111,8 +110,8 @@ walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1)
   throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '4.0.0')
-  throw new Error(`expected Flowersec 4.0.0, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '5.0.0')
+  throw new Error(`expected Flowersec 5.0.0, found ${flowersecManifest.version}`);
 console.log(
   `verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`
 );

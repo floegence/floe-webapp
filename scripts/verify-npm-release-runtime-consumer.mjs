@@ -126,8 +126,8 @@ function resolveSmokePeerDirectory() {
   if (existsSync(join(directory, 'go.work')))
     throw new Error('Flowersec smoke peer must not use go.work');
   const module = readFileSync(join(directory, 'go.mod'), 'utf8');
-  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v4 v4\.0\.0$/mu.test(module)) {
-    throw new Error('Flowersec smoke peer must pin flowersec-go/v4 v4.0.0');
+  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.0\.0$/mu.test(module)) {
+    throw new Error('Flowersec smoke peer must pin flowersec-go/v5 v5.0.0');
   }
   if (/^replace\s/mu.test(module) || /(?:^|\s)\.\.\//mu.test(module)) {
     throw new Error('Flowersec smoke peer must not use local dependency shortcuts');

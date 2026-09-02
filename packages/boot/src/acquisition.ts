@@ -8,7 +8,6 @@ import {
   type Session,
 } from '@floegence/flowersec-core';
 import type {
-  ConnectionControllerOptions,
   PrivateLoopbackArtifactLeaseV1,
   PrivateLoopbackArtifactSourceV1,
   SessionOptions,
@@ -409,8 +408,6 @@ export async function connectIsolatedOneShot(
     throw error;
   }
 }
-
-export type BrowserControllerOptions = ConnectionControllerOptions;
 
 async function validateAcquisitionEnvelope<Artifact>(
   value: unknown,

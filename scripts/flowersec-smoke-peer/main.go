@@ -21,8 +21,8 @@ import (
 	"syscall"
 	"time"
 
-	flowersec "github.com/floegence/flowersec/flowersec-go/v4"
-	"github.com/floegence/flowersec/flowersec-go/v4/controlplane"
+	flowersec "github.com/floegence/flowersec/flowersec-go/v5"
+	"github.com/floegence/flowersec/flowersec-go/v5/controlplane"
 )
 
 const allowedOrigin = "https://app.example.com"

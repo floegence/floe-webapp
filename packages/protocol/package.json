@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-protocol",
-  "version": "0.47.1",
+  "version": "0.48.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -34,7 +34,7 @@
     "solid-js": "^1.8.0"
   },
   "dependencies": {
-    "@floegence/flowersec-core": "4.0.0"
+    "@floegence/flowersec-core": "5.0.0"
   },
   "devDependencies": {
     "solid-js": "^1.9.11",
