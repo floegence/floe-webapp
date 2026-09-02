@@ -3,6 +3,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import { __resetSurfacePortalScopeForTests } from '../src/components/ui/surfacePortalScope';
@@ -351,5 +353,19 @@ describe('SurfaceFloatingLayer', () => {
     expect(layer?.querySelector('.workbench-dock-popover__arrow')).toBeTruthy();
     expect(document.body.contains(layer)).toBe(true);
     expect(surface.contains(layer)).toBe(true);
+  });
+
+  it('keeps the Dock and its popovers on one shared corner radius', () => {
+    const css = readFileSync(
+      resolve(process.cwd(), 'src/components/workbench/workbench.css'),
+      'utf8'
+    );
+    const materialBlock = css.match(/\.workbench-dock-material \{[\s\S]*?\n  \}/u)?.[0] ?? '';
+    const dockBlock = css.match(/\.workbench-dock \{[\s\S]*?\n  \}/u)?.[0] ?? '';
+    const popoverBlock = css.match(/\.workbench-dock-popover \{[\s\S]*?\n  \}/u)?.[0] ?? '';
+
+    expect(materialBlock).toContain('border-radius: 16px;');
+    expect(dockBlock).not.toContain('border-radius:');
+    expect(popoverBlock).not.toContain('border-radius:');
   });
 });
