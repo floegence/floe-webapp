@@ -264,10 +264,6 @@
     border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock {
-    border-radius: 20px;
-  }
-
   .workbench-surface[data-workbench-theme='vibrancy'] .workbench-dock__tile {
     background: rgba(255, 255, 255, 0.42);
     border-color: rgba(255, 255, 255, 0.26);
@@ -468,7 +464,6 @@
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
-    border-radius: 0;
   }
 
   .workbench-surface[data-workbench-theme='mica'] .workbench-dock__tile {
@@ -659,7 +654,6 @@
   }
 
   .workbench-surface[data-workbench-theme='midnight'] .workbench-dock {
-    border-radius: 12px;
     gap: 6px;
     padding: 6px 10px;
   }
@@ -876,7 +870,6 @@
   }
 
   .workbench-surface[data-workbench-theme='aurora'] .workbench-dock {
-    border-radius: 22px;
     padding: 8px 14px;
   }
 
@@ -1071,7 +1064,6 @@
     align-items: center;
     gap: 4px;
     padding: 6px 10px;
-    border-radius: 6px;
   }
 
   .workbench-surface[data-workbench-theme='terminal'] .workbench-dock::after {
