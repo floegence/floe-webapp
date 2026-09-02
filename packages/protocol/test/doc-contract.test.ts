@@ -13,7 +13,7 @@ describe('protocol docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('const source = createControlplaneArtifactSource');
     expect(doc).toContain('@floegence/floe-webapp-boot');
-    expect(doc).toContain('@floegence/flowersec-core@5.0.0');
+    expect(doc).toContain('@floegence/flowersec-core@5.0.1');
     expect(doc).toContain('flowersec-private-loopback/1');
     expect(doc).toContain('createPrivateLoopbackDirectConnectionConfig');
     expect(doc).toContain('sole retry/backoff owner');
