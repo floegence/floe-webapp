@@ -100,6 +100,65 @@ describe('createFloatingPresence', () => {
     expect(presence.state()).toBe('open');
   });
 
+  it('does not re-enter when a source change keeps the surface open', async () => {
+    let invalidateOpenSource = () => undefined;
+    let openPresence: FloatingPresence | undefined;
+
+    createRoot((dispose) => {
+      const [openRevision, setOpenRevision] = createSignal(0);
+      invalidateOpenSource = () => setOpenRevision((revision) => revision + 1);
+      openPresence = createFloatingPresence({
+        open: () => {
+          openRevision();
+          return true;
+        },
+      });
+      disposers.push(dispose);
+    });
+
+    vi.runOnlyPendingTimers();
+    await Promise.resolve();
+    expect(openPresence?.state()).toBe('open');
+
+    invalidateOpenSource();
+    await Promise.resolve();
+
+    expect(openPresence?.state()).toBe('open');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not defer an active exit when a source change keeps the surface closed', async () => {
+    let close = () => undefined;
+    let invalidateClosedSource = () => undefined;
+    let presence: FloatingPresence | undefined;
+
+    createRoot((dispose) => {
+      const [snapshot, setSnapshot] = createSignal({ open: true, revision: 0 });
+      close = () => setSnapshot((current) => ({ open: false, revision: current.revision + 1 }));
+      invalidateClosedSource = () =>
+        setSnapshot((current) => ({ ...current, revision: current.revision + 1 }));
+      presence = createFloatingPresence({ open: () => snapshot().open, exitDurationMs: 120 });
+      disposers.push(dispose);
+    });
+
+    vi.runOnlyPendingTimers();
+    await Promise.resolve();
+    expect(presence?.state()).toBe('open');
+
+    close();
+    await Promise.resolve();
+    expect(presence?.state()).toBe('exiting');
+    expect(presence?.mounted()).toBe(true);
+
+    vi.advanceTimersByTime(60);
+    invalidateClosedSource();
+    await Promise.resolve();
+    vi.advanceTimersByTime(60);
+    await Promise.resolve();
+
+    expect(presence?.mounted()).toBe(false);
+  });
+
   it('uses a near-instant exit when reduced motion is requested', async () => {
     vi.stubGlobal('matchMedia', ((query: string) => ({
       matches: query === '(prefers-reduced-motion: reduce)',

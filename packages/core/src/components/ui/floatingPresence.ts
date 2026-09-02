@@ -1,4 +1,11 @@
-import { createEffect, createSignal, onCleanup, untrack, type Accessor } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  untrack,
+  type Accessor,
+} from 'solid-js';
 
 export type FloatingPresenceState = 'entering' | 'open' | 'exiting';
 
@@ -44,10 +51,10 @@ function resolveExitDuration(options: FloatingPresenceOptions): number {
 }
 
 export function createFloatingPresence(options: FloatingPresenceOptions): FloatingPresence {
-  const [mounted, setMounted] = createSignal(options.open());
-  const [state, setState] = createSignal<FloatingPresenceState>(
-    options.open() ? 'entering' : 'exiting',
-  );
+  const open = createMemo(() => options.open());
+  const initiallyOpen = untrack(open);
+  const [mounted, setMounted] = createSignal(initiallyOpen);
+  const [state, setState] = createSignal<FloatingPresenceState>(initiallyOpen ? 'entering' : 'exiting');
   let enterFrame: number | null = null;
   let exitTimer: number | null = null;
 
@@ -64,14 +71,14 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
   };
 
   createEffect(() => {
-    if (options.open()) {
+    if (open()) {
       clearExitTimer();
       clearEnterFrame();
       setMounted(true);
       setState('entering');
       enterFrame = requestPresenceFrame(() => {
         enterFrame = null;
-        if (untrack(options.open)) {
+        if (untrack(open)) {
           setState('open');
         }
       });
@@ -88,7 +95,7 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
     const exitDuration = resolveExitDuration(options);
     exitTimer = globalThis.setTimeout(() => {
       exitTimer = null;
-      if (!untrack(options.open)) {
+      if (!untrack(open)) {
         setMounted(false);
       }
     }, exitDuration) as unknown as number;

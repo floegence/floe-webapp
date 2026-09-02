@@ -38,7 +38,8 @@ describe('FloatingWindow open cycle', () => {
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
     Object.defineProperty(window, 'requestAnimationFrame', {
       configurable: true,
-      value: (callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 0),
+      value: (callback: FrameRequestCallback) =>
+        window.setTimeout(() => callback(performance.now()), 0),
     });
     Object.defineProperty(window, 'cancelAnimationFrame', {
       configurable: true,
@@ -110,5 +111,49 @@ describe('FloatingWindow open cycle', () => {
     ) as HTMLElement | null;
     expect(reopenedWindow?.style.transform).toBe('translate3d(20px, 28px, 0)');
     expect(document.querySelector('[data-testid="preview-body"]')).toBeTruthy();
+  });
+
+  it('keeps the same open surface when content state changes', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    let updateContent: (() => void) | undefined;
+
+    function Harness() {
+      const [snapshot, setSnapshot] = createSignal({ open: true, content: 'First' });
+      updateContent = () => setSnapshot({ open: true, content: 'Second' });
+
+      return (
+        <FloatingWindow
+          open={snapshot().open}
+          onOpenChange={() => undefined}
+          title="Live preview"
+          defaultPosition={{ x: 20, y: 20 }}
+          defaultSize={{ width: 400, height: 300 }}
+        >
+          <div data-testid="live-preview-body">{snapshot().content}</div>
+        </FloatingWindow>
+      );
+    }
+
+    mount(() => <Harness />, host);
+    await flushAnimationFrame();
+
+    const geometry = document.querySelector<HTMLElement>(
+      '[data-floe-geometry-surface="floating-window"]'
+    );
+    const surface = document.querySelector<HTMLElement>(
+      '[data-floe-floating-window-surface="true"]'
+    );
+    expect(geometry?.getAttribute('data-floating-presence')).toBe('open');
+    expect(surface?.getAttribute('data-floating-presence')).toBe('open');
+
+    updateContent?.();
+    await Promise.resolve();
+
+    expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBe(geometry);
+    expect(document.querySelector('[data-floe-floating-window-surface="true"]')).toBe(surface);
+    expect(geometry?.getAttribute('data-floating-presence')).toBe('open');
+    expect(surface?.getAttribute('data-floating-presence')).toBe('open');
+    expect(document.querySelector('[data-testid="live-preview-body"]')?.textContent).toBe('Second');
   });
 });
