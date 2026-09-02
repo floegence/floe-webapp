@@ -360,9 +360,9 @@ describe('SurfaceFloatingLayer', () => {
       resolve(process.cwd(), 'src/components/workbench/workbench.css'),
       'utf8'
     );
-    const materialBlock = css.match(/\.workbench-dock-material \{[\s\S]*?\n  \}/u)?.[0] ?? '';
-    const dockBlock = css.match(/\.workbench-dock \{[\s\S]*?\n  \}/u)?.[0] ?? '';
-    const popoverBlock = css.match(/\.workbench-dock-popover \{[\s\S]*?\n  \}/u)?.[0] ?? '';
+    const materialBlock = css.match(/\.workbench-dock-material \{[\s\S]*?\n {2}\}/u)?.[0] ?? '';
+    const dockBlock = css.match(/\.workbench-dock \{[\s\S]*?\n {2}\}/u)?.[0] ?? '';
+    const popoverBlock = css.match(/\.workbench-dock-popover \{[\s\S]*?\n {2}\}/u)?.[0] ?? '';
 
     expect(materialBlock).toContain('border-radius: 16px;');
     expect(dockBlock).not.toContain('border-radius:');
