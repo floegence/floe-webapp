@@ -27,15 +27,6 @@ describe('FileBrowser controlled path wiring', () => {
     expect(src).toContain('title="Explorer"');
   });
 
-  it('should sync controlled path and keep user callbacks explicit', () => {
-    const src = read('../src/components/file-browser/FileBrowserContext.tsx');
-
-    expect(src).toContain("if (typeof props.path !== 'string') return;");
-    expect(src).toContain('const nextPath = normalizePath(props.path);');
-    expect(src).toContain("deferNonBlocking(() => onPathChange?.(nextPath, 'user'));");
-    expect(src).toContain('deferNonBlocking(() => onNavigate?.(nextPath));');
-  });
-
   it('should expose a toolbar end-actions slot on FileBrowserToolbar without coupling business-specific controls into core', () => {
     const src = read('../src/components/file-browser/FileBrowserToolbar.tsx');
 

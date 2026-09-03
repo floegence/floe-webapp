@@ -231,7 +231,12 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     return normalizePath(props.initialPath ?? '/');
   };
 
-  const [currentPath, setCurrentPathInternal] = createSignal(resolveInitialPath());
+  const [uncontrolledPath, setUncontrolledPath] = createSignal(resolveInitialPath());
+  const currentPath = () => (
+    typeof props.path === 'string'
+      ? normalizePath(props.path)
+      : uncontrolledPath()
+  );
   const [selectedById, setSelectedById] = createStore<Record<string, true>>({});
   const [selectedIdList, setSelectedIdList] = createSignal<string[]>([]);
   const [selectionAnchorId, setSelectionAnchorId] = createSignal<string | null>(null);
@@ -643,22 +648,34 @@ export function FileBrowserProvider(props: FileBrowserProviderProps) {
     setFilterActive(false);
   };
 
-  // Controlled-path sync: external path changes should update view state without
-  // triggering navigation callbacks (to avoid controlled loops).
-  createEffect(() => {
-    if (typeof props.path !== 'string') return;
-    const nextPath = normalizePath(props.path);
-    if (nextPath === currentPath()) return;
+  let lastControlledPath: string | undefined;
 
-    setCurrentPathInternal(nextPath);
+  // A controlled path is authoritative. Observe committed changes only to reset
+  // path-scoped UI; never mirror the value into a second internal path state.
+  createEffect(() => {
+    if (typeof props.path !== 'string') {
+      lastControlledPath = undefined;
+      return;
+    }
+    const nextPath = normalizePath(props.path);
+    if (lastControlledPath === undefined) {
+      lastControlledPath = nextPath;
+      return;
+    }
+    if (nextPath === lastControlledPath) return;
+
+    lastControlledPath = nextPath;
     clearPathScopedUiState();
   });
 
   const setCurrentPath = (path: string) => {
     const nextPath = normalizePath(path);
-    if (nextPath === currentPath()) return;
-    setCurrentPathInternal(nextPath);
-    clearPathScopedUiState();
+    const controlled = typeof props.path === 'string';
+    if (!controlled) {
+      if (nextPath === currentPath()) return;
+      setUncontrolledPath(nextPath);
+      clearPathScopedUiState();
+    }
     const onNavigate = props.onNavigate;
     deferNonBlocking(() => onNavigate?.(nextPath));
     const onPathChange = props.onPathChange;

@@ -11,6 +11,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/file-context-menu-surface-scope.test.tsx',
   'packages/core/test/file-open-picker.test.tsx',
   'packages/core/test/file-browser-status-bar.test.tsx',
+  'packages/core/test/file-browser-set-current-path.test.tsx',
   'packages/core/test/floating-presence.test.tsx',
   'packages/core/test/floating-window-open-cycle.test.tsx',
   'packages/core/test/floe-registry-contributions.test.tsx',
