@@ -1,16 +1,18 @@
-import type { JsonValue, RpcPeer } from '@floegence/flowersec-core';
+import type { JsonValue, OperationOptions, RpcPeer } from '@floegence/flowersec-core';
 
 export interface RpcClientLike {
   rpc: Pick<RpcPeer, 'call' | 'notify' | 'onNotify'>;
 }
 
 export type RpcDecoder<T> = (payload: JsonValue) => T;
+export type RpcOperationOptions = OperationOptions;
 
 export interface RpcHelpers {
   call: <Req extends JsonValue, Res>(
     typeId: number,
     payload: Req,
     decodeResponse: RpcDecoder<Res>,
+    options?: RpcOperationOptions,
   ) => Promise<Res>;
   /** Strict notification: detached transports fail with ProtocolNotConnectedError. */
   notify: <Req extends JsonValue>(typeId: number, payload: Req) => Promise<void>;

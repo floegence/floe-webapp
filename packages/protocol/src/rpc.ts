@@ -1,6 +1,6 @@
 import type { JsonValue, RpcResult } from '@floegence/flowersec-core';
 import { useProtocol } from './client';
-import type { ProtocolContract, RpcDecoder, RpcHelpers } from './contract';
+import type { ProtocolContract, RpcDecoder, RpcHelpers, RpcOperationOptions } from './contract';
 
 export class ProtocolNotConnectedError extends Error {
   constructor() {
@@ -26,13 +26,14 @@ function createHelpers(protocol: ReturnType<typeof useProtocol>): RpcHelpers {
     typeId: number,
     payload: Req,
     decodeResponse: RpcDecoder<Res>,
+    options?: RpcOperationOptions,
   ): Promise<Res> => {
     const transport = protocol.rpcTransport();
     if (!transport) throw new ProtocolNotConnectedError();
 
     let response: RpcResult<Res>;
     try {
-      response = await transport.call(typeId, payload, decodeResponse);
+      response = await transport.call(typeId, payload, decodeResponse, options);
     } catch (error) {
       throw new RpcError({ typeId, code: -1, message: 'RPC transport or response decode error', cause: error });
     }

@@ -4,9 +4,16 @@ import { ProtocolProvider, useProtocol } from '../src/client';
 import type { ProtocolContract } from '../src/contract';
 import { ProtocolNotConnectedError, useRpc } from '../src/rpc';
 
+const transportCall = vi.fn(async (
+  _typeId: number,
+  _payload: unknown,
+  decode: (value: never) => unknown,
+  _options?: { signal?: AbortSignal },
+) => ({ ok: true as const, payload: decode({ value: 42 } as never) }));
+
 const connectedSession = {
   rpc: {
-    call: async (_typeId: number, _payload: unknown, decode: (value: never) => unknown) => ({ ok: true as const, payload: decode({ value: 42 } as never) }),
+    call: transportCall,
     notify: async () => {},
     onNotify: (_typeId: number, decode: (value: never) => unknown, handler: (payload: unknown) => void) => {
       handler(decode({ event: 'ready' } as never));
@@ -75,5 +82,37 @@ describe('useRpc Flowersec session transport', () => {
     })).resolves.toBe(42);
     await expect(rpc.call(1, {}, () => { throw new Error('invalid response'); })).rejects.toMatchObject({ name: 'RpcError' });
     dispose();
+  });
+
+  it('forwards cancellation separately from the wire payload', async () => {
+    transportCall.mockClear();
+    let rpc!: ReturnType<typeof useRpc>;
+    let protocol!: ReturnType<typeof useProtocol>;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, { contract, get children() {
+        return createComponent(() => {
+          rpc = useRpc();
+          protocol = useProtocol();
+          return null;
+        }, {});
+      } });
+    });
+
+    try {
+      await protocol.connect({ source: { acquire: async () => ({ kind: 'failure', code: 'unused', disposition: { kind: 'terminal' } }) } as never });
+      const payload = { request: true } as const;
+      const controller = new AbortController();
+
+      await expect(rpc.call(7, payload, (value) => value, { signal: controller.signal })).resolves.toEqual({ value: 42 });
+      expect(transportCall).toHaveBeenCalledOnce();
+      expect(transportCall.mock.calls[0]?.[0]).toBe(7);
+      expect(transportCall.mock.calls[0]?.[1]).toBe(payload);
+      expect(transportCall.mock.calls[0]?.[3]?.signal).toBe(controller.signal);
+      expect(payload).toEqual({ request: true });
+    } finally {
+      dispose();
+    }
   });
 });
