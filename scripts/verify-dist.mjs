@@ -121,8 +121,8 @@ function assertInitTemplates() {
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.48.4',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.48.4`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.48.5',
+      `Init template ${template} must target @floegence/floe-webapp-core ^0.48.5`
     );
   }
 
@@ -340,9 +340,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.48.4'
+      (version) => version === '0.48.5'
     ),
-    'Published Floe packages must all use version 0.48.4'
+    'Published Floe packages must all use version 0.48.5'
   );
 
   assert(

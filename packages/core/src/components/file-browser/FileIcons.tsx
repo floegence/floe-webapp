@@ -1,6 +1,7 @@
 import { Show, createUniqueId, type Component, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import type { FileItem } from './types';
+import { classifyArchiveFileName } from './archiveFiles';
 
 export interface FileIconProps {
   class?: string;
@@ -22,8 +23,31 @@ export interface ResolveFileItemIconOptions {
 const IMAGE_FILE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp']);
 const VIDEO_FILE_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'm4v', 'ogv', 'mkv']);
 const AUDIO_FILE_EXTENSIONS = new Set(['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga', 'opus', 'flac']);
-const DOCUMENT_FILE_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'rtf']);
-const CONFIG_FILE_EXTENSIONS = new Set(['json', 'yaml', 'yml', 'toml', 'xml', 'ini', 'env', 'config', 'cfg', 'conf', 'properties']);
+const DOCUMENT_FILE_EXTENSIONS = new Set([
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'txt',
+  'md',
+  'rtf',
+]);
+const CONFIG_FILE_EXTENSIONS = new Set([
+  'json',
+  'yaml',
+  'yml',
+  'toml',
+  'xml',
+  'ini',
+  'env',
+  'config',
+  'cfg',
+  'conf',
+  'properties',
+]);
 const STYLE_FILE_EXTENSIONS = new Set(['css', 'scss', 'sass', 'less', 'styl']);
 const GENERIC_CODE_FILE_EXTENSIONS = new Set([
   'clj',
@@ -57,7 +81,8 @@ const GENERIC_CODE_FILE_EXTENSIONS = new Set([
 
 const FILE_SHELL_PATH = 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z';
 const FILE_SHELL_CORNER_POINTS = '14 2 14 8 20 8';
-const CODE_BADGE_FONT_STACK = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+const CODE_BADGE_FONT_STACK =
+  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 const VIDEO_FILE_ACCENT = 'color-mix(in srgb, #8b5cf6 86%, var(--foreground))';
 const CODE_BADGE_TONE_COLOR: Record<CodeBadgeTone, string> = {
   warning: 'var(--warning)',
@@ -143,8 +168,30 @@ registerCodeBadge(CMAKE_BADGE_SPEC, ['cmake']);
 registerSpecialCodeBadge(DOCKER_BADGE_SPEC, ['dockerfile', 'containerfile']);
 registerSpecialCodeBadge(MAKE_BADGE_SPEC, ['makefile', 'gnumakefile', 'justfile']);
 registerSpecialCodeBadge(CMAKE_BADGE_SPEC, ['cmakelists.txt']);
-registerSpecialCodeBadge(SHELL_BADGE_SPEC, ['.bashrc', '.bash_profile', '.bash_aliases', '.profile', '.zshrc', '.zprofile', '.zshenv', '.zlogin', '.zlogout', '.kshrc', '.cshrc', '.tcshrc', '.envrc']);
-registerSpecialCodeBadge(RUBY_BADGE_SPEC, ['gemfile', 'rakefile', 'podfile', 'fastfile', 'appfile', 'brewfile', 'vagrantfile']);
+registerSpecialCodeBadge(SHELL_BADGE_SPEC, [
+  '.bashrc',
+  '.bash_profile',
+  '.bash_aliases',
+  '.profile',
+  '.zshrc',
+  '.zprofile',
+  '.zshenv',
+  '.zlogin',
+  '.zlogout',
+  '.kshrc',
+  '.cshrc',
+  '.tcshrc',
+  '.envrc',
+]);
+registerSpecialCodeBadge(RUBY_BADGE_SPEC, [
+  'gemfile',
+  'rakefile',
+  'podfile',
+  'fastfile',
+  'appfile',
+  'brewfile',
+  'vagrantfile',
+]);
 registerSpecialCodeBadge(GROOVY_BADGE_SPEC, ['jenkinsfile']);
 registerSpecialCodeBadgePrefix(DOCKER_BADGE_SPEC, ['dockerfile.', 'containerfile.']);
 registerSpecialCodeBadgeSuffix(DOCKER_BADGE_SPEC, ['.dockerfile', '.containerfile']);
@@ -209,7 +256,9 @@ function getResolvedExtension(item: Pick<FileItem, 'name' | 'extension'>): strin
   return normalizeExtension(item.extension) ?? getExtensionFromName(item.name);
 }
 
-function resolveCodeBadgeSpec(item: Pick<FileItem, 'name' | 'extension'>): CodeBadgeSpec | undefined {
+function resolveCodeBadgeSpec(
+  item: Pick<FileItem, 'name' | 'extension'>
+): CodeBadgeSpec | undefined {
   const basename = getBasename(item.name);
   if (basename) {
     const specialFilenameSpec = CODE_BADGE_BY_BASENAME.get(basename);
@@ -306,12 +355,14 @@ const FileShellIcon = (props: FileShellIconProps) => {
 };
 
 const LinkDecoration = (props: { targetType: NonNullable<FileItem['link']>['targetType'] }) => {
-  const stroke = () => props.targetType === 'broken'
-    ? 'var(--error)'
-    : 'color-mix(in srgb, var(--foreground) 82%, var(--background))';
-  const fill = () => props.targetType === 'broken'
-    ? 'color-mix(in srgb, var(--error) 18%, var(--background))'
-    : 'color-mix(in srgb, var(--background) 92%, var(--foreground) 8%)';
+  const stroke = () =>
+    props.targetType === 'broken'
+      ? 'var(--error)'
+      : 'color-mix(in srgb, var(--foreground) 82%, var(--background))';
+  const fill = () =>
+    props.targetType === 'broken'
+      ? 'color-mix(in srgb, var(--error) 18%, var(--background))'
+      : 'color-mix(in srgb, var(--background) 92%, var(--foreground) 8%)';
 
   return (
     <g data-file-link-kind="symbolic" data-file-link-target-type={props.targetType}>
@@ -346,7 +397,8 @@ const FolderGraphic = (props: FolderGraphicProps) => {
   // Avoid duplicate DOM ids: `url(#...)` references break under repeated hardcoded ids.
   const baseId = createUniqueId();
   const isOpen = () => !!props.open;
-  const gradientId = () => `${isOpen() ? 'floe-folder-open-gradient' : 'floe-folder-gradient'}-${baseId}`;
+  const gradientId = () =>
+    `${isOpen() ? 'floe-folder-open-gradient' : 'floe-folder-gradient'}-${baseId}`;
 
   return (
     <svg
@@ -372,16 +424,14 @@ const FolderGraphic = (props: FolderGraphicProps) => {
       </defs>
       <path
         fill={`url(#${gradientId()})`}
-        d={isOpen()
-          ? 'M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z'
-          : 'M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z'}
+        d={
+          isOpen()
+            ? 'M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7.414A2 2 0 0 0 20.414 6L18 3.586A2 2 0 0 0 16.586 3H5zm4 2h7.586L19 7.414V17H5V5h4z'
+            : 'M3 5a2 2 0 0 1 2-2h4.586a1 1 0 0 1 .707.293L12 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z'
+        }
       />
       <Show when={isOpen()}>
-        <path
-          fill="var(--background)"
-          opacity="0.3"
-          d="M3 8l4-3h14l-4 3H3z"
-        />
+        <path fill="var(--background)" opacity="0.3" d="M3 8l4-3h14l-4 3H3z" />
       </Show>
       <Show when={props.linkTargetType}>
         <LinkDecoration targetType={props.linkTargetType!} />
@@ -413,9 +463,7 @@ const BrokenSymlinkFolderOpenIcon = (props: FileIconProps) => (
 );
 
 // Generic file icon
-export const FileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} />
-);
+export const FileIcon = (props: FileIconProps) => <FileShellIcon class={props.class} />;
 
 export const SymlinkFileIcon = (props: FileIconProps) => (
   <FileShellIcon class={props.class} linkTargetType="file">
@@ -426,6 +474,31 @@ export const SymlinkFileIcon = (props: FileIconProps) => (
 export const BrokenSymlinkIcon = (props: FileIconProps) => (
   <FileShellIcon class={props.class} accent="var(--muted-foreground)" linkTargetType="broken">
     <LinkDecoration targetType="broken" />
+  </FileShellIcon>
+);
+
+export const ArchiveFileIcon = (props: FileIconProps) => (
+  <FileShellIcon class={props.class} accent="var(--warning)">
+    <g data-file-icon-kind="archive">
+      <path
+        d="M10 9.75h4M10 12.25h4M10 14.75h4"
+        fill="none"
+        stroke="var(--warning)"
+        stroke-width="1.35"
+        stroke-linecap="round"
+      />
+      <rect
+        x="9.25"
+        y="17"
+        width="5.5"
+        height="2.25"
+        rx="0.7"
+        fill="var(--warning)"
+        opacity="0.18"
+        stroke="var(--warning)"
+        stroke-width="1"
+      />
+    </g>
   </FileShellIcon>
 );
 
@@ -523,7 +596,16 @@ export const VideoFileIcon = (props: FileIconProps) => (
         fill={VIDEO_FILE_ACCENT}
         d="M10.75 13.7v2.85a.45.45 0 0 0 .68.39l2.45-1.43a.45.45 0 0 0 0-.78l-2.45-1.42a.45.45 0 0 0-.68.39z"
       />
-      <line x1="8" y1="19.5" x2="16" y2="19.5" stroke={VIDEO_FILE_ACCENT} stroke-width="1.2" stroke-linecap="round" opacity="0.72" />
+      <line
+        x1="8"
+        y1="19.5"
+        x2="16"
+        y2="19.5"
+        stroke={VIDEO_FILE_ACCENT}
+        stroke-width="1.2"
+        stroke-linecap="round"
+        opacity="0.72"
+      />
     </g>
   </FileShellIcon>
 );
@@ -540,8 +622,26 @@ export const AudioFileIcon = (props: FileIconProps) => (
         stroke-linejoin="round"
         d="M9 16.25v-5.2l5.5-1.15v5.15"
       />
-      <ellipse cx="8.2" cy="17.2" rx="1.75" ry="1.25" fill="var(--info)" opacity="0.2" stroke="var(--info)" stroke-width="1.1" />
-      <ellipse cx="13.7" cy="16" rx="1.75" ry="1.25" fill="var(--info)" opacity="0.2" stroke="var(--info)" stroke-width="1.1" />
+      <ellipse
+        cx="8.2"
+        cy="17.2"
+        rx="1.75"
+        ry="1.25"
+        fill="var(--info)"
+        opacity="0.2"
+        stroke="var(--info)"
+        stroke-width="1.1"
+      />
+      <ellipse
+        cx="13.7"
+        cy="16"
+        rx="1.75"
+        ry="1.25"
+        fill="var(--info)"
+        opacity="0.2"
+        stroke="var(--info)"
+        stroke-width="1.1"
+      />
     </g>
   </FileShellIcon>
 );
@@ -549,8 +649,24 @@ export const AudioFileIcon = (props: FileIconProps) => (
 // Document file icon (PDF, DOC, etc.)
 export const DocumentFileIcon = (props: FileIconProps) => (
   <FileShellIcon class={props.class} accent="var(--error)">
-    <line x1="8" y1="13" x2="16" y2="13" stroke="var(--error)" stroke-width="1.5" stroke-linecap="round" />
-    <line x1="8" y1="17" x2="14" y2="17" stroke="var(--error)" stroke-width="1.5" stroke-linecap="round" />
+    <line
+      x1="8"
+      y1="13"
+      x2="16"
+      y2="13"
+      stroke="var(--error)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
+    <line
+      x1="8"
+      y1="17"
+      x2="14"
+      y2="17"
+      stroke="var(--error)"
+      stroke-width="1.5"
+      stroke-linecap="round"
+    />
   </FileShellIcon>
 );
 
@@ -585,6 +701,10 @@ export const StyleFileIcon = (props: FileIconProps) => (
 // Get appropriate icon based on file extension.
 export function getFileIcon(extension?: string): FileIconComponent {
   const normalizedExtension = normalizeExtension(extension);
+
+  if (normalizedExtension && classifyArchiveFileName(`file.${normalizedExtension}`)) {
+    return ArchiveFileIcon;
+  }
 
   if (normalizedExtension) {
     const codeBadgeSpec = CODE_BADGE_BY_EXTENSION.get(normalizedExtension);
@@ -624,7 +744,10 @@ export function getFileIcon(extension?: string): FileIconComponent {
   return FileIcon;
 }
 
-function resolveFolderIcon(item: ResolvableFileIcon, options: ResolveFileItemIconOptions): FileIconComponent {
+function resolveFolderIcon(
+  item: ResolvableFileIcon,
+  options: ResolveFileItemIconOptions
+): FileIconComponent {
   const linkTargetType = item.link?.kind === 'symbolic' ? item.link.targetType : undefined;
   if (linkTargetType === 'broken') {
     return options.open ? BrokenSymlinkFolderOpenIcon : BrokenSymlinkFolderIcon;
@@ -637,7 +760,7 @@ function resolveFolderIcon(item: ResolvableFileIcon, options: ResolveFileItemIco
 
 export function resolveFileItemIcon(
   item: ResolvableFileIcon,
-  options: ResolveFileItemIconOptions = {},
+  options: ResolveFileItemIconOptions = {}
 ): FileItemIconRenderer {
   if (item.icon) {
     return item.icon;
@@ -654,6 +777,10 @@ export function resolveFileItemIcon(
     return SymlinkFileIcon;
   }
 
+  if (classifyArchiveFileName(item.name)) {
+    return ArchiveFileIcon;
+  }
+
   const codeBadgeSpec = resolveCodeBadgeSpec(item);
   if (codeBadgeSpec) {
     return getCodeBadgeIcon(codeBadgeSpec);
@@ -668,11 +795,11 @@ export function FileItemIcon(props: { item: ResolvableFileIcon; class?: string; 
   return (
     <Show
       when={typeof icon() === 'function'}
-      fallback={(
+      fallback={
         <span class={`inline-flex items-center justify-center ${props.class ?? ''}`.trim()}>
           {icon() as JSX.Element}
         </span>
-      )}
+      }
     >
       <Dynamic component={icon() as FileIconComponent} class={props.class} />
     </Show>

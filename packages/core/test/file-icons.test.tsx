@@ -5,6 +5,7 @@ import {
   CodeFileIcon,
   ConfigFileIcon,
   AudioFileIcon,
+  ArchiveFileIcon,
   BrokenSymlinkIcon,
   DocumentFileIcon,
   FileIcon,
@@ -23,6 +24,7 @@ import {
   getFileIcon,
   resolveFileItemIcon,
 } from '../src/components/file-browser/FileIcons';
+import { classifyArchiveFileName } from '../src/components/file-browser/archiveFiles';
 
 function extractAll(re: RegExp, input: string): string[] {
   return Array.from(input.matchAll(re), (m) => m[1] ?? '');
@@ -74,7 +76,10 @@ describe('file icons', () => {
     expect(html).not.toContain('url(#folder-open-gradient)');
 
     const ids = extractAll(/id="(floe-folder-open-gradient-[^"]+)"/g, html);
-    const fills = extractAll(/fill=(?:")?url\(#(floe-folder-open-gradient-[^")\s>]+)\)(?:")?/g, html);
+    const fills = extractAll(
+      /fill=(?:")?url\(#(floe-folder-open-gradient-[^")\s>]+)\)(?:")?/g,
+      html
+    );
 
     expect(ids.length).toBe(2);
     expect(fills.length).toBe(2);
@@ -105,8 +110,68 @@ describe('file icons', () => {
     expect(getFileIcon('unknown')).toBe(FileIcon);
   });
 
+  it('classifies supported archive names using longest case-insensitive suffix matching', () => {
+    expect(classifyArchiveFileName('Release.TAR.GZ')).toEqual({
+      format: 'tar.gz',
+      kind: 'archive',
+      defaultOutputName: 'Release',
+    });
+    expect(classifyArchiveFileName('/tmp/source.tgz')).toEqual({
+      format: 'tar.gz',
+      kind: 'archive',
+      defaultOutputName: 'source',
+    });
+    expect(classifyArchiveFileName('logs.txt.xz')).toEqual({
+      format: 'xz',
+      kind: 'compressed-file',
+      defaultOutputName: 'logs.txt',
+    });
+    expect(classifyArchiveFileName('not-an-archive.gz.txt')).toBeUndefined();
+  });
+
+  it('classifies explicit multipart archive names without matching arbitrary numbered files', () => {
+    expect(classifyArchiveFileName('backup.7z.001')).toEqual({
+      format: '7z',
+      kind: 'multipart',
+      defaultOutputName: 'backup',
+    });
+    expect(classifyArchiveFileName('photos.part02.rar')).toEqual({
+      format: 'rar',
+      kind: 'multipart',
+      defaultOutputName: 'photos',
+    });
+    expect(classifyArchiveFileName('legacy.r00')).toEqual({
+      format: 'rar',
+      kind: 'multipart',
+      defaultOutputName: 'legacy',
+    });
+    expect(classifyArchiveFileName('split.z01')).toEqual({
+      format: 'zip',
+      kind: 'multipart',
+      defaultOutputName: 'split',
+    });
+    expect(classifyArchiveFileName('recording.001')).toBeUndefined();
+  });
+
+  it('uses the archive icon for simple and compound archive names', () => {
+    expect(getFileIcon('zip')).toBe(ArchiveFileIcon);
+    expect(
+      resolveFileItemIcon({
+        id: 'a',
+        name: 'bundle.tar.zst',
+        type: 'file',
+        path: '/bundle.tar.zst',
+      })
+    ).toBe(ArchiveFileIcon);
+    expect(renderItemIcon({ id: 'b', name: 'logs.gz', type: 'file', path: '/logs.gz' })).toContain(
+      'data-file-icon-kind="archive"'
+    );
+  });
+
   it('resolveFileItemIcon should prefer item.icon for files before extension mapping', () => {
-    const CustomIcon = (props: { class?: string }) => <svg data-custom-component-icon="true" class={props.class} />;
+    const CustomIcon = (props: { class?: string }) => (
+      <svg data-custom-component-icon="true" class={props.class} />
+    );
     const item: FileItem = {
       id: 'custom.ts',
       name: 'custom.ts',
@@ -120,7 +185,9 @@ describe('file icons', () => {
   });
 
   it('resolveFileItemIcon should prefer item.icon for folders before symlink-aware folder fallback', () => {
-    const CustomIcon = (props: { class?: string }) => <svg data-custom-folder-icon="true" class={props.class} />;
+    const CustomIcon = (props: { class?: string }) => (
+      <svg data-custom-folder-icon="true" class={props.class} />
+    );
     const item: FileItem = {
       id: 'linked-folder',
       name: 'linked-folder',
@@ -189,13 +256,16 @@ describe('file icons', () => {
       path: '/linked-dir',
       link: { kind: 'symbolic', targetType: 'folder' },
     });
-    const openSymlinkFolderHtml = renderItemIcon({
-      id: '/linked-dir-open',
-      name: 'linked-dir-open',
-      type: 'folder',
-      path: '/linked-dir-open',
-      link: { kind: 'symbolic', targetType: 'folder' },
-    }, { open: true });
+    const openSymlinkFolderHtml = renderItemIcon(
+      {
+        id: '/linked-dir-open',
+        name: 'linked-dir-open',
+        type: 'folder',
+        path: '/linked-dir-open',
+        link: { kind: 'symbolic', targetType: 'folder' },
+      },
+      { open: true }
+    );
     const brokenSymlinkHtml = renderItemIcon({
       id: '/broken-link',
       name: 'broken-link',
