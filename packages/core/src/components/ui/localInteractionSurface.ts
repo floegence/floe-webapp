@@ -318,7 +318,7 @@ export function resolveWorkbenchWidgetLocalTypingTarget(
   while (currentElement && currentElement !== widgetElement) {
     if (
       currentElement instanceof HTMLElement
-      && isTypingElement(currentElement)
+      && (isTypingElement(currentElement) || currentElement.matches('iframe'))
     ) {
       return currentElement;
     }

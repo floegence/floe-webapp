@@ -8,6 +8,13 @@
 - If two branches introduce incompatible behavior, surface the product or architecture tradeoff instead of choosing one side silently.
 - After resolving conflicts, run focused checks for the affected behavior in addition to the repository quality gate.
 
+## Workbench Embedded Input Ownership
+
+- Widget selection and stacking are separate from DOM focus. Bodies observing local or embedded input must use `requestActivate({ focus: false })` so native text editing, composition, double-click, and pointer capture retain their input target.
+- Iframe events do not bubble into the host document. Embedded surfaces must use their authenticated interaction channel to report activation; Workbench must not inspect iframe content or use shell focus to simulate that channel.
+- Explicit shell and navigation commands may focus the widget. An asynchronous input observation must not reclaim focus from the embedded document or another widget.
+- Regression coverage must exercise embedded focus in both canvas-scaled and projected layouts, including initial activation and repeated observations.
+
 ## Workbench Wheel Ownership
 
 - Inside Workbench, wheel / trackpad scrolling belongs to the canvas by default. Blank canvas areas and unselected widget bounds may zoom the canvas.

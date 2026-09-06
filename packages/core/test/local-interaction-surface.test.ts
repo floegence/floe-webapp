@@ -159,6 +159,19 @@ describe('local interaction surface routing', () => {
     expect(shouldActivateLocalTarget(input, widget)).toBe(false);
   });
 
+  it('preserves embedded iframe focus as a local typing target', () => {
+    const widget = document.createElement('article');
+    const body = document.createElement('div');
+    body.setAttribute('data-floe-canvas-interactive', 'true');
+    const iframe = document.createElement('iframe');
+    body.appendChild(iframe);
+    widget.appendChild(body);
+
+    expect(resolveWidgetOwnership(iframe, widget)).toBe('widget_local');
+    expect(resolveLocalTypingTarget(iframe, widget)).toBe(iframe);
+    expect(shouldActivateLocalTarget(iframe, widget)).toBe(false);
+  });
+
   it('treats activation-surface typing helpers as widget-owned activation targets', () => {
     const widget = document.createElement('article');
     const body = document.createElement('div');

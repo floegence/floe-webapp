@@ -138,7 +138,8 @@ export interface WorkbenchWidgetBodyProps<TWidgetType extends string = Workbench
   motion?: WorkbenchWidgetMotionIntent | null;
   selected?: boolean;
   filtered?: boolean;
-  requestActivate?: () => void;
+  /** Select and raise the widget. Set focus to false for local or embedded input observations. */
+  requestActivate?: (options?: { focus?: boolean }) => void;
 }
 
 export interface WorkbenchWidgetDefinition<TWidgetType extends string = WorkbenchWidgetType> {

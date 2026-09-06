@@ -1142,6 +1142,43 @@ describe('WorkbenchWidget interaction ownership', () => {
     expect(document.activeElement).toBe(widgetRoot);
   });
 
+  it.each(['canvas_scaled', 'projected_surface'] as const)(
+    'preserves embedded iframe focus when a %s body reports activation without requesting focus',
+    async (layoutMode) => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      let bodyProps: WorkbenchWidgetBodyProps | undefined;
+      dispose = renderStatefulWidget(host, {
+        ...filesWidgetDefinition,
+        body: (props) => {
+          bodyProps = props;
+          return (
+            <div>
+              <textarea aria-label="Local editor" />
+              <canvas tabIndex={0} />
+              <iframe title="Embedded editor" />
+            </div>
+          );
+        },
+      }, { layoutMode });
+      const root = host.querySelector<HTMLElement>('.workbench-widget')!;
+      const iframe = host.querySelector<HTMLIFrameElement>('iframe')!;
+      const embeddedEditor = iframe.contentDocument!.createElement('textarea');
+      iframe.contentDocument!.body.appendChild(embeddedEditor);
+
+      iframe.focus();
+      const activeElement = document.activeElement;
+      const previousLayer = Number(root.style.zIndex);
+      bodyProps!.requestActivate?.({ focus: false });
+      await flushWorkbenchInteraction();
+      expect(document.activeElement).toBe(activeElement);
+      expect(root.classList.contains('is-selected')).toBe(true);
+      expect(Number(root.style.zIndex)).toBeGreaterThan(previousLayer);
+      embeddedEditor.focus();
+      expect(iframe.contentDocument!.activeElement).toBe(embeddedEditor);
+    }
+  );
+
   it('keeps the selected widget hot while the canvas is locked', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

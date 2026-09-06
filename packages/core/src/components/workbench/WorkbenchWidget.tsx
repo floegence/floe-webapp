@@ -37,6 +37,7 @@ import type {
   WorkbenchInteractionAdapter,
   WorkbenchWidgetDefinition,
   WorkbenchWidgetBodyActivation,
+  WorkbenchWidgetBodyProps,
   WorkbenchWidgetLifecycle,
   WorkbenchWidgetItem,
   WorkbenchWidgetMotionIntent,
@@ -375,9 +376,9 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
       interactiveSelector: interactionAdapter().interactiveSelector,
       panSurfaceSelector: interactionAdapter().panSurfaceSelector,
     });
-  const requestActivate = () => {
+  const requestActivate: NonNullable<WorkbenchWidgetBodyProps['requestActivate']> = (options) => {
     commitWidgetSelectionAndFront();
-    widgetRootEl?.focus({ preventScroll: true });
+    if (options?.focus !== false) widgetRootEl?.focus({ preventScroll: true });
   };
   const emitBodyActivation = (pointerType?: string) => {
     setBodyActivation((previous) => ({
