@@ -41,3 +41,17 @@ HTTPS is required by default. Loopback HTTP requires `allowLoopbackHTTP: true`. 
 `createPrivateLoopbackControlplaneArtifactSource()` is the dedicated source for an explicitly authorized private browser document. It accepts only a root numeric-loopback HTTP origin, parses only `flowersec-private-loopback/1`, and feeds `createPrivateLoopbackDirectConnectionConfig()`. Both public and private sources use the same envelope validation, digest verification, spend callback, acquisition synchronization, retry ownership, replacement, and cleanup. The private path cannot be selected through `allowLoopbackHTTP`, a public artifact, or an automatic fallback.
 
 The boot package also provides a bounded single-request `fetchServerSentEvents` helper. It performs exactly one fetch, validates `text/event-stream`, and does not parse application JSON or reconnect.
+
+## Native isolated application controllers
+
+`createIsolatedControlplaneArtifactSource()` from `@floegence/floe-webapp-boot/artifact-source`
+accepts the control-plane v6 isolated response and validates its handoff, exact
+resource context, cross-bound origins, critical projection, and isolated consumer
+before materializing a lease. Native shells pass `isolatedContext` plus the same
+explicit target validator and spend callback; no browser location, SW, iframe,
+network patch, or browser capability is synthesized. Pass the source to the
+published Flowersec Node controller, which remains the only reconnect owner.
+Each acquisition uses a fresh entry ticket supplied by the authenticated product
+fetch adapter. Node TLS and Origin admission remain explicit connector options.
+The existing trusted source rejects isolated acquisitions and browser one-shot
+handoffs retain their location-clearing and one-consumption requirements.

@@ -1,5 +1,74 @@
 import { describe, expect, it, vi } from 'vitest';
 
+it('materializes a native isolated handoff without a browser location or consumer downgrade', async () => {
+  const { createIsolatedControlplaneArtifactSource } = await import('../src/artifact-source');
+  const projection = JSON.stringify({
+    scope: 'proxy.runtime',
+    scope_version: 2,
+    critical: true,
+    payload: {
+      mode: 'controller_bridge',
+      appBasePath: '/',
+      controllerBridge: { allowedOrigins: ['https://app.example.com'] },
+    },
+  });
+  const body = await envelope('{}', projection);
+  (body.spend_scope as Record<string, unknown>).consumer = 'isolated';
+  const isolatedContext = {
+    envPublicId: 'env_demo',
+    floeApp: 'code',
+    codeSpaceId: 'space',
+    appPath: '/',
+    launcherKind: 'cs' as const,
+    launcherId: 'space',
+    launcherOrigin: 'https://launcher.example.com',
+    validateTargetBinding: vi.fn((_binding: unknown) => undefined),
+  };
+  const response = () => ({
+    v: 6,
+    runtime_origin: 'https://runtime.example.com',
+    runtime_handoff_b64u: encodeBase64Url(
+      new TextEncoder().encode(
+        JSON.stringify({
+          v: 6,
+          env_public_id: 'env_demo',
+          floe_app: 'code',
+          code_space_id: 'space',
+          app_path: '/',
+          launcher_kind: 'cs',
+          launcher_id: 'space',
+          launcher_origin: isolatedContext.launcherOrigin,
+          runtime_origin: 'https://runtime.example.com',
+          app_origin: 'https://app.example.com',
+          acquisition: body,
+        })
+      )
+    ),
+  });
+  const source = createIsolatedControlplaneArtifactSource({
+    baseUrl: isolatedContext.launcherOrigin,
+    endpointId: 'env_demo',
+    entryTicket: 'entry',
+    isolatedContext,
+    fetch: vi.fn(async () => new Response(JSON.stringify(response()))),
+    commitSpend: vi.fn(async () => undefined),
+    validateSpendBinding: (binding) => {
+      expect(binding.consumer).toBe('isolated');
+    },
+  });
+  expect((await source.acquire({ signal: new AbortController().signal })).kind).toBe('lease');
+  isolatedContext.validateTargetBinding.mockImplementationOnce(() => {
+    throw new Error('wrong resource');
+  });
+  expect(await source.acquire({ signal: new AbortController().signal })).toMatchObject({
+    kind: 'failure',
+    code: 'invalid_spend_binding',
+    disposition: { kind: 'terminal' },
+  });
+  (body.spend_scope as Record<string, unknown>).consumer = 'trusted';
+  expect((await source.acquire({ signal: new AbortController().signal })).kind).toBe('failure');
+});
+
 const leases: Array<{ artifact: unknown; commitSpend: (signal?: AbortSignal) => Promise<void> }> =
   [];
 const privateLeases: Array<{

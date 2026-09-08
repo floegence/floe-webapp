@@ -5,6 +5,7 @@ export { getSessionStorage, removeSessionStorage, setSessionStorage } from './st
 export type { ArtifactSource, ArtifactSourceResult } from '@floegence/flowersec-core';
 export {
   createControlplaneArtifactSource,
+  createIsolatedControlplaneArtifactSource,
   createPrivateLoopbackControlplaneArtifactSource,
   ControlplaneRequestError,
 } from './artifact-source';

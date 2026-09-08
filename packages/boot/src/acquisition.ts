@@ -335,28 +335,11 @@ export async function materializeIsolatedOneShot(
   } catch {
     throw new AcquisitionError('invalid_isolated_handoff');
   }
-  const payload = validateRuntimeBootPayload(value, options.validationContext);
-  const validated = await validateAcquisitionEnvelope(
-    payload.acquisition,
-    {
-      commitSpend: options.commitSpend,
-      expectedConsumer: 'isolated',
-      validateSpendBinding: (binding) => {
-        validateIsolatedCrossBinding(payload, binding, options.validationContext);
-        options.validationContext.validateTargetBinding(binding.targetBinding);
-        return `${binding.artifactDigestB64u}.${binding.projectionDigestB64u}`;
-      },
-    },
-    parseArtifact
+  const validated = await validateIsolatedPayloadAcquisition(
+    value,
+    options.validationContext,
+    options.commitSpend
   );
-  if (validated.scope.appBasePath !== payload.app_path)
-    throw new AcquisitionError('isolated_app_path_mismatch');
-  if (validated.scope.mode === 'controller_bridge') {
-    const origins = validated.scope.controllerBridge.allowedOrigins;
-    if (origins.length !== 1 || origins[0] !== payload.app_origin) {
-      throw new AcquisitionError('isolated_allowed_origins_mismatch');
-    }
-  }
 
   let pending!: PendingAcquisition<ArtifactLease>;
   const lease = materializeLease(
@@ -373,6 +356,95 @@ export async function materializeIsolatedOneShot(
   const acquisition = IsolatedOneShotAcquisition.create();
   isolatedAcquisitions.set(acquisition, { pending, state: 'ready' });
   return acquisition;
+}
+
+async function validateIsolatedPayloadAcquisition(
+  value: unknown,
+  expected: IsolatedHandoffValidationContext,
+  commitSpend: CommitSpend
+) {
+  const payload = validateRuntimeBootPayload(value, expected);
+  const validated = await validateAcquisitionEnvelope(
+    payload.acquisition,
+    {
+      commitSpend: commitSpend,
+      expectedConsumer: 'isolated',
+      validateSpendBinding: (binding) => {
+        validateIsolatedCrossBinding(payload, binding, expected);
+        try {
+          expected.validateTargetBinding(binding.targetBinding);
+        } catch {
+          throw new AcquisitionError('invalid_spend_binding');
+        }
+        return `${binding.artifactDigestB64u}.${binding.projectionDigestB64u}`;
+      },
+    },
+    parseArtifact
+  );
+  if (validated.scope.appBasePath !== payload.app_path)
+    throw new AcquisitionError('isolated_app_path_mismatch');
+  if (validated.scope.mode === 'controller_bridge') {
+    const origins = validated.scope.controllerBridge.allowedOrigins;
+    if (origins.length !== 1 || origins[0] !== payload.app_origin) {
+      throw new AcquisitionError('isolated_allowed_origins_mismatch');
+    }
+  }
+
+  return validated;
+}
+
+export type NativeIsolatedAcquisitionContext = Omit<
+  IsolatedHandoffValidationContext,
+  'runtimeOrigin' | 'appOrigin'
+>;
+
+// Native callers receive the authenticated control-plane response directly, never
+// a browser location. All envelope, projection, consumer, and target checks remain shared.
+export async function materializeNativeIsolatedAcquisitionForSource(
+  source: ArtifactSource,
+  value: unknown,
+  options: MaterializeOptions & Readonly<{ context: NativeIsolatedAcquisitionContext }>
+): Promise<ArtifactLease> {
+  const state = acquisitionSources.get(source);
+  if (state === undefined) throw new AcquisitionError('invalid_acquisition_source');
+  const response = exactRecord(
+    value,
+    ['v', 'runtime_origin', 'runtime_handoff_b64u'],
+    'invalid_isolated_handoff'
+  );
+  const raw = response.runtime_handoff_b64u;
+  if (response.v !== 6 || typeof raw !== 'string' || byteLength(raw) > MAX_ISOLATED_FRAGMENT_BYTES)
+    throw new AcquisitionError('invalid_isolated_handoff');
+  const bytes = decodeCanonicalBase64Url(raw, 'invalid_isolated_handoff');
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    throw new AcquisitionError('invalid_isolated_handoff');
+  }
+  const payload = decoded as Partial<RuntimeBootInitPayloadV6> | null;
+  const expected = {
+    ...options.context,
+    runtimeOrigin: exactOrigin(response.runtime_origin),
+    appOrigin: exactOrigin(payload?.app_origin),
+  };
+  const validated = await validateIsolatedPayloadAcquisition(
+    decoded,
+    expected,
+    options.commitSpend
+  );
+  const envelope = payload?.acquisition;
+  if (!envelope) throw new AcquisitionError('invalid_isolated_handoff');
+  options.validateSpendBinding(freezeBindingView(envelope.spend_scope));
+  return materializeLease(
+    validated,
+    createArtifactLease,
+    options.commitSpend,
+    (pending) => state.pending.push(pending),
+    (retired) => {
+      state.pending = state.pending.filter((pending) => pending !== retired);
+    }
+  );
 }
 
 export async function connectIsolatedOneShot(

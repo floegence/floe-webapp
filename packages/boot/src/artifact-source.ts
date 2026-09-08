@@ -11,6 +11,8 @@ import type {
 import {
   AcquisitionError,
   materializeAcquisitionForSource,
+  materializeNativeIsolatedAcquisitionForSource,
+  type NativeIsolatedAcquisitionContext,
   materializePrivateLoopbackAcquisitionForSource,
   registerAcquisitionSource,
   type CommitSpend,
@@ -133,6 +135,27 @@ export function createControlplaneArtifactSource(
   return source;
 }
 
+/** Acquires an isolated application lease for a native controller without a browser handoff.
+ * The caller validates the exact launcher, runtime, app, and resource binding and
+ * supplies the existing spend callback. No consumer or origin is rewritten.
+ */
+export function createIsolatedControlplaneArtifactSource(
+  options: ControlplaneArtifactSourceOptions &
+    Readonly<{ isolatedContext: NativeIsolatedAcquisitionContext }>
+): ArtifactSource {
+  const source = createControlplaneSource<ArtifactLease>(
+    options,
+    (source, value, materializeOptions) =>
+      materializeNativeIsolatedAcquisitionForSource(source, value, {
+        ...materializeOptions,
+        context: options.isolatedContext,
+      }),
+    'isolated'
+  );
+  registerAcquisitionSource(source);
+  return source;
+}
+
 export function createPrivateLoopbackControlplaneArtifactSource(
   options: PrivateLoopbackControlplaneArtifactSourceOptions
 ): PrivateLoopbackArtifactSourceV1 {
@@ -168,9 +191,10 @@ function createControlplaneSource<Lease>(
     options: Readonly<{
       commitSpend: CommitSpend;
       validateSpendBinding: ValidateSpendBinding;
-      expectedConsumer: 'trusted';
+      expectedConsumer: 'trusted' | 'isolated';
     }>
-  ) => Promise<Lease>
+  ) => Promise<Lease>,
+  expectedConsumer: 'trusted' | 'isolated' = 'trusted'
 ): ArtifactSourceFor<Lease> {
   if (typeof options.commitSpend !== 'function') throw new TypeError('commitSpend is required');
   if (typeof options.validateSpendBinding !== 'function')
@@ -229,7 +253,7 @@ function createControlplaneSource<Lease>(
               throw new AcquisitionError('invalid_spend_binding');
             }
           },
-          expectedConsumer: 'trusted',
+          expectedConsumer,
         });
         return Object.freeze({ kind: 'lease' as const, lease });
       } catch (error) {
