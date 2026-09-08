@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal, mergeProps } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { Check } from '../icons';
@@ -6,16 +6,7 @@ import { FileItemIcon } from '../file-browser/FileIcons';
 import type { FileItem } from '../file-browser/types';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
-import {
-  NewFolderSection,
-  PathInputBar,
-  PickerBreadcrumb,
-  PickerFolderTree,
-  getParentPath,
-  normalizePath,
-  type BasePickerProps,
-  usePickerTree,
-} from './picker/PickerBase';
+import { PickerPanel, pickerCopy, usePickerNavigation, getParentPath, normalizePath, type BasePickerProps } from './picker/PickerBase';
 
 export type FileOpenPickerSelectionMode = 'single' | 'multiple';
 
@@ -84,36 +75,17 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
   const initialDirectory = () => {
     if (props.initialPath) return props.initialPath;
     const firstSelection = props.initialSelectedPaths?.[0];
-    return firstSelection ? getParentPath(firstSelection) : '/';
+    return firstSelection ? getParentPath(firstSelection) : undefined;
   };
 
-  const tree = usePickerTree({
-    initialPath: initialDirectory,
-    open: () => props.open,
-    files: () => props.files,
-    // eslint-disable-next-line solid/reactivity -- filter is a static callback
-    filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
-    // eslint-disable-next-line solid/reactivity -- onExpand is a static callback
-    onExpand: props.onExpand,
-    // eslint-disable-next-line solid/reactivity -- ensurePath is a static callback
-    ensurePath: props.ensurePath,
-    homeLabel: () => props.homeLabel,
-    homePath: () => props.homePath,
-    onReset: () => {
-      setSelectedPaths(normalizeFileOpenSelection(
-        props.initialSelectedPaths,
-        selectionMode() === 'single' ? 1 : props.maxSelections,
-      ));
-    },
+  const navigationProps = mergeProps(props, {
+    get initialPath() { return initialDirectory(); },
+    get scopeKey() { return props.scopeKey; },
   });
-
-  const currentFiles = createMemo(() => {
-    const path = normalizePath(tree.selectedPath());
-    const items = path === '/'
-      ? props.files
-      : tree.folderIndex().get(path)?.children ?? [];
-    return items.filter((item) => item.type === 'file' && (!props.fileFilter || props.fileFilter(item)));
+  const source = usePickerNavigation(navigationProps, () => props.open, undefined, () => {
+    setSelectedPaths(normalizeFileOpenSelection(props.initialSelectedPaths, selectionMode() === 'single' ? 1 : props.maxSelections));
   });
+  const currentFiles = createMemo(() => source.entries().filter((item) => item.type === 'file' && (!props.fileFilter || props.fileFilter(item))));
 
   const selectionIndex = (path: string) => selectedPaths().indexOf(normalizePath(path));
   const selectionLimitReached = () => (
@@ -131,7 +103,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
   };
 
   const confirmSelection = (paths = selectedPaths()) => {
-    if (paths.length === 0 || tree.pathPending()) return;
+    if (paths.length === 0 || !source.valid()) return;
     const onSelect = props.onSelect;
     props.onOpenChange(false);
     deferNonBlocking(() => onSelect([...paths]));
@@ -160,17 +132,17 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
         <div class="flex items-center w-full gap-2">
           <span class="flex-1 text-[11px] text-muted-foreground truncate">
             {selectedPaths().length === 0
-              ? 'No files selected'
-              : `${selectedPaths().length} selected`}
+              ? pickerCopy(props).noFilesSelected
+              : pickerCopy(props).selectedCount(selectedPaths().length)}
           </span>
           <Button variant="ghost" size="sm" onClick={() => props.onOpenChange(false)}>
-            {props.cancelText ?? 'Cancel'}
+            {props.cancelText ?? pickerCopy(props).cancel}
           </Button>
           <Button
             variant="primary"
             size="sm"
             onClick={() => confirmSelection()}
-            disabled={selectedPaths().length === 0 || tree.pathPending()}
+            disabled={selectedPaths().length === 0 || !source.valid()}
           >
             {props.confirmText ?? 'Select'}
           </Button>
@@ -178,36 +150,11 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
       }
     >
       <div class="flex flex-col gap-2 -mt-1">
-        <PathInputBar
-          value={tree.pathInput}
-          onInput={(value) => {
-            tree.setPathInput(value);
-            tree.setPathInputError('');
-          }}
-          pending={tree.pathPending}
-          error={tree.pathInputError}
-          onGo={tree.handlePathInputGo}
-          onKeyDown={tree.handlePathInputKeyDown}
-        />
-
-        <PickerBreadcrumb segments={tree.breadcrumbSegments} onClick={tree.handleBreadcrumbClick} />
-
-        <div class="flex min-h-[260px] flex-col overflow-hidden rounded border border-border sm:h-[300px] sm:flex-row">
-          <PickerFolderTree
-            rootFolders={tree.rootFolders}
-            selectedPath={tree.selectedPath}
-            expandedPaths={tree.expandedPaths}
-            revealNonce={tree.revealNonce}
-            onToggle={tree.toggleExpand}
-            onSelect={tree.handleSelectFolder}
-            onSelectRoot={tree.handleSelectRoot}
-            isSelectable={tree.isSelectable}
-            homeLabel={tree.homeLabel}
-            class="min-h-[120px] min-w-0 border-0 border-b border-border rounded-none sm:h-full sm:w-1/2 sm:border-b-0 sm:border-r"
-          />
-
+        <PickerPanel {...props} source={source} />
+        <div class="flex min-h-[140px] overflow-hidden rounded border border-border">
           <div
-            class="min-h-[140px] min-w-0 flex-1 overflow-y-auto"
+            {...props.scrollViewportProps}
+            class="max-h-[200px] min-h-[140px] min-w-0 flex-1 overflow-y-auto"
             role="listbox"
             aria-multiselectable={selectionMode() === 'multiple' ? 'true' : undefined}
           >
@@ -215,7 +162,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
               when={currentFiles().length > 0}
               fallback={
                 <div class="flex h-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
-                  {props.emptyText ?? 'No matching files in this directory'}
+                  {props.emptyText ?? pickerCopy(props).emptyFiles}
                 </div>
               }
             >
@@ -230,14 +177,14 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
                       role="option"
                       aria-selected={selectedIndex() >= 0}
                       disabled={disabled()}
-                      title={disabled() ? 'Selection limit reached' : file.name}
+                      title={disabled() ? pickerCopy(props).selectionLimit : file.name}
                       onClick={() => toggleFile(file)}
                       onDblClick={() => {
                         if (selectionMode() === 'single') confirmSelection([normalizePath(file.path)]);
                       }}
                       onKeyDown={(event) => handleFileKeyDown(event, index())}
                       class={cn(
-                        'flex min-h-9 w-full items-center gap-2 px-2 py-1.5 text-left text-xs',
+                        'flex min-h-9 w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs',
                         'transition-colors duration-100 hover:bg-accent/60',
                         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
                         'disabled:cursor-not-allowed disabled:opacity-45',
@@ -261,13 +208,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
           </div>
         </div>
 
-        <Show when={props.onCreateFolder}>
-          <NewFolderSection
-            parentPath={tree.selectedPath}
-            onCreateFolder={props.onCreateFolder!}
-            toDisplayPath={tree.toDisplayPath}
-          />
-        </Show>
+
       </div>
     </Dialog>
   );

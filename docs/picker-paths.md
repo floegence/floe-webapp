@@ -1,36 +1,53 @@
 # Picker Path Semantics
 
-Floe picker components intentionally operate with two different path domains:
+Starting with 0.49.0, DirectoryPicker, DirectoryInput, FileOpenPicker and
+FileSavePicker use absolute paths throughout: directory entries, initial values,
+selection callbacks, navigation state and loader requests. `/` is always the
+filesystem root. `homePath` is a display hint for static pickers, not a path
+prefix. Only an explicit `~` or `~/...` input expands against Home; relative paths
+are rejected. The host resolves canonical paths and symbolic links.
 
-- internal picker path:
-  - rooted at `/`
-  - relative to `homePath` when `homePath` is provided
-  - examples:
-    - `/`
-    - `/Downloads/code/floe-webapp`
-- absolute display / filesystem path:
-  - real host path shown to users or sent to downstream file APIs
-  - examples:
-    - `/Users/demo`
-    - `/Users/demo/Downloads/code/floe-webapp`
+## Remote directory navigation
 
-## Contract
+Provide `loadPathContext()` and `loadDirectory(path, { showHidden })` together.
+The path context contains `homePathAbs`, `defaultRootId`, and a `roots` array of
+`id`, `label`, `pathAbs`, optional `permissions` and optional `hidden` properties.
+A static `pathContext` is also available for hosts whose context lifecycle is
+owned elsewhere. Remote consumers never get an inferred Home or Root when their
+context is unavailable. Root permissions describe navigation affordances; the
+host loader must independently authorize every requested path.
 
-- `DirectoryPicker`, `FileSavePicker`, and `DirectoryInput` keep picker state in the internal-path domain.
-- `homePath` is the bridge between internal paths and absolute display paths.
-- `initialPath` may be provided as an absolute path by downstream callers, but picker state canonicalizes it into the internal-path domain before selection state is stored.
-- callbacks that leave the picker boundary should convert back into the caller's expected path domain explicitly.
-- When downstream data is lazy-loaded, `ensurePath(path, { reason })` is the contract that upgrades a target internal path from "may exist remotely" to "its ancestor chain is now represented in `files`".
+Every open and `scopeKey` change refreshes the context. All navigation entrypoints
+use one data source and load the target directory directly, without enumerating
+ancestors. Input edits, closure, a newer navigation, or a replaced environment
+invalidate older responses. Only a successful latest navigation commits its
+path and entries. An error retains the requested input and last committed
+contents, blocks confirmation, and exposes retry. Empty directories are valid;
+failed loads are never converted to empty directories or Home navigation.
 
-## Why this matters
+`DirectoryInput` accepts the containing form's `open` state and reports
+`onValidityChange`. Keep form submission disabled while false. Its `onChange`
+fires only after successful validation, including successful initial loading.
+The expandable panel shares the same core as the dialog; it does not create a
+nested modal or own surrounding form metadata. `scrollViewportProps` lets the
+host mark actual scroll regions using its existing interaction contract.
 
-If an absolute path is stored directly as picker-internal state while `homePath` is also set, display conversion can prepend `homePath` a second time and create duplicated prefixes such as:
+`copy` and `formatError` localize the common controls and host error categories.
+Home/root labels come from the supplied context. `initialShowHidden` controls the
+initial listing, and the user can change it in the panel. Folder creation stays
+optional and uses the validated absolute parent path. File pickers retain ordered
+multiple selection, file filters, selection limits and filename validation.
 
-- `/Users/demo/Users/demo/project`
+## Migration from 0.48.x
 
-To avoid that class of bug:
+This is an intentional minor-version API break while the package is pre-1.0.
+Remove the former `onExpand` / `ensurePath` tree hydration callbacks and use
+`loadDirectory` instead. Remove all Home-relative tree conversion and supply
+absolute `FileItem.path`, `initialPath`, and file selections. Callbacks now return
+absolute paths directly; never prepend Home to their output. The previous
+`PickerEnsurePath` types and dual path conversion helpers are removed.
 
-- normalize `initialPath` against `homePath` before consuming it as picker state
-- treat `initialPath` as reactive input instead of a mount-time snapshot
-- keep absolute-path conversion at the boundary helpers, not inside selection state
-- route open, path-input, breadcrumb, and tree-select navigation through the same async `ensurePath` flow instead of validating against a stale partial tree snapshot
+Static examples may continue to provide `files` containing an absolute tree;
+they use the same navigation state and a static directory lookup. They do not
+stand in for permission-checked remote loaders. Do not mix static and remote
+authority or construct a second navigation/cache owner around the picker.

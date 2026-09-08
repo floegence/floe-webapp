@@ -6,15 +6,7 @@ import { Input } from './Input';
 import type { FileItem } from '../file-browser/types';
 import { FileItemIcon } from '../file-browser/FileIcons';
 import { deferNonBlocking } from '../../utils/defer';
-import {
-  usePickerTree,
-  normalizePath,
-  PathInputBar,
-  PickerBreadcrumb,
-  PickerFolderTree,
-  NewFolderSection,
-  type BasePickerProps,
-} from './picker/PickerBase';
+import { PickerPanel, pickerCopy, usePickerNavigation, type BasePickerProps } from './picker/PickerBase';
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -38,34 +30,11 @@ export function FileSavePicker(props: FileSavePickerProps) {
   const [fileName, setFileName] = createSignal(props.initialFileName ?? '');
   const [fileNameError, setFileNameError] = createSignal('');
 
-  const tree = usePickerTree({
-    initialPath: () => props.initialPath,
-    open: () => props.open,
-    files: () => props.files,
-    // eslint-disable-next-line solid/reactivity -- filter is a static callback
-    filter: props.filter ? (item: FileItem) => props.filter!(item) : undefined,
-    // eslint-disable-next-line solid/reactivity -- onExpand is a static callback
-    onExpand: props.onExpand,
-    // eslint-disable-next-line solid/reactivity -- ensurePath is a static callback
-    ensurePath: props.ensurePath,
-    homeLabel: () => props.homeLabel,
-    homePath: () => props.homePath,
-    onReset: () => {
-      setFileName(props.initialFileName ?? '');
-      setFileNameError('');
-    },
+  const source = usePickerNavigation(props, () => props.open, undefined, () => {
+    setFileName(props.initialFileName ?? '');
+    setFileNameError('');
   });
-
-  // Files in the currently selected directory
-  const currentFiles = createMemo(() => {
-    const path = normalizePath(tree.selectedPath());
-    if (path === '/') {
-      return props.files.filter((f) => f.type === 'file');
-    }
-    const folder = tree.folderIndex().get(path);
-    if (!folder?.children) return [];
-    return folder.children.filter((f) => f.type === 'file');
-  });
+  const currentFiles = createMemo(() => source.entries().filter((item) => item.type === 'file'));
 
   // Clear filename error on edit
   createEffect(
@@ -84,9 +53,10 @@ export function FileSavePicker(props: FileSavePickerProps) {
   // ── Save / Cancel ─────────────────────────────────────────────────────
 
   const handleSave = () => {
+    if (!source.valid()) return;
     const name = fileName().trim();
     if (!name) {
-      setFileNameError('Filename is required');
+      setFileNameError(pickerCopy(props).fileNameRequired);
       return;
     }
 
@@ -98,7 +68,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
       }
     }
 
-    const dirPath = tree.selectedPath();
+    const dirPath = source.currentPath();
     const onSave = props.onSave;
     // Close UI first, then notify (UI response priority)
     props.onOpenChange(false);
@@ -118,7 +88,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
 
   // Full path preview (display path for user)
   const fullPath = createMemo(() => {
-    const dir = tree.toDisplayPath(tree.selectedPath());
+    const dir = source.currentPath();
     const name = fileName().trim();
     if (!name) return dir;
     return dir === '/' ? `/${name}` : `${dir}/${name}`;
@@ -134,7 +104,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
         <div class="flex flex-col w-full gap-2">
           {/* Filename input */}
           <div class="flex items-center gap-1.5">
-            <label class="text-xs text-muted-foreground flex-shrink-0">File name:</label>
+            <label class="text-xs text-muted-foreground flex-shrink-0">{pickerCopy(props).fileName}</label>
             <div class="flex-1">
               <Input
                 size="sm"
@@ -153,9 +123,9 @@ export function FileSavePicker(props: FileSavePickerProps) {
               {fullPath()}
             </span>
             <Button variant="ghost" size="sm" onClick={handleCancel}>
-              {props.cancelText ?? 'Cancel'}
+              {props.cancelText ?? pickerCopy(props).cancel}
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim() || tree.pathPending()}>
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim() || !source.valid()}>
               {props.confirmText ?? 'Save'}
             </Button>
           </div>
@@ -163,47 +133,14 @@ export function FileSavePicker(props: FileSavePickerProps) {
       }
     >
       <div class="flex flex-col gap-2 -mt-1">
-        <PathInputBar
-          value={tree.pathInput}
-          onInput={(v) => {
-            tree.setPathInput(v);
-            tree.setPathInputError('');
-          }}
-          pending={tree.pathPending}
-          error={tree.pathInputError}
-          onGo={tree.handlePathInputGo}
-          onKeyDown={tree.handlePathInputKeyDown}
-        />
-
-        <PickerBreadcrumb
-          segments={tree.breadcrumbSegments}
-          onClick={tree.handleBreadcrumbClick}
-        />
-
-        {/* Split view: folder tree + file list */}
-        <div class="flex border border-border rounded overflow-hidden" style={{ height: '260px' }}>
-          {/* Left: folder tree */}
-          <PickerFolderTree
-            rootFolders={tree.rootFolders}
-            selectedPath={tree.selectedPath}
-            expandedPaths={tree.expandedPaths}
-            revealNonce={tree.revealNonce}
-            onToggle={tree.toggleExpand}
-            onSelect={tree.handleSelectFolder}
-            onSelectRoot={tree.handleSelectRoot}
-            isSelectable={tree.isSelectable}
-            homeLabel={tree.homeLabel}
-            class="w-1/2 min-w-0 border-r border-border border-0 rounded-none"
-            style={{ 'max-height': 'none', 'min-height': '0' }}
-          />
-
-          {/* Right: file list */}
-          <div class="w-1/2 min-w-0 overflow-y-auto">
+        <PickerPanel {...props} source={source} />
+        <div class="flex min-h-[100px] overflow-hidden rounded border border-border">
+          <div {...props.scrollViewportProps} class="max-h-[160px] w-full min-w-0 overflow-y-auto">
             <Show
               when={currentFiles().length > 0}
               fallback={
                 <div class="flex items-center justify-center h-full text-xs text-muted-foreground">
-                  No files in this directory
+                  {pickerCopy(props).emptyFiles}
                 </div>
               }
             >
@@ -234,13 +171,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
           </div>
         </div>
 
-        <Show when={props.onCreateFolder}>
-          <NewFolderSection
-            parentPath={tree.selectedPath}
-            onCreateFolder={props.onCreateFolder!}
-            toDisplayPath={tree.toDisplayPath}
-          />
-        </Show>
+
       </div>
     </Dialog>
   );

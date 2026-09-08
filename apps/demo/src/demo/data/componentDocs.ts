@@ -1578,7 +1578,7 @@ function Example() {
 export const directoryPickerDoc: ComponentDoc = {
   name: 'DirectoryPicker',
   description:
-    'Modal directory selector with tree navigation, path input, breadcrumb, and folder creation.',
+    'Modal directory selector with absolute directory navigation, path input, breadcrumb, and folder creation.',
   props: [
     {
       name: 'open',
@@ -1595,8 +1595,7 @@ export const directoryPickerDoc: ComponentDoc = {
     {
       name: 'files',
       type: 'FileItem[]',
-      required: true,
-      description: 'File tree data to display.',
+      description: 'Static file tree with absolute paths. Remote consumers supply directory loaders.',
     },
     {
       name: 'initialPath',
@@ -1681,8 +1680,7 @@ export const fileOpenPickerDoc: ComponentDoc = {
     {
       name: 'files',
       type: 'FileItem[]',
-      required: true,
-      description: 'File tree data to display.',
+      description: 'Static file tree with absolute paths. Remote consumers supply directory loaders.',
     },
     {
       name: 'selectionMode',
@@ -1745,7 +1743,7 @@ export const fileOpenPickerDoc: ComponentDoc = {
 export const directoryInputDoc: ComponentDoc = {
   name: 'DirectoryInput',
   description:
-    'Form-compatible input for selecting directories. Shows selected path and expands an inline folder tree panel when clicked.',
+    'Form-compatible input for selecting directories. Shows selected path and expands an inline directory navigation panel when clicked.',
   props: [
     {
       name: 'value',
@@ -1760,13 +1758,12 @@ export const directoryInputDoc: ComponentDoc = {
     {
       name: 'files',
       type: 'FileItem[]',
-      required: true,
-      description: 'File tree data for the picker.',
+      description: 'Static file tree with absolute paths. Remote consumers supply directory loaders.',
     },
     {
-      name: 'onExpand',
-      type: '(path: string) => void',
-      description: 'Callback to load directory contents (for lazy loading).',
+      name: 'loadDirectory',
+      type: '(path: string, options: { showHidden: boolean }) => Promise<FileItem[]>',
+      description: 'Authorize and list the target absolute directory directly.',
     },
     {
       name: 'placeholder',
@@ -1816,7 +1813,7 @@ export const directoryInputDoc: ComponentDoc = {
     ],
     bestPractices: [
       'Use with FormField for consistent form layout',
-      'Provide onExpand for lazy loading large file trees',
+      'Provide loadPathContext and loadDirectory for remote filesystems',
       'Show helpful placeholder text',
     ],
     avoid: [
@@ -1838,7 +1835,8 @@ function Example() {
       value={path()}
       onChange={setPath}
       files={files()}
-      onExpand={(dir) => loadDirectory(dir)}
+      loadPathContext={() => fetchFilesystemContext()}
+      loadDirectory={(dir, options) => listDirectory(dir, options)}
       placeholder="Select project directory..."
       helperText="Choose the root directory for your project."
     />
@@ -1870,7 +1868,8 @@ function ProjectForm() {
           value={projectDir()}
           onChange={setProjectDir}
           files={files()}
-          onExpand={(dir) => loadDirectory(dir)}
+          loadPathContext={() => fetchFilesystemContext()}
+      loadDirectory={(dir, options) => listDirectory(dir, options)}
           placeholder="Select project location..."
         />
         <FormDescription>Where your project files will be stored.</FormDescription>
@@ -1909,8 +1908,7 @@ export const fileSavePickerDoc: ComponentDoc = {
     {
       name: 'files',
       type: 'FileItem[]',
-      required: true,
-      description: 'File tree data to display.',
+      description: 'Static file tree with absolute paths. Remote consumers supply directory loaders.',
     },
     {
       name: 'initialPath',

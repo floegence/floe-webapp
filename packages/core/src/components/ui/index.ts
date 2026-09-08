@@ -178,14 +178,12 @@ export {
   type FileOpenPickerProps,
   type FileOpenPickerSelectionMode,
 } from './FileOpenPicker';
+export { type BasePickerProps, type PickerPanelProps } from './picker/PickerBase';
 export {
-  type BasePickerProps,
-  type PickerEnsurePath,
-  type PickerEnsurePathOptions,
-  type PickerPathResolveResult,
-  type PickerPathResolveStatus,
-  type PickerPathNavigateReason,
-} from './picker/PickerBase';
+  createFilesystemPickerDataSource, parsePickerPath, formatPickerPath, PickerNavigationError,
+  type PickerRoot, type PickerPathContext, type PickerDataProps, type PickerDirectoryLoader,
+  type PickerCopy, type FilesystemPickerDataSource,
+} from './picker/PickerNavigation';
 export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';
 export {
   HighlightBlock,

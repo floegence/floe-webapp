@@ -1,62 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { parsePickerPath, formatPickerPath, pickerParentPath } from '../src/components/ui/picker/PickerNavigation';
 
-import { resolvePickerInitialPath } from '../src/components/ui/picker/PickerBase';
-
-function read(relPath: string): string {
-  const here = fileURLToPath(import.meta.url);
-  const dir = path.dirname(here);
-  const target = path.resolve(dir, relPath);
-  return fs.readFileSync(target, 'utf8');
-}
-
-describe('picker initial path state', () => {
-  it('keeps initialPath reactive inside usePickerTree so open-reset can re-canonicalize against the latest homePath', () => {
-    const src = read('../src/components/ui/picker/PickerBase.tsx');
-
-    expect(src).toContain("initialPath?: string | Accessor<string | undefined>;");
-    expect(src).toContain("const raw = typeof opts.initialPath === 'function' ? opts.initialPath() : opts.initialPath;");
-    expect(src).toContain('return resolvePickerInitialPath(raw, getHomePath());');
-    expect(src).toContain('const [selectedPath, setSelectedPath] = createSignal(getInitialPath());');
-    expect(src).toContain('const init = getInitialPath();');
-    expect(src).toContain('setSelectedPath(init);');
-    expect(src).toContain('setPathInput(toDisplayPath(init));');
+describe('picker absolute path semantics', () => {
+  it('never changes an absolute path according to Home', () => {
+    for (const input of ['/', '/workspace', '/Users/demo/workspace', '/Volumes/开发 项目']) {
+      expect(parsePickerPath(input, '/Users/demo')).toBe(input);
+    }
   });
-
-  it('passes initialPath through accessors from picker entrypoints instead of snapshotting props at mount time', () => {
-    expect(read('../src/components/ui/DirectoryPicker.tsx')).toContain('initialPath: () => props.initialPath,');
-    expect(read('../src/components/ui/DirectoryPicker.tsx')).toContain('ensurePath: props.ensurePath,');
-    expect(read('../src/components/ui/FileSavePicker.tsx')).toContain('initialPath: () => props.initialPath,');
-    expect(read('../src/components/ui/FileSavePicker.tsx')).toContain('ensurePath: props.ensurePath,');
-    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("initialPath: () => local.initialPath ?? '/',");
-    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain('ensurePath: local.ensurePath,');
-    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("if (expanded() && local.files.length === 0 && local.onExpand) {");
-    expect(read('../src/components/ui/DirectoryInput.tsx')).toContain("if (!wasExpanded && local.files.length === 0 && local.onExpand) {");
+  it('formats Home only at a segment boundary', () => {
+    expect(formatPickerPath('/Users/demo', '/Users/demo')).toBe('~');
+    expect(formatPickerPath('/Users/demo/project', '/Users/demo')).toBe('~/project');
+    expect(formatPickerPath('/Users/demo-other', '/Users/demo')).toBe('/Users/demo-other');
   });
-
-  it('renders picker tree folders through FileItemIcon so symlink metadata can flow into picker affordances too', () => {
-    const src = read('../src/components/ui/picker/PickerBase.tsx');
-
-    expect(src).toContain("import { FileItemIcon, FolderOpenIcon } from '../../file-browser/FileIcons';");
-    expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
+  it('normalizes logical separators and traversal without resolving symbolic links', () => {
+    expect(parsePickerPath('/Volumes//team/./project/../other/')).toBe('/Volumes/team/other');
+    expect(parsePickerPath('/../../')).toBe('/');
+    expect(pickerParentPath('/Volumes/team')).toBe('/Volumes');
+    expect(pickerParentPath('/')).toBe('/');
   });
-
-  it('keeps async picker navigation and reveal behavior in the shared picker base layer', () => {
-    const src = read('../src/components/ui/picker/PickerBase.tsx');
-
-    expect(src).toContain("ensurePath?: PickerEnsurePath;");
-    expect(src).toContain("void navigateToPath(init, { reason: 'open' });");
-    expect(src).toContain("setPathPending(true);");
-    expect(src).toContain("data-picker-row-path={props.item.path}");
-    expect(src).toContain("const row = rowRefs.get(selectedPath);");
-    expect(src).toContain("row.scrollIntoView({ block: 'nearest', inline: 'nearest' });");
-  });
-
-  it('resolves picker initial paths into a single internal-path domain', () => {
-    expect(resolvePickerInitialPath('/Users/demo', '/Users/demo')).toBe('/');
-    expect(resolvePickerInitialPath('/Users/demo/workspace', '/Users/demo')).toBe('/workspace');
-    expect(resolvePickerInitialPath('/workspace', '/Users/demo')).toBe('/workspace');
+  it('rejects relative paths, missing Home, user expansion and NUL', () => {
+    for (const input of ['', 'repo', '~', '~/repo', '~another/repo', '/bad\0path']) expect(parsePickerPath(input)).toBe('');
   });
 });
