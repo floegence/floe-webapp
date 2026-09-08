@@ -162,7 +162,7 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
       <div class="flex items-center gap-1.5">
         <Input size="sm" aria-label={copy().folderName} value={name()} onInput={(event) => setName(event.currentTarget.value)} disabled={props.disabled || busy()} />
         <Button size="sm" disabled={props.disabled || busy() || !name().trim() || !props.source.valid()} onClick={() => { void create(); }}>{copy().create}</Button>
-        <Button size="sm" variant="ghost" disabled={props.disabled || busy()} onClick={() => setVisible(false)}>{copy().cancel}</Button>
+        <Button size="sm" variant="ghost-destructive" disabled={props.disabled || busy()} onClick={() => setVisible(false)}>{copy().cancel}</Button>
       </div>
     </Show>
     <Show when={failure()}><p role="alert" class="text-xs text-error">{pickerErrorMessage(props, failure())}</p></Show>
