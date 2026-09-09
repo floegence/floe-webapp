@@ -80,6 +80,11 @@ execFileSync('node', [join(root, 'node_modules', '.bin', 'floe-webapp-init'), '-
   stdio: 'inherit',
 });
 
+const focusCSS = readFileSync(join(root, 'node_modules/@floegence/floe-webapp-core/dist/input-focus.css'), 'utf8');
+if (!focusCSS.includes('[data-floe-input-surface]') || focusCSS.includes('@import')) {
+  throw new Error('The standalone input focus contract must be shipped without shell imports');
+}
+
 const runtimeSmoke = join(root, 'verify-runtime-consumer.mjs');
 copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url), runtimeSmoke);
 execFileSync(process.execPath, [runtimeSmoke], {

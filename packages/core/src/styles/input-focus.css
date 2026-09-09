@@ -1,0 +1,37 @@
+/* A field has one visible border. Compound controls mark the element that owns it.
+ * Keep the contract unlayered so host base borders cannot silently hide focus.
+ * It changes color only and never replaces an existing decorative shadow.
+ */
+:is(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='button'], [type='submit'], [type='reset'], [type='image']),
+  textarea, select, [data-floe-input-surface]
+) {
+  outline: none;
+}
+
+:is(
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='button'], [type='submit'], [type='reset'], [type='image']),
+  textarea, select, [data-floe-input-surface]
+):focus:not(:disabled):not([aria-disabled='true']):not([data-floe-input-surface] :is(input, textarea, select)),
+[data-floe-input-surface]:focus-within:not(:disabled):not([aria-disabled='true']) {
+  border-color: var(--floe-input-focus-color, var(--ring));
+}
+
+:is(input, textarea, select, [data-floe-input-surface])[aria-invalid='true'] {
+  --floe-input-focus-color: var(--error);
+}
+
+/* Internal buttons use a local fill to identify keyboard focus without a second frame. */
+[data-floe-input-surface] button:focus-visible {
+  outline: none;
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+@media (forced-colors: active) {
+  :is(input, textarea, select, [data-floe-input-surface]),
+  :is(input, textarea, select, [data-floe-input-surface])[aria-invalid='true'] {
+    --floe-input-focus-color: Highlight;
+  }
+}
+

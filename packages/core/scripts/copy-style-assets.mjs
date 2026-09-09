@@ -10,6 +10,10 @@ const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
   {
+    src: resolve(pkgRoot, 'src/styles/input-focus.css'),
+    dest: resolve(pkgRoot, 'dist/input-focus.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/styles/floe.css'),
     dest: resolve(pkgRoot, 'dist/floe.css'),
   },

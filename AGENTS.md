@@ -35,5 +35,6 @@
 
 - Text fields, textareas, native selects, and compound input surfaces signal focus only by changing their existing border color. Focus must not add an outline, ring, halo, border thickness, padding change, or layout movement.
 - Mark the visible boundary of compound controls with `data-floe-input-surface`; its editable descendants remain frameless. Internal buttons identify keyboard focus with a local fill. Independent buttons, links, toggles, and navigation retain their keyboard focus indicators.
+- Standalone host-owned documents may consume the published `@floegence/floe-webapp-core/input-focus.css` asset without loading the shell. Map their semantic tokens to `--ring`, `--error`, `--accent`, and `--accent-foreground`; do not copy the rules or inject them into third-party frames.
 - Use the shared input focus CSS, including invalid, disabled, and forced-colors behavior. Do not add component-local focus shadows or work around the contract with broad `!important` resets. Existing decorative shadows remain unchanged on focus.
 - Validate computed focus styles and stable geometry in the browser, across the built-in shell themes, before publishing input style changes. Source checks must distinguish input surfaces from unrelated buttons.

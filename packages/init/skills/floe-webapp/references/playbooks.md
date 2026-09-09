@@ -82,6 +82,7 @@ done
 - `@floegence/floe-webapp-core/full`
 - `@floegence/floe-webapp-core/styles`
 - `@floegence/floe-webapp-core/tailwind`
+- `@floegence/floe-webapp-core/input-focus.css`
 3. Do not import `@floegence/floe-webapp-core/src/...`.
 4. Prefer `@floegence/floe-webapp-core/tailwind` for Tailwind v4 apps; use `@floegence/floe-webapp-core/styles` only as the no-Tailwind fallback.
 
@@ -142,3 +143,7 @@ pnpm verify
 - Fix the nearest root cause.
 - Re-run from the failed command onward.
 - Do a final review of the changed files for consistency and completeness before committing.
+
+## Input focus boundaries
+
+Text inputs, textareas, and native selects change only their existing border color on focus. Mark a composite control's visible boundary with `data-floe-input-surface` and leave its inner editor frameless. Keep independent buttons and navigation keyboard-visible. Standalone host-owned documents can load `@floegence/floe-webapp-core/input-focus.css` and map `--ring`, `--error`, `--accent`, and `--accent-foreground` to their theme. The asset has no shell imports; do not copy it or inject it into third-party frames.

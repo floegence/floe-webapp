@@ -87,6 +87,7 @@ describe('@floegence/floe-webapp-core package config', () => {
       },
       './styles': './dist/styles.css',
       './tailwind': './dist/tailwind.css',
+      './input-focus.css': './dist/input-focus.css',
     });
 
     expect(pkg.files).toEqual(['dist']);

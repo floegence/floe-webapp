@@ -1,5 +1,6 @@
 /* global window, document, getComputedStyle */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import { chromium } from 'playwright';
@@ -160,6 +161,17 @@ try {
     assert.equal(result.color, result.expected, `${name}: system focus border`);
     assert.equal(result.outline, 'none');
   }
+  await page.emulateMedia({ forcedColors: 'none' });
+  const standaloneCSS = readFileSync(new URL('../packages/core/src/styles/input-focus.css', import.meta.url), 'utf8');
+  await page.setContent(`<style>${standaloneCSS}
+    :root { --ring: rgb(20, 100, 180); --accent: #eee; --accent-foreground: #111; }
+    .address { border: 1px solid #888; padding: 8px; }
+    input { border: 0; background: transparent; }
+  </style><div class="address" data-floe-input-surface><input aria-label="Address" /></div>`);
+  await page.locator('input').focus();
+  const standalone = await page.locator('.address').evaluate(el => ({border:getComputedStyle(el).borderColor,outline:getComputedStyle(el).outlineStyle}));
+  assert.equal(standalone.border, 'rgb(20, 100, 180)');
+  assert.equal(standalone.outline, 'none');
   assert.deepEqual(pageErrors, []);
   console.log(JSON.stringify({ themes: themes.length, fields: 17, status: 'passed' }));
 } finally {

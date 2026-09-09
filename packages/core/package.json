@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.50.5",
+  "version": "0.50.6",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -86,7 +86,8 @@
       "import": "./dist/workbench.js"
     },
     "./styles": "./dist/styles.css",
-    "./tailwind": "./dist/tailwind.css"
+    "./tailwind": "./dist/tailwind.css",
+    "./input-focus.css": "./dist/input-focus.css"
   },
   "files": [
     "dist"
