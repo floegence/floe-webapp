@@ -63,9 +63,9 @@ export function Input(props: InputProps) {
           'w-full rounded border border-input bg-background shadow-sm',
           'placeholder:text-muted-foreground/60',
           'transition-colors duration-100',
-          'focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring',
+          'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          local.error && 'border-error focus:ring-error',
+          local.error && 'border-error',
           sizeStyles[local.size ?? 'md'],
           // Icon padding must come AFTER sizeStyles to override px-*
           local.leftIcon && 'pl-10',
@@ -131,10 +131,10 @@ export function Textarea(props: TextareaProps) {
           'w-full min-h-16 rounded border border-input bg-background p-2.5 text-xs shadow-sm',
           'placeholder:text-muted-foreground/60',
           'transition-colors duration-100',
-          'focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring',
+          'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
           'resize-y',
-          local.error && 'border-error focus:ring-error',
+          local.error && 'border-error',
           local.class
         )}
         {...rest}
@@ -243,12 +243,14 @@ export function NumberInput(props: NumberInputProps) {
   return (
     <div class={props.class}>
       <div
+        data-floe-input-surface
+        aria-invalid={props.error ? true : undefined}
+        aria-disabled={props.disabled ? true : undefined}
         class={cn(
           'inline-flex items-center rounded border border-input bg-background shadow-sm',
           'transition-colors duration-100',
-          'focus-within:ring-1 focus-within:ring-ring focus-within:border-ring',
           props.disabled && 'opacity-50 cursor-not-allowed',
-          props.error && 'border-error focus-within:ring-error',
+          props.error && 'border-error',
           config().height
         )}
       >
@@ -418,12 +420,14 @@ export function AffixInput(props: AffixInputProps) {
   return (
     <div class={local.class}>
       <div
+        data-floe-input-surface
+        aria-invalid={local.error ? true : undefined}
+        aria-disabled={rest.disabled ? true : undefined}
         class={cn(
           'inline-flex items-center rounded border border-input bg-background shadow-sm',
           'transition-colors duration-100',
-          'focus-within:ring-1 focus-within:ring-ring focus-within:border-ring',
           rest.disabled && 'opacity-50 cursor-not-allowed',
-          local.error && 'border-error focus-within:ring-error',
+          local.error && 'border-error',
           config().height
         )}
       >

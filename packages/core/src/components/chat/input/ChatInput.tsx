@@ -13,7 +13,6 @@ export interface ChatInputProps {
 export const ChatInput: Component<ChatInputProps> = (props) => {
   const ctx = useChatContext();
   const [text, setText] = createSignal('');
-  const [isFocused, setIsFocused] = createSignal(false);
 
   let textareaRef: HTMLTextAreaElement | undefined;
   let rafId: number | null = null;
@@ -99,9 +98,10 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
 
   return (
     <div
+      data-floe-input-surface
+      aria-disabled={props.disabled ? true : undefined}
       class={cn(
         'chat-input-container',
-        isFocused() && 'chat-input-container-focused',
         attachments.isDragging() && 'chat-input-container-dragging',
         props.class
       )}
@@ -135,8 +135,6 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           placeholder={placeholder()}
           disabled={props.disabled}
           rows={2}

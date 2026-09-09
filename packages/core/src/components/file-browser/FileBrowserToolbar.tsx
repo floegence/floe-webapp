@@ -234,7 +234,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
             </button>
           }
         >
-          <div class="flex items-center flex-1 gap-1 px-2 py-1 bg-muted/50 rounded-md border border-border/50 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
+          <div data-floe-input-surface class="flex items-center flex-1 gap-1 px-2 py-1 bg-muted/50 rounded-md border border-border/50">
             <SearchIcon class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
             <input
               ref={(el) => {
@@ -250,7 +250,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
               class={cn(
                 'flex-1 min-w-0 bg-transparent text-xs',
                 'outline-none border-0 ring-0 shadow-none appearance-none',
-                'focus:outline-none focus:border-0 focus:ring-0',
+                'focus:outline-none focus:ring-0',
                 'placeholder:text-muted-foreground/60'
               )}
               aria-label="Filter files by name"

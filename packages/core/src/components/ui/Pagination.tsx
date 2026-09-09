@@ -312,7 +312,7 @@ export function Pagination(props: PaginationProps) {
                 onChange={(e) => local.onPageSizeChange?.(parseInt(e.target.value, 10))}
                 disabled={local.disabled}
                 class={cn(
-                  'rounded-md border border-border bg-background px-2 focus:outline-none focus:ring-2 focus:ring-ring',
+                  'rounded-md border border-border bg-background px-2 focus:outline-none',
                   styles().input,
                   local.disabled && 'opacity-50 cursor-not-allowed'
                 )}
@@ -402,7 +402,7 @@ export function Pagination(props: PaginationProps) {
                 onBlur={handleJumpTo}
                 class={cn(
                   'rounded-md border border-border bg-background px-2 text-center',
-                  'focus:outline-none focus:ring-2 focus:ring-ring',
+                  'focus:outline-none',
                   '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
                   styles().input,
                   local.disabled && 'opacity-50 cursor-not-allowed'

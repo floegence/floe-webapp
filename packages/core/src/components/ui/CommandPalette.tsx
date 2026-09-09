@@ -133,7 +133,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
           onKeyDown={handleKeyDown}
         >
           {/* Search input */}
-          <div class="flex items-center gap-3 px-4 pt-1 border-b border-border">
+          <div data-floe-input-surface class="flex items-center gap-3 px-4 pt-1 border-b border-border">
             <Search class="w-5 h-5 text-muted-foreground flex-shrink-0" />
             <input
               ref={inputRef}

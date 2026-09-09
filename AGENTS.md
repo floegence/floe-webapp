@@ -30,3 +30,10 @@
 - Real text-bearing reading surfaces must be declared through the exported text-selection surface contract, or projected into that contract by a product-level adapter before widget activation runs. Plain headings, labels, metadata blocks, log lines, and similar read-only text must not silently fall back to widget-body activation semantics in products that expose them as readable content.
 - Unselected widgets may still become selected on an initial plain click inside a reading surface, but drag-to-select must not be broken by that selection flow.
 - `Ctrl/Cmd+C` should defer to the browser, Monaco, terminals, and other controls that already copy from a real local selection. Do not add product-level forced-copy fallbacks that bypass a verified selection lifecycle.
+
+## Input Focus Border Contract
+
+- Text fields, textareas, native selects, and compound input surfaces signal focus only by changing their existing border color. Focus must not add an outline, ring, halo, border thickness, padding change, or layout movement.
+- Mark the visible boundary of compound controls with `data-floe-input-surface`; its editable descendants remain frameless. Internal buttons identify keyboard focus with a local fill. Independent buttons, links, toggles, and navigation retain their keyboard focus indicators.
+- Use the shared input focus CSS, including invalid, disabled, and forced-colors behavior. Do not add component-local focus shadows or work around the contract with broad `!important` resets. Existing decorative shadows remain unchanged on focus.
+- Validate computed focus styles and stable geometry in the browser, across the built-in shell themes, before publishing input style changes. Source checks must distinguish input surfaces from unrelated buttons.

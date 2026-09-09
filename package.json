@@ -11,17 +11,19 @@
     "build:demo": "NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter '@floegence/floe-webapp-demo...' build",
     "verify": "node scripts/verify-dist.mjs",
     "sync:skills": "node scripts/sync-skills.mjs",
-    "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs",
+    "lint": "eslint packages apps scripts --ext .ts,.tsx,.mjs && node scripts/check-input-focus-styles.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "typecheck": "pnpm -r typecheck",
     "test": "node scripts/test.mjs",
-    "clean": "pnpm -r clean && rm -rf node_modules"
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "test:input-focus": "pnpm exec vitest run scripts/input-focus-policy.test.mjs && node scripts/check-input-focus-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/node": "^25.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-solid": "^0.14.5",
+    "playwright": "1.61.1",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",

@@ -1085,10 +1085,6 @@
     outline: none;
   }
 
-  .workbench-text-annotation__size-input:focus {
-    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 18%, transparent);
-  }
-
   .workbench-sticky {
     --workbench-sticky-accent: #d8b25a;
     --workbench-sticky-surface: #fff2bd;
