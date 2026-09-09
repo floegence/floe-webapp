@@ -31,6 +31,8 @@ export interface UseOverlayMaskOptions {
 
   /** Close on Escape and never leak to underlying window handlers (default: always). */
   closeOnEscape?: MaybeAccessor<boolean | OverlayEscapeCloseMode | undefined>;
+  /** Opt into bubbling so nested controls can consume Escape; capture preserves existing callers. */
+  escapeKeyPhase?: MaybeAccessor<'capture' | 'bubble' | undefined>;
 
   /** Stop bubbling keydown events to window-level hotkeys (default: true). */
   blockHotkeys?: MaybeAccessor<boolean | undefined>;
@@ -56,7 +58,7 @@ function isNode(target: unknown): target is Node {
 function isWithinOverlayTarget(
   root: HTMLElement | undefined,
   target: EventTarget | null,
-  containsTarget?: (target: EventTarget | null) => boolean,
+  containsTarget?: (target: EventTarget | null) => boolean
 ): boolean {
   if (containsTarget) return containsTarget(target);
   if (!root) return false;
@@ -68,7 +70,7 @@ function shouldBlockByMode(
   root: HTMLElement | undefined,
   target: EventTarget | null,
   mode: OverlayScrollBlockMode,
-  containsTarget?: (target: EventTarget | null) => boolean,
+  containsTarget?: (target: EventTarget | null) => boolean
 ): boolean {
   if (mode === 'none') return false;
   if (mode === 'all') return true;
@@ -77,7 +79,7 @@ function shouldBlockByMode(
 }
 
 function resolveAllowedHotkeys(
-  allowHotkeys: UseOverlayMaskOptions['allowHotkeys'],
+  allowHotkeys: UseOverlayMaskOptions['allowHotkeys']
 ): readonly string[] {
   if (typeof allowHotkeys === 'function') {
     return allowHotkeys() ?? [];
@@ -85,10 +87,7 @@ function resolveAllowedHotkeys(
   return allowHotkeys ?? [];
 }
 
-function resolveOptionValue<T>(
-  value: MaybeAccessor<T | undefined> | undefined,
-  fallback: T,
-): T {
+function resolveOptionValue<T>(value: MaybeAccessor<T | undefined> | undefined, fallback: T): T {
   if (typeof value === 'function') {
     return (value as Accessor<T | undefined>)() ?? fallback;
   }
@@ -97,7 +96,7 @@ function resolveOptionValue<T>(
 
 function shouldAllowHotkey(
   event: KeyboardEvent,
-  allowHotkeys: UseOverlayMaskOptions['allowHotkeys'],
+  allowHotkeys: UseOverlayMaskOptions['allowHotkeys']
 ): boolean {
   for (const keybind of resolveAllowedHotkeys(allowHotkeys)) {
     const normalizedKeybind = keybind.trim();
@@ -113,7 +112,10 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
   const lockBodyScroll = () => resolveOptionValue(options.lockBodyScroll, true);
   const trapFocus = () => resolveOptionValue(options.trapFocus, true);
   const closeOnEscape = (): OverlayEscapeCloseMode => {
-    const resolved = resolveOptionValue<boolean | OverlayEscapeCloseMode>(options.closeOnEscape, true);
+    const resolved = resolveOptionValue<boolean | OverlayEscapeCloseMode>(
+      options.closeOnEscape,
+      true
+    );
     if (resolved === false) return 'none';
     if (resolved === 'inside') return 'inside';
     if (resolved === 'none') return 'none';
@@ -122,8 +124,10 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
   const blockHotkeys = () => resolveOptionValue(options.blockHotkeys, true);
   const restoreFocus = () => resolveOptionValue(options.restoreFocus, true);
   const blockWheel = () => resolveOptionValue<OverlayScrollBlockMode>(options.blockWheel, 'none');
-  const blockTouchMove = () => resolveOptionValue<OverlayScrollBlockMode>(options.blockTouchMove, 'none');
-  const autoFocus = () => resolveOptionValue<boolean | { selector?: string }>(options.autoFocus, true);
+  const blockTouchMove = () =>
+    resolveOptionValue<OverlayScrollBlockMode>(options.blockTouchMove, 'none');
+  const autoFocus = () =>
+    resolveOptionValue<boolean | { selector?: string }>(options.autoFocus, true);
 
   createEffect(() => {
     if (!options.open()) return;
@@ -132,13 +136,15 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     const shouldLockBodyScroll = lockBodyScroll();
     const shouldTrapFocus = trapFocus();
     const escapeCloseMode = closeOnEscape();
+    const escapeKeyPhase = resolveOptionValue(options.escapeKeyPhase, 'capture');
     const shouldBlockHotkeys = blockHotkeys();
     const shouldRestoreFocus = restoreFocus();
     const wheelBlockMode = blockWheel();
     const touchMoveBlockMode = blockTouchMove();
     const autoFocusMode = autoFocus();
 
-    const prevActive = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const prevActive =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const unlockBody = shouldLockBodyScroll ? lockBodyStyle({ overflow: 'hidden' }) : null;
 
     // Focus management is deferred to ensure Portal DOM is mounted and at least one paint is not blocked.
@@ -148,8 +154,11 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
       if (autoFocusMode === false) return;
 
-      const preferredSelector = typeof autoFocusMode === 'object' ? autoFocusMode.selector : undefined;
-      const preferred = preferredSelector ? root.querySelector<HTMLElement>(preferredSelector) : null;
+      const preferredSelector =
+        typeof autoFocusMode === 'object' ? autoFocusMode.selector : undefined;
+      const preferred = preferredSelector
+        ? root.querySelector<HTMLElement>(preferredSelector)
+        : null;
       const target =
         preferred ??
         root.querySelector<HTMLElement>('[data-floe-autofocus]') ??
@@ -208,9 +217,14 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     const handleEscapeCapture = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (escapeKeyPhase === 'bubble' && (e.defaultPrevented || e.isComposing)) return;
       if (escapeCloseMode === 'none') return;
       const root = options.root();
-      const inside = isWithinOverlayTarget(root, isNode(e.target) ? e.target : document.activeElement, options.containsTarget);
+      const inside = isWithinOverlayTarget(
+        root,
+        isNode(e.target) ? e.target : document.activeElement,
+        options.containsTarget
+      );
 
       if (escapeCloseMode === 'inside') {
         if (inside) {
@@ -260,7 +274,13 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     };
 
     if (shouldTrapFocus) document.addEventListener('keydown', handleTabTrap, true);
-    if (escapeCloseMode !== 'none') window.addEventListener('keydown', handleEscapeCapture, true);
+    const escapeTarget = escapeKeyPhase === 'capture' ? window : document;
+    if (escapeCloseMode !== 'none')
+      escapeTarget.addEventListener(
+        'keydown',
+        handleEscapeCapture as EventListener,
+        escapeKeyPhase === 'capture'
+      );
     document.addEventListener('keydown', handleKeydownBubble);
 
     if (wheelBlockMode !== 'none') {
@@ -268,12 +288,20 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       document.addEventListener('wheel', handleWheelBubble);
     }
     if (touchMoveBlockMode !== 'none') {
-      document.addEventListener('touchmove', handleTouchMoveCapture, { capture: true, passive: false });
+      document.addEventListener('touchmove', handleTouchMoveCapture, {
+        capture: true,
+        passive: false,
+      });
     }
 
     onCleanup(() => {
       if (shouldTrapFocus) document.removeEventListener('keydown', handleTabTrap, true);
-      if (escapeCloseMode !== 'none') window.removeEventListener('keydown', handleEscapeCapture, true);
+      if (escapeCloseMode !== 'none')
+        escapeTarget.removeEventListener(
+          'keydown',
+          handleEscapeCapture as EventListener,
+          escapeKeyPhase === 'capture'
+        );
       document.removeEventListener('keydown', handleKeydownBubble);
 
       if (wheelBlockMode !== 'none') {

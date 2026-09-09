@@ -252,3 +252,75 @@ describe('dialog placement provider', () => {
     expect(overlayRoot.style.zIndex).toBe('4000');
   });
 });
+
+describe('dialog editor controls', () => {
+  afterEach(() => {
+    for (const dispose of disposers.splice(0)) dispose();
+    document.body.innerHTML = '';
+  });
+  it('lets an input consume Escape before closing and ignores composition', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const close = vi.fn();
+    mount(
+      () => (
+        <Dialog open title="Editor" onOpenChange={close} escapeKeyPhase="bubble">
+          <input
+            aria-label="Connection"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') event.preventDefault();
+            }}
+          />
+          <button data-testid="plain-editor-control">Save</button>
+        </Dialog>
+      ),
+      host
+    );
+    await flushMicrotasks();
+    const input = document.querySelector('input')!;
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(close).not.toHaveBeenCalled();
+    const button = document.querySelector('[data-testid="plain-editor-control"]')!;
+    button.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, isComposing: true })
+    );
+    expect(close).not.toHaveBeenCalled();
+    button.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(close).toHaveBeenCalledWith(false);
+  });
+
+  it('can keep backdrop clicks inert while retaining a localized close action and panel shortcuts', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const close = vi.fn();
+    const shortcut = vi.fn();
+    mount(
+      () => (
+        <Dialog
+          open
+          title="Editor"
+          onOpenChange={close}
+          closeOnBackdropClick={false}
+          closeLabel="Close editor"
+          onKeyDown={shortcut}
+        >
+          <input aria-label="Name" />
+        </Dialog>
+      ),
+      host
+    );
+    await flushMicrotasks();
+    document.querySelector<HTMLElement>('[data-floe-dialog-backdrop]')!.click();
+    expect(close).not.toHaveBeenCalled();
+    document
+      .querySelector('input')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+    expect(shortcut).toHaveBeenCalled();
+    document.querySelector<HTMLButtonElement>('[aria-label="Close editor"]')!.click();
+    expect(close).toHaveBeenCalledWith(false);
+  });
+});

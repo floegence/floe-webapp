@@ -33,6 +33,13 @@ export interface DialogProps {
   /** Dialog title - can be a string or JSX element for custom headers */
   title?: string | JSX.Element;
   description?: string;
+  /** Localized accessible name for the close button. */
+  closeLabel?: string;
+  /** Whether clicking the backdrop requests dismissal. Defaults to true. */
+  closeOnBackdropClick?: boolean;
+  /** Bubble lets nested inputs consume Escape before the dialog handles it. */
+  escapeKeyPhase?: 'capture' | 'bubble';
+  onKeyDown?: JSX.EventHandler<HTMLDivElement, KeyboardEvent>;
   children: JSX.Element;
   footer?: JSX.Element;
   class?: string;
@@ -187,6 +194,7 @@ export function Dialog(props: DialogProps) {
     lockBodyScroll: () => !isSurfaceMode(),
     trapFocus: true,
     closeOnEscape: () => (isSurfaceMode() ? 'inside' : true),
+    escapeKeyPhase: () => props.escapeKeyPhase ?? 'capture',
     blockHotkeys: true,
     // Block scroll bleed outside the dialog while keeping the dialog content scrollable.
     blockWheel: () => (isSurfaceMode() ? 'none' : 'outside'),
@@ -233,12 +241,15 @@ export function Dialog(props: DialogProps) {
               {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
               data-floating-presence={dialogPresence.state()}
               class={cn(
-                'absolute inset-0 cursor-pointer floe-floating-presence floe-floating-backdrop',
+                'absolute inset-0 floe-floating-presence floe-floating-backdrop',
+                props.closeOnBackdropClick === false ? 'cursor-default' : 'cursor-pointer',
                 isSurfaceMode()
                   ? 'bg-background/72 backdrop-blur-[2px]'
                   : 'bg-background/80 backdrop-blur-sm'
               )}
-              onClick={() => props.onOpenChange(false)}
+              onClick={() => {
+                if (props.closeOnBackdropClick !== false) props.onOpenChange(false);
+              }}
             />
 
             {/* Dialog */}
@@ -262,6 +273,7 @@ export function Dialog(props: DialogProps) {
                 aria-modal={isSurfaceMode() ? undefined : 'true'}
                 aria-labelledby={props.title ? titleId() : undefined}
                 aria-describedby={props.description ? descriptionId() : undefined}
+                onKeyDown={(event) => props.onKeyDown?.(event)}
                 tabIndex={-1}
               >
                 {/* Header */}
@@ -284,7 +296,7 @@ export function Dialog(props: DialogProps) {
                       size="icon"
                       class="-my-2 -mr-2 h-[46px] w-[46px] shrink-0 sm:my-0 sm:-mr-1 sm:h-6 sm:w-6"
                       onClick={() => props.onOpenChange(false)}
-                      aria-label="Close"
+                      aria-label={props.closeLabel ?? 'Close'}
                     >
                       <X class="w-3.5 h-3.5" />
                     </Button>
