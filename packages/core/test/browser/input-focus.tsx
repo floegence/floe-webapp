@@ -35,7 +35,8 @@ render(
       <section data-case="disabled">
         <Input aria-label="Disabled" disabled />
       </section>
-      <section data-case="native">
+      <section data-case="host"><input aria-label="Host styled text" class="host-field" /></section>
+    <section data-case="native">
         <input aria-label="Native text" class="border border-input bg-background p-2" />
       </section>
       <section data-case="search">

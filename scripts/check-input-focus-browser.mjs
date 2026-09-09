@@ -28,7 +28,7 @@ try {
   );
   await page.locator('[data-case="text"] input').waitFor();
   await page.addStyleTag({
-    content: '*, *::before, *::after { transition: none !important; animation: none !important; }',
+    content: '*, *::before, *::after { transition: none !important; animation: none !important; } .host-field { border: 1px solid var(--input); padding: 8px; background:var(--background); }',
   });
   const themes = await page.evaluate(() => window.inputFocusThemes);
   for (const theme of themes) {
@@ -161,7 +161,7 @@ try {
     assert.equal(result.outline, 'none');
   }
   assert.deepEqual(pageErrors, []);
-  console.log(JSON.stringify({ themes: themes.length, fields: 16, status: 'passed' }));
+  console.log(JSON.stringify({ themes: themes.length, fields: 17, status: 'passed' }));
 } finally {
   await browser.close();
   await server.close();
