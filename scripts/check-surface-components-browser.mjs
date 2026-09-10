@@ -331,6 +331,7 @@ try {
     const themes = await palette.evaluate(() =>
       window.surfaceFixture.themes.map(({ name, mode }) => ({ name, mode }))
     );
+    let minFocusContrast = Infinity;
     for (const theme of themes) {
       await palette.evaluate(
         (theme) => window.surfaceFixture.theme.selectShellTheme(theme.mode, theme.name),
@@ -338,6 +339,8 @@ try {
       );
       await palette.waitForTimeout(180);
       if (theme.name !== 'hc-light') {
+        await palette.getByRole('textbox', { name: 'Gallery workspace', exact: true }).focus();
+        await palette.waitForTimeout(180);
         const contrast = await palette
           .locator(
             '[data-radio-variant="default"] [data-floe-surface-part="indicator"]:not([data-floe-selected="true"])'
@@ -359,13 +362,36 @@ try {
                 })
                 .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
             };
-            const a = luminance(getComputedStyle(el).backgroundColor),
-              b = luminance(
+            const ratio = (first, second) => {
+              const a = luminance(first),
+                b = luminance(second);
+              return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+            };
+            const field = document.querySelector('[aria-label="Gallery workspace"]');
+            const focus = getComputedStyle(field).borderColor;
+            return {
+              indicator: ratio(
+                getComputedStyle(el).backgroundColor,
                 getComputedStyle(el.closest('[data-floe-card-variant]')).backgroundColor
-              );
-            return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+              ),
+              focus: Math.min(
+                ratio(focus, getComputedStyle(field).backgroundColor),
+                ratio(
+                  focus,
+                  getComputedStyle(field.closest('[data-floe-card-variant]')).backgroundColor
+                )
+              ),
+            };
           });
-        assert.ok(contrast >= 3, `${theme.name}: unselected indicator face contrast ${contrast}`);
+        assert.ok(
+          contrast.indicator >= 3,
+          `${theme.name}: unselected indicator face contrast ${contrast.indicator}`
+        );
+        assert.ok(
+          contrast.focus >= 3,
+          `${theme.name}: focused field boundary contrast ${contrast.focus}`
+        );
+        minFocusContrast = Math.min(minFocusContrast, contrast.focus);
       }
       const styles = await palette
         .locator('[data-gallery-group="checks"] [data-floe-surface-part="indicator"]')
@@ -403,7 +429,7 @@ try {
       '0s'
     );
     await palette.close();
-    report.entries.push({ entry, palettes: themes.length, status: 'passed' });
+    report.entries.push({ entry, palettes: themes.length, minFocusContrast, status: 'passed' });
   }
   report.checks = [
     'A/B standard visual compatibility',

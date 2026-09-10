@@ -24,7 +24,9 @@
  * retains the original boundaries. Explicit rich Card variants stay independent. */
 @media (forced-colors: none) {
   :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
-    --floe-input-focus-edge-color: var(--floe-surface-edge);
+    /* A uniform muted border keeps focus readable without a bright frame.
+     * Different colors per edge force a costlier native-editor raster path. */
+    --floe-input-focus-color: var(--muted-foreground);
   }
   :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
     :is(

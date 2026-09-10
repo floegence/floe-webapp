@@ -234,7 +234,7 @@ export function SurfaceComponentGallery(props: { progress?: number; dense?: bool
         <Group
           id="fields"
           title="Fields & compound controls"
-          description="Recessed surfaces; a focused field changes only its existing bottom edge."
+          description="Recessed surfaces; focus changes only the existing border to a quiet, readable color."
         >
           <label class="surface-gallery-field">
             Workspace name

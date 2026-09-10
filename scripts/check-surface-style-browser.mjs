@@ -27,6 +27,7 @@ const geometry = (el) => {
     outline: s.outlineStyle,
     color: s.borderColor,
     topColor: s.borderTopColor,
+    bottomColor: s.borderBottomColor,
     transition: s.transitionProperty,
     backdrop: s.backdropFilter,
   };
@@ -146,8 +147,8 @@ try {
         if (theme.name !== 'hc-light')
           assert.equal(
             result.samples.at(-1).topColor,
-            result.before.topColor,
-            `${entry}/${theme.name}/${label}: focus does not restore a rectangular frame`
+            result.samples.at(-1).bottomColor,
+            `${entry}/${theme.name}/${label}: uniform focus edges retain the native raster path`
           );
       }
     }
