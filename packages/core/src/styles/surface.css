@@ -236,7 +236,7 @@
         var(--floe-surface-compact-inset)
       );
     }
-    & :is([data-floe-surface-part='badge'], [data-floe-surface-part='progress-fill']) {
+    & [data-floe-surface-part='badge'] {
       /* These can repeat in dense lists. Keep lighting inside the painted box. */
       --floe-surface-decoration: var(
         --floe-surface-shadow-raised,
@@ -250,6 +250,15 @@
         --floe-surface-shadow-inset,
         var(--floe-surface-compact-inset)
       );
+    }
+    &
+      :is(
+        [data-floe-surface-part='switch-thumb'],
+        [data-floe-surface-part='progress-fill']
+      )[data-floe-surface='raised'] {
+      /* Frequent travel and width updates must not repaint decorative shadows.
+       * The fixed track carries depth; explicit host shadow overrides still apply. */
+      --floe-surface-decoration: var(--floe-surface-shadow-raised, none);
     }
     & :is([data-floe-surface-part='rail'], [data-floe-surface-part='tab-rail']) {
       background-color: color-mix(in srgb, var(--card) 65%, var(--muted));
@@ -316,11 +325,6 @@
       transition:
         translate 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
         background-color 140ms ease-out;
-      --floe-surface-decoration: var(
-        --floe-surface-shadow-raised,
-        0 1px 1px var(--floe-surface-shade),
-        inset 0 1px 0 var(--floe-surface-highlight)
-      );
     }
     &
       :is(

@@ -98,10 +98,8 @@ try {
         'badge',
         'indicator',
         'switch-track',
-        'switch-thumb',
         'segment',
         'progress-track',
-        'progress-fill',
         'progress-circle',
         'step',
       ]) {
@@ -111,6 +109,15 @@ try {
         assert.ok(
           shadows.some((s) => s !== 'none' && !s.startsWith('rgba(0, 0, 0, 0)')),
           `${mode}: visible ${part} relief`
+        );
+      }
+      for (const part of ['switch-thumb', 'progress-fill']) {
+        const shadows = await page
+          .locator(`[data-floe-surface-part="${part}"][data-floe-surface="raised"]`)
+          .evaluateAll((els) => els.map((el) => getComputedStyle(el).boxShadow));
+        assert.ok(
+          shadows.length > 0 && shadows.every((shadow) => shadow === 'none'),
+          `${mode}: moving ${part} uses its fixed track for depth`
         );
       }
       await page.evaluate(() =>
@@ -124,6 +131,16 @@ try {
         /7px/,
         'public shadow override reaches compact controls'
       );
+      for (const part of ['switch-thumb', 'progress-fill']) {
+        assert.match(
+          await page
+            .locator(`[data-floe-surface-part="${part}"][data-floe-surface="raised"]`)
+            .first()
+            .evaluate((el) => getComputedStyle(el).boxShadow),
+          /7px/,
+          `explicit public shadow override reaches ${part}`
+        );
+      }
       await tags.first().evaluate((el) => el.setAttribute('data-floe-surface', 'flat'));
       assert.match(
         await tags.first().evaluate((el) => getComputedStyle(el).boxShadow),
