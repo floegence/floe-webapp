@@ -217,6 +217,7 @@ try {
         await page.waitForTimeout(240);
         const thumb = toggle.locator('..').locator('[data-floe-surface-part="switch-thumb"]');
         const transform = await thumb.evaluate((el) => getComputedStyle(el).translate);
+        const thumbColor = await thumb.evaluate((el) => getComputedStyle(el).backgroundColor);
         await toggle.press('Space');
         await page.waitForTimeout(240);
         assert.equal(await toggle.isChecked(), false);
@@ -224,6 +225,11 @@ try {
           await thumb.evaluate((el) => getComputedStyle(el).translate),
           transform,
           `${size}: thumb travels`
+        );
+        assert.equal(
+          await thumb.evaluate((el) => getComputedStyle(el).backgroundColor),
+          thumbColor,
+          `${mode}/${size}: thumb color stays stable while the track changes state`
         );
         assert.equal(
           await toggle.evaluate((el) => getComputedStyle(el.nextElementSibling).outlineStyle),
@@ -392,6 +398,18 @@ try {
             const field = document.querySelector('[aria-label="Gallery workspace"]');
             const focus = getComputedStyle(field).borderColor;
             return {
+              switchThumb: Math.min(
+                ...[...document.querySelectorAll('[data-floe-surface-part="switch-track"]')]
+                  .filter((track) => !track.previousElementSibling.disabled)
+                  .map((track) =>
+                    ratio(
+                      getComputedStyle(
+                        track.querySelector('[data-floe-surface-part="switch-thumb"]')
+                      ).backgroundColor,
+                      getComputedStyle(track).backgroundColor
+                    )
+                  )
+              ),
               indicator: ratio(
                 getComputedStyle(el).backgroundColor,
                 getComputedStyle(el.closest('[data-floe-card-variant]')).backgroundColor
@@ -405,6 +423,10 @@ try {
               ),
             };
           });
+        assert.ok(
+          contrast.switchThumb >= 3,
+          `${theme.name}: switch thumb contrast ${contrast.switchThumb}`
+        );
         assert.ok(
           contrast.indicator >= 3,
           `${theme.name}: unselected indicator face contrast ${contrast.indicator}`
