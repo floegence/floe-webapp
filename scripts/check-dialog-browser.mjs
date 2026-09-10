@@ -54,6 +54,16 @@ try {
   await page.waitForFunction(() => document.activeElement?.textContent === 'Review install');
   assert.equal(await drawer.getAttribute('data-floating-presence'), 'open');
 
+  await page.getByRole('button', { name: 'Source filter', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Review package', exact: true }).click();
+  await confirm.getByRole('textbox').fill('opened from menu');
+  await page.keyboard.press('Escape');
+  await confirm.waitFor({ state: 'detached' });
+  await page.waitForFunction(() => document.activeElement?.textContent === 'Source filter', null, {
+    timeout: 1500,
+  });
+  assert.equal(await drawer.getAttribute('data-floating-presence'), 'open');
+
   await drawer.locator('[data-scroll]').hover();
   await page.mouse.wheel(0, 500);
   await page.waitForFunction(() => document.querySelector('[data-scroll]').scrollTop > 0);

@@ -189,7 +189,12 @@ export function Dropdown(props: DropdownProps) {
 
   const handleSelect = (item: DropdownItem) => {
     const onSelect = props.onSelect;
-    if (!item.keepOpen) setOpen(false);
+    if (!item.keepOpen) {
+      setOpen(false);
+      // A deferred action may open a dialog. Give it a durable return target
+      // before the selected menu item leaves the document.
+      triggerRef?.focus({ preventScroll: true });
+    }
     deferNonBlocking(() => onSelect(item.id));
   };
 

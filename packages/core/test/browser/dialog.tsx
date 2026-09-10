@@ -58,8 +58,12 @@ function Fixture() {
                 items={[
                   { id: 'all', label: 'All sources' },
                   { id: 'official', label: 'Official sources' },
+                  { id: 'review', label: 'Review package' },
                 ]}
-                onSelect={setFilter}
+                onSelect={(id) => {
+                  if (id === 'review') setConfirm(true);
+                  else setFilter(id);
+                }}
               />
               <button onClick={() => setConfirm(true)}>Review install</button>
               <button onClick={() => setOpen(false)}>Close manager</button>

@@ -100,6 +100,8 @@ Prefer this pattern:
 
 Avoid passing a nested `<button>` as `trigger`, because the wrapper already owns the menu-button semantics.
 
+Selecting a closing menu item focuses the trigger before dispatching the deferred action. A dialog opened by that action therefore captures a stable return target; closing it returns to the menu trigger. Items with `keepOpen` retain menu focus, and a destination can explicitly move focus after dispatch.
+
 ## Suggested downstream checklist
 
 When adopting Floe Webapp in an application shell, verify:
