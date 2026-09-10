@@ -490,6 +490,37 @@
     --floe-floating-exit-scale: 0.985;
   }
 
+  .floe-bottom-drawer-overlay {
+    padding: max(1.25rem, env(safe-area-inset-top, 0px))
+      max(1.5rem, env(safe-area-inset-right, 0px)) max(1.25rem, env(safe-area-inset-bottom, 0px))
+      max(1.5rem, env(safe-area-inset-left, 0px));
+  }
+
+  .floe-bottom-drawer-backdrop {
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    --floe-floating-enter-duration: 240ms;
+    --floe-floating-exit-duration: 180ms;
+  }
+
+  .floe-bottom-drawer-panel {
+    --floe-floating-enter-duration: 240ms;
+    --floe-floating-exit-duration: 180ms;
+    --floe-floating-enter-y: calc(100% + 1.25rem);
+    --floe-floating-exit-y: calc(100% + 1.25rem);
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  @media (max-width: 639px) {
+    .floe-bottom-drawer-overlay {
+      padding: max(0.75rem, env(safe-area-inset-top, 0px))
+        max(0.75rem, env(safe-area-inset-right, 0px)) max(0.75rem, env(safe-area-inset-bottom, 0px))
+        max(0.75rem, env(safe-area-inset-left, 0px));
+    }
+  }
+
   .floe-floating-menu {
     --floe-floating-enter-duration: 120ms;
     --floe-floating-exit-duration: 100ms;

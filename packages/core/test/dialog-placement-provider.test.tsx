@@ -8,6 +8,7 @@ import {
   ConfirmDialog,
   Dialog,
   DialogPlacementProvider,
+  Dropdown,
   DirectoryPicker,
   FloatingWindow,
   type DialogPlacementMode,
@@ -322,5 +323,132 @@ describe('dialog editor controls', () => {
     expect(shortcut).toHaveBeenCalled();
     document.querySelector<HTMLButtonElement>('[aria-label="Close editor"]')!.click();
     expect(close).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('bottom drawer ownership', () => {
+  afterEach(() => {
+    for (const dispose of disposers.splice(0)) dispose();
+    document.body.replaceChildren();
+    __resetDialogSurfaceScopeForTests();
+  });
+
+  it('keeps the drawer outside an inert canvas and retains its accessible title without default chrome', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const presence = vi.fn();
+    const [open, setOpen] = createSignal(false);
+    mount(
+      () => (
+        <>
+          <div data-floe-dialog-surface-host="true" inert={open()}>
+            <button data-testid="dock" onClick={() => setOpen(true)}>
+              Manage
+            </button>
+          </div>
+          <DialogPlacementProvider mode="global" globalZIndex={4000}>
+            <Dialog
+              open={open()}
+              onOpenChange={setOpen}
+              title="Plugin management"
+              presentation="bottom-drawer"
+              header={null}
+              contentClass="p-0 overflow-hidden"
+              onPresenceChange={presence}
+            >
+              <input aria-label="Search plugins" />
+            </Dialog>
+          </DialogPlacementProvider>
+        </>
+      ),
+      host
+    );
+    const trigger = host.querySelector<HTMLButtonElement>('[data-testid="dock"]')!;
+    trigger.focus();
+    trigger.click();
+    await flushMicrotasks();
+    const root = document.querySelector<HTMLElement>('[data-floe-dialog-overlay-root]')!;
+    expect(root.dataset.floeDialogPresentation).toBe('bottom-drawer');
+    expect(root.closest('[inert]')).toBeNull();
+    expect(root.dataset.floeDialogMode).toBe('global');
+    const panel = root.querySelector('[role="dialog"]')!;
+    expect(document.getElementById(panel.getAttribute('aria-labelledby')!)?.textContent).toBe(
+      'Plugin management'
+    );
+    expect(panel.querySelector('button')).toBeNull();
+    expect(panel.querySelector('input')?.parentElement?.classList.contains('p-0')).toBe(true);
+    expect(presence).toHaveBeenLastCalledWith(true);
+    setOpen(false);
+    expect(presence).toHaveBeenLastCalledWith(true);
+    expect(root.classList.contains('pointer-events-none')).toBe(false);
+    await vi.waitFor(() => expect(presence).toHaveBeenLastCalledWith(false));
+  });
+
+  it('gives a nested confirmation sole Escape ownership and restores its trigger', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const parentClose = vi.fn();
+    const [child, setChild] = createSignal(false);
+    mount(
+      () => (
+        <DialogPlacementProvider mode="global" globalZIndex={4000}>
+          <Dialog open title="Manager" onOpenChange={parentClose} presentation="bottom-drawer">
+            <button data-testid="review" onClick={() => setChild(true)}>
+              Review
+            </button>
+            <Dialog open={child()} title="Confirm install" onOpenChange={setChild}>
+              <button data-testid="confirm">Install</button>
+            </Dialog>
+          </Dialog>
+        </DialogPlacementProvider>
+      ),
+      host
+    );
+    await flushMicrotasks();
+    const review = document.querySelector<HTMLButtonElement>('[data-testid="review"]')!;
+    review.focus();
+    review.click();
+    await flushMicrotasks();
+    const confirm = document.querySelector<HTMLButtonElement>('[data-testid="confirm"]')!;
+    confirm.focus();
+    confirm.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(child()).toBe(false);
+    expect(parentClose).not.toHaveBeenCalled();
+    await vi.waitFor(() => expect(document.activeElement).toBe(review));
+  });
+
+  it('hosts owned menus above the drawer and closes the menu before the drawer', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const close = vi.fn();
+    mount(
+      () => (
+        <DialogPlacementProvider mode="global" globalZIndex={4000}>
+          <Dialog open title="Manager" onOpenChange={close} presentation="bottom-drawer">
+            <Dropdown
+              trigger={<button>Filter plugins</button>}
+              items={[{ id: 'all', label: 'All plugins' }]}
+              onSelect={() => undefined}
+            />
+          </Dialog>
+        </DialogPlacementProvider>
+      ),
+      host
+    );
+    await flushMicrotasks();
+    const trigger = document.querySelector<HTMLElement>('[aria-haspopup="menu"]')!;
+    trigger.focus();
+    trigger.click();
+    await flushMicrotasks();
+    const menu = document.querySelector<HTMLElement>('[role="menu"]')!;
+    expect(menu.closest('[data-floe-dialog-overlay-root]')).not.toBeNull();
+    menu.focus();
+    menu.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(close).not.toHaveBeenCalled();
   });
 });

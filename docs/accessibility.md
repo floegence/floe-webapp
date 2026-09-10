@@ -45,6 +45,28 @@ The shared light-theme muted foreground and activity-bar foreground tokens were 
 
 Downstream apps should continue to prefer semantic tokens instead of hard-coded low-contrast colors.
 
+## Modal drawers and nested layers
+
+`Dialog` accepts `presentation="bottom-drawer"` for a bottom-aligned floating
+modal with reduced-motion-aware enter/exit transitions. `header={null}` removes
+the default visible header while retaining the accessible `title` and
+`description`; applications supply their own visible close action. `contentClass`
+customizes the body layout. `onPresenceChange` includes the closing animation so
+hosts can keep background input isolated until the overlay is removed.
+
+Product-wide management drawers should use `DialogPlacementProvider mode="global"`
+when their background canvas is inert. Automatic placement intentionally follows
+the owning interaction surface and is appropriate for widget-local dialogs.
+Never place a management overlay inside the branch it disables.
+
+Dialog-owned menus mount in the dialog's shared floating layer. Nested overlays
+coordinate through `useOverlayMask`: the top applicable layer owns keyboard and
+scroll input, independent local Workbench surfaces remain independent, and
+deferred autofocus respects focus already placed inside the active layer. Escape
+closes a menu or confirmation before its parent; Tab from a menu closes it and
+returns focus to its trigger. Closing a drawer retains a hit-testable backdrop
+until its exit completes.
+
 ## Downstream responsibilities
 
 Floe Webapp can guarantee shared structure and primitive behavior, but application teams still own product semantics.

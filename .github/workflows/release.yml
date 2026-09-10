@@ -86,6 +86,7 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium
           pnpm test:input-focus
+          pnpm test:dialog
 
       - name: Build packages
         run: pnpm -r --filter './packages/*' build

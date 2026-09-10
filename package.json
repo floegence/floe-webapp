@@ -17,6 +17,7 @@
     "test": "node scripts/test.mjs",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "test:input-focus": "pnpm exec vitest run scripts/input-focus-policy.test.mjs && node scripts/check-input-focus-browser.mjs",
+    "test:dialog": "node scripts/check-dialog-browser.mjs",
     "test:surface-style": "node scripts/prepare-surface-consumer.mjs && node scripts/check-surface-style-browser.mjs && node scripts/check-surface-components-browser.mjs && node scripts/check-surface-motion-browser.mjs",
     "test:surface-performance": "node scripts/check-surface-performance.mjs"
   },

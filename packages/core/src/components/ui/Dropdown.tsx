@@ -21,6 +21,7 @@ import {
   type ResolvedSurfacePortalHost,
 } from './surfacePortalScope';
 import { createFloatingPresence } from './floatingPresence';
+import { useOverlayMask } from '../../hooks/useOverlayMask';
 
 export interface DropdownItem {
   id: string;
@@ -111,7 +112,7 @@ export function Dropdown(props: DropdownProps) {
   const menuId = `${dropdownId}-menu`;
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
     menuPresence.mounted()
-      ? resolveSurfacePortalHost()
+      ? resolveSurfacePortalHost({ owner: triggerRef })
       : { host: null, boundaryHost: null, mountHost: null, mode: 'global' }
   );
   const portalLayout: DropdownPortalLayout = {
@@ -120,6 +121,28 @@ export function Dropdown(props: DropdownProps) {
     boundaryRect: () => resolveSurfacePortalBoundaryRect(surfaceHost()),
     projectPosition: (position) => projectSurfacePortalPosition(position, surfaceHost()),
   };
+
+  const dismissMenu = () => {
+    setOpen(false);
+    requestAnimationFrame(() => triggerRef?.focus());
+  };
+  useOverlayMask({
+    open: menuPresence.mounted,
+    root: () => menuRef,
+    containsTarget: (target) => {
+      const element = target instanceof Element ? target : document.activeElement;
+      return Boolean(element?.closest(`[data-floe-dropdown="${dropdownId}"]`));
+    },
+    onClose: dismissMenu,
+    onEscapeOutside: dismissMenu,
+    lockBodyScroll: false,
+    trapFocus: false,
+    autoFocus: false,
+    restoreFocus: false,
+    blockHotkeys: false,
+    closeOnEscape: 'inside',
+    escapeKeyPhase: 'bubble',
+  });
 
   // Update menu position
   const updateMenuPosition = () => {
@@ -151,14 +174,7 @@ export function Dropdown(props: DropdownProps) {
       setOpen(false);
     };
 
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpen(false);
-      requestAnimationFrame(() => triggerRef?.focus());
-    };
-
     document.addEventListener('pointerdown', handleClickOutside, true);
-    document.addEventListener('keydown', handleEscape);
 
     // Initial positioning + focus after mount
     requestAnimationFrame(() => {
@@ -168,7 +184,6 @@ export function Dropdown(props: DropdownProps) {
 
     onCleanup(() => {
       document.removeEventListener('pointerdown', handleClickOutside, true);
-      document.removeEventListener('keydown', handleEscape);
     });
   });
 
@@ -229,7 +244,9 @@ export function Dropdown(props: DropdownProps) {
         focusMenuItem(menu, 'last');
         return;
       case 'Tab':
+        event.preventDefault();
         setOpen(false);
+        triggerRef?.focus();
         return;
       default:
         return;

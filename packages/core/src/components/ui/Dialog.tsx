@@ -14,7 +14,12 @@ import { Button } from './Button';
 import { X } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
-import { DIALOG_SURFACE_BOUNDARY_ATTR, type ResolvedDialogSurfaceHost } from './dialogSurfaceScope';
+import {
+  DIALOG_SURFACE_BOUNDARY_ATTR,
+  DIALOG_SURFACE_HOST_ATTR,
+  SURFACE_PORTAL_LAYER_ATTR,
+  type ResolvedDialogSurfaceHost,
+} from './dialogSurfaceScope';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import {
   isSurfacePortalMode,
@@ -43,6 +48,13 @@ export interface DialogProps {
   children: JSX.Element;
   footer?: JSX.Element;
   class?: string;
+  /** Bottom drawers retain the same modal and surface-placement contract. */
+  presentation?: 'dialog' | 'bottom-drawer';
+  /** Undefined uses the default header; null leaves only accessible title/description. */
+  header?: JSX.Element;
+  contentClass?: string;
+  /** Includes the exit animation, so hosts can retain background input isolation. */
+  onPresenceChange?: (present: boolean) => void;
   /** Optional stacking layer for global dialogs. Overrides the placement provider default. */
   globalZIndex?: number;
 }
@@ -90,13 +102,18 @@ export function Dialog(props: DialogProps) {
   const [ownerAnchor, setOwnerAnchor] = createSignal<HTMLElement | null>(null);
   const [ownerAnchorReadyVersion, setOwnerAnchorReadyVersion] = createSignal(0);
   const [surfaceGeometryVersion, setSurfaceGeometryVersion] = createSignal(0);
+  const isBottomDrawer = () => props.presentation === 'bottom-drawer';
   const isMountedOpen = () => props.open && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
   const dialogPresence = createFloatingPresence({
     open: isMountedOpen,
-    exitDurationMs: 120,
+    get exitDurationMs() {
+      return isBottomDrawer() ? 180 : 120;
+    },
   });
   const isPresenceMounted = () =>
     dialogPresence.mounted() && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
+  createEffect(() => props.onPresenceChange?.(isPresenceMounted()));
+  onCleanup(() => props.onPresenceChange?.(false));
   const setDialogOwnerAnchor = (element: HTMLElement): void => {
     setOwnerAnchor(element);
     scheduleDialogOwnerAnchorReady(() => {
@@ -182,14 +199,7 @@ export function Dialog(props: DialogProps) {
   useOverlayMask({
     open: isPresenceMounted,
     root: () => dialogRef,
-    containsTarget: (target) => {
-      if (isSurfaceMode()) {
-        return isWithinDialogBoundary(target);
-      }
-      return typeof Node !== 'undefined' && target instanceof Node
-        ? Boolean(dialogRef?.contains(target))
-        : false;
-    },
+    containsTarget: isWithinDialogBoundary,
     onClose: () => props.onOpenChange(false),
     lockBodyScroll: () => !isSurfaceMode(),
     trapFocus: true,
@@ -215,14 +225,20 @@ export function Dialog(props: DialogProps) {
           <div
             data-floe-dialog-overlay-root={baseId}
             data-floe-dialog-mode={isSurfaceMode() ? 'surface' : 'global'}
+            data-floe-dialog-presentation={props.presentation ?? 'dialog'}
             data-floating-presence={dialogPresence.state()}
             aria-hidden={dialogPresence.exiting() ? 'true' : undefined}
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
+            {...{
+              [SURFACE_PORTAL_LAYER_ATTR]: 'true',
+              [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId(),
+            }}
             class={cn(
               isSurfaceMode()
                 ? 'absolute z-20 box-border p-3'
                 : cn('fixed inset-0 box-border p-4', globalZIndex() === undefined && 'z-50'),
-              dialogPresence.exiting() && 'pointer-events-none'
+              isBottomDrawer() && 'floe-bottom-drawer-overlay',
+              dialogPresence.exiting() && !isBottomDrawer() && 'pointer-events-none'
             )}
             style={
               isSurfaceMode()
@@ -243,33 +259,46 @@ export function Dialog(props: DialogProps) {
               class={cn(
                 'absolute inset-0 floe-floating-presence floe-floating-backdrop',
                 props.closeOnBackdropClick === false ? 'cursor-default' : 'cursor-pointer',
-                isSurfaceMode()
-                  ? 'bg-background/72 backdrop-blur-[2px]'
-                  : 'bg-background/80 backdrop-blur-sm'
+                isBottomDrawer()
+                  ? 'floe-bottom-drawer-backdrop'
+                  : isSurfaceMode()
+                    ? 'bg-background/72 backdrop-blur-[2px]'
+                    : 'bg-background/80 backdrop-blur-sm'
               )}
               onClick={() => {
-                if (props.closeOnBackdropClick !== false) props.onOpenChange(false);
+                if (!dialogPresence.exiting() && props.closeOnBackdropClick !== false)
+                  props.onOpenChange(false);
               }}
             />
 
             {/* Dialog */}
-            <div class="pointer-events-none relative z-[1] flex h-full w-full items-center justify-center">
+            <div
+              class={cn(
+                'pointer-events-none relative z-[1] flex h-full w-full justify-center',
+                isBottomDrawer() ? 'items-end' : 'items-center'
+              )}
+            >
               <div
                 ref={dialogRef}
                 data-floe-dialog-panel={baseId}
                 data-floe-surface="floating"
-                {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
+                {...{
+                  [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId(),
+                  [DIALOG_SURFACE_HOST_ATTR]: 'true',
+                }}
                 class={cn(
                   isSurfaceMode()
                     ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
                     : 'w-full max-w-md max-h-[85vh]',
                   'bg-card text-card-foreground rounded-md shadow-lg',
                   'border border-border',
-                  'floe-floating-presence floe-floating-dialog-panel',
+                  'floe-floating-presence',
+                  isBottomDrawer() ? 'floe-bottom-drawer-panel' : 'floe-floating-dialog-panel',
                   'pointer-events-auto flex flex-col',
                   props.class
                 )}
                 data-floating-presence={dialogPresence.state()}
+                inert={isBottomDrawer() && dialogPresence.exiting()}
                 role="dialog"
                 aria-modal={isSurfaceMode() ? undefined : 'true'}
                 aria-labelledby={props.title ? titleId() : undefined}
@@ -278,34 +307,60 @@ export function Dialog(props: DialogProps) {
                 tabIndex={-1}
               >
                 {/* Header */}
-                <Show when={props.title || props.description}>
-                  <div class="flex items-start justify-between p-3 border-b border-border">
-                    <div>
+                <Show
+                  when={props.header === undefined}
+                  fallback={
+                    <>
                       <Show when={props.title}>
-                        <h2 id={titleId()} class="text-sm font-semibold">
+                        <h2 id={titleId()} class="sr-only">
                           {props.title}
                         </h2>
                       </Show>
                       <Show when={props.description}>
-                        <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
+                        <p id={descriptionId()} class="sr-only">
                           {props.description}
                         </p>
                       </Show>
+                      {props.header}
+                    </>
+                  }
+                >
+                  <Show when={props.title || props.description}>
+                    <div class="flex items-start justify-between p-3 border-b border-border">
+                      <div>
+                        <Show when={props.title}>
+                          <h2 id={titleId()} class="text-sm font-semibold">
+                            {props.title}
+                          </h2>
+                        </Show>
+                        <Show when={props.description}>
+                          <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
+                            {props.description}
+                          </p>
+                        </Show>
+                      </div>
+                      <Button
+                        variant="ghost-destructive"
+                        size="icon"
+                        class="-my-2 -mr-2 h-[46px] w-[46px] shrink-0 sm:my-0 sm:-mr-1 sm:h-6 sm:w-6"
+                        onClick={() => props.onOpenChange(false)}
+                        aria-label={props.closeLabel ?? 'Close'}
+                      >
+                        <X class="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost-destructive"
-                      size="icon"
-                      class="-my-2 -mr-2 h-[46px] w-[46px] shrink-0 sm:my-0 sm:-mr-1 sm:h-6 sm:w-6"
-                      onClick={() => props.onOpenChange(false)}
-                      aria-label={props.closeLabel ?? 'Close'}
-                    >
-                      <X class="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+                  </Show>
                 </Show>
 
                 {/* Content */}
-                <div class="flex-1 overflow-auto overscroll-contain p-3">{props.children}</div>
+                <div
+                  class={cn(
+                    'min-h-0 flex-1 overflow-auto overscroll-contain p-3',
+                    props.contentClass
+                  )}
+                >
+                  {props.children}
+                </div>
 
                 {/* Footer */}
                 <Show when={props.footer}>

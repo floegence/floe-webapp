@@ -148,12 +148,12 @@
 [data-floe-surface-style='soft-neumorphic'] [data-floe-floating-window-surface='true'] {
   contain: paint;
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop] {
+[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
   background-color: rgb(0 0 0 / 16%);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-:root.dark[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop] {
+:root.dark[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
   background-color: rgb(0 0 0 / 36%);
 }
 

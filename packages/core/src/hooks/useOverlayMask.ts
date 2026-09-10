@@ -8,6 +8,12 @@ export type OverlayScrollBlockMode = 'none' | 'outside' | 'all';
 export type OverlayEscapeCloseMode = 'none' | 'inside' | 'always';
 type MaybeAccessor<T> = T | Accessor<T>;
 
+type OverlayMaskEntry = {
+  global: boolean;
+  contains: (target: EventTarget | null) => boolean;
+};
+const overlayMasks = new WeakMap<Document, OverlayMaskEntry[]>();
+
 export interface UseOverlayMaskOptions {
   open: Accessor<boolean>;
   root: Accessor<HTMLElement | undefined>;
@@ -143,6 +149,22 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     const touchMoveBlockMode = blockTouchMove();
     const autoFocusMode = autoFocus();
 
+    const masks = overlayMasks.get(document) ?? [];
+    overlayMasks.set(document, masks);
+    const entry: OverlayMaskEntry = {
+      global: shouldLockBodyScroll || escapeCloseMode === 'always',
+      contains: (target) => isWithinOverlayTarget(options.root(), target, options.containsTarget),
+    };
+    masks.push(entry);
+    let active = true;
+    // Local overlays in unrelated Workbench surfaces remain independent. A newer
+    // global modal or a layer containing this event owns input before its parent.
+    const ownsTarget = (target: EventTarget | null) =>
+      active &&
+      !masks
+        .slice(masks.indexOf(entry) + 1)
+        .some((candidate) => candidate.global || candidate.contains(target));
+
     const prevActive =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const unlockBody = shouldLockBodyScroll ? lockBodyStyle({ overflow: 'hidden' }) : null;
@@ -150,9 +172,10 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     // Focus management is deferred to ensure Portal DOM is mounted and at least one paint is not blocked.
     const focusOnOpen = () => {
       const root = options.root();
-      if (!root) return;
+      if (!root?.isConnected || !ownsTarget(root)) return;
 
       if (autoFocusMode === false) return;
+      if (entry.contains(document.activeElement)) return;
 
       const preferredSelector =
         typeof autoFocusMode === 'object' ? autoFocusMode.selector : undefined;
@@ -176,6 +199,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     const handleTabTrap = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
+      if (!ownsTarget(e.target)) return;
       const root = options.root();
       if (!root) return;
 
@@ -204,7 +228,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
           }
         }
       } else {
-        if (active === last) {
+        if (active === last || !active || !root.contains(active)) {
           e.preventDefault();
           try {
             first.focus();
@@ -217,6 +241,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     const handleEscapeCapture = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (!ownsTarget(e.target)) return;
       if (escapeKeyPhase === 'bubble' && (e.defaultPrevented || e.isComposing)) return;
       if (escapeCloseMode === 'none') return;
       const root = options.root();
@@ -250,6 +275,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     // Stop keydown bubbling to window-level shortcuts, but keep typing behavior intact
     // (the target/input still receives the event; we only block propagation after that).
     const handleKeydownBubble = (e: KeyboardEvent) => {
+      if (!ownsTarget(e.target)) return;
       const root = options.root();
       if (!root) return;
       if (!shouldBlockHotkeys) return;
@@ -259,15 +285,18 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     };
 
     const handleWheelCapture = (e: WheelEvent) => {
+      if (!ownsTarget(e.target)) return;
       const root = options.root();
       if (!shouldBlockByMode(root, e.target, wheelBlockMode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
     };
     const handleWheelBubble = (e: WheelEvent) => {
+      if (!ownsTarget(e.target)) return;
       e.stopPropagation();
     };
 
     const handleTouchMoveCapture = (e: TouchEvent) => {
+      if (!ownsTarget(e.target)) return;
       const root = options.root();
       if (!shouldBlockByMode(root, e.target, touchMoveBlockMode, options.containsTarget)) return;
       if (e.cancelable) e.preventDefault();
@@ -295,6 +324,8 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     }
 
     onCleanup(() => {
+      active = false;
+      masks.splice(masks.indexOf(entry), 1);
       if (shouldTrapFocus) document.removeEventListener('keydown', handleTabTrap, true);
       if (escapeCloseMode !== 'none')
         escapeTarget.removeEventListener(
