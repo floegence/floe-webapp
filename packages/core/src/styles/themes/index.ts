@@ -1,4 +1,15 @@
 export type ThemeType = 'light' | 'dark' | 'system';
+export type FloeSurfaceStyle = 'standard' | 'soft-neumorphic';
+
+export function isFloeSurfaceStyle(value: unknown): value is FloeSurfaceStyle {
+  return value === 'standard' || value === 'soft-neumorphic';
+}
+
+export function applySurfaceStyleAttribute(style: FloeSurfaceStyle | undefined, target?: ThemeTarget): void {
+  const root = resolveThemeTarget(target);
+  if (style) root?.setAttribute?.('data-floe-surface-style', style);
+  else root?.removeAttribute?.('data-floe-surface-style');
+}
 export type FloeThemePresetMode = 'light' | 'dark' | 'both';
 export type FloeThemeTokenMap = Partial<Record<`--${string}`, string>>;
 

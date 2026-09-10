@@ -3,6 +3,7 @@ import {
   floeColorTokenCategories,
   floeFontFamilyTokens,
   floeMotionTokens,
+  floeSurfaceTokens,
   floeRadiusTokens,
   floeSpacingTokens,
   floeTypographyTokens,
@@ -81,6 +82,16 @@ export function DesignTokensPage() {
       </div>
 
       {/* Colors Section */}
+      <section class="space-y-3">
+        <h2 class="text-sm font-semibold">Surface materials</h2>
+        <p class="text-[11px] text-muted-foreground">Surface style is independent of color. Optional shadow tokens override local defaults; raised, inset, and floating roles retain the existing layout.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <For each={floeSurfaceTokens}>{token => <div class="border border-border rounded-lg p-4 bg-card" data-floe-surface={token.role === 'interacting' ? 'floating' : token.role} data-floe-surface-interacting={token.role === 'interacting' ? 'true' : undefined}>
+            <p class="text-xs font-medium">{token.role}</p>
+            <code class="text-[10px] break-all text-muted-foreground">{token.variable}</code>
+          </div>}</For>
+        </div>
+      </section>
       <div class="space-y-4">
         <div class="flex items-center gap-2">
           <div class="w-1 h-4 rounded-full bg-primary" />

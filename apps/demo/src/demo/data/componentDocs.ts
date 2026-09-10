@@ -758,6 +758,12 @@ export const dropdownDoc: ComponentDoc = {
       description: 'Element that triggers the dropdown when clicked.',
     },
     {
+      name: 'triggerInputSurface',
+      type: 'boolean',
+      default: 'false',
+      description: 'Use the existing trigger as a field boundary with border-only focus and inset material. Select enables this automatically.',
+    },
+    {
       name: 'items',
       type: 'DropdownItem[]',
       required: true,

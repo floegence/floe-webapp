@@ -90,6 +90,8 @@ export function LinearProgress(props: LinearProgressProps) {
           'relative w-full overflow-hidden rounded-full bg-muted',
           linearSizeStyles[size()].track
         )}
+        data-floe-surface="inset"
+        data-floe-surface-part="progress-track"
         role="progressbar"
         aria-valuenow={local.indeterminate ? undefined : value()}
         aria-valuemin={0}
@@ -105,6 +107,8 @@ export function LinearProgress(props: LinearProgressProps) {
 
         {/* Main progress bar */}
         <div
+          data-floe-surface="raised"
+          data-floe-surface-part="progress-fill"
           class={cn(
             'h-full rounded-full transition-all duration-300',
             colorStyles[color()].bar,
@@ -226,6 +230,8 @@ export function CircularProgress(props: CircularProgressProps) {
 
   return (
     <div
+      data-floe-surface={local.showTrack !== false ? 'inset' : undefined}
+      data-floe-surface-part="progress-circle"
       class={cn('relative inline-flex items-center justify-center', local.class)}
       style={{ width: `${pixelSize()}px`, height: `${pixelSize()}px` }}
       role="progressbar"
@@ -349,6 +355,8 @@ export function SegmentedProgress(props: SegmentedProgressProps) {
         <For each={Array.from({ length: segments() })}>
           {(_, index) => (
             <div
+              data-floe-surface={index() < filledSegments() ? 'raised' : 'inset'}
+              data-floe-surface-part="progress-fill"
               class={cn(
                 'flex-1 rounded-full transition-colors duration-200',
                 linearSizeStyles[size()].track,
@@ -429,7 +437,11 @@ export function StepsProgress(props: StepsProgressProps) {
                 isVertical() ? 'flex-col' : 'flex-row w-full'
               )}>
                 {/* Step dot */}
-                <div class={cn(
+                <div
+                  data-floe-surface={state() === 'pending' ? 'inset' : 'raised'}
+                  data-floe-surface-part="step"
+                  data-floe-step-state={state()}
+                  class={cn(
                   'flex items-center justify-center rounded-full font-medium transition-colors duration-200 shrink-0',
                   stepSizeStyles[size()].dot,
                   state() === 'completed' && cn(colorStyles[color()].bar, 'text-primary-foreground'),
@@ -447,7 +459,7 @@ export function StepsProgress(props: StepsProgressProps) {
 
                 {/* Connector */}
                 <Show when={!isLast()}>
-                  <div class={cn(
+                  <div data-floe-surface="inset" data-floe-surface-part="progress-track" class={cn(
                     'transition-colors duration-200',
                     isVertical()
                       ? cn('w-0.5 h-8 my-1', index() < local.current ? colorStyles[color()].bar : 'bg-muted')

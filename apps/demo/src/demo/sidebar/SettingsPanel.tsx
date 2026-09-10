@@ -6,6 +6,7 @@ import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 import { ChartThemePicker } from '../components/ChartThemePicker';
 import { ShellThemePicker } from '../components/ShellThemePicker';
+import { SurfaceStylePicker, surfaceStyleCopy } from '../components/SurfaceStylePicker';
 
 export function SettingsPanel() {
   const notifications = useNotification();
@@ -77,6 +78,11 @@ export function SettingsPanel() {
 
       <SidebarSection title="Shell Theme">
         <ShellThemePicker />
+      </SidebarSection>
+
+      <SidebarSection title={surfaceStyleCopy.title}>
+        <p class="mb-2 text-[11px] text-muted-foreground">{surfaceStyleCopy.description}</p>
+        <SurfaceStylePicker />
       </SidebarSection>
 
       <SidebarSection title="Chart Theme">

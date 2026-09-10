@@ -257,6 +257,7 @@ export function Dialog(props: DialogProps) {
               <div
                 ref={dialogRef}
                 data-floe-dialog-panel={baseId}
+                data-floe-surface="floating"
                 {...{ [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId() }}
                 class={cn(
                   isSurfaceMode()

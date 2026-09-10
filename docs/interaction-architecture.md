@@ -59,7 +59,7 @@
 规则：
 
 - 几何属性（`width` / `height` / `left` / `top` / `transform`）在热交互期间不能再叠加 transition。
-- 允许保留颜色、阴影、透明度等低成本反馈动画。
+- Color and opacity feedback may remain. Static shadows are permitted, but animating blur, offset, or spread requires a bounded scope and measured paint/raster evidence; shadow animation is not assumed to be cheap.
 - 统一通过 `data-floe-hot-interaction` + `data-floe-geometry-surface` 约束热交互期间的 motion 行为。
 - 对于 shell-owned page boundary 切换，如果产品要求某一次 sidebar 显隐直接完成而不是播放宽度动画，应使用 shared one-shot `visibilityMotion` contract，而不是在下游页面里长期关闭 sidebar transition。
 
@@ -431,3 +431,7 @@ workbench 的选择态、导航态与菜单关闭态必须保持在共享模型�
 - 移动端 tab / 页面切换反馈更即时
 - mobile drawer 不再滚动穿透 / hotkey 穿透
 - 关键交互规范有文档、有代码、有测试守卫，而不是只有一次性修复
+
+## Optional surface material
+
+[Surface styles](surface-style.md) owns the optional material contract. During drag and resize, only the affected shell changes to a fixed lightweight shadow using its existing local interaction state. Material changes do not write geometry or persistence on pointermove. FloatingWindow uses the shared pointer session for document release, pointer cancellation, lost capture, window blur, visibility loss, and unmount. Its existing commit-on-pointer-cancel behavior is preserved. Workbench input ownership, stable widget bodies, and surface-local portals remain unchanged.

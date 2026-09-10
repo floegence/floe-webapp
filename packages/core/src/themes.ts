@@ -13,6 +13,7 @@ export {
   type FloeShellThemeSelection,
 } from './styles/themes/presets';
 export type {
+  FloeSurfaceStyle,
   FloeMonacoThemeDefinition,
   FloeMonacoTokenRule,
   FloeThemePreset,

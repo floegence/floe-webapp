@@ -30,6 +30,45 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it.each(['blur', 'lostpointercapture', 'pointercancel', 'unmount'])(
+    'releases drag ownership and material on %s',
+    async (reason) => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      mount(
+        () => (
+          <FloatingWindow open onOpenChange={() => undefined} title="Lifecycle">
+            <input value="draft" />
+          </FloatingWindow>
+        ),
+        host
+      );
+      await flushAnimationFrame();
+      const root = document.querySelector<HTMLElement>(
+        '[data-floe-geometry-surface="floating-window"]'
+      )!;
+      const title = root.querySelector<HTMLElement>('[data-floe-floating-window-titlebar]')!;
+      const down = new MouseEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: 100,
+        clientY: 100,
+      });
+      Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+      title.dispatchEvent(down);
+      expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+      if (reason === 'unmount') disposers.pop()?.();
+      else if (reason === 'blur') window.dispatchEvent(new Event('blur'));
+      else {
+        const event = new MouseEvent(reason, { bubbles: true, clientX: 110, clientY: 110 });
+        Object.defineProperty(event, 'pointerId', { value: 7 });
+        root.dispatchEvent(event);
+      }
+      expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
+      expect(document.querySelector('[data-floe-surface-interacting="true"]')).toBeNull();
+    }
+  );
   beforeEach(() => {
     originalRequestAnimationFrame = window.requestAnimationFrame;
     originalCancelAnimationFrame = window.cancelAnimationFrame;

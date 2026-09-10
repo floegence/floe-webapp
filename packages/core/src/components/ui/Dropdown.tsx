@@ -42,6 +42,8 @@ export interface DropdownProps {
   trigger: JSX.Element;
   triggerClass?: string;
   triggerAriaLabel?: string;
+  /** Treat the existing trigger boundary as a field (used by Select). */
+  triggerInputSurface?: boolean;
   items: DropdownItem[];
   value?: string;
   onSelect: (id: string) => void;
@@ -249,7 +251,7 @@ export function Dropdown(props: DropdownProps) {
         }}
         onKeyDown={handleTriggerKeyDown}
         class={cn(
-          'cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+          'cursor-pointer',
           props.triggerClass,
           props.disabled && 'pointer-events-none opacity-50'
         )}
@@ -261,6 +263,8 @@ export function Dropdown(props: DropdownProps) {
         aria-label={props.triggerAriaLabel}
         aria-disabled={props.disabled ? 'true' : undefined}
         data-floe-dropdown-trigger=""
+        data-floe-input-surface={props.triggerInputSurface ? 'true' : undefined}
+        data-floe-surface={props.triggerInputSurface ? 'inset' : undefined}
       >
         {props.trigger}
       </div>
@@ -289,6 +293,7 @@ export function Dropdown(props: DropdownProps) {
               top: `${portalLayout.projectPosition(menuPosition()).y}px`,
             }}
             role="menu"
+            data-floe-surface="floating"
             id={menuId}
             onKeyDown={handleMenuKeyDown}
           >
@@ -509,6 +514,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
               top: `${props.portalLayout.projectPosition(submenuPosition()).y}px`,
             }}
             role="menu"
+            data-floe-surface="floating"
             aria-labelledby={menuItemId}
             onMouseEnter={() => {
               clearTimeout(hoverTimeout);
@@ -567,6 +573,7 @@ export function Select(props: SelectProps) {
 
   return (
     <Dropdown
+      triggerInputSurface
       triggerClass={cn(
         'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
         'rounded border border-input bg-background text-xs shadow-sm',

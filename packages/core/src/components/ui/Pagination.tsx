@@ -198,6 +198,9 @@ export function Pagination(props: PaginationProps) {
     return (
       <button
         type="button"
+        data-floe-surface={buttonProps.isActive ? 'inset' : 'raised'}
+        data-floe-surface-part="action"
+        aria-current={buttonProps.isActive ? 'page' : undefined}
         disabled={buttonProps.disabled || local.disabled}
         onClick={handleClick}
         title={buttonProps.title}
@@ -308,6 +311,7 @@ export function Pagination(props: PaginationProps) {
             <div class="flex items-center gap-2">
               <span class={cn('text-muted-foreground', styles().text)}>Show</span>
               <select
+                data-floe-surface="inset"
                 value={local.pageSize}
                 onChange={(e) => local.onPageSizeChange?.(parseInt(e.target.value, 10))}
                 disabled={local.disabled}
@@ -393,6 +397,7 @@ export function Pagination(props: PaginationProps) {
             <div class="flex items-center gap-2">
               <span class={cn('text-muted-foreground', styles().text)}>Go to</span>
               <input
+                data-floe-surface="inset"
                 type="number"
                 min={1}
                 max={local.totalPages}

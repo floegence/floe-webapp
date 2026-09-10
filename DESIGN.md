@@ -166,7 +166,7 @@ Buttons should stay compact, slightly rounded, and fast. The personality is prec
 Inputs should feel embedded in the same surface system as the shell.
 
 - Use `bg-background` with `border-input`.
-- Focus is expressed through `ring` and border shift, not exaggerated glow.
+- Focus changes only the existing border color. Keep border width, padding, geometry, and decorative shadows unchanged; do not add an outline, ring, or halo. Compound fields declare one `data-floe-input-surface` boundary.
 - Helper and error text sit at `11px` and must be semantically connected.
 - Inputs may include left/right icons, but those icons are subordinate to the text field, not decorative anchors.
 
@@ -219,3 +219,7 @@ Floe allows a more cinematic mode for immersive selection and transitional UI.
 - **Don't** rebuild overlay semantics, focus handling, or keyboard navigation ad hoc when shared primitives already own them.
 - **Don't** use pure black or pure white when the exported tokens already provide contrast-safe values.
 - **Don't** let visual richness outrun product clarity.
+
+## Optional surface material
+
+`soft-neumorphic` extends The Quiet Workbench with static, shallow depth. `standard` remains the framework default. Color palettes and surface material are independent. Default cards and actions rise slightly; fields and selection wells are inset; floating shells replace their old shadow and blur. Tags, radio/checkbox/switch controls, progress, tabs and pagination use compact relief scaled to their density. Content and dense rows stay flat. Dark mode has its own carrying-plane and edge contrast. Explicit rich Card variants and tilt retain their existing treatments. See [Surface styles](docs/surface-style.md) for role, token, focus, and performance contracts.

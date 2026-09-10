@@ -42,6 +42,8 @@ export function QuoteBlock(props: QuoteBlockProps) {
 
   return (
     <blockquote
+      data-floe-surface="inset"
+      data-floe-surface-part="message"
       class={cn(
         'relative my-2',
         // Default variant - Gray background with solid primary left border

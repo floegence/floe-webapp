@@ -176,6 +176,8 @@ Guidance:
 Configuration: `FloeConfig.theme` (`packages/core/src/context/FloeConfigContext.tsx`)
 
 - `defaultTheme`: `'light' | 'dark' | 'system'`
+- `defaultSurfaceStyle`: `'standard' | 'soft-neumorphic'` (default: `standard`)
+- `surfaceStyleStorageKey`: optional material key (default: `${storageKey}-surface-style`)
 - `storageKey`: persistence key for theme choice
 - `presetStorageKey`: persistence key for the active named token preset (defaults to `${storageKey}-preset`)
 - `defaultPreset`: default named token preset
@@ -272,3 +274,7 @@ Implementation references:
 
 - `packages/core/src/components/layout/TopBar.tsx`
 - `packages/core/src/components/ui/CommandPalette.tsx`
+
+### Surface material
+
+`useTheme().surfaceStyle()` reads the material and `setSurfaceStyle(style)` updates it without remounting the application. It uses the configured persistence service, namespace, adapter, and enabled flag. Missing or invalid stored values fall back to the configured default; invalid configuration falls back to `standard`. Palette storage and token source order are unchanged. See [Surface styles](surface-style.md) for the complete styling contract.

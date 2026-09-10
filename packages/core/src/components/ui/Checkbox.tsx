@@ -1,4 +1,4 @@
-import { splitProps, type JSX, type Component, For, Show, Match, Switch, createContext, useContext, createUniqueId } from 'solid-js';
+import { splitProps, type JSX, type Component, For, Show, Match, createEffect, Switch, createContext, useContext, createUniqueId } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type CheckboxSize = 'sm' | 'md' | 'lg';
@@ -167,6 +167,8 @@ export function CheckboxGroup(props: CheckboxGroupProps) {
     <CheckboxContext.Provider value={contextValue}>
       <div
         role="group"
+        data-floe-surface={variant() === 'button' ? 'inset' : undefined}
+        data-floe-surface-part={variant() === 'button' ? 'rail' : undefined}
         class={cn(getContainerClass(), local.class)}
         {...rest}
       >
@@ -188,12 +190,14 @@ export function Checkbox(props: CheckboxProps) {
     'size',
     'variant',
     'indeterminate',
+    'ref',
     'class',
     'disabled',
     'id',
   ]);
 
-  const id = () => local.id ?? createUniqueId();
+  const generatedId = createUniqueId();
+  const id = () => local.id ?? generatedId;
 
   // Determine if we're in a group context
   const isInGroup = () => context !== undefined;
@@ -222,6 +226,9 @@ export function Checkbox(props: CheckboxProps) {
   // Checkbox indicator component
   const CheckboxIndicator = () => (
     <div
+      data-floe-surface="inset"
+      data-floe-surface-part="indicator"
+      data-floe-selected={isChecked() || local.indeterminate ? 'true' : undefined}
       class={cn(
         'rounded-[3px] border-2 transition-all duration-150',
         'flex items-center justify-center',
@@ -242,18 +249,30 @@ export function Checkbox(props: CheckboxProps) {
   );
 
   // Common checkbox input
-  const CheckboxInput = (inputProps: { class?: string }) => (
-    <input
-      type="checkbox"
-      id={id()}
-      value={local.value}
-      checked={isChecked()}
-      disabled={isDisabled()}
-      onChange={handleChange}
-      class={inputProps.class ?? 'sr-only peer'}
-      {...rest}
-    />
-  );
+  const CheckboxInput = (inputProps: { class?: string }) => {
+    let element: HTMLInputElement | undefined;
+    createEffect(() => {
+      if (element) element.indeterminate = local.indeterminate ?? false;
+    });
+    return (
+      <input
+        data-floe-choice-input
+        type="checkbox"
+        id={id()}
+        value={local.value}
+        checked={isChecked()}
+        aria-checked={local.indeterminate ? 'mixed' : isChecked()}
+        disabled={isDisabled()}
+        onChange={handleChange}
+        class={inputProps.class ?? 'sr-only peer'}
+        {...rest}
+        ref={(el) => {
+          element = el;
+          if (typeof local.ref === 'function') local.ref(el);
+        }}
+      />
+    );
+  };
 
   return (
     <Switch>
@@ -290,6 +309,10 @@ export function Checkbox(props: CheckboxProps) {
       {/* Button variant */}
       <Match when={variant() === 'button'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'cursor-pointer select-none transition-colors duration-150',
             'border-r border-border last:border-r-0',
@@ -309,6 +332,10 @@ export function Checkbox(props: CheckboxProps) {
       {/* Card variant */}
       <Match when={variant() === 'card'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'relative cursor-pointer select-none rounded-lg border-2 transition-all duration-150',
             cardSizeStyles[size()],
@@ -350,6 +377,10 @@ export function Checkbox(props: CheckboxProps) {
       {/* Tile variant */}
       <Match when={variant() === 'tile'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
             'rounded-lg border-2 transition-all duration-150 text-center',

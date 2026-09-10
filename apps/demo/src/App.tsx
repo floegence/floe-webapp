@@ -23,9 +23,11 @@ import {
   useNotification,
   usePersisted,
   useTheme,
+  isFloeSurfaceStyle,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
+import { SurfaceStylePicker } from './demo/components/SurfaceStylePicker';
 import {
   configureSyncHighlighter,
   createMarkdownWorker,
@@ -647,6 +649,15 @@ function AppContent() {
   };
 
   onMount(() => {
+    const preview = new URLSearchParams(window.location.search);
+    const surface = preview.get('surface');
+    if (isFloeSurfaceStyle(surface)) theme.setSurfaceStyle(surface);
+    const colorMode = preview.get('mode');
+    if (colorMode === 'light' || colorMode === 'dark') theme.setTheme(colorMode);
+    if (preview.get('view') === 'showcase') {
+      setDisplayMode('activity');
+      setSidebarActiveTab('showcase');
+    }
     // UI-first: allow the initial frame to paint before initializing the syntax highlighter.
     deferAfterPaint(() => void initShiki());
 
@@ -760,6 +771,7 @@ function AppContent() {
   const HeaderActions: Component = () => (
     <div class="flex items-center gap-2">
       <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
+      <SurfaceStylePicker compact />
       <Button variant="ghost" size="icon" onClick={() => theme.toggleTheme()} title="Toggle theme">
         {theme.resolvedTheme() === 'light' ? <Moon class="w-4 h-4" /> : <Sun class="w-4 h-4" />}
       </Button>

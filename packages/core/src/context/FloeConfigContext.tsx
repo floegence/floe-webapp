@@ -1,5 +1,5 @@
 import { createContext, createEffect, createMemo, onCleanup, useContext, type JSX } from 'solid-js';
-import type { FloeThemePreset, FloeThemeTokenOverrides, ThemeType } from '../styles/themes';
+import type { FloeSurfaceStyle, FloeThemePreset, FloeThemeTokenOverrides, ThemeType } from '../styles/themes';
 
 export interface FloeStorageAdapter {
   getItem: (key: string) => string | null;
@@ -74,6 +74,10 @@ export interface FloeLayoutConfig {
 export interface FloeThemeConfig {
   storageKey: string;
   defaultTheme: ThemeType;
+  /** Surface material, independent of color palettes. Defaults to standard. */
+  defaultSurfaceStyle?: FloeSurfaceStyle;
+  /** Defaults to `${storageKey}-surface-style`; uses the configured persistence service. */
+  surfaceStyleStorageKey?: string;
   /** Optional storage key for the active named token preset. Defaults to `${storageKey}-preset`. */
   presetStorageKey?: string;
   /** Optional default named token preset. Falls back to the first preset when omitted. */
@@ -248,6 +252,7 @@ export const DEFAULT_FLOE_CONFIG: FloeConfig = {
   theme: {
     storageKey: 'theme',
     defaultTheme: 'system',
+    defaultSurfaceStyle: 'standard',
   },
   accessibility: {
     mainContentId: 'floe-main-content',

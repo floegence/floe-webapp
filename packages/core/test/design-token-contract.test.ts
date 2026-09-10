@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { floeColorTokenCategories, floeSharedCssVariables } from '../src/styles/tokens';
+import { floeColorTokenCategories, floeSharedCssVariables, floeSurfaceTokens } from '../src/styles/tokens';
 
 const testDir = dirname(fileURLToPath(import.meta.url));
 const coreDir = resolve(testDir, '..');
@@ -15,6 +15,13 @@ function parseCssVariables(css: string) {
 }
 
 describe('design token contract', () => {
+  it('keeps optional material token metadata aligned with local CSS fallbacks', () => {
+    const css = readFileSync(resolve(stylesDir, 'surface.css'), 'utf8');
+    const compact = (value: string) => value.replace(/\s+/g, '');
+    for (const token of floeSurfaceTokens) {
+      expect(compact(css)).toContain(compact(`var(${token.variable}, ${token.fallback})`));
+    }
+  });
   it('keeps light and dark theme css values aligned with the exported token metadata', () => {
     const lightCss = readFileSync(resolve(stylesDir, 'themes/light.css'), 'utf8');
     const darkCss = readFileSync(resolve(stylesDir, 'themes/dark.css'), 'utf8');

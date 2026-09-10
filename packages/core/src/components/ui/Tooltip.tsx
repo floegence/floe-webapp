@@ -82,6 +82,7 @@ export function Tooltip(props: TooltipProps) {
           data-floating-presence={tooltipPresence.state()}
           aria-hidden={tooltipPresence.exiting() ? 'true' : undefined}
           role="tooltip"
+          data-floe-surface="floating"
         >
           {props.content}
           {/* Arrow */}

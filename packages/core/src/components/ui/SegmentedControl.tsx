@@ -88,6 +88,8 @@ export function SegmentedControl(props: SegmentedControlProps) {
   return (
     <div
       role="group"
+      data-floe-surface="inset"
+      data-floe-surface-part="rail"
       class={cn(
         'floe-segmented-control inline-flex items-center rounded-lg border',
         styles().container,
@@ -105,6 +107,8 @@ export function SegmentedControl(props: SegmentedControlProps) {
             <button
               type="button"
               role="radio"
+              data-floe-surface={isSelected() ? 'raised' : 'flat'}
+              data-floe-surface-part="segment"
               aria-checked={isSelected()}
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}

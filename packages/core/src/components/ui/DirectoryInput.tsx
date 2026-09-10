@@ -28,7 +28,7 @@ export function DirectoryInput(props: DirectoryInputProps) {
   const source = usePickerNavigation(navigationProps, () => props.open ?? true, (path) => props.onChange?.(path));
   const displayValue = () => formatPickerPath(props.value ?? '', source.context()?.homePathAbs ?? props.homePath);
   return <div class={props.class}>
-    <button data-floe-input-surface aria-invalid={props.error ? true : undefined} type="button" onClick={() => setExpanded((value) => !value)} disabled={props.disabled}
+    <button data-floe-input-surface data-floe-surface="inset" aria-invalid={props.error ? true : undefined} type="button" onClick={() => setExpanded((value) => !value)} disabled={props.disabled}
       aria-expanded={expanded()} title={props.value} class={cn(
         'flex w-full cursor-pointer items-center gap-2 rounded border border-input bg-background px-2 text-left shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
         props.size === 'lg' ? 'h-9 text-sm' : props.size === 'md' ? 'h-8 text-xs' : 'h-7 text-xs',

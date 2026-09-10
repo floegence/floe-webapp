@@ -145,6 +145,9 @@ function StepIndicator(props: StepIndicatorProps) {
 
   return (
     <div
+      data-floe-surface={isCurrent() || isCompleted() ? 'raised' : 'inset'}
+      data-floe-surface-part="step"
+      data-floe-step-state={isCurrent() ? 'current' : isCompleted() ? 'completed' : 'pending'}
       class={cn(baseClasses(), variantClasses())}
       onClick={handleClick}
       role={props.clickable ? 'button' : undefined}
@@ -232,6 +235,8 @@ function Connector(props: ConnectorProps) {
 
   return (
     <div
+      data-floe-surface="inset"
+      data-floe-surface-part="progress-track"
       class={cn(
         'transition-colors duration-300',
         props.orientation === 'horizontal'

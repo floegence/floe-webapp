@@ -1,3 +1,4 @@
+import { SurfaceComponentGallery } from '../components/SurfaceComponentGallery';
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
 import { PropsTable, CodeSnippet, UsageGuidelines } from '../components/docs';
 import {
@@ -1198,6 +1199,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
   return (
     <div class="p-4 max-w-5xl mx-auto space-y-6">
+      <section id="surface-system" class="scroll-mt-4"><SurfaceComponentGallery /></section>
       <div id="overview" class="space-y-3 scroll-mt-4">
         <div class="space-y-1">
           <h1 class="text-lg font-bold">Floe Webapp Demo</h1>

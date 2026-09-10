@@ -97,7 +97,10 @@ export function Card(props: CardProps) {
     }
   });
 
-  const baseStyles = 'rounded-lg transition-all duration-300 ease-out';
+  const baseStyles = 'rounded-lg duration-300 ease-out';
+  const transitions = () => local.enableTilt || variant() === 'hover-lift'
+    ? 'transition-[color,background-color,border-color,box-shadow,transform]'
+    : 'transition-[color,background-color,border-color,box-shadow]';
 
   const variantStyles: Record<CardVariant, string> = {
     default: 'bg-card border border-border shadow-sm hover:shadow-md',
@@ -175,8 +178,11 @@ export function Card(props: CardProps) {
   return (
     <div
       ref={cardRef}
+      data-floe-card-variant={local.enableTilt ? 'tilt' : variant()}
+      data-floe-surface={variant() === 'default' && !local.enableTilt ? 'raised' : undefined}
       class={cn(
         baseStyles,
+        transitions(),
         variantStyles[variant()],
         variant() === 'spotlight' && 'group',
         local.class

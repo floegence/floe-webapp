@@ -147,3 +147,7 @@ pnpm verify
 ## Input focus boundaries
 
 Text inputs, textareas, and native selects change only their existing border color on focus. Mark a composite control's visible boundary with `data-floe-input-surface` and leave its inner editor frameless. Keep independent buttons and navigation keyboard-visible. Standalone host-owned documents can load `@floegence/floe-webapp-core/input-focus.css` and map `--ring`, `--error`, `--accent`, and `--accent-foreground` to their theme. The asset has no shell imports; do not copy it or inject it into third-party frames.
+
+## Surface styles
+
+Keep the default `standard` material unchanged unless a host explicitly opts into `soft-neumorphic`. Prefer existing components; a host-owned boundary may declare `data-floe-surface="flat|raised|inset|floating"` without adding wrappers or interaction semantics. Use theme token overrides, keep rich Card variants separate, and preserve input border-only focus. Review the component-state matrix in `docs/surface-components.md`, including semantic tags, all choice variants, switches, progress and dark-mode contrast. Material uses static lighting; existing local drag/resize state selects a fixed lightweight shadow. Do not add decorative animation loops, global listeners, per-pointer theme writes, or blanket layer promotion. Validate packed `/styles` and `/tailwind` consumers, computed focus styles with animations enabled, and A/B/C performance evidence using the scripts documented in `docs/surface-style.md`.

@@ -87,3 +87,7 @@ When adopting Floe Webapp in an application shell, verify:
 - custom widgets do not suppress focus-visible styles,
 - custom keyboard flows do not conflict with the shared tab/menu behavior,
 - contrast overrides remain token-based and are validated in both light and dark themes.
+
+## Surface material
+
+The optional [soft neumorphic surface style](surface-style.md) keeps inputs on the existing border-only focus contract. Decorative shadows remain static on focus. Independent keyboard indicators compose with material; compound input buttons use local fill. Forced colors and the built-in High Contrast Light palette suppress material decoration while retaining boundaries and state. Reduced motion removes material transitions. Shadows never provide the sole control, selection, or focus affordance.

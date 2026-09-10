@@ -204,7 +204,7 @@ function PillVariant(props: VariantProps) {
           style={{ background: `conic-gradient(from 0deg, var(--primary), transparent, var(--primary))` }}
         />
       </div>
-      <div class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background">
+      <div data-floe-surface="raised" data-floe-surface-part="status" class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background">
         <div class="relative w-4 h-4">
           <For each={[0, 1, 2]}>
             {(i) => (
@@ -233,7 +233,7 @@ function CardVariant(props: VariantProps) {
   return (
     <div class="relative rounded-xl overflow-hidden">
       <div class="absolute inset-0 rounded-xl processing-card-border" />
-      <div class="relative m-[1px] rounded-[11px] bg-card/95 backdrop-blur-sm px-4 py-3">
+      <div data-floe-surface="floating" data-floe-surface-part="status" class="relative m-[1px] rounded-[11px] bg-card/95 backdrop-blur-sm px-4 py-3">
         <div class="absolute inset-0 processing-shimmer-sweep" />
         <div class="relative flex items-center gap-3">
           <div class="relative w-11 h-11">

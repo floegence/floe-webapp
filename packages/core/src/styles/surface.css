@@ -1,0 +1,366 @@
+/* Surface roles change decoration only. The existing element owns layout,
+ * input, portals, and focus. Unlayered rules replace component/utility shadows.
+ * Token fallbacks resolve on the surface, so local Workbench colors participate
+ * and root-level theme.tokens overrides remain authoritative. */
+@property --floe-surface-decoration {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0 0 transparent;
+}
+
+/* Only the visible boundary owns its resolved decoration. A hot shell must not
+ * propagate that private value through its editor/content descendants. */
+/* Preblend quiet seams onto the carrying background. Opaque borders avoid an
+ * extra blending path when native editors repaint their text and caret. */
+:root {
+  --floe-surface-edge: color-mix(in srgb, var(--border) 18%, var(--background));
+  --floe-surface-divider: color-mix(in srgb, var(--border) 12%, var(--background));
+  --floe-surface-highlight: color-mix(in srgb, var(--card) 36%, white 64%);
+  --floe-surface-shade: color-mix(in srgb, var(--card) 78%, black 22%);
+}
+
+/* Keep dimensions and semantic palette tokens intact. Neutral boundaries become
+ * quiet seams; material and existing fills carry the grouping. High contrast
+ * retains the original boundaries. Explicit rich Card variants stay independent. */
+@media (forced-colors: none) {
+  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
+    --floe-input-focus-edge-color: var(--floe-surface-edge);
+  }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+    :is(
+      .border-border,
+      .border-input,
+      [class~='border-border/40'],
+      [data-floe-surface],
+      .workbench-hud,
+      .workbench-lock-button,
+      .workbench-overlay__frame
+    ):not(
+      :where(
+        [aria-invalid='true'],
+        [data-floe-surface-part='tab'],
+        [data-floe-card-variant]:not([data-floe-card-variant='default'])
+      )
+    ) {
+    border-color: var(--floe-surface-edge);
+  }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+    :is(
+      [data-floe-shell-slot],
+      .workbench-widget__header,
+      [data-floe-floating-window-titlebar],
+      .chat-input-toolbar,
+      .workbench-overlay__header,
+      [data-floe-surface-divider]
+    ) {
+    --top-bar-border: var(--floe-surface-divider);
+    --bottom-bar-border: var(--floe-surface-divider);
+    --activity-bar-border: var(--floe-surface-divider);
+    --terminal-panel-border: var(--floe-surface-divider);
+    border-color: var(--floe-surface-divider);
+  }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+    :is(
+      .bg-border,
+      .workbench-dock__divider,
+      .workbench-hud__divider,
+      .workbench-context-menu__separator,
+      .workbench-overlay__header-separator,
+      [data-floe-surface-divider='fill']
+    ) {
+    background-color: var(--floe-surface-divider);
+  }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+    .workbench-canvas__grid {
+    opacity: 0.35;
+  }
+  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+    [data-floe-surface-divider] {
+    border-color: var(--floe-surface-divider);
+  }
+  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+    .workbench-surface {
+    --wb-dock-material-border: var(--floe-surface-edge);
+    --wb-dock-material-border-top: var(--floe-surface-edge);
+    --wb-dock-material-shadow: var(
+      --floe-surface-shadow-raised,
+      2px 2px 5px var(--floe-surface-shade),
+      -2px -2px 5px var(--floe-surface-highlight)
+    );
+  }
+}
+:root.dark {
+  --floe-surface-highlight: color-mix(in srgb, var(--card) 86%, white 14%);
+  --floe-surface-shade: color-mix(in srgb, var(--card) 38%, black 62%);
+}
+
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+  --floe-surface-decoration: 0 0 transparent;
+  box-shadow: var(--floe-surface-decoration);
+  transition-property: color, background-color, border-color, opacity;
+}
+
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='raised'] {
+  --floe-surface-decoration: var(
+    --floe-surface-shadow-raised,
+    2px 2px 5px var(--floe-surface-shade),
+    -2px -2px 5px var(--floe-surface-highlight)
+  );
+}
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='inset'] {
+  --floe-surface-decoration: var(
+    --floe-surface-shadow-inset,
+    inset 1px 1px 3px var(--floe-surface-shade),
+    inset -1px -1px 3px var(--floe-surface-highlight)
+  );
+}
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='floating'] {
+  --floe-surface-decoration: var(
+    --floe-surface-shadow-floating,
+    4px 6px 12px -3px var(--floe-surface-shade),
+    inset 1px 1px 0 var(--floe-surface-highlight)
+  );
+  background-color: var(--card);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* A compound input has one decorative boundary, including host compositions
+ * that contain an Input component. Dense nested actions stay flat. */
+[data-floe-surface-style='soft-neumorphic'] [data-floe-input-surface] [data-floe-surface],
+[data-floe-surface-style='soft-neumorphic']
+  [data-floe-surface='raised']
+  [data-floe-surface='raised']:not([data-floe-surface-part]),
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='flat'] {
+  --floe-surface-decoration: 0 0 transparent;
+}
+
+/* Decoration cannot replace independent keyboard indicators. Inputs, including
+ * button-based compound fields, continue to use input-focus.css exclusively. */
+[data-floe-surface-style='soft-neumorphic']
+  [data-floe-surface]:focus-visible:not(
+    :where(input, textarea, select, [data-floe-input-surface], [data-floe-input-surface] *)
+  ) {
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--ring),
+    var(--floe-surface-decoration);
+}
+
+[data-floe-surface-style='soft-neumorphic'] .workbench-widget[data-floe-surface] {
+  --floe-surface-highlight: color-mix(in srgb, var(--wb-widget-body) 36%, white 64%);
+  --floe-surface-shade: color-mix(in srgb, var(--wb-widget-body) 65%, black 35%);
+  /* Some local palettes use translucent body tints. Composite onto an opaque
+   * card base instead of reintroducing glass or letting content bleed through. */
+  background: linear-gradient(var(--wb-widget-body), var(--wb-widget-body)), var(--card);
+}
+:root.dark[data-floe-surface-style='soft-neumorphic'] .workbench-widget[data-floe-surface] {
+  --floe-surface-highlight: color-mix(in srgb, var(--card) 86%, var(--wb-text) 14%);
+}
+[data-floe-surface-style='soft-neumorphic'] .workbench-widget.is-selected {
+  border-color: color-mix(in srgb, var(--wb-accent) 18%, transparent);
+}
+[data-floe-surface-style='soft-neumorphic']
+  .workbench-widget.is-selected
+  .workbench-widget__header {
+  background: color-mix(in srgb, var(--wb-accent) 12%, var(--card));
+  color: var(--wb-accent);
+}
+[data-floe-surface-style='soft-neumorphic'] [data-floe-surface-interacting='true'] {
+  --floe-surface-decoration: var(
+    --floe-surface-shadow-interacting,
+    0 1px 2px var(--floe-surface-shade)
+  );
+  transition: none;
+}
+
+/* Compact controls use the same four roles at their existing visible boundary.
+ * Tight static highlights carry material without large soft shadows per item.
+ * Functional transforms, progress widths, and SVG strokes retain their motion. */
+@media (forced-colors: none) {
+  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
+    --floe-surface-compact-raised:
+      1px 2px 3px var(--floe-surface-shade),
+      inset 1px 1px 1px color-mix(in srgb, white 28%, transparent);
+    --floe-surface-compact-inset:
+      inset 1px 2px 3px var(--floe-surface-shade), inset -1px -1px 2px var(--floe-surface-highlight);
+  }
+  :root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
+    --floe-surface-compact-raised:
+      1px 2px 3px var(--floe-surface-shade),
+      inset 1px 1px 1px color-mix(in srgb, white 18%, transparent);
+  }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
+    & [data-floe-surface-part][data-floe-surface='raised'] {
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-raised,
+        var(--floe-surface-compact-raised)
+      );
+    }
+    & [data-floe-surface-part][data-floe-surface='inset'] {
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-inset,
+        var(--floe-surface-compact-inset)
+      );
+    }
+    & :is([data-floe-surface-part='badge'], [data-floe-surface-part='progress-fill']) {
+      /* These can repeat in dense lists. Keep lighting inside the painted box. */
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-raised,
+        inset 0 1px 1px color-mix(in srgb, white 30%, transparent),
+        inset 0 -1px 2px color-mix(in srgb, black 24%, transparent)
+      );
+    }
+    & [data-floe-surface-part='badge'][data-floe-surface='inset'],
+    & [data-floe-surface-part='progress-fill'][data-floe-surface='inset'] {
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-inset,
+        var(--floe-surface-compact-inset)
+      );
+    }
+    & :is([data-floe-surface-part='rail'], [data-floe-surface-part='tab-rail']) {
+      background-color: color-mix(in srgb, var(--card) 65%, var(--muted));
+    }
+    & [data-floe-surface-part='choice'] {
+      background-color: var(--card);
+    }
+    & [data-floe-surface-part='choice'][data-floe-selected='true'] {
+      background-color: color-mix(in srgb, var(--primary) 17%, var(--card));
+    }
+    & [data-floe-choice-variant='button'][data-floe-selected='true'] {
+      background-color: var(--primary);
+    }
+    & [data-floe-surface-part='segment'][aria-checked='true'],
+    & [data-floe-surface-part='tab'][aria-selected='true'] {
+      background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+      color: var(--foreground);
+    }
+    & [data-floe-surface-part='segment'][aria-checked='false'] {
+      background-color: transparent;
+    }
+
+    & [data-floe-surface-part='progress-circle'] {
+      border-radius: 50%;
+      background-color: var(--card);
+    }
+    & [data-floe-surface-part='step'][data-floe-step-state='current'] {
+      background-color: color-mix(in srgb, var(--primary) 16%, var(--card));
+      color: var(--primary);
+    }
+    & [data-floe-surface-part='indicator']:not([data-floe-selected='true']),
+    & [data-floe-surface-part='switch-track']:not([data-floe-selected='true']) {
+      /* The control face, not a strong outline, supplies non-text contrast. */
+      background-color: var(--muted-foreground);
+    }
+    & [data-floe-surface-part='switch-thumb'] {
+      background-color: var(--card);
+      transition-property: transform, translate, scale;
+    }
+    &
+      [data-floe-surface-part='switch-track'][data-floe-selected='true']
+      > [data-floe-surface-part='switch-thumb'] {
+      background-color: var(--primary-foreground);
+    }
+    &
+      [data-floe-surface-part='indicator'][data-floe-selected='true']:has(
+        [data-floe-surface-part='radio-dot']
+      ) {
+      background-color: var(--card);
+    }
+    & [data-floe-surface-part='radio-dot'] {
+      background-color: var(--foreground);
+      transition-property: transform, translate, scale;
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-raised,
+        0 1px 2px color-mix(in srgb, black 35%, transparent),
+        inset 0 1px 1px color-mix(in srgb, white 45%, transparent)
+      );
+    }
+    & [data-floe-surface-part='progress-fill'] {
+      transition-property: width, background-color;
+    }
+    & [data-floe-surface-part='action']:active:not(:disabled) {
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-inset,
+        var(--floe-surface-compact-inset)
+      );
+    }
+    /* Hidden native inputs delegate their indicator to the visible existing
+     * face. A pointer selection does not receive this keyboard-only outline. */
+    & [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
+    &
+      [data-floe-choice-input]:focus-visible
+      + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
+      outline: 2px solid var(--ring);
+      outline-offset: 3px;
+      box-shadow: var(--floe-surface-decoration);
+    }
+  }
+  :where(
+    :root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+  ) {
+    /* A solid carrying plane avoids repainting a large gradient behind editors. */
+    & [data-floe-card-variant='default'][data-floe-surface='raised'] {
+      background-color: color-mix(in srgb, var(--card) 96%, white);
+    }
+    & [data-floe-input-surface],
+    & :is(input, textarea)[data-floe-surface='inset'] {
+      background-color: color-mix(in srgb, var(--card) 82%, black);
+    }
+  }
+}
+
+/* Explicit host opt-outs and compound input boundaries outrank compact states. */
+:root[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='flat'],
+:root[data-floe-surface-style='soft-neumorphic'] [data-floe-input-surface] [data-floe-surface] {
+  --floe-surface-decoration: 0 0 transparent;
+}
+
+/* High contrast stays flat, with real boundaries and keyboard indicators. */
+:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+  [data-floe-surface] {
+  --floe-surface-decoration: 0 0 transparent;
+}
+:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+  .workbench-widget.is-selected {
+  border-color: var(--wb-accent);
+}
+@media (forced-colors: active) {
+  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+    --floe-surface-decoration: 0 0 transparent;
+  }
+  [data-floe-surface-style='soft-neumorphic']
+    [data-floe-surface]:focus-visible:not(
+      :where(input, textarea, select, [data-floe-input-surface], [data-floe-input-surface] *)
+    ) {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  [data-floe-surface-style='soft-neumorphic'] .workbench-widget.is-selected {
+    border-color: Highlight;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+    transition: none;
+  }
+}
+
+:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+  [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
+:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+  [data-floe-choice-input]:focus-visible
+  + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+@media (forced-colors: active) {
+  [data-floe-surface-style='soft-neumorphic']
+    [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
+  [data-floe-surface-style='soft-neumorphic']
+    [data-floe-choice-input]:focus-visible
+    + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
+    outline: 2px solid Highlight;
+    outline-offset: 3px;
+  }
+}

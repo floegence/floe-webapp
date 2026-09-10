@@ -35,3 +35,35 @@ test('recognizes CSS input ownership without banning unrelated buttons', () => {
     []
   );
 });
+
+test('classifies each positive selector instead of treating excluded inputs as targets', () => {
+  const exempt =
+    '.material [data-surface]:focus-visible:not(:where(input, textarea, select, [data-floe-input-surface], [data-floe-input-surface] *))';
+  assert.deepEqual(inspectInputCSS(`${exempt} {box-shadow:0 0 0 2px blue;}`, new Set()), []);
+  for (const selector of [
+    `${exempt}, input:focus`,
+    ':is(input,textarea):focus:not(:disabled)',
+    'input:focus:not([type="checkbox"], [type="radio"])',
+    '[data-floe-input-surface]:focus-within:not([aria-disabled="true"])',
+    ':focus-visible:not(:not(input))',
+  ])
+    assert.equal(
+      inspectInputCSS(`${selector} {box-shadow:0 0 0 2px blue;}`, new Set()).length,
+      1,
+      selector
+    );
+});
+
+test('does not mistake attribute names for input type selectors', () => {
+  assert.deepEqual(
+    inspectInputCSS(
+      '[data-choice-input]:focus-visible + .indicator {outline:2px solid blue;}',
+      new Set()
+    ),
+    []
+  );
+  assert.equal(
+    inspectInputCSS('[data-choice-input] input:focus {outline:2px solid blue;}', new Set()).length,
+    1
+  );
+});

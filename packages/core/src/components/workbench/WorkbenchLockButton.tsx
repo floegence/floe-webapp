@@ -16,6 +16,7 @@ export function WorkbenchLockButton(props: WorkbenchLockButtonProps) {
     <button
       type="button"
       class="workbench-lock-button"
+      data-floe-surface="floating"
       classList={{ 'is-locked': props.locked }}
       aria-label={props.shortcutLabel ? `${label()} (${props.shortcutLabel})` : label()}
       aria-pressed={props.locked}

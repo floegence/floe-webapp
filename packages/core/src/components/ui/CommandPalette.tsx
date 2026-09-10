@@ -128,12 +128,13 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
             'overflow-hidden'
           )}
           style={{ 'z-index': props.zIndex }}
+          data-floe-surface="floating"
           data-floating-presence={palettePresence.state()}
           aria-hidden={palettePresence.exiting() ? 'true' : undefined}
           onKeyDown={handleKeyDown}
         >
           {/* Search input */}
-          <div data-floe-input-surface class="flex items-center gap-3 px-4 pt-1 border-b border-border">
+          <div data-floe-input-surface data-floe-surface="inset" class="flex items-center gap-3 px-4 pt-1 border-b border-border">
             <Search class="w-5 h-5 text-muted-foreground flex-shrink-0" />
             <input
               ref={inputRef}

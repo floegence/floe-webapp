@@ -99,6 +99,7 @@ export const ChatInput: Component<ChatInputProps> = (props) => {
   return (
     <div
       data-floe-input-surface
+      data-floe-surface="inset"
       aria-disabled={props.disabled ? true : undefined}
       class={cn(
         'chat-input-container',

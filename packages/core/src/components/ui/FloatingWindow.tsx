@@ -15,6 +15,7 @@ import { useLayout } from '../../context/LayoutContext';
 import { Button } from './Button';
 import { X, Maximize, Restore } from '../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
+import { startPointerSession, type PointerSessionController } from './pointerSession';
 import {
   normalizeFloatingWindowRect,
   resolveFloatingWindowViewport,
@@ -102,6 +103,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   let windowRef: HTMLDivElement | undefined;
   let activePointerId: number | null = null;
+  let pointerSession: PointerSessionController | undefined;
   let mode: 'drag' | 'resize' | null = null;
   let lastPointerPos = { x: 0, y: 0 };
   let rafId: number | null = null;
@@ -251,7 +253,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     }));
   };
 
-  const stopInteraction = (pointerId?: number, commit = true) => {
+  const finishInteraction = (commit: boolean) => {
     if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -260,15 +262,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
       applyLatestPointerRect();
     }
     const committedRect = commit ? (readLiveRectFromDom() ?? liveRect) : null;
-    if (pointerId !== undefined) {
-      try {
-        if (typeof windowRef?.releasePointerCapture === 'function') {
-          windowRef.releasePointerCapture(pointerId);
-        }
-      } catch {
-        // Ignore (e.g. already released).
-      }
-    }
 
     batch(() => {
       if (committedRect) {
@@ -280,7 +273,14 @@ export function FloatingWindow(props: FloatingWindowProps) {
       setIsResizing(false);
     });
     setGlobalInteractionStyles(false, '');
+    pointerSession = undefined;
   };
+
+  const stopInteraction = (commit = false) => {
+    if (pointerSession) pointerSession.stop({ commit });
+    else finishInteraction(commit);
+  };
+  onCleanup(() => stopInteraction(false));
 
   onMount(() => {
     if (!props.open) {
@@ -342,7 +342,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   createEffect(() => {
     if (!props.open) {
       setIsActive(false);
-      stopInteraction(activePointerId ?? undefined, false);
+      stopInteraction(false);
       return;
     }
     setIsActive(true);
@@ -382,7 +382,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
 
   const handleDragStart = (e: PointerEvent) => {
-    if (!draggable() || isMaximized()) return;
+    if (!draggable() || isMaximized() || activePointerId !== null) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
@@ -397,14 +397,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
     dragStartRect = { ...liveRect };
     lastPointerPos = { x: e.clientX, y: e.clientY };
     setGlobalInteractionStyles(true, 'grabbing');
-    if (typeof windowRef?.setPointerCapture === 'function') {
-      windowRef.setPointerCapture(e.pointerId);
-    }
+    startWindowPointerSession(e);
   };
 
   // eslint-disable-next-line solid/reactivity -- This returns an event handler.
   const handleResizeStart = (handle: FloatingWindowResizeHandle) => (e: PointerEvent) => {
-    if (!resizable() || isMaximized()) return;
+    if (!resizable() || isMaximized() || activePointerId !== null) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     e.preventDefault();
@@ -418,9 +416,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     resizeStartRect = { ...liveRect };
     lastPointerPos = { x: e.clientX, y: e.clientY };
     setGlobalInteractionStyles(true, RESIZE_CURSORS[handle]);
-    if (typeof windowRef?.setPointerCapture === 'function') {
-      windowRef.setPointerCapture(e.pointerId);
-    }
+    startWindowPointerSession(e);
   };
 
   const flushPointerMove = () => {
@@ -442,15 +438,22 @@ export function FloatingWindow(props: FloatingWindowProps) {
     rafId = requestAnimationFrame(flushPointerMove);
   };
 
-  const handlePointerUpOrCancel = (e: PointerEvent) => {
-    if (activePointerId === null || e.pointerId !== activePointerId) return;
-    lastPointerPos = { x: e.clientX, y: e.clientY };
-    stopInteraction(e.pointerId);
+  const startWindowPointerSession = (event: PointerEvent) => {
+    pointerSession = startPointerSession({
+      pointerEvent: event,
+      captureEl: windowRef,
+      onMove: handlePointerMove,
+      onEnd: ({ commit, reason, snapshot }) => {
+        lastPointerPos = { x: snapshot.latestClientX, y: snapshot.latestClientY };
+        // Preserve FloatingWindow's existing commit-on-cancel geometry contract.
+        finishInteraction(commit || reason === 'pointer_cancel');
+      },
+    });
   };
 
   const toggleMaximize = () => {
     if (activePointerId !== null) {
-      stopInteraction(activePointerId, true);
+      stopInteraction(true);
     }
 
     if (isMaximized()) {
@@ -533,9 +536,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,
           }}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUpOrCancel}
-          onPointerCancel={handlePointerUpOrCancel}
           role="dialog"
           aria-labelledby={props.title ? titleId() : undefined}
           tabIndex={-1}
@@ -545,6 +545,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
             data-floe-dialog-surface-host="true"
             {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
             data-floe-floating-window-surface="true"
+            data-floe-surface="floating"
+            data-floe-surface-interacting={isDragging() || isResizing() ? 'true' : undefined}
             data-floe-floating-window-state={isActive() ? 'active' : 'inactive'}
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
             class={cn(

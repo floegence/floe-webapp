@@ -1816,3 +1816,12 @@
     transform-origin: 0 0;
   }
 }
+
+/* Field triggers use input-focus.css. Action triggers retain an independent
+ * keyboard indicator without applying ring utilities to a conditional field. */
+@layer components {
+  [data-floe-dropdown-trigger]:focus-visible:not([data-floe-input-surface]) {
+    outline: 1px solid var(--ring);
+    outline-offset: 0;
+  }
+}

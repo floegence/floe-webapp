@@ -14,11 +14,13 @@
   textarea, select, [data-floe-input-surface]
 ):focus:not(:disabled):not([aria-disabled='true']):not([data-floe-input-surface] :is(input, textarea, select)),
 [data-floe-input-surface]:focus-within:not(:disabled):not([aria-disabled='true']) {
-  border-color: var(--floe-input-focus-color, var(--ring));
+  border-color: var(--floe-input-focus-edge-color, var(--floe-input-focus-color, var(--ring)));
+  border-bottom-color: var(--floe-input-focus-color, var(--ring));
 }
 
 :is(input, textarea, select, [data-floe-input-surface])[aria-invalid='true'] {
   --floe-input-focus-color: var(--error);
+  --floe-input-focus-edge-color: var(--error);
 }
 
 /* Internal buttons use a local fill to identify keyboard focus without a second frame. */
@@ -32,6 +34,6 @@
   :is(input, textarea, select, [data-floe-input-surface]),
   :is(input, textarea, select, [data-floe-input-surface])[aria-invalid='true'] {
     --floe-input-focus-color: Highlight;
+    --floe-input-focus-edge-color: Highlight;
   }
 }
-

@@ -65,7 +65,8 @@ export function Switch(props: SwitchProps) {
     'id',
   ]);
 
-  const id = () => local.id ?? createUniqueId();
+  const generatedId = createUniqueId();
+  const id = () => local.id ?? generatedId;
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
   const labelPos = () => local.labelPosition ?? 'right';
@@ -78,6 +79,7 @@ export function Switch(props: SwitchProps) {
   const SwitchControl = () => (
     <div class="relative inline-flex items-center shrink-0">
       <input
+        data-floe-choice-input
         type="checkbox"
         role="switch"
         id={id()}
@@ -89,6 +91,9 @@ export function Switch(props: SwitchProps) {
         {...rest}
       />
       <div
+        data-floe-surface="inset"
+        data-floe-surface-part="switch-track"
+        data-floe-selected={local.checked ? 'true' : undefined}
         class={cn(
           'rounded-full transition-colors duration-200 cursor-pointer',
           styles().track,
@@ -98,6 +103,8 @@ export function Switch(props: SwitchProps) {
         )}
       >
         <div
+          data-floe-surface="raised"
+          data-floe-surface-part="switch-thumb"
           class={cn(
             'rounded-full bg-background shadow-sm transition-transform duration-200',
             styles().thumb,

@@ -32,9 +32,11 @@ try {
     content: '*, *::before, *::after { transition: none !important; animation: none !important; } .host-field { border: 1px solid var(--input); padding: 8px; background:var(--background); }',
   });
   const themes = await page.evaluate(() => window.inputFocusThemes);
-  for (const theme of themes) {
+  const variants = themes.flatMap(theme => ['standard', 'soft-neumorphic'].map(surface => ({ ...theme, surface })));
+  for (const theme of variants) {
     await page.evaluate((theme) => {
       document.documentElement.dataset.floeShellTheme = theme.name;
+      document.documentElement.dataset.floeSurfaceStyle = theme.surface;
       document.documentElement.classList.toggle('dark', theme.mode === 'dark');
     }, theme);
     const results = await page.evaluate(() => {
@@ -72,7 +74,7 @@ try {
         });
     });
     for (const result of results) {
-      const label = `${theme.name}/${result.name}`;
+      const label = `${theme.name}/${theme.surface}/${result.name}`;
       for (const key of ['width', 'height', 'border', 'padding', 'shadow'])
         assert.equal(result.after[key], result.before[key], `${label}: focus changes ${key}`);
       assert.ok(
@@ -173,7 +175,7 @@ try {
   assert.equal(standalone.border, 'rgb(20, 100, 180)');
   assert.equal(standalone.outline, 'none');
   assert.deepEqual(pageErrors, []);
-  console.log(JSON.stringify({ themes: themes.length, fields: 17, status: 'passed' }));
+  console.log(JSON.stringify({ themes: themes.length, materials: 2, fields: 17, status: 'passed' }));
 } finally {
   await browser.close();
   await server.close();

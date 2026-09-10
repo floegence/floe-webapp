@@ -58,6 +58,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - Reuse `useOverlayMask()` for overlays.
    - Reuse `startHotInteraction()` and preview/commit separation for drag or resize flows.
 6. Keep styling on design tokens and official CSS entrypoints:
+   - For optional material, read `docs/surface-style.md`: use `theme.defaultSurfaceStyle` / `useTheme().setSurfaceStyle()` and existing component surface roles. Do not add parallel neumorphic components or a second theme owner.
    - Preferred: `@floegence/floe-webapp-core/tailwind`
    - Fallback: `@floegence/floe-webapp-core/styles`
 7. When editing this repo's skill package, treat `skills/floe-webapp/*` as the source of truth and sync these mirrors before finishing:

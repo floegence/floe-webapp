@@ -57,6 +57,7 @@ export function Input(props: InputProps) {
 
       <input
         id={inputId()}
+        data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
@@ -125,6 +126,7 @@ export function Textarea(props: TextareaProps) {
     <div>
       <textarea
         id={textareaId()}
+        data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
@@ -244,6 +246,7 @@ export function NumberInput(props: NumberInputProps) {
     <div class={props.class}>
       <div
         data-floe-input-surface
+        data-floe-surface="inset"
         aria-invalid={props.error ? true : undefined}
         aria-disabled={props.disabled ? true : undefined}
         class={cn(
@@ -421,6 +424,7 @@ export function AffixInput(props: AffixInputProps) {
     <div class={local.class}>
       <div
         data-floe-input-surface
+        data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-disabled={rest.disabled ? true : undefined}
         class={cn(

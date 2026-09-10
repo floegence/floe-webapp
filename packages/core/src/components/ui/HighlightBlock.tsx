@@ -138,6 +138,8 @@ export function HighlightBlock(props: HighlightBlockProps) {
 
   return (
     <div
+      data-floe-surface="raised"
+      data-floe-surface-part="message"
       class={cn(
         'highlight-block',
         config().containerClass,

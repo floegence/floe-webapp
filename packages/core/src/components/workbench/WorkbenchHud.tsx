@@ -19,7 +19,7 @@ export interface WorkbenchHudProps {
 
 export function WorkbenchHud(props: WorkbenchHudProps) {
   return (
-    <div class="workbench-hud" data-floe-canvas-interactive="true">
+    <div class="workbench-hud" data-floe-surface="floating" data-floe-canvas-interactive="true">
       <Show when={props.activeTheme && props.onSelectTheme}>
         <WorkbenchThemeSelector
           activeTheme={props.activeTheme!}

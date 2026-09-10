@@ -3,6 +3,8 @@ import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import {
   applyShellThemeAttribute,
+  applySurfaceStyleAttribute,
+  isFloeSurfaceStyle,
   applyTheme,
   getSystemTheme,
   isThemeType,
@@ -14,9 +16,12 @@ import {
   type FloeShellThemeSelection,
   type FloeThemePreset,
   type ThemeType,
+  type FloeSurfaceStyle,
 } from '../styles/themes';
 
 export interface ThemeContextValue {
+  surfaceStyle: Accessor<FloeSurfaceStyle>;
+  setSurfaceStyle: (style: FloeSurfaceStyle) => void;
   theme: Accessor<ThemeType>;
   resolvedTheme: Accessor<'light' | 'dark'>;
   setTheme: (theme: ThemeType) => void;
@@ -47,6 +52,20 @@ export function createThemeService(): ThemeContextValue {
   const floe = useResolvedFloeConfig();
   const storageKey = () => floe.config.theme.storageKey;
   const defaultTheme = () => floe.config.theme.defaultTheme;
+  const surfaceStyleStorageKey = () => floe.config.theme.surfaceStyleStorageKey ?? `${storageKey()}-surface-style`;
+  const configuredSurfaceStyle = floe.config.theme.defaultSurfaceStyle;
+  const defaultSurfaceStyle = isFloeSurfaceStyle(configuredSurfaceStyle) ? configuredSurfaceStyle : 'standard';
+  const storedSurfaceStyle = floe.persist.load<unknown>(surfaceStyleStorageKey(), defaultSurfaceStyle);
+  const [surfaceStyle, setSurfaceStyleSignal] = createSignal<FloeSurfaceStyle>(
+    isFloeSurfaceStyle(storedSurfaceStyle) ? storedSurfaceStyle : defaultSurfaceStyle
+  );
+  const setSurfaceStyle = (style: FloeSurfaceStyle) => {
+    const next = isFloeSurfaceStyle(style) ? style : defaultSurfaceStyle;
+    setSurfaceStyleSignal(next);
+    floe.persist.debouncedSave(surfaceStyleStorageKey(), next);
+  };
+  // Material updates never rerun palette application or recreate the consumer tree.
+  createEffect(() => applySurfaceStyleAttribute(surfaceStyle()));
   const themeTokens = () => floe.config.theme.tokens;
   const themePresets = () => floe.config.theme.presets ?? [];
   const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
@@ -147,6 +166,7 @@ export function createThemeService(): ThemeContextValue {
   });
 
   onCleanup(() => {
+    applySurfaceStyleAttribute(undefined);
     applyShellThemeAttribute(undefined);
     appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames);
   });
@@ -198,6 +218,8 @@ export function createThemeService(): ThemeContextValue {
   };
 
   return {
+    surfaceStyle,
+    setSurfaceStyle,
     theme,
     resolvedTheme,
     setTheme,

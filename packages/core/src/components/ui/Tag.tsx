@@ -27,6 +27,8 @@ export function Tag(props: TagProps) {
 
   return (
     <span
+      data-floe-surface={local.tone === 'soft' ? 'inset' : 'raised'}
+      data-floe-surface-part="badge"
       class={cn(
         'floe-tag',
         `floe-tag--${local.variant ?? 'neutral'}`,

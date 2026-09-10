@@ -792,6 +792,8 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
     <article
       ref={widgetRootEl}
       class="workbench-widget"
+      data-floe-surface="floating"
+      data-floe-surface-interacting={isDragging() || isResizing() ? 'true' : undefined}
       classList={{
         'is-selected': selected(),
         'is-dragging': isDragging(),

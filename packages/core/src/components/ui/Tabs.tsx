@@ -586,6 +586,8 @@ export function Tabs(props: TabsProps) {
           local.slotClassNames?.scrollContainer
         )}
         role="tablist"
+        data-floe-surface="inset"
+        data-floe-surface-part="tab-rail"
         aria-orientation="horizontal"
         aria-label={local.ariaLabel}
       >
@@ -622,6 +624,8 @@ export function Tabs(props: TabsProps) {
                 class={getTabStyles(isCurrentActive(), item.disabled)}
                 onClick={() => handleTabClick(item.id, item.disabled)}
                 role="tab"
+                data-floe-surface={isCurrentActive() ? 'raised' : 'flat'}
+                data-floe-surface-part="tab"
                 aria-selected={isCurrentActive()}
                 aria-disabled={item.disabled}
                 tabIndex={item.disabled ? -1 : isCurrentActive() ? 0 : -1}

@@ -106,7 +106,8 @@ export function RadioGroup(props: RadioGroupProps) {
     'children',
   ]);
 
-  const groupName = () => local.name ?? createUniqueId();
+  const generatedName = createUniqueId();
+  const groupName = () => local.name ?? generatedName;
   const variant = () => local.variant ?? 'default';
 
   const contextValue: RadioContextValue = {
@@ -146,6 +147,8 @@ export function RadioGroup(props: RadioGroupProps) {
     <RadioContext.Provider value={contextValue}>
       <div
         role="radiogroup"
+        data-floe-surface={variant() === 'button' ? 'inset' : undefined}
+        data-floe-surface-part={variant() === 'button' ? 'rail' : undefined}
         class={cn(getContainerClass(), local.class)}
         {...rest}
       >
@@ -168,7 +171,8 @@ export function RadioOption(props: RadioOptionProps) {
     'id',
   ]);
 
-  const id = () => local.id ?? createUniqueId();
+  const generatedId = createUniqueId();
+  const id = () => local.id ?? generatedId;
   const size = () => local.size ?? context.size();
   const variant = () => context.variant();
   const isDisabled = () => local.disabled ?? context.disabled();
@@ -183,6 +187,7 @@ export function RadioOption(props: RadioOptionProps) {
   // Common radio input for all variants
   const RadioInput = (inputProps: { class?: string }) => (
     <input
+      data-floe-choice-input
       type="radio"
       id={id()}
       name={context.name()}
@@ -198,18 +203,23 @@ export function RadioOption(props: RadioOptionProps) {
   // Radio indicator for default and card variants
   const RadioIndicator = () => (
     <div
+      data-floe-surface="inset"
+      data-floe-surface-part="indicator"
+      data-floe-selected={isChecked() ? 'true' : undefined}
       class={cn(
         'rounded-full border-2 transition-colors duration-150',
         'flex items-center justify-center',
         sizeStyles[size()].outer,
         isChecked()
           ? 'border-primary bg-primary'
-          : 'border-input bg-background hover:border-primary/50',
+          : cn('border-input bg-background', variant() === 'default' && 'hover:border-primary/50'),
         isDisabled() && 'cursor-not-allowed',
         'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
       )}
     >
       <div
+        data-floe-surface="raised"
+        data-floe-surface-part="radio-dot"
         class={cn(
           'rounded-full bg-primary-foreground transition-transform duration-150',
           sizeStyles[size()].inner,
@@ -254,6 +264,10 @@ export function RadioOption(props: RadioOptionProps) {
       {/* Button variant - segmented control style */}
       <Match when={variant() === 'button'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'cursor-pointer select-none transition-colors duration-150',
             'border-r border-border last:border-r-0',
@@ -273,6 +287,10 @@ export function RadioOption(props: RadioOptionProps) {
       {/* Card variant - bordered card with radio indicator */}
       <Match when={variant() === 'card'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'relative cursor-pointer select-none rounded-lg border-2 transition-all duration-150',
             cardSizeStyles[size()],
@@ -286,25 +304,7 @@ export function RadioOption(props: RadioOptionProps) {
           <RadioInput />
           <div class="flex items-start gap-3">
             <div class="flex items-center justify-center pt-0.5">
-              <div
-                class={cn(
-                  'rounded-full border-2 transition-colors duration-150',
-                  'flex items-center justify-center',
-                  sizeStyles[size()].outer,
-                  isChecked()
-                    ? 'border-primary bg-primary'
-                    : 'border-input bg-background',
-                  'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
-                )}
-              >
-                <div
-                  class={cn(
-                    'rounded-full bg-primary-foreground transition-transform duration-150',
-                    sizeStyles[size()].inner,
-                    isChecked() ? 'scale-100' : 'scale-0'
-                  )}
-                />
-              </div>
+              <RadioIndicator />
             </div>
             <div class="flex flex-col flex-1 min-w-0">
               <Show when={local.label}>
@@ -333,6 +333,10 @@ export function RadioOption(props: RadioOptionProps) {
       {/* Tile variant - icon-centric card */}
       <Match when={variant() === 'tile'}>
         <label
+          data-floe-surface={isChecked() ? 'inset' : 'raised'}
+          data-floe-surface-part="choice"
+          data-floe-selected={isChecked() ? 'true' : undefined}
+          data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
             'rounded-lg border-2 transition-all duration-150 text-center',
