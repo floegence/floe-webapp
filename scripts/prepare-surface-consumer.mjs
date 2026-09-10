@@ -1,4 +1,12 @@
-import { cpSync, mkdirSync, readFileSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
+import {
+  cpSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  symlinkSync,
+  rmSync,
+} from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
@@ -17,12 +25,18 @@ const tarball = resolve(repo, process.argv[3] ?? '.cache/surface-style/current-c
 if (name === 'current') {
   mkdirSync(dirname(tarball), { recursive: true });
   const metadata = JSON.parse(readFileSync(resolve(repo, 'packages/core/package.json'), 'utf8'));
-  execFileSync('pnpm', ['pack', '--pack-destination', '../../.cache/surface-style'], {
-    cwd: resolve(repo, 'packages/core'),
-    stdio: 'ignore',
-  });
-  const packedName = `${metadata.name.replace(/^@/, '').replace('/', '-')}-${metadata.version}.tgz`;
-  cpSync(resolve(repo, '.cache/surface-style', packedName), tarball);
+  // Keep a same-version development pack from overwriting a published baseline.
+  const staging = mkdtempSync(resolve(repo, '.cache/surface-style/pack-'));
+  try {
+    execFileSync('pnpm', ['pack', '--pack-destination', staging], {
+      cwd: resolve(repo, 'packages/core'),
+      stdio: 'ignore',
+    });
+    const packedName = `${metadata.name.replace(/^@/, '').replace('/', '-')}-${metadata.version}.tgz`;
+    cpSync(resolve(staging, packedName), tarball);
+  } finally {
+    rmSync(staging, { recursive: true, force: true });
+  }
 }
 const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
 for (const entry of ['styles', 'tailwind']) {
@@ -98,7 +112,7 @@ writeFileSync(
       tarball,
       packageSha256: sha256(tarball),
       fixtureSha256: Object.fromEntries(
-        ['main.tsx', 'layout.css'].map((file) => [
+        ['main.tsx', 'layout.css', 'WindowMaterialStudy.tsx'].map((file) => [
           file,
           sha256(resolve(repo, 'scripts/fixtures/surface-style', file)),
         ])

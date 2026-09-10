@@ -1,5 +1,11 @@
 /* Generated from src/styles/themes/presets.ts. Do not edit by hand. */
 :root[data-floe-shell-theme='paper'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f1e8;
   --foreground: #243447;
   --primary: #243447;
@@ -65,6 +71,12 @@
   --glow: #243447;
 }
 :root[data-floe-shell-theme='mist'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #eef3f7;
   --foreground: #1f3442;
   --primary: #234e63;
@@ -130,6 +142,12 @@
   --glow: #234e63;
 }
 :root[data-floe-shell-theme='meadow'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #eef4ec;
   --foreground: #20372d;
   --primary: #24523d;
@@ -195,6 +213,12 @@
   --glow: #24523d;
 }
 :root[data-floe-shell-theme='citrus'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #fff5e1;
   --foreground: #3f2d1c;
   --primary: #874000;
@@ -260,6 +284,12 @@
   --glow: #874000;
 }
 :root[data-floe-shell-theme='lilac'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f0fa;
   --foreground: #30253d;
   --primary: #51407e;
@@ -325,6 +355,12 @@
   --glow: #51407e;
 }
 :root[data-floe-shell-theme='light-plus'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #ffffff;
   --foreground: #1f1f1f;
   --primary: #005fb8;
@@ -390,6 +426,12 @@
   --glow: #005fb8;
 }
 :root[data-floe-shell-theme='quiet-light'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f5f5;
   --foreground: #333333;
   --primary: #4b61b9;
@@ -455,6 +497,12 @@
   --glow: #4b61b9;
 }
 :root[data-floe-shell-theme='solarized-light'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #fdf6e3;
   --foreground: #586e75;
   --primary: #075e73;
@@ -520,6 +568,12 @@
   --glow: #075e73;
 }
 :root[data-floe-shell-theme='github-light'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f6f8fa;
   --foreground: #24292f;
   --primary: #0969da;
@@ -585,6 +639,12 @@
   --glow: #0969da;
 }
 :root[data-floe-shell-theme='hc-light'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: var(--muted-foreground);
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #ffffff;
   --foreground: #000000;
   --primary: #0000a8;
@@ -650,6 +710,12 @@
   --glow: #0000a8;
 }
 :root[data-floe-shell-theme='ink'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #0b1420;
   --foreground: #eaf2f7;
   --primary: #86a6e7;
@@ -715,6 +781,12 @@
   --glow: #395c9f;
 }
 :root[data-floe-shell-theme='slate'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #171b22;
   --foreground: #eef1f5;
   --primary: #a8b7c8;
@@ -780,6 +852,12 @@
   --glow: #52677e;
 }
 :root[data-floe-shell-theme='forest'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #0b1a17;
   --foreground: #edf6f1;
   --primary: #71d0b1;
@@ -845,6 +923,12 @@
   --glow: #2d7d67;
 }
 :root[data-floe-shell-theme='ember'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1d1115;
   --foreground: #fff1f1;
   --primary: #ff9b7a;
@@ -910,6 +994,12 @@
   --glow: #a94632;
 }
 :root[data-floe-shell-theme='ocean'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #071a25;
   --foreground: #e9f7fc;
   --primary: #69d4ff;
@@ -975,6 +1065,12 @@
   --glow: #176c8e;
 }
 :root[data-floe-shell-theme='dark-plus'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1e1e1e;
   --foreground: #d4d4d4;
   --primary: #3794ff;
@@ -1040,6 +1136,12 @@
   --glow: #264f78;
 }
 :root[data-floe-shell-theme='monokai'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #272822;
   --foreground: #f8f8f2;
   --primary: #f92672;
@@ -1105,6 +1207,12 @@
   --glow: #5a594e;
 }
 :root[data-floe-shell-theme='nord'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #2e3440;
   --foreground: #eceff4;
   --primary: #88c0d0;
@@ -1170,6 +1278,12 @@
   --glow: #4c668a;
 }
 :root[data-floe-shell-theme='dracula'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #282a36;
   --foreground: #f8f8f2;
   --primary: #bd93f9;
@@ -1235,6 +1349,12 @@
   --glow: #52566d;
 }
 :root[data-floe-shell-theme='abyss'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #000c18;
   --foreground: #ddeeff;
   --primary: #00a4ef;
@@ -1300,6 +1420,12 @@
   --glow: #005a8d;
 }
 :root[data-floe-shell-theme='studio'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1a1a1c;
   --foreground: #e0e0e4;
   --primary: #e0e0e4;
@@ -1365,6 +1491,12 @@
   --glow: #2060c0;
 }
 :root[data-floe-shell-theme='graphite'] {
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1c1c1e;
   --foreground: #f2f2f7;
   --primary: #0070e0;

@@ -23,6 +23,7 @@ const allScenarios = [
   'terminal-output',
   'window-drag',
   'window-resize',
+  'window-presence',
   'workbench-pan-zoom',
   'menu-dialog',
   'typing',
@@ -31,14 +32,22 @@ const allScenarios = [
   'control-toggle',
 ];
 const scenarios = requestedScenario
-  ? allScenarios.filter((value) => value === requestedScenario)
+  ? allScenarios.filter((value) =>
+      requestedScenario === 'windows' ? value.startsWith('window-') : value === requestedScenario
+    )
   : allScenarios;
 assert.ok(scenarios.length, 'unknown performance scenario');
-const versions = [
-  { id: 'A', version: 'baseline', surface: 'standard' },
-  { id: 'B', version: 'current', surface: 'standard' },
-  { id: 'C', version: 'current', surface: 'soft-neumorphic' },
-];
+const windowMaterial = process.argv.includes('--window-material');
+const versions = windowMaterial
+  ? [
+      { id: 'A', version: 'baseline', surface: 'soft-neumorphic' },
+      { id: 'B', version: 'current', surface: 'soft-neumorphic' },
+    ]
+  : [
+      { id: 'A', version: 'baseline', surface: 'standard' },
+      { id: 'B', version: 'current', surface: 'standard' },
+      { id: 'C', version: 'current', surface: 'soft-neumorphic' },
+    ];
 const report = {
   environment: {
     browser: runtime.browser.version(),
@@ -56,6 +65,7 @@ const report = {
   methodology:
     'Five interleaved repetitions; each sample warms the workload in its own page, restores the initial workload state, and settles before recording. Fixed 120-frame streams/scrolls; trusted mouse/keyboard actions. Paint and RasterTask intervals are unioned per thread to avoid nested double counting, then normalized per recorded second. Sustained cost regression requires median >10% and at least four of five paired samples >10%; hot frame loss median increment must be <=1 percentage point. Input-to-next-frame latency is a local feedback proxy, not INP. Traces include the complete recorded interval.',
   baseline: readFileSync(resolve(artifactRoot, 'baseline-sha.txt'), 'utf8').trim(),
+  comparisonMode: windowMaterial ? 'published-soft/current-soft' : 'standard/soft',
   package: JSON.parse(readFileSync(resolve(artifactRoot, 'current-manifest.json'), 'utf8')),
   samples: [],
   comparisons: [],
@@ -85,6 +95,17 @@ async function frameLoad(page, scenario) {
   }, scenario);
 }
 async function workload(page, scenario) {
+  if (scenario === 'window-presence') {
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole('button', { name: 'Close', exact: true }).last().click();
+      await page.waitForFunction(
+        () => !document.querySelector('[data-floe-floating-window-surface]')
+      );
+      await page.getByRole('button', { name: 'Open windows', exact: true }).click();
+      await pause(200);
+    }
+    return;
+  }
   if (scenario === 'control-toggle') {
     const switchInput = page.getByRole('switch', { name: 'Off md', exact: true });
     await page.locator('[data-gallery-group="checks"]').scrollIntoViewIfNeeded();
@@ -267,10 +288,11 @@ async function sample(version, scenario, repetition) {
       const start = performance.now();
       requestAnimationFrame(() => inputs.push(performance.now() - start));
     };
-    document.addEventListener('input', input);
+    const inputEvents = ['input', 'pointerdown', 'pointermove', 'keydown'];
+    inputEvents.forEach((type) => document.addEventListener(type, input));
     window.finishMeasurement = () => {
       cancelAnimationFrame(id);
-      document.removeEventListener('input', input);
+      inputEvents.forEach((type) => document.removeEventListener(type, input));
       observer.disconnect();
       return { deltas, inputs, longTasks };
     };
@@ -348,15 +370,18 @@ async function sample(version, scenario, repetition) {
 try {
   const browserSession = await runtime.browser.newBrowserCDPSession();
   report.environment.gpu = (await browserSession.send('SystemInfo.getInfo')).gpu;
+  const pairs = windowMaterial
+    ? [['B', 'A']]
+    : [
+        ['B', 'A'],
+        ['C', 'A'],
+        ['C', 'B'],
+      ];
   for (const scenario of scenarios) {
     for (let repetition = 0; repetition < repetitions; repetition++)
       for (let j = 0; j < versions.length; j++)
         await sample(versions[(j + repetition) % versions.length], scenario, repetition);
-    for (const [id, baseId] of [
-      ['B', 'A'],
-      ['C', 'A'],
-      ['C', 'B'],
-    ]) {
+    for (const [id, baseId] of pairs) {
       const base = report.samples.filter((s) => s.scenario === scenario && s.variant === baseId);
       const next = report.samples.filter((s) => s.scenario === scenario && s.variant === id);
       const comparison = { scenario, comparison: `${id}/${baseId}`, metrics: {}, blockers: [] };

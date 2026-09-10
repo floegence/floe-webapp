@@ -1,3 +1,4 @@
+import { LIGHT_WINDOW_TOKENS, DARK_WINDOW_TOKENS } from './windowTokens.ts';
 import type { FloeThemePreset, FloeThemePresetMode, FloeThemeTokenMap } from './index';
 import {
   CLASSIC_DARK_SEMANTIC_TOKENS,
@@ -15,6 +16,12 @@ export interface FloeShellThemeSelection {
 export type FloeShellThemeDefaults = Partial<Record<FloeShellThemeMode, string>>;
 
 type ShellThemeTokenName =
+  | '--floe-window-background'
+  | '--floe-window-foreground'
+  | '--floe-window-muted-foreground'
+  | '--floe-window-titlebar-background'
+  | '--floe-window-border'
+  | '--floe-window-shadow'
   | '--background'
   | '--foreground'
   | '--primary'
@@ -80,6 +87,13 @@ type ShellThemeTokenName =
   | '--glow';
 
 export const REQUIRED_SHELL_THEME_TOKENS: readonly ShellThemeTokenName[] = [
+  '--floe-window-background',
+  '--floe-window-foreground',
+  '--floe-window-muted-foreground',
+  '--floe-window-titlebar-background',
+  '--floe-window-border',
+  '--floe-window-shadow',
+
   '--background',
   '--foreground',
   '--primary',
@@ -232,6 +246,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
   };
 
   const tokenMap: Record<ShellThemeTokenName, string> = {
+    ...(definition.mode === 'dark' ? DARK_WINDOW_TOKENS : LIGHT_WINDOW_TOKENS),
     '--background': definition.background,
     '--foreground': definition.foreground,
     '--primary': definition.primary,

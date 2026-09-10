@@ -1,3 +1,4 @@
+import { WindowMaterialStudy } from './WindowMaterialStudy';
 import { SurfaceComponentGallery } from './SurfaceComponentGallery';
 import { createSignal, Show, For, onMount, onCleanup } from 'solid-js';
 import { render } from 'solid-js/web';
@@ -123,134 +124,151 @@ function Content() {
       }
     >
       <Show
-        when={params.get('panel') === 'components'}
+        when={params.get('panel') === 'windows'}
         fallback={
-          <div class="acceptance-page" data-scroll>
-            <header>
-              <p class="eyebrow">FLOE / SURFACE STUDY</p>
-              <h1>A quieter place to work.</h1>
-              <p>Familiar controls. Gentle depth. Your workspace stays yours.</p>
-            </header>
-            <div class="cards">
-              <Card data-case="card">
-                <CardHeader>
-                  <CardTitle>Workspace details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <label>
-                    Workspace name
-                    <Input aria-label="Workspace name" value="Studio workspace" />
-                  </label>
-                  <label>
-                    Description
-                    <Textarea
-                      aria-label="Description"
-                      value="A focused environment for thoughtful work."
+          <>
+            <Show
+              when={params.get('panel') === 'components'}
+              fallback={
+                <div class="acceptance-page" data-scroll>
+                  <header>
+                    <p class="eyebrow">FLOE / SURFACE STUDY</p>
+                    <h1>A quieter place to work.</h1>
+                    <p>Familiar controls. Gentle depth. Your workspace stays yours.</p>
+                  </header>
+                  <div class="cards">
+                    <Card data-case="card">
+                      <CardHeader>
+                        <CardTitle>Workspace details</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <label>
+                          Workspace name
+                          <Input aria-label="Workspace name" value="Studio workspace" />
+                        </label>
+                        <label>
+                          Description
+                          <Textarea
+                            aria-label="Description"
+                            value="A focused environment for thoughtful work."
+                          />
+                        </label>
+                        <div class="controls">
+                          <Button data-case="primary">Save changes</Button>
+                          <Button variant="secondary" data-case="secondary">
+                            Duplicate
+                          </Button>
+                          <Button variant="outline">Export</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Connection preferences</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <label>
+                          Endpoint
+                          <AffixInput
+                            aria-label="Endpoint"
+                            prefix="https://"
+                            value="workspace.example"
+                          />
+                        </label>
+                        <label>
+                          Concurrent sessions
+                          <NumberInput value={3} onChange={() => undefined} />
+                        </label>
+                        <div class="controls">
+                          <Button variant="secondary" onClick={() => setWindows((v) => !v)}>
+                            Open windows
+                          </Button>
+                          <Button variant="outline" onClick={() => setDialog(true)}>
+                            Review settings
+                          </Button>
+                          <Dropdown
+                            trigger={<span>More actions</span>}
+                            triggerAriaLabel="More actions"
+                            items={[
+                              { id: 'rename', label: 'Rename workspace' },
+                              { id: 'archive', label: 'Archive workspace' },
+                            ]}
+                            onSelect={() => undefined}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <section class="chat-panel">
+                      <p class="eyebrow">ASSISTANT</p>
+                      <p data-chat-output>{output()}</p>
+                      <ChatProvider config={{ allowAttachments: false }}>
+                        <ChatInput />
+                      </ChatProvider>
+                    </section>
+                  </div>
+                  <section class="workbench-frame" data-floe-surface-divider>
+                    <WorkbenchSurface
+                      state={state}
+                      setState={setState}
+                      widgetDefinitions={definitions}
                     />
-                  </label>
+                  </section>
                   <div class="controls">
-                    <Button data-case="primary">Save changes</Button>
-                    <Button variant="secondary" data-case="secondary">
-                      Duplicate
-                    </Button>
-                    <Button variant="outline">Export</Button>
+                    <Card variant="glass" data-case="glass">
+                      <CardContent>Explicit glass</CardContent>
+                    </Card>
+                    <Card variant="hover-lift" data-case="lift">
+                      <CardContent>Explicit hover lift</CardContent>
+                    </Card>
+                    <Card data-floe-surface="flat" data-case="flat">
+                      <CardContent>Flat content</CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Connection preferences</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <label>
-                    Endpoint
-                    <AffixInput aria-label="Endpoint" prefix="https://" value="workspace.example" />
-                  </label>
-                  <label>
-                    Concurrent sessions
-                    <NumberInput value={3} onChange={() => undefined} />
-                  </label>
-                  <div class="controls">
-                    <Button variant="secondary" onClick={() => setWindows((v) => !v)}>
-                      Open windows
-                    </Button>
-                    <Button variant="outline" onClick={() => setDialog(true)}>
-                      Review settings
-                    </Button>
-                    <Dropdown
-                      trigger={<span>More actions</span>}
-                      triggerAriaLabel="More actions"
-                      items={[
-                        { id: 'rename', label: 'Rename workspace' },
-                        { id: 'archive', label: 'Archive workspace' },
-                      ]}
-                      onSelect={() => undefined}
-                    />
+                  <section class="long-list" data-list data-floe-surface-divider>
+                    <For each={Array.from({ length: 600 }, (_, i) => i)}>
+                      {(i) => (
+                        <div data-floe-surface-divider>
+                          <span>workspace / module-{String(i).padStart(3, '0')}.ts</span>
+                          <span>Ready</span>
+                        </div>
+                      )}
+                    </For>
+                  </section>
+                  <Dialog open={dialog()} onOpenChange={setDialog} title="Review settings">
+                    <Input aria-label="Review name" value="Studio workspace" />
+                    <Button onClick={() => setDialog(false)}>Done</Button>
+                  </Dialog>
+                </div>
+              }
+            >
+              <div class="acceptance-page" data-scroll>
+                <SurfaceComponentGallery
+                  progress={params.get('dense') === 'true' ? componentProgress() : undefined}
+                  dense={params.get('dense') === 'true'}
+                />
+              </div>
+            </Show>
+            <For each={[0, 1]}>
+              {(i) => (
+                <FloatingWindow
+                  open={windows()}
+                  onOpenChange={setWindows}
+                  title={`Session ${i + 1}`}
+                  defaultPosition={{ x: 130 + i * 460, y: 160 + i * 40 }}
+                  defaultSize={{ width: 420, height: 280 }}
+                >
+                  <div class="widget-content">
+                    <Input aria-label={`Session ${i + 1} input`} value="Persistent draft" />
+                    <pre>{output()}</pre>
                   </div>
-                </CardContent>
-              </Card>
-              <section class="chat-panel">
-                <p class="eyebrow">ASSISTANT</p>
-                <p data-chat-output>{output()}</p>
-                <ChatProvider config={{ allowAttachments: false }}>
-                  <ChatInput />
-                </ChatProvider>
-              </section>
-            </div>
-            <section class="workbench-frame" data-floe-surface-divider>
-              <WorkbenchSurface state={state} setState={setState} widgetDefinitions={definitions} />
-            </section>
-            <div class="controls">
-              <Card variant="glass" data-case="glass">
-                <CardContent>Explicit glass</CardContent>
-              </Card>
-              <Card variant="hover-lift" data-case="lift">
-                <CardContent>Explicit hover lift</CardContent>
-              </Card>
-              <Card data-floe-surface="flat" data-case="flat">
-                <CardContent>Flat content</CardContent>
-              </Card>
-            </div>
-            <section class="long-list" data-list data-floe-surface-divider>
-              <For each={Array.from({ length: 600 }, (_, i) => i)}>
-                {(i) => (
-                  <div data-floe-surface-divider>
-                    <span>workspace / module-{String(i).padStart(3, '0')}.ts</span>
-                    <span>Ready</span>
-                  </div>
-                )}
-              </For>
-            </section>
-            <Dialog open={dialog()} onOpenChange={setDialog} title="Review settings">
-              <Input aria-label="Review name" value="Studio workspace" />
-              <Button onClick={() => setDialog(false)}>Done</Button>
-            </Dialog>
-          </div>
+                </FloatingWindow>
+              )}
+            </For>
+          </>
         }
       >
-        <div class="acceptance-page" data-scroll>
-          <SurfaceComponentGallery
-            progress={params.get('dense') === 'true' ? componentProgress() : undefined}
-            dense={params.get('dense') === 'true'}
-          />
-        </div>
+        <WindowMaterialStudy />
       </Show>
-      <For each={[0, 1]}>
-        {(i) => (
-          <FloatingWindow
-            open={windows()}
-            onOpenChange={setWindows}
-            title={`Session ${i + 1}`}
-            defaultPosition={{ x: 130 + i * 460, y: 160 + i * 40 }}
-            defaultSize={{ width: 420, height: 280 }}
-          >
-            <div class="widget-content">
-              <Input aria-label={`Session ${i + 1} input`} value="Persistent draft" />
-              <pre>{output()}</pre>
-            </div>
-          </FloatingWindow>
-        )}
-      </For>
     </Shell>
   );
 }

@@ -1,3 +1,4 @@
+import { LIGHT_WINDOW_TOKENS, DARK_WINDOW_TOKENS } from './windowTokens.ts';
 import type { FloeThemeTokenMap } from './index';
 
 function resolveTokenReferences(tokens: Readonly<FloeThemeTokenMap>): Readonly<FloeThemeTokenMap> {
@@ -17,6 +18,7 @@ function resolveTokenReferences(tokens: Readonly<FloeThemeTokenMap>): Readonly<F
 }
 
 const CLASSIC_LIGHT_CSS_TOKENS = {
+  ...LIGHT_WINDOW_TOKENS,
   '--background': 'hsl(34 24% 94%)', '--foreground': 'hsl(214 26% 17%)',
   '--primary': 'hsl(214 26% 17%)', '--primary-foreground': 'hsl(36 100% 99%)',
   '--secondary': 'hsl(36 15% 94%)', '--secondary-foreground': 'hsl(214 25% 25%)',
@@ -57,6 +59,7 @@ const CLASSIC_LIGHT_CSS_TOKENS = {
 } as const satisfies FloeThemeTokenMap;
 
 const CLASSIC_DARK_CSS_TOKENS = {
+  ...DARK_WINDOW_TOKENS,
   '--background': 'hsl(222 30% 8%)', '--foreground': 'hsl(210 20% 98%)',
   '--primary': 'hsl(210 20% 98%)', '--primary-foreground': 'hsl(222 30% 10%)',
   '--secondary': 'hsl(220 18% 15%)', '--secondary-foreground': 'hsl(210 20% 98%)',

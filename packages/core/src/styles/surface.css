@@ -403,6 +403,55 @@
   --floe-surface-decoration: 0 0 transparent;
 }
 
+/* Non-modal windows must stay identifiable without a scrim. Their palette is
+ * distinct from ordinary Cards, Dialogs and menus. Only this visible panel owns
+ * material; the outer geometry owner and its input lifecycle stay unchanged. */
+@media (forced-colors: none) {
+  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+    [data-floe-floating-window-surface='true'][data-floe-surface='floating'] {
+    background: var(--floe-window-background);
+    color: var(--floe-window-foreground);
+    --muted-foreground: var(--floe-window-muted-foreground);
+    border-color: var(--floe-window-border);
+    --floe-surface-decoration: var(--floe-window-shadow);
+
+    & [data-floe-floating-window-titlebar='true'] {
+      background: var(--floe-window-titlebar-background);
+      border-bottom-color: transparent;
+      color: var(--floe-window-foreground);
+      transition: none;
+    }
+    &[data-floe-floating-window-state='inactive'] > [data-floe-floating-window-titlebar='true'] {
+      background: color-mix(in srgb, var(--floe-window-titlebar-background) 50%, var(--floe-window-background));
+    }
+    & > [data-floe-floating-window-titlebar='true'] button {
+      transition-property: background-color, border-color, opacity;
+    }
+    & > [data-floe-floating-window-titlebar='true'] button:not(:hover):not(:focus-visible) {
+      color: inherit;
+    }
+    &[data-floe-surface-interacting='true'] {
+      --floe-surface-decoration: var(--floe-surface-shadow-interacting, 0 1px 2px var(--floe-surface-shade));
+    }
+  }
+}
+
+/* FloatingWindow keeps rich text at scale 1 throughout its short presence
+ * motion. Only presence promotes this panel; the existing geometry owner
+ * already promotes direct drag/resize, so adding a second hot layer is wasteful. */
+:root[data-floe-surface-style='soft-neumorphic'] .floe-floating-window-motion {
+  --floe-floating-enter-scale: 1;
+  --floe-floating-exit-scale: 1;
+  --floe-floating-enter-y: 3px;
+  --floe-floating-exit-y: 2px;
+  will-change: auto;
+}
+:root[data-floe-surface-style='soft-neumorphic'] .floe-floating-window-motion:is(
+  [data-floating-presence='entering'], [data-floating-presence='exiting']
+) {
+  will-change: opacity, transform;
+}
+
 /* High contrast stays flat, with real boundaries and keyboard indicators. */
 :root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
   [data-floe-surface] {

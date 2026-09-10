@@ -174,6 +174,31 @@ describe('shell theme context', () => {
     );
   });
 
+  it('applies window token overrides through the existing theme lifecycle without remounting drafts', () => {
+    const { service, host } = mountSurface({
+      tokens: { shared: { '--floe-window-shadow': '0 2px 3px black' } },
+      shellPresets: builtInShellThemePresets,
+      presets: [
+        { name: 'window', displayName: 'Window', tokens: { shared: { '--floe-window-background': '#f0f1f2' } } },
+        { name: 'plain', displayName: 'Plain' },
+      ],
+    });
+    const input = host.querySelector('input')!;
+    input.value = 'unsaved notes';
+    service.setSurfaceStyle('soft-neumorphic');
+    service.selectShellTheme('dark', 'forest');
+    expect(document.documentElement.style.getPropertyValue('--floe-window-background')).toBe('#f0f1f2');
+    service.setThemePreset('plain');
+    expect(document.documentElement.style.getPropertyValue('--floe-window-background')).toBe(
+      builtInShellThemePresets.find((preset) => preset.name === 'forest')!.tokens!.dark!['--floe-window-background'],
+    );
+    service.selectShellTheme('light', 'classic-light');
+    expect(document.documentElement.style.getPropertyValue('--floe-window-background')).toBe('');
+    expect(document.documentElement.style.getPropertyValue('--floe-window-shadow')).toBe('0 2px 3px black');
+    expect(host.querySelector('input')).toBe(input);
+    expect(input.value).toBe('unsaved notes');
+  });
+
   it('keeps shell and chart channels independent while remembering both modes', () => {
     const { adapter, values } = createStorage();
     const host = document.createElement('div');

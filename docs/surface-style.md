@@ -48,13 +48,80 @@ Optional overrides:
 
 Use `theme.tokens` / named token presets for overrides. Source order remains config, active Shell preset, active named token preset, with each source's shared values followed by its active mode. Removing a preset or mode removes obsolete inline tokens through the existing synchronization service. The unlayered material rules replace component and utility decoration only on opted-in roles; the input-focus stylesheet continues to own focus border color.
 
-Compact parts use shorter static interior lighting than content containers. The part markers are internal component details; hosts use the four public roles. Dark Cards use a 2% lighter carrying plane and floating overlays a 6% lighter plane. There are no exterior white halos or opaque black grooves. Card/choice/indicator/rail borders retain their box dimensions but become transparent so their own fill reaches the edge; native and compound input borders remain opaque for stable editing raster cost. Choice selection uses an 8% primary tint, and the existing primary tab underline is subdued. Semantic tag, progress and primary action colors stay owned by their existing palette. Switch translate/scale and progress width transitions remain functional; no SVG filters are added.
+Compact parts use shorter static interior lighting than content containers. The part markers are internal component details; hosts use the four public roles. Dark Cards use a 2% lighter carrying plane and generic floating overlays a 6% lighter plane; non-modal windows use the independent palette below. There are no exterior white halos or opaque black grooves. Card/choice/indicator/rail borders retain their box dimensions but become transparent so their own fill reaches the edge; native and compound input borders remain opaque for stable editing raster cost. Choice selection uses an 8% primary tint, and the existing primary tab underline is subdued. Semantic tag, progress and primary action colors stay owned by their existing palette. Switch translate/scale and progress width transitions remain functional; no SVG filters are added.
 
 Checkbox and Switch wells use a one-pixel inner shade and an unblurred one-pixel light edge. Radio indicators instead use a hollow 1px outline, no default shadow, and a transparent unselected interior. Selection adds a 6% primary tint and the solid dot; do not apply container relief to a 6–10px mark. The outline uses an 88% muted-foreground/card blend and retains at least 3:1 contrast across the non-HC palette matrix. External dimensions, label hit targets and keyboard ownership remain unchanged. Switch thumbs and filled progress portions stay shadow-free by default; their fixed recessed tracks carry depth. Repainting even one-pixel shadows on frequently moving or resizing faces adds measurable dense-update cost. The Switch thumb keeps its existing background fill in both states; only its position and track color change. This avoids repainting the moving face in dark mode, while the palette matrix verifies at least 3:1 thumb-to-track contrast. Explicit public shadow overrides remain authoritative. Disabled Checkbox and Switch content is dimmed once by its label, not again by its face. Review these controls at both 1× and 2× pixel density, not only in enlarged previews.
 
 Selection fills on Radio, Checkbox, Tabs and SegmentedControl are immediate. Radio dots settle through a 90ms scale transition; Checkbox marks have a 100ms micro entrance; Switch thumbs use 140ms eased translate motion that reverses from the current position. Material's generic color transition rule excludes motion owners: floating presence, switch thumbs, radio dots and progress fills. Their transition property, duration and easing remain one declaration. Never let a generic surface rule drop a functional transform or remap a transition shorthand.
 
 FloatingWindow keeps layout/style containment on its geometry root and paint containment on the existing moving panel. The panel still clips content and owns the local portal, but its exterior shadow is no longer clipped by its parent. Dialog backdrops use static dimming (16% black in light mode, 36% in dark mode) with opacity motion and no full-page blur. The shared presence lifecycle lets the exiting style paint before starting its duration, then waits for the final frame before unmounting. Reopening reverses from the current painted state and cancels pending exit work; reduced motion skips the extra frame delay. This bounded lifecycle also applies in standard mode. Keyboard Tabs move roving focus within the key event so rapid repeated navigation uses the latest tab; the existing deferred content selection transaction remains authoritative.
+
+## Non-modal window material
+
+In `soft-neumorphic`, FloatingWindow has an independent, opaque reading plane
+and a solid title bar. Dialogs and menus keep the general floating role. Standard
+material, high contrast, and forced colors retain their existing presentation.
+Window geometry, input ownership, persistence, and portal placement do not change.
+
+| Window token | Purpose |
+| --- | --- |
+| `--floe-window-background` | Reading plane; light mode keeps 35% of the card tint, dark mode mixes 10% white into the card |
+| `--floe-window-foreground` | Main reading and active title foreground |
+| `--floe-window-muted-foreground` | Secondary reading text; dark mode mixes 28% foreground into muted text to preserve contrast on the elevated plane |
+| `--floe-window-titlebar-background` | Opaque title bar; a quiet ink tint in light mode, a small lightness step in dark mode |
+| `--floe-window-border` | One opaque, low-emphasis seam |
+| `--floe-window-shadow` | A compact contact shadow and restrained cast shadow; no inset bevel |
+
+The additional muted-text token is necessary because page-level secondary colors
+can fall below reading contrast when used on a lighter dark window. Only the
+window maps its local `--muted-foreground` to this resolved token; root tokens,
+other surfaces, editor themes, and third-party frames are unchanged. Both primary
+and secondary reading text are checked at 4.5:1 across the built-in window matrix.
+
+Window tokens are part of the existing generated shell palettes and Classic
+renderer/adapter metadata. Custom palettes inherit CSS-derived defaults and need
+no new mandatory configuration. Overrides use the existing `theme.tokens` / named
+preset precedence described above. Prefer a named token preset for an override
+that must win over an explicitly selected shell preset. Removing it restores the
+shell palette through the existing theme synchronization, without remounting body
+content. The window-specific shadow owns window elevation; general floating
+shadow overrides continue to own Dialogs, menus and other floating surfaces.
+
+Active and inactive windows retain identical body fill and static shadows. Only
+the inactive title-bar fill moves closer to the reading plane; title text and
+actions retain full foreground contrast and their existing hover and keyboard
+indicators. Drag and resize use the existing local
+interaction marker and lightweight contact shadow. The outer geometry owner does
+not clip the panel's external shadow, while content clipping stays on the panel.
+
+Window presence keeps its 150ms entry and 120ms exit, replacing scale with 3px/2px
+translation. The content stays at scale 1. The shared presence lifecycle owns
+interrupted exits and the final paint before disposal; promotion is limited to
+presence on the inner panel and direct interaction on the existing outer geometry
+owner. The inner panel does not allocate a second compositing layer during drag
+or resize. Reduced motion disables transitions. Body theme
+fills and shadows never animate during activation, dragging, or resizing.
+
+Consumers should let product-owned document containers inherit the window plane,
+or explicitly consume `--floe-window-background`; do not overwrite their large
+reading area with the page background. Images, PDFs, terminal and editor internals
+keep their own colors. Redeven will adopt the content mapping only after an
+accepted upstream release, using published packages.
+
+The packed `?panel=windows&theme=paper&surface=soft-neumorphic` study covers files,
+cards, overlapping windows, editable notes and all built-in themes. Its host uses
+the public `zIndex` property for stacking. `pnpm test:window-material` checks both
+CSS entries, theme contrast, activation, direct geometry, custom tokens, 2x pixel
+density, reduced motion, forced colors and unchanged standard presentation.
+
+For the window comparison, save the published 0.51.0 package as
+`.cache/surface-style/baseline-core.tgz`, verify its registry integrity, and prepare
+it with `node scripts/prepare-surface-consumer.mjs baseline .cache/surface-style/baseline-core.tgz`.
+Do not substitute a development pack carrying the same version number. Run
+`node scripts/check-surface-performance.mjs --window-material --scenario=windows --mode=light --output=window-performance-light`
+and repeat with dark mode and a separate output directory. This compares
+published-soft to current-soft with the existing five paired samples and budgets;
+it does not relabel a comparison with standard material as the change baseline.
 
 ## Focus, accessibility, and interaction
 

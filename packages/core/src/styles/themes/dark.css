@@ -2,6 +2,15 @@
 .dark {
   color-scheme: dark;
 
+  /* Independent non-modal window material. */
+  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-foreground: var(--foreground);
+  --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
+  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
+  --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
+
+
   /* Base - Blue-black ink */
   --background: hsl(222 30% 8%);
   --foreground: hsl(210 20% 98%);
