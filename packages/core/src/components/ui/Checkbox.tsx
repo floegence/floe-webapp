@@ -236,7 +236,7 @@ export function Checkbox(props: CheckboxProps) {
         isChecked() || local.indeterminate
           ? 'border-primary bg-primary text-primary-foreground'
           : 'border-input bg-background hover:border-primary/50',
-        isDisabled() && 'cursor-not-allowed opacity-50'
+        isDisabled() && 'cursor-not-allowed'
       )}
     >
       <Show when={local.indeterminate}>

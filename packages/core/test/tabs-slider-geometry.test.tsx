@@ -118,6 +118,34 @@ describe('Tabs slider geometry', () => {
     vi.restoreAllMocks();
   });
 
+  it('moves keyboard focus synchronously so rapid navigation uses the latest tab', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    dispose = render(() => <Tabs
+      items={[
+        { id: 'one', label: 'One' },
+        { id: 'disabled', label: 'Disabled', disabled: true },
+        { id: 'two', label: 'Two' },
+        { id: 'three', label: 'Three' },
+      ]}
+      defaultActiveId="one"
+    />, host);
+    const tabs = [...host.querySelectorAll<HTMLElement>('[role="tab"]')];
+    for (const tab of tabs) tab.scrollIntoView = vi.fn();
+    tabs[0].focus();
+    const key = (key: string) => document.activeElement?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    key('ArrowRight');
+    expect(document.activeElement).toBe(tabs[2]);
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+    key('ArrowRight');
+    expect(document.activeElement).toBe(tabs[3]);
+    key('ArrowLeft');
+    expect(document.activeElement).toBe(tabs[2]);
+    await flushDeferredPaint();
+    expect(document.activeElement).toBe(tabs[2]);
+    expect(tabs[2].getAttribute('aria-selected')).toBe('true');
+  });
+
   it('keeps slider alignment in local layout coordinates inside scaled ancestors', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

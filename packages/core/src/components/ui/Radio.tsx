@@ -218,7 +218,7 @@ export function RadioOption(props: RadioOptionProps) {
       )}
     >
       <div
-        data-floe-surface="raised"
+        data-floe-surface="flat"
         data-floe-surface-part="radio-dot"
         class={cn(
           'rounded-full bg-primary-foreground transition-transform duration-150',

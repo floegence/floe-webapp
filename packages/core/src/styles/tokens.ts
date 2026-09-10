@@ -713,9 +713,9 @@ export function getFloeColorTokenValue(
 /** Optional shadow overrides. Defaults resolve at each role so local palettes
  * participate without masking overrides supplied by the theme service. */
 export const floeSurfaceTokens = [
-  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: '2px 2px 5px var(--floe-surface-shade), -2px -2px 5px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: 'inset 1px 1px 3px var(--floe-surface-shade), inset -1px -1px 3px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: '4px 6px 12px -3px var(--floe-surface-shade), inset 1px 1px 0 var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: '0 2px 5px -2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: 'inset 0 1px 2px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: '0 8px 20px -6px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
   { variable: '--floe-surface-shadow-interacting', role: 'interacting', fallback: '0 1px 2px var(--floe-surface-shade)' },
 ] as const;
 

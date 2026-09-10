@@ -1,13 +1,13 @@
 # Surface component coverage
 
-The optional soft neumorphic material is a shared component system. Every component family below has a deliberate visual role and state contract. `docs/surface-style.md` owns configuration, persistence, surface tokens, input focus, high contrast, and performance rules. This inventory owns coverage and prevents a container-only implementation from being presented as a complete material system.
+The optional soft neumorphic material is a lightweight shared component system: restrained depth, crisp marks and fast feedback, rather than heavy embossed frames. Every component family below has a deliberate visual role and state contract. `docs/surface-style.md` owns configuration, persistence, surface tokens, input focus, high contrast, and performance rules. This inventory owns coverage and prevents a container-only implementation from being presented as a complete material system.
 
 ## Design decisions
 
 - Use a common light direction and separate raised, recessed, and floating treatments. Ordinary surfaces use at most two decorative shadows; independent focus indicators are additional. Compact indicators use smaller relief than containers; metadata must not cast large shadows across adjacent rows.
 - Preserve semantic hues, labels, checkmarks, position, progress values, and disabled behavior. Depth supplements these signals; it never becomes the only state indicator. Unselected control wells use the existing muted-foreground fill so their face, rather than a strong outline, supplies non-text contrast against the carrying card. The browser matrix checks at least 3:1 across all non-HC palettes.
-- Dark surfaces require a visible carrying plane, a tight lighter edge, and a darker opposing edge. Increasing blur around near-black surfaces does not establish readable relief. Tune light/dark independently, with local Workbench palettes participating.
-- Neutral borders and separators remain quiet. Input focus changes the existing border to the theme's muted-foreground color, with at least 3:1 adjacent contrast in the built-in non-HC palette matrix. All four edges use one color so native editors retain the uniform-border raster path. Error and high-contrast boundaries remain explicit.
+- Dark surfaces use a slightly lighter carrying plane, a 4% white interior light and 20% black shade; no exterior white halo or opaque black groove. Increasing blur around near-black surfaces does not establish readable relief. Tune light/dark independently, with local Workbench palettes participating.
+- Neutral borders and separators remain quiet. Input focus changes the existing uniform border to an opaque 88% muted-foreground / card blend, with at least 3:1 adjacent contrast in the built-in non-HC palette matrix. All four edges use one color so native editors retain the uniform-border raster path. Error and high-contrast boundaries remain explicit.
 - Add material to existing semantic elements. Do not add wrappers, alternate controls, state stores, polling, cursor lighting, or decoration animation loops. Existing functional transforms and progress animations retain their contracts.
 
 ## Component matrix
@@ -16,12 +16,12 @@ The optional soft neumorphic material is a shared component system. Every compon
 | --- | --- | --- |
 | Button | Compact raised action; primary/destructive colors retain meaning; pressed fill and inset relief for toggle state | Native disabled/loading, click, keyboard focus, sizes and icons |
 | Card | Raised default grouping surface; avoid repeated raised descendants | Explicit rich variants and tilt remain opt-in independent effects |
-| Tag | Small embossed solid badge or recessed soft badge; all six semantic roles and three sizes | Literal content, truncation, icon/dot, non-interactive semantics |
+| Tag | Subtle interior lighting on solid or soft badges; all six semantic roles and three sizes | Literal content, truncation, icon/dot, non-interactive semantics |
 | Input / Textarea / Select | Recessed field, quiet edges, stable decoration during focus | Draft, selection, composition, disabled, validation, all sizes |
 | NumberInput / AffixInput / DirectoryInput | One recessed compound boundary; quiet internal separators | Internal controls stay frameless; local keyboard fill; dropdown ownership |
 | Radio | Recessed well and distinct selected dot; button/card/tile variants share a pressed selection treatment | Stable native group name, checked value, change event, keyboard, disabled |
 | Checkbox | Recessed square, semantic checked/mixed face; button/card/tile selection shares Radio treatment | Native checked/indeterminate meaning and multi-select semantics; the mixed property and ARIA now match the visual indicator |
-| Switch | Recessed track and raised moving thumb, readable in both states and modes | Native switch state; existing thumb travel, focus and disabled behavior |
+| Switch | Tight recessed track and raised thumb with a crisp light edge, readable at 1× and 2× | Native switch state; 140ms reversible translate, existing travel, focus and disabled behavior |
 | SegmentedControl | Recessed rail and raised selected segment | Selection, keyboard focus, per-option and whole-control disabled states |
 | Tabs | Quiet rail and colored selected tab face; existing indicator remains meaningful | Overflow, close/add actions, optimistic selection, configurable slider geometry |
 | Pagination | Compact raised page controls, pressed current page | Page selection, bounds, disabled arrows, native page-size and jump controls |
@@ -49,6 +49,8 @@ The optional soft neumorphic material is a shared component system. Every compon
 ## Acceptance matrix
 
 The same component-state gallery must be reviewed in standard and soft modes, light and dark, all supported sizes, selected/unselected, hover/pressed, keyboard focus, disabled/loading, invalid, and mixed/indeterminate states where applicable. Browser assertions must verify actual values, keyboard ownership and unchanged geometry, not only the presence of role attributes. High contrast stays flat and explicit. Published styles and Tailwind consumers must both render the gallery correctly.
+
+Selection faces respond in their first painted frame: Radio, Checkbox, Tab and segment colors do not crossfade. A Radio's solid dot has a short 90ms scale motion and Checkbox marks have a 100ms micro entrance; compact wells have only tight static lighting. Test rapid Radio and Tab arrow navigation and Switch reversals before an animation finishes. Floating layers must complete both opacity and transform on entry/exit, reverse without remounting, and keep their shadow visible outside the geometry boundary. The shared presence owner schedules a bounded final paint before disposal; it never turns decoration into an animation loop. `scripts/check-surface-motion-browser.mjs` records these cases and 1×/2× screenshots for both CSS consumers.
 
 Performance evidence must state the actual renderer. Headless Shell software rasterization is different from full Chromium's hardware-backed renderer; preserve results from both when used, and do not silently replace a failed environment. Measure the final component system against the same baseline fixture and renderer, including dense controls, selection changes, progress updates, input, streaming and window/canvas hot interactions.
 

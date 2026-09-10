@@ -28,6 +28,7 @@ const allScenarios = [
   'typing',
   'dense-controls',
   'progress-updates',
+  'control-toggle',
 ];
 const scenarios = requestedScenario
   ? allScenarios.filter((value) => value === requestedScenario)
@@ -55,6 +56,7 @@ const report = {
   methodology:
     'Five interleaved repetitions; each sample warms the workload in its own page, restores the initial workload state, and settles before recording. Fixed 120-frame streams/scrolls; trusted mouse/keyboard actions. Paint and RasterTask intervals are unioned per thread to avoid nested double counting, then normalized per recorded second. Sustained cost regression requires median >10% and at least four of five paired samples >10%; hot frame loss median increment must be <=1 percentage point. Input-to-next-frame latency is a local feedback proxy, not INP. Traces include the complete recorded interval.',
   baseline: readFileSync(resolve(artifactRoot, 'baseline-sha.txt'), 'utf8').trim(),
+  package: JSON.parse(readFileSync(resolve(artifactRoot, 'current-manifest.json'), 'utf8')),
   samples: [],
   comparisons: [],
 };
@@ -83,6 +85,31 @@ async function frameLoad(page, scenario) {
   }, scenario);
 }
 async function workload(page, scenario) {
+  if (scenario === 'control-toggle') {
+    const switchInput = page.getByRole('switch', { name: 'Off md', exact: true });
+    await page.locator('[data-gallery-group="checks"]').scrollIntoViewIfNeeded();
+    await switchInput.focus();
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Space');
+      await pause(150);
+    }
+    const radios = page.locator('[data-radio-variant="default"]');
+    for (let i = 0; i < 6; i++) {
+      await radios.getByText(i % 2 ? 'Local' : 'Cloud', { exact: true }).click();
+      await pause(100);
+    }
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole('tab', { name: i % 2 ? 'Overview' : 'Activity', exact: true }).click();
+      await pause(100);
+    }
+    assert.equal(await switchInput.isChecked(), false, 'switch workload returns to off');
+    assert.equal(await radios.getByRole('radio', { name: 'Local', exact: true }).isChecked(), true);
+    assert.equal(
+      await page.getByRole('tab', { name: 'Overview', exact: true }).getAttribute('aria-selected'),
+      'true'
+    );
+    return;
+  }
   if (scenario === 'dense-controls' || scenario === 'progress-updates') {
     return page.evaluate(async (scenario) => {
       const scroller = document.querySelector('[data-scroll]');
@@ -169,12 +196,14 @@ async function sample(version, scenario, repetition) {
     version.surface
   );
   const components = scenario === 'dense-controls' || scenario === 'progress-updates';
-  if (components) {
+  if (components || scenario === 'control-toggle') {
     await page.goto(
-      `${runtime.baseURL}/${version.version}-styles/dist/?panel=components&dense=true&mode=${mode}&surface=${version.surface}`
+      `${runtime.baseURL}/${version.version}-styles/dist/?panel=components&dense=${components}&mode=${mode}&surface=${version.surface}`
     );
     await page.waitForFunction(() => !!window.surfaceFixture);
     await page.waitForTimeout(350);
+  }
+  if (components) {
     await page.evaluate(() => {
       const scroller = document.querySelector('[data-scroll]');
       const dense = document.querySelector('[data-dense-controls]');

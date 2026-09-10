@@ -55,13 +55,13 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
   const initiallyOpen = untrack(open);
   const [mounted, setMounted] = createSignal(initiallyOpen);
   const [state, setState] = createSignal<FloatingPresenceState>(initiallyOpen ? 'entering' : 'exiting');
-  let enterFrame: number | null = null;
+  let presenceFrame: number | null = null;
   let exitTimer: number | null = null;
 
-  const clearEnterFrame = () => {
-    if (enterFrame === null) return;
-    cancelPresenceFrame(enterFrame);
-    enterFrame = null;
+  const clearPresenceFrame = () => {
+    if (presenceFrame === null) return;
+    cancelPresenceFrame(presenceFrame);
+    presenceFrame = null;
   };
 
   const clearExitTimer = () => {
@@ -73,11 +73,16 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
   createEffect(() => {
     if (open()) {
       clearExitTimer();
-      clearEnterFrame();
+      clearPresenceFrame();
+      // Reverse an in-flight exit from its current painted position.
+      if (untrack(mounted) && untrack(state) === 'exiting') {
+        setState('open');
+        return;
+      }
       setMounted(true);
       setState('entering');
-      enterFrame = requestPresenceFrame(() => {
-        enterFrame = null;
+      presenceFrame = requestPresenceFrame(() => {
+        presenceFrame = null;
         if (untrack(open)) {
           setState('open');
         }
@@ -85,7 +90,7 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
       return;
     }
 
-    clearEnterFrame();
+    clearPresenceFrame();
     if (!untrack(mounted)) {
       setState('exiting');
       return;
@@ -93,16 +98,29 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
 
     setState('exiting');
     const exitDuration = resolveExitDuration(options);
-    exitTimer = globalThis.setTimeout(() => {
-      exitTimer = null;
-      if (!untrack(open)) {
-        setMounted(false);
-      }
-    }, exitDuration) as unknown as number;
+    const finishExit = () => {
+      presenceFrame = null;
+      if (!untrack(open)) setMounted(false);
+    };
+    const startExitTimer = () => {
+      presenceFrame = null;
+      exitTimer = globalThis.setTimeout(() => {
+        exitTimer = null;
+        if (exitDuration <= 1) finishExit();
+        else presenceFrame = requestPresenceFrame(finishExit);
+      }, exitDuration) as unknown as number;
+    };
+    // CSS starts after frame callbacks. Let the exiting style paint before
+    // starting its duration, then allow its final frame before removing the DOM.
+    // This is bounded work; reduced motion has no extra frame latency.
+    if (exitDuration <= 1) startExitTimer();
+    else presenceFrame = requestPresenceFrame(() => {
+      presenceFrame = requestPresenceFrame(startExitTimer);
+    });
   });
 
   onCleanup(() => {
-    clearEnterFrame();
+    clearPresenceFrame();
     clearExitTimer();
   });
 

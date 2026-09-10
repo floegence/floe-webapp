@@ -195,6 +195,9 @@ try {
       for (const size of ['sm', 'md', 'lg']) {
         const toggle = page.getByRole('switch', { name: `Sync ${size}`, exact: true });
         await toggle.focus();
+        // Sizes share one signal. Let the previous size's reset settle before
+        // comparing endpoints; the motion suite separately tests reversals.
+        await page.waitForTimeout(240);
         const thumb = toggle.locator('..').locator('[data-floe-surface-part="switch-thumb"]');
         const transform = await thumb.evaluate((el) => getComputedStyle(el).translate);
         await toggle.press('Space');
@@ -337,7 +340,9 @@ try {
         (theme) => window.surfaceFixture.theme.selectShellTheme(theme.mode, theme.name),
         theme
       );
-      await palette.waitForTimeout(180);
+      // Contrast checks use the settled carrying Card, whose palette transition
+      // lasts 300 ms independently of immediate control selection feedback.
+      await palette.waitForTimeout(400);
       if (theme.name !== 'hc-light') {
         await palette.getByRole('textbox', { name: 'Gallery workspace', exact: true }).focus();
         await palette.waitForTimeout(180);

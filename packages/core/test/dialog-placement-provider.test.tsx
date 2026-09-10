@@ -31,7 +31,7 @@ function flushMicrotasks(): Promise<void> {
 }
 
 async function flushFloatingExit(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 160));
+  await new Promise((resolve) => setTimeout(resolve, 190));
   await flushMicrotasks();
 }
 

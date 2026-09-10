@@ -35,7 +35,7 @@ describe('createFloatingPresence', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.stubGlobal('requestAnimationFrame', ((callback: FrameRequestCallback) => {
-      const handle = window.setTimeout(() => callback(0), 0);
+      const handle = window.setTimeout(() => callback(0), 16);
       return handle;
     }) as typeof requestAnimationFrame);
     vi.stubGlobal('cancelAnimationFrame', ((handle: number) => {
@@ -72,12 +72,16 @@ describe('createFloatingPresence', () => {
     expect(presence.state()).toBe('exiting');
     expect(presence.exiting()).toBe(true);
 
+    // The close event may precede the first CSS transition frame.
+    vi.advanceTimersByTime(32);
     vi.advanceTimersByTime(119);
     await Promise.resolve();
     expect(presence.mounted()).toBe(true);
 
     vi.advanceTimersByTime(1);
     await Promise.resolve();
+    expect(presence.mounted()).toBe(true);
+    vi.advanceTimersByTime(16);
     expect(presence.mounted()).toBe(false);
   });
 
@@ -94,6 +98,8 @@ describe('createFloatingPresence', () => {
     presence.setOpen(true);
     await Promise.resolve();
     expect(presence.mounted()).toBe(true);
+    expect(presence.state()).toBe('open');
+    expect(vi.getTimerCount()).toBe(0);
 
     vi.runOnlyPendingTimers();
     await Promise.resolve();
@@ -153,7 +159,7 @@ describe('createFloatingPresence', () => {
     vi.advanceTimersByTime(60);
     invalidateClosedSource();
     await Promise.resolve();
-    vi.advanceTimersByTime(60);
+    vi.advanceTimersByTime(108);
     await Promise.resolve();
 
     expect(presence?.mounted()).toBe(false);
@@ -182,5 +188,29 @@ describe('createFloatingPresence', () => {
     vi.advanceTimersByTime(1);
     await Promise.resolve();
     expect(presence.mounted()).toBe(false);
+  });
+
+  it('cancels an exit before its first frame when reopened', async () => {
+    const presence = createPresenceHarness(true);
+    vi.runOnlyPendingTimers();
+    presence.setOpen(false);
+    presence.setOpen(true);
+    await Promise.resolve();
+    expect(presence.state()).toBe('open');
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(300);
+    expect(presence.mounted()).toBe(true);
+  });
+
+  it('cancels the final exit frame on disposal', async () => {
+    const presence = createPresenceHarness(true);
+    vi.runOnlyPendingTimers();
+    presence.setOpen(false);
+    vi.advanceTimersByTime(152);
+    await Promise.resolve();
+    expect(presence.mounted()).toBe(true);
+    expect(vi.getTimerCount()).toBe(1);
+    disposers.pop()?.();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

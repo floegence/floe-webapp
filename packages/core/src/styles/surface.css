@@ -15,8 +15,8 @@
 :root {
   --floe-surface-edge: color-mix(in srgb, var(--border) 18%, var(--background));
   --floe-surface-divider: color-mix(in srgb, var(--border) 12%, var(--background));
-  --floe-surface-highlight: color-mix(in srgb, var(--card) 36%, white 64%);
-  --floe-surface-shade: color-mix(in srgb, var(--card) 78%, black 22%);
+  --floe-surface-highlight: rgb(255 255 255 / 50%);
+  --floe-surface-shade: rgb(0 0 0 / 12%);
 }
 
 /* Keep dimensions and semantic palette tokens intact. Neutral boundaries become
@@ -26,7 +26,7 @@
   :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
     /* A uniform muted border keeps focus readable without a bright frame.
      * Different colors per edge force a costlier native-editor raster path. */
-    --floe-input-focus-color: var(--muted-foreground);
+    --floe-input-focus-color: color-mix(in srgb, var(--muted-foreground) 88%, var(--card));
   }
   :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
     :is(
@@ -86,45 +86,87 @@
     --wb-dock-material-border-top: var(--floe-surface-edge);
     --wb-dock-material-shadow: var(
       --floe-surface-shadow-raised,
-      2px 2px 5px var(--floe-surface-shade),
-      -2px -2px 5px var(--floe-surface-highlight)
+      0 2px 5px -2px var(--floe-surface-shade),
+      inset 0 1px 1px var(--floe-surface-highlight)
     );
   }
 }
 :root.dark {
-  --floe-surface-highlight: color-mix(in srgb, var(--card) 86%, white 14%);
-  --floe-surface-shade: color-mix(in srgb, var(--card) 38%, black 62%);
+  --floe-surface-highlight: rgb(255 255 255 / 4%);
+  --floe-surface-shade: rgb(0 0 0 / 20%);
 }
 
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
   --floe-surface-decoration: 0 0 transparent;
   box-shadow: var(--floe-surface-decoration);
+}
+
+/* Material never owns movement. Keep the motion component's property list,
+ * duration and easing together instead of remapping its transition shorthand. */
+[data-floe-surface-style='soft-neumorphic']
+  [data-floe-surface]:not(
+    :where(
+      .floe-floating-presence,
+      [data-floe-surface-part='switch-thumb'],
+      [data-floe-surface-part='radio-dot'],
+      [data-floe-surface-part='progress-fill']
+    )
+  ) {
   transition-property: color, background-color, border-color, opacity;
 }
 
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface='raised'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-raised,
-    2px 2px 5px var(--floe-surface-shade),
-    -2px -2px 5px var(--floe-surface-highlight)
+    0 2px 5px -2px var(--floe-surface-shade),
+    inset 0 1px 1px var(--floe-surface-highlight)
   );
 }
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface='inset'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-inset,
-    inset 1px 1px 3px var(--floe-surface-shade),
-    inset -1px -1px 3px var(--floe-surface-highlight)
+    inset 0 1px 2px var(--floe-surface-shade),
+    inset 0 -1px 1px var(--floe-surface-highlight)
   );
 }
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface='floating'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-floating,
-    4px 6px 12px -3px var(--floe-surface-shade),
-    inset 1px 1px 0 var(--floe-surface-highlight)
+    0 8px 20px -6px var(--floe-surface-shade),
+    inset 0 1px 1px var(--floe-surface-highlight)
   );
   background-color: var(--card);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* The geometry owner must not clip the moving panel's external shadow. Paint
+ * containment belongs on the existing panel that also owns content clipping. */
+[data-floe-surface-style='soft-neumorphic'] [data-floe-geometry-surface='floating-window'] {
+  contain: layout style;
+}
+[data-floe-surface-style='soft-neumorphic'] [data-floe-floating-window-surface='true'] {
+  contain: paint;
+}
+[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop] {
+  background-color: rgb(0 0 0 / 16%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root.dark[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop] {
+  background-color: rgb(0 0 0 / 36%);
+}
+
+/* A new selection is visible in its first painted frame. Fading the two faces
+ * leaves the old choice visually active after the native state has changed. */
+[data-floe-surface-style='soft-neumorphic']
+  :is(
+    [data-floe-surface-part='choice'],
+    [data-floe-surface-part='indicator'],
+    [data-floe-surface-part='tab'],
+    [data-floe-surface-part='segment']
+  ) {
+  transition: none;
 }
 
 /* A compound input has one decorative boundary, including host compositions
@@ -150,22 +192,17 @@
 }
 
 [data-floe-surface-style='soft-neumorphic'] .workbench-widget[data-floe-surface] {
-  --floe-surface-highlight: color-mix(in srgb, var(--wb-widget-body) 36%, white 64%);
-  --floe-surface-shade: color-mix(in srgb, var(--wb-widget-body) 65%, black 35%);
   /* Some local palettes use translucent body tints. Composite onto an opaque
    * card base instead of reintroducing glass or letting content bleed through. */
   background: linear-gradient(var(--wb-widget-body), var(--wb-widget-body)), var(--card);
 }
-:root.dark[data-floe-surface-style='soft-neumorphic'] .workbench-widget[data-floe-surface] {
-  --floe-surface-highlight: color-mix(in srgb, var(--card) 86%, var(--wb-text) 14%);
-}
 [data-floe-surface-style='soft-neumorphic'] .workbench-widget.is-selected {
-  border-color: color-mix(in srgb, var(--wb-accent) 18%, transparent);
+  border-color: transparent;
 }
 [data-floe-surface-style='soft-neumorphic']
   .workbench-widget.is-selected
   .workbench-widget__header {
-  background: color-mix(in srgb, var(--wb-accent) 12%, var(--card));
+  background: color-mix(in srgb, var(--wb-accent) 8%, var(--card));
   color: var(--wb-accent);
 }
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface-interacting='true'] {
@@ -182,15 +219,9 @@
 @media (forced-colors: none) {
   :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
     --floe-surface-compact-raised:
-      1px 2px 3px var(--floe-surface-shade),
-      inset 1px 1px 1px color-mix(in srgb, white 28%, transparent);
+      0 1px 2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight);
     --floe-surface-compact-inset:
-      inset 1px 2px 3px var(--floe-surface-shade), inset -1px -1px 2px var(--floe-surface-highlight);
-  }
-  :root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
-    --floe-surface-compact-raised:
-      1px 2px 3px var(--floe-surface-shade),
-      inset 1px 1px 1px color-mix(in srgb, white 18%, transparent);
+      inset 0 1px 1px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight);
   }
   :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
     & [data-floe-surface-part][data-floe-surface='raised'] {
@@ -209,8 +240,8 @@
       /* These can repeat in dense lists. Keep lighting inside the painted box. */
       --floe-surface-decoration: var(
         --floe-surface-shadow-raised,
-        inset 0 1px 1px color-mix(in srgb, white 30%, transparent),
-        inset 0 -1px 2px color-mix(in srgb, black 24%, transparent)
+        inset 0 1px 1px var(--floe-surface-highlight),
+        inset 0 -1px 1px var(--floe-surface-shade)
       );
     }
     & [data-floe-surface-part='badge'][data-floe-surface='inset'],
@@ -223,22 +254,48 @@
     & :is([data-floe-surface-part='rail'], [data-floe-surface-part='tab-rail']) {
       background-color: color-mix(in srgb, var(--card) 65%, var(--muted));
     }
+    /* Keep the existing box metrics, but let the carrying fill reach the edge.
+     * An opaque seam based on the page background becomes a dark frame here. */
+    &
+      :is(
+        [data-floe-card-variant='default'],
+        [data-floe-surface-part='choice'],
+        [data-floe-surface-part='indicator'],
+        [data-floe-surface-part='rail'],
+        [data-floe-surface-part='tab-rail'],
+        [data-floe-surface-part='segment'],
+        [data-floe-surface-part='badge']
+      )[data-floe-surface] {
+      border-color: transparent;
+    }
     & [data-floe-surface-part='choice'] {
       background-color: var(--card);
     }
+    &
+      [data-floe-surface-part='choice']:not([data-floe-selected='true']):hover:not(
+        :has(:disabled)
+      ) {
+      background-color: color-mix(in srgb, var(--primary) 3%, var(--card));
+    }
     & [data-floe-surface-part='choice'][data-floe-selected='true'] {
-      background-color: color-mix(in srgb, var(--primary) 17%, var(--card));
+      background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
     }
     & [data-floe-choice-variant='button'][data-floe-selected='true'] {
-      background-color: var(--primary);
+      color: var(--foreground);
     }
     & [data-floe-surface-part='segment'][aria-checked='true'],
     & [data-floe-surface-part='tab'][aria-selected='true'] {
-      background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+      background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
       color: var(--foreground);
     }
     & [data-floe-surface-part='segment'][aria-checked='false'] {
       background-color: transparent;
+    }
+    & [data-floe-surface-part='tab'].border-primary {
+      border-color: color-mix(in srgb, var(--primary) 24%, var(--card));
+    }
+    & [data-floe-surface-part='indicator'] > svg {
+      animation: floe-choice-mark-in 100ms ease-out;
     }
 
     & [data-floe-surface-part='progress-circle'] {
@@ -254,9 +311,33 @@
       /* The control face, not a strong outline, supplies non-text contrast. */
       background-color: var(--muted-foreground);
     }
-    & [data-floe-surface-part='switch-thumb'] {
+    & [data-floe-surface-part='switch-thumb'][data-floe-surface='raised'] {
       background-color: var(--card);
-      transition-property: transform, translate, scale;
+      transition:
+        translate 140ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        background-color 140ms ease-out;
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-raised,
+        0 1px 1px var(--floe-surface-shade),
+        inset 0 1px 0 var(--floe-surface-highlight)
+      );
+    }
+    &
+      :is(
+        [data-floe-surface-part='indicator'],
+        [data-floe-surface-part='switch-track']
+      )[data-floe-surface='inset'] {
+      /* At 14–24 px, a one-pixel light edge and tight well stay legible at 1x.
+       * Broad opposing blurs make both the contour and the glyph look unfocused. */
+      --floe-surface-decoration: var(
+        --floe-surface-shadow-inset,
+        inset 0 1px 1px var(--floe-surface-shade),
+        inset 0 -1px 0 var(--floe-surface-highlight)
+      );
+    }
+    & [data-floe-surface-part='switch-track'] {
+      transition-duration: 140ms;
+      transition-timing-function: ease-out;
     }
     &
       [data-floe-surface-part='switch-track'][data-floe-selected='true']
@@ -267,16 +348,11 @@
       [data-floe-surface-part='indicator'][data-floe-selected='true']:has(
         [data-floe-surface-part='radio-dot']
       ) {
-      background-color: var(--card);
+      background-color: color-mix(in srgb, var(--muted-foreground) 20%, var(--card));
     }
     & [data-floe-surface-part='radio-dot'] {
       background-color: var(--foreground);
-      transition-property: transform, translate, scale;
-      --floe-surface-decoration: var(
-        --floe-surface-shadow-raised,
-        0 1px 2px color-mix(in srgb, black 35%, transparent),
-        inset 0 1px 1px color-mix(in srgb, white 45%, transparent)
-      );
+      transition: scale 90ms ease-out;
     }
     & [data-floe-surface-part='progress-fill'] {
       transition-property: width, background-color;
@@ -303,11 +379,14 @@
   ) {
     /* A solid carrying plane avoids repainting a large gradient behind editors. */
     & [data-floe-card-variant='default'][data-floe-surface='raised'] {
-      background-color: color-mix(in srgb, var(--card) 96%, white);
+      background-color: color-mix(in srgb, var(--card) 98%, white);
+    }
+    & [data-floe-surface='floating']:not(.workbench-widget) {
+      background-color: color-mix(in srgb, var(--card) 94%, white);
     }
     & [data-floe-input-surface],
     & :is(input, textarea)[data-floe-surface='inset'] {
-      background-color: color-mix(in srgb, var(--card) 82%, black);
+      background-color: color-mix(in srgb, var(--card) 94%, black);
     }
   }
 }
@@ -345,6 +424,20 @@
 @media (prefers-reduced-motion: reduce) {
   [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
     transition: none;
+  }
+  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface-part='indicator'] > svg {
+    animation: none;
+  }
+}
+
+@keyframes floe-choice-mark-in {
+  from {
+    opacity: 0.65;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

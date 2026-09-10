@@ -98,7 +98,7 @@ export function Switch(props: SwitchProps) {
           'rounded-full transition-colors duration-200 cursor-pointer',
           styles().track,
           local.checked ? 'bg-primary' : 'bg-input',
-          local.disabled && 'opacity-50 cursor-not-allowed',
+          local.disabled && 'cursor-not-allowed',
           'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
         )}
       >
@@ -109,7 +109,7 @@ export function Switch(props: SwitchProps) {
             'rounded-full bg-background shadow-sm transition-transform duration-200',
             styles().thumb,
             'absolute top-0.5 left-0.5',
-            local.checked && styles().thumbTranslate
+            local.checked ? styles().thumbTranslate : 'translate-x-0'
           )}
         />
       </div>

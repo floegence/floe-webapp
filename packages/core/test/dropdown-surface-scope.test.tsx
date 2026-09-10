@@ -131,7 +131,7 @@ describe('Dropdown surface scope', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith('bravo');
 
-    vi.advanceTimersByTime(1);
+    vi.advanceTimersByTime(17);
     await Promise.resolve();
     expect(surfaceHost!.querySelector('[data-floe-dropdown][role="menu"]')).toBeNull();
   });

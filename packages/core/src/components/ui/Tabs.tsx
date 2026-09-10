@@ -481,11 +481,11 @@ export function Tabs(props: TabsProps) {
     const item = local.items.find((candidate) => candidate.id === id);
     if (!item) return;
     handleTabClick(item.id, item.disabled);
-    requestAnimationFrame(() => {
-      const el = tabEls.get(item.id);
-      el?.focus();
-      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    });
+    // Roving focus is part of this key event. Deferring it lets the next key
+    // navigate from the previous tab and can replay stale focus after a click.
+    const el = tabEls.get(item.id);
+    el?.focus({ preventScroll: true });
+    el?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
   const handleTabKeyNavigation = (event: KeyboardEvent, item: TabItem) => {
