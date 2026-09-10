@@ -342,11 +342,19 @@
       transition-duration: 140ms;
       transition-timing-function: ease-out;
     }
+    & [data-floe-surface-part='indicator']:has([data-floe-surface-part='radio-dot']) {
+      /* A hollow hairline keeps an unchecked radio quieter than its selected dot.
+       * Border-box dimensions and hit targets stay fixed; there is no blurred well. */
+      border-width: 1px;
+      border-color: color-mix(in srgb, var(--muted-foreground) 88%, var(--card));
+      background-color: transparent;
+      --floe-surface-decoration: var(--floe-surface-shadow-inset, none);
+    }
     &
       [data-floe-surface-part='indicator'][data-floe-selected='true']:has(
         [data-floe-surface-part='radio-dot']
       ) {
-      background-color: color-mix(in srgb, var(--muted-foreground) 20%, var(--card));
+      background-color: color-mix(in srgb, var(--primary) 6%, var(--card));
     }
     & [data-floe-surface-part='radio-dot'] {
       background-color: var(--foreground);

@@ -54,6 +54,15 @@ try {
       page.on('pageerror', (e) => errors.push(e.message));
       const baseline = await open('baseline', entry, mode, 'standard');
       const before = await page.evaluate(snapshot);
+      const radioFaceSelector =
+        '[data-floe-surface-part="indicator"]:has([data-floe-surface-part="radio-dot"])';
+      const radioFaces = page.locator(radioFaceSelector);
+      const radioBounds = await radioFaces.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, width: r.width, height: r.height };
+        })
+      );
       assert.deepEqual(
         before,
         await baseline.evaluate(snapshot),
@@ -73,6 +82,34 @@ try {
       await page.evaluate(() => window.surfaceFixture.theme.setSurfaceStyle('soft-neumorphic'));
       await page.waitForTimeout(350);
       const after = await page.evaluate(snapshot);
+      assert.deepEqual(
+        await radioFaces.evaluateAll((els) =>
+          els.map((el) => {
+            const r = el.getBoundingClientRect();
+            return { x: r.x, y: r.y, width: r.width, height: r.height };
+          })
+        ),
+        radioBounds,
+        `${mode}: hollow radio preserves external geometry`
+      );
+      const hollowFaces = await page
+        .locator(`${radioFaceSelector}:not([data-floe-selected="true"])`)
+        .evaluateAll((els) =>
+          els.map((el) => {
+            const s = getComputedStyle(el);
+            return { background: s.backgroundColor, shadow: s.boxShadow, border: s.borderWidth };
+          })
+        );
+      assert.ok(hollowFaces.length > 0, 'unchecked radio faces exist');
+      assert.ok(
+        hollowFaces.every(
+          (face) =>
+            face.background === 'rgba(0, 0, 0, 0)' &&
+            face.shadow === 'none' &&
+            face.border === '1px'
+        ),
+        `${mode}: unselected radios are hollow hairlines without blur`
+      );
       assert.deepEqual(
         after.map(({ tag, role, width, height, padding, border }) => ({
           tag,
@@ -411,7 +448,7 @@ try {
                   )
               ),
               indicator: ratio(
-                getComputedStyle(el).backgroundColor,
+                getComputedStyle(el).borderColor,
                 getComputedStyle(el.closest('[data-floe-card-variant]')).backgroundColor
               ),
               focus: Math.min(
@@ -429,7 +466,7 @@ try {
         );
         assert.ok(
           contrast.indicator >= 3,
-          `${theme.name}: unselected indicator face contrast ${contrast.indicator}`
+          `${theme.name}: unselected radio outline contrast ${contrast.indicator}`
         );
         assert.ok(
           contrast.focus >= 3,
