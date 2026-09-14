@@ -3757,8 +3757,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
           open={floatingWindowOpen()}
           onOpenChange={setFloatingWindowOpen}
           title="Floating Window Demo"
-          defaultSize={{ width: 450, height: 320 }}
-          minSize={{ width: 280, height: 200 }}
+          defaultSize={{ width: 420, height: 280 }}
+          minSize={{ width: 260, height: 180 }}
           footer={
             <>
               <Button variant="ghost" onClick={() => setFloatingWindowOpen(false)}>
@@ -3776,18 +3776,18 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </>
           }
         >
-          <div class="space-y-3">
+          <div class="space-y-2">
             <p class="text-xs text-muted-foreground">
               This is a floating window component. Try these interactions:
             </p>
-            <ul class="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+            <ul class="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
               <li>Drag the title bar to move the window</li>
               <li>Drag edges or corners to resize</li>
               <li>Double-click title bar to maximize/restore</li>
               <li>Click the maximize button in the title bar</li>
               <li>Press Escape or click X to close</li>
             </ul>
-            <div class="pt-2">
+            <div class="pt-1">
               <Input placeholder="Type something..." />
             </div>
           </div>

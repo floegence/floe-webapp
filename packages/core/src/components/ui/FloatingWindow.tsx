@@ -576,7 +576,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
             >
               <div class="flex-1 min-w-0">
                 <Show when={props.title}>
-                  <h2 id={titleId()} class="text-sm font-medium truncate select-none">
+                  <h2
+                    id={titleId()}
+                    class="text-sm font-medium truncate select-none"
+                    style={{ 'font-size': '13px', 'line-height': '1.25', 'letter-spacing': '-0.01em' }}
+                  >
                     {props.title}
                   </h2>
                 </Show>
@@ -616,6 +620,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             <div
               data-floe-floating-window-content="true"
               class="flex-1 overflow-auto p-3"
+              style={{ padding: '10px', 'font-size': '13px', 'line-height': '1.5' }}
             >
               {props.children}
             </div>
@@ -624,6 +629,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               <div
                 data-floe-floating-window-footer="true"
                 class="flex items-center justify-end gap-2 p-3 border-t border-border"
+                style={{ padding: '8px 10px' }}
               >
                 {props.footer}
               </div>

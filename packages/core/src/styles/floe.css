@@ -389,6 +389,22 @@
     transition: none;
   }
 
+  [data-floe-floating-window-titlebar='true'] h2 {
+    font-size: 13px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  [data-floe-floating-window-surface='true'] [data-floe-floating-window-content='true'] {
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  [data-floe-floating-window-surface='true'] [data-floe-floating-window-footer='true'] {
+    padding: 8px 10px;
+  }
+
   :root.dark [data-floe-floating-window-surface='true'] {
     box-shadow:
       0 12px 28px -8px color-mix(in srgb, var(--foreground) 24%, transparent),
