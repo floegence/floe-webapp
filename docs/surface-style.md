@@ -175,6 +175,14 @@ The browser tools use full Chromium (`channel: 'chromium'`) and record GPU/compo
 
 The performance command compares A (baseline standard), B (current standard), and C (current soft neumorphic), using the same fixture and machine, with an unrecorded warmup in each measured page, restoration of the initial workload state, and five interleaved runs per scene. Paint and raster intervals are unioned per thread before normalization, so nested trace events are not counted twice. Hot-interaction frame-loss median increment is limited to one percentage point. A paint/raster median increase above 10% in at least four of five paired runs blocks completion for investigation. Input-to-next-frame latency and long tasks are reported separately. These are task budgets, not browser guarantees or a substitute for downstream real workloads. Keep every result, including failures; investigate with the raw trace rather than selecting favorable runs.
 
+Use `pnpm test:floating-window-drag` for the focused drag-follow score. It runs a
+trusted 120-point path in the packed standard consumer and records per-frame
+Euclidean position error, maximum and P95 error, input-to-next-frame P95, and
+missed-frame percentage. The default acceptance budget is median max error <=
+12px, P95 error <= 8px, input-to-next-frame P95 <= 35ms, and missed frames <=
+5%. The path stays inside the fixture safe viewport so clamping is not counted
+as renderer lag. Reports are written to `.cache/surface-style/drag-performance`.
+
 Artifacts live under `.cache/surface-style`: baseline/current tarballs, packed preview builds, screenshots, JSON reports, and compressed Chrome traces. Decompress a trace and load its JSON in Chromium DevTools Performance. Tests do not publish packages or modify `main`.
 
 ## Downstream consumption and stop point

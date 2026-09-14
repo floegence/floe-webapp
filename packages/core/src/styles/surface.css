@@ -419,8 +419,8 @@
 
     & [data-floe-floating-window-titlebar='true'] {
       position: relative;
-      min-height: 42px;
-      padding-inline: 14px;
+      min-height: 36px;
+      padding-inline: 10px;
       background-color: var(--floe-window-titlebar-background);
       background-image: none;
       border-bottom-color: var(--floe-surface-divider);
@@ -447,7 +447,7 @@
       background-image: none;
     }
     &[data-floe-floating-window-state='active'] > [data-floe-floating-window-titlebar='true'] {
-      background-color: color-mix(in srgb, var(--accent) 48%, var(--floe-window-titlebar-background));
+      background-color: color-mix(in srgb, var(--accent) 24%, var(--floe-window-titlebar-background));
     }
     & [data-floe-floating-window-content='true'] {
       background: color-mix(in srgb, var(--floe-window-background) 96%, var(--background));

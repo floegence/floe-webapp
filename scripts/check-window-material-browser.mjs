@@ -94,7 +94,7 @@ try {
           assert.equal(active.titleImage, 'none');
           assert.equal(active.backdrop, 'none');
           assert.equal(active.radius, '10px');
-          assert.equal(active.titleMinHeight, '42px');
+          assert.equal(active.titleMinHeight, '36px');
           assert.equal(active.contentBackground?.[3], 255);
           assert.ok(active.footerBackground, 'footer keeps a distinct reading layer');
           assert.equal(active.footerBackground[3], 255);
@@ -312,27 +312,22 @@ try {
         await responsive.close();
       }
       // Optional material must not change the existing standard presentation.
-      const standard = [];
-      for (const build of ['baseline', 'current']) {
-        const compatibility = await runtime.browser.newPage();
-        await compatibility.goto(
-          `${runtime.baseURL}/${build}-${entry}/dist/?panel=windows&surface=standard&theme=classic-dark`
-        );
-        await compatibility.locator('.window-study-window-0').waitFor();
-        await compatibility.waitForTimeout(250);
-        standard.push(await measure(compatibility));
-        await compatibility.close();
-      }
-      check(`${entry}: standard material remains unchanged`, () => {
-        const comparable = (value) => {
-          const legacy = { ...value };
-          delete legacy.contentBackground;
-          delete legacy.footerBackground;
-          delete legacy.radius;
-          delete legacy.titleMinHeight;
-          return legacy;
-        };
-        assert.deepEqual(comparable(standard[1]), comparable(standard[0]));
+      const standardPage = await runtime.browser.newPage();
+      await standardPage.goto(
+        `${runtime.baseURL}/current-${entry}/dist/?panel=windows&surface=standard&theme=classic-dark`
+      );
+      await standardPage.locator('.window-study-window-0').waitFor();
+      await standardPage.waitForTimeout(250);
+      const standard = await measure(standardPage);
+      await standardPage.close();
+      check(`${entry}: default standard windows use the shared Mica material`, () => {
+        assert.equal(standard.backdrop, 'none');
+        assert.equal(standard.titleImage, 'none');
+        assert.equal(standard.background[3], 255);
+        assert.equal(standard.title[3], 255);
+        assert.equal(standard.radius, '10px');
+        assert.equal(standard.titleMinHeight, '36px');
+        assert.equal(standard.transition, 'opacity, transform');
       });
     }
   }

@@ -533,6 +533,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             width: `${size().width}px`,
             height: `${size().height}px`,
             transform: `translate3d(${position().x}px, ${position().y}px, 0)`,
+            'border-radius': isMaximized() ? '0' : '10px',
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,
           }}
@@ -558,6 +559,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               isMaximized() && 'rounded-none',
               props.class
             )}
+            style={{ 'border-radius': isMaximized() ? '0' : '10px' }}
             data-floating-presence={windowPresence.state()}
           >
             <div
