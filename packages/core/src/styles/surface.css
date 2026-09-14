@@ -409,20 +409,52 @@
 @media (forced-colors: none) {
   :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
     [data-floe-floating-window-surface='true'][data-floe-surface='floating'] {
+    --floe-window-radius: 10px;
     background: var(--floe-window-background);
     color: var(--floe-window-foreground);
     --muted-foreground: var(--floe-window-muted-foreground);
     border-color: var(--floe-window-border);
     --floe-surface-decoration: var(--floe-window-shadow);
+    border-radius: var(--floe-window-radius);
 
     & [data-floe-floating-window-titlebar='true'] {
-      background: var(--floe-window-titlebar-background);
-      border-bottom-color: transparent;
+      position: relative;
+      min-height: 42px;
+      padding-inline: 14px;
+      background-color: var(--floe-window-titlebar-background);
+      background-image: none;
+      border-bottom-color: var(--floe-surface-divider);
       color: var(--floe-window-foreground);
       transition: none;
+      border-radius: calc(var(--floe-window-radius) - 1px) calc(var(--floe-window-radius) - 1px) 0 0;
+    }
+    & [data-floe-floating-window-titlebar='true']::before {
+      content: '';
+      position: absolute;
+      inset: 0 14px auto;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--ring) 42%, transparent) 50%,
+        transparent
+      );
+      opacity: 0.72;
+      pointer-events: none;
     }
     &[data-floe-floating-window-state='inactive'] > [data-floe-floating-window-titlebar='true'] {
       background: color-mix(in srgb, var(--floe-window-titlebar-background) 50%, var(--floe-window-background));
+      background-image: none;
+    }
+    &[data-floe-floating-window-state='active'] > [data-floe-floating-window-titlebar='true'] {
+      background-color: color-mix(in srgb, var(--accent) 48%, var(--floe-window-titlebar-background));
+    }
+    & [data-floe-floating-window-content='true'] {
+      background: color-mix(in srgb, var(--floe-window-background) 96%, var(--background));
+    }
+    & [data-floe-floating-window-footer='true'] {
+      background: color-mix(in srgb, var(--floe-window-background) 92%, var(--muted));
+      border-top-color: var(--floe-surface-divider);
     }
     & > [data-floe-floating-window-titlebar='true'] button {
       transition-property: background-color, border-color, opacity;
@@ -434,6 +466,14 @@
       --floe-surface-decoration: var(--floe-surface-shadow-interacting, 0 1px 2px var(--floe-surface-shade));
     }
   }
+}
+
+/* Dark shell palettes use a restrained dark step for active chrome so the
+ * window remains discoverable without a bright outline or animated glow. */
+:root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+  [data-floe-floating-window-surface='true'][data-floe-floating-window-state='active']
+  > [data-floe-floating-window-titlebar='true'] {
+  background-color: color-mix(in srgb, var(--background) 38%, var(--floe-window-titlebar-background));
 }
 
 /* FloatingWindow keeps rich text at scale 1 throughout its short presence

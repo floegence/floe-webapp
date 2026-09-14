@@ -171,6 +171,11 @@ export function WindowMaterialStudy() {
             viewportInsets={{ top: 126, bottom: 28, left: 12, right: 12 }}
             zIndex={front() === index ? 110 : 100 + index}
             class={`window-study-window window-study-window-${index}`}
+            footer={
+              index === 0 ? (
+                <span class="text-[11px] text-muted-foreground">Saved locally</span>
+              ) : undefined
+            }
           >
             <div class="window-study-content">
               <div class="window-study-document-toolbar">

@@ -611,10 +611,18 @@ export function FloatingWindow(props: FloatingWindowProps) {
               </div>
             </div>
 
-            <div class="flex-1 overflow-auto p-3">{props.children}</div>
+            <div
+              data-floe-floating-window-content="true"
+              class="flex-1 overflow-auto p-3"
+            >
+              {props.children}
+            </div>
 
             <Show when={props.footer}>
-              <div class="flex items-center justify-end gap-2 p-3 border-t border-border">
+              <div
+                data-floe-floating-window-footer="true"
+                class="flex items-center justify-end gap-2 p-3 border-t border-border"
+              >
                 {props.footer}
               </div>
             </Show>

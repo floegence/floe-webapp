@@ -133,6 +133,7 @@ describe('FloatingWindow open cycle', () => {
     setOpen!(true);
     await flushAnimationFrame();
     expect(document.querySelector('[data-testid="preview-body"]')).toBeTruthy();
+    expect(document.querySelector('[data-floe-floating-window-content="true"]')).toBeTruthy();
 
     setOpen!(false);
     await Promise.resolve();
@@ -194,5 +195,27 @@ describe('FloatingWindow open cycle', () => {
     expect(geometry?.getAttribute('data-floating-presence')).toBe('open');
     expect(surface?.getAttribute('data-floating-presence')).toBe('open');
     expect(document.querySelector('[data-testid="live-preview-body"]')?.textContent).toBe('Second');
+  });
+
+  it('keeps the content and footer surfaces addressable without changing the window root', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(
+      () => (
+        <FloatingWindow
+          open
+          onOpenChange={() => undefined}
+          title="Layered window"
+          footer={<button type="button">Apply</button>}
+        >
+          <p>Reading plane</p>
+        </FloatingWindow>
+      ),
+      host,
+    );
+    await flushAnimationFrame();
+
+    expect(document.querySelector('[data-floe-floating-window-content="true"]')).toBeTruthy();
+    expect(document.querySelector('[data-floe-floating-window-footer="true"]')).toBeTruthy();
   });
 });

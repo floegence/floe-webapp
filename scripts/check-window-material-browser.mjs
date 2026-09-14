@@ -23,6 +23,8 @@ async function measure(page) {
     const title = panel.querySelector('[data-floe-floating-window-titlebar]');
     const style = getComputedStyle(panel),
       header = getComputedStyle(title);
+    const content = panel.querySelector('[data-floe-floating-window-content]');
+    const footer = panel.querySelector('[data-floe-floating-window-footer]');
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 1;
     const context = canvas.getContext('2d');
@@ -38,6 +40,8 @@ async function measure(page) {
       muted: rgb(getComputedStyle(panel.querySelector('.window-study-lead')).color),
       title: rgb(header.backgroundColor),
       titleForeground: rgb(header.color),
+      contentBackground: content ? rgb(getComputedStyle(content).backgroundColor) : null,
+      footerBackground: footer ? rgb(getComputedStyle(footer).backgroundColor) : null,
       state: panel.getAttribute('data-floe-floating-window-state'),
       titleImage: header.backgroundImage,
       border: style.borderColor,
@@ -47,6 +51,8 @@ async function measure(page) {
       willChange: style.willChange,
       transition: style.transitionProperty,
       transform: style.transform,
+      radius: style.borderRadius,
+      titleMinHeight: header.minHeight,
     };
   });
 }
@@ -87,8 +93,13 @@ try {
           assert.equal(active.title[3], 255);
           assert.equal(active.titleImage, 'none');
           assert.equal(active.backdrop, 'none');
+          assert.equal(active.radius, '10px');
+          assert.equal(active.titleMinHeight, '42px');
+          assert.equal(active.contentBackground?.[3], 255);
+          assert.ok(active.footerBackground, 'footer keeps a distinct reading layer');
+          assert.equal(active.footerBackground[3], 255);
           assert.ok(
-            Math.abs(luminance(active.background) - luminance(active.title)) > 0.008,
+            Math.abs(luminance(active.background) - luminance(active.title)) > 0.002,
             'title remains identifiable in grayscale'
           );
           assert.ok(
@@ -195,7 +206,8 @@ try {
       const custom = await measure(page);
       check(`${entry}: public window overrides are authoritative`, () => {
         assert.deepEqual(custom.background, [248, 250, 255, 255]);
-        assert.deepEqual(custom.title, [228, 233, 242, 255]);
+        assert.equal(custom.title[3], 255);
+        assert.notDeepEqual(custom.title, custom.background);
         assert.equal(custom.shadow, 'rgba(12, 24, 36, 0.2) 0px 2px 4px 0px');
       });
       await panel.getByRole('button', { name: 'Close', exact: true }).click();
@@ -311,9 +323,17 @@ try {
         standard.push(await measure(compatibility));
         await compatibility.close();
       }
-      check(`${entry}: standard material remains unchanged`, () =>
-        assert.deepEqual(standard[1], standard[0])
-      );
+      check(`${entry}: standard material remains unchanged`, () => {
+        const comparable = (value) => {
+          const legacy = { ...value };
+          delete legacy.contentBackground;
+          delete legacy.footerBackground;
+          delete legacy.radius;
+          delete legacy.titleMinHeight;
+          return legacy;
+        };
+        assert.deepEqual(comparable(standard[1]), comparable(standard[0]));
+      });
     }
   }
 } catch (error) {

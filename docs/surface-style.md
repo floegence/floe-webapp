@@ -59,7 +59,9 @@ FloatingWindow keeps layout/style containment on its geometry root and paint con
 ## Non-modal window material
 
 In `soft-neumorphic`, FloatingWindow has an independent, opaque reading plane
-and a solid title bar. Dialogs and menus keep the general floating role. Standard
+and a solid title bar. The window uses a restrained Mica treatment: a 10px
+corner, a one-pixel tokenized title highlight, quiet title/content/footer planes,
+and a two-stage static cast shadow. Dialogs and menus keep the general floating role. Standard
 material, high contrast, and forced colors retain their existing presentation.
 Window geometry, input ownership, persistence, and portal placement do not change.
 
@@ -93,6 +95,10 @@ actions retain full foreground contrast and their existing hover and keyboard
 indicators. Drag and resize use the existing local
 interaction marker and lightweight contact shadow. The outer geometry owner does
 not clip the panel's external shadow, while content clipping stays on the panel.
+
+The title highlight and plane transitions are paint-only feedback. They never
+animate geometry, blur, or shadow values, and the title/content/footer boundaries
+remain opaque so native editors and terminal output keep a stable raster path.
 
 Window presence keeps its 150ms entry and 120ms exit, replacing scale with 3px/2px
 translation. The content stays at scale 1. The shared presence lifecycle owns
