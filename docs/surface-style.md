@@ -131,6 +131,22 @@ it does not relabel a comparison with standard material as the change baseline.
 
 ## Focus, accessibility, and interaction
 
+FloatingWindow has a 32px title bar with a 12px default title in both standard
+and soft modes. Its maximize/restore and close controls span the full inner
+header height (31px plus the shared 1px divider), with 36px and 40px widths
+matching Workbench controls. Icons remain small; hover paints the whole button.
+Keyboard focus uses an inset outline so the clipped window edge does not hide
+it. Controls never begin a title-bar drag or bubble a double-click into a second
+maximize action. The outer resize perimeter retains its hit targets. These
+header dimensions do not alter the default window rectangle, content typography,
+or footer spacing.
+
+`check-floating-window-header-browser.mjs`, included in `test:window-material`,
+checks computed header and title sizes, button edge hit-testing, pointer and
+keyboard actions, focus visibility, and narrow viewports through both packed CSS
+entries. Pass `--demo=http://127.0.0.1:43180/` to check the real Demo opening path
+and save matching hover/focus screenshots in `.cache/surface-style/window-header`.
+
 - Input focus changes only existing border color. Soft neumorphic fields use 88% muted-foreground blended with the opaque card color for a quiet, uniform focus boundary; custom `--floe-input-focus-color` overrides remain authoritative. The built-in non-HC palette matrix verifies at least 3:1 contrast against both the carrying card and the recessed field. Different colors per edge require a more expensive native-editor border raster path, so keep all four edges uniform. Error and high-contrast fields retain their semantic colors. Dimensions, position, padding, border width, and decorative shadow are identical before and after focus, including intermediate animation frames. Compound fields use `data-floe-input-surface`; editable descendants stay frameless.
 - Select declares its existing trigger as an input boundary through `Dropdown.triggerInputSurface`; this also repairs its prior ring-based keyboard focus to follow the shared field contract in standard mode. Generic Dropdown actions remain independent buttons.
 - Independent buttons and focusable surfaces compose their keyboard indicator with material. Compound input buttons keep the shared local fill. In forced colors, independent material controls use a system-color outline; input focus still uses its existing system-color border.

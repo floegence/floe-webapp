@@ -52,7 +52,8 @@ async function measure(page) {
       transition: style.transitionProperty,
       transform: style.transform,
       radius: style.borderRadius,
-      titleMinHeight: header.minHeight,
+      titleHeight: title.getBoundingClientRect().height,
+      titleFontSize: getComputedStyle(title.querySelector('h2')).fontSize,
     };
   });
 }
@@ -94,7 +95,8 @@ try {
           assert.equal(active.titleImage, 'none');
           assert.equal(active.backdrop, 'none');
           assert.equal(active.radius, '10px');
-          assert.equal(active.titleMinHeight, '36px');
+          assert.equal(active.titleHeight, 32);
+          assert.equal(active.titleFontSize, '12px');
           assert.equal(active.contentBackground?.[3], 255);
           assert.ok(active.footerBackground, 'footer keeps a distinct reading layer');
           assert.equal(active.footerBackground[3], 255);
@@ -326,7 +328,8 @@ try {
         assert.equal(standard.background[3], 255);
         assert.equal(standard.title[3], 255);
         assert.equal(standard.radius, '10px');
-        assert.equal(standard.titleMinHeight, '36px');
+        assert.equal(standard.titleHeight, 32);
+        assert.equal(standard.titleFontSize, '12px');
         assert.equal(standard.transition, 'opacity, transform');
       });
     }

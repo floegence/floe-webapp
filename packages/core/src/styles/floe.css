@@ -382,17 +382,9 @@
   }
 
   [data-floe-floating-window-titlebar='true'] {
-    min-height: 36px;
-    padding-inline: 10px;
     background-color: color-mix(in srgb, var(--muted) 70%, var(--card) 30%);
     border-bottom-color: color-mix(in srgb, var(--border) 70%, var(--background) 30%);
     transition: none;
-  }
-
-  [data-floe-floating-window-titlebar='true'] h2 {
-    font-size: 13px;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
   }
 
   :root.dark [data-floe-floating-window-surface='true'] {
@@ -420,6 +412,19 @@
   [data-floe-hot-interaction~='drag'] [data-floe-geometry-surface='notes-note'] .notes-note__surface {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Edge-aligned window controls keep their keyboard indicator inside the
+ * clipped panel. The outer resize perimeter keeps its existing hit targets. */
+[data-floe-floating-window-control]:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: -3px;
+}
+@media (forced-colors: active) {
+  [data-floe-floating-window-control]:focus-visible {
+    outline-color: Highlight;
   }
 }
 

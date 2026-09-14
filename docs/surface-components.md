@@ -41,7 +41,7 @@ The optional soft neumorphic material is a lightweight shared component system: 
 | ChatInput | One recessed composer with quiet toolbar seam | Draft, send, attachments, composition and local actions |
 | Chat messages / code / logs | Readable flat content; controls inherit shared treatments | Streaming, text selection/copy, syntax colors, virtualization |
 | Shell / Panel | Flat carrying planes with subdued structural separators | Density, resizer hit targets, mobile safe areas, layout and navigation |
-| FloatingWindow | Opaque Mica reading plane, layered title bar/footer and local lightweight hot state | Shared pointer session, geometry, focus and portal ownership |
+| FloatingWindow | Opaque Mica reading plane, 32px title bar with 12px title, full-height 36px maximize/40px close controls, layered footer and local lightweight hot state | Shared pointer session, geometry, focus and portal ownership; button input stays separate from title-bar drag/double-click |
 | WorkbenchWidget | Local-palette floating shell; color-led selected header | Stable instance, embedded focus, wheel/text ownership and projection |
 | Workbench HUD / lock / dock | Small floating or raised controls with quiet seams | Canvas controls, lock state, dock actions and existing placement |
 | InfiniteCanvas / SurfaceFloatingLayer / MobileKeyboard | No independent decorative layer; material belongs to the visible consumer | Coordinates, input routing, portal and keyboard viewport mechanisms |

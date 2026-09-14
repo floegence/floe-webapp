@@ -491,7 +491,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
     setIsMaximized(true);
   };
 
-  const handleTitleBarDoubleClick = () => {
+  const handleTitleBarDoubleClick = (event: MouseEvent) => {
+    if ((event.target as Element | null)?.closest('button')) return;
     toggleMaximize();
   };
 
@@ -564,7 +565,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             <div
               data-floe-floating-window-titlebar="true"
               class={cn(
-                'flex items-center justify-between h-9 px-3',
+                'flex shrink-0 items-center justify-between h-8',
                 'border-b',
                 isMaximized() ? 'rounded-none' : 'rounded-t-md',
                 draggable() && !isMaximized() && 'cursor-move'
@@ -573,23 +574,23 @@ export function FloatingWindow(props: FloatingWindowProps) {
               onDblClick={handleTitleBarDoubleClick}
               style={{ 'touch-action': 'none' }}
             >
-              <div class="flex-1 min-w-0">
+              <div class="flex-1 min-w-0 px-2">
                 <Show when={props.title}>
                   <h2
                     id={titleId()}
-                    class="text-sm font-medium truncate select-none"
-                    style={{ 'font-size': '13px', 'line-height': '1.25', 'letter-spacing': '-0.01em' }}
+                    class="text-xs leading-none font-medium truncate select-none"
                   >
                     {props.title}
                   </h2>
                 </Show>
               </div>
 
-              <div class="flex items-center gap-0.5 -mr-1">
+              <div class="flex h-full shrink-0 items-stretch">
                 <Button
                   variant="ghost"
                   size="icon"
-                  class="h-6 w-6"
+                  data-floe-floating-window-control="maximize"
+                  class="h-full w-9 shrink-0 rounded-none border-0 px-0 active:scale-100"
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
                     toggleMaximize();
@@ -604,7 +605,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 <Button
                   variant="ghost-destructive"
                   size="icon"
-                  class="h-6 w-6"
+                  data-floe-floating-window-control="close"
+                  class="h-full w-10 shrink-0 rounded-none border-0 px-0 active:scale-100"
                   onClick={(e: MouseEvent) => {
                     e.stopPropagation();
                     props.onOpenChange(false);

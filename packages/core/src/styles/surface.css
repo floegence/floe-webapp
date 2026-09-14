@@ -419,8 +419,6 @@
 
     & [data-floe-floating-window-titlebar='true'] {
       position: relative;
-      min-height: 36px;
-      padding-inline: 10px;
       background-color: var(--floe-window-titlebar-background);
       background-image: none;
       border-bottom-color: var(--floe-surface-divider);
