@@ -533,7 +533,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
             width: `${size().width}px`,
             height: `${size().height}px`,
             transform: `translate3d(${position().x}px, ${position().y}px, 0)`,
-            'border-radius': isMaximized() ? '0' : '10px',
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,
           }}
@@ -620,7 +619,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
             <div
               data-floe-floating-window-content="true"
               class="flex-1 overflow-auto p-3"
-              style={{ padding: '10px', 'font-size': '13px', 'line-height': '1.5' }}
             >
               {props.children}
             </div>
@@ -629,7 +627,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
               <div
                 data-floe-floating-window-footer="true"
                 class="flex items-center justify-end gap-2 p-3 border-t border-border"
-                style={{ padding: '8px 10px' }}
               >
                 {props.footer}
               </div>
