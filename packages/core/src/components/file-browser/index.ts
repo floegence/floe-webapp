@@ -1,4 +1,5 @@
 // File Browser component exports
+export { createLongPressContextMenuHandlers } from './longPressContextMenu';
 export { FileBrowser, type FileBrowserProps } from './FileBrowser';
 export {
   FileBrowserProvider,

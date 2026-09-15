@@ -602,3 +602,32 @@ Run local CI (lint + typecheck + test + build + verify):
 ```bash
 make check
 ```
+
+
+### File context menu boundaries
+
+`FileContextMenu` accepts an optional `boundary` element or client-coordinate rectangle.
+The shared floating geometry intersects it with the owning surface and the current
+visual viewport, including device safe areas, and keeps an eight-pixel inset. An
+explicit null, disconnected element, hidden owner, or empty intersection closes the
+menu; omitting the boundary keeps automatic surface ownership. `owner` can provide
+a stable trigger for ownership and Escape/Tab focus restoration.
+
+Menus measure before becoming visible, constrain their actual scroll viewport, and
+keep every action reachable through touch scrolling and keyboard navigation. The
+configured mobile layout or a coarse pointer uses 44-pixel action targets. Submenus
+use the same portal and collision boundary; mobile layouts or insufficient lateral
+space navigate the same menu tree in one panel with a caller-localized `backLabel`
+(default `Back`). `scrollViewportProps` passes host wheel-contract attributes only
+to the constrained panel. Hosts retain selection-based wheel policy.
+
+External pointer/focus, window blur, external scrolling, owner resizing/hiding, and
+visual viewport changes dismiss the menu. Internal scrolling keeps it open and
+closes detached child panels. Escape closes one submenu level before closing the
+root. Product shells supply their occupied-area boundary without duplicating
+coordinate projection, menu state, or viewport listeners.
+
+The exported `createLongPressContextMenuHandlers` lets custom file-tree rows use the
+same hold, movement cancellation, multi-pointer cancellation, and release-click
+suppression as the shared grid and list. `pnpm test:file-menu` verifies desktop,
+mobile, short-height, projected, and scaled-host behavior in Chromium and WebKit.

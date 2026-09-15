@@ -84,9 +84,10 @@ jobs:
 
       - name: Verify input focus in Chromium
         run: |
-          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright install --with-deps chromium webkit
           pnpm test:input-focus
           pnpm test:dialog
+          pnpm test:file-menu
 
       - name: Build packages
         run: pnpm -r --filter './packages/*' build

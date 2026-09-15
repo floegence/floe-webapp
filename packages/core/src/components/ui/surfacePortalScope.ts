@@ -10,6 +10,7 @@ export {
   resolveSurfacePortalMount,
   resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalMountRect,
+  resolveSurfacePortalScale,
   projectSurfacePortalPosition,
   projectSurfacePortalRect,
   __resetSurfacePortalScopeForTests,

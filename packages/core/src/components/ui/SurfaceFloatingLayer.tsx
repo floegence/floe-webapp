@@ -4,6 +4,11 @@ import { cn } from '../../utils/cn';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import { clampMenuPosition } from './menuUtils';
 import {
+  readSurfaceSafeArea,
+  resolveFloatingBoundary,
+  type SurfaceFloatingBoundary,
+} from './surfaceFloatingBoundary';
+import {
   isSurfacePortalMode,
   projectSurfacePortalPosition,
   resolveSurfacePortalBoundaryRect,
@@ -23,11 +28,14 @@ export type SurfaceFloatingLayerSize = Readonly<{
   height: number;
 }>;
 
-export interface SurfaceFloatingLayerProps
-  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'children' | 'class' | 'style' | 'ref'> {
+export interface SurfaceFloatingLayerProps extends Omit<
+  JSX.HTMLAttributes<HTMLDivElement>,
+  'children' | 'class' | 'style' | 'ref'
+> {
   position: SurfaceFloatingLayerPosition;
   /** Stable trigger or anchor used to resolve the owning projected surface. */
   owner?: Element | null;
+  boundary?: SurfaceFloatingBoundary;
   estimatedSize?: SurfaceFloatingLayerSize;
   clamp?: boolean;
   class?: string;
@@ -54,6 +62,7 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   const [local, rest] = splitProps(props, [
     'position',
     'owner',
+    'boundary',
     'estimatedSize',
     'clamp',
     'class',
@@ -63,7 +72,14 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   ]);
   const surfaceHost = createMemo(() => resolveSurfacePortalHost({ owner: local.owner ?? null }));
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
-  const boundaryRect = () => resolveSurfacePortalBoundaryRect(surfaceHost()) ?? emptyBoundaryRect();
+  const safeArea = createMemo(() => {
+    void local.position;
+    return readSurfaceSafeArea();
+  });
+  const boundaryRect = () =>
+    local.boundary === undefined
+      ? resolveSurfacePortalBoundaryRect(surfaceHost())
+      : (resolveFloatingBoundary(surfaceHost(), local.boundary, safeArea()) ?? emptyBoundaryRect());
   const shouldClamp = () => local.clamp !== false && Boolean(local.estimatedSize);
   const resolvedPosition = createMemo(() => {
     const position = local.position;
@@ -73,6 +89,9 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   const projectedPosition = () => projectSurfacePortalPosition(resolvedPosition(), surfaceHost());
   const layerStyle = () => ({
     ...(local.style ?? {}),
+    ...(local.boundary !== undefined && (boundaryRect().width <= 16 || boundaryRect().height <= 16)
+      ? { visibility: 'hidden' as const, 'pointer-events': 'none' as const }
+      : {}),
     left: `${projectedPosition().x}px`,
     top: `${projectedPosition().y}px`,
   });

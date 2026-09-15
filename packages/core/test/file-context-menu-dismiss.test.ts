@@ -19,14 +19,25 @@ function createWindowMock() {
   const listeners = new Map<string, ListenerEntry[]>();
 
   return {
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
+    addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions
+    ) {
       const current = listeners.get(type) ?? [];
       current.push({ listener, options });
       listeners.set(type, current);
     },
-    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
+    removeEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions
+    ) {
       const current = listeners.get(type) ?? [];
-      listeners.set(type, current.filter((entry) => entry.listener !== listener || entry.options !== options));
+      listeners.set(
+        type,
+        current.filter((entry) => entry.listener !== listener || entry.options !== options)
+      );
     },
     dispatch(type: string, event: Event) {
       const current = listeners.get(type) ?? [];
@@ -41,6 +52,22 @@ function createWindowMock() {
 }
 
 describe('FileContextMenu dismissal controller', () => {
+  it('keeps local scrolling and submenu Escape with the menu owner', () => {
+    const ownerWindow = createWindowMock();
+    const onDismiss = vi.fn();
+    installContextMenuDismissListeners({
+      ownerWindow: ownerWindow as unknown as Window,
+      contextMenuId: 'local',
+      onDismiss,
+    });
+    const inside = {
+      composedPath: () => [{ dataset: { floeContextMenu: 'local' } }],
+      target: null,
+    };
+    ownerWindow.dispatch('scroll', inside as unknown as Event);
+    ownerWindow.dispatch('keydown', { ...inside, key: 'Escape' } as unknown as Event);
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
   it('registers capture-phase pointerdown dismissal while preserving inside-menu clicks', () => {
     const ownerWindow = createWindowMock();
     const onDismiss = vi.fn();

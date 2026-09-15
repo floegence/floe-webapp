@@ -69,15 +69,21 @@ function flushDeferredWork(): Promise<void> {
   return Promise.resolve();
 }
 
-function SurfaceScopedMenuHarness(props: { onDuplicate: (items: FileItem[]) => void }) {
+function SurfaceScopedMenuHarness(props: {
+  onDuplicate: (items: FileItem[]) => void;
+  boundary?: DOMRect;
+}) {
   return (
     <FileBrowserProvider files={files} initialPath="/">
-      <SurfaceScopedMenuHarnessBody onDuplicate={props.onDuplicate} />
+      <SurfaceScopedMenuHarnessBody onDuplicate={props.onDuplicate} boundary={props.boundary} />
     </FileBrowserProvider>
   );
 }
 
-function SurfaceScopedMenuHarnessBody(props: { onDuplicate: (items: FileItem[]) => void }) {
+function SurfaceScopedMenuHarnessBody(props: {
+  onDuplicate: (items: FileItem[]) => void;
+  boundary?: DOMRect;
+}) {
   const ctx = useFileBrowser();
 
   return (
@@ -102,7 +108,7 @@ function SurfaceScopedMenuHarnessBody(props: { onDuplicate: (items: FileItem[]) 
       >
         Open file menu
       </button>
-      <FileContextMenu callbacks={{ onDuplicate: props.onDuplicate }} />
+      <FileContextMenu callbacks={{ onDuplicate: props.onDuplicate }} boundary={props.boundary} />
     </div>
   );
 }
@@ -140,7 +146,13 @@ function LayerScopedMenuHarnessBody(props: {
       <div
         data-testid="surface-host"
         data-floe-dialog-surface-host="true"
-        style={{ position: 'absolute', left: '120px', top: '80px', width: '320px', height: '240px' }}
+        style={{
+          position: 'absolute',
+          left: '120px',
+          top: '80px',
+          width: '320px',
+          height: '240px',
+        }}
       >
         <button
           type="button"
@@ -187,7 +199,9 @@ function GlobalMenuHarness() {
       >
         Open global menu
       </button>
-      <FileContextMenu overrideItems={[{ id: 'duplicate', label: 'Duplicate', type: 'duplicate' }]} />
+      <FileContextMenu
+        overrideItems={[{ id: 'duplicate', label: 'Duplicate', type: 'duplicate' }]}
+      />
     </>
   );
 }
@@ -217,6 +231,29 @@ describe('FileContextMenu surface scope', () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it('keeps the last action above a caller boundary rather than the window bottom', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(
+      () => (
+        <SurfaceScopedMenuHarness onDuplicate={vi.fn()} boundary={new DOMRect(20, 30, 280, 150)} />
+      ),
+      host
+    );
+    const surface = host.querySelector('[data-testid="surface-host"]') as HTMLElement;
+    mockRect(surface, { left: 0, top: 0, right: 320, bottom: 240, width: 320, height: 240 });
+    const trigger = host.querySelector('button')!;
+    dispatchPointerDown(trigger);
+    trigger.click();
+    await Promise.resolve();
+    const menu = host.querySelector('[role="menu"]') as HTMLElement;
+    mockRect(menu, { left: 88, top: 96, right: 268, bottom: 216, width: 180, height: 120 });
+    flushRaf();
+    await Promise.resolve();
+    expect(menu.style.top).toBe('52px');
+    expect(menu.style.maxHeight).toBe('134px');
   });
 
   it('mounts the menu into the nearest surface host and keeps actions clickable', async () => {
@@ -260,7 +297,9 @@ describe('FileContextMenu surface scope', () => {
 
     mount(() => <LayerScopedMenuHarness onDuplicate={onDuplicate} />, host);
 
-    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLDivElement | null;
+    const surfaceLayer = host.querySelector(
+      '[data-testid="surface-layer"]'
+    ) as HTMLDivElement | null;
     const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
     const trigger = host.querySelector('[data-testid="open-menu"]') as HTMLButtonElement | null;
 
@@ -312,15 +351,20 @@ describe('FileContextMenu surface scope', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
 
-    mount(() => (
-      <LayerScopedMenuHarness
-        onDuplicate={vi.fn()}
-        anchor={{ x: 430, y: 315 }}
-        overrideItems={[{ id: 'duplicate', label: 'Duplicate', type: 'duplicate' }]}
-      />
-    ), host);
+    mount(
+      () => (
+        <LayerScopedMenuHarness
+          onDuplicate={vi.fn()}
+          anchor={{ x: 430, y: 315 }}
+          overrideItems={[{ id: 'duplicate', label: 'Duplicate', type: 'duplicate' }]}
+        />
+      ),
+      host
+    );
 
-    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLDivElement | null;
+    const surfaceLayer = host.querySelector(
+      '[data-testid="surface-layer"]'
+    ) as HTMLDivElement | null;
     const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
     const trigger = host.querySelector('[data-testid="open-menu"]') as HTMLButtonElement | null;
 
@@ -386,11 +430,14 @@ describe('FileContextMenu surface scope', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 500 });
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 360 });
 
-    mount(() => (
-      <FileBrowserProvider files={files} initialPath="/">
-        <GlobalMenuHarness />
-      </FileBrowserProvider>
-    ), host);
+    mount(
+      () => (
+        <FileBrowserProvider files={files} initialPath="/">
+          <GlobalMenuHarness />
+        </FileBrowserProvider>
+      ),
+      host
+    );
 
     const trigger = host.querySelector('[data-testid="open-menu"]') as HTMLButtonElement | null;
     expect(trigger).toBeTruthy();
@@ -443,15 +490,20 @@ describe('FileContextMenu surface scope', () => {
       },
     ];
 
-    mount(() => (
-      <LayerScopedMenuHarness
-        onDuplicate={vi.fn()}
-        anchor={{ x: 300, y: 160 }}
-        overrideItems={menuItems}
-      />
-    ), host);
+    mount(
+      () => (
+        <LayerScopedMenuHarness
+          onDuplicate={vi.fn()}
+          anchor={{ x: 300, y: 160 }}
+          overrideItems={menuItems}
+        />
+      ),
+      host
+    );
 
-    const surfaceLayer = host.querySelector('[data-testid="surface-layer"]') as HTMLDivElement | null;
+    const surfaceLayer = host.querySelector(
+      '[data-testid="surface-layer"]'
+    ) as HTMLDivElement | null;
     const surfaceHost = host.querySelector('[data-testid="surface-host"]') as HTMLDivElement | null;
     const trigger = host.querySelector('[data-testid="open-menu"]') as HTMLButtonElement | null;
 
@@ -480,7 +532,9 @@ describe('FileContextMenu surface scope', () => {
     trigger!.click();
     await Promise.resolve();
 
-    const rootMenu = surfaceLayer!.querySelector('[data-floe-context-menu]') as HTMLDivElement | null;
+    const rootMenu = surfaceLayer!.querySelector(
+      '[data-floe-context-menu]'
+    ) as HTMLDivElement | null;
     expect(rootMenu).toBeTruthy();
     mockRect(rootMenu!, {
       left: 300,

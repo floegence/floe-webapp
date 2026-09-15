@@ -20,6 +20,8 @@ export function createLongPressContextMenuHandlers(
   let timer: number | null = null;
   let start: { x: number; y: number } | null = null;
   let suppressNextClick = false;
+  let ownerDocument: Document | null = null;
+  let pointerId: number | null = null;
 
   const clear = () => {
     if (timer !== null && typeof window !== 'undefined') {
@@ -27,6 +29,16 @@ export function createLongPressContextMenuHandlers(
       timer = null;
     }
     start = null;
+    ownerDocument?.removeEventListener('pointerdown', onAdditionalPointer, true);
+    ownerDocument = null;
+    pointerId = null;
+  };
+
+  const onAdditionalPointer = (event: PointerEvent) => {
+    if (pointerId !== null && event.pointerId !== pointerId) {
+      clear();
+      suppressNextClick = true;
+    }
   };
 
   const armSuppressNextClick = () => {
@@ -35,13 +47,15 @@ export function createLongPressContextMenuHandlers(
 
   const openMenuAt = (x: number, y: number) => {
     if (!selectOnOpen) {
-      ctx.showContextMenu(createItemContextMenuEvent({
-        x,
-        y,
-        triggerItem: item,
-        items: [item],
-        source,
-      }));
+      ctx.showContextMenu(
+        createItemContextMenuEvent({
+          x,
+          y,
+          triggerItem: item,
+          items: [item],
+          source,
+        })
+      );
       armSuppressNextClick();
       return;
     }
@@ -51,13 +65,15 @@ export function createLongPressContextMenuHandlers(
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [item];
 
-    ctx.showContextMenu(createItemContextMenuEvent({
-      x,
-      y,
-      triggerItem: item,
-      items: selectedItems,
-      source,
-    }));
+    ctx.showContextMenu(
+      createItemContextMenuEvent({
+        x,
+        y,
+        triggerItem: item,
+        items: selectedItems,
+        source,
+      })
+    );
     armSuppressNextClick();
   };
 
@@ -67,9 +83,17 @@ export function createLongPressContextMenuHandlers(
 
     // Long-press is for touch/pen; keep desktop interactions unchanged.
     if (e.pointerType === 'mouse') return;
+    if (e.isPrimary === false) {
+      clear();
+      armSuppressNextClick();
+      return;
+    }
     if (typeof window === 'undefined') return;
 
     clear();
+    pointerId = e.pointerId;
+    ownerDocument = e.currentTarget instanceof Node ? e.currentTarget.ownerDocument : document;
+    ownerDocument?.addEventListener('pointerdown', onAdditionalPointer, true);
     start = { x: e.clientX, y: e.clientY };
     const x = e.clientX;
     const y = e.clientY;
@@ -92,7 +116,10 @@ export function createLongPressContextMenuHandlers(
   };
 
   const onPointerUp = () => clear();
-  const onPointerCancel = () => clear();
+  const onPointerCancel = () => {
+    clear();
+    armSuppressNextClick();
+  };
 
   const consumeClickSuppression = (e: MouseEvent) => {
     if (!suppressNextClick) return false;

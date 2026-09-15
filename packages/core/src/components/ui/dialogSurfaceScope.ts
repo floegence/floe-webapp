@@ -90,7 +90,7 @@ export function ensureSurfacePortalInteractionTracking(): void {
   trackedDocument = document;
 }
 
-function readFreshInteractionSnapshot(): DialogSurfaceInteractionSnapshot | null {
+export function readFreshInteractionSnapshot(): DialogSurfaceInteractionSnapshot | null {
   if (!lastInteractionSnapshot) return null;
   if (Date.now() - lastInteractionSnapshot.recordedAt > SURFACE_PORTAL_INTERACTION_TTL_MS) {
     return null;
@@ -213,6 +213,19 @@ export function resolveSurfacePortalMountRect(
   };
 }
 
+export function resolveSurfacePortalScale(surfaceHost: ResolvedSurfacePortalHost): {
+  x: number;
+  y: number;
+} {
+  const mount = resolveSurfacePortalMount(surfaceHost);
+  if (!mount) return { x: 1, y: 1 };
+  const rect = mount.getBoundingClientRect();
+  return {
+    x: mount.offsetWidth > 0 && rect.width > 0 ? rect.width / mount.offsetWidth : 1,
+    y: mount.offsetHeight > 0 && rect.height > 0 ? rect.height / mount.offsetHeight : 1,
+  };
+}
+
 export function projectSurfacePortalPosition(
   position: Readonly<{ x: number; y: number }>,
   surfaceHost: ResolvedSurfacePortalHost
@@ -221,10 +234,12 @@ export function projectSurfacePortalPosition(
     return position;
   }
 
+  const mount = resolveSurfacePortalMount(surfaceHost)!;
   const mountRect = resolveSurfacePortalMountRect(surfaceHost);
+  const scale = resolveSurfacePortalScale(surfaceHost);
   return {
-    x: position.x - mountRect.left,
-    y: position.y - mountRect.top,
+    x: (position.x - mountRect.left) / scale.x - mount.clientLeft + mount.scrollLeft,
+    y: (position.y - mountRect.top) / scale.y - mount.clientTop + mount.scrollTop,
   };
 }
 
@@ -236,14 +251,15 @@ export function projectSurfacePortalRect(
     return rect;
   }
 
-  const mountRect = resolveSurfacePortalMountRect(surfaceHost);
+  const start = projectSurfacePortalPosition({ x: rect.left, y: rect.top }, surfaceHost);
+  const end = projectSurfacePortalPosition({ x: rect.right, y: rect.bottom }, surfaceHost);
   return {
-    left: rect.left - mountRect.left,
-    top: rect.top - mountRect.top,
-    right: rect.right - mountRect.left,
-    bottom: rect.bottom - mountRect.top,
-    width: rect.width,
-    height: rect.height,
+    left: start.x,
+    top: start.y,
+    right: end.x,
+    bottom: end.y,
+    width: end.x - start.x,
+    height: end.y - start.y,
   };
 }
 
