@@ -13,6 +13,7 @@ import {
   type WorkbenchDockItemActivationMode,
   type WorkbenchDockItemPresentation,
   type WorkbenchDockAction,
+  type WorkbenchDockModeIcons,
   type WorkbenchExternalDockDragController,
   type WorkbenchHostDockItem,
 } from './WorkbenchFilterBar';
@@ -144,6 +145,8 @@ export interface WorkbenchSurfaceProps {
    */
   dockItemActivationMode?: WorkbenchDockItemActivationMode;
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
+  /** Host artwork for the Dock mode trigger and its menu. */
+  dockModeIcons?: WorkbenchDockModeIcons;
   dockActions?: readonly WorkbenchDockAction[];
   dockItems?: readonly WorkbenchHostDockItem[];
   registerExternalDockDragController?: (
@@ -966,6 +969,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         onCreateAt={handleCreateAtClient}
         onCreateToolAt={handleCreateToolAtClient}
         onItemClick={props.onDockItemClick}
+        modeIcons={props.dockModeIcons}
         dockActions={props.dockActions}
         dockItems={props.dockItems}
         registerExternalDockDragController={props.registerExternalDockDragController}

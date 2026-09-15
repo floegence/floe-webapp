@@ -51,6 +51,8 @@ export interface WorkbenchFilterBarProps {
   widgets: readonly WorkbenchWidgetItem[];
   filters: Record<string, boolean>;
   mode?: WorkbenchInteractionMode;
+  /** Optional artwork shared by the mode trigger and menu; omitted entries use the built-in icons. */
+  modeIcons?: WorkbenchDockModeIcons;
   /** Changes built-in Dock clicks without affecting drag-to-create behavior. */
   activationMode?: WorkbenchDockItemActivationMode;
   /** Solo a single dock component in the supplied mode scope; soloing it again shows the full scope. */
@@ -105,6 +107,10 @@ export type WorkbenchDockItemPresentation = Readonly<{
   currentIndex: number | null;
   active: boolean;
 }>;
+
+export type WorkbenchDockModeIcons = Readonly<
+  Partial<Record<'work' | 'background', Component<{ class?: string }>>>
+>;
 
 export type WorkbenchDockAction = Readonly<{
   id: string;
@@ -223,7 +229,7 @@ type ExternalDragClickSuppression = Readonly<{
 const DOCK_SELECTOR = '.workbench-dock';
 
 const WORKBENCH_MODE_ITEMS: readonly {
-  mode: WorkbenchInteractionMode;
+  mode: 'work' | 'background';
   label: string;
   description: string;
   icon: Component<{ class?: string }>;
@@ -626,8 +632,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const current = dragState();
         return Boolean(
           current?.moved &&
-            current.hasEnteredCanvas &&
-            !isOverDock(current.clientX, current.clientY, dockRootEl)
+          current.hasEnteredCanvas &&
+          !isOverDock(current.clientX, current.clientY, dockRootEl)
         );
       },
     });
@@ -899,9 +905,14 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     dragState()?.kind === 'external' ? dragState()?.icon : undefined;
   const activeMode = (): WorkbenchInteractionMode =>
     props.mode === 'background' || props.mode === 'annotation' ? 'background' : 'work';
+  const modeItems = createMemo(() =>
+    WORKBENCH_MODE_ITEMS.map((item) => ({
+      ...item,
+      icon: props.modeIcons?.[item.mode] ?? item.icon,
+    }))
+  );
   const activeModeItem = createMemo(
-    () =>
-      WORKBENCH_MODE_ITEMS.find((item) => item.mode === activeMode()) ?? WORKBENCH_MODE_ITEMS[0]!
+    () => modeItems().find((item) => item.mode === activeMode()) ?? modeItems()[0]!
   );
   const componentItems = createMemo(() => {
     if (activeMode() === 'background') {
@@ -1040,7 +1051,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           </button>
           <Show when={modeMenuOpen()}>
             <div class="workbench-dock__mode-popover" role="menu" aria-label="Canvas mode">
-              <For each={WORKBENCH_MODE_ITEMS}>
+              <For each={modeItems()}>
                 {(item) => {
                   const Icon = item.icon;
                   return (

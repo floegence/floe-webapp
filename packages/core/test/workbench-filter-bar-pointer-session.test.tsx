@@ -19,7 +19,10 @@ vi.mock('solid-motionone', () => ({
 }));
 
 import { WorkbenchFilterBar } from '../src/components/workbench/WorkbenchFilterBar';
-import type { WorkbenchWidgetDefinition } from '../src/components/workbench/types';
+import type {
+  WorkbenchInteractionMode,
+  WorkbenchWidgetDefinition,
+} from '../src/components/workbench/types';
 
 const widgetDefinitions: readonly WorkbenchWidgetDefinition[] = [
   {
@@ -98,6 +101,55 @@ describe('WorkbenchFilterBar pointer session', () => {
     dispose = undefined;
     vi.restoreAllMocks();
     document.body.innerHTML = '';
+  });
+
+  it('uses host mode artwork in both the trigger and menu while retaining mode selection and defaults', async () => {
+    const host = createWorkbenchHost();
+    const [mode, setMode] = createSignal<WorkbenchInteractionMode>('work');
+    const [custom, setCustom] = createSignal(true);
+    const CompositionIcon = (props: { class?: string }) => (
+      <svg class={props.class} data-custom-composition />
+    );
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{}}
+          onSoloFilter={() => {}}
+          mode={mode()}
+          onSelectMode={setMode}
+          modeIcons={custom() ? { background: CompositionIcon } : undefined}
+        />
+      ),
+      host
+    );
+    const trigger = host.querySelector<HTMLButtonElement>('.workbench-dock__mode-trigger')!;
+    expect(trigger.querySelector('svg')).not.toBeNull();
+    expect(trigger.querySelector('[data-custom-composition]')).toBeNull();
+    trigger.click();
+    const options = host.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]');
+    expect(options[0]?.querySelector('svg')).not.toBeNull();
+    expect(options[1]?.querySelector('[data-custom-composition]')?.getAttribute('class')).toBe(
+      'workbench-dock__mode-icon'
+    );
+    options[1]!.click();
+    await Promise.resolve();
+    expect(mode()).toBe('background');
+    expect(trigger.querySelector('[data-custom-composition]')?.getAttribute('class')).toBe(
+      'workbench-dock__icon'
+    );
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+    trigger.click();
+    expect(host.querySelector('[aria-checked="true"] [data-custom-composition]')).not.toBeNull();
+    setCustom(false);
+    await Promise.resolve();
+    expect(host.querySelector('[data-custom-composition]')).toBeNull();
+    expect(trigger.querySelector('svg')).not.toBeNull();
+    setCustom(true);
+    setMode('annotation');
+    await Promise.resolve();
+    expect(trigger.querySelector('[data-custom-composition]')).not.toBeNull();
   });
 
   function mockAnimationFrames(): FrameRequestCallback[] {

@@ -82,6 +82,8 @@ Rules:
 
 Product-owned context menus can be attached without moving menu policy into Floe. `ActivityBarItem.onContextMenu` and `WorkbenchHostDockItem.onContextMenu` receive the concrete trigger button, a viewport-space anchor, and a `pointer` or `keyboard` source. Floe handles right-click, the Context Menu key, Shift+F10, native-menu suppression, and `aria-haspopup="menu"`; the product owns menu contents, placement surface, focus restoration, and actions.
 
+`WorkbenchSurface.dockModeIcons` accepts optional `work` and `background` icon components. The Dock uses the same artwork in the current-mode trigger and mode menu; omitted entries keep the built-in icons. The lower-level `WorkbenchDock` accepts this map as `modeIcons`. This presentation override does not change mode selection, labels, or input ownership.
+
 Workbench host items default to the leading host group. Set `WorkbenchHostDockItem.dockPlacement` to `after-components` to render an item after Floe's component group. External Dock drags use the same optional field on `WorkbenchExternalDockDragItem`, so their placeholder matches the final host-item position.
 
 `WorkbenchSurface.dockItemActivationMode` applies only to Floe's built-in component items. It defaults to `solo-filter`; `focus-cycle` navigates spatially ordered widgets, sticky notes, text, and background regions, or creates an empty type at the viewport center. It does not change `WorkbenchHostDockItem`, external drag, Dock action, mode switcher, or context-menu behavior. `onDockItemClick` remains the host's first-priority interception point in either mode.
