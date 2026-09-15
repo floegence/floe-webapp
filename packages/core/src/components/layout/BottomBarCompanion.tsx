@@ -15,6 +15,8 @@ export interface BottomBarCompanionProps {
   id: string;
   label: string;
   children?: JSX.Element;
+  /** Preferred expanded width in pixels; defaults to the anchor width and respects maxWidth. */
+  expandedWidth?: number;
   maxWidth?: number;
   maxHeight?: number;
   viewportPadding?: number;
@@ -99,6 +101,7 @@ function safeAreaInsets(mount: HTMLElement): CompanionInsets {
 function expandedFrame(
   anchor: CompanionFrame,
   mount: HTMLElement,
+  expandedWidth: number,
   maxWidth: number,
   maxHeight: number,
   padding: number
@@ -113,9 +116,9 @@ function expandedFrame(
   const safeLeft = viewportLeft + insets.left + padding;
   const safeRight = viewportLeft + viewportWidth - insets.right - padding;
   const safeTop = viewportTop + insets.top + padding;
-  const safeBottom = viewportTop + viewportHeight - insets.bottom - padding;
+  const safeBottom = viewportTop + viewportHeight - insets.bottom;
   const availableWidth = Math.max(0, safeRight - safeLeft);
-  const width = Math.min(anchor.width, maxWidth, availableWidth);
+  const width = Math.min(expandedWidth, maxWidth, availableWidth);
   const desiredLeft = anchor.left + (anchor.width - width) / 2;
   const left = Math.max(safeLeft, Math.min(desiredLeft, safeRight - width));
   const bottom = Math.min(anchor.top + anchor.height, safeBottom);
@@ -220,6 +223,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     return expandedFrame(
       anchorFrame,
       mount,
+      finitePositive(props.expandedWidth, anchorFrame.width),
       finitePositive(props.maxWidth, DEFAULT_MAX_WIDTH),
       finitePositive(props.maxHeight, DEFAULT_MAX_HEIGHT),
       finiteNonNegative(props.viewportPadding, DEFAULT_VIEWPORT_PADDING)
@@ -290,6 +294,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     const open = props.open;
     void props.anchor;
     void props.mount;
+    void props.expandedWidth;
     void props.maxWidth;
     void props.maxHeight;
     void props.viewportPadding;

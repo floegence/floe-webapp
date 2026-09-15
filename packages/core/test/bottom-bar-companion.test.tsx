@@ -162,6 +162,139 @@ describe('BottomBarCompanion', () => {
     expect(surface.querySelector('textarea')).toBe(textarea);
   });
 
+  it('widens a compact entry upward without moving its bottom edge or replacing its input', () => {
+    const { anchor, portalMount, renderHost } = createFixture({
+      left: 400,
+      top: 875,
+      width: 320,
+      height: 22,
+    });
+    const [open, setOpen] = createSignal(false);
+    mount(
+      () => (
+        <BottomBarCompanion
+          retained
+          visible
+          open={open()}
+          anchor={anchor}
+          mount={portalMount}
+          id="compact-companion"
+          label="Companion"
+          expandedWidth={544}
+        >
+          <textarea />
+        </BottomBarCompanion>
+      ),
+      renderHost
+    );
+    flushAllAnimationFrames();
+    const surface = portalMount.querySelector('[data-floe-bottom-bar-companion]') as HTMLElement;
+    const input = surface.querySelector('textarea')!;
+    input.value = 'Keep the selected draft';
+    input.focus();
+    input.setSelectionRange(5, 8);
+    expect(surface.style.height).toBe('22px');
+    setOpen(true);
+    flushAllAnimationFrames();
+    expect(surface.style.width).toBe('544px');
+    expect(surface.style.left).toBe('288px');
+    expect(Number.parseFloat(surface.style.top) + Number.parseFloat(surface.style.height)).toBe(
+      897
+    );
+    finishTransition(surface);
+    setOpen(false);
+    flushAllAnimationFrames();
+    finishTransition(surface);
+    expect(surface.style.width).toBe('320px');
+    expect(surface.style.top).toBe('875px');
+    expect(surface.querySelector('textarea')).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe('Keep the selected draft');
+    expect([input.selectionStart, input.selectionEnd]).toEqual([5, 8]);
+  });
+
+  it('constrains requested expansion width and reacts to changes without changing the anchor', () => {
+    const { anchor, portalMount, renderHost } = createFixture({
+      left: 1080,
+      top: 800,
+      width: 100,
+      height: 22,
+    });
+    const [width, setWidth] = createSignal(700);
+    mount(
+      () => (
+        <BottomBarCompanion
+          retained
+          visible
+          open
+          anchor={anchor}
+          mount={portalMount}
+          id="companion"
+          label="Companion"
+          expandedWidth={width()}
+          maxWidth={600}
+        />
+      ),
+      renderHost
+    );
+    flushAllAnimationFrames();
+    const surface = portalMount.querySelector('[data-floe-bottom-bar-companion]') as HTMLElement;
+    expect(surface.style.width).toBe('600px');
+    expect(surface.style.left).toBe('588px');
+    setWidth(480);
+    flushAllAnimationFrames();
+    expect(surface.style.width).toBe('480px');
+    setWidth(Number.NaN);
+    flushAllAnimationFrames();
+    expect(surface.style.width).toBe('100px');
+    setWidth(700);
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 400 });
+    window.dispatchEvent(new Event('resize'));
+    flushAllAnimationFrames();
+    expect(surface.style.width).toBe('376px');
+    expect(surface.style.left).toBe('12px');
+  });
+
+  it('keeps expansion inside the visual viewport safe area when the anchor falls below it', () => {
+    const { anchor, portalMount, renderHost } = createFixture({
+      left: 200,
+      top: 875,
+      width: 320,
+      height: 22,
+    });
+    portalMount.style.setProperty('--floe-bottom-bar-companion-safe-area-bottom', '20px');
+    const viewport = new EventTarget();
+    Object.assign(viewport, { offsetLeft: 40, offsetTop: 80, width: 400, height: 500 });
+    vi.stubGlobal('visualViewport', viewport);
+    try {
+      mount(
+        () => (
+          <BottomBarCompanion
+            retained
+            visible
+            open
+            anchor={anchor}
+            mount={portalMount}
+            id="companion"
+            label="Companion"
+            expandedWidth={544}
+          />
+        ),
+        renderHost
+      );
+      flushAllAnimationFrames();
+      const surface = portalMount.querySelector('[data-floe-bottom-bar-companion]') as HTMLElement;
+      expect(surface.style.left).toBe('52px');
+      expect(surface.style.width).toBe('376px');
+      expect(surface.style.top).toBe('92px');
+      expect(Number.parseFloat(surface.style.top) + Number.parseFloat(surface.style.height)).toBe(
+        560
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('retargets interrupted transitions without committing a stale frame', () => {
     const { anchor, portalMount, renderHost } = createFixture();
     let setOpen: ((value: boolean) => void) | undefined;

@@ -95,6 +95,9 @@ jobs:
       - name: Verify floating panel interaction in Chromium
         run: node scripts/check-floating-panel-browser.mjs
 
+      - name: Verify bottom bar companion morph in Chromium
+        run: node scripts/check-bottom-bar-companion-browser.mjs
+
       - name: Verify dist
         run: pnpm verify
 

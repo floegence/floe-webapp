@@ -97,6 +97,8 @@
 
 - 一个 retained Portal root、一个稳定 content host 和一份持续有效的几何 frame 共同承载 collapsed / expanding / expanded / collapsing；展示状态变化不能重建 consumer subtree。
 - collapsed frame 来自 connected、non-zero anchor；expanded frame 保持同一 bottom edge，并在 visual viewport、safe area、`maxWidth` 与 `maxHeight` 内向上生长。
+- `expandedWidth` optionally widens the same shell around the anchor center; omitted or invalid values use the anchor width. `maxWidth` and the visual viewport still constrain expansion. Viewport padding applies to the top and sides; the anchor bottom stays fixed unless it extends beyond the safe viewport bottom.
+- Opening and closing share one reversible geometry transition. The shell interpolates width and height together, retains its input nodes, and grows upward without adding another visible launcher or panel. Reduced motion commits the target directly.
 - `retained`、`visible`、`open` 是正交状态。`visible=false` 只负责 inert/hidden，不能卸载 retained root；`open` 只选择几何形态。
 - `mount` 必须显式传入。mount 或 anchor 暂时不可用时保留最后一次有效 host/frame 并隐藏，只有 connected mount 与当前有效 anchor 同时 ready 才能原子切换；禁止回退到 `document.body`。
 - outside pointer 使用 owner document 的 capture listener，保证目标组件即使停止冒泡也能触发收起；相关 consumer Portal 由产品通过 `isOwnedInteraction` 显式声明为 inside。
