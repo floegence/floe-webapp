@@ -141,6 +141,14 @@ maximize action. The outer resize perimeter retains its hit targets. These
 header dimensions do not alter the default window rectangle, content typography,
 or footer spacing.
 
+`headerActions` accepts compact host actions at the right of the title bar,
+before a quiet separator and the built-in window controls. The title truncates
+to leave these actions accessible at narrow widths. Hosts own action labels,
+state, and behavior; use controls no taller than 28px to fit the existing header.
+The whole action region is excluded from title-bar drag and double-click
+maximization without canceling native input or suppressing bubbling activation
+events. Omitting the slot preserves the existing header layout.
+
 `check-floating-window-header-browser.mjs`, included in `test:window-material`,
 checks computed header and title sizes, button edge hit-testing, pointer and
 keyboard actions, focus visibility, and narrow viewports through both packed CSS

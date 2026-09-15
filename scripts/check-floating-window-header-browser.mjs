@@ -126,6 +126,38 @@ try {
           const closeRect = await close.boundingBox();
           await page.mouse.click(closeRect.x + 6, closeRect.y + closeRect.height - 3);
           await panel.waitFor({ state: 'detached' });
+          if (!demo) {
+            await page.goto(`${base}?view=showcase&panel=windows&surface=${surface}&mode=${mode}&headerActions=1`);
+            await panel.waitFor();
+            await page.waitForTimeout(250);
+            const actions = titlebar.locator('[data-floe-floating-window-header-actions]');
+            const copy = actions.getByRole('button', { name: 'Copy reference', exact: true });
+            await titlebar.locator('h2').evaluate((element) => {
+              element.textContent = 'A very long document filename that must preserve all header actions.md';
+            });
+            const actionRect = await actions.boundingBox();
+            const titleRect = await titlebar.locator('h2').boundingBox();
+            const controlRect = await maximize.boundingBox();
+            assert.ok(titleRect.x + titleRect.width <= actionRect.x);
+            assert.ok(actionRect.x + actionRect.width <= controlRect.x);
+            assert.equal((await titlebar.boundingBox()).height, 32);
+            assert.ok((await copy.boundingBox()).height <= 28, 'Host actions fit the existing titlebar');
+            const beforeActions = await geometry.boundingBox();
+            await copy.click();
+            assert.equal(await copy.textContent(), '1');
+            await copy.focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await copy.textContent(), '2');
+            await actions.dispatchEvent('dblclick');
+            assert.deepEqual(await geometry.boundingBox(), beforeActions);
+            await page.mouse.move(actionRect.x + actionRect.width - 8, actionRect.y + 10);
+            await page.mouse.down();
+            await page.mouse.move(actionRect.x + actionRect.width - 5, actionRect.y + 12);
+            assert.equal(await panel.getAttribute('data-floe-surface-interacting'), null);
+            await page.mouse.up();
+            assert.deepEqual(await geometry.boundingBox(), beforeActions);
+            await panel.screenshot({ path: resolve(output, `${name}-actions.png`) });
+          }
           assert.deepEqual(errors, []);
           cases.push({ name, ...dimensions, initial, passed: true });
           await page.close();

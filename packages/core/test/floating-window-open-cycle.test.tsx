@@ -30,6 +30,52 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('keeps reactive header actions outside titlebar drag and double-click ownership', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const activate = vi.fn();
+    const observedPointer = vi.fn();
+    const [editing, setEditing] = createSignal(false);
+    mount(() => (
+      <FloatingWindow
+        open
+        onOpenChange={() => undefined}
+        title="A long document filename.md"
+        defaultPosition={{ x: 20, y: 20 }}
+        headerActions={(
+          <button type="button" onClick={() => { activate(); setEditing(true); }}>
+            {editing() ? 'Save file' : 'Edit file'}
+          </button>
+        )}
+      >
+        <p>Selected reading content</p>
+      </FloatingWindow>
+    ), host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const titlebar = root.querySelector<HTMLElement>('[data-floe-floating-window-titlebar]')!;
+    const actions = titlebar.querySelector<HTMLElement>('[data-floe-floating-window-header-actions]');
+    expect(actions).not.toBeNull();
+    const initialTransform = root.style.transform;
+    const initialWidth = root.style.width;
+    root.addEventListener('pointerdown', observedPointer);
+    const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+    actions!.dispatchEvent(down);
+    expect(down.defaultPrevented).toBe(false);
+    expect(observedPointer).toHaveBeenCalledOnce();
+    expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
+    actions!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(root.style.transform).toBe(initialTransform);
+    expect(root.style.width).toBe(initialWidth);
+    actions!.querySelector('button')!.click();
+    expect(activate).toHaveBeenCalledOnce();
+    expect(actions!.textContent).toContain('Save file');
+    expect(root.querySelector('[data-floe-floating-window-content]')?.textContent).toBe('Selected reading content');
+    titlebar.dispatchEvent(down);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+  });
+
   it.each(['blur', 'lostpointercapture', 'pointercancel', 'unmount'])(
     'releases drag ownership and material on %s',
     async (reason) => {

@@ -16,6 +16,7 @@ export function WindowMaterialStudy() {
   const [scene, setScene] = createSignal(params.get('scene') ?? 'files');
   const [open, setOpen] = createSignal([true, params.get('scene') === 'overlap', false]);
   const [front, setFront] = createSignal(params.get('scene') === 'overlap' ? 1 : 0);
+  const [headerActionCount, setHeaderActionCount] = createSignal(0);
   const [draft, setDraft] = createSignal(
     'Keep the reading surface quiet. Changes remain here while switching themes and windows.'
   );
@@ -166,6 +167,21 @@ export function WindowMaterialStudy() {
             open={open()[index]}
             onOpenChange={(value) => show(index, value)}
             title={['architecture.md', 'Workspace notes', 'Review checklist'][index]}
+            headerActions={index === 0 && params.has('headerActions') ? (
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="size-7"
+                  aria-label="Copy reference"
+                  onClick={() => setHeaderActionCount((count) => count + 1)}
+                >
+                  {headerActionCount()}
+                </Button>
+                <Button size="icon" variant="ghost" class="size-7" aria-label="Edit document">E</Button>
+                <Button size="icon" variant="ghost" class="size-7" aria-label="Download document">D</Button>
+              </>
+            ) : undefined}
             defaultPosition={{ x: 210 + index * 210, y: 175 + index * 88 }}
             defaultSize={{ width: index === 0 ? 760 : 430, height: index === 0 ? 600 : 330 }}
             viewportInsets={{ top: 126, bottom: 28, left: 12, right: 12 }}

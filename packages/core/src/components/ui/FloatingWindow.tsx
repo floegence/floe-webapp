@@ -35,6 +35,8 @@ export interface FloatingWindowProps {
   onOpenChange: (open: boolean) => void;
   /** Window title */
   title?: string;
+  /** Compact actions at the right of the title bar, before the window controls. */
+  headerActions?: JSX.Element;
   /** Window content */
   children: JSX.Element;
   /** Optional footer content */
@@ -386,7 +388,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
-    if (target?.closest('button, input, select, textarea, a, [role="button"]')) return;
+    if (target?.closest('button, input, select, textarea, a, [role="button"], [data-floe-floating-window-header-actions]')) return;
 
     e.preventDefault();
 
@@ -492,7 +494,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const handleTitleBarDoubleClick = (event: MouseEvent) => {
-    if ((event.target as Element | null)?.closest('button')) return;
+    if ((event.target as Element | null)?.closest('button, [data-floe-floating-window-header-actions]')) return;
     toggleMaximize();
   };
 
@@ -584,6 +586,16 @@ export function FloatingWindow(props: FloatingWindowProps) {
                   </h2>
                 </Show>
               </div>
+
+              <Show when={props.headerActions}>
+                <div
+                  data-floe-floating-window-header-actions="true"
+                  class="flex shrink-0 cursor-default items-center gap-1"
+                >
+                  {props.headerActions}
+                  <span aria-hidden="true" class="mx-2 h-4 w-px shrink-0 bg-border" />
+                </div>
+              </Show>
 
               <div class="flex h-full shrink-0 items-stretch">
                 <Button
