@@ -432,6 +432,41 @@ workbench 的选择态、导航态与菜单关闭态必须保持在共享模型�
 - mobile drawer 不再滚动穿透 / hotkey 穿透
 - 关键交互规范有文档、有代码、有测试守卫，而不是只有一次性修复
 
+## Draggable launchers and edge snapping
+
+`SurfaceFloatingPanel` from `@floegence/floe-webapp-core/ui` owns launcher
+positioning, pointer capture, click suppression, keyboard movement, and projection
+into the current floating surface. Spread its child callback's complete `handle`
+onto the launcher button, and attach the product's restore action to `onClick`.
+`MonitorPointer` from the public icons entry provides a computer-preview icon.
+
+```tsx
+<SurfaceFloatingPanel boundary={contentElement} snapToEdge snapInset={12}>
+  {(handle) => <button {...handle} onClick={restore}>Restore preview</button>}
+</SurfaceFloatingPanel>
+```
+
+The optional `boundary` intersects the visible viewport and current surface;
+`boundaryInsets` excludes additional app chrome on its four sides. Insets,
+`snapInset` (default 8), `snapThreshold` (default Infinity), and
+`onPositionChange({ x, y })` all use client/CSS viewport pixels, including inside
+scaled Workbench surfaces. The position callback observes committed user moves,
+not animation frames or automatic boundary resizing; it does not control placement.
+
+Snapping is opt-in. After a committed pointer drag of at least 4px, `snapToEdge`
+selects the nearest safe edge within `snapThreshold`, preserving the orthogonal
+position. Ties resolve left, right, top, then bottom. Placement remains relative
+to available space when the boundary changes. Cancelled gestures restore their
+starting placement. A drag suppresses its following pointer click; ordinary
+clicks and Enter/Space still activate the native button. Arrow keys move 10px
+(40px with Shift) without forcing another snap.
+
+Snaps animate for 180ms, or complete immediately with reduced motion. A new
+pointer or keyboard movement interrupts the animation at its visible position.
+Keep the panel component mounted while hiding its launcher if placement must
+survive opening a preview. Likewise, control `FloatingWindow.open` without
+unmounting its component to preserve position, size, and maximization.
+
 ## Optional surface material
 
 [Surface styles](surface-style.md) owns the optional material contract. During drag and resize, only the affected shell changes to a fixed lightweight shadow using its existing local interaction state. Material changes do not write geometry or persistence on pointermove. FloatingWindow uses the shared pointer session for document release, pointer cancellation, lost capture, window blur, visibility loss, and unmount. Its existing commit-on-pointer-cancel behavior is preserved. Workbench input ownership, stable widget bodies, and surface-local portals remain unchanged.

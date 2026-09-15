@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-boot",
-  "version": "0.52.7",
+  "version": "0.52.8",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

@@ -20,7 +20,15 @@ export {
   type DialogPlacementProviderProps,
 } from './DialogPlacementContext';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
-export { SurfaceFloatingPanel, type SurfaceFloatingPanelProps, type SurfaceFloatingPanelHandleProps } from './SurfaceFloatingPanel';
+export {
+  SurfaceFloatingPanel,
+  type SurfaceFloatingPanelProps,
+  type SurfaceFloatingPanelHandleProps,
+} from './SurfaceFloatingPanel';
+export type {
+  SurfaceFloatingPanelBoundaryInsets,
+  SurfaceFloatingPanelPosition,
+} from './surfaceFloatingPanelGeometry';
 export {
   createFloatingPresence,
   type FloatingPresence,
@@ -182,9 +190,16 @@ export {
 } from './FileOpenPicker';
 export { type BasePickerProps, type PickerPanelProps } from './picker/PickerBase';
 export {
-  createFilesystemPickerDataSource, parsePickerPath, formatPickerPath, PickerNavigationError,
-  type PickerRoot, type PickerPathContext, type PickerDataProps, type PickerDirectoryLoader,
-  type PickerCopy, type FilesystemPickerDataSource,
+  createFilesystemPickerDataSource,
+  parsePickerPath,
+  formatPickerPath,
+  PickerNavigationError,
+  type PickerRoot,
+  type PickerPathContext,
+  type PickerDataProps,
+  type PickerDirectoryLoader,
+  type PickerCopy,
+  type FilesystemPickerDataSource,
 } from './picker/PickerNavigation';
 export { QuoteBlock, type QuoteBlockProps } from './QuoteBlock';
 export {
