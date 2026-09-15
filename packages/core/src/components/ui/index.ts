@@ -20,6 +20,7 @@ export {
   type DialogPlacementProviderProps,
 } from './DialogPlacementContext';
 export { FloatingWindow, type FloatingWindowProps } from './FloatingWindow';
+export { SurfaceFloatingPanel, type SurfaceFloatingPanelProps, type SurfaceFloatingPanelHandleProps } from './SurfaceFloatingPanel';
 export {
   createFloatingPresence,
   type FloatingPresence,

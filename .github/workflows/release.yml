@@ -92,6 +92,9 @@ jobs:
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
+      - name: Verify floating panel interaction in Chromium
+        run: node scripts/check-floating-panel-browser.mjs
+
       - name: Verify dist
         run: pnpm verify
 

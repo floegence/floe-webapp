@@ -6,6 +6,7 @@ import { render as renderSolid } from 'solid-js/web';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { SurfaceFloatingPanel } from '../src/components/ui/SurfaceFloatingPanel';
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import { __resetSurfacePortalScopeForTests } from '../src/components/ui/surfacePortalScope';
 import { WorkbenchDockPopoverSurface } from '../src/components/workbench/WorkbenchDockPopoverSurface';
@@ -380,4 +381,143 @@ describe('SurfaceFloatingLayer', () => {
     expect(themeDockBlocks.length).toBeGreaterThan(0);
     expect(themeDockBlocks.every((block) => !block.includes('border-radius:'))).toBe(true);
   });
+});
+
+describe('SurfaceFloatingPanel', () => {
+  it('keeps collapsed content reachable and moves only from its handle', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const activate = vi.fn();
+    let collapse!: (value: boolean) => void;
+    const dispose = renderSolid(() => {
+      const [small, setSmall] = createSignal(false);
+      collapse = setSmall;
+      return (
+        <SurfaceFloatingPanel data-testid="draggable-panel">
+          {(handle) => (
+            <>
+              <button {...handle} data-testid="grip" onClick={activate}>
+                Move
+              </button>
+              <div data-testid="content">{small() ? 'small' : 'large'}</div>
+            </>
+          )}
+        </SurfaceFloatingPanel>
+      );
+    }, host);
+    try {
+      const panel = document.querySelector('[data-testid="draggable-panel"]') as HTMLElement;
+      const grip = panel.querySelector('button')!;
+      let size = 200;
+      Object.defineProperty(panel, 'getBoundingClientRect', {
+        value: () => ({ width: size, height: size }),
+      });
+      const tick = () => {
+        const frame = frames.shift();
+        frame?.(0);
+      };
+      tick();
+      const right = Number.parseFloat(panel.style.left);
+      grip.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })
+      );
+      expect(Number.parseFloat(panel.style.left)).toBe(right - 10);
+      expect(activate).not.toHaveBeenCalled();
+      const pointer = (target: EventTarget, type: string, x: number, y: number) => {
+        const event = new MouseEvent(type, {
+          clientX: x,
+          clientY: y,
+          button: 0,
+          buttons: type === 'pointerup' ? 0 : 1,
+          bubbles: true,
+          cancelable: true,
+        });
+        Object.defineProperty(event, 'pointerId', { value: 1 });
+        target.dispatchEvent(event);
+      };
+      const dragStart = Number.parseFloat(panel.style.left);
+      pointer(grip, 'pointerdown', 400, 300);
+      pointer(document, 'pointermove', 360, 300);
+      pointer(document, 'pointerup', 360, 300);
+      expect(Number.parseFloat(panel.style.left)).toBe(dragStart - 40);
+      grip.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+      expect(activate).not.toHaveBeenCalled();
+      pointer(grip, 'pointerdown', 360, 300);
+      pointer(document, 'pointermove', 340, 300);
+      pointer(document, 'pointercancel', 340, 300);
+      expect(Number.parseFloat(panel.style.left)).toBe(dragStart - 40);
+      grip.click();
+      expect(activate).toHaveBeenCalledTimes(1);
+      collapse(true);
+      size = 48;
+      tick();
+      expect(Number.parseFloat(panel.style.left) + 48).toBeLessThanOrEqual(window.innerWidth - 8);
+      const before = panel.style.left;
+      panel
+        .querySelector('[data-testid="content"]')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      expect(panel.style.left).toBe(before);
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 120 });
+      tick();
+      expect(Number.parseFloat(panel.style.left) + 48).toBeLessThanOrEqual(112);
+    } finally {
+      dispose();
+      host.remove();
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+it('projects draggable panel geometry into its scaled owner without body escape', () => {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 600 });
+  const host = document.createElement('div');
+  document.body.append(host);
+  host.setAttribute('data-floe-dialog-surface-host', 'true');
+  mockRect(host, { left: 100, top: 100, right: 500, bottom: 400, width: 400, height: 300 });
+  Object.defineProperty(host, 'offsetWidth', { configurable: true, value: 800 });
+  Object.defineProperty(host, 'offsetHeight', { configurable: true, value: 600 });
+  const frames: FrameRequestCallback[] = [];
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frames.push(callback);
+    return frames.length;
+  });
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  const dispose = renderSolid(
+    () => (
+      <SurfaceFloatingPanel owner={host} data-testid="scaled-panel">
+        {(handle) => <button {...handle}>Move</button>}
+      </SurfaceFloatingPanel>
+    ),
+    host
+  );
+  try {
+    const panel = host.querySelector('[data-testid="scaled-panel"]') as HTMLElement;
+    expect(panel).not.toBeNull();
+    Object.defineProperty(panel, 'getBoundingClientRect', {
+      value: () => ({ width: 100, height: 80 }),
+    });
+    frames.shift()?.(0);
+    expect(panel.classList.contains('absolute')).toBe(true);
+    expect(panel.classList.contains('fixed')).toBe(false);
+    expect(panel.getAttribute('data-floe-local-interaction-surface')).toBe('true');
+    expect(panel.style.left).toBe('584px');
+    expect(panel.style.top).toBe('424px');
+    panel
+      .querySelector('button')!
+      .dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true, bubbles: true })
+      );
+    expect(panel.style.left).toBe('504px');
+  } finally {
+    dispose();
+    host.remove();
+    vi.unstubAllGlobals();
+  }
 });
