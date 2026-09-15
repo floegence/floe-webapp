@@ -83,22 +83,22 @@ describe('shell theme context', () => {
     return { ...storage, service, host };
   }
 
-  it('defaults to standard and changes only material without remounting input or writing palette keys', () => {
+  it('defaults to soft material and changes only material without remounting input or writing palette keys', () => {
     const { service, host, values } = mountSurface();
     const input = host.querySelector('input')!;
     input.value = 'unsubmitted draft';
     input.focus();
     input.setSelectionRange(2, 7);
-    expect(service.surfaceStyle()).toBe('standard');
-    service.setSurfaceStyle('soft-neumorphic');
-    expect(document.documentElement.dataset.floeSurfaceStyle).toBe('soft-neumorphic');
+    expect(service.surfaceStyle()).toBe('soft-neumorphic');
+    service.setSurfaceStyle('standard');
+    expect(document.documentElement.dataset.floeSurfaceStyle).toBe('standard');
     expect(host.querySelector('input')).toBe(input);
     expect(document.activeElement).toBe(input);
     expect(input.value).toBe('unsubmitted draft');
     expect(input.selectionStart).toBe(2);
     vi.runAllTimers();
     expect([...values.keys()]).toEqual(['material-theme-surface-style']);
-    expect(JSON.parse(values.get('material-theme-surface-style')!)).toBe('soft-neumorphic');
+    expect(JSON.parse(values.get('material-theme-surface-style')!)).toBe('standard');
     dispose?.();
     dispose = undefined;
     expect(document.documentElement.hasAttribute('data-floe-surface-style')).toBe(false);

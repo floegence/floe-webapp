@@ -74,7 +74,7 @@ export interface FloeLayoutConfig {
 export interface FloeThemeConfig {
   storageKey: string;
   defaultTheme: ThemeType;
-  /** Surface material, independent of color palettes. Defaults to standard. */
+  /** Surface material, independent of color palettes. Defaults to soft-neumorphic. */
   defaultSurfaceStyle?: FloeSurfaceStyle;
   /** Defaults to `${storageKey}-surface-style`; uses the configured persistence service. */
   surfaceStyleStorageKey?: string;
@@ -252,7 +252,7 @@ export const DEFAULT_FLOE_CONFIG: FloeConfig = {
   theme: {
     storageKey: 'theme',
     defaultTheme: 'system',
-    defaultSurfaceStyle: 'standard',
+    defaultSurfaceStyle: 'soft-neumorphic',
   },
   accessibility: {
     mainContentId: 'floe-main-content',

@@ -854,6 +854,7 @@ export function App() {
     },
     theme: {
       defaultPreset: 'default',
+      defaultSurfaceStyle: 'soft-neumorphic',
       presets: demoChartThemePresets,
       shellPresets: builtInShellThemePresets,
       defaultShellPreset: BUILT_IN_SHELL_THEME_DEFAULTS,

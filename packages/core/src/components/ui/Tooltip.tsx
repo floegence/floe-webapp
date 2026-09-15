@@ -73,7 +73,7 @@ export function Tooltip(props: TooltipProps) {
         <div
           class={cn(
             'absolute z-50 px-2 py-1',
-            'bg-popover text-popover-foreground text-xs rounded shadow-md',
+            'bg-popover text-popover-foreground text-[11px] rounded-md shadow-md',
             'whitespace-nowrap',
             'floe-floating-presence floe-floating-tooltip',
             placementStyles[props.placement ?? 'top'],

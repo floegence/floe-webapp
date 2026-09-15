@@ -97,14 +97,14 @@ export function Card(props: CardProps) {
     }
   });
 
-  const baseStyles = 'rounded-lg duration-300 ease-out';
+  const baseStyles = 'rounded-lg duration-180 ease-out';
   const transitions = () => local.enableTilt || variant() === 'hover-lift'
     ? 'transition-[color,background-color,border-color,box-shadow,transform]'
     : 'transition-[color,background-color,border-color,box-shadow]';
 
   const variantStyles: Record<CardVariant, string> = {
-    default: 'bg-card border border-border shadow-sm hover:shadow-md',
-    'hover-lift': 'bg-card border border-border shadow-sm hover:shadow-xl hover:-translate-y-1',
+    default: 'bg-card border border-border shadow-sm hover:shadow-sm',
+    'hover-lift': 'bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5',
     'gradient-border': 'relative bg-card overflow-hidden',
     glass: 'backdrop-blur-xl bg-card/30 border border-border/50 shadow-lg',
     spotlight: 'relative bg-card border border-border overflow-hidden',

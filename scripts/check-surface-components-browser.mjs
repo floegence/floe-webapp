@@ -68,13 +68,14 @@ try {
         await baseline.evaluate(snapshot),
         `${entry}/${mode}: published standard controls stay visually compatible`
       );
-      // Baseline reproduces a visual-only mixed state. The current native property
-      // and ARIA state must agree with its existing minus indicator.
+      // The mixed state must be exposed through the native property as well as
+      // the ARIA state so assistive technology receives the same signal as the
+      // visual minus indicator.
       assert.equal(
         await baseline
           .getByRole('checkbox', { name: 'Mixed selection', exact: true })
           .evaluate((el) => el.indeterminate),
-        false
+        true
       );
       await baseline.screenshot({ path: resolve(output, `${entry}-A-${mode}.png`) });
       await baseline.close();

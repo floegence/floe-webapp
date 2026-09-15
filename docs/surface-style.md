@@ -1,6 +1,6 @@
 # Surface styles
 
-Floe owns optional shared surface material. `standard` preserves existing presentation and is the default. `soft-neumorphic` adds shallow static depth to selected controls and shells while keeping content flat. Color palettes, density, layout, interaction ownership, and component identity remain independent. Unsupported stored values fall back to the configured default. Disable decoration, not input or navigation, in high contrast.
+Floe owns shared surface material. `soft-neumorphic` is the default and adds restrained static depth to selected controls and shells while keeping content flat. `standard` remains available for explicit compatibility or comparison. Color palettes, density, layout, interaction ownership, and component identity remain independent. Unsupported stored values fall back to the configured default. Disable decoration, not input or navigation, in high contrast.
 
 ## Configuration and ownership
 

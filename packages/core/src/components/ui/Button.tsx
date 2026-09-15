@@ -21,13 +21,13 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]',
-  primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]',
-  secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:scale-[0.98]',
-  outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:scale-[0.98]',
-  ghost: 'hover:bg-accent hover:text-accent-foreground active:scale-[0.98]',
-  'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:scale-[0.98]',
-  destructive: 'bg-error text-error-foreground shadow-sm hover:bg-error/90 active:scale-[0.98]',
+  default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
+  primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
+  secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:bg-secondary/70',
+  outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+  ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+  'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:bg-error/80',
+  destructive: 'bg-error text-error-foreground shadow-sm hover:bg-error/90 active:bg-error/80',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -66,7 +66,7 @@ export function Button(props: ButtonProps) {
       data-floe-surface-part="action"
       class={cn(
         'inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer',
-        'transition-colors duration-150',
+        'transition-[color,background-color,border-color,box-shadow] duration-120',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
         variantStyles[local.variant ?? 'default'],

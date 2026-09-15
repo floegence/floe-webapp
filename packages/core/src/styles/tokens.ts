@@ -55,6 +55,18 @@ export const floeSharedCssVariables = {
   '--radius': '0.375rem',
   '--font-sans': "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   '--font-mono': "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace",
+  '--floe-type-caption': '0.6875rem',
+  '--floe-type-control': '0.8125rem',
+  '--floe-type-body': '0.875rem',
+  '--floe-type-heading': '1rem',
+  '--floe-space-1': '0.25rem',
+  '--floe-space-2': '0.5rem',
+  '--floe-space-3': '0.75rem',
+  '--floe-space-4': '1rem',
+  '--floe-space-6': '1.5rem',
+  '--floe-radius-control': '0.375rem',
+  '--floe-radius-group': '0.5rem',
+  '--floe-radius-floating': '0.625rem',
 } as const satisfies Record<FloeCssVariableName, string>;
 
 export const floeColorTokenCategories = [
@@ -713,9 +725,9 @@ export function getFloeColorTokenValue(
 /** Optional shadow overrides. Defaults resolve at each role so local palettes
  * participate without masking overrides supplied by the theme service. */
 export const floeSurfaceTokens = [
-  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: '0 2px 5px -2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: 'inset 0 1px 2px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: '0 8px 20px -6px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: '0 1px 3px -2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: 'inset 0 1px 1px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight)' },
+  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: '0 8px 18px -8px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
   { variable: '--floe-surface-shadow-interacting', role: 'interacting', fallback: '0 1px 2px var(--floe-surface-shade)' },
 ] as const;
 

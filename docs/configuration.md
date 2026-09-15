@@ -176,7 +176,7 @@ Guidance:
 Configuration: `FloeConfig.theme` (`packages/core/src/context/FloeConfigContext.tsx`)
 
 - `defaultTheme`: `'light' | 'dark' | 'system'`
-- `defaultSurfaceStyle`: `'standard' | 'soft-neumorphic'` (default: `standard`)
+- `defaultSurfaceStyle`: `'standard' | 'soft-neumorphic'` (default: `soft-neumorphic`)
 - `surfaceStyleStorageKey`: optional material key (default: `${storageKey}-surface-style`)
 - `storageKey`: persistence key for theme choice
 - `presetStorageKey`: persistence key for the active named token preset (defaults to `${storageKey}-preset`)
