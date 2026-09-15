@@ -28,6 +28,7 @@ export type SurfacePortalBoundaryRect = SurfacePortalRect;
 export type { SurfacePortalRect };
 
 export type SurfacePortalHostResolutionOptions = Readonly<{
+  /** A supplied owner fixes scope, including when it belongs to the global surface. */
   owner?: Element | null;
 }>;
 
@@ -123,10 +124,10 @@ export function resolveSurfacePortalHost(
   ensureDialogSurfaceInteractionTracking();
 
   const snapshot = readFreshInteractionSnapshot();
-  const boundaryHost =
-    findSurfaceHostFromElement(options.owner ?? null) ??
-    findSurfaceHostFromElement(snapshot?.target ?? null) ??
-    findSurfaceHostFromElement(snapshot?.activeElement ?? null);
+  const boundaryHost = options.owner
+    ? findSurfaceHostFromElement(options.owner)
+    : findSurfaceHostFromElement(snapshot?.target ?? null) ??
+      findSurfaceHostFromElement(snapshot?.activeElement ?? null);
 
   if (!boundaryHost) {
     return { host: null, boundaryHost: null, mountHost: null, mode: 'global' };

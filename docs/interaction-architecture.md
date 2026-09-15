@@ -441,6 +441,9 @@ positioning, pointer capture, click suppression, keyboard movement, and projecti
 into the current floating surface. Spread its child callback's complete `handle`
 onto the launcher button, and attach the product's restore action to `onClick`.
 `MonitorPointer` from the public icons entry provides a computer-preview icon.
+An explicit floating-layer owner determines its surface even outside Workbench;
+recent input in another window cannot change that global ownership. Layers without
+an owner continue to infer their surface from the latest interaction.
 
 ```tsx
 <SurfaceFloatingPanel boundary={contentElement} snapToEdge snapInset={12}>

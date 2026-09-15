@@ -1,3 +1,4 @@
+/* global document, window, Event */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -127,6 +128,7 @@ render(() => <App/>, document.getElementById('root'));
       const ball = page.getByTestId('ball');
       const ballIcon = page.getByTestId('ball-icon');
       await ball.waitFor();
+      await ball.click({ trial: true });
 
       const launcherBounds = await readLauncherBounds();
       const collapsed = await panel.boundingBox();
@@ -160,6 +162,31 @@ render(() => <App/>, document.getElementById('root'));
           Math.abs(box.x - middleX) < 2 && Math.abs(box.y + box.height - launcherBounds.bottom) < 2,
         'launcher must snap to the bottom safe edge'
       );
+
+      if (!scale) {
+        // Closing an unrelated surface must not claim a globally owned launcher.
+        await page.evaluate(() => {
+          const otherSurface = document.createElement('div');
+          otherSurface.setAttribute('data-floe-dialog-surface-host', 'true');
+          otherSurface.style.cssText = 'position:fixed;left:0;top:0;width:100px;height:60px';
+          const close = document.createElement('button');
+          close.textContent = 'Close other surface';
+          close.onclick = () => {
+            otherSurface.remove();
+            window.dispatchEvent(new Event('resize'));
+          };
+          otherSurface.append(close);
+          document.body.append(otherSurface);
+        });
+        await page.getByRole('button', { name: 'Close other surface' }).click();
+        await waitForPanelBox(
+          (box) =>
+            box.width === 56 &&
+            box.height === 56 &&
+            Math.abs(box.y + box.height - launcherBounds.bottom) < 2,
+          'closing an unrelated surface must preserve global launcher geometry'
+        );
+      }
 
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await dragPanelTo(ball, launcherBounds.left + 8, middleY);

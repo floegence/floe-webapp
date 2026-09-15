@@ -8,7 +8,10 @@ import { Dialog } from '../src/components/ui/Dialog';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
 import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
-import { __resetDialogSurfaceScopeForTests } from '../src/components/ui/dialogSurfaceScope';
+import {
+  __resetDialogSurfaceScopeForTests,
+  resolveSurfacePortalHost,
+} from '../src/components/ui/dialogSurfaceScope';
 import { handleMenuKeyboardNavigation } from '../src/components/ui/menuUtils';
 
 vi.mock('../src/context/LayoutContext', () => ({
@@ -18,6 +21,26 @@ vi.mock('../src/context/LayoutContext', () => ({
 }));
 
 const disposers: Array<() => void> = [];
+
+it('keeps an explicit global owner independent of another window interaction', () => {
+  const owner = document.createElement('span');
+  const windowSurface = document.createElement('div');
+  windowSurface.setAttribute('data-floe-dialog-surface-host', 'true');
+  const control = document.createElement('button');
+  windowSurface.append(control);
+  document.body.append(owner, windowSurface);
+  try {
+    dispatchPointerDown(control);
+    expect(resolveSurfacePortalHost().host).toBe(windowSurface);
+    expect(resolveSurfacePortalHost({ owner }).mode).toBe('global');
+    windowSurface.remove();
+    expect(resolveSurfacePortalHost({ owner }).mode).toBe('global');
+  } finally {
+    owner.remove();
+    windowSurface.remove();
+    __resetDialogSurfaceScopeForTests();
+  }
+});
 
 function mount(view: () => unknown, host: HTMLElement): void {
   disposers.push(renderSolid(view, host));
