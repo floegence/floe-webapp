@@ -197,6 +197,81 @@ function createStickyItem(): WorkbenchStickyNoteItem {
 }
 
 describe('Workbench layer objects', () => {
+  it('preserves intentionally empty region names and sticky material through reload', () => {
+    const state = sanitizeWorkbenchState({
+      version: 1,
+      widgets: [],
+      backgroundLayers: [{ ...createRegionItem(), name: '   ' }],
+      stickyNotes: [{ ...createStickyItem(), body: '', material: 'ruled' }],
+    });
+    expect(state.backgroundLayers[0].name).toBe('');
+    expect(state.stickyNotes[0].body).toBe('');
+    expect(state.stickyNotes[0].material).toBe('ruled');
+  });
+
+  it('preserves composition text when focus leaves before composition ends', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onUpdate = vi.fn();
+    const dispose = render(
+      () => (
+        <WorkbenchTextAnnotation
+          item={createTextItem()}
+          selected
+          editable
+          viewportScale={1}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onUpdate={onUpdate}
+        />
+      ),
+      host
+    );
+    const editor = host.querySelector('[contenteditable]') as HTMLDivElement;
+    editor.focus();
+    dispatchCompositionEvent('compositionstart', editor);
+    editor.textContent = '中文输入';
+    editor.blur();
+    expect(onUpdate).not.toHaveBeenCalled();
+    dispatchCompositionEvent('compositionend', editor);
+    expect(onUpdate).toHaveBeenCalledWith('text-1', { text: '中文输入' });
+    dispose();
+  });
+
+  it('commits a text edit once on blur and restores cancelled edits without a mutation', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onUpdate = vi.fn();
+    const dispose = render(
+      () => (
+        <WorkbenchTextAnnotation
+          item={createTextItem()}
+          selected
+          editable
+          viewportScale={1}
+          onSelect={vi.fn()}
+          onCommitMove={vi.fn()}
+          onUpdate={onUpdate}
+        />
+      ),
+      host
+    );
+    const editor = document.querySelector('[contenteditable]') as HTMLDivElement;
+    editor.focus();
+    editor.textContent = 'Changed';
+    dispatchTextInput(editor);
+    expect(onUpdate).not.toHaveBeenCalled();
+    editor.blur();
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    editor.focus();
+    editor.textContent = 'Cancelled';
+    dispatchTextInput(editor);
+    editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(editor.textContent).toBe('Editable label');
+    dispose();
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     document.body.innerHTML = '';
@@ -225,7 +300,9 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
+    const content = document.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLElement | null;
     expect(content).toBeTruthy();
     mockPointerCapture(content!);
 
@@ -281,7 +358,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const content = host.querySelector(
+    const content = document.querySelector(
       '.workbench-text-annotation__content'
     ) as HTMLDivElement | null;
     expect(content).toBeTruthy();
@@ -299,7 +376,7 @@ describe('Workbench layer objects', () => {
     );
     await Promise.resolve();
 
-    const nextContent = host.querySelector(
+    const nextContent = document.querySelector(
       '.workbench-text-annotation__content'
     ) as HTMLDivElement | null;
     expect(nextContent).toBe(content);
@@ -348,9 +425,11 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const annotation = host.querySelector('.workbench-text-annotation') as HTMLElement | null;
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
-    const control = host.querySelector('.workbench-layer-control--text') as HTMLElement | null;
+    const annotation = document.querySelector('.workbench-text-annotation') as HTMLElement | null;
+    const content = document.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLElement | null;
+    const control = document.querySelector('.workbench-layer-control--text') as HTMLElement | null;
     expect(annotation).toBeTruthy();
     expect(content).toBeTruthy();
     expect(control).toBeTruthy();
@@ -389,7 +468,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const content = host.querySelector(
+    const content = document.querySelector(
       '.workbench-text-annotation__content'
     ) as HTMLDivElement | null;
     expect(content).toBeTruthy();
@@ -399,6 +478,7 @@ describe('Workbench layer objects', () => {
     dispatchTextInput(content!, { data: '✨', inputType: 'insertText' });
     await Promise.resolve();
 
+    content!.blur();
     expect(onUpdate).toHaveBeenCalledWith('text-1', { text: 'Editable label ✨' });
     expect(content!.getAttribute('contenteditable')).toBe('plaintext-only');
 
@@ -427,7 +507,9 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const content = host.querySelector('.workbench-text-annotation__content') as HTMLElement | null;
+    const content = document.querySelector(
+      '.workbench-text-annotation__content'
+    ) as HTMLElement | null;
     expect(content).toBeTruthy();
     mockPointerCapture(content!);
 
@@ -490,9 +572,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const move = host.querySelector(
-      '.workbench-layer-control--text .workbench-layer-move-handle'
-    ) as HTMLElement | null;
+    const move = document.querySelector('.workbench-layer-move-handle') as HTMLElement | null;
     expect(move).toBeTruthy();
     mockPointerCapture(move!);
 
@@ -542,10 +622,10 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const region = host.querySelector('.workbench-background-region') as HTMLElement | null;
+    const region = document.querySelector('.workbench-background-region') as HTMLElement | null;
     expect(region).toBeTruthy();
-    expect(region!.style.getPropertyValue('--workbench-region-ink')).toContain('#9da8a1');
-    expect(region!.style.getPropertyValue('--workbench-region-surface')).toContain('#9da8a1 72%');
+    expect(region!.style.getPropertyValue('--workbench-region-fill')).toContain('#9da8a1');
+    expect(region!.style.getPropertyValue('--workbench-region-fill')).toBe('#9da8a1');
     expect(region!.style.getPropertyValue('--workbench-region-opacity')).toBe('');
     mockPointerCapture(region!);
 
@@ -600,28 +680,30 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const control = host.querySelector('.workbench-layer-control--region') as HTMLElement | null;
-    const resize = host.querySelector(
+    const control = document.querySelector(
+      '.workbench-layer-control--region'
+    ) as HTMLElement | null;
+    const resize = document.querySelector(
       '.workbench-layer-control--region .workbench-layer-resize'
     ) as HTMLElement | null;
-    const color = host.querySelector(
+    const color = document.querySelector(
       'button[aria-label="Use region color #a79d8e"]'
     ) as HTMLButtonElement | null;
-    const material = host.querySelector(
+    const material = document.querySelector(
       'button[aria-label="Use region material Grid"]'
     ) as HTMLButtonElement | null;
-    const materialGroup = host.querySelector(
+    const materialGroup = document.querySelector(
       '.workbench-region-material-group'
     ) as HTMLElement | null;
 
     expect(control?.getAttribute('data-wb-plane')).toBe('overlay');
     expect(control?.style.transform).toBe('translate(100px, 80px)');
-    expect(control?.style.getPropertyValue('--workbench-region-ink')).toContain('#9da8a1');
+    expect(control?.style.getPropertyValue('--workbench-region-fill')).toContain('#9da8a1');
     expect(resize).toBeTruthy();
     expect(color).toBeTruthy();
     expect(material).toBeTruthy();
     expect(materialGroup?.getAttribute('role')).toBe('group');
-    expect(host.querySelectorAll('.workbench-region-material')).toHaveLength(5);
+    expect(document.querySelectorAll('.workbench-region-material')).toHaveLength(6);
     mockPointerCapture(resize!);
 
     dispatchPointerEvent('pointerdown', resize!, {
@@ -695,15 +777,17 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const overlay = host.querySelector('.workbench-control-overlay-layer') as HTMLElement | null;
-    const outlineLayer = host.querySelector(
+    const overlay = document.querySelector(
+      '.workbench-control-overlay-layer'
+    ) as HTMLElement | null;
+    const outlineLayer = document.querySelector(
       '.workbench-region-visibility-outline-layer'
     ) as HTMLElement | null;
-    const outlines = host.querySelectorAll('.workbench-region-visibility-outline');
-    const selectedOutline = host.querySelector(
+    const outlines = document.querySelectorAll('.workbench-region-visibility-outline');
+    const selectedOutline = document.querySelector(
       '.workbench-region-visibility-outline.is-selected-region'
     ) as HTMLElement | null;
-    const selectionChrome = host.querySelector(
+    const selectionChrome = document.querySelector(
       '.workbench-layer-control__selection.is-region'
     ) as HTMLElement | null;
 
@@ -765,7 +849,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const resize = host.querySelector(
+    const resize = document.querySelector(
       '.workbench-layer-control--region .workbench-layer-resize'
     ) as HTMLElement | null;
     expect(resize).toBeTruthy();
@@ -856,7 +940,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const resize = host.querySelector(
+    const resize = document.querySelector(
       '.workbench-layer-control--text .workbench-layer-resize'
     ) as HTMLElement | null;
     expect(resize).toBeTruthy();
@@ -926,14 +1010,14 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const stepper = host.querySelector('.workbench-text-size-stepper') as HTMLElement | null;
-    const input = host.querySelector(
+    const stepper = document.querySelector('.workbench-text-size-stepper') as HTMLElement | null;
+    const input = document.querySelector(
       '.workbench-text-size-stepper .workbench-text-annotation__size-input'
     ) as HTMLInputElement | null;
-    const readableSwatch = host.querySelector(
+    const readableSwatch = document.querySelector(
       `button[aria-label="Use text color ${WORKBENCH_TEXT_COLOR_OPTIONS[1]}"]`
     ) as HTMLButtonElement | null;
-    const decrease = host.querySelector(
+    const decrease = document.querySelector(
       'button[aria-label="Decrease text size"]'
     ) as HTMLButtonElement | null;
 
@@ -978,22 +1062,24 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const fontTrigger = host.querySelector(
+    const fontTrigger = document.querySelector(
       'button[aria-label="Choose bold font"]'
     ) as HTMLButtonElement | null;
     expect(fontTrigger).toBeTruthy();
     expect(fontTrigger?.getAttribute('aria-expanded')).toBe('false');
-    expect(host.querySelectorAll('.workbench-text-font-option')).toHaveLength(0);
+    expect(document.querySelectorAll('.workbench-text-font-option')).toHaveLength(0);
 
     fontTrigger!.click();
     expect(fontTrigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(host.querySelector('.workbench-text-font-popover')?.getAttribute('role')).toBe('menu');
-    expect(host.querySelectorAll('.workbench-text-font-option')).toHaveLength(
+    expect(document.querySelector('.workbench-text-font-popover')?.getAttribute('role')).toBe(
+      'menu'
+    );
+    expect(document.querySelectorAll('.workbench-text-font-option')).toHaveLength(
       WORKBENCH_TEXT_FONT_OPTIONS.length
     );
 
     const roundFont = WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.id === 'round')!;
-    const roundButton = host.querySelector(
+    const roundButton = document.querySelector(
       `button[aria-label="Use ${roundFont.label} bold font"]`
     ) as HTMLButtonElement | null;
     expect(roundButton).toBeTruthy();
@@ -1056,7 +1142,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const content = host.querySelector(
+    const content = document.querySelector(
       '.workbench-text-annotation__content'
     ) as HTMLDivElement | null;
     expect(content?.firstChild).toBeTruthy();
@@ -1069,7 +1155,7 @@ describe('Workbench layer objects', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    const emojiTrigger = host.querySelector(
+    const emojiTrigger = document.querySelector(
       'button[aria-label="Insert emoji"]'
     ) as HTMLButtonElement | null;
     expect(emojiTrigger).toBeTruthy();
@@ -1077,19 +1163,20 @@ describe('Workbench layer objects', () => {
 
     emojiTrigger!.click();
     expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(host.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(
+    expect(document.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(
       WORKBENCH_TEXT_EMOJI_OPTIONS.length
     );
     expect(Math.ceil(WORKBENCH_TEXT_EMOJI_OPTIONS.length / 6)).toBeGreaterThanOrEqual(5);
 
     const emoji = WORKBENCH_TEXT_EMOJI_OPTIONS[0];
-    const emojiButton = host.querySelector(
+    const emojiButton = document.querySelector(
       `button[aria-label="Insert emoji ${emoji}"]`
     ) as HTMLButtonElement | null;
     expect(emojiButton).toBeTruthy();
     emojiButton!.click();
     await Promise.resolve();
 
+    content!.blur();
     const [updatedItem] = untrack(items);
     expect(updatedItem?.text).toBe(`Editable ${emoji}label`);
     expect(content!.textContent).toBe(`Editable ${emoji}label`);
@@ -1125,7 +1212,7 @@ describe('Workbench layer objects', () => {
     );
 
     for (const color of WORKBENCH_TEXT_COLOR_OPTIONS) {
-      expect(host.querySelector(`button[aria-label="Use text color ${color}"]`)).toBeTruthy();
+      expect(document.querySelector(`button[aria-label="Use text color ${color}"]`)).toBeTruthy();
       expect(contrastRatio(color, '#ffffff')).toBeGreaterThanOrEqual(4.3);
       expect(contrastRatio(color, '#000000')).toBeGreaterThanOrEqual(4.3);
     }
@@ -1157,9 +1244,7 @@ describe('Workbench layer objects', () => {
     );
 
     for (const fill of WORKBENCH_REGION_FILL_OPTIONS) {
-      expect(
-        regionHost.querySelector(`button[aria-label="Use region color ${fill}"]`)
-      ).toBeTruthy();
+      expect(document.querySelector(`button[aria-label="Use region color ${fill}"]`)).toBeTruthy();
     }
 
     disposeRegion();
@@ -1179,7 +1264,7 @@ describe('Workbench layer objects', () => {
       backgroundLayers: [{ ...createRegionItem(), fill: '#ff00ff' }],
     });
 
-    expect(state.stickyNotes?.[0]?.color).toBe('amber');
+    expect(state.stickyNotes?.[0]?.color).toBe('graphite');
     expect(state.annotations?.[0]?.color).toBe(WORKBENCH_DEFAULT_TEXT_COLOR);
     expect(state.backgroundLayers?.[0]?.fill).toBe(WORKBENCH_DEFAULT_REGION_FILL);
   });
@@ -1214,18 +1299,18 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    expect(host.querySelector('.workbench-sticky__label')).toBeNull();
-    expect(host.querySelector('.workbench-sticky__number')).toBeNull();
+    expect(document.querySelector('.workbench-sticky__label')).toBeNull();
+    expect(document.querySelector('.workbench-sticky__number')).toBeNull();
 
-    const body = host.querySelector('.workbench-sticky__body') as HTMLElement | null;
-    const resize = host.querySelector('.workbench-sticky__resize') as HTMLElement | null;
+    const body = document.querySelector('.workbench-sticky__body') as HTMLElement | null;
+    const resize = document.querySelector('.workbench-sticky__resize') as HTMLElement | null;
     expect(body).toBeTruthy();
     expect(resize).toBeTruthy();
     dispatchPointerEvent('pointerdown', body!, { pointerId: 20, clientX: 48, clientY: 62 });
     body!.click();
     expect(onSelect).toHaveBeenCalledWith('sticky-1');
 
-    const copy = host.querySelector(
+    const copy = document.querySelector(
       'button[aria-label="Copy sticky note content"]'
     ) as HTMLElement | null;
     expect(copy).toBeTruthy();
@@ -1263,27 +1348,6 @@ describe('Workbench layer objects', () => {
     expect(resizeBlock).not.toContain('z-index: 2;');
   });
 
-  it('keeps region paint stable while dotted material remains visible', () => {
-    const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
-    const css = readFileSync(cssPath, 'utf8');
-
-    expect(css).toContain(
-      'background-color: var(--workbench-region-surface, var(--workbench-region-fill));'
-    );
-    expect(css).toContain('opacity: 1;');
-    expect(css).toContain('var(--workbench-region-ink) 1.45px');
-    expect(css).toContain('background-size: 11px 11px;');
-    expect(css).toContain('.workbench-background-region.is-transforming {');
-    expect(css).toContain('will-change: transform;');
-    expect(css).not.toContain('opacity: var(--workbench-region-opacity);');
-    expect(css).not.toContain('background-size: 11px 11px, auto;');
-    expect(css).toContain('--workbench-sticky-surface: #fff2bd;');
-    expect(css).toContain('--workbench-sticky-accent: #8fae72;');
-    expect(css).toContain('--workbench-sticky-ink: #302616;');
-    expect(css).toContain('.workbench-text-font-popover {');
-    expect(css).not.toContain('oklch(0.91 0.19 88)');
-  });
-
   it('keeps sticky note IME composition inside a stable plaintext editor until composition ends', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -1309,7 +1373,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const body = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
+    const body = document.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
     expect(body).toBeTruthy();
     expect(body!.getAttribute('contenteditable')).toBe('true');
 
@@ -1319,7 +1383,7 @@ describe('Workbench layer objects', () => {
     dispatchTextInput(body!, { data: '输', inputType: 'insertCompositionText', isComposing: true });
     await Promise.resolve();
 
-    const bodyDuringComposition = host.querySelector(
+    const bodyDuringComposition = document.querySelector(
       '.workbench-sticky__body'
     ) as HTMLDivElement | null;
     expect(bodyDuringComposition).toBe(body);
@@ -1327,11 +1391,13 @@ describe('Workbench layer objects', () => {
     expect(onUpdate).not.toHaveBeenCalled();
 
     dispatchCompositionEvent('compositionend', body!);
+    expect(onUpdate).not.toHaveBeenCalled();
+    body!.blur();
     await Promise.resolve();
 
     expect(onUpdate).toHaveBeenCalledTimes(1);
     expect(onUpdate).toHaveBeenCalledWith('sticky-1', { body: '中文输入' });
-    expect(host.querySelector('.workbench-sticky__body')).toBe(body);
+    expect(document.querySelector('.workbench-sticky__body')).toBe(body);
 
     dispose();
   });
@@ -1365,8 +1431,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const body = host.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
-    const copy = host.querySelector(
+    const body = document.querySelector('.workbench-sticky__body') as HTMLDivElement | null;
+    const copy = document.querySelector(
       'button[aria-label="Copy sticky note content"]'
     ) as HTMLElement | null;
     expect(body).toBeTruthy();
@@ -1416,8 +1482,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
-    const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;
+    const grip = document.querySelector('.workbench-sticky__grip') as HTMLElement | null;
+    const sticky = document.querySelector('.workbench-sticky') as HTMLElement | null;
     expect(grip).toBeTruthy();
     expect(sticky).toBeTruthy();
     mockPointerCapture(grip!);
@@ -1476,8 +1542,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
-    const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;
+    const grip = document.querySelector('.workbench-sticky__grip') as HTMLElement | null;
+    const sticky = document.querySelector('.workbench-sticky') as HTMLElement | null;
     expect(grip).toBeTruthy();
     expect(sticky).toBeTruthy();
     mockPointerCapture(grip!);
@@ -1562,8 +1628,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const grip = host.querySelector('.workbench-sticky__grip') as HTMLElement | null;
-    const sticky = host.querySelector('.workbench-sticky') as HTMLElement | null;
+    const grip = document.querySelector('.workbench-sticky__grip') as HTMLElement | null;
+    const sticky = document.querySelector('.workbench-sticky') as HTMLElement | null;
     expect(grip).toBeTruthy();
     expect(sticky).toBeTruthy();
     mockPointerCapture(grip!);
@@ -1576,7 +1642,7 @@ describe('Workbench layer objects', () => {
     });
     await Promise.resolve();
 
-    const stickyAfterSelection = host.querySelector('.workbench-sticky') as HTMLElement | null;
+    const stickyAfterSelection = document.querySelector('.workbench-sticky') as HTMLElement | null;
     expect(stickyAfterSelection).toBe(sticky);
 
     dispatchPointerEvent('pointermove', document, {

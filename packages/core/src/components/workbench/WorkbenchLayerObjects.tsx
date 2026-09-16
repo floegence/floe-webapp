@@ -1,3 +1,6 @@
+import { CANVAS_WHEEL_INTERACTIVE_ATTR } from '../ui/localInteractionSurface';
+import { useWorkbenchCompositionText } from './workbenchCompositionMessages';
+import { SurfaceAnchoredLayer } from '../ui/SurfaceAnchoredLayer';
 import {
   For,
   Show,
@@ -16,7 +19,6 @@ import { startPointerSession, type PointerSessionController } from '../ui/pointe
 import type {
   WorkbenchAnnotationItem,
   WorkbenchBackgroundLayer,
-  WorkbenchBackgroundMaterial,
   WorkbenchSelection,
   WorkbenchStickyNoteColor,
   WorkbenchStickyNoteItem,
@@ -93,13 +95,6 @@ const REGION_MIN_WIDTH = 180;
 const REGION_MIN_HEIGHT = 120;
 const TEXT_MIN_WIDTH = 96;
 const TEXT_MIN_HEIGHT = 42;
-const BACKGROUND_MATERIAL_LABEL: Record<WorkbenchBackgroundMaterial, string> = {
-  solid: 'Solid',
-  dotted: 'Dotted',
-  grid: 'Grid',
-  hatched: 'Hatched',
-  glass: 'Glass',
-};
 const STICKY_COLOR_CLASS: Record<WorkbenchStickyNoteColor, string> = {
   amber: 'is-amber',
   sage: 'is-sage',
@@ -187,15 +182,21 @@ function selectionBelongsToNode(selection: Selection | null, node: Node): select
   return ancestor === node || node.contains(ancestor);
 }
 
-function usePlainTextEditor(args: { value: Accessor<string>; onCommit: (value: string) => void }) {
+function useCanvasTextEditor(args: {
+  value: Accessor<string>;
+  onCommit: (value: string) => void;
+  singleLine?: boolean;
+}) {
   const [element, setElement] = createSignal<HTMLDivElement>();
   const [isComposing, setIsComposing] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(false);
 
+  let initialValue = '';
+  let cancelled = false;
   const readText = () => element()?.textContent ?? '';
   const bind = (node: HTMLDivElement) => setElement(node);
   const commitCurrentText = (node: HTMLDivElement) => {
-    const nextValue = node.innerHTML ?? '';
+    const nextValue = args.singleLine ? (node.textContent ?? '').trim() : (node.innerHTML ?? '');
     if (nextValue === args.value()) return;
     args.onCommit(nextValue);
   };
@@ -207,47 +208,56 @@ function usePlainTextEditor(args: { value: Accessor<string>; onCommit: (value: s
     if (isFocused()) return;
     const nextValue = args.value();
     if ((node.innerHTML ?? '') === nextValue) return;
-    node.innerHTML = nextValue;
+    if (args.singleLine) node.textContent = nextValue;
+    else node.innerHTML = nextValue;
   });
 
   const handleFocus: JSX.EventHandler<HTMLDivElement, FocusEvent> = () => {
+    initialValue = args.value();
+    cancelled = false;
     setIsFocused(true);
   };
   const handleBlur: JSX.EventHandler<HTMLDivElement, FocusEvent> = (event) => {
-    if (!isComposing()) {
-      commitCurrentText(event.currentTarget);
-    }
+    if (!cancelled && !isComposing()) commitCurrentText(event.currentTarget);
     setIsFocused(false);
   };
-  const handleInput: JSX.EventHandler<HTMLDivElement, InputEvent> = (event) => {
-    if (isComposing() || event.isComposing) return;
-    commitCurrentText(event.currentTarget);
-  };
   const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
-    if (isComposing()) return;
+    if (isComposing() || event.isComposing || event.keyCode === 229) return;
+    event.stopPropagation();
     const mod = event.ctrlKey || event.metaKey;
-    if (mod && event.key === 'b') {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelled = true;
+      if (args.singleLine) event.currentTarget.textContent = initialValue;
+      else event.currentTarget.innerHTML = initialValue;
+      event.currentTarget.blur();
+    } else if (event.key === 'Enter' && (mod || args.singleLine)) {
+      event.preventDefault();
+      event.currentTarget.blur();
+    } else if (mod && event.key === 'b') {
       event.preventDefault();
       document.execCommand('bold', false);
-      commitCurrentText(event.currentTarget);
     } else if (mod && event.key === 'i') {
       event.preventDefault();
       document.execCommand('italic', false);
-      commitCurrentText(event.currentTarget);
     }
   };
   const handleCompositionStart: JSX.EventHandler<HTMLDivElement, CompositionEvent> = () => {
     setIsComposing(true);
   };
   const handleCompositionEnd: JSX.EventHandler<HTMLDivElement, CompositionEvent> = (event) => {
-    commitCurrentText(event.currentTarget);
+    if (document.activeElement !== event.currentTarget && !cancelled)
+      commitCurrentText(event.currentTarget);
     setIsComposing(false);
   };
-  const focus = () => element()?.focus();
+  const focus = () => {
+    setIsFocused(true);
+    element()?.focus({ preventScroll: true });
+  };
   const insertTextAtSelection = (text: string): void => {
     const node = element();
     if (!node) return;
-    node.focus();
+    node.focus({ preventScroll: true });
     const selection = document.getSelection();
     const ownsSelection = selectionBelongsToNode(selection, node);
     const range = ownsSelection && selection ? selection.getRangeAt(0) : document.createRange();
@@ -263,17 +273,16 @@ function usePlainTextEditor(args: { value: Accessor<string>; onCommit: (value: s
     range.collapse(true);
     selection?.removeAllRanges();
     selection?.addRange(range);
-    commitCurrentText(node);
   };
 
   return {
     bind,
+    isFocused,
     readText,
     focus,
     insertTextAtSelection,
     handleFocus,
     handleBlur,
-    handleInput,
     handleKeyDown,
     handleCompositionStart,
     handleCompositionEnd,
@@ -288,18 +297,10 @@ function clampRegionOpacity(value: number): number {
   return Math.max(0.08, Math.min(1, value));
 }
 
-function formatPercent(value: number): string {
-  return `${Math.round(clampRegionOpacity(value) * 1000) / 10}%`;
-}
-
 function createRegionRenderVars(item: WorkbenchBackgroundLayer): JSX.CSSProperties {
-  const opacity = clampRegionOpacity(item.opacity);
-  const surface = `color-mix(in srgb, ${item.fill} ${Math.round(opacity * 100)}%, transparent)`;
   return {
     '--workbench-region-fill': item.fill,
-    '--workbench-region-surface': surface,
-    '--workbench-region-ink': `color-mix(in srgb, color-mix(in srgb, ${item.fill} 48%, var(--foreground, #111) 52%) ${formatPercent(Math.max(opacity, 0.42) * 0.72)}, transparent)`,
-    '--workbench-region-highlight': `color-mix(in srgb, white ${formatPercent(Math.max(opacity, 0.32) * 0.2)}, transparent)`,
+    '--workbench-region-strength': `${Math.round(clampRegionOpacity(item.opacity) * 100)}%`,
   };
 }
 
@@ -641,12 +642,14 @@ export function WorkbenchStickyNote(props: {
   onCommitResize: (noteId: string, size: { width: number; height: number }) => void;
   onUpdate: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
   ) => void;
   onDelete: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
   onLayoutInteractionEnd?: () => void;
 }) {
+  const t = useWorkbenchCompositionText();
+  const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
   const selected = createOwnerSafePropAccessor(() => props.selected);
   const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
@@ -669,7 +672,7 @@ export function WorkbenchStickyNote(props: {
     () => props.onLayoutInteractionStart
   );
   const onLayoutInteractionEnd = createOwnerSafePropAccessor(() => props.onLayoutInteractionEnd);
-  const bodyEditor = usePlainTextEditor({
+  const bodyEditor = useCanvasTextEditor({
     value: () => item().body,
     onCommit: (body) => onUpdate()(item().id, { body }),
   });
@@ -762,6 +765,7 @@ export function WorkbenchStickyNote(props: {
 
   return (
     <article
+      ref={setAnchor}
       class="workbench-sticky"
       classList={{
         'is-selected': selected(),
@@ -789,32 +793,37 @@ export function WorkbenchStickyNote(props: {
         onContextMenu()?.(event, item());
       }}
     >
-      <div class="workbench-sticky__surface">
-        <header class="workbench-sticky__header">
-          <button
-            type="button"
-            class="workbench-sticky__grip"
-            aria-label="Drag sticky note"
-            data-floe-workbench-sticky-local="true"
-            data-wb-part="move"
-            onPointerDown={(event) => {
-              const currentItem = item();
-              onSelect()(currentItem.id);
-              onClaimVisualFrontOwner()?.(currentItem.id);
-              drag.beginDrag(event);
-            }}
-          >
-            <GripVertical class="w-3.5 h-3.5" />
-          </button>
-        </header>
+      <div
+        class="workbench-sticky__surface"
+        data-floe-input-surface="true"
+        data-note-color={item().color}
+        data-note-material={item().material ?? 'tint'}
+      >
+        <button
+          type="button"
+          class="workbench-sticky__grip"
+          aria-label={t('dragSticky')}
+          data-floe-workbench-sticky-local="true"
+          data-wb-part="move"
+          onPointerDown={(event) => {
+            const currentItem = item();
+            onSelect()(currentItem.id);
+            onClaimVisualFrontOwner()?.(currentItem.id);
+            drag.beginDrag(event);
+          }}
+        >
+          <GripVertical class="w-3.5 h-3.5" />
+        </button>
+
         <div
           ref={bodyEditor.bind}
           class="workbench-sticky__body"
+          {...{ [CANVAS_WHEEL_INTERACTIVE_ATTR]: selected() ? 'true' : undefined }}
           contentEditable={locked() ? false : true}
           role="textbox"
           aria-multiline="true"
           aria-disabled={locked() ? 'true' : undefined}
-          aria-label="Sticky note body"
+          aria-label={t('stickyBody')}
           spellcheck={false}
           data-floe-workbench-text-selection-surface="true"
           data-wb-text-editor="plain"
@@ -826,69 +835,101 @@ export function WorkbenchStickyNote(props: {
           }}
           onFocus={bodyEditor.handleFocus}
           onBlur={bodyEditor.handleBlur}
-          onInput={bodyEditor.handleInput}
           onKeyDown={bodyEditor.handleKeyDown}
           onCompositionStart={bodyEditor.handleCompositionStart}
           onCompositionEnd={bodyEditor.handleCompositionEnd}
         />
       </div>
       <Show when={selected() && !locked()}>
-        <div class="workbench-sticky__actions" data-floe-workbench-sticky-local="true">
-          <button
-            type="button"
-            class="workbench-sticky__tool"
-            classList={{ 'is-success': copied() }}
-            aria-label="Copy sticky note content"
-            title={copied() ? 'Sticky note content copied' : 'Copy sticky note content'}
-            onPointerDown={stopLayerButtonPointer}
-            onClick={async (event) => {
-              stopLayerButtonClick(event);
-              await copyStickyBody();
-            }}
-          >
-            <Show when={copied()} fallback={<Copy class="w-3.5 h-3.5" />}>
-              <Check class="w-3.5 h-3.5" />
-            </Show>
-          </button>
-          <button
-            type="button"
-            class="workbench-sticky__tool"
-            aria-label="Change sticky note color"
-            title="Change sticky note color"
-            onPointerDown={stopLayerButtonPointer}
-            onClick={(event) => {
-              stopLayerButtonClick(event);
-              const currentItem = item();
-              onUpdate()(currentItem.id, {
-                color: nextValue<WorkbenchStickyNoteColor>(
-                  WORKBENCH_STICKY_NOTE_COLORS,
-                  currentItem.color
-                ),
-              });
-            }}
-          >
-            <span class="workbench-sticky__color-dot" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            class="workbench-sticky__tool is-danger"
-            aria-label="Delete sticky note"
-            title="Delete sticky note"
-            onPointerDown={stopLayerButtonPointer}
-            onClick={(event) => {
-              stopLayerButtonClick(event);
-              onDelete()(item().id);
-            }}
-          >
-            <Trash class="w-3.5 h-3.5" />
-          </button>
-        </div>
+        <SurfaceAnchoredLayer anchor={anchor()} revision={style()} class="workbench-object-tools">
+          <div class="workbench-sticky__actions" data-floe-workbench-sticky-local="true">
+            <button
+              type="button"
+              class="workbench-sticky__tool"
+              classList={{ 'is-success': copied() }}
+              aria-label={t('copySticky')}
+              title={t(copied() ? 'copiedSticky' : 'copySticky')}
+              onPointerDown={stopLayerButtonPointer}
+              onClick={async (event) => {
+                stopLayerButtonClick(event);
+                await copyStickyBody();
+              }}
+            >
+              <Show when={copied()} fallback={<Copy class="w-3.5 h-3.5" />}>
+                <Check class="w-3.5 h-3.5" />
+              </Show>
+            </button>
+            <For each={WORKBENCH_STICKY_NOTE_COLORS}>
+              {(color) => (
+                <button
+                  type="button"
+                  class="workbench-style-choice"
+                  aria-label={t('stickyColor', t(color))}
+                  aria-pressed={item().color === color}
+                  onPointerDown={stopLayerButtonPointer}
+                  onClick={() => onUpdate()(item().id, { color })}
+                >
+                  <span
+                    class="workbench-note-preview"
+                    data-note-color={color}
+                    data-note-material={item().material ?? 'tint'}
+                  />
+                </button>
+              )}
+            </For>
+            <div class="workbench-material-choices" role="group" aria-label={t('stickyMaterial')}>
+              <For each={['tint', 'tab', 'ruled'] as const}>
+                {(material) => (
+                  <button
+                    type="button"
+                    class="workbench-style-choice is-material"
+                    aria-label={t('useStickyMaterial', t(material))}
+                    aria-pressed={(item().material ?? 'tint') === material}
+                    onPointerDown={stopLayerButtonPointer}
+                    onClick={() => onUpdate()(item().id, { material })}
+                  >
+                    <span
+                      class="workbench-note-preview"
+                      data-note-color={item().color}
+                      data-note-material={material}
+                    />
+                    <span>{t(material)}</span>
+                  </button>
+                )}
+              </For>
+            </div>
+            <button
+              type="button"
+              class="workbench-layer-mini-button"
+              onPointerDown={stopLayerButtonPointer}
+              onClick={() => {
+                const active = document.activeElement;
+                if (active instanceof HTMLElement) active.blur();
+              }}
+            >
+              {t('done')}
+            </button>
+            <button
+              type="button"
+              class="workbench-sticky__tool is-danger"
+              aria-label={t('deleteSticky')}
+              title={t('deleteSticky')}
+              onPointerDown={stopLayerButtonPointer}
+              onClick={(event) => {
+                stopLayerButtonClick(event);
+                onDelete()(item().id);
+              }}
+            >
+              <Trash class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </SurfaceAnchoredLayer>
       </Show>
       <Show when={!locked()}>
         <button
           type="button"
           class="workbench-layer-resize workbench-sticky__resize"
-          aria-label="Resize sticky note"
+          aria-label={t('resizeSticky')}
           onPointerDown={resize.beginResize}
         />
       </Show>
@@ -911,6 +952,7 @@ export function WorkbenchTextAnnotation(props: {
   onCommitMove: (annotationId: string, position: { x: number; y: number }) => void;
   onUpdate: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
 }) {
+  const t = useWorkbenchCompositionText();
   const item = createOwnerSafePropAccessor(() => props.item);
   const selected = createOwnerSafePropAccessor(() => props.selected);
   const editable = createOwnerSafePropAccessor(() => props.editable);
@@ -924,7 +966,7 @@ export function WorkbenchTextAnnotation(props: {
   const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
   const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
   const onUpdate = createOwnerSafePropAccessor(() => props.onUpdate);
-  const textEditor = usePlainTextEditor({
+  const textEditor = useCanvasTextEditor({
     value: () => item().text,
     onCommit: (text) => onUpdate()(item().id, { text }),
   });
@@ -994,6 +1036,7 @@ export function WorkbenchTextAnnotation(props: {
   return (
     <article
       class="workbench-text-annotation"
+      data-floe-input-surface="true"
       classList={{ 'is-selected': selected(), 'is-editable': editable() }}
       data-floe-canvas-interactive={editable() ? 'true' : undefined}
       data-wb-plane="annotation"
@@ -1016,6 +1059,7 @@ export function WorkbenchTextAnnotation(props: {
         contentEditable={editable() ? 'plaintext-only' : false}
         tabIndex={editable() ? 0 : undefined}
         role={editable() ? 'textbox' : undefined}
+        aria-label={t('textContent')}
         aria-multiline={editable() ? 'true' : undefined}
         aria-disabled={editable() ? undefined : 'true'}
         spellcheck={false}
@@ -1030,8 +1074,8 @@ export function WorkbenchTextAnnotation(props: {
           textEditor.handleFocus(event);
           if (editable()) onSelect()(item().id);
         }}
+        onKeyDown={textEditor.handleKeyDown}
         onBlur={textEditor.handleBlur}
-        onInput={textEditor.handleInput}
         onCompositionStart={textEditor.handleCompositionStart}
         onCompositionEnd={textEditor.handleCompositionEnd}
       />
@@ -1048,10 +1092,13 @@ export function WorkbenchBackgroundRegion(props: {
   projection?: WorkbenchLayerProjectionMode;
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
+  onUpdate?: (layerId: string, patch: { name: string }) => void;
   onSelect: (layerId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchBackgroundLayer) => void;
   onCommitMove: (layerId: string, position: { x: number; y: number }) => void;
 }) {
+  const t = useWorkbenchCompositionText();
   const item = createOwnerSafePropAccessor(() => props.item);
   const selected = createOwnerSafePropAccessor(() => props.selected);
   const editable = createOwnerSafePropAccessor(() => props.editable);
@@ -1063,6 +1110,15 @@ export function WorkbenchBackgroundRegion(props: {
   const onSelect = createOwnerSafePropAccessor(() => props.onSelect);
   const onContextMenu = createOwnerSafePropAccessor(() => props.onContextMenu);
   const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
+  const nameEditor = useCanvasTextEditor({
+    value: () => item().name,
+    singleLine: true,
+    onCommit: (name) => props.onUpdate?.(item().id, { name }),
+  });
+  createEffect(() => {
+    const unregister = props.textEditorRegistry?.register(item().id, nameEditor);
+    onCleanup(() => unregister?.());
+  });
   const drag = useLayerDrag({
     viewportScale,
     readPosition: () => ({ x: item().x, y: item().y }),
@@ -1099,7 +1155,9 @@ export function WorkbenchBackgroundRegion(props: {
     if (!editable() || event.button !== 0) return;
     if (
       event.target instanceof Element &&
-      event.target.closest('.workbench-background-region__toolbar, .workbench-layer-resize')
+      event.target.closest(
+        '.workbench-background-region__label, .workbench-background-region__toolbar, .workbench-layer-resize'
+      )
     ) {
       return;
     }
@@ -1132,7 +1190,30 @@ export function WorkbenchBackgroundRegion(props: {
         onSelect()(item().id);
         onContextMenu()?.(event, item());
       }}
-    />
+    >
+      <div
+        class="workbench-background-region__label"
+        classList={{ 'is-empty': !item().name.trim() && !nameEditor.isFocused() }}
+        data-floe-input-surface="true"
+      >
+        <div
+          ref={nameEditor.bind}
+          contentEditable={editable() ? 'plaintext-only' : false}
+          role="textbox"
+          aria-label={t('regionName')}
+          data-floe-workbench-text-selection-surface="true"
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            onSelect()(item().id);
+          }}
+          onFocus={nameEditor.handleFocus}
+          onBlur={nameEditor.handleBlur}
+          onKeyDown={nameEditor.handleKeyDown}
+          onCompositionStart={nameEditor.handleCompositionStart}
+          onCompositionEnd={nameEditor.handleCompositionEnd}
+        />
+      </div>
+    </article>
   );
 }
 
@@ -1149,6 +1230,8 @@ function WorkbenchTextAnnotationControls(props: {
   onUpdate: (annotationId: string, patch: WorkbenchTextAnnotationPatch) => void;
   onDelete: (annotationId: string) => void;
 }) {
+  const t = useWorkbenchCompositionText();
+  const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
   const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
   const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
@@ -1256,6 +1339,7 @@ function WorkbenchTextAnnotationControls(props: {
 
   return (
     <div
+      ref={setAnchor}
       class="workbench-layer-control workbench-layer-control--text"
       data-floe-canvas-interactive="true"
       data-wb-plane="overlay"
@@ -1265,236 +1349,238 @@ function WorkbenchTextAnnotationControls(props: {
       style={style()}
     >
       <div class="workbench-layer-control__selection is-text" aria-hidden="true" />
-      <div
-        class="workbench-text-annotation__toolbar"
-        data-floe-canvas-interactive="true"
-        onPointerDown={stopLayerControlPointer}
-        onClick={stopLayerControlClick}
-      >
-        <button
-          type="button"
-          aria-label="Move text"
-          title="Move text"
-          class="workbench-layer-mini-button workbench-layer-move-handle"
-          data-wb-part="move"
-          onPointerDown={move.beginDrag}
-          onClick={stopLayerButtonClick}
-        >
-          <GripVertical class="w-3.5 h-3.5" />
-        </button>
+      <SurfaceAnchoredLayer anchor={anchor()} revision={style()} class="workbench-object-tools">
         <div
-          ref={fontPickerEl}
-          class="workbench-text-font-picker"
+          class="workbench-text-annotation__toolbar"
           data-floe-canvas-interactive="true"
           onPointerDown={stopLayerControlPointer}
           onClick={stopLayerControlClick}
         >
           <button
             type="button"
-            aria-label="Choose bold font"
-            aria-haspopup="menu"
-            aria-expanded={fontPickerOpen()}
-            title="Choose bold font"
-            class="workbench-text-font-trigger"
-            onPointerDown={stopLayerButtonPointer}
-            onClick={(event) => {
-              stopLayerButtonClick(event);
-              setFontPickerOpen((open) => !open);
-            }}
+            aria-label={t('moveText')}
+            title={t('moveText')}
+            class="workbench-layer-mini-button workbench-layer-move-handle"
+            data-wb-part="move"
+            onPointerDown={move.beginDrag}
+            onClick={stopLayerButtonClick}
           >
-            <span
-              class="workbench-text-font-trigger__sample"
-              style={{
-                'font-family': activeFont().fontFamily,
-                'font-weight': `${activeFont().fontWeight}`,
-              }}
-            >
-              Aa
-            </span>
-            <span class="workbench-text-font-trigger__label">{activeFont().label}</span>
-            <ChevronDown class="workbench-text-font-trigger__icon" />
+            <GripVertical class="w-3.5 h-3.5" />
           </button>
-          <Show when={fontPickerOpen()}>
-            <div class="workbench-text-font-popover" role="menu" aria-label="Bold font">
-              <For each={WORKBENCH_TEXT_FONT_OPTIONS}>
-                {(font) => (
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={item().font_family === font.fontFamily}
-                    aria-label={`Use ${font.label} bold font`}
-                    title={`${font.label} bold`}
-                    class="workbench-text-font-option"
-                    classList={{ 'is-active': item().font_family === font.fontFamily }}
-                    onPointerDown={stopLayerButtonPointer}
-                    onClick={(event) => {
-                      stopLayerButtonClick(event);
-                      onUpdate()(item().id, {
-                        font_family: font.fontFamily,
-                        font_weight: font.fontWeight,
-                      });
-                      setFontPickerOpen(false);
-                    }}
-                  >
-                    <span
-                      class="workbench-text-font-option__sample"
-                      style={{
-                        'font-family': font.fontFamily,
-                        'font-weight': `${font.fontWeight}`,
-                      }}
-                    >
-                      Aa
-                    </span>
-                    <span class="workbench-text-font-option__label">{font.label}</span>
-                  </button>
-                )}
-              </For>
-            </div>
-          </Show>
-        </div>
-        <div
-          class="workbench-text-size-stepper"
-          role="group"
-          aria-label="Text size"
-          onPointerDown={stopLayerControlPointer}
-          onClick={stopLayerControlClick}
-        >
-          <button
-            type="button"
-            aria-label="Decrease text size"
-            title="Decrease text size"
-            class="workbench-text-size-stepper__button"
-            onPointerDown={stopLayerButtonPointer}
-            onClick={(event) => {
-              stopLayerButtonClick(event);
-              updateFontSize(item().font_size - 1);
-            }}
-          >
-            <Minus class="w-3 h-3" />
-          </button>
-          <input
-            ref={sizeInputEl}
-            class="workbench-text-annotation__size-input"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            aria-label="Text size value"
-            value={fontSizeDraft()}
+          <div
+            ref={fontPickerEl}
+            class="workbench-text-font-picker"
+            data-floe-canvas-interactive="true"
             onPointerDown={stopLayerControlPointer}
             onClick={stopLayerControlClick}
-            onInput={(event) => setFontSizeDraft(event.currentTarget.value)}
-            onBlur={commitFontSizeDraft}
-            onKeyDown={(event) => {
-              if (event.key !== 'Enter') return;
-              event.preventDefault();
-              commitFontSizeDraft();
-              event.currentTarget.blur();
-            }}
-          />
-          <button
-            type="button"
-            aria-label="Increase text size"
-            title="Increase text size"
-            class="workbench-text-size-stepper__button"
-            onPointerDown={stopLayerButtonPointer}
-            onClick={(event) => {
-              stopLayerButtonClick(event);
-              updateFontSize(item().font_size + 1);
-            }}
           >
-            <Plus class="w-3 h-3" />
-          </button>
-        </div>
-        <For each={WORKBENCH_TEXT_COLOR_OPTIONS}>
-          {(color) => (
             <button
               type="button"
-              aria-label={`Use text color ${color}`}
-              class="workbench-layer-swatch"
-              classList={{ 'is-active': item().color === color }}
-              style={{ background: color }}
+              aria-label={t('chooseFont')}
+              aria-haspopup="menu"
+              aria-expanded={fontPickerOpen()}
+              title={t('chooseFont')}
+              class="workbench-text-font-trigger"
               onPointerDown={stopLayerButtonPointer}
               onClick={(event) => {
                 stopLayerButtonClick(event);
-                onUpdate()(item().id, { color });
+                setFontPickerOpen((open) => !open);
+              }}
+            >
+              <span
+                class="workbench-text-font-trigger__sample"
+                style={{
+                  'font-family': activeFont().fontFamily,
+                  'font-weight': `${activeFont().fontWeight}`,
+                }}
+              >
+                Aa
+              </span>
+              <span class="workbench-text-font-trigger__label">{t(activeFont().id)}</span>
+              <ChevronDown class="workbench-text-font-trigger__icon" />
+            </button>
+            <Show when={fontPickerOpen()}>
+              <div class="workbench-text-font-popover" role="menu" aria-label={t('boldFont')}>
+                <For each={WORKBENCH_TEXT_FONT_OPTIONS}>
+                  {(font) => (
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={item().font_family === font.fontFamily}
+                      aria-label={t('useFont', t(font.id))}
+                      title={t('fontPreview', t(font.id))}
+                      class="workbench-text-font-option"
+                      classList={{ 'is-active': item().font_family === font.fontFamily }}
+                      onPointerDown={stopLayerButtonPointer}
+                      onClick={(event) => {
+                        stopLayerButtonClick(event);
+                        onUpdate()(item().id, {
+                          font_family: font.fontFamily,
+                          font_weight: font.fontWeight,
+                        });
+                        setFontPickerOpen(false);
+                      }}
+                    >
+                      <span
+                        class="workbench-text-font-option__sample"
+                        style={{
+                          'font-family': font.fontFamily,
+                          'font-weight': `${font.fontWeight}`,
+                        }}
+                      >
+                        Aa
+                      </span>
+                      <span class="workbench-text-font-option__label">{t(font.id)}</span>
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
+          <div
+            class="workbench-text-size-stepper"
+            role="group"
+            aria-label={t('textSize')}
+            onPointerDown={stopLayerControlPointer}
+            onClick={stopLayerControlClick}
+          >
+            <button
+              type="button"
+              aria-label={t('decreaseSize')}
+              title={t('decreaseSize')}
+              class="workbench-text-size-stepper__button"
+              onPointerDown={stopLayerButtonPointer}
+              onClick={(event) => {
+                stopLayerButtonClick(event);
+                updateFontSize(item().font_size - 1);
+              }}
+            >
+              <Minus class="w-3 h-3" />
+            </button>
+            <input
+              ref={sizeInputEl}
+              class="workbench-text-annotation__size-input"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              aria-label={t('sizeValue')}
+              value={fontSizeDraft()}
+              onPointerDown={stopLayerControlPointer}
+              onClick={stopLayerControlClick}
+              onInput={(event) => setFontSizeDraft(event.currentTarget.value)}
+              onBlur={commitFontSizeDraft}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                commitFontSizeDraft();
+                event.currentTarget.blur();
               }}
             />
-          )}
-        </For>
-        <div
-          ref={emojiPickerEl}
-          class="workbench-text-emoji-picker"
-          data-floe-canvas-interactive="true"
-          onPointerDown={stopLayerControlPointer}
-          onClick={stopLayerControlClick}
-        >
+            <button
+              type="button"
+              aria-label={t('increaseSize')}
+              title={t('increaseSize')}
+              class="workbench-text-size-stepper__button"
+              onPointerDown={stopLayerButtonPointer}
+              onClick={(event) => {
+                stopLayerButtonClick(event);
+                updateFontSize(item().font_size + 1);
+              }}
+            >
+              <Plus class="w-3 h-3" />
+            </button>
+          </div>
+          <For each={WORKBENCH_TEXT_COLOR_OPTIONS}>
+            {(color) => (
+              <button
+                type="button"
+                aria-label={t('textColor', color)}
+                class="workbench-layer-swatch"
+                classList={{ 'is-active': item().color === color }}
+                style={{ background: color }}
+                onPointerDown={stopLayerButtonPointer}
+                onClick={(event) => {
+                  stopLayerButtonClick(event);
+                  onUpdate()(item().id, { color });
+                }}
+              />
+            )}
+          </For>
+          <div
+            ref={emojiPickerEl}
+            class="workbench-text-emoji-picker"
+            data-floe-canvas-interactive="true"
+            onPointerDown={stopLayerControlPointer}
+            onClick={stopLayerControlClick}
+          >
+            <button
+              type="button"
+              aria-label={t('insertEmoji')}
+              aria-haspopup="menu"
+              aria-expanded={emojiPickerOpen()}
+              title={t('insertEmoji')}
+              class="workbench-text-emoji-trigger"
+              onPointerDown={stopLayerButtonPointer}
+              onClick={(event) => {
+                stopLayerButtonClick(event);
+                setEmojiPickerOpen((open) => !open);
+              }}
+            >
+              ✨
+            </button>
+            <Show when={emojiPickerOpen()}>
+              <div class="workbench-text-emoji-popover" role="menu" aria-label={t('emoji')}>
+                <For each={WORKBENCH_TEXT_EMOJI_OPTIONS}>
+                  {(emoji) => (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      aria-label={t('useEmoji', emoji)}
+                      title={t('useEmoji', emoji)}
+                      class="workbench-text-emoji-option"
+                      onPointerDown={stopLayerButtonPointer}
+                      onClick={(event) => {
+                        stopLayerButtonClick(event);
+                        textEditorRegistry()?.get(item().id)?.insertTextAtSelection(emoji);
+                        setEmojiPickerOpen(false);
+                      }}
+                    >
+                      {emoji}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </div>
           <button
             type="button"
-            aria-label="Insert emoji"
-            aria-haspopup="menu"
-            aria-expanded={emojiPickerOpen()}
-            title="Insert emoji"
-            class="workbench-text-emoji-trigger"
+            class="workbench-layer-mini-button"
             onPointerDown={stopLayerButtonPointer}
             onClick={(event) => {
               stopLayerButtonClick(event);
-              setEmojiPickerOpen((open) => !open);
+              onUpdate()(item().id, { align: nextAlign() });
             }}
           >
-            ✨
+            {item().align}
           </button>
-          <Show when={emojiPickerOpen()}>
-            <div class="workbench-text-emoji-popover" role="menu" aria-label="Emoji">
-              <For each={WORKBENCH_TEXT_EMOJI_OPTIONS}>
-                {(emoji) => (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    aria-label={`Insert emoji ${emoji}`}
-                    title={`Insert ${emoji}`}
-                    class="workbench-text-emoji-option"
-                    onPointerDown={stopLayerButtonPointer}
-                    onClick={(event) => {
-                      stopLayerButtonClick(event);
-                      textEditorRegistry()?.get(item().id)?.insertTextAtSelection(emoji);
-                      setEmojiPickerOpen(false);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                )}
-              </For>
-            </div>
-          </Show>
+          <button
+            type="button"
+            class="workbench-layer-mini-button is-danger"
+            aria-label={t('deleteText')}
+            onPointerDown={stopLayerButtonPointer}
+            onClick={(event) => {
+              stopLayerButtonClick(event);
+              onDelete()(item().id);
+            }}
+          >
+            <Trash class="w-3.5 h-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          class="workbench-layer-mini-button"
-          onPointerDown={stopLayerButtonPointer}
-          onClick={(event) => {
-            stopLayerButtonClick(event);
-            onUpdate()(item().id, { align: nextAlign() });
-          }}
-        >
-          {item().align}
-        </button>
-        <button
-          type="button"
-          class="workbench-layer-mini-button is-danger"
-          aria-label="Delete text"
-          onPointerDown={stopLayerButtonPointer}
-          onClick={(event) => {
-            stopLayerButtonClick(event);
-            onDelete()(item().id);
-          }}
-        >
-          <Trash class="w-3.5 h-3.5" />
-        </button>
-      </div>
+      </SurfaceAnchoredLayer>
       <button
         type="button"
         class="workbench-layer-resize"
-        aria-label="Resize text"
+        aria-label={t('resizeText')}
         data-wb-part="resize"
         onPointerDown={resize.beginResize}
       />
@@ -1504,6 +1590,7 @@ function WorkbenchTextAnnotationControls(props: {
 
 function WorkbenchBackgroundRegionControls(props: {
   item: WorkbenchBackgroundLayer;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
   viewportScale: number;
   viewport?: WorkbenchViewport;
   projection?: WorkbenchLayerProjectionMode;
@@ -1516,6 +1603,8 @@ function WorkbenchBackgroundRegionControls(props: {
   ) => void;
   onDelete: (layerId: string) => void;
 }) {
+  const t = useWorkbenchCompositionText();
+  const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
   const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
   const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
@@ -1565,6 +1654,7 @@ function WorkbenchBackgroundRegionControls(props: {
 
   return (
     <div
+      ref={setAnchor}
       class="workbench-layer-control workbench-layer-control--region"
       data-floe-canvas-interactive="true"
       data-wb-plane="overlay"
@@ -1574,87 +1664,114 @@ function WorkbenchBackgroundRegionControls(props: {
       style={style()}
     >
       <div class="workbench-layer-control__selection is-region" aria-hidden="true" />
-      <div
-        class="workbench-background-region__toolbar"
-        data-floe-canvas-interactive="true"
-        onPointerDown={stopLayerControlPointer}
-        onClick={stopLayerControlClick}
-      >
-        <For each={WORKBENCH_REGION_FILL_OPTIONS}>
-          {(fill) => (
-            <button
-              type="button"
-              aria-label={`Use region color ${fill}`}
-              class="workbench-layer-swatch workbench-layer-swatch--region"
-              classList={{ 'is-active': item().fill === fill }}
-              style={{ background: fill }}
-              onPointerDown={stopLayerButtonPointer}
-              onClick={(event) => {
-                stopLayerButtonClick(event);
-                onUpdate()(item().id, { fill });
-              }}
-            />
-          )}
-        </For>
+      <SurfaceAnchoredLayer anchor={anchor()} revision={style()} class="workbench-object-tools">
         <div
-          class="workbench-region-material-group"
-          role="group"
-          aria-label="Region material"
+          class="workbench-background-region__toolbar"
+          data-floe-canvas-interactive="true"
           onPointerDown={stopLayerControlPointer}
           onClick={stopLayerControlClick}
         >
-          <For each={WORKBENCH_BACKGROUND_MATERIALS}>
-            {(material) => (
+          <button
+            type="button"
+            class="workbench-layer-mini-button"
+            onPointerDown={stopLayerButtonPointer}
+            onClick={() => props.textEditorRegistry?.get(item().id)?.focus()}
+          >
+            {t(item().name.trim() ? 'editName' : 'addName')}
+          </button>
+          <Show when={item().name.trim()}>
+            <button
+              type="button"
+              class="workbench-layer-mini-button"
+              onPointerDown={stopLayerButtonPointer}
+              onClick={() => onUpdate()(item().id, { name: '' })}
+            >
+              {t('clearName')}
+            </button>
+          </Show>
+          <For each={WORKBENCH_REGION_FILL_OPTIONS}>
+            {(fill) => (
               <button
                 type="button"
-                aria-label={`Use region material ${BACKGROUND_MATERIAL_LABEL[material]}`}
-                title={BACKGROUND_MATERIAL_LABEL[material]}
-                class="workbench-region-material"
-                classList={{
-                  'is-active': item().material === material,
-                  [`is-${material}`]: true,
-                }}
+                aria-label={t('regionColor', fill)}
+                class={`workbench-layer-swatch workbench-layer-swatch--region is-material-${item().material}`}
+                classList={{ 'is-active': item().fill === fill }}
+                aria-pressed={item().fill === fill}
+                style={createRegionRenderVars({ ...item(), fill })}
                 onPointerDown={stopLayerButtonPointer}
                 onClick={(event) => {
                   stopLayerButtonClick(event);
-                  onUpdate()(item().id, { material });
+                  onUpdate()(item().id, { fill });
                 }}
-              >
-                <span class="workbench-region-material__sample" aria-hidden="true" />
-              </button>
+              />
             )}
           </For>
+          <div
+            class="workbench-region-material-group"
+            role="group"
+            aria-label={t('regionMaterial')}
+            onPointerDown={stopLayerControlPointer}
+            onClick={stopLayerControlClick}
+          >
+            <For each={WORKBENCH_BACKGROUND_MATERIALS}>
+              {(material) => (
+                <button
+                  type="button"
+                  aria-label={t('useRegionMaterial', t(material))}
+                  title={t(material)}
+                  aria-pressed={item().material === material}
+                  class="workbench-region-material"
+                  classList={{
+                    'is-active': item().material === material,
+                    [`is-${material}`]: true,
+                  }}
+                  onPointerDown={stopLayerButtonPointer}
+                  onClick={(event) => {
+                    stopLayerButtonClick(event);
+                    onUpdate()(item().id, { material });
+                  }}
+                >
+                  <span
+                    class={`workbench-region-material__sample is-material-${material}`}
+                    style={createRegionRenderVars(item())}
+                    aria-hidden="true"
+                  />
+                  <span>{t(material)}</span>
+                </button>
+              )}
+            </For>
+          </div>
+          <button
+            type="button"
+            class="workbench-layer-mini-button"
+            onPointerDown={stopLayerButtonPointer}
+            onClick={(event) => {
+              stopLayerButtonClick(event);
+              onUpdate()(item().id, {
+                opacity: item().opacity >= 0.88 ? 0.42 : item().opacity + 0.18,
+              });
+            }}
+          >
+            {Math.round(item().opacity * 100)}%
+          </button>
+          <button
+            type="button"
+            class="workbench-layer-mini-button is-danger"
+            aria-label={t('deleteRegion')}
+            onPointerDown={stopLayerButtonPointer}
+            onClick={(event) => {
+              stopLayerButtonClick(event);
+              onDelete()(item().id);
+            }}
+          >
+            <Trash class="w-3.5 h-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          class="workbench-layer-mini-button"
-          onPointerDown={stopLayerButtonPointer}
-          onClick={(event) => {
-            stopLayerButtonClick(event);
-            onUpdate()(item().id, {
-              opacity: item().opacity >= 0.88 ? 0.42 : item().opacity + 0.18,
-            });
-          }}
-        >
-          {Math.round(item().opacity * 100)}%
-        </button>
-        <button
-          type="button"
-          class="workbench-layer-mini-button is-danger"
-          aria-label="Delete background region"
-          onPointerDown={stopLayerButtonPointer}
-          onClick={(event) => {
-            stopLayerButtonClick(event);
-            onDelete()(item().id);
-          }}
-        >
-          <Trash class="w-3.5 h-3.5" />
-        </button>
-      </div>
+      </SurfaceAnchoredLayer>
       <button
         type="button"
         class="workbench-layer-resize"
-        aria-label="Resize background region"
+        aria-label={t('resizeRegion')}
         data-wb-part="resize"
         onPointerDown={resize.beginResize}
       />
@@ -1753,6 +1870,8 @@ export function WorkbenchBackgroundLayerView(props: {
   preview?: WorkbenchLayerGeometryPreview | null;
   onPreviewGeometry?: (preview: WorkbenchLayerGeometryPreview | null) => void;
   viewport: WorkbenchViewport;
+  textEditorRegistry?: WorkbenchTextEditorRegistry;
+  onUpdate?: (layerId: string, patch: { name: string }) => void;
   onSelect: (layerId: string) => void;
   onContextMenu?: (event: MouseEvent, item: WorkbenchBackgroundLayer) => void;
   onCommitMove: (layerId: string, position: { x: number; y: number }) => void;
@@ -1784,6 +1903,8 @@ export function WorkbenchBackgroundLayerView(props: {
                   projection={props.projection}
                   preview={props.preview}
                   onPreviewGeometry={props.onPreviewGeometry}
+                  textEditorRegistry={props.textEditorRegistry}
+                  onUpdate={props.onUpdate}
                   onSelect={props.onSelect}
                   onContextMenu={props.onContextMenu}
                   onCommitMove={props.onCommitMove}
@@ -1907,6 +2028,7 @@ export function WorkbenchLayerControlOverlayView(props: {
       <Show when={props.editable && selectedRegion()}>
         {(item) => (
           <WorkbenchBackgroundRegionControls
+            textEditorRegistry={props.textEditorRegistry}
             item={item()}
             viewportScale={props.viewport.scale}
             viewport={props.viewport}

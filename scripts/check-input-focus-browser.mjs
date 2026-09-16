@@ -29,10 +29,13 @@ try {
   );
   await page.locator('[data-case="text"] input').waitFor();
   await page.addStyleTag({
-    content: '*, *::before, *::after { transition: none !important; animation: none !important; } .host-field { border: 1px solid var(--input); padding: 8px; background:var(--background); }',
+    content:
+      '*, *::before, *::after { transition: none !important; animation: none !important; } .host-field { border: 1px solid var(--input); padding: 8px; background:var(--background); }',
   });
   const themes = await page.evaluate(() => window.inputFocusThemes);
-  const variants = themes.flatMap(theme => ['standard', 'soft-neumorphic'].map(surface => ({ ...theme, surface })));
+  const variants = themes.flatMap((theme) =>
+    ['standard', 'soft-neumorphic'].map((surface) => ({ ...theme, surface }))
+  );
   for (const theme of variants) {
     await page.evaluate((theme) => {
       document.documentElement.dataset.floeShellTheme = theme.name;
@@ -58,7 +61,7 @@ try {
         .filter((el) => !['button', 'switch'].includes(el.dataset.case))
         .map((section) => {
           document.activeElement?.blur();
-          const input = section.querySelector('input,textarea,select,button');
+          const input = section.querySelector('input,textarea,select,button,[contenteditable]');
           const owner = input.closest('[data-floe-input-surface]') || input;
           const before = snapshot(owner),
             innerBefore = snapshot(input);
@@ -97,12 +100,10 @@ try {
     }
   }
   await page.locator('[data-case="text"] input').click();
-  const selected = await page
-    .locator('[data-case="text"] input')
-    .evaluate((el) => ({
-      outline: getComputedStyle(el).outlineStyle,
-      shadow: getComputedStyle(el).boxShadow,
-    }));
+  const selected = await page.locator('[data-case="text"] input').evaluate((el) => ({
+    outline: getComputedStyle(el).outlineStyle,
+    shadow: getComputedStyle(el).boxShadow,
+  }));
   assert.equal(selected.outline, 'none');
   await page.keyboard.press('Tab');
   assert.equal(
@@ -164,18 +165,28 @@ try {
     assert.equal(result.outline, 'none');
   }
   await page.emulateMedia({ forcedColors: 'none' });
-  const standaloneCSS = readFileSync(new URL('../packages/core/src/styles/input-focus.css', import.meta.url), 'utf8');
+  const standaloneCSS = readFileSync(
+    new URL('../packages/core/src/styles/input-focus.css', import.meta.url),
+    'utf8'
+  );
   await page.setContent(`<style>${standaloneCSS}
     :root { --ring: rgb(20, 100, 180); --accent: #eee; --accent-foreground: #111; }
     .address { border: 1px solid #888; padding: 8px; }
     input { border: 0; background: transparent; }
   </style><div class="address" data-floe-input-surface><input aria-label="Address" /></div>`);
   await page.locator('input').focus();
-  const standalone = await page.locator('.address').evaluate(el => ({border:getComputedStyle(el).borderColor,outline:getComputedStyle(el).outlineStyle}));
+  const standalone = await page
+    .locator('.address')
+    .evaluate((el) => ({
+      border: getComputedStyle(el).borderColor,
+      outline: getComputedStyle(el).outlineStyle,
+    }));
   assert.equal(standalone.border, 'rgb(20, 100, 180)');
   assert.equal(standalone.outline, 'none');
   assert.deepEqual(pageErrors, []);
-  console.log(JSON.stringify({ themes: themes.length, materials: 2, fields: 17, status: 'passed' }));
+  console.log(
+    JSON.stringify({ themes: themes.length, materials: 2, fields: 17, status: 'passed' })
+  );
 } finally {
   await browser.close();
   await server.close();

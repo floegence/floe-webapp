@@ -24,9 +24,7 @@ export const WORKBENCH_WIDGET_TYPES: readonly WorkbenchWidgetType[] = [
 ];
 
 export type WorkbenchWidgetRenderMode = 'canvas_scaled' | 'projected_surface';
-export type WorkbenchProjectedSurfaceScaleBehavior =
-  | 'stable_transform'
-  | 'settle_sharp_zoom';
+export type WorkbenchProjectedSurfaceScaleBehavior = 'stable_transform' | 'settle_sharp_zoom';
 
 export type WorkbenchCanvasOwnerReason =
   | 'initial'
@@ -40,10 +38,7 @@ export type WorkbenchInputOwner =
   | { kind: 'canvas'; reason: WorkbenchCanvasOwnerReason }
   | { kind: 'widget'; widgetId: string; reason: WorkbenchWidgetOwnerReason };
 
-export type WorkbenchWheelLocalReason =
-  | SurfaceWheelLocalReason
-  | 'selected_widget'
-  | (string & {});
+export type WorkbenchWheelLocalReason = SurfaceWheelLocalReason | 'selected_widget' | (string & {});
 
 export type WorkbenchWheelRoutingDecision =
   | { kind: 'canvas_zoom' }
@@ -62,7 +57,7 @@ export interface WorkbenchInteractionAdapter {
   createCanvasInputOwner?: (reason: WorkbenchCanvasOwnerReason) => WorkbenchInputOwner;
   createWidgetInputOwner?: (
     widgetId: string,
-    reason: WorkbenchWidgetOwnerReason,
+    reason: WorkbenchWidgetOwnerReason
   ) => WorkbenchInputOwner;
   findWidgetRoot?: (target: EventTarget | null) => HTMLElement | null;
   readWidgetId?: (element: Element | null) => string | null;
@@ -182,8 +177,7 @@ export const WORKBENCH_LAYER_COMPONENT_FILTER_IDS = [
   WORKBENCH_BACKGROUND_REGION_FILTER_ID,
 ] as const;
 
-export type WorkbenchLayerComponentFilterId =
-  typeof WORKBENCH_LAYER_COMPONENT_FILTER_IDS[number];
+export type WorkbenchLayerComponentFilterId = (typeof WORKBENCH_LAYER_COMPONENT_FILTER_IDS)[number];
 
 export type WorkbenchDockToolId =
   | 'select'
@@ -198,19 +192,17 @@ export type WorkbenchSelection =
   | { kind: 'annotation'; id: string }
   | { kind: 'background_layer'; id: string };
 
-export type WorkbenchStickyNoteColor =
-  | 'graphite'
-  | 'sage'
-  | 'amber'
-  | 'azure'
-  | 'coral'
-  | 'rose';
+export type WorkbenchStickyNoteColor = 'graphite' | 'sage' | 'amber' | 'azure' | 'coral' | 'rose';
+
+export type WorkbenchStickyNoteMaterial = 'tint' | 'tab' | 'ruled';
 
 export interface WorkbenchStickyNoteItem {
   id: string;
   kind: 'sticky_note';
   body: string;
   color: WorkbenchStickyNoteColor;
+  /** Missing material in existing layouts renders as tint. */
+  material?: WorkbenchStickyNoteMaterial;
   x: number;
   y: number;
   width: number;
@@ -220,10 +212,9 @@ export interface WorkbenchStickyNoteItem {
   updated_at_unix_ms: number;
 }
 
-export type WorkbenchStickyNotePatch = Partial<Pick<
-  WorkbenchStickyNoteItem,
-  'body' | 'color'
->>;
+export type WorkbenchStickyNotePatch = Partial<
+  Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>
+>;
 
 export type WorkbenchTextAnnotationAlign = 'left' | 'center' | 'right';
 
@@ -245,15 +236,19 @@ export interface WorkbenchTextAnnotationItem {
   updated_at_unix_ms: number;
 }
 
-export type WorkbenchTextAnnotationPatch = Partial<Pick<
-  WorkbenchTextAnnotationItem,
-  'text' | 'font_family' | 'font_size' | 'font_weight' | 'color' | 'align'
->>;
+export type WorkbenchTextAnnotationPatch = Partial<
+  Pick<
+    WorkbenchTextAnnotationItem,
+    'text' | 'font_family' | 'font_size' | 'font_weight' | 'color' | 'align'
+  >
+>;
 
-export type WorkbenchTextAnnotationDefaults = Partial<Pick<
-  WorkbenchTextAnnotationItem,
-  'font_family' | 'font_size' | 'font_weight' | 'color' | 'align' | 'width' | 'height'
->>;
+export type WorkbenchTextAnnotationDefaults = Partial<
+  Pick<
+    WorkbenchTextAnnotationItem,
+    'font_family' | 'font_size' | 'font_weight' | 'color' | 'align' | 'width' | 'height'
+  >
+>;
 
 export type WorkbenchAnnotationItem = WorkbenchTextAnnotationItem;
 
@@ -262,7 +257,8 @@ export type WorkbenchBackgroundMaterial =
   | 'dotted'
   | 'grid'
   | 'hatched'
-  | 'glass';
+  | 'glass'
+  | 'frame';
 
 export interface WorkbenchBackgroundLayer {
   id: string;
@@ -279,15 +275,13 @@ export interface WorkbenchBackgroundLayer {
   updated_at_unix_ms: number;
 }
 
-export type WorkbenchBackgroundLayerPatch = Partial<Pick<
-  WorkbenchBackgroundLayer,
-  'fill' | 'opacity' | 'material' | 'name'
->>;
+export type WorkbenchBackgroundLayerPatch = Partial<
+  Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name'>
+>;
 
-export type WorkbenchBackgroundLayerDefaults = Partial<Pick<
-  WorkbenchBackgroundLayer,
-  'fill' | 'opacity' | 'material' | 'name' | 'width' | 'height'
->>;
+export type WorkbenchBackgroundLayerDefaults = Partial<
+  Pick<WorkbenchBackgroundLayer, 'fill' | 'opacity' | 'material' | 'name' | 'width' | 'height'>
+>;
 
 export interface WorkbenchViewport {
   x: number;

@@ -403,7 +403,7 @@ describe('WorkbenchSurface api', () => {
       y: 148,
     });
     expect(region).toMatchObject({
-      name: 'Focus area',
+      name: '',
       x: 360,
       y: 180,
     });

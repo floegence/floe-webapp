@@ -23,7 +23,8 @@
     "test:surface-performance": "node scripts/check-surface-performance.mjs",
     "test:window-material": "node scripts/prepare-surface-consumer.mjs && node scripts/check-window-material-browser.mjs && node scripts/check-floating-window-header-browser.mjs",
     "test:floating-window-drag": "node scripts/prepare-surface-consumer.mjs && node scripts/check-floating-window-drag-performance.mjs",
-    "test:file-menu": "node scripts/check-file-menu-browser.mjs"
+    "test:file-menu": "node scripts/check-file-menu-browser.mjs",
+    "test:workbench-composition": "node scripts/check-workbench-composition-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

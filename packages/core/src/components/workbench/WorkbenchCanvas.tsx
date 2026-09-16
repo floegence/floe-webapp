@@ -81,7 +81,7 @@ export interface WorkbenchCanvasProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onSelectAnnotation?: (annotationId: string) => void;
@@ -109,8 +109,10 @@ export interface WorkbenchCanvasProps {
   onLayoutInteractionEnd?: () => void;
 }
 
-interface WorkbenchProjectedWidgetSlotProps
-  extends Omit<WorkbenchCanvasProps, 'viewport' | 'widgets'> {
+interface WorkbenchProjectedWidgetSlotProps extends Omit<
+  WorkbenchCanvasProps,
+  'viewport' | 'widgets'
+> {
   widgetId: string;
   widgetById: () => Map<string, WorkbenchWidgetItem>;
   renderLayers: () => ReturnType<typeof createWorkbenchRenderLayerMap>;
@@ -186,7 +188,7 @@ interface WorkbenchProjectedStickyNoteSlotProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
@@ -342,6 +344,8 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                 classList={{ 'is-work-layer-locked': workLayerLocked() }}
               >
                 <WorkbenchBackgroundLayerView
+                  textEditorRegistry={textEditorRegistry}
+                  onUpdate={(id, patch) => props.onUpdateBackgroundLayer?.(id, patch)}
                   items={props.backgroundLayers ?? []}
                   selectedObject={props.selectedObject ?? null}
                   editable={backgroundLayerEditable() && !props.locked}
@@ -423,7 +427,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                         renderLayers={renderLayers}
                         projectedViewport={liveViewport}
                         visualFrontOwnerId={props.visualFrontOwnerId}
-                        locked={props.locked || workLayerLocked()}
+                        locked={props.locked}
                         filtered={
                           !workLayerLocked() && props.filters[WORKBENCH_STICKY_FILTER_ID] === false
                         }

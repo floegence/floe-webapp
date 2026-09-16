@@ -221,7 +221,7 @@ function createBackgroundLayerAt(
 ): WorkbenchBackgroundLayer {
   const now = Date.now();
   const { width, height } = resolveBackgroundLayerDefaultSize(defaults);
-  const name = String(defaults?.name ?? '').trim() || 'Focus area';
+  const name = String(defaults?.name ?? '').trim();
   return {
     id: createWorkbenchId(),
     name,
@@ -989,6 +989,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
               ...item,
               ...(typeof patch.body === 'string' ? { body: patch.body } : {}),
               ...(patch.color ? { color: patch.color } : {}),
+              ...(patch.material ? { material: patch.material } : {}),
               updated_at_unix_ms: Date.now(),
             }
           : item
@@ -1095,7 +1096,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
               ...(typeof patch.fill === 'string' ? { fill: patch.fill } : {}),
               ...(typeof patch.opacity === 'number' ? { opacity: patch.opacity } : {}),
               ...(typeof patch.material === 'string' ? { material: patch.material } : {}),
-              ...(typeof patch.name === 'string' ? { name: patch.name } : {}),
+              ...(typeof patch.name === 'string' ? { name: patch.name.trim() } : {}),
               updated_at_unix_ms: Date.now(),
             }
           : item
@@ -1267,7 +1268,6 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       ...prev,
       selectedWidgetId: null,
       selectedObject: { kind: 'sticky_note', id: noteId },
-      mode: 'work',
       activeTool: 'select',
     }));
     commitStickyFront(noteId);

@@ -3,16 +3,42 @@
  * It changes color only and never replaces an existing decorative shadow.
  */
 :is(
-  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='button'], [type='submit'], [type='reset'], [type='image']),
-  textarea, select, [data-floe-input-surface]
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='range'],
+    [type='color'],
+    [type='file'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='image']
+  ),
+  textarea,
+  select,
+  [data-floe-input-surface]
 ) {
   outline: none;
 }
 
 :is(
-  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='button'], [type='submit'], [type='reset'], [type='image']),
-  textarea, select, [data-floe-input-surface]
-):focus:not(:disabled):not([aria-disabled='true']):not([data-floe-input-surface] :is(input, textarea, select)),
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='color'],
+      [type='file'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='image']
+    ),
+    textarea,
+    select,
+    [data-floe-input-surface]
+  ):focus:not(:disabled):not([aria-disabled='true']):not(
+    [data-floe-input-surface] :is(input, textarea, select)
+  ),
 [data-floe-input-surface]:focus-within:not(:disabled):not([aria-disabled='true']) {
   border-color: var(--floe-input-focus-color, var(--ring));
 }
@@ -33,4 +59,12 @@
   :is(input, textarea, select, [data-floe-input-surface])[aria-invalid='true'] {
     --floe-input-focus-color: Highlight;
   }
+}
+
+/* The marked compound boundary owns focus for direct canvas text editors. */
+[data-floe-input-surface] > [contenteditable] {
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
 }

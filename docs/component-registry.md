@@ -238,3 +238,13 @@ Shell renders them in:
 - backed by `FloeConfig.storage` (implementation: `packages/core/src/context/FloeConfigContext.tsx`)
 
 `ComponentContext.logger` is a lightweight wrapper over `console.*` with a component prefix.
+
+### Workbench composition surfaces
+
+Sticky notes support `material: 'tint' | 'tab' | 'ruled'` independently of their color. Missing material in older layouts resolves to `tint`. Hosts must persist the material with the note and include it when comparing or synchronizing layouts. Notes remain editable in composition mode; business widgets retain their mode-specific input lock.
+
+Background region names are optional. Empty names round-trip as empty strings, render no label, and can be restored through the selected region's Add name action. Regions support a transparent `frame` material as well as solid color fields, hatch, and the existing dotted, grid, and wash materials. Moving a region changes its boundary without moving its contents.
+
+Clicking canvas text uses native caret placement and selection. A changed text editing session commits once on blur or Ctrl/Cmd+Enter; region names also commit on Enter. Escape restores the original value, and composition keystrokes do not commit or cancel. Hosts receive no text patch for a no-op or cancelled session. Sticky rich text remains supported. `WorkbenchSurface.compositionMessages` accepts translated composition labels, with `WorkbenchCompositionMessages` describing the complete catalog.
+
+Selected-object tools use `SurfaceAnchoredLayer`, which builds on `SurfaceFloatingLayer` to retain the owning surface, avoid clipping, follow transforms, and keep controls at screen size. Measurement is event-driven and mounted only for selected objects; there is no idle polling. Plain wheel routing remains governed by the existing selected-widget contract. Space+drag and middle-button drag explicitly pan the canvas without changing region geometry.

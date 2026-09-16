@@ -322,3 +322,5 @@ export {
   type ProgressSize,
   type ProgressColor,
 } from './Progress';
+
+export { SurfaceAnchoredLayer, type SurfaceAnchoredLayerProps } from './SurfaceAnchoredLayer';

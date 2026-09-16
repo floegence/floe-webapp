@@ -84,3 +84,9 @@ export {
   type WorkbenchThemePreview,
 } from './workbenchThemes';
 export { WorkbenchThemeSelector, type WorkbenchThemeSelectorProps } from './WorkbenchThemeSelector';
+
+export {
+  workbenchCompositionMessages,
+  type WorkbenchCompositionMessageKey,
+  type WorkbenchCompositionMessages,
+} from './workbenchCompositionMessages';

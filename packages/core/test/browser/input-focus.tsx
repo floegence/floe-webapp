@@ -14,6 +14,13 @@ Object.assign(window, {
 render(
   () => (
     <main class="grid grid-cols-3 gap-6 p-6">
+      <section data-case="canvas-text">
+        <div data-floe-input-surface="true" class="border border-input p-2">
+          <div contentEditable="plaintext-only" role="textbox">
+            Editable canvas text
+          </div>
+        </div>
+      </section>
       <section data-case="text">
         <Input aria-label="Text" value="Sample text" />
       </section>
@@ -35,8 +42,10 @@ render(
       <section data-case="disabled">
         <Input aria-label="Disabled" disabled />
       </section>
-      <section data-case="host"><input aria-label="Host styled text" class="host-field" /></section>
-    <section data-case="native">
+      <section data-case="host">
+        <input aria-label="Host styled text" class="host-field" />
+      </section>
+      <section data-case="native">
         <input aria-label="Native text" class="border border-input bg-background p-2" />
       </section>
       <section data-case="search">

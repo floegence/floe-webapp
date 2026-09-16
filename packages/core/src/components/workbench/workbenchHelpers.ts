@@ -47,13 +47,13 @@ export function createWorkbenchId(): string {
 }
 
 export function resolveWorkbenchWidgetRenderMode(
-  definition: WorkbenchWidgetDefinition,
+  definition: WorkbenchWidgetDefinition
 ): WorkbenchWidgetRenderMode {
   return definition.renderMode ?? 'canvas_scaled';
 }
 
 export function resolveWorkbenchProjectedSurfaceScaleBehavior(
-  definition: WorkbenchWidgetDefinition,
+  definition: WorkbenchWidgetDefinition
 ): WorkbenchProjectedSurfaceScaleBehavior {
   return definition.projectedSurfaceScaleBehavior ?? 'stable_transform';
 }
@@ -68,7 +68,7 @@ export interface CreateWorkbenchProjectedRectInput {
 }
 
 export function createWorkbenchProjectedRect(
-  input: CreateWorkbenchProjectedRectInput,
+  input: CreateWorkbenchProjectedRectInput
 ): WorkbenchProjectedRect {
   const viewportScale =
     Number.isFinite(input.viewport.scale) && input.viewport.scale > 0 ? input.viewport.scale : 1;
@@ -100,7 +100,7 @@ export function createWorkbenchProjectedRect(
 }
 
 export function createWorkbenchWidgetSurfaceMetrics(
-  input: CreateWorkbenchProjectedRectInput & { ready: boolean },
+  input: CreateWorkbenchProjectedRectInput & { ready: boolean }
 ): WorkbenchWidgetSurfaceMetrics {
   return {
     ready: input.ready,
@@ -123,7 +123,7 @@ export type WorkbenchWidgetFrame = Readonly<{
 
 export function createWorkbenchWidgetFrame(
   definition: Pick<WorkbenchWidgetDefinition, 'defaultSize'>,
-  placement: WorkbenchWidgetPlacement,
+  placement: WorkbenchWidgetPlacement
 ): WorkbenchWidgetFrame {
   const { width, height } = definition.defaultSize;
   switch (placement.anchor) {
@@ -144,7 +144,9 @@ export function createWorkbenchWidgetFrame(
   }
 }
 
-export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefined): WorkbenchViewport {
+export function sanitizeViewport(
+  viewport: Partial<WorkbenchViewport> | undefined
+): WorkbenchViewport {
   if (!viewport) return { ...DEFAULT_WORKBENCH_VIEWPORT };
   return {
     x: Number.isFinite(viewport.x) ? viewport.x! : 0,
@@ -155,7 +157,7 @@ export function sanitizeViewport(viewport: Partial<WorkbenchViewport> | undefine
 
 export function sanitizeWorkbenchViewportForMode(
   viewport: Partial<WorkbenchViewport> | undefined,
-  mode: WorkbenchInteractionMode,
+  mode: WorkbenchInteractionMode
 ): WorkbenchViewport {
   const next = sanitizeViewport(viewport);
   return {
@@ -212,14 +214,18 @@ function sanitizeActiveTool(value: unknown, mode: WorkbenchInteractionMode): Wor
 function sanitizeStringOption<T extends string>(
   value: unknown,
   options: readonly T[],
-  fallback: T,
+  fallback: T
 ): T {
   const next = compact(value);
-  return options.includes(next as T) ? next as T : fallback;
+  return options.includes(next as T) ? (next as T) : fallback;
 }
 
 function sanitizeStickyNoteColor(value: unknown): WorkbenchStickyNoteColor {
-  return sanitizeStringOption(value, WORKBENCH_STICKY_NOTE_COLORS, WORKBENCH_DEFAULT_STICKY_NOTE_COLOR);
+  return sanitizeStringOption(
+    value,
+    WORKBENCH_STICKY_NOTE_COLORS,
+    WORKBENCH_DEFAULT_STICKY_NOTE_COLOR
+  );
 }
 
 function sanitizeStickyNote(value: unknown): WorkbenchStickyNoteItem | null {
@@ -229,7 +235,8 @@ function sanitizeStickyNote(value: unknown): WorkbenchStickyNoteItem | null {
   return {
     id,
     kind: 'sticky_note',
-    body: compact(value.body) || 'Untitled note',
+    body: typeof value.body === 'string' ? value.body : '',
+    material: value.material === 'tab' || value.material === 'ruled' ? value.material : 'tint',
     color: sanitizeStickyNoteColor(value.color),
     x: finiteNumber(value.x, 0),
     y: finiteNumber(value.y, 0),
@@ -257,7 +264,7 @@ const TEXT_ALIGNS: readonly WorkbenchTextAnnotationAlign[] = ['left', 'center', 
 
 function sanitizeTextAlign(value: unknown): WorkbenchTextAnnotationAlign {
   return TEXT_ALIGNS.includes(value as WorkbenchTextAnnotationAlign)
-    ? value as WorkbenchTextAnnotationAlign
+    ? (value as WorkbenchTextAnnotationAlign)
     : 'left';
 }
 
@@ -268,11 +275,15 @@ function sanitizeTextAnnotation(value: unknown): WorkbenchTextAnnotationItem | n
   return {
     id: normalizeObjectId(value.id, 'text'),
     kind: 'text',
-    text: compact(value.text) || 'Text',
+    text: typeof value.text === 'string' ? value.text : '',
     font_family: font.fontFamily,
     font_size: Math.max(8, Math.min(160, Math.round(finiteNumber(value.font_size, 28)))),
     font_weight: font.fontWeight,
-    color: sanitizeStringOption(value.color, WORKBENCH_TEXT_COLOR_OPTIONS, WORKBENCH_DEFAULT_TEXT_COLOR),
+    color: sanitizeStringOption(
+      value.color,
+      WORKBENCH_TEXT_COLOR_OPTIONS,
+      WORKBENCH_DEFAULT_TEXT_COLOR
+    ),
     align: sanitizeTextAlign(value.align),
     x: finiteNumber(value.x, 0),
     y: finiteNumber(value.y, 0),
@@ -300,7 +311,7 @@ function sanitizeBackgroundMaterial(value: unknown): WorkbenchBackgroundMaterial
   return sanitizeStringOption(
     value,
     WORKBENCH_BACKGROUND_MATERIALS,
-    WORKBENCH_DEFAULT_BACKGROUND_MATERIAL,
+    WORKBENCH_DEFAULT_BACKGROUND_MATERIAL
   );
 }
 
@@ -309,8 +320,12 @@ function sanitizeBackgroundLayer(value: unknown): WorkbenchBackgroundLayer | nul
   const now = Date.now();
   return {
     id: normalizeObjectId(value.id, 'region'),
-    name: compact(value.name) || 'Canvas region',
-    fill: sanitizeStringOption(value.fill, WORKBENCH_REGION_FILL_OPTIONS, WORKBENCH_DEFAULT_REGION_FILL),
+    name: compact(value.name),
+    fill: sanitizeStringOption(
+      value.fill,
+      WORKBENCH_REGION_FILL_OPTIONS,
+      WORKBENCH_DEFAULT_REGION_FILL
+    ),
     opacity: Math.max(0.08, Math.min(1, finiteNumber(value.opacity, 0.72))),
     material: sanitizeBackgroundMaterial(value.material),
     x: finiteNumber(value.x, 0),
@@ -341,7 +356,7 @@ function sanitizeSelection(
   stickyNotes: readonly WorkbenchStickyNoteItem[],
   annotations: readonly WorkbenchAnnotationItem[],
   backgroundLayers: readonly WorkbenchBackgroundLayer[],
-  fallbackWidgetId: string | null,
+  fallbackWidgetId: string | null
 ): WorkbenchSelection | null {
   if (isRecord(value)) {
     const kind = compact(value.kind);
@@ -366,7 +381,8 @@ export function sanitizeWorkbenchState(
   options: SanitizeWorkbenchStateOptions = {}
 ): WorkbenchState {
   const widgetDefinitions = resolveWorkbenchWidgetDefinitions(options.widgetDefinitions);
-  const createFallbackState = options.createFallbackState ?? (() => createDefaultWorkbenchState(widgetDefinitions));
+  const createFallbackState =
+    options.createFallbackState ?? (() => createDefaultWorkbenchState(widgetDefinitions));
   const state = input as Partial<WorkbenchState> | undefined;
   if (!state || state.version !== 1 || !Array.isArray(state.widgets)) {
     return createFallbackState();
@@ -391,13 +407,17 @@ export function sanitizeWorkbenchState(
         width: Number.isFinite(w.width) && w.width > 0 ? w.width : entry.defaultSize.width,
         height: Number.isFinite(w.height) && w.height > 0 ? w.height : entry.defaultSize.height,
         z_index: Number.isFinite(w.z_index) && w.z_index >= 0 ? w.z_index : 1,
-        created_at_unix_ms: Number.isFinite(w.created_at_unix_ms) ? w.created_at_unix_ms : Date.now(),
+        created_at_unix_ms: Number.isFinite(w.created_at_unix_ms)
+          ? w.created_at_unix_ms
+          : Date.now(),
       };
     });
 
-  const selectedWidgetId = typeof state.selectedWidgetId === 'string' && widgets.some((widget) => widget.id === state.selectedWidgetId)
-    ? state.selectedWidgetId
-    : null;
+  const selectedWidgetId =
+    typeof state.selectedWidgetId === 'string' &&
+    widgets.some((widget) => widget.id === state.selectedWidgetId)
+      ? state.selectedWidgetId
+      : null;
   const stickyNotes = sanitizeStickyNotes(state.stickyNotes);
   const annotations = sanitizeAnnotations(state.annotations);
   const backgroundLayers = sanitizeBackgroundLayers(state.backgroundLayers);
@@ -420,7 +440,7 @@ export function sanitizeWorkbenchState(
       stickyNotes,
       annotations,
       backgroundLayers,
-      selectedWidgetId,
+      selectedWidgetId
     ),
     stickyNotes,
     annotations,
@@ -433,13 +453,14 @@ export function createDefaultWorkbenchState(
 ): WorkbenchState {
   const definitions = resolveWorkbenchWidgetDefinitions(widgetDefinitions);
   const now = Date.now();
-  const seedSpecs: ReadonlyArray<Readonly<{ type: string; title: string; x: number; y: number }>> = [
-    { type: 'terminal', title: 'dev · terminal', x: 80, y: 80 },
-    { type: 'file-browser', title: 'project · files', x: 600, y: 80 },
-    { type: 'system-monitor', title: 'host · system monitor', x: 80, y: 420 },
-    { type: 'log-viewer', title: 'services · logs', x: 540, y: 500 },
-    { type: 'code-editor', title: 'Counter.tsx', x: 1000, y: 180 },
-  ];
+  const seedSpecs: ReadonlyArray<Readonly<{ type: string; title: string; x: number; y: number }>> =
+    [
+      { type: 'terminal', title: 'dev · terminal', x: 80, y: 80 },
+      { type: 'file-browser', title: 'project · files', x: 600, y: 80 },
+      { type: 'system-monitor', title: 'host · system monitor', x: 80, y: 420 },
+      { type: 'log-viewer', title: 'services · logs', x: 540, y: 500 },
+      { type: 'code-editor', title: 'Counter.tsx', x: 1000, y: 180 },
+    ];
 
   const widgets = seedSpecs
     .filter((seed) => definitions.some((entry) => entry.type === seed.type))
@@ -573,7 +594,7 @@ export function createWorkbenchViewportAtScale(options: {
   const nextScale = clampScale(
     options.scale,
     options.minScale ?? WORKBENCH_COMPOSITION_MIN_SCALE,
-    WORKBENCH_MAX_SCALE,
+    WORKBENCH_MAX_SCALE
   );
   if (options.frameWidth <= 0 || options.frameHeight <= 0 || options.viewport.scale <= 0) {
     return { ...options.viewport, scale: nextScale };
@@ -620,10 +641,10 @@ export function createWorkbenchViewportFitForWidget(options: {
   const targetScale = clampScale(
     Math.min(
       availableWidth / Math.max(options.widget.width, 1),
-      availableHeight / Math.max(options.widget.height, 1),
+      availableHeight / Math.max(options.widget.height, 1)
     ),
     minScale,
-    maxScale,
+    maxScale
   );
 
   return createWorkbenchViewportCenteredOnWidget({
@@ -651,7 +672,7 @@ export interface WorkbenchLayerFrontResolution {
 
 export function compareWorkbenchLayerRenderOrder(
   left: WorkbenchLayerOrderItem,
-  right: WorkbenchLayerOrderItem,
+  right: WorkbenchLayerOrderItem
 ): number {
   if (left.z_index !== right.z_index) {
     return left.z_index - right.z_index;
@@ -663,7 +684,7 @@ export function compareWorkbenchLayerRenderOrder(
 }
 
 export function createWorkbenchRenderLayerMap(
-  widgets: readonly WorkbenchLayerOrderItem[],
+  widgets: readonly WorkbenchLayerOrderItem[]
 ): WorkbenchRenderLayerMap {
   const ordered = [...widgets].sort(compareWorkbenchLayerRenderOrder);
   const byWidgetId = new Map<string, number>();
@@ -680,14 +701,14 @@ export function createWorkbenchRenderLayerMap(
 
 export function isWorkbenchLayerItemAbove(
   left: WorkbenchLayerOrderItem,
-  right: WorkbenchLayerOrderItem,
+  right: WorkbenchLayerOrderItem
 ): boolean {
   return compareWorkbenchLayerRenderOrder(left, right) > 0;
 }
 
 export function resolveWorkbenchLayerFront(
   items: readonly WorkbenchLayerOrderItem[],
-  targetId: string,
+  targetId: string
 ): WorkbenchLayerFrontResolution | null {
   const target = items.find((item) => item.id === targetId);
   if (!target) {
@@ -695,8 +716,8 @@ export function resolveWorkbenchLayerFront(
   }
 
   const maxZIndex = items.reduce((max, item) => Math.max(max, item.z_index), 1);
-  const hasItemAbove = items.some((item) =>
-    item.id !== targetId && isWorkbenchLayerItemAbove(item, target)
+  const hasItemAbove = items.some(
+    (item) => item.id !== targetId && isWorkbenchLayerItemAbove(item, target)
   );
 
   return {
@@ -754,10 +775,18 @@ export function findNearestWidget(
 
     let isInDirection = false;
     switch (direction) {
-      case 'up': isInDirection = dy < -10; break;
-      case 'down': isInDirection = dy > 10; break;
-      case 'left': isInDirection = dx < -10; break;
-      case 'right': isInDirection = dx > 10; break;
+      case 'up':
+        isInDirection = dy < -10;
+        break;
+      case 'down':
+        isInDirection = dy > 10;
+        break;
+      case 'left':
+        isInDirection = dx < -10;
+        break;
+      case 'right':
+        isInDirection = dx > 10;
+        break;
     }
 
     if (!isInDirection) continue;
@@ -778,7 +807,11 @@ export function findNearestWidget(
   return best;
 }
 
-export function clampScale(scale: number, min = WORKBENCH_MIN_SCALE, max = WORKBENCH_MAX_SCALE): number {
+export function clampScale(
+  scale: number,
+  min = WORKBENCH_MIN_SCALE,
+  max = WORKBENCH_MAX_SCALE
+): number {
   return Math.max(min, Math.min(max, scale));
 }
 

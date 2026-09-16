@@ -1113,3 +1113,63 @@
     box-shadow: 0 0 18px var(--wb-accent-ring);
   }
 }
+
+/* Shared matte surfaces keep all appearance variants legible in every shell palette. */
+@layer components {
+  .workbench-surface[data-workbench-theme] {
+    --wb-canvas: oklch(from var(--background) clamp(0.78, calc(l - 0.085), 0.91) c h);
+    --wb-window: var(--card);
+    --wb-window-edge: oklch(from var(--wb-window) calc(l - 0.19) calc(c * 0.25) h);
+    --wb-window-active: oklch(from var(--wb-window) calc(l - 0.36) calc(c * 0.25) h);
+    --wb-window-title: color-mix(in oklab, var(--wb-window) 97%, var(--foreground));
+    --wb-window-shadow: 0 6px 16px -8px rgb(0 0 0 / 22%);
+    --wb-text: var(--foreground);
+  }
+  html.dark .workbench-surface[data-workbench-theme] {
+    --wb-canvas: oklch(from var(--background) clamp(0.175, calc(l - 0.08), 0.28) c h);
+    --wb-window: color-mix(in oklab, var(--background) 94%, var(--foreground));
+    --wb-window-title: color-mix(in oklab, var(--wb-window) 94%, var(--foreground));
+    --wb-window-edge: oklch(from var(--wb-window) calc(l + 0.075) calc(c * 0.25) h);
+    --wb-window-active: oklch(from var(--wb-window) calc(l + 0.17) calc(c * 0.25) h);
+    --wb-window-shadow: 0 6px 16px -8px rgb(0 0 0 / 48%);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-canvas {
+    background: var(--wb-canvas);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget {
+    background: var(--wb-window);
+    border-color: var(--wb-window-edge);
+    box-shadow: var(--wb-window-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget:hover {
+    border-color: var(--wb-window-edge);
+    box-shadow: var(--wb-window-shadow);
+  }
+  .workbench-surface[data-workbench-theme]
+    .workbench-widget:is(.is-selected, .is-dragging, .is-resizing) {
+    border-color: var(--wb-window-active);
+    box-shadow: var(--wb-window-shadow);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget__header {
+    background: var(--wb-window-title);
+    border-bottom: 1px solid var(--wb-window-edge);
+    color: var(--foreground);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget__body {
+    background: var(--wb-window);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget__title {
+    color: var(--foreground);
+  }
+  .workbench-surface[data-workbench-theme] .workbench-widget__title-area svg {
+    color: var(--foreground);
+  }
+  html[data-floe-shell-theme='hc-light'] .workbench-surface[data-workbench-theme] {
+    --wb-window-edge: var(--foreground);
+    --wb-window-active: var(--foreground);
+    --wb-canvas: var(--muted);
+    --wb-window-shadow: none;
+  }
+}

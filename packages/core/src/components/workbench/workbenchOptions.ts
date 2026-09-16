@@ -1,7 +1,4 @@
-import type {
-  WorkbenchBackgroundMaterial,
-  WorkbenchStickyNoteColor,
-} from './types';
+import type { WorkbenchBackgroundMaterial, WorkbenchStickyNoteColor } from './types';
 
 export const WORKBENCH_TEXT_COLOR_OPTIONS = [
   '#6b7280',
@@ -47,7 +44,7 @@ export const WORKBENCH_TEXT_FONT_OPTIONS = [
   },
 ] as const;
 
-export type WorkbenchTextFontOption = typeof WORKBENCH_TEXT_FONT_OPTIONS[number];
+export type WorkbenchTextFontOption = (typeof WORKBENCH_TEXT_FONT_OPTIONS)[number];
 
 export const WORKBENCH_DEFAULT_TEXT_FONT = WORKBENCH_TEXT_FONT_OPTIONS[0];
 
@@ -88,12 +85,12 @@ export const WORKBENCH_TEXT_EMOJI_OPTIONS = [
   '🎉',
 ] as const;
 
-export function resolveWorkbenchTextFontOption(
-  fontFamily: unknown,
-): WorkbenchTextFontOption {
+export function resolveWorkbenchTextFontOption(fontFamily: unknown): WorkbenchTextFontOption {
   const normalizedFamily = String(fontFamily ?? '').trim();
-  return WORKBENCH_TEXT_FONT_OPTIONS.find((option) => option.fontFamily === normalizedFamily)
-    ?? WORKBENCH_DEFAULT_TEXT_FONT;
+  return (
+    WORKBENCH_TEXT_FONT_OPTIONS.find((option) => option.fontFamily === normalizedFamily) ??
+    WORKBENCH_DEFAULT_TEXT_FONT
+  );
 }
 
 export const WORKBENCH_REGION_FILL_OPTIONS = [
@@ -109,13 +106,14 @@ export const WORKBENCH_DEFAULT_REGION_FILL = WORKBENCH_REGION_FILL_OPTIONS[0];
 
 export const WORKBENCH_BACKGROUND_MATERIALS = [
   'solid',
+  'frame',
+  'hatched',
   'dotted',
   'grid',
-  'hatched',
   'glass',
 ] as const satisfies readonly WorkbenchBackgroundMaterial[];
 
-export const WORKBENCH_DEFAULT_BACKGROUND_MATERIAL = 'dotted' satisfies WorkbenchBackgroundMaterial;
+export const WORKBENCH_DEFAULT_BACKGROUND_MATERIAL = 'solid' satisfies WorkbenchBackgroundMaterial;
 
 export const WORKBENCH_STICKY_NOTE_COLORS = [
   'amber',
@@ -123,6 +121,7 @@ export const WORKBENCH_STICKY_NOTE_COLORS = [
   'azure',
   'coral',
   'rose',
+  'graphite',
 ] as const satisfies readonly WorkbenchStickyNoteColor[];
 
 export const WORKBENCH_DEFAULT_STICKY_NOTE_COLOR = 'amber' satisfies WorkbenchStickyNoteColor;

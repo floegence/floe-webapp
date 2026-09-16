@@ -61,13 +61,16 @@ export interface InfiniteCanvasProps {
     target: EventTarget | null;
     disablePanZoom: boolean;
     wheelInteractiveSelector: string;
-  }) => SurfaceWheelRoutingDecision | {
-    kind: 'local_surface';
-    reason: string;
-  } | {
-    kind: 'ignore';
-    reason: string;
-  };
+  }) =>
+    | SurfaceWheelRoutingDecision
+    | {
+        kind: 'local_surface';
+        reason: string;
+      }
+    | {
+        kind: 'ignore';
+        reason: string;
+      };
   minScale?: number;
   maxScale?: number;
   wheelZoomSpeed?: number;
@@ -104,6 +107,7 @@ function resolveWheelDelta(event: WheelEvent, root: HTMLDivElement | undefined):
 }
 
 export function InfiniteCanvas(props: InfiniteCanvasProps) {
+  let spaceHeld = false;
   const [liveViewport, setLiveViewport] = createSignal<InfiniteCanvasPoint>(
     untrack(() => sanitizeViewport(props.viewport))
   );
@@ -218,6 +222,29 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       event.stopPropagation();
     };
 
+    const keyDown = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || event.isComposing) return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]'
+        )
+      )
+        return;
+      spaceHeld = true;
+      if (root.contains(event.target as Node)) event.preventDefault();
+    };
+    const releaseSpace = () => {
+      spaceHeld = false;
+    };
+    document.addEventListener('keydown', keyDown);
+    document.addEventListener('keyup', releaseSpace);
+    window.addEventListener('blur', releaseSpace);
+    const capturePointer = (event: PointerEvent) => {
+      if (event.button === 1 || (event.button === 0 && spaceHeld))
+        handlePointerDown(event as Parameters<typeof handlePointerDown>[0]);
+    };
+    root.addEventListener('pointerdown', capturePointer, true);
     root.addEventListener('click', handleClickCapture, true);
     // Explicit `passive: false` — wheel zoom calls preventDefault() to stop
     // the page from scrolling while the user is zooming. Attaching this
@@ -226,6 +253,10 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     root.addEventListener('wheel', handleWheel, { passive: false });
 
     onCleanup(() => {
+      document.removeEventListener('keydown', keyDown);
+      document.removeEventListener('keyup', releaseSpace);
+      window.removeEventListener('blur', releaseSpace);
+      root.removeEventListener('pointerdown', capturePointer, true);
       root.removeEventListener('click', handleClickCapture, true);
       root.removeEventListener('wheel', handleWheel);
     });
@@ -239,14 +270,16 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   });
 
   const handlePointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
-    if (event.button !== 0) return;
+    const explicitPan = event.button === 1 || (event.button === 0 && spaceHeld);
+    if (event.button !== 0 && event.button !== 1) return;
 
-    const targetRole = resolveTargetRole(event.target);
+    const targetRole = explicitPan ? 'canvas' : resolveTargetRole(event.target);
     if (targetRole === 'canvas') {
       props.onCanvasPointerDown?.(event);
     }
 
     if (props.disablePanZoom) return;
+    if (explicitPan) event.stopPropagation();
 
     const startedFromPanSurface = targetRole === 'pan_surface';
     if (targetRole === 'local_surface') return;

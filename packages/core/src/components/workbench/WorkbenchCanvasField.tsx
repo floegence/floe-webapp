@@ -69,7 +69,7 @@ export interface WorkbenchCanvasFieldProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onSelectAnnotation?: (annotationId: string) => void;
@@ -173,7 +173,7 @@ interface WorkbenchCanvasStickyNoteSlotProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
@@ -264,6 +264,8 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
       {renderFreeformLayers() ? (
         <>
           <WorkbenchBackgroundLayerView
+            textEditorRegistry={textEditorRegistry()}
+            onUpdate={(id, patch) => props.onUpdateBackgroundLayer?.(id, patch)}
             items={props.backgroundLayers ?? []}
             selectedObject={props.selectedObject ?? null}
             editable={Boolean(props.backgroundLayerEditable) && !props.locked}
@@ -336,7 +338,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               selectedObject={props.selectedObject}
               visualFrontOwnerId={props.visualFrontOwnerId}
               viewportScale={props.viewportScale}
-              locked={workLocked()}
+              locked={props.locked}
               filtered={
                 !props.workLayerLocked && props.filters[WORKBENCH_STICKY_FILTER_ID] === false
               }
