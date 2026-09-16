@@ -762,16 +762,10 @@
     --segmented-control-item-color: var(--muted-foreground);
     --segmented-control-item-hover-bg: color-mix(in srgb, var(--background) 74%, var(--muted) 26%);
     --segmented-control-item-hover-color: var(--foreground);
-    --segmented-control-item-active-bg: color-mix(in srgb, var(--background) 96%, white 4%);
-    --segmented-control-item-active-border: color-mix(
-      in srgb,
-      var(--border) 70%,
-      var(--foreground) 30%
-    );
-    --segmented-control-item-active-color: var(--foreground);
-    --segmented-control-item-active-shadow:
-      inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
-      0 1px 2px color-mix(in srgb, black 10%, transparent);
+    --segmented-control-item-active-bg: var(--primary);
+    --segmented-control-item-active-border: var(--primary);
+    --segmented-control-item-active-color: var(--primary-foreground);
+    --segmented-control-item-active-shadow: none;
 
     background-color: var(--segmented-control-bg);
     border-color: var(--segmented-control-border);
@@ -785,19 +779,6 @@
       var(--foreground) 8%,
       var(--background) 92%
     );
-    --segmented-control-item-active-bg: color-mix(
-      in srgb,
-      var(--foreground) 14%,
-      var(--background) 86%
-    );
-    --segmented-control-item-active-border: color-mix(
-      in srgb,
-      var(--foreground) 28%,
-      var(--border) 72%
-    );
-    --segmented-control-item-active-shadow:
-      inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
-      0 1px 2px color-mix(in srgb, black 30%, transparent);
   }
 
   .floe-segmented-control__item {

@@ -1499,8 +1499,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1c1c1e;
   --foreground: #f2f2f7;
-  --primary: #0070e0;
-  --primary-foreground: #ffffff;
+  --primary: #0a84ff;
+  --primary-foreground: #101012;
   --secondary: #3a3a3c;
   --secondary-foreground: #f2f2f7;
   --muted: #3a3a3c;
@@ -1535,8 +1535,8 @@
   --highlight-block-tip-accent: #71c8c0;
   --sidebar: #242426;
   --sidebar-foreground: #f2f2f7;
-  --sidebar-primary: #0070e0;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: #0a84ff;
+  --sidebar-primary-foreground: #101012;
   --sidebar-accent: #3a3a3c;
   --sidebar-accent-foreground: #f2f2f7;
   --sidebar-border: #38383a;
@@ -1544,8 +1544,8 @@
   --activity-bar: #242426;
   --activity-bar-foreground: #aeaeb2;
   --activity-bar-foreground-active: #f2f2f7;
-  --activity-bar-badge: #0070e0;
-  --activity-bar-badge-foreground: #ffffff;
+  --activity-bar-badge: #0a84ff;
+  --activity-bar-badge-foreground: #101012;
   --terminal-background: #141416;
   --terminal-foreground: #e5e5ea;
   --chart-1: #2dd4d4;

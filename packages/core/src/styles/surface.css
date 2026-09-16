@@ -287,10 +287,14 @@
     & [data-floe-surface-part='choice'][data-floe-selected='true'] {
       background-color: var(--accent);
     }
-    & [data-floe-choice-variant='button'][data-floe-selected='true'] {
-      color: var(--foreground);
+    /* Compact choices need a clear selected face, independent of material.
+     * Large choice cards retain their native dot/checkmark and quiet tint. */
+    & [data-floe-choice-variant='button'][data-floe-selected='true'],
+    & [data-floe-surface-part='segment'][aria-checked='true'] {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      --floe-surface-decoration: 0 0 transparent;
     }
-    & [data-floe-surface-part='segment'][aria-checked='true'],
     & [data-floe-surface-part='tab'][aria-selected='true'] {
       background-color: var(--accent);
       color: var(--foreground);
@@ -493,6 +497,15 @@
   border-color: var(--wb-accent);
 }
 @media (forced-colors: active) {
+  .floe-segmented-control__item[aria-checked='true'],
+  [data-floe-choice-variant='button'][data-floe-selected='true'] {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    border-color: Highlight;
+    color: HighlightText;
+    box-shadow: none;
+    transition: none;
+  }
   [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
     --floe-surface-decoration: 0 0 transparent;
   }
