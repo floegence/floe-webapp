@@ -68,7 +68,7 @@ export const floeSharedCssVariables = {
   '--floe-space-6': '1.5rem',
   '--floe-radius-control': '0.375rem',
   '--floe-radius-group': '0.5rem',
-  '--floe-radius-floating': '0.75rem',
+  '--floe-radius-floating': '12px',
 } as const satisfies Record<FloeCssVariableName, string>;
 
 export const floeColorTokenCategories = [

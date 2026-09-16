@@ -327,7 +327,7 @@ try {
         assert.equal(standard.titleImage, 'none');
         assert.equal(standard.background[3], 255);
         assert.equal(standard.title[3], 255);
-        assert.equal(standard.radius, '10px');
+        assert.equal(standard.radius, '12px');
         assert.equal(standard.titleHeight, 32);
         assert.equal(standard.titleFontSize, '12px');
         assert.equal(standard.transition, 'opacity, transform');

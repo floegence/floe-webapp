@@ -125,7 +125,7 @@ describe('Dropdown surface scope', () => {
     expect(exitingMenu?.getAttribute('aria-hidden')).toBe('true');
     expect(exitingMenu?.style.left).not.toBe('-9999px');
 
-    vi.advanceTimersByTime(99);
+    vi.advanceTimersByTime(159);
     await Promise.resolve();
     expect(surfaceHost!.querySelector('[data-floe-dropdown][role="menu"]')).toBeTruthy();
     expect(onSelect).toHaveBeenCalledTimes(1);
@@ -284,14 +284,14 @@ describe('Dropdown surface scope', () => {
     expect(document.querySelector('[role="menu"]')).toBeTruthy();
 
     dispatchPointerDown(outside);
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(160);
     await Promise.resolve();
     expect(document.querySelector('[role="menu"]')).toBeNull();
 
     trigger.click();
     await Promise.resolve();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(160);
     await Promise.resolve();
     expect(document.querySelector('[role="menu"]')).toBeNull();
     expect(onSelect).not.toHaveBeenCalled();

@@ -230,7 +230,7 @@ export function Checkbox(props: CheckboxProps) {
       data-floe-surface-part="indicator"
       data-floe-selected={isChecked() || local.indeterminate ? 'true' : undefined}
       class={cn(
-        'rounded-[3px] border-2 transition-all duration-150',
+        'rounded-[3px] border-2 transition-[background-color,border-color,color] duration-120',
         'flex items-center justify-center',
         sizeStyles[size()].box,
         isChecked() || local.indeterminate
@@ -337,7 +337,7 @@ export function Checkbox(props: CheckboxProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'relative cursor-pointer select-none rounded-lg border-2 transition-all duration-150',
+            'relative cursor-pointer select-none rounded-lg border-2 transition-[background-color,border-color,color] duration-120',
             cardSizeStyles[size()],
             isChecked()
               ? 'border-primary bg-primary/5'
@@ -383,7 +383,7 @@ export function Checkbox(props: CheckboxProps) {
           data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
-            'rounded-lg border-2 transition-all duration-150 text-center',
+            'rounded-lg border-2 transition-[background-color,border-color,color] duration-120 text-center',
             tileSizeStyles[size()].container,
             isChecked()
               ? 'border-primary bg-primary/5'

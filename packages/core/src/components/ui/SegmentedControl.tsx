@@ -113,7 +113,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}
               class={cn(
-                'floe-segmented-control__item font-medium rounded-md transition-[background-color,border-color,color,box-shadow] duration-150 cursor-pointer',
+                'floe-segmented-control__item font-medium rounded-md transition-[background-color,border-color,color] duration-120 cursor-pointer',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 styles().button,
                 'border',

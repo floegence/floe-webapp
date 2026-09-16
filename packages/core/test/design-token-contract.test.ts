@@ -9,9 +9,14 @@ const coreDir = resolve(testDir, '..');
 const stylesDir = resolve(coreDir, 'src/styles');
 
 function parseCssVariables(css: string) {
-  return new Map(
+  const values = new Map(
     Array.from(css.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi), (match) => [match[1], match[2].trim()] as const),
   );
+  for (const [name, value] of values) {
+    const reference = /^var\((--[\w-]+)\)$/.exec(value)?.[1];
+    if (reference) values.set(name, values.get(reference) ?? value);
+  }
+  return values;
 }
 
 describe('design token contract', () => {
