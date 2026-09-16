@@ -30,6 +30,63 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('disables maximize controls and titlebar double-click while retaining drag and resize', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onOpenChange = vi.fn();
+    mount(() => (
+      <FloatingWindow open onOpenChange={onOpenChange} maximizable={false}
+        defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}>
+        <textarea />
+      </FloatingWindow>
+    ), host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const titlebar = root.querySelector<HTMLElement>('[data-floe-floating-window-titlebar]')!;
+    root.querySelector('textarea')!.value = 'Preserved draft';
+    const geometry = root.style.cssText;
+    expect(root.querySelector('[data-floe-floating-window-control="maximize"]')).toBeNull();
+    titlebar.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(root.style.cssText).toBe(geometry);
+    const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+    titlebar.dispatchEvent(down);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+    window.dispatchEvent(new Event('blur'));
+    root.querySelector('[data-floe-floating-window-resize-handle="se"]')!.dispatchEvent(down);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('resize');
+    window.dispatchEvent(new Event('blur'));
+    expect(root.querySelector('textarea')?.value).toBe('Preserved draft');
+    root.querySelector<HTMLButtonElement>('[data-floe-floating-window-control="close"]')!.click();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps maximize enabled by default independently of resizing and restores when disabled', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const [maximizable, setMaximizable] = createSignal<boolean | undefined>();
+    mount(() => (
+      <FloatingWindow open onOpenChange={() => undefined} resizable={false} maximizable={maximizable()}
+        defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}>
+        <p>Window content</p>
+      </FloatingWindow>
+    ), host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const initial = { transform: root.style.transform, width: root.style.width, height: root.style.height };
+    expect(root.querySelector('[data-floe-floating-window-resize-handle]')).toBeNull();
+    root.querySelector<HTMLButtonElement>('[data-floe-floating-window-control="maximize"]')!.click();
+    expect(root.style.width).toBe('1200px');
+    expect(root.style.height).toBe('800px');
+    setMaximizable(false);
+    await flushAnimationFrame();
+    expect(root.querySelector('[data-floe-floating-window-control="maximize"]')).toBeNull();
+    expect({ transform: root.style.transform, width: root.style.width, height: root.style.height }).toEqual(initial);
+    setMaximizable(true);
+    root.querySelector('[data-floe-floating-window-titlebar]')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(root.style.width).toBe('1200px');
+  });
+
   it('keeps reactive header actions outside titlebar drag and double-click ownership', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

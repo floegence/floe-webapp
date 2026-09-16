@@ -60,6 +60,8 @@ export interface FloatingWindowProps {
   labels?: { close: string; maximize: string; restore: string };
   /** Whether the window can be resized */
   resizable?: boolean;
+  /** Allow the maximize control and titlebar double-click (defaults to true, independently of resizing). */
+  maximizable?: boolean;
   /** Whether the window can be dragged */
   draggable?: boolean;
   /** Additional CSS class */
@@ -77,6 +79,7 @@ export interface FloatingWindowProps {
  */
 export function FloatingWindow(props: FloatingWindowProps) {
   const resizable = () => props.resizable ?? true;
+  const maximizable = () => props.maximizable ?? true;
   const draggable = () => props.draggable ?? true;
   const minSize = () => props.minSize ?? { width: 200, height: 150 };
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
@@ -380,6 +383,14 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
 
   createEffect(() => {
+    if (maximizable() || !isMaximized()) return;
+    untrack(() => {
+      setIsMaximized(false);
+      syncRectToViewport({ center: false });
+    });
+  });
+
+  createEffect(() => {
     if (!props.open) return;
 
     const handleEscape = (e: KeyboardEvent) => {
@@ -515,11 +526,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const toggleMaximize = () => {
+    if (!maximizable() || compact()) return;
     if (activePointerId !== null) {
       stopInteraction(true);
     }
 
-    if (compact()) return;
     setIsMaximized(!isMaximized());
     syncRectToViewport();
   };
@@ -634,7 +645,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               </Show>
 
               <div class="flex h-full shrink-0 items-stretch">
-                <Show when={!compact()}>
+                <Show when={maximizable() && !compact()}>
                 <Button
                   variant="ghost"
                   size="icon"
