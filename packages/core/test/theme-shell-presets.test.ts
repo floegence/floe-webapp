@@ -55,11 +55,26 @@ describe('built-in shell theme presets', () => {
     expect(preset.monaco?.light?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#005FB8');
   });
 
-  it('ships the original pair plus ten distinct presets for each mode', () => {
-    expect(builtInShellThemePresets).toHaveLength(24);
-    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(11);
-    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(13);
-    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(24);
+  it('preserves Redeven warm porcelain colors as a separate light and dark pair', () => {
+    const light = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-light');
+    const dark = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-dark');
+    expect(light?.semanticTokens?.['--background']).toBe('#F4F1ED');
+    expect(light?.semanticTokens?.['--foreground']).toBe('#202A37');
+    expect(light?.semanticTokens?.['--primary']).toBe('#202A37');
+    expect(light?.semanticTokens?.['--sidebar']).toBe('#EEECE9');
+    expect(light?.semanticTokens?.['--card']).toBe('#FFFDFA');
+    expect(dark?.semanticTokens?.['--background']).toBe('#20242A');
+    expect(dark?.semanticTokens?.['--foreground']).toBe('#E6E3DD');
+    expect(dark?.semanticTokens?.['--primary']).toBe('#BCC8D5');
+    expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({ light: 'classic-light', dark: 'classic-dark' });
+    expect(builtInShellThemePresets.slice(-2).map((preset) => preset.name)).toEqual(['porcelain-light', 'porcelain-dark']);
+  });
+
+  it('ships the original catalog and appends the warm porcelain pair', () => {
+    expect(builtInShellThemePresets).toHaveLength(26);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(12);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(14);
+    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(26);
 
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';

@@ -44,7 +44,7 @@ their independent meaning.
 Input boundaries use `--input`; focus uses `--ring` through `input-focus.css`.
 Decorative seams never override those boundaries. Soft input faces mix card and
 background equally. Placeholder text uses the full muted-foreground color.
-The packed 24-theme, two-material matrix checks text at 4.5:1 and input boundaries
+The packed 26-theme, two-material matrix checks text at 4.5:1 and input boundaries
 at 3:1. Only affected semantic roles change when a palette fails these checks.
 
 Theme application finishes only active CSS color/shadow transitions before the
@@ -53,6 +53,14 @@ and does not remount content. Hover colors use 120ms; ordinary overlays enter in
 220ms and exit in 160ms with scale 1 and at most 6px travel. Drawer geometry and
 360ms reversible bottom-bar companion motion keep their owners. Reduced motion
 retains final states without travel. Shadows and blur do not animate.
+
+The catalog also appends **Porcelain Light** and **Porcelain Dark** without
+renaming or reordering existing preset IDs. Porcelain Light preserves Redeven's
+original warm ivory canvas (`#F4F1ED`), blue-gray ink and primary action
+(`#202A37`), and warm sidebar (`#EEECE9`). Its dark partner uses a slate canvas,
+warm ivory text, and soft blue-gray actions. Both receive the same material,
+control-boundary, focus, and motion rules; they do not restore decorative glow.
+The catalog now contains 26 presets. Stored selections retain version 1.
 
 ## Tokens and local palettes
 
@@ -140,9 +148,9 @@ The packed `?panel=windows&theme=paper&surface=soft-neumorphic` study covers fil
 cards, overlapping windows, editable notes and all built-in themes. Its host uses
 the public `zIndex` property for stacking. `pnpm test:window-material` checks both
 CSS entries, theme contrast, activation, direct geometry, custom tokens, 2x pixel
-density, reduced motion, forced colors and unchanged standard presentation.
+density, reduced motion, forced colors and shared standard presentation.
 
-For the window comparison, save the published 0.51.0 package as
+For the window comparison, save the published 0.53.0 package as
 `.cache/surface-style/baseline-core.tgz`, verify its registry integrity, and prepare
 it with `node scripts/prepare-surface-consumer.mjs baseline .cache/surface-style/baseline-core.tgz`.
 Do not substitute a development pack carrying the same version number. Run
