@@ -46,6 +46,8 @@ Decorative seams never override those boundaries. Soft input faces mix card and
 background equally. Placeholder text uses the full muted-foreground color.
 The packed 26-theme, two-material matrix checks text at 4.5:1 and input boundaries
 at 3:1. Only affected semantic roles change when a palette fails these checks.
+Auxiliary copy must also retain 4.5:1 on navigation, muted and selected choice
+faces; checking only the page canvas misses the descriptions inside RadioOption.
 
 Theme application finishes only active CSS color/shadow transitions before the
 next paint. It does not cancel transforms, geometry, progress, or presence exits,

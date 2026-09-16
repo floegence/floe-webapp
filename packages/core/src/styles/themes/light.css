@@ -15,7 +15,7 @@
   --secondary: #eeefe8;
   --secondary-foreground: #545f56;
   --muted: #e9ece3;
-  --muted-foreground: #626e60;
+  --muted-foreground: #5e695c;
   --accent: #e0e7da;
   --accent-foreground: #303a34;
   --border: #d4d8cd;
@@ -53,7 +53,7 @@
   --sidebar-border: #dedfd7;
   --sidebar-ring: #56694f;
   --activity-bar: #eeede6;
-  --activity-bar-foreground: #626e60;
+  --activity-bar-foreground: #5e695c;
   --activity-bar-foreground-active: #303a34;
   --activity-bar-badge: #465a43;
   --activity-bar-badge-foreground: #f8faf5;

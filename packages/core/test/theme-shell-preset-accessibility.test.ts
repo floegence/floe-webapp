@@ -29,6 +29,18 @@ function contrastRatio(first: string, second: string): number {
 }
 
 describe('shell theme accessibility', () => {
+  it('keeps auxiliary copy readable on cards, navigation and selected choice faces', () => {
+    for (const preset of builtInShellThemePresets) {
+      const tokens = preset.semanticTokens!;
+      for (const surface of ['--card', '--sidebar', '--muted', '--accent'] as const) {
+        expect(
+          contrastRatio(tokens['--muted-foreground']!, tokens[surface]!),
+          `${preset.name}:auxiliary-copy:${surface}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
   it('keeps text, controls, statuses, selections, and charts readable in every preset', () => {
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';

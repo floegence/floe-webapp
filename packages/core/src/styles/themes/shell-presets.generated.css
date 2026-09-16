@@ -1433,7 +1433,7 @@
   --secondary: #2c2c30;
   --secondary-foreground: #e0e0e4;
   --muted: #2c2c30;
-  --muted-foreground: #909098;
+  --muted-foreground: #93939b;
   --accent: #2c2c30;
   --accent-foreground: #e0e0e4;
   --border: #323236;
@@ -1471,7 +1471,7 @@
   --sidebar-border: #323236;
   --sidebar-ring: #e0e0e4;
   --activity-bar: #141416;
-  --activity-bar-foreground: #909098;
+  --activity-bar-foreground: #93939b;
   --activity-bar-foreground-active: #e0e0e4;
   --activity-bar-badge: #e0e0e4;
   --activity-bar-badge-foreground: #1a1a1c;
@@ -1575,7 +1575,7 @@
   --secondary: #f1efec;
   --secondary-foreground: #202a37;
   --muted: #f1efec;
-  --muted-foreground: #5a687c;
+  --muted-foreground: #576579;
   --accent: #e4e1dd;
   --accent-foreground: #202a37;
   --border: #d8d3cc;
@@ -1613,7 +1613,7 @@
   --sidebar-border: #d8d3cc;
   --sidebar-ring: #202a37;
   --activity-bar: #eeece9;
-  --activity-bar-foreground: #5a687c;
+  --activity-bar-foreground: #576579;
   --activity-bar-foreground-active: #202a37;
   --activity-bar-badge: #202a37;
   --activity-bar-badge-foreground: #fffdfa;
