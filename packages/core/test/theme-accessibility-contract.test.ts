@@ -32,6 +32,7 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
 }
 
 function parseHsl(value: string): [number, number, number] {
+  if (/^#[0-9a-f]{6}$/i.test(value)) return [1, 3, 5].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16)) as [number, number, number];
   const match = /hsl\(([-\d.]+)\s+([-\d.]+)%\s+([-\d.]+)%\)/.exec(value.trim());
   if (!match) {
     throw new Error(`Unsupported color format: ${value}`);

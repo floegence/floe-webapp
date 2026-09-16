@@ -30,6 +30,31 @@ function readResolvedClassicTokens(mode: 'light' | 'dark'): Record<string, strin
 }
 
 describe('built-in shell theme presets', () => {
+  it('uses one neutral Classic Dark palette for renderer, preview and host metadata', () => {
+    const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-dark')!;
+    const tokens = preset.semanticTokens!;
+    expect(tokens['--background']).toBe('#202223');
+    expect(tokens['--card']).toBe('#282b2c');
+    expect(tokens['--popover']).toBe('#2b2e2f');
+    expect(tokens['--primary']).toBe('#bccbb8');
+    expect(tokens['--activity-bar']).toBe('#17191a');
+    expect(preset.preview?.background.toLowerCase()).toBe(tokens['--background']);
+    expect(preset.preview?.surface?.toLowerCase()).toBe(tokens['--card']);
+    expect(preset.preview?.primary?.toLowerCase()).toBe(tokens['--primary']);
+    expect(preset.monaco?.dark?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#C19BE8');
+    expect(tokens['--terminal-background']).toBe('hsl(222 32% 7%)');
+    expect(tokens['--chart-4']).toBe('oklch(0.72 0.19 150)');
+  });
+
+  it('pairs Classic Light with the same quiet surface hierarchy', () => {
+    const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-light')!;
+    expect(preset.semanticTokens?.['--background']).toBe('#f8f7f2');
+    expect(preset.semanticTokens?.['--primary']).toBe('#465a43');
+    expect(preset.preview?.background).toBe(preset.semanticTokens?.['--background']);
+    expect(preset.preview?.surface).toBe(preset.semanticTokens?.['--card']);
+    expect(preset.monaco?.light?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#005FB8');
+  });
+
   it('ships the original pair plus ten distinct presets for each mode', () => {
     expect(builtInShellThemePresets).toHaveLength(24);
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(11);

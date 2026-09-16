@@ -108,7 +108,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [isActive, setIsActive] = createSignal(false);
   const windowPresence = createFloatingPresence({
     open: () => props.open,
-    exitDurationMs: 120,
   });
   let dragStartPos = { x: 0, y: 0 };
   let dragStartRect: FloatingWindowRect = { x: 0, y: 0, width: 0, height: 0 };

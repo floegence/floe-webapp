@@ -103,7 +103,6 @@ export function Dropdown(props: DropdownProps) {
   const [open, setOpen] = createSignal(false);
   const menuPresence = createFloatingPresence({
     open,
-    exitDurationMs: 100,
   });
   const [menuPosition, setMenuPosition] = createSignal({ x: -9999, y: -9999 });
   let triggerRef: HTMLDivElement | undefined;
@@ -358,7 +357,6 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const submenuActive = () => Boolean(submenuOpen() && hasChildren());
   const submenuPresence = createFloatingPresence({
     open: submenuActive,
-    exitDurationMs: 100,
   });
   const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
   let itemRef: HTMLDivElement | undefined;

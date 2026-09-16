@@ -6,6 +6,8 @@ import {
   REQUIRED_SHELL_THEME_TOKENS,
 } from '../src/styles/themes/presets.ts';
 
+import { CLASSIC_LIGHT_CSS_TOKENS, CLASSIC_DARK_CSS_TOKENS } from '../src/styles/themes/classicSemanticTokens.ts';
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const outputPath = resolve(scriptDir, '../src/styles/themes/shell-presets.generated.css');
 
@@ -29,3 +31,10 @@ for (const preset of builtInShellThemePresets) {
 
 await mkdir(dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${lines.join('\n')}\n`, 'utf8');
+
+// Classic CSS and browser-neutral host metadata have one authored palette.
+for (const [mode, tokens] of [['light', CLASSIC_LIGHT_CSS_TOKENS], ['dark', CLASSIC_DARK_CSS_TOKENS]]) {
+  const selector = mode === 'light' ? ':root,\n.light' : '.dark';
+  const source = ['/* Generated from classicSemanticTokens.ts. Do not edit by hand. */', `${selector} {`, `  color-scheme: ${mode};`, ...Object.entries(tokens).map(([name, value]) => `  ${name}: ${value};`), '}', ''].join('\n');
+  await writeFile(resolve(scriptDir, `../src/styles/themes/${mode}.css`), source, 'utf8');
+}

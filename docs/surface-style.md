@@ -29,7 +29,30 @@ A host-owned visible boundary can use `data-floe-surface="flat|raised|inset|floa
 
 Explicit Card variants (`glass`, `hover-lift`, `gradient-border`, `spotlight`, `shimmer`, `glow`) and `enableTilt` do not opt into material automatically. Their capabilities and opt-in motion remain available. Card transition properties are enumerated instead of `transition-all`; tilt/lift retain transform transitions. Do not combine an explicit rich variant with a material role. Dense file rows, trees and prose stay flat. Compact metadata, selection controls, status tracks, navigation controls and overlays follow the explicit [component coverage matrix](./surface-components.md), with relief scaled to their density.
 
-In the optional style, neutral component borders and structural separators become quiet seams. Existing surface fills and shallow shadows carry grouping; selected Workbench headers use a local accent tint instead of a strong outline. The dock reuses its existing material-token boundary to remove the bright inset rim. Geometry, resizer hit targets, and semantic palette tokens do not change. Radio indicators use a 1px hollow border inside their unchanged border-box dimensions; all other border widths remain unchanged. `--floe-surface-edge` and `--floe-surface-divider` are overridable colors, defaulting to 18% and 12% neutral border color preblended with the background. The resulting seam is opaque: this avoids the extra native-editor blending cost of an alpha border while keeping its visible contrast low. Hosts with their own neutral separators can mark an existing boundary with `data-floe-surface-divider`; use `data-floe-surface-divider="fill"` for a filled divider. High contrast, error states, and explicit rich Card variants preserve their boundaries.
+In the optional style, neutral component borders and structural separators become quiet seams. Existing surface fills and shallow shadows carry grouping; selected Workbench headers use a local accent tint instead of a strong outline. The dock reuses its existing material-token boundary to remove the bright inset rim. Geometry, resizer hit targets, and semantic palette tokens do not change. Radio indicators use a 1px hollow border inside their unchanged border-box dimensions; all other border widths remain unchanged. `--floe-surface-edge` and `--floe-surface-divider` are overridable colors, defaulting to 11.5% and 8.5% foreground color preblended with the background. The resulting seam is opaque: this avoids the extra native-editor blending cost of an alpha border while keeping its visible contrast low. Hosts with their own neutral separators can mark an existing boundary with `data-floe-surface-divider`; use `data-floe-surface-divider="fill"` for a filled divider. High contrast, error states, and explicit rich Card variants preserve their boundaries.
+
+## Paired Classic palettes
+
+Classic Dark uses soft graphite carrying planes and a pale sage primary action.
+Classic Light uses warm paper planes and a dark sage primary action. Their IDs,
+mode defaults, catalog order, and stored preferences stay unchanged; `graphite`
+and `paper` remain separate existing presets. `classicSemanticTokens.ts` is the
+single source for generated light/dark CSS, preview colors and browser-neutral
+host metadata. Editor syntax, terminal ANSI and categorical chart colors retain
+their independent meaning.
+
+Input boundaries use `--input`; focus uses `--ring` through `input-focus.css`.
+Decorative seams never override those boundaries. Soft input faces mix card and
+background equally. Placeholder text uses the full muted-foreground color.
+The packed 24-theme, two-material matrix checks text at 4.5:1 and input boundaries
+at 3:1. Only affected semantic roles change when a palette fails these checks.
+
+Theme application finishes only active CSS color/shadow transitions before the
+next paint. It does not cancel transforms, geometry, progress, or presence exits,
+and does not remount content. Hover colors use 120ms; ordinary overlays enter in
+220ms and exit in 160ms with scale 1 and at most 6px travel. Drawer geometry and
+360ms reversible bottom-bar companion motion keep their owners. Reduced motion
+retains final states without travel. Shadows and blur do not animate.
 
 ## Tokens and local palettes
 
@@ -39,18 +62,18 @@ Optional overrides:
 | --- | --- |
 | `--floe-surface-shadow-raised` | Restrained 5px ambient shade with negative spread and a 1px interior light |
 | `--floe-surface-shadow-inset` | A 2px inset shade and a 1px interior light |
-| `--floe-surface-shadow-floating` | A 20px ambient shade with negative spread and a 1px interior light |
+| `--floe-surface-shadow-floating` | The neutral contact and cast shadow from the window palette; no interior light |
 | `--floe-surface-shadow-interacting` | One 2px-blur shadow |
 | `--floe-surface-highlight` | Light edge, separately tuned for light and dark mode |
 | `--floe-surface-shade` | Dark edge based on the carrying color and black |
 
-`floeSurfaceTokens` and `floeDesignTokens.surface` expose the exact shadow fallback expressions. Transparent light/shade colors composite naturally onto each carrying plane, including local Workbench colors, without a second set of opaque shadow colors or masked root-level overrides. Light mode uses 50% white light and 12% black shade; dark mode uses only 4% white light and 20% black shade. Optional shadow variables are intentionally unset until overridden; the metadata records their CSS fallbacks, not fake resolved values.
+`floeSurfaceTokens` and `floeDesignTokens.surface` expose the exact shadow fallback expressions. Transparent light/shade colors composite naturally onto each carrying plane, including local Workbench colors, without a second set of opaque shadow colors or masked root-level overrides. Light mode uses 50% white light and 12% black shade; dark mode removes raised and inset shadows and retains neutral black floating depth. Explicit host shadow overrides remain authoritative.
 
 Use `theme.tokens` / named token presets for overrides. Source order remains config, active Shell preset, active named token preset, with each source's shared values followed by its active mode. Removing a preset or mode removes obsolete inline tokens through the existing synchronization service. The unlayered material rules replace component and utility decoration only on opted-in roles; the input-focus stylesheet continues to own focus border color.
 
-Compact parts use shorter static interior lighting than content containers. The part markers are internal component details; hosts use the four public roles. Dark Cards use a 2% lighter carrying plane and generic floating overlays a 6% lighter plane; non-modal windows use the independent palette below. There are no exterior white halos or opaque black grooves. Card/choice/indicator/rail borders retain their box dimensions but become transparent so their own fill reaches the edge; native and compound input borders remain opaque for stable editing raster cost. Choice selection uses an 8% primary tint, and the existing primary tab underline is subdued. Semantic tag, progress and primary action colors stay owned by their existing palette. Switch translate/scale and progress width transitions remain functional; no SVG filters are added.
+Compact parts use shorter static interior lighting than content containers. The part markers are internal component details; hosts use the four public roles. Dark Cards use the card plane and generic floating overlays use the popover plane; non-modal windows use the independent palette below. There are no exterior white halos or opaque black grooves. Card/choice/indicator/rail borders retain their box dimensions but become transparent so their own fill reaches the edge; native and compound input borders remain opaque for stable editing raster cost. Choice selection uses the accent plane, distinct from the muted hover plane, and the existing primary tab underline is subdued. Semantic tag, progress and primary action colors stay owned by their existing palette. Switch translate/scale and progress width transitions remain functional; no SVG filters are added.
 
-Checkbox and Switch wells use a one-pixel inner shade and an unblurred one-pixel light edge. Radio indicators instead use a hollow 1px outline, no default shadow, and a transparent unselected interior. Selection adds a 6% primary tint and the solid dot; do not apply container relief to a 6–10px mark. The outline uses an 88% muted-foreground/card blend and retains at least 3:1 contrast across the non-HC palette matrix. External dimensions, label hit targets and keyboard ownership remain unchanged. Switch thumbs and filled progress portions stay shadow-free by default; their fixed recessed tracks carry depth. Repainting even one-pixel shadows on frequently moving or resizing faces adds measurable dense-update cost. The Switch thumb keeps its existing background fill in both states; only its position and track color change. This avoids repainting the moving face in dark mode, while the palette matrix verifies at least 3:1 thumb-to-track contrast. Explicit public shadow overrides remain authoritative. Disabled Checkbox and Switch content is dimmed once by its label, not again by its face. Review these controls at both 1× and 2× pixel density, not only in enlarged previews.
+Light Checkbox and Switch wells use a one-pixel inner shade and a one-pixel light edge. Dark controls use solid faces with no inset lighting. Radio indicators instead use a hollow 1px outline, no default shadow, and a transparent unselected interior. Selection adds a 6% primary tint and the solid dot; do not apply container relief to a 6–10px mark. The outline uses an 88% muted-foreground/card blend and retains at least 3:1 contrast across the non-HC palette matrix. External dimensions, label hit targets and keyboard ownership remain unchanged. Switch thumbs and filled progress portions stay shadow-free by default; their fixed recessed tracks carry depth. Repainting even one-pixel shadows on frequently moving or resizing faces adds measurable dense-update cost. The Switch thumb keeps its existing background fill in both states; only its position and track color change. This avoids repainting the moving face in dark mode, while the palette matrix verifies at least 3:1 thumb-to-track contrast. Explicit public shadow overrides remain authoritative. Disabled Checkbox and Switch content is dimmed once by its label, not again by its face. Review these controls at both 1× and 2× pixel density, not only in enlarged previews.
 
 Selection fills on Radio, Checkbox, Tabs and SegmentedControl are immediate. Radio dots settle through a 90ms scale transition; Checkbox marks have a 100ms micro entrance; Switch thumbs use 140ms eased translate motion that reverses from the current position. Material's generic color transition rule excludes motion owners: floating presence, switch thumbs, radio dots and progress fills. Their transition property, duration and easing remain one declaration. Never let a generic surface rule drop a functional transform or remap a transition shorthand.
 
@@ -59,10 +82,9 @@ FloatingWindow keeps layout/style containment on its geometry root and paint con
 ## Non-modal window material
 
 In `soft-neumorphic`, FloatingWindow has an independent, opaque reading plane
-and a solid title bar. The window uses a restrained Mica treatment: a 10px
-corner, a one-pixel tokenized title highlight, quiet title/content/footer planes,
-and a two-stage static cast shadow. Dialogs and menus keep the general floating role. Standard
-material, high contrast, and forced colors retain their existing presentation.
+and a solid title bar. The window uses a restrained treatment: a 12px
+corner, quiet title/content/footer planes,
+and a two-stage static cast shadow. Dialogs and menus keep the general floating role. Standard material shares the opaque palette and neutral shadow; high contrast and forced colors retain explicit boundaries.
 Window geometry, input ownership, persistence, and portal placement do not change.
 
 | Window token | Purpose |
@@ -96,11 +118,11 @@ indicators. Drag and resize use the existing local
 interaction marker and lightweight contact shadow. The outer geometry owner does
 not clip the panel's external shadow, while content clipping stays on the panel.
 
-The title highlight and plane transitions are paint-only feedback. They never
+Title activation uses a local change of background. They never
 animate geometry, blur, or shadow values, and the title/content/footer boundaries
 remain opaque so native editors and terminal output keep a stable raster path.
 
-Window presence keeps its 150ms entry and 120ms exit, replacing scale with 3px/2px
+Window presence uses 220ms entry and 160ms exit, with 3px/2px
 translation. The content stays at scale 1. The shared presence lifecycle owns
 interrupted exits and the final paint before disposal; promotion is limited to
 presence on the inner panel and direct interaction on the existing outer geometry
@@ -155,7 +177,7 @@ keyboard actions, focus visibility, and narrow viewports through both packed CSS
 entries. Pass `--demo=http://127.0.0.1:43180/` to check the real Demo opening path
 and save matching hover/focus screenshots in `.cache/surface-style/window-header`.
 
-- Input focus changes only existing border color. Soft neumorphic fields use 88% muted-foreground blended with the opaque card color for a quiet, uniform focus boundary; custom `--floe-input-focus-color` overrides remain authoritative. The built-in non-HC palette matrix verifies at least 3:1 contrast against both the carrying card and the recessed field. Different colors per edge require a more expensive native-editor border raster path, so keep all four edges uniform. Error and high-contrast fields retain their semantic colors. Dimensions, position, padding, border width, and decorative shadow are identical before and after focus, including intermediate animation frames. Compound fields use `data-floe-input-surface`; editable descendants stay frameless.
+- Input focus changes only existing border color. Fields use the semantic ring color for a uniform focus boundary; custom `--floe-input-focus-color` overrides remain authoritative. The built-in non-HC palette matrix verifies at least 3:1 contrast against both the carrying card and the recessed field. Different colors per edge require a more expensive native-editor border raster path, so keep all four edges uniform. Error and high-contrast fields retain their semantic colors. Dimensions, position, padding, border width, and decorative shadow are identical before and after focus, including intermediate animation frames. Compound fields use `data-floe-input-surface`; editable descendants stay frameless.
 - Select declares its existing trigger as an input boundary through `Dropdown.triggerInputSurface`; this also repairs its prior ring-based keyboard focus to follow the shared field contract in standard mode. Generic Dropdown actions remain independent buttons.
 - Independent buttons and focusable surfaces compose their keyboard indicator with material. Compound input buttons keep the shared local fill. In forced colors, independent material controls use a system-color outline; input focus still uses its existing system-color border.
 - High Contrast Light and forced colors suppress decoration while retaining flat opaque floating surfaces. They do not restore old blur. Reduced motion cancels material transitions.
@@ -188,10 +210,11 @@ After implementation:
 make check
 pnpm test:input-focus
 pnpm test:surface-style
+node scripts/check-theme-surface-browser.mjs
 pnpm test:surface-performance
 ```
 
-`make check` owns full unit/build/dist/packed-consumer validation. The surface browser check independently consumes the actual packed component code through `/styles` and `/tailwind`; it does not alias source files. It verifies default computed styles, focus geometry with animations enabled, lifecycle, local overlays, high contrast, reduced motion, and responsive viewports. It requires the saved baseline tarball/fixture for compatibility evidence.
+`make check` owns full unit/build/dist/packed-consumer validation. The surface browser check independently consumes the actual packed component code through `/styles` and `/tailwind`; it does not alias source files. It verifies preserved control geometry, focus geometry with animations enabled, lifecycle, local overlays, high contrast, reduced motion, and responsive viewports. It requires the saved baseline tarball/fixture for compatibility evidence.
 
 `check-surface-motion-browser.mjs`, included in `test:surface-style`, captures trusted input through actual intermediate animation frames: all Switch sizes in both directions, Radio dots, first-frame selection fills, rapid keyboard navigation/reversals and reduced motion. Overlay checks require both `transitionrun` and `transitionend` for opacity and transform on open and close, rather than accepting a correct endpoint after a truncated transition. It also captures 1×/2× small controls and floating-window separation in light/dark through both packed CSS entries. These functional samples are distinct from the trace-based performance budget.
 

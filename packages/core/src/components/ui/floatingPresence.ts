@@ -47,7 +47,7 @@ function resolveExitDuration(options: FloatingPresenceOptions): number {
   if (prefersReducedMotion()) {
     return Math.max(0, options.reducedMotionExitDurationMs ?? 1);
   }
-  return Math.max(0, options.exitDurationMs ?? 120);
+  return Math.max(0, options.exitDurationMs ?? 160);
 }
 
 export function createFloatingPresence(options: FloatingPresenceOptions): FloatingPresence {

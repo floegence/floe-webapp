@@ -94,7 +94,7 @@ try {
           assert.equal(active.title[3], 255);
           assert.equal(active.titleImage, 'none');
           assert.equal(active.backdrop, 'none');
-          assert.equal(active.radius, '10px');
+          assert.equal(active.radius, '12px');
           assert.equal(active.titleHeight, 32);
           assert.equal(active.titleFontSize, '12px');
           assert.equal(active.contentBackground?.[3], 255);

@@ -1,126 +1,74 @@
-/* Light theme - Redeven warm paper aesthetic */
+/* Generated from classicSemanticTokens.ts. Do not edit by hand. */
 :root,
 .light {
   color-scheme: light;
-
-  /* Independent non-modal window material. */
-  --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
+  --floe-window-background: var(--popover);
   --floe-window-foreground: var(--foreground);
   --floe-window-muted-foreground: var(--muted-foreground);
-  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 92%, var(--foreground));
+  --floe-window-titlebar-background: var(--popover);
   --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
-
-
-  /* Base - Warm paper and blue-black ink */
-  --background: hsl(34 24% 94%);
-  --foreground: hsl(214 26% 17%);
-
-  /* Primary - Deep blue-black ink */
-  --primary: hsl(214 26% 17%);
-  --primary-foreground: hsl(36 100% 99%);
-
-  /* Secondary - Warm muted */
-  --secondary: hsl(36 15% 94%);
-  --secondary-foreground: hsl(214 25% 25%);
-
-  /* Muted - Warm gray */
-  --muted: hsl(36 15% 94%);
-  --muted-foreground: hsl(215 16% 42%);
-
-  /* Accent - Subtle warm highlight, darker than sidebar for visible hover/active fills */
-  --accent: hsl(34 9% 85%);
-  --accent-foreground: hsl(214 26% 17%);
-
-  /* Border - Warm gray */
-  --border: hsl(35 13% 82%);
-  --input: hsl(37 15% 76%);
-  --ring: hsl(214 26% 17%);
-  --chrome-border: hsl(33 11% 84%);
+  --background: #f8f7f2;
+  --foreground: #303a34;
+  --primary: #465a43;
+  --primary-foreground: #f8faf5;
+  --secondary: #eeefe8;
+  --secondary-foreground: #545f56;
+  --muted: #e9ece3;
+  --muted-foreground: #626e60;
+  --accent: #e0e7da;
+  --accent-foreground: #303a34;
+  --border: #d4d8cd;
+  --input: #858e80;
+  --ring: #56694f;
+  --chrome-border: #dedfd7;
   --top-bar-border: var(--chrome-border);
   --activity-bar-border: var(--chrome-border);
   --bottom-bar-border: var(--chrome-border);
   --terminal-panel-border: var(--chrome-border);
-
-  /* glow: in light mode primary is dark ink — works well as a depth/shadow glow accent */
-  --glow: var(--primary);
-
-  /* Card */
-  --card: hsl(36 100% 99%);
-  --card-foreground: hsl(214 26% 17%);
-
-  /* Popover */
-  --popover: hsl(36 100% 99%);
-  --popover-foreground: hsl(214 26% 17%);
-
-  /* Status colors */
-  --success: oklch(0.68 0.16 150);
-  --success-foreground: hsl(0 0% 100%);
-  --warning: hsl(38 92% 50%);
-  --warning-foreground: hsl(214 26% 17%);
-  --error: oklch(0.65 0.2 25);
-  --error-foreground: hsl(0 0% 100%);
-  --info: hsl(217 91% 60%);
-  --info-foreground: hsl(0 0% 100%);
-
-  /* Highlight block accents - deeper than shared status tokens */
+  --card: #fcfbf7;
+  --card-foreground: #303a34;
+  --popover: #fffefa;
+  --popover-foreground: #303a34;
+  --success: #496744;
+  --success-foreground: #f8faf5;
+  --warning: #856828;
+  --warning-foreground: #fffefa;
+  --error: #b74744;
+  --error-foreground: #fffefa;
+  --info: #2671d9;
+  --info-foreground: #fffefa;
   --highlight-block-info-accent: oklch(0.52 0.14 245);
   --highlight-block-warning-accent: oklch(0.62 0.16 65);
   --highlight-block-success-accent: oklch(0.55 0.14 155);
   --highlight-block-error-accent: oklch(0.55 0.16 25);
   --highlight-block-note-accent: oklch(0.52 0.16 285);
   --highlight-block-tip-accent: oklch(0.52 0.12 175);
-
-  /* Sidebar — distinct from background, slightly deeper */
-  --sidebar: hsl(34 13% 90%);
-  --sidebar-foreground: hsl(214 26% 17%);
-  --sidebar-primary: hsl(214 26% 17%);
-  --sidebar-primary-foreground: hsl(36 100% 99%);
-  --sidebar-accent: hsl(34 9% 84%);
-  --sidebar-accent-foreground: hsl(214 26% 17%);
-  --sidebar-border: hsl(33 9% 82%);
-  --sidebar-ring: hsl(214 26% 17%);
-
-  /* Activity bar — deepest light-mode surface, clearly separate from sidebar.
-     L90% keeps --muted-foreground contrast ratio ≥ 4.5 on this surface (WCAG AA). */
-  --activity-bar: hsl(34 11% 90%);
-  --activity-bar-foreground: hsl(215 14% 46%);
-  --activity-bar-foreground-active: hsl(214 26% 17%);
-  --activity-bar-badge: hsl(214 26% 17%);
-  --activity-bar-badge-foreground: hsl(36 100% 99%);
-
-  /* Terminal */
+  --sidebar: #efeee7;
+  --sidebar-foreground: #303a34;
+  --sidebar-primary: #465a43;
+  --sidebar-primary-foreground: #f8faf5;
+  --sidebar-accent: #e0e7da;
+  --sidebar-accent-foreground: #303a34;
+  --sidebar-border: #dedfd7;
+  --sidebar-ring: #56694f;
+  --activity-bar: #eeede6;
+  --activity-bar-foreground: #626e60;
+  --activity-bar-foreground-active: #303a34;
+  --activity-bar-badge: #465a43;
+  --activity-bar-badge-foreground: #f8faf5;
   --terminal-background: hsl(214 26% 17%);
   --terminal-foreground: hsl(0 0% 92%);
-
-  /* Chart colors */
   --chart-1: hsl(214 26% 17%);
   --chart-2: hsl(215 16% 42%);
   --chart-3: hsl(217 91% 60%);
   --chart-4: oklch(0.68 0.16 150);
   --chart-5: hsl(38 92% 50%);
-
-  /* ============================================
-     Selection Colors
-     ============================================
-     Design notes:
-     1. Default selection: blue background + white text (works for most cases)
-     2. Selection on primary backgrounds: must contrast with the primary color
-        - In light theme, --primary is dark, so we use a bright highlight (yellow)
-     3. Code selection: fixed bright blue, since code blocks always use a dark background
-  */
-
-  /* Default selection */
   --selection-bg: hsl(217 91% 60%);
   --selection-fg: hsl(0 0% 100%);
-
-  /* Selection on primary backgrounds
-     In light theme, primary is dark (hsl(214 26% 17%)),
-     so we use a warm amber selection to keep contrast. */
   --selection-on-primary-bg: hsl(38 92% 50%);
   --selection-on-primary-fg: hsl(214 26% 17%);
-
-  /* Code-block selection (code blocks use a dark background: #0d1117) */
   --selection-code-bg: hsl(212 100% 67%);
   --selection-code-fg: hsl(220 20% 8%);
+  --glow: #465a43;
 }

@@ -24,7 +24,6 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const palettePresence = createFloatingPresence({
     open: command.isOpen,
-    exitDurationMs: 120,
   });
 
   useOverlayMask({

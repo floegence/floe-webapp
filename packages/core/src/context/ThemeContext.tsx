@@ -163,6 +163,17 @@ export function createThemeService(): ThemeContextValue {
       resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens),
       appliedTokenNames
     );
+    // Resolve only palette transitions before the next paint. Functional motion
+    // (including an in-flight drawer, switch, or exit) retains its own timeline.
+    if (typeof document !== 'undefined') {
+      queueMicrotask(() => {
+        for (const animation of document.documentElement.getAnimations?.({ subtree: true }) ?? []) {
+          if ('transitionProperty' in animation && /^(color|background-color|border-.*-color|fill|stroke|box-shadow)$/.test(String(animation.transitionProperty))) {
+            animation.finish();
+          }
+        }
+      });
+    }
   });
 
   onCleanup(() => {

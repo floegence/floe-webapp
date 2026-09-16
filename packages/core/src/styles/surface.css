@@ -13,8 +13,8 @@
 /* Preblend quiet seams onto the carrying background. Opaque borders avoid an
  * extra blending path when native editors repaint their text and caret. */
 :root {
-  --floe-surface-edge: color-mix(in srgb, var(--border) 18%, var(--background));
-  --floe-surface-divider: color-mix(in srgb, var(--border) 12%, var(--background));
+  --floe-surface-edge: color-mix(in srgb, var(--foreground) 11.5%, var(--background));
+  --floe-surface-divider: color-mix(in srgb, var(--foreground) 8.5%, var(--background));
   --floe-surface-highlight: rgb(255 255 255 / 50%);
   --floe-surface-shade: rgb(0 0 0 / 12%);
 }
@@ -23,15 +23,9 @@
  * quiet seams; material and existing fills carry the grouping. High contrast
  * retains the original boundaries. Explicit rich Card variants stay independent. */
 @media (forced-colors: none) {
-  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
-    /* A uniform muted border keeps focus readable without a bright frame.
-     * Different colors per edge force a costlier native-editor raster path. */
-    --floe-input-focus-color: color-mix(in srgb, var(--muted-foreground) 88%, var(--card));
-  }
   :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
     :is(
       .border-border,
-      .border-input,
       [class~='border-border/40'],
       [data-floe-surface],
       .workbench-hud,
@@ -40,6 +34,9 @@
     ):not(
       :where(
         [aria-invalid='true'],
+        .border-input,
+        [data-floe-input-surface],
+        [data-floe-input-surface] *,
         [data-floe-surface-part='tab'],
         [data-floe-card-variant]:not([data-floe-card-variant='default'])
       )
@@ -92,7 +89,9 @@
   }
 }
 :root.dark {
-  --floe-surface-highlight: rgb(255 255 255 / 4%);
+  --floe-surface-highlight: transparent;
+  --floe-surface-shadow-raised: 0 0 transparent;
+  --floe-surface-shadow-inset: 0 0 transparent;
   --floe-surface-shade: rgb(0 0 0 / 20%);
 }
 
@@ -132,10 +131,9 @@
 [data-floe-surface-style='soft-neumorphic'] [data-floe-surface='floating'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-floating,
-    0 8px 18px -8px var(--floe-surface-shade),
-    inset 0 1px 1px var(--floe-surface-highlight)
+    var(--floe-window-shadow)
   );
-  background-color: var(--card);
+  background-color: var(--popover);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -284,17 +282,17 @@
       [data-floe-surface-part='choice']:not([data-floe-selected='true']):hover:not(
         :has(:disabled)
       ) {
-      background-color: color-mix(in srgb, var(--primary) 3%, var(--card));
+      background-color: color-mix(in srgb, var(--foreground) 4%, var(--card));
     }
     & [data-floe-surface-part='choice'][data-floe-selected='true'] {
-      background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
+      background-color: var(--accent);
     }
     & [data-floe-choice-variant='button'][data-floe-selected='true'] {
       color: var(--foreground);
     }
     & [data-floe-surface-part='segment'][aria-checked='true'],
     & [data-floe-surface-part='tab'][aria-selected='true'] {
-      background-color: color-mix(in srgb, var(--primary) 8%, var(--card));
+      background-color: var(--accent);
       color: var(--foreground);
     }
     & [data-floe-surface-part='segment'][aria-checked='false'] {
@@ -380,19 +378,10 @@
       box-shadow: var(--floe-surface-decoration);
     }
   }
-  :where(
-    :root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
-  ) {
-    /* A solid carrying plane avoids repainting a large gradient behind editors. */
-    & [data-floe-card-variant='default'][data-floe-surface='raised'] {
-      background-color: color-mix(in srgb, var(--card) 98%, white);
-    }
-    & [data-floe-surface='floating']:not(.workbench-widget) {
-      background-color: color-mix(in srgb, var(--card) 94%, white);
-    }
+  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
     & [data-floe-input-surface],
-    & :is(input, textarea)[data-floe-surface='inset'] {
-      background-color: color-mix(in srgb, var(--card) 94%, black);
+    & :is(input, textarea, select)[data-floe-surface='inset'] {
+      background-color: color-mix(in srgb, var(--card) 50%, var(--background));
     }
   }
 }
@@ -409,7 +398,7 @@
 @media (forced-colors: none) {
   :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
     [data-floe-floating-window-surface='true'][data-floe-surface='floating'] {
-    --floe-window-radius: 10px;
+    --floe-window-radius: var(--floe-radius-floating);
     background: var(--floe-window-background);
     color: var(--floe-window-foreground);
     --muted-foreground: var(--floe-window-muted-foreground);
@@ -425,20 +414,6 @@
       color: var(--floe-window-foreground);
       transition: none;
       border-radius: calc(var(--floe-window-radius) - 1px) calc(var(--floe-window-radius) - 1px) 0 0;
-    }
-    & [data-floe-floating-window-titlebar='true']::before {
-      content: '';
-      position: absolute;
-      inset: 0 14px auto;
-      height: 1px;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        color-mix(in srgb, var(--ring) 42%, transparent) 50%,
-        transparent
-      );
-      opacity: 0.72;
-      pointer-events: none;
     }
     &[data-floe-floating-window-state='inactive'] > [data-floe-floating-window-titlebar='true'] {
       background: color-mix(in srgb, var(--floe-window-titlebar-background) 50%, var(--floe-window-background));

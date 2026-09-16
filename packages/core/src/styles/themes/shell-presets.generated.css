@@ -1509,7 +1509,7 @@
   --accent-foreground: #f2f2f7;
   --border: #38383a;
   --input: #888888;
-  --ring: #0070e0;
+  --ring: #0a84ff;
   --chrome-border: #38383a;
   --top-bar-border: #38383a;
   --activity-bar-border: #38383a;
@@ -1540,7 +1540,7 @@
   --sidebar-accent: #3a3a3c;
   --sidebar-accent-foreground: #f2f2f7;
   --sidebar-border: #38383a;
-  --sidebar-ring: #0070e0;
+  --sidebar-ring: #0a84ff;
   --activity-bar: #242426;
   --activity-bar-foreground: #aeaeb2;
   --activity-bar-foreground-active: #f2f2f7;

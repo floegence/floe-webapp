@@ -107,7 +107,7 @@ export function Dialog(props: DialogProps) {
   const dialogPresence = createFloatingPresence({
     open: isMountedOpen,
     get exitDurationMs() {
-      return isBottomDrawer() ? 180 : 120;
+      return isBottomDrawer() ? 180 : 160;
     },
   });
   const isPresenceMounted = () =>

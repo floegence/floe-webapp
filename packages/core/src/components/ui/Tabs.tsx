@@ -513,7 +513,7 @@ export function Tabs(props: TabsProps) {
   // Styles for tab items
   const getTabStyles = (isCurrentActive: boolean, disabled?: boolean) => {
     const base =
-      'inline-flex items-center gap-1.5 font-medium transition-colors duration-150 whitespace-nowrap';
+      'inline-flex items-center gap-1.5 font-medium transition-colors duration-120 whitespace-nowrap';
     const cursor = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
 
     const activeIndicatorClass = (() => {
@@ -563,7 +563,7 @@ export function Tabs(props: TabsProps) {
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
             'w-6 h-6 rounded cursor-pointer',
-            'transition-all duration-150',
+            'transition-[color,background-color,opacity] duration-120',
             canScrollLeft()
               ? 'text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-100'
               : 'opacity-0 pointer-events-none',
@@ -658,7 +658,7 @@ export function Tabs(props: TabsProps) {
                       closeDangerHover()
                         ? 'hover:bg-error hover:text-error-foreground'
                         : 'hover:bg-muted/80 hover:text-foreground',
-                      'transition-colors duration-150',
+                      'transition-colors duration-120',
                       'ml-1.5',
                       local.slotClassNames?.closeButton
                     )}
@@ -686,7 +686,7 @@ export function Tabs(props: TabsProps) {
             'flex-shrink-0 flex items-center justify-center',
             'rounded hover:bg-muted/80 cursor-pointer',
             'text-muted-foreground hover:text-foreground',
-            'transition-colors duration-150',
+            'transition-colors duration-120',
             local.size === 'sm' ? 'w-6 h-6' : 'w-7 h-7',
             local.slotClassNames?.addButton
           )}
@@ -705,7 +705,7 @@ export function Tabs(props: TabsProps) {
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
             'w-6 h-6 rounded cursor-pointer',
-            'transition-all duration-150',
+            'transition-[color,background-color,opacity] duration-120',
             canScrollRight()
               ? 'text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-100'
               : 'opacity-0 pointer-events-none',

@@ -23,7 +23,7 @@ export function BottomBar(props: BottomBarProps) {
         'text-[10px] text-muted-foreground font-mono',
         props.class
       )}
-      style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
+      style={{ 'background-color': 'var(--activity-bar)', 'border-top-color': 'var(--bottom-bar-border)' }}
     >
       {props.children}
     </footer>

@@ -28,9 +28,6 @@ const snapshot = () =>
       height: r.height,
       padding: s.padding,
       border: s.borderWidth,
-      color: s.color,
-      background: s.backgroundColor,
-      shadow: s.boxShadow,
       transform: s.transform,
     };
   });
@@ -66,7 +63,7 @@ try {
       assert.deepEqual(
         before,
         await baseline.evaluate(snapshot),
-        `${entry}/${mode}: published standard controls stay visually compatible`
+        `${entry}/${mode}: published controls retain their geometry and native state`
       );
       // The mixed state must be exposed through the native property as well as
       // the ARIA state so assistive technology receives the same signal as the
@@ -106,7 +103,7 @@ try {
         hollowFaces.every(
           (face) =>
             face.background === 'rgba(0, 0, 0, 0)' &&
-            face.shadow === 'none' &&
+            (face.shadow === 'none' || face.shadow === 'rgba(0, 0, 0, 0) 0px 0px 0px 0px') &&
             face.border === '1px'
         ),
         `${mode}: unselected radios are hollow hairlines without blur`
@@ -145,8 +142,10 @@ try {
           .locator(`[data-floe-surface-part="${part}"]`)
           .evaluateAll((els) => els.map((el) => getComputedStyle(el).boxShadow));
         assert.ok(
-          shadows.some((s) => s !== 'none' && !s.startsWith('rgba(0, 0, 0, 0)')),
-          `${mode}: visible ${part} relief`
+          mode === 'dark'
+            ? shadows.every((s) => !s.includes('inset'))
+            : shadows.some((s) => s !== 'none' && !s.startsWith('rgba(0, 0, 0, 0)')),
+          `${mode}: ${part} follows the palette material`
         );
       }
       for (const part of ['switch-thumb', 'progress-fill']) {
@@ -154,7 +153,7 @@ try {
           .locator(`[data-floe-surface-part="${part}"][data-floe-surface="raised"]`)
           .evaluateAll((els) => els.map((el) => getComputedStyle(el).boxShadow));
         assert.ok(
-          shadows.length > 0 && shadows.every((shadow) => shadow === 'none'),
+          shadows.length > 0 && shadows.every((shadow) => (shadow === 'none' || shadow === 'rgba(0, 0, 0, 0) 0px 0px 0px 0px')),
           `${mode}: moving ${part} uses its fixed track for depth`
         );
       }
@@ -492,6 +491,8 @@ try {
           'solid',
           'high-contrast switch retains visible keyboard focus'
         );
+      } else if (theme.mode === 'dark') {
+        assert.ok(!styles.shadow.includes('inset'), `${theme.name}: no inset lighting`);
       } else assert.ok(styles.shadow.includes('inset'), `${theme.name}: recessed control`);
     }
     await palette.emulateMedia({ forcedColors: 'active' });

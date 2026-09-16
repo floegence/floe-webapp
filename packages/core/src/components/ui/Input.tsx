@@ -62,7 +62,7 @@ export function Input(props: InputProps) {
         aria-describedby={ariaDescribedBy()}
         class={cn(
           'w-full rounded border border-input bg-background shadow-sm',
-          'placeholder:text-muted-foreground/60',
+          'placeholder:text-muted-foreground',
           'transition-colors duration-100',
           'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
@@ -131,7 +131,7 @@ export function Textarea(props: TextareaProps) {
         aria-describedby={ariaDescribedBy()}
         class={cn(
           'w-full min-h-16 rounded border border-input bg-background p-2.5 text-xs shadow-sm',
-          'placeholder:text-muted-foreground/60',
+          'placeholder:text-muted-foreground',
           'transition-colors duration-100',
           'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
@@ -471,7 +471,7 @@ export function AffixInput(props: AffixInputProps) {
           aria-describedby={ariaDescribedBy()}
           class={cn(
             'flex-1 min-w-0 bg-transparent border-none',
-            'placeholder:text-muted-foreground/60',
+            'placeholder:text-muted-foreground',
             'outline-none focus:outline-none focus:ring-0',
             'disabled:cursor-not-allowed',
             config().text,

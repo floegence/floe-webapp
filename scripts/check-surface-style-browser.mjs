@@ -55,7 +55,7 @@ try {
           const snapshot = new Function(`return (${source})`)();
           return samples.map((selector) => {
             const result = snapshot(document.querySelector(selector));
-            delete result.transition;
+            for (const key of ['transition', 'color', 'topColor', 'bottomColor', 'shadow']) delete result[key];
             return { selector, ...result };
           });
         },
@@ -64,7 +64,7 @@ try {
     assert.deepEqual(
       await readStyles(page),
       await readStyles(baseline.page),
-      `${entry}: default geometry and style compatibility`
+      `${entry}: default geometry and focus compatibility`
     );
     assert.equal(await page.locator('.workbench-widget').count(), 2);
     await baseline.page.close();

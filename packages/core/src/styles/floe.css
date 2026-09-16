@@ -34,7 +34,7 @@
   --floe-space-6: 1.5rem;
   --floe-radius-control: 0.375rem;
   --floe-radius-group: 0.5rem;
-  --floe-radius-floating: 0.625rem;
+  --floe-radius-floating: 0.75rem;
 }
 
 /*
@@ -370,48 +370,20 @@
   }
 
   [data-floe-floating-window-surface='true'].floe-floating-window-motion {
-    /* Floating windows use an opaque Mica-like stack in every surface mode.
-     * Keeping this on the component boundary makes the default (standard)
-     * path match the selected material without changing other controls. */
-    background-color: var(--card);
-    border-color: color-mix(in srgb, var(--border) 78%, var(--background) 22%);
-    border-radius: 10px;
-    box-shadow:
-      0 12px 28px -8px color-mix(in srgb, var(--foreground) 18%, transparent),
-      0 3px 8px -2px color-mix(in srgb, var(--foreground) 12%, transparent),
-      inset 0 1px 0 rgb(255 255 255 / 45%);
-  }
-  [data-floe-floating-window-surface='true'] {
-    border-radius: 10px;
-  }
-
-  [data-floe-floating-window-surface='true'][data-floe-floating-window-state='active'] {
-    border-color: color-mix(in srgb, var(--border) 60%, var(--ring) 40%);
-  }
-
-  [data-floe-floating-window-surface='true'][data-floe-floating-window-state='inactive'] {
-    border-color: color-mix(in srgb, var(--border) 88%, var(--background) 12%);
+    background-color: var(--floe-window-background);
+    border-color: var(--floe-window-border);
+    border-radius: var(--floe-radius-floating);
+    box-shadow: var(--floe-window-shadow);
   }
 
   [data-floe-floating-window-titlebar='true'] {
-    background-color: color-mix(in srgb, var(--muted) 70%, var(--card) 30%);
-    border-bottom-color: color-mix(in srgb, var(--border) 70%, var(--background) 30%);
+    background-color: var(--floe-window-titlebar-background);
+    border-bottom-color: var(--floe-surface-divider);
     transition: none;
   }
 
-  :root.dark [data-floe-floating-window-surface='true'] {
-    box-shadow:
-      0 12px 28px -8px color-mix(in srgb, var(--foreground) 24%, transparent),
-      0 3px 8px -2px color-mix(in srgb, var(--foreground) 18%, transparent),
-      inset 0 1px 0 rgb(255 255 255 / 8%);
-  }
-
   [data-floe-floating-window-surface='true'][data-floe-floating-window-state='active'] [data-floe-floating-window-titlebar='true'] {
-    background-color: color-mix(in srgb, var(--accent) 24%, var(--muted) 76%);
-  }
-
-  [data-floe-floating-window-surface='true'][data-floe-floating-window-state='inactive'] [data-floe-floating-window-titlebar='true'] {
-    background-color: color-mix(in srgb, var(--muted) 56%, var(--card) 44%);
+    background-color: color-mix(in srgb, var(--accent) 24%, var(--floe-window-titlebar-background));
   }
 
   [data-floe-hot-interaction~='resize'] [data-floe-geometry-surface='shell-sidebar'],
@@ -443,8 +415,8 @@
 /* Animation utilities */
 @layer utilities {
   .floe-floating-presence {
-    --floe-floating-enter-duration: 140ms;
-    --floe-floating-exit-duration: 110ms;
+    --floe-floating-enter-duration: 220ms;
+    --floe-floating-exit-duration: 160ms;
     --floe-floating-presence-x: 0;
     --floe-floating-presence-y: 0;
     --floe-floating-presence-scale: 1;
@@ -452,14 +424,14 @@
     --floe-floating-enter-y: 0;
     --floe-floating-exit-x: 0;
     --floe-floating-exit-y: 0;
-    --floe-floating-enter-scale: 0.98;
-    --floe-floating-exit-scale: 0.985;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
     opacity: 1;
     transform: translate(var(--floe-floating-presence-x), var(--floe-floating-presence-y)) scale(var(--floe-floating-presence-scale));
     transform-origin: var(--floe-floating-origin, center);
     transition:
       opacity var(--floe-floating-enter-duration) ease-out,
-      transform var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.75, 0.25, 1);
     will-change: opacity, transform;
   }
 
@@ -493,8 +465,8 @@
   .floe-floating-dialog-panel {
     --floe-floating-enter-y: 0.25rem;
     --floe-floating-exit-y: 0.125rem;
-    --floe-floating-enter-scale: 0.975;
-    --floe-floating-exit-scale: 0.985;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
   }
 
   .floe-bottom-drawer-overlay {
@@ -529,12 +501,12 @@
   }
 
   .floe-floating-menu {
-    --floe-floating-enter-duration: 120ms;
-    --floe-floating-exit-duration: 100ms;
+    --floe-floating-enter-duration: 220ms;
+    --floe-floating-exit-duration: 160ms;
     --floe-floating-enter-y: -0.25rem;
     --floe-floating-exit-y: -0.125rem;
-    --floe-floating-enter-scale: 0.985;
-    --floe-floating-exit-scale: 0.992;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
     --floe-floating-origin: top;
   }
 
@@ -549,15 +521,17 @@
     --floe-floating-exit-duration: 70ms;
     --floe-floating-enter-y: -0.125rem;
     --floe-floating-exit-y: -0.0625rem;
-    --floe-floating-enter-scale: 0.98;
-    --floe-floating-exit-scale: 0.99;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
   }
 
   .floe-floating-window-motion {
-    --floe-floating-enter-duration: 150ms;
-    --floe-floating-exit-duration: 120ms;
-    --floe-floating-enter-scale: 0.985;
-    --floe-floating-exit-scale: 0.985;
+    --floe-floating-enter-y: 4px;
+    --floe-floating-exit-y: 2px;
+    --floe-floating-enter-duration: 220ms;
+    --floe-floating-exit-duration: 160ms;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
   }
 
   .animate-in {
@@ -753,8 +727,6 @@
     height 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
     border-radius 200ms ease,
     border-color 180ms ease,
-    background-color 200ms ease,
-    box-shadow 200ms ease,
     opacity 120ms ease;
 }
 

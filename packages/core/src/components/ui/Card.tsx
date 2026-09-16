@@ -97,10 +97,10 @@ export function Card(props: CardProps) {
     }
   });
 
-  const baseStyles = 'rounded-lg duration-180 ease-out';
+  const baseStyles = 'rounded-[10px] duration-180 ease-out';
   const transitions = () => local.enableTilt || variant() === 'hover-lift'
     ? 'transition-[color,background-color,border-color,box-shadow,transform]'
-    : 'transition-[color,background-color,border-color,box-shadow]';
+    : 'transition-[color,background-color,border-color]';
 
   const variantStyles: Record<CardVariant, string> = {
     default: 'bg-card border border-border shadow-sm hover:shadow-sm',

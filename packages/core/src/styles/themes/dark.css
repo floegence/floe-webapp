@@ -1,127 +1,73 @@
-/* Dark theme - Blue-black ink */
+/* Generated from classicSemanticTokens.ts. Do not edit by hand. */
 .dark {
   color-scheme: dark;
-
-  /* Independent non-modal window material. */
-  --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
+  --floe-window-background: var(--popover);
   --floe-window-foreground: var(--foreground);
   --floe-window-muted-foreground: color-mix(in srgb, var(--muted-foreground) 72%, var(--foreground));
-  --floe-window-titlebar-background: color-mix(in srgb, var(--floe-window-background) 95%, white);
+  --floe-window-titlebar-background: var(--popover);
   --floe-window-border: color-mix(in srgb, var(--floe-window-background) 88%, var(--foreground));
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
-
-
-  /* Base - Blue-black ink */
-  --background: hsl(222 30% 8%);
-  --foreground: hsl(210 20% 98%);
-
-  /* Primary - Light text */
-  --primary: hsl(210 20% 98%);
-  --primary-foreground: hsl(222 30% 10%);
-
-  /* Secondary */
-  --secondary: hsl(220 18% 15%);
-  --secondary-foreground: hsl(210 20% 98%);
-
-  /* Muted — hover/inactive fill, one step above card */
-  --muted: hsl(220 16% 16%);
-  --muted-foreground: hsl(215 16% 56%);
-
-  /* Accent — selected/active fill, one step above muted */
-  --accent: hsl(220 14% 19%);
-  --accent-foreground: hsl(210 20% 98%);
-
-  /* Border */
-  --border: hsl(220 16% 20%);
-  --input: hsl(220 18% 15%);
-  --ring: hsl(215 25% 70%);
-  /* chrome-border: hairline seams between shell chrome panels */
-  --chrome-border: hsl(220 16% 13%);
-  /* glow: dedicated accent color for glow/bloom effects.
-     --primary in dark mode is near-white (hsl 210 20% 98%), which creates
-     an overpowering white bloom when used as a glow source. This token
-     maps to a specific blue that reads as luminous without burning. */
-  --glow: hsl(217 65% 52%);
+  --background: #202223;
+  --foreground: #e5e6e2;
+  --primary: #bccbb8;
+  --primary-foreground: #20291f;
+  --secondary: #303435;
+  --secondary-foreground: #b8bdb8;
+  --muted: #343738;
+  --muted-foreground: #9ba29e;
+  --accent: #353a38;
+  --accent-foreground: #e5e6e2;
+  --border: #3e4142;
+  --input: #6d7571;
+  --ring: #acbdb3;
+  --chrome-border: #292c2b;
   --top-bar-border: var(--chrome-border);
   --activity-bar-border: var(--chrome-border);
   --bottom-bar-border: var(--chrome-border);
   --terminal-panel-border: var(--chrome-border);
-
-  /* Card — one clear step above sidebar */
-  --card: hsl(220 20% 13%);
-  --card-foreground: hsl(210 20% 98%);
-
-  /* Popover — floating layer, one step above card */
-  --popover: hsl(220 18% 15%);
-  --popover-foreground: hsl(210 20% 98%);
-
-  /* Status colors */
-  --success: oklch(0.72 0.19 150);
-  --success-foreground: hsl(222 30% 10%);
-  --warning: oklch(0.82 0.16 80);
-  --warning-foreground: hsl(222 30% 10%);
+  --card: #282b2c;
+  --card-foreground: #e5e6e2;
+  --popover: #2b2e2f;
+  --popover-foreground: #e5e6e2;
+  --success: #a1b69e;
+  --success-foreground: #20291f;
+  --warning: #c8af84;
+  --warning-foreground: #20291f;
   --error: oklch(0.7 0.22 25);
-  --error-foreground: hsl(0 0% 100%);
+  --error-foreground: #202223;
   --info: oklch(0.7 0.15 250);
-  --info-foreground: hsl(0 0% 100%);
-
-  /* Highlight block accents - deeper than shared status tokens */
+  --info-foreground: #202223;
   --highlight-block-info-accent: oklch(0.62 0.12 240);
   --highlight-block-warning-accent: oklch(0.7 0.14 65);
   --highlight-block-success-accent: oklch(0.62 0.12 155);
   --highlight-block-error-accent: oklch(0.6 0.14 25);
   --highlight-block-note-accent: oklch(0.62 0.14 285);
   --highlight-block-tip-accent: oklch(0.6 0.1 175);
-
-  /* Sidebar — distinct structural plane between background and card */
-  --sidebar: hsl(221 22% 11%);
-  --sidebar-foreground: hsl(210 20% 98%);
-  --sidebar-primary: hsl(217 80% 55%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(220 14% 19%);
-  --sidebar-accent-foreground: hsl(210 20% 98%);
-  --sidebar-border: hsl(220 16% 13%);
-  --sidebar-ring: hsl(217 80% 55%);
-
-  /* Activity bar — deepest surface, anchors the left edge of the layout */
-  --activity-bar: hsl(222 28% 7%);
-  --activity-bar-foreground: hsl(215 16% 50%);
-  --activity-bar-foreground-active: hsl(210 20% 96%);
-  --activity-bar-badge: hsl(217 80% 55%);
-  --activity-bar-badge-foreground: hsl(0 0% 100%);
-
-  /* Terminal */
+  --sidebar: #1b1d1e;
+  --sidebar-foreground: #e5e6e2;
+  --sidebar-primary: #bccbb8;
+  --sidebar-primary-foreground: #20291f;
+  --sidebar-accent: #353a38;
+  --sidebar-accent-foreground: #e5e6e2;
+  --sidebar-border: #292c2b;
+  --sidebar-ring: #acbdb3;
+  --activity-bar: #17191a;
+  --activity-bar-foreground: #9ba29e;
+  --activity-bar-foreground-active: #e5e6e2;
+  --activity-bar-badge: #bccbb8;
+  --activity-bar-badge-foreground: #20291f;
   --terminal-background: hsl(222 32% 7%);
   --terminal-foreground: hsl(210 15% 92%);
-
-  /* Chart colors */
   --chart-1: hsl(210 20% 98%);
   --chart-2: hsl(215 20% 60%);
   --chart-3: oklch(0.7 0.15 250);
   --chart-4: oklch(0.72 0.19 150);
   --chart-5: oklch(0.82 0.16 80);
-
-  /* ============================================
-     Selection Colors
-     ============================================
-     Design notes:
-     1. Default selection: blue background + white text
-     2. Selection on primary backgrounds: must contrast with the primary color
-        - In dark theme, --primary is near-white, so we use a darker selection (deep blue)
-     3. Code selection: fixed bright blue, since code blocks always use a dark background
-  */
-
-  /* Default selection */
   --selection-bg: hsl(215 70% 50%);
   --selection-fg: hsl(0 0% 100%);
-
-  /* Selection on primary backgrounds
-     In dark theme, primary is near-white (hsl(210 20% 98%)),
-     so we use a darker selection to keep contrast. */
   --selection-on-primary-bg: hsl(215 80% 35%);
   --selection-on-primary-fg: hsl(0 0% 100%);
-
-  /* Code-block selection (code blocks use a dark background: #0d1117) */
   --selection-code-bg: hsl(212 100% 67%);
   --selection-code-fg: hsl(220 20% 8%);
+  --glow: hsl(217 65% 52%);
 }

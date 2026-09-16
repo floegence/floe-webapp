@@ -29,7 +29,7 @@ export function TopBar(props: TopBarProps) {
         'shrink-0 bg-background border-b border-border safe-top safe-left safe-right',
         props.class
       )}
-      style={{ 'border-bottom-color': 'var(--top-bar-border)' }}
+      style={{ 'background-color': 'var(--activity-bar)', 'border-bottom-color': 'var(--top-bar-border)' }}
       aria-label={props.ariaLabel}
     >
       <div class="h-10 flex items-center gap-2 px-3">

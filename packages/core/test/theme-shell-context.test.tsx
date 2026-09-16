@@ -104,6 +104,33 @@ describe('shell theme context', () => {
     expect(document.documentElement.hasAttribute('data-floe-surface-style')).toBe(false);
   });
 
+  it('finishes palette transitions without interrupting functional motion or remounting drafts', async () => {
+    const color = { transitionProperty: 'background-color', finish: vi.fn() };
+    const travel = { transitionProperty: 'transform', finish: vi.fn() };
+    const geometry = { transitionProperty: 'width', finish: vi.fn() };
+    const root = document.documentElement;
+    Object.defineProperty(root, 'getAnimations', {
+      configurable: true,
+      value: () => [color, travel, geometry],
+    });
+    try {
+      const { service, host } = mountSurface();
+      const input = host.querySelector('input')!;
+      input.focus();
+      input.setSelectionRange(1, 3);
+      service.selectShellTheme('dark', 'classic-dark');
+      await Promise.resolve();
+      expect(color.finish).toHaveBeenCalled();
+      expect(travel.finish).not.toHaveBeenCalled();
+      expect(geometry.finish).not.toHaveBeenCalled();
+      expect(host.querySelector('input')).toBe(input);
+      expect(document.activeElement).toBe(input);
+      expect(input.selectionStart).toBe(1);
+    } finally {
+      Reflect.deleteProperty(root, 'getAnimations');
+    }
+  });
+
   it.each([undefined, null, 'unknown', 1, { style: 'soft-neumorphic' }])(
     'falls back to the configured default for invalid stored material %j',
     (stored) => {
