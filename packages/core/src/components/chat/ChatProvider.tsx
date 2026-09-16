@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../utils/secureRandom';
 import {
   createContext,
   useContext,
@@ -341,7 +342,7 @@ export const ChatProvider: ParentComponent<ChatProviderProps> = (props) => {
   const sendMessage = async (content: string, attachments: Attachment[] = []) => {
     // Create user message
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: secureRandomUUID(),
       role: 'user',
       blocks: createUserMessageBlocks(content, attachments),
       status: 'sending',

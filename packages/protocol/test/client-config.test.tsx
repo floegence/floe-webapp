@@ -17,6 +17,7 @@ const controller = {
 vi.mock('@floegence/flowersec-core/browser', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@floegence/flowersec-core/browser')>()),
   createConnectionController: vi.fn(() => controller),
+  createHTTPDirectConnectionControllerV1: vi.fn(() => controller),
   createPrivateLoopbackConnectionControllerV1: vi.fn(() => controller),
 }));
 
@@ -92,6 +93,58 @@ describe('ProtocolProvider connection controller contract', () => {
         .mocked(browser.createConnectionController)
         .mock.calls.some(([source]) => source === config.source)
     ).toBe(false);
+    dispose();
+  });
+
+  it('uses the explicit HTTP Direct Controller without changing Protocol ownership', async () => {
+    const browser = await import('@floegence/flowersec-core/browser');
+    const config: ConnectConfig = {
+      source: {
+        acquire: async () => ({ kind: 'failure', code: 'test', disposition: { kind: 'terminal' } }),
+      } as never,
+      httpDirect: {
+        origin: 'http://192.168.1.20:23998',
+        maximumAttempts: 1,
+        connectTimeoutMs: 2500,
+      },
+    };
+    let protocol!: ReturnType<typeof useProtocol>;
+    let pending!: Promise<void>;
+    function Harness() {
+      protocol = useProtocol();
+      pending = protocol.connect(config);
+      return null;
+    }
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          return createComponent(Harness, {});
+        },
+      });
+    });
+    await pending;
+    expect(browser.createHTTPDirectConnectionControllerV1).toHaveBeenCalledWith(
+      config.source,
+      config.httpDirect
+    );
+    expect(
+      vi
+        .mocked(browser.createConnectionController)
+        .mock.calls.some(([source]) => source === config.source)
+    ).toBe(false);
+    const replacement = {
+      ...config,
+      httpDirect: { ...config.httpDirect, origin: 'http://192.168.1.21:23998' },
+    };
+    await expect(protocol.connect(replacement)).rejects.toThrow(/replaceConnection/u);
+    await protocol.replaceConnection(replacement);
+    expect(browser.createHTTPDirectConnectionControllerV1).toHaveBeenLastCalledWith(
+      config.source,
+      replacement.httpDirect
+    );
     dispose();
   });
 });

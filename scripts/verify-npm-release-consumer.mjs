@@ -68,7 +68,7 @@ execFileSync(
     [
       `import.meta.resolve('${packageNames[0]}')`,
       `const boot = await import('${packageNames[1]}')`,
-      `for (const name of ['createPrivateLoopbackControlplaneArtifactSource', 'createPrivateLoopbackDirectConnectionConfig']) if (typeof boot[name] !== 'function') throw new Error('missing Boot private-loopback export: ' + name)`,
+      `for (const name of ['createPrivateLoopbackControlplaneArtifactSource', 'createPrivateLoopbackDirectConnectionConfig', 'createHTTPDirectControlplaneArtifactSource', 'createHTTPDirectConnectionConfig']) if (typeof boot[name] !== 'function') throw new Error('missing Boot connection export: ' + name)`,
       `await import('${packageNames[2]}')`,
     ].join(';'),
   ],
@@ -115,8 +115,8 @@ walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1)
   throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '5.1.0')
-  throw new Error(`expected Flowersec 5.1.0, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '5.2.0')
+  throw new Error(`expected Flowersec 5.2.0, found ${flowersecManifest.version}`);
 console.log(
   `verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`
 );

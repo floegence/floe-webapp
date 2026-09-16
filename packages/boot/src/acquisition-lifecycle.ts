@@ -1,6 +1,6 @@
-import type { ArtifactSource, ConnectionSnapshot } from '@floegence/flowersec-core';
-import type { PrivateLoopbackArtifactSourceV1 } from '@floegence/flowersec-core/browser';
+import type { ConnectionSnapshot } from '@floegence/flowersec-core';
 import {
+  type AcquisitionSource,
   AcquisitionError,
   clearAcquisitionSource,
   ConnectedAcquisition,
@@ -23,7 +23,7 @@ export type AcquisitionConnectionLifecycleOptions = Readonly<{
 }>;
 
 export function createAcquisitionConnectionLifecycle(
-  source: ArtifactSource | PrivateLoopbackArtifactSourceV1,
+  source: AcquisitionSource,
   options: AcquisitionConnectionLifecycleOptions = {}
 ): AcquisitionConnectionLifecycle {
   let disposed = false;

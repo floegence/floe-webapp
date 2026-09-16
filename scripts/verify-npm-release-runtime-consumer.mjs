@@ -5,6 +5,8 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { isAbsolute, join } from 'node:path';
 import {
+  createHTTPDirectConnectionConfig,
+  createHTTPDirectControlplaneArtifactSource,
   createArtifactDirectConnectionConfig,
   createControlplaneArtifactSource,
 } from '@floegence/floe-webapp-boot';
@@ -111,6 +113,88 @@ try {
   globalThis.WebSocket = previousWebSocket;
 }
 
+await verifyHTTPConsumers();
+
+async function verifyHTTPConsumers() {
+  const peer = startSmokePeer(smokePeerDirectory, true);
+  const clients = [];
+  const previousCrypto = globalThis.crypto;
+  const spent = new Set();
+  try {
+    const { http_origin: origin } = await waitForSmokePeerReady(peer);
+    globalThis.WebSocket = class HTTPConsumerWebSocket extends NativeWebSocket {
+      constructor(url, protocol) {
+        super(url, protocol, { headers: { Origin: origin } });
+      }
+    };
+    Object.defineProperty(globalThis, 'crypto', {
+      configurable: true,
+      value: { getRandomValues: previousCrypto.getRandomValues.bind(previousCrypto) },
+    });
+    for (let index = 0; index < 2; index += 1) {
+      const client = {};
+      createRoot((dispose) => {
+        client.dispose = dispose;
+        createComponent(ProtocolProvider, {
+          contract: { id: 'http-smoke', createRpc: () => ({}) },
+          get children() {
+            return createComponent(() => {
+              client.protocol = useProtocol();
+              return null;
+            }, {});
+          },
+        });
+      });
+      clients.push(client);
+      const source = createHTTPDirectControlplaneArtifactSource({
+        baseUrl: origin,
+        endpointId: 'http-smoke',
+        validateSpendBinding: (binding) => {
+          if (
+            binding.appOrigin !== origin ||
+            binding.runtimeOrigin !== origin ||
+            binding.launcherOrigin !== origin
+          )
+            throw new Error('HTTP binding mismatch');
+        },
+        commitSpend: async (request) => {
+          if (spent.has(request.receipt)) throw new Error('HTTP receipt reused');
+          spent.add(request.receipt);
+        },
+      });
+      client.connection = createHTTPDirectConnectionConfig({
+        source,
+        httpDirect: { origin, maximumAttempts: 1, connectTimeoutMs: 5000 },
+      });
+    }
+    await Promise.all(clients.map((client) => client.protocol.connect(client.connection)));
+    if (spent.size !== 2) throw new Error('HTTP clients did not spend independently');
+    for (const client of clients) {
+      const result = await client.protocol.session().rpc.call(7001, {}, (payload) => payload);
+      if (!result.ok || result.payload.server !== 'http-direct') throw new Error('HTTP RPC failed');
+    }
+    await clients[0].protocol.session().close();
+    clients[0].protocol.disconnect();
+    const result = await clients[1].protocol.session().rpc.call(7001, {}, (payload) => payload);
+    if (!result.ok || result.payload.server !== 'http-direct')
+      throw new Error('Closing first client disrupted second');
+    await clients[1].protocol.session().close();
+    clients[1].protocol.disconnect();
+    await waitForSmokePeerExit(peer);
+    console.log(
+      'verified two independent Boot -> Protocol HTTP clients without SubtleCrypto or randomUUID'
+    );
+  } finally {
+    for (const client of clients) {
+      client.protocol.disconnect();
+      client.dispose();
+    }
+    Object.defineProperty(globalThis, 'crypto', { configurable: true, value: previousCrypto });
+    globalThis.WebSocket = previousWebSocket;
+    await stopSmokePeer(peer);
+  }
+}
+
 function resolveSmokePeerDirectory() {
   const configured = process.env.FLOE_FLOWERSEC_SMOKE_PEER_DIR;
   if (configured === undefined || !isAbsolute(configured)) {
@@ -126,8 +210,8 @@ function resolveSmokePeerDirectory() {
   if (existsSync(join(directory, 'go.work')))
     throw new Error('Flowersec smoke peer must not use go.work');
   const module = readFileSync(join(directory, 'go.mod'), 'utf8');
-  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.1\.0$/mu.test(module)) {
-    throw new Error('Flowersec smoke peer must pin flowersec-go/v5 v5.1.0');
+  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.2\.0$/mu.test(module)) {
+    throw new Error('Flowersec smoke peer must pin flowersec-go/v5 v5.2.0');
   }
   if (/^replace\s/mu.test(module) || /(?:^|\s)\.\.\//mu.test(module)) {
     throw new Error('Flowersec smoke peer must not use local dependency shortcuts');
@@ -135,10 +219,10 @@ function resolveSmokePeerDirectory() {
   return directory;
 }
 
-function startSmokePeer(directory) {
+function startSmokePeer(directory, http = false) {
   const child = spawn('go', ['run', '.'], {
     cwd: directory,
-    env: { ...process.env, GOWORK: 'off' },
+    env: { ...process.env, GOWORK: 'off', FLOE_SMOKE_HTTP: http ? '1' : '0' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let stderr = '';
@@ -182,6 +266,16 @@ async function waitForSmokePeerReady(peer) {
         ready = JSON.parse(output.slice(0, newline));
       } catch {
         return fail('Flowersec smoke peer returned invalid ready JSON');
+      }
+      if (
+        ready !== null &&
+        typeof ready === 'object' &&
+        typeof ready.http_origin === 'string' &&
+        /^http:\/\/127\.0\.0\.1:[0-9]+$/u.test(ready.http_origin)
+      ) {
+        cleanup();
+        resolve(ready);
+        return;
       }
       if (
         ready === null ||

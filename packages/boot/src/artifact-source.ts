@@ -5,11 +5,14 @@ import type {
   RetryDisposition,
 } from '@floegence/flowersec-core';
 import type {
+  HTTPDirectArtifactLeaseV1,
+  HTTPDirectArtifactSourceV1,
   PrivateLoopbackArtifactLeaseV1,
   PrivateLoopbackArtifactSourceV1,
 } from '@floegence/flowersec-core/browser';
 import {
   AcquisitionError,
+  materializeHTTPDirectAcquisitionForSource,
   materializeAcquisitionForSource,
   materializeNativeIsolatedAcquisitionForSource,
   type NativeIsolatedAcquisitionContext,
@@ -35,6 +38,11 @@ export type ControlplaneArtifactSourceOptions = Readonly<{
 }>;
 
 export type PrivateLoopbackControlplaneArtifactSourceOptions = Omit<
+  ControlplaneArtifactSourceOptions,
+  'allowLoopbackHTTP' | 'entryTicket'
+>;
+
+export type HTTPDirectControlplaneArtifactSourceOptions = Omit<
   ControlplaneArtifactSourceOptions,
   'allowLoopbackHTTP' | 'entryTicket'
 >;
@@ -168,6 +176,31 @@ export function createPrivateLoopbackControlplaneArtifactSource(
   return source;
 }
 
+/** Explicit HTTP acquisition; the HTTP Direct controller validates the session origin.
+ * This never changes the transport policy of the TLS or private-loopback sources.
+ */
+export function createHTTPDirectControlplaneArtifactSource(
+  options: HTTPDirectControlplaneArtifactSourceOptions
+): HTTPDirectArtifactSourceV1 {
+  let baseURL: URL;
+  try {
+    baseURL = new URL(options.baseUrl);
+  } catch {
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
+  }
+  if (options.baseUrl !== baseURL.origin || baseURL.protocol !== 'http:') {
+    throw new ControlplaneRequestError(0, 'transport_policy_denied');
+  }
+  const source = createControlplaneSource<HTTPDirectArtifactLeaseV1>(
+    options,
+    materializeHTTPDirectAcquisitionForSource,
+    'trusted',
+    baseURL
+  );
+  registerAcquisitionSource(source);
+  return source;
+}
+
 type ArtifactSourceResultFor<Lease> =
   | Readonly<{
       kind: 'lease';
@@ -194,14 +227,14 @@ function createControlplaneSource<Lease>(
       expectedConsumer: 'trusted' | 'isolated';
     }>
   ) => Promise<Lease>,
-  expectedConsumer: 'trusted' | 'isolated' = 'trusted'
+  expectedConsumer: 'trusted' | 'isolated' = 'trusted',
+  baseUrl: URL = resolveBaseUrl(options.baseUrl, options.allowLoopbackHTTP === true)
 ): ArtifactSourceFor<Lease> {
   if (typeof options.commitSpend !== 'function') throw new TypeError('commitSpend is required');
   if (typeof options.validateSpendBinding !== 'function')
     throw new TypeError('validateSpendBinding is required');
   const fetchImpl = options.fetch ?? globalThis.fetch;
   if (typeof fetchImpl !== 'function') throw new TypeError('fetch is required');
-  const baseUrl = resolveBaseUrl(options.baseUrl, options.allowLoopbackHTTP === true);
   const endpoint = artifactEndpoint(baseUrl, options.entryTicket);
 
   const source: ArtifactSourceFor<Lease> = {

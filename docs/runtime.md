@@ -1,6 +1,6 @@
 # Runtime Bootstrap
 
-Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.1.0` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
+Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.2.0` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
 
 ```ts
 import {
@@ -55,3 +55,30 @@ Each acquisition uses a fresh entry ticket supplied by the authenticated product
 fetch adapter. Node TLS and Origin admission remain explicit connector options.
 The existing trusted source rejects isolated acquisitions and browser one-shot
 handoffs retain their location-clearing and one-consumption requirements.
+
+## Explicit HTTP Direct connections
+
+`createHTTPDirectControlplaneArtifactSource()` accepts an explicitly chosen canonical
+HTTP origin and acquires only `flowersec-http-direct/1` leases. Pair it with
+`createHTTPDirectConnectionConfig({ source, httpDirect: { origin } })`. Flowersec's
+HTTP Direct controller owns endpoint validation and same-origin WS admission;
+public HTTP is never inferred from a failed TLS connection or private bridge.
+The host authenticates each client and supplies its own durable spend callback.
+Separate clients use independent sources, controllers, leases, and sessions.
+Closing one controller does not close another client's session or stop the server.
+
+All three source profiles share digest validation, spend binding, retirement,
+and acquisition lifecycle ownership. SHA-256 uses the published `@noble/hashes`
+implementation on HTTP and HTTPS, so integrity validation does not depend on
+SubtleCrypto. Secure random attempt identifiers still require `getRandomValues`;
+missing entropy fails explicitly. HTTP does not provide transport encryption.
+Capabilities that the browser restricts to secure contexts remain restricted.
+
+Core exports `secureRandomUUID()` for client identifiers. Chat attachments,
+Markdown rendering tasks, and Workbench identifiers use this CSPRNG-backed UUIDv4
+helper on either protocol, without weak random fallbacks.
+
+The clean release consumer verifies both TLS and HTTP against the published Go
+peer. The HTTP case runs two parallel Boot/Protocol clients with SubtleCrypto and
+randomUUID absent, verifies RPC on both, closes the first, then verifies RPC on
+the second before closing it. Page acquisition and WS share the peer's one port.

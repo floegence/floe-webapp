@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../../utils/secureRandom';
 import { createSignal } from 'solid-js';
 import type { ShikiWorkerResponse } from '../types';
 
@@ -100,7 +101,7 @@ export async function highlightCode(
 
   if (hasWorker && shikiWorker) {
     return new Promise<string>((resolve, reject) => {
-      const id = crypto.randomUUID();
+      const id = secureRandomUUID();
 
       pendingRequests.set(id, {
         resolve: (html) => {

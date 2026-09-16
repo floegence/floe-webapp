@@ -14,7 +14,7 @@ export default defineConfig({
       fileName: (_format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
-      external: [/^@floegence\/flowersec-core(?:\/.*)?$/],
+      external: [/^@noble\/hashes(?:\/.*)?$/, /^@floegence\/flowersec-core(?:\/.*)?$/],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',

@@ -5,6 +5,7 @@ export { getSessionStorage, removeSessionStorage, setSessionStorage } from './st
 export type { ArtifactSource, ArtifactSourceResult } from '@floegence/flowersec-core';
 export {
   createControlplaneArtifactSource,
+  createHTTPDirectControlplaneArtifactSource,
   createIsolatedControlplaneArtifactSource,
   createPrivateLoopbackControlplaneArtifactSource,
   ControlplaneRequestError,
@@ -13,6 +14,7 @@ export { classifyControlplaneFailure } from './artifact-source';
 export type {
   ClassifiedControlplaneFailure,
   ControlplaneArtifactSourceOptions,
+  HTTPDirectControlplaneArtifactSourceOptions,
   ControlplaneFailureInput,
   PrivateLoopbackControlplaneArtifactSourceOptions,
 } from './artifact-source';
@@ -23,6 +25,7 @@ export {
   ConnectedAcquisition,
   IsolatedOneShotAcquisition,
   materializePrivateLoopbackAcquisitionForSource,
+  materializeHTTPDirectAcquisitionForSource,
   materializeIsolatedOneShot,
   synchronizeAcquisitionSourceSnapshot,
 } from './acquisition';
@@ -45,6 +48,7 @@ export type {
 } from './acquisition-lifecycle';
 export type {
   DirectArtifactConnectionOptions,
+  HTTPDirectConnectionOptions,
   FlowersecConnectionConfig,
   PrivateLoopbackDirectConnectionOptions,
   ProxyRuntimeTunnelConnectionOptions,
@@ -52,6 +56,7 @@ export type {
 } from './connection';
 export {
   createArtifactDirectConnectionConfig,
+  createHTTPDirectConnectionConfig,
   createArtifactTunnelConnectionConfig,
   createPrivateLoopbackDirectConnectionConfig,
   createProxyRuntimeTunnelConnectionConfig,

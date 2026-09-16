@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../../utils/secureRandom';
 import { createSignal } from 'solid-js';
 import type { Attachment } from '../types';
 
@@ -66,7 +67,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 
       const isImage = file.type.startsWith('image/');
       const attachment: Attachment = {
-        id: crypto.randomUUID(),
+        id: secureRandomUUID(),
         file,
         type: isImage ? 'image' : 'file',
         preview: isImage ? URL.createObjectURL(file) : undefined,

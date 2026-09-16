@@ -1,3 +1,4 @@
+import { sha256 } from '@noble/hashes/sha2.js';
 import {
   createArtifactLease,
   parseArtifact,
@@ -8,6 +9,8 @@ import {
   type Session,
 } from '@floegence/flowersec-core';
 import type {
+  HTTPDirectArtifactLeaseV1,
+  HTTPDirectArtifactSourceV1,
   PrivateLoopbackArtifactLeaseV1,
   PrivateLoopbackArtifactSourceV1,
   SessionOptions,
@@ -119,8 +122,11 @@ export class IsolatedOneShotAcquisition {
   }
 }
 
-type AcquisitionLease = ArtifactLease | PrivateLoopbackArtifactLeaseV1;
-type AcquisitionSource = ArtifactSource | PrivateLoopbackArtifactSourceV1;
+type AcquisitionLease = ArtifactLease | PrivateLoopbackArtifactLeaseV1 | HTTPDirectArtifactLeaseV1;
+export type AcquisitionSource =
+  | ArtifactSource
+  | PrivateLoopbackArtifactSourceV1
+  | HTTPDirectArtifactSourceV1;
 
 type PendingAcquisition<Lease extends AcquisitionLease = AcquisitionLease> = {
   readonly lease: Lease;
@@ -176,20 +182,7 @@ export async function materializeAcquisitionForSource(
   value: unknown,
   options: MaterializeOptions
 ): Promise<ArtifactLease> {
-  const state = acquisitionSources.get(source);
-  if (state === undefined) throw new AcquisitionError('invalid_acquisition_source');
-  const validated = await validateAcquisitionEnvelope(value, options, parseArtifact);
-  return materializeLease(
-    validated,
-    createArtifactLease,
-    options.commitSpend,
-    (pending) => {
-      state.pending.push(pending);
-    },
-    (pending) => {
-      state.pending = state.pending.filter((candidate) => candidate !== pending);
-    }
-  );
+  return materializeSourceLease(source, value, options, parseArtifact, createArtifactLease);
 }
 
 export async function materializePrivateLoopbackAcquisitionForSource(
@@ -197,17 +190,44 @@ export async function materializePrivateLoopbackAcquisitionForSource(
   value: unknown,
   options: MaterializeOptions
 ): Promise<PrivateLoopbackArtifactLeaseV1> {
-  const state = acquisitionSources.get(source);
-  if (state === undefined) throw new AcquisitionError('invalid_acquisition_source');
   const runtime = await import('@floegence/flowersec-core/browser');
-  const validated = await validateAcquisitionEnvelope(
+  return materializeSourceLease(
+    source,
     value,
     options,
-    runtime.parsePrivateLoopbackArtifactV1
+    runtime.parsePrivateLoopbackArtifactV1,
+    runtime.createPrivateLoopbackArtifactLeaseV1
   );
+}
+
+export async function materializeHTTPDirectAcquisitionForSource(
+  source: HTTPDirectArtifactSourceV1,
+  value: unknown,
+  options: MaterializeOptions
+): Promise<HTTPDirectArtifactLeaseV1> {
+  const runtime = await import('@floegence/flowersec-core/browser');
+  return materializeSourceLease(
+    source,
+    value,
+    options,
+    runtime.parseHTTPDirectArtifactV1,
+    runtime.createHTTPDirectArtifactLeaseV1
+  );
+}
+
+async function materializeSourceLease<Artifact, Lease extends AcquisitionLease>(
+  source: AcquisitionSource,
+  value: unknown,
+  options: MaterializeOptions,
+  parse: (input: string | Uint8Array) => Artifact,
+  createLease: (artifact: Artifact, commitSpend: (signal?: AbortSignal) => Promise<void>) => Lease
+): Promise<Lease> {
+  const state = acquisitionSources.get(source);
+  if (state === undefined) throw new AcquisitionError('invalid_acquisition_source');
+  const validated = await validateAcquisitionEnvelope(value, options, parse);
   return materializeLease(
     validated,
-    runtime.createPrivateLoopbackArtifactLeaseV1,
+    createLease,
     options.commitSpend,
     (pending) => {
       state.pending.push(pending);
@@ -814,17 +834,6 @@ async function verifyDigest(bytes: Uint8Array, expected: string, code: string): 
 
 async function sha256Base64Url(bytes: Uint8Array): Promise<string> {
   return encodeBase64Url(await sha256(bytes));
-}
-
-async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
-  if (globalThis.crypto?.subtle === undefined)
-    throw new AcquisitionError('acquisition_crypto_unavailable');
-  const input = bytes.buffer.slice(
-    bytes.byteOffset,
-    bytes.byteOffset + bytes.byteLength
-  ) as ArrayBuffer;
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', input);
-  return new Uint8Array(digest);
 }
 
 function randomBase64Url32(): string {

@@ -33,6 +33,10 @@ type readyMessage struct {
 }
 
 func main() {
+	if os.Getenv("FLOE_SMOKE_HTTP") == "1" {
+		runHTTP()
+		return
+	}
 	serverTLS, caPEM, err := testTLS()
 	if err != nil {
 		fail("TLS fixture creation failed")

@@ -8,6 +8,8 @@ import type {
 } from '@floegence/flowersec-core';
 import type {
   ConnectionControllerOptions,
+  HTTPDirectArtifactSourceV1,
+  HTTPDirectConnectionControllerOptionsV1,
   PrivateLoopbackArtifactSourceV1,
   PrivateLoopbackConnectionControllerOptionsV1,
 } from '@floegence/flowersec-core/browser';
@@ -53,10 +55,18 @@ export type ConnectConfig = SharedConnectConfig &
         source: ArtifactSource;
         controller?: ConnectionControllerOptions;
         privateLoopback?: never;
+        httpDirect?: never;
       }>
     | Readonly<{
         source: PrivateLoopbackArtifactSourceV1;
         privateLoopback: PrivateLoopbackConnectionControllerOptionsV1;
+        httpDirect?: never;
+        controller?: never;
+      }>
+    | Readonly<{
+        source: HTTPDirectArtifactSourceV1;
+        httpDirect: HTTPDirectConnectionControllerOptionsV1;
+        privateLoopback?: never;
         controller?: never;
       }>
   );
@@ -153,12 +163,14 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
     const runtime = await loadBrowserRuntime();
     if (generation !== lifecycleGeneration) return;
     const nextController =
-      config.privateLoopback === undefined
-        ? await runtime.createConnectionController(config.source, config.controller)
-        : await runtime.createPrivateLoopbackConnectionControllerV1(
-            config.source,
-            config.privateLoopback
-          );
+      config.httpDirect !== undefined
+        ? await runtime.createHTTPDirectConnectionControllerV1(config.source, config.httpDirect)
+        : config.privateLoopback !== undefined
+          ? await runtime.createPrivateLoopbackConnectionControllerV1(
+              config.source,
+              config.privateLoopback
+            )
+          : await runtime.createConnectionController(config.source, config.controller);
     if (generation !== lifecycleGeneration) {
       await nextController.close();
       return;
@@ -255,6 +267,7 @@ function sameConnectionConfig(left: ConnectConfig, right: ConnectConfig): boolea
     left.source === right.source &&
     left.controller === right.controller &&
     left.privateLoopback === right.privateLoopback &&
+    left.httpDirect === right.httpDirect &&
     left.lifecycle === right.lifecycle
   );
 }

@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../../utils/secureRandom';
 import type { CodeDiffRenderModel, DiffWorkerResponse } from '../types';
 import { computeCodeDiffModel } from '../diff/diffModel';
 
@@ -90,7 +91,7 @@ export async function computeCodeDiff(oldCode: string, newCode: string): Promise
   }
 
   return new Promise<CodeDiffRenderModel>((resolve, reject) => {
-    const id = crypto.randomUUID();
+    const id = secureRandomUUID();
     pendingRequests.set(id, {
       resolve: (model) => {
         cacheSet(key, model);

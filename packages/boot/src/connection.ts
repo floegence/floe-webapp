@@ -1,6 +1,8 @@
 import type { ArtifactSource } from '@floegence/flowersec-core';
 import type {
   ConnectionControllerOptions,
+  HTTPDirectArtifactSourceV1,
+  HTTPDirectConnectionControllerOptionsV1,
   PrivateLoopbackArtifactSourceV1,
   PrivateLoopbackConnectionControllerOptionsV1,
 } from '@floegence/flowersec-core/browser';
@@ -21,10 +23,18 @@ export type FlowersecConnectionConfig = SharedFlowersecConnectionConfig &
         source: ArtifactSource;
         controller?: ConnectionControllerOptions;
         privateLoopback?: never;
+        httpDirect?: never;
       }>
     | Readonly<{
         source: PrivateLoopbackArtifactSourceV1;
         privateLoopback: PrivateLoopbackConnectionControllerOptionsV1;
+        httpDirect?: never;
+        controller?: never;
+      }>
+    | Readonly<{
+        source: HTTPDirectArtifactSourceV1;
+        httpDirect: HTTPDirectConnectionControllerOptionsV1;
+        privateLoopback?: never;
         controller?: never;
       }>
   );
@@ -43,6 +53,24 @@ export type PrivateLoopbackDirectConnectionOptions = Readonly<{
   privateLoopback: PrivateLoopbackConnectionControllerOptionsV1;
   onConnected?: (acquisition: ConnectedAcquisition) => void;
 }>;
+
+export type HTTPDirectConnectionOptions = Readonly<{
+  source: HTTPDirectArtifactSourceV1;
+  httpDirect: HTTPDirectConnectionControllerOptionsV1;
+  onConnected?: (acquisition: ConnectedAcquisition) => void;
+}>;
+
+export function createHTTPDirectConnectionConfig(
+  options: HTTPDirectConnectionOptions
+): FlowersecConnectionConfig {
+  return Object.freeze({
+    source: options.source,
+    httpDirect: options.httpDirect,
+    lifecycle: createAcquisitionConnectionLifecycle(options.source, {
+      ...(options.onConnected === undefined ? {} : { onConnected: options.onConnected }),
+    }),
+  });
+}
 
 export type ProxyRuntimeTunnelConnectionOptions = AcquisitionConnectionOptions &
   Readonly<{

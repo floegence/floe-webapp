@@ -101,6 +101,11 @@ vi.mock('@floegence/flowersec-core/browser', () => ({
     }
     return url.origin;
   },
+  parseHTTPDirectArtifactV1: (value: string | Uint8Array) => ({ httpValue: value }),
+  createHTTPDirectArtifactLeaseV1: (
+    artifact: unknown,
+    commitSpend: (signal?: AbortSignal) => Promise<void>
+  ) => ({ artifact, commitSpend }),
   parsePrivateLoopbackArtifactV1: (value: string | Uint8Array) => ({ privateValue: value }),
   createPrivateLoopbackArtifactLeaseV1: (
     artifact: unknown,
@@ -157,6 +162,114 @@ async function envelope(
 }
 
 describe('boot artifact source', () => {
+  it('verifies acquisition integrity and spends once without SubtleCrypto', async () => {
+    const mod = await import('../src/index');
+    const body = await envelope();
+    const commitSpend = vi.fn(async () => {});
+    const source = mod.createControlplaneArtifactSource({
+      baseUrl: 'https://cp.example.com',
+      endpointId: 'demo',
+      fetch: vi.fn(async () => new Response(JSON.stringify(body))),
+      commitSpend,
+      validateSpendBinding: () => 'http-binding',
+    });
+    const getRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+    vi.stubGlobal('crypto', { getRandomValues });
+    try {
+      const result = await source.acquire({ signal: new AbortController().signal });
+      expect(result.kind).toBe('lease');
+      const lease = leases.at(-1)!;
+      await lease.commitSpend();
+      expect(commitSpend).toHaveBeenCalledOnce();
+      await expect(lease.commitSpend()).rejects.toMatchObject({ code: 'spend_binding_consumed' });
+      body.connect_artifact = '{"tampered":true}';
+      expect(await source.acquire({ signal: new AbortController().signal })).toMatchObject({
+        kind: 'failure',
+        disposition: { kind: 'terminal' },
+      });
+      expect(commitSpend).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('uses explicit HTTP acquisition with independent spends and connected state', async () => {
+    const mod = await import('../src/index');
+    const body = await envelope();
+    const spend = vi.fn(async () => {});
+    const fetch = vi.fn(async () => new Response(JSON.stringify(body)));
+    const options = {
+      baseUrl: 'http://192.168.1.20:23998',
+      endpointId: 'runtime',
+      fetch,
+      commitSpend: spend,
+      validateSpendBinding: () => 'http-binding',
+    };
+    const first = mod.createHTTPDirectControlplaneArtifactSource(options);
+    const second = mod.createHTTPDirectControlplaneArtifactSource(options);
+    const getRandomValues = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
+    vi.stubGlobal('crypto', { getRandomValues });
+    try {
+      const results = [];
+      // Keep mocked dynamic module imports sequential; real parallel connections run in the release consumer smoke.
+      for (const source of [first, second])
+        results.push(await source.acquire({ signal: new AbortController().signal }));
+      expect(results).toEqual([
+        expect.objectContaining({ kind: 'lease' }),
+        expect.objectContaining({ kind: 'lease' }),
+      ]);
+      for (const result of results) {
+        if (result.kind !== 'lease') throw new Error('Expected lease');
+        await (result.lease as unknown as { commitSpend: () => Promise<void> }).commitSpend();
+      }
+      expect(spend).toHaveBeenCalledTimes(2);
+      expect(spend.mock.calls[0]?.[0]).not.toEqual(spend.mock.calls[1]?.[0]);
+      const config = mod.createHTTPDirectConnectionConfig({
+        source: second,
+        httpDirect: { origin: options.baseUrl },
+      });
+      mod.clearAcquisitionSource(first);
+      expect(() =>
+        config.lifecycle.synchronize({
+          state: 'connected',
+          attempt: 1,
+          currentSession: {} as never,
+        })
+      ).not.toThrow();
+      config.lifecycle.dispose();
+      expect(fetch).toHaveBeenCalledWith(
+        'http://192.168.1.20:23998/v1/connect/artifact',
+        expect.objectContaining({ redirect: 'error', credentials: 'omit' })
+      );
+      body.critical_scope_projection_json = '{}';
+      expect(await second.acquire({ signal: new AbortController().signal })).toMatchObject({
+        kind: 'failure',
+        code: 'projection_digest_mismatch',
+        disposition: { kind: 'terminal' },
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([
+    'https://192.168.1.20:23998',
+    'http://user:secret@192.168.1.20:23998',
+    'http://192.168.1.20:23998/',
+    'http://192.168.1.20:23998/path',
+    'http://192.168.1.20:23998?token=secret',
+  ])('rejects a non-origin HTTP acquisition URL %s', async (baseUrl) => {
+    const mod = await import('../src/index');
+    expect(() =>
+      mod.createHTTPDirectControlplaneArtifactSource({
+        baseUrl,
+        endpointId: 'runtime',
+        commitSpend: vi.fn(),
+        validateSpendBinding: vi.fn(),
+      })
+    ).toThrow(expect.objectContaining({ code: 'transport_policy_denied' }));
+  });
+
   it.each([
     ['https://cp.example.com', 'https://cp.example.com/v1/connect/artifact'],
     ['https://cp.example.com/', 'https://cp.example.com/v1/connect/artifact'],

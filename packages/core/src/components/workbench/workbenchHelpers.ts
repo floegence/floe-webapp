@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../utils/secureRandom';
 import {
   DEFAULT_WORKBENCH_VIEWPORT,
   WORKBENCH_BACKGROUND_REGION_FILTER_ID,
@@ -42,11 +43,7 @@ import {
 import { DEFAULT_WORKBENCH_THEME, isWorkbenchThemeId } from './workbenchThemes';
 
 export function createWorkbenchId(): string {
-  const crypto = globalThis.crypto;
-  if (crypto && typeof crypto.randomUUID === 'function') {
-    return `wb-${crypto.randomUUID()}`;
-  }
-  return `wb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return `wb-${secureRandomUUID()}`;
 }
 
 export function resolveWorkbenchWidgetRenderMode(

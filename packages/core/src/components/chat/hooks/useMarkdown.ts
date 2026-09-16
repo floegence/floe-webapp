@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../../utils/secureRandom';
 import type { MarkdownWorkerResponse } from '../types';
 import { renderMarkdownToHtml } from '../markdown/markdown';
 
@@ -88,7 +89,7 @@ export async function renderMarkdown(content: string): Promise<string> {
   }
 
   return new Promise<string>((resolve, reject) => {
-    const id = crypto.randomUUID();
+    const id = secureRandomUUID();
     pendingRequests.set(id, {
       resolve: (html) => {
         cacheSet(content, html);

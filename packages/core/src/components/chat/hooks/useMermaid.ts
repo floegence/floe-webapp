@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../../utils/secureRandom';
 import { createSignal } from 'solid-js';
 import type { MermaidWorkerResponse } from '../types';
 
@@ -91,7 +92,7 @@ export async function renderMermaid(
 
   if (hasWorker && mermaidWorker) {
     return new Promise<string>((resolve, reject) => {
-      const id = crypto.randomUUID();
+      const id = secureRandomUUID();
 
       pendingRequests.set(id, {
         resolve: (svg) => {
