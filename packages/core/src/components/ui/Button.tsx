@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
   primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
   secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:bg-secondary/70',
-  outline: 'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+  outline: 'border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
   ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
   'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:bg-error/80',
   destructive: 'bg-error text-error-foreground shadow-sm hover:bg-error/90 active:bg-error/80',

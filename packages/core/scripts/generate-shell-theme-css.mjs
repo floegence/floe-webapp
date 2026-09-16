@@ -22,8 +22,7 @@ for (const preset of builtInShellThemePresets) {
   }
 
   lines.push(`:root[data-floe-shell-theme='${preset.name}'] {`);
-  for (const token of REQUIRED_SHELL_THEME_TOKENS) {
-    const value = overrides[token];
+  for (const [token, value] of Object.entries(overrides)) {
     lines.push(`  ${token}: ${value.startsWith('#') ? value.toLowerCase() : value};`);
   }
   lines.push('}');

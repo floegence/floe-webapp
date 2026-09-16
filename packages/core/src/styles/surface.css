@@ -386,6 +386,24 @@
   }
 }
 
+/* Text-labelled actions, rails and fields use one contour. Stacked inset and
+ * contact shadows turn a quiet toolbar into an embossed frame in light mode.
+ * Small check/switch indicators retain their independent relief and contrast. */
+[data-floe-surface-style='soft-neumorphic']
+  :is(
+    [data-floe-surface-part='action'],
+    [data-floe-surface-part='rail'],
+    [data-floe-surface-part='tab-rail'],
+    [data-floe-surface-part='tab'],
+    [data-floe-surface-part='segment']
+  )[data-floe-surface] {
+  --floe-surface-decoration: var(--floe-surface-shadow-raised, 0 0 transparent);
+}
+[data-floe-surface-style='soft-neumorphic']
+  :is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
+  --floe-surface-decoration: var(--floe-surface-shadow-inset, 0 0 transparent);
+}
+
 /* Explicit host opt-outs and compound input boundaries outrank compact states. */
 :root[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='flat'],
 :root[data-floe-surface-style='soft-neumorphic'] [data-floe-input-surface] [data-floe-surface] {

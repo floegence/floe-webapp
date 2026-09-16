@@ -1,4 +1,5 @@
 import { WindowMaterialStudy } from './WindowMaterialStudy';
+import { FileAppearanceStudy } from './FileAppearanceStudy';
 import { SurfaceComponentGallery } from './SurfaceComponentGallery';
 import { createSignal, Show, For, onMount, onCleanup } from 'solid-js';
 import { render } from 'solid-js/web';
@@ -124,7 +125,7 @@ function Content() {
       }
     >
       <Show
-        when={params.get('panel') === 'windows'}
+        when={params.get('panel') === 'windows' || params.get('panel') === 'files'}
         fallback={
           <>
             <Show
@@ -267,7 +268,7 @@ function Content() {
           </>
         }
       >
-        <WindowMaterialStudy />
+        <Show when={params.get('panel') === 'files'} fallback={<WindowMaterialStudy />}><FileAppearanceStudy /></Show>
       </Show>
     </Shell>
   );

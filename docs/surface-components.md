@@ -14,7 +14,7 @@ The optional soft neumorphic material is a lightweight shared component system: 
 
 | Component | Material and state treatment | Behavioral boundary |
 | --- | --- | --- |
-| Button | Compact raised action; primary/destructive colors retain meaning; pressed fill and inset relief for toggle state | Native disabled/loading, click, keyboard focus, sizes and icons |
+| Button | Compact action with one decorative seam; primary/destructive colors retain meaning; pressed fill without stacked relief | Native disabled/loading, click, keyboard focus, sizes and icons |
 | Card | Raised default grouping surface; avoid repeated raised descendants | Explicit rich variants and tilt remain opt-in independent effects |
 | Tag | Subtle interior lighting on solid or soft badges; all six semantic roles and three sizes | Literal content, truncation, icon/dot, non-interactive semantics |
 | Input / Textarea / Select | Recessed field, quiet edges, stable decoration during focus | Draft, selection, composition, disabled, validation, all sizes |

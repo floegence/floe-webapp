@@ -1631,6 +1631,11 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #202a37;
+  --floe-file-icon-primary: hsl(214 26% 17%);
+  --floe-file-icon-warning: hsl(38 92% 50%);
+  --floe-file-icon-info: hsl(217 91% 60%);
+  --floe-file-icon-success: oklch(0.68 0.16 150);
+  --floe-file-icon-error: oklch(0.65 0.2 25);
 }
 :root[data-floe-shell-theme='porcelain-dark'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);

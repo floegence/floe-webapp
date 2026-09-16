@@ -64,6 +64,21 @@ warm ivory text, and soft blue-gray actions. Both receive the same material,
 control-boundary, focus, and motion rules; they do not restore decorative glow.
 The catalog now contains 26 presets. Stored selections retain version 1.
 
+Porcelain Light also retains the original file identification colors: gold
+folders/configuration/archives, blue code/audio, red documents and green images.
+Optional `--floe-file-icon-primary|warning|info|success|error` paint tokens are
+independent of status text roles and fall back to the corresponding semantic
+color in other themes. Both generated CSS and browser-neutral metadata include
+these paints. Broken symbolic-link errors still use the error status role.
+
+Text-labelled actions, tab/segment rails and input faces have no default inset
+or contact shadow in soft material. A single seam or fill identifies the face;
+check/switch indicators keep their smaller, independent relief. Outline buttons
+use the decorative border role, while actual fields retain the input boundary.
+File tiles keep their original glyphs and colors without hover magnification.
+`scripts/check-file-appearance-browser.mjs` verifies the packed CSS entries against
+the original Classic Light icon paints and rejects stacked toolbar contours.
+
 ## Tokens and local palettes
 
 Optional overrides:

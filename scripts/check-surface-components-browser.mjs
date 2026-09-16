@@ -133,7 +133,6 @@ try {
         'badge',
         'indicator',
         'switch-track',
-        'segment',
         'progress-track',
         'progress-circle',
         'step',

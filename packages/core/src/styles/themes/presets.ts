@@ -190,6 +190,8 @@ interface ShellThemePaletteDefinition {
    *   avoids the white-bloom problem that comes from using a near-white primary)
    */
   glow?: string;
+  /** File identification paint is independent of status text contrast. */
+  fileIconColors?: Partial<Record<'primary' | 'warning' | 'info' | 'success' | 'error', string>>;
   syntax?: {
     comment: string;
     keyword: string;
@@ -247,7 +249,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     constant: chart4,
   };
 
-  const tokenMap: Record<ShellThemeTokenName, string> = {
+  const tokenMap: Record<ShellThemeTokenName, string> & FloeThemeTokenMap = {
     ...(definition.mode === 'dark' ? DARK_WINDOW_TOKENS : LIGHT_WINDOW_TOKENS),
     '--background': definition.background,
     '--foreground': definition.foreground,
@@ -315,6 +317,10 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     // selectionBackground so we don't inherit a near-white primary as glow source.
     '--glow': definition.glow ?? (definition.mode === 'light' ? definition.primary : definition.selectionBackground),
   };
+
+  for (const [tone, color] of Object.entries(definition.fileIconColors ?? {})) {
+    tokenMap[`--floe-file-icon-${tone}`] = color;
+  }
 
   return {
     name: definition.name,
@@ -1046,6 +1052,13 @@ export const builtInShellThemePresets = [
     name: 'porcelain-light',
     displayName: 'Porcelain Light',
     description: 'Original Redeven warm ivory and blue-gray ink, with quiet modern surfaces.',
+    fileIconColors: {
+      primary: 'hsl(214 26% 17%)',
+      warning: 'hsl(38 92% 50%)',
+      info: 'hsl(217 91% 60%)',
+      success: 'oklch(0.68 0.16 150)',
+      error: 'oklch(0.65 0.2 25)',
+    },
     mode: 'light',
     background: '#F4F1ED',
     foreground: '#202A37',

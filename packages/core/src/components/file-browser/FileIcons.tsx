@@ -85,11 +85,11 @@ const CODE_BADGE_FONT_STACK =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 const VIDEO_FILE_ACCENT = 'color-mix(in srgb, #8b5cf6 86%, var(--foreground))';
 const CODE_BADGE_TONE_COLOR: Record<CodeBadgeTone, string> = {
-  warning: 'var(--warning)',
-  primary: 'var(--primary)',
-  info: 'var(--info)',
-  success: 'var(--success)',
-  error: 'var(--error)',
+  warning: 'var(--floe-file-icon-warning, var(--warning))',
+  primary: 'var(--floe-file-icon-primary, var(--primary))',
+  info: 'var(--floe-file-icon-info, var(--info))',
+  success: 'var(--floe-file-icon-success, var(--success))',
+  error: 'var(--floe-file-icon-error, var(--error))',
   neutral: 'color-mix(in srgb, var(--foreground) 70%, var(--background))',
 };
 
@@ -410,13 +410,13 @@ const FolderGraphic = (props: FolderGraphicProps) => {
     >
       <defs>
         <linearGradient id={gradientId()} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ 'stop-color': 'var(--warning)', 'stop-opacity': 1 }} />
+          <stop offset="0%" style={{ 'stop-color': 'var(--floe-file-icon-warning, var(--warning))', 'stop-opacity': 1 }} />
           <stop
             offset="100%"
             style={{
               'stop-color': isOpen()
-                ? 'color-mix(in srgb, var(--warning) 70%, var(--foreground))'
-                : 'color-mix(in srgb, var(--warning) 80%, var(--foreground))',
+                ? 'color-mix(in srgb, var(--floe-file-icon-warning, var(--warning)) 70%, var(--foreground))'
+                : 'color-mix(in srgb, var(--floe-file-icon-warning, var(--warning)) 80%, var(--foreground))',
               'stop-opacity': 1,
             }}
           />
@@ -478,12 +478,12 @@ export const BrokenSymlinkIcon = (props: FileIconProps) => (
 );
 
 export const ArchiveFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--warning)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-warning, var(--warning))">
     <g data-file-icon-kind="archive">
       <path
         d="M10 9.75h4M10 12.25h4M10 14.75h4"
         fill="none"
-        stroke="var(--warning)"
+        stroke="var(--floe-file-icon-warning, var(--warning))"
         stroke-width="1.35"
         stroke-linecap="round"
       />
@@ -493,9 +493,9 @@ export const ArchiveFileIcon = (props: FileIconProps) => (
         width="5.5"
         height="2.25"
         rx="0.7"
-        fill="var(--warning)"
+        fill="var(--floe-file-icon-warning, var(--warning))"
         opacity="0.18"
-        stroke="var(--warning)"
+        stroke="var(--floe-file-icon-warning, var(--warning))"
         stroke-width="1"
       />
     </g>
@@ -504,10 +504,10 @@ export const ArchiveFileIcon = (props: FileIconProps) => (
 
 // Generic code file icon fallback for known code-like extensions without a dedicated badge.
 export const CodeFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--info)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-info, var(--info))">
     <path
       fill="none"
-      stroke="var(--info)"
+      stroke="var(--floe-file-icon-info, var(--info))"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -564,11 +564,11 @@ export const ShellScriptFileIcon = getCodeBadgeIcon(SHELL_BADGE_SPEC);
 
 // Image file icon
 export const ImageFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--success)">
-    <circle cx="10" cy="13" r="2" fill="var(--success)" />
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-success, var(--success))">
+    <circle cx="10" cy="13" r="2" fill="var(--floe-file-icon-success, var(--success))" />
     <path
       fill="none"
-      stroke="var(--success)"
+      stroke="var(--floe-file-icon-success, var(--success))"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -612,11 +612,11 @@ export const VideoFileIcon = (props: FileIconProps) => (
 
 // Audio file icon
 export const AudioFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--info)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-info, var(--info))">
     <g data-file-icon-kind="audio">
       <path
         fill="none"
-        stroke="var(--info)"
+        stroke="var(--floe-file-icon-info, var(--info))"
         stroke-width="1.45"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -627,9 +627,9 @@ export const AudioFileIcon = (props: FileIconProps) => (
         cy="17.2"
         rx="1.75"
         ry="1.25"
-        fill="var(--info)"
+        fill="var(--floe-file-icon-info, var(--info))"
         opacity="0.2"
-        stroke="var(--info)"
+        stroke="var(--floe-file-icon-info, var(--info))"
         stroke-width="1.1"
       />
       <ellipse
@@ -637,9 +637,9 @@ export const AudioFileIcon = (props: FileIconProps) => (
         cy="16"
         rx="1.75"
         ry="1.25"
-        fill="var(--info)"
+        fill="var(--floe-file-icon-info, var(--info))"
         opacity="0.2"
-        stroke="var(--info)"
+        stroke="var(--floe-file-icon-info, var(--info))"
         stroke-width="1.1"
       />
     </g>
@@ -648,13 +648,13 @@ export const AudioFileIcon = (props: FileIconProps) => (
 
 // Document file icon (PDF, DOC, etc.)
 export const DocumentFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--error)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-error, var(--error))">
     <line
       x1="8"
       y1="13"
       x2="16"
       y2="13"
-      stroke="var(--error)"
+      stroke="var(--floe-file-icon-error, var(--error))"
       stroke-width="1.5"
       stroke-linecap="round"
     />
@@ -663,7 +663,7 @@ export const DocumentFileIcon = (props: FileIconProps) => (
       y1="17"
       x2="14"
       y2="17"
-      stroke="var(--error)"
+      stroke="var(--floe-file-icon-error, var(--error))"
       stroke-width="1.5"
       stroke-linecap="round"
     />
@@ -672,10 +672,10 @@ export const DocumentFileIcon = (props: FileIconProps) => (
 
 // Config/JSON file icon
 export const ConfigFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--warning)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-warning, var(--warning))">
     <path
       fill="none"
-      stroke="var(--warning)"
+      stroke="var(--floe-file-icon-warning, var(--warning))"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -686,10 +686,10 @@ export const ConfigFileIcon = (props: FileIconProps) => (
 
 // Style file icon (CSS, SCSS, etc.)
 export const StyleFileIcon = (props: FileIconProps) => (
-  <FileShellIcon class={props.class} accent="var(--primary)">
+  <FileShellIcon class={props.class} accent="var(--floe-file-icon-primary, var(--primary))">
     <path
       fill="none"
-      stroke="var(--primary)"
+      stroke="var(--floe-file-icon-primary, var(--primary))"
       stroke-width="1.5"
       stroke-linecap="round"
       stroke-linejoin="round"

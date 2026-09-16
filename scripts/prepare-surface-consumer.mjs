@@ -112,7 +112,7 @@ writeFileSync(
       tarball,
       packageSha256: sha256(tarball),
       fixtureSha256: Object.fromEntries(
-        ['main.tsx', 'layout.css', 'WindowMaterialStudy.tsx'].map((file) => [
+        ['main.tsx', 'layout.css', 'WindowMaterialStudy.tsx', 'FileAppearanceStudy.tsx'].map((file) => [
           file,
           sha256(resolve(repo, 'scripts/fixtures/surface-style', file)),
         ])
