@@ -24,6 +24,10 @@ mkdirSync(output, { recursive: true });
 const results = [];
 try {
   for (const [engine, browserType] of [
+    ['chromium-soft', chromium],
+    ['webkit-soft', webkit],
+    ['chromium-soft-projected', chromium],
+    ['webkit-soft-projected', webkit],
     ['chromium', chromium],
     ['webkit', webkit],
     ['chromium-projected', chromium],
@@ -38,6 +42,9 @@ try {
       await page.goto(
         `http://127.0.0.1:${server.httpServer.address().port}/test/browser/workbench-composition.html?projected=${engine.endsWith('projected') ? '1' : '0'}`
       );
+      await page.evaluate((soft) => {
+        document.documentElement.dataset.floeSurfaceStyle = soft ? 'soft-neumorphic' : 'standard';
+      }, engine.includes('soft'));
       const note = page.locator('.workbench-sticky__body');
       await note.waitFor();
       await page.addStyleTag({
@@ -321,7 +328,7 @@ try {
       const tools = await page.locator('.workbench-object-tools').boundingBox();
       assert.ok(tools.x >= 0 && tools.x + tools.width <= 391, 'toolbar fits narrow viewport');
       assert.deepEqual(errors, []);
-      if (engine === 'chromium') {
+      if (engine.startsWith('chromium')) {
         const cdp = await page.context().newCDPSession(page);
         await cdp.send('Performance.enable');
         const first = await cdp.send('Performance.getMetrics');

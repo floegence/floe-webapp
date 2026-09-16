@@ -383,8 +383,7 @@
     }
   }
   :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
-    & [data-floe-input-surface],
-    & :is(input, textarea, select)[data-floe-surface='inset'] {
+    & :is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
       background-color: color-mix(in srgb, var(--card) 50%, var(--background));
     }
   }
