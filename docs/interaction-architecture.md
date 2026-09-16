@@ -446,7 +446,7 @@ recent input in another window cannot change that global ownership. Layers witho
 an owner continue to infer their surface from the latest interaction.
 
 ```tsx
-<SurfaceFloatingPanel boundary={contentElement} snapToEdge snapInset={12}>
+<SurfaceFloatingPanel boundary={contentElement} snapToEdge snapPreview snapMotion="gentle" snapInset={12}>
   {(handle) => <button {...handle} onClick={restore}>Restore preview</button>}
 </SurfaceFloatingPanel>
 ```
@@ -460,17 +460,32 @@ not animation frames or automatic boundary resizing; it does not control placeme
 
 Snapping is opt-in. After a committed pointer drag of at least 4px, `snapToEdge`
 selects the nearest safe edge within `snapThreshold`, preserving the orthogonal
-position. Ties resolve left, right, top, then bottom. Placement remains relative
-to available space when the boundary changes. Cancelled gestures restore their
-starting placement. A drag suppresses its following pointer click; ordinary
+position. Exact ties follow the latest direction of the current gesture, with
+left/right/top/bottom as the stationary fallback. Placement remains relative to
+available space when the boundary changes. Esc restores the starting placement;
+browser cancellation, blur and visibility loss settle at the last held position.
+Capture loss keeps document tracking active. A release updates the position even
+when no pointermove preceded it; re-entry with released buttons never applies
+unheld movement. A drag suppresses its following pointer click; ordinary
 clicks and Enter/Space still activate the native button. Arrow keys move 10px
 (40px with Shift) without forcing another snap.
 
-Snaps animate for 180ms, or complete immediately with reduced motion. A new
+Snaps animate for 180ms by default. `snapMotion="gentle"` uses a 210–360ms
+distance-sensitive ease with no overshoot; reduced motion completes immediately.
+`snapPreview` paints a neutral marker using the exact same snap target. The panel
+exposes `data-floe-panel-dragging` and `data-floe-panel-settling` for content feedback. A new
 pointer or keyboard movement interrupts the animation at its visible position.
 Keep the panel component mounted while hiding its launcher if placement must
 survive opening a preview. Likewise, control `FloatingWindow.open` without
 unmounting its component to preserve position, size, and maximization.
+
+`FloatingWindow.boundary` constrains the native window to a visible content region;
+`viewportInsets` applies inside that region. `compactBelow` optionally fills that
+region on narrow layouts and hides drag, resize and maximize controls. Preferred
+normal geometry survives temporary viewport/composer constraints and maximize
+cycles. `labels` supplies localized close, maximize and restore control text.
+Hidden/exiting windows are inert. Product code owns entry focus and status; Floe
+owns all floating geometry.
 
 ## Optional surface material
 

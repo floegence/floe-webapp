@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, onMount, splitProps, type JSX } from 'solid-js';
+import { Show, createMemo, createSignal, onCleanup, onMount, splitProps, type JSX } from 'solid-js';
 import { SurfaceFloatingLayer, type SurfaceFloatingLayerProps } from './SurfaceFloatingLayer';
 import { readSurfaceSafeArea, resolveFloatingBoundary } from './surfaceFloatingBoundary';
 import { resolveSurfacePortalHost, resolveSurfacePortalScale } from './surfacePortalScope';
@@ -36,6 +36,10 @@ export interface SurfaceFloatingPanelProps extends Omit<
   snapThreshold?: number;
   /** Client/CSS viewport pixel gap between the panel and its safe boundary. Defaults to 8px. */
   snapInset?: number;
+  /** Show a quiet marker at the predicted landing edge during dragging. */
+  snapPreview?: boolean;
+  /** Gentle motion varies from 210–360ms with travel distance. Default: standard (180ms). */
+  snapMotion?: 'standard' | 'gentle';
   /** Called with client/CSS viewport coordinates after a committed position change. */
   onPositionChange?: (position: SurfaceFloatingPanelPosition) => void;
 }
@@ -56,15 +60,19 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
     'boundaryInsets',
     'snapThreshold',
     'snapInset',
+    'snapPreview',
+    'snapMotion',
     'onPositionChange',
   ]);
   let anchor: HTMLSpanElement | undefined;
   let layer: HTMLDivElement | undefined;
   let session: PointerSessionController | undefined;
   let suppressClick = false;
-  let snapAnimationTimer: ReturnType<typeof setTimeout> | undefined;
-  let previousTransition: string | null = null;
+  let snapAnimation: Animation | undefined;
   const safeArea = readSurfaceSafeArea();
+  const [dragging, setDragging] = createSignal(false);
+  const [settling, setSettling] = createSignal(false);
+  const [direction, setDirection] = createSignal({ x: 0, y: 0 });
   const [mounted, setMounted] = createSignal(false);
   const [placement, setPlacement] = createSignal({ x: 1, y: 1 });
   const [geometry, setGeometry] = createSignal<
@@ -85,9 +93,10 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
   const owner = () => local.owner ?? anchor;
   const panelInset = () => resolveSurfaceFloatingPanelInset(local.snapInset);
   const bounds = createMemo(() => resolveSurfaceFloatingPanelBounds(geometry(), panelInset()));
-  const snapAnimationDuration = () => {
+  const snapAnimationDuration = (distance: number) => {
     const ownerWindow = owner()?.ownerDocument.defaultView;
-    return ownerWindow?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 180;
+    if (ownerWindow?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return 0;
+    return local.snapMotion === 'gentle' ? Math.round(Math.min(360, Math.max(210, 180 + Math.sqrt(distance) * 12))) : 180;
   };
   const measure = () => {
     if (!layer) return;
@@ -111,6 +120,8 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
       scaleX: scale.x,
       scaleY: scale.y,
     };
+    if (snapAnimation && (next.width !== geometry().width || next.height !== geometry().height
+      || next.scaleX !== geometry().scaleX || next.scaleY !== geometry().scaleY)) clearSnapAnimation();
     setGeometry((previous) =>
       Object.keys(next).every(
         (key) => next[key as keyof typeof next] === previous[key as keyof typeof next]
@@ -133,28 +144,36 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
     local.onPositionChange?.(next);
   };
   const clearSnapAnimation = () => {
-    if (snapAnimationTimer !== undefined) {
-      clearTimeout(snapAnimationTimer);
-      snapAnimationTimer = undefined;
-    }
-    if (layer && previousTransition !== null) {
-      layer.style.transition = previousTransition;
-      previousTransition = null;
-    }
+    const animation = snapAnimation;
+    snapAnimation = undefined;
+    animation?.cancel();
+    setSettling(false);
   };
   const beginMovement = () => {
     // A new gesture starts at the visible position, even during an unfinished snap.
-    const rendered = snapAnimationTimer !== undefined ? layer?.getBoundingClientRect() : undefined;
+    const rendered = snapAnimation !== undefined ? layer?.getBoundingClientRect() : undefined;
     clearSnapAnimation();
     measure();
     if (rendered) move(rendered.left, rendered.top);
   };
+  const snapTarget = createMemo(() => resolveSurfaceFloatingPanelSnap(
+    position(), bounds(), resolveSurfaceFloatingPanelSnapThreshold(local.snapThreshold), direction()
+  ));
+  const preview = createMemo(() => {
+    const target = snapTarget();
+    if (!local.snapPreview || !local.snapToEdge || !dragging() || !target) return null;
+    const g = geometry();
+    const vertical = target.edge === 'left' || target.edge === 'right';
+    return {
+      edge: target.edge,
+      x: target.position.x + (vertical ? (target.edge === 'left' ? -7 : g.panelWidth + 5) : (g.panelWidth - 28) / 2),
+      y: target.position.y + (vertical ? (g.panelHeight - 28) / 2 : (target.edge === 'top' ? -7 : g.panelHeight + 5)),
+      width: (vertical ? 2 : 28) / g.scaleX,
+      height: (vertical ? 28 : 2) / g.scaleY,
+    };
+  });
   const snapToNearestEdge = () => {
-    const snapped = resolveSurfaceFloatingPanelSnap(
-      position(),
-      bounds(),
-      resolveSurfaceFloatingPanelSnapThreshold(local.snapThreshold)
-    );
+    const snapped = snapTarget();
     if (!snapped) {
       notifyPositionChange(position());
       return;
@@ -167,21 +186,25 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
     }
 
     clearSnapAnimation();
-    const duration = snapAnimationDuration();
-    if (layer) {
-      previousTransition = layer.style.transition;
-      layer.style.transition = duration ? `left ${duration}ms ease-out, top ${duration}ms ease-out` : 'none';
-    }
+    const duration = snapAnimationDuration(Math.hypot(current.x - snapped.position.x, current.y - snapped.position.y));
+    const easing = local.snapMotion === 'gentle' ? 'cubic-bezier(.22,.7,.18,1)' : 'ease-out';
     move(snapped.position.x, snapped.position.y);
     notifyPositionChange(snapped.position);
-    snapAnimationTimer = setTimeout(() => {
-      if (layer && previousTransition !== null) {
-        layer.style.transition = previousTransition;
-      }
-      previousTransition = null;
-      snapAnimationTimer = undefined;
-    }, duration);
+    if (!duration || !layer?.animate) return;
+    const g = geometry();
+    const animation = layer.animate([
+      { translate: `${(current.x - snapped.position.x) / g.scaleX}px ${(current.y - snapped.position.y) / g.scaleY}px` },
+      { translate: '0px 0px' },
+    ], { duration, easing });
+    snapAnimation = animation;
+    setSettling(true);
+    void animation.finished.then(() => {
+      if (snapAnimation !== animation) return;
+      snapAnimation = undefined;
+      setSettling(false);
+    }).catch(() => {});
   };
+
   const handle: SurfaceFloatingPanelHandleProps = {
     style: { 'touch-action': 'none', 'user-select': 'none' },
     onPointerDown: (event) => {
@@ -193,27 +216,38 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
       const startX = event.clientX;
       const startY = event.clientY;
       suppressClick = false;
+      setDirection({ x: 0, y: 0 });
+      let previous = { x: startX, y: startY };
       let moved = false;
       const update = (x: number, y: number) => {
         const dx = x - startX;
         const dy = y - startY;
         moved ||= Math.hypot(dx, dy) >= 4;
-        if (moved) move(initialPosition.x + dx, initialPosition.y + dy);
+        if (moved) {
+          suppressClick = true;
+          setDragging(true);
+          if (x !== previous.x || y !== previous.y) setDirection({ x: x - previous.x, y: y - previous.y });
+          previous = { x, y };
+          move(initialPosition.x + dx, initialPosition.y + dy);
+        }
       };
       session = startPointerSession({
         pointerEvent: event,
         captureEl: event.currentTarget,
+        continueOnCaptureLoss: true,
+        interruptionPosition: 'last-held',
         onMove: (next) => {
           next.preventDefault();
           update(next.clientX, next.clientY);
         },
-        onEnd: ({ commit, snapshot }) => {
-          if (commit) {
+        onEnd: ({ commit, reason, snapshot }) => {
+          if (commit || reason === 'pointer_cancel') {
             update(snapshot.latestClientX, snapshot.latestClientY);
             if (moved && local.snapToEdge) snapToNearestEdge();
             else if (moved) notifyPositionChange(position());
           } else setPlacement(initialPlacement);
           suppressClick = moved;
+          setDragging(false);
           session = undefined;
         },
       });
@@ -241,6 +275,20 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
   };
   onMount(() => {
     setMounted(true);
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !session) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      session.stop();
+    };
+    document.addEventListener('keydown', cancel, true);
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const reduceMotion = () => { if (reduced?.matches) clearSnapAnimation(); };
+    reduced?.addEventListener?.('change', reduceMotion);
+    onCleanup(() => {
+      document.removeEventListener('keydown', cancel, true);
+      reduced?.removeEventListener?.('change', reduceMotion);
+    });
     let frame = 0;
     // Also observe projected transforms, which do not emit ResizeObserver events.
     // Only changed geometry publishes reactive state; content is never remounted.
@@ -258,9 +306,19 @@ export function SurfaceFloatingPanel(props: SurfaceFloatingPanelProps) {
   return (
     <>
       <span ref={anchor} hidden />
+      <Show when={preview()}>{(mark) => (
+        <SurfaceFloatingLayer owner={owner()} boundary={local.boundary} position={mark()} clamp={false}
+          aria-hidden="true" data-floe-panel-snap-preview={mark().edge}
+          style={{ width: `${mark().width}px`, height: `${mark().height}px`, 'border-radius': '2px',
+            'pointer-events': 'none', border: '1px solid currentColor', 'box-sizing': 'border-box', color: 'var(--muted-foreground, CanvasText)', opacity: 0.55 }}>
+          {null}
+        </SurfaceFloatingLayer>
+      )}</Show>
       {mounted() && (
         <SurfaceFloatingLayer
           {...rest}
+          data-floe-panel-dragging={dragging() ? 'true' : undefined}
+          data-floe-panel-settling={settling() ? 'true' : undefined}
           owner={owner()}
           boundary={local.boundary}
           position={position()}

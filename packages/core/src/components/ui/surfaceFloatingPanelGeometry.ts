@@ -115,7 +115,8 @@ function clampToAxis(value: number, axis: SurfaceFloatingPanelAxis): number {
 export function resolveSurfaceFloatingPanelSnap(
   position: SurfaceFloatingPanelPosition,
   bounds: SurfaceFloatingPanelBounds,
-  threshold = Infinity
+  threshold = Infinity,
+  direction: SurfaceFloatingPanelPosition = { x: 0, y: 0 }
 ): SurfaceFloatingPanelSnap | null {
   const resolvedThreshold = resolveSurfaceFloatingPanelSnapThreshold(threshold);
   const candidates: Array<SurfaceFloatingPanelSnap & { distance: number }> = [
@@ -140,7 +141,10 @@ export function resolveSurfaceFloatingPanelSnap(
       position: { x: clampToAxis(position.x, bounds.x), y: bounds.y.max },
     },
   ];
-  candidates.sort((left, right) => left.distance - right.distance);
+  const towards = { left: -direction.x, right: direction.x, top: -direction.y, bottom: direction.y };
+  candidates.sort((left, right) => Math.abs(left.distance - right.distance) < 0.01
+    ? towards[right.edge] - towards[left.edge]
+    : left.distance - right.distance);
   const nearest = candidates[0];
   if (!nearest || nearest.distance > resolvedThreshold) return null;
   return { edge: nearest.edge, position: nearest.position };

@@ -93,7 +93,9 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Verify floating panel interaction in Chromium
-        run: node scripts/check-floating-panel-browser.mjs
+        run: |
+          node scripts/check-floating-panel-browser.mjs
+          node scripts/check-floating-panel-lifecycle.mjs
 
       - name: Verify bottom bar companion morph in Chromium
         run: node scripts/check-bottom-bar-companion-browser.mjs

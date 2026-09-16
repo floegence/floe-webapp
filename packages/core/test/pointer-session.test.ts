@@ -79,6 +79,7 @@ describe('startPointerSession', () => {
     startPointerSession({
       pointerEvent: pointerDown,
       captureEl: target,
+      interruptionPosition: 'last-held',
       onMove,
       onEnd,
     });
@@ -104,6 +105,7 @@ describe('startPointerSession', () => {
     startPointerSession({
       pointerEvent: pointerDown,
       captureEl: target,
+      interruptionPosition: 'last-held',
       onMove,
       onEnd,
     });
@@ -128,8 +130,8 @@ describe('startPointerSession', () => {
       commit: true,
       snapshot: {
         pointerId: 8,
-        latestClientX: 40,
-        latestClientY: 32,
+        latestClientX: 10,
+        latestClientY: 10,
         latestButtons: 0,
         active: false,
       },
@@ -160,4 +162,19 @@ describe('startPointerSession', () => {
       },
     });
   });
+});
+
+it('keeps document ownership after capture loss when a floating panel requests it', () => {
+  const target = document.createElement('button');
+  document.body.append(target);
+  const onEnd = vi.fn();
+  const onMove = vi.fn();
+  startPointerSession({ pointerEvent: createPointerDown(target), captureEl: target,
+    continueOnCaptureLoss: true, onMove, onEnd });
+  target.dispatchEvent(new Event('lostpointercapture'));
+  expect(onEnd).not.toHaveBeenCalled();
+  dispatchPointerEvent('pointermove', document, { clientX: 200, clientY: 100 });
+  dispatchPointerEvent('pointerup', document, { clientX: 600, clientY: 100, buttons: 0 });
+  expect(onMove).toHaveBeenCalledTimes(1);
+  expect(onEnd.mock.calls[0][0].snapshot.latestClientX).toBe(600);
 });

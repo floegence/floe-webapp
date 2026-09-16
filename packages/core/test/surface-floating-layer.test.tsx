@@ -450,7 +450,7 @@ describe('SurfaceFloatingPanel', () => {
       expect(activate).not.toHaveBeenCalled();
       pointer(grip, 'pointerdown', 360, 300);
       pointer(document, 'pointermove', 340, 300);
-      pointer(document, 'pointercancel', 340, 300);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       expect(Number.parseFloat(panel.style.left)).toBe(dragStart - 40);
       grip.click();
       expect(activate).toHaveBeenCalledTimes(1);

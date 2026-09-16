@@ -100,3 +100,10 @@ describe('surface floating panel geometry', () => {
     });
   });
 });
+
+it('uses only the current drag direction to resolve an exact edge tie', () => {
+  const bounds = resolveSurfaceFloatingPanelBounds({ left: 0, top: 0, width: 300, height: 300, panelWidth: 40, panelHeight: 40 }, 12);
+  expect(resolveSurfaceFloatingPanelSnap({ x: 130, y: 130 }, bounds, Infinity, { x: 8, y: 0 })?.edge).toBe('right');
+  expect(resolveSurfaceFloatingPanelSnap({ x: 130, y: 130 }, bounds, Infinity, { x: 0, y: -8 })?.edge).toBe('top');
+  expect(resolveSurfaceFloatingPanelSnap({ x: 13, y: 130 }, bounds, Infinity, { x: 800, y: 0 })?.edge).toBe('left');
+});

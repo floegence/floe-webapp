@@ -81,7 +81,7 @@ it('snaps a dragged launcher to the nearest safe boundary edge', () => {
 
     expect(panel.style.left).toBe('162px');
     expect(Number.parseFloat(panel.style.top)).toBeCloseTo(252);
-    expect(panel.style.transition).toContain('left 180ms ease-out');
+    expect(panel.style.transition).toBe('');
     const snappedPosition = positionChanged.mock.calls.at(-1)?.[0];
     expect(snappedPosition?.x).toBeCloseTo(162);
     expect(snappedPosition?.y).toBeCloseTo(252);
@@ -123,13 +123,13 @@ it('snaps a dragged launcher to the nearest safe boundary edge', () => {
     pointer(document, 'pointermove', 518, 260);
     pointer(document, 'pointerup', 518, 260);
     expect(panel.style.left).toBe('502px');
-    expect(panel.style.transition).toBe('none');
+    expect(panel.style.transition).toBe('');
 
     const beforeCancel = { left: panel.style.left, top: panel.style.top };
     const notificationsBeforeCancel = positionChanged.mock.calls.length;
     pointer(launcher, 'pointerdown', 290, 260);
     pointer(document, 'pointermove', 450, 180);
-    pointer(document, 'pointercancel', 450, 180);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect({ left: panel.style.left, top: panel.style.top }).toEqual(beforeCancel);
     expect(positionChanged).toHaveBeenCalledTimes(notificationsBeforeCancel);
 
@@ -140,6 +140,7 @@ it('snaps a dragged launcher to the nearest safe boundary edge', () => {
     expect(restore).toHaveBeenCalledTimes(1);
 
     vi.mocked(matchMedia).mockReturnValue({ matches: false } as MediaQueryList);
+    panel.animate = vi.fn(() => ({ cancel: vi.fn(), finished: new Promise(() => {}) }) as unknown as Animation);
     pointer(launcher, 'pointerdown', 530, 260);
     pointer(document, 'pointermove', 300, 260);
     pointer(document, 'pointerup', 300, 260);
@@ -148,7 +149,7 @@ it('snaps a dragged launcher to the nearest safe boundary edge', () => {
     expect(Number.parseFloat(panel.style.left)).toBeCloseTo(272);
     pointer(document, 'pointermove', 320, 260);
     expect(Number.parseFloat(panel.style.left)).toBeCloseTo(292);
-    pointer(document, 'pointercancel', 320, 260);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(Number.parseFloat(panel.style.left)).toBeCloseTo(272);
   } finally {
     dispose();

@@ -221,9 +221,21 @@ export function resolveSurfacePortalScale(surfaceHost: ResolvedSurfacePortalHost
   const mount = resolveSurfacePortalMount(surfaceHost);
   if (!mount) return { x: 1, y: 1 };
   const rect = mount.getBoundingClientRect();
+  const style = getComputedStyle(mount);
+  const pixels = (value: string) => Number.parseFloat(value) || 0;
+  const borderBox = (axis: 'width' | 'height') => {
+    const value = pixels(style[axis]);
+    if (!value) return axis === 'width' ? mount.offsetWidth : mount.offsetHeight;
+    if (style.boxSizing === 'border-box') return value;
+    return value + (axis === 'width'
+      ? pixels(style.paddingLeft) + pixels(style.paddingRight) + pixels(style.borderLeftWidth) + pixels(style.borderRightWidth)
+      : pixels(style.paddingTop) + pixels(style.paddingBottom) + pixels(style.borderTopWidth) + pixels(style.borderBottomWidth));
+  };
+  const width = borderBox('width');
+  const height = borderBox('height');
   return {
-    x: mount.offsetWidth > 0 && rect.width > 0 ? rect.width / mount.offsetWidth : 1,
-    y: mount.offsetHeight > 0 && rect.height > 0 ? rect.height / mount.offsetHeight : 1,
+    x: width > 0 && rect.width > 0 ? rect.width / width : 1,
+    y: height > 0 && rect.height > 0 ? rect.height / height : 1,
   };
 }
 

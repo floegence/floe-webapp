@@ -29,6 +29,10 @@ export interface StartPointerSessionOptions {
   ownerDocument?: Document;
   buttonMask?: number;
   capturePointer?: boolean;
+  /** Keep document ownership when capture is lost before release. */
+  continueOnCaptureLoss?: boolean;
+  /** Floating launchers settle at the last held point after an interrupted release. */
+  interruptionPosition?: 'event' | 'last-held';
   onMove?: (event: PointerEvent, snapshot: PointerSessionSnapshot) => void;
   onEnd: (event: PointerSessionEndEvent) => void;
 }
@@ -159,13 +163,14 @@ export function startPointerSession(options: StartPointerSessionOptions): Pointe
 
   function handlePointerMove(event: PointerEvent) {
     if (!snapshot.active || event.pointerId !== snapshot.pointerId) return;
-    updatePointer(event);
-
     if (buttonMask > 0 && (readButtons(event, snapshot.latestButtons) & buttonMask) !== buttonMask) {
-      stop({ reason: 'buttons_released', commit: true, event });
+      snapshot.latestButtons = readButtons(event, 0);
+      stop({ reason: 'buttons_released', commit: true,
+        ...(options.interruptionPosition === 'last-held' ? {} : { event }) });
       return;
     }
 
+    updatePointer(event);
     options.onMove?.(event, snapshot);
   }
 
@@ -174,10 +179,14 @@ export function startPointerSession(options: StartPointerSessionOptions): Pointe
   }
 
   function handlePointerCancel(event: PointerEvent) {
-    stop({ reason: 'pointer_cancel', commit: false, event });
+    if (!eventMatchesPointer(event, snapshot.pointerId)) return;
+    stop({ reason: 'pointer_cancel', commit: false,
+      ...(options.interruptionPosition === 'last-held' ? {} : { event }) });
   }
 
   function handleLostPointerCapture() {
+    snapshot.captureActive = false;
+    if (options.continueOnCaptureLoss) return;
     stop({ reason: 'lost_pointer_capture', commit: true });
   }
 

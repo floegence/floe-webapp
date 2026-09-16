@@ -26,7 +26,8 @@ import {
 } from './floatingWindowGeometry';
 import { createFloatingPresence } from './floatingPresence';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
-import { SURFACE_FLOATING_LAYER_ATTR, SURFACE_PORTAL_LAYER_ATTR } from './surfacePortalScope';
+import { SURFACE_FLOATING_LAYER_ATTR, SURFACE_PORTAL_LAYER_ATTR, resolveSurfacePortalHost } from './surfacePortalScope';
+import { resolveFloatingBoundary, readSurfaceSafeArea, type SurfaceFloatingBoundary } from './surfaceFloatingBoundary';
 
 export interface FloatingWindowProps {
   /** Whether the window is open */
@@ -51,6 +52,12 @@ export interface FloatingWindowProps {
   maxSize?: { width: number; height: number };
   /** Safe area inside the browser viewport that the floating window should avoid */
   viewportInsets?: FloatingWindowViewportInsets;
+  /** Optional visible content boundary, measured in client coordinates by Floe. */
+  boundary?: SurfaceFloatingBoundary;
+  /** Fill the available boundary below this width, without drag/resize controls. Disabled by default. */
+  compactBelow?: number;
+  /** Localized native window control labels. */
+  labels?: { close: string; maximize: string; restore: string };
   /** Whether the window can be resized */
   resizable?: boolean;
   /** Whether the window can be dragged */
@@ -73,7 +80,18 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const draggable = () => props.draggable ?? true;
   const minSize = () => props.minSize ?? { width: 200, height: 150 };
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
-  const viewportInsets = () => props.viewportInsets ?? {};
+  let anchor: HTMLSpanElement | undefined;
+  const safeArea = readSurfaceSafeArea();
+  const [boundaryInsets, setBoundaryInsets] = createSignal<FloatingWindowViewportInsets>({});
+  const [boundaryWidth, setBoundaryWidth] = createSignal(Infinity);
+  const [boundaryVisible, setBoundaryVisible] = createSignal(true);
+  const compact = () => Boolean(props.compactBelow && boundaryWidth() < props.compactBelow);
+  const viewportInsets = () => ({
+    top: (boundaryInsets().top ?? 0) + (props.viewportInsets?.top ?? 0),
+    right: (boundaryInsets().right ?? 0) + (props.viewportInsets?.right ?? 0),
+    bottom: (boundaryInsets().bottom ?? 0) + (props.viewportInsets?.bottom ?? 0),
+    left: (boundaryInsets().left ?? 0) + (props.viewportInsets?.left ?? 0),
+  });
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
 
@@ -92,11 +110,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
     open: () => props.open,
     exitDurationMs: 120,
   });
-  const [preMaximizeState, setPreMaximizeState] = createSignal<{
-    position: { x: number; y: number };
-    size: { width: number; height: number };
-  } | null>(null);
-
   let dragStartPos = { x: 0, y: 0 };
   let dragStartRect: FloatingWindowRect = { x: 0, y: 0, width: 0, height: 0 };
   let resizeStartPos = { x: 0, y: 0 };
@@ -116,6 +129,18 @@ export function FloatingWindow(props: FloatingWindowProps) {
     y: props.defaultPosition?.y ?? 0,
     width: props.defaultSize?.width ?? 400,
     height: props.defaultSize?.height ?? 300,
+  };
+
+  // Viewport constraints are a rendering projection, never the user's preferred geometry.
+  let preferredRect = { ...liveRect };
+  let preferredPlacement: { x: number; y: number } | undefined;
+  const rememberPreference = (rect: FloatingWindowRect) => {
+    preferredRect = { ...rect };
+    const bounds = resolveFloatingWindowViewport({ width: window.innerWidth, height: window.innerHeight }, viewportInsets());
+    preferredPlacement = {
+      x: bounds.width > rect.width ? (rect.x - bounds.x) / (bounds.width - rect.width) : (preferredPlacement?.x ?? 0.5),
+      y: bounds.height > rect.height ? (rect.y - bounds.y) / (bounds.height - rect.height) : (preferredPlacement?.y ?? 0.5),
+    };
   };
 
   const RESIZE_CURSORS: Record<FloatingWindowResizeHandle, string> = {
@@ -238,21 +263,34 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (typeof window === 'undefined') return;
 
     const viewport = { width: window.innerWidth, height: window.innerHeight };
-    if (isMaximized()) {
+    if (isMaximized() || compact()) {
       setCommittedRect(resolveFloatingWindowViewport(viewport, viewportInsets()));
       return;
     }
 
-    setCommittedRect(normalizeFloatingWindowRect({
-      rect: readCommittedRect(),
+    let rect = normalizeFloatingWindowRect({
+      rect: preferredRect,
       minSize: minSize(),
       maxSize: maxSize(),
       viewport,
       viewportInsets: viewportInsets(),
-      mobile: isMobile(),
+      mobile: props.boundary === undefined && isMobile(),
       mobilePadding: MOBILE_PADDING,
       center: options?.center ?? false,
-    }));
+    });
+    if (props.boundary !== undefined && preferredPlacement && !options?.center) {
+      const available = resolveFloatingWindowViewport(viewport, viewportInsets());
+      rect = { ...rect,
+        x: available.x + preferredPlacement.x * Math.max(0, available.width - rect.width),
+        y: available.y + preferredPlacement.y * Math.max(0, available.height - rect.height),
+      };
+    }
+    setCommittedRect(rect);
+    if (!preferredPlacement) {
+      const requestedSize = { width: preferredRect.width, height: preferredRect.height };
+      rememberPreference(rect);
+      Object.assign(preferredRect, requestedSize);
+    }
   };
 
   const finishInteraction = (commit: boolean) => {
@@ -268,6 +306,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     batch(() => {
       if (committedRect) {
         setCommittedRect(committedRect);
+        rememberPreference(committedRect);
       }
       activePointerId = null;
       mode = null;
@@ -285,6 +324,25 @@ export function FloatingWindow(props: FloatingWindowProps) {
   onCleanup(() => stopInteraction(false));
 
   onMount(() => {
+    let frame = 0;
+    const measureBoundary = () => {
+      if (props.boundary !== undefined) {
+        const rect = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: anchor }), props.boundary, safeArea);
+        const next = rect ? { top: rect.top, left: rect.left, right: window.innerWidth - rect.right, bottom: window.innerHeight - rect.bottom } : {};
+        batch(() => {
+          setBoundaryVisible(Boolean(rect && rect.width > 16 && rect.height > 16));
+          setBoundaryWidth(rect?.width ?? 0);
+          setBoundaryInsets(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
+        });
+      } else {
+        setBoundaryVisible(true);
+        setBoundaryWidth(window.innerWidth);
+        setBoundaryInsets(previous => Object.keys(previous).length ? {} : previous);
+      }
+      frame = requestAnimationFrame(measureBoundary);
+    };
+    measureBoundary();
+    onCleanup(() => cancelAnimationFrame(frame));
     if (!props.open) {
       syncRectToViewport({ center: !props.defaultPosition });
     }
@@ -313,8 +371,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
 
   createEffect(() => {
-    if (!props.open || !hasOpenedOnce || activePointerId !== null) return;
     viewportInsets();
+    compact();
+    if (!props.open || !hasOpenedOnce || activePointerId !== null) return;
     untrack(() => syncRectToViewport({ center: false }));
   });
 
@@ -384,7 +443,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
 
   const handleDragStart = (e: PointerEvent) => {
-    if (!draggable() || isMaximized() || activePointerId !== null) return;
+    if (!draggable() || isMaximized() || compact() || activePointerId !== null) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
@@ -404,7 +463,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   // eslint-disable-next-line solid/reactivity -- This returns an event handler.
   const handleResizeStart = (handle: FloatingWindowResizeHandle) => (e: PointerEvent) => {
-    if (!resizable() || isMaximized() || activePointerId !== null) return;
+    if (!resizable() || isMaximized() || compact() || activePointerId !== null) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     e.preventDefault();
@@ -458,39 +517,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
       stopInteraction(true);
     }
 
-    if (isMaximized()) {
-      const prevState = preMaximizeState();
-      if (prevState) {
-        setCommittedRect(normalizeFloatingWindowRect({
-          rect: {
-            x: prevState.position.x,
-            y: prevState.position.y,
-            width: prevState.size.width,
-            height: prevState.size.height,
-          },
-          minSize: minSize(),
-          maxSize: maxSize(),
-          viewport: { width: window.innerWidth, height: window.innerHeight },
-          viewportInsets: viewportInsets(),
-          mobile: isMobile(),
-          mobilePadding: MOBILE_PADDING,
-          center: false,
-        }));
-      }
-      setIsMaximized(false);
-      return;
-    }
-
-    const currentRect = readCommittedRect();
-    setPreMaximizeState({
-      position: { x: currentRect.x, y: currentRect.y },
-      size: { width: currentRect.width, height: currentRect.height },
-    });
-    setCommittedRect(resolveFloatingWindowViewport(
-      { width: window.innerWidth, height: window.innerHeight },
-      viewportInsets(),
-    ));
-    setIsMaximized(true);
+    if (compact()) return;
+    setIsMaximized(!isMaximized());
+    syncRectToViewport();
   };
 
   const handleTitleBarDoubleClick = (event: MouseEvent) => {
@@ -519,13 +548,17 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   return (
+    <>
+    <span ref={anchor} hidden />
     <Show when={windowPresence.mounted()}>
       <Portal>
         <div
           ref={windowRef}
           data-floe-geometry-surface="floating-window"
           data-floating-presence={windowPresence.state()}
-          aria-hidden={windowPresence.exiting() ? 'true' : undefined}
+          aria-hidden={windowPresence.exiting() || !boundaryVisible() ? 'true' : undefined}
+          inert={windowPresence.exiting() || !boundaryVisible()}
+          data-floe-floating-window-compact={compact() ? 'true' : undefined}
           {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
           class={cn(
             'fixed left-0 top-0 z-[100] flex flex-col',
@@ -533,6 +566,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             windowPresence.exiting() && 'pointer-events-none'
           )}
           style={{
+            visibility: boundaryVisible() ? undefined : 'hidden',
             width: `${size().width}px`,
             height: `${size().height}px`,
             transform: `translate3d(${position().x}px, ${position().y}px, 0)`,
@@ -570,7 +604,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 'flex shrink-0 items-center justify-between h-8',
                 'border-b',
                 isMaximized() ? 'rounded-none' : 'rounded-t-md',
-                draggable() && !isMaximized() && 'cursor-move'
+                draggable() && !isMaximized() && !compact() && 'cursor-move'
               )}
               onPointerDown={handleDragStart}
               onDblClick={handleTitleBarDoubleClick}
@@ -598,6 +632,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               </Show>
 
               <div class="flex h-full shrink-0 items-stretch">
+                <Show when={!compact()}>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -607,12 +642,13 @@ export function FloatingWindow(props: FloatingWindowProps) {
                     e.stopPropagation();
                     toggleMaximize();
                   }}
-                  aria-label={isMaximized() ? 'Restore' : 'Maximize'}
+                  aria-label={isMaximized() ? (props.labels?.restore ?? 'Restore') : (props.labels?.maximize ?? 'Maximize')}
                 >
                   <Show when={isMaximized()} fallback={<Maximize class="w-3 h-3" />}>
                     <Restore class="w-3 h-3" />
                   </Show>
                 </Button>
+                </Show>
 
                 <Button
                   variant="ghost-destructive"
@@ -623,7 +659,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
                     e.stopPropagation();
                     props.onOpenChange(false);
                   }}
-                  aria-label="Close"
+                  aria-label={props.labels?.close ?? 'Close'}
                 >
                   <X class="w-3.5 h-3.5" />
                 </Button>
@@ -646,7 +682,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               </div>
             </Show>
 
-            <Show when={resizable() && !isMaximized()}>
+            <Show when={resizable() && !isMaximized() && !compact()}>
               <div
                 class={getResizeHandleClass('n')}
                 data-floe-floating-window-resize-handle="n"
@@ -703,5 +739,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
         </div>
       </Portal>
     </Show>
+    </>
   );
 }
