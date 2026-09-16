@@ -483,7 +483,8 @@ unmounting its component to preserve position, size, and maximization.
 `viewportInsets` applies inside that region. `compactBelow` optionally fills that
 region on narrow layouts and hides drag, resize and maximize controls. Preferred
 normal geometry survives temporary viewport/composer constraints and maximize
-cycles. `labels` supplies localized close, maximize and restore control text.
+cycles, including when the user moves the temporarily constrained window. Only
+explicit resize changes its preferred size. `labels` supplies localized close, maximize and restore control text.
 Hidden/exiting windows are inert. Product code owns entry focus and status; Floe
 owns all floating geometry.
 

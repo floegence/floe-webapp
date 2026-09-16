@@ -216,6 +216,12 @@ render(() => <App/>, document.getElementById('root'));
             style: await dialog.getAttribute('style'),
           })
         );
+        const title = dialog.locator('[data-floe-floating-window-titlebar]');
+        const titleBox = await title.boundingBox();
+        await page.mouse.move(titleBox.x + 30, titleBox.y + titleBox.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(titleBox.x + 55, titleBox.y + titleBox.height / 2);
+        await page.mouse.up();
         await page.evaluate(() => window.fixture.setHeight(540));
         await page.waitForTimeout(100);
         near((await dialog.boundingBox()).height, original.height);

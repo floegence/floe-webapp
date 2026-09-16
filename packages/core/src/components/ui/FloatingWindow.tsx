@@ -306,7 +306,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
     batch(() => {
       if (committedRect) {
         setCommittedRect(committedRect);
+        const preferredSize = { width: preferredRect.width, height: preferredRect.height };
         rememberPreference(committedRect);
+        // Moving a constrained window changes only its placement; resizing owns size.
+        if (mode === 'drag') Object.assign(preferredRect, preferredSize);
       }
       activePointerId = null;
       mode = null;
