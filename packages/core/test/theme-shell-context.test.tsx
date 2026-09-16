@@ -106,12 +106,15 @@ describe('shell theme context', () => {
 
   it('finishes palette transitions without interrupting functional motion or remounting drafts', async () => {
     const color = { transitionProperty: 'background-color', finish: vi.fn() };
+    const inherited = { transitionProperty: 'color', finish: vi.fn() };
     const travel = { transitionProperty: 'transform', finish: vi.fn() };
     const geometry = { transitionProperty: 'width', finish: vi.fn() };
     const root = document.documentElement;
     Object.defineProperty(root, 'getAnimations', {
       configurable: true,
-      value: () => [color, travel, geometry],
+      value: () => color.finish.mock.calls.length
+        ? [color, inherited, travel, geometry]
+        : [color, travel, geometry],
     });
     try {
       const { service, host } = mountSurface();
@@ -121,6 +124,7 @@ describe('shell theme context', () => {
       service.selectShellTheme('dark', 'classic-dark');
       await Promise.resolve();
       expect(color.finish).toHaveBeenCalled();
+      expect(inherited.finish).toHaveBeenCalledTimes(1);
       expect(travel.finish).not.toHaveBeenCalled();
       expect(geometry.finish).not.toHaveBeenCalled();
       expect(host.querySelector('input')).toBe(input);

@@ -167,8 +167,17 @@ export function createThemeService(): ThemeContextValue {
     // (including an in-flight drawer, switch, or exit) retains its own timeline.
     if (typeof document !== 'undefined') {
       queueMicrotask(() => {
-        for (const animation of document.documentElement.getAnimations?.({ subtree: true }) ?? []) {
-          if ('transitionProperty' in animation && /^(color|background-color|border-.*-color|fill|stroke|box-shadow)$/.test(String(animation.transitionProperty))) {
+        const finished = new Set<Animation>();
+        // Finishing an inherited color can start a descendant's own transition.
+        // Resolve that finite cascade in this same paint, once per animation.
+        for (;;) {
+          const pending = (document.documentElement.getAnimations?.({ subtree: true }) ?? [])
+            .filter((animation) => !finished.has(animation) &&
+              'transitionProperty' in animation &&
+              /(^|-)color$|^(fill|stroke|box-shadow)$/.test(String(animation.transitionProperty)));
+          if (pending.length === 0) break;
+          for (const animation of pending) {
+            finished.add(animation);
             animation.finish();
           }
         }
