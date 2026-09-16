@@ -597,7 +597,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               isMaximized() && 'rounded-none',
               props.class
             )}
-            style={{ 'border-radius': isMaximized() ? '0' : '10px' }}
+            style={{ 'border-radius': isMaximized() ? '0' : 'var(--floe-radius-floating)' }}
             data-floating-presence={windowPresence.state()}
           >
             <div
