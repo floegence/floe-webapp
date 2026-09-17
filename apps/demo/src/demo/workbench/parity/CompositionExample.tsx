@@ -87,6 +87,7 @@ function frame() {
         y: Math.max(260, innerHeight / 2 - (object.height * scale) / 2) - object.y * scale,
         scale,
       },
+      mode: selection(id)?.kind === 'sticky_note' ? 'work' : 'background',
       selectedObject: selection(id),
     }));
 }

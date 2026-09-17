@@ -380,7 +380,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                     props.onUpdateTextAnnotation?.(annotationId, patch)
                   }
                 />
-                <div class="workbench-canvas__projected-work-layer">
+                <div class="workbench-canvas__projected-work-layer" inert={workLayerLocked()}>
                   <For each={projectedWidgetIds()}>
                     {(widgetId) => (
                       <WorkbenchProjectedWidgetSlot
@@ -428,7 +428,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
                         renderLayers={renderLayers}
                         projectedViewport={liveViewport}
                         visualFrontOwnerId={props.visualFrontOwnerId}
-                        locked={props.locked}
+                        locked={props.locked || workLayerLocked()}
                         filtered={
                           !workLayerLocked() && props.filters[WORKBENCH_STICKY_FILTER_ID] === false
                         }

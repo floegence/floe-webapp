@@ -191,8 +191,8 @@ try {
     await actual.locator('.workbench-composition-toolbar').waitFor();
     if (!id.startsWith('board-'))
       await actual.locator('.workbench-treatment-trigger[aria-expanded="true"]').waitFor();
-    if (sample === 'composition' && !id.startsWith('board-')) {
-      // Sticky menus now float independently; compare the unchanged compact row.
+    if (!id.startsWith('board-')) {
+      // Material menus float independently; compare the unchanged compact row.
       await ref.locator('#object-toolbar .treatment-trigger').click();
     }
     await nextFrame(actual);
@@ -321,7 +321,6 @@ try {
   await b.keyboard.press('Enter');
   if ((await b.locator('.workbench-treatment-trigger').getAttribute('aria-expanded')) !== 'true')
     await b.locator('.workbench-treatment-trigger').click();
-  await b.getByRole('button', { name: 'More options', exact: true }).click();
   await b.getByRole('button', { name: 'Clear name', exact: true }).click();
   assert.equal(
     await b.evaluate(
@@ -331,7 +330,6 @@ try {
     ''
   );
   assert.equal(await name.isVisible(), false, 'Cleared region is an unlabelled color field');
-  await b.getByRole('button', { name: 'More options', exact: true }).click();
   if ((await b.locator('.workbench-treatment-trigger').getAttribute('aria-expanded')) !== 'true')
     await b.locator('.workbench-treatment-trigger').click();
   await nextFrame(b);

@@ -56,91 +56,279 @@ try {
         content:
           '*,*::before,*::after { transition: none !important; animation: none !important; }',
       });
+      const setMode = async (mode) => {
+        if (
+          (await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode')) === mode
+        )
+          return;
+        await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+        await page
+          .getByRole('menuitemradio', { name: mode === 'work' ? /Work Mode/ : /Composition Mode/ })
+          .click();
+      };
+      const beforeIsolation = await page.evaluate(() => window.workbenchFixture.state());
+      await setMode('work');
+      const noteNode = await note.elementHandle();
+      const widgetInput = page.getByRole('textbox', { name: 'Widget input' });
+      const inputNode = await widgetInput.elementHandle();
+      await widgetInput.fill('Keep widget state');
+      await note.click();
+      await note.fill('Save when mode changes');
+      // A host can switch modes without moving focus; the active draft still commits.
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((s) => ({
+          ...s,
+          mode: 'background',
+          selectedObject: null,
+          selectedWidgetId: null,
+        }))
+      );
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].body),
+        'Save when mode changes'
+      );
+      assert.equal(await note.evaluate((el) => el.isContentEditable), false);
+      assert.equal(await note.evaluate((el) => el === document.activeElement), false);
+      assert.equal(
+        await noteNode.evaluate((el) => el === document.querySelector('.workbench-sticky__body')),
+        true
+      );
+      for (const selector of ['.workbench-sticky', '.workbench-widget']) {
+        const object = page.locator(selector);
+        assert.ok(
+          await object.evaluate((el) => !!el.closest('[inert]')),
+          `${selector}: work subtree is inert`
+        );
+        assert.ok(
+          await object.evaluate(
+            (el) =>
+              Number(
+                getComputedStyle(el.querySelector('[class$="__surface"]'), '::after').opacity
+              ) > 0.8
+          ),
+          `${selector}: work object is muted`
+        );
+        const rect = await object.boundingBox();
+        await page.mouse.click(rect.x + 80, rect.y + 65);
+        const selection = await page.evaluate(() => window.workbenchFixture.state().selectedObject);
+        assert.ok(
+          !selection || !['sticky_note', 'widget'].includes(selection.kind),
+          'Pointer cannot select work objects'
+        );
+        await page.mouse.move(rect.x + 80, rect.y + 65);
+        await page.mouse.down();
+        await page.mouse.move(rect.x + 130, rect.y + 90, { steps: 4 });
+        await page.mouse.up();
+        await page.mouse.click(rect.x + 80, rect.y + 65, { button: 'right' });
+        const target = await page.evaluate(() => window.workbenchFixture.state().selectedObject);
+        assert.ok(!target || !['sticky_note', 'widget'].includes(target.kind));
+        await page.keyboard.press('Escape');
+      }
+      // Disabled objects cannot regain keyboard focus or expose a floating editing toolbar.
+      await noteNode.evaluate((el) => el.focus());
+      await inputNode.evaluate((el) => el.focus());
+      assert.equal(await page.evaluate(() => !!document.activeElement.closest('[inert]')), false);
+      await page.mouse.click(30, 650);
+      for (let i = 0; i < 18; i++) {
+        await page.keyboard.press('Tab');
+        assert.equal(
+          await page.evaluate(() => !!document.activeElement.closest('[inert]')),
+          false,
+          'Tab skips work content'
+        );
+      }
+      await page.mouse.click(30, 650);
+      await page.keyboard.press('ArrowRight');
+      await page.keyboard.press('Delete');
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().mode),
+        'background',
+        'Navigation cannot switch back to a work object'
+      );
+      assert.equal(
+        await page.locator('.workbench-composition-toolbar[data-kind="sticky"]').count(),
+        0
+      );
+      const afterIsolation = await page.evaluate(() => window.workbenchFixture.state());
+      assert.deepEqual(
+        afterIsolation.widgets,
+        beforeIsolation.widgets,
+        'Work windows cannot be moved or deleted'
+      );
+      assert.equal(afterIsolation.stickyNotes.length, 1);
+      for (const key of ['x', 'y', 'width', 'height'])
+        assert.equal(
+          afterIsolation.stickyNotes[0][key],
+          beforeIsolation.stickyNotes[0][key],
+          'Sticky geometry stays locked'
+        );
+      assert.equal(afterIsolation.stickyNotes[0].body, 'Save when mode changes');
+      // Stale externally supplied selection is also safe against destructive shortcuts.
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((s) => ({
+          ...s,
+          selectedObject: { kind: 'sticky_note', id: 'note' },
+        }))
+      );
+      await page.keyboard.press('Delete');
+      assert.equal(await page.locator('.workbench-sticky').count(), 1);
+      await setMode('work');
+      assert.equal(await note.evaluate((el) => el.isContentEditable), true);
+      assert.equal(
+        await inputNode.evaluate(
+          (el) => el === document.querySelector('input[aria-label="Widget input"]')
+        ),
+        true,
+        'Mode switching preserves mounted widget content'
+      );
+      assert.equal(await widgetInput.inputValue(), 'Keep widget state');
+      await widgetInput.fill('Work restored');
+      await note.click();
+      await note.fill('Sticky restored');
+      await page.keyboard.press('Escape');
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].body),
+        'Sticky restored'
+      );
+      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeIsolation);
       const beforeMenu = await page.evaluate(() => window.workbenchFixture.state());
-      for (const scale of [0.35, 1]) {
-        for (const [x, y] of [
-          [20, 80],
-          [520, 360],
-          [970, 620],
-          [970, 740],
-        ]) {
-          await page.evaluate(
-            ({ x, y, scale }) =>
-              window.workbenchFixture.setState((state) => ({
-                ...state,
-                viewport: { x: 0, y: 0, scale },
-                selectedObject: { kind: 'sticky_note', id: 'note' },
-                stickyNotes: state.stickyNotes.map((note) => ({
-                  ...note,
-                  x: x / scale,
-                  y: y / scale,
-                  material: 'tint',
+      for (const [kind, collection, id, first, second, last] of [
+        ['sticky_note', 'stickyNotes', 'note', 'tint', 'tab', 'ruled'],
+        ['background_layer', 'backgroundLayers', 'region', 'solid', 'frame', 'glass'],
+      ]) {
+        for (const scale of [0.35, 1]) {
+          for (const [x, y] of [
+            [20, 80],
+            [520, 360],
+            [970, 620],
+            [970, 740],
+          ]) {
+            await page.evaluate(
+              ({ x, y, scale, kind, collection, id, first }) =>
+                window.workbenchFixture.setState((state) => ({
+                  ...state,
+                  mode: kind === 'sticky_note' ? 'work' : 'background',
+                  viewport: { x: 0, y: 0, scale },
+                  selectedObject: { kind, id },
+                  [collection]: state[collection].map((note) => ({
+                    ...note,
+                    x: x / scale,
+                    y: y / scale,
+                    material: first,
+                  })),
                 })),
-              })),
-            { x, y, scale }
-          );
-          await page.waitForTimeout(60);
-          const geometry = await page.evaluate(async () => {
-            const toolbar = document.querySelector('.workbench-composition-toolbar');
-            const box = (element) => {
-              const rect = element.getBoundingClientRect();
-              return [rect.x, rect.y, rect.width, rect.height];
-            };
-            const before = box(toolbar);
-            document.querySelector('.workbench-treatment-trigger').click();
-            const frames = [];
-            for (let frame = 0; frame < 8; frame++) {
-              await new Promise(requestAnimationFrame);
-              const panel = document.querySelector('.workbench-treatment-panel');
-              frames.push({
-                toolbar: box(toolbar),
-                menu: getComputedStyle(panel).visibility === 'visible' ? box(panel) : null,
-              });
+              { x, y, scale, kind, collection, id, first }
+            );
+            await page.waitForTimeout(60);
+            const geometry = await page.evaluate(async () => {
+              const toolbar = document.querySelector('.workbench-composition-toolbar');
+              const box = (element) => {
+                const rect = element.getBoundingClientRect();
+                return [rect.x, rect.y, rect.width, rect.height];
+              };
+              const before = box(toolbar);
+              document.querySelector('.workbench-treatment-trigger').click();
+              const frames = [];
+              for (let frame = 0; frame < 8; frame++) {
+                await new Promise(requestAnimationFrame);
+                const panel = document.querySelector('.workbench-treatment-panel');
+                frames.push({
+                  toolbar: box(toolbar),
+                  menu: getComputedStyle(panel).visibility === 'visible' ? box(panel) : null,
+                });
+              }
+              return { before, frames };
+            });
+            for (const frame of geometry.frames) {
+              assert.deepEqual(
+                frame.toolbar,
+                geometry.before,
+                `${engine}/${kind}/${scale}/${x},${y}: opening a material menu keeps the toolbar fixed`
+              );
             }
-            return { before, frames };
-          });
-          for (const frame of geometry.frames) {
-            assert.deepEqual(
-              frame.toolbar,
-              geometry.before,
-              `${engine}/${scale}/${x},${y}: opening a material menu keeps the toolbar fixed`
+            const visible = geometry.frames
+              .filter((frame) => frame.menu)
+              .map((frame) => frame.menu);
+            assert.ok(visible.length > 0, 'Material menu becomes visible');
+            for (const rect of visible) {
+              assert.deepEqual(
+                rect,
+                visible[0],
+                'The menu never changes position after its first visible frame'
+              );
+              assert.ok(
+                rect[2] <= 224 && rect[3] <= (kind === 'sticky_note' ? 160 : 340),
+                'Material menu stays compact'
+              );
+              assert.ok(
+                rect[0] >= 0 &&
+                  rect[0] + rect[2] <= 1280 &&
+                  rect[1] >= 0 &&
+                  rect[1] + rect[3] <= 800,
+                'Material menu stays within the canvas'
+              );
+            }
+            await page.locator('.workbench-treatment-options > button').nth(1).click();
+            assert.equal(
+              await page.locator('.workbench-treatment-trigger').getAttribute('aria-expanded'),
+              'false',
+              'Selecting a material closes the menu'
             );
+            assert.equal(
+              await page.evaluate(
+                (collection) => window.workbenchFixture.state()[collection][0].material,
+                collection
+              ),
+              second
+            );
+            const trigger = page.locator('.workbench-treatment-trigger');
+            await trigger.focus();
+            await page.keyboard.press('ArrowDown');
+            await page.keyboard.press('End');
+            await page.keyboard.press('Enter');
+            assert.equal(
+              await page.evaluate(
+                (collection) => window.workbenchFixture.state()[collection][0].material,
+                collection
+              ),
+              last,
+              'Keyboard material selection works'
+            );
+            if (kind === 'background_layer') {
+              if (scale === 1 && x === 520) {
+                await trigger.click();
+                const opacity = page.getByRole('slider', { name: 'Opacity', exact: true });
+                const value = Number(await opacity.inputValue());
+                const viewport = await page.evaluate(
+                  () => window.workbenchFixture.state().viewport
+                );
+                await opacity.focus();
+                await page.keyboard.press('ArrowLeft');
+                assert.equal(
+                  Number(await opacity.inputValue()),
+                  value - 1,
+                  'Slider keeps native arrow key control'
+                );
+                assert.deepEqual(
+                  await page.evaluate(() => window.workbenchFixture.state().viewport),
+                  viewport,
+                  'Slider does not navigate the canvas'
+                );
+                await page.keyboard.press('Escape');
+                assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+              }
+              const region = await page.locator('.workbench-background-region').boundingBox();
+              const grip = await page
+                .getByRole('button', { name: 'Move region', exact: true })
+                .boundingBox();
+              assert.ok(
+                Math.abs(grip.x + 29 - region.x) <= 1.2 && Math.abs(grip.y - region.y) <= 1.2,
+                `Region grip sits outside the left edge, like text: ${JSON.stringify({ region, grip })}`
+              );
+              assert.ok(Math.abs(grip.width - 22) < 0.1, 'Region grip retains its screen size');
+            }
+            menuResults.push({ engine, kind, scale, x, y, stableFrames: visible.length });
           }
-          const visible = geometry.frames.filter((frame) => frame.menu).map((frame) => frame.menu);
-          assert.ok(visible.length > 0, 'Material menu becomes visible');
-          for (const rect of visible) {
-            assert.deepEqual(
-              rect,
-              visible[0],
-              'The menu never changes position after its first visible frame'
-            );
-            assert.ok(rect[2] <= 224 && rect[3] <= 160, 'Material menu stays compact');
-            assert.ok(
-              rect[0] >= 0 && rect[0] + rect[2] <= 1280 && rect[1] >= 0 && rect[1] + rect[3] <= 800,
-              'Material menu stays within the canvas'
-            );
-          }
-          await page.locator('.workbench-treatment-options > button').nth(1).click();
-          assert.equal(
-            await page.locator('.workbench-treatment-trigger').getAttribute('aria-expanded'),
-            'false',
-            'Selecting a material closes the menu'
-          );
-          assert.equal(
-            await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].material),
-            'tab'
-          );
-          const trigger = page.locator('.workbench-treatment-trigger');
-          await trigger.focus();
-          await page.keyboard.press('ArrowDown');
-          await page.keyboard.press('End');
-          await page.keyboard.press('Enter');
-          assert.equal(
-            await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].material),
-            'ruled',
-            'Keyboard material selection works'
-          );
-          menuResults.push({ engine, scale, x, y, stableFrames: visible.length });
         }
       }
       await page.evaluate((state) => window.workbenchFixture.setState(state), beforeMenu);
@@ -275,6 +463,7 @@ try {
                 window.workbenchFixture.setState((s) => ({
                   ...s,
                   selectedObject: null,
+                  mode: collection === 'stickyNotes' ? 'work' : 'background',
                   viewport,
                   stickyNotes: s.stickyNotes.map((note) => ({ ...note, title: 'Editable title' })),
                 }));
@@ -324,6 +513,7 @@ try {
         (state) =>
           window.workbenchFixture.setState({
             ...state,
+            mode: 'work',
             viewport: { x: 100, y: 120, scale: 0.35 },
             stickyNotes: state.stickyNotes.map((note) => ({ ...note, title: 'Editable title' })),
           }),
@@ -365,7 +555,10 @@ try {
       );
       await page.keyboard.press('Escape');
       await page.setViewportSize({ width: 1280, height: 800 });
-      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeZoom);
+      await page.evaluate(
+        (state) => window.workbenchFixture.setState({ ...state, mode: 'work' }),
+        beforeZoom
+      );
       const initial = await note.textContent();
       await note.click({ position: { x: 40, y: 15 } });
       await page.keyboard.press('End');
@@ -390,7 +583,7 @@ try {
         await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].body),
         /committed/
       );
-      // Native selection is allowed on the first pointer gesture, even in composition mode.
+      // Native selection is allowed on the first pointer gesture in Work mode.
       const box = await note.boundingBox();
       await page.mouse.move(box.x + 4, box.y + 12);
       await page.mouse.down();
@@ -401,6 +594,7 @@ try {
         'native text selection'
       );
       await page.keyboard.press('Escape');
+      await setMode('background');
       const name = page.getByRole('textbox', { name: 'Region name' });
       await name.click({ position: { x: 5, y: 10 } });
       await page.keyboard.press('ControlOrMeta+A');
@@ -457,6 +651,7 @@ try {
         ['Canvas text', 'annotations', 'text'],
         ['Region name', 'backgroundLayers', 'name'],
       ]) {
+        await setMode(collection === 'stickyNotes' ? 'work' : 'background');
         const editor = page.getByRole('textbox', { name: label, exact: true });
         for (const finish of ['Escape', 'outside pointer']) {
           await editor.click();
@@ -480,6 +675,7 @@ try {
         }
       }
       // Moving between fields commits the first field without stealing focus from the second.
+      await setMode('work');
       const title = page.getByRole('textbox', { name: 'Sticky note title', exact: true });
       await title.click();
       await page.keyboard.press('ControlOrMeta+A');
@@ -600,6 +796,7 @@ try {
                 window.workbenchFixture.setState((s) => ({
                   ...s,
                   viewport: { x: 0, y: 0, scale: 1 },
+                  mode: 'work',
                   selectedObject: { kind: 'sticky_note', id: 'note' },
                   stickyNotes: s.stickyNotes.map((n) => ({ ...n, material, color })),
                 })),
@@ -654,6 +851,7 @@ try {
               ({ material, fill }) =>
                 window.workbenchFixture.setState((s) => ({
                   ...s,
+                  mode: 'background',
                   selectedObject: { kind: 'background_layer', id: 'region' },
                   backgroundLayers: s.backgroundLayers.map((r) => ({ ...r, fill, material })),
                 })),
@@ -721,6 +919,7 @@ try {
           window.workbenchFixture.setState((s) => ({
             ...s,
             theme: 'default',
+            mode: 'work',
             selectedObject: { kind: 'sticky_note', id: 'note' },
           }))
         );

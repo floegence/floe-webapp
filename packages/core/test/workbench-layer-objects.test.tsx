@@ -786,8 +786,7 @@ describe('Workbench layer objects', () => {
     document.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')!.click();
     const materialGroup = document.querySelector('.workbench-treatment-options');
     expect(materialGroup?.getAttribute('role')).toBe('group');
-    expect(materialGroup?.children).toHaveLength(3);
-    document.querySelector<HTMLButtonElement>('.workbench-picker-more')!.click();
+    expect(materialGroup?.children).toHaveLength(6);
     const material = document.querySelector(
       'button[aria-label="Use region material Grid"]'
     ) as HTMLButtonElement | null;
@@ -830,7 +829,6 @@ describe('Workbench layer objects', () => {
     expect(onUpdate).toHaveBeenCalledWith('region-1', { fill: '#a79d8e' });
 
     document.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')!.click();
-    document.querySelector<HTMLButtonElement>('.workbench-picker-more')!.click();
     document
       .querySelector<HTMLButtonElement>('button[aria-label="Use region material Grid"]')!
       .click();

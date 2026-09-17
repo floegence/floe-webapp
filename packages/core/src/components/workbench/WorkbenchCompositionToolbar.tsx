@@ -49,7 +49,7 @@ export function CompositionDivider() {
   return <span class="workbench-composition-divider" aria-hidden="true" />;
 }
 
-/** Object tools keep their anchor when a sticky material menu opens. */
+/** Object tools keep their anchor when a material menu opens. */
 export function CompositionToolbar(props: {
   kind: 'sticky' | 'region' | 'text';
   children: JSX.Element;
@@ -65,7 +65,6 @@ export function CompositionToolbar(props: {
 }) {
   const t = useWorkbenchCompositionText();
   const [open, setOpen] = createSignal(false);
-  const [more, setMore] = createSignal(false);
   const [materialPanel, setMaterialPanel] = createSignal<HTMLDivElement>();
   const [menuPosition, setMenuPosition] = createSignal<{ x: number; y: number }>();
   const panelId = createUniqueId();
@@ -73,13 +72,12 @@ export function CompositionToolbar(props: {
   let focusMaterialOnOpen = false;
   const close = () => {
     setOpen(false);
-    setMore(false);
     props.onMoreClose?.();
   };
   const styleOpen = open;
   createEffect(() => {
     const panel = materialPanel();
-    if (!open() || props.kind !== 'sticky' || !panel || !root) {
+    if (!open() || !panel || !root) {
       setMenuPosition(undefined);
       return;
     }
@@ -90,12 +88,15 @@ export function CompositionToolbar(props: {
     // Its size never feeds back into the object toolbar's placement calculation.
     const anchor = trigger.getBoundingClientRect();
     const parent = root.getBoundingClientRect();
+    panel.style.maxHeight = `${Math.max(0, bounds.bottom - bounds.top - 24)}px`;
     const size = panel.getBoundingClientRect();
     const above = anchor.top - size.height - 10;
-    const y =
+    const y = Math.max(
+      bounds.top + 12,
       above >= bounds.top + 12
         ? above
-        : Math.min(anchor.bottom + 10, bounds.bottom - size.height - 12);
+        : Math.min(anchor.bottom + 10, bounds.bottom - size.height - 12)
+    );
     const x = Math.max(bounds.left + 12, Math.min(anchor.left, bounds.right - size.width - 12));
     setMenuPosition({ x: x - parent.left, y: y - parent.top });
     if (focusMaterialOnOpen) {
@@ -110,13 +111,13 @@ export function CompositionToolbar(props: {
     }
   });
   createEffect(() => {
-    if (!open() && !more() && !props.moreOpen) return;
+    if (!open() && !props.moreOpen) return;
     const dismiss = (event: PointerEvent) => {
       if (event.target instanceof Node && !root?.contains(event.target)) close();
     };
     document.addEventListener('pointerdown', dismiss, true);
     onCleanup(() => document.removeEventListener('pointerdown', dismiss, true));
-    if (props.kind === 'sticky') {
+    if (props.materials) {
       const dismissOnWheel = (event: WheelEvent) => {
         if (event.target instanceof Node && !root?.contains(event.target)) close();
       };
@@ -139,10 +140,12 @@ export function CompositionToolbar(props: {
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && (open() || more() || props.moreOpen)) {
+        if (event.key === 'Escape' && (open() || props.moreOpen)) {
           event.stopPropagation();
           close();
-          root?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')?.focus({ preventScroll: true });
+          root
+            ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
+            ?.focus({ preventScroll: true });
         }
       }}
     >
@@ -153,14 +156,17 @@ export function CompositionToolbar(props: {
           class="workbench-treatment-panel"
           onKeyDown={(event) => {
             if (
-              props.kind !== 'sticky' ||
-              !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+              !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key) ||
+              !(event.target instanceof Element) ||
+              !event.target.closest('.workbench-treatment-options')
             )
               return;
             event.preventDefault();
             event.stopPropagation();
             const options = Array.from(
-              event.currentTarget.querySelectorAll<HTMLButtonElement>('button')
+              event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                '.workbench-treatment-options > button'
+              )
             );
             const current = options.indexOf(document.activeElement as HTMLButtonElement);
             const next =
@@ -172,34 +178,12 @@ export function CompositionToolbar(props: {
                     options.length;
             options[next]?.focus({ preventScroll: true });
           }}
-          style={
-            props.kind === 'sticky'
-              ? {
-                  left: `${menuPosition()?.x ?? 0}px`,
-                  top: `${menuPosition()?.y ?? 0}px`,
-                  visibility: menuPosition() ? 'visible' : 'hidden',
-                }
-              : undefined
-          }
+          style={{
+            left: `${menuPosition()?.x ?? 0}px`,
+            top: `${menuPosition()?.y ?? 0}px`,
+            visibility: menuPosition() ? 'visible' : 'hidden',
+          }}
         >
-          <Show when={props.kind !== 'sticky'}>
-            <div class="workbench-picker-heading">
-              {t('treatment')}
-              <Show when={props.more} fallback={<span>{t('treatmentHint')}</span>}>
-                <button
-                  type="button"
-                  class="workbench-picker-more"
-                  aria-label={t('more')}
-                  title={t('more')}
-                  onClick={() => {
-                    setMore(!more());
-                  }}
-                >
-                  {t('treatmentHint')}
-                </button>
-              </Show>
-            </div>
-          </Show>
           <div
             class="workbench-treatment-options"
             role="group"
@@ -214,12 +198,10 @@ export function CompositionToolbar(props: {
                   onPointerDown={(event) => event.preventDefault()}
                   onClick={() => {
                     props.onMaterial?.(material);
-                    if (props.kind === 'sticky') {
-                      setOpen(false);
-                      root
-                        ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
-                        ?.focus({ preventScroll: true });
-                    }
+                    setOpen(false);
+                    root
+                      ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
+                      ?.focus({ preventScroll: true });
                   }}
                 >
                   {props.preview?.(material, true)}
@@ -227,14 +209,16 @@ export function CompositionToolbar(props: {
                     {t(material)}
                     <Check />
                   </span>
-                  <small>{t(`${material}Description` as WorkbenchCompositionMessageKey)}</small>
                 </button>
               )}
             </For>
           </div>
+          <Show when={props.more}>
+            <div class="workbench-material-settings">{props.more}</div>
+          </Show>
         </div>
       </Show>
-      <Show when={more() || props.moreOpen}>
+      <Show when={!props.materials && props.moreOpen}>
         <div class="workbench-composition-more">{props.more}</div>
       </Show>
       <div class="workbench-toolbar-main">
@@ -248,7 +232,7 @@ export function CompositionToolbar(props: {
             aria-expanded={!!styleOpen()}
             aria-controls={panelId}
             onKeyDown={(event) => {
-              if (props.kind !== 'sticky' || event.key !== 'ArrowDown') return;
+              if (event.key !== 'ArrowDown') return;
               event.preventDefault();
               event.stopPropagation();
               if (open())
@@ -263,7 +247,6 @@ export function CompositionToolbar(props: {
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => {
               setOpen(!styleOpen());
-              setMore(false);
             }}
           >
             {props.preview?.(props.material!, false)}

@@ -737,6 +737,11 @@ export function WorkbenchStickyNote(props: {
     value: () => item().title ?? '',
     onCommit: (title) => onUpdate()(item().id, { title }),
   });
+  createEffect(() => {
+    if (!locked()) return;
+    titleEditor.blur();
+    bodyEditor.blur();
+  });
   const actions = useContext(WorkbenchCompositionActionsContext);
   const editing = () => titleEditor.isFocused() || bodyEditor.isFocused();
   const [copied, setCopied] = createSignal(false);
@@ -870,7 +875,9 @@ export function WorkbenchStickyNote(props: {
           aria-label={t('dragSticky')}
           data-floe-workbench-sticky-local="true"
           data-wb-part="move"
+          disabled={locked()}
           onPointerDown={(event) => {
+            if (locked()) return;
             const currentItem = item();
             onSelect()(currentItem.id);
             onClaimVisualFrontOwner()?.(currentItem.id);
@@ -1879,7 +1886,7 @@ function WorkbenchBackgroundRegionControls(props: {
       >
         <CompositionToolbar
           kind="region"
-          materials={['solid', 'frame', 'hatched']}
+          materials={WORKBENCH_BACKGROUND_MATERIALS}
           material={item().material}
           materialLabel={(material) => t('useRegionMaterial', t(material))}
           preview={(material, large) => (
@@ -1923,28 +1930,6 @@ function WorkbenchBackgroundRegionControls(props: {
           }
           more={
             <>
-              <Show when={item().name.trim()}>
-                <button
-                  type="button"
-                  onPointerDown={stopLayerButtonPointer}
-                  onClick={() => onUpdate()(item().id, { name: '' })}
-                >
-                  {t('clearName')}
-                </button>
-              </Show>
-              <For each={WORKBENCH_BACKGROUND_MATERIALS.slice(3)}>
-                {(material) => (
-                  <button
-                    type="button"
-                    aria-label={t('useRegionMaterial', t(material))}
-                    aria-pressed={item().material === material}
-                    onPointerDown={stopLayerButtonPointer}
-                    onClick={() => onUpdate()(item().id, { material })}
-                  >
-                    {t(material)}
-                  </button>
-                )}
-              </For>
               <label>
                 {t('opacity')}
                 <input
@@ -1958,6 +1943,14 @@ function WorkbenchBackgroundRegionControls(props: {
                   }
                 />
               </label>
+              <button
+                type="button"
+                disabled={!item().name.trim()}
+                onPointerDown={stopLayerButtonPointer}
+                onClick={() => onUpdate()(item().id, { name: '' })}
+              >
+                {t('clearName')}
+              </button>
             </>
           }
         >

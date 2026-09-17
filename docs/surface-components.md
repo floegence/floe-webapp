@@ -65,10 +65,19 @@ The baseline packed gallery reproduced distinct generated names for options in a
 Workbench owns the production renderer for sticky notes, regions, text, and their
 object-attached tools. Sticky notes have six theme-aware colors and three materials
 (`tint`, `tab`, `ruled`). Regions use the same six color families with `solid`,
-`frame`, and `hatched` previews; additional existing materials and opacity remain
-available through the material panel's more-options action. Preview tiles and
+`frame`, `hatched`, `dotted`, `grid`, and `glass` previews, with opacity and Clear
+name directly below the compact material list. Preview tiles and
 objects share material variables. No material requires a blur filter or idle
 animation loop.
+
+Work mode owns sticky notes and widgets. Composition mode edits only regions and
+text: work objects remain visible beneath a quiet theme-aware overlay, but their
+subtrees are inert, cannot receive pointer or keyboard focus, and expose no editing
+tools. Arrow navigation and deletion cannot target work objects in Composition
+mode. This contract covers both world-scaled and projected rendering; changing
+mode preserves mounted widget state. An active sticky draft finishes when the
+mode changes, including host-driven changes without pointer focus transfer. Public
+host mutation APIs remain available for application-owned updates.
 
 A sticky note's optional `title` is editable content. New notes start with empty
 title and body fields, with localized placeholders. Existing notes without a
@@ -86,18 +95,20 @@ a region name, and Ctrl/Cmd+Enter finishes multiline content. Switching title/bo
 commits the previous field. IME confirmation stays inside the editor; when focus
 leaves during composition, the completed composition is saved. The toolbar keeps
 its appearance controls throughout editing, without a separate Done/Cancel mode.
-Clear name remains available in the region's more-options panel. Changing
+Clear name remains available in the region's material menu. Changing
 appearance preserves the last caret for emoji insertion.
 
 The compact toolbar is centered above the visible object with a 12-pixel gap,
-clears external region labels, and follows the object when it moves. Sticky
-materials open in a compact three-row menu within the owning floating surface.
+clears external region labels, and follows the object when it moves. Sticky and
+region materials open in compact row menus within the owning floating surface.
 The menu stays out of layout flow, is measured before becoming visible, and never
 changes the toolbar's size or position. It opens above the trigger to keep the
 note visible, or below when space is limited; a selection closes it. Arrow keys, Home/End, Enter,
 and Escape support keyboard use. Outside input, canvas zoom, and window resizing
 dismiss it. Local interaction surfaces retain keyboard ownership so canvas arrow
-navigation cannot steal menu focus. Region material panels retain their larger previews.
+navigation cannot steal menu focus. Region opacity retains native slider keyboard
+behavior. Region and text drag handles sit outside the left edge and keep their
+22-pixel screen size at every zoom level.
 Text presets match the demo's 48/30/18/14-pixel hierarchy;
 the typography menu also exposes the existing font, size, color and emoji controls.
 Persisted font weights survive state normalization. Inputs use the shared
@@ -130,13 +141,14 @@ and saved state across navigation and reloads in Chromium and WebKit. Set
 
 The demo app also includes `/workbench-comparison.html` (A/B) and
 `/workbench-composition.html` (production components only). Both use the same
-sample content, theme and viewport. `apps/demo/public/workbench-reference/` is an
-immutable copy of the approved v4.1 design; its manifest hashes guard the original
+sample content, theme and viewport. The standalone production page opens Work mode
+for a selected sticky and Composition mode for a selected region or text.
+`apps/demo/public/workbench-reference/` is an immutable copy of the approved v4.1 design; its manifest hashes guard the original
 renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
 This reference is an acceptance fixture, not an alternative product implementation.
 Later approved interaction changes, including save-on-exit and proportional content
-zoom, apply to the production example while the frozen reference retains its
-historical behavior.
+zoom, compact material menus, and mode ownership apply to the production example
+while the frozen reference retains its historical behavior.
 
 Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty

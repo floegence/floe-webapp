@@ -1458,6 +1458,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   };
 
   const handleArrowNavigation = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (modeStrategy().workLayerLocked) return;
     const current = selectedObject();
     const workItems = [
       ...widgets(),
@@ -1488,6 +1489,8 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
   const deleteSelected = () => {
     const selected = selectedObject();
     if (!selected) return;
+    const isWorkObject = selected.kind === 'widget' || selected.kind === 'sticky_note';
+    if (isWorkObject === modeStrategy().workLayerLocked) return;
     if (selected.kind === 'widget') deleteWidget(selected.id);
     if (selected.kind === 'sticky_note') deleteStickyNote(selected.id);
     if (selected.kind === 'annotation') deleteAnnotation(selected.id);

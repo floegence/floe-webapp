@@ -294,7 +294,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
           />
         </>
       ) : null}
-      <div class="workbench-work-layer">
+      <div class="workbench-work-layer" inert={Boolean(props.workLayerLocked)}>
         {/* Keep widget subtree ownership keyed by widget.id so z-index or geometry updates do not remount business widgets. */}
         <For each={widgetIds()}>
           {(widgetId) => (
@@ -337,7 +337,7 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
               selectedObject={props.selectedObject}
               visualFrontOwnerId={props.visualFrontOwnerId}
               viewportScale={props.viewportScale}
-              locked={props.locked}
+              locked={workLocked()}
               filtered={
                 !props.workLayerLocked && props.filters[WORKBENCH_STICKY_FILTER_ID] === false
               }

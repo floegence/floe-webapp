@@ -54,12 +54,39 @@ try {
       );
       assert.equal(await page.locator('.workbench-widget').count(), 3);
       assert.equal(await page.locator('.workbench-background-region').count(), 3);
-      assert.ok((await page.getByRole('link', { name: 'A/B comparison' }).getAttribute('href')).includes('object=blank-region'));
+      assert.ok(
+        (await page.getByRole('link', { name: 'A/B comparison' }).getAttribute('href')).includes(
+          'object=blank-region'
+        )
+      );
       for (const theme of ['paper', 'slate']) {
         await page.getByRole('combobox', { name: 'Application theme' }).selectOption(theme);
         await nextFrame(page);
         await page.screenshot({ path: `${output}/overview-${engine.name()}-${theme}.png` });
       }
+      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
+      for (const theme of ['paper', 'slate']) {
+        await page.getByRole('combobox', { name: 'Application theme' }).selectOption(theme);
+        await nextFrame(page);
+        assert.equal(
+          await page
+            .locator('.workbench-widget')
+            .evaluateAll((nodes) => nodes.every((el) => !!el.closest('[inert]'))),
+          true
+        );
+        assert.equal(
+          await page
+            .locator('.workbench-sticky__body')
+            .evaluateAll((nodes) =>
+              nodes.every((el) => !el.isContentEditable && !!el.closest('[inert]'))
+            ),
+          true
+        );
+        await page.screenshot({ path: `${output}/composition-mode-${engine.name()}-${theme}.png` });
+      }
+      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+      await page.getByRole('menuitemradio', { name: /Work Mode/ }).click();
       await page.getByRole('tab', { name: 'Composition', exact: true }).click();
       await board(page, 'product').waitFor();
       assert.equal(
@@ -85,11 +112,23 @@ try {
       const themes = await themeSelect
         .locator('option')
         .evaluateAll((options) => options.map((option) => option.value));
+      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
       for (const theme of themes) {
         await themeSelect.selectOption(theme);
         assert.equal(await page.locator('html').getAttribute('data-floe-shell-theme'), theme);
         assert.equal(await page.locator('.workbench-sticky').count(), 6);
+        assert.equal(
+          await page
+            .locator('.workbench-sticky__body')
+            .evaluateAll((nodes) =>
+              nodes.every((el) => !el.isContentEditable && !!el.closest('[inert]'))
+            ),
+          true
+        );
       }
+      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+      await page.getByRole('menuitemradio', { name: /Work Mode/ }).click();
       const standalone = await context.newPage();
       for (const theme of ['paper', 'slate']) {
         await themeSelect.selectOption(theme);
