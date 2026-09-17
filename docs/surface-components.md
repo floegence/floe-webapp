@@ -92,6 +92,12 @@ the typography menu also exposes the existing font, size, color and emoji contro
 Persisted font weights survive state normalization. Inputs use the shared
 border-only focus contract, including the region-name editor. Resize hit areas stay
 24 screen pixels at every zoom level without covering nearby editable text.
+Composition text, sticky titles and bodies, region names, and their content spacing
+scale with the canvas while preserving line wrapping and relative positions.
+Zooming past 50% must not switch typography, hide note bodies, or enlarge labels.
+Both world and projected compositors follow the same content scale; toolbars and
+interaction handles retain screen-sized controls. A region toolbar clears the
+scaled name by its usual 12-pixel gap.
 
 The demo app includes `/workbench-comparison.html` (A/B) and
 `/workbench-composition.html` (production components only). Both use the same
@@ -99,14 +105,16 @@ sample content, theme and viewport. `apps/demo/public/workbench-reference/` is a
 immutable copy of the approved v4.1 design; its manifest hashes guard the original
 renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
 This reference is an acceptance fixture, not an alternative product implementation.
-Later approved interaction changes, including save-on-exit, apply to the production
-example while the frozen reference retains its historical behavior.
+Later approved interaction changes, including save-on-exit and proportional content
+zoom, apply to the production example while the frozen reference retains its
+historical behavior.
 
 Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty
 names, dragging, narrow layouts, and idle layout/style work. Evidence is written
 to `.cache/workbench-parity/`. `pnpm test:workbench-composition` also exercises
-native selection, IME and the world/projected compositors in Chromium and WebKit.
+native selection, IME, proportional content zoom, and the world/projected compositors
+in Chromium and WebKit.
 
 For an editing-only change, run the composition browser script with
 `--interactions-only` to cover both compositors, browsers, and surface styles

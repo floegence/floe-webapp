@@ -839,8 +839,6 @@ export function WorkbenchStickyNote(props: {
         'is-resizing': resize.isResizing(),
         'is-copied': copied(),
         'is-editing': editing(),
-        'is-overview': viewportScale() <= 0.5 && !editing(),
-        'has-title': item().title !== undefined,
         [STICKY_COLOR_CLASS[item().color]]: true,
       }}
       data-floe-canvas-interactive="true"
@@ -1267,11 +1265,15 @@ export function WorkbenchBackgroundRegion(props: {
       projection: projection(),
     });
   });
+  const contentScale = createMemo(() =>
+    projection() === 'screen' ? Math.max(viewport().scale, 0.001) : 1
+  );
   const style = createMemo<JSX.CSSProperties>(() => ({
     ...createLayerTransformStyle(visualGeometry()),
     'z-index': `${item().z_index}`,
     '--workbench-layer-control-inverse-scale': `${1 / visualGeometry().scale}`,
-    '--workbench-layer-scale': `${visualGeometry().scale}`,
+    '--workbench-region-content-scale': `${contentScale()}`,
+    '--workbench-region-content-inverse-scale': `${1 / contentScale()}`,
     ...createRegionRenderVars(item()),
   }));
   const handleRegionPointerDown: JSX.EventHandler<HTMLElement, PointerEvent> = (event) => {
@@ -1365,10 +1367,10 @@ function WorkbenchTextAnnotationControls(props: {
 }) {
   const t = useWorkbenchCompositionText();
   const actions = useContext(WorkbenchCompositionActionsContext);
-  const editor = () => props.textEditorRegistry?.get(props.item.id);
 
   const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
+  const editor = () => props.textEditorRegistry?.get(item().id);
   const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
   const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
   const projection = createOwnerSafePropAccessor(() => props.projection);
@@ -1805,11 +1807,11 @@ function WorkbenchBackgroundRegionControls(props: {
 }) {
   const t = useWorkbenchCompositionText();
   const actions = useContext(WorkbenchCompositionActionsContext);
-  const editor = () => props.textEditorRegistry?.get(props.item.id);
-  const editing = () => editor()?.isFocused() ?? false;
 
   const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
+  const editor = () => props.textEditorRegistry?.get(item().id);
+  const editing = () => editor()?.isFocused() ?? false;
   const viewportScale = createOwnerSafePropAccessor(() => props.viewportScale);
   const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
   const projection = createOwnerSafePropAccessor(() => props.projection);
@@ -1872,7 +1874,7 @@ function WorkbenchBackgroundRegionControls(props: {
         reservedSpace={{ top: 64, narrowTop: 106, bottom: 86 }}
         anchor={anchor()}
         revision={style()}
-        topOffset={item().name.trim() || editing() ? 34 : 0}
+        topOffset={item().name.trim() || editing() ? 34 * viewport().scale : 0}
         class="workbench-object-tools"
       >
         <CompositionToolbar

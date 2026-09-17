@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle, CompositionEvent, InputEvent, KeyboardEvent */
+/* global window, document, getComputedStyle, requestAnimationFrame, CompositionEvent, InputEvent, KeyboardEvent */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -22,6 +22,7 @@ await server.listen();
 const output = fileURLToPath(new URL('../.cache/workbench-composition/', import.meta.url));
 mkdirSync(output, { recursive: true });
 const results = [];
+const zoomResults = [];
 const interactionsOnly = process.argv.includes('--interactions-only');
 try {
   for (const [engine, browserType] of [
@@ -53,6 +54,121 @@ try {
         content:
           '*,*::before,*::after { transition: none !important; animation: none !important; }',
       });
+      // Content keeps its world-space layout across zoom, including the former 50% threshold.
+      const beforeZoom = await page.evaluate(() => window.workbenchFixture.state());
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((s) => ({
+          ...s,
+          selectedObject: { kind: 'background_layer', id: 'region' },
+          backgroundLayers: s.backgroundLayers.map((region) => ({ ...region, name: '' })),
+        }))
+      );
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((s) => ({
+          ...s,
+          selectedObject: null,
+          viewport: { x: 20, y: 40, scale: 0.35 },
+        }))
+      );
+      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeZoom);
+      const readTextGeometry = () =>
+        page.evaluate(() =>
+          [
+            '.workbench-sticky__title',
+            '.workbench-sticky__body',
+            '.workbench-background-region__label > div',
+            '.workbench-text-annotation__content',
+          ].map((selector) => {
+            const node = document.querySelector(selector);
+            const parent = node.closest('[data-wb-object-id]');
+            const object = parent.getBoundingClientRect();
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            const text = range.getBoundingClientRect();
+            return {
+              selector,
+              x: text.x - object.x,
+              y: text.y - object.y,
+              width: text.width,
+              height: text.height,
+              lines: range.getClientRects().length,
+              visible: getComputedStyle(node).display !== 'none' && text.height > 0,
+            };
+          })
+        );
+      for (const theme of ['paper', 'slate']) {
+        await page.evaluate((theme) => {
+          document.documentElement.dataset.floeShellTheme = theme;
+          document.documentElement.classList.toggle('dark', theme === 'slate');
+        }, theme);
+        for (const material of ['tint', 'tab', 'ruled']) {
+          await page.evaluate(
+            (material) =>
+              window.workbenchFixture.setState((s) => ({
+                ...s,
+                selectedObject: null,
+                viewport: { x: 16, y: 48, scale: 1 },
+                stickyNotes: s.stickyNotes.map((n) => ({
+                  ...n,
+                  title: 'A stable note title',
+                  material,
+                })),
+              })),
+            material
+          );
+          const baseline = await readTextGeometry();
+          for (const scale of [0.8, 0.51, 0.5, 0.49, 0.35, 0.2, 1.5, 2]) {
+            await page.evaluate(
+              (scale) =>
+                window.workbenchFixture.setState((s) => ({
+                  ...s,
+                  viewport: { ...s.viewport, scale },
+                })),
+              scale
+            );
+            const current = await readTextGeometry();
+            current.forEach((actual, index) => {
+              const expected = baseline[index];
+              const label = `${engine}/${theme}/${material}/${scale}/${actual.selector}`;
+              assert.equal(actual.visible, true, `${label}: content stays visible`);
+              assert.equal(actual.lines, expected.lines, `${label}: wrapping stays stable`);
+              for (const dimension of ['x', 'y', 'width', 'height'])
+                assert.ok(
+                  Math.abs(actual[dimension] - expected[dimension] * scale) <= 1.2,
+                  `${label}: ${dimension} scales with canvas (${actual[dimension]} vs ${expected[dimension] * scale})`
+                );
+            });
+            zoomResults.push({ engine, theme, material, scale });
+          }
+        }
+      }
+      // Screen-space tools keep their gap above the scaled region label.
+      for (const scale of [0.2, 0.5, 1, 2]) {
+        await page.evaluate(
+          (scale) =>
+            window.workbenchFixture.setState((s) => ({
+              ...s,
+              selectedObject: { kind: 'background_layer', id: 'region' },
+              viewport: { x: 250 - 80 * scale, y: 350 - 140 * scale, scale },
+            })),
+          scale
+        );
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+        );
+        const region = await page.locator('.workbench-background-region').boundingBox();
+        const toolbar = await page.locator('.workbench-composition-toolbar').boundingBox();
+        assert.ok(
+          Math.abs(toolbar.y + toolbar.height + 12 + 34 * scale - region.y) <= 1.2,
+          `${engine}/${scale}: toolbar clears the scaled region name`
+        );
+      }
+      await page.evaluate((state) => {
+        window.workbenchFixture.setState(state);
+        document.documentElement.removeAttribute('data-floe-shell-theme');
+        document.documentElement.classList.remove('dark');
+      }, beforeZoom);
       const initial = await note.textContent();
       await note.click({ position: { x: 40, y: 15 } });
       await page.keyboard.press('End');
@@ -446,6 +562,7 @@ try {
       {
         mode: interactionsOnly ? 'interactions' : 'full',
         configurations: 8,
+        zoomResults,
         results,
       },
       null,
@@ -453,7 +570,7 @@ try {
     )
   );
   console.log(
-    `Workbench composition: ${results.length} theme/color/material cases and interaction checks passed.`
+    `Workbench composition: ${zoomResults.length} zoom cases, ${results.length} theme/color/material cases and interaction checks passed.`
   );
 } finally {
   await server.close();

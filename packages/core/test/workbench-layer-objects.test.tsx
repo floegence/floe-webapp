@@ -205,6 +205,42 @@ function createStickyItem(): WorkbenchStickyNoteItem {
 }
 
 describe('Workbench layer objects', () => {
+  it('releases unnamed region controls when deselection and zoom change together', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const region = { ...createRegionItem(), name: '' };
+    const [view, setView] = createSignal({
+      selection: { kind: 'background_layer', id: region.id } as WorkbenchSelection | null,
+      viewport: { x: 0, y: 0, scale: 1 },
+    });
+    const dispose = render(
+      () => (
+        <WorkbenchLayerControlOverlayView
+          annotations={[]}
+          backgroundLayers={[region]}
+          selectedObject={view().selection}
+          viewport={view().viewport}
+          editable
+          textEditorRegistry={createWorkbenchTextEditorRegistry()}
+          onCommitAnnotationMove={vi.fn()}
+          onCommitAnnotationResize={vi.fn()}
+          onUpdateTextAnnotation={vi.fn()}
+          onDeleteAnnotation={vi.fn()}
+          onCommitBackgroundResize={vi.fn()}
+          onUpdateBackgroundLayer={vi.fn()}
+          onDeleteBackgroundLayer={vi.fn()}
+        />
+      ),
+      host
+    );
+    expect(document.querySelector('.workbench-layer-control--region')).toBeTruthy();
+    expect(() =>
+      setView({ selection: null, viewport: { x: 10, y: 20, scale: 0.35 } })
+    ).not.toThrow();
+    expect(document.querySelector('.workbench-layer-control--region')).toBeNull();
+    dispose();
+  });
+
   it('preserves intentionally empty region names and sticky material through reload', () => {
     const state = sanitizeWorkbenchState({
       version: 1,

@@ -211,9 +211,21 @@ try {
           ['fontSize', 'fontWeight', 'lineHeight', 'letterSpacing'].map((key) => [key, style[key]])
         );
       });
+    let expectedTypography = await referenceText.evaluateAll(typography);
+    if (Number(scale) <= 0.5) {
+      // Production keeps the approved full-size typography at every zoom; the frozen
+      // reference still switches to enlarged titles and hidden bodies below 50%.
+      await a.goto(
+        `${origin}/workbench-reference/embed.html?sample=${sample}&object=${id}&theme=${themeName}&scale=1&scene=composition&design=proposed&lang=zh-CN`
+      );
+      expectedTypography = await a
+        .locator(`[data-object="${id}"]`)
+        .locator('.sticky-title,.sticky-body,.region-name,.free-text-content')
+        .evaluateAll(typography);
+    }
     assert.deepEqual(
       await productionText.evaluateAll(typography),
-      await referenceText.evaluateAll(typography),
+      expectedTypography,
       `${id}/${scale} text hierarchy`
     );
     const resize = await actual
