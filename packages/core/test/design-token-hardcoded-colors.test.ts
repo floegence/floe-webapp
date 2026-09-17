@@ -41,7 +41,7 @@ const forbiddenByFile: Record<string, string[]> = {
     'oklch(0.65 0.18 45)',
     'oklch(0.65 0.18 340)',
   ],
-  'packages/core/src/components/ui/styles/ui.css': ['#22c55e', '#38bdf8', '#f59e0b', 'oklch(', 'drop-shadow(0 2px 4px rgba'],
+  'packages/core/src/components/ui/styles/ui.css': ['#22c55e', '#38bdf8', '#f59e0b', 'drop-shadow(0 2px 4px rgba'],
   'packages/core/src/components/chat/styles/chat.css': ['#57a5ff', 'ui-monospace', 'rgb(239 68 68)'],
   'packages/core/src/widgets/MetricsWidget.tsx': ['text-yellow-500', 'text-green-500', 'text-blue-500', 'text-purple-500'],
   'packages/core/src/components/ui/picker/PickerBase.tsx': ['hover:bg-red-500', 'hover:text-white'],
@@ -51,11 +51,24 @@ const forbiddenByFile: Record<string, string[]> = {
 };
 
 describe('design token hardcoded color cleanup', () => {
+  const literalOklch = /oklch\((?!\s*from\s+var\(--)/u;
+
+  it('distinguishes semantic relative color adjustments from fixed color literals', () => {
+    expect('oklch(from var(--foreground) calc(l - 0.16) c h)').not.toMatch(literalOklch);
+    expect('oklch(0.65 0.18 160)').toMatch(literalOklch);
+    expect('oklch(from white l c h)').toMatch(literalOklch);
+    expect('oklch(from #ffffff l c h)').toMatch(literalOklch);
+  });
+
   it('keeps the audited core surfaces on semantic tokens instead of duplicated hardcoded colors', () => {
     for (const [relativePath, forbiddenPatterns] of Object.entries(forbiddenByFile)) {
       const content = readFileSync(resolve(repoRoot, relativePath), 'utf8');
       for (const pattern of forbiddenPatterns) {
         expect(content, `${relativePath} should not contain ${pattern}`).not.toContain(pattern);
+      }
+      if (relativePath === 'packages/core/src/components/ui/styles/ui.css') {
+        // Feature-query probe values do not paint a component.
+        expect(content.replace(/@supports[^{}]+\{/gu, '{')).not.toMatch(literalOklch);
       }
     }
   });

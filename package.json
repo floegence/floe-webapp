@@ -21,6 +21,7 @@
     "test:event-stream-media": "node scripts/check-event-stream-media-browser.mjs",
     "test:surface-style": "node scripts/prepare-surface-consumer.mjs && node scripts/check-surface-style-browser.mjs && node scripts/check-surface-components-browser.mjs && node scripts/check-surface-motion-browser.mjs && node scripts/check-theme-surface-browser.mjs && node scripts/check-selection-contrast-browser.mjs && node scripts/check-file-appearance-browser.mjs",
     "test:visual-refinement": "node scripts/check-demo-visual-refinement-browser.mjs",
+    "test:progress-shimmer": "node scripts/prepare-surface-consumer.mjs && node scripts/check-progress-shimmer-browser.mjs",
     "test:surface-performance": "node scripts/check-surface-performance.mjs",
     "test:window-material": "node scripts/prepare-surface-consumer.mjs && node scripts/check-window-material-browser.mjs && node scripts/check-floating-window-header-browser.mjs",
     "test:floating-window-drag": "node scripts/prepare-surface-consumer.mjs && node scripts/check-floating-window-drag-performance.mjs",

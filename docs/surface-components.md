@@ -46,6 +46,37 @@ The optional soft neumorphic material is a lightweight shared component system: 
 | Workbench HUD / lock / dock | Small floating or raised controls with quiet seams | Canvas controls, lock state, dock actions and existing placement |
 | InfiniteCanvas / SurfaceFloatingLayer / MobileKeyboard | No independent decorative layer; material belongs to the visible consumer | Coordinates, input routing, portal and keyboard viewport mechanisms |
 
+## Active progress shimmer
+
+Both published `styles` and `tailwind` entries expose an opt-in visual contract:
+`data-floe-progress-shimmer="text"` for a short progress label on a neutral reading
+surface, or `data-floe-progress-shimmer="surface"` on a filled primary action.
+The existing `processing-text-shimmer` class uses the same text implementation.
+Products own active state: remove the attribute when work settles or waits for
+user input. This attribute never implies `disabled`, `aria-busy`, a live region,
+or an operation lifecycle. A progress disclosure can remain clickable.
+
+Text has one accessible copy, including nested labels and ellipsis. The surface
+uses its own noninteractive `::before` beneath content and inherits the corner
+radius. Its opaque fill preserves primary-label contrast through hover and
+press. Do not combine that surface opt-in with another `::before` owner. A busy
+disabled button retains full opacity and native disabled behavior. Hosts with
+a custom filled action can map `--floe-progress-surface-background` to its fill;
+they must validate that fill and its label as a pair.
+
+The shared effect travels left to right every 2.4 seconds with a 20% band.
+Foreground-derived text colors and a mode-aware surface shade retain at least
+4.5:1 text contrast and 0.08 OKLab color difference between base and peak across
+the built-in shell palettes. These are progress visibility thresholds, not a
+claim about arbitrary host color overrides. Reduced motion and forced colors
+remove the sweep and restore opaque text; the label and host interaction remain.
+No timer, duplicated label, shadow animation, or compositor promotion is added.
+
+`pnpm test:progress-shimmer` verifies both packed CSS entries and materials,
+all presets, hover, actual painted motion, long nested/localized labels,
+keyboard and pointer actions, continuous phase updates, and accessible static
+states. Reports, screenshots, and recordings live in `.cache/surface-style/progress-shimmer`.
+
 ## Acceptance matrix
 
 The same component-state gallery must be reviewed in standard and soft modes, light and dark, all supported sizes, selected/unselected, hover/pressed, keyboard focus, disabled/loading, invalid, and mixed/indeterminate states where applicable. Browser assertions must verify actual values, keyboard ownership and unchanged geometry, not only the presence of role attributes. High contrast stays flat and explicit. Published styles and Tailwind consumers must both render the gallery correctly.

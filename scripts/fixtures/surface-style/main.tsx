@@ -1,5 +1,6 @@
 import { WindowMaterialStudy } from './WindowMaterialStudy';
 import { FileAppearanceStudy } from './FileAppearanceStudy';
+import { ProgressShimmerStudy } from './ProgressShimmerStudy';
 import { SurfaceComponentGallery } from './SurfaceComponentGallery';
 import { createSignal, Show, For, onMount, onCleanup } from 'solid-js';
 import { render } from 'solid-js/web';
@@ -106,6 +107,7 @@ function Content() {
     });
   });
   return (
+    <Show when={params.get('panel') === 'progress'} fallback={
     <Shell
       topBarActions={
         <div class="controls surface-controls">
@@ -271,6 +273,7 @@ function Content() {
         <Show when={params.get('panel') === 'files'} fallback={<WindowMaterialStudy />}><FileAppearanceStudy /></Show>
       </Show>
     </Shell>
+    }><ProgressShimmerStudy /></Show>
   );
 }
 

@@ -112,10 +112,13 @@ writeFileSync(
       tarball,
       packageSha256: sha256(tarball),
       fixtureSha256: Object.fromEntries(
-        ['main.tsx', 'layout.css', 'WindowMaterialStudy.tsx', 'FileAppearanceStudy.tsx'].map((file) => [
-          file,
-          sha256(resolve(repo, 'scripts/fixtures/surface-style', file)),
-        ])
+        [
+          'main.tsx',
+          'layout.css',
+          'WindowMaterialStudy.tsx',
+          'FileAppearanceStudy.tsx',
+          'ProgressShimmerStudy.tsx',
+        ].map((file) => [file, sha256(resolve(repo, 'scripts/fixtures/surface-style', file))])
       ),
       gallerySha256: sha256(
         resolve(repo, 'apps/demo/src/demo/components/SurfaceComponentGallery.tsx')
