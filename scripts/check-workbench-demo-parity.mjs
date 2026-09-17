@@ -191,6 +191,10 @@ try {
     await actual.locator('.workbench-composition-toolbar').waitFor();
     if (!id.startsWith('board-'))
       await actual.locator('.workbench-treatment-trigger[aria-expanded="true"]').waitFor();
+    if (sample === 'composition' && !id.startsWith('board-')) {
+      // Sticky menus now float independently; compare the unchanged compact row.
+      await ref.locator('#object-toolbar .treatment-trigger').click();
+    }
     await nextFrame(actual);
     const x = await ref.locator('#object-toolbar').boundingBox();
     const y = await actual.locator('.workbench-composition-toolbar').boundingBox();

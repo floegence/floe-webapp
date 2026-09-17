@@ -1,6 +1,7 @@
 import { isTypingElement } from '../../utils/dom';
 import {
   DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
+  DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR,
   DEFAULT_WORKBENCH_WIDGET_SHELL_SELECTOR,
   resolveSurfaceInteractionTargetRole,
   resolveSurfaceWheelRouting,
@@ -220,7 +221,7 @@ export function resolveWorkbenchInteractionAdapter(
       adapter?.shouldBypassGlobalHotkeys
       ?? ((args) => {
         const element = resolveElement(args.target);
-        return isTypingElement(element);
+        return isTypingElement(element) || Boolean(element?.closest(DEFAULT_LOCAL_INTERACTION_SURFACE_SELECTOR));
       }),
   };
 }

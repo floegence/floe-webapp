@@ -8,6 +8,9 @@ import {
   type JSX,
 } from 'solid-js';
 import { Check, ChevronDown } from '../../icons';
+import { resolveSurfacePortalHost } from '../ui/surfacePortalScope';
+import { resolveFloatingBoundary } from '../ui/surfaceFloatingBoundary';
+import { LOCAL_INTERACTION_SURFACE_ATTR } from '../ui/localInteractionSurface';
 import {
   useWorkbenchCompositionText,
   type WorkbenchCompositionMessageKey,
@@ -46,7 +49,7 @@ export function CompositionDivider() {
   return <span class="workbench-composition-divider" aria-hidden="true" />;
 }
 
-/** One panel owns both its compact row and its expanding material previews. */
+/** Object tools keep their anchor when a sticky material menu opens. */
 export function CompositionToolbar(props: {
   kind: 'sticky' | 'region' | 'text';
   children: JSX.Element;
@@ -63,8 +66,11 @@ export function CompositionToolbar(props: {
   const t = useWorkbenchCompositionText();
   const [open, setOpen] = createSignal(false);
   const [more, setMore] = createSignal(false);
+  const [materialPanel, setMaterialPanel] = createSignal<HTMLDivElement>();
+  const [menuPosition, setMenuPosition] = createSignal<{ x: number; y: number }>();
   const panelId = createUniqueId();
   let root: HTMLDivElement | undefined;
+  let focusMaterialOnOpen = false;
   const close = () => {
     setOpen(false);
     setMore(false);
@@ -72,18 +78,62 @@ export function CompositionToolbar(props: {
   };
   const styleOpen = open;
   createEffect(() => {
+    const panel = materialPanel();
+    if (!open() || props.kind !== 'sticky' || !panel || !root) {
+      setMenuPosition(undefined);
+      return;
+    }
+    const bounds = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: root }));
+    const trigger = root.querySelector('.workbench-treatment-trigger');
+    if (!bounds || !trigger) return;
+    // The menu is out of flow and hidden until this first measurement is committed.
+    // Its size never feeds back into the object toolbar's placement calculation.
+    const anchor = trigger.getBoundingClientRect();
+    const parent = root.getBoundingClientRect();
+    const size = panel.getBoundingClientRect();
+    const above = anchor.top - size.height - 10;
+    const y =
+      above >= bounds.top + 12
+        ? above
+        : Math.min(anchor.bottom + 10, bounds.bottom - size.height - 12);
+    const x = Math.max(bounds.left + 12, Math.min(anchor.left, bounds.right - size.width - 12));
+    setMenuPosition({ x: x - parent.left, y: y - parent.top });
+    if (focusMaterialOnOpen) {
+      focusMaterialOnOpen = false;
+      queueMicrotask(() => {
+        if (panel.isConnected) {
+          panel
+            .querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
+            ?.focus({ preventScroll: true });
+        }
+      });
+    }
+  });
+  createEffect(() => {
     if (!open() && !more() && !props.moreOpen) return;
     const dismiss = (event: PointerEvent) => {
       if (event.target instanceof Node && !root?.contains(event.target)) close();
     };
     document.addEventListener('pointerdown', dismiss, true);
     onCleanup(() => document.removeEventListener('pointerdown', dismiss, true));
+    if (props.kind === 'sticky') {
+      const dismissOnWheel = (event: WheelEvent) => {
+        if (event.target instanceof Node && !root?.contains(event.target)) close();
+      };
+      window.addEventListener('resize', close);
+      document.addEventListener('wheel', dismissOnWheel, { capture: true, passive: true });
+      onCleanup(() => {
+        window.removeEventListener('resize', close);
+        document.removeEventListener('wheel', dismissOnWheel, true);
+      });
+    }
   });
   return (
     <div
       ref={root}
       class={`workbench-composition-toolbar workbench-${props.kind === 'sticky' ? 'sticky__actions' : props.kind === 'region' ? 'background-region__toolbar' : 'text-annotation__toolbar'}`}
       data-kind={props.kind}
+      {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
       role="toolbar"
       aria-label={t('treatment')}
       onPointerDown={(event) => event.stopPropagation()}
@@ -92,28 +142,64 @@ export function CompositionToolbar(props: {
         if (event.key === 'Escape' && (open() || more() || props.moreOpen)) {
           event.stopPropagation();
           close();
-          root?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')?.focus();
+          root?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')?.focus({ preventScroll: true });
         }
       }}
     >
       <Show when={styleOpen() && props.materials}>
-        <div id={panelId} class="workbench-treatment-panel">
-          <div class="workbench-picker-heading">
-            {t('treatment')}
-            <Show when={props.more} fallback={<span>{t('treatmentHint')}</span>}>
-              <button
-                type="button"
-                class="workbench-picker-more"
-                aria-label={t('more')}
-                title={t('more')}
-                onClick={() => {
-                  setMore(!more());
-                }}
-              >
-                {t('treatmentHint')}
-              </button>
-            </Show>
-          </div>
+        <div
+          ref={setMaterialPanel}
+          id={panelId}
+          class="workbench-treatment-panel"
+          onKeyDown={(event) => {
+            if (
+              props.kind !== 'sticky' ||
+              !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+            )
+              return;
+            event.preventDefault();
+            event.stopPropagation();
+            const options = Array.from(
+              event.currentTarget.querySelectorAll<HTMLButtonElement>('button')
+            );
+            const current = options.indexOf(document.activeElement as HTMLButtonElement);
+            const next =
+              event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                  ? options.length - 1
+                  : (current + (event.key === 'ArrowUp' ? -1 : 1) + options.length) %
+                    options.length;
+            options[next]?.focus({ preventScroll: true });
+          }}
+          style={
+            props.kind === 'sticky'
+              ? {
+                  left: `${menuPosition()?.x ?? 0}px`,
+                  top: `${menuPosition()?.y ?? 0}px`,
+                  visibility: menuPosition() ? 'visible' : 'hidden',
+                }
+              : undefined
+          }
+        >
+          <Show when={props.kind !== 'sticky'}>
+            <div class="workbench-picker-heading">
+              {t('treatment')}
+              <Show when={props.more} fallback={<span>{t('treatmentHint')}</span>}>
+                <button
+                  type="button"
+                  class="workbench-picker-more"
+                  aria-label={t('more')}
+                  title={t('more')}
+                  onClick={() => {
+                    setMore(!more());
+                  }}
+                >
+                  {t('treatmentHint')}
+                </button>
+              </Show>
+            </div>
+          </Show>
           <div
             class="workbench-treatment-options"
             role="group"
@@ -126,7 +212,15 @@ export function CompositionToolbar(props: {
                   aria-label={props.materialLabel?.(material)}
                   aria-pressed={props.material === material}
                   onPointerDown={(event) => event.preventDefault()}
-                  onClick={() => props.onMaterial?.(material)}
+                  onClick={() => {
+                    props.onMaterial?.(material);
+                    if (props.kind === 'sticky') {
+                      setOpen(false);
+                      root
+                        ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
+                        ?.focus({ preventScroll: true });
+                    }
+                  }}
                 >
                   {props.preview?.(material, true)}
                   <span class="workbench-treatment-label">
@@ -153,6 +247,19 @@ export function CompositionToolbar(props: {
             aria-label={t('treatment')}
             aria-expanded={!!styleOpen()}
             aria-controls={panelId}
+            onKeyDown={(event) => {
+              if (props.kind !== 'sticky' || event.key !== 'ArrowDown') return;
+              event.preventDefault();
+              event.stopPropagation();
+              if (open())
+                materialPanel()
+                  ?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
+                  ?.focus({ preventScroll: true });
+              else {
+                focusMaterialOnOpen = true;
+                setOpen(true);
+              }
+            }}
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => {
               setOpen(!styleOpen());

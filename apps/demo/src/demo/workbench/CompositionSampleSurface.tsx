@@ -10,16 +10,18 @@ import {
   REDEVEN_PARITY_WORKBENCH_WIDGETS,
   useWorkbenchDemo,
 } from './WorkbenchDemoContext';
-import { createCompositionSample, type CompositionSample } from './parity/compositionSamples';
+import { createCompositionSample } from './parity/compositionSamples';
+import { createWorkbenchOverview, type WorkbenchExampleSample } from './workbenchOverview';
 
 /** Each example keeps its own edits and viewport when switching pages or modes. */
-export function CompositionSampleSurface(props: { sample: CompositionSample }) {
+export function CompositionSampleSurface(props: { sample: WorkbenchExampleSample }) {
   // The keyed parent remounts this surface when the sample changes.
   const sample = untrack(() => props.sample);
   const { state: stored, setState: setStored } = useWorkbenchDemo().examples[sample];
   const firstVisit = stored() === null;
   const createSeed = () => ({
-    ...createCompositionSample(sample),
+    ...(sample === 'overview' ? createWorkbenchOverview() : createCompositionSample(sample)),
+    mode: 'work' as const,
     filters: createWorkbenchFilterState(REDEVEN_PARITY_WORKBENCH_WIDGETS),
   });
   setStored(
@@ -38,6 +40,7 @@ export function CompositionSampleSurface(props: { sample: CompositionSample }) {
     if (!firstVisit) return;
     const { width, height } = container.getBoundingClientRect();
     const objects = [
+      ...state().widgets,
       ...state().backgroundLayers!,
       ...state().stickyNotes!,
       ...state().annotations!,

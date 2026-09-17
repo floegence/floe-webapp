@@ -24,6 +24,7 @@ mkdirSync(output, { recursive: true });
 const results = [];
 const zoomResults = [];
 const focusResults = [];
+const menuResults = [];
 const interactionsOnly = process.argv.includes('--interactions-only');
 try {
   for (const [engine, browserType] of [
@@ -55,6 +56,94 @@ try {
         content:
           '*,*::before,*::after { transition: none !important; animation: none !important; }',
       });
+      const beforeMenu = await page.evaluate(() => window.workbenchFixture.state());
+      for (const scale of [0.35, 1]) {
+        for (const [x, y] of [
+          [20, 80],
+          [520, 360],
+          [970, 620],
+          [970, 740],
+        ]) {
+          await page.evaluate(
+            ({ x, y, scale }) =>
+              window.workbenchFixture.setState((state) => ({
+                ...state,
+                viewport: { x: 0, y: 0, scale },
+                selectedObject: { kind: 'sticky_note', id: 'note' },
+                stickyNotes: state.stickyNotes.map((note) => ({
+                  ...note,
+                  x: x / scale,
+                  y: y / scale,
+                  material: 'tint',
+                })),
+              })),
+            { x, y, scale }
+          );
+          await page.waitForTimeout(60);
+          const geometry = await page.evaluate(async () => {
+            const toolbar = document.querySelector('.workbench-composition-toolbar');
+            const box = (element) => {
+              const rect = element.getBoundingClientRect();
+              return [rect.x, rect.y, rect.width, rect.height];
+            };
+            const before = box(toolbar);
+            document.querySelector('.workbench-treatment-trigger').click();
+            const frames = [];
+            for (let frame = 0; frame < 8; frame++) {
+              await new Promise(requestAnimationFrame);
+              const panel = document.querySelector('.workbench-treatment-panel');
+              frames.push({
+                toolbar: box(toolbar),
+                menu: getComputedStyle(panel).visibility === 'visible' ? box(panel) : null,
+              });
+            }
+            return { before, frames };
+          });
+          for (const frame of geometry.frames) {
+            assert.deepEqual(
+              frame.toolbar,
+              geometry.before,
+              `${engine}/${scale}/${x},${y}: opening a material menu keeps the toolbar fixed`
+            );
+          }
+          const visible = geometry.frames.filter((frame) => frame.menu).map((frame) => frame.menu);
+          assert.ok(visible.length > 0, 'Material menu becomes visible');
+          for (const rect of visible) {
+            assert.deepEqual(
+              rect,
+              visible[0],
+              'The menu never changes position after its first visible frame'
+            );
+            assert.ok(rect[2] <= 224 && rect[3] <= 160, 'Material menu stays compact');
+            assert.ok(
+              rect[0] >= 0 && rect[0] + rect[2] <= 1280 && rect[1] >= 0 && rect[1] + rect[3] <= 800,
+              'Material menu stays within the canvas'
+            );
+          }
+          await page.locator('.workbench-treatment-options > button').nth(1).click();
+          assert.equal(
+            await page.locator('.workbench-treatment-trigger').getAttribute('aria-expanded'),
+            'false',
+            'Selecting a material closes the menu'
+          );
+          assert.equal(
+            await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].material),
+            'tab'
+          );
+          const trigger = page.locator('.workbench-treatment-trigger');
+          await trigger.focus();
+          await page.keyboard.press('ArrowDown');
+          await page.keyboard.press('End');
+          await page.keyboard.press('Enter');
+          assert.equal(
+            await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].material),
+            'ruled',
+            'Keyboard material selection works'
+          );
+          menuResults.push({ engine, scale, x, y, stableFrames: visible.length });
+        }
+      }
+      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeMenu);
       // Content keeps its world-space layout across zoom, including the former 50% threshold.
       const beforeZoom = await page.evaluate(() => window.workbenchFixture.state());
       await page.evaluate(() =>
@@ -681,6 +770,10 @@ try {
   );
   console.log(
     `Workbench composition: ${focusResults.length} focus cases, ${zoomResults.length} zoom cases, ${results.length} theme/color/material cases and interaction checks passed.`
+  );
+  writeFileSync(
+    `${output}/menu-stability-results.json`,
+    `${JSON.stringify(menuResults, null, 2)}\n`
   );
 } finally {
   await server.close();

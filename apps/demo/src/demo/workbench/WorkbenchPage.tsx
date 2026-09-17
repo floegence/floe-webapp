@@ -3,7 +3,7 @@ import { usePersisted, useTheme } from '@floegence/floe-webapp-core';
 import { Tabs } from '@floegence/floe-webapp-core/ui';
 import { WorkbenchSurface } from '@floegence/floe-webapp-core/workbench';
 import { CompositionSampleSurface } from './CompositionSampleSurface';
-import type { CompositionSample } from './parity/compositionSamples';
+import type { WorkbenchExampleSample } from './workbenchOverview';
 import {
   DEMO_WORKBENCH_TEXT_DEFAULTS,
   REDEVEN_PARITY_LAUNCHER_WIDGET_TYPES,
@@ -20,9 +20,10 @@ import {
 export const WorkbenchPage: Component = () => {
   const demo = useWorkbenchDemo();
   const theme = useTheme();
-  const [sample, setSample] = usePersisted('demo.workbench.sample.v1', 'workspace');
+  const [sample, setSample] = usePersisted('demo.workbench.sample.v1', 'overview');
   const requestedSample = new URLSearchParams(window.location.search).get('sample');
   if (
+    requestedSample === 'overview' ||
     requestedSample === 'workspace' ||
     requestedSample === 'composition' ||
     requestedSample === 'regions'
@@ -35,13 +36,13 @@ export const WorkbenchPage: Component = () => {
     url.searchParams.set('sample', id);
     window.history.replaceState(null, '', url);
   };
-  const compositionSample = (): CompositionSample =>
-    sample() === 'regions' ? 'regions' : 'composition';
+  const activeExample = (): WorkbenchExampleSample =>
+    sample() === 'regions' ? 'regions' : sample() === 'composition' ? 'composition' : 'overview';
   const comparisonUrl = () =>
     `/workbench-comparison.html?${new URLSearchParams({
       theme: theme.shellPreset()?.name ?? 'paper',
-      sample: compositionSample(),
-      object: sample() === 'regions' ? 'blank-region' : 'principle',
+      sample: sample() === 'composition' ? 'composition' : 'regions',
+      object: sample() === 'composition' ? 'principle' : 'blank-region',
       tools: 'style',
       lang: 'en-US',
     })}`;
@@ -51,7 +52,8 @@ export const WorkbenchPage: Component = () => {
         <Tabs
           ariaLabel="Workbench examples"
           items={[
-            { id: 'workspace', label: 'Workspace' },
+            { id: 'overview', label: 'Workspace' },
+            { id: 'workspace', label: 'Windows' },
             { id: 'composition', label: 'Composition' },
             { id: 'regions', label: 'Regions' },
           ]}
@@ -111,7 +113,7 @@ export const WorkbenchPage: Component = () => {
           </div>
         }
       >
-        <Show when={compositionSample()} keyed>
+        <Show when={activeExample()} keyed>
           {(selected) => <CompositionSampleSurface sample={selected} />}
         </Show>
       </Show>

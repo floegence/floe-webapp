@@ -45,7 +45,28 @@ try {
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      await page.goto(`${origin}/?view=workbench&sample=composition&theme=paper&surface=standard`);
+      await page.goto(`${origin}/?view=workbench&theme=paper&surface=standard`);
+      await board(page, 'overview-title').waitFor();
+      assert.equal(
+        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
+        'work',
+        'The default studio opens in Work mode'
+      );
+      assert.equal(await page.locator('.workbench-widget').count(), 3);
+      assert.equal(await page.locator('.workbench-background-region').count(), 3);
+      assert.ok((await page.getByRole('link', { name: 'A/B comparison' }).getAttribute('href')).includes('object=blank-region'));
+      for (const theme of ['paper', 'slate']) {
+        await page.getByRole('combobox', { name: 'Application theme' }).selectOption(theme);
+        await nextFrame(page);
+        await page.screenshot({ path: `${output}/overview-${engine.name()}-${theme}.png` });
+      }
+      await page.getByRole('tab', { name: 'Composition', exact: true }).click();
+      await board(page, 'product').waitFor();
+      assert.equal(
+        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
+        'work',
+        'Composition examples also default to Work mode'
+      );
       await page.waitForSelector('.workbench-sticky');
       assert.equal(
         await page
@@ -108,6 +129,12 @@ try {
       await page.getByRole('tab', { name: 'Regions', exact: true }).click();
       await board(page, 'blank-region').waitFor();
       assert.equal(await page.locator('.workbench-background-region').count(), 3);
+      assert.equal(
+        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
+        'work'
+      );
+      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
       const detail = board(page, 'outline-detail').locator('[data-wb-part="content"]');
       assert.ok(
         await detail.evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
@@ -127,7 +154,7 @@ try {
       );
       await page.screenshot({ path: `${output}/full-example-${engine.name()}-region-tools.png` });
 
-      await page.getByRole('tab', { name: 'Workspace', exact: true }).click();
+      await page.getByRole('tab', { name: 'Windows', exact: true }).click();
       await page.waitForSelector('.workbench-widget');
       assert.equal(
         await page.locator('.workbench-widget').count(),

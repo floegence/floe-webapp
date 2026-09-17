@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
+import { resolveWorkbenchInteractionAdapter } from '../src/components/workbench/workbenchInteractionAdapter';
 
 import {
   CANVAS_WHEEL_INTERACTIVE_ATTR,
@@ -60,6 +61,21 @@ function resolveWheel(target: EventTarget | null, disablePanZoom = false) {
 }
 
 describe('local interaction surface routing', () => {
+  it('leaves menu and toolbar keys with their local surface while preserving canvas hotkeys', () => {
+    const adapter = resolveWorkbenchInteractionAdapter();
+    const root = document.createElement('div');
+    const toolbar = document.createElement('div');
+    toolbar.setAttribute(LOCAL_INTERACTION_SURFACE_ATTR, 'true');
+    const button = document.createElement('button');
+    toolbar.appendChild(button);
+    root.appendChild(toolbar);
+    const bypass = (target: Element) => adapter.shouldBypassGlobalHotkeys({
+      root, target, owner: { kind: 'canvas', reason: 'initial' },
+      interactiveSelector: INTERACTIVE_SELECTOR,
+    });
+    expect(bypass(button)).toBe(true);
+    expect(bypass(root)).toBe(false);
+  });
   it('treats explicit pan surfaces as pan ownership even when nested inside local surfaces', () => {
     const localSurface = document.createElement('div');
     localSurface.setAttribute(LOCAL_INTERACTION_SURFACE_ATTR, 'true');

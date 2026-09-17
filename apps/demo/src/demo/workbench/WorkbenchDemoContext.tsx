@@ -52,7 +52,7 @@ import {
   LOCAL_INTERACTION_SURFACE_ATTR,
   WORKBENCH_TEXT_SELECTION_SURFACE_ATTR,
 } from '@floegence/floe-webapp-core/ui';
-import type { CompositionSample } from './parity/compositionSamples';
+import type { WorkbenchExampleSample } from './workbenchOverview';
 
 interface CompositionExampleState {
   state: Accessor<WorkbenchState | null>;
@@ -62,7 +62,7 @@ interface CompositionExampleState {
 export interface WorkbenchDemoContextValue {
   state: Accessor<WorkbenchState>;
   setState: (updater: (prev: WorkbenchState) => WorkbenchState) => void;
-  examples: Record<CompositionSample, CompositionExampleState>;
+  examples: Record<WorkbenchExampleSample, CompositionExampleState>;
 }
 
 const WorkbenchDemoContext = createContext<WorkbenchDemoContextValue>();
@@ -269,14 +269,10 @@ const DEMO_FILE_TREE: FileItem[] = [
 ];
 
 const DEMO_TERMINAL_LINES = [
-  { kind: 'prompt', text: 'pnpm --filter @floegence/floe-webapp-demo dev' },
+  { kind: 'prompt', text: 'pnpm dev' },
   { kind: 'muted', text: 'VITE v7.3.2 ready in 308 ms' },
   { kind: 'muted', text: 'Local: http://127.0.0.1:5173/' },
-  { kind: 'prompt', text: 'git status --short --branch' },
-  { kind: 'muted', text: '## feat-workbench-composition-isolation' },
-  { kind: 'muted', text: ' M packages/core/src/components/workbench/WorkbenchLayerObjects.tsx' },
-  { kind: 'prompt', text: 'node scripts/test.mjs packages/core/test/workbench-layer-objects.test.tsx' },
-  { kind: 'muted', text: 'OK Workbench layer geometry previews are stable' },
+  { kind: 'muted', text: 'Watching for file changes…' },
 ] as const;
 
 function DemoWidgetFrame(props: WorkbenchWidgetBodyProps & {
@@ -709,12 +705,13 @@ export function sanitizeWorkbenchDemoState(input: unknown): WorkbenchState {
 }
 
 export function WorkbenchDemoProvider(props: { children: JSX.Element }) {
-  const createExampleStore = (sample: CompositionSample): CompositionExampleState => {
+  const createExampleStore = (sample: WorkbenchExampleSample): CompositionExampleState => {
     const [state, setState] = usePersisted<WorkbenchState | null>(`demo.workbench.${sample}.v1`, null);
     return { state, setState };
   };
   // Keep state above display-mode navigation so rapid switches never reload a pending save.
   const examples = {
+    overview: createExampleStore('overview'),
     composition: createExampleStore('composition'),
     regions: createExampleStore('regions'),
   };

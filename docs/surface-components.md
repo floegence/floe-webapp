@@ -90,8 +90,15 @@ Clear name remains available in the region's more-options panel. Changing
 appearance preserves the last caret for emoji insertion.
 
 The compact toolbar is centered above the visible object with a 12-pixel gap,
-clears external region labels, and adapts its placement when the material panel
-opens or the object moves. Text presets match the demo's 48/30/18/14-pixel hierarchy;
+clears external region labels, and follows the object when it moves. Sticky
+materials open in a compact three-row menu within the owning floating surface.
+The menu stays out of layout flow, is measured before becoming visible, and never
+changes the toolbar's size or position. It opens above the trigger to keep the
+note visible, or below when space is limited; a selection closes it. Arrow keys, Home/End, Enter,
+and Escape support keyboard use. Outside input, canvas zoom, and window resizing
+dismiss it. Local interaction surfaces retain keyboard ownership so canvas arrow
+navigation cannot steal menu focus. Region material panels retain their larger previews.
+Text presets match the demo's 48/30/18/14-pixel hierarchy;
 the typography menu also exposes the existing font, size, color and emoji controls.
 Persisted font weights survive state normalization. Inputs use the shared
 border-only focus contract, including the region-name editor. Resize hit areas stay
@@ -103,8 +110,11 @@ Both world and projected compositors follow the same content scale; toolbars and
 interaction handles retain screen-sized controls. A region toolbar clears the
 scaled name by its usual 12-pixel gap.
 
-The complete demo app exposes Workspace, Composition, and Regions examples in
-Workbench mode. Open `/?view=workbench&sample=composition` or
+The complete demo app defaults to a Workspace studio with three coordinated
+regions, sticky notes, text, and working Files, Terminal, and Monitoring windows.
+Open `/?view=workbench&sample=overview`. New examples start in Work mode; the dock
+switches to Composition mode for editing regions and text. The Windows tab keeps
+the previous four-window example available. Open `/?view=workbench&sample=composition` or
 `/?view=workbench&sample=regions`; use `theme=paper` or `theme=slate` for a specific
 shell theme. Composition and Regions use English sample content from the same
 scene factory as the comparison pages, with the production renderer and toolbar.
@@ -112,7 +122,7 @@ Each example retains its own edits and viewport across example and display-mode
 switches and reloads. Only a first visit frames the sample; later navigation and
 editing preserve the viewport. The theme selector covers all shell themes, and
 the A/B link retains the original design for comparison. Only the active example
-mounts a canvas. Workspace retains the existing file, terminal, and assistant demos.
+mounts a canvas. All examples share the production renderer and widget registry.
 Run `pnpm test:workbench-example` for full-app navigation, English sample layout,
 theme switching, standalone material parity, editing without viewport movement,
 and saved state across navigation and reloads in Chromium and WebKit. Set
