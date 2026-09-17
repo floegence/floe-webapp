@@ -22,6 +22,7 @@ await server.listen();
 const output = fileURLToPath(new URL('../.cache/workbench-composition/', import.meta.url));
 mkdirSync(output, { recursive: true });
 const results = [];
+const interactionsOnly = process.argv.includes('--interactions-only');
 try {
   for (const [engine, browserType] of [
     ['chromium-soft', chromium],
@@ -33,6 +34,7 @@ try {
     ['chromium-projected', chromium],
     ['webkit-projected', webkit],
   ]) {
+    console.log(`Checking ${engine} interactions`);
     const browser = await browserType.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -61,7 +63,12 @@ try {
         'typing stays in the edit transaction'
       );
       await page.keyboard.press('Escape');
-      assert.equal(await note.textContent(), initial, 'Escape restores content');
+      assert.match(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].body),
+        /draft/,
+        'Escape saves content'
+      );
+      assert.equal(await note.evaluate((el) => el === document.activeElement), false);
       await note.click();
       await page.keyboard.press('ControlOrMeta+End');
       await page.keyboard.type(' committed');
@@ -124,6 +131,77 @@ try {
         await page.evaluate(() => window.workbenchFixture.state().backgroundLayers[0].name),
         '中文'
       );
+      // All fields complete without an explicit confirmation or native blur from the canvas.
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((s) => ({
+          ...s,
+          stickyNotes: s.stickyNotes.map((note) => ({ ...note, title: 'Note title' })),
+        }))
+      );
+      for (const [label, collection, field] of [
+        ['Sticky note title', 'stickyNotes', 'title'],
+        ['Sticky note body', 'stickyNotes', 'body'],
+        ['Canvas text', 'annotations', 'text'],
+        ['Region name', 'backgroundLayers', 'name'],
+      ]) {
+        const editor = page.getByRole('textbox', { name: label, exact: true });
+        for (const finish of ['Escape', 'outside pointer']) {
+          await editor.click();
+          const toolbar = page.locator('.workbench-composition-toolbar');
+          assert.equal(await toolbar.getByRole('button', { name: 'Done', exact: true }).count(), 0);
+          assert.equal(await toolbar.locator('.workbench-editing-caption').count(), 0);
+          await page.keyboard.press('ControlOrMeta+A');
+          const value = `${label} saved on ${finish}`;
+          await page.keyboard.type(value);
+          if (finish === 'Escape') await page.keyboard.press('Escape');
+          else await page.mouse.click(30, 700);
+          assert.equal(await editor.evaluate((el) => el === document.activeElement), false);
+          assert.equal(
+            await page.evaluate(
+              ({ collection, field }) => window.workbenchFixture.state()[collection][0][field],
+              { collection, field }
+            ),
+            value,
+            `${label}: ${finish} saves`
+          );
+        }
+      }
+      // Moving between fields commits the first field without stealing focus from the second.
+      const title = page.getByRole('textbox', { name: 'Sticky note title', exact: true });
+      await title.click();
+      await page.keyboard.press('ControlOrMeta+A');
+      await page.keyboard.type('Switch fields');
+      await note.click();
+      assert.equal(await note.evaluate((el) => el === document.activeElement), true);
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].title),
+        'Switch fields'
+      );
+      await page.keyboard.press('ControlOrMeta+A');
+      await page.keyboard.type('Save before recoloring');
+      await page.getByRole('button', { name: 'Use sticky color Coral', exact: true }).click();
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].body),
+        'Save before recoloring'
+      );
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().stickyNotes[0].color),
+        'coral'
+      );
+      assert.equal(await note.evaluate((el) => el === document.activeElement), false);
+      await page.evaluate(
+        (body) =>
+          window.workbenchFixture.setState((s) => ({
+            ...s,
+            stickyNotes: s.stickyNotes.map((note) => ({
+              ...note,
+              title: undefined,
+              body,
+              color: 'sage',
+            })),
+          })),
+        initial
+      );
       // Toolbar follows live object transforms and lives in the shared surface portal.
       await note.click();
       await page.keyboard.press('Escape');
@@ -177,15 +255,24 @@ try {
       await page.evaluate(() =>
         window.workbenchFixture.setState((s) => ({ ...s, viewport: { x: 0, y: 0, scale: 0.35 } }))
       );
+      const resizeTarget = await page
+        .getByRole('button', { name: 'Resize sticky note' })
+        .boundingBox();
+      assert.ok(
+        Math.abs(resizeTarget.width - 24) < 0.1 && Math.abs(resizeTarget.height - 24) < 0.1,
+        'overview resize target stays 24 screen pixels without covering text'
+      );
       await note.click();
       assert.ok(
         await page.evaluate(() => window.workbenchFixture.state().viewport.scale >= 0.85),
         'overview click frames readable editor'
       );
       await page.keyboard.press('Escape');
-      const themes = await page.evaluate(() =>
-        window.workbenchFixture.themes.map(({ name, mode }) => ({ name, mode }))
-      );
+      const themes = interactionsOnly
+        ? []
+        : await page.evaluate(() =>
+            window.workbenchFixture.themes.map(({ name, mode }) => ({ name, mode }))
+          );
       for (const theme of themes) {
         console.log(engine, theme.name);
         await page.evaluate((theme) => {
@@ -353,7 +440,18 @@ try {
       await browser.close();
     }
   }
-  writeFileSync(`${output}/results.json`, JSON.stringify(results, null, 2));
+  writeFileSync(
+    `${output}/${interactionsOnly ? 'interactions' : 'results'}.json`,
+    JSON.stringify(
+      {
+        mode: interactionsOnly ? 'interactions' : 'full',
+        configurations: 8,
+        results,
+      },
+      null,
+      2
+    )
+  );
   console.log(
     `Workbench composition: ${results.length} theme/color/material cases and interaction checks passed.`
   );

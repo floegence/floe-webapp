@@ -207,8 +207,6 @@ function useCanvasTextEditor(args: {
   const [isComposing, setIsComposing] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(false);
 
-  let initialValue = '';
-  let cancelled = false;
   let lastRange: Range | undefined;
   const readText = () => element()?.textContent ?? '';
   const bind = (node: HTMLDivElement) => setElement(node);
@@ -229,27 +227,35 @@ function useCanvasTextEditor(args: {
     else node.innerHTML = nextValue;
   });
 
+  createEffect(() => {
+    const node = element();
+    if (!node || !isFocused()) return;
+    const finishOutside = (event: PointerEvent) => {
+      if (event.composedPath().includes(node)) return;
+      // Canvas gestures may prevent native focus transfer. Save before selection or dragging runs.
+      node.blur();
+    };
+    const document = node.ownerDocument;
+    document.addEventListener('pointerdown', finishOutside, true);
+    onCleanup(() => document.removeEventListener('pointerdown', finishOutside, true));
+  });
+
   const handleFocus: JSX.EventHandler<HTMLDivElement, FocusEvent> = () => {
-    initialValue = args.value();
-    cancelled = false;
     setIsFocused(true);
   };
   const handleBlur: JSX.EventHandler<HTMLDivElement, FocusEvent> = (event) => {
     const selection = document.getSelection();
     if (selectionBelongsToNode(selection, event.currentTarget))
       lastRange = selection.getRangeAt(0).cloneRange();
-    if (!cancelled && !isComposing()) commitCurrentText(event.currentTarget);
+    if (!isComposing()) commitCurrentText(event.currentTarget);
     setIsFocused(false);
   };
   const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
-    if (isComposing() || event.isComposing || event.keyCode === 229) return;
     event.stopPropagation();
+    if (isComposing() || event.isComposing || event.keyCode === 229) return;
     const mod = event.ctrlKey || event.metaKey;
     if (event.key === 'Escape') {
       event.preventDefault();
-      cancelled = true;
-      if (args.singleLine) event.currentTarget.textContent = initialValue;
-      else event.currentTarget.innerHTML = initialValue;
       event.currentTarget.blur();
     } else if (event.key === 'Enter' && (mod || args.singleLine)) {
       event.preventDefault();
@@ -266,8 +272,7 @@ function useCanvasTextEditor(args: {
     setIsComposing(true);
   };
   const handleCompositionEnd: JSX.EventHandler<HTMLDivElement, CompositionEvent> = (event) => {
-    if (document.activeElement !== event.currentTarget && !cancelled)
-      commitCurrentText(event.currentTarget);
+    if (document.activeElement !== event.currentTarget) commitCurrentText(event.currentTarget);
     setIsComposing(false);
   };
   const focus = () => {
@@ -663,6 +668,18 @@ function useLayerResize(args: {
   };
 }
 
+function StickyNotePreview(props: { color: WorkbenchStickyNoteColor; material: string }) {
+  return (
+    <span
+      class="workbench-note-preview"
+      data-note-color={props.color}
+      data-note-material={props.material}
+    >
+      <span class="workbench-preview-writing" />
+    </span>
+  );
+}
+
 export function WorkbenchStickyNote(props: {
   item: WorkbenchStickyNoteItem;
   selected: boolean;
@@ -721,17 +738,7 @@ export function WorkbenchStickyNote(props: {
     onCommit: (title) => onUpdate()(item().id, { title }),
   });
   const actions = useContext(WorkbenchCompositionActionsContext);
-  let openMaterials: (() => void) | undefined;
   const editing = () => titleEditor.isFocused() || bodyEditor.isFocused();
-  const finishEditing = () => {
-    titleEditor.blur();
-    bodyEditor.blur();
-  };
-  const previewNote = (color: WorkbenchStickyNoteColor, material: string) => (
-    <span class="workbench-note-preview" data-note-color={color} data-note-material={material}>
-      <span class="workbench-preview-writing" />
-    </span>
-  );
   const [copied, setCopied] = createSignal(false);
   let copiedTimer: number | undefined;
   const clearCopiedTimer = () => {
@@ -941,14 +948,10 @@ export function WorkbenchStickyNote(props: {
         >
           <CompositionToolbar
             kind="sticky"
-            onReady={(open) => {
-              openMaterials = open;
-            }}
-            editing={editing()}
             materials={['tint', 'tab', 'ruled']}
             material={item().material ?? 'tint'}
             materialLabel={(material) => t('useStickyMaterial', t(material))}
-            preview={(material) => previewNote(item().color, material)}
+            preview={(material) => <StickyNotePreview color={item().color} material={material} />}
             onMaterial={(material) =>
               onUpdate()(item().id, { material: material as WorkbenchStickyNoteItem['material'] })
             }
@@ -964,55 +967,12 @@ export function WorkbenchStickyNote(props: {
                       onPointerDown={stopLayerButtonPointer}
                       onClick={() => onUpdate()(item().id, { color })}
                     >
-                      {previewNote(color, item().material ?? 'tint')}
+                      <StickyNotePreview color={color} material={item().material ?? 'tint'} />
                       <Check />
                     </button>
                   )}
                 </For>
               </div>
-            }
-            editingControls={
-              <>
-                <Show when={item().title !== undefined}>
-                  <div class="workbench-edit-field-options">
-                    <button
-                      type="button"
-                      aria-pressed={titleEditor.isFocused()}
-                      onPointerDown={stopLayerButtonPointer}
-                      onClick={titleEditor.focus}
-                    >
-                      {t('editTitle')}
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={bodyEditor.isFocused()}
-                      onPointerDown={stopLayerButtonPointer}
-                      onClick={bodyEditor.focus}
-                    >
-                      {t('editBody')}
-                    </button>
-                  </div>
-                </Show>
-                <span class="workbench-editing-caption">{t('editingHint')}</span>
-                <button
-                  type="button"
-                  onPointerDown={stopLayerButtonPointer}
-                  onClick={() => {
-                    finishEditing();
-                    openMaterials?.();
-                  }}
-                >
-                  {t('treatment')}
-                </button>
-                <button
-                  type="button"
-                  class="workbench-edit-done"
-                  onPointerDown={stopLayerButtonPointer}
-                  onClick={finishEditing}
-                >
-                  {t('done')}
-                </button>
-              </>
             }
           >
             <button
@@ -1406,7 +1366,6 @@ function WorkbenchTextAnnotationControls(props: {
   const t = useWorkbenchCompositionText();
   const actions = useContext(WorkbenchCompositionActionsContext);
   const editor = () => props.textEditorRegistry?.get(props.item.id);
-  const editing = () => editor()?.isFocused() ?? false;
 
   const [anchor, setAnchor] = createSignal<HTMLElement>();
   const item = createOwnerSafePropAccessor(() => props.item);
@@ -1544,30 +1503,8 @@ function WorkbenchTextAnnotationControls(props: {
       >
         <CompositionToolbar
           kind="text"
-          editing={editing()}
           moreOpen={advancedOpen()}
           onMoreClose={() => setAdvancedOpen(false)}
-          editingControls={
-            <>
-              <span class="workbench-editing-caption">{t('editingHint')}</span>
-              <button
-                type="button"
-                class="workbench-name-trigger"
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => editor()?.blur()}
-              >
-                {t('treatment')}
-              </button>
-              <button
-                type="button"
-                class="workbench-edit-done"
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => editor()?.blur()}
-              >
-                {t('done')}
-              </button>
-            </>
-          }
           more={
             <>
               <div
@@ -1867,7 +1804,6 @@ function WorkbenchBackgroundRegionControls(props: {
   onDelete: (layerId: string) => void;
 }) {
   const t = useWorkbenchCompositionText();
-  let openMaterials: (() => void) | undefined;
   const actions = useContext(WorkbenchCompositionActionsContext);
   const editor = () => props.textEditorRegistry?.get(props.item.id);
   const editing = () => editor()?.isFocused() ?? false;
@@ -1941,10 +1877,6 @@ function WorkbenchBackgroundRegionControls(props: {
       >
         <CompositionToolbar
           kind="region"
-          onReady={(open) => {
-            openMaterials = open;
-          }}
-          editing={editing()}
           materials={['solid', 'frame', 'hatched']}
           material={item().material}
           materialLabel={(material) => t('useRegionMaterial', t(material))}
@@ -1987,42 +1919,17 @@ function WorkbenchBackgroundRegionControls(props: {
               </For>
             </div>
           }
-          editingControls={
-            <>
-              <span class="workbench-editing-caption">{t('regionEditingHint')}</span>
-              <button
-                type="button"
-                class="workbench-name-trigger"
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => {
-                  editor()?.blur();
-                  onUpdate()(item().id, { name: '' });
-                }}
-              >
-                {t('clearName')}
-              </button>
-              <button
-                type="button"
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => {
-                  editor()?.blur();
-                  openMaterials?.();
-                }}
-              >
-                {t('treatment')}
-              </button>
-              <button
-                type="button"
-                class="workbench-edit-done"
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => editor()?.blur()}
-              >
-                {t('done')}
-              </button>
-            </>
-          }
           more={
             <>
+              <Show when={item().name.trim()}>
+                <button
+                  type="button"
+                  onPointerDown={stopLayerButtonPointer}
+                  onClick={() => onUpdate()(item().id, { name: '' })}
+                >
+                  {t('clearName')}
+                </button>
+              </Show>
               <For each={WORKBENCH_BACKGROUND_MATERIALS.slice(3)}>
                 {(material) => (
                   <button

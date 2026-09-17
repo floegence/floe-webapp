@@ -5,7 +5,6 @@ import {
   createSignal,
   createUniqueId,
   onCleanup,
-  onMount,
   type JSX,
 } from 'solid-js';
 import { Check, ChevronDown } from '../../icons';
@@ -50,8 +49,6 @@ export function CompositionDivider() {
 /** One panel owns both its compact row and its expanding material previews. */
 export function CompositionToolbar(props: {
   kind: 'sticky' | 'region' | 'text';
-  editing?: boolean;
-  editingControls?: JSX.Element;
   children: JSX.Element;
   palette?: JSX.Element;
   materials?: readonly WorkbenchCompositionMessageKey[];
@@ -62,17 +59,10 @@ export function CompositionToolbar(props: {
   more?: JSX.Element;
   onMoreClose?: () => void;
   moreOpen?: boolean;
-  onReady?: (openMaterials: () => void) => void;
 }) {
   const t = useWorkbenchCompositionText();
   const [open, setOpen] = createSignal(false);
   const [more, setMore] = createSignal(false);
-  onMount(() =>
-    props.onReady?.(() => {
-      setOpen(true);
-      setMore(false);
-    })
-  );
   const panelId = createUniqueId();
   let root: HTMLDivElement | undefined;
   const close = () => {
@@ -106,7 +96,7 @@ export function CompositionToolbar(props: {
         }
       }}
     >
-      <Show when={!props.editing && styleOpen() && props.materials}>
+      <Show when={styleOpen() && props.materials}>
         <div id={panelId} class="workbench-treatment-panel">
           <div class="workbench-picker-heading">
             {t('treatment')}
@@ -150,41 +140,32 @@ export function CompositionToolbar(props: {
           </div>
         </div>
       </Show>
-      <Show when={(more() || props.moreOpen) && !props.editing}>
+      <Show when={more() || props.moreOpen}>
         <div class="workbench-composition-more">{props.more}</div>
       </Show>
       <div class="workbench-toolbar-main">
-        <Show
-          when={props.editing}
-          fallback={
-            <>
-              {props.palette}
-              <Show when={props.material}>
-                <CompositionDivider />
-                <button
-                  type="button"
-                  class="workbench-treatment-trigger"
-                  aria-label={t('treatment')}
-                  aria-expanded={!!styleOpen()}
-                  aria-controls={panelId}
-                  onPointerDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    setOpen(!styleOpen());
-                    setMore(false);
-                  }}
-                >
-                  {props.preview?.(props.material!, false)}
-                  <span>{t(props.material!)}</span>
-                  <ChevronDown />
-                </button>
-                <CompositionDivider />
-              </Show>
-              {props.children}
-            </>
-          }
-        >
-          {props.editingControls}
+        {props.palette}
+        <Show when={props.material}>
+          <CompositionDivider />
+          <button
+            type="button"
+            class="workbench-treatment-trigger"
+            aria-label={t('treatment')}
+            aria-expanded={!!styleOpen()}
+            aria-controls={panelId}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={() => {
+              setOpen(!styleOpen());
+              setMore(false);
+            }}
+          >
+            {props.preview?.(props.material!, false)}
+            <span>{t(props.material!)}</span>
+            <ChevronDown />
+          </button>
+          <CompositionDivider />
         </Show>
+        {props.children}
       </div>
     </div>
   );

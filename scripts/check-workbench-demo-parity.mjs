@@ -34,6 +34,7 @@ const output = `${repo}.cache/workbench-parity`;
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch();
 const results = [];
+const interactionsOnly = process.argv.includes('--interactions-only');
 const errors = [];
 const fills = {
   amber: '#a79d8e',
@@ -101,10 +102,12 @@ try {
   const b = await browser.newPage({ viewport: { width: 1000, height: 900 } });
   for (const page of [a, b]) page.on('pageerror', (e) => errors.push(e.message));
   const themeNames = [];
-  for (const [kind, sample, id, materials] of [
-    ['sticky', 'composition', 'principle', ['tint', 'tab', 'ruled']],
-    ['region', 'regions', 'blank-region', ['solid', 'frame', 'hatched']],
-  ]) {
+  for (const [kind, sample, id, materials] of interactionsOnly
+    ? []
+    : [
+        ['sticky', 'composition', 'principle', ['tint', 'tab', 'ruled']],
+        ['region', 'regions', 'blank-region', ['solid', 'frame', 'hatched']],
+      ]) {
     const query = `?scene=composition&design=proposed&theme=paper&sample=${sample}&object=${id}&tools=style&scale=.8&lang=zh-CN`;
     await Promise.all([
       a.goto(`${origin}/workbench-reference/embed.html${query}`),
@@ -167,16 +170,18 @@ try {
   }
   // Compare toolbar geometry and text hierarchy in real A/B frames, at desktop and narrow widths.
   const review = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
-  for (const [sample, id, themeName, scale] of [
-    ['regions', 'blank-region', 'paper', '.8'],
-    ['regions', 'field-region', 'slate', '1'],
-    ['composition', 'principle', 'slate', '.8'],
-    ['composition', 'next', 'paper', '.8'],
-    ['composition', 'reference', 'hc-light', '.8'],
-    ['composition', 'board-title', 'paper', '.8'],
-    ['composition', 'board-subtitle', 'slate', '1'],
-    ['composition', 'principle', 'paper', '.35'],
-  ]) {
+  for (const [sample, id, themeName, scale] of interactionsOnly
+    ? []
+    : [
+        ['regions', 'blank-region', 'paper', '.8'],
+        ['regions', 'field-region', 'slate', '1'],
+        ['composition', 'principle', 'slate', '.8'],
+        ['composition', 'next', 'paper', '.8'],
+        ['composition', 'reference', 'hc-light', '.8'],
+        ['composition', 'board-title', 'paper', '.8'],
+        ['composition', 'board-subtitle', 'slate', '1'],
+        ['composition', 'principle', 'paper', '.35'],
+      ]) {
     await review.goto(
       `${origin}/workbench-comparison.html?sample=${sample}&object=${id}&theme=${themeName}&scale=${scale}`
     );
@@ -215,8 +220,8 @@ try {
       .locator(`[data-wb-object-id="${id}"] .workbench-layer-resize`)
       .boundingBox();
     assert.ok(
-      resize.width >= 23.9 && resize.height >= 23.9,
-      `${id}/${scale} resize target remains usable`
+      Math.abs(resize.width - 24) < 0.1 && Math.abs(resize.height - 24) < 0.1,
+      `${id}/${scale} resize target stays 24 screen pixels`
     );
     await review.screenshot({ path: `${output}/${themeName}-${id}-${scale}.png` });
   }
@@ -228,19 +233,21 @@ try {
   const note = b.locator('.workbench-sticky[data-wb-object-id="principle"]');
   const title = note.locator('.workbench-sticky__title');
   const body = note.locator('.workbench-sticky__body');
-  const originalTitle = await title.innerText();
   await title.click();
   await b.keyboard.press('ControlOrMeta+A');
   await b.keyboard.type('Edited title');
   await b.keyboard.press('Escape');
-  assert.equal(await title.innerText(), originalTitle, 'Escape restores title');
+  assert.equal(await title.innerText(), 'Edited title', 'Escape saves title');
+  assert.equal(await title.evaluate((el) => el === document.activeElement), false);
   await title.click();
   await b.keyboard.press('ControlOrMeta+A');
   await b.keyboard.type('Edited title');
-  await b.getByRole('button', { name: 'Body', exact: true }).click();
+  await body.click();
   await b.keyboard.press('ControlOrMeta+A');
   await b.keyboard.type('Edited body');
-  await b.getByRole('button', { name: 'Done', exact: true }).click();
+  await b.keyboard.press('Escape');
+  assert.equal(await body.evaluate((el) => el === document.activeElement), false);
+  assert.equal(await b.getByRole('button', { name: 'Done', exact: true }).count(), 0);
   assert.equal(
     await b.evaluate(
       () => window.compositionExample.state().stickyNotes.find((o) => o.id === 'principle').title
@@ -267,7 +274,9 @@ try {
   );
   await b.keyboard.type('Optional name');
   await b.keyboard.press('Enter');
-  await name.click();
+  if ((await b.locator('.workbench-treatment-trigger').getAttribute('aria-expanded')) !== 'true')
+    await b.locator('.workbench-treatment-trigger').click();
+  await b.getByRole('button', { name: 'More options', exact: true }).click();
   await b.getByRole('button', { name: 'Clear name', exact: true }).click();
   assert.equal(
     await b.evaluate(
@@ -277,6 +286,7 @@ try {
     ''
   );
   assert.equal(await name.isVisible(), false, 'Cleared region is an unlabelled color field');
+  await b.getByRole('button', { name: 'More options', exact: true }).click();
   if ((await b.locator('.workbench-treatment-trigger').getAttribute('aria-expanded')) !== 'true')
     await b.locator('.workbench-treatment-trigger').click();
   await nextFrame(b);
@@ -312,11 +322,13 @@ try {
     );
   assert.deepEqual(errors, [], 'No renderer errors');
   writeFileSync(
-    `${output}/results.json`,
+    `${output}/${interactionsOnly ? 'interactions' : 'results'}.json`,
     JSON.stringify({ themes: themeNames, cases: results.length, results }, null, 2)
   );
   console.log(
-    `A/B parity passed: ${results.length} material/color cases, toolbar geometry, native editing, duplication, empty names, drag, mobile and idle checks.`
+    interactionsOnly
+      ? 'Production interaction checks passed: editing, duplication, empty names, drag, mobile and idle checks.'
+      : `A/B parity passed: ${results.length} material/color cases, toolbar geometry, native editing, duplication, empty names, drag, mobile and idle checks.`
   );
 } finally {
   await browser.close();

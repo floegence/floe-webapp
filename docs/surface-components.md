@@ -76,16 +76,22 @@ title and body fields, with localized placeholders. Existing notes without a
 the optional field alongside `body`, `color`, and `material`. Region names may be
 empty, disappear when cleared, and can be restored with Add name. Click visible
 text to edit it directly; native selection and IME remain inside the editor.
-Enter finishes a region name, Ctrl/Cmd+Enter finishes multiline content, and Escape
-restores the field's value at the start of editing. Switching title/body commits
-the previous field. Changing appearance preserves the last caret for emoji insertion.
+Escape or a pointer press outside the active editor saves and finishes editing,
+including canvas gestures that prevent native focus transfer. Enter also finishes
+a region name, and Ctrl/Cmd+Enter finishes multiline content. Switching title/body
+commits the previous field. IME confirmation stays inside the editor; when focus
+leaves during composition, the completed composition is saved. The toolbar keeps
+its appearance controls throughout editing, without a separate Done/Cancel mode.
+Clear name remains available in the region's more-options panel. Changing
+appearance preserves the last caret for emoji insertion.
 
 The compact toolbar is centered above the visible object with a 12-pixel gap,
 clears external region labels, and adapts its placement when the material panel
 opens or the object moves. Text presets match the demo's 48/30/18/14-pixel hierarchy;
 the typography menu also exposes the existing font, size, color and emoji controls.
 Persisted font weights survive state normalization. Inputs use the shared
-border-only focus contract, including the region-name editor.
+border-only focus contract, including the region-name editor. Resize hit areas stay
+24 screen pixels at every zoom level without covering nearby editable text.
 
 The demo app includes `/workbench-comparison.html` (A/B) and
 `/workbench-composition.html` (production components only). Both use the same
@@ -93,9 +99,15 @@ sample content, theme and viewport. `apps/demo/public/workbench-reference/` is a
 immutable copy of the approved v4.1 design; its manifest hashes guard the original
 renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
 This reference is an acceptance fixture, not an alternative product implementation.
+Later approved interaction changes, including save-on-exit, apply to the production
+example while the frozen reference retains its historical behavior.
 
 Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty
 names, dragging, narrow layouts, and idle layout/style work. Evidence is written
 to `.cache/workbench-parity/`. `pnpm test:workbench-composition` also exercises
 native selection, IME and the world/projected compositors in Chromium and WebKit.
+
+For an editing-only change, run the composition browser script with
+`--interactions-only` to cover both compositors, browsers, and surface styles
+without repeating the unchanged theme/material matrix.

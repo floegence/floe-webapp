@@ -249,7 +249,51 @@ describe('Workbench layer objects', () => {
     dispose();
   });
 
-  it('commits a text edit once on blur and restores cancelled edits without a mutation', () => {
+  it.each(['Escape', 'outside pointer'])(
+    'saves text once and leaves the editor on %s',
+    (completion) => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const [item, setItem] = createSignal(createTextItem());
+      const onUpdate = vi.fn((id, patch) => setItem((value) => ({ ...value, ...patch })));
+      const dispose = render(
+        () => (
+          <WorkbenchTextAnnotation
+            item={item()}
+            selected
+            editable
+            viewportScale={1}
+            onSelect={vi.fn()}
+            onCommitMove={vi.fn()}
+            onUpdate={onUpdate}
+          />
+        ),
+        host
+      );
+      const editor = document.querySelector('[contenteditable]') as HTMLDivElement;
+      editor.focus();
+      editor.textContent = 'Changed';
+      dispatchTextInput(editor);
+      expect(onUpdate).not.toHaveBeenCalled();
+      if (completion === 'Escape') {
+        editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      } else {
+        // Canvas gestures can suppress native focus transfer.
+        host.addEventListener('pointerdown', (event) => event.preventDefault());
+        dispatchPointerEvent('pointerdown', host);
+      }
+      expect(document.activeElement).not.toBe(editor);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      expect(untrack(item).text).toBe('Changed');
+      expect(editor.textContent).toBe('Changed');
+      editor.blur();
+      dispatchPointerEvent('pointerdown', host);
+      expect(onUpdate).toHaveBeenCalledTimes(1);
+      dispose();
+    }
+  );
+
+  it('keeps native pointer selection and IME Escape inside the active editor', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const onUpdate = vi.fn();
@@ -267,19 +311,22 @@ describe('Workbench layer objects', () => {
       ),
       host
     );
-    const editor = document.querySelector('[contenteditable]') as HTMLDivElement;
+    const editor = host.querySelector('[contenteditable]') as HTMLDivElement;
     editor.focus();
-    editor.textContent = 'Changed';
-    dispatchTextInput(editor);
+    editor.innerHTML = '<b>Selected text</b>';
+    dispatchPointerEvent('pointerdown', editor.firstChild!);
+    expect(document.activeElement).toBe(editor);
+    dispatchCompositionEvent('compositionstart', editor);
+    editor.textContent = '中文';
+    editor.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, isComposing: true })
+    );
+    expect(document.activeElement).toBe(editor);
     expect(onUpdate).not.toHaveBeenCalled();
-    editor.blur();
-    expect(onUpdate).toHaveBeenCalledTimes(1);
-    editor.focus();
-    editor.textContent = 'Cancelled';
-    dispatchTextInput(editor);
-    editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    expect(onUpdate).toHaveBeenCalledTimes(1);
-    expect(editor.textContent).toBe('Editable label');
+    dispatchPointerEvent('pointerdown', host);
+    expect(onUpdate).not.toHaveBeenCalled();
+    dispatchCompositionEvent('compositionend', editor);
+    expect(onUpdate).toHaveBeenCalledExactlyOnceWith('text-1', { text: '中文' });
     dispose();
   });
 
