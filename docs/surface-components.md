@@ -76,6 +76,10 @@ title and body fields, with localized placeholders. Existing notes without a
 the optional field alongside `body`, `color`, and `material`. Region names may be
 empty, disappear when cleared, and can be restored with Add name. Click visible
 text to edit it directly; native selection and IME remain inside the editor.
+Entering a composition editor by pointer, Tab, or toolbar action preserves the
+current canvas position and zoom, including partly clipped objects and low zoom.
+Typing, finishing edits, and surface resizing must not recenter or enlarge the
+canvas implicitly; viewport navigation remains an explicit user action.
 Escape or a pointer press outside the active editor saves and finishes editing,
 including canvas gestures that prevent native focus transfer. Enter also finishes
 a region name, and Ctrl/Cmd+Enter finishes multiline content. Switching title/body

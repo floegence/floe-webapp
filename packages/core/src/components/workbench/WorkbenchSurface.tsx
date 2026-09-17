@@ -881,44 +881,6 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     });
   });
 
-  const ensureReadableEditor = () => {
-    const active = document.activeElement;
-    if (
-      !(active instanceof HTMLElement) ||
-      !active.isContentEditable ||
-      !surfaceRootEl()?.contains(active)
-    )
-      return;
-    const id = active.closest('[data-wb-object-id]')?.getAttribute('data-wb-object-id');
-    const note = model.stickyNotes().find((item) => item.id === id);
-    const text = model.annotations().find((item) => item.id === id);
-    const item = note ?? text;
-    if (!item) return;
-    const size = model.canvasFrameSize();
-    const viewport = model.viewport();
-    const left = viewport.x + item.x * viewport.scale;
-    const top = viewport.y + item.y * viewport.scale;
-    if (
-      viewport.scale >= 0.85 &&
-      left >= 12 &&
-      left + item.width * viewport.scale <= size.width - 12 &&
-      top >= 12 &&
-      top + item.height * viewport.scale <= size.height - 12
-    )
-      return;
-    const scale = Math.min(1, Math.max(0.85, (size.width - 40) / item.width));
-    model.canvas.commitViewport({
-      x: (size.width - item.width * scale) / 2 - item.x * scale,
-      y: Math.max(100, (size.height - item.height * scale) / 2) - item.y * scale,
-      scale,
-    });
-  };
-
-  createEffect(() => {
-    const size = model.canvasFrameSize();
-    if (size.width > 0 && size.height > 0) untrack(ensureReadableEditor);
-  });
-
   return (
     <WorkbenchCompositionActionsContext.Provider
       value={{
@@ -941,10 +903,6 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       <WorkbenchCompositionMessagesContext.Provider value={() => props.compositionMessages}>
         <div
           ref={setSurfaceRootEl}
-          onClick={ensureReadableEditor}
-          onKeyUp={(event) => {
-            if (event.key === 'Tab') ensureReadableEditor();
-          }}
           class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
           {...{
             [interactionAdapter().surfaceRootAttr]: 'true',

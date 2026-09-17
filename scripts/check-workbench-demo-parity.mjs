@@ -245,7 +245,13 @@ try {
   const note = b.locator('.workbench-sticky[data-wb-object-id="principle"]');
   const title = note.locator('.workbench-sticky__title');
   const body = note.locator('.workbench-sticky__body');
+  const editViewport = await b.evaluate(() => window.compositionExample.state().viewport);
   await title.click();
+  assert.deepEqual(
+    await b.evaluate(() => window.compositionExample.state().viewport),
+    editViewport,
+    'Clicking the sticky title keeps the example viewport'
+  );
   await b.keyboard.press('ControlOrMeta+A');
   await b.keyboard.type('Edited title');
   await b.keyboard.press('Escape');
@@ -267,12 +273,35 @@ try {
     'Edited title'
   );
   assert.equal(await body.innerText(), 'Edited body');
+  assert.deepEqual(
+    await b.evaluate(() => window.compositionExample.state().viewport),
+    editViewport,
+    'Sticky typing and saving keep the example viewport'
+  );
   await b.getByRole('button', { name: 'Duplicate', exact: true }).click();
   const copy = await b.evaluate(() => window.compositionExample.state().stickyNotes.at(-1));
   assert.equal(copy.title, 'Edited title');
   assert.equal(copy.body, 'Edited body');
   assert.equal(copy.material, 'tint');
   assert.equal(copy.color, 'sage');
+  await b.goto(
+    `${origin}/workbench-composition.html?theme=paper&sample=regions&object=board-title&scale=.35&lang=en-US`
+  );
+  const text = b.locator('[data-wb-object-id="board-title"] .workbench-text-annotation__content');
+  await text.waitFor();
+  const textViewport = await b.evaluate(() => window.compositionExample.state().viewport);
+  const textBefore = await text.boundingBox();
+  await text.click({ position: { x: 10, y: 8 } });
+  await b.keyboard.type('Edited ');
+  await b.keyboard.press('Escape');
+  assert.deepEqual(
+    await b.evaluate(() => window.compositionExample.state().viewport),
+    textViewport,
+    'Text editing keeps the example viewport'
+  );
+  const textAfter = await text.boundingBox();
+  close(textAfter.x, textBefore.x, 'Text editing keeps its screen x');
+  close(textAfter.y, textBefore.y, 'Text editing keeps its screen y');
   await b.goto(
     `${origin}/workbench-composition.html?theme=paper&sample=regions&object=blank-region&tools=style&scale=.8&lang=en-US`
   );

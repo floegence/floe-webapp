@@ -23,6 +23,7 @@ const output = fileURLToPath(new URL('../.cache/workbench-composition/', import.
 mkdirSync(output, { recursive: true });
 const results = [];
 const zoomResults = [];
+const focusResults = [];
 const interactionsOnly = process.argv.includes('--interactions-only');
 try {
   for (const [engine, browserType] of [
@@ -169,6 +170,113 @@ try {
         document.documentElement.removeAttribute('data-floe-shell-theme');
         document.documentElement.classList.remove('dark');
       }, beforeZoom);
+      // Editing must keep the chosen viewport, even at low zoom or near a clipped edge.
+      for (const [label, collection] of [
+        ['Sticky note title', 'stickyNotes'],
+        ['Sticky note body', 'stickyNotes'],
+        ['Canvas text', 'annotations'],
+        ['Region name', 'backgroundLayers'],
+      ]) {
+        for (const scale of [0.35, 0.8, 1.4]) {
+          for (const left of [110, 1160]) {
+            const viewport = await page.evaluate(
+              ({ collection, scale, left }) => {
+                const item = window.workbenchFixture.state()[collection][0];
+                const viewport = { x: left - item.x * scale, y: 300 - item.y * scale, scale };
+                window.workbenchFixture.setState((s) => ({
+                  ...s,
+                  selectedObject: null,
+                  viewport,
+                  stickyNotes: s.stickyNotes.map((note) => ({ ...note, title: 'Editable title' })),
+                }));
+                return viewport;
+              },
+              { collection, scale, left }
+            );
+            const editor = page.getByRole('textbox', { name: label, exact: true });
+            const before = await editor.boundingBox();
+            await page.mouse.click(
+              before.x + Math.min(10, before.width / 2),
+              before.y + Math.min(5, before.height / 2)
+            );
+            assert.equal(
+              await editor.evaluate((el) => document.activeElement === el),
+              true,
+              `${label}: click places the caret`
+            );
+            assert.deepEqual(
+              await page.evaluate(() => window.workbenchFixture.state().viewport),
+              viewport,
+              `${engine}/${label}/${scale}/${left}: clicking keeps the viewport`
+            );
+            const after = await editor.boundingBox();
+            assert.ok(
+              Math.abs(after.x - before.x) < 1 && Math.abs(after.y - before.y) < 1,
+              `${label}: focus preserves the text position`
+            );
+            await page.keyboard.type('x');
+            await page.keyboard.press('Escape');
+            assert.deepEqual(
+              await page.evaluate(() => window.workbenchFixture.state().viewport),
+              viewport,
+              `${label}: typing and saving keep the viewport`
+            );
+            const saved = await editor.boundingBox();
+            assert.ok(
+              Math.abs(saved.x - before.x) < 1 && Math.abs(saved.y - before.y) < 1,
+              `${label}: typing and saving do not scroll the canvas DOM`
+            );
+            focusResults.push({ engine, label, scale, left });
+          }
+        }
+      }
+      // Keyboard and toolbar entry follow the same focus-only contract.
+      await page.evaluate(
+        (state) =>
+          window.workbenchFixture.setState({
+            ...state,
+            viewport: { x: 100, y: 120, scale: 0.35 },
+            stickyNotes: state.stickyNotes.map((note) => ({ ...note, title: 'Editable title' })),
+          }),
+        beforeZoom
+      );
+      const focusViewport = await page.evaluate(() => window.workbenchFixture.state().viewport);
+      await page.getByRole('textbox', { name: 'Sticky note title', exact: true }).focus();
+      await page.keyboard.press('Tab');
+      assert.equal(
+        await note.evaluate((el) => document.activeElement === el),
+        true,
+        'Tab enters the note body'
+      );
+      assert.deepEqual(
+        await page.evaluate(() => window.workbenchFixture.state().viewport),
+        focusViewport,
+        'Tab keeps the viewport'
+      );
+      await page.keyboard.press('Escape');
+      await page.getByRole('button', { name: 'Edit text', exact: true }).click();
+      assert.equal(
+        await note.evaluate((el) => document.activeElement === el),
+        true,
+        'Toolbar enters the note body'
+      );
+      assert.deepEqual(
+        await page.evaluate(() => window.workbenchFixture.state().viewport),
+        focusViewport,
+        'Toolbar editing keeps the viewport'
+      );
+      await page.setViewportSize({ width: 1240, height: 780 });
+      await page.evaluate(
+        () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      );
+      assert.deepEqual(
+        await page.evaluate(() => window.workbenchFixture.state().viewport),
+        focusViewport,
+        'Resizing during editing keeps the viewport'
+      );
+      await page.keyboard.press('Escape');
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeZoom);
       const initial = await note.textContent();
       await note.click({ position: { x: 40, y: 15 } });
       await page.keyboard.press('End');
@@ -379,9 +487,10 @@ try {
         'overview resize target stays 24 screen pixels without covering text'
       );
       await note.click();
-      assert.ok(
-        await page.evaluate(() => window.workbenchFixture.state().viewport.scale >= 0.85),
-        'overview click frames readable editor'
+      assert.deepEqual(
+        await page.evaluate(() => window.workbenchFixture.state().viewport),
+        { x: 0, y: 0, scale: 0.35 },
+        'overview click preserves the chosen viewport'
       );
       await page.keyboard.press('Escape');
       const themes = interactionsOnly
@@ -563,6 +672,7 @@ try {
         mode: interactionsOnly ? 'interactions' : 'full',
         configurations: 8,
         zoomResults,
+        focusResults,
         results,
       },
       null,
@@ -570,7 +680,7 @@ try {
     )
   );
   console.log(
-    `Workbench composition: ${zoomResults.length} zoom cases, ${results.length} theme/color/material cases and interaction checks passed.`
+    `Workbench composition: ${focusResults.length} focus cases, ${zoomResults.length} zoom cases, ${results.length} theme/color/material cases and interaction checks passed.`
   );
 } finally {
   await server.close();
