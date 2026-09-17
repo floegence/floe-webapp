@@ -1,4 +1,57 @@
 @layer components {
+  .workbench-demo-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .workbench-demo-examples {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding: 5px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+  }
+
+  .workbench-demo-examples__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 2px 0;
+    font-size: 12px;
+  }
+
+  .workbench-demo-theme {
+    height: 30px;
+    max-width: 160px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--foreground);
+    background: var(--card);
+    font: inherit;
+  }
+
+  .workbench-demo-comparison {
+    color: var(--muted-foreground);
+    white-space: nowrap;
+  }
+
+  .workbench-demo-comparison:hover {
+    color: var(--foreground);
+  }
+
+  .workbench-demo-scene {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .workbench-demo-widget {
     display: flex;
     flex-direction: column;

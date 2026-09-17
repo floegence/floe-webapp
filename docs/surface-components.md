@@ -103,7 +103,22 @@ Both world and projected compositors follow the same content scale; toolbars and
 interaction handles retain screen-sized controls. A region toolbar clears the
 scaled name by its usual 12-pixel gap.
 
-The demo app includes `/workbench-comparison.html` (A/B) and
+The complete demo app exposes Workspace, Composition, and Regions examples in
+Workbench mode. Open `/?view=workbench&sample=composition` or
+`/?view=workbench&sample=regions`; use `theme=paper` or `theme=slate` for a specific
+shell theme. Composition and Regions use English sample content from the same
+scene factory as the comparison pages, with the production renderer and toolbar.
+Each example retains its own edits and viewport across example and display-mode
+switches and reloads. Only a first visit frames the sample; later navigation and
+editing preserve the viewport. The theme selector covers all shell themes, and
+the A/B link retains the original design for comparison. Only the active example
+mounts a canvas. Workspace retains the existing file, terminal, and assistant demos.
+Run `pnpm test:workbench-example` for full-app navigation, English sample layout,
+theme switching, standalone material parity, editing without viewport movement,
+and saved state across navigation and reloads in Chromium and WebKit. Set
+`FLOE_DEMO_URL` to reuse a running example server.
+
+The demo app also includes `/workbench-comparison.html` (A/B) and
 `/workbench-composition.html` (production components only). Both use the same
 sample content, theme and viewport. `apps/demo/public/workbench-reference/` is an
 immutable copy of the approved v4.1 design; its manifest hashes guard the original

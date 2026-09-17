@@ -654,6 +654,13 @@ function AppContent() {
     if (isFloeSurfaceStyle(surface)) theme.setSurfaceStyle(surface);
     const colorMode = preview.get('mode');
     if (colorMode === 'light' || colorMode === 'dark') theme.setTheme(colorMode);
+    const shellPreset = theme.shellPresets().find((preset) => preset.name === preview.get('theme'));
+    if (shellPreset?.mode === 'light' || shellPreset?.mode === 'dark') {
+      theme.selectShellTheme(shellPreset.mode, shellPreset.name);
+    }
+    if (preview.get('view') === 'workbench' || preview.get('view') === 'deck') {
+      setDisplayMode(sanitizeDisplayMode(preview.get('view')));
+    }
     if (preview.get('view') === 'showcase') {
       setDisplayMode('activity');
       setSidebarActiveTab('showcase');

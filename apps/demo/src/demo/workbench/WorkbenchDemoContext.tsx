@@ -52,10 +52,17 @@ import {
   LOCAL_INTERACTION_SURFACE_ATTR,
   WORKBENCH_TEXT_SELECTION_SURFACE_ATTR,
 } from '@floegence/floe-webapp-core/ui';
+import type { CompositionSample } from './parity/compositionSamples';
+
+interface CompositionExampleState {
+  state: Accessor<WorkbenchState | null>;
+  setState: (state: WorkbenchState | null) => void;
+}
 
 export interface WorkbenchDemoContextValue {
   state: Accessor<WorkbenchState>;
   setState: (updater: (prev: WorkbenchState) => WorkbenchState) => void;
+  examples: Record<CompositionSample, CompositionExampleState>;
 }
 
 const WorkbenchDemoContext = createContext<WorkbenchDemoContextValue>();
@@ -702,6 +709,15 @@ export function sanitizeWorkbenchDemoState(input: unknown): WorkbenchState {
 }
 
 export function WorkbenchDemoProvider(props: { children: JSX.Element }) {
+  const createExampleStore = (sample: CompositionSample): CompositionExampleState => {
+    const [state, setState] = usePersisted<WorkbenchState | null>(`demo.workbench.${sample}.v1`, null);
+    return { state, setState };
+  };
+  // Keep state above display-mode navigation so rapid switches never reload a pending save.
+  const examples = {
+    composition: createExampleStore('composition'),
+    regions: createExampleStore('regions'),
+  };
   const [persistedState, setPersistedState] = usePersisted<WorkbenchState>(
     'demo.workbench.redeven-parity-state.v1',
     createWorkbenchDemoFallbackState()
@@ -722,7 +738,7 @@ export function WorkbenchDemoProvider(props: { children: JSX.Element }) {
     setStore(sanitizeWorkbenchDemoState(next));
   };
 
-  const value: WorkbenchDemoContextValue = { state, setState };
+  const value: WorkbenchDemoContextValue = { state, setState, examples };
 
   return (
     <WorkbenchDemoContext.Provider value={value}>

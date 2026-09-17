@@ -26,7 +26,8 @@
     "test:floating-window-drag": "node scripts/prepare-surface-consumer.mjs && node scripts/check-floating-window-drag-performance.mjs",
     "test:file-menu": "node scripts/check-file-menu-browser.mjs",
     "test:workbench-composition": "node scripts/check-workbench-composition-browser.mjs",
-    "test:workbench-demo-parity": "node scripts/check-workbench-demo-parity.mjs"
+    "test:workbench-demo-parity": "node scripts/check-workbench-demo-parity.mjs",
+    "test:workbench-example": "node scripts/check-workbench-example-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

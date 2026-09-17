@@ -219,6 +219,7 @@
         "y": 430,
         "w": 366,
         "h": 80,
+        "hEn": 112,
         "level": "bodyText",
         "align": "left",
         "textKey": "regionFrameDetail"
