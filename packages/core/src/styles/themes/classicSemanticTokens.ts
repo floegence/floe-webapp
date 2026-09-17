@@ -1,3 +1,4 @@
+import { createProgressTokens } from './progressTokens.ts';
 import { LIGHT_WINDOW_TOKENS, DARK_WINDOW_TOKENS } from './windowTokens.ts';
 import type { FloeThemeTokenMap } from './index';
 
@@ -17,7 +18,7 @@ function resolveTokenReferences(tokens: Readonly<FloeThemeTokenMap>): Readonly<F
   return Object.freeze(resolved);
 }
 
-export const CLASSIC_LIGHT_CSS_TOKENS = {
+const classicLightPalette = {
   ...LIGHT_WINDOW_TOKENS,
   '--floe-window-background': 'var(--popover)',
   '--floe-window-titlebar-background': 'var(--popover)',
@@ -60,7 +61,7 @@ export const CLASSIC_LIGHT_CSS_TOKENS = {
   '--glow': '#465a43',
 } as const satisfies FloeThemeTokenMap;
 
-export const CLASSIC_DARK_CSS_TOKENS = {
+const classicDarkPalette = {
   ...DARK_WINDOW_TOKENS,
   '--floe-window-background': 'var(--popover)',
   '--floe-window-titlebar-background': 'var(--popover)',
@@ -102,6 +103,9 @@ export const CLASSIC_DARK_CSS_TOKENS = {
   '--selection-code-bg': 'hsl(212 100% 67%)', '--selection-code-fg': 'hsl(220 20% 8%)',
   '--glow': 'hsl(217 65% 52%)',
 } as const satisfies FloeThemeTokenMap;
+
+export const CLASSIC_LIGHT_CSS_TOKENS = { ...classicLightPalette, ...createProgressTokens('light', classicLightPalette) };
+export const CLASSIC_DARK_CSS_TOKENS = { ...classicDarkPalette, ...createProgressTokens('dark', classicDarkPalette) };
 
 export const CLASSIC_LIGHT_SEMANTIC_TOKENS = resolveTokenReferences(CLASSIC_LIGHT_CSS_TOKENS);
 export const CLASSIC_DARK_SEMANTIC_TOKENS = resolveTokenReferences(CLASSIC_DARK_CSS_TOKENS);

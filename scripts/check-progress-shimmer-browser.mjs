@@ -122,7 +122,11 @@ try {
             assert.equal(value.animation, true, `${label}: has a real running shimmer`);
             assert.ok(value.luminanceGain > 0, `${label}: highlight must brighten, not cast a shadow`);
             assert.ok(value.lightnessGain > 0, `${label}: highlight must increase perceptual lightness`);
-            if (value.name === 'surface') assert.ok(value.chromaChange <= 0.005, `${label}: reflection approaches neutral light`);
+            assert.ok(value.peak.slice(0, 3).every((channel, index) => channel >= value.base[index]), `${label}: reflection adds white without reducing any RGB channel`);
+            if (value.name !== 'surface') {
+              assert.ok(value.deltaEOK >= 0.2, `${label}: text needs a clearly separated bright core`);
+              if (theme.mode === 'dark') assert.deepEqual(value.peak.slice(0, 3), [255, 255, 255], `${label}: dark text reflects white light`);
+            }
             assert.equal(value.duration, 2400, `${label}: one shared cadence`);
             assert.ok(
               value.minimumContrast >= 4.5,
@@ -141,11 +145,19 @@ try {
           }, time);
         await freeze(0);
         const before = await page.screenshot();
+        // Sample the central glyph strip near both ends of the bright plateau.
+        // A narrow glint can move yet still be imperceptible at normal reading size.
+        const coreFrames = [];
+        for (const time of [1060, 1340]) {
+          await freeze(time);
+          coreFrames.push(await page.screenshot());
+        }
+
         await freeze(1200);
         const after = await page.screenshot();
         assert.equal(before.equals(after), false, `${theme.name}: sweep changes painted pixels`);
         const changedPixels = await page.evaluate(
-          async ({ before, after, bases }) => {
+          async ({ before, after }) => {
             const frames = await Promise.all(
               [before, after].map(async (bytes) => {
                 const bitmap = await createImageBitmap(
@@ -202,13 +214,6 @@ try {
                 )
                   changed++;
               for (let i = 0; i < a.length; i += 4) {
-                // Surface direction belongs to the fill, not the overlaid label.
-                // Linux LCD text antialiasing can reduce one RGB channel at a
-                // white glyph edge while the desaturated fill grows brighter.
-                // Text shimmer still samples every glyph; label readability is
-                // independently checked against the entire gradient above.
-                if (!isText && !bases[el.dataset.progressCase].slice(0, 3)
-                  .every((channel, index) => Math.abs(a[i + index] - channel) <= 1)) continue;
                 sampledCarrierPixels++;
                 const gain = pixelLuminance(b, i) - pixelLuminance(a, i);
                 if (gain > 0.003) brightened++;
@@ -217,7 +222,7 @@ try {
               return { name: el.dataset.progressCase, changed, brightened, darkened, sampledCarrierPixels, backgroundChanged };
             });
           },
-          { before: [...before], after: [...after], bases: Object.fromEntries(report.cases.at(-1).values.map(value => [value.name, value.base])) }
+          { before: [...before], after: [...after] }
         );
         for (const value of changedPixels) {
           assert.ok(value.sampledCarrierPixels > 100, `${theme.name}/${value.name}: carrier has enough observable pixels`);
@@ -230,6 +235,30 @@ try {
           assert.equal(value.backgroundChanged, 0, `${theme.name}/${value.name}: text flow never paints its surrounding background`);
         }
         report.cases.at(-1).paintedMotion = changedPixels;
+        const core = await page.evaluate(async (bytes) => {
+          const frames = await Promise.all(bytes.map(async data => {
+            const bitmap = await createImageBitmap(new Blob([new Uint8Array(data)], { type: 'image/png' }));
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width; canvas.height = bitmap.height;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(bitmap, 0, 0); bitmap.close();
+            return ctx;
+          }));
+          let illuminated = 0, unstable = 0;
+          for (const el of document.querySelectorAll('[data-floe-progress-shimmer="text"]')) {
+            const box = el.getBoundingClientRect();
+            const pixels = frames.map(ctx => ctx.getImageData(Math.round(box.x + box.width / 2), Math.ceil(box.y), 1, Math.floor(box.height)).data);
+            for (let i = 0; i < pixels[0].length; i += 4) {
+              const difference = (a, b) => [0, 1, 2].reduce((sum, channel) => sum + Math.abs(a[i + channel] - b[i + channel]), 0);
+              if (difference(pixels[0], pixels[1]) > 15) illuminated++;
+              if (difference(pixels[1], pixels[2]) > 6) unstable++;
+            }
+          }
+          return { illuminated, unstable, exposureMs: 280 };
+        }, [[...before], ...coreFrames.map(frame => [...frame])]);
+        assert.ok(core.illuminated > 4, `${theme.name}: bright core reaches real central glyphs`);
+        assert.equal(core.unstable, 0, `${theme.name}: bright core remains visible for at least 280ms`);
+        report.cases.at(-1).coreExposure = core;
+
         if (['classic-light', 'classic-dark', 'github-light', 'nord'].includes(theme.name)) {
           await page.screenshot({
             path: resolve(output, `${entry}-${material}-${theme.name}.png`),

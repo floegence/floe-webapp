@@ -71,4 +71,8 @@
   --selection-code-bg: hsl(212 100% 67%);
   --selection-code-fg: hsl(220 20% 8%);
   --glow: #465a43;
+  --floe-progress-text-base: rgb(15 24 19);
+  --floe-progress-text-peak: rgb(96 101 98);
+  --floe-progress-primary-base: rgb(48 61 46);
+  --floe-progress-primary-white-mix: 28.0%;
 }

@@ -69,6 +69,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #243447;
+  --floe-progress-text-base: rgb(12 23 35);
+  --floe-progress-text-peak: rgb(94 101 109);
+  --floe-progress-primary-base: rgb(36 52 71);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='mist'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -140,6 +144,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #234e63;
+  --floe-progress-text-base: rgb(8 24 34);
+  --floe-progress-text-peak: rgb(94 104 111);
+  --floe-progress-primary-base: rgb(31 68 87);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='meadow'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -211,6 +219,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #24523d;
+  --floe-progress-text-base: rgb(7 26 19);
+  --floe-progress-text-peak: rgb(93 105 101);
+  --floe-progress-primary-base: rgb(31 70 52);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='citrus'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -282,6 +294,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #874000;
+  --floe-progress-text-base: rgb(32 19 7);
+  --floe-progress-text-peak: rgb(110 101 94);
+  --floe-progress-primary-base: rgb(108 51 0);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='lilac'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -353,6 +369,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #51407e;
+  --floe-progress-text-base: rgb(25 18 33);
+  --floe-progress-text-peak: rgb(103 98 108);
+  --floe-progress-primary-base: rgb(69 55 107);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='light-plus'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -424,6 +444,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #005fb8;
+  --floe-progress-text-base: rgb(22 22 22);
+  --floe-progress-text-peak: rgb(105 105 105);
+  --floe-progress-primary-base: rgb(0 68 133);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='quiet-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -495,6 +519,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #4b61b9;
+  --floe-progress-text-base: rgb(22 22 22);
+  --floe-progress-text-peak: rgb(102 102 102);
+  --floe-progress-primary-base: rgb(46 60 114);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='solarized-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -566,6 +594,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #075e73;
+  --floe-progress-text-base: rgb(5 25 31);
+  --floe-progress-text-peak: rgb(91 105 108);
+  --floe-progress-primary-base: rgb(5 72 89);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='github-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -637,6 +669,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #0969da;
+  --floe-progress-text-base: rgb(18 22 28);
+  --floe-progress-text-peak: rgb(103 106 110);
+  --floe-progress-primary-base: rgb(6 65 136);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='hc-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -708,6 +744,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #0000a8;
+  --floe-progress-text-base: rgb(22 22 22);
+  --floe-progress-text-peak: rgb(97 97 97);
+  --floe-progress-primary-base: rgb(0 0 168);
+  --floe-progress-primary-white-mix: 28.0%;
 }
 :root[data-floe-shell-theme='ink'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -779,6 +819,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #395c9f;
+  --floe-progress-text-base: rgb(149 157 161);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(134 166 231);
+  --floe-progress-primary-white-mix: 35.5%;
 }
 :root[data-floe-shell-theme='slate'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -850,6 +894,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #52677e;
+  --floe-progress-text-base: rgb(153 156 159);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(168 183 200);
+  --floe-progress-primary-white-mix: 45.5%;
 }
 :root[data-floe-shell-theme='forest'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -921,6 +969,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #2d7d67;
+  --floe-progress-text-base: rgb(149 158 153);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(113 208 177);
+  --floe-progress-primary-white-mix: 47.0%;
 }
 :root[data-floe-shell-theme='ember'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -992,6 +1044,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #a94632;
+  --floe-progress-text-base: rgb(165 152 152);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(255 155 122);
+  --floe-progress-primary-white-mix: 43.5%;
 }
 :root[data-floe-shell-theme='ocean'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1063,6 +1119,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #176c8e;
+  --floe-progress-text-base: rgb(145 158 162);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(105 212 255);
+  --floe-progress-primary-white-mix: 53.0%;
 }
 :root[data-floe-shell-theme='dark-plus'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1134,6 +1194,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #264f78;
+  --floe-progress-text-base: rgb(155 155 155);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(55 148 255);
+  --floe-progress-primary-white-mix: 29.5%;
 }
 :root[data-floe-shell-theme='monokai'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1205,6 +1269,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #5a594e;
+  --floe-progress-text-base: rgb(165 165 159);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(249 38 114);
+  --floe-progress-primary-white-mix: 33.0%;
 }
 :root[data-floe-shell-theme='nord'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1276,6 +1344,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #4c668a;
+  --floe-progress-text-base: rgb(187 189 194);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(136 192 208);
+  --floe-progress-primary-white-mix: 45.5%;
 }
 :root[data-floe-shell-theme='dracula'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1347,6 +1419,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #52566d;
+  --floe-progress-text-base: rgb(172 172 166);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(189 147 249);
+  --floe-progress-primary-white-mix: 36.0%;
 }
 :root[data-floe-shell-theme='abyss'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1418,6 +1494,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #005a8d;
+  --floe-progress-text-base: rgb(142 157 173);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(0 164 239);
+  --floe-progress-primary-white-mix: 36.5%;
 }
 :root[data-floe-shell-theme='studio'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1489,6 +1569,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #2060c0;
+  --floe-progress-text-base: rgb(155 155 159);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(218 218 222);
+  --floe-progress-primary-white-mix: 96.0%;
 }
 :root[data-floe-shell-theme='graphite'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);
@@ -1560,6 +1644,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #0070e0;
+  --floe-progress-text-base: rgb(164 164 168);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(10 132 255);
+  --floe-progress-primary-white-mix: 29.0%;
 }
 :root[data-floe-shell-theme='porcelain-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -1631,6 +1719,10 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #202a37;
+  --floe-progress-text-base: rgb(13 23 35);
+  --floe-progress-text-peak: rgb(93 99 107);
+  --floe-progress-primary-base: rgb(32 42 55);
+  --floe-progress-primary-white-mix: 28.0%;
   --floe-file-icon-primary: hsl(214 26% 17%);
   --floe-file-icon-warning: hsl(38 92% 50%);
   --floe-file-icon-info: hsl(217 91% 60%);
@@ -1707,4 +1799,8 @@
   --selection-code-bg: #58a6ff;
   --selection-code-fg: #08111d;
   --glow: #3b6592;
+  --floe-progress-text-base: rgb(166 163 157);
+  --floe-progress-text-peak: rgb(255 255 255);
+  --floe-progress-primary-base: rgb(188 200 213);
+  --floe-progress-primary-white-mix: 59.5%;
 }

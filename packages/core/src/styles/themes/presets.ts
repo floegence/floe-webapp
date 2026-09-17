@@ -1,3 +1,4 @@
+import { createProgressTokens } from './progressTokens.ts';
 import { LIGHT_WINDOW_TOKENS, DARK_WINDOW_TOKENS } from './windowTokens.ts';
 import type { FloeThemePreset, FloeThemePresetMode, FloeThemeTokenMap } from './index';
 import {
@@ -317,6 +318,8 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     // selectionBackground so we don't inherit a near-white primary as glow source.
     '--glow': definition.glow ?? (definition.mode === 'light' ? definition.primary : definition.selectionBackground),
   };
+
+  Object.assign(tokenMap, createProgressTokens(definition.mode, tokenMap));
 
   for (const [tone, color] of Object.entries(definition.fileIconColors ?? {})) {
     tokenMap[`--floe-file-icon-${tone}`] = color;

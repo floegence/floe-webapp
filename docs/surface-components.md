@@ -64,16 +64,20 @@ disabled button retains full opacity and native disabled behavior. Hosts with
 a custom filled action can map `--floe-progress-surface-background` to its fill;
 they must validate that fill and its label as a pair.
 
-The shared effect travels left to right every 2.4 seconds with a 20% band.
-The peak always increases luminance and perceptual lightness. Dark text uses a
-darker base and a lighter peak; button reflection follows the actual fill
-lightness, independently of the page mode. Its softened, slightly angled band
-reduces chroma toward neutral light instead of painting a dark stripe. Bounded
-peak lightness preserves light labels on dark buttons. These colors retain at least
-4.5:1 text contrast and 0.08 OKLab color difference between base and peak across
-the built-in shell palettes. These are progress visibility thresholds, not a
-claim about arbitrary host color overrides. Reduced motion and forced colors
-remove the sweep and restore opaque text; the label and host interaction remain.
+The shared effect travels left to right every 2.4 seconds. The text gradient is
+clipped to glyphs only: its white core occupies 20% of the visible text width,
+with soft shoulders bringing the full band to 35%. Each glyph receives about
+320ms of full light. Dark themes use a white peak; light themes reserve enough
+contrast against every neutral reading surface. No text backplate is added.
+
+Buttons use a narrower, angled 20% reflection. Their busy fill is calibrated
+against the primary label, reserving contrast for additive white light. Every
+RGB channel stays constant or increases along the sweep, avoiding gray or dark
+bands even on saturated blue fills. Generated palette tokens have one owner in
+the theme catalog and are published with both CSS entries. Built-in palettes
+retain at least 4.5:1 label contrast and 0.08 OKLab base-to-peak separation;
+text exceeds 0.2. These bounds do not cover arbitrary host color overrides.
+Reduced motion and forced colors remove the sweep and restore opaque text.
 No timer, duplicated label, shadow animation, or compositor promotion is added.
 
 `pnpm test:progress-shimmer` verifies both packed CSS entries and materials,
