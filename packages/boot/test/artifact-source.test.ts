@@ -62,7 +62,7 @@ it('materializes a native isolated handoff without a browser location or consume
   });
   expect(await source.acquire({ signal: new AbortController().signal })).toMatchObject({
     kind: 'failure',
-    code: 'invalid_spend_binding',
+    code: 'artifact_invalid',
     disposition: { kind: 'terminal' },
   });
   (body.spend_scope as Record<string, unknown>).consumer = 'trusted';
@@ -244,7 +244,7 @@ describe('boot artifact source', () => {
       body.critical_scope_projection_json = '{}';
       expect(await second.acquire({ signal: new AbortController().signal })).toMatchObject({
         kind: 'failure',
-        code: 'projection_digest_mismatch',
+        code: 'artifact_invalid',
         disposition: { kind: 'terminal' },
       });
     } finally {
@@ -427,7 +427,7 @@ describe('boot artifact source', () => {
     const objectSource = mod.createControlplaneArtifactSource({ ...options, fetch: objectFetch });
     await expect(
       objectSource.acquire({ signal: new AbortController().signal })
-    ).resolves.toMatchObject({ kind: 'failure', code: 'invalid_acquisition_envelope' });
+    ).resolves.toMatchObject({ kind: 'failure', code: 'artifact_invalid' });
 
     const invalidProjection = JSON.stringify({
       scope: 'proxy.runtime',
@@ -442,7 +442,7 @@ describe('boot artifact source', () => {
     const badSource = mod.createControlplaneArtifactSource({ ...options, fetch: badFetch });
     await expect(
       badSource.acquire({ signal: new AbortController().signal })
-    ).resolves.toMatchObject({ kind: 'failure', code: 'invalid_critical_scope_projection' });
+    ).resolves.toMatchObject({ kind: 'failure', code: 'artifact_invalid' });
   });
 
   it('treats host spend-binding rejection as a terminal acquisition failure', async () => {
@@ -460,7 +460,7 @@ describe('boot artifact source', () => {
 
     await expect(source.acquire({ signal: new AbortController().signal })).resolves.toEqual({
       kind: 'failure',
-      code: 'invalid_spend_binding',
+      code: 'artifact_invalid',
       disposition: { kind: 'terminal' },
     });
     expect(leases).toHaveLength(0);
@@ -476,7 +476,7 @@ describe('boot artifact source', () => {
       invalidIdentitySource.acquire({ signal: new AbortController().signal })
     ).resolves.toMatchObject({
       kind: 'failure',
-      code: 'invalid_spend_binding_identity',
+      code: 'artifact_invalid',
       disposition: { kind: 'terminal' },
     });
   });

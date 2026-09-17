@@ -269,13 +269,19 @@ function createControlplaneSource<Lease>(
             retryAfter: response.headers.get('retry-after'),
             retryableBusinessCodes: options.retryableBusinessCodes,
           });
-          return { kind: 'failure' as const, ...failure };
+          // Business diagnostics belong to the HTTP boundary. Flowersec only
+          // accepts its canonical source codes; preserve the retry authority.
+          return Object.freeze({
+            kind: 'failure' as const,
+            code: failure.code === 'invalid_error_code' ? 'artifact_invalid' : 'connection_failed',
+            disposition: failure.disposition,
+          });
         }
         let envelope: unknown;
         try {
           envelope = (await response.json()) as unknown;
         } catch {
-          return terminalFailure('invalid_controlplane_response');
+          return terminalFailure();
         }
         const lease = await materialize(source, envelope, {
           commitSpend: options.commitSpend,
@@ -292,11 +298,11 @@ function createControlplaneSource<Lease>(
       } catch (error) {
         if (signal.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
-        if (error instanceof AcquisitionError) return terminalFailure(error.code);
-        if (error instanceof ControlplaneRequestError) return terminalFailure(error.code);
+        if (error instanceof AcquisitionError) return terminalFailure();
+        if (error instanceof ControlplaneRequestError) return terminalFailure();
         return Object.freeze({
           kind: 'failure' as const,
-          code: 'network_error',
+          code: 'connection_failed',
           disposition: Object.freeze({ kind: 'retryable' as const }),
         });
       }
@@ -364,12 +370,10 @@ function parseRetryAfter(value: string | null | undefined, now: number): number 
   return Number.isSafeInteger(parsed) && parsed > now ? parsed : undefined;
 }
 
-function terminalFailure(
-  code: string
-): ClassifiedControlplaneFailure & Readonly<{ kind: 'failure' }> {
+function terminalFailure(): ClassifiedControlplaneFailure & Readonly<{ kind: 'failure' }> {
   return Object.freeze({
     kind: 'failure',
-    code: BUSINESS_CODE_PATTERN.test(code) ? code : 'invalid_error_code',
+    code: 'artifact_invalid',
     disposition: Object.freeze({ kind: 'terminal' }),
   });
 }
