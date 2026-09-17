@@ -67,8 +67,10 @@ object-attached tools. Sticky notes have six theme-aware colors and three materi
 (`tint`, `tab`, `ruled`). Regions use the same six color families with `solid`,
 `frame`, `hatched`, `dotted`, `grid`, and `glass` previews, with opacity and Clear
 name directly below the compact material list. Preview tiles and
-objects share material variables. No material requires a blur filter or idle
-animation loop.
+objects share color variables. Region menu swatches use stronger texture contrast,
+smaller dot/grid spacing, and a clearer wash gradient so materials remain distinct
+at thumbnail size; canvas rendering keeps its full-size treatment. No material
+requires a blur filter or idle animation loop.
 
 Work mode owns sticky notes and widgets. Composition mode edits only regions and
 text: work objects remain visible beneath a quiet theme-aware overlay, but their
