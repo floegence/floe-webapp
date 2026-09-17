@@ -42,6 +42,15 @@ HTTPS is required by default. Loopback HTTP requires `allowLoopbackHTTP: true`. 
 
 The boot package also provides a bounded single-request `fetchServerSentEvents` helper. It performs exactly one fetch, validates `text/event-stream`, and does not parse application JSON or reconnect.
 
+Persistent event streams default to `priority: 'low'`. Chromium can otherwise keep
+native media requests queued behind long-lived high-priority fetches when its
+network quality estimator selects a slow connection class, including for a local
+HTTP server. Hosts with their own event readers use
+`createServerSentEventRequestInit(init)` to apply the same request policy. This
+helper returns a new options object, preserves headers, credentials, cancellation
+and all other request options, and honors an explicit priority. It does not change
+event delivery, implement reconnects, or alter HTTP connection limits.
+
 ## Native isolated application controllers
 
 `createIsolatedControlplaneArtifactSource()` from `@floegence/floe-webapp-boot/artifact-source`

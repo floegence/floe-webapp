@@ -1,10 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ServerSentEventStreamError,
+  createServerSentEventRequestInit,
   fetchServerSentEvents,
 } from '../src/server-sent-events';
 
 const encoder = new TextEncoder();
+
+describe('createServerSentEventRequestInit', () => {
+  it('defaults persistent requests to low priority without mutating caller options', () => {
+    const controller = new AbortController();
+    const headers = new Headers({ authorization: 'Bearer test' });
+    const init = Object.freeze({ headers, signal: controller.signal, credentials: 'include' as const, cache: 'no-store' as const });
+    const result = createServerSentEventRequestInit(init);
+    expect(result).toEqual({ ...init, priority: 'low' });
+    expect(result).not.toBe(init);
+    expect(result.headers).toBe(headers);
+    expect(init).not.toHaveProperty('priority');
+    expect(createServerSentEventRequestInit()).toEqual({ priority: 'low' });
+    expect(createServerSentEventRequestInit({ priority: undefined }).priority).toBe('low');
+  });
+
+  it.each(['high', 'low', 'auto'] as const)('preserves an explicit %s priority', (priority) => {
+    expect(createServerSentEventRequestInit({ priority }).priority).toBe(priority);
+  });
+});
 
 function responseFromChunks(
   chunks: readonly (string | Uint8Array)[],
@@ -34,6 +54,15 @@ async function collect(stream: AsyncIterable<unknown>): Promise<unknown[]> {
 }
 
 describe('fetchServerSentEvents', () => {
+  it.each([undefined, 'high', 'auto'] as const)('applies the shared request priority default for %s', async (priority) => {
+    const fetch = vi.fn(async () => responseFromChunks(['data: ready\n\n']));
+    const signal = new AbortController().signal;
+    await collect(fetchServerSentEvents('/stream', { fetch, priority, signal, credentials: 'include' }));
+    expect(fetch).toHaveBeenCalledWith('/stream', expect.objectContaining({
+      priority: priority ?? 'low', signal, credentials: 'include',
+    }));
+  });
+
   it('decodes fragmented UTF-8, CRLF boundaries, multiline data, id, event, and retry', async () => {
     const unicode = encoder.encode('data: \u4f60\u597d\r\n');
     const fetch = vi.fn(async () => responseFromChunks([

@@ -42,6 +42,11 @@ export type FetchServerSentEventsOptions = Omit<RequestInit, 'signal'> & Readonl
 const DEFAULT_MAX_FRAME_BYTES = 1024 * 1024;
 const DEFAULT_MAX_BUFFER_BYTES = 2 * 1024 * 1024;
 
+/** Persistent event streams must not hold Chromium's high-priority request budget. */
+export function createServerSentEventRequestInit(init: RequestInit = {}): RequestInit {
+  return { ...init, priority: init.priority ?? 'low' };
+}
+
 function positiveLimit(value: number | undefined, fallback: number): number {
   if (value === undefined) return fallback;
   if (!Number.isSafeInteger(value) || value <= 0) {
@@ -80,7 +85,7 @@ export async function* fetchServerSentEvents(
 
   let response: Response;
   try {
-    response = await fetchImplementation(input, { ...requestInit, signal });
+    response = await fetchImplementation(input, createServerSentEventRequestInit({ ...requestInit, signal }));
   } catch (cause) {
     throw new ServerSentEventStreamError('transport', 'failed to open server-sent event stream', { cause });
   }

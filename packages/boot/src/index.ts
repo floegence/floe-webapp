@@ -66,7 +66,7 @@ export type {
   ServerSentEvent,
   ServerSentEventStreamErrorCode,
 } from './server-sent-events';
-export { fetchServerSentEvents, ServerSentEventStreamError } from './server-sent-events';
+export { createServerSentEventRequestInit, fetchServerSentEvents, ServerSentEventStreamError } from './server-sent-events';
 export {
   closeProxyBootstrap,
   createProxyBootstrapOwner,
