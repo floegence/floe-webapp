@@ -98,3 +98,14 @@ The clean release consumer verifies both TLS and HTTP against the published Go
 peer. The HTTP case runs two parallel Boot/Protocol clients with SubtleCrypto and
 randomUUID absent, verifies RPC on both, closes the first, then verifies RPC on
 the second before closing it. Page acquisition and WS share the peer's one port.
+
+### Established session health
+
+The acquisition connection lifecycle keeps its current Flowersec session alive
+with a liveness probe every 20 seconds, including while the page is in the
+background. Foreground, online, and page restoration events request an immediate
+probe. Concurrent probes coalesce. A failed probe or a 10-second deadline closes
+only the observed session; the Flowersec controller remains the sole owner of
+reacquisition, retry delays, and terminal failures. Replacement and disposal abort
+outstanding probes and remove timers and browser listeners. Browser suspension
+can still interrupt a session; health checking resumes when the page wakes.

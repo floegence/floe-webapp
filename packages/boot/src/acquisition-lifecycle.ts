@@ -1,4 +1,5 @@
 import type { ConnectionSnapshot } from '@floegence/flowersec-core';
+import { createSessionHealthMonitor } from './session-health';
 import {
   type AcquisitionSource,
   AcquisitionError,
@@ -28,6 +29,7 @@ export function createAcquisitionConnectionLifecycle(
 ): AcquisitionConnectionLifecycle {
   let disposed = false;
   let current: ConnectedAcquisition | null = null;
+  const health = createSessionHealthMonitor();
   return Object.freeze({
     synchronize(snapshot: ConnectionSnapshot): void {
       if (disposed) throw new AcquisitionError('acquisition_lifecycle_disposed');
@@ -39,11 +41,13 @@ export function createAcquisitionConnectionLifecycle(
         synchronizeProxyBootstrap(options.proxyBootstrap, acquisition);
       if (acquisition !== null && acquisition !== current) options.onConnected?.(acquisition);
       current = acquisition;
+      health.synchronize(snapshot.state === 'connected' ? snapshot.currentSession ?? null : null);
     },
     dispose(): void {
       if (disposed) return;
       disposed = true;
       current = null;
+      health.dispose();
       if (options.proxyBootstrap !== undefined) closeProxyBootstrap(options.proxyBootstrap);
       clearAcquisitionSource(source);
     },
