@@ -107,7 +107,14 @@ try {
         for (const hover of [false, true]) {
           if (hover) await page.locator('[data-progress-case="surface"]').hover();
           else await page.mouse.move(850, 550);
-          await page.waitForTimeout(150);
+          // Theme and hover transitions must settle before comparing frames.
+          // A wall-clock delay can expire before a busy renderer starts them.
+          await page.evaluate(async () => {
+            await new Promise(requestAnimationFrame);
+            await Promise.all(document.getAnimations()
+              .filter((animation) => animation.effect?.getTiming().iterations !== Infinity)
+              .map((animation) => animation.finished.catch(() => {})));
+          });
           const values = await page.evaluate(sample);
           report.cases.push({ entry, material, ...theme, hover, values });
           for (const value of values) {
@@ -264,7 +271,8 @@ try {
         .locator('[data-floe-progress-shimmer], .processing-text-shimmer')
         .evaluateAll((elements) =>
           elements.map((el) => ({
-            animations: el.getAnimations({ subtree: true }).length,
+            animations: el.getAnimations({ subtree: true })
+              .filter((animation) => animation.animationName === 'floe-progress-shimmer').length,
             ink: getComputedStyle(el).webkitTextFillColor,
             background: getComputedStyle(el).backgroundImage,
           }))
