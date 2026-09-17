@@ -66,6 +66,41 @@ try {
           .getByRole('menuitemradio', { name: mode === 'work' ? /Work Mode/ : /Composition Mode/ })
           .click();
       };
+      // Verify native undo before snapshot-based scenarios replace editor contents.
+      // Browser undo histories refer to the original DOM; fixture state resets are not user edits.
+      const beforeUndo = await page.evaluate(() => window.workbenchFixture.state());
+      await page.evaluate(
+        (state) =>
+          window.workbenchFixture.setState({
+            ...state,
+            mode: 'work',
+            stickyNotes: state.stickyNotes.map((note) => ({
+              ...note,
+              title: 'Alpha target omega',
+            })),
+          }),
+        beforeUndo
+      );
+      const undoEditor = page.getByRole('textbox', { name: 'Sticky note title', exact: true });
+      await undoEditor.click();
+      await undoEditor.evaluate((el) => {
+        const range = document.createRange();
+        range.setStart(el.firstChild, 6);
+        range.setEnd(el.firstChild, 12);
+        document.getSelection().removeAllRanges();
+        document.getSelection().addRange(range);
+      });
+      await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Insert emoji 🚀', exact: true }).click();
+      assert.equal(await undoEditor.textContent(), 'Alpha 🚀 omega');
+      await page.keyboard.press('ControlOrMeta+z');
+      assert.equal(
+        await undoEditor.textContent(),
+        'Alpha target omega',
+        'Emoji participates in native undo'
+      );
+      await page.keyboard.press('Escape');
+      await page.evaluate((state) => window.workbenchFixture.setState(state), beforeUndo);
       const beforeIsolation = await page.evaluate(() => window.workbenchFixture.state());
       await setMode('work');
       const noteNode = await note.elementHandle();
@@ -508,7 +543,163 @@ try {
           }
         }
       }
-      // Keyboard and toolbar entry follow the same focus-only contract.
+      // The primary emoji action serves every text field and remembers the native selection.
+      for (const [label, collection, field] of [
+        ['Sticky note title', 'stickyNotes', 'title'],
+        ['Sticky note body', 'stickyNotes', 'body'],
+        ['Canvas text', 'annotations', 'text'],
+        ['Region name', 'backgroundLayers', 'name'],
+      ]) {
+        for (const scale of [0.35, 1]) {
+          await page.evaluate(
+            ({ state, collection, field, scale }) => {
+              const object = state[collection][0];
+              const next = {
+                ...state,
+                mode: collection === 'stickyNotes' ? 'work' : 'background',
+                selectedObject: null,
+                stickyNotes: state.stickyNotes.map((note) => ({
+                  ...note,
+                  title: 'Editable title',
+                })),
+                viewport: { x: 520 - object.x * scale, y: 380 - object.y * scale, scale },
+              };
+              // Start with persisted content so browser typing coalescence cannot merge the fixture setup with emoji insertion.
+              next[collection] = next[collection].map((item) => ({
+                ...item,
+                [field]: 'Alpha target omega',
+              }));
+              window.workbenchFixture.setState(next);
+            },
+            { state: beforeZoom, collection, field, scale }
+          );
+          const editor = page.getByRole('textbox', { name: label, exact: true });
+          await editor.click();
+          await editor.evaluate((el) => {
+            const range = document.createRange();
+            range.setStart(el.firstChild, 6);
+            range.setEnd(el.firstChild, 12);
+            document.getSelection().removeAllRanges();
+            document.getSelection().addRange(range);
+          });
+          const viewport = await page.evaluate(() => window.workbenchFixture.state().viewport);
+          const editorBox = await editor.boundingBox();
+          const toolbar = page.locator('.workbench-composition-toolbar');
+          const trigger = toolbar.getByRole('button', { name: 'Insert emoji', exact: true });
+          assert.equal(
+            await toolbar.getByRole('button', { name: 'Edit text', exact: true }).count(),
+            0
+          );
+          assert.equal(
+            await trigger.evaluate((el) => !!el.closest('.workbench-toolbar-main')),
+            true,
+            'Emoji is a primary action'
+          );
+          await page.waitForTimeout(60);
+          const toolbarBox = await toolbar.boundingBox();
+          await trigger.click();
+          const frames = await page.evaluate(async () => {
+            const frames = [];
+            for (let i = 0; i < 6; i++) {
+              await new Promise(requestAnimationFrame);
+              const menu = document.querySelector('.workbench-emoji-panel');
+              const rect = menu.getBoundingClientRect();
+              frames.push([rect.x, rect.y, rect.width, rect.height]);
+            }
+            return frames;
+          });
+          for (const rect of frames)
+            assert.deepEqual(rect, frames[0], 'Emoji menu never jumps after opening');
+          assert.deepEqual(
+            await toolbar.boundingBox(),
+            toolbarBox,
+            'Emoji menu does not resize its toolbar'
+          );
+          await page.getByRole('menuitem', { name: 'Insert emoji 🚀', exact: true }).click();
+          assert.equal(
+            await editor.textContent(),
+            'Alpha 🚀 omega',
+            `${label}: emoji replaces the selected text`
+          );
+          assert.equal(
+            await editor.evaluate((el) => el === document.activeElement),
+            true,
+            'Insertion restores the field'
+          );
+          await page.keyboard.press('Shift+ArrowLeft');
+          await trigger.click();
+          await page.keyboard.press('End');
+          await page.keyboard.press('Enter');
+          assert.equal(
+            await editor.textContent(),
+            'Alpha 🎉 omega',
+            `${engine}/${label}/${scale}: keyboard choice restores the same selection`
+          );
+          await page.keyboard.type('!');
+          await page.keyboard.press('Escape');
+          assert.equal(
+            await page.evaluate(
+              ({ collection, field }) => window.workbenchFixture.state()[collection][0][field],
+              { collection, field }
+            ),
+            'Alpha 🎉! omega',
+            `${label}: emoji saves on exit`
+          );
+          assert.deepEqual(
+            await page.evaluate(() => window.workbenchFixture.state().viewport),
+            viewport,
+            'Emoji insertion preserves the viewport'
+          );
+          const afterBox = await editor.boundingBox();
+          assert.ok(
+            Math.abs(afterBox.x - editorBox.x) < 1 && Math.abs(afterBox.y - editorBox.y) < 1,
+            'Emoji does not scroll the canvas DOM'
+          );
+          await trigger.click();
+          await page.keyboard.press('Escape');
+          assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+          assert.equal(
+            await trigger.evaluate((el) => el === document.activeElement),
+            true,
+            'Escape returns to the picker trigger'
+          );
+          assert.equal(
+            await editor.textContent(),
+            'Alpha 🎉! omega',
+            'Closing the picker inserts nothing'
+          );
+        }
+      }
+      // An unnamed region can receive an emoji name without an intermediate edit button.
+      await page.evaluate(
+        (state) =>
+          window.workbenchFixture.setState({
+            ...state,
+            mode: 'background',
+            selectedObject: { kind: 'background_layer', id: 'region' },
+            backgroundLayers: state.backgroundLayers.map((region) => ({ ...region, name: '' })),
+          }),
+        beforeZoom
+      );
+      await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Insert emoji 💡', exact: true }).click();
+      await page.keyboard.type(' Ideas');
+      await page.keyboard.press('Escape');
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().backgroundLayers[0].name),
+        '💡 Ideas'
+      );
+      // Materials and emoji share one floating panel; switching never leaves stacked menus.
+      await page.getByRole('button', { name: 'Treatment', exact: true }).click();
+      await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+      assert.equal(await page.locator('.workbench-treatment-panel').count(), 0);
+      assert.equal(await page.locator('.workbench-emoji-panel').count(), 1);
+      await page.getByRole('button', { name: 'Treatment', exact: true }).click();
+      assert.equal(await page.locator('.workbench-emoji-panel').count(), 0);
+      assert.equal(await page.locator('.workbench-treatment-panel').count(), 1);
+      await page.mouse.click(30, 700);
+      assert.equal(await page.locator('.workbench-composition-menu').count(), 0);
+      // Keyboard and direct pointer entry follow the same focus-only contract.
       await page.evaluate(
         (state) =>
           window.workbenchFixture.setState({
@@ -533,16 +724,17 @@ try {
         'Tab keeps the viewport'
       );
       await page.keyboard.press('Escape');
-      await page.getByRole('button', { name: 'Edit text', exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: 'Edit text', exact: true }).count(), 0);
+      await note.click();
       assert.equal(
         await note.evaluate((el) => document.activeElement === el),
         true,
-        'Toolbar enters the note body'
+        'Direct click enters the note body'
       );
       assert.deepEqual(
         await page.evaluate(() => window.workbenchFixture.state().viewport),
         focusViewport,
-        'Toolbar editing keeps the viewport'
+        'Direct editing keeps the viewport'
       );
       await page.setViewportSize({ width: 1240, height: 780 });
       await page.evaluate(

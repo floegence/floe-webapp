@@ -1258,7 +1258,6 @@ describe('Workbench layer objects', () => {
     selection?.addRange(range);
 
     content!.blur();
-    openAdvancedTextTools();
     const emojiTrigger = document.querySelector(
       'button[aria-label="Insert emoji"]'
     ) as HTMLButtonElement | null;
@@ -1267,7 +1266,7 @@ describe('Workbench layer objects', () => {
 
     emojiTrigger!.click();
     expect(emojiTrigger?.getAttribute('aria-expanded')).toBe('true');
-    expect(document.querySelectorAll('.workbench-text-emoji-option')).toHaveLength(
+    expect(document.querySelectorAll('.workbench-emoji-option')).toHaveLength(
       WORKBENCH_TEXT_EMOJI_OPTIONS.length
     );
     expect(Math.ceil(WORKBENCH_TEXT_EMOJI_OPTIONS.length / 6)).toBeGreaterThanOrEqual(5);

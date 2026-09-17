@@ -98,6 +98,17 @@ its appearance controls throughout editing, without a separate Done/Cancel mode.
 Clear name remains available in the region's material menu. Changing
 appearance preserves the last caret for emoji insertion.
 
+Sticky and text toolbars omit the redundant Edit text action. Every canvas text
+field has a primary Insert emoji action: sticky title/body, text annotations, and
+region names, including unnamed regions. A sticky targets the last focused title
+or body field, defaulting to its body. The picker restores the native caret or
+selection, inserts a Unicode emoji, returns focus without scrolling, and saves on
+the same Escape/outside-input path. Native insertion participates in browser undo.
+The lightweight six-column picker mounts only while open; it shares one anchored
+popup with material choices, so the menus cannot stack or resize the toolbar.
+Arrow keys and Home/End navigate, Enter inserts, Escape cancels, and Tab closes the
+picker and resumes native focus navigation. No separate confirmation is required.
+
 The compact toolbar is centered above the visible object with a 12-pixel gap,
 clears external region labels, and follows the object when it moves. Sticky and
 region materials open in compact row menus within the owning floating surface.
@@ -110,7 +121,7 @@ navigation cannot steal menu focus. Region opacity retains native slider keyboar
 behavior. Region and text drag handles sit outside the left edge and keep their
 22-pixel screen size at every zoom level.
 Text presets match the demo's 48/30/18/14-pixel hierarchy;
-the typography menu also exposes the existing font, size, color and emoji controls.
+the typography menu also exposes the existing font, size, and color controls.
 Persisted font weights survive state normalization. Inputs use the shared
 border-only focus contract, including the region-name editor. Resize hit areas stay
 24 screen pixels at every zoom level without covering nearby editable text.
@@ -147,8 +158,8 @@ for a selected sticky and Composition mode for a selected region or text.
 renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
 This reference is an acceptance fixture, not an alternative product implementation.
 Later approved interaction changes, including save-on-exit and proportional content
-zoom, compact material menus, and mode ownership apply to the production example
-while the frozen reference retains its historical behavior.
+zoom, compact material menus, mode ownership, and primary emoji actions apply to
+the production example while the frozen reference retains its historical behavior.
 
 Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty

@@ -52,6 +52,9 @@ Object.assign(
         moveText: '移动文字',
         more: '更多选项',
         opacity: '不透明度',
+        emoji: '表情符号',
+        insertEmoji: '插入表情符号',
+        useEmoji: '插入表情符号 {value}',
       }
     : {}
 );

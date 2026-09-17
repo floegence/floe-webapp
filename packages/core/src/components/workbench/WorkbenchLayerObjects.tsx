@@ -43,7 +43,6 @@ import {
   WORKBENCH_STICKY_NOTE_COLORS,
   WORKBENCH_DEFAULT_TEXT_COLOR,
   WORKBENCH_TEXT_COLOR_OPTIONS,
-  WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from './workbenchOptions';
 import {
@@ -289,12 +288,16 @@ function useCanvasTextEditor(args: {
     const savedRange =
       lastRange && node.contains(lastRange.commonAncestorContainer) ? lastRange : undefined;
     const range = currentRange ?? savedRange?.cloneRange() ?? document.createRange();
-    node.focus({ preventScroll: true });
+    focus();
     if (!currentRange && !savedRange) {
       range.selectNodeContents(node);
       range.collapse(false);
     }
 
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    // Native insertion participates in the same undo history as typed text.
+    if (document.execCommand?.('insertText', false, text)) return;
     range.deleteContents();
     const textNode = document.createTextNode(text);
     range.insertNode(textNode);
@@ -742,6 +745,7 @@ export function WorkbenchStickyNote(props: {
     titleEditor.blur();
     bodyEditor.blur();
   });
+  const [emojiField, setEmojiField] = createSignal<'title' | 'body'>('body');
   const actions = useContext(WorkbenchCompositionActionsContext);
   const editing = () => titleEditor.isFocused() || bodyEditor.isFocused();
   const [copied, setCopied] = createSignal(false);
@@ -909,7 +913,10 @@ export function WorkbenchStickyNote(props: {
                 event.stopPropagation();
                 onSelect()(item().id);
               }}
-              onFocus={titleEditor.handleFocus}
+              onFocus={(event) => {
+                setEmojiField('title');
+                titleEditor.handleFocus(event);
+              }}
               onBlur={titleEditor.handleBlur}
               onKeyDown={titleEditor.handleKeyDown}
               onCompositionStart={titleEditor.handleCompositionStart}
@@ -935,6 +942,7 @@ export function WorkbenchStickyNote(props: {
               onSelect()(item().id);
             }}
             onFocus={(event) => {
+              setEmojiField('body');
               bodyEditor.handleFocus(event);
             }}
             onBlur={bodyEditor.handleBlur}
@@ -953,6 +961,12 @@ export function WorkbenchStickyNote(props: {
         >
           <CompositionToolbar
             kind="sticky"
+            onInsertEmoji={(emoji) =>
+              (emojiField() === 'title' && item().title !== undefined
+                ? titleEditor
+                : bodyEditor
+              ).insertTextAtSelection(emoji)
+            }
             materials={['tint', 'tab', 'ruled']}
             material={item().material ?? 'tint'}
             materialLabel={(material) => t('useStickyMaterial', t(material))}
@@ -979,53 +993,45 @@ export function WorkbenchStickyNote(props: {
                 </For>
               </div>
             }
-          >
-            <button
-              type="button"
-              aria-label={t('edit')}
-              title={t('edit')}
-              onPointerDown={stopLayerButtonPointer}
-              onClick={() => {
-                bodyEditor.focus();
-              }}
-            >
-              <CompositionIcon name="edit" />
-            </button>
-            <Show
-              when={actions}
-              fallback={
+            actions={
+              <>
+                <Show
+                  when={actions}
+                  fallback={
+                    <button
+                      type="button"
+                      aria-label={t('copySticky')}
+                      onPointerDown={stopLayerButtonPointer}
+                      classList={{ 'is-success': copied() }}
+                      onClick={copyStickyBody}
+                    >
+                      <CompositionIcon name="copy" />
+                    </button>
+                  }
+                >
+                  <button
+                    type="button"
+                    aria-label={t('duplicate')}
+                    title={t('duplicate')}
+                    onPointerDown={stopLayerButtonPointer}
+                    onClick={() => actions?.duplicate({ kind: 'sticky_note', id: item().id })}
+                  >
+                    <CompositionIcon name="copy" />
+                  </button>
+                </Show>
                 <button
                   type="button"
-                  aria-label={t('copySticky')}
+                  class="is-danger"
+                  aria-label={t('deleteSticky')}
+                  title={t('deleteSticky')}
                   onPointerDown={stopLayerButtonPointer}
-                  classList={{ 'is-success': copied() }}
-                  onClick={copyStickyBody}
+                  onClick={() => onDelete()(item().id)}
                 >
-                  <CompositionIcon name="copy" />
+                  <CompositionIcon name="trash" />
                 </button>
-              }
-            >
-              <button
-                type="button"
-                aria-label={t('duplicate')}
-                title={t('duplicate')}
-                onPointerDown={stopLayerButtonPointer}
-                onClick={() => actions?.duplicate({ kind: 'sticky_note', id: item().id })}
-              >
-                <CompositionIcon name="copy" />
-              </button>
-            </Show>
-            <button
-              type="button"
-              class="is-danger"
-              aria-label={t('deleteSticky')}
-              title={t('deleteSticky')}
-              onPointerDown={stopLayerButtonPointer}
-              onClick={() => onDelete()(item().id)}
-            >
-              <CompositionIcon name="trash" />
-            </button>
-          </CompositionToolbar>
+              </>
+            }
+          />
         </SurfaceAnchoredLayer>
       </Show>
       <Show when={selected()}>
@@ -1382,7 +1388,6 @@ function WorkbenchTextAnnotationControls(props: {
   const viewport = createOwnerSafePropAccessor(() => props.viewport ?? { x: 0, y: 0, scale: 1 });
   const projection = createOwnerSafePropAccessor(() => props.projection);
   const preview = createOwnerSafePropAccessor(() => props.preview);
-  const textEditorRegistry = createOwnerSafePropAccessor(() => props.textEditorRegistry);
   const onPreviewGeometry = createOwnerSafePropAccessor(() => props.onPreviewGeometry);
   const onCommitMove = createOwnerSafePropAccessor(() => props.onCommitMove);
   const onCommitResize = createOwnerSafePropAccessor(() => props.onCommitResize);
@@ -1390,11 +1395,9 @@ function WorkbenchTextAnnotationControls(props: {
   const onDelete = createOwnerSafePropAccessor(() => props.onDelete);
   let sizeInputEl: HTMLInputElement | undefined;
   let fontPickerEl: HTMLDivElement | undefined;
-  let emojiPickerEl: HTMLDivElement | undefined;
   const [advancedOpen, setAdvancedOpen] = createSignal(false);
   const [fontSizeDraft, setFontSizeDraft] = createSignal('');
   const [fontPickerOpen, setFontPickerOpen] = createSignal(false);
-  const [emojiPickerOpen, setEmojiPickerOpen] = createSignal(false);
   const activeFont = createMemo(
     () =>
       WORKBENCH_TEXT_FONT_OPTIONS.find((font) => font.fontFamily === item().font_family) ??
@@ -1477,11 +1480,6 @@ function WorkbenchTextAnnotationControls(props: {
     () => fontPickerEl,
     () => setFontPickerOpen(false)
   );
-  useLayerPopoverDismiss(
-    emojiPickerOpen,
-    () => emojiPickerEl,
-    () => setEmojiPickerOpen(false)
-  );
 
   return (
     <div
@@ -1512,6 +1510,7 @@ function WorkbenchTextAnnotationControls(props: {
       >
         <CompositionToolbar
           kind="text"
+          onInsertEmoji={(emoji) => editor()?.insertTextAtSelection(emoji)}
           moreOpen={advancedOpen()}
           onMoreClose={() => setAdvancedOpen(false)}
           more={
@@ -1655,59 +1654,36 @@ function WorkbenchTextAnnotationControls(props: {
                   />
                 )}
               </For>
-              <div
-                ref={emojiPickerEl}
-                class="workbench-text-emoji-picker"
-                data-floe-canvas-interactive="true"
-                onPointerDown={stopLayerControlPointer}
-                onClick={stopLayerControlClick}
-              >
-                <button
-                  type="button"
-                  aria-label={t('insertEmoji')}
-                  aria-haspopup="menu"
-                  aria-expanded={emojiPickerOpen()}
-                  title={t('insertEmoji')}
-                  class="workbench-text-emoji-trigger"
-                  onPointerDown={stopLayerButtonPointer}
-                  onClick={(event) => {
-                    stopLayerButtonClick(event);
-                    setEmojiPickerOpen((open) => !open);
-                  }}
-                >
-                  ✨
-                </button>
-                <Show when={emojiPickerOpen()}>
-                  <div class="workbench-text-emoji-popover" role="menu" aria-label={t('emoji')}>
-                    <For each={WORKBENCH_TEXT_EMOJI_OPTIONS}>
-                      {(emoji) => (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          aria-label={t('useEmoji', emoji)}
-                          title={t('useEmoji', emoji)}
-                          class="workbench-text-emoji-option"
-                          onPointerDown={stopLayerButtonPointer}
-                          onClick={(event) => {
-                            stopLayerButtonClick(event);
-                            setEmojiPickerOpen(false);
-                            textEditorRegistry()?.get(item().id)?.insertTextAtSelection(emoji);
-                          }}
-                        >
-                          {emoji}
-                        </button>
-                      )}
-                    </For>
-                  </div>
-                </Show>
-              </div>
-
               <button
                 type="button"
                 onPointerDown={stopLayerButtonPointer}
                 onClick={() => onUpdate()(item().id, { align: nextAlign() })}
               >
                 {t(item().align)}
+              </button>
+            </>
+          }
+          actions={
+            <>
+              <Show when={actions}>
+                <button
+                  type="button"
+                  aria-label={t('duplicate')}
+                  title={t('duplicate')}
+                  onPointerDown={stopLayerButtonPointer}
+                  onClick={() => actions?.duplicate({ kind: 'annotation', id: item().id })}
+                >
+                  <CompositionIcon name="copy" />
+                </button>
+              </Show>
+              <button
+                type="button"
+                class="is-danger"
+                aria-label={t('deleteText')}
+                onPointerDown={stopLayerButtonPointer}
+                onClick={() => onDelete()(item().id)}
+              >
+                <CompositionIcon name="trash" />
               </button>
             </>
           }
@@ -1755,35 +1731,6 @@ function WorkbenchTextAnnotationControls(props: {
             )}
           </For>
           <CompositionDivider />
-          <button
-            type="button"
-            aria-label={t('edit')}
-            title={t('edit')}
-            onPointerDown={stopLayerButtonPointer}
-            onClick={() => editor()?.focus()}
-          >
-            <CompositionIcon name="edit" />
-          </button>
-          <Show when={actions}>
-            <button
-              type="button"
-              aria-label={t('duplicate')}
-              title={t('duplicate')}
-              onPointerDown={stopLayerButtonPointer}
-              onClick={() => actions?.duplicate({ kind: 'annotation', id: item().id })}
-            >
-              <CompositionIcon name="copy" />
-            </button>
-          </Show>
-          <button
-            type="button"
-            class="is-danger"
-            aria-label={t('deleteText')}
-            onPointerDown={stopLayerButtonPointer}
-            onClick={() => onDelete()(item().id)}
-          >
-            <CompositionIcon name="trash" />
-          </button>
         </CompositionToolbar>
       </SurfaceAnchoredLayer>
       <button
@@ -1886,6 +1833,7 @@ function WorkbenchBackgroundRegionControls(props: {
       >
         <CompositionToolbar
           kind="region"
+          onInsertEmoji={(emoji) => editor()?.insertTextAtSelection(emoji)}
           materials={WORKBENCH_BACKGROUND_MATERIALS}
           material={item().material}
           materialLabel={(material) => t('useRegionMaterial', t(material))}
@@ -1953,6 +1901,30 @@ function WorkbenchBackgroundRegionControls(props: {
               </button>
             </>
           }
+          actions={
+            <>
+              <Show when={actions}>
+                <button
+                  type="button"
+                  aria-label={t('duplicate')}
+                  title={t('duplicate')}
+                  onPointerDown={stopLayerButtonPointer}
+                  onClick={() => actions?.duplicate({ kind: 'background_layer', id: item().id })}
+                >
+                  <CompositionIcon name="copy" />
+                </button>
+              </Show>
+              <button
+                type="button"
+                class="is-danger"
+                aria-label={t('deleteRegion')}
+                onPointerDown={stopLayerButtonPointer}
+                onClick={() => onDelete()(item().id)}
+              >
+                <CompositionIcon name="trash" />
+              </button>
+            </>
+          }
         >
           <button
             type="button"
@@ -1962,26 +1934,6 @@ function WorkbenchBackgroundRegionControls(props: {
           >
             <CompositionIcon name="text" />
             <span>{t(item().name.trim() ? 'regionName' : 'addName')}</span>
-          </button>
-          <Show when={actions}>
-            <button
-              type="button"
-              aria-label={t('duplicate')}
-              title={t('duplicate')}
-              onPointerDown={stopLayerButtonPointer}
-              onClick={() => actions?.duplicate({ kind: 'background_layer', id: item().id })}
-            >
-              <CompositionIcon name="copy" />
-            </button>
-          </Show>
-          <button
-            type="button"
-            class="is-danger"
-            aria-label={t('deleteRegion')}
-            onPointerDown={stopLayerButtonPointer}
-            onClick={() => onDelete()(item().id)}
-          >
-            <CompositionIcon name="trash" />
           </button>
         </CompositionToolbar>
       </SurfaceAnchoredLayer>

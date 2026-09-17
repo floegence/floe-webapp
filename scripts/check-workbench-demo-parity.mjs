@@ -198,7 +198,13 @@ try {
     await nextFrame(actual);
     const x = await ref.locator('#object-toolbar').boundingBox();
     const y = await actual.locator('.workbench-composition-toolbar').boundingBox();
-    for (const dimension of ['width', 'height', 'y'])
+    // Region now includes an emoji action; the frozen reference keeps its original width.
+    const hasAddedEmojiAction =
+      (await actual.locator('.workbench-composition-toolbar').getAttribute('data-kind')) ===
+      'region';
+    if (hasAddedEmojiAction)
+      close(y.width, x.width + 32, `${id}/${scale}: width includes one emoji action and gap`);
+    for (const dimension of hasAddedEmojiAction ? ['height', 'y'] : ['width', 'height', 'y'])
       close(y[dimension], x[dimension], `${id}/${scale} toolbar ${dimension}`);
     const referenceText = ref
       .locator(`[data-object="${id}"]`)

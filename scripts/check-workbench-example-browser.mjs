@@ -154,6 +154,37 @@ try {
       await title.fill('A saved idea');
       await page.keyboard.press('Escape');
       assert.deepEqual(await shape(note), geometry, 'Editing does not move or zoom the canvas');
+      const body = note.locator('.workbench-sticky__body');
+      await body.click();
+      await body.evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        document.getSelection().removeAllRanges();
+        document.getSelection().addRange(range);
+      });
+      await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+      await page.getByRole('menuitem', { name: 'Insert emoji ✅', exact: true }).click();
+      await page.keyboard.press('Escape');
+      const savedBody = await body.textContent();
+      assert.ok(
+        savedBody.endsWith('✅'),
+        'The example inserts emoji into the last focused sticky field'
+      );
+      assert.equal(
+        await title.textContent(),
+        'A saved idea',
+        'Body emoji does not alter the title'
+      );
+      assert.equal(await page.getByRole('button', { name: 'Edit text', exact: true }).count(), 0);
+      for (const theme of ['paper', 'slate']) {
+        await themeSelect.selectOption(theme);
+        await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+        await nextFrame(page);
+        await page.screenshot({ path: `${output}/emoji-example-${engine.name()}-${theme}.png` });
+        await page.keyboard.press('Escape');
+      }
+      await themeSelect.selectOption('paper');
       await page.getByRole('tab', { name: 'Regions', exact: true }).click();
       await board(page, 'blank-region').waitFor();
       await page.getByRole('tab', { name: 'Composition', exact: true }).click();
@@ -164,6 +195,7 @@ try {
         'Rapid sample switches preserve edits'
       );
       assert.deepEqual(await shape(note), geometry, 'Returning preserves the viewport');
+      assert.equal(await body.textContent(), savedBody, 'Emoji content survives sample navigation');
 
       await page.getByRole('tab', { name: 'Regions', exact: true }).click();
       await board(page, 'blank-region').waitFor();

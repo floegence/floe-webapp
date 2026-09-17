@@ -8,6 +8,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { Check, ChevronDown } from '../../icons';
+import { WORKBENCH_TEXT_EMOJI_OPTIONS } from './workbenchOptions';
 import { resolveSurfacePortalHost } from '../ui/surfacePortalScope';
 import { resolveFloatingBoundary } from '../ui/surfaceFloatingBoundary';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from '../ui/localInteractionSurface';
@@ -17,10 +18,10 @@ import {
 } from './workbenchCompositionMessages';
 
 export function CompositionIcon(props: {
-  name: 'edit' | 'text' | 'left' | 'center' | 'copy' | 'trash';
+  name: 'emoji' | 'text' | 'left' | 'center' | 'copy' | 'trash';
 }) {
   const paths = {
-    edit: 'm15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z',
+    emoji: 'M8 14s1.5 2 4 2 4-2 4-2M8 9h.01M16 9h.01',
     copy: 'M16 8V4H4v12h4',
     trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',
     text: 'M4 5h16M12 5v15M8 20h8M4 5v3m16-3v3',
@@ -37,6 +38,9 @@ export function CompositionIcon(props: {
       stroke-linejoin="round"
       aria-hidden="true"
     >
+      <Show when={props.name === 'emoji'}>
+        <circle cx="12" cy="12" r="9" />
+      </Show>
       <Show when={props.name === 'copy'}>
         <rect x="8" y="8" width="12" height="12" rx="2" />
       </Show>
@@ -49,11 +53,13 @@ export function CompositionDivider() {
   return <span class="workbench-composition-divider" aria-hidden="true" />;
 }
 
-/** Object tools keep their anchor when a material menu opens. */
+/** Object tools keep their anchor when a material or emoji menu opens. */
 export function CompositionToolbar(props: {
   kind: 'sticky' | 'region' | 'text';
-  children: JSX.Element;
+  children?: JSX.Element;
+  actions?: JSX.Element;
   palette?: JSX.Element;
+  onInsertEmoji?: (emoji: string) => void;
   materials?: readonly WorkbenchCompositionMessageKey[];
   material?: WorkbenchCompositionMessageKey;
   preview?: (material: WorkbenchCompositionMessageKey, large: boolean) => JSX.Element;
@@ -64,25 +70,43 @@ export function CompositionToolbar(props: {
   moreOpen?: boolean;
 }) {
   const t = useWorkbenchCompositionText();
-  const [open, setOpen] = createSignal(false);
-  const [materialPanel, setMaterialPanel] = createSignal<HTMLDivElement>();
+  const [open, setOpen] = createSignal<'material' | 'emoji' | null>(null);
+  const [menuPanel, setMenuPanel] = createSignal<HTMLDivElement>();
   const [menuPosition, setMenuPosition] = createSignal<{ x: number; y: number }>();
   const panelId = createUniqueId();
   let root: HTMLDivElement | undefined;
-  let focusMaterialOnOpen = false;
+  let focusOptionOnOpen = false;
   const close = () => {
-    setOpen(false);
+    setOpen(null);
     props.onMoreClose?.();
   };
-  const styleOpen = open;
+  const triggerFor = (menu: 'material' | 'emoji' | null) =>
+    root?.querySelector<HTMLButtonElement>(
+      menu === 'emoji' ? '.workbench-emoji-trigger' : '.workbench-treatment-trigger'
+    );
+  const focusOption = (panel: HTMLElement) =>
+    (
+      panel.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ??
+      panel.querySelector<HTMLButtonElement>('.workbench-menu-options > button')
+    )?.focus({ preventScroll: true });
+  const openFromKeyboard = (event: KeyboardEvent, menu: 'material' | 'emoji') => {
+    if (event.key !== 'ArrowDown') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (open() === menu && menuPanel()) focusOption(menuPanel()!);
+    else {
+      focusOptionOnOpen = true;
+      setOpen(menu);
+    }
+  };
   createEffect(() => {
-    const panel = materialPanel();
+    const panel = menuPanel();
     if (!open() || !panel || !root) {
       setMenuPosition(undefined);
       return;
     }
     const bounds = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: root }));
-    const trigger = root.querySelector('.workbench-treatment-trigger');
+    const trigger = triggerFor(open());
     if (!bounds || !trigger) return;
     // The menu is out of flow and hidden until this first measurement is committed.
     // Its size never feeds back into the object toolbar's placement calculation.
@@ -99,13 +123,11 @@ export function CompositionToolbar(props: {
     );
     const x = Math.max(bounds.left + 12, Math.min(anchor.left, bounds.right - size.width - 12));
     setMenuPosition({ x: x - parent.left, y: y - parent.top });
-    if (focusMaterialOnOpen) {
-      focusMaterialOnOpen = false;
+    if (focusOptionOnOpen) {
+      focusOptionOnOpen = false;
       queueMicrotask(() => {
         if (panel.isConnected) {
-          panel
-            .querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
-            ?.focus({ preventScroll: true });
+          focusOption(panel);
         }
       });
     }
@@ -117,7 +139,7 @@ export function CompositionToolbar(props: {
     };
     document.addEventListener('pointerdown', dismiss, true);
     onCleanup(() => document.removeEventListener('pointerdown', dismiss, true));
-    if (props.materials) {
+    if (open()) {
       const dismissOnWheel = (event: WheelEvent) => {
         if (event.target instanceof Node && !root?.contains(event.target)) close();
       };
@@ -142,39 +164,54 @@ export function CompositionToolbar(props: {
       onKeyDown={(event) => {
         if (event.key === 'Escape' && (open() || props.moreOpen)) {
           event.stopPropagation();
+          const trigger = triggerFor(open());
           close();
-          root
-            ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
-            ?.focus({ preventScroll: true });
+          trigger?.focus({ preventScroll: true });
         }
       }}
     >
-      <Show when={styleOpen() && props.materials}>
+      <Show when={open()}>
         <div
-          ref={setMaterialPanel}
+          ref={setMenuPanel}
           id={panelId}
-          class="workbench-treatment-panel"
+          class="workbench-composition-menu"
+          classList={{
+            'workbench-treatment-panel': open() === 'material',
+            'workbench-emoji-panel': open() === 'emoji',
+          }}
           onKeyDown={(event) => {
+            if (event.key === 'Tab' && open() === 'emoji') {
+              const trigger = triggerFor(open());
+              setOpen(null);
+              trigger?.focus({ preventScroll: true });
+              return;
+            }
             if (
-              !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key) ||
+              !['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(
+                event.key
+              ) ||
               !(event.target instanceof Element) ||
-              !event.target.closest('.workbench-treatment-options')
+              !event.target.closest('.workbench-menu-options')
             )
               return;
             event.preventDefault();
             event.stopPropagation();
             const options = Array.from(
               event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                '.workbench-treatment-options > button'
+                '.workbench-menu-options > button'
               )
             );
             const current = options.indexOf(document.activeElement as HTMLButtonElement);
+            const step =
+              open() === 'emoji' && (event.key === 'ArrowUp' || event.key === 'ArrowDown') ? 6 : 1;
             const next =
               event.key === 'Home'
                 ? 0
                 : event.key === 'End'
                   ? options.length - 1
-                  : (current + (event.key === 'ArrowUp' ? -1 : 1) + options.length) %
+                  : (current +
+                      (event.key === 'ArrowUp' || event.key === 'ArrowLeft' ? -step : step) +
+                      options.length) %
                     options.length;
             options[next]?.focus({ preventScroll: true });
           }}
@@ -184,37 +221,67 @@ export function CompositionToolbar(props: {
             visibility: menuPosition() ? 'visible' : 'hidden',
           }}
         >
-          <div
-            class="workbench-treatment-options"
-            role="group"
-            aria-label={t(props.kind === 'region' ? 'regionMaterial' : 'stickyMaterial')}
-          >
-            <For each={props.materials}>
-              {(material) => (
-                <button
-                  type="button"
-                  aria-label={props.materialLabel?.(material)}
-                  aria-pressed={props.material === material}
-                  onPointerDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    props.onMaterial?.(material);
-                    setOpen(false);
-                    root
-                      ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
-                      ?.focus({ preventScroll: true });
-                  }}
-                >
-                  {props.preview?.(material, true)}
-                  <span class="workbench-treatment-label">
-                    {t(material)}
-                    <Check />
-                  </span>
-                </button>
-              )}
-            </For>
-          </div>
-          <Show when={props.more}>
-            <div class="workbench-material-settings">{props.more}</div>
+          <Show when={open() === 'material'}>
+            <div
+              class="workbench-menu-options workbench-treatment-options"
+              role="group"
+              aria-label={t(props.kind === 'region' ? 'regionMaterial' : 'stickyMaterial')}
+            >
+              <For each={props.materials}>
+                {(material) => (
+                  <button
+                    type="button"
+                    aria-label={props.materialLabel?.(material)}
+                    aria-pressed={props.material === material}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      props.onMaterial?.(material);
+                      setOpen(null);
+                      root
+                        ?.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')
+                        ?.focus({ preventScroll: true });
+                    }}
+                  >
+                    {props.preview?.(material, true)}
+                    <span class="workbench-treatment-label">
+                      {t(material)}
+                      <Check />
+                    </span>
+                  </button>
+                )}
+              </For>
+            </div>
+            <Show when={props.more}>
+              <div class="workbench-material-settings">{props.more}</div>
+            </Show>
+          </Show>
+          <Show when={open() === 'emoji'}>
+            <div class="workbench-emoji-heading">{t('emoji')}</div>
+            <div
+              class="workbench-menu-options workbench-emoji-options"
+              role="menu"
+              aria-label={t('emoji')}
+            >
+              <For each={WORKBENCH_TEXT_EMOJI_OPTIONS}>
+                {(emoji, index) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    tabIndex={index() === 0 ? 0 : -1}
+                    class="workbench-emoji-option"
+                    aria-label={t('useEmoji', emoji)}
+                    title={t('useEmoji', emoji)}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setOpen(null);
+                      props.onInsertEmoji?.(emoji);
+                    }}
+                  >
+                    {emoji}
+                  </button>
+                )}
+              </For>
+            </div>
           </Show>
         </div>
       </Show>
@@ -229,24 +296,12 @@ export function CompositionToolbar(props: {
             type="button"
             class="workbench-treatment-trigger"
             aria-label={t('treatment')}
-            aria-expanded={!!styleOpen()}
+            aria-expanded={open() === 'material'}
             aria-controls={panelId}
-            onKeyDown={(event) => {
-              if (event.key !== 'ArrowDown') return;
-              event.preventDefault();
-              event.stopPropagation();
-              if (open())
-                materialPanel()
-                  ?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]')
-                  ?.focus({ preventScroll: true });
-              else {
-                focusMaterialOnOpen = true;
-                setOpen(true);
-              }
-            }}
+            onKeyDown={(event) => openFromKeyboard(event, 'material')}
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => {
-              setOpen(!styleOpen());
+              setOpen(open() === 'material' ? null : 'material');
             }}
           >
             {props.preview?.(props.material!, false)}
@@ -256,6 +311,26 @@ export function CompositionToolbar(props: {
           <CompositionDivider />
         </Show>
         {props.children}
+        <Show when={props.onInsertEmoji}>
+          <button
+            type="button"
+            class="workbench-emoji-trigger"
+            aria-label={t('insertEmoji')}
+            title={t('insertEmoji')}
+            aria-haspopup="menu"
+            aria-expanded={open() === 'emoji'}
+            aria-controls={panelId}
+            onPointerDown={(event) => event.preventDefault()}
+            onKeyDown={(event) => openFromKeyboard(event, 'emoji')}
+            onClick={() => {
+              focusOptionOnOpen = open() !== 'emoji';
+              setOpen(open() === 'emoji' ? null : 'emoji');
+            }}
+          >
+            <CompositionIcon name="emoji" />
+          </button>
+        </Show>
+        {props.actions}
       </div>
     </div>
   );
