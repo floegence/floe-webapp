@@ -228,7 +228,7 @@ export function Dialog(props: DialogProps) {
             data-floe-dialog-presentation={props.presentation ?? 'dialog'}
             data-floating-presence={dialogPresence.state()}
             aria-hidden={dialogPresence.exiting() ? 'true' : undefined}
-            {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? 'true' : undefined }}
+            {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
             {...{
               [SURFACE_PORTAL_LAYER_ATTR]: 'true',
               [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId(),

@@ -88,6 +88,24 @@ try {
   await page.keyboard.press('Escape');
   await local.waitFor({ state: 'detached' });
 
+  const canvasViewport = await page.locator('[data-canvas-viewport]').textContent();
+  await page.getByRole('button', { name: 'Canvas dialog', exact: true }).click();
+  const canvasDialog = page.getByRole('dialog', { name: 'Canvas settings', exact: true });
+  await canvasDialog.getByRole('button', { name: 'Apply canvas settings', exact: true }).click();
+  assert.equal(
+    await page.locator('[data-canvas-actions]').textContent(),
+    '1',
+    'global dialog footer owns its pointer sequence'
+  );
+  await canvasDialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await canvasDialog.waitFor({ state: 'detached' });
+  assert.equal(await page.locator('[data-canvas-viewport]').textContent(), canvasViewport);
+  await page.getByRole('button', { name: 'Canvas dialog', exact: true }).click();
+  await canvasDialog.waitFor();
+  await page.mouse.click(10, 10);
+  await canvasDialog.waitFor({ state: 'detached' });
+  assert.equal(await page.locator('[data-canvas-viewport]').textContent(), canvasViewport);
+
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.getByRole('button', { name: 'Manage plugins', exact: true }).click();
   assert.ok(

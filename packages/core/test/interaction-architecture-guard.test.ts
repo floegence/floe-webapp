@@ -113,7 +113,7 @@ describe('interaction architecture guard', () => {
     expect(dialogSrc).toContain('Portal mount={portalMount()}');
     expect(dialogSrc).toContain('closeOnEscape: () => (isSurfaceMode() ? \'inside\' : true)');
     expect(dialogSrc).toContain('data-floe-dialog-backdrop={baseId}');
-    expect(dialogSrc).toContain('[LOCAL_INTERACTION_SURFACE_ATTR]: isSurfaceMode() ? \'true\' : undefined');
+    expect(dialogSrc).toContain("[LOCAL_INTERACTION_SURFACE_ATTR]: 'true'");
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host'");
     expect(dialogSurfaceScopeSrc).toContain("SURFACE_PORTAL_LAYER_ATTR = 'data-floe-surface-portal-layer'");
     expect(dialogSurfaceScopeSrc).toContain("DIALOG_SURFACE_BOUNDARY_ATTR = 'data-floe-dialog-surface-boundary'");

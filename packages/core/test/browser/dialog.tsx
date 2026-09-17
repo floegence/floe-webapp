@@ -3,6 +3,7 @@ import { render } from 'solid-js/web';
 import { Dialog } from '../../src/components/ui/Dialog';
 import { DialogPlacementProvider } from '../../src/components/ui/DialogPlacementContext';
 import { Dropdown } from '../../src/components/ui/Dropdown';
+import { InfiniteCanvas } from '../../src/components/ui/InfiniteCanvas';
 import '../../src/styles/globals.css';
 
 function Fixture() {
@@ -12,6 +13,9 @@ function Fixture() {
   const [local, setLocal] = createSignal(false);
   const [count, setCount] = createSignal(0);
   const [filter, setFilter] = createSignal('all');
+  const [canvasDialog, setCanvasDialog] = createSignal(false);
+  const [canvasViewport, setCanvasViewport] = createSignal({ x: 0, y: 0, scale: 0.8 });
+  const [canvasActions, setCanvasActions] = createSignal(0);
   return (
     <>
       <main inert={present()} class="relative h-screen bg-background p-10" data-background>
@@ -36,6 +40,33 @@ function Fixture() {
           Background action
         </button>
         <output data-count>{count()}</output>
+        <div class="relative h-48 w-[600px]" data-dialog-canvas>
+          <InfiniteCanvas
+            viewport={canvasViewport()}
+            onViewportChange={setCanvasViewport}
+            class="h-full w-full"
+          >
+            <button data-floe-canvas-interactive="true" onClick={() => setCanvasDialog(true)}>
+              Canvas dialog
+            </button>
+            <DialogPlacementProvider mode="global">
+              <Dialog
+                open={canvasDialog()}
+                onOpenChange={setCanvasDialog}
+                title="Canvas settings"
+                footer={
+                  <button onClick={() => setCanvasActions(canvasActions() + 1)}>
+                    Apply canvas settings
+                  </button>
+                }
+              >
+                <p>Global dialog content remains independent of the canvas.</p>
+              </Dialog>
+            </DialogPlacementProvider>
+          </InfiniteCanvas>
+        </div>
+        <output data-canvas-actions>{canvasActions()}</output>
+        <output data-canvas-viewport>{JSON.stringify(canvasViewport())}</output>
       </main>
       <DialogPlacementProvider mode="global" globalZIndex={4000}>
         <Dialog
