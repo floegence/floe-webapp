@@ -254,7 +254,12 @@ try {
                 })),
               { x, y, scale, kind, collection, id, first }
             );
-            await page.waitForTimeout(60);
+            // Let the fixture's object transform and anchored layer reach the screen
+            // before measuring menu opening. Wall-clock delays can still read the
+            // preceding scenario when WebKit defers animation frames under load.
+            await page.evaluate(async () => {
+              for (let frame = 0; frame < 3; frame++) await new Promise(requestAnimationFrame);
+            });
             const geometry = await page.evaluate(async () => {
               const toolbar = document.querySelector('.workbench-composition-toolbar');
               const box = (element) => {
