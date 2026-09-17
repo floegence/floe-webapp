@@ -1,4 +1,4 @@
-import { type Component, createSignal, createEffect, Show } from 'solid-js';
+import { type Component, createSignal, createEffect, onCleanup, Show } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { highlightCode } from '../hooks/useCodeHighlight';
 import { deferNonBlocking } from '../../../utils/defer';
@@ -8,12 +8,33 @@ export interface CodeBlockProps {
   content: string;
   filename?: string;
   class?: string;
+  copyLabel?: string;
+  copiedLabel?: string;
+  copyErrorLabel?: string;
 }
 
 export const CodeBlock: Component<CodeBlockProps> = (props) => {
   const [highlightedHtml, setHighlightedHtml] = createSignal<string | null>(null);
   const [isLoading, setIsLoading] = createSignal(true);
-  const [copied, setCopied] = createSignal(false);
+  const [copyState, setCopyState] = createSignal<'idle' | 'copied' | 'failed'>('idle');
+  let copyRevision = 0;
+  let copyResetTimer: ReturnType<typeof setTimeout> | undefined;
+  const copyLabel = () =>
+    copyState() === 'copied'
+      ? (props.copiedLabel ?? 'Copied!')
+      : copyState() === 'failed'
+        ? (props.copyErrorLabel ?? 'Could not copy code')
+        : (props.copyLabel ?? 'Copy code');
+  createEffect(() => {
+    void props.content;
+    copyRevision++;
+    clearTimeout(copyResetTimer);
+    setCopyState('idle');
+  });
+  onCleanup(() => {
+    copyRevision++;
+    clearTimeout(copyResetTimer);
+  });
   let runId = 0;
 
   // Highlight code
@@ -49,13 +70,17 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
 
   // Copy code
   const handleCopy = async () => {
+    const revision = ++copyRevision;
+    clearTimeout(copyResetTimer);
     try {
       await navigator.clipboard.writeText(props.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
+      if (revision !== copyRevision) return;
+      setCopyState('copied');
+    } catch {
+      if (revision !== copyRevision) return;
+      setCopyState('failed');
     }
+    copyResetTimer = setTimeout(() => setCopyState('idle'), 2000);
   };
 
   return (
@@ -74,13 +99,18 @@ export const CodeBlock: Component<CodeBlockProps> = (props) => {
           type="button"
           class="chat-code-copy-btn"
           onClick={handleCopy}
-          title={copied() ? 'Copied!' : 'Copy code'}
+          title={copyLabel()}
+          aria-label={copyLabel()}
         >
-          <Show when={copied()} fallback={<CopyIcon />}>
+          <Show when={copyState() === 'copied'} fallback={<CopyIcon />}>
             <CheckIcon />
           </Show>
         </button>
       </div>
+
+      <span class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {copyState() === 'idle' ? '' : copyLabel()}
+      </span>
 
       {/* Code content */}
       <div class="chat-code-content">

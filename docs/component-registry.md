@@ -250,3 +250,12 @@ Clicking canvas text uses native caret placement and selection. A changed text e
 Selected-object tools use `SurfaceAnchoredLayer`, which builds on `SurfaceFloatingLayer` to retain the owning surface, avoid clipping, follow transforms, and keep controls at screen size. Measurement is event-driven and mounted only for selected objects; there is no idle polling. Plain wheel routing remains governed by the existing selected-widget contract. Space+drag and middle-button drag explicitly pan the canvas without changing region geometry.
 
 Compound input focus markers do not opt a surface into the inset palette. The soft material recolors only explicit `data-floe-surface="inset"` fields; canvas notes, text, and region labels preserve their own fill or transparent background. Composition browser coverage exercises both standard and soft materials in world and projected layouts.
+
+### Code block copy feedback
+
+The public `CodeBlock` from `@floegence/floe-webapp-core/chat` accepts optional
+`copyLabel`, `copiedLabel`, and `copyErrorLabel` strings. Hosts provide localized
+copy for code or output. Clipboard success and failure use the button accessible
+name and a polite status announcement; changing content clears stale feedback.
+Code is copied literally, including whitespace. The component owns highlighting
+and copying; host surfaces own placement, disclosure, and content limits.
