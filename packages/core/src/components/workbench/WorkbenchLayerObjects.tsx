@@ -1513,7 +1513,7 @@ function WorkbenchTextAnnotationControls(props: {
           onInsertEmoji={(emoji) => editor()?.insertTextAtSelection(emoji)}
           moreOpen={advancedOpen()}
           onMoreClose={() => setAdvancedOpen(false)}
-          more={
+          more={() => (
             <>
               <div
                 ref={fontPickerEl}
@@ -1662,7 +1662,7 @@ function WorkbenchTextAnnotationControls(props: {
                 {t(item().align)}
               </button>
             </>
-          }
+          )}
           actions={
             <>
               <Show when={actions}>
@@ -1872,7 +1872,7 @@ function WorkbenchBackgroundRegionControls(props: {
               </For>
             </div>
           }
-          more={
+          more={(closeMenu) => (
             <>
               <label>
                 {t('opacity')}
@@ -1891,12 +1891,15 @@ function WorkbenchBackgroundRegionControls(props: {
                 type="button"
                 disabled={!item().name.trim()}
                 onPointerDown={stopLayerButtonPointer}
-                onClick={() => onUpdate()(item().id, { name: '' })}
+                onClick={() => {
+                  closeMenu();
+                  onUpdate()(item().id, { name: '' });
+                }}
               >
                 {t('clearName')}
               </button>
             </>
-          }
+          )}
           actions={
             <>
               <Show when={actions}>

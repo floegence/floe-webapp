@@ -371,6 +371,47 @@ try {
           }
         }
       }
+      // Removing a name can move the toolbar from below the region to above it.
+      // Finish the menu action before that relocation so no stale popup is clipped.
+      await page.evaluate(() =>
+        window.workbenchFixture.setState((state) => ({
+          ...state,
+          mode: 'background',
+          viewport: { x: 0, y: 0, scale: 1 },
+          selectedObject: { kind: 'background_layer', id: 'region' },
+          backgroundLayers: state.backgroundLayers.map((region) => ({
+            ...region,
+            x: 80,
+            y: 140,
+            width: 700,
+            height: 390,
+            name: 'Layout region',
+          })),
+        }))
+      );
+      await page.evaluate(async () => {
+        for (let frame = 0; frame < 3; frame++) await new Promise(requestAnimationFrame);
+      });
+      await page.locator('.workbench-treatment-trigger').click();
+      await page.getByRole('button', { name: 'Clear name', exact: true }).click();
+      assert.equal(
+        await page.locator('.workbench-treatment-trigger').getAttribute('aria-expanded'),
+        'false'
+      );
+      assert.equal(await page.locator('.workbench-treatment-panel').count(), 0);
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().backgroundLayers[0].name),
+        ''
+      );
+      await page.evaluate(async () => {
+        for (let frame = 0; frame < 3; frame++) await new Promise(requestAnimationFrame);
+      });
+      await page.locator('.workbench-treatment-trigger').click();
+      await page.getByRole('button', { name: 'Use region material Outline', exact: true }).click();
+      assert.equal(
+        await page.evaluate(() => window.workbenchFixture.state().backgroundLayers[0].material),
+        'frame'
+      );
       await page.evaluate((state) => window.workbenchFixture.setState(state), beforeMenu);
       // Content keeps its world-space layout across zoom, including the former 50% threshold.
       const beforeZoom = await page.evaluate(() => window.workbenchFixture.state());

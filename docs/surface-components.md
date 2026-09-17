@@ -97,7 +97,8 @@ a region name, and Ctrl/Cmd+Enter finishes multiline content. Switching title/bo
 commits the previous field. IME confirmation stays inside the editor; when focus
 leaves during composition, the completed composition is saved. The toolbar keeps
 its appearance controls throughout editing, without a separate Done/Cancel mode.
-Clear name remains available in the region's material menu. Changing
+Clear name remains available in the region's material menu and closes the menu
+before the toolbar repositions around the unnamed region. Changing
 appearance preserves the last caret for emoji insertion.
 
 Sticky and text toolbars omit the redundant Edit text action. Every canvas text

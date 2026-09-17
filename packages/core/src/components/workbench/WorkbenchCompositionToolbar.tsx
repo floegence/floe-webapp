@@ -65,7 +65,7 @@ export function CompositionToolbar(props: {
   preview?: (material: WorkbenchCompositionMessageKey) => JSX.Element;
   onMaterial?: (material: WorkbenchCompositionMessageKey) => void;
   materialLabel?: (material: WorkbenchCompositionMessageKey) => string;
-  more?: JSX.Element;
+  more?: (closeMenu: () => void) => JSX.Element;
   onMoreClose?: () => void;
   moreOpen?: boolean;
 }) {
@@ -252,7 +252,7 @@ export function CompositionToolbar(props: {
               </For>
             </div>
             <Show when={props.more}>
-              <div class="workbench-material-settings">{props.more}</div>
+              <div class="workbench-material-settings">{props.more?.(close)}</div>
             </Show>
           </Show>
           <Show when={open() === 'emoji'}>
@@ -286,7 +286,7 @@ export function CompositionToolbar(props: {
         </div>
       </Show>
       <Show when={!props.materials && props.moreOpen}>
-        <div class="workbench-composition-more">{props.more}</div>
+        <div class="workbench-composition-more">{props.more?.(close)}</div>
       </Show>
       <div class="workbench-toolbar-main">
         {props.palette}
