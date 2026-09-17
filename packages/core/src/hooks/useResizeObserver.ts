@@ -6,39 +6,41 @@ export interface Size {
 }
 
 /**
- * Track element dimensions
+ * Track the usable content box in local CSS pixels, excluding padding and
+ * scrollbars. CSS transforms on the element or its ancestors do not affect it.
  */
 export function useResizeObserver(
   element: Accessor<HTMLElement | null | undefined>
 ): Accessor<Size | null> {
-  const [size, setSize] = createSignal<Size | null>(null);
+  const [size, setSize] = createSignal<Size | null>(null, {
+    equals: (previous, next) => previous?.width === next?.width && previous?.height === next?.height,
+  });
 
   createEffect(() => {
     const el = element();
-    if (!el) return;
-
-    // Initial measurement: some ResizeObserver implementations may not fire immediately,
-    // but charts/layout need the correct width on first paint to avoid "letterboxing".
-    const rect = el.getBoundingClientRect();
-    setSize({ width: rect.width, height: rect.height });
+    if (!el) {
+      setSize(null);
+      return;
+    }
+    const measure = () => {
+      const style = el.ownerDocument.defaultView!.getComputedStyle(el);
+      const px = (value: string) => Number.parseFloat(value) || 0;
+      setSize({
+        width: Math.max(0, el.clientWidth - px(style.paddingLeft) - px(style.paddingRight)),
+        height: Math.max(0, el.clientHeight - px(style.paddingTop) - px(style.paddingBottom)),
+      });
+    };
+    measure();
 
     if (typeof ResizeObserver === 'undefined') {
-      const handleResize = () => setSize({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height });
       if (typeof window !== 'undefined') {
-        window.addEventListener('resize', handleResize);
-        onCleanup(() => window.removeEventListener('resize', handleResize));
+        window.addEventListener('resize', measure);
+        onCleanup(() => window.removeEventListener('resize', measure));
       }
       return;
     }
 
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      setSize({
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      });
-    });
+    const observer = new ResizeObserver(measure);
 
     observer.observe(el);
     onCleanup(() => observer.disconnect());

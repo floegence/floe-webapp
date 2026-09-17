@@ -278,3 +278,15 @@ Implementation references:
 ### Surface material
 
 `useTheme().surfaceStyle()` reads the material and `setSurfaceStyle(style)` updates it without remounting the application. It uses the configured persistence service, namespace, adapter, and enabled flag. Missing or invalid stored values fall back to the configured default; invalid configuration falls back to `standard`. Palette storage and token source order are unchanged. See [Surface styles](surface-style.md) for the complete styling contract.
+
+## Content sizing
+
+`useResizeObserver` reports usable content dimensions in local CSS pixels. Initial
+measurement, resize notifications, and the window-resize fallback all exclude
+padding and scrollbars and ignore CSS transforms. Hidden content reports zero;
+removing the observed element resets the result to `null`.
+
+`calculateFitScale({ content, viewport, mode })` accepts width/height pairs and
+`contain` or `width` mode. It returns an unrounded positive scale, including
+enlargement above 1, or `null` while dimensions are unavailable. Consumers own
+toolbar space, page labels, manual zoom limits, and rendering resource budgets.

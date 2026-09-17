@@ -86,6 +86,7 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium webkit
           pnpm test:input-focus
+          node scripts/check-content-sizing-browser.mjs
           pnpm test:workbench-composition
           pnpm test:dialog
           pnpm test:file-menu

@@ -1,4 +1,5 @@
 export { cn } from './cn';
+export { calculateFitScale, type FitScaleSize } from './fitScale';
 export * from './defer';
 export * from './keybind';
 export * from './bodyStyleLock';
