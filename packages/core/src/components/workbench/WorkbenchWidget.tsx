@@ -2,6 +2,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  Show,
   onCleanup,
   untrack,
   type Accessor,
@@ -32,6 +33,10 @@ import {
   type ResolvedWorkbenchInteractionAdapter,
 } from './workbenchInteractionAdapter';
 import { createOwnerSafePropAccessor } from './workbenchOwnerSafeAccessors';
+import {
+  WorkbenchWidgetHeaderContext,
+  type WorkbenchWidgetHeaderProps,
+} from './WorkbenchWidgetHeader';
 import type {
   WorkbenchViewport,
   WorkbenchInteractionAdapter,
@@ -131,6 +136,14 @@ export interface WorkbenchWidgetProps {
 }
 
 export function WorkbenchWidget(props: WorkbenchWidgetProps) {
+  const [header, setHeader] = createSignal<WorkbenchWidgetHeaderProps>();
+  const registerHeader = (contribution: WorkbenchWidgetHeaderProps) => {
+    if (untrack(header)) throw new Error('A Workbench widget supports one header contribution');
+    setHeader(contribution);
+    return () => {
+      if (untrack(header) === contribution) setHeader(undefined);
+    };
+  };
   const definition = createOwnerSafePropAccessor(() => props.definition);
   const widgetId = createOwnerSafePropAccessor(() => props.widgetId);
   const widgetTitle = createOwnerSafePropAccessor(() => props.widgetTitle);
@@ -884,8 +897,21 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
               const Icon = definition().icon;
               return <Icon class="w-3.5 h-3.5" />;
             })()}
-            <span class="workbench-widget__title">{widgetTitle()}</span>
+            <span class="workbench-widget__title" title={header()?.titleTooltip || widgetTitle()}>
+              {widgetTitle()}
+            </span>
           </div>
+          <Show when={header()?.actions}>
+            <div
+              class="workbench-widget__header-actions"
+              data-floe-workbench-header-actions="true"
+              data-floe-canvas-interactive="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onDblClick={(event) => event.stopPropagation()}
+            >
+              {header()?.actions}
+            </div>
+          </Show>
           <span class="workbench-widget__window-controls" role="group" aria-label="Window controls">
             <button
               type="button"
@@ -923,23 +949,25 @@ export function WorkbenchWidget(props: WorkbenchWidgetProps) {
           </span>
         </header>
         <div class="workbench-widget__body" data-floe-canvas-interactive="true">
-          {(() => {
-            const Body = definition().body;
-            return (
-              <Body
-                widgetId={widgetId()}
-                title={widgetTitle()}
-                type={widgetType()}
-                surfaceMetrics={surfaceMetrics}
-                activation={bodyActivation()}
-                lifecycle={lifecycle()}
-                motion={motion()}
-                selected={selected()}
-                filtered={filtered()}
-                requestActivate={requestActivate}
-              />
-            );
-          })()}
+          <WorkbenchWidgetHeaderContext.Provider value={registerHeader}>
+            {(() => {
+              const Body = definition().body;
+              return (
+                <Body
+                  widgetId={widgetId()}
+                  title={widgetTitle()}
+                  type={widgetType()}
+                  surfaceMetrics={surfaceMetrics}
+                  activation={bodyActivation()}
+                  lifecycle={lifecycle()}
+                  motion={motion()}
+                  selected={selected()}
+                  filtered={filtered()}
+                  requestActivate={requestActivate}
+                />
+              );
+            })()}
+          </WorkbenchWidgetHeaderContext.Provider>
         </div>
         {locked() ? null : (
           <div

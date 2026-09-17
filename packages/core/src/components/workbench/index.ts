@@ -1,4 +1,5 @@
 export { WorkbenchOverlay, type WorkbenchOverlayProps } from './WorkbenchOverlay';
+export { WorkbenchWidgetHeader, type WorkbenchWidgetHeaderProps } from './WorkbenchWidgetHeader';
 export {
   WorkbenchDockPopoverSurface,
   type WorkbenchDockPopoverSurfaceProps,

@@ -238,6 +238,16 @@
     display: none;
   }
 
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__header-actions {
+    padding-right: 0;
+    padding-left: 9px;
+  }
+
+  .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__header-actions::after {
+    right: auto;
+    left: 0;
+  }
+
   .workbench-surface[data-workbench-theme='vibrancy'] .workbench-widget__title-area svg {
     display: none;
   }

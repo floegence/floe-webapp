@@ -259,3 +259,9 @@ copy for code or output. Clipboard success and failure use the button accessible
 name and a polite status announcement; changing content clears stale feedback.
 Code is copied literally, including whitespace. The component owns highlighting
 and copying; host surfaces own placement, disclosure, and content limits.
+
+### Workbench widget header contributions
+
+A widget body may render one `WorkbenchWidgetHeader` from `@floegence/floe-webapp-core/workbench`, with `actions` and optional `titleTooltip`. The contribution renders its actions once between the title and the trailing window controls; themes with leading window controls place actions at the trailing edge. The widget owns layout, title truncation, and input isolation. Header actions do not increase the header height and must fit its existing compact chrome.
+
+Actions keep the body owner and its providers. Reactive updates and stacking changes do not remount the body. Removing the contribution clears the actions and restores the ordinary title tooltip. Pointer input in the action region does not start widget dragging or emit body activation; native controls retain keyboard focus and click behavior. The existing selected-widget wheel contract still applies. Hosts own action availability, responsive presentation, and document state.

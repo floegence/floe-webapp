@@ -89,6 +89,7 @@ jobs:
           node scripts/check-content-sizing-browser.mjs
           pnpm test:event-stream-media
           pnpm test:workbench-composition
+          pnpm test:workbench-header
           pnpm test:dialog
           pnpm test:file-menu
 

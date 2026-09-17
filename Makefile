@@ -1,8 +1,8 @@
-.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer
+.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header
 
 install:
 	pnpm install --frozen-lockfile
@@ -27,3 +27,6 @@ verify:
 
 packed-consumer:
 	node scripts/verify-npm-release-consumer.mjs --packed
+
+workbench-header:
+	pnpm test:workbench-header
