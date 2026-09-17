@@ -1,0 +1,961 @@
+/* Composition objects and their previews share the approved material renderer. */
+@layer components {
+  .workbench-surface {
+    --workbench-composition-font:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+    --workbench-canvas-ink: oklch(
+      from var(--foreground) min(calc(l * 0.88), 0.37) calc(c * 0.88) h
+    );
+  }
+  .dark .workbench-surface {
+    --workbench-canvas-ink: var(--foreground);
+  }
+  .workbench-object-tools {
+    pointer-events: auto;
+    font-family: var(--workbench-composition-font);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .workbench-composition-toolbar {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    max-width: 100%;
+    background: var(--card);
+    border: 1px solid var(--wb-window-edge);
+    border-radius: 10px;
+    color: var(--foreground);
+    box-shadow: 0 3px 10px -4px rgb(0 0 0 / 20%);
+  }
+  .workbench-toolbar-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    gap: 3px;
+    min-height: 44px;
+  }
+  .workbench-composition-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 29px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--foreground);
+    font: inherit;
+    font-size: 11px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .workbench-composition-toolbar button:hover {
+    background: color-mix(in oklab, var(--foreground) 7%, var(--card));
+  }
+  .workbench-composition-toolbar button.is-danger:hover {
+    color: var(--error);
+  }
+  .workbench-composition-toolbar svg {
+    stroke-width: 1.65;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+  .workbench-composition-toolbar
+    button[aria-pressed='true']:not(.workbench-style-choice):not(
+      .workbench-treatment-options > button
+    ) {
+    background: var(--muted);
+  }
+  .workbench-composition-divider {
+    display: block;
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    flex-shrink: 0;
+    background: var(--border);
+  }
+  .workbench-color-options {
+    display: flex;
+    gap: 3px;
+  }
+  .workbench-composition-toolbar button.workbench-style-choice {
+    position: relative;
+    min-width: 26px;
+    width: 26px;
+    height: 30px;
+    padding: 3px;
+    border: 1px solid transparent;
+  }
+  .workbench-composition-toolbar button.workbench-style-choice[aria-pressed='true'] {
+    border-color: var(--wb-window-active);
+  }
+  .workbench-style-choice > svg {
+    display: none;
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    color: var(--foreground);
+    background: var(--card);
+    border-radius: 3px;
+    bottom: 0;
+    right: -1px;
+    padding: 1px;
+    pointer-events: none;
+  }
+  .workbench-style-choice[aria-pressed='true'] > svg {
+    display: block;
+  }
+  .workbench-composition-toolbar .workbench-treatment-trigger {
+    padding: 0 5px;
+    gap: 6px;
+  }
+  .workbench-treatment-trigger > svg {
+    width: 12px;
+  }
+  .workbench-treatment-trigger[aria-expanded='true'] {
+    background: var(--muted);
+  }
+  .workbench-treatment-trigger > span {
+    white-space: nowrap;
+  }
+  .workbench-treatment-panel {
+    padding: 12px;
+    border-bottom: 1px solid var(--wb-window-edge);
+  }
+  [data-placement='below'] .workbench-treatment-panel {
+    order: 1;
+    border-bottom: 0;
+    border-top: 1px solid var(--wb-window-edge);
+  }
+  .workbench-picker-heading {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 10px;
+    color: var(--foreground);
+    font-size: 11px;
+    font-weight: 550;
+  }
+  .workbench-composition-toolbar button.workbench-picker-more {
+    height: auto;
+    min-width: 0;
+    font-size: 10px;
+    color: var(--muted-foreground);
+    font-weight: 400;
+  }
+  .workbench-composition-toolbar button.workbench-picker-more:hover {
+    text-decoration: underline;
+  }
+  .workbench-picker-heading > span {
+    color: var(--muted-foreground);
+    font-weight: 400;
+    font-size: 10px;
+  }
+  .workbench-treatment-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .workbench-composition-toolbar .workbench-treatment-options > button {
+    display: flex;
+    height: auto;
+    padding: 7px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    text-align: left;
+  }
+  .workbench-composition-toolbar .workbench-treatment-options > button[aria-pressed='true'] {
+    border-color: var(--wb-window-active);
+    background: color-mix(in oklab, var(--foreground) 4%, var(--card));
+  }
+  .workbench-treatment-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 550;
+  }
+  .workbench-treatment-label > svg {
+    width: 11px;
+    height: 11px;
+    visibility: hidden;
+  }
+  [aria-pressed='true'] > .workbench-treatment-label > svg {
+    visibility: visible;
+  }
+  .workbench-treatment-options small {
+    color: var(--muted-foreground);
+    font-size: 9px;
+    line-height: 1.5;
+    max-width: 104px;
+  }
+  .workbench-composition-toolbar select {
+    height: 30px;
+    width: 69px;
+    max-width: 116px;
+    padding: 0 7px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--foreground);
+    background: var(--card);
+    border: 1px solid var(--wb-window-edge);
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .workbench-composition-toolbar .workbench-name-trigger {
+    padding: 0 7px;
+    white-space: nowrap;
+  }
+  .workbench-edit-field-options {
+    display: flex;
+    gap: 2px;
+    padding-right: 5px;
+    border-right: 1px solid var(--wb-window-edge);
+  }
+  .workbench-edit-field-options > button {
+    padding: 0 8px;
+  }
+  .workbench-editing-caption {
+    font-size: 10px;
+    color: var(--muted-foreground);
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+  .workbench-composition-toolbar button.workbench-edit-done {
+    padding: 0 10px;
+    background: var(--foreground);
+    color: var(--card);
+  }
+  .workbench-composition-more {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px;
+    border-bottom: 1px solid var(--wb-window-edge);
+  }
+  .workbench-composition-more label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  [data-note-color] {
+    --note-hue: 82;
+    --note-chroma: 0.038;
+    --note-face-lightness: 0.945;
+    --note-edge-lightness: 0.79;
+    --note-edge-chroma: 0.025;
+    --note-marker-lightness: 0.54;
+    --note-marker-chroma: 0.075;
+    --note-cos: cos(calc(var(--note-hue) * 1deg));
+    --note-sin: sin(calc(var(--note-hue) * 1deg));
+    --note-face: oklch(0.945 var(--note-chroma) var(--note-hue));
+    --note-ink: oklch(0.32 0.025 var(--note-hue));
+    --note-muted: oklch(0.45 0.03 var(--note-hue));
+    --note-marker: oklch(var(--note-marker-lightness) var(--note-marker-chroma) var(--note-hue));
+    --note-edge: oklch(0.79 0.025 var(--note-hue));
+    --note-paper: var(--wb-window);
+  }
+  [data-note-color='sage'] {
+    --note-hue: 145;
+  }
+  [data-note-color='azure'] {
+    --note-hue: 245;
+  }
+  [data-note-color='coral'] {
+    --note-hue: 42;
+  }
+  [data-note-color='rose'] {
+    --note-hue: 350;
+  }
+  [data-note-color='graphite'] {
+    --note-hue: 255;
+    --note-chroma: 0.008;
+    --note-marker-chroma: 0.012;
+  }
+  .dark [data-note-color] {
+    --note-face-lightness: clamp(0.29, calc(l + 0.025), 0.4);
+    --note-edge-lightness: calc(var(--note-face-lightness) + 0.065);
+    --note-edge-chroma: 0.018;
+    --note-face: oklch(
+      from var(--wb-window) clamp(0.29, calc(l + 0.025), 0.4) var(--note-chroma) var(--note-hue)
+    );
+    --note-ink: oklch(0.9 0.016 var(--note-hue));
+    --note-muted: oklch(0.77 0.018 var(--note-hue));
+    --note-marker-lightness: 0.68;
+    --note-marker-chroma: 0.07;
+    --note-edge: oklch(from var(--note-face) calc(l + 0.065) 0.018 var(--note-hue));
+  }
+  .dark [data-note-color='graphite'] {
+    --note-marker-chroma: 0.012;
+  }
+  [data-note-material] {
+    --note-fill: var(--note-face);
+    --note-surface-ink: var(--note-ink);
+    --note-surface-muted: var(--note-muted);
+    --note-surface-edge: var(--note-edge);
+    --paper-rule: oklab(
+      from var(--note-fill) calc(l * 0.78 + var(--note-marker-lightness) * 0.22)
+        calc(a * 0.78 + var(--note-marker-chroma) * var(--note-cos) * 0.22)
+        calc(b * 0.78 + var(--note-marker-chroma) * var(--note-sin) * 0.22)
+    );
+    --margin-rule: oklab(
+      from var(--note-fill) calc(l * 0.62 + var(--note-marker-lightness) * 0.38)
+        calc(a * 0.62 + var(--note-marker-chroma) * var(--note-cos) * 0.38)
+        calc(b * 0.62 + var(--note-marker-chroma) * var(--note-sin) * 0.38)
+    );
+    background-color: var(--note-fill);
+    color: var(--note-surface-ink);
+    border: 1px solid var(--note-surface-edge);
+    border-radius: var(--surface-radius, 9px);
+  }
+  [data-note-material='tab'] {
+    --note-fill: var(--note-paper);
+    --note-surface-ink: var(--foreground);
+    --note-surface-muted: var(--muted-foreground);
+    --note-surface-edge: var(--wb-window-edge);
+  }
+  [data-note-material='tab']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--stripe-width, 9px);
+    border-radius: var(--surface-radius, 8px) 0 0 var(--surface-radius, 8px);
+    background: var(--note-marker);
+    pointer-events: none;
+  }
+  [data-note-material='ruled'] {
+    /* Equivalent Oklab interpolation without nesting color-mix through relative
+       colors, which crashes WebKit when the dark window itself is a color mix. */
+    --note-fill: oklab(
+      from var(--note-paper) calc(l * 0.52 + var(--note-face-lightness) * 0.48)
+        calc(a * 0.52 + var(--note-chroma) * var(--note-cos) * 0.48)
+        calc(b * 0.52 + var(--note-chroma) * var(--note-sin) * 0.48)
+    );
+    --note-surface-ink: var(--foreground);
+    --note-surface-muted: var(--muted-foreground);
+    --note-surface-edge: oklab(
+      from var(--note-paper) calc(l * 0.35 + var(--note-edge-lightness) * 0.65)
+        calc(a * 0.35 + var(--note-edge-chroma) * var(--note-cos) * 0.65)
+        calc(b * 0.35 + var(--note-edge-chroma) * var(--note-sin) * 0.65)
+    );
+    border-radius: 3px;
+  }
+  [data-note-material='ruled']::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        to right,
+        transparent var(--rule-margin, 30px),
+        var(--margin-rule) var(--rule-margin, 30px),
+        var(--margin-rule) calc(var(--rule-margin, 30px) + var(--rule-width, 1px)),
+        transparent calc(var(--rule-margin, 30px) + var(--rule-width, 1px))
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(var(--rule-space, 28px) - var(--rule-width, 1px)),
+        var(--paper-rule) calc(var(--rule-space, 28px) - var(--rule-width, 1px)),
+        var(--paper-rule) var(--rule-space, 28px)
+      );
+    background-position:
+      0 0,
+      0 var(--rule-start, 0px);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .workbench-sticky {
+    display: flex;
+    overflow: visible;
+    border-radius: 9px;
+    transform-origin: 0 0;
+    cursor: grab;
+    font-family: var(--workbench-composition-font);
+  }
+  .workbench-sticky__surface {
+    --ring: var(--wb-window-active);
+    --stripe-width: 9px;
+    --rule-space: 28px;
+    --rule-start: 27px;
+    --rule-margin: 30px;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 3px 7px -5px rgb(0 0 0 / 24%);
+  }
+  .workbench-sticky__content {
+    position: relative;
+    padding: 27px 24px 22px;
+    overflow: hidden;
+    height: 100%;
+  }
+  .workbench-sticky.is-selected .workbench-sticky__content {
+    overflow: auto;
+  }
+  .workbench-sticky__title {
+    font-size: 20px;
+    font-weight: 560;
+    line-height: 1.4;
+    letter-spacing: -0.45px;
+    margin: 0 0 14px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-height: 28px;
+  }
+  .workbench-sticky__body {
+    margin: 0;
+    font-size: 14px;
+    line-height: 28px;
+    font-weight: 400;
+    color: var(--note-surface-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-height: 28px;
+  }
+  .workbench-sticky__surface[data-note-material='tab'] .workbench-sticky__content {
+    padding-left: 30px;
+  }
+  .workbench-sticky__surface[data-note-material='ruled'] .workbench-sticky__content {
+    padding: 28px 24px 22px 43px;
+  }
+  .workbench-sticky__surface[data-note-material='ruled'] .workbench-sticky__title {
+    font-size: 19px;
+    line-height: 28px;
+    margin-bottom: 0;
+  }
+  .workbench-sticky__grip {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    width: calc(24px * var(--workbench-layer-control-inverse-scale));
+    height: calc(24px * var(--workbench-layer-control-inverse-scale));
+    padding: calc(6px * var(--workbench-layer-control-inverse-scale));
+    z-index: 2;
+    color: var(--note-surface-muted);
+    opacity: 0;
+    border: 0;
+    border-radius: calc(4px * var(--workbench-layer-control-inverse-scale));
+    background: transparent;
+    cursor: grab;
+  }
+  .workbench-sticky__grip > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .workbench-sticky:hover .workbench-sticky__grip,
+  .workbench-sticky.is-selected .workbench-sticky__grip,
+  .workbench-sticky__grip:focus-visible {
+    opacity: 0.75;
+  }
+  .workbench-sticky__grip:hover {
+    background: color-mix(in oklab, currentColor 8%, transparent);
+    opacity: 1;
+  }
+  .workbench-sticky.is-overview.has-title .workbench-sticky__body {
+    display: none;
+  }
+  .workbench-sticky.is-overview {
+    --stripe-width: calc(4px * var(--workbench-layer-control-inverse-scale));
+    --rule-space: calc(13px * var(--workbench-layer-control-inverse-scale));
+    --rule-start: 0px;
+    --rule-margin: calc(7px * var(--workbench-layer-control-inverse-scale));
+    --rule-width: calc(0.6px * var(--workbench-layer-control-inverse-scale));
+  }
+  .workbench-sticky.is-overview .workbench-sticky__content {
+    padding: calc(14px * var(--workbench-layer-control-inverse-scale))
+      calc(13px * var(--workbench-layer-control-inverse-scale));
+  }
+  .workbench-sticky.is-overview .workbench-sticky__title {
+    font-size: calc(11px * var(--workbench-layer-control-inverse-scale));
+    line-height: 1.55;
+    letter-spacing: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin: 0;
+  }
+  .workbench-sticky.is-overview .workbench-sticky__grip {
+    top: calc(-10px * var(--workbench-layer-control-inverse-scale));
+    right: calc(7px * var(--workbench-layer-control-inverse-scale));
+    height: calc(19px * var(--workbench-layer-control-inverse-scale));
+    background: var(--note-fill);
+    border: calc(1px * var(--workbench-layer-control-inverse-scale)) solid var(--note-surface-edge);
+    padding: calc(3px * var(--workbench-layer-control-inverse-scale))
+      calc(6px * var(--workbench-layer-control-inverse-scale));
+  }
+  .workbench-note-preview {
+    position: relative;
+    display: block;
+    width: 20px;
+    height: 22px;
+    flex-shrink: 0;
+    overflow: hidden;
+    --stripe-width: 3px;
+    --rule-space: 5px;
+    --rule-start: 0px;
+    --rule-margin: 5px;
+    --surface-radius: 3px;
+    --rule-width: 1px;
+  }
+  .workbench-treatment-trigger > .workbench-note-preview {
+    width: 18px;
+    height: 20px;
+  }
+  .workbench-preview-writing {
+    position: absolute;
+    top: 28%;
+    left: 22%;
+    width: 58%;
+    height: 3px;
+    border-radius: 1px;
+    background: currentColor;
+    opacity: 0.42;
+  }
+  .workbench-preview-writing::after {
+    content: '';
+    position: absolute;
+    top: 7px;
+    left: 0;
+    width: 76%;
+    height: 2px;
+    background: currentColor;
+    box-shadow: 0 5px 0 currentColor;
+  }
+  .workbench-color-options .workbench-preview-writing {
+    display: none;
+  }
+  .workbench-treatment-trigger .workbench-preview-writing {
+    height: 1px;
+  }
+  .workbench-treatment-trigger .workbench-preview-writing::after {
+    top: 4px;
+    height: 1px;
+    box-shadow: 0 3px 0 currentColor;
+  }
+  .workbench-treatment-options .workbench-note-preview {
+    width: 100%;
+    height: 57px;
+    --stripe-width: 5px;
+    --rule-space: 9px;
+    --rule-margin: 11px;
+    --surface-radius: 4px;
+  }
+
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ) {
+    --region-lightness: 0.83;
+    --region-edge-delta: -0.08;
+    --region-outline-lightness: 0.56;
+    --region-chroma: 0.065;
+    --region-outline-chroma: 0.065;
+    --region-face: oklch(
+      from var(--wb-canvas) clamp(0.77, calc(l - 0.07), 0.88) var(--region-chroma) var(--region-hue)
+    );
+    --region-edge: oklch(from var(--region-face) calc(l - 0.08) min(0.032, c) var(--region-hue));
+    --region-outline: oklch(0.56 var(--region-outline-chroma) var(--region-hue));
+    --region-fill: color-mix(
+      in oklab,
+      var(--region-face) var(--workbench-region-strength, 100%),
+      var(--wb-canvas)
+    );
+    --region-border: var(--region-edge);
+    --region-hatch: color-mix(in oklab, var(--region-outline) 20%, var(--region-fill));
+    --region-stroke: 1px;
+    --hatch-spacing: 10px;
+    --hatch-line: 1px;
+    background-color: var(--region-fill);
+    border: var(--region-stroke) solid var(--region-border);
+    border-radius: 12px;
+    color: var(--workbench-canvas-ink);
+  }
+  .dark
+    :is(
+      .workbench-background-region,
+      .workbench-region-material__sample,
+      .workbench-region-visibility-outline
+    ) {
+    --region-lightness: 0.3;
+    --region-edge-delta: 0.085;
+    --region-outline-lightness: 0.58;
+    --region-chroma: 0.045;
+    --region-outline-chroma: 0.055;
+    --region-face: oklch(
+      from var(--wb-canvas) clamp(0.255, calc(l + 0.085), 0.34) var(--region-chroma)
+        var(--region-hue)
+    );
+    --region-edge: oklch(from var(--region-face) calc(l + 0.085) min(0.025, c) var(--region-hue));
+    --region-outline: oklch(0.58 var(--region-outline-chroma) var(--region-hue));
+  }
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ).is-material-frame {
+    --region-fill: transparent;
+    --region-border: var(--region-outline);
+    border-width: calc(2 * var(--region-stroke));
+    border-style: dashed;
+  }
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ).is-material-hatched {
+    --region-fill: color-mix(in oklab, var(--region-face) 80%, var(--wb-canvas));
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0,
+      transparent calc(var(--hatch-spacing) - var(--hatch-line)),
+      var(--region-hatch) calc(var(--hatch-spacing) - var(--hatch-line)),
+      var(--region-hatch) var(--hatch-spacing)
+    );
+  }
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ).is-material-dotted {
+    background-image: radial-gradient(var(--region-hatch) 1px, transparent 1px);
+    background-size: 10px 10px;
+  }
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ).is-material-grid {
+    background-image:
+      linear-gradient(var(--region-hatch) 1px, transparent 1px),
+      linear-gradient(90deg, var(--region-hatch) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  :is(
+    .workbench-background-region,
+    .workbench-region-material__sample,
+    .workbench-region-visibility-outline
+  ).is-material-glass {
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in srgb, white 10%, transparent),
+      transparent 60%
+    );
+  }
+  .workbench-background-region,
+  .workbench-region-visibility-outline {
+    --region-stroke: calc(1px * var(--workbench-layer-control-inverse-scale, 1));
+    --hatch-spacing: calc(10px * var(--workbench-layer-control-inverse-scale, 1));
+    --hatch-line: calc(0.75px * var(--workbench-layer-control-inverse-scale, 1));
+    box-shadow: none;
+    pointer-events: none;
+    font-family: var(--workbench-composition-font);
+  }
+  .workbench-region-visibility-outline {
+    background: none;
+  }
+  .workbench-background-region.is-editable {
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+  }
+  .workbench-background-region.is-transforming {
+    will-change: transform;
+  }
+  .workbench-background-region__label {
+    --ring: var(--wb-window-active);
+    position: absolute;
+    top: calc(-34px * var(--workbench-layer-control-inverse-scale, 1));
+    left: 0;
+    display: flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 2px 0;
+    max-width: calc(100% * var(--workbench-layer-scale, 1) - 30px);
+    transform: scale(var(--workbench-layer-control-inverse-scale, 1));
+    transform-origin: left top;
+    color: var(--workbench-canvas-ink);
+    white-space: nowrap;
+    font-size: 12px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+  }
+  .workbench-background-region__label > div {
+    display: block;
+    min-width: 1px;
+    font-weight: 550;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .workbench-background-region__label.is-empty {
+    display: none;
+  }
+  .workbench-background-region.is-editing .workbench-background-region__label {
+    min-width: 180px;
+    max-width: calc(100% * var(--workbench-layer-scale, 1));
+    z-index: 14;
+    background: var(--card);
+    color: var(--foreground);
+  }
+  .workbench-background-region.is-editing .workbench-background-region__label > div {
+    min-width: 178px;
+    text-overflow: clip;
+  }
+  .workbench-region-grip {
+    position: absolute;
+    top: calc(7px * var(--workbench-layer-control-inverse-scale, 1));
+    right: calc(7px * var(--workbench-layer-control-inverse-scale, 1));
+    width: calc(24px * var(--workbench-layer-control-inverse-scale, 1));
+    height: calc(24px * var(--workbench-layer-control-inverse-scale, 1));
+    padding: calc(6px * var(--workbench-layer-control-inverse-scale, 1));
+    border: 0;
+    border-radius: calc(5px * var(--workbench-layer-control-inverse-scale, 1));
+    background: transparent;
+    color: var(--workbench-canvas-ink);
+    opacity: 0;
+    pointer-events: none;
+    cursor: grab;
+  }
+  .workbench-region-grip > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .workbench-background-region.is-editable:is(:hover, .is-selected) > .workbench-region-grip {
+    opacity: 0.8;
+    pointer-events: auto;
+  }
+  .workbench-region-preview-mat {
+    display: block;
+    position: relative;
+    width: 20px;
+    height: 22px;
+    flex-shrink: 0;
+    background: var(--wb-canvas);
+    border-radius: 4px;
+  }
+  .workbench-region-material__sample {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    --hatch-spacing: 5px;
+    --hatch-line: 0.6px;
+  }
+  .workbench-treatment-trigger > .workbench-region-preview-mat {
+    width: 20px;
+    height: 20px;
+  }
+  .workbench-treatment-options .workbench-region-preview-mat {
+    width: 100%;
+    height: 65px;
+  }
+  .workbench-treatment-options .workbench-region-material__sample {
+    --hatch-spacing: 8px;
+    --hatch-line: 0.75px;
+    border-radius: 5px;
+  }
+  .workbench-preview-objects {
+    position: absolute;
+    top: 26%;
+    left: 17%;
+    width: 28%;
+    height: 42%;
+    border: 1px solid var(--wb-window-edge);
+    background: var(--wb-window);
+    border-radius: 3px;
+  }
+  .workbench-preview-objects::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: calc(100% + 8px);
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--wb-window-edge);
+    background: var(--wb-window);
+    border-radius: 3px;
+  }
+
+  .workbench-composition-selection,
+  .workbench-layer-control__selection {
+    position: absolute;
+    inset: 0;
+    border: calc(1px * var(--workbench-layer-control-inverse-scale, 1)) solid
+      var(--wb-window-active);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .workbench-composition-selection::before,
+  .workbench-composition-selection::after,
+  .workbench-layer-control__selection::before,
+  .workbench-layer-control__selection::after {
+    content: '';
+    position: absolute;
+    width: calc(4px * var(--workbench-layer-control-inverse-scale, 1));
+    height: calc(4px * var(--workbench-layer-control-inverse-scale, 1));
+    background: var(--card);
+    border: calc(1px * var(--workbench-layer-control-inverse-scale, 1)) solid
+      var(--wb-window-active);
+    border-radius: calc(1px * var(--workbench-layer-control-inverse-scale, 1));
+  }
+  :is(.workbench-composition-selection, .workbench-layer-control__selection)::before {
+    left: calc(-2px * var(--workbench-layer-control-inverse-scale, 1));
+    top: calc(-2px * var(--workbench-layer-control-inverse-scale, 1));
+  }
+  :is(.workbench-composition-selection, .workbench-layer-control__selection)::after {
+    right: calc(-2px * var(--workbench-layer-control-inverse-scale, 1));
+    bottom: calc(-2px * var(--workbench-layer-control-inverse-scale, 1));
+  }
+  .workbench-layer-control--region {
+    border-radius: 12px;
+  }
+  .workbench-layer-control--text {
+    border-radius: 3px;
+  }
+  .workbench-layer-control .workbench-layer-resize,
+  .workbench-sticky .workbench-layer-resize {
+    right: calc(-12px * var(--workbench-layer-control-inverse-scale, 1));
+    bottom: calc(-12px * var(--workbench-layer-control-inverse-scale, 1));
+    width: calc(24px * var(--workbench-layer-control-inverse-scale, 1));
+    height: calc(24px * var(--workbench-layer-control-inverse-scale, 1));
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    opacity: 0;
+    pointer-events: auto;
+  }
+  .workbench-text-move {
+    position: absolute;
+    width: calc(22px * var(--workbench-layer-control-inverse-scale, 1));
+    height: calc(22px * var(--workbench-layer-control-inverse-scale, 1));
+    left: calc(-29px * var(--workbench-layer-control-inverse-scale, 1));
+    top: 0;
+    padding: calc(4px * var(--workbench-layer-control-inverse-scale, 1));
+    color: var(--muted-foreground);
+    background: var(--card);
+    border: calc(1px * var(--workbench-layer-control-inverse-scale, 1)) solid var(--wb-window-edge);
+    border-radius: calc(4px * var(--workbench-layer-control-inverse-scale, 1));
+    pointer-events: auto;
+    cursor: grab;
+  }
+  .workbench-text-move > svg {
+    width: 100%;
+    height: 100%;
+  }
+  .workbench-sticky [contenteditable],
+  .workbench-background-region [contenteditable] {
+    user-select: text;
+    cursor: text;
+  }
+  .workbench-sticky [contenteditable]:empty::before,
+  .workbench-background-region [contenteditable]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--muted-foreground);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  :root[data-floe-shell-theme='hc-light']
+    :is(
+      .workbench-background-region,
+      .workbench-region-material__sample,
+      .workbench-region-visibility-outline
+    ) {
+    --region-outline: oklch(0.44 var(--region-outline-chroma) var(--region-hue));
+    --region-border: var(--region-outline);
+  }
+  :root[data-floe-shell-theme='hc-light'] [data-note-material] {
+    border-color: var(--foreground);
+  }
+  @media (max-width: 1100px) {
+    .workbench-composition-toolbar {
+      gap: 3px;
+    }
+  }
+  @media (max-width: 760px) {
+    .workbench-toolbar-main {
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .workbench-treatment-panel {
+      padding: 8px;
+    }
+    .workbench-treatment-options :is(.workbench-note-preview, .workbench-region-preview-mat) {
+      height: 44px;
+    }
+    .workbench-treatment-options small {
+      display: none;
+    }
+    .workbench-composition-toolbar .workbench-treatment-options > button {
+      padding: 5px;
+      gap: 4px;
+    }
+    .workbench-composition-divider {
+      display: none;
+    }
+    .workbench-composition-toolbar select {
+      max-width: 92px;
+    }
+    .workbench-color-options {
+      gap: 0;
+    }
+    .workbench-composition-toolbar button.workbench-style-choice {
+      min-width: 24px;
+      width: 24px;
+    }
+    .workbench-composition-toolbar button {
+      min-width: 25px;
+    }
+    .workbench-composition-toolbar[data-kind='region'] .workbench-color-options {
+      flex-basis: 100%;
+      justify-content: center;
+      padding-bottom: 3px;
+    }
+    .workbench-editing-caption {
+      white-space: normal;
+    }
+    .workbench-composition-toolbar[data-kind='region'] .workbench-editing-caption {
+      flex-basis: 100%;
+      text-align: center;
+      padding: 3px;
+    }
+  }
+  @media (forced-colors: active) {
+    .workbench-sticky__surface,
+    .workbench-background-region {
+      background: Canvas !important;
+      color: CanvasText !important;
+      border: 1px solid CanvasText !important;
+    }
+    .workbench-sticky__body,
+    .workbench-sticky__grip {
+      color: CanvasText !important;
+    }
+    .workbench-composition-selection,
+    .workbench-layer-control__selection {
+      border-color: Highlight !important;
+    }
+    [data-note-material],
+    .workbench-region-material__sample {
+      border-color: CanvasText !important;
+    }
+    [data-note-material]::before {
+      forced-color-adjust: none;
+    }
+    .workbench-background-region.is-material-frame {
+      border-style: dashed !important;
+    }
+  }
+}

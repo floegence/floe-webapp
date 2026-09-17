@@ -1,5 +1,6 @@
 import {
   WorkbenchCompositionMessagesContext,
+  WorkbenchCompositionActionsContext,
   type WorkbenchCompositionMessages,
 } from './workbenchCompositionMessages';
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from 'solid-js';
@@ -919,134 +920,153 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
   });
 
   return (
-    <WorkbenchCompositionMessagesContext.Provider value={() => props.compositionMessages}>
-      <div
-        ref={setSurfaceRootEl}
-        onClick={ensureReadableEditor}
-        onKeyUp={(event) => {
-          if (event.key === 'Tab') ensureReadableEditor();
-        }}
-        class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
-        {...{
-          [interactionAdapter().surfaceRootAttr]: 'true',
-          [interactionAdapter().dialogSurfaceHostAttr]: 'true',
-          [DIALOG_SURFACE_HOST_ATTR]: 'true',
-          [SURFACE_PORTAL_LAYER_ATTR]: 'true',
-        }}
-        data-workbench-theme={model.theme()}
-        data-workbench-mode={model.mode()}
-        tabIndex={-1}
-      >
-        <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
-          <WorkbenchCanvas
-            widgetDefinitions={model.widgetDefinitions()}
-            widgets={model.widgets()}
-            stickyNotes={model.stickyNotes()}
-            annotations={model.annotations()}
-            backgroundLayers={model.backgroundLayers()}
-            placementPreview={placementPreview()}
-            viewport={model.viewport()}
-            canvasFrameSize={model.canvasFrameSize()}
-            selectedWidgetId={selectedWidgetId()}
-            selectedObject={selectedObject()}
-            mode={model.mode()}
-            visualFrontOwnerId={model.visualFrontOwnerId()}
+    <WorkbenchCompositionActionsContext.Provider
+      value={{
+        duplicate: (selection) => {
+          if (selection.kind === 'sticky_note') {
+            const item = model.queries.findStickyNoteById(selection.id);
+            if (item) model.widgetActions.duplicateStickyNoteFrom(item);
+          }
+          if (selection.kind === 'annotation') {
+            const item = model.annotations().find((item) => item.id === selection.id);
+            if (item) model.widgetActions.duplicateTextAnnotationFrom(item);
+          }
+          if (selection.kind === 'background_layer') {
+            const item = model.backgroundLayers().find((item) => item.id === selection.id);
+            if (item) model.widgetActions.duplicateBackgroundLayerFrom(item);
+          }
+        },
+      }}
+    >
+      <WorkbenchCompositionMessagesContext.Provider value={() => props.compositionMessages}>
+        <div
+          ref={setSurfaceRootEl}
+          onClick={ensureReadableEditor}
+          onKeyUp={(event) => {
+            if (event.key === 'Tab') ensureReadableEditor();
+          }}
+          class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}
+          {...{
+            [interactionAdapter().surfaceRootAttr]: 'true',
+            [interactionAdapter().dialogSurfaceHostAttr]: 'true',
+            [DIALOG_SURFACE_HOST_ATTR]: 'true',
+            [SURFACE_PORTAL_LAYER_ATTR]: 'true',
+          }}
+          data-workbench-theme={model.theme()}
+          data-workbench-mode={model.mode()}
+          tabIndex={-1}
+        >
+          <div class="workbench-surface__body" data-floe-workbench-canvas-frame="true">
+            <WorkbenchCanvas
+              widgetDefinitions={model.widgetDefinitions()}
+              widgets={model.widgets()}
+              stickyNotes={model.stickyNotes()}
+              annotations={model.annotations()}
+              backgroundLayers={model.backgroundLayers()}
+              placementPreview={placementPreview()}
+              viewport={model.viewport()}
+              canvasFrameSize={model.canvasFrameSize()}
+              selectedWidgetId={selectedWidgetId()}
+              selectedObject={selectedObject()}
+              mode={model.mode()}
+              visualFrontOwnerId={model.visualFrontOwnerId()}
+              locked={model.locked()}
+              filters={model.filters()}
+              interactionAdapter={interactionAdapter()}
+              setCanvasFrameRef={model.setCanvasFrameRef}
+              onViewportCommit={model.canvas.commitViewport}
+              onViewportInteractionStart={model.canvas.cancelViewportNavigation}
+              onCanvasContextMenu={model.canvas.openCanvasContextMenu}
+              onCanvasPointerDown={handleCanvasPointerDown}
+              onSelectWidget={selectWidget}
+              onActivateWidget={activateWidget}
+              onWidgetContextMenu={model.canvas.openWidgetContextMenu}
+              onClaimVisualFrontOwner={model.canvas.claimVisualFrontOwner}
+              onCommitFront={model.canvas.commitFront}
+              onCommitMove={model.canvas.commitMove}
+              onCommitResize={model.canvas.commitResize}
+              onSelectStickyNote={model.canvas.selectStickyNote}
+              onStickyNoteContextMenu={model.canvas.openStickyNoteContextMenu}
+              onClaimStickyVisualFrontOwner={model.canvas.claimVisualFrontOwner}
+              onCommitStickyFront={model.canvas.commitStickyFront}
+              onCommitStickyMove={model.canvas.commitStickyMove}
+              onCommitStickyResize={model.canvas.commitStickyResize}
+              onUpdateStickyNote={model.widgetActions.updateStickyNote}
+              onDeleteStickyNote={model.widgetActions.deleteStickyNote}
+              onSelectAnnotation={model.canvas.selectAnnotation}
+              onAnnotationContextMenu={model.canvas.openAnnotationContextMenu}
+              onCommitAnnotationMove={model.canvas.commitAnnotationMove}
+              onCommitAnnotationResize={model.canvas.commitAnnotationResize}
+              onUpdateTextAnnotation={model.widgetActions.updateTextAnnotation}
+              onDeleteAnnotation={model.widgetActions.deleteAnnotation}
+              onSelectBackgroundLayer={model.canvas.selectBackgroundLayer}
+              onBackgroundLayerContextMenu={model.canvas.openBackgroundLayerContextMenu}
+              onCommitBackgroundMove={model.canvas.commitBackgroundMove}
+              onCommitBackgroundResize={model.canvas.commitBackgroundResize}
+              onUpdateBackgroundLayer={model.widgetActions.updateBackgroundLayer}
+              onDeleteBackgroundLayer={model.widgetActions.deleteBackgroundLayer}
+              onRequestOverview={overviewWidgetForViewport}
+              onRequestFit={focusWidgetForViewport}
+              onRequestDelete={props.onRequestDelete ?? model.widgetActions.deleteWidget}
+              onLayoutInteractionStart={props.onLayoutInteractionStart}
+              onLayoutInteractionEnd={props.onLayoutInteractionEnd}
+            />
+          </div>
+
+          <WorkbenchLockButton
             locked={model.locked()}
-            filters={model.filters()}
-            interactionAdapter={interactionAdapter()}
-            setCanvasFrameRef={model.setCanvasFrameRef}
-            onViewportCommit={model.canvas.commitViewport}
-            onViewportInteractionStart={model.canvas.cancelViewportNavigation}
-            onCanvasContextMenu={model.canvas.openCanvasContextMenu}
-            onCanvasPointerDown={handleCanvasPointerDown}
-            onSelectWidget={selectWidget}
-            onActivateWidget={activateWidget}
-            onWidgetContextMenu={model.canvas.openWidgetContextMenu}
-            onClaimVisualFrontOwner={model.canvas.claimVisualFrontOwner}
-            onCommitFront={model.canvas.commitFront}
-            onCommitMove={model.canvas.commitMove}
-            onCommitResize={model.canvas.commitResize}
-            onSelectStickyNote={model.canvas.selectStickyNote}
-            onStickyNoteContextMenu={model.canvas.openStickyNoteContextMenu}
-            onClaimStickyVisualFrontOwner={model.canvas.claimVisualFrontOwner}
-            onCommitStickyFront={model.canvas.commitStickyFront}
-            onCommitStickyMove={model.canvas.commitStickyMove}
-            onCommitStickyResize={model.canvas.commitStickyResize}
-            onUpdateStickyNote={model.widgetActions.updateStickyNote}
-            onDeleteStickyNote={model.widgetActions.deleteStickyNote}
-            onSelectAnnotation={model.canvas.selectAnnotation}
-            onAnnotationContextMenu={model.canvas.openAnnotationContextMenu}
-            onCommitAnnotationMove={model.canvas.commitAnnotationMove}
-            onCommitAnnotationResize={model.canvas.commitAnnotationResize}
-            onUpdateTextAnnotation={model.widgetActions.updateTextAnnotation}
-            onDeleteAnnotation={model.widgetActions.deleteAnnotation}
-            onSelectBackgroundLayer={model.canvas.selectBackgroundLayer}
-            onBackgroundLayerContextMenu={model.canvas.openBackgroundLayerContextMenu}
-            onCommitBackgroundMove={model.canvas.commitBackgroundMove}
-            onCommitBackgroundResize={model.canvas.commitBackgroundResize}
-            onUpdateBackgroundLayer={model.widgetActions.updateBackgroundLayer}
-            onDeleteBackgroundLayer={model.widgetActions.deleteBackgroundLayer}
-            onRequestOverview={overviewWidgetForViewport}
-            onRequestFit={focusWidgetForViewport}
-            onRequestDelete={props.onRequestDelete ?? model.widgetActions.deleteWidget}
-            onLayoutInteractionStart={props.onLayoutInteractionStart}
-            onLayoutInteractionEnd={props.onLayoutInteractionEnd}
+            onToggle={model.lock.toggle}
+            shortcutLabel={lockShortcut() ?? undefined}
           />
+
+          <WorkbenchDock
+            widgetDefinitions={filterBarWidgetDefinitions()}
+            widgets={model.widgets()}
+            filters={model.filters()}
+            mode={model.mode()}
+            activationMode={props.dockItemActivationMode}
+            viewport={model.viewport()}
+            onSoloFilter={model.filter.solo}
+            onFocusCycleItem={handleDockFocusCycle}
+            resolveItemPresentation={resolveDockItemPresentation}
+            onDockActivation={handleDockActivation}
+            onSelectMode={model.modes.setMode}
+            onViewportCommit={model.canvas.commitViewport}
+            onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
+            onCreateAt={handleCreateAtClient}
+            onCreateToolAt={handleCreateToolAtClient}
+            onItemClick={props.onDockItemClick}
+            modeIcons={props.dockModeIcons}
+            dockActions={props.dockActions}
+            dockItems={props.dockItems}
+            registerExternalDockDragController={props.registerExternalDockDragController}
+            onDragPreviewChange={setDockDragPreview}
+          />
+
+          <WorkbenchHud
+            scaleLabel={model.scaleLabel()}
+            onZoomOut={model.hud.zoomOut}
+            onZoomIn={model.hud.zoomIn}
+            activeTheme={model.theme()}
+            onSelectTheme={(id) => model.appearance.setTheme(id)}
+          />
+
+          <Show when={model.contextMenu.state()}>
+            <Portal>
+              <div
+                class="workbench-menu-backdrop"
+                data-floe-workbench-boundary="true"
+                onContextMenu={model.contextMenu.retarget}
+              />
+              <WorkbenchContextMenu
+                x={contextMenuPosition()?.left ?? 0}
+                y={contextMenuPosition()?.top ?? 0}
+                items={contextMenuItems()}
+              />
+            </Portal>
+          </Show>
         </div>
-
-        <WorkbenchLockButton
-          locked={model.locked()}
-          onToggle={model.lock.toggle}
-          shortcutLabel={lockShortcut() ?? undefined}
-        />
-
-        <WorkbenchDock
-          widgetDefinitions={filterBarWidgetDefinitions()}
-          widgets={model.widgets()}
-          filters={model.filters()}
-          mode={model.mode()}
-          activationMode={props.dockItemActivationMode}
-          viewport={model.viewport()}
-          onSoloFilter={model.filter.solo}
-          onFocusCycleItem={handleDockFocusCycle}
-          resolveItemPresentation={resolveDockItemPresentation}
-          onDockActivation={handleDockActivation}
-          onSelectMode={model.modes.setMode}
-          onViewportCommit={model.canvas.commitViewport}
-          onViewportInteractionStart={() => model.canvas.cancelViewportNavigation()}
-          onCreateAt={handleCreateAtClient}
-          onCreateToolAt={handleCreateToolAtClient}
-          onItemClick={props.onDockItemClick}
-          modeIcons={props.dockModeIcons}
-          dockActions={props.dockActions}
-          dockItems={props.dockItems}
-          registerExternalDockDragController={props.registerExternalDockDragController}
-          onDragPreviewChange={setDockDragPreview}
-        />
-
-        <WorkbenchHud
-          scaleLabel={model.scaleLabel()}
-          onZoomOut={model.hud.zoomOut}
-          onZoomIn={model.hud.zoomIn}
-          activeTheme={model.theme()}
-          onSelectTheme={(id) => model.appearance.setTheme(id)}
-        />
-
-        <Show when={model.contextMenu.state()}>
-          <Portal>
-            <div
-              class="workbench-menu-backdrop"
-              data-floe-workbench-boundary="true"
-              onContextMenu={model.contextMenu.retarget}
-            />
-            <WorkbenchContextMenu
-              x={contextMenuPosition()?.left ?? 0}
-              y={contextMenuPosition()?.top ?? 0}
-              items={contextMenuItems()}
-            />
-          </Portal>
-        </Show>
-      </div>
-    </WorkbenchCompositionMessagesContext.Provider>
+      </WorkbenchCompositionMessagesContext.Provider>
+    </WorkbenchCompositionActionsContext.Provider>
   );
 }

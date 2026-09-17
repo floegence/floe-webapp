@@ -161,7 +161,8 @@ function createStickyNoteAt(
   return {
     id: createWorkbenchId(),
     kind: 'sticky_note',
-    body: 'Capture the thought, decision, or next step here.',
+    title: '',
+    body: '',
     color: WORKBENCH_DEFAULT_STICKY_NOTE_COLOR,
     x: worldX - width / 2,
     y: worldY - height / 2,
@@ -230,7 +231,7 @@ function createBackgroundLayerAt(
       defaults?.fill,
       WORKBENCH_DEFAULT_REGION_FILL
     ),
-    opacity: opacityValue(defaults?.opacity, 0.72),
+    opacity: opacityValue(defaults?.opacity, 1),
     material: stringOption(
       WORKBENCH_BACKGROUND_MATERIALS,
       defaults?.material,
@@ -839,6 +840,27 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
     return stickyNote;
   };
 
+  const duplicateStickyNoteFrom = (item: WorkbenchStickyNoteItem) => {
+    const now = Date.now();
+    const offset = 28 / viewport().scale;
+    const note = {
+      ...item,
+      id: createWorkbenchId(),
+      x: item.x + offset,
+      y: item.y + offset,
+      z_index: topZIndex() + 1,
+      created_at_unix_ms: now,
+      updated_at_unix_ms: now,
+    };
+    options.setState((prev) => ({
+      ...prev,
+      stickyNotes: [...(prev.stickyNotes ?? []), note],
+      selectedWidgetId: null,
+      selectedObject: { kind: 'sticky_note', id: note.id },
+    }));
+    return note;
+  };
+
   const addTextAnnotationAtCursor = (worldX: number, worldY: number) => {
     const annotation = createTextAnnotationAt(
       worldX,
@@ -987,6 +1009,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
         item.id === noteId
           ? {
               ...item,
+              ...(typeof patch.title === 'string' ? { title: patch.title } : {}),
               ...(typeof patch.body === 'string' ? { body: patch.body } : {}),
               ...(patch.color ? { color: patch.color } : {}),
               ...(patch.material ? { material: patch.material } : {}),
@@ -1588,6 +1611,7 @@ export function useWorkbenchModel(options: UseWorkbenchModelOptions) {
       addWidgetAtWorldCenter,
       addStickyNoteAtCursor,
       addTextAnnotationAtCursor,
+      duplicateStickyNoteFrom,
       duplicateTextAnnotationFrom,
       addBackgroundLayerAtCursor,
       duplicateBackgroundLayerFrom,

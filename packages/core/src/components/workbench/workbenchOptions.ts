@@ -13,6 +13,12 @@ export const WORKBENCH_DEFAULT_TEXT_COLOR = WORKBENCH_TEXT_COLOR_OPTIONS[0];
 
 export const WORKBENCH_TEXT_FONT_OPTIONS = [
   {
+    id: 'system',
+    label: 'System',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif',
+    fontWeight: 560,
+  },
+  {
     id: 'serif',
     label: 'Serif',
     fontFamily: 'ui-serif, Georgia, serif',
@@ -93,6 +99,15 @@ export function resolveWorkbenchTextFontOption(fontFamily: unknown): WorkbenchTe
   );
 }
 
+export const WORKBENCH_REGION_COLOR_OPTIONS = [
+  { color: 'amber', fill: '#a79d8e', hue: 82 },
+  { color: 'sage', fill: '#9da8a1', hue: 145 },
+  { color: 'azure', fill: '#8fa1aa', hue: 245 },
+  { color: 'coral', fill: '#a78f86', hue: 42 },
+  { color: 'rose', fill: '#b58fa2', hue: 350 },
+  { color: 'graphite', fill: '#999999', hue: 255 },
+] as const;
+
 export const WORKBENCH_REGION_FILL_OPTIONS = [
   '#9da8a1',
   '#a79d8e',
@@ -100,6 +115,8 @@ export const WORKBENCH_REGION_FILL_OPTIONS = [
   '#a78f86',
   '#9ca184',
   '#9993a7',
+  '#b58fa2',
+  '#999999',
 ] as const;
 
 export const WORKBENCH_DEFAULT_REGION_FILL = WORKBENCH_REGION_FILL_OPTIONS[0];

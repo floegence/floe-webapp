@@ -69,7 +69,7 @@ export interface WorkbenchCanvasFieldProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'title' | 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onSelectAnnotation?: (annotationId: string) => void;
@@ -173,7 +173,7 @@ interface WorkbenchCanvasStickyNoteSlotProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'title' | 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
@@ -260,7 +260,6 @@ export function WorkbenchCanvasField(props: WorkbenchCanvasFieldProps) {
       class="workbench-canvas__field"
       classList={{ 'is-work-layer-muted': Boolean(props.workLayerLocked) }}
     >
-      <div class="workbench-canvas__grid" aria-hidden="true" />
       {renderFreeformLayers() ? (
         <>
           <WorkbenchBackgroundLayerView

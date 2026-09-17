@@ -197,6 +197,8 @@ export type WorkbenchStickyNoteColor = 'graphite' | 'sage' | 'amber' | 'azure' |
 export type WorkbenchStickyNoteMaterial = 'tint' | 'tab' | 'ruled';
 
 export interface WorkbenchStickyNoteItem {
+  /** Optional editable heading; old body-only notes remain valid. */
+  title?: string;
   id: string;
   kind: 'sticky_note';
   body: string;
@@ -213,7 +215,7 @@ export interface WorkbenchStickyNoteItem {
 }
 
 export type WorkbenchStickyNotePatch = Partial<
-  Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>
+  Pick<WorkbenchStickyNoteItem, 'title' | 'body' | 'color' | 'material'>
 >;
 
 export type WorkbenchTextAnnotationAlign = 'left' | 'center' | 'right';

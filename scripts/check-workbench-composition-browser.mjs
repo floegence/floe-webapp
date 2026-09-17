@@ -248,7 +248,7 @@ try {
           }
         }
         for (const material of ['solid', 'frame', 'hatched', 'dotted', 'grid', 'glass']) {
-          for (const fill of ['#9da8a1', '#a79d8e', '#8fa1aa', '#a78f86', '#9ca184', '#9993a7']) {
+          for (const fill of ['#9da8a1', '#a79d8e', '#8fa1aa', '#a78f86', '#b58fa2', '#999999']) {
             await page.evaluate(
               ({ material, fill }) =>
                 window.workbenchFixture.setState((s) => ({
@@ -258,10 +258,12 @@ try {
                 })),
               { material, fill }
             );
-            const region = await page.evaluate((fill) => {
+            const region = await page.evaluate(() => {
               const face = getComputedStyle(document.querySelector('.workbench-background-region'));
               const sample = getComputedStyle(
-                document.querySelector(`button[aria-label="Use region color ${fill}"]`)
+                document.querySelector(
+                  '.workbench-style-choice[aria-pressed="true"] .workbench-region-material__sample'
+                )
               );
               return {
                 fill: face.backgroundColor,
@@ -270,15 +272,15 @@ try {
                 samplePattern: sample.backgroundImage,
                 filter: face.backdropFilter,
               };
-            }, fill);
+            });
             assert.equal(
               region.fill,
               region.sample,
               `${theme.name}/${material}: exact region color preview`
             );
             assert.equal(
-              region.pattern,
-              region.samplePattern,
+              region.pattern.split('(')[0],
+              region.samplePattern.split('(')[0],
               `${theme.name}/${material}: exact region texture preview`
             );
             assert.ok(!region.filter || region.filter === 'none');

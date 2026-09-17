@@ -81,7 +81,7 @@ export interface WorkbenchCanvasProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'title' | 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onSelectAnnotation?: (annotationId: string) => void;
@@ -188,7 +188,7 @@ interface WorkbenchProjectedStickyNoteSlotProps {
   onCommitStickyResize?: (noteId: string, size: { width: number; height: number }) => void;
   onUpdateStickyNote?: (
     noteId: string,
-    patch: Partial<Pick<WorkbenchStickyNoteItem, 'body' | 'color' | 'material'>>
+    patch: Partial<Pick<WorkbenchStickyNoteItem, 'title' | 'body' | 'color' | 'material'>>
   ) => void;
   onDeleteStickyNote?: (noteId: string) => void;
   onLayoutInteractionStart?: () => void;
@@ -307,6 +307,7 @@ export function WorkbenchCanvas(props: WorkbenchCanvasProps) {
       ref={props.setCanvasFrameRef}
     >
       <div class="workbench-canvas__atmosphere" aria-hidden="true" />
+      <div class="workbench-canvas__grid" aria-hidden="true" />
       <InfiniteCanvas
         ariaLabel="Workbench canvas"
         class="workbench-canvas__infinite"

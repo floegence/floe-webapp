@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN" data-design="proposed">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Redeven · Workbench surface study</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23283430'/%3E%3Cpath d='M8 10h10a6 6 0 010 12h-5v-6h6' fill='none' stroke='%23c4d5c9' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="baseline.css">
+  <link rel="stylesheet" href="demo.css">
+  <link rel="stylesheet" href="composition.css">
+  <script src="themes.js" defer></script>
+  <script src="locales.js" defer></script>
+  <script src="composition-locales.js" defer></script>
+  <script src="demo.js" defer></script>
+  <script src="composition.js" defer></script>
+</head>
+<body>
+  <svg aria-hidden="true" class="sprite" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 6 6 6-6 6m9 0h7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h5l3 3h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 13h4l3-9 5 16 3-10 2 3h3"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9M8 8h5m-5 5h8m-8 4h5m4-14 4 4m-5 1 5-5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15.5A9 9 0 0 1 8.5 4 9 9 0 1 0 20 15.5Z"/></symbol>
+    <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><rect x="8" y="8" width="8" height="8" rx="1"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3.5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m7 5-5 7 5 7m10-14 5 7-5 7M14 3l-4 18"/></symbol>
+    <symbol id="i-flower" viewBox="0 0 24 24"><path d="M12 9c-8-11-13 3-3 3-11 8 3 13 3 3 8 11 13-3 3-3 11-8-3-13-3-3Z"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></symbol>
+  </defs></svg>
+
+  <header class="study-header">
+    <div class="brand"><span class="brand-mark"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M7 8h9a6 6 0 0 1 0 12h-4v-6h6"/></svg></span><span>Redeven <span class="brand-divider">/</span> <strong>Workbench</strong></span><span class="demo-tag" data-i18n="demo"></span></div>
+    <div class="header-actions"><span class="study-name" data-i18n="study"></span><button id="language" class="quiet-button">English</button></div>
+  </header>
+
+  <main class="study-layout">
+    <aside class="inspector" aria-label="Appearance preview">
+      <div class="inspector-heading"><span class="eyebrow">SURFACE STUDY · 04</span><h1 data-i18n="heading"></h1><p data-i18n="intro"></p></div>
+      <div class="design-switch segmented" role="group" aria-label="Design version"><button data-design-choice="baseline" data-i18n="baseline"></button><button data-design-choice="proposed" aria-pressed="true" data-i18n="proposed"></button></div>
+      <section class="theme-section">
+        <div class="section-label"><h2 data-i18n="theme"></h2><span class="count">26</span></div>
+        <div class="mode-switch segmented" role="group" aria-label="Theme mode"><button data-mode="light"><svg class="icon"><use href="#i-sun"/></svg><span data-i18n="light"></span></button><button data-mode="dark"><svg class="icon"><use href="#i-moon"/></svg><span data-i18n="dark"></span></button></div>
+        <div id="theme-grid" class="theme-grid"></div>
+      </section>
+      <section class="material-section"><label for="material" data-i18n="appearance"></label><select id="material"><option value="default">Default</option><option value="vibrancy">Vibrancy</option><option value="mica">Mica</option><option value="midnight">Midnight</option><option value="aurora">Aurora</option><option value="terminal">Terminal</option></select></section>
+      <section class="composition-guide"><span class="eyebrow" data-i18n="materialSystem"></span><h2 data-i18n="systemTitle"></h2><p data-i18n="systemBody"></p><div id="palette-legend"></div></section>
+      <section class="layer-section"><div class="section-label"><h2 data-i18n="layers"></h2><span class="small-label" id="layer-mode"></span></div><div class="layer-swatches"><div><span id="swatch-canvas"></span><small data-i18n="canvas"></small></div><div><span id="swatch-window"></span><small data-i18n="window"></small></div><div><span id="swatch-header"></span><small data-i18n="titlebar"></small></div></div><p id="layer-explanation"></p></section>
+      <div class="inspector-footer"><span class="status-dot"></span><span data-i18n="localOnly"></span></div>
+    </aside>
+
+    <section class="preview" aria-label="Interactive Workbench design preview">
+      <div class="preview-toolbar"><div class="preview-context"><span class="status-dot"></span><strong>redeven</strong></div><div class="scene-switch segmented" role="group" aria-label="Preview scene"><button data-scene="work" data-i18n="workScene"></button><button data-scene="composition" data-i18n="compositionScene"></button></div><div class="view-mode"><span class="current"><svg class="icon"><use href="#i-grid"/></svg> Workbench</span></div><button id="reset" class="icon-button" data-title="reset"><svg class="icon"><use href="#i-reset"/></svg></button></div>
+      <div id="surface" class="workbench-surface" data-workbench-theme="default">
+        <div id="canvas" class="workbench-canvas">
+          <div class="canvas-atmosphere"></div><div class="demo-grid"></div>
+          <div class="canvas-caption"><span class="eyebrow" data-i18n="workspace"></span><div><span id="preview-theme-name"></span><span class="caption-dot">·</span><span id="preview-design-name"></span></div></div>
+          <div class="zoom-toolbar"><button id="fit" class="icon-button" data-title="fit"><svg class="icon"><use href="#i-fit"/></svg></button><span class="tool-divider"></span><button id="zoom-out" class="icon-button" data-title="zoomOut">−</button><button id="zoom-value" data-title="toggleZoom">65%</button><button id="zoom-in" class="icon-button" data-title="zoomIn">+</button><span class="tool-divider"></span><button id="overview" data-i18n="overview"></button></div>
+          <div id="world" class="world"></div>
+          <div id="composition-world" class="world" hidden></div>
+          <div id="object-toolbar" class="object-toolbar" role="toolbar" hidden></div>
+          <div id="composition-dock" class="composition-dock" hidden></div>
+          <div class="canvas-help"><span class="help-dot"></span><span data-i18n="canvasHelp"></span></div>
+          <nav id="dock" class="demo-dock" aria-label="Demo windows"></nav>
+        </div>
+      </div>
+      <footer class="preview-footer"><span><span class="legend-dot"></span><span id="focus-status" aria-live="polite"></span></span><span id="overview-hint" data-i18n="footerHint"></span><span class="sample-label" data-i18n="sampleData"></span></footer>
+    </section>
+  </main>
+  <div class="sr-only" id="announcement" aria-live="polite"></div>
+<script defer src="review-embed.js"></script></body>
+</html>

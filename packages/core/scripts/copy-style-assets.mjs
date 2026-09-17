@@ -62,6 +62,10 @@ const copies = [
     dest: resolve(pkgRoot, 'dist/workbench.css'),
   },
   {
+    src: resolve(pkgRoot, 'src/components/workbench/workbench-composition.css'),
+    dest: resolve(pkgRoot, 'dist/workbench-composition.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/components/workbench/workbench-themes.css'),
     dest: resolve(pkgRoot, 'dist/workbench-themes.css'),
   },

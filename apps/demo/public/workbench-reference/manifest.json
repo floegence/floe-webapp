@@ -1,0 +1,14 @@
+{
+  "source": "Approved Workbench design demo v4.1",
+  "files": {
+    "index.html": "db5e6a3b6a5165f77d4f4603f7e5ad18c68f12b5b46e17e2697fa9a954b505fd",
+    "demo.css": "25f6f4718c0ac7d86a4bf84ae9ddc14f8f44aacb2ac76c70fabc993fad868fa7",
+    "baseline.css": "c19259abe067dfd60ea7960b09b3b59ba06c9e35ae10f15adc66c5267c1e077a",
+    "composition.css": "c426d3b5844e12538ee4377e4c6b80f4a5ac99566861410e1d6ecffd2b4ccc87",
+    "themes.js": "7823cd8a2a7da1d2772eb500d6b33f60bec0f40158f2988619da984f31d590fc",
+    "locales.js": "1ad9a29cbb5cacec483bdd60a2735f44a96e9a07bbe39a0c3f0103e126ae15eb",
+    "composition-locales.js": "70fc6815d20c16805d36eef583295a4aa04d127eaa8c69adc4c6cc0fd1263776",
+    "demo.js": "909d0480073ab0f54fe7f4ca6ddace613b7c2773fc00cc0ff6791b4e4f87ee7f",
+    "composition.js": "b23620f16fbbfe8a1ef7d3fd8e19d7ff2bda85effaf30fded9310ba5187cb9e3"
+  }
+}

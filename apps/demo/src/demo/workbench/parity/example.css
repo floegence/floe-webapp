@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+@import '@floegence/floe-webapp-core/tailwind';
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+/* This isolated example leaves chrome to the comparison page. Object styles come only from core. */
+#root > .workbench-surface {
+  width: 100%;
+  height: 100%;
+}
+#root .workbench-hud,
+#root .workbench-filter-bar,
+#root .workbench-lock-button {
+  display: none;
+}
+
+body .workbench-dock {
+  display: none;
+}

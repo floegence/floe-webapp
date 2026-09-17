@@ -59,3 +59,43 @@ Performance evidence must state the actual renderer. Headless Shell software ras
 ## Behavioral findings from the state audit
 
 The baseline packed gallery reproduced distinct generated names for options in a RadioGroup, which prevented native arrow-key group navigation. Generate the fallback name once per group; preserve explicit names and stable option IDs. The baseline mixed Checkbox only displayed a minus glyph. Synchronize its native `indeterminate` property and `aria-checked="mixed"`, while preserving consumer refs. Focused client tests and real keyboard browser checks cover both repairs.
+
+## Workbench composition objects
+
+Workbench owns the production renderer for sticky notes, regions, text, and their
+object-attached tools. Sticky notes have six theme-aware colors and three materials
+(`tint`, `tab`, `ruled`). Regions use the same six color families with `solid`,
+`frame`, and `hatched` previews; additional existing materials and opacity remain
+available through the material panel's more-options action. Preview tiles and
+objects share material variables. No material requires a blur filter or idle
+animation loop.
+
+A sticky note's optional `title` is editable content. New notes start with empty
+title and body fields, with localized placeholders. Existing notes without a
+`title` retain their body-only layout. Hosts persisting `WorkbenchState` must retain
+the optional field alongside `body`, `color`, and `material`. Region names may be
+empty, disappear when cleared, and can be restored with Add name. Click visible
+text to edit it directly; native selection and IME remain inside the editor.
+Enter finishes a region name, Ctrl/Cmd+Enter finishes multiline content, and Escape
+restores the field's value at the start of editing. Switching title/body commits
+the previous field. Changing appearance preserves the last caret for emoji insertion.
+
+The compact toolbar is centered above the visible object with a 12-pixel gap,
+clears external region labels, and adapts its placement when the material panel
+opens or the object moves. Text presets match the demo's 48/30/18/14-pixel hierarchy;
+the typography menu also exposes the existing font, size, color and emoji controls.
+Persisted font weights survive state normalization. Inputs use the shared
+border-only focus contract, including the region-name editor.
+
+The demo app includes `/workbench-comparison.html` (A/B) and
+`/workbench-composition.html` (production components only). Both use the same
+sample content, theme and viewport. `apps/demo/public/workbench-reference/` is an
+immutable copy of the approved v4.1 design; its manifest hashes guard the original
+renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
+This reference is an acceptance fixture, not an alternative product implementation.
+
+Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
+936 color/material comparisons, toolbar geometry, editing, duplication, empty
+names, dragging, narrow layouts, and idle layout/style work. Evidence is written
+to `.cache/workbench-parity/`. `pnpm test:workbench-composition` also exercises
+native selection, IME and the world/projected compositors in Chromium and WebKit.

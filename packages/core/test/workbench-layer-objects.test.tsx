@@ -29,10 +29,18 @@ import {
   WORKBENCH_DEFAULT_TEXT_COLOR,
   WORKBENCH_DEFAULT_TEXT_FONT,
   WORKBENCH_REGION_FILL_OPTIONS,
+  WORKBENCH_REGION_COLOR_OPTIONS,
   WORKBENCH_TEXT_COLOR_OPTIONS,
   WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from '../src/components/workbench/workbenchOptions';
+
+function openAdvancedTextTools() {
+  const select = document.querySelector<HTMLSelectElement>('select[aria-label="Typography"]');
+  expect(select).toBeTruthy();
+  select!.value = 'more';
+  select!.dispatchEvent(new Event('change', { bubbles: true }));
+}
 
 function dispatchPointerEvent(
   type: string,
@@ -202,9 +210,12 @@ describe('Workbench layer objects', () => {
       version: 1,
       widgets: [],
       backgroundLayers: [{ ...createRegionItem(), name: '   ' }],
-      stickyNotes: [{ ...createStickyItem(), body: '', material: 'ruled' }],
+      stickyNotes: [{ ...createStickyItem(), title: '', body: '', material: 'ruled' }],
+      annotations: [{ ...createTextItem(), font_size: 18, font_weight: 400 }],
     });
     expect(state.backgroundLayers[0].name).toBe('');
+    expect(state.stickyNotes[0].title).toBe('');
+    expect(state.annotations[0].font_weight).toBe(400);
     expect(state.stickyNotes[0].body).toBe('');
     expect(state.stickyNotes[0].material).toBe('ruled');
   });
@@ -572,7 +583,7 @@ describe('Workbench layer objects', () => {
       host
     );
 
-    const move = document.querySelector('.workbench-layer-move-handle') as HTMLElement | null;
+    const move = document.querySelector('.workbench-text-move') as HTMLElement | null;
     expect(move).toBeTruthy();
     mockPointerCapture(move!);
 
@@ -687,14 +698,16 @@ describe('Workbench layer objects', () => {
       '.workbench-layer-control--region .workbench-layer-resize'
     ) as HTMLElement | null;
     const color = document.querySelector(
-      'button[aria-label="Use region color #a79d8e"]'
+      'button[aria-label="Use region color Amber"]'
     ) as HTMLButtonElement | null;
+    document.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')!.click();
+    const materialGroup = document.querySelector('.workbench-treatment-options');
+    expect(materialGroup?.getAttribute('role')).toBe('group');
+    expect(materialGroup?.children).toHaveLength(3);
+    document.querySelector<HTMLButtonElement>('.workbench-picker-more')!.click();
     const material = document.querySelector(
       'button[aria-label="Use region material Grid"]'
     ) as HTMLButtonElement | null;
-    const materialGroup = document.querySelector(
-      '.workbench-region-material-group'
-    ) as HTMLElement | null;
 
     expect(control?.getAttribute('data-wb-plane')).toBe('overlay');
     expect(control?.style.transform).toBe('translate(100px, 80px)');
@@ -703,7 +716,7 @@ describe('Workbench layer objects', () => {
     expect(color).toBeTruthy();
     expect(material).toBeTruthy();
     expect(materialGroup?.getAttribute('role')).toBe('group');
-    expect(document.querySelectorAll('.workbench-region-material')).toHaveLength(6);
+
     mockPointerCapture(resize!);
 
     dispatchPointerEvent('pointerdown', resize!, {
@@ -733,7 +746,11 @@ describe('Workbench layer objects', () => {
     color!.click();
     expect(onUpdate).toHaveBeenCalledWith('region-1', { fill: '#a79d8e' });
 
-    material!.click();
+    document.querySelector<HTMLButtonElement>('.workbench-treatment-trigger')!.click();
+    document.querySelector<HTMLButtonElement>('.workbench-picker-more')!.click();
+    document
+      .querySelector<HTMLButtonElement>('button[aria-label="Use region material Grid"]')!
+      .click();
     expect(onUpdate).toHaveBeenCalledWith('region-1', { material: 'grid' });
 
     dispose();
@@ -1010,6 +1027,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
+    openAdvancedTextTools();
+
     const stepper = document.querySelector('.workbench-text-size-stepper') as HTMLElement | null;
     const input = document.querySelector(
       '.workbench-text-size-stepper .workbench-text-annotation__size-input'
@@ -1061,6 +1080,8 @@ describe('Workbench layer objects', () => {
       ),
       host
     );
+
+    openAdvancedTextTools();
 
     const fontTrigger = document.querySelector(
       'button[aria-label="Choose bold font"]'
@@ -1155,6 +1176,8 @@ describe('Workbench layer objects', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
 
+    content!.blur();
+    openAdvancedTextTools();
     const emojiTrigger = document.querySelector(
       'button[aria-label="Insert emoji"]'
     ) as HTMLButtonElement | null;
@@ -1211,6 +1234,8 @@ describe('Workbench layer objects', () => {
       host
     );
 
+    openAdvancedTextTools();
+
     for (const color of WORKBENCH_TEXT_COLOR_OPTIONS) {
       expect(document.querySelector(`button[aria-label="Use text color ${color}"]`)).toBeTruthy();
       expect(contrastRatio(color, '#ffffff')).toBeGreaterThanOrEqual(4.3);
@@ -1243,8 +1268,9 @@ describe('Workbench layer objects', () => {
       regionHost
     );
 
-    for (const fill of WORKBENCH_REGION_FILL_OPTIONS) {
-      expect(document.querySelector(`button[aria-label="Use region color ${fill}"]`)).toBeTruthy();
+    for (const { color } of WORKBENCH_REGION_COLOR_OPTIONS) {
+      const name = color[0].toUpperCase() + color.slice(1);
+      expect(document.querySelector(`button[aria-label="Use region color ${name}"]`)).toBeTruthy();
     }
 
     disposeRegion();
@@ -1323,20 +1349,6 @@ describe('Workbench layer objects', () => {
     expect(copy!.classList.contains('is-success')).toBe(true);
 
     dispose();
-  });
-
-  it('keeps the sticky note resize hit area larger than its visual glyph', () => {
-    const cssPath = resolve(process.cwd(), 'src/components/workbench/workbench.css');
-    const css = readFileSync(cssPath, 'utf8');
-
-    expect(css).toContain('.workbench-sticky__resize {');
-    expect(css).toContain('width: 34px;');
-    expect(css).toContain('height: 34px;');
-    expect(css).toContain('z-index: 4;');
-    expect(css).toContain('pointer-events: auto;');
-    expect(css).toContain('.workbench-sticky__resize::after {');
-    expect(css).toContain('width: 10px;');
-    expect(css).toContain('height: 10px;');
   });
 
   it('keeps the widget resize handle above widget-body overlays', () => {

@@ -7,6 +7,10 @@ export interface SurfaceAnchoredLayerProps {
   anchor: HTMLElement | undefined;
   /** Changes when the anchor moves through a transform; no idle polling is used. */
   revision?: unknown;
+  /** Screen-space clearance above labels outside the object bounds. */
+  topOffset?: number;
+  /** Preferred clearance for surface navigation; object visibility takes priority. */
+  reservedSpace?: { top: number; narrowTop?: number; bottom: number };
   children: JSX.Element;
   class?: string;
 }
@@ -15,14 +19,16 @@ export interface SurfaceAnchoredLayerProps {
 export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
   const [mounted, setMounted] = createSignal(false);
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
+  const [placement, setPlacement] = createSignal('above');
   const [visible, setVisible] = createSignal(false);
   const [width, setWidth] = createSignal(480);
-  let panel: HTMLDivElement | undefined;
+  const [panel, setPanel] = createSignal<HTMLDivElement>();
   let frame: number | undefined;
   const measure = () => {
     frame = undefined;
     const anchor = props.anchor;
-    if (!anchor || !panel) return;
+    const panelElement = panel();
+    if (!anchor || !panelElement) return;
     const bounds = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: anchor }));
     if (!bounds) {
       setVisible(false);
@@ -31,14 +37,48 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     const rect = anchor.getBoundingClientRect();
     const maxWidth = Math.max(120, bounds.width - 24);
     setWidth(maxWidth);
-    const size = panel.getBoundingClientRect();
-    const x = Math.max(bounds.left + 12, Math.min(rect.left, bounds.right - size.width - 12));
-    const above = rect.top - size.height - 12;
-    const y =
-      above >= bounds.top + 12
-        ? above
-        : Math.max(bounds.top + 12, Math.min(rect.bottom + 12, bounds.bottom - size.height - 12));
-    setPosition({ x, y });
+    const size = panelElement.getBoundingClientRect();
+    const center = (Math.max(bounds.left, rect.left) + Math.min(bounds.right, rect.right)) / 2;
+    let x = Math.max(
+      bounds.left + 12,
+      Math.min(center - size.width / 2, bounds.right - size.width - 12)
+    );
+    const top = rect.top - (props.topOffset ?? 0);
+    const above = top - size.height - 12;
+    const padding = props.reservedSpace;
+    const minY =
+      bounds.top +
+      (window.matchMedia('(max-width:760px)').matches
+        ? (padding?.narrowTop ?? padding?.top ?? 12)
+        : (padding?.top ?? 12));
+    const maxY = Math.max(minY, bounds.bottom - (padding?.bottom ?? 12) - size.height);
+    const clampY = (value: number) => Math.max(minY, Math.min(value, maxY));
+    let y = above;
+    let side = 'above';
+    if (above < minY) {
+      if (rect.bottom + 12 <= maxY) {
+        y = rect.bottom + 12;
+        side = 'below';
+      } else if (above >= bounds.top + 12) {
+        side = 'above';
+      } else if (rect.bottom + size.height + 12 <= bounds.bottom - 12) {
+        y = rect.bottom + 12;
+        side = 'below';
+      } else if (rect.right + size.width + 24 <= bounds.right) {
+        x = rect.right + 12;
+        y = clampY(top);
+        side = 'right';
+      } else if (rect.left - size.width - 24 >= bounds.left) {
+        x = rect.left - size.width - 12;
+        y = clampY(top);
+        side = 'left';
+      } else {
+        y = clampY(above);
+        side = 'edge';
+      }
+    } else y = Math.min(y, maxY);
+    setPlacement(side);
+    setPosition({ x: Math.round(x), y: Math.round(y) });
     setVisible(
       rect.right > bounds.left &&
         rect.left < bounds.right &&
@@ -53,13 +93,22 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
   createEffect(() => {
     void props.anchor;
     void props.revision;
+    void props.topOffset;
+    void props.reservedSpace;
     schedule();
+  });
+  createEffect(() => {
+    const element = panel();
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(schedule);
+    observer.observe(element);
+    onCleanup(() => observer.disconnect());
   });
   onMount(() => {
     setMounted(true);
     const observer =
       typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : undefined;
-    if (panel) observer?.observe(panel);
+
     const boundary = resolveSurfacePortalHost({ owner: props.anchor }).boundaryHost;
     if (boundary) observer?.observe(boundary);
     // Canvas movement is a transform on an ancestor in the world compositor.
@@ -89,13 +138,15 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
         owner={props.anchor}
         position={position()}
         class={props.class}
+        data-placement={placement()}
+        inert={!visible()}
         style={{
           visibility: visible() ? 'visible' : 'hidden',
           'max-width': `${width()}px`,
           'z-index': 60,
         }}
         layerRef={(node) => {
-          panel = node;
+          setPanel(node);
           schedule();
         }}
       >

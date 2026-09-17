@@ -235,6 +235,7 @@ function sanitizeStickyNote(value: unknown): WorkbenchStickyNoteItem | null {
   return {
     id,
     kind: 'sticky_note',
+    ...(typeof value.title === 'string' ? { title: value.title } : {}),
     body: typeof value.body === 'string' ? value.body : '',
     material: value.material === 'tab' || value.material === 'ruled' ? value.material : 'tint',
     color: sanitizeStickyNoteColor(value.color),
@@ -278,7 +279,10 @@ function sanitizeTextAnnotation(value: unknown): WorkbenchTextAnnotationItem | n
     text: typeof value.text === 'string' ? value.text : '',
     font_family: font.fontFamily,
     font_size: Math.max(8, Math.min(160, Math.round(finiteNumber(value.font_size, 28)))),
-    font_weight: font.fontWeight,
+    font_weight: Math.max(
+      100,
+      Math.min(900, Math.round(finiteNumber(value.font_weight, font.fontWeight)))
+    ),
     color: sanitizeStringOption(
       value.color,
       WORKBENCH_TEXT_COLOR_OPTIONS,

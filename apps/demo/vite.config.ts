@@ -100,6 +100,15 @@ export default defineConfig(({ command }) => {
     resolve: {
       alias: [{ find: '@', replacement: resolve(__dirname, './src') }, ...workspaceAliases],
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+          workbenchComparison: resolve(__dirname, 'workbench-comparison.html'),
+          workbenchComposition: resolve(__dirname, 'workbench-composition.html'),
+        },
+      },
+    },
     server: {
       fs: {
         // Allow importing source files across the monorepo (e.g. `?raw` file viewer).

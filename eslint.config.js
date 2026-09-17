@@ -33,6 +33,12 @@ export default [
     },
   },
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/*.config.*'],
+    // Frozen design evidence is verified by check-workbench-demo-parity.mjs.
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/*.config.*',
+      'apps/demo/public/workbench-reference/**',
+    ],
   },
 ];
