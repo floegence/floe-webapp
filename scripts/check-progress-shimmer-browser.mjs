@@ -145,7 +145,7 @@ try {
         const after = await page.screenshot();
         assert.equal(before.equals(after), false, `${theme.name}: sweep changes painted pixels`);
         const changedPixels = await page.evaluate(
-          async ({ before, after }) => {
+          async ({ before, after, bases }) => {
             const frames = await Promise.all(
               [before, after].map(async (bytes) => {
                 const bitmap = await createImageBitmap(
@@ -178,6 +178,7 @@ try {
               let changed = 0;
               let brightened = 0;
               let darkened = 0;
+              let sampledCarrierPixels = 0;
               const pixelLuminance = (data, offset) => [0.2126, 0.7152, 0.0722].reduce((sum, weight, channel) => {
                 const value = data[offset + channel] / 255;
                 return sum + weight * (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -201,16 +202,25 @@ try {
                 )
                   changed++;
               for (let i = 0; i < a.length; i += 4) {
+                // Surface direction belongs to the fill, not the overlaid label.
+                // Linux LCD text antialiasing can reduce one RGB channel at a
+                // white glyph edge while the desaturated fill grows brighter.
+                // Text shimmer still samples every glyph; label readability is
+                // independently checked against the entire gradient above.
+                if (!isText && !bases[el.dataset.progressCase].slice(0, 3)
+                  .every((channel, index) => Math.abs(a[i + index] - channel) <= 1)) continue;
+                sampledCarrierPixels++;
                 const gain = pixelLuminance(b, i) - pixelLuminance(a, i);
                 if (gain > 0.003) brightened++;
                 if (gain < -0.003) darkened++;
               }
-              return { name: el.dataset.progressCase, changed, brightened, darkened, backgroundChanged };
+              return { name: el.dataset.progressCase, changed, brightened, darkened, sampledCarrierPixels, backgroundChanged };
             });
           },
-          { before: [...before], after: [...after] }
+          { before: [...before], after: [...after], bases: Object.fromEntries(report.cases.at(-1).values.map(value => [value.name, value.base])) }
         );
         for (const value of changedPixels) {
+          assert.ok(value.sampledCarrierPixels > 100, `${theme.name}/${value.name}: carrier has enough observable pixels`);
           assert.ok(
             value.changed > 4,
             `${theme.name}/${value.name}: actual glyph or surface paint moves`
