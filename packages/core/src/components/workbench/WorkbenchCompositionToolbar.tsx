@@ -62,7 +62,7 @@ export function CompositionToolbar(props: {
   onInsertEmoji?: (emoji: string) => void;
   materials?: readonly WorkbenchCompositionMessageKey[];
   material?: WorkbenchCompositionMessageKey;
-  preview?: (material: WorkbenchCompositionMessageKey, large: boolean) => JSX.Element;
+  preview?: (material: WorkbenchCompositionMessageKey) => JSX.Element;
   onMaterial?: (material: WorkbenchCompositionMessageKey) => void;
   materialLabel?: (material: WorkbenchCompositionMessageKey) => string;
   more?: JSX.Element;
@@ -242,7 +242,7 @@ export function CompositionToolbar(props: {
                         ?.focus({ preventScroll: true });
                     }}
                   >
-                    {props.preview?.(material, true)}
+                    {props.preview?.(material)}
                     <span class="workbench-treatment-label">
                       {t(material)}
                       <Check />
@@ -304,7 +304,7 @@ export function CompositionToolbar(props: {
               setOpen(open() === 'material' ? null : 'material');
             }}
           >
-            {props.preview?.(props.material!, false)}
+            {props.preview?.(props.material!)}
             <span>{t(props.material!)}</span>
             <ChevronDown />
           </button>

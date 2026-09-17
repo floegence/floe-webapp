@@ -1837,16 +1837,12 @@ function WorkbenchBackgroundRegionControls(props: {
           materials={WORKBENCH_BACKGROUND_MATERIALS}
           material={item().material}
           materialLabel={(material) => t('useRegionMaterial', t(material))}
-          preview={(material, large) => (
+          preview={(material) => (
             <span class="workbench-region-preview-mat">
               <span
                 class={`workbench-region-material__sample is-material-${material}`}
                 style={createRegionRenderVars(item())}
-              >
-                <Show when={large}>
-                  <span class="workbench-preview-objects" />
-                </Show>
-              </span>
+              />
             </span>
           )}
           onMaterial={(material) =>
