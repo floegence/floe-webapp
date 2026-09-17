@@ -65,7 +65,11 @@ a custom filled action can map `--floe-progress-surface-background` to its fill;
 they must validate that fill and its label as a pair.
 
 The shared effect travels left to right every 2.4 seconds with a 20% band.
-Foreground-derived text colors and a mode-aware surface shade retain at least
+The peak always increases luminance and perceptual lightness. Dark text uses a
+darker base and a lighter peak; button reflection follows the actual fill
+lightness, independently of the page mode. Its softened, slightly angled band
+reduces chroma toward neutral light instead of painting a dark stripe. Bounded
+peak lightness preserves light labels on dark buttons. These colors retain at least
 4.5:1 text contrast and 0.08 OKLab color difference between base and peak across
 the built-in shell palettes. These are progress visibility thresholds, not a
 claim about arbitrary host color overrides. Reduced motion and forced colors

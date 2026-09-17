@@ -74,6 +74,9 @@ function sample() {
       name: el.dataset.progressCase,
       base,
       peak,
+      luminanceGain: luminance(peak) - luminance(base),
+      lightnessGain: b[0] - a[0],
+      chromaChange: Math.hypot(b[1], b[2]) - Math.hypot(a[1], a[2]),
       minimumContrast,
       deltaEOK: Math.hypot(...a.map((v, i) => v - b[i])),
       duration: animation?.effect.getTiming().duration,
@@ -110,6 +113,9 @@ try {
           for (const value of values) {
             const label = `${entry}/${material}/${theme.name}/${hover}/${value.name}`;
             assert.equal(value.animation, true, `${label}: has a real running shimmer`);
+            assert.ok(value.luminanceGain > 0, `${label}: highlight must brighten, not cast a shadow`);
+            assert.ok(value.lightnessGain > 0, `${label}: highlight must increase perceptual lightness`);
+            if (value.name === 'surface') assert.ok(value.chromaChange <= 0.005, `${label}: reflection approaches neutral light`);
             assert.equal(value.duration, 2400, `${label}: one shared cadence`);
             assert.ok(
               value.minimumContrast >= 4.5,
@@ -163,6 +169,12 @@ try {
                   ).data
               );
               let changed = 0;
+              let brightened = 0;
+              let darkened = 0;
+              const pixelLuminance = (data, offset) => [0.2126, 0.7152, 0.0722].reduce((sum, weight, channel) => {
+                const value = data[offset + channel] / 255;
+                return sum + weight * (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+              }, 0);
               let backgroundChanged = 0;
               const isText = el.dataset.floeProgressShimmer !== 'surface';
               if (isText) {
@@ -181,7 +193,12 @@ try {
                   15
                 )
                   changed++;
-              return { name: el.dataset.progressCase, changed, backgroundChanged };
+              for (let i = 0; i < a.length; i += 4) {
+                const gain = pixelLuminance(b, i) - pixelLuminance(a, i);
+                if (gain > 0.003) brightened++;
+                if (gain < -0.003) darkened++;
+              }
+              return { name: el.dataset.progressCase, changed, brightened, darkened, backgroundChanged };
             });
           },
           { before: [...before], after: [...after] }
@@ -191,10 +208,12 @@ try {
             value.changed > 4,
             `${theme.name}/${value.name}: actual glyph or surface paint moves`
           );
+          assert.ok(value.brightened > 4, `${theme.name}/${value.name}: actual sweep brightens painted pixels`);
+          assert.equal(value.darkened, 0, `${theme.name}/${value.name}: sweep never darkens painted pixels`);
           assert.equal(value.backgroundChanged, 0, `${theme.name}/${value.name}: text flow never paints its surrounding background`);
         }
         report.cases.at(-1).paintedMotion = changedPixels;
-        if (['classic-light', 'classic-dark', 'solarized-light', 'nord'].includes(theme.name)) {
+        if (['classic-light', 'classic-dark', 'github-light', 'nord'].includes(theme.name)) {
           await page.screenshot({
             path: resolve(output, `${entry}-${material}-${theme.name}.png`),
           });

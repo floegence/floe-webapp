@@ -491,14 +491,13 @@
   }
 
   :is([data-floe-progress-shimmer='text'], .processing-text-shimmer) {
-    --floe-progress-text-base: oklch(from var(--foreground) clamp(0.42, l, 0.46) min(c, 0.04) h);
-    --floe-progress-text-peak: oklch(from var(--floe-progress-text-base) calc(l - 0.16) c h);
+    --floe-progress-text-base: oklch(from var(--foreground) clamp(0.26, calc(l - 0.16), 0.3) min(c, 0.04) h);
+    --floe-progress-text-peak: oklch(from var(--floe-progress-text-base) calc(l + 0.16) c h);
     color: var(--floe-progress-text-base);
   }
 
   .dark :is([data-floe-progress-shimmer='text'], .processing-text-shimmer) {
     --floe-progress-text-base: oklch(from var(--foreground) clamp(0.8, calc(l - 0.1), 0.82) min(c, 0.04) h);
-    --floe-progress-text-peak: oklch(from var(--floe-progress-text-base) calc(l + 0.16) c h);
   }
 
   :is([data-floe-progress-shimmer='text'], .processing-text-shimmer)::selection,
@@ -519,13 +518,13 @@
 
   [data-floe-progress-shimmer='surface'] {
     --floe-progress-surface-base: var(--floe-progress-surface-background, var(--primary));
-    --floe-progress-surface-peak: oklch(from var(--floe-progress-surface-base) max(0, calc(l - 0.14)) c h);
+    /* Reflect light on the fill itself, independently of the page mode.
+     * Dark fills cap the lightness at 0.55 to retain light-label contrast;
+     * lighter fills with dark labels continue toward white. Reduced chroma
+     * makes the band read as a reflection instead of a saturated color stripe. */
+    --floe-progress-surface-peak: oklch(from var(--floe-progress-surface-base) min(1, max(min(0.55, calc(l + 0.14)), calc(l + (l - 0.55) * 1.4))) calc(c * 0.3) h);
     position: relative;
     isolation: isolate;
-  }
-
-  .dark [data-floe-progress-shimmer='surface'] {
-    --floe-progress-surface-peak: oklch(from var(--floe-progress-surface-base) min(1, calc(l + 0.14)) c h);
   }
 
   /* A busy control can be unavailable for a second submission while its
@@ -541,7 +540,7 @@
     z-index: -1;
     border-radius: inherit;
     pointer-events: none;
-    background-image: linear-gradient(90deg, var(--floe-progress-surface-base) 46%, var(--floe-progress-surface-peak) 49%, var(--floe-progress-surface-peak) 51%, var(--floe-progress-surface-base) 54%);
+    background-image: linear-gradient(100deg, var(--floe-progress-surface-base) 46%, var(--floe-progress-surface-peak) 50%, var(--floe-progress-surface-base) 54%);
     background-size: 250% 100%;
     animation: floe-progress-shimmer 2.4s linear infinite;
   }
