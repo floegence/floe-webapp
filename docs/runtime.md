@@ -1,6 +1,6 @@
 # Runtime Bootstrap
 
-Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.2.0` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
+Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.2.2` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
 
 ```ts
 import {
@@ -35,6 +35,13 @@ Every controller attempt acquires a fresh opaque Lease. `commitSpend` receives a
 `createProxyBootstrapOwner()` derives runtime limits and mode from the validated projection. Each connected session generation owns one ProxyRuntime; waiting, failure, close, and replacement dispose the previous runtime and bridge before a new one is installed. Product adapters receive only the opaque runtime and immutable projection-derived values.
 
 Proxy scope validation uses `@floegence/flowersec-core/proxy`'s `PROXY_RUNTIME_SCOPE` and `assertProxyRuntimeScope` contracts.
+
+A validated acquisition may declare `http.additionalPathPrefixes` and
+`http.extraRequestHeaders`. Bootstrap composes HTTP access from `appBasePath`
+plus those explicit additions and passes only the declared headers to Flowersec.
+WebSocket access remains limited to `appBasePath`. Page messages cannot replace
+this authority. Replacing the acquisition disposes the old proxy and applies the
+new scope, including removal of previously granted HTTP additions.
 
 HTTPS is required by default. Loopback HTTP requires `allowLoopbackHTTP: true`. No option permits reuse of a consumed artifact Lease. The application-provided spend adapter is the sole durable fact source; a production host must use its own transactional storage rather than an in-memory flag.
 

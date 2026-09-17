@@ -93,9 +93,13 @@ export function synchronizeProxyBootstrap(
   const runtime = createProxyRuntime({
     session: details.session,
     ...(scope.limits ?? {}),
+    ...(scope.http?.extraRequestHeaders === undefined ? {} : { extraRequestHeaders: scope.http.extraRequestHeaders }),
     ...(scope.appBasePath === undefined
       ? {}
-      : { pathPolicy: { allowedPathPrefixes: Object.freeze([scope.appBasePath]) } }),
+      : { pathPolicy: {
+          allowedPathPrefixes: Object.freeze([scope.appBasePath, ...(scope.http?.additionalPathPrefixes ?? [])]),
+          allowedWebSocketPathPrefixes: Object.freeze([scope.appBasePath]),
+        } }),
   });
   try {
     let binding: ProxyBootstrapBinding;
