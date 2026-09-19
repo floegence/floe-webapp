@@ -67,10 +67,11 @@ describe('built-in shell theme presets', () => {
     expect(dark?.semanticTokens?.['--foreground']).toBe('#F2F1EE');
     expect(dark?.semanticTokens?.['--primary']).toBe('#E8E7E3');
     expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({ light: 'porcelain-light', dark: 'porcelain-dark' });
-    expect(builtInShellThemePresets.slice(-2).map((preset) => preset.name)).toEqual(['porcelain-light', 'porcelain-dark']);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')[0]?.name).toBe('porcelain-light');
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')[0]?.name).toBe('porcelain-dark');
   });
 
-  it('ships the original catalog and appends the warm porcelain pair', () => {
+  it('ships all 26 presets with the default Porcelain theme first in each mode', () => {
     expect(builtInShellThemePresets).toHaveLength(26);
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(12);
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(14);
