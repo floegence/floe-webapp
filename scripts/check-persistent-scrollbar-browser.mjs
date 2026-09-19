@@ -32,6 +32,8 @@ try {
   const left = () => viewport.evaluate((el) => el.scrollLeft);
   await bar.waitFor({ timeout: 3000 });
   assert.equal(await bar.getAttribute('aria-controls'), 'viewport');
+  assert.equal(await viewport.evaluate((el) => getComputedStyle(el).paddingLeft), '8px');
+  assert.equal(await viewport.evaluate((el) => getComputedStyle(el).borderLeftWidth), '2px');
   await page.waitForFunction(() => {
     const viewport = document.querySelector('#viewport');
     return (
@@ -73,7 +75,7 @@ try {
       { steps: 8 }
     );
     await page.mouse.up();
-    assert.ok(Math.abs((await left()) - 660) < 8, 'thumb drag honors rendered canvas scale');
+    assert.ok(Math.abs((await left()) - metrics.maximum / 2) < 8, 'thumb drag honors rendered canvas scale');
     await page.mouse.click(trackBox.x + trackBox.width - 2, trackBox.y + trackBox.height / 2);
     assert.ok((await left()) > metrics.maximum - 20, 'track click reaches the content end');
   }

@@ -18,7 +18,12 @@ function Fixture() {
           'transform-origin': 'top left',
         }}
       >
-        <div id="viewport" ref={setViewport} style={{ height: '240px', overflow: 'auto' }}>
+        <div
+          id="viewport"
+          class="border-2 p-2 rounded-lg"
+          ref={setViewport}
+          style={{ height: '240px', overflow: 'auto' }}
+        >
           <div style={{ width: wide() ? '1800px' : '100%', height: '900px' }}>
             Long selectable content
           </div>
