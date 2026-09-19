@@ -265,3 +265,36 @@ and copying; host surfaces own placement, disclosure, and content limits.
 A widget body may render one `WorkbenchWidgetHeader` from `@floegence/floe-webapp-core/workbench`, with `actions` and optional `titleTooltip`. The contribution renders its actions once between the title and the trailing window controls; themes with leading window controls place actions at the trailing edge. The widget owns layout, title truncation, and input isolation. Header actions do not increase the header height and must fit its existing compact chrome.
 
 Actions keep the body owner and its providers. Reactive updates and stacking changes do not remount the body. Removing the contribution clears the actions and restores the ordinary title tooltip. Pointer input in the action region does not start widget dragging or emit body activation; native controls retain keyboard focus and click behavior. The existing selected-widget wheel contract still applies. Hosts own action availability, responsive presentation, and document state.
+
+## Inline chat media
+
+`MarkdownMedia` from `@floegence/floe-webapp-core/chat` renders images, video,
+audio, and self-contained interactive HTML. Hosts provide localized
+`MarkdownMediaLabels` and may supply a `resolve(source, signal)` callback for
+local files or opaque references. The callback owns authorization and returns a
+media URL or a bounded `loadHTML` function. Release host-created object URLs when
+the signal aborts. Remote image/video/audio URLs use HTTP(S), with no credentials
+in the URL; HTML always requires inline source or an explicit host loader.
+
+`markdownMediaPlaceholder` and `readMarkdownMediaPlaceholder` carry an inert,
+escaped display request through a controlled Markdown renderer. Mount the
+component only into placeholders emitted by that renderer; raw HTML must remain
+escaped. `markdownMediaKind` classifies common media filename extensions. These
+helpers do not authorize resources, infer local filesystem access, or parse host
+API routes.
+
+The card preserves native playback controls, supports image enlargement in the
+shared surface-aware dialog, expands HTML without replacing its iframe, and
+exposes loading, failure, and retry states. Retain the same mounted component for
+an unchanged Markdown segment during streaming. Images never autoplay; video and
+audio preload metadata and start only on user interaction.
+
+HTML is limited to one million characters and rendered with `sandbox="allow-scripts"`
+without same-origin permission. Its leading CSP blocks network requests, nested
+frames, forms, external scripts, and assets. Inline styles/scripts and embedded
+data images remain usable. A host must also bound bytes before decoding fetched
+HTML. Preview output is never inserted into the application's DOM.
+
+Validation: `node scripts/check-chat-media-browser.mjs` covers interactive HTML,
+shell/network isolation, stable iframe expansion, media playback and seeking,
+image dialog dismissal, and narrow layout.

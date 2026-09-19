@@ -4,6 +4,8 @@ export { ChatProvider, useChatContext, type ChatProviderProps, type ChatContextV
 
 // Types
 export * from './types';
+export { MarkdownMedia, type MarkdownMediaProps, type MarkdownMediaLabels, type ResolvedMarkdownMedia } from './blocks/MarkdownMedia';
+export { markdownMediaKind, markdownMediaPlaceholder, readMarkdownMediaPlaceholder, safeMarkdownMediaURL, sandboxedMarkdownHtml, type MarkdownMediaKind, type MarkdownMediaSource } from './markdown/media';
 export { createStreamEventBuilder, buildAssistantNoticeEvents, isStreamEvent, type StreamEventBuilder } from './streamEvents';
 
 // Message list

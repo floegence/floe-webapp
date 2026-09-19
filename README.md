@@ -47,7 +47,7 @@ Workbench gives product-owned tools a persistent canvas with shared window chrom
 
 - **Start with a complete product shell.** Top bar, activity bar, sidebar, bottom bar, mobile navigation, command palette, notifications, and display modes share one layout model.
 - **Compose instead of forking.** Register product pages, navigation, commands, status items, and Workbench widgets through public extension contracts.
-- **Reuse real workspace surfaces.** File browsing, Monaco editing, terminal integration, chat blocks, Notes, launchpad flows, Deck, and Workbench are built to live together.
+- **Reuse real workspace surfaces.** File browsing, Monaco editing, terminal integration, chat blocks with inline image, video, audio, and isolated interactive HTML previews, Notes, launchpad flows, Deck, and Workbench are built to live together.
 - **Keep interaction behavior coherent.** Themes, keyboard navigation, focus, local scrolling, text selection, dialogs, menus, and accessibility patterns are owned at the right surface boundary.
 - **Connect only when needed.** The optional protocol package adds reconnect-aware typed RPC without coupling the UI framework to one business contract.
 
