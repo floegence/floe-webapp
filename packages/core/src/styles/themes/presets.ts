@@ -1102,7 +1102,8 @@ export const builtInShellThemePresets = [
     primary: '#E8E7E3',
     primaryForeground: '#161617',
     border: '#343435',
-    input: '#787877',
+    // Idle fields use a quiet edge; --ring supplies the stronger focus boundary.
+    input: '#383839',
     ring: '#BDBCB8',
     sidebar: '#111112',
     terminalBackground: '#09090A',

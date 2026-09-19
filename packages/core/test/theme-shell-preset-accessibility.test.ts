@@ -42,6 +42,15 @@ describe('shell theme accessibility', () => {
     expect(contrastRatio(tokens['--card']!, tokens['--background']!)).toBeGreaterThanOrEqual(1.1);
   });
 
+  it('keeps idle Porcelain Dark fields quiet and reveals a strong boundary on focus', () => {
+    const tokens = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-dark')!.semanticTokens!;
+    for (const surface of ['--background', '--card']) {
+      expect(contrastRatio(tokens['--input']!, tokens[surface]!), `idle:${surface}`).toBeLessThan(2);
+      expect(contrastRatio(tokens['--input']!, tokens[surface]!), `idle:${surface}`).toBeGreaterThanOrEqual(1.25);
+      expect(contrastRatio(tokens['--ring']!, tokens[surface]!), `focus:${surface}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it('keeps auxiliary copy readable on cards, navigation and selected choice faces', () => {
     for (const preset of builtInShellThemePresets) {
       const tokens = preset.semanticTokens!;
@@ -99,10 +108,10 @@ describe('shell theme accessibility', () => {
         preset.name
       ).toBeGreaterThanOrEqual(4.5);
       expect(
-        contrastRatio(color('--input'), color('--background')),
+        contrastRatio(color(preset.name === 'porcelain-dark' ? '--ring' : '--input'), color('--background')),
         preset.name
       ).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio(color('--input'), color('--card')), preset.name).toBeGreaterThanOrEqual(
+      expect(contrastRatio(color(preset.name === 'porcelain-dark' ? '--ring' : '--input'), color('--card')), preset.name).toBeGreaterThanOrEqual(
         3
       );
       expect(

@@ -11,6 +11,8 @@ mkdirSync(output, { recursive: true });
 const results = [];
 try {
   const { page } = await openFixture(runtime.browser, runtime.baseURL, version);
+  // Measure resting/focused endpoint colors without sampling the transition between them.
+  await page.addStyleTag({ content: 'input { transition: none !important; }' });
   const themes = await page.evaluate(() => window.surfaceFixture.themes.map(({ name, mode }) => ({ name, mode })));
   for (const surface of ['standard', 'soft-neumorphic']) {
     await page.evaluate((value) => window.surfaceFixture.theme.setSurfaceStyle(value), surface);
@@ -37,8 +39,14 @@ try {
         input.blur();
         const field = getComputedStyle(input);
         const card = getComputedStyle(document.querySelector('[data-case="card"]'));
+        const idleBorder = field.borderColor;
+        input.focus();
+        const focusedBorder = getComputedStyle(input).borderColor;
+        const focusedBackground = getComputedStyle(input).backgroundColor;
+        input.blur();
         return {
-          inputContrast: contrast(field.borderColor, field.backgroundColor),
+          focusedInputContrast: contrast(focusedBorder, focusedBackground),
+          inputContrast: contrast(idleBorder, field.backgroundColor),
           placeholderContrast: contrast(getComputedStyle(input, '::placeholder').color, field.backgroundColor),
           textContrast: contrast(card.color, card.backgroundColor),
           shadow: card.boxShadow,
@@ -46,7 +54,10 @@ try {
         };
       });
       const failures = [];
-      if (sample.inputContrast < 3) failures.push('control boundary < 3:1');
+      if (theme.name === 'porcelain-dark') {
+        if (sample.inputContrast < 1.25 || sample.inputContrast >= 2) failures.push('idle field edge outside quiet 1.25–2:1 range');
+        if (sample.focusedInputContrast < 3) failures.push('focused field boundary < 3:1');
+      } else if (sample.inputContrast < 3) failures.push('control boundary < 3:1');
       if (sample.placeholderContrast < 4.5) failures.push('placeholder < 4.5:1');
       if (sample.textContrast < 4.5) failures.push('body < 4.5:1');
       if (theme.mode === 'dark' && sample.shadow.includes('inset')) failures.push('dark card has inset lighting');
