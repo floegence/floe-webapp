@@ -52,7 +52,7 @@ export interface LayoutContextValue {
   setIsMobile: (mobile: boolean) => void;
 }
 
-export const { Provider: LayoutProvider, use: useLayout } = createSimpleContext<LayoutContextValue>({
+export const { Provider: LayoutProvider, use: useLayout, useOptional: useOptionalLayout } = createSimpleContext<LayoutContextValue>({
   name: 'Layout',
   init: createLayoutService,
 });

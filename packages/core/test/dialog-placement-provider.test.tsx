@@ -16,6 +16,9 @@ import {
 import { __resetDialogSurfaceScopeForTests } from '../src/components/ui/dialogSurfaceScope';
 
 vi.mock('../src/context/LayoutContext', () => ({
+  useOptionalLayout: () => ({
+    isMobile: () => false,
+  }),
   useLayout: () => ({
     isMobile: () => false,
   }),

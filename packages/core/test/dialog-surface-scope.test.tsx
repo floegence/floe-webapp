@@ -15,6 +15,9 @@ import {
 import { handleMenuKeyboardNavigation } from '../src/components/ui/menuUtils';
 
 vi.mock('../src/context/LayoutContext', () => ({
+  useOptionalLayout: () => ({
+    isMobile: () => false,
+  }),
   useLayout: () => ({
     isMobile: () => false,
   }),

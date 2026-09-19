@@ -1,11 +1,13 @@
 import { createEffect, createMemo, createSignal, Match, onCleanup, onMount, Show, Switch, type Component } from 'solid-js';
-import { Dialog } from '../../ui/Dialog';
-import { ExternalLink, Maximize, Refresh } from '../../icons';
+import { FloatingWindow } from '../../ui/FloatingWindow';
+import { ExternalLink, Eye, FolderOpen, Maximize, Refresh } from '../../icons';
 import { cn } from '../../../utils/cn';
 import { safeMarkdownMediaURL, sandboxedMarkdownHtml, type MarkdownMediaSource } from '../markdown/media';
 
 export interface MarkdownMediaLabels {
   image: string;
+  /** Label for opening an image in its preview window. */
+  previewImage?: string;
   video: string;
   audio: string;
   html: string;
@@ -24,6 +26,10 @@ export interface ResolvedMarkdownMedia {
   /** Optional host-authorized source link. */
   openURL?: string;
   loadHTML?: (signal: AbortSignal) => Promise<string>;
+  /** Open the image in the host's existing preview surface. */
+  preview?: { label: string; onSelect: () => void };
+  /** Reveal the authorized file in its containing folder. Omit for non-file resources. */
+  reveal?: { label: string; onSelect: () => void };
 }
 
 export interface MarkdownMediaProps {
@@ -42,6 +48,7 @@ async function resolveRemote(source: MarkdownMediaSource): Promise<ResolvedMarkd
 /** Stable inline media with host-owned resource resolution and an isolated HTML document. */
 export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   let root!: HTMLSpanElement;
+  let previewTrigger: HTMLElement | undefined;
   const [visible, setVisible] = createSignal(false);
   onMount(() => {
     if (typeof IntersectionObserver === 'undefined') { setVisible(true); return; }
@@ -58,6 +65,13 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   const [expanded, setExpanded] = createSignal(false);
   const title = () => props.source.title || props.labels[props.source.kind];
   const source = createMemo(() => props.source);
+  const previewLabel = () => resource()?.preview?.label || props.labels.previewImage || props.labels.expand;
+  const previewImage = (event: MouseEvent) => {
+    previewTrigger = event.currentTarget as HTMLElement;
+    const action = resource()?.preview;
+    if (action) action.onSelect();
+    else setExpanded(true);
+  };
 
   createEffect(() => {
     if (!visible()) return;
@@ -98,7 +112,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
         <Match when={status() === 'ready'}>
           <Switch>
             <Match when={props.source.kind === 'image'}>
-              <button type="button" class="chat-media-image-button" aria-label={`${props.labels.expand}: ${title()}`} onClick={() => setExpanded(true)}><img class="chat-media-image" src={resource()?.src} alt={title()} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setStatus('error')} /></button>
+              <button type="button" class="chat-media-image-button" aria-label={`${previewLabel()}: ${title()}`} onClick={previewImage}><img class="chat-media-image" src={resource()?.src} alt={title()} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setStatus('error')} /></button>
             </Match>
             <Match when={props.source.kind === 'video'}><video class="chat-media-video" src={resource()?.src} controls playsinline preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
             <Match when={props.source.kind === 'audio'}><audio class="chat-media-audio" src={resource()?.src} controls preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
@@ -109,16 +123,25 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       <span class="chat-media-header">
         <span class="chat-media-heading"><span class="chat-media-kind">{props.labels[props.source.kind]}</span><span class="chat-media-title" title={title()}>{title()}</span></span>
         <span class="chat-media-actions">
-          <Show when={status() === 'ready' && ['image', 'html'].includes(props.source.kind)}>
+          <Show when={status() === 'ready' && resource()?.reveal}>{action => (
+            <button type="button" class="chat-media-action" aria-label={action().label} title={action().label} onClick={() => action().onSelect()}><FolderOpen /></button>
+          )}</Show>
+          <Show when={status() === 'ready' && props.source.kind === 'image'}>
+            <button type="button" class="chat-media-action" aria-label={previewLabel()} title={previewLabel()} onClick={previewImage}><Eye /></button>
+          </Show>
+          <Show when={status() === 'ready' && props.source.kind === 'html'}>
             <button type="button" class="chat-media-action" aria-label={expanded() ? props.labels.collapse : props.labels.expand} title={expanded() ? props.labels.collapse : props.labels.expand} aria-expanded={expanded()} onClick={() => setExpanded(!expanded())}><Maximize /></button>
           </Show>
-          <Show when={resource()?.openURL}>{url => <a class="chat-media-action" href={url()} target="_blank" rel="noopener noreferrer" aria-label={props.labels.open} title={props.labels.open}><ExternalLink /></a>}</Show>
+          <Show when={props.source.kind !== 'image' && !resource()?.reveal && resource()?.openURL}>{url => <a class="chat-media-action" href={url()} target="_blank" rel="noopener noreferrer" aria-label={props.labels.open} title={props.labels.open}><ExternalLink /></a>}</Show>
         </span>
       </span>
       <Show when={props.source.kind === 'image'}>
-        <Dialog open={expanded()} onOpenChange={setExpanded} title={title()} closeLabel={props.labels.close} class="chat-media-dialog" contentClass="chat-media-dialog-body">
-          <img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" />
-        </Dialog>
+        <FloatingWindow open={expanded()} onOpenChange={open => { setExpanded(open); if (!open) previewTrigger?.focus({ preventScroll: true }); }} title={title()}
+          labels={{ close: props.labels.close, maximize: props.labels.expand, restore: props.labels.collapse }}
+          defaultSize={{ width: 960, height: 680 }} minSize={{ width: 280, height: 240 }} compactBelow={640}
+          class="chat-media-preview-window">
+          <div class="chat-media-preview-content" ref={element => queueMicrotask(() => element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true }))}><img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" /></div>
+        </FloatingWindow>
       </Show>
     </span>
   );

@@ -10,8 +10,9 @@ import {
   untrack,
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { cn } from '../../utils/cn';
-import { useLayout } from '../../context/LayoutContext';
+import { useOptionalLayout } from '../../context/LayoutContext';
 import { Button } from './Button';
 import { X, Maximize, Restore } from '../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
@@ -98,8 +99,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
 
-  const layout = useLayout();
-  const isMobile = () => layout.isMobile();
+  const layout = useOptionalLayout();
+  const isMobile = layout?.isMobile ?? useMediaQuery('(max-width: 767px)');
   const MOBILE_PADDING = 16;
   const titleId = () => `floating-window-${baseId}-title`;
 

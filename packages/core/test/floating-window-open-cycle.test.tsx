@@ -7,6 +7,9 @@ import { render as renderSolid } from 'solid-js/web';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
 
 vi.mock('../src/context/LayoutContext', () => ({
+  useOptionalLayout: () => ({
+    isMobile: () => false,
+  }),
   useLayout: () => ({
     isMobile: () => false,
   }),

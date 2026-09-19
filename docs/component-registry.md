@@ -273,7 +273,12 @@ audio, and self-contained interactive HTML. Hosts provide localized
 `MarkdownMediaLabels` and may supply a `resolve(source, signal)` callback for
 local files or opaque references. The callback owns authorization and returns a
 media URL or a bounded `loadHTML` function. Release host-created object URLs when
-the signal aborts. Remote image/video/audio URLs use HTTP(S), with no credentials
+the signal aborts. Images open a draggable, resizable `FloatingWindow`; optional
+`ResolvedMarkdownMedia.preview` and `reveal` actions supply a localized label and
+`onSelect` callback to reuse the host's preview and containing-folder navigation.
+The image and eye button share the same preview action. Show the folder action
+only for a real host-resolved file; a blob URL never implies a folder. The optional
+`previewImage` label distinguishes image preview from HTML expansion. Remote image/video/audio URLs use HTTP(S), with no credentials
 in the URL; HTML always requires inline source or an explicit host loader.
 
 `markdownMediaPlaceholder` and `readMarkdownMediaPlaceholder` from the pure
