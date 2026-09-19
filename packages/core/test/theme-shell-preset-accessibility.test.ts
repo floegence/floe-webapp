@@ -29,6 +29,19 @@ function contrastRatio(first: string, second: string): number {
 }
 
 describe('shell theme accessibility', () => {
+  it('keeps Porcelain Dark achromatic with strong reading contrast and distinct surface levels', () => {
+    const tokens = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-dark')!.semanticTokens!;
+    for (const role of ['--background', '--card', '--sidebar', '--muted', '--primary', '--foreground', '--muted-foreground']) {
+      const rgb = parseHex(tokens[role]!);
+      expect(Math.max(...rgb) - Math.min(...rgb), role).toBeLessThanOrEqual(6);
+    }
+    expect(Math.max(...parseHex(tokens['--background']!))).toBeLessThanOrEqual(16);
+    expect(contrastRatio(tokens['--foreground']!, tokens['--background']!)).toBeGreaterThanOrEqual(15);
+    expect(contrastRatio(tokens['--foreground']!, tokens['--card']!)).toBeGreaterThanOrEqual(12);
+    expect(contrastRatio(tokens['--muted-foreground']!, tokens['--card']!)).toBeGreaterThanOrEqual(7);
+    expect(contrastRatio(tokens['--card']!, tokens['--background']!)).toBeGreaterThanOrEqual(1.1);
+  });
+
   it('keeps auxiliary copy readable on cards, navigation and selected choice faces', () => {
     for (const preset of builtInShellThemePresets) {
       const tokens = preset.semanticTokens!;
