@@ -91,6 +91,38 @@ describe('ProtocolProvider controller ownership', () => {
     dispose();
   });
 
+  it('lets callers await disconnection before resuming with a fresh controller', async () => {
+    let finishClose!: () => void;
+    const closing = new Promise<void>((resolve) => { finishClose = resolve; });
+    close.mockImplementationOnce(() => closing);
+    let protocol!: ReturnType<typeof useProtocol>;
+    let dispose!: () => void;
+    createRoot((rootDispose) => {
+      dispose = rootDispose;
+      createComponent(ProtocolProvider, {
+        contract,
+        get children() {
+          protocol = useProtocol();
+          return null;
+        },
+      });
+    });
+    const config = { source: { acquire: async () => ({ kind: 'failure', code: 'connection_failed', disposition: { kind: 'terminal' } }) } } as never;
+    await protocol.connect(config);
+    const stopped = protocol.disconnect();
+    expect(stopped).toBeInstanceOf(Promise);
+    let settled = false;
+    void Promise.resolve(stopped).then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    finishClose();
+    await stopped;
+    expect(protocol.status()).toBe('idle');
+    await protocol.connect(config);
+    expect(createConnectionController).toHaveBeenCalledTimes(2);
+    dispose();
+  });
+
   it('disconnects and closes the controller', async () => {
     const config = {
       source: {

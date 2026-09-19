@@ -37,7 +37,8 @@ interface ProtocolContextValue {
   connect: (config: ConnectConfig) => Promise<void>;
   replaceConnection: (config: ConnectConfig) => Promise<void>;
   retryNow: () => boolean;
-  disconnect: () => void;
+  /** Resolves after the canceled controller and its pending connection settle. */
+  disconnect: () => Promise<void>;
 }
 
 export interface ConnectionLifecycle {
@@ -221,9 +222,11 @@ export function ProtocolProvider(props: { children: JSX.Element; contract: Proto
 
   const retryNow = (): boolean => controller?.retryNow() ?? false;
 
-  const disconnect = () => {
+  const disconnect = async () => {
     lifecycleGeneration += 1;
-    void closeController();
+    const pendingConnection = operation;
+    await closeController();
+    await pendingConnection?.catch(() => undefined);
   };
 
   const value: ProtocolContextValue = {
