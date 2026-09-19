@@ -1,8 +1,8 @@
-.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header
+.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar
 
 install:
 	pnpm install --frozen-lockfile
@@ -30,3 +30,6 @@ packed-consumer:
 
 workbench-header:
 	pnpm test:workbench-header
+
+persistent-scrollbar:
+	pnpm test:persistent-scrollbar

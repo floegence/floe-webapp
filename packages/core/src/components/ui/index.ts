@@ -324,3 +324,5 @@ export {
 } from './Progress';
 
 export { SurfaceAnchoredLayer, type SurfaceAnchoredLayerProps } from './SurfaceAnchoredLayer';
+
+export { PersistentHorizontalScrollbar, type PersistentHorizontalScrollbarProps } from './PersistentHorizontalScrollbar';

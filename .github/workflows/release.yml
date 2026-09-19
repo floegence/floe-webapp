@@ -91,6 +91,7 @@ jobs:
           pnpm test:workbench-composition
           pnpm test:workbench-header
           pnpm test:dialog
+          pnpm test:persistent-scrollbar
           pnpm test:file-menu
 
       - name: Build packages
