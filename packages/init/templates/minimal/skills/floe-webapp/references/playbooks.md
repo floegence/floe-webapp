@@ -72,6 +72,7 @@ done
 - `@floegence/floe-webapp-core/launchpad`
 - `@floegence/floe-webapp-core/file-browser`
 - `@floegence/floe-webapp-core/chat`
+- `@floegence/floe-webapp-core/chat-media` (pure media parsing and HTML isolation helpers)
 - `@floegence/floe-webapp-core/notes`
 - `@floegence/floe-webapp-core/editor`
 - `@floegence/floe-webapp-core/widgets`

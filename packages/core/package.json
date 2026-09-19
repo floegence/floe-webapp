@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.57.0",
+  "version": "0.57.1",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -59,6 +59,10 @@
     "./chat": {
       "types": "./dist/chat.d.ts",
       "import": "./dist/chat.js"
+    },
+    "./chat-media": {
+      "types": "./dist/chat-media.d.ts",
+      "import": "./dist/chat-media.js"
     },
     "./notes": {
       "types": "./dist/notes.d.ts",

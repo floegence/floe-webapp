@@ -92,15 +92,6 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
 
   return (
     <span ref={root} class={cn('chat-media', expanded() && props.source.kind === 'html' && 'chat-media-expanded', props.class)} data-media-kind={props.source.kind}>
-      <span class="chat-media-header">
-        <span class="chat-media-heading"><span class="chat-media-kind">{props.labels[props.source.kind]}</span><span class="chat-media-title" title={title()}>{title()}</span></span>
-        <span class="chat-media-actions">
-          <Show when={status() === 'ready' && ['image', 'html'].includes(props.source.kind)}>
-            <button type="button" class="chat-media-action" aria-label={expanded() ? props.labels.collapse : props.labels.expand} title={expanded() ? props.labels.collapse : props.labels.expand} aria-expanded={expanded()} onClick={() => setExpanded(!expanded())}><Maximize /></button>
-          </Show>
-          <Show when={resource()?.openURL}>{url => <a class="chat-media-action" href={url()} target="_blank" rel="noopener noreferrer" aria-label={props.labels.open} title={props.labels.open}><ExternalLink /></a>}</Show>
-        </span>
-      </span>
       <Switch>
         <Match when={status() === 'loading'}><span class="chat-media-placeholder" role="status">{props.labels.loading}</span></Match>
         <Match when={status() === 'error'}><span class="chat-media-placeholder" role="status"><span>{props.labels.unavailable}</span><button type="button" class="chat-media-retry" onClick={() => setRetry(value => value + 1)}><Refresh />{props.labels.retry}</button></span></Match>
@@ -115,6 +106,15 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           </Switch>
         </Match>
       </Switch>
+      <span class="chat-media-header">
+        <span class="chat-media-heading"><span class="chat-media-kind">{props.labels[props.source.kind]}</span><span class="chat-media-title" title={title()}>{title()}</span></span>
+        <span class="chat-media-actions">
+          <Show when={status() === 'ready' && ['image', 'html'].includes(props.source.kind)}>
+            <button type="button" class="chat-media-action" aria-label={expanded() ? props.labels.collapse : props.labels.expand} title={expanded() ? props.labels.collapse : props.labels.expand} aria-expanded={expanded()} onClick={() => setExpanded(!expanded())}><Maximize /></button>
+          </Show>
+          <Show when={resource()?.openURL}>{url => <a class="chat-media-action" href={url()} target="_blank" rel="noopener noreferrer" aria-label={props.labels.open} title={props.labels.open}><ExternalLink /></a>}</Show>
+        </span>
+      </span>
       <Show when={props.source.kind === 'image'}>
         <Dialog open={expanded()} onOpenChange={setExpanded} title={title()} closeLabel={props.labels.close} class="chat-media-dialog" contentClass="chat-media-dialog-body">
           <img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" />

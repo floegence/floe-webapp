@@ -276,14 +276,17 @@ media URL or a bounded `loadHTML` function. Release host-created object URLs whe
 the signal aborts. Remote image/video/audio URLs use HTTP(S), with no credentials
 in the URL; HTML always requires inline source or an explicit host loader.
 
-`markdownMediaPlaceholder` and `readMarkdownMediaPlaceholder` carry an inert,
+`markdownMediaPlaceholder` and `readMarkdownMediaPlaceholder` from the pure
+`@floegence/floe-webapp-core/chat-media` subpath carry an inert,
 escaped display request through a controlled Markdown renderer. Mount the
 component only into placeholders emitted by that renderer; raw HTML must remain
 escaped. `markdownMediaKind` classifies common media filename extensions. These
 helpers do not authorize resources, infer local filesystem access, or parse host
 API routes.
 
-The card preserves native playback controls, supports image enlargement in the
+Media appears directly in the conversation, without an enclosing border or
+title bar. Quiet captions sit below the content; source/enlarge actions appear
+on hover, keyboard focus, or touch devices. The component preserves native playback controls, supports image enlargement in the
 shared surface-aware dialog, expands HTML without replacing its iframe, and
 exposes loading, failure, and retry states. Retain the same mounted component for
 an unchanged Markdown segment during streaming. Images never autoplay; video and

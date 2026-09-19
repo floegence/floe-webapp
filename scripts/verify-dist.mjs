@@ -245,6 +245,8 @@ function main() {
   assertFile('packages/core/dist/file-browser.d.ts');
   assertFile('packages/core/dist/chat.js');
   assertFile('packages/core/dist/chat.d.ts');
+  assertFile('packages/core/dist/chat-media.js');
+  execSync(`node --input-type=module -e 'const m = await import("./packages/core/dist/chat-media.js"); if (m.markdownMediaKind("clip.mp4") !== "video") process.exit(1)'`, { stdio: 'inherit' });
   assertFile('packages/core/dist/editor.js');
   assertFile('packages/core/dist/editor.d.ts');
   assertFile('packages/core/dist/widgets.js');
@@ -340,9 +342,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.57.0'
+      (version) => version === '0.57.1'
     ),
-    'Published Floe packages must all use version 0.57.0'
+    'Published Floe packages must all use version 0.57.1'
   );
 
   assert(
@@ -385,6 +387,7 @@ function main() {
     'launchpad',
     'file-browser',
     'chat',
+    'chat-media',
     'editor',
     'widgets',
     'terminal',

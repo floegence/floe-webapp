@@ -1,4 +1,4 @@
-/* global window, document, innerWidth */
+/* global window, document, innerWidth, getComputedStyle */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const fixture = `import { render } from 'solid-js/web';
 import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/MarkdownMedia';
 import '/packages/core/src/styles/globals.css';
 const labels = ${JSON.stringify(labels)};
-const html = ${JSON.stringify(`<h1>Preview workspace</h1><button onclick="this.textContent='Clicked'">Try interaction</button><script>try{parent.previewEscape=true}catch{};fetch('/should-not-fetch').catch(()=>{});</script>`)};
+const html = ${JSON.stringify(`<h1>Preview workspace</h1><button onclick="this.textContent='Clicked'">Try interaction</button><script>try{parent.previewEscape=true}catch{};fetch('/should-not-fetch').catch(()=>{});document.documentElement.dataset.ready='true';</script>`)};
 render(() => <main style="max-width:680px;margin:auto"><MarkdownMedia labels={labels} source={{kind:'html',title:'Interactive report',html}}/><MarkdownMedia labels={labels} source={{kind:'video',title:'Demo clip',src:location.origin+'/media.mp4'}}/><MarkdownMedia labels={labels} source={{kind:'image',title:'Design study',src:location.origin+'/image.svg'}}/></main>, document.getElementById('root'));`;
 let forbiddenRequests = 0;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx') return '/fixture.tsx'; }, load(id) { if (id === '/fixture.tsx') return fixture; }, configureServer(instance) {
@@ -25,7 +25,7 @@ const server = await createServer({ configFile: false, optimizeDeps: { noDiscove
     else if (req.url === '/should-not-fetch') { forbiddenRequests++; res.end('blocked'); }
     else next();
   });
-} }], server: {host:'127.0.0.1',port:0} });
+} }], server: {host:'127.0.0.1',port:0,hmr:false} });
 let browser;
 try {
   await server.listen();
@@ -33,6 +33,7 @@ try {
   const page = await browser.newPage({viewport:{width:1000,height:1100}});
   await page.goto(server.resolvedUrls.local[0]);
   const iframe = page.frameLocator('iframe');
+  await iframe.locator('html[data-ready=true]').waitFor();
   await iframe.getByRole('button', {name:'Try interaction'}).click();
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   assert.equal(await page.evaluate(() => window.previewEscape), undefined);
@@ -52,6 +53,12 @@ try {
   await page.locator('.chat-media-full-image').waitFor({state:'detached'});
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   await page.locator('[data-media-kind=html]').getByRole('button', {name:'Collapse preview'}).click();
+  await page.mouse.click(2, 2);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-media-kind=image] .chat-media-actions')).opacity === '0');
+  assert.equal(await page.locator('[data-media-kind=image]').evaluate(node => getComputedStyle(node).borderWidth), '0px');
+  assert.equal(await page.locator('[data-media-kind=video]').evaluate(node => getComputedStyle(node).borderWidth), '0px');
+  await page.locator('iframe').scrollIntoViewIfNeeded();
+  await iframe.getByRole('button', {name:'Clicked'}).waitFor({state:'visible'});
   await page.screenshot({path:'/tmp/floe-chat-media-desktop.png',fullPage:true});
   await page.setViewportSize({width:360,height:900});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
