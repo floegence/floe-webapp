@@ -191,7 +191,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
                         selectedIndex() >= 0 && 'bg-accent text-accent-foreground font-medium',
                       )}
                     >
-                      <FileItemIcon item={file} class="w-4 h-4 flex-shrink-0" />
+                      <FileItemIcon item={file} size={16} class="w-4 h-4 flex-shrink-0" />
                       <span class="truncate">{file.name}</span>
                       <Show when={selectedIndex() >= 0}>
                         <span class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">

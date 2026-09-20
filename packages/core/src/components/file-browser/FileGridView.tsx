@@ -634,12 +634,10 @@ function FileGridItem(props: FileGridItemProps) {
       <div
         class={cn(
           'w-12 h-12 flex items-center justify-center rounded-lg',
-          'relative',
-          props.item.type !== 'folder' && 'bg-muted/50'
+          'relative'
         )}
-        style={props.item.type === 'folder' ? { 'background-color': 'color-mix(in srgb, var(--floe-file-icon-warning, var(--warning)) 10%, transparent)' } : undefined}
       >
-        <FileItemIcon item={props.item} class="w-8 h-8" />
+        <FileItemIcon item={props.item} size={40} class="w-10 h-10" />
         <FileItemDecorationBadge item={props.item} size="md" />
       </div>
 

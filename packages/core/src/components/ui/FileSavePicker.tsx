@@ -157,7 +157,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
                       fileName() === file.name && 'bg-accent text-accent-foreground font-medium'
                     )}
                   >
-                    <FileItemIcon item={file} class="w-4 h-4 flex-shrink-0" />
+                    <FileItemIcon item={file} size={16} class="w-4 h-4 flex-shrink-0" />
                     <span class="truncate">{file.name}</span>
                     <Show when={file.size != null}>
                       <span class="ml-auto text-[10px] text-muted-foreground/60 flex-shrink-0">

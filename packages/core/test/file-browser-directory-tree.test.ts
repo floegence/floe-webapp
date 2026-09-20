@@ -23,7 +23,7 @@ describe('DirectoryTree', () => {
     const src = fs.readFileSync(target, 'utf8');
 
     expect(src).toContain("import { FileItemIcon } from './FileIcons';");
-    expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />');
+    expect(src).toContain('<FileItemIcon item={props.item} open={isExpanded()} size={16} class="w-4 h-4" />');
   });
 
   it('should render folder decoration badges and name tones in the tree', () => {

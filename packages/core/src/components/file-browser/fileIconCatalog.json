@@ -1,0 +1,3836 @@
+[
+  {
+    "id": "json",
+    "name": "JSON",
+    "category": "config",
+    "tone": "yellow",
+    "draw": "json",
+    "label": "JSON",
+    "motif": "json",
+    "family": "document",
+    "extensions": [
+      "json",
+      "jsonc",
+      "json5"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "settings.json"
+    ],
+    "package": false
+  },
+  {
+    "id": "jsonl",
+    "name": "JSON Lines",
+    "category": "config",
+    "tone": "yellow",
+    "draw": "jsonl",
+    "label": "JSONL",
+    "motif": "json",
+    "family": "document",
+    "extensions": [
+      "jsonl",
+      "ndjson"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "events.jsonl"
+    ],
+    "package": false
+  },
+  {
+    "id": "yaml",
+    "name": "YAML",
+    "category": "config",
+    "tone": "red",
+    "draw": "yaml",
+    "label": "YAML",
+    "motif": "yaml",
+    "family": "document",
+    "extensions": [
+      "yaml",
+      "yml"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "config.yaml"
+    ],
+    "package": false
+  },
+  {
+    "id": "toml",
+    "name": "TOML",
+    "category": "config",
+    "tone": "orange",
+    "draw": "toml",
+    "label": "TOML",
+    "motif": "toml",
+    "family": "document",
+    "extensions": [
+      "toml"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "config.toml"
+    ],
+    "package": false
+  },
+  {
+    "id": "xml",
+    "name": "XML",
+    "category": "config",
+    "tone": "orange",
+    "draw": "xml",
+    "label": "XML",
+    "motif": "xml",
+    "family": "document",
+    "extensions": [
+      "xml",
+      "xsd",
+      "xsl",
+      "xslt",
+      "dtd"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "schema.xml"
+    ],
+    "package": false
+  },
+  {
+    "id": "ini",
+    "name": "INI / settings",
+    "category": "config",
+    "tone": "neutral",
+    "draw": "ini",
+    "label": "INI",
+    "motif": "ini",
+    "family": "document",
+    "extensions": [
+      "ini",
+      "cfg",
+      "conf",
+      "config",
+      "properties"
+    ],
+    "names": [
+      ".npmrc",
+      ".yarnrc",
+      ".editorconfig"
+    ],
+    "patterns": [],
+    "examples": [
+      "settings.ini"
+    ],
+    "package": false
+  },
+  {
+    "id": "env",
+    "name": "Environment",
+    "category": "config",
+    "tone": "green",
+    "draw": "env",
+    "label": "ENV",
+    "motif": "env",
+    "family": "document",
+    "extensions": [
+      "env"
+    ],
+    "names": [
+      ".env"
+    ],
+    "patterns": [
+      {
+        "regex": "^\\.env\\..+$",
+        "display": ".env.*",
+        "example": ".env.production"
+      }
+    ],
+    "examples": [
+      ".env.local"
+    ],
+    "package": false
+  },
+  {
+    "id": "config",
+    "name": "Tool configuration",
+    "category": "config",
+    "tone": "neutral",
+    "draw": "config",
+    "label": "CFG",
+    "motif": "ini",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      ".prettierrc",
+      ".eslintrc",
+      ".babelrc",
+      ".browserslistrc",
+      ".stylelintrc"
+    ],
+    "patterns": [],
+    "examples": [
+      ".prettierrc"
+    ],
+    "package": false
+  },
+  {
+    "id": "plist",
+    "name": "Property list",
+    "category": "config",
+    "tone": "blue",
+    "draw": "plist",
+    "label": "PLIST",
+    "motif": "yaml",
+    "family": "document",
+    "extensions": [
+      "plist"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Info.plist"
+    ],
+    "package": false
+  },
+  {
+    "id": "hcl",
+    "name": "HCL",
+    "category": "config",
+    "tone": "purple",
+    "draw": "hcl",
+    "label": "HCL",
+    "motif": "toml",
+    "family": "document",
+    "extensions": [
+      "hcl"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "policy.hcl"
+    ],
+    "package": false
+  },
+  {
+    "id": "csv",
+    "name": "CSV",
+    "category": "config",
+    "tone": "green",
+    "draw": "csv",
+    "label": "CSV",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "csv"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "customers.csv"
+    ],
+    "package": false
+  },
+  {
+    "id": "tsv",
+    "name": "TSV",
+    "category": "config",
+    "tone": "green",
+    "draw": "tsv",
+    "label": "TSV",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "tsv"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "results.tsv"
+    ],
+    "package": false
+  },
+  {
+    "id": "js",
+    "name": "JavaScript",
+    "category": "dev",
+    "tone": "yellow",
+    "draw": "js",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "js",
+      "mjs",
+      "cjs"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "index.js"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F7DF1E",
+      "ink": "#17202A",
+      "source": "https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/js.svg"
+    }
+  },
+  {
+    "id": "ts",
+    "name": "TypeScript",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "ts",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "ts",
+      "mts",
+      "cts"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.ts"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3178C6",
+      "ink": "#17202A",
+      "source": "https://www.typescriptlang.org/branding"
+    }
+  },
+  {
+    "id": "jsx",
+    "name": "JSX",
+    "category": "dev",
+    "tone": "yellow",
+    "draw": "jsx",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "jsx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.jsx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#61DAFB",
+      "ink": "#17202A",
+      "source": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg"
+    }
+  },
+  {
+    "id": "tsx",
+    "name": "TSX",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "tsx",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "tsx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.tsx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#61DAFB",
+      "ink": "#17202A",
+      "source": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg"
+    }
+  },
+  {
+    "id": "python",
+    "name": "Python",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "python",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "py",
+      "pyi",
+      "pyw"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.py"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3776AB",
+      "ink": "#FFFFFF",
+      "source": "https://www.python.org/community/logos/",
+      "yellow": "#FFD43B"
+    }
+  },
+  {
+    "id": "go",
+    "name": "Go",
+    "category": "dev",
+    "tone": "cyan",
+    "draw": "go",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "go"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.go"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#00ADD8",
+      "ink": "#17202A",
+      "source": "https://blog.golang.org/go-brand"
+    }
+  },
+  {
+    "id": "rust",
+    "name": "Rust",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "rust",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "rs"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.rs"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#000000",
+      "ink": "#FFFFFF",
+      "source": "https://www.rust-lang.org",
+      "darkPrimary": "#FFFFFF"
+    }
+  },
+  {
+    "id": "html",
+    "name": "HTML",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "html",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "html",
+      "htm",
+      "xhtml"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "index.html"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#E34F26",
+      "ink": "#17202A",
+      "source": "https://www.w3.org/html/logo/"
+    }
+  },
+  {
+    "id": "css",
+    "name": "CSS",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "css",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "css"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "theme.css"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#663399",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/CSS-Next/logo.css/blob/bacc20878227204b283c68a6b935f8279e06b0cd/css.svg"
+    }
+  },
+  {
+    "id": "graphql",
+    "name": "GraphQL",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "graphql",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "graphql",
+      "gql"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "schema.graphql"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#E10098",
+      "ink": "#17202A",
+      "source": "https://graphql.org/brand"
+    }
+  },
+  {
+    "id": "vue",
+    "name": "Vue",
+    "category": "dev",
+    "tone": "green",
+    "draw": "vue",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "vue"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.vue"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#4FC08D",
+      "ink": "#17202A",
+      "source": "https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/logo.svg",
+      "secondary": "#35495E"
+    }
+  },
+  {
+    "id": "c",
+    "name": "C",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "c",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "c",
+      "h"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.c"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#00599C",
+      "ink": "#FFFFFF",
+      "source": "https://isocpp.org/"
+    }
+  },
+  {
+    "id": "cpp",
+    "name": "C++",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "cpp",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "cpp",
+      "hpp",
+      "cc",
+      "cxx",
+      "hxx",
+      "hh",
+      "cp"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.cpp"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#00599C",
+      "ink": "#FFFFFF",
+      "source": "https://isocpp.org/"
+    }
+  },
+  {
+    "id": "sass",
+    "name": "Sass / SCSS",
+    "category": "dev",
+    "tone": "red",
+    "draw": "sass",
+    "label": "SASS",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "scss",
+      "sass"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "theme.scss"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#CC6699",
+      "ink": "#17202A",
+      "source": "https://sass-lang.com/styleguide/brand"
+    }
+  },
+  {
+    "id": "less",
+    "name": "Less",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "less",
+    "label": "LESS",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "less"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "theme.less"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#1D365D",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/less/logo/blob/c9c10c328cfc00071e92443934b35e389310abf8/less_logo.ai"
+    }
+  },
+  {
+    "id": "stylus",
+    "name": "Stylus",
+    "category": "dev",
+    "tone": "green",
+    "draw": "stylus",
+    "label": "STYL",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "styl"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "theme.styl"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#333333",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/stylus/stylus-lang.com/blob/c833bf697e39e1174c7c6e679e0e5a23d0baeb90/img/stylus-logo.svg"
+    }
+  },
+  {
+    "id": "swift",
+    "name": "Swift",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "swift",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "swift"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "ContentView.swift"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F05138",
+      "ink": "#FFFFFF",
+      "source": "https://developer.apple.com/swift/resources/",
+      "gradientStart": "#FA7343"
+    }
+  },
+  {
+    "id": "java",
+    "name": "Java",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "java",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "java"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Main.java"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#007396",
+      "ink": "#FFFFFF",
+      "source": "https://www.oracle.com/java/technologies/java-licensing-logo-guidelines.html",
+      "red": "#E76F00"
+    }
+  },
+  {
+    "id": "kotlin",
+    "name": "Kotlin",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "kotlin",
+    "label": "KT",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "kt",
+      "kts"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.kt"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#7F52FF",
+      "ink": "#FFFFFF",
+      "source": "https://www.jetbrains.com/company/brand/logos/",
+      "gradientEnd": "#C711E1"
+    }
+  },
+  {
+    "id": "csharp",
+    "name": "C#",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "csharp",
+    "label": "C#",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "cs"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.cs"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#512BD4",
+      "ink": "#FFFFFF",
+      "source": "https://learn.microsoft.com/training/paths/get-started-c-sharp-part-1"
+    }
+  },
+  {
+    "id": "fsharp",
+    "name": "F#",
+    "category": "dev",
+    "tone": "cyan",
+    "draw": "fsharp",
+    "label": "F#",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "fs",
+      "fsi",
+      "fsx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.fs"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#378BBA",
+      "ink": "#17202A",
+      "source": "https://foundation.fsharp.org/logo"
+    }
+  },
+  {
+    "id": "ruby",
+    "name": "Ruby",
+    "category": "dev",
+    "tone": "red",
+    "draw": "ruby",
+    "label": "RB",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "rb",
+      "rake",
+      "gemspec",
+      "erb"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.rb"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#CC342D",
+      "ink": "#FFFFFF",
+      "source": "https://www.ruby-lang.org/en/about/logo/"
+    }
+  },
+  {
+    "id": "php",
+    "name": "PHP",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "php",
+    "label": "PHP",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "php",
+      "phtml"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.php"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#777BB4",
+      "ink": "#17202A",
+      "source": "https://php.net/download-logos.php"
+    }
+  },
+  {
+    "id": "dart",
+    "name": "Dart",
+    "category": "dev",
+    "tone": "cyan",
+    "draw": "dart",
+    "label": "DART",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "dart"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.dart"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#0175C2",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/dart-lang/site-shared/tree/18458ff440afd3d06f04e5cb871c4c5eda29c9d5/src/_assets/image/dart/logo"
+    }
+  },
+  {
+    "id": "lua",
+    "name": "Lua",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "lua",
+    "label": "LUA",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "lua"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.lua"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#000080",
+      "ink": "#FFFFFF",
+      "source": "https://www.lua.org/images/"
+    }
+  },
+  {
+    "id": "r",
+    "name": "R",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "r",
+    "label": "R",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "r",
+      "rmd"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.r"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#276DC3",
+      "ink": "#FFFFFF",
+      "source": "https://www.r-project.org/logo/"
+    }
+  },
+  {
+    "id": "scala",
+    "name": "Scala",
+    "category": "dev",
+    "tone": "red",
+    "draw": "scala",
+    "label": "SC",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "scala",
+      "sc"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.scala"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#DC322F",
+      "ink": "#FFFFFF",
+      "source": "https://www.scala-lang.org"
+    }
+  },
+  {
+    "id": "perl",
+    "name": "Perl",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "perl",
+    "label": "PL",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "pl",
+      "pm"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.pl"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#0073A1",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/metacpan/perl-assets/blob/56b555711934dde8fd0b20ec29ecc3bf81a3d493/blessed/src/010.svg"
+    }
+  },
+  {
+    "id": "elixir",
+    "name": "Elixir",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "elixir",
+    "label": "EX",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "ex",
+      "exs"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.ex"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#4B275F",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/elixir-lang/elixir-lang.github.com/tree/031746384ee23b9be19298c92a9699c56cc05845/images/logo"
+    }
+  },
+  {
+    "id": "erlang",
+    "name": "Erlang",
+    "category": "dev",
+    "tone": "red",
+    "draw": "erlang",
+    "label": "ERL",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "erl",
+      "hrl"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.erl"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#A90533",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/erlang/erlide_eclipse/blob/99d1d61fde8e32ef1630ca0e1b05a6822b3d6489/meta/media/erlang-logo.svg"
+    }
+  },
+  {
+    "id": "haskell",
+    "name": "Haskell",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "haskell",
+    "label": "HS",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "hs",
+      "lhs"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.hs"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#5D4F85",
+      "ink": "#FFFFFF",
+      "source": "https://wiki.haskell.org/Thompson-Wheeler_logo"
+    }
+  },
+  {
+    "id": "clojure",
+    "name": "Clojure",
+    "category": "dev",
+    "tone": "green",
+    "draw": "clojure",
+    "label": "CLJ",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "clj",
+      "cljs",
+      "cljc",
+      "edn"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.clj"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#5881D8",
+      "ink": "#17202A",
+      "source": "https://commons.wikimedia.org/wiki/File:Clojure_logo.svg"
+    }
+  },
+  {
+    "id": "julia",
+    "name": "Julia",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "julia",
+    "label": "JL",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "jl"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.jl"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#9558B2",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/JuliaLang/julia-logo-graphics/blob/b5551ca7946b4a25746c045c15fbb8806610f8d0/images/julia-dots.svg"
+    }
+  },
+  {
+    "id": "zig",
+    "name": "Zig",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "zig",
+    "label": "ZIG",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "zig"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.zig"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F7A41D",
+      "ink": "#17202A",
+      "source": "https://github.com/ziglang/logo/blob/6446ba8e37a0651da720d8869e1ce9264fa0c0b9/zig-mark.svg"
+    }
+  },
+  {
+    "id": "objectivec",
+    "name": "Objective-C",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "objectivec",
+    "label": "ObjC",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "m",
+      "mm"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.m"
+    ],
+    "package": false
+  },
+  {
+    "id": "groovy",
+    "name": "Groovy / Gradle",
+    "category": "dev",
+    "tone": "green",
+    "draw": "groovy",
+    "label": "GRV",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "groovy",
+      "gradle",
+      "gvy"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.groovy"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#4298B8",
+      "ink": "#17202A",
+      "source": "https://apache.org/logos"
+    }
+  },
+  {
+    "id": "svelte",
+    "name": "Svelte",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "svelte",
+    "label": "SVELTE",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "svelte"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.svelte"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#FF3E00",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/sveltejs/branding/blob/c4dfca6743572087a6aef0e109ffe3d95596e86a/svelte-logo.svg"
+    }
+  },
+  {
+    "id": "astro",
+    "name": "Astro",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "astro",
+    "label": "ASTRO",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "astro"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.astro"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#BC52EE",
+      "ink": "#17202A",
+      "source": "https://astro.build/press"
+    }
+  },
+  {
+    "id": "mdx",
+    "name": "MDX",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "mdx",
+    "label": "MDX",
+    "motif": "text",
+    "family": "language",
+    "extensions": [
+      "mdx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "example.mdx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#1B1F24",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/mdx-js/mdx/blob/b8a76c95deb14f7297bafdac1aa3eddd2b0fbb8f/docs/_static/icon.svg"
+    }
+  },
+  {
+    "id": "shell",
+    "name": "Shell",
+    "category": "dev",
+    "tone": "green",
+    "draw": "shell",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "sh",
+      "bash",
+      "zsh",
+      "fish",
+      "ksh",
+      "csh"
+    ],
+    "names": [
+      ".bashrc",
+      ".bash_profile",
+      ".bash_aliases",
+      ".profile",
+      ".zshrc",
+      ".zprofile",
+      ".zshenv",
+      ".kshrc",
+      ".cshrc",
+      ".envrc",
+      ".zlogin",
+      ".zlogout",
+      ".tcshrc"
+    ],
+    "patterns": [],
+    "examples": [
+      "build.sh"
+    ],
+    "package": false
+  },
+  {
+    "id": "powershell",
+    "name": "PowerShell",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "powershell",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "ps1",
+      "psm1",
+      "psd1"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "deploy.ps1"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#5391FE",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/PowerShell/PowerShell/tree/11d7587f9b934cf27013d318886f97fb95c811cf"
+    }
+  },
+  {
+    "id": "batch",
+    "name": "Windows batch",
+    "category": "dev",
+    "tone": "neutral",
+    "draw": "batch",
+    "label": "BAT",
+    "motif": "terminal",
+    "family": "document",
+    "extensions": [
+      "bat",
+      "cmd"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "build.cmd"
+    ],
+    "package": false
+  },
+  {
+    "id": "sql",
+    "name": "SQL source",
+    "category": "dev",
+    "tone": "cyan",
+    "draw": "sql",
+    "label": "SQL",
+    "motif": "database",
+    "family": "document",
+    "extensions": [
+      "sql"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "query.sql"
+    ],
+    "package": false
+  },
+  {
+    "id": "proto",
+    "name": "Protocol Buffers",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "proto",
+    "label": "PROTO",
+    "motif": "schema",
+    "family": "document",
+    "extensions": [
+      "proto"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "service.proto"
+    ],
+    "package": false
+  },
+  {
+    "id": "notebook",
+    "name": "Jupyter notebook",
+    "category": "dev",
+    "tone": "orange",
+    "draw": "notebook",
+    "label": "IPYNB",
+    "motif": "notebook",
+    "family": "document",
+    "extensions": [
+      "ipynb"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "analysis.ipynb"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F37626",
+      "ink": "#17202A",
+      "source": "https://github.com/jupyter/design/blob/80716ee75dd7b2a6ec6abcd89922d020483589b1/logos/Logo%20Mark/logomark-whitebody-whitemoons/logomark-whitebody-whitemoons.svg"
+    }
+  },
+  {
+    "id": "types",
+    "name": "Type declarations",
+    "category": "dev",
+    "tone": "blue",
+    "draw": "types",
+    "label": "D.TS",
+    "motif": "tsconfig",
+    "family": "document",
+    "extensions": [
+      "d.ts",
+      "d.mts",
+      "d.cts"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "types.d.ts"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3178C6",
+      "ink": "#17202A",
+      "source": "https://www.typescriptlang.org/branding"
+    }
+  },
+  {
+    "id": "git",
+    "name": "Git",
+    "category": "tooling",
+    "tone": "orange",
+    "draw": "git",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [],
+    "names": [
+      ".gitignore",
+      ".gitattributes",
+      ".gitmodules",
+      ".gitkeep"
+    ],
+    "patterns": [],
+    "examples": [
+      ".gitignore"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F03C2E",
+      "ink": "#17202A",
+      "source": "https://git-scm.com/community/logos"
+    }
+  },
+  {
+    "id": "ignore",
+    "name": "Ignore rules",
+    "category": "tooling",
+    "tone": "neutral",
+    "draw": "ignore",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [],
+    "names": [
+      ".taurignore",
+      ".dockerignore",
+      ".npmignore",
+      ".eslintignore",
+      ".prettierignore"
+    ],
+    "patterns": [],
+    "examples": [
+      ".dockerignore"
+    ],
+    "package": false
+  },
+  {
+    "id": "lock",
+    "name": "Dependency lock",
+    "category": "tooling",
+    "tone": "purple",
+    "draw": "lock",
+    "label": "LOCK",
+    "motif": "lock",
+    "family": "document",
+    "extensions": [
+      "lock"
+    ],
+    "names": [
+      "Cargo.lock",
+      "yarn.lock",
+      "bun.lock",
+      "bun.lockb",
+      "go.sum",
+      "Gemfile.lock",
+      "Podfile.lock",
+      "Package.resolved"
+    ],
+    "patterns": [],
+    "examples": [
+      "Cargo.lock"
+    ],
+    "package": false
+  },
+  {
+    "id": "json-package",
+    "name": "JSON package manifest",
+    "category": "tooling",
+    "tone": "yellow",
+    "draw": "json-package",
+    "label": "JSON",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "package.json",
+      "composer.json"
+    ],
+    "patterns": [],
+    "examples": [
+      "package.json"
+    ],
+    "package": false
+  },
+  {
+    "id": "yaml-lock",
+    "name": "YAML dependency lock",
+    "category": "tooling",
+    "tone": "red",
+    "draw": "yaml-lock",
+    "label": "YAML",
+    "motif": "lock",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "pnpm-lock.yaml"
+    ],
+    "patterns": [],
+    "examples": [
+      "pnpm-lock.yaml"
+    ],
+    "package": false
+  },
+  {
+    "id": "json-lock",
+    "name": "JSON dependency lock",
+    "category": "tooling",
+    "tone": "yellow",
+    "draw": "json-lock",
+    "label": "JSON",
+    "motif": "lock",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "package-lock.json",
+      "npm-shrinkwrap.json",
+      "composer.lock"
+    ],
+    "patterns": [],
+    "examples": [
+      "package-lock.json"
+    ],
+    "package": false
+  },
+  {
+    "id": "tsconfig",
+    "name": "TypeScript configuration",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "tsconfig",
+    "label": "JSON",
+    "motif": "tsconfig",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "tsconfig.json",
+      "jsconfig.json"
+    ],
+    "patterns": [
+      {
+        "regex": "^(tsconfig|jsconfig)\\..+\\.json$",
+        "display": "tsconfig.*.json / jsconfig.*.json",
+        "example": "tsconfig.build.json"
+      }
+    ],
+    "examples": [
+      "tsconfig.json"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3178C6",
+      "ink": "#17202A",
+      "source": "https://www.typescriptlang.org/branding"
+    }
+  },
+  {
+    "id": "docker",
+    "name": "Docker / Containerfile",
+    "category": "tooling",
+    "tone": "cyan",
+    "draw": "docker",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "dockerfile",
+      "containerfile"
+    ],
+    "names": [
+      "Dockerfile",
+      "Containerfile"
+    ],
+    "patterns": [
+      {
+        "regex": "^(dockerfile|containerfile)\\..+$",
+        "display": "Dockerfile.* / Containerfile.*",
+        "example": "Dockerfile.prod"
+      }
+    ],
+    "examples": [
+      "Dockerfile"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#2496ED",
+      "ink": "#17202A",
+      "source": "https://www.docker.com/company/newsroom/media-resources"
+    }
+  },
+  {
+    "id": "make",
+    "name": "Make / Just",
+    "category": "tooling",
+    "tone": "yellow",
+    "draw": "make",
+    "label": "MAKE",
+    "motif": "build",
+    "family": "document",
+    "extensions": [
+      "mk"
+    ],
+    "names": [
+      "Makefile",
+      "GNUmakefile",
+      "Justfile",
+      "makefile",
+      "justfile"
+    ],
+    "patterns": [],
+    "examples": [
+      "Makefile"
+    ],
+    "package": false
+  },
+  {
+    "id": "cmake",
+    "name": "CMake",
+    "category": "tooling",
+    "tone": "purple",
+    "draw": "cmake",
+    "label": "CMAKE",
+    "motif": "build",
+    "family": "document",
+    "extensions": [
+      "cmake"
+    ],
+    "names": [
+      "CMakeLists.txt"
+    ],
+    "patterns": [],
+    "examples": [
+      "CMakeLists.txt"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#064F8C",
+      "ink": "#FFFFFF",
+      "source": "https://www.kitware.com/platforms/"
+    }
+  },
+  {
+    "id": "gomod",
+    "name": "Go module",
+    "category": "tooling",
+    "tone": "cyan",
+    "draw": "gomod",
+    "label": "MOD",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "go.mod",
+      "go.work"
+    ],
+    "patterns": [],
+    "examples": [
+      "go.mod"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#00ADD8",
+      "ink": "#17202A",
+      "source": "https://blog.golang.org/go-brand"
+    }
+  },
+  {
+    "id": "cargo",
+    "name": "Cargo manifest",
+    "category": "tooling",
+    "tone": "orange",
+    "draw": "cargo",
+    "label": "TOML",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "Cargo.toml"
+    ],
+    "patterns": [],
+    "examples": [
+      "Cargo.toml"
+    ],
+    "package": false
+  },
+  {
+    "id": "pyproject",
+    "name": "Python project",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "pyproject",
+    "label": "TOML",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "pyproject.toml"
+    ],
+    "patterns": [],
+    "examples": [
+      "pyproject.toml"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3776AB",
+      "ink": "#FFFFFF",
+      "source": "https://www.python.org/community/logos/"
+    }
+  },
+  {
+    "id": "requirements",
+    "name": "Python requirements",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "requirements",
+    "label": "REQ",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "requirements.txt"
+    ],
+    "patterns": [
+      {
+        "regex": "^requirements[-.][\\w.-]+\\.txt$",
+        "display": "requirements-*.txt",
+        "example": "requirements-dev.txt"
+      }
+    ],
+    "examples": [
+      "requirements.txt"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3776AB",
+      "ink": "#FFFFFF",
+      "source": "https://www.python.org/community/logos/"
+    }
+  },
+  {
+    "id": "swift-package",
+    "name": "Swift package",
+    "category": "tooling",
+    "tone": "orange",
+    "draw": "swift-package",
+    "label": "SWIFT",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "Package.swift"
+    ],
+    "patterns": [],
+    "examples": [
+      "Package.swift"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F05138",
+      "ink": "#FFFFFF",
+      "source": "https://developer.apple.com/swift/resources/"
+    }
+  },
+  {
+    "id": "ruby-project",
+    "name": "Ruby / CocoaPods",
+    "category": "tooling",
+    "tone": "red",
+    "draw": "ruby-project",
+    "label": "RUBY",
+    "motif": "package",
+    "family": "document",
+    "extensions": [
+      "podspec"
+    ],
+    "names": [
+      "Gemfile",
+      "Rakefile",
+      "Podfile",
+      "Brewfile",
+      "Fastfile",
+      "Vagrantfile",
+      "Appfile"
+    ],
+    "patterns": [],
+    "examples": [
+      "Podfile"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#CC342D",
+      "ink": "#FFFFFF",
+      "source": "https://www.ruby-lang.org/en/about/logo/"
+    }
+  },
+  {
+    "id": "maven",
+    "name": "Maven",
+    "category": "tooling",
+    "tone": "red",
+    "draw": "maven",
+    "label": "XML",
+    "motif": "package",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "pom.xml"
+    ],
+    "patterns": [],
+    "examples": [
+      "pom.xml"
+    ],
+    "package": false
+  },
+  {
+    "id": "gradle",
+    "name": "Gradle build",
+    "category": "tooling",
+    "tone": "green",
+    "draw": "gradle",
+    "label": "GRADLE",
+    "motif": "build",
+    "family": "document",
+    "extensions": [
+      "gradle.kts"
+    ],
+    "names": [
+      "build.gradle",
+      "settings.gradle",
+      "gradlew",
+      "gradlew.bat"
+    ],
+    "patterns": [],
+    "examples": [
+      "build.gradle.kts"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#02303A",
+      "ink": "#FFFFFF",
+      "source": "https://gradle.com/brand"
+    }
+  },
+  {
+    "id": "xcode",
+    "name": "Xcode project",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "xcode",
+    "label": "XCODE",
+    "motif": "build",
+    "family": "document",
+    "extensions": [
+      "xcodeproj",
+      "xcworkspace"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Studio.xcodeproj"
+    ],
+    "package": true,
+    "palette": {
+      "primary": "#147EFB",
+      "ink": "#17202A",
+      "source": "https://developer.apple.com/develop"
+    }
+  },
+  {
+    "id": "xcconfig",
+    "name": "Xcode configuration",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "xcconfig",
+    "label": "XCCFG",
+    "motif": "ini",
+    "family": "document",
+    "extensions": [
+      "xcconfig",
+      "pbxproj",
+      "xcscheme"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Release.xcconfig"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#147EFB",
+      "ink": "#17202A",
+      "source": "https://developer.apple.com/develop"
+    }
+  },
+  {
+    "id": "xcassets",
+    "name": "Xcode asset catalog",
+    "category": "tooling",
+    "tone": "blue",
+    "draw": "xcassets",
+    "label": "ASSET",
+    "motif": "palette",
+    "family": "document",
+    "extensions": [
+      "xcassets"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Assets.xcassets"
+    ],
+    "package": true,
+    "palette": {
+      "primary": "#147EFB",
+      "ink": "#17202A",
+      "source": "https://developer.apple.com/develop"
+    }
+  },
+  {
+    "id": "visualstudio",
+    "name": "Visual Studio project",
+    "category": "tooling",
+    "tone": "purple",
+    "draw": "visualstudio",
+    "label": "VS",
+    "motif": "build",
+    "family": "document",
+    "extensions": [
+      "sln",
+      "slnx",
+      "csproj",
+      "fsproj",
+      "vbproj",
+      "vcxproj",
+      "props",
+      "targets"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.csproj"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#5C2D91",
+      "ink": "#FFFFFF",
+      "source": "https://visualstudio.microsoft.com/"
+    }
+  },
+  {
+    "id": "terraform",
+    "name": "Terraform",
+    "category": "tooling",
+    "tone": "purple",
+    "draw": "terraform",
+    "label": "TF",
+    "motif": "schema",
+    "family": "document",
+    "extensions": [
+      "tf",
+      "tfvars",
+      "tfstate"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "main.tf"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#844FBA",
+      "ink": "#FFFFFF",
+      "source": "https://www.hashicorp.com/brand"
+    }
+  },
+  {
+    "id": "prisma",
+    "name": "Prisma schema",
+    "category": "tooling",
+    "tone": "cyan",
+    "draw": "prisma",
+    "label": "PRISMA",
+    "motif": "database",
+    "family": "document",
+    "extensions": [
+      "prisma"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "schema.prisma"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#2D3748",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/prisma/presskit/tree/4bcb64181f266723439d955d60afa1c55fefa715"
+    }
+  },
+  {
+    "id": "jenkins",
+    "name": "Jenkins pipeline",
+    "category": "tooling",
+    "tone": "red",
+    "draw": "jenkins",
+    "label": "CI",
+    "motif": "build",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "Jenkinsfile"
+    ],
+    "patterns": [],
+    "examples": [
+      "Jenkinsfile"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#D24939",
+      "ink": "#17202A",
+      "source": "https://get.jenkins.io/art/"
+    }
+  },
+  {
+    "id": "word",
+    "name": "Word document",
+    "category": "office",
+    "tone": "blue",
+    "draw": "word",
+    "label": "WORD",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "doc",
+      "docx",
+      "docm",
+      "dot",
+      "dotx",
+      "dotm"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Proposal.docx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#2B579A",
+      "ink": "#FFFFFF",
+      "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+    }
+  },
+  {
+    "id": "excel",
+    "name": "Excel workbook",
+    "category": "office",
+    "tone": "green",
+    "draw": "excel",
+    "label": "XLS",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "xls",
+      "xlsx",
+      "xlsm",
+      "xlsb",
+      "xlt",
+      "xltx",
+      "xltm",
+      "xlam"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Budget.xlsx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#217346",
+      "ink": "#FFFFFF",
+      "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+    }
+  },
+  {
+    "id": "powerpoint",
+    "name": "PowerPoint",
+    "category": "office",
+    "tone": "orange",
+    "draw": "powerpoint",
+    "label": "PPT",
+    "motif": "slides",
+    "family": "document",
+    "extensions": [
+      "ppt",
+      "pptx",
+      "pptm",
+      "pot",
+      "potx",
+      "potm",
+      "pps",
+      "ppsx",
+      "ppsm"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Pitch.pptx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#B7472A",
+      "ink": "#FFFFFF",
+      "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+    }
+  },
+  {
+    "id": "wps",
+    "name": "WPS Writer",
+    "category": "office",
+    "tone": "blue",
+    "draw": "wps",
+    "label": "WPS",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "wps",
+      "wpt"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Proposal.wps"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#1E6FFF",
+      "ink": "#FFFFFF",
+      "source": "https://www.wps.com/office/writer/"
+    }
+  },
+  {
+    "id": "wps-sheet",
+    "name": "WPS Spreadsheets",
+    "category": "office",
+    "tone": "green",
+    "draw": "wps-sheet",
+    "label": "ET",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "et",
+      "ett"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Budget.et"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#00A66C",
+      "ink": "#FFFFFF",
+      "source": "https://www.wps.com/office/spreadsheet/"
+    }
+  },
+  {
+    "id": "wps-slides",
+    "name": "WPS Presentation",
+    "category": "office",
+    "tone": "orange",
+    "draw": "wps-slides",
+    "label": "DPS",
+    "motif": "slides",
+    "family": "document",
+    "extensions": [
+      "dps",
+      "dpt"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Pitch.dps"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F36B35",
+      "ink": "#FFFFFF",
+      "source": "https://www.wps.com/office/presentation/"
+    }
+  },
+  {
+    "id": "odt",
+    "name": "OpenDocument text",
+    "category": "office",
+    "tone": "blue",
+    "draw": "odt",
+    "label": "ODT",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "odt",
+      "ott",
+      "fodt"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Notes.odt"
+    ],
+    "package": false
+  },
+  {
+    "id": "ods",
+    "name": "OpenDocument spreadsheet",
+    "category": "office",
+    "tone": "green",
+    "draw": "ods",
+    "label": "ODS",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "ods",
+      "ots",
+      "fods"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Budget.ods"
+    ],
+    "package": false
+  },
+  {
+    "id": "odp",
+    "name": "OpenDocument presentation",
+    "category": "office",
+    "tone": "orange",
+    "draw": "odp",
+    "label": "ODP",
+    "motif": "slides",
+    "family": "document",
+    "extensions": [
+      "odp",
+      "otp",
+      "fodp"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Pitch.odp"
+    ],
+    "package": false
+  },
+  {
+    "id": "pages",
+    "name": "Pages",
+    "category": "office",
+    "tone": "orange",
+    "draw": "pages",
+    "label": "PAGES",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "pages"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Proposal.pages"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#FF9500",
+      "ink": "#17202A",
+      "source": "https://www.apple.com/pages/"
+    }
+  },
+  {
+    "id": "numbers",
+    "name": "Numbers",
+    "category": "office",
+    "tone": "green",
+    "draw": "numbers",
+    "label": "NUM",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "numbers"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Budget.numbers"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#27AE35",
+      "ink": "#17202A",
+      "source": "https://www.apple.com/numbers/"
+    }
+  },
+  {
+    "id": "onenote",
+    "name": "OneNote",
+    "category": "office",
+    "tone": "purple",
+    "draw": "onenote",
+    "label": "ONE",
+    "motif": "notebook",
+    "family": "document",
+    "extensions": [
+      "one",
+      "onepkg"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Notes.one"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#7719AA",
+      "ink": "#FFFFFF",
+      "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+    }
+  },
+  {
+    "id": "visio",
+    "name": "Visio",
+    "category": "office",
+    "tone": "blue",
+    "draw": "visio",
+    "label": "VSD",
+    "motif": "schema",
+    "family": "document",
+    "extensions": [
+      "vsd",
+      "vsdx",
+      "vss",
+      "vssx",
+      "vst",
+      "vstx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Architecture.vsdx"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3955A3",
+      "ink": "#FFFFFF",
+      "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+    }
+  },
+  {
+    "id": "msproject",
+    "name": "Microsoft Project",
+    "category": "office",
+    "tone": "green",
+    "draw": "msproject",
+    "label": "MPP",
+    "motif": "table",
+    "family": "document",
+    "extensions": [
+      "mpp",
+      "mpt"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Schedule.mpp"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#217346",
+      "ink": "#FFFFFF",
+      "source": "https://www.microsoft.com/microsoft-365/project/project-management-software"
+    }
+  },
+  {
+    "id": "rtf",
+    "name": "Rich text",
+    "category": "office",
+    "tone": "blue",
+    "draw": "rtf",
+    "label": "RTF",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "rtf"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Notes.rtf"
+    ],
+    "package": false
+  },
+  {
+    "id": "pdf",
+    "name": "PDF",
+    "category": "office",
+    "tone": "red",
+    "draw": "pdf",
+    "label": "PDF",
+    "motif": "pdf",
+    "family": "document",
+    "extensions": [
+      "pdf"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Report.pdf"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#EC1C24",
+      "ink": "#17202A",
+      "source": "https://acrobat.adobe.com"
+    }
+  },
+  {
+    "id": "key",
+    "name": "KEY file",
+    "category": "office",
+    "tone": "neutral",
+    "draw": "key",
+    "label": "KEY",
+    "motif": "file",
+    "family": "document",
+    "extensions": [
+      "key"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Presentation.key"
+    ],
+    "package": false
+  },
+  {
+    "id": "pub",
+    "name": "PUB file",
+    "category": "office",
+    "tone": "neutral",
+    "draw": "pub",
+    "label": "PUB",
+    "motif": "file",
+    "family": "document",
+    "extensions": [
+      "pub"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Brochure.pub"
+    ],
+    "package": false
+  },
+  {
+    "id": "epub",
+    "name": "EPUB book",
+    "category": "office",
+    "tone": "green",
+    "draw": "epub",
+    "label": "EPUB",
+    "motif": "book",
+    "family": "document",
+    "extensions": [
+      "epub"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Book.epub"
+    ],
+    "package": false
+  },
+  {
+    "id": "ebook",
+    "name": "Kindle / MOBI book",
+    "category": "office",
+    "tone": "orange",
+    "draw": "ebook",
+    "label": "BOOK",
+    "motif": "book",
+    "family": "document",
+    "extensions": [
+      "mobi",
+      "azw",
+      "azw3",
+      "fb2"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Book.azw3"
+    ],
+    "package": false
+  },
+  {
+    "id": "tex",
+    "name": "LaTeX",
+    "category": "office",
+    "tone": "green",
+    "draw": "tex",
+    "label": "TEX",
+    "motif": "writing",
+    "family": "document",
+    "extensions": [
+      "tex",
+      "sty",
+      "cls"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "paper.tex"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#008080",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/latex3/branding/tree/9def6b5f6075567d62b67424e11dbe6d4d5245b4"
+    }
+  },
+  {
+    "id": "bib",
+    "name": "BibTeX bibliography",
+    "category": "office",
+    "tone": "green",
+    "draw": "bib",
+    "label": "BIB",
+    "motif": "book",
+    "family": "document",
+    "extensions": [
+      "bib"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "references.bib"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#008080",
+      "ink": "#FFFFFF",
+      "source": "https://github.com/latex3/branding/tree/9def6b5f6075567d62b67424e11dbe6d4d5245b4"
+    }
+  },
+  {
+    "id": "photoshop",
+    "name": "Photoshop",
+    "category": "design",
+    "tone": "blue",
+    "draw": "photoshop",
+    "label": "Ps",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "psd",
+      "psb"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Cover.psd"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#31A8FF",
+      "ink": "#17202A",
+      "source": "https://www.adobe.com/creativecloud.html",
+      "background": "#001E36"
+    }
+  },
+  {
+    "id": "illustrator",
+    "name": "Illustrator",
+    "category": "design",
+    "tone": "orange",
+    "draw": "illustrator",
+    "label": "Ai",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "ai"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Logo.ai"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#FF9A00",
+      "ink": "#17202A",
+      "source": "https://www.adobe.com/creativecloud.html",
+      "background": "#330000"
+    }
+  },
+  {
+    "id": "aftereffects",
+    "name": "After Effects",
+    "category": "design",
+    "tone": "purple",
+    "draw": "aftereffects",
+    "label": "Ae",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "aep",
+      "aepx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Intro.aep"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#9999FF",
+      "ink": "#17202A",
+      "source": "https://www.adobe.com/creativecloud.html",
+      "background": "#00005B"
+    }
+  },
+  {
+    "id": "premiere",
+    "name": "Premiere Pro",
+    "category": "design",
+    "tone": "purple",
+    "draw": "premiere",
+    "label": "Pr",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "prproj"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Film.prproj"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#9999FF",
+      "ink": "#17202A",
+      "source": "https://www.adobe.com/creativecloud.html",
+      "background": "#00005B"
+    }
+  },
+  {
+    "id": "indesign",
+    "name": "InDesign",
+    "category": "design",
+    "tone": "red",
+    "draw": "indesign",
+    "label": "Id",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "indd",
+      "idml",
+      "indt"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Magazine.indd"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#FF3366",
+      "ink": "#17202A",
+      "source": "https://www.adobe.com/creativecloud.html",
+      "background": "#49021F"
+    }
+  },
+  {
+    "id": "xd",
+    "name": "Adobe XD",
+    "category": "design",
+    "tone": "red",
+    "draw": "xd",
+    "label": "Xd",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "xd"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Prototype.xd"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#FF61F6",
+      "ink": "#17202A",
+      "source": "https://helpx.adobe.com/support/xd.html",
+      "background": "#470137"
+    }
+  },
+  {
+    "id": "sketch",
+    "name": "Sketch",
+    "category": "design",
+    "tone": "yellow",
+    "draw": "sketch",
+    "label": "SKETCH",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "sketch"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.sketch"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F7B500",
+      "ink": "#17202A",
+      "source": "https://www.sketch.com/about-us/#press",
+      "secondary": "#FDB300",
+      "highlight": "#FFD800",
+      "shadow": "#EA6C00"
+    }
+  },
+  {
+    "id": "figma",
+    "name": "Figma file",
+    "category": "design",
+    "tone": "purple",
+    "draw": "figma",
+    "label": "FIG",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "fig"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Components.fig"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#F24E1E",
+      "ink": "#17202A",
+      "source": "https://www.figma.com/using-the-figma-brand/",
+      "red": "#F24E1E",
+      "orange": "#FF7262",
+      "purple": "#A259FF",
+      "cyan": "#1ABCFE",
+      "green": "#0ACF83"
+    }
+  },
+  {
+    "id": "blender",
+    "name": "Blender",
+    "category": "design",
+    "tone": "orange",
+    "draw": "blender",
+    "label": "BLEND",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "blend"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Scene.blend"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#E87D0D",
+      "ink": "#17202A",
+      "source": "https://www.blender.org/about/logo",
+      "cyan": "#265787",
+      "surface": "#FFFFFF"
+    }
+  },
+  {
+    "id": "cad",
+    "name": "AutoCAD drawing",
+    "category": "design",
+    "tone": "red",
+    "draw": "cad",
+    "label": "DWG",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "dwg",
+      "dxf"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Floorplan.dwg"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#E51050",
+      "ink": "#FFFFFF",
+      "source": "https://www.autodesk.com/blogs/autocad"
+    }
+  },
+  {
+    "id": "3d",
+    "name": "3D model",
+    "category": "design",
+    "tone": "cyan",
+    "draw": "3d",
+    "label": "3D",
+    "motif": "text",
+    "family": "creative",
+    "extensions": [
+      "obj",
+      "fbx",
+      "stl",
+      "gltf",
+      "glb",
+      "3mf",
+      "dae",
+      "ply",
+      "usdz"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Model.glb"
+    ],
+    "package": false
+  },
+  {
+    "id": "postscript",
+    "name": "PostScript",
+    "category": "design",
+    "tone": "red",
+    "draw": "postscript",
+    "label": "PS",
+    "motif": "vector",
+    "family": "document",
+    "extensions": [
+      "ps",
+      "eps"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Print.ps"
+    ],
+    "package": false
+  },
+  {
+    "id": "dmg",
+    "name": "macOS disk image",
+    "category": "install",
+    "tone": "neutral",
+    "draw": "disk",
+    "label": "DMG",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "dmg"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Redeven.dmg"
+    ],
+    "package": false
+  },
+  {
+    "id": "pkg",
+    "name": "macOS package",
+    "category": "install",
+    "tone": "orange",
+    "draw": "box",
+    "label": "PKG",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "pkg",
+      "mpkg"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Installer.pkg"
+    ],
+    "package": false
+  },
+  {
+    "id": "deb",
+    "name": "Debian package",
+    "category": "install",
+    "tone": "red",
+    "draw": "box",
+    "label": "DEB",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "deb",
+      "udeb"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "redeven_amd64.deb"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#A81D33",
+      "ink": "#FFFFFF",
+      "source": "https://www.debian.org/logos"
+    }
+  },
+  {
+    "id": "rpm",
+    "name": "RPM package",
+    "category": "install",
+    "tone": "neutral",
+    "draw": "box",
+    "label": "RPM",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "rpm"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "redeven.rpm"
+    ],
+    "package": false
+  },
+  {
+    "id": "exe",
+    "name": "Windows executable",
+    "category": "install",
+    "tone": "blue",
+    "draw": "application",
+    "label": "EXE",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "exe",
+      "com"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Setup.exe"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#0078D4",
+      "ink": "#FFFFFF",
+      "source": "https://www.microsoft.com/windows"
+    }
+  },
+  {
+    "id": "msi",
+    "name": "Windows installer",
+    "category": "install",
+    "tone": "blue",
+    "draw": "box",
+    "label": "MSI",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "msi",
+      "msp",
+      "mst"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Setup.msi"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#0078D4",
+      "ink": "#FFFFFF",
+      "source": "https://www.microsoft.com/windows"
+    }
+  },
+  {
+    "id": "msix",
+    "name": "Windows application package",
+    "category": "install",
+    "tone": "blue",
+    "draw": "box",
+    "label": "MSIX",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "msix",
+      "msixbundle",
+      "appx",
+      "appxbundle"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.msix"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#0078D4",
+      "ink": "#FFFFFF",
+      "source": "https://www.microsoft.com/windows"
+    }
+  },
+  {
+    "id": "appimage",
+    "name": "AppImage",
+    "category": "install",
+    "tone": "green",
+    "draw": "application",
+    "label": "APP",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "appimage"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Tool.AppImage"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#739FB9",
+      "ink": "#17202A",
+      "source": "https://appimage.org"
+    }
+  },
+  {
+    "id": "snap",
+    "name": "Snap package",
+    "category": "install",
+    "tone": "green",
+    "draw": "box",
+    "label": "SNAP",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "snap"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "tool.snap"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#E95420",
+      "ink": "#17202A",
+      "source": "https://design.ubuntu.com/resources"
+    }
+  },
+  {
+    "id": "flatpak",
+    "name": "Flatpak",
+    "category": "install",
+    "tone": "blue",
+    "draw": "box",
+    "label": "FLAT",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "flatpak",
+      "flatpakref",
+      "flatpakrepo"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "tool.flatpakref"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#4A90D9",
+      "ink": "#17202A",
+      "source": "https://flatpak.org/press"
+    }
+  },
+  {
+    "id": "apk",
+    "name": "Android package",
+    "category": "install",
+    "tone": "green",
+    "draw": "android",
+    "label": "APK",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "apk"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.apk"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3DDC84",
+      "ink": "#17202A",
+      "source": "https://partnermarketinghub.withgoogle.com/brands/android/visual-identity/visual-identity/logo-lock-ups"
+    }
+  },
+  {
+    "id": "aab",
+    "name": "Android App Bundle",
+    "category": "install",
+    "tone": "green",
+    "draw": "android",
+    "label": "AAB",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "aab"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.aab"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#3DDC84",
+      "ink": "#17202A",
+      "source": "https://partnermarketinghub.withgoogle.com/brands/android/visual-identity/visual-identity/logo-lock-ups"
+    }
+  },
+  {
+    "id": "ipa",
+    "name": "iOS application package",
+    "category": "install",
+    "tone": "blue",
+    "draw": "application",
+    "label": "IPA",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "ipa"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "App.ipa"
+    ],
+    "package": false
+  },
+  {
+    "id": "iso",
+    "name": "Disk / virtual disk image",
+    "category": "install",
+    "tone": "neutral",
+    "draw": "disk",
+    "label": "ISO",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "iso",
+      "img",
+      "vhd",
+      "vhdx",
+      "vmdk",
+      "qcow2"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "System.iso"
+    ],
+    "package": false
+  },
+  {
+    "id": "extension",
+    "name": "Application extension",
+    "category": "install",
+    "tone": "purple",
+    "draw": "box",
+    "label": "EXT",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "crx",
+      "xpi",
+      "vsix"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Theme.vsix"
+    ],
+    "package": false
+  },
+  {
+    "id": "app",
+    "name": "macOS application bundle",
+    "category": "install",
+    "tone": "blue",
+    "draw": "application",
+    "label": "APP",
+    "motif": "text",
+    "family": "installer",
+    "extensions": [
+      "app"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Redeven.app"
+    ],
+    "package": true
+  },
+  {
+    "id": "markdown",
+    "name": "Markdown",
+    "category": "media",
+    "tone": "blue",
+    "draw": "markdown",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "md",
+      "markdown",
+      "mdow"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "README.md"
+    ],
+    "package": false
+  },
+  {
+    "id": "license",
+    "name": "License",
+    "category": "media",
+    "tone": "yellow",
+    "draw": "license",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [],
+    "names": [
+      "LICENSE",
+      "LICENCE",
+      "COPYING",
+      "UNLICENSE"
+    ],
+    "patterns": [
+      {
+        "regex": "^(licen[cs]e|copying)\\..+$",
+        "display": "LICENSE.* / COPYING.*",
+        "example": "LICENSE.txt"
+      }
+    ],
+    "examples": [
+      "LICENSE"
+    ],
+    "package": false
+  },
+  {
+    "id": "text",
+    "name": "Plain text",
+    "category": "media",
+    "tone": "neutral",
+    "draw": "text",
+    "label": "TXT",
+    "motif": "text",
+    "family": "document",
+    "extensions": [
+      "txt",
+      "log",
+      "text"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Notes.txt"
+    ],
+    "package": false
+  },
+  {
+    "id": "svg",
+    "name": "SVG",
+    "category": "media",
+    "tone": "orange",
+    "draw": "svg",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "svg",
+      "svgz"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Logo.svg"
+    ],
+    "package": false
+  },
+  {
+    "id": "image",
+    "name": "Raster image",
+    "category": "media",
+    "tone": "green",
+    "draw": "image",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "png",
+      "jpg",
+      "jpeg",
+      "jpe",
+      "jfif",
+      "webp",
+      "gif",
+      "avif",
+      "heic",
+      "heif",
+      "bmp",
+      "ico",
+      "icns",
+      "tif",
+      "tiff",
+      "apng"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Photo.heic"
+    ],
+    "package": false
+  },
+  {
+    "id": "raw",
+    "name": "Camera RAW",
+    "category": "media",
+    "tone": "green",
+    "draw": "raw",
+    "label": "RAW",
+    "motif": "camera",
+    "family": "document",
+    "extensions": [
+      "raw",
+      "dng",
+      "cr2",
+      "cr3",
+      "nef",
+      "arw",
+      "raf",
+      "orf",
+      "rw2"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Photo.dng"
+    ],
+    "package": false
+  },
+  {
+    "id": "video",
+    "name": "Video",
+    "category": "media",
+    "tone": "purple",
+    "draw": "video",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "mp4",
+      "webm",
+      "mov",
+      "mkv",
+      "avi",
+      "m4v",
+      "mpg",
+      "mpeg",
+      "ogv",
+      "wmv",
+      "flv",
+      "m2ts"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Demo.webm"
+    ],
+    "package": false
+  },
+  {
+    "id": "audio",
+    "name": "Audio",
+    "category": "media",
+    "tone": "cyan",
+    "draw": "audio",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "mp3",
+      "wav",
+      "flac",
+      "ogg",
+      "oga",
+      "opus",
+      "m4a",
+      "aac",
+      "aiff",
+      "aif",
+      "mid",
+      "midi",
+      "wma"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Sound.flac"
+    ],
+    "package": false
+  },
+  {
+    "id": "subtitles",
+    "name": "Subtitles",
+    "category": "media",
+    "tone": "purple",
+    "draw": "subtitles",
+    "label": "CC",
+    "motif": "slides",
+    "family": "document",
+    "extensions": [
+      "srt",
+      "vtt",
+      "ass",
+      "ssa",
+      "sub"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Captions.vtt"
+    ],
+    "package": false
+  },
+  {
+    "id": "font",
+    "name": "Font",
+    "category": "media",
+    "tone": "purple",
+    "draw": "font",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "woff",
+      "woff2",
+      "ttf",
+      "otf",
+      "eot",
+      "ttc"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Font.woff2"
+    ],
+    "package": false
+  },
+  {
+    "id": "database",
+    "name": "Database",
+    "category": "media",
+    "tone": "cyan",
+    "draw": "sql",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "db",
+      "sqlite",
+      "sqlite3",
+      "db3",
+      "mdb",
+      "accdb"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Data.sqlite3"
+    ],
+    "package": false
+  },
+  {
+    "id": "certificate",
+    "name": "Certificate / key container",
+    "category": "media",
+    "tone": "yellow",
+    "draw": "certificate",
+    "label": "CERT",
+    "motif": "certificate",
+    "family": "document",
+    "extensions": [
+      "crt",
+      "cer",
+      "pem",
+      "p12",
+      "pfx",
+      "der",
+      "p7b",
+      "p7c"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Certificate.crt"
+    ],
+    "package": false
+  },
+  {
+    "id": "ssh-key",
+    "name": "SSH key",
+    "category": "media",
+    "tone": "yellow",
+    "draw": "ssh-key",
+    "label": "KEY",
+    "motif": "key",
+    "family": "document",
+    "extensions": [],
+    "names": [
+      "id_rsa",
+      "id_ed25519",
+      "id_ecdsa",
+      "id_dsa",
+      "id_rsa.pub",
+      "id_ed25519.pub",
+      "id_ecdsa.pub",
+      "id_dsa.pub"
+    ],
+    "patterns": [],
+    "examples": [
+      "id_ed25519.pub"
+    ],
+    "package": false
+  },
+  {
+    "id": "wasm",
+    "name": "WebAssembly",
+    "category": "dev",
+    "tone": "purple",
+    "draw": "wasm",
+    "label": "WASM",
+    "motif": "schema",
+    "family": "document",
+    "extensions": [
+      "wasm",
+      "wat"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Module.wasm"
+    ],
+    "package": false,
+    "palette": {
+      "primary": "#654FF0",
+      "ink": "#FFFFFF",
+      "source": "https://webassembly.org"
+    }
+  },
+  {
+    "id": "library",
+    "name": "Compiled library",
+    "category": "install",
+    "tone": "neutral",
+    "draw": "library",
+    "label": "LIB",
+    "motif": "package",
+    "family": "document",
+    "extensions": [
+      "dll",
+      "so",
+      "dylib",
+      "a",
+      "lib"
+    ],
+    "names": [],
+    "patterns": [
+      {
+        "regex": "^.+\\.so(?:\\.[0-9]+)+$",
+        "display": "*.so.<version>",
+        "example": "libssl.so.3"
+      }
+    ],
+    "examples": [
+      "Library.dylib"
+    ],
+    "package": false
+  },
+  {
+    "id": "zip",
+    "name": "ZIP archive",
+    "category": "archive",
+    "tone": "yellow",
+    "draw": "archive",
+    "label": "ZIP",
+    "motif": "text",
+    "family": "archive",
+    "extensions": [
+      "zip",
+      "zipx"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Bundle.zip"
+    ],
+    "package": false
+  },
+  {
+    "id": "tar",
+    "name": "TAR archive",
+    "category": "archive",
+    "tone": "orange",
+    "draw": "archive",
+    "label": "TAR",
+    "motif": "text",
+    "family": "archive",
+    "extensions": [
+      "tar",
+      "tar.gz",
+      "tar.bz2",
+      "tar.xz",
+      "tar.zst",
+      "tar.zstd",
+      "tgz",
+      "tbz",
+      "tbz2",
+      "txz",
+      "tzst"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Source.tar.gz"
+    ],
+    "package": false
+  },
+  {
+    "id": "rar",
+    "name": "RAR archive",
+    "category": "archive",
+    "tone": "purple",
+    "draw": "archive",
+    "label": "RAR",
+    "motif": "text",
+    "family": "archive",
+    "extensions": [
+      "rar"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Bundle.rar"
+    ],
+    "package": false
+  },
+  {
+    "id": "sevenzip",
+    "name": "7-Zip archive",
+    "category": "archive",
+    "tone": "yellow",
+    "draw": "archive",
+    "label": "7Z",
+    "motif": "text",
+    "family": "archive",
+    "extensions": [
+      "7z"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Bundle.7z"
+    ],
+    "package": false
+  },
+  {
+    "id": "compressed",
+    "name": "Compressed file",
+    "category": "archive",
+    "tone": "orange",
+    "draw": "archive",
+    "label": "GZ",
+    "motif": "text",
+    "family": "archive",
+    "extensions": [
+      "gz",
+      "bz2",
+      "xz",
+      "zst",
+      "zstd",
+      "br",
+      "lz",
+      "lzma",
+      "lz4"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Log.gz"
+    ],
+    "package": false
+  },
+  {
+    "id": "archive",
+    "name": "Other archive",
+    "category": "archive",
+    "tone": "yellow",
+    "draw": "archive",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [
+      "jar",
+      "war",
+      "ear",
+      "cab",
+      "ar",
+      "cpio"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "Library.jar"
+    ],
+    "package": false
+  },
+  {
+    "id": "folder",
+    "name": "Folder",
+    "category": "common",
+    "tone": "folder",
+    "draw": "folder",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "src"
+    ],
+    "package": false
+  },
+  {
+    "id": "file",
+    "name": "Unknown file",
+    "category": "common",
+    "tone": "neutral",
+    "draw": "file",
+    "label": "",
+    "motif": "text",
+    "family": "native",
+    "extensions": [],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "file.unknown"
+    ],
+    "package": false
+  },
+  {
+    "id": "code",
+    "name": "Source code",
+    "category": "dev",
+    "tone": "cyan",
+    "draw": "code",
+    "label": "",
+    "motif": "xml",
+    "family": "native",
+    "extensions": [
+      "coffee",
+      "elm",
+      "haml",
+      "handlebars",
+      "hbs",
+      "heex",
+      "jinja",
+      "jinja2",
+      "lisp",
+      "liquid",
+      "ml",
+      "mli",
+      "nim",
+      "slim",
+      "twig"
+    ],
+    "names": [],
+    "patterns": [],
+    "examples": [
+      "template.twig"
+    ],
+    "package": false
+  }
+]

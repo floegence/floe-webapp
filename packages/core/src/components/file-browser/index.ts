@@ -20,6 +20,7 @@ export { FileBrowserToolbar, type FileBrowserToolbarProps } from './FileBrowserT
 export { FileBrowserStatusBar, type FileBrowserStatusBarProps } from './FileBrowserStatusBar';
 export { FileBrowserDragPreview } from './DragPreview';
 export {
+  type FileIconProps,
   FolderIcon,
   FolderOpenIcon,
   SymlinkFolderIcon,

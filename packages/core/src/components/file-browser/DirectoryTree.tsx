@@ -264,7 +264,7 @@ function FolderTreeItem(props: TreeItemProps) {
         >
           {/* Folder icon */}
           <span class="relative flex-shrink-0 w-4 h-4">
-            <FileItemIcon item={props.item} open={isExpanded()} class="w-4 h-4" />
+            <FileItemIcon item={props.item} open={isExpanded()} size={16} class="w-4 h-4" />
             <FileItemDecorationBadge item={props.item} size="xs" />
           </span>
 

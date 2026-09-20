@@ -1,0 +1,43 @@
+/* Approved file artwork colors. Brand palettes are embedded in SVG geometry. */
+[data-file-icon-type] {
+  --floe-icon-surface: #fff;
+  --floe-icon-raised: #edf1f4;
+  --floe-icon-paper-top: #fff;
+  --floe-icon-paper-bottom: #e6eef4;
+  --floe-icon-paper-stroke: #96a9b7;
+  --floe-icon-fold: #d4e0e9;
+  --floe-icon-white: #fff;
+  --floe-icon-yellow: #d8a43c;
+  --floe-icon-orange: #cd7b37;
+  --floe-icon-red: #d86873;
+  --floe-icon-blue: #4e92d2;
+  --floe-icon-cyan: #399db7;
+  --floe-icon-green: #42a578;
+  --floe-icon-purple: #9273c2;
+  --floe-icon-neutral: #788d9b;
+  --floe-icon-folder: #dcb156;
+  --floe-icon-ink: #15202a;
+  --floe-icon-monochrome: #000000;
+  display: block;
+  flex-shrink: 0;
+}
+.dark [data-file-icon-type] {
+  --floe-icon-surface: #15181b;
+  --floe-icon-raised: #1c2024;
+  --floe-icon-paper-top: #303d47;
+  --floe-icon-paper-bottom: #1c252c;
+  --floe-icon-paper-stroke: #60727f;
+  --floe-icon-fold: #40515e;
+  --floe-icon-white: #f6f8fb;
+  --floe-icon-yellow: #e8c15c;
+  --floe-icon-orange: #e69b5d;
+  --floe-icon-red: #ec7d86;
+  --floe-icon-blue: #74b1eb;
+  --floe-icon-cyan: #6bc4d8;
+  --floe-icon-green: #77c9a4;
+  --floe-icon-purple: #b49be1;
+  --floe-icon-neutral: #aab6bf;
+  --floe-icon-folder: #ecc26b;
+  --floe-icon-ink: #15202a;
+  --floe-icon-monochrome: #ffffff;
+}

@@ -171,6 +171,12 @@ Scaffolded projects include the same skill package at `./skills/floe-webapp`.
 
 Floe targets a reusable WCAG 2.2 AA baseline for shared shell chrome and core interaction primitives. Tabs, menus, dialogs, skip links, landmarks, keyboard navigation, focus ownership, and mobile navigation are designed as framework contracts so downstream products can extend them consistently.
 
+## File icon artwork
+
+The shared file browser includes the reviewed source-code, project, design, office, installer, media and archive icon catalog. JSON, YAML and TOML have distinct outlined labels; product formats retain their product palettes across shell themes. `FileItemIcon` accepts an optional `size` in pixels (default 24): sizes up to 20 use compact artwork. Built-in list, tree and picker views use 16 px; the grid uses 40 px. Custom icon overrides and symbolic-link decorations retain precedence. Directory packages such as `.xcodeproj`, `.xcassets` and `.app` remain navigable directories with specific artwork.
+
+Filename rules match exact names, patterns and the longest registered suffix before an extension hint for extensionless entries. The icon catalog identifies naming conventions; archive extraction and file preview support remain separate capabilities. The complete approved standalone study is preserved at [`apps/demo/public/file-icons-reference/index.html`](apps/demo/public/file-icons-reference/index.html). Tests verify all 156 approved families against frozen compact/detail geometry, palettes and matching rules; existing generic code aliases remain supported as an additional family.
+
 ## License
 
 [MIT](LICENSE)

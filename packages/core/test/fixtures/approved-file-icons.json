@@ -1,0 +1,3086 @@
+{
+  "htmlSha256": "ef29cff36ffca53df100fd4de43327d1ad7c7e472cbe31b29c7162ac28b04a4d",
+  "items": [
+    {
+      "id": "json",
+      "extensions": [
+        "json",
+        "jsonc",
+        "json5"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "settings.json"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "15520f97fb5b763abbd7a63110ba37ad61da8c93efc2ce1ec0d0573389d437dd",
+      "detailed": "bbfa049b4e5506992eb9c303086c6c3a9d1be48870373032481635ec173c0d41"
+    },
+    {
+      "id": "jsonl",
+      "extensions": [
+        "jsonl",
+        "ndjson"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "events.jsonl"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "83c554437f2003715f6632fb9499453e9af3c3714ab049761a522f39f5037e44",
+      "detailed": "3111659e9900df89d49c95a52f032fb4eb24ffae91271b5a1945ca04dc2d9e3f"
+    },
+    {
+      "id": "yaml",
+      "extensions": [
+        "yaml",
+        "yml"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "config.yaml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "5f2249be5112debae76720f0f493386d40831a0ef03e2c1de853674447942e21",
+      "detailed": "dddb2cbc527bc5d7513c057451de399123819d00a2be9451d024672218ba87db"
+    },
+    {
+      "id": "toml",
+      "extensions": [
+        "toml"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "config.toml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "843c7b210fb38a65d7d86d813f8d90391bffa645441515d87f95bdf6d231f044",
+      "detailed": "919f4944700a57a822a64d1104dc04d954c368d7d4f43ba923905e9b24fe68b0"
+    },
+    {
+      "id": "xml",
+      "extensions": [
+        "xml",
+        "xsd",
+        "xsl",
+        "xslt",
+        "dtd"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "schema.xml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "fc38a222ef1bad61861f1e5d0300a09ff2ab80bd65603fefe218443c79a1dd85",
+      "detailed": "c5dc82165e55614f00c88bc7c502ce71d3a43a65c606e3b42868ce2f2f779192"
+    },
+    {
+      "id": "ini",
+      "extensions": [
+        "ini",
+        "cfg",
+        "conf",
+        "config",
+        "properties"
+      ],
+      "names": [
+        ".npmrc",
+        ".yarnrc",
+        ".editorconfig"
+      ],
+      "patterns": [],
+      "examples": [
+        "settings.ini"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "c1c25e65277398298f30fcd14534e43bac8c2b7314017cdd9378276239e91332",
+      "detailed": "4244c52e398b56b2382fd311b949ef664e62e87d122c37b4208e2cb660245064"
+    },
+    {
+      "id": "env",
+      "extensions": [
+        "env"
+      ],
+      "names": [
+        ".env"
+      ],
+      "patterns": [
+        {
+          "regex": "^\\.env\\..+$",
+          "display": ".env.*",
+          "example": ".env.production"
+        }
+      ],
+      "examples": [
+        ".env.local"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "b628501b6d34765238b83bb7eeefa773116d8a23dfe417cf898b3b954af278a2",
+      "detailed": "e0000dbdc13c2ccb86bbd93a3b1d4302f16a35ff1d94280c82b67c75fcddcf9e"
+    },
+    {
+      "id": "config",
+      "extensions": [],
+      "names": [
+        ".prettierrc",
+        ".eslintrc",
+        ".babelrc",
+        ".browserslistrc",
+        ".stylelintrc"
+      ],
+      "patterns": [],
+      "examples": [
+        ".prettierrc"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "2edf5ce2a907ff1bd9af292b81c521fce60babbd4c2845e5ab100e210ff2837c",
+      "detailed": "332761b1f417ac8ba90a77ccbca65e8ad1de8f3d05f48dc7a26848f0c7f39bea"
+    },
+    {
+      "id": "plist",
+      "extensions": [
+        "plist"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Info.plist"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "9ca9956d1a4be7b6d726ec17509831e3e11331baefd53fdc7e2c9f049e545c4c",
+      "detailed": "40de6bb41c58fa02f3e17e245596cc9f1925d1689bfedfd901e8260cb36f8108"
+    },
+    {
+      "id": "hcl",
+      "extensions": [
+        "hcl"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "policy.hcl"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "c5f0c0836f68a00a6672124a25d2811f14c7fa5de6c8a9ef6d7010efdfb5de2e",
+      "detailed": "157a708e68522c0b90e9c87c0d3ea66ba1a6d8c27b7373c332683e43c3b34862"
+    },
+    {
+      "id": "csv",
+      "extensions": [
+        "csv"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "customers.csv"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "46a93e2fef835eb9a7321a9fc776dd33894d2b77c3c287ce8584a2e6f9a37ed0",
+      "detailed": "01a8801ba1a54d057e169ded5645a7e22405a1cdd288cf31767fc90d98f7a379"
+    },
+    {
+      "id": "tsv",
+      "extensions": [
+        "tsv"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "results.tsv"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "20c9a002bff1784c80e93d0eb42cb1ac79aceb665ce0e07d0b580ce9c371d58f",
+      "detailed": "52ca29b9b1b597a03d6b19fa4ed4a9d3d495db5c4dc00aec33d1b31884fe5e12"
+    },
+    {
+      "id": "js",
+      "extensions": [
+        "js",
+        "mjs",
+        "cjs"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "index.js"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F7DF1E",
+        "ink": "#17202A",
+        "source": "https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/js.svg"
+      },
+      "compact": "4c58a27dc44dc882cdfc7f3edd7816c219a505c32807896123cb2d3384899d98",
+      "detailed": "30a6ccfd097038d7e531c1cfc06b5d61eee24610fbfb6a49f93014ff14928a75"
+    },
+    {
+      "id": "ts",
+      "extensions": [
+        "ts",
+        "mts",
+        "cts"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.ts"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3178C6",
+        "ink": "#17202A",
+        "source": "https://www.typescriptlang.org/branding"
+      },
+      "compact": "ea6104d873e29af0a73d5b199f4d7ac0be047142ab4f8c7e39f1fb23c27b9f1b",
+      "detailed": "1d5e3403658225f1f5ee9b521a6a9b1a786f128c510b1105bda4a9b1818b92cc"
+    },
+    {
+      "id": "jsx",
+      "extensions": [
+        "jsx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.jsx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#61DAFB",
+        "ink": "#17202A",
+        "source": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg"
+      },
+      "compact": "47be6f75041a5e76010a02a24ba2e3d9bc3a027cd98cd64b5dff7f1cde57b583",
+      "detailed": "d869b12a2d34dbf00b8d7a00cbe2d9d465cd5f255684be8277fe1e9aa747f855"
+    },
+    {
+      "id": "tsx",
+      "extensions": [
+        "tsx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.tsx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#61DAFB",
+        "ink": "#17202A",
+        "source": "https://github.com/facebook/create-react-app/blob/282c03f9525fdf8061ffa1ec50dce89296d916bd/test/fixtures/relative-paths/src/logo.svg"
+      },
+      "compact": "c8a8111ea5e63c024e622fe4561ba1c07dcf10b2c94d2644d4dc045153a48440",
+      "detailed": "a5f3b285a7a138aa44d60f1742e2277904881e3639a5fb1b8e545b3ff19e4ba3"
+    },
+    {
+      "id": "python",
+      "extensions": [
+        "py",
+        "pyi",
+        "pyw"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.py"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3776AB",
+        "ink": "#FFFFFF",
+        "source": "https://www.python.org/community/logos/",
+        "yellow": "#FFD43B"
+      },
+      "compact": "bddc88f1887c2a1b0d3afd2f55be86c766d3d907abbc9fbb15171699b4a4ed01",
+      "detailed": "bddc88f1887c2a1b0d3afd2f55be86c766d3d907abbc9fbb15171699b4a4ed01"
+    },
+    {
+      "id": "go",
+      "extensions": [
+        "go"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.go"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#00ADD8",
+        "ink": "#17202A",
+        "source": "https://blog.golang.org/go-brand"
+      },
+      "compact": "98a468c3a3caf1a6a1663024ea4652e6cd238aae9ec9bfaa818fc8f707a56dcf",
+      "detailed": "a06395119172da9dd9fc5021ddec3d4afb69781a5d1aef10602260de9f69c0a9"
+    },
+    {
+      "id": "rust",
+      "extensions": [
+        "rs"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.rs"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#000000",
+        "ink": "#FFFFFF",
+        "source": "https://www.rust-lang.org",
+        "darkPrimary": "#FFFFFF"
+      },
+      "compact": "797849ebf10cf7d5805446eb8249af2b032a952755e446a81fc99e3baea64b14",
+      "detailed": "2edffac795f7499128b8ae3402db520b34450cb6122160e406b52214b29ffeae"
+    },
+    {
+      "id": "html",
+      "extensions": [
+        "html",
+        "htm",
+        "xhtml"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "index.html"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#E34F26",
+        "ink": "#17202A",
+        "source": "https://www.w3.org/html/logo/"
+      },
+      "compact": "fdfaa1f9e5e39bcfe9914e1a9a9d7c760c8d1486b443a40f5f245b95bd2e51cc",
+      "detailed": "fdfaa1f9e5e39bcfe9914e1a9a9d7c760c8d1486b443a40f5f245b95bd2e51cc"
+    },
+    {
+      "id": "css",
+      "extensions": [
+        "css"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "theme.css"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#663399",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/CSS-Next/logo.css/blob/bacc20878227204b283c68a6b935f8279e06b0cd/css.svg"
+      },
+      "compact": "ad2122e29173bbcbfe70a20ece260b96202e9e5000a278448bec9880da69e780",
+      "detailed": "ad2122e29173bbcbfe70a20ece260b96202e9e5000a278448bec9880da69e780"
+    },
+    {
+      "id": "graphql",
+      "extensions": [
+        "graphql",
+        "gql"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "schema.graphql"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#E10098",
+        "ink": "#17202A",
+        "source": "https://graphql.org/brand"
+      },
+      "compact": "51352bcc1fcd327af670a1cbad241f64ca5a0bccbfa507fc880fc09b873a28e1",
+      "detailed": "849d57be8de4daa5e7df2059f5c8c310942659f70ca36c658790962d6ce086cd"
+    },
+    {
+      "id": "vue",
+      "extensions": [
+        "vue"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.vue"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#4FC08D",
+        "ink": "#17202A",
+        "source": "https://github.com/vuejs/art/blob/a1c78b74569b70a25300925b4eacfefcc143b8f6/logo.svg",
+        "secondary": "#35495E"
+      },
+      "compact": "c7a9fef17e36259e22e4ab2ee6707bd242809c58fbaea21815893cf36b0d0aa3",
+      "detailed": "c7a9fef17e36259e22e4ab2ee6707bd242809c58fbaea21815893cf36b0d0aa3"
+    },
+    {
+      "id": "c",
+      "extensions": [
+        "c",
+        "h"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.c"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#00599C",
+        "ink": "#FFFFFF",
+        "source": "https://isocpp.org/"
+      },
+      "compact": "0b78d8ffc3631ef660e0c11673e812c8e5bfe4ba42a2b1b4935597a0a29b9774",
+      "detailed": "0b78d8ffc3631ef660e0c11673e812c8e5bfe4ba42a2b1b4935597a0a29b9774"
+    },
+    {
+      "id": "cpp",
+      "extensions": [
+        "cpp",
+        "hpp",
+        "cc",
+        "cxx",
+        "hxx",
+        "hh",
+        "cp"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.cpp"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#00599C",
+        "ink": "#FFFFFF",
+        "source": "https://isocpp.org/"
+      },
+      "compact": "067db65b4e2691f0d84ba7d43adc6f851512478b020044fb3e0aab2702706cb9",
+      "detailed": "067db65b4e2691f0d84ba7d43adc6f851512478b020044fb3e0aab2702706cb9"
+    },
+    {
+      "id": "sass",
+      "extensions": [
+        "scss",
+        "sass"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "theme.scss"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#CC6699",
+        "ink": "#17202A",
+        "source": "https://sass-lang.com/styleguide/brand"
+      },
+      "compact": "a4ba2dfeca69a2ef9dd868d6c2c00eb0206e9eb84663f724b58c873b76b71d88",
+      "detailed": "6688a43502f5824bae88f4f42962ca0db6d2a470f2bcca639f3795ec67608f3e"
+    },
+    {
+      "id": "less",
+      "extensions": [
+        "less"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "theme.less"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#1D365D",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/less/logo/blob/c9c10c328cfc00071e92443934b35e389310abf8/less_logo.ai"
+      },
+      "compact": "02de38fb84c0e3078a4ece9955849db8bd912143e2ce1d82150f5e1ab1eb634d",
+      "detailed": "5760672b598e726de8d2fcc9d99f3de3b8a7ea0db9cd01076ed3acc0600fd911"
+    },
+    {
+      "id": "stylus",
+      "extensions": [
+        "styl"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "theme.styl"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#333333",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/stylus/stylus-lang.com/blob/c833bf697e39e1174c7c6e679e0e5a23d0baeb90/img/stylus-logo.svg"
+      },
+      "compact": "8d11772a9a166699f078704c673a043f671d4142a527c62de4011425bc99d932",
+      "detailed": "121f3da7897572c5ce7aa4da636e4449292823dbb4fd19a06e4277075046c221"
+    },
+    {
+      "id": "swift",
+      "extensions": [
+        "swift"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "ContentView.swift"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F05138",
+        "ink": "#FFFFFF",
+        "source": "https://developer.apple.com/swift/resources/",
+        "gradientStart": "#FA7343"
+      },
+      "compact": "1b692ec4da6bf31b766cfb6275548b975449abe4d37af126cd04e5b4cdbda7c2",
+      "detailed": "1b692ec4da6bf31b766cfb6275548b975449abe4d37af126cd04e5b4cdbda7c2"
+    },
+    {
+      "id": "java",
+      "extensions": [
+        "java"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Main.java"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#007396",
+        "ink": "#FFFFFF",
+        "source": "https://www.oracle.com/java/technologies/java-licensing-logo-guidelines.html",
+        "red": "#E76F00"
+      },
+      "compact": "0e3225fd10f55f16438951688ccf3832eaa81f385fcaf73ab8a6f17463834e84",
+      "detailed": "0e3225fd10f55f16438951688ccf3832eaa81f385fcaf73ab8a6f17463834e84"
+    },
+    {
+      "id": "kotlin",
+      "extensions": [
+        "kt",
+        "kts"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.kt"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#7F52FF",
+        "ink": "#FFFFFF",
+        "source": "https://www.jetbrains.com/company/brand/logos/",
+        "gradientEnd": "#C711E1"
+      },
+      "compact": "05490e6be45f6c8f74718ea5a5b5b0687f6f04683cb2b8f82f6b54c8ef0adcc0",
+      "detailed": "8ad2e9a7e2982645452f05e45268fbd53c7afa165f05fa5a514212b05d604cc4"
+    },
+    {
+      "id": "csharp",
+      "extensions": [
+        "cs"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.cs"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#512BD4",
+        "ink": "#FFFFFF",
+        "source": "https://learn.microsoft.com/training/paths/get-started-c-sharp-part-1"
+      },
+      "compact": "bbbc38ce952bee4bae32ec9f638f3a3c23b9fc982f8e4fc63c9a1976132cb727",
+      "detailed": "de1867cca8894cf782ef0554d87e0cee307b9be8a91b04ae6e77bf4969518878"
+    },
+    {
+      "id": "fsharp",
+      "extensions": [
+        "fs",
+        "fsi",
+        "fsx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.fs"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#378BBA",
+        "ink": "#17202A",
+        "source": "https://foundation.fsharp.org/logo"
+      },
+      "compact": "a98581330c0b04a248bbe1451a777daec3b4577770c4a5f95a5dc5bca7e146b8",
+      "detailed": "0c97dbc43de92de8fc06d17cae78d67a3d608c1670199a980b0720978db90a34"
+    },
+    {
+      "id": "ruby",
+      "extensions": [
+        "rb",
+        "rake",
+        "gemspec",
+        "erb"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.rb"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#CC342D",
+        "ink": "#FFFFFF",
+        "source": "https://www.ruby-lang.org/en/about/logo/"
+      },
+      "compact": "627270a6202a68e2d8908efb1bdef591037d2bfb4936a5710f8a398de34a1e79",
+      "detailed": "e5b0fb961ead34d5f350846bc2f49ea0e096aea63b273c72feb3eca78bd19c8d"
+    },
+    {
+      "id": "php",
+      "extensions": [
+        "php",
+        "phtml"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.php"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#777BB4",
+        "ink": "#17202A",
+        "source": "https://php.net/download-logos.php"
+      },
+      "compact": "9ced0e096a5fba14bbbda497e69ffeea8c694ead0bd307a04129d7da72ada750",
+      "detailed": "3ef8de441d0cd759ffe9c9484f07fb9160326ad5a7eb2edb201649f791d5b72c"
+    },
+    {
+      "id": "dart",
+      "extensions": [
+        "dart"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.dart"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#0175C2",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/dart-lang/site-shared/tree/18458ff440afd3d06f04e5cb871c4c5eda29c9d5/src/_assets/image/dart/logo"
+      },
+      "compact": "ae6c48bf6cbf46b551c4570cf7c3eab6d6d51843c659ebaf36ba5c4fcf7409d4",
+      "detailed": "8e9619d6af594596c41393a925c94ae6513e481b17bd3d4e1651ba23d08fce97"
+    },
+    {
+      "id": "lua",
+      "extensions": [
+        "lua"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.lua"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#000080",
+        "ink": "#FFFFFF",
+        "source": "https://www.lua.org/images/"
+      },
+      "compact": "989f48f3ac1b90a8eab04083791ab331d9cd05d75f249c70931e3e4760de3c90",
+      "detailed": "f568cf4d39b40d0d49d4cb184785d33d955a9fa16d2d861f6e70113b6d7b0a79"
+    },
+    {
+      "id": "r",
+      "extensions": [
+        "r",
+        "rmd"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.r"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#276DC3",
+        "ink": "#FFFFFF",
+        "source": "https://www.r-project.org/logo/"
+      },
+      "compact": "e8b32b20cc55ad119bbcb32da4cdbfe01c537e2caa44803f2a6e80c9123624a2",
+      "detailed": "138e55c298be757a1e0fa83a6a304ca84ea4b05f1296eedc860c1577a8a7d85b"
+    },
+    {
+      "id": "scala",
+      "extensions": [
+        "scala",
+        "sc"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.scala"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#DC322F",
+        "ink": "#FFFFFF",
+        "source": "https://www.scala-lang.org"
+      },
+      "compact": "0900f392aa6a0638fd8d85cf50c0c6fc64a701e288f34f5576b4af1e2197fb8e",
+      "detailed": "4f9df8a057cf00e10562942b03de3f1232193f05044a7603a8ab14ecd952cfde"
+    },
+    {
+      "id": "perl",
+      "extensions": [
+        "pl",
+        "pm"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.pl"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#0073A1",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/metacpan/perl-assets/blob/56b555711934dde8fd0b20ec29ecc3bf81a3d493/blessed/src/010.svg"
+      },
+      "compact": "d588eeca928493407b21fc109e475471a1aea225dcc874a029790075a5a2679d",
+      "detailed": "7eb4ed0fab7118802dc5e35a99a11bd81d1b7a0b3deb0f8c89104706f95ec64b"
+    },
+    {
+      "id": "elixir",
+      "extensions": [
+        "ex",
+        "exs"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.ex"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#4B275F",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/elixir-lang/elixir-lang.github.com/tree/031746384ee23b9be19298c92a9699c56cc05845/images/logo"
+      },
+      "compact": "3d7a3637546f95de4d2f19790ca6c99000ccca5bf6f8ebb325416f017eaea15e",
+      "detailed": "6ed2254479dbdfea4f13831e1ddc61c41a93e97fb858fe0a77bd76571b5a7a2a"
+    },
+    {
+      "id": "erlang",
+      "extensions": [
+        "erl",
+        "hrl"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.erl"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#A90533",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/erlang/erlide_eclipse/blob/99d1d61fde8e32ef1630ca0e1b05a6822b3d6489/meta/media/erlang-logo.svg"
+      },
+      "compact": "69201e42804c9f42242323e12d044eda38263c97be3fdd87677d616d355fe546",
+      "detailed": "d0d72014e1e3b2eeb9c45e4d71ef6158d59b199338b127130c66d6ed4a1c8bc5"
+    },
+    {
+      "id": "haskell",
+      "extensions": [
+        "hs",
+        "lhs"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.hs"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#5D4F85",
+        "ink": "#FFFFFF",
+        "source": "https://wiki.haskell.org/Thompson-Wheeler_logo"
+      },
+      "compact": "d25b4f8cdc6f676fdf337f51a8381b389917d7dc3e700e60bb88e48f4b986d7c",
+      "detailed": "2a3953a8dad9bf7170d27dd55e3e1c0be0325d4c5e0d6e4288260933f08c09d8"
+    },
+    {
+      "id": "clojure",
+      "extensions": [
+        "clj",
+        "cljs",
+        "cljc",
+        "edn"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.clj"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#5881D8",
+        "ink": "#17202A",
+        "source": "https://commons.wikimedia.org/wiki/File:Clojure_logo.svg"
+      },
+      "compact": "26df4d40db92636dc1db3d77c5bf25ec22288737230ff4b44d4a1d79564b79ef",
+      "detailed": "568e1b6204bc2fbd46435a4611a1365485a5fc6cd7cc84794612f229676728e2"
+    },
+    {
+      "id": "julia",
+      "extensions": [
+        "jl"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.jl"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#9558B2",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/JuliaLang/julia-logo-graphics/blob/b5551ca7946b4a25746c045c15fbb8806610f8d0/images/julia-dots.svg"
+      },
+      "compact": "82b8c27ed458d23295025e5e9016614bafa2db873df2cd5494d369e550d02322",
+      "detailed": "c5d36c757e6ae16f9404af5fa4e69d67524705b85d0fc0ad6f3fd6e19bbb69b5"
+    },
+    {
+      "id": "zig",
+      "extensions": [
+        "zig"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.zig"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F7A41D",
+        "ink": "#17202A",
+        "source": "https://github.com/ziglang/logo/blob/6446ba8e37a0651da720d8869e1ce9264fa0c0b9/zig-mark.svg"
+      },
+      "compact": "0e1df02b394204f4b48897a4a9241128970e91e94f0fb5157aba732e80cf984f",
+      "detailed": "a1b00e9e1f27c1226f9cc55063b212d60a9f6f67bdd7f4f600fc5028dcc17e01"
+    },
+    {
+      "id": "objectivec",
+      "extensions": [
+        "m",
+        "mm"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.m"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "ed22d0e103a43aa283bf2d302b06c6ba88b3f8510569b0e184baa2d27cfc8f7e",
+      "detailed": "f98f3821ff6067c3c016fc49e7cead41353d588eab98699e9da5dd31a7a2410c"
+    },
+    {
+      "id": "groovy",
+      "extensions": [
+        "groovy",
+        "gradle",
+        "gvy"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.groovy"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#4298B8",
+        "ink": "#17202A",
+        "source": "https://apache.org/logos"
+      },
+      "compact": "eee599379436b01c4c2e78fe0ebf5261550213be17e30ec634eae0cb0f4993c9",
+      "detailed": "d3d91790cae6a65f7977eb182f092aa1adc85d5145f1b92a90e7085d12832663"
+    },
+    {
+      "id": "svelte",
+      "extensions": [
+        "svelte"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.svelte"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#FF3E00",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/sveltejs/branding/blob/c4dfca6743572087a6aef0e109ffe3d95596e86a/svelte-logo.svg"
+      },
+      "compact": "9c5bbaca4aba6dde0501755efb73f8ca421f1c68b8e10853adc080907e52c117",
+      "detailed": "313ccdf3e83f3652c2f332be17c4c505f08167af00aa93d7de9f4646e695f291"
+    },
+    {
+      "id": "astro",
+      "extensions": [
+        "astro"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.astro"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#BC52EE",
+        "ink": "#17202A",
+        "source": "https://astro.build/press"
+      },
+      "compact": "f7ebb4ae52cdd5d2ba251244b635582808a653f333225b3fb8fd8ad0d6632cca",
+      "detailed": "3c30dd09c77473814399ba78765f0deaf4ad62ab19ab68ff6560b40a7a978062"
+    },
+    {
+      "id": "mdx",
+      "extensions": [
+        "mdx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "example.mdx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#1B1F24",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/mdx-js/mdx/blob/b8a76c95deb14f7297bafdac1aa3eddd2b0fbb8f/docs/_static/icon.svg"
+      },
+      "compact": "736571ed750c02e4e189a9e19a34be5a4c31ae3a5c50fe4c01be896efe871f04",
+      "detailed": "b3af98915757603d1837e4c669ca081ce1158bfe50cd3817ad5b5a28d60aea20"
+    },
+    {
+      "id": "shell",
+      "extensions": [
+        "sh",
+        "bash",
+        "zsh",
+        "fish",
+        "ksh",
+        "csh"
+      ],
+      "names": [
+        ".bashrc",
+        ".bash_profile",
+        ".bash_aliases",
+        ".profile",
+        ".zshrc",
+        ".zprofile",
+        ".zshenv",
+        ".kshrc",
+        ".cshrc",
+        ".envrc"
+      ],
+      "patterns": [],
+      "examples": [
+        "build.sh"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "ee36212ea55af341e9013e9a9d4d1da2cd782b62bfeb63b2c226b64fd41201da",
+      "detailed": "67a85b6ea65362ce7d00a5696e27ad2302a623f46fbac35d1044deb6a139d1b5"
+    },
+    {
+      "id": "powershell",
+      "extensions": [
+        "ps1",
+        "psm1",
+        "psd1"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "deploy.ps1"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#5391FE",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/PowerShell/PowerShell/tree/11d7587f9b934cf27013d318886f97fb95c811cf"
+      },
+      "compact": "bbebc4a1ce7b32f5c072beac3be73daac8634ba3bd7998bf73e46e90c26ac92e",
+      "detailed": "bbebc4a1ce7b32f5c072beac3be73daac8634ba3bd7998bf73e46e90c26ac92e"
+    },
+    {
+      "id": "batch",
+      "extensions": [
+        "bat",
+        "cmd"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "build.cmd"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "8a51b22b3de5211afa4192dd8d87dda75800947b412bef130c3ac072cb643523",
+      "detailed": "f0832c73bc79f8a070f2f61e133af4eefce81023494943f2fa4c0e236146e35d"
+    },
+    {
+      "id": "sql",
+      "extensions": [
+        "sql"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "query.sql"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "57fa5bde9f0933b1b9b0d002b12850273b3c930ff184237310026f30c1274e89",
+      "detailed": "fc673aea4d246762b4a32a85743a094cfc0a2b6112453ed56374a14d7e3e97ba"
+    },
+    {
+      "id": "proto",
+      "extensions": [
+        "proto"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "service.proto"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "daca37a47fefa22cd4df8f84c0afd10c29fcf4ab37926b4f725ababc31e3a715",
+      "detailed": "3af94e4f1690e2a307fb5fffe7c7700193963c9ec54b8ab60ca75582d2145e72"
+    },
+    {
+      "id": "notebook",
+      "extensions": [
+        "ipynb"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "analysis.ipynb"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F37626",
+        "ink": "#17202A",
+        "source": "https://github.com/jupyter/design/blob/80716ee75dd7b2a6ec6abcd89922d020483589b1/logos/Logo%20Mark/logomark-whitebody-whitemoons/logomark-whitebody-whitemoons.svg"
+      },
+      "compact": "c6323bfc37cce4259a1475ae5304b141b850b04d699dfa0f2a9545106b1c587c",
+      "detailed": "fdd405d30de92c98904f03d1833c69ca516dbf035e6ff9534928b6a3377642f0"
+    },
+    {
+      "id": "types",
+      "extensions": [
+        "d.ts",
+        "d.mts",
+        "d.cts"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "types.d.ts"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3178C6",
+        "ink": "#17202A",
+        "source": "https://www.typescriptlang.org/branding"
+      },
+      "compact": "45c0c3adc99d24166a6692023d84636d9f42907a2e9db1a34e88d4516cc1769c",
+      "detailed": "d8fc874a4669b4b45825df991d98b657f1977f022dd5eecbda870184645382db"
+    },
+    {
+      "id": "git",
+      "extensions": [],
+      "names": [
+        ".gitignore",
+        ".gitattributes",
+        ".gitmodules",
+        ".gitkeep"
+      ],
+      "patterns": [],
+      "examples": [
+        ".gitignore"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F03C2E",
+        "ink": "#17202A",
+        "source": "https://git-scm.com/community/logos"
+      },
+      "compact": "7a796bdc95ddae87aced4da0d4c1b75b7f82f554aca5f870b40f632c74460b69",
+      "detailed": "7a796bdc95ddae87aced4da0d4c1b75b7f82f554aca5f870b40f632c74460b69"
+    },
+    {
+      "id": "ignore",
+      "extensions": [],
+      "names": [
+        ".taurignore",
+        ".dockerignore",
+        ".npmignore",
+        ".eslintignore",
+        ".prettierignore"
+      ],
+      "patterns": [],
+      "examples": [
+        ".dockerignore"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "69793a0fd52e1b9839274dfba60c925d6ca46ac690e4a1f00689bedca8e4250a",
+      "detailed": "ca74c1870f44ed44d1f532f2c58ed4eec0322aac9ca9e94ec2d0b8d13fe70bb6"
+    },
+    {
+      "id": "lock",
+      "extensions": [
+        "lock"
+      ],
+      "names": [
+        "Cargo.lock",
+        "yarn.lock",
+        "bun.lock",
+        "bun.lockb",
+        "go.sum",
+        "Gemfile.lock",
+        "Podfile.lock",
+        "Package.resolved"
+      ],
+      "patterns": [],
+      "examples": [
+        "Cargo.lock"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "1bf8859ba8d417fc31368ec7e47ca691e20e451707ce27a4b81d59247c15b28c",
+      "detailed": "13110a71f6fb0dbfe189d1859f1dbe94a05c153fec183815de26d1d6d858642e"
+    },
+    {
+      "id": "json-package",
+      "extensions": [],
+      "names": [
+        "package.json",
+        "composer.json"
+      ],
+      "patterns": [],
+      "examples": [
+        "package.json"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "15520f97fb5b763abbd7a63110ba37ad61da8c93efc2ce1ec0d0573389d437dd",
+      "detailed": "78e6b87a3bb231172ac02e47d88ea89fd19b9db6b4182900cfc77ad7cce8f136"
+    },
+    {
+      "id": "yaml-lock",
+      "extensions": [],
+      "names": [
+        "pnpm-lock.yaml"
+      ],
+      "patterns": [],
+      "examples": [
+        "pnpm-lock.yaml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "5f2249be5112debae76720f0f493386d40831a0ef03e2c1de853674447942e21",
+      "detailed": "5d13102ea416d67e18d4d30dcd64123d980d5d2ce1f14c9ff2eff87f8e473c12"
+    },
+    {
+      "id": "json-lock",
+      "extensions": [],
+      "names": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "composer.lock"
+      ],
+      "patterns": [],
+      "examples": [
+        "package-lock.json"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "15520f97fb5b763abbd7a63110ba37ad61da8c93efc2ce1ec0d0573389d437dd",
+      "detailed": "6d9bbcbc427c352b1cee51c848266b743584d56809709da5cc853b77b079c280"
+    },
+    {
+      "id": "tsconfig",
+      "extensions": [],
+      "names": [
+        "tsconfig.json",
+        "jsconfig.json"
+      ],
+      "patterns": [
+        {
+          "regex": "^(tsconfig|jsconfig)\\..+\\.json$",
+          "display": "tsconfig.*.json / jsconfig.*.json",
+          "example": "tsconfig.build.json"
+        }
+      ],
+      "examples": [
+        "tsconfig.json"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3178C6",
+        "ink": "#17202A",
+        "source": "https://www.typescriptlang.org/branding"
+      },
+      "compact": "6deadd5300fa1e42f2b1929734e57a2c25d47e862333b159254c3f3758f9b96a",
+      "detailed": "5a93644e5f276e95a3a504cd9c2c7af5c0494ce01887f070f8cde85ad9472ba5"
+    },
+    {
+      "id": "docker",
+      "extensions": [
+        "dockerfile",
+        "containerfile"
+      ],
+      "names": [
+        "Dockerfile",
+        "Containerfile"
+      ],
+      "patterns": [
+        {
+          "regex": "^(dockerfile|containerfile)\\..+$",
+          "display": "Dockerfile.* / Containerfile.*",
+          "example": "Dockerfile.prod"
+        }
+      ],
+      "examples": [
+        "Dockerfile"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#2496ED",
+        "ink": "#17202A",
+        "source": "https://www.docker.com/company/newsroom/media-resources"
+      },
+      "compact": "93bf480577cb2ad0cc5dc4bd71ff24d345f37591da08fc13077f9cdf810fc491",
+      "detailed": "caf6c1330b16ad1abdd195014b9e658447e85773cf8a7627a9940d5566168c4a"
+    },
+    {
+      "id": "make",
+      "extensions": [
+        "mk"
+      ],
+      "names": [
+        "Makefile",
+        "GNUmakefile",
+        "Justfile",
+        "makefile",
+        "justfile"
+      ],
+      "patterns": [],
+      "examples": [
+        "Makefile"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "fbb9c7a1539d16585d96e192d712ab44af021156877af8b623580ac3d06944ae",
+      "detailed": "795b7942601913ab657ad59395479357134ae3ff2bb2762c72646c75c4aedbac"
+    },
+    {
+      "id": "cmake",
+      "extensions": [
+        "cmake"
+      ],
+      "names": [
+        "CMakeLists.txt"
+      ],
+      "patterns": [],
+      "examples": [
+        "CMakeLists.txt"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#064F8C",
+        "ink": "#FFFFFF",
+        "source": "https://www.kitware.com/platforms/"
+      },
+      "compact": "6ae773811194d9f7f3638258398de9d6d6df485b674055f20295b1a6fa68d5c2",
+      "detailed": "4112d2052d67ca466ec153a36c948d2374d845c46f14642b4c2f2d7ec4a67e7e"
+    },
+    {
+      "id": "gomod",
+      "extensions": [],
+      "names": [
+        "go.mod",
+        "go.work"
+      ],
+      "patterns": [],
+      "examples": [
+        "go.mod"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#00ADD8",
+        "ink": "#17202A",
+        "source": "https://blog.golang.org/go-brand"
+      },
+      "compact": "4b74d1c0bf812f6e493d3320573560ba029e50c13e090a173cf03d1979de6f17",
+      "detailed": "5c378e6a53717d96a035b63b00163564337c8b4684a2b0df21a490f1b242ccff"
+    },
+    {
+      "id": "cargo",
+      "extensions": [],
+      "names": [
+        "Cargo.toml"
+      ],
+      "patterns": [],
+      "examples": [
+        "Cargo.toml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "843c7b210fb38a65d7d86d813f8d90391bffa645441515d87f95bdf6d231f044",
+      "detailed": "f1587556d29af177e692c7f74a1b8b24f999f1bf1f0b8a8f9de28431e0c47817"
+    },
+    {
+      "id": "pyproject",
+      "extensions": [],
+      "names": [
+        "pyproject.toml"
+      ],
+      "patterns": [],
+      "examples": [
+        "pyproject.toml"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3776AB",
+        "ink": "#FFFFFF",
+        "source": "https://www.python.org/community/logos/"
+      },
+      "compact": "2669f6eae0dfdaa0ab2579a6865014f0df658ad693c807a208a9a393e646539e",
+      "detailed": "16ba1098bf0f7d4af82f8a6d2dafafa7b76971c993143d3d9e976294004ac70c"
+    },
+    {
+      "id": "requirements",
+      "extensions": [],
+      "names": [
+        "requirements.txt"
+      ],
+      "patterns": [
+        {
+          "regex": "^requirements[-.][\\w.-]+\\.txt$",
+          "display": "requirements-*.txt",
+          "example": "requirements-dev.txt"
+        }
+      ],
+      "examples": [
+        "requirements.txt"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3776AB",
+        "ink": "#FFFFFF",
+        "source": "https://www.python.org/community/logos/"
+      },
+      "compact": "79429e672a01c29ef2e0a086360ec520d840953b2b6513be4b55ea96e92ba347",
+      "detailed": "f567079fc598e97a27ed4659d23481b8bd01e091807230f073566873c01671bb"
+    },
+    {
+      "id": "swift-package",
+      "extensions": [],
+      "names": [
+        "Package.swift"
+      ],
+      "patterns": [],
+      "examples": [
+        "Package.swift"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F05138",
+        "ink": "#FFFFFF",
+        "source": "https://developer.apple.com/swift/resources/"
+      },
+      "compact": "3fc10fd997e03ae4b3a1ff2060eab25fd3b5522f73eda59b42bd06293eab4c20",
+      "detailed": "9d2a0282495169e0642d640e67d2b73f9b19b59a60f4190dcd8b17299171df1c"
+    },
+    {
+      "id": "ruby-project",
+      "extensions": [
+        "podspec"
+      ],
+      "names": [
+        "Gemfile",
+        "Rakefile",
+        "Podfile",
+        "Brewfile",
+        "Fastfile",
+        "Vagrantfile"
+      ],
+      "patterns": [],
+      "examples": [
+        "Podfile"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#CC342D",
+        "ink": "#FFFFFF",
+        "source": "https://www.ruby-lang.org/en/about/logo/"
+      },
+      "compact": "00c8eb18d0ebeaaeaf0efedb76ec35cec508eadaf4488fa880b848969e25c0ca",
+      "detailed": "50e61c36d11b6661206f3c436445ca7febe2955d55b6ed7d114efe3957b90b0d"
+    },
+    {
+      "id": "maven",
+      "extensions": [],
+      "names": [
+        "pom.xml"
+      ],
+      "patterns": [],
+      "examples": [
+        "pom.xml"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "610b0873b6be57c42b846c6e2f01046fee2b8c8fa81058c77d79844f27d2ae97",
+      "detailed": "2f4ddac7fa77c33d620687f7d693ad4cda427a52d4afd64d0ee93e864e146751"
+    },
+    {
+      "id": "gradle",
+      "extensions": [
+        "gradle.kts"
+      ],
+      "names": [
+        "build.gradle",
+        "settings.gradle",
+        "gradlew",
+        "gradlew.bat"
+      ],
+      "patterns": [],
+      "examples": [
+        "build.gradle.kts"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#02303A",
+        "ink": "#FFFFFF",
+        "source": "https://gradle.com/brand"
+      },
+      "compact": "6c156b2211dcd729ac612382faa775473f26b7cc084063fcfe5042b33ef0ab1f",
+      "detailed": "b0d8e758f3386204dabd4e1ee16cee7bda02463c4047de422ce5331e2eb49431"
+    },
+    {
+      "id": "xcode",
+      "extensions": [
+        "xcodeproj",
+        "xcworkspace"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Studio.xcodeproj"
+      ],
+      "package": true,
+      "palette": {
+        "primary": "#147EFB",
+        "ink": "#17202A",
+        "source": "https://developer.apple.com/develop"
+      },
+      "compact": "c77638543e498bef515cab6f4cd7f5c1317733e27660b3ee8242b1e4166a12b5",
+      "detailed": "df5302979266028992c8a31e6dccb0ae3927b51fd3fcdf925420e22795f54f47"
+    },
+    {
+      "id": "xcconfig",
+      "extensions": [
+        "xcconfig",
+        "pbxproj",
+        "xcscheme"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Release.xcconfig"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#147EFB",
+        "ink": "#17202A",
+        "source": "https://developer.apple.com/develop"
+      },
+      "compact": "17ace689f70edd38c8ab380b2ed2245e81158902d5d7588eae1985c53c831ccd",
+      "detailed": "09097e43930beb46d534af774ba85a4714fb111e7360763caaa5725abb94295b"
+    },
+    {
+      "id": "xcassets",
+      "extensions": [
+        "xcassets"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Assets.xcassets"
+      ],
+      "package": true,
+      "palette": {
+        "primary": "#147EFB",
+        "ink": "#17202A",
+        "source": "https://developer.apple.com/develop"
+      },
+      "compact": "e480207ad6ee7576ce2c0881ca80d50f7f5f9cf7b1e9cfdb0e3f136dd41e07a0",
+      "detailed": "b801faf78e5b17cf6684218e6851f154a0cd3da7af5278f813fb2380c0ce9f5c"
+    },
+    {
+      "id": "visualstudio",
+      "extensions": [
+        "sln",
+        "slnx",
+        "csproj",
+        "fsproj",
+        "vbproj",
+        "vcxproj",
+        "props",
+        "targets"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.csproj"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#5C2D91",
+        "ink": "#FFFFFF",
+        "source": "https://visualstudio.microsoft.com/"
+      },
+      "compact": "53ac09c39186ea787411f86bb62cc20c33586507fefdfe0e3eae8a4002df1d15",
+      "detailed": "6f65f7be454b9826d33942a6e9f2e940ba7aee07f1a9a3cbab1602dabb73b6f5"
+    },
+    {
+      "id": "terraform",
+      "extensions": [
+        "tf",
+        "tfvars",
+        "tfstate"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "main.tf"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#844FBA",
+        "ink": "#FFFFFF",
+        "source": "https://www.hashicorp.com/brand"
+      },
+      "compact": "c0451a349b07737130c9ad076a375cf5b8807eb3ea5ae5e4c126bebba9eac858",
+      "detailed": "ba65ffea2d00117c5f204ef90989accf91f8b7c621a840e9008041ae147245ae"
+    },
+    {
+      "id": "prisma",
+      "extensions": [
+        "prisma"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "schema.prisma"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#2D3748",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/prisma/presskit/tree/4bcb64181f266723439d955d60afa1c55fefa715"
+      },
+      "compact": "583ec9887a58237bea5a2b79bb849e1d5cca3ca76ce4f8cd796fc7c2d9f84810",
+      "detailed": "ef957d9e017d4975de150add3424809a09a46fd5edb43274e2ff80d6117fd7a0"
+    },
+    {
+      "id": "jenkins",
+      "extensions": [],
+      "names": [
+        "Jenkinsfile"
+      ],
+      "patterns": [],
+      "examples": [
+        "Jenkinsfile"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#D24939",
+        "ink": "#17202A",
+        "source": "https://get.jenkins.io/art/"
+      },
+      "compact": "083f6b0d7fa322252cb468d66f499de55471def6fd947d296cd1586c80ec38dd",
+      "detailed": "37297dafa0818f03d1d2ac2cf6825ff12b41a2f0fc99f0917bf6797a528a7953"
+    },
+    {
+      "id": "word",
+      "extensions": [
+        "doc",
+        "docx",
+        "docm",
+        "dot",
+        "dotx",
+        "dotm"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Proposal.docx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#2B579A",
+        "ink": "#FFFFFF",
+        "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+      },
+      "compact": "53bf5f59d5f3d35c1331991979df806e7eb11f75e31403cf444dc410a56cb4c5",
+      "detailed": "868cdbff906f1b79aefae5077b51ad0a97fa5c69ea26fcb93e5cbdd36dc22685"
+    },
+    {
+      "id": "excel",
+      "extensions": [
+        "xls",
+        "xlsx",
+        "xlsm",
+        "xlsb",
+        "xlt",
+        "xltx",
+        "xltm",
+        "xlam"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Budget.xlsx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#217346",
+        "ink": "#FFFFFF",
+        "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+      },
+      "compact": "b3201dbbc813a77e5c4319e85da2afe98d524068eec7718c4a4f2e76e4db81e9",
+      "detailed": "4c3e7a4bd5527b314be3e13d74d3f71b81e6c59c997f1fa8c7fac70972446db4"
+    },
+    {
+      "id": "powerpoint",
+      "extensions": [
+        "ppt",
+        "pptx",
+        "pptm",
+        "pot",
+        "potx",
+        "potm",
+        "pps",
+        "ppsx",
+        "ppsm"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Pitch.pptx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#B7472A",
+        "ink": "#FFFFFF",
+        "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+      },
+      "compact": "6e249c89b19a3afae553719a6e5f409014e050b7e5d178f19e9308775f532a29",
+      "detailed": "bb75bd1cd1948940d80c5042b86b1160f99a32086a5fcb54315b73d3a8b3cd32"
+    },
+    {
+      "id": "wps",
+      "extensions": [
+        "wps",
+        "wpt"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Proposal.wps"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#1E6FFF",
+        "ink": "#FFFFFF",
+        "source": "https://www.wps.com/office/writer/"
+      },
+      "compact": "a61fed7822acef6423930653b7059981e1040a39d8bc6b29e847dde729139e46",
+      "detailed": "ce4af63376611355939fe1cca67250d6e9f59fc8b8c0c2a0d325b0724a0f558d"
+    },
+    {
+      "id": "wps-sheet",
+      "extensions": [
+        "et",
+        "ett"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Budget.et"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#00A66C",
+        "ink": "#FFFFFF",
+        "source": "https://www.wps.com/office/spreadsheet/"
+      },
+      "compact": "3e46d477ab3bcce20242430d187dec4fd1e71dd4bad75be66150f5f2715fb177",
+      "detailed": "39d8bb2e0187347e8dd7d0b1b1ac8cdd18ade7cc29305582896929ac49e417dd"
+    },
+    {
+      "id": "wps-slides",
+      "extensions": [
+        "dps",
+        "dpt"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Pitch.dps"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F36B35",
+        "ink": "#FFFFFF",
+        "source": "https://www.wps.com/office/presentation/"
+      },
+      "compact": "9b8e9848da5d6ebf1b0425867ff9689076ea646bcfd124124795acf805903aec",
+      "detailed": "bbed8d74a91684a5c2caf78632d22e3fb01e91f2392297dc84ad6835bf79c539"
+    },
+    {
+      "id": "odt",
+      "extensions": [
+        "odt",
+        "ott",
+        "fodt"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Notes.odt"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "80b6f16c5bc9d4a15592c700fac75af1024001d94f3110be3fbd4fe042f98b7c",
+      "detailed": "166a6591069714244c374d071b91e8cfcbb6eea5ed92c7d4e59742b746295c6b"
+    },
+    {
+      "id": "ods",
+      "extensions": [
+        "ods",
+        "ots",
+        "fods"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Budget.ods"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "b196c7abe878d6b960dc28cc2d0b0968cba533aced544061a3a5ce0e6bc08c37",
+      "detailed": "df65555a40d93cacae96c783b32866ee043bbcba98476e5e01ceb4b4f9b525b0"
+    },
+    {
+      "id": "odp",
+      "extensions": [
+        "odp",
+        "otp",
+        "fodp"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Pitch.odp"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "85f684df3a8da7786598599c226f5ba953e089fc68a7c6da240a8b9b222e4d08",
+      "detailed": "f0f460b3be33dc248547c843457ba1d2e8767e9b61127cf2ffd23dad130a1f4d"
+    },
+    {
+      "id": "pages",
+      "extensions": [
+        "pages"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Proposal.pages"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#FF9500",
+        "ink": "#17202A",
+        "source": "https://www.apple.com/pages/"
+      },
+      "compact": "4e23bf184bc84f35eb856d13d3060543f96a8f5d27e17de965f7309f8c0f1fb4",
+      "detailed": "c71433615e348bb4ae6657411fc44d5adeb065a631d94923fd26d7a0e2bf9f76"
+    },
+    {
+      "id": "numbers",
+      "extensions": [
+        "numbers"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Budget.numbers"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#27AE35",
+        "ink": "#17202A",
+        "source": "https://www.apple.com/numbers/"
+      },
+      "compact": "6b2939c7668886c82749ca8c41cca1c4868a440128df8dfa55c81ec1da04d8bc",
+      "detailed": "2a162de580fd7a5d94cf3a9f75f7a721560217249ad4f93603afa78cd88e9f44"
+    },
+    {
+      "id": "onenote",
+      "extensions": [
+        "one",
+        "onepkg"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Notes.one"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#7719AA",
+        "ink": "#FFFFFF",
+        "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+      },
+      "compact": "c6c7be592addb289b5c279a3985659a8db94a1fbb3dc17780b74dba96d62d7d5",
+      "detailed": "568f602d6e3a6ba06d3965d4a67611e099462b480a164629f2f4278127b8a518"
+    },
+    {
+      "id": "visio",
+      "extensions": [
+        "vsd",
+        "vsdx",
+        "vss",
+        "vssx",
+        "vst",
+        "vstx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Architecture.vsdx"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3955A3",
+        "ink": "#FFFFFF",
+        "source": "https://developer.microsoft.com/en-us/fluentui#/styles/web/colors/products"
+      },
+      "compact": "14e91e72fd7e0df1213cab79f98e3101b2fb296a151a64ca1a3e5175b9ffe277",
+      "detailed": "85a3640cffd79703c7203a2a1a41128e8657d1b800e2c67dff054a1cee7fa783"
+    },
+    {
+      "id": "msproject",
+      "extensions": [
+        "mpp",
+        "mpt"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Schedule.mpp"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#217346",
+        "ink": "#FFFFFF",
+        "source": "https://www.microsoft.com/microsoft-365/project/project-management-software"
+      },
+      "compact": "67fc4cc28191db27617dc458f052a0ee937097803e563fc5fe0054e0db1e9e60",
+      "detailed": "dbf3e7f78b8e63354ba2afef5df232cef958919b83bd87ac0c7be0e042104802"
+    },
+    {
+      "id": "rtf",
+      "extensions": [
+        "rtf"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Notes.rtf"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "04e919219d7c829f4434b390bef9379393a2ee6eb51ba438e5a2337d32681b68",
+      "detailed": "33798af1d997f25d56a541af997199d150d7c0af578c54c1ed0d1bb7ba5ec2d9"
+    },
+    {
+      "id": "pdf",
+      "extensions": [
+        "pdf"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Report.pdf"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#EC1C24",
+        "ink": "#17202A",
+        "source": "https://acrobat.adobe.com"
+      },
+      "compact": "5a4318bf7458acaf880e3479e379f9047038e89dc84f01410ce56cf4491c2291",
+      "detailed": "7e8c0aa59cf1ce166e291a1abe4dafdd01f91bbd02e5a8f97d3f15b84e7d3bb3"
+    },
+    {
+      "id": "key",
+      "extensions": [
+        "key"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Presentation.key"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "457e24117dbb785faa61e35f0600f37929e553fbca5c63388d277cfd9866aff6",
+      "detailed": "6ab9da9a62bdb0da6813c3426f2638692c0b2f82ee2405ddfb977a851b2635ce"
+    },
+    {
+      "id": "pub",
+      "extensions": [
+        "pub"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Brochure.pub"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "332c064ba19f673be1da1df3c9a75908b263727c55c7891b8f91fead7f289b84",
+      "detailed": "aecc00cdc500fd6315a687206bf43d98c6baa85dbe0e5827d6735d93cfe33980"
+    },
+    {
+      "id": "epub",
+      "extensions": [
+        "epub"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Book.epub"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "f53afb71a216fc18e55e7d5ca9c16482419e608e5604f1a5eb2d80f3034c041e",
+      "detailed": "a70fe0ca889bb5cac6c43e95a2dcd38c8ea4cd5af44c10399b2e166e5e115ef0"
+    },
+    {
+      "id": "ebook",
+      "extensions": [
+        "mobi",
+        "azw",
+        "azw3",
+        "fb2"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Book.azw3"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "c923d43196caa1c72a3c0ea04231a9898d9d8fdc7d64f769742919e596e67bc5",
+      "detailed": "77cdf99350c905cc78eeff254440e8f0e9d59233a26bb58a133b6c50905284c6"
+    },
+    {
+      "id": "tex",
+      "extensions": [
+        "tex",
+        "sty",
+        "cls"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "paper.tex"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#008080",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/latex3/branding/tree/9def6b5f6075567d62b67424e11dbe6d4d5245b4"
+      },
+      "compact": "48bf0c858dbe0a9da868b0d4e21855b30f19b361bbf72bd9cf12eb69702a7819",
+      "detailed": "0c99d5622a07b6428e5635ebb0e2cbf0361c9616d4a8fddfd54c239c80341759"
+    },
+    {
+      "id": "bib",
+      "extensions": [
+        "bib"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "references.bib"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#008080",
+        "ink": "#FFFFFF",
+        "source": "https://github.com/latex3/branding/tree/9def6b5f6075567d62b67424e11dbe6d4d5245b4"
+      },
+      "compact": "f7b8940b5d288bdc4517a54bb1fccc33f25d7e3c66fff67fdaed3cb83211f565",
+      "detailed": "c9c407a9672555493827232338c96bef488a20cd03a769ca153ebb071cf039ca"
+    },
+    {
+      "id": "photoshop",
+      "extensions": [
+        "psd",
+        "psb"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Cover.psd"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#31A8FF",
+        "ink": "#17202A",
+        "source": "https://www.adobe.com/creativecloud.html",
+        "background": "#001E36"
+      },
+      "compact": "568faaa68b97b35997b3846347b0f29a1d736652b5d6df862ee8aee78dd5c8fa",
+      "detailed": "95ecdd28d435a9339036689846498bc011c973aa3d23a9e2de01e81acae8fda1"
+    },
+    {
+      "id": "illustrator",
+      "extensions": [
+        "ai"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Logo.ai"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#FF9A00",
+        "ink": "#17202A",
+        "source": "https://www.adobe.com/creativecloud.html",
+        "background": "#330000"
+      },
+      "compact": "a6393d4de9d5b4211016d91c3bac953958eb8f3ae01f3a184078505b37a4e43e",
+      "detailed": "de9fc19e6979227944e0e005f143b917dcfebe84163d87344759884eeaac4778"
+    },
+    {
+      "id": "aftereffects",
+      "extensions": [
+        "aep",
+        "aepx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Intro.aep"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#9999FF",
+        "ink": "#17202A",
+        "source": "https://www.adobe.com/creativecloud.html",
+        "background": "#00005B"
+      },
+      "compact": "6ac2d0c403fb938eda536dad29d3ff32d85ce8bf7952cbec5998bd87873166ca",
+      "detailed": "0536e02a37c8629d5af31fa4120d0074d8fb5fc4236f74d83c6a78adbef32acf"
+    },
+    {
+      "id": "premiere",
+      "extensions": [
+        "prproj"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Film.prproj"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#9999FF",
+        "ink": "#17202A",
+        "source": "https://www.adobe.com/creativecloud.html",
+        "background": "#00005B"
+      },
+      "compact": "a6407020d950920ec925b0832ef84e4da54327eaa577abeab21d50fb78e14ae3",
+      "detailed": "bffa28946f00ab2e5fc045cf4ebe2ffbbceeebddea5597fba6cce57e1afa38cd"
+    },
+    {
+      "id": "indesign",
+      "extensions": [
+        "indd",
+        "idml",
+        "indt"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Magazine.indd"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#FF3366",
+        "ink": "#17202A",
+        "source": "https://www.adobe.com/creativecloud.html",
+        "background": "#49021F"
+      },
+      "compact": "8867ceca5208fdbfbd89f06b3539a91a4655b637be008bd9167b4c6842fb303f",
+      "detailed": "72334e9c601300b9308bebeca37858d92b4df10354d5abe9898f3d4040b0cfc1"
+    },
+    {
+      "id": "xd",
+      "extensions": [
+        "xd"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Prototype.xd"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#FF61F6",
+        "ink": "#17202A",
+        "source": "https://helpx.adobe.com/support/xd.html",
+        "background": "#470137"
+      },
+      "compact": "21a163c1a2db0fd8b818e34f7f8f7c8b10200b5bf5f5ece9eb424fa6647022ed",
+      "detailed": "9092b1ccef5484b525c7ec1252a24d2503dea6d00b89dbcbc6f6393066e65788"
+    },
+    {
+      "id": "sketch",
+      "extensions": [
+        "sketch"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.sketch"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F7B500",
+        "ink": "#17202A",
+        "source": "https://www.sketch.com/about-us/#press",
+        "secondary": "#FDB300",
+        "highlight": "#FFD800",
+        "shadow": "#EA6C00"
+      },
+      "compact": "7aea244e96404fecc896650f23a9f6b10e2a5ae50160649732c01fdc6f312962",
+      "detailed": "7aea244e96404fecc896650f23a9f6b10e2a5ae50160649732c01fdc6f312962"
+    },
+    {
+      "id": "figma",
+      "extensions": [
+        "fig"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Components.fig"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#F24E1E",
+        "ink": "#17202A",
+        "source": "https://www.figma.com/using-the-figma-brand/",
+        "red": "#F24E1E",
+        "orange": "#FF7262",
+        "purple": "#A259FF",
+        "cyan": "#1ABCFE",
+        "green": "#0ACF83"
+      },
+      "compact": "3dd8a967e853dc85482f9fad502fac24a8c3b6f9ae7776cbcf002375d3ed2ffc",
+      "detailed": "3dd8a967e853dc85482f9fad502fac24a8c3b6f9ae7776cbcf002375d3ed2ffc"
+    },
+    {
+      "id": "blender",
+      "extensions": [
+        "blend"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Scene.blend"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#E87D0D",
+        "ink": "#17202A",
+        "source": "https://www.blender.org/about/logo",
+        "cyan": "#265787",
+        "surface": "#FFFFFF"
+      },
+      "compact": "703e74569842863274d656a682e10295bbf154cf22d606eb77a4fed6436b3c35",
+      "detailed": "703e74569842863274d656a682e10295bbf154cf22d606eb77a4fed6436b3c35"
+    },
+    {
+      "id": "cad",
+      "extensions": [
+        "dwg",
+        "dxf"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Floorplan.dwg"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#E51050",
+        "ink": "#FFFFFF",
+        "source": "https://www.autodesk.com/blogs/autocad"
+      },
+      "compact": "4dae02b2aae8e7902396e64d57c53c40d5ee440d3f13db5a31e99a9fa173eef7",
+      "detailed": "4d1a6e6f5e3c600bd2cb70736c0e21b12e58039ebc3121b1cef8959fcfd1242f"
+    },
+    {
+      "id": "3d",
+      "extensions": [
+        "obj",
+        "fbx",
+        "stl",
+        "gltf",
+        "glb",
+        "3mf",
+        "dae",
+        "ply",
+        "usdz"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Model.glb"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "685b68afd72fbe27097afcd4411b00afa620ff2b6969fa69126a6136c49a4014",
+      "detailed": "5c813330ad70fc7e1b555f430d90d291da40f9791a88eeae2bae20f2c58d3ca8"
+    },
+    {
+      "id": "postscript",
+      "extensions": [
+        "ps",
+        "eps"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Print.ps"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "f9deb0c91cf6f8edf8cafc8344bfe3080dc11f9c8d89139b9d502f4f9458ce4b",
+      "detailed": "629442bfd6a7e5ec89cc55301df9b78c8368d9d36f81a66c3dc323f7bb84d86e"
+    },
+    {
+      "id": "dmg",
+      "extensions": [
+        "dmg"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Redeven.dmg"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "52612e05418b490dbb48a9f45b915dbb7b7220da4ccc83bbddc60c7f4f6d77df",
+      "detailed": "f6ed066147742fa254c7c15f6a1d7e452d86dc747da2039f6a0871ba8ebca061"
+    },
+    {
+      "id": "pkg",
+      "extensions": [
+        "pkg",
+        "mpkg"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Installer.pkg"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "49810a277b4aa100c522bd0d17535397ebdfb581317063172f0a646c03a0dd8d",
+      "detailed": "9c56db57eba0197e087f19d6fe1d2f8d1304f975b8ba0f74481e4fa6701426de"
+    },
+    {
+      "id": "deb",
+      "extensions": [
+        "deb",
+        "udeb"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "redeven_amd64.deb"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#A81D33",
+        "ink": "#FFFFFF",
+        "source": "https://www.debian.org/logos"
+      },
+      "compact": "dc66bf606a603656edf54a50b79f90c4560d4fff3d156ecff594f44ef5c22047",
+      "detailed": "c3296c5e12d0acb6e893f6179a650c130315535c005d4146d6a03239f592c6bb"
+    },
+    {
+      "id": "rpm",
+      "extensions": [
+        "rpm"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "redeven.rpm"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "7740d016cdf926e8698cefd32e5505e9f0588682f476a48221fa3dc59371caea",
+      "detailed": "5bd618190a1450aaa38e68817b1962c8626f569c34516b9b03f593f9992dabc7"
+    },
+    {
+      "id": "exe",
+      "extensions": [
+        "exe",
+        "com"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Setup.exe"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#0078D4",
+        "ink": "#FFFFFF",
+        "source": "https://www.microsoft.com/windows"
+      },
+      "compact": "0a6323b8064fb42771557baa410be14632e26f54b1970a98a17df25f8cd454c8",
+      "detailed": "430acc3bf4956b61ed3137821107c6c1df1e648c5a1f7984e17dee4d08cfd856"
+    },
+    {
+      "id": "msi",
+      "extensions": [
+        "msi",
+        "msp",
+        "mst"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Setup.msi"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#0078D4",
+        "ink": "#FFFFFF",
+        "source": "https://www.microsoft.com/windows"
+      },
+      "compact": "05f0dab75fb957be7791a203f6faa5d4fd4eaac0cc3bdd8dc56219c8d2bcb772",
+      "detailed": "37ec083cde2d0cd488d21ee241728343bbc2ac7484eb3fb5c3d28cb4c0f78149"
+    },
+    {
+      "id": "msix",
+      "extensions": [
+        "msix",
+        "msixbundle",
+        "appx",
+        "appxbundle"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.msix"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#0078D4",
+        "ink": "#FFFFFF",
+        "source": "https://www.microsoft.com/windows"
+      },
+      "compact": "8a74684ecb3a0bcada7b433c85fd9f0c07c166067f2af227ee0e4c0ef4848a4b",
+      "detailed": "e2a93ad6bb48922dbb672319b014a19f1c04cbd9601a1a52f99591d73568d879"
+    },
+    {
+      "id": "appimage",
+      "extensions": [
+        "appimage"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Tool.AppImage"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#739FB9",
+        "ink": "#17202A",
+        "source": "https://appimage.org"
+      },
+      "compact": "b4dca973202bfbfc1189435a68d54a073411999b6c82c6942397e07ead588323",
+      "detailed": "2c325cda8a62e63a83b483b23b62371b3ac7e5eb7efd4457d71ba90907d80143"
+    },
+    {
+      "id": "snap",
+      "extensions": [
+        "snap"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "tool.snap"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#E95420",
+        "ink": "#17202A",
+        "source": "https://design.ubuntu.com/resources"
+      },
+      "compact": "34300d4ce3739ffacdabe5009a3e5290d6363fc32394844fd223efa572a9f6c4",
+      "detailed": "0a77be1fabb32e04ae331fe4ea18043e37928c7e447da2fe6b4d296f973669f4"
+    },
+    {
+      "id": "flatpak",
+      "extensions": [
+        "flatpak",
+        "flatpakref",
+        "flatpakrepo"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "tool.flatpakref"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#4A90D9",
+        "ink": "#17202A",
+        "source": "https://flatpak.org/press"
+      },
+      "compact": "973036f17496bf004583fa2a77f5d69e3c93c0f5cad3195c3b96ec10360d11f9",
+      "detailed": "2d9dc448e773b4ea5597fb502d9f749bc5aff27129b6523480a1f7123cddc585"
+    },
+    {
+      "id": "apk",
+      "extensions": [
+        "apk"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.apk"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3DDC84",
+        "ink": "#17202A",
+        "source": "https://partnermarketinghub.withgoogle.com/brands/android/visual-identity/visual-identity/logo-lock-ups"
+      },
+      "compact": "2f26468a591b1e10c0be3191c2b066bd9b6ee83a5a4b387f605d621ab2169619",
+      "detailed": "4c31758a0e6b60f010cc7179eee0c33548f7895cbe858cfc6b5df080e5e48c9e"
+    },
+    {
+      "id": "aab",
+      "extensions": [
+        "aab"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.aab"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#3DDC84",
+        "ink": "#17202A",
+        "source": "https://partnermarketinghub.withgoogle.com/brands/android/visual-identity/visual-identity/logo-lock-ups"
+      },
+      "compact": "e26c4691b03826212d326f56042a74013ceb3ec542d3507965633745815dab62",
+      "detailed": "51472d03ae85d98a19399b8101b52a08812765a81f017ed295a6c71cb6486335"
+    },
+    {
+      "id": "ipa",
+      "extensions": [
+        "ipa"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "App.ipa"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "deccbbd49814c13c7c5c88aa02e784e480e2a69be7c0e35fdd2882954b40092e",
+      "detailed": "67824a8498970b8954eaa182a6ee0b8a4e5ddc93a41fee898ab279dcda396d4b"
+    },
+    {
+      "id": "iso",
+      "extensions": [
+        "iso",
+        "img",
+        "vhd",
+        "vhdx",
+        "vmdk",
+        "qcow2"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "System.iso"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "4bc36990d73ce4815691ae0d5201475b2b1ef79f0a7caa4e2b847d6c8f6c708e",
+      "detailed": "99f73663225633eda9b984994eff0bb83470e110b2da88a020ca5f38b6a46f94"
+    },
+    {
+      "id": "extension",
+      "extensions": [
+        "crx",
+        "xpi",
+        "vsix"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Theme.vsix"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "0caa612a01a802b71a8451b9c4118796179220ca85d7dd8b4e86e100fc733576",
+      "detailed": "139405240a59b8881f53c23a103d1a31a3a346c050605ed37273222308b94d83"
+    },
+    {
+      "id": "app",
+      "extensions": [
+        "app"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Redeven.app"
+      ],
+      "package": true,
+      "palette": null,
+      "compact": "134d9916271500668fdbcaf6004323e745cb0418618e7630cda7f51239bfae91",
+      "detailed": "50a455958619fec66211cededba2d1342302e6f5e89d08ab9364cb9f984bd4b2"
+    },
+    {
+      "id": "markdown",
+      "extensions": [
+        "md",
+        "markdown",
+        "mdow"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "README.md"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "ea06948ce0513d97d7d0f5ace4e5d3d8ff485969c2d886ad11c6ada49f31ac52",
+      "detailed": "bdac07c3978a1f70fb98dcd6efa2b97632c21b814d2180c14836544165cd615a"
+    },
+    {
+      "id": "license",
+      "extensions": [],
+      "names": [
+        "LICENSE",
+        "LICENCE",
+        "COPYING",
+        "UNLICENSE"
+      ],
+      "patterns": [
+        {
+          "regex": "^(licen[cs]e|copying)\\..+$",
+          "display": "LICENSE.* / COPYING.*",
+          "example": "LICENSE.txt"
+        }
+      ],
+      "examples": [
+        "LICENSE"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "e311ef01976ee7be53985ea1e25965f4a396648dcd7ec29c17ae248d99bcca35",
+      "detailed": "7aae278b6947b868ac74e415d6f4bb4151f7ef18aa167196d95f8193384b4f02"
+    },
+    {
+      "id": "text",
+      "extensions": [
+        "txt",
+        "log",
+        "text"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Notes.txt"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "c74a6d18578c35a0228560ddeb29f1399b1b25b4c22f7161810baf68a1c199b3",
+      "detailed": "e63bac7016b7ee497dc10f98ed340a2f669b95f0759df13c90b7f147a05e1ffc"
+    },
+    {
+      "id": "svg",
+      "extensions": [
+        "svg",
+        "svgz"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Logo.svg"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "4cefe8ec811b1e56348d3a024cf6c4ed7f03cb233eafbce1ee47fd4f04213d8c",
+      "detailed": "94957f6d05ccd6db8732fa3aab8c06e6b1222e1eb6d4bbfdb2cdb7b958465747"
+    },
+    {
+      "id": "image",
+      "extensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "jpe",
+        "jfif",
+        "webp",
+        "gif",
+        "avif",
+        "heic",
+        "heif",
+        "bmp",
+        "ico",
+        "icns",
+        "tif",
+        "tiff",
+        "apng"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Photo.heic"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "3f522e628c90c9a2d3cb1c5b1f27433f42de6a2cdc91ac152b9a44e085e94980",
+      "detailed": "3f522e628c90c9a2d3cb1c5b1f27433f42de6a2cdc91ac152b9a44e085e94980"
+    },
+    {
+      "id": "raw",
+      "extensions": [
+        "raw",
+        "dng",
+        "cr2",
+        "cr3",
+        "nef",
+        "arw",
+        "raf",
+        "orf",
+        "rw2"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Photo.dng"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "ea7b76953a2df3298368bb8a439fa91c14b58e56f07ee6fed1e9169d38643736",
+      "detailed": "d6af0fca1b29b7c7a6a3fe9bf8560e144e50a0c5726540d510490b3cbba456e9"
+    },
+    {
+      "id": "video",
+      "extensions": [
+        "mp4",
+        "webm",
+        "mov",
+        "mkv",
+        "avi",
+        "m4v",
+        "mpg",
+        "mpeg",
+        "ogv",
+        "wmv",
+        "flv",
+        "m2ts"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Demo.webm"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "048cfc03cda25bf3310eec4af9b26b76b4cd85ffcf75d03489d0833a3bc2625f",
+      "detailed": "048cfc03cda25bf3310eec4af9b26b76b4cd85ffcf75d03489d0833a3bc2625f"
+    },
+    {
+      "id": "audio",
+      "extensions": [
+        "mp3",
+        "wav",
+        "flac",
+        "ogg",
+        "oga",
+        "opus",
+        "m4a",
+        "aac",
+        "aiff",
+        "aif",
+        "mid",
+        "midi",
+        "wma"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Sound.flac"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "3b3a92d2027b9f4f8aaa5e2e313355aa6d000ec6358500002701cb42c74fc131",
+      "detailed": "0a9b3a26e91b5366060b1b9a7945bd230369bfe21de03685063bdde3d948ef87"
+    },
+    {
+      "id": "subtitles",
+      "extensions": [
+        "srt",
+        "vtt",
+        "ass",
+        "ssa",
+        "sub"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Captions.vtt"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "53e15cd65fd6a5d4c84d6b9dfc235188bdc9a0f2e268d74311c1548f054d95ba",
+      "detailed": "b2dd50cb89d85d42b2ffd276baefcafb76d08a33612416a291894ca0923f5772"
+    },
+    {
+      "id": "font",
+      "extensions": [
+        "woff",
+        "woff2",
+        "ttf",
+        "otf",
+        "eot",
+        "ttc"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Font.woff2"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "9b6ebac068d51336d397a0da8d8a3bcb8394335263b66a88a0a1a490387e443f",
+      "detailed": "9b6ebac068d51336d397a0da8d8a3bcb8394335263b66a88a0a1a490387e443f"
+    },
+    {
+      "id": "database",
+      "extensions": [
+        "db",
+        "sqlite",
+        "sqlite3",
+        "db3",
+        "mdb",
+        "accdb"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Data.sqlite3"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "f9189c491d59e57423d15130d73bfb1e577a5852e1716c38745399d14d1275d4",
+      "detailed": "7ce48b3c34385f7800364abae7670fe98b3df304738c8993acab3d288b0c9852"
+    },
+    {
+      "id": "certificate",
+      "extensions": [
+        "crt",
+        "cer",
+        "pem",
+        "p12",
+        "pfx",
+        "der",
+        "p7b",
+        "p7c"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Certificate.crt"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "669dec224fc6e528885fd54e1206482f3a8af44a9e706376a7122dbec9933433",
+      "detailed": "a41631ca4bf6bf6a2b758fdb72fc51857d12e7e20b5d902fe23b0f87d69f1ce2"
+    },
+    {
+      "id": "ssh-key",
+      "extensions": [],
+      "names": [
+        "id_rsa",
+        "id_ed25519",
+        "id_ecdsa",
+        "id_dsa",
+        "id_rsa.pub",
+        "id_ed25519.pub",
+        "id_ecdsa.pub",
+        "id_dsa.pub"
+      ],
+      "patterns": [],
+      "examples": [
+        "id_ed25519.pub"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "a7255378dbdd68d00aa6788b7484df3bed86fd9935a9c475da2f46dd3c7891ba",
+      "detailed": "4ac85deb908082fc1818f674593f9b11b4e37f4d286d316fdbe98f81ef6cbaaa"
+    },
+    {
+      "id": "wasm",
+      "extensions": [
+        "wasm",
+        "wat"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Module.wasm"
+      ],
+      "package": false,
+      "palette": {
+        "primary": "#654FF0",
+        "ink": "#FFFFFF",
+        "source": "https://webassembly.org"
+      },
+      "compact": "f6207e3e2c8768a613fc393472829a98827ce0ce0034cc72fdcffd06c886fd87",
+      "detailed": "bb230a40ecbc4d19d7859e2f3f34bd9296b586773841b084e7870f9b58549217"
+    },
+    {
+      "id": "library",
+      "extensions": [
+        "dll",
+        "so",
+        "dylib",
+        "a",
+        "lib"
+      ],
+      "names": [],
+      "patterns": [
+        {
+          "regex": "^.+\\.so(?:\\.[0-9]+)+$",
+          "display": "*.so.<version>",
+          "example": "libssl.so.3"
+        }
+      ],
+      "examples": [
+        "Library.dylib"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "e67355d9d4cdba41dbc416472967692755ba596d66212cc1e54dff3762880424",
+      "detailed": "d5aeb9d277a3eed38afc2eb818c633f875508ca3a5992e26d96cc2e319d0917b"
+    },
+    {
+      "id": "zip",
+      "extensions": [
+        "zip",
+        "zipx"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Bundle.zip"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "a6a42c51013594d14233fbc12ac5e4e5603117543313e2bf78c285786cdef9b7",
+      "detailed": "a6a42c51013594d14233fbc12ac5e4e5603117543313e2bf78c285786cdef9b7"
+    },
+    {
+      "id": "tar",
+      "extensions": [
+        "tar",
+        "tar.gz",
+        "tar.bz2",
+        "tar.xz",
+        "tar.zst",
+        "tar.zstd",
+        "tgz",
+        "tbz",
+        "tbz2",
+        "txz",
+        "tzst"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Source.tar.gz"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "31af33879e5db45b9179b8d25a9466f79315f15b6ff1a7cc33a9a5c3454f846f",
+      "detailed": "31af33879e5db45b9179b8d25a9466f79315f15b6ff1a7cc33a9a5c3454f846f"
+    },
+    {
+      "id": "rar",
+      "extensions": [
+        "rar"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Bundle.rar"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "c1e25e11610741d22c971fbaed89c5a5b6cf5ad258abec274a29088ff0fbe792",
+      "detailed": "c1e25e11610741d22c971fbaed89c5a5b6cf5ad258abec274a29088ff0fbe792"
+    },
+    {
+      "id": "sevenzip",
+      "extensions": [
+        "7z"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Bundle.7z"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "afb14943ac344d0ca3976b002f61ec6180300957b9381f9efcdd0b19adb9cd90",
+      "detailed": "afb14943ac344d0ca3976b002f61ec6180300957b9381f9efcdd0b19adb9cd90"
+    },
+    {
+      "id": "compressed",
+      "extensions": [
+        "gz",
+        "bz2",
+        "xz",
+        "zst",
+        "zstd",
+        "br",
+        "lz",
+        "lzma",
+        "lz4"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Log.gz"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "fb5fb2b3d787bd3000685d6eb2febc657a10e5a4e966101bdb3e35e7f9774031",
+      "detailed": "fb5fb2b3d787bd3000685d6eb2febc657a10e5a4e966101bdb3e35e7f9774031"
+    },
+    {
+      "id": "archive",
+      "extensions": [
+        "jar",
+        "war",
+        "ear",
+        "cab",
+        "ar",
+        "cpio"
+      ],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "Library.jar"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "6d22fe2a2e430d049a3c29905aee7c61d7b79764074c3c82b87cd47c31440751",
+      "detailed": "6d22fe2a2e430d049a3c29905aee7c61d7b79764074c3c82b87cd47c31440751"
+    },
+    {
+      "id": "folder",
+      "extensions": [],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "src"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "f471e362394521786cb6aa873675eaccd0e5b70f39bc69f823e99330f12a5899",
+      "detailed": "8f4a57d7fde9de0cde511a2e8a6875dd101b173f52ba5931ddcd5eb8a09fcbcd"
+    },
+    {
+      "id": "file",
+      "extensions": [],
+      "names": [],
+      "patterns": [],
+      "examples": [
+        "file.unknown"
+      ],
+      "package": false,
+      "palette": null,
+      "compact": "ac59d2c99791d266d5e165ccede05948709a1133ccaa210a1393ae2c41d6783c",
+      "detailed": "3b96b3ef1a602a14c9dcaf99f41a85366fdd525f797df9b59de005543ec14d6d"
+    }
+  ]
+}

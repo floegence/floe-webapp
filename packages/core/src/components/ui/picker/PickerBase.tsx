@@ -124,7 +124,7 @@ export function PickerPanel(props: PickerPanelProps & { source: FilesystemPicker
                 data-picker-row-path={item.path} disabled={props.disabled || props.filter?.(item) === false}
                 class="flex min-h-8 w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => { void source.navigate(item.path); }} onKeyDown={(event) => keyDown(event, index())}>
-                <FileItemIcon item={item} class="h-4 w-4 shrink-0" /><span class="min-w-0 flex-1 truncate">{item.name}</span><ChevronRight class="h-3 w-3 shrink-0 text-muted-foreground" />
+                <FileItemIcon item={item} size={16} class="h-4 w-4 shrink-0" /><span class="min-w-0 flex-1 truncate">{item.name}</span><ChevronRight class="h-3 w-3 shrink-0 text-muted-foreground" />
               </button>
             )}</For>
           </Show>

@@ -187,7 +187,7 @@ export function FileBrowserDragPreview() {
                 {(item) => (
                   <div class="flex items-center gap-2.5 text-xs text-foreground">
                     <span class="flex-shrink-0 w-4 h-4">
-                      <FileItemIcon item={item} class="w-4 h-4" />
+                      <FileItemIcon item={item} size={16} class="w-4 h-4" />
                     </span>
                     <span class="truncate font-medium">{item.name}</span>
                   </div>
