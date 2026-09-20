@@ -45,12 +45,18 @@ describe('directory picker presentations', () => {
     const suggestions = document.querySelectorAll<HTMLButtonElement>('[data-picker-suggested-path]');
     expect(suggestions).toHaveLength(2);
     expect(suggestions[0].title).toBe('/Volumes/project');
-    expect(document.querySelector('[aria-label="Recently used"]')).not.toBeNull();
+    expect(button('Recently used').getAttribute('role')).toBe('tab');
+    expect(button('Recently used').getAttribute('aria-selected')).toBe('true');
+    expect(button('Home').closest('[role="tablist"]')).toBe(button('Recently used').parentElement);
+    expect(document.querySelector('input[aria-label="Directory path"]')).toBeNull();
+    expect(button('Choose').disabled).toBe(true);
     suggestions[1].click(); await flush();
     expect(button('Choose').disabled).toBe(true);
     expect(document.querySelector('[role="alert"]')?.textContent).toContain('Directory is unavailable');
     expect(onSelect).not.toHaveBeenCalled();
-    suggestions[0].click(); await flush();
+    button('Recently used').click(); await flush();
+    document.querySelector<HTMLButtonElement>('[data-picker-suggested-path]')!.click(); await flush();
+    expect(document.activeElement).toBe(document.querySelector('input[aria-label="Directory path"]'));
     expect(loadDirectory).toHaveBeenLastCalledWith('/Volumes/project', { showHidden: false });
     expect(onSelect).not.toHaveBeenCalled();
     expect(button('Choose').disabled).toBe(false);
@@ -60,17 +66,47 @@ describe('directory picker presentations', () => {
   });
 
   it('omits empty suggestions and keeps suggested navigation disabled with the picker', async () => {
-    const [suggestions, setSuggestions] = createSignal<readonly string[]>([]);
+    const [suggestions, setSuggestions] = createSignal<readonly string[]>(['relative']);
     const loadDirectory = vi.fn(async () => []);
     mount(() => <DirectoryPicker open disabled onOpenChange={() => {}} onSelect={() => {}}
       loadPathContext={async () => context} loadDirectory={loadDirectory} suggestedPaths={suggestions()} />);
     await flush();
     expect(document.querySelector('[data-picker-suggestions]')).toBeNull();
     setSuggestions(['/Volumes/project']); await flush();
-    const suggestion = document.querySelector<HTMLButtonElement>('[data-picker-suggested-path]')!;
+    const suggestion = document.querySelector<HTMLButtonElement>('[role="tab"]')!;
     expect(suggestion.disabled).toBe(true);
     suggestion.click(); await flush();
     expect(loadDirectory).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('switches recent, home and root tabs with keyboard focus and resets on reopen and scope changes', async () => {
+    const [open, setOpen] = createSignal(true);
+    const [scope, setScope] = createSignal('one');
+    const loadDirectory = vi.fn(async () => []);
+    mount(() => <DirectoryPicker open={open()} onOpenChange={setOpen} scopeKey={scope()} onSelect={() => {}}
+      loadPathContext={async () => context} loadDirectory={loadDirectory}
+      suggestedPaths={['/Volumes/project']} suggestedPathsLabel="Recently used" />);
+    await flush();
+    const recentTab = button('Recently used');
+    recentTab.focus();
+    recentTab.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(button('Home'));
+    expect(recentTab.getAttribute('aria-selected')).toBe('true');
+    button('Home').click(); await flush();
+    expect(document.querySelector('[data-picker-suggestions]')).toBeNull();
+    expect(button('Home').getAttribute('aria-selected')).toBe('true');
+    expect(loadDirectory).toHaveBeenLastCalledWith('/Users/alice', { showHidden: false });
+    button('Root').click(); await flush();
+    expect(loadDirectory).toHaveBeenLastCalledWith('/', { showHidden: false });
+    button('Recently used').click(); await flush();
+    expect(document.querySelector('[data-picker-suggestions]')).not.toBeNull();
+    expect(loadDirectory).toHaveBeenCalledTimes(3);
+    button('Home').click(); await flush();
+    setOpen(false); await flush(); setOpen(true); await flush();
+    expect(button('Recently used').getAttribute('aria-selected')).toBe('true');
+    button('Root').click(); await flush(); setScope('two'); await flush();
+    expect(button('Recently used').getAttribute('aria-selected')).toBe('true');
   });
 
   it('uses Home and Root as absolute navigation shortcuts and confirms only validated paths', async () => {

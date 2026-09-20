@@ -41,10 +41,15 @@ multiple selection, file filters, selection limits and filename validation.
 `DirectoryPicker` accepts host-ranked `suggestedPaths` and a localized
 `suggestedPathsLabel`, for example recent project directories. Empty or invalid
 paths are omitted and duplicate absolute paths collapse in their original order.
-The host owns ranking, scope, and the number of suggestions. Each compact row
+The host owns ranking, scope, and the number of suggestions. Suggestions occupy
+a tab alongside the context roots, selected initially and on each reopen or scope
+change. Root tabs reveal the regular directory browser in the same content area.
+Tab arrows move focus; Enter or Space activates a tab. Each compact suggestion row
 shows the directory name and path, with the full path in its accessible label and
 tooltip. Activating a suggestion uses the same navigation source and loader as
-typed paths; it neither adds an authorized root nor confirms a selection. Failed
+typed paths, opens the directory browser and moves focus to its path input. It
+neither adds an authorized root nor confirms a selection. Confirmation is disabled
+while the suggestions tab is visible. Failed
 or pending navigation continues to block confirmation. No suggestion history is
 stored by the picker.
 
