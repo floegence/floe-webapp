@@ -31,6 +31,48 @@ beforeEach(() => {
 afterEach(() => { while (disposers.length) disposers.pop()?.(); document.body.replaceChildren(); vi.unstubAllGlobals(); });
 
 describe('directory picker presentations', () => {
+  it('navigates suggested absolute directories through validation without confirming or granting access', async () => {
+    const onSelect = vi.fn();
+    const loadDirectory = vi.fn(async (path: string) => {
+      if (path === '/Volumes/unavailable') throw new Error('Directory is unavailable');
+      return [];
+    });
+    mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={onSelect}
+      loadPathContext={async () => context} loadDirectory={loadDirectory} confirmText="Choose"
+      suggestedPaths={['/Volumes/project', '/Volumes/project/', 'relative', '/Volumes/unavailable']}
+      suggestedPathsLabel="Recently used" />);
+    await flush();
+    const suggestions = document.querySelectorAll<HTMLButtonElement>('[data-picker-suggested-path]');
+    expect(suggestions).toHaveLength(2);
+    expect(suggestions[0].title).toBe('/Volumes/project');
+    expect(document.querySelector('[aria-label="Recently used"]')).not.toBeNull();
+    suggestions[1].click(); await flush();
+    expect(button('Choose').disabled).toBe(true);
+    expect(document.querySelector('[role="alert"]')?.textContent).toContain('Directory is unavailable');
+    expect(onSelect).not.toHaveBeenCalled();
+    suggestions[0].click(); await flush();
+    expect(loadDirectory).toHaveBeenLastCalledWith('/Volumes/project', { showHidden: false });
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(button('Choose').disabled).toBe(false);
+    button('Choose').click();
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('/Volumes/project');
+    expect(context.roots).toHaveLength(2);
+  });
+
+  it('omits empty suggestions and keeps suggested navigation disabled with the picker', async () => {
+    const [suggestions, setSuggestions] = createSignal<readonly string[]>([]);
+    const loadDirectory = vi.fn(async () => []);
+    mount(() => <DirectoryPicker open disabled onOpenChange={() => {}} onSelect={() => {}}
+      loadPathContext={async () => context} loadDirectory={loadDirectory} suggestedPaths={suggestions()} />);
+    await flush();
+    expect(document.querySelector('[data-picker-suggestions]')).toBeNull();
+    setSuggestions(['/Volumes/project']); await flush();
+    const suggestion = document.querySelector<HTMLButtonElement>('[data-picker-suggested-path]')!;
+    expect(suggestion.disabled).toBe(true);
+    suggestion.click(); await flush();
+    expect(loadDirectory).toHaveBeenCalledTimes(1);
+  });
+
   it('uses Home and Root as absolute navigation shortcuts and confirms only validated paths', async () => {
     const onSelect = vi.fn();
     const loadDirectory = vi.fn(async () => []);

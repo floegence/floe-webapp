@@ -38,6 +38,16 @@ initial listing, and the user can change it in the panel. Folder creation stays
 optional and uses the validated absolute parent path. File pickers retain ordered
 multiple selection, file filters, selection limits and filename validation.
 
+`DirectoryPicker` accepts host-ranked `suggestedPaths` and a localized
+`suggestedPathsLabel`, for example recent project directories. Empty or invalid
+paths are omitted and duplicate absolute paths collapse in their original order.
+The host owns ranking, scope, and the number of suggestions. Each compact row
+shows the directory name and path, with the full path in its accessible label and
+tooltip. Activating a suggestion uses the same navigation source and loader as
+typed paths; it neither adds an authorized root nor confirms a selection. Failed
+or pending navigation continues to block confirmation. No suggestion history is
+stored by the picker.
+
 ## Migration from 0.48.x
 
 This is an intentional minor-version API break while the package is pre-1.0.
