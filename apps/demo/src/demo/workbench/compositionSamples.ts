@@ -6,7 +6,7 @@ import fixtures from './reference-fixtures.json';
 
 export type CompositionSample = 'composition' | 'regions';
 
-/** Shared scene data for the full example app and the preserved A/B comparison. */
+/** Editable example scenes rendered by the shared Workbench components. */
 export function createCompositionSample(
   sample: CompositionSample,
   locale: 'en-US' | 'zh-CN' = 'en-US'

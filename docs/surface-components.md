@@ -174,34 +174,22 @@ Both world and projected compositors follow the same content scale; toolbars and
 interaction handles retain screen-sized controls. A region toolbar clears the
 scaled name by its usual 12-pixel gap.
 
-The complete demo app defaults to a Workspace studio with three coordinated
-regions, sticky notes, text, and working Files, Terminal, and Monitoring windows.
-Open `/?view=workbench&sample=overview`. New examples start in Work mode; the dock
-switches to Composition mode for editing regions and text. The Windows tab keeps
-the previous four-window example available. Open `/?view=workbench&sample=composition` or
-`/?view=workbench&sample=regions`; use `theme=paper` or `theme=slate` for a specific
-shell theme. Composition and Regions use English sample content from the same
-scene factory as the comparison pages, with the production renderer and toolbar.
-Each example retains its own edits and viewport across example and display-mode
-switches and reloads. Only a first visit frames the sample; later navigation and
-editing preserve the viewport. The theme selector covers all shell themes, and
-the A/B link retains the original design for comparison. Only the active example
-mounts a canvas. All examples share the production renderer and widget registry.
-Run `pnpm test:workbench-example` for full-app navigation, English sample layout,
-theme switching, standalone material parity, editing without viewport movement,
-and saved state across navigation and reloads in Chromium and WebKit. Set
-`FLOE_DEMO_URL` to reuse a running example server.
+The demo app opens a Workspace studio with three coordinated regions, sticky
+notes, text, and working Files, Terminal, and Monitoring windows. The shared dock
+switches between Work and Composition modes. Each scene retains its edits and
+viewport across display-mode switches and reloads. Only a first visit frames the
+scene. Shell controls own theme selection; no review toolbar or comparison links
+appear in the application.
 
-The demo app also includes `/workbench-comparison.html` (A/B) and
-`/workbench-composition.html` (production components only). Both use the same
-sample content, theme and viewport. The standalone production page opens Work mode
-for a selected sticky and Composition mode for a selected region or text.
-`apps/demo/public/workbench-reference/` is an immutable copy of the approved v4.1 design; its manifest hashes guard the original
-renderer. Only `embed.html` and `review-embed.js` adapt its surrounding presentation.
-This reference is an acceptance fixture, not an alternative product implementation.
-Later approved interaction changes, including save-on-exit and proportional content
-zoom, compact material menus, mode ownership, and primary emoji actions apply to
-the production example while the frozen reference retains its historical behavior.
+Isolated comparison pages and the immutable design reference live only in
+`scripts/fixtures/workbench-review/`. The parity script serves that fixture with
+its own Vite root. These files are excluded from the demo's public directory and
+build entries. The manifest guards the historical renderer; production behavior
+continues to be verified through the shared components.
+
+Run `pnpm test:workbench-example` for full-app navigation, editing without
+viewport movement, saved state, and absence of review chrome in Chromium and
+WebKit. Set `FLOE_DEMO_URL` to reuse a running demo server.
 
 Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty

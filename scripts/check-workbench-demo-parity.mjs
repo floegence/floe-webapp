@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import { chromium } from 'playwright';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const reference = `${repo}apps/demo/public/workbench-reference`;
+const reference = `${repo}scripts/fixtures/workbench-review/public/workbench-reference`;
 const manifest = JSON.parse(readFileSync(`${reference}/manifest.json`, 'utf8'));
 for (const [file, hash] of Object.entries(manifest.files)) {
   assert.equal(
@@ -23,7 +23,11 @@ const { createServer } = await import(pathToFileURL(require.resolve('vite')).hre
 const server = process.env.FLOE_PARITY_URL
   ? null
   : await createServer({
-      root: `${repo}apps/demo`,
+      root: `${repo}scripts/fixtures/workbench-review`,
+      publicDir: `${repo}scripts/fixtures/workbench-review/public`,
+      resolve: {
+        alias: [{ find: 'solid-js', replacement: `${repo}apps/demo/node_modules/solid-js` }],
+      },
       configFile: `${repo}apps/demo/vite.config.ts`,
       server: { host: '127.0.0.1', port: 0 },
     });

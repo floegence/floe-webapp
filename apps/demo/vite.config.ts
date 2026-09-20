@@ -104,8 +104,6 @@ export default defineConfig(({ command }) => {
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
-          workbenchComparison: resolve(__dirname, 'workbench-comparison.html'),
-          workbenchComposition: resolve(__dirname, 'workbench-composition.html'),
         },
       },
     },

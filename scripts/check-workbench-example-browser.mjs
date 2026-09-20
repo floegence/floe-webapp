@@ -1,4 +1,4 @@
-/* global document, getComputedStyle, requestAnimationFrame, localStorage, innerWidth */
+/* global document, requestAnimationFrame, localStorage, innerWidth */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -31,44 +31,45 @@ const shape = (locator) =>
     const rect = element.getBoundingClientRect();
     return [rect.x, rect.y, rect.width, rect.height];
   });
-const material = (locator) =>
-  locator.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return [style.backgroundColor, style.borderTopColor, style.backgroundImage, style.borderRadius];
-  });
 
 try {
   for (const engine of [chromium, webkit]) {
     const browser = await engine.launch();
     try {
-      const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-      const page = await context.newPage();
-      const errors = [];
-      page.on('pageerror', (error) => errors.push(error.message));
-      await page.goto(`${origin}/?view=workbench&theme=paper&surface=standard`);
-      await board(page, 'overview-title').waitFor();
-      assert.equal(
-        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
-        'work',
-        'The default studio opens in Work mode'
-      );
-      assert.equal(await page.locator('.workbench-widget').count(), 3);
-      assert.equal(await page.locator('.workbench-background-region').count(), 3);
-      assert.ok(
-        (await page.getByRole('link', { name: 'A/B comparison' }).getAttribute('href')).includes(
-          'object=blank-region'
-        )
-      );
       for (const theme of ['paper', 'slate']) {
-        await page.getByRole('combobox', { name: 'Application theme' }).selectOption(theme);
-        await nextFrame(page);
-        await page.screenshot({ path: `${output}/overview-${engine.name()}-${theme}.png` });
-      }
-      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
-      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
-      for (const theme of ['paper', 'slate']) {
-        await page.getByRole('combobox', { name: 'Application theme' }).selectOption(theme);
-        await nextFrame(page);
+        const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+        const page = await context.newPage();
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        await page.goto(`${origin}/?view=workbench&theme=${theme}&surface=standard`);
+        await board(page, 'overview-title').waitFor();
+        assert.equal(await page.locator('html').getAttribute('data-floe-shell-theme'), theme);
+        assert.equal(
+          await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
+          'work'
+        );
+        assert.equal(await page.locator('.workbench-widget').count(), 3);
+        assert.equal(await page.locator('.workbench-background-region').count(), 3);
+        assert.equal(
+          await page.locator('.workbench-demo-examples').count(),
+          0,
+          'No review toolbar'
+        );
+        assert.equal(
+          await page.getByRole('link', { name: /A\/B/ }).count(),
+          0,
+          'No comparison entry'
+        );
+        assert.equal(
+          await page.getByRole('combobox', { name: 'Application theme' }).count(),
+          0,
+          'Theme belongs to shell controls'
+        );
+        assert.equal(await page.locator('iframe[src*="workbench-reference"]').count(), 0);
+        await page.screenshot({ path: `${output}/clean-demo-${engine.name()}-${theme}.png` });
+
+        await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+        await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
         assert.equal(
           await page
             .locator('.workbench-widget')
@@ -83,197 +84,60 @@ try {
             ),
           true
         );
-        await page.screenshot({ path: `${output}/composition-mode-${engine.name()}-${theme}.png` });
-      }
-      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
-      await page.getByRole('menuitemradio', { name: /Work Mode/ }).click();
-      await page.getByRole('tab', { name: 'Composition', exact: true }).click();
-      await board(page, 'product').waitFor();
-      assert.equal(
-        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
-        'work',
-        'Composition examples also default to Work mode'
-      );
-      await page.waitForSelector('.workbench-sticky');
-      assert.equal(
-        await page
-          .getByRole('tab', { name: 'Workbench', exact: true })
-          .getAttribute('aria-selected'),
-        'true'
-      );
-      assert.equal(await page.locator('.workbench-sticky').count(), 6);
-      assert.equal(await page.locator('.workbench-surface').count(), 1);
-      assert.equal(
-        await page.locator('.workbench-sticky__title').first().textContent(),
-        'Give the work room to breathe.'
-      );
+        await page.getByRole('button', { name: 'Switch canvas mode' }).click();
+        await page.getByRole('menuitemradio', { name: /Work Mode/ }).click();
 
-      const themeSelect = page.getByRole('combobox', { name: 'Application theme' });
-      const themes = await themeSelect
-        .locator('option')
-        .evaluateAll((options) => options.map((option) => option.value));
-      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
-      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
-      for (const theme of themes) {
-        await themeSelect.selectOption(theme);
-        assert.equal(await page.locator('html').getAttribute('data-floe-shell-theme'), theme);
-        assert.equal(await page.locator('.workbench-sticky').count(), 6);
-        assert.equal(
-          await page
-            .locator('.workbench-sticky__body')
-            .evaluateAll((nodes) =>
-              nodes.every((el) => !el.isContentEditable && !!el.closest('[inert]'))
-            ),
-          true
-        );
-      }
-      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
-      await page.getByRole('menuitemradio', { name: /Work Mode/ }).click();
-      const standalone = await context.newPage();
-      for (const theme of ['paper', 'slate']) {
-        await themeSelect.selectOption(theme);
-        await standalone.goto(
-          `${origin}/workbench-composition.html?sample=composition&lang=en-US&theme=${theme}`
-        );
-        await standalone.waitForSelector('.workbench-sticky');
-        assert.deepEqual(
-          await material(board(page, 'reference').locator('.workbench-sticky__surface')),
-          await material(board(standalone, 'reference').locator('.workbench-sticky__surface')),
-          `${engine.name()}: the full example uses the same ${theme} material as the standalone example`
-        );
-        await nextFrame(page);
-        await page.screenshot({ path: `${output}/full-example-${engine.name()}-${theme}.png` });
-      }
-      await standalone.close();
-      await themeSelect.selectOption('paper');
-
-      const note = board(page, 'idea');
-      const geometry = await shape(note);
-      const title = note.locator('.workbench-sticky__title');
-      await title.click();
-      await title.fill('A saved idea');
-      await page.keyboard.press('Escape');
-      assert.deepEqual(await shape(note), geometry, 'Editing does not move or zoom the canvas');
-      const body = note.locator('.workbench-sticky__body');
-      await body.click();
-      await body.evaluate((el) => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        range.collapse(false);
-        document.getSelection().removeAllRanges();
-        document.getSelection().addRange(range);
-      });
-      await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
-      await page.getByRole('menuitem', { name: 'Insert emoji ✅', exact: true }).click();
-      await page.keyboard.press('Escape');
-      const savedBody = await body.textContent();
-      assert.ok(
-        savedBody.endsWith('✅'),
-        'The example inserts emoji into the last focused sticky field'
-      );
-      assert.equal(
-        await title.textContent(),
-        'A saved idea',
-        'Body emoji does not alter the title'
-      );
-      assert.equal(await page.getByRole('button', { name: 'Edit text', exact: true }).count(), 0);
-      for (const theme of ['paper', 'slate']) {
-        await themeSelect.selectOption(theme);
-        await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
-        await nextFrame(page);
-        await page.screenshot({ path: `${output}/emoji-example-${engine.name()}-${theme}.png` });
+        const note = board(page, 'overview-idea');
+        const geometry = await shape(note);
+        const title = note.locator('.workbench-sticky__title');
+        await title.click();
+        await title.fill('A saved idea');
         await page.keyboard.press('Escape');
+        assert.deepEqual(await shape(note), geometry, 'Editing preserves the viewport');
+        const body = note.locator('.workbench-sticky__body');
+        await body.click();
+        await body.evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          document.getSelection().removeAllRanges();
+          document.getSelection().addRange(range);
+        });
+        await page.getByRole('button', { name: 'Insert emoji', exact: true }).click();
+        await page.getByRole('menuitem', { name: 'Insert emoji ✅', exact: true }).click();
+        await page.keyboard.press('Escape');
+        const savedBody = await body.textContent();
+        assert.ok(savedBody.endsWith('✅'));
+        assert.equal(await title.textContent(), 'A saved idea');
+        await page.getByRole('tab', { name: 'Deck', exact: true }).click();
+        await page.getByRole('tab', { name: 'Activity', exact: true }).click();
+        await page.getByRole('tab', { name: 'Workbench', exact: true }).click();
+        assert.equal(await title.textContent(), 'A saved idea', 'Mode switches retain edits');
+        await page.waitForFunction(() =>
+          Object.keys(localStorage).some(
+            (key) =>
+              key.includes('demo.workbench.overview.v1') &&
+              localStorage.getItem(key)?.includes('A saved idea')
+          )
+        );
+        await page.reload();
+        await title.waitFor();
+        assert.equal(await title.textContent(), 'A saved idea', 'Reload retains edits');
+        assert.equal(await body.textContent(), savedBody);
+        assert.deepEqual(await shape(note), geometry, 'Reload retains the viewport');
+        await page.setViewportSize({ width: 620, height: 820 });
+        await nextFrame(page);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(errors, []);
+        results.push({
+          browser: engine.name(),
+          theme,
+          editing: 'passed',
+          persistence: 'passed',
+          reviewChrome: 'absent',
+        });
+        await context.close();
       }
-      await themeSelect.selectOption('paper');
-      await page.getByRole('tab', { name: 'Regions', exact: true }).click();
-      await board(page, 'blank-region').waitFor();
-      await page.getByRole('tab', { name: 'Composition', exact: true }).click();
-      await board(page, 'product').waitFor();
-      assert.equal(
-        await title.textContent(),
-        'A saved idea',
-        'Rapid sample switches preserve edits'
-      );
-      assert.deepEqual(await shape(note), geometry, 'Returning preserves the viewport');
-      assert.equal(await body.textContent(), savedBody, 'Emoji content survives sample navigation');
-
-      await page.getByRole('tab', { name: 'Regions', exact: true }).click();
-      await board(page, 'blank-region').waitFor();
-      assert.equal(await page.locator('.workbench-background-region').count(), 3);
-      assert.equal(
-        await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode'),
-        'work'
-      );
-      await page.getByRole('button', { name: 'Switch canvas mode' }).click();
-      await page.getByRole('menuitemradio', { name: /Composition Mode/ }).click();
-      const detail = board(page, 'outline-detail').locator('[data-wb-part="content"]');
-      assert.ok(
-        await detail.evaluate((element) => element.scrollHeight <= element.clientHeight + 1),
-        'English region detail is not clipped'
-      );
-      const label = board(page, 'field-region').locator('[contenteditable]');
-      await label.click();
-      await label.fill('');
-      await page.keyboard.press('Escape');
-      assert.equal(await label.textContent(), '', 'Region names can be removed');
-      await board(page, 'blank-region').click({ position: { x: 100, y: 100 } });
-      await page.locator('.workbench-treatment-trigger').click();
-      assert.equal(await page.locator('.workbench-composition-toolbar').count(), 1);
-      assert.ok(
-        !/\p{Script=Han}/u.test(await page.locator('.workbench-composition-toolbar').innerText()),
-        'Example tools use English'
-      );
-      await page.screenshot({ path: `${output}/full-example-${engine.name()}-region-tools.png` });
-
-      await page.getByRole('tab', { name: 'Windows', exact: true }).click();
-      await page.waitForSelector('.workbench-widget');
-      assert.equal(
-        await page.locator('.workbench-widget').count(),
-        4,
-        'Original workspace stays available'
-      );
-      await page.getByRole('tab', { name: 'Deck', exact: true }).click();
-      await page.getByRole('tab', { name: 'Activity', exact: true }).click();
-      await page.getByRole('tab', { name: 'Workbench', exact: true }).click();
-      await page.getByRole('tab', { name: 'Composition', exact: true }).click();
-      await board(page, 'product').waitFor();
-      assert.equal(
-        await title.textContent(),
-        'A saved idea',
-        'Display-mode switches preserve edits'
-      );
-      await page.waitForFunction(() =>
-        Object.keys(localStorage).some(
-          (key) =>
-            key.includes('demo.workbench.composition.v1') &&
-            localStorage.getItem(key)?.includes('A saved idea')
-        )
-      );
-      await page.reload();
-      await title.waitFor();
-      assert.equal(await title.textContent(), 'A saved idea', 'Reload preserves edits');
-      assert.deepEqual(await shape(note), geometry, 'Reload preserves the viewport');
-      await page.getByRole('tab', { name: 'Regions', exact: true }).click();
-      await board(page, 'blank-region').waitFor();
-      assert.equal(await label.textContent(), '', 'Reload preserves an empty region name');
-      await page.setViewportSize({ width: 620, height: 820 });
-      await nextFrame(page);
-      assert.ok(
-        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-        'Narrow shell does not overflow'
-      );
-      const link = await page.getByRole('link', { name: 'A/B comparison' }).getAttribute('href');
-      assert.ok(link.includes('lang=en-US') && link.includes('sample=regions'));
-      assert.deepEqual(errors, [], 'Full application has no uncaught browser errors');
-      results.push({
-        browser: engine.name(),
-        themes: themes.length,
-        editing: 'passed',
-        persistence: 'passed',
-        navigation: 'passed',
-        parity: 'passed',
-      });
-      await context.close();
     } finally {
       await browser.close();
     }

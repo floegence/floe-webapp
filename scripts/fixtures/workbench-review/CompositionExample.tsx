@@ -7,8 +7,8 @@ import {
   type WorkbenchCompositionMessages,
 } from '@floegence/floe-webapp-core/workbench';
 import { builtInShellThemePresets } from '@floegence/floe-webapp-core';
-import fixtures from './reference-fixtures.json';
-import { createCompositionSample } from './compositionSamples';
+import fixtures from '../../../apps/demo/src/demo/workbench/reference-fixtures.json';
+import { createCompositionSample } from '../../../apps/demo/src/demo/workbench/compositionSamples';
 import './example.css';
 
 const params = new URLSearchParams(location.search);

@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import '@floegence/floe-webapp-core/tailwind';
+@import '../../../apps/demo/node_modules/tailwindcss/index.css';
+@import '../../../apps/demo/src/core-workspace-tailwind.css';
 html,
 body,
 #root {

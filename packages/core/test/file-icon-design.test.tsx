@@ -40,7 +40,7 @@ const sha256 = (value: string) => createHash('sha256').update(value).digest('hex
 describe('approved design preservation and production boundaries', () => {
   it('retains the complete standalone acceptance artifact unchanged', () => {
     const html = readFileSync(
-      new URL('../../../apps/demo/public/file-icons-reference/index.html', import.meta.url),
+      new URL('./fixtures/approved-file-icons.html', import.meta.url),
       'utf8'
     );
     expect(sha256(html)).toBe(approved.htmlSha256);

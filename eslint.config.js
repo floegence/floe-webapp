@@ -38,7 +38,7 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/*.config.*',
-      'apps/demo/public/workbench-reference/**',
+      'scripts/fixtures/workbench-review/public/workbench-reference/**',
     ],
   },
 ];

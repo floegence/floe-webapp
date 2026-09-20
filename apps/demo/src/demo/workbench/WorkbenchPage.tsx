@@ -1,6 +1,4 @@
-import { For, Show, type Component } from 'solid-js';
-import { usePersisted, useTheme } from '@floegence/floe-webapp-core';
-import { Tabs } from '@floegence/floe-webapp-core/ui';
+import { Show, type Component } from 'solid-js';
 import { WorkbenchSurface } from '@floegence/floe-webapp-core/workbench';
 import { CompositionSampleSurface } from './CompositionSampleSurface';
 import type { WorkbenchExampleSample } from './workbenchOverview';
@@ -19,88 +17,13 @@ import {
  */
 export const WorkbenchPage: Component = () => {
   const demo = useWorkbenchDemo();
-  const theme = useTheme();
-  const [sample, setSample] = usePersisted('demo.workbench.sample.v1', 'overview');
-  const requestedSample = new URLSearchParams(window.location.search).get('sample');
-  if (
-    requestedSample === 'overview' ||
-    requestedSample === 'workspace' ||
-    requestedSample === 'composition' ||
-    requestedSample === 'regions'
-  ) {
-    setSample(requestedSample);
-  }
-  const selectSample = (id: string) => {
-    setSample(id);
-    const url = new URL(window.location.href);
-    url.searchParams.set('sample', id);
-    window.history.replaceState(null, '', url);
-  };
+  const sample = new URLSearchParams(window.location.search).get('sample') ?? 'overview';
   const activeExample = (): WorkbenchExampleSample =>
-    sample() === 'regions' ? 'regions' : sample() === 'composition' ? 'composition' : 'overview';
-  const comparisonUrl = () =>
-    `/workbench-comparison.html?${new URLSearchParams({
-      theme: theme.shellPreset()?.name ?? 'paper',
-      sample: sample() === 'composition' ? 'composition' : 'regions',
-      object: sample() === 'composition' ? 'principle' : 'blank-region',
-      tools: 'style',
-      lang: 'en-US',
-    })}`;
+    sample === 'regions' ? 'regions' : sample === 'composition' ? 'composition' : 'overview';
   return (
     <div class="workbench-demo-page">
-      <div class="workbench-demo-examples">
-        <Tabs
-          ariaLabel="Workbench examples"
-          items={[
-            { id: 'overview', label: 'Workspace' },
-            { id: 'workspace', label: 'Windows' },
-            { id: 'composition', label: 'Composition' },
-            { id: 'regions', label: 'Regions' },
-          ]}
-          activeId={sample()}
-          onChange={selectSample}
-          size="sm"
-          features={{
-            containerBorder: false,
-            indicator: { colorToken: 'muted-foreground', animated: false },
-          }}
-        />
-        <div class="workbench-demo-examples__actions">
-          <select
-            aria-label="Application theme"
-            class="workbench-demo-theme"
-            value={theme.shellPreset()?.name}
-            onChange={(event) => {
-              const preset = theme
-                .shellPresets()
-                .find((item) => item.name === event.currentTarget.value);
-              if (preset?.mode === 'light' || preset?.mode === 'dark') {
-                theme.selectShellTheme(preset.mode, preset.name);
-              }
-            }}
-          >
-            <For each={['light', 'dark'] as const}>
-              {(mode) => (
-                <optgroup label={mode === 'light' ? 'Light themes' : 'Dark themes'}>
-                  <For each={theme.shellPresets().filter((preset) => preset.mode === mode)}>
-                    {(preset) => <option value={preset.name}>{preset.displayName}</option>}
-                  </For>
-                </optgroup>
-              )}
-            </For>
-          </select>
-          <a
-            class="workbench-demo-comparison"
-            href={comparisonUrl()}
-            target="_blank"
-            rel="noreferrer"
-          >
-            A/B comparison <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      </div>
       <Show
-        when={sample() !== 'workspace'}
+        when={sample !== 'workspace'}
         fallback={
           <div class="workbench-demo-scene">
             <WorkbenchSurface

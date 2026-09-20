@@ -10,7 +10,7 @@ import {
   REDEVEN_PARITY_WORKBENCH_WIDGETS,
   useWorkbenchDemo,
 } from './WorkbenchDemoContext';
-import { createCompositionSample } from './parity/compositionSamples';
+import { createCompositionSample } from './compositionSamples';
 import { createWorkbenchOverview, type WorkbenchExampleSample } from './workbenchOverview';
 
 /** Each example keeps its own edits and viewport when switching pages or modes. */
