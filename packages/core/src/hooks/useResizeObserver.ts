@@ -8,9 +8,12 @@ export interface Size {
 /**
  * Track the usable content box in local CSS pixels, excluding padding and
  * scrollbars. CSS transforms on the element or its ancestors do not affect it.
+ * With preserveWhenHidden, retain the last measurement while there is no rendered
+ * box. Real zero-sized boxes still report zero; replacing the element resets it.
  */
 export function useResizeObserver(
-  element: Accessor<HTMLElement | null | undefined>
+  element: Accessor<HTMLElement | null | undefined>,
+  options: { preserveWhenHidden?: boolean } = {},
 ): Accessor<Size | null> {
   const [size, setSize] = createSignal<Size | null>(null, {
     equals: (previous, next) => previous?.width === next?.width && previous?.height === next?.height,
@@ -18,11 +21,14 @@ export function useResizeObserver(
 
   createEffect(() => {
     const el = element();
+    setSize(null);
     if (!el) {
-      setSize(null);
       return;
     }
     const measure = () => {
+      // A display:none ancestor removes the box; it is not a real resize to zero.
+      // Keep this opt-in so consumers that need hidden/zero dimensions retain their contract.
+      if (options.preserveWhenHidden && el.getClientRects().length === 0) return;
       const style = el.ownerDocument.defaultView!.getComputedStyle(el);
       const px = (value: string) => Number.parseFloat(value) || 0;
       setSize({

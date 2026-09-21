@@ -104,6 +104,7 @@ export default defineConfig(({ command }) => {
       rollupOptions: {
         input: {
           main: resolve(__dirname, 'index.html'),
+          navigation: resolve(__dirname, 'navigation.html'),
         },
       },
     },

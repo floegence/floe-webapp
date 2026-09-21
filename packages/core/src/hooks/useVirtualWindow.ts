@@ -42,7 +42,9 @@ export function useVirtualWindow(options: UseVirtualWindowOptions): UseVirtualWi
   const [viewportSize, setViewportSize] = createSignal(0);
 
   const readScroll = () => {
-    if (!scrollEl) return;
+    // Preserve the last rendered range while an ancestor hides the retained view.
+    // Reading zero here would discard its visible rows and scroll anchor on every switch.
+    if (!scrollEl || scrollEl.getClientRects().length === 0) return;
     setScrollTop(scrollEl.scrollTop);
     setViewportSize(scrollEl.clientHeight);
   };
@@ -90,11 +92,12 @@ export function useVirtualWindow(options: UseVirtualWindowOptions): UseVirtualWi
     resizeObserver = null;
 
     scrollEl = el;
-    if (!scrollEl || typeof ResizeObserver === 'undefined') return;
+    if (!scrollEl) return;
+    readScroll();
+    if (typeof ResizeObserver === 'undefined') return;
 
     resizeObserver = new ResizeObserver(() => readScroll());
     resizeObserver.observe(scrollEl);
-    readScroll();
   };
 
   onCleanup(() => {
@@ -107,4 +110,3 @@ export function useVirtualWindow(options: UseVirtualWindowOptions): UseVirtualWi
 
   return { scrollRef, onScroll, range, paddingTop, paddingBottom, totalSize };
 }
-

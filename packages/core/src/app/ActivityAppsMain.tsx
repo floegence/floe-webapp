@@ -30,6 +30,9 @@ export interface ActivityAppsMainProps<TProtocol = unknown> {
 
   /** Forwarded to KeepAliveStack (default: sync). */
   activationMode?: KeepAliveStackProps['activationMode'];
+
+  /** Target-local loading UI; leaves shell navigation available while a lazy page resolves. */
+  renderFallback?: KeepAliveStackProps['renderFallback'];
 }
 
 function defaultInclude<TProtocol>(component: FloeComponent<TProtocol>): boolean {
@@ -69,6 +72,7 @@ export function ActivityAppsMain<TProtocol = unknown>(props: ActivityAppsMainPro
       lazyMount={props.lazyMount}
       keepMounted={props.keepMounted}
       activationMode={props.activationMode}
+      renderFallback={props.renderFallback}
       class={props.class}
     />
   );

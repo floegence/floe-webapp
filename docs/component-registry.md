@@ -150,8 +150,34 @@ Notes:
 
 - Desktop sidebar panels are kept mounted after first activation by default (Shell uses `KeepAliveStack`).
 - FullScreen pages should be rendered via `ActivityAppsMain` (also keep-alive).
+- For UI-first Activity navigation, set `Shell activitySelectionMode="ui-first"`
+  and `ActivityAppsMain activationMode="after-paint"`. Selection feedback paints
+  before the committed page changes; focus and other activation effects follow.
+- `useViewActivation().visible()` follows committed visibility immediately and
+  includes ancestor view visibility. Renderers use it to present retained content
+  in the same update as its container. `active()` and `activationSeq()` retain
+  their existing activation timing. Custom providers can omit `visible`; their
+  `active` accessor then supplies visibility.
+- `renderFallback={(id) => <PageLoading id={id} />}` adds a separate Suspense
+  boundary for each retained view. The host owns localized, target-local loading
+  copy. Navigation remains available; resolving a hidden lazy view never selects
+  it. Without this prop, existing ancestor Suspense boundaries remain in control.
+- Hidden views remain `display: none`, inert, and excluded from accessibility.
+  File grids, lists, and breadcrumbs retain their last rendered measurements;
+  hidden zero-sized boxes do not reset column counts or virtual scroll ranges.
+  Real resize observations apply when the view returns. This does not keep every
+  hidden page in layout or eagerly mount unvisited features.
+- The `content_presented` selection event marks a scheduled paint opportunity,
+  not asynchronous feature readiness. Validate lazy content and renderer pixels
+  separately; do not interpret that event as proof a module or data has loaded.
 - If you want the activity tab selection to drive your own main views (for non-fullScreen tabs), use `KeepAliveStack`
   keyed by `useLayout().sidebarActiveTab()`.
+
+The interactive navigation demo is available at `/navigation.html` after
+`pnpm dev`. It exercises a large Files grid/list, a retained canvas and draft,
+and a lazy Reports page. `pnpm test:activity-navigation` verifies real browser
+scroll retention, opaque canvas presentation, deferred loading, superseded
+selection, keyboard navigation, and warm intent/content timing.
 
 ```tsx
 import { useLayout } from '@floegence/floe-webapp-core';

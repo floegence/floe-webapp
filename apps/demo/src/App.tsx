@@ -761,15 +761,15 @@ function AppContent() {
 
   const DesktopMain: Component = () => (
     <>
-      <ActivityAppsMain />
-      <KeepAliveStack views={desktopMainViews} activeId={layout.sidebarActiveTab()} />
+      <ActivityAppsMain activationMode="after-paint" />
+      <KeepAliveStack views={desktopMainViews} activeId={layout.sidebarActiveTab()} activationMode="after-paint" />
     </>
   );
 
   const MobileMain: Component = () => (
     <>
-      <ActivityAppsMain />
-      <KeepAliveStack views={mobileMainViews} activeId={layout.sidebarActiveTab()} />
+      <ActivityAppsMain activationMode="after-paint" />
+      <KeepAliveStack views={mobileMainViews} activeId={layout.sidebarActiveTab()} activationMode="after-paint" />
     </>
   );
 
@@ -792,6 +792,7 @@ function AppContent() {
       <Show when={displayMode() === 'activity'}>
         <Shell
           logo={<Logo />}
+          activitySelectionMode="ui-first"
           activityItems={shellActivityItems()}
           activityBottomItemsMobileMode="topBar"
           activityBottomItems={[

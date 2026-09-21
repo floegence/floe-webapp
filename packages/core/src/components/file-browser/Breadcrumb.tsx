@@ -44,7 +44,7 @@ export function Breadcrumb(props: BreadcrumbProps) {
     if (!containerRef) return;
 
     const updateWidth = () => {
-      if (containerRef) {
+      if (containerRef && containerRef.getClientRects().length > 0) {
         setContainerWidth(containerRef.offsetWidth);
       }
     };

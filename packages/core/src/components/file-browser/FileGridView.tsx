@@ -86,7 +86,7 @@ export function FileGridView(props: FileGridViewProps) {
   const MIN_COLUMNS = 2;
   const MAX_COLUMNS = 6;
   const [measureEl, setMeasureEl] = createSignal<HTMLDivElement | null>(null);
-  const measureSize = useResizeObserver(measureEl);
+  const measureSize = useResizeObserver(measureEl, { preserveWhenHidden: true });
   const columns = createMemo(() => {
     const width = measureSize()?.width ?? 0;
     if (width <= 0) return MIN_COLUMNS;

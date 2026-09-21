@@ -225,7 +225,7 @@ export function FileListView(props: FileListViewProps) {
   const isMdUp = useMediaQuery('(min-width: 768px)');
 
   const [headerEl, setHeaderEl] = createSignal<HTMLDivElement | null>(null);
-  const headerSize = useResizeObserver(headerEl);
+  const headerSize = useResizeObserver(headerEl, { preserveWhenHidden: true });
 
   const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 

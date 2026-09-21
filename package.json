@@ -30,7 +30,8 @@
     "test:workbench-demo-parity": "node scripts/check-workbench-demo-parity.mjs",
     "test:workbench-example": "node scripts/check-workbench-example-browser.mjs",
     "test:workbench-header": "node scripts/check-workbench-header-browser.mjs",
-    "test:persistent-scrollbar": "node scripts/check-persistent-scrollbar-browser.mjs"
+    "test:persistent-scrollbar": "node scripts/check-persistent-scrollbar-browser.mjs",
+    "test:activity-navigation": "node scripts/check-activity-navigation-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

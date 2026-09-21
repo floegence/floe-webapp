@@ -1,8 +1,8 @@
-.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media
+.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation
 
 install:
 	pnpm install --frozen-lockfile
@@ -33,6 +33,9 @@ workbench-header:
 
 persistent-scrollbar:
 	pnpm test:persistent-scrollbar
+
+activity-navigation:
+	pnpm test:activity-navigation
 
 chat-media:
 	node scripts/check-chat-media-browser.mjs
