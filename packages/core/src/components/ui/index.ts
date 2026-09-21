@@ -326,3 +326,16 @@ export {
 export { SurfaceAnchoredLayer, type SurfaceAnchoredLayerProps } from './SurfaceAnchoredLayer';
 
 export { PersistentHorizontalScrollbar, type PersistentHorizontalScrollbarProps } from './PersistentHorizontalScrollbar';
+
+export {
+  SettingsLayout,
+  SettingsNavigation,
+  SettingsSection,
+  SettingsList,
+  SettingRow,
+  type SettingsNavigationItem,
+  type SettingsNavigationGroup,
+  type SettingsNavigationProps,
+  type SettingsSectionProps,
+  type SettingRowProps,
+} from './Settings';

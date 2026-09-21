@@ -1921,3 +1921,89 @@
   .floe-horizontal-scrollbar { border-color: ButtonBorder; background: ButtonFace; }
   .floe-horizontal-scrollbar-thumb { background: ButtonText; }
 }
+
+@layer components {
+  .floe-settings-layout {
+    display: flex; flex: 1; min-height: 0; min-width: 0;
+    background: var(--background); color: var(--foreground);
+  }
+  .floe-settings-layout__sidebar {
+    width: 242px; flex-shrink: 0; min-height: 0; overflow: hidden;
+    border-inline-end: 1px solid var(--border);
+    background: var(--sidebar); color: var(--sidebar-foreground);
+  }
+  .floe-settings-layout__content { position: relative; flex: 1; min-width: 0; overflow: hidden; container: floe-settings / inline-size; }
+  .floe-settings-layout__mobile { display: none; }
+  .floe-settings-page { max-width: 980px; margin-inline: auto; padding: 36px 40px 64px; }
+  .floe-settings-navigation { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .floe-settings-navigation__search { padding: 18px 16px 8px; }
+  .floe-settings-navigation__groups { overflow-y: auto; padding: 0 10px 20px; }
+  .floe-settings-navigation__group + .floe-settings-navigation__group { margin-top: 7px; }
+  .floe-settings-navigation__label { padding: 13px 12px 5px; font-size: 10px; font-weight: 600; letter-spacing: .075em; text-transform: uppercase; color: var(--muted-foreground); }
+  .floe-settings-navigation__item {
+    position: relative; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px;
+    padding: 8px 12px; border: 1px solid transparent; border-radius: 7px; text-align: start;
+    font-size: 12px; line-height: 1.4; cursor: pointer; color: inherit;
+  }
+  .floe-settings-navigation__item > span { min-width: 0; overflow-wrap: anywhere; }
+  .floe-settings-navigation__item:hover { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
+  .floe-settings-navigation__item[aria-current='page'] {
+    background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 600;
+  }
+  .floe-settings-navigation__item[aria-current='page']::before {
+    content: ''; position: absolute; inset-inline-start: 0; inset-block: 9px;
+    width: 3px; border-radius: 3px; background: currentColor;
+  }
+  .floe-settings-navigation__item:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+  .floe-settings-navigation__icon { width: 15px; height: 15px; flex-shrink: 0; }
+  .floe-settings-section + .floe-settings-section { margin-top: 32px; }
+  .floe-settings-section__header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .floe-settings-section__heading { min-width: 0; }
+  .floe-settings-section__title { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .floe-settings-section h2 { font-size: 15px; line-height: 1.5; font-weight: 600; letter-spacing: -.015em; }
+  .floe-settings-section h1 { font-size: 27px; line-height: 1.3; font-weight: 650; letter-spacing: -.035em; }
+  .floe-settings-section__heading > p { margin-top: 6px; font-size: 12px; line-height: 1.7; color: var(--muted-foreground); max-width: 640px; overflow-wrap: anywhere; }
+  .floe-settings-section[data-settings-variant='page'] > .floe-settings-section__header { margin-bottom: 28px; }
+  .floe-settings-section__actions { display: flex; align-items: center; justify-content: end; flex-wrap: wrap; gap: 8px; flex-shrink: 0; padding-top: 3px; }
+  .floe-settings-section__body { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .floe-settings-list, .floe-setting-row {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--card-foreground);
+  }
+  .floe-settings-list { overflow: hidden; }
+  .floe-setting-row { padding: 20px; min-width: 0; }
+  .floe-settings-list > .floe-setting-row { border: 0; border-radius: 0; background: transparent; }
+  .floe-settings-list > .floe-setting-row + .floe-setting-row { border-top: 1px solid var(--border); }
+  .floe-setting-row__main { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-width: 0; }
+  .floe-setting-row__label { display: flex; align-items: start; gap: 12px; min-width: 0; flex: 1; }
+  .floe-setting-row__label > div { min-width: 0; }
+  .floe-setting-row__title { font-size: 13px; font-weight: 550; line-height: 1.5; overflow-wrap: anywhere; }
+  .floe-setting-row__label p { margin-top: 4px; font-size: 12px; line-height: 1.6; color: var(--muted-foreground); overflow-wrap: anywhere; }
+  .floe-setting-row__icon { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; color: var(--muted-foreground); }
+  .floe-setting-row__control { display: flex; align-items: center; justify-content: end; gap: 8px; max-width: 50%; min-width: 0; }
+  .floe-setting-row__body { margin-top: 16px; min-width: 0; }
+  .floe-setting-row[data-tone='info'] { --floe-settings-tone: var(--info); }
+  .floe-setting-row[data-tone='success'] { --floe-settings-tone: var(--success); }
+  .floe-setting-row[data-tone='warning'] { --floe-settings-tone: var(--warning); }
+  .floe-setting-row[data-tone='danger'] { --floe-settings-tone: var(--error); }
+  .floe-setting-row:not([data-tone='default']) { background: color-mix(in srgb, var(--floe-settings-tone) 6%, var(--card)); }
+  @container floe-settings (max-width: 600px) {
+    .floe-settings-page { padding: 24px 20px 48px; }
+    .floe-settings-section__header { flex-direction: column; }
+    .floe-settings-section h1 { font-size: 24px; }
+    .floe-setting-row__main { align-items: stretch; flex-direction: column; gap: 14px; }
+    .floe-setting-row__control { justify-content: start; max-width: 100%; }
+  }
+  @media (max-width: 767px) {
+    .floe-settings-layout { flex-direction: column; }
+    .floe-settings-layout__sidebar { display: none; }
+    .floe-settings-layout__mobile { display: block; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .floe-settings-page { padding: 24px 20px 48px; }
+    .floe-settings-section__header { flex-direction: column; }
+    .floe-setting-row__main { align-items: stretch; flex-direction: column; gap: 14px; }
+    .floe-setting-row__control { justify-content: start; max-width: 100%; }
+  }
+  @media (forced-colors: active) {
+    .floe-settings-navigation__item[aria-current='page'] { border-color: Highlight; }
+    .floe-settings-list, .floe-setting-row { border-color: CanvasText; }
+  }
+}

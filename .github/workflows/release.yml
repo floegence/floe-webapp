@@ -91,6 +91,7 @@ jobs:
           pnpm test:event-stream-media
           pnpm test:workbench-composition
           pnpm test:workbench-header
+          pnpm test:settings
           pnpm test:dialog
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation
