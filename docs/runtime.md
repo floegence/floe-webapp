@@ -1,6 +1,6 @@
 # Runtime Bootstrap
 
-Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.2.2` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
+Runtime bootstrap is owned by `@floegence/floe-webapp-boot` and targets the published `@floegence/flowersec-core@5.3.1` package through its current public entrypoints. It creates an exact artifact source, validates `proxy.runtime@2`, binds each Lease to one spend attempt, and exposes an opaque `ConnectedAcquisition` only after the single Flowersec controller reports a matching session generation.
 
 ```ts
 import {
@@ -47,16 +47,41 @@ HTTPS is required by default. Loopback HTTP requires `allowLoopbackHTTP: true`. 
 
 `createPrivateLoopbackControlplaneArtifactSource()` is the dedicated source for an explicitly authorized private browser document. It accepts only a root numeric-loopback HTTP origin, parses only `flowersec-private-loopback/1`, and feeds `createPrivateLoopbackDirectConnectionConfig()`. Both public and private sources use the same envelope validation, digest verification, spend callback, acquisition synchronization, retry ownership, replacement, and cleanup. The private path cannot be selected through `allowLoopbackHTTP`, a public artifact, or an automatic fallback.
 
-The boot package also provides a bounded single-request `fetchServerSentEvents` helper. It performs exactly one fetch, validates `text/event-stream`, and does not parse application JSON or reconnect.
+## Session HTTP and event observation
 
-Persistent event streams default to `priority: 'low'`. Chromium can otherwise keep
-native media requests queued behind long-lived high-priority fetches when its
-network quality estimator selects a slow connection class, including for a local
-HTTP server. Hosts with their own event readers use
-`createServerSentEventRequestInit(init)` to apply the same request policy. This
-helper returns a new options object, preserves headers, credentials, cancellation
-and all other request options, and honors an explicit priority. It does not change
-event delivery, implement reconnects, or alter HTTP connection limits.
+Every acquisition connection lifecycle exposes `fetch(input, init)` and
+`events(input, options)`. HTTP Direct, TLS Direct, Desktop private-loopback,
+and remote tunnel configurations use the current session's single ProxyRuntime.
+The runtime is shared with any installed Service Worker or controller bridge;
+a direct document requires neither adapter. Explicit bootstrap options still
+require the adapter declared by the authenticated projection.
+
+`lifecycle.events('/app/events', { signal })` performs one session HTTP request
+with `Accept: text/event-stream`, validates the response type, and yields bounded
+`ServerSentEvent` frames using the shared parser. Products validate and map event
+payloads and own their existing observation recovery policy. Boot does not retry,
+poll, open another WebSocket, or fall back to native HTTP. Bootstrap and login
+requests remain independent, so establishing a session never needs that session.
+
+Authority comes from the validated spend binding's app origin and proxy scope.
+Absolute URLs must match that origin. Session replacement, failure, waiting, and
+disposal cancel outstanding requests and invalidate old event callbacks, including
+frames already parsed when the session changed. Consumer cancellation and early
+iterator return release the individual stream without canceling background work.
+
+Flowersec owns establishment timeouts, persistent-stream activity deadlines,
+chunk bounds, backpressure, and admission. Confirmed SSE responses have no ordinary
+response total-duration or cumulative-body limit. Default HTTP concurrency is 24,
+with at most 16 event subscriptions, preserving 8 slots for ordinary requests.
+Excess subscriptions fail explicitly instead of waiting indefinitely.
+
+The standalone `fetchServerSentEvents` parser remains available for independent
+consumers. It performs exactly one fetch and does not parse application JSON or reconnect.
+Native requests use `priority: 'low'` by default to preserve media
+scheduling under slow network classification; `createServerSentEventRequestInit`
+provides that policy without changing HTTP connection limits. Priority alone does
+not prevent native HTTP/1.1 pool exhaustion. Connected applications use lifecycle
+events to avoid occupying that pool.
 
 ## Native isolated application controllers
 

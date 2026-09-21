@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const runtimes: Array<{ dispose: ReturnType<typeof vi.fn> }> = [];
+const runtimes: Array<{ dispose: ReturnType<typeof vi.fn>; fetch: ReturnType<typeof vi.fn> }> = [];
 
 vi.mock('@floegence/flowersec-core', () => ({
   parseArtifact: (value: string | Uint8Array) => ({ value }),
@@ -11,7 +11,7 @@ vi.mock('@floegence/flowersec-core/proxy', () => ({
   assertProxyRuntimeScope: (payload: unknown) => payload,
   PROXY_RUNTIME_SCOPE: { name: 'proxy.runtime', version: 2 },
   createProxyRuntime: vi.fn(() => {
-    const runtime = { dispose: vi.fn() };
+    const runtime = { dispose: vi.fn(), fetch: vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('ok')) };
     runtimes.push(runtime);
     return runtime;
   }),
@@ -100,4 +100,59 @@ describe('proxy bootstrap ownership', () => {
     expect(runtimes[0]?.dispose).toHaveBeenCalledOnce();
     expect(sourceState).toBeDefined();
   });
+});
+
+
+it('uses one session HTTP runtime across direct HTTP, TLS, private bridge and remote configurations', async () => {
+  const acquisition = await import('../src/acquisition');
+  const boot = await import('../src/index');
+  for (const mode of ['http', 'tls', 'private', 'remote']) {
+    runtimes.length = 0;
+    const source = { acquire: vi.fn() } as never;
+    acquisition.registerAcquisitionSource(source);
+    const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
+      expectedConsumer: 'trusted', commitSpend: vi.fn(async () => {}), validateSpendBinding: () => 'binding',
+    });
+    await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
+    const bootstrap = boot.createProxyBootstrapOwner({ serviceWorker: () => ({ dispose() {} }) });
+    const config = mode === 'http' ? boot.createHTTPDirectConnectionConfig({ source, httpDirect: { origin: 'http://localhost:1234' } })
+      : mode === 'private' ? boot.createPrivateLoopbackDirectConnectionConfig({ source, privateLoopback: { origin: 'http://localhost:1234' } })
+      : mode === 'remote' ? boot.createProxyRuntimeTunnelConnectionConfig({ source, proxyBootstrap: bootstrap })
+      : boot.createArtifactDirectConnectionConfig({ source });
+    try {
+      await expect(config.lifecycle.fetch('/app/events')).rejects.toThrow(/unavailable/);
+      const snapshot = { state: 'connected', attempt: 1, currentSession: session } as never;
+      config.lifecycle.synchronize(snapshot);
+      config.lifecycle.synchronize(snapshot);
+      expect(runtimes).toHaveLength(1);
+      expect(await (await config.lifecycle.fetch('/app/api')).text()).toBe('ok');
+      config.lifecycle.synchronize({ state: 'waiting', attempt: 1 } as never);
+      expect(runtimes[0]!.dispose).toHaveBeenCalledOnce();
+      await expect(config.lifecycle.fetch('/app/events')).rejects.toThrow(/unavailable/);
+    } finally { config.lifecycle.dispose(); }
+  }
+});
+
+it('fences already parsed events when the acquisition changes without adding a reconnect loop', async () => {
+  const acquisition = await import('../src/acquisition');
+  const boot = await import('../src/index');
+  const source = { acquire: vi.fn() } as never;
+  acquisition.registerAcquisitionSource(source);
+  const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
+    expectedConsumer: 'trusted', commitSpend: vi.fn(async () => {}), validateSpendBinding: () => 'binding',
+  });
+  await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
+  const lifecycle = boot.createArtifactDirectConnectionConfig({ source }).lifecycle;
+  lifecycle.synchronize({ state: 'connected', attempt: 1, currentSession: session as never });
+  const runtime = runtimes.at(-1)!;
+  runtime.fetch.mockImplementation(async (_input: unknown, init?: RequestInit) => {
+    expect(new Headers(init?.headers).get('accept')).toBe('text/event-stream');
+    return new Response('data: first\n\ndata: stale\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+  });
+  const iterator = lifecycle.events('/app/events');
+  expect(await iterator.next()).toMatchObject({ value: { data: 'first' } });
+  lifecycle.synchronize({ state: 'waiting', attempt: 1 } as never);
+  await expect(iterator.next()).rejects.toThrow(/unavailable|replaced/);
+  expect(runtime.fetch).toHaveBeenCalledOnce();
+  lifecycle.dispose();
 });

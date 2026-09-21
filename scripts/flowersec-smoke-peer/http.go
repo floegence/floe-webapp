@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -29,15 +30,18 @@ func runHTTP() {
 	var records sync.Map
 	var issuedCount atomic.Int32
 	released := make(chan struct{}, 2)
-	handlers, err := flowersec.NewSessionHandlers(flowersec.SessionHandlerOptions{})
-	if err != nil {
-		fail("HTTP session handlers failed")
-	}
-	if err := handlers.HandleRPC(7001, func(context.Context, json.RawMessage) (any, *flowersec.RPCError) {
-		return map[string]string{"server": "http-direct"}, nil
-	}); err != nil {
-		fail("HTTP RPC registration failed")
-	}
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/events" {
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = fmt.Fprint(w, "event: ready\ndata: session-event\n\n")
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+			return
+		}
+		_, _ = fmt.Fprint(w, "session-http")
+	}))
+	defer upstream.Close()
+	var proxies sync.Map
 	acceptor, err := flowersec.NewAcceptor(flowersec.AcceptorOptions{
 		Authorize: func(_ context.Context, req controlplane.RuntimeAuthorizationRequest) (controlplane.AuthorizationResponse, error) {
 			record, ok := records.LoadAndDelete(req.LookupKey())
@@ -46,10 +50,33 @@ func runHTTP() {
 			}
 			return controlplane.AuthorizeRuntime(req, record.(controlplane.AuthorizationRecord), req.LookupKey())
 		},
-		ResolveHandlers: func(context.Context, controlplane.RuntimeAuthorizationRequest) (*flowersec.SessionHandlers, error) {
+		ResolveHandlers: func(_ context.Context, request controlplane.RuntimeAuthorizationRequest) (*flowersec.SessionHandlers, error) {
+			handlers, err := flowersec.NewSessionHandlers(flowersec.SessionHandlerOptions{})
+			if err != nil {
+				return nil, err
+			}
+			if err := handlers.HandleRPC(7001, func(context.Context, json.RawMessage) (any, *flowersec.RPCError) {
+				return map[string]string{"server": "http-direct"}, nil
+			}); err != nil {
+				return nil, err
+			}
+			proxy, err := flowersec.NewProxyServer(flowersec.ProxyServerOptions{Upstream: upstream.URL, UpstreamOrigin: origin})
+			if err != nil {
+				return nil, err
+			}
+			if err := proxy.RegisterStreamHandlers(handlers); err != nil {
+				_ = proxy.Close()
+				return nil, err
+			}
+			proxies.Store(request.LookupKey(), proxy)
 			return handlers, nil
 		},
-		Release: func(context.Context, string) { released <- struct{}{} },
+		Release: func(_ context.Context, key string) {
+			if proxy, ok := proxies.LoadAndDelete(key); ok {
+				_ = proxy.(*flowersec.ProxyServer).Close()
+			}
+			released <- struct{}{}
+		},
 		OnSession: func(ctx context.Context, s flowersec.Session, _ string) error {
 			_, err := s.WaitTermination(ctx)
 			return err

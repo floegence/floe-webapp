@@ -1,3 +1,4 @@
+import { fetchServerSentEvents, ServerSentEventStreamError, type FetchServerSentEventsOptions, type ServerSentEvent } from './server-sent-events';
 import {
   createProxyRuntime,
   type ProxyRuntime,
@@ -37,7 +38,7 @@ export type ProxyBootstrapOwnerOptions = Readonly<{
 
 export type ProxyBootstrapSnapshot = Readonly<{
   generation: number;
-  mode: 'service_worker' | 'controller_bridge';
+  mode: 'session' | 'service_worker' | 'controller_bridge';
   bindingIdentity: string;
 }>;
 
@@ -58,7 +59,7 @@ export class ProxyBootstrapOwner {
 }
 
 type ProxyBootstrapOwnerState = {
-  readonly options: ProxyBootstrapOwnerOptions;
+  readonly options: ProxyBootstrapOwnerOptions | undefined;
   generation: number;
   acquisition?: ConnectedAcquisition;
   runtime?: ProxyRuntime;
@@ -68,7 +69,7 @@ type ProxyBootstrapOwnerState = {
 
 const proxyBootstrapOwners = new WeakMap<ProxyBootstrapOwner, ProxyBootstrapOwnerState>();
 
-export function createProxyBootstrapOwner(options: ProxyBootstrapOwnerOptions): ProxyBootstrapOwner {
+export function createProxyBootstrapOwner(options?: ProxyBootstrapOwnerOptions): ProxyBootstrapOwner {
   const owner = ProxyBootstrapOwner.create();
   proxyBootstrapOwners.set(owner, { options, generation: 0 });
   return owner;
@@ -92,6 +93,7 @@ export function synchronizeProxyBootstrap(
   const scope = details.scope;
   const runtime = createProxyRuntime({
     session: details.session,
+    externalOrigin: details.appOrigin,
     ...(scope.limits ?? {}),
     ...(scope.http?.extraRequestHeaders === undefined ? {} : { extraRequestHeaders: scope.http.extraRequestHeaders }),
     ...(scope.appBasePath === undefined
@@ -102,8 +104,10 @@ export function synchronizeProxyBootstrap(
         } }),
   });
   try {
-    let binding: ProxyBootstrapBinding;
-    if (scope.mode === 'service_worker') {
+    let binding: ProxyBootstrapBinding | undefined;
+    if (state.options === undefined) {
+      // Direct documents need no browser bridge; the session runtime is sufficient.
+    } else if (scope.mode === 'service_worker') {
       const adapter = state.options.serviceWorker;
       if (adapter === undefined) throw new AcquisitionError('service_worker_bootstrap_unavailable');
       binding = adapter(Object.freeze({
@@ -126,10 +130,10 @@ export function synchronizeProxyBootstrap(
         capabilityNonce: randomCapabilityNonce(),
       }));
     }
-    if (binding === null || typeof binding !== 'object' || typeof binding.dispose !== 'function') {
+    if (state.options !== undefined && (binding === null || typeof binding !== 'object' || typeof binding.dispose !== 'function')) {
       throw new AcquisitionError('invalid_proxy_bootstrap_binding');
     }
-    const snapshot = Object.freeze({ generation, mode: scope.mode, bindingIdentity: details.bindingIdentity });
+    const snapshot = Object.freeze({ generation, mode: state.options === undefined ? 'session' as const : scope.mode, bindingIdentity: details.bindingIdentity });
     state.acquisition = acquisition;
     state.runtime = runtime;
     state.binding = binding;
@@ -138,6 +142,41 @@ export function synchronizeProxyBootstrap(
   } catch (error) {
     runtime.dispose();
     throw error;
+  }
+}
+
+// Connection lifecycles expose these operations without exposing a mutable runtime.
+export async function fetchProxyBootstrap(owner: ProxyBootstrapOwner, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const state = ownerState(owner);
+  const runtime = state.runtime;
+  if (runtime === undefined) throw new AcquisitionError('session_http_unavailable');
+  const response = await runtime.fetch(input, init);
+  if (state.runtime !== runtime) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new AcquisitionError('session_http_replaced');
+  }
+  return response;
+}
+
+export async function* readProxyBootstrapEvents(
+  owner: ProxyBootstrapOwner,
+  input: RequestInfo | URL,
+  options: Omit<FetchServerSentEventsOptions, 'fetch'> = {},
+): AsyncGenerator<ServerSentEvent> {
+  const state = ownerState(owner);
+  const runtime = state.runtime;
+  if (runtime === undefined) throw new ServerSentEventStreamError('transport', 'session HTTP is unavailable');
+  options.signal?.throwIfAborted();
+  const headers = new Headers(options.headers ?? (input instanceof Request ? input.headers : undefined));
+  headers.set('Accept', 'text/event-stream');
+  for await (const event of fetchServerSentEvents(input, {
+    ...options, headers,
+    fetch: (request, init) => runtime.fetch(request, init),
+    onActivity: () => { if (state.runtime === runtime && !options.signal?.aborted) options.onActivity?.(); },
+  })) {
+    options.signal?.throwIfAborted();
+    if (state.runtime !== runtime) throw new ServerSentEventStreamError('transport', 'session HTTP was replaced');
+    yield event;
   }
 }
 

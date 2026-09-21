@@ -9,6 +9,14 @@ vi.mock('../src/acquisition', () => ({
     snapshot.currentSession ?? null,
 }));
 
+vi.mock('../src/proxy-bootstrap', () => ({
+  createProxyBootstrapOwner: () => ({}),
+  synchronizeProxyBootstrap: vi.fn(),
+  closeProxyBootstrap: vi.fn(),
+  fetchProxyBootstrap: vi.fn(),
+  readProxyBootstrapEvents: vi.fn(),
+}));
+
 const disposers: Array<() => void> = [];
 function fixture() {
   const lifecycle = createAcquisitionConnectionLifecycle({} as never);

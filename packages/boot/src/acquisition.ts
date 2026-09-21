@@ -132,6 +132,7 @@ type PendingAcquisition<Lease extends AcquisitionLease = AcquisitionLease> = {
   readonly lease: Lease;
   readonly scope: ProxyRuntimeScope;
   readonly bindingIdentity: string;
+  readonly appOrigin: string;
   committed: boolean;
 };
 
@@ -145,6 +146,7 @@ export type ConnectedAcquisitionDetails = Readonly<{
   session: Session;
   scope: ProxyRuntimeScope;
   bindingIdentity: string;
+  appOrigin: string;
   attempt: number;
 }>;
 
@@ -277,6 +279,7 @@ export function synchronizeAcquisitionSourceSnapshot(
       session: snapshot.currentSession,
       scope: pending.scope,
       bindingIdentity: pending.bindingIdentity,
+      appOrigin: pending.appOrigin,
       attempt: snapshot.attempt,
     })
   );
@@ -490,6 +493,7 @@ export async function connectIsolatedOneShot(
         session,
         scope: state.pending.scope,
         bindingIdentity: state.pending.bindingIdentity,
+        appOrigin: state.pending.appOrigin,
         attempt: 1,
       })
     );
@@ -613,7 +617,7 @@ function materializeLease<Artifact, Lease extends AcquisitionLease>(
       throw error;
     }
   });
-  pending = { lease, scope, bindingIdentity, committed: false };
+  pending = { lease, scope, bindingIdentity, appOrigin: binding.appOrigin, committed: false };
   registered(pending);
   return lease;
 }

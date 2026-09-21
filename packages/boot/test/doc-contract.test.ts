@@ -14,7 +14,7 @@ describe('boot docs', () => {
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('ArtifactSource');
     expect(doc).toContain('createControlplaneArtifactSource');
-    expect(doc).toContain('@floegence/flowersec-core@5.2.2');
+    expect(doc).toContain('@floegence/flowersec-core@5.3.1');
     expect(doc).toContain('createPrivateLoopbackControlplaneArtifactSource');
     expect(doc).toContain('createPrivateLoopbackDirectConnectionConfig');
     expect(doc).toContain('sole retry/backoff owner');

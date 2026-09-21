@@ -172,6 +172,12 @@ async function verifyHTTPConsumers() {
     for (const client of clients) {
       const result = await client.protocol.session().rpc.call(7001, {}, (payload) => payload);
       if (!result.ok || result.payload.server !== 'http-direct') throw new Error('HTTP RPC failed');
+      const response = await client.connection.lifecycle.fetch('/ordinary');
+      if (await response.text() !== 'session-http') throw new Error('Session HTTP failed');
+      const events = client.connection.lifecycle.events('/events');
+      const first = await events.next();
+      if (first.value?.event !== 'ready' || first.value?.data !== 'session-event') throw new Error('Session SSE failed');
+      await events.return();
     }
     await clients[0].protocol.session().close();
     clients[0].protocol.disconnect();
@@ -210,8 +216,8 @@ function resolveSmokePeerDirectory() {
   if (existsSync(join(directory, 'go.work')))
     throw new Error('Flowersec smoke peer must not use go.work');
   const module = readFileSync(join(directory, 'go.mod'), 'utf8');
-  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.2\.2$/mu.test(module)) {
-    throw new Error('Flowersec smoke peer must pin flowersec-go/v5 v5.2.2');
+  if (!/^require github\.com\/floegence\/flowersec\/flowersec-go\/v5 v5\.3\.1$/mu.test(module)) {
+    throw new Error('Flowersec smoke peer must pin flowersec-go/v5 v5.3.1');
   }
   if (/^replace\s/mu.test(module) || /(?:^|\s)\.\.\//mu.test(module)) {
     throw new Error('Flowersec smoke peer must not use local dependency shortcuts');

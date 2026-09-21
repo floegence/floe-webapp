@@ -5,7 +5,7 @@ import {
   registerAcquisitionSource,
   synchronizeAcquisitionSourceSnapshot,
 } from '../src/acquisition';
-import { closeProxyBootstrap, createProxyBootstrapOwner, synchronizeProxyBootstrap } from '../src/proxy-bootstrap';
+import { fetchProxyBootstrap, closeProxyBootstrap, createProxyBootstrapOwner, synchronizeProxyBootstrap } from '../src/proxy-bootstrap';
 
 // Only artifact cryptography is replaced; scope validation and proxy framing are real.
 vi.mock('@floegence/flowersec-core', () => ({
@@ -116,6 +116,27 @@ describe('acquisition-bound HTTP proxy authority', () => {
       expect(await request(bindings[0]!, '/app/catalog')).toContainEqual(expect.objectContaining({ status: 200 }));
       expect(current.requests).toEqual([expect.objectContaining({ headers: [] })]);
     } finally { closeProxyBootstrap(owner); }
+  });
+
+  it('uses the same authority for direct session fetch without a browser binding', async () => {
+    const current = await connected({ additionalPathPrefixes: ['/platform/api/'], extraRequestHeaders: ['X-Platform-CSRF'] });
+    const owner = createProxyBootstrapOwner();
+    try {
+      expect(synchronizeProxyBootstrap(owner, current.acquisition)?.mode).toBe('session');
+      const response = await fetchProxyBootstrap(owner, 'https://app.example/platform/api/catalog', {
+        method: 'POST', headers: { 'X-Platform-CSRF': 'proof', Authorization: 'must-not-forward', 'Content-Type': 'application/json' }, body: '{}',
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe('');
+      expect(current.requests).toEqual([expect.objectContaining({ headers: [
+        { name: 'content-type', value: 'application/json' },
+        { name: 'x-platform-csrf', value: 'proof' },
+      ] })]);
+      await expect(fetchProxyBootstrap(owner, 'https://untrusted.example/platform/api/catalog')).rejects.toThrow();
+      await expect(fetchProxyBootstrap(owner, '/private/')).rejects.toThrow(/not allowed/);
+      expect(current.session.openStream).toHaveBeenCalledTimes(1);
+    } finally { closeProxyBootstrap(owner); }
+    await expect(fetchProxyBootstrap(owner, '/app/')).rejects.toThrow('unavailable');
   });
 
   it('adds declared HTTP paths and headers, keeps WebSockets bounded, and replaces authority on reconnect', async () => {

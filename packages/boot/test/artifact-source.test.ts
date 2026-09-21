@@ -89,6 +89,7 @@ vi.mock('@floegence/flowersec-core', () => ({
 }));
 
 vi.mock('@floegence/flowersec-core/proxy', () => ({
+  createProxyRuntime: vi.fn(() => ({ fetch: vi.fn(), dispose: vi.fn() })),
   assertProxyRuntimeScope: (payload: unknown) => payload,
   PROXY_RUNTIME_SCOPE: { name: 'proxy.runtime', version: 2 },
 }));

@@ -11,8 +11,9 @@ const packages = [
   '@floegence/floe-webapp-protocol',
   '@floegence/floe-webapp-init',
 ];
-const attempts = 12;
-const delayMs = 5_000;
+// npm accepts an immutable version before registry processing exposes metadata.
+const attempts = 61;
+const delayMs = 10_000;
 const expectedLicense = 'MIT';
 const expectedLicenseText = readFileSync('LICENSE', 'utf8');
 
