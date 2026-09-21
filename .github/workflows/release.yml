@@ -111,6 +111,9 @@ jobs:
       - name: Verify bottom bar companion morph in Chromium
         run: node scripts/check-bottom-bar-companion-browser.mjs
 
+      - name: Verify input history public API in Chromium
+        run: node scripts/check-input-history-browser.mjs
+
       - name: Verify dist
         run: pnpm verify
 

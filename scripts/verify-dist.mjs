@@ -244,6 +244,8 @@ function main() {
   assertFile('packages/core/dist/file-browser.js');
   assertFile('packages/core/dist/file-browser.d.ts');
   assertFile('packages/core/dist/chat.js');
+  assertFileContains('packages/core/dist/chat.js', 'createInputHistoryController');
+  assertFileContains('packages/core/dist/components/chat/index.d.ts', 'createInputHistoryController');
   assertFile('packages/core/dist/chat.d.ts');
   assertFile('packages/core/dist/chat-media.js');
   execSync(`node --input-type=module -e 'const m = await import("./packages/core/dist/chat-media.js"); if (m.markdownMediaKind("clip.mp4") !== "video") process.exit(1)'`, { stdio: 'inherit' });
@@ -342,9 +344,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.61.0'
+      (version) => version === '0.62.0'
     ),
-    'Published Floe packages must all use version 0.61.0'
+    'Published Floe packages must all use version 0.62.0'
   );
 
   assert(

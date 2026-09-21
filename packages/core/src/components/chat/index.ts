@@ -57,6 +57,15 @@ export {
 
 // Input components
 export { ChatInput, AttachmentPreview, type ChatInputProps, type AttachmentPreviewProps } from './input';
+export {
+  createInputHistoryController,
+  type InputHistoryEntry,
+  type InputHistoryContext,
+  type InputHistoryState,
+  type InputHistoryOptions,
+  type InputHistoryEditor,
+  type InputHistoryController,
+} from './input/createInputHistoryController';
 
 // Status components
 export {
