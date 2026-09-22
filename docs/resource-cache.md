@@ -42,3 +42,14 @@ after building core to verify real IndexedDB restoration across a page reload.
 Native adapters that partition access by owner can use `enforceResourceCacheBudget` over their complete private storage index to enforce one physical byte budget. Return opaque adapter-owned keys from that internal index; do not expose another owner's records through the renderer bridge. The same eviction policy is used by the resource cache itself. Reusing a handle counts as recent use, and an evicted handle can persist its next successful refresh again.
 
 `ResourceSnapshot.restoring` is true while the initial storage read is pending. It becomes false atomically with the restored data, or after a miss, rejected snapshot, or storage failure. Successful live data and invalidation end restoration immediately; late storage cannot replace them. Render available data first, and use `restoring` only when deciding whether an absent value is still being restored. `hydrate()` still waits for the actual storage read.
+
+## Transport replacement
+
+Call `cache.cancelRefreshes(scope)` when retiring requests for a transport that
+is being replaced. Pending refresh promises reject immediately with `AbortError`,
+even if the fetcher ignores cancellation. Late results cannot publish data or
+errors. Existing handles, subscriptions, successful snapshots, pending writes,
+and disk restoration remain intact; other scopes are unaffected. A cancelled
+resource stops refreshing and becomes stale. The consumer still owns identity
+confirmation and decides when requests may resume. Use `clearScope` for actual
+authorization loss, and `dispose` only when retiring the entire cache owner.

@@ -23,6 +23,58 @@ const definition = { scope: 'alice/host', key: 'apps', version: 1, decode: (valu
 } };
 
 describe('persistent resource continuity', () => {
+  it('cancels a scope immediately without replacing handles, listeners or successful snapshots', async () => {
+    const { adapter, values } = storage();
+    const cache = createResourceCache({ storage: adapter });
+    const resource = cache.resource(definition);
+    resource.set([]);
+    const listener = vi.fn();
+    resource.subscribe(listener);
+    const old = deferred<string[]>();
+    const other = deferred<string[]>();
+    const oldRequest = resource.refresh(() => old.promise);
+    const cancelled = expect(oldRequest).rejects.toMatchObject({ name: 'AbortError' });
+    const otherResource = cache.resource({ ...definition, scope: 'bob/host' });
+    const otherRequest = otherResource.refresh(() => other.promise);
+    await Promise.resolve();
+    cache.cancelRefreshes(definition.scope);
+    await cancelled;
+    expect(resource.snapshot()).toMatchObject({ data: [], restoring: false, refreshing: false, stale: true, error: undefined });
+    expect(cache.resource(definition)).toBe(resource);
+    await cache.flush();
+    expect(values.get(JSON.stringify([definition.scope, definition.key, 1]))).toContain('"data":[]');
+    expect(otherResource.snapshot().refreshing).toBe(true);
+    listener.mockClear();
+    await resource.refresh(async () => ['Current']);
+    old.resolve(['Obsolete']);
+    other.resolve(['Other user']);
+    await otherRequest;
+    expect(resource.snapshot().data).toEqual(['Current']);
+    expect(otherResource.snapshot().data).toEqual(['Other user']);
+    expect(listener).toHaveBeenCalled();
+    cache.dispose();
+  });
+
+  it('preserves an in-progress disk restore while cancelling only its network request', async () => {
+    const { adapter } = storage();
+    const disk = deferred<string | null>();
+    adapter.get = () => disk.promise;
+    const cache = createResourceCache({ storage: adapter });
+    const resource = cache.resource(definition);
+    const old = deferred<string[]>();
+    const request = resource.refresh(() => old.promise);
+    const cancelled = expect(request).rejects.toMatchObject({ name: 'AbortError' });
+    cache.cancelRefreshes(definition.scope);
+    await cancelled;
+    expect(resource.snapshot().restoring).toBe(true);
+    disk.resolve(JSON.stringify({ version: 1, data: ['Disk'] }));
+    await resource.hydrate();
+    old.reject(new Error('Obsolete denial'));
+    await Promise.resolve();
+    expect(resource.snapshot()).toMatchObject({ data: ['Disk'], restoring: false, error: undefined });
+    cache.dispose();
+  });
+
   it.each(['hit', 'empty', 'miss', 'corrupt', 'version', 'failure'])('finishes restoration atomically for %s storage', async outcome => {
     const { adapter } = storage();
     const disk = deferred<string | null>();

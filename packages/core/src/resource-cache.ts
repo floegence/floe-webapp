@@ -38,6 +38,8 @@ export interface CachedResourceDefinition<T> {
 
 export interface ResourceCache {
   resource<T>(definition: CachedResourceDefinition<T>): CachedResource<T>;
+  /** Abort pending refreshes without retiring snapshots, storage, hydration or subscribers. */
+  cancelRefreshes(scope: string): void;
   clearScope(scope: string): Promise<void>;
   flush(): Promise<void>;
   dispose(): void;
@@ -64,7 +66,7 @@ export function createResourceCache(options: {
 }): ResourceCache {
   const storage = options.storage;
   const maxBytes = Math.max(0, options.maxBytes ?? 32 * 1024 * 1024);
-  const resources = new Map<string, { scope: string; handle: CachedResource<unknown>; accessedAt: number; evicted(): void; stop(): void }>();
+  const resources = new Map<string, { scope: string; handle: CachedResource<unknown>; accessedAt: number; evicted(): void; cancelRefresh(): void; stop(): void }>();
   const pending = new Map<string, { value: string; valid(): boolean; stored(): void }>();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let writes = Promise.resolve();
@@ -115,6 +117,7 @@ export function createResourceCache(options: {
     let persisted: string | undefined;
     let controller: AbortController | undefined;
     let request: Promise<T> | undefined;
+    let rejectCancellation: (() => void) | undefined;
     const notify = () => { for (const listener of listeners) listener(); };
     const accept = (value: T) => {
       ++revision;
@@ -172,7 +175,10 @@ export function createResourceCache(options: {
         controller = abort;
         state = { ...state, refreshing: true, error: undefined };
         notify();
-        request = Promise.resolve().then(() => fetcher(abort.signal)).then(value => {
+        const cancelled = new Promise<never>((_resolve, reject) => {
+          rejectCancellation = () => reject(new DOMException('Resource refresh cancelled', 'AbortError'));
+        });
+        const fetched = Promise.resolve().then(() => fetcher(abort.signal)).then(value => {
           if (!disposed && id === requestID && !abort.signal.aborted) accept(value);
           return value;
         }, error => {
@@ -181,10 +187,12 @@ export function createResourceCache(options: {
             notify();
           }
           throw error;
-        }).finally(() => {
+        });
+        request = Promise.race([fetched, cancelled]).finally(() => {
           if (id !== requestID) return;
           request = undefined;
           controller = undefined;
+          rejectCancellation = undefined;
           state = { ...state, refreshing: false };
           notify();
         });
@@ -199,7 +207,17 @@ export function createResourceCache(options: {
       },
       invalidate,
     };
-    resources.set(key, { scope: definition.scope, accessedAt: Date.now(), evicted: () => { persisted = undefined; }, handle: handle as CachedResource<unknown>, stop: () => {
+    resources.set(key, { scope: definition.scope, accessedAt: Date.now(), evicted: () => { persisted = undefined; }, handle: handle as CachedResource<unknown>, cancelRefresh: () => {
+      if (!request) return;
+      ++requestID;
+      rejectCancellation?.();
+      rejectCancellation = undefined;
+      controller?.abort();
+      controller = undefined;
+      request = undefined;
+      state = { ...state, refreshing: false, stale: true };
+      notify();
+    }, stop: () => {
       ++requestID;
       controller?.abort();
       listeners.clear();
@@ -210,6 +228,9 @@ export function createResourceCache(options: {
   return {
     resource,
     flush,
+    cancelRefreshes: scope => {
+      for (const entry of resources.values()) if (entry.scope === scope) entry.cancelRefresh();
+    },
     clearScope: async scope => {
       for (const entry of resources.values()) if (entry.scope === scope) entry.handle.invalidate(true);
       await enqueue(async () => {
