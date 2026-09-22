@@ -44,6 +44,7 @@ describe('@floegence/floe-webapp-core package config', () => {
         types: './dist/icons.d.ts',
         import: './dist/icons.js',
       },
+      './reload-placeholder': { types: './dist/reload-placeholder.d.ts', import: './dist/reload-placeholder.js' },
       './resource-cache': { types: './dist/resource-cache.d.ts', import: './dist/resource-cache.js' },
       './loading': {
         types: './dist/loading.d.ts',

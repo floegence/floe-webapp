@@ -107,7 +107,7 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Verify progress shimmer across shell themes
-        run: pnpm test:progress-shimmer && pnpm test:window-status
+        run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs
 
       - name: Verify floating panel interaction in Chromium
         run: |

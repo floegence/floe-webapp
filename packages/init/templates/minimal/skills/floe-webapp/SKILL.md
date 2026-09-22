@@ -37,6 +37,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/icons`
    - `@floegence/floe-webapp-core/loading`
    - `@floegence/floe-webapp-core/resource-cache` (asynchronous, scoped presentation snapshots; consumers retain authorization and polling ownership)
+   - `@floegence/floe-webapp-core/reload-placeholder` (anonymous session-only geometry before document modules; consumers own readiness and authorization)
    - `@floegence/floe-webapp-core/launchpad`
    - `@floegence/floe-webapp-core/file-browser`
    - `@floegence/floe-webapp-core/chat`

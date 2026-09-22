@@ -237,6 +237,8 @@ function main() {
   assertFile('packages/core/dist/ui.d.ts');
   assertFile('packages/core/dist/icons.js');
   assertFile('packages/core/dist/icons.d.ts');
+  assertFile('packages/core/dist/reload-placeholder.js');
+  assertFile('packages/core/dist/reload-placeholder.d.ts');
   assertFile('packages/core/dist/resource-cache.js');
   assertFile('packages/core/dist/resource-cache.d.ts');
   assertFile('packages/core/dist/loading.js');
@@ -357,9 +359,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.69.0'
+      (version) => version === '0.70.0'
     ),
-    'Published Floe packages must all use version 0.69.0'
+    'Published Floe packages must all use version 0.70.0'
   );
 
   assert(
@@ -400,6 +402,7 @@ function main() {
     'icons',
     'loading',
     'resource-cache',
+    'reload-placeholder',
     'launchpad',
     'file-browser',
     'chat',

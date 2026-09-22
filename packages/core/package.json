@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.69.0",
+  "version": "0.70.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -112,6 +112,10 @@
       "types": "./dist/window-status.d.ts",
       "import": "./dist/window-status.js",
       "default": "./dist/window-status.js"
+    },
+    "./reload-placeholder": {
+      "types": "./dist/reload-placeholder.d.ts",
+      "import": "./dist/reload-placeholder.js"
     }
   },
   "files": [

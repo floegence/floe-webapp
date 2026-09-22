@@ -67,6 +67,8 @@ execFileSync(
     '-e',
     [
       `import.meta.resolve('${packageNames[0]}')`,
+      `const { createReloadPlaceholderScript } = await import('${packageNames[0]}/reload-placeholder')`,
+      `new Function(createReloadPlaceholderScript({storageKey: 'consumer'}))`,
       `const { createResourceCache } = await import('${packageNames[0]}/resource-cache')`,
       `const cache = createResourceCache({ storage: { get: async () => null, set: async () => {}, remove: async () => {}, list: async () => [] } })`,
       `const resource = cache.resource({ scope: 'consumer', key: 'list', version: 1, decode: value => value })`,
