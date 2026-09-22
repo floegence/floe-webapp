@@ -1,8 +1,8 @@
-.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation
+.PHONY: check install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache
 
 install:
 	pnpm install --frozen-lockfile
@@ -55,3 +55,6 @@ asset-recovery:
 .PHONY: resource-cache
 resource-cache:
 	node scripts/check-resource-cache-browser.mjs
+
+window-status:
+	pnpm test:window-status

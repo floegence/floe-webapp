@@ -39,6 +39,7 @@ export default defineConfig({
         widgets: resolve(__dirname, 'src/widgets.ts'),
         terminal: resolve(__dirname, 'src/terminal.ts'),
         themes: resolve(__dirname, 'src/themes.ts'),
+        'window-status': resolve(__dirname, 'src/window-status.ts'),
         workbench: resolve(__dirname, 'src/workbench.ts'),
       },
       name: 'FloeCore',

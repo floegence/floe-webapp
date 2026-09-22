@@ -1,3 +1,4 @@
+@import './progress-shimmer.css';
 /* First-party standalone documents: the same themes, geometry tokens and
  * material as Floe, without the shell, Tailwind utilities or renderer runtime.
  * Set .light/.dark, data-floe-shell-theme and data-floe-surface-style on <html>.

@@ -107,7 +107,7 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Verify progress shimmer across shell themes
-        run: pnpm test:progress-shimmer
+        run: pnpm test:progress-shimmer && pnpm test:window-status
 
       - name: Verify floating panel interaction in Chromium
         run: |

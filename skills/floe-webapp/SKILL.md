@@ -52,6 +52,9 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/workbench`
    - `@floegence/floe-webapp-core/styles`
    - `@floegence/floe-webapp-core/tailwind`
+   - `@floegence/floe-webapp-core/window-status.css` (fixed host-window state layout; never draggable or Workbench content)
+   - `@floegence/floe-webapp-core/window-status` (browser-neutral fixed SVG artwork and the shared stationary retry icon)
+   - `@floegence/floe-webapp-core/progress-shimmer.css` (standalone working-text and busy-surface paint)
    - `@floegence/floe-webapp-core/standalone.css` (themes and surface material for first-party standalone documents)
    - `@floegence/floe-webapp-core/input-focus.css` (standalone input borders without shell styles)
 4. Align registry behavior end-to-end:

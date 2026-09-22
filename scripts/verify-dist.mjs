@@ -262,6 +262,10 @@ function main() {
   assertFile('packages/core/dist/styles.css');
   assertFile('packages/core/dist/tailwind.css');
   assertFile('packages/core/dist/standalone.css');
+  assertFile('packages/core/dist/window-status.css');
+  assertFile('packages/core/dist/progress-shimmer.css');
+  assertFile('packages/core/dist/window-status.js');
+  assertFile('packages/core/dist/window-status.d.ts');
   assertFile('packages/core/dist/primitives.css');
   assertFile('packages/core/dist/floe.css');
   assertFile('packages/core/dist/themes/light.css');
@@ -353,9 +357,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.66.1'
+      (version) => version === '0.67.0'
     ),
-    'Published Floe packages must all use version 0.66.1'
+    'Published Floe packages must all use version 0.67.0'
   );
 
   assert(

@@ -191,3 +191,28 @@ or `.dark`, `data-floe-shell-theme`, and `data-floe-surface-style` on the docume
 root; declare `data-floe-surface` on each visible material boundary. Host code
 owns layout, locale and actions. Do not inject these styles into third-party
 application documents. This entry contains no renderer JavaScript or utility scan.
+
+
+### Whole-window status surfaces
+
+`@floegence/floe-webapp-core/window-status.css` provides the opt-in
+`floe-window-status` layout and its `__content`, `__illustration`, `__identity`,
+`__title`, `__description`, `__activity`, `__label`, `__actions`, `__button`,
+`__details`, and `__form` slots. Mount it inside a positioned host-window root.
+It is not a dialog or a Workbench/floating-window material. The default backdrop
+is opaque; only `data-backdrop="workspace"` enables one 8 px glass layer over a
+retained, inert workspace. Access gates always use the opaque default. Hosts own
+inertness, focus, operation state, accessible names, localization, and actions.
+
+Load normal Floe theme styles or `standalone.css` first. Standalone documents
+can inline the published `progress-shimmer.css` with their selected Floe theme
+tokens; it is also included by the standard style entries. Mark only active
+working text with `data-floe-progress-shimmer="text"` and remove it on settlement.
+This preserves one accessible text copy and respects reduced motion and forced
+colors. Do not add spinning icons or animated progress bars to this surface.
+
+The browser-neutral `@floegence/floe-webapp-core/window-status` entry exports
+`windowStatusIllustrationSvg('access' | 'editor' | 'service')` and
+`windowStatusRefreshSvg`. These are trusted, fixed SVG strings without user
+input, scripts, or renderer dependencies. The retry artwork shares geometry
+with the renderer's `Refresh` icon. Hosts must escape their own dynamic copy.

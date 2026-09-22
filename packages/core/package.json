@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.66.1",
+  "version": "0.67.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -105,6 +105,13 @@
     "./resource-cache": {
       "types": "./dist/resource-cache.d.ts",
       "import": "./dist/resource-cache.js"
+    },
+    "./progress-shimmer.css": "./dist/progress-shimmer.css",
+    "./window-status.css": "./dist/window-status.css",
+    "./window-status": {
+      "types": "./dist/window-status.d.ts",
+      "import": "./dist/window-status.js",
+      "default": "./dist/window-status.js"
     }
   },
   "files": [
