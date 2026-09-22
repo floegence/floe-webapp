@@ -1,0 +1,16 @@
+/* Import after pdfjs-dist/web/pdf_viewer.css. Layers use PDF page coordinates;
+   surrounding transforms belong to the host surface and need no compensating math. */
+.floe-pdf-page > .page {
+  position: relative;
+  margin: 0;
+  border: 0;
+  overflow: visible;
+  background: white;
+  color: black;
+}
+.floe-pdf-page .canvasWrapper { position: absolute; inset: 0; overflow: hidden; }
+.floe-pdf-page .canvasWrapper canvas { display: block; position: absolute; inset: 0; }
+.floe-pdf-page .textLayer { user-select: text; }
+.floe-pdf-page .annotationLayer a, .floe-pdf-page .annotationLayer button,
+.floe-pdf-page .annotationLayer input[type=checkbox], .floe-pdf-page .annotationLayer input[type=radio],
+.floe-pdf-page .annotationEditorLayer button { cursor: pointer; }

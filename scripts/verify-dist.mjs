@@ -349,9 +349,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.64.0'
+      (version) => version === '0.65.0'
     ),
-    'Published Floe packages must all use version 0.64.0'
+    'Published Floe packages must all use version 0.65.0'
   );
 
   assert(
@@ -396,6 +396,7 @@ function main() {
     'chat',
     'chat-media',
     'editor',
+    'pdf',
     'widgets',
     'terminal',
   ];

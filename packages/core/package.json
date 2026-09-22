@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.64.0",
+  "version": "0.65.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -91,15 +91,26 @@
     },
     "./styles": "./dist/styles.css",
     "./tailwind": "./dist/tailwind.css",
-    "./input-focus.css": "./dist/input-focus.css"
+    "./input-focus.css": "./dist/input-focus.css",
+    "./pdf": {
+      "types": "./dist/pdf.d.ts",
+      "import": "./dist/pdf.js"
+    },
+    "./pdf.css": "./dist/pdf.css",
+    "./pdf-assets": {
+      "types": "./scripts/pdf-assets.d.mts",
+      "import": "./scripts/pdf-assets.mjs"
+    }
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts/pdf-assets.mjs",
+    "scripts/pdf-assets.d.mts"
   ],
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
     "build": "pnpm clean && pnpm build:shell-theme-css && vite build && tsc -p tsconfig.build.json && pnpm build:styles && pnpm build:assets",
-    "build:assets": "node ./scripts/copy-style-assets.mjs",
+    "build:assets": "node ./scripts/copy-style-assets.mjs && node ./scripts/build-pdf-styles.mjs",
     "build:shell-theme-css": "node ./scripts/generate-shell-theme-css.mjs",
     "build:styles": "vite build -c vite.styles.config.ts",
     "typecheck": "tsc --noEmit",
@@ -114,6 +125,7 @@
     "marked": "^17.0.1",
     "mermaid": "^11.16.0",
     "monaco-editor": "^0.55.1",
+    "pdfjs-dist": "6.3.289",
     "shiki": "^3.21.0",
     "solid-motionone": "^1.0.4",
     "tailwind-merge": "^3.4.0"

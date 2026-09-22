@@ -34,6 +34,7 @@ export default defineConfig({
         'chat-media': resolve(__dirname, 'src/chat-media.ts'),
         notes: resolve(__dirname, 'src/notes.ts'),
         editor: resolve(__dirname, 'src/editor.ts'),
+        pdf: resolve(__dirname, 'src/pdf.ts'),
         widgets: resolve(__dirname, 'src/widgets.ts'),
         terminal: resolve(__dirname, 'src/terminal.ts'),
         themes: resolve(__dirname, 'src/themes.ts'),
@@ -50,6 +51,7 @@ export default defineConfig({
         'solid-js/store',
         'monaco-editor',
         /^monaco-editor\//,
+        /^pdfjs-dist(?:\/|$)/,
       ],
       output: {
         preserveModules: true,

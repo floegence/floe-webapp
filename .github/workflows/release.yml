@@ -97,6 +97,11 @@ jobs:
           pnpm test:activity-navigation
           pnpm test:file-menu
 
+      - name: Verify PDF surface
+        run: |
+          pnpm --filter @floegence/floe-webapp-core build
+          pnpm test:pdf
+
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
