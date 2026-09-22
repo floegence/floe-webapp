@@ -2,7 +2,7 @@
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input
 
 install:
 	pnpm install --frozen-lockfile
@@ -62,3 +62,7 @@ window-status:
 .PHONY: reload-placeholder
 reload-placeholder:
 	node scripts/check-reload-placeholder-browser.mjs
+
+.PHONY: remote-input
+remote-input:
+	node scripts/check-remote-input-browser.mjs

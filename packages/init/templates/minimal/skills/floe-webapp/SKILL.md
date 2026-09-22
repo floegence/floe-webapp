@@ -58,6 +58,8 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/progress-shimmer.css` (standalone working-text and busy-surface paint)
    - `@floegence/floe-webapp-core/standalone.css` (themes and surface material for first-party standalone documents)
    - `@floegence/floe-webapp-core/input-focus.css` (standalone input borders without shell styles)
+   - `@floegence/floe-webapp-core/remote-input` (framework-free client composition and exclusive remote keyboard ownership)
+   - `@floegence/floe-webapp-core/remote-input.css` (native input and bounded composition preview)
 4. Align registry behavior end-to-end:
    - Keep `FloeComponent.id`, sidebar items, command targets, and layout navigation consistent.
    - Use `ActivityAppsMain` for `sidebar.fullScreen` or `sidebar.renderIn === 'main'` page flows when appropriate.

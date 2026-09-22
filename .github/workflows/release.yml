@@ -123,6 +123,9 @@ jobs:
       - name: Verify persistent resource cache in Chromium
         run: node scripts/check-resource-cache-browser.mjs
 
+      - name: Verify remote input ownership
+        run: node scripts/check-remote-input-browser.mjs
+
       - name: Verify dist
         run: pnpm verify
 

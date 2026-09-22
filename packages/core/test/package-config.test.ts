@@ -44,6 +44,8 @@ describe('@floegence/floe-webapp-core package config', () => {
         types: './dist/icons.d.ts',
         import: './dist/icons.js',
       },
+      './remote-input': { types: './dist/remote-input.d.ts', import: './dist/remote-input.js' },
+      './remote-input.css': './dist/remote-input.css',
       './reload-placeholder': { types: './dist/reload-placeholder.d.ts', import: './dist/reload-placeholder.js' },
       './resource-cache': { types: './dist/resource-cache.d.ts', import: './dist/resource-cache.js' },
       './loading': {

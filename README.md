@@ -130,6 +130,7 @@ The packages are independently consumable:
 | ------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Build and run the first app                                         | [Getting started](docs/getting-started.md)                   |
 | Restore successful resource data while refreshing | [Resource cache](docs/resource-cache.md) |
+| Own client composition and keyboard input for a remote surface | [Remote input](docs/remote-input.md) |
 | Configure strings, storage, keybindings, themes, and shell defaults | [Configuration](docs/configuration.md)                       |
 | Register views, commands, navigation, and status contributions      | [Component registry](docs/component-registry.md)             |
 | Understand wheel, focus, activation, and selection ownership        | [Interaction architecture](docs/interaction-architecture.md) |
