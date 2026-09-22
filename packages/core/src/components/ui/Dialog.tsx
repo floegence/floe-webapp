@@ -37,7 +37,8 @@ export interface DialogProps {
   onOpenChange: (open: boolean) => void;
   /** Dialog title - can be a string or JSX element for custom headers */
   title?: string | JSX.Element;
-  description?: string;
+  /** Plain-text guidance rendered at the start of the body, never in the header. */
+  bodyDescription?: string;
   /** Localized accessible name for the close button. */
   closeLabel?: string;
   /** Whether clicking the backdrop requests dismissal. Defaults to true. */
@@ -50,7 +51,7 @@ export interface DialogProps {
   class?: string;
   /** Bottom drawers retain the same modal and surface-placement contract. */
   presentation?: 'dialog' | 'bottom-drawer';
-  /** Undefined uses the default header; null leaves only accessible title/description. */
+  /** Undefined uses the default header; null leaves only the accessible title. */
   header?: JSX.Element;
   contentClass?: string;
   /** Includes the exit animation, so hosts can retain background input isolation. */
@@ -302,7 +303,7 @@ export function Dialog(props: DialogProps) {
                 role="dialog"
                 aria-modal={isSurfaceMode() ? undefined : 'true'}
                 aria-labelledby={props.title ? titleId() : undefined}
-                aria-describedby={props.description ? descriptionId() : undefined}
+                aria-describedby={props.bodyDescription ? descriptionId() : undefined}
                 onKeyDown={(event) => props.onKeyDown?.(event)}
                 tabIndex={-1}
               >
@@ -316,27 +317,20 @@ export function Dialog(props: DialogProps) {
                           {props.title}
                         </h2>
                       </Show>
-                      <Show when={props.description}>
-                        <p id={descriptionId()} class="sr-only">
-                          {props.description}
-                        </p>
-                      </Show>
                       {props.header}
                     </>
                   }
                 >
-                  <Show when={props.title || props.description}>
-                    <div class="flex items-start justify-between p-3 border-b border-border">
+                  <Show when={props.title}>
+                    <div
+                      data-floe-dialog-header
+                      class="flex items-start justify-between p-3 border-b border-border"
+                    >
                       <div>
                         <Show when={props.title}>
                           <h2 id={titleId()} class="text-sm font-semibold">
                             {props.title}
                           </h2>
-                        </Show>
-                        <Show when={props.description}>
-                          <p id={descriptionId()} class="mt-0.5 text-xs text-muted-foreground">
-                            {props.description}
-                          </p>
                         </Show>
                       </div>
                       <Button
@@ -354,17 +348,29 @@ export function Dialog(props: DialogProps) {
 
                 {/* Content */}
                 <div
+                  data-floe-dialog-body
                   class={cn(
                     'min-h-0 flex-1 overflow-auto overscroll-contain p-3',
                     props.contentClass
                   )}
                 >
+                  <Show when={props.bodyDescription}>
+                    <p
+                      id={descriptionId()}
+                      class="mb-3 shrink-0 text-sm text-muted-foreground last:mb-0"
+                    >
+                      {props.bodyDescription}
+                    </p>
+                  </Show>
                   {props.children}
                 </div>
 
                 {/* Footer */}
                 <Show when={props.footer}>
-                  <div class="flex items-center justify-end gap-2 p-3 border-t border-border">
+                  <div
+                    data-floe-dialog-footer
+                    class="flex items-center justify-end gap-2 p-3 border-t border-border"
+                  >
                     {props.footer}
                   </div>
                 </Show>
@@ -384,9 +390,9 @@ export interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  /** Description displayed under title (header area). Use children for content area. */
-  description?: string;
-  /** Custom content in the dialog body. If not provided, an empty placeholder is used. */
+  /** Plain-text guidance rendered in the body; use children for rich content. */
+  bodyDescription?: string;
+  /** Optional custom content after the body description. */
   children?: JSX.Element;
   confirmText?: string;
   cancelText?: string;
@@ -404,7 +410,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={props.title}
-      description={props.description}
+      bodyDescription={props.bodyDescription}
       globalZIndex={props.globalZIndex}
       footer={
         <>
@@ -425,7 +431,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
         </>
       }
     >
-      {props.children ?? <div />}
+      {props.children}
     </Dialog>
   );
 }

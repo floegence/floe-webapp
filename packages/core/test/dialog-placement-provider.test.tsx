@@ -143,6 +143,67 @@ describe('dialog placement provider', () => {
     __resetDialogSurfaceScopeForTests();
   });
 
+  it('places confirmation guidance in the body between the title and actions', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    mount(
+      () => (
+        <ConfirmDialog
+          open
+          onOpenChange={() => undefined}
+          title="Stop sharing"
+          bodyDescription="Disconnect this application. Unsaved work stays on the host."
+          onConfirm={() => undefined}
+        />
+      ),
+      host
+    );
+    await flushMicrotasks();
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const description = document.getElementById(dialog.getAttribute('aria-describedby')!)!;
+    expect(description.textContent).toContain('Unsaved work stays on the host.');
+    expect(dialog.children[1].contains(description)).toBe(true);
+    expect(dialog.children[0].textContent).toBe('Stop sharing');
+    expect(dialog.children[1].children).toHaveLength(1);
+  });
+
+  it.each([undefined, null, <div>Custom toolbar</div>])(
+    'keeps reactive guidance in the body with header %s',
+    async (header) => {
+      const host = document.createElement('div');
+      document.body.append(host);
+      const [description, setDescription] = createSignal<string | undefined>('Review the changes.');
+      mount(
+        () => (
+          <Dialog
+            open
+            onOpenChange={() => undefined}
+            title="Review"
+            header={header}
+            bodyDescription={description()}
+          >
+            <button>Body action</button>
+          </Dialog>
+        ),
+        host
+      );
+      await flushMicrotasks();
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+      const body = dialog.querySelector('[data-floe-dialog-body]')!;
+      const descriptionID = dialog.getAttribute('aria-describedby')!;
+      expect(document.getElementById(descriptionID)?.parentElement).toBe(body);
+      expect(body.firstElementChild?.textContent).toBe('Review the changes.');
+      expect(body.lastElementChild?.textContent).toBe('Body action');
+      expect(document.querySelectorAll(`[id="${descriptionID}"]`)).toHaveLength(1);
+      setDescription('Changes updated.');
+      expect(document.getElementById(descriptionID)?.textContent).toBe('Changes updated.');
+      setDescription(undefined);
+      expect(dialog.hasAttribute('aria-describedby')).toBe(false);
+      expect(document.getElementById(descriptionID)).toBeNull();
+      expect(body.children).toHaveLength(1);
+    }
+  );
+
   it('forces a surface-owned dialog into the global modal layer', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

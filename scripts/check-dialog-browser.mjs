@@ -25,6 +25,41 @@ try {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/dialog.html`);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByRole('button', { name: 'Review stop sharing', exact: true }).click();
+    const sharing = page.getByRole('dialog', { name: 'Stop sharing', exact: true });
+    await sharing.locator('[data-floe-dialog-body] p').waitFor();
+    const layout = await sharing.evaluate((el) => {
+      const header = el.querySelector('[data-floe-dialog-header]');
+      const body = el.querySelector('[data-floe-dialog-body]');
+      const footer = el.querySelector('[data-floe-dialog-footer]');
+      const description = document.getElementById(el.getAttribute('aria-describedby'));
+      return {
+        title: header.textContent,
+        inBody: description.parentElement === body,
+        bodyChildren: body.children.length,
+        visible: description.getBoundingClientRect().height > 0,
+        afterHeader:
+          description.getBoundingClientRect().top >= header.getBoundingClientRect().bottom,
+        beforeFooter:
+          description.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top,
+        noOverflow: body.scrollWidth <= body.clientWidth,
+      };
+    });
+    assert.deepEqual(layout, {
+      title: 'Stop sharing',
+      inBody: true,
+      bodyChildren: 1,
+      visible: true,
+      afterHeader: true,
+      beforeFooter: true,
+      noOverflow: true,
+    });
+    await sharing.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await sharing.waitFor({ state: 'detached' });
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Manage plugins', exact: true }).click();
   const drawer = page.locator('[data-floe-dialog-presentation="bottom-drawer"]');
   await drawer.locator('[data-floating-presence="open"]').first().waitFor();

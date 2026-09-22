@@ -3412,7 +3412,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           open={dialogOpen()}
           onOpenChange={setDialogOpen}
           title="Example Dialog"
-          description="This dialog demonstrates header/footer + scrollable content."
+          bodyDescription="This dialog demonstrates header/footer + scrollable content."
           footer={
             <>
               <Button variant="ghost" onClick={() => setDialogOpen(false)}>
@@ -3450,7 +3450,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           open={confirmOpen()}
           onOpenChange={setConfirmOpen}
           title="Confirm action"
-          description="This confirm dialog simulates an async operation."
+          bodyDescription="This confirm dialog simulates an async operation."
           confirmText="Run"
           cancelText="Cancel"
           loading={confirmLoading()}

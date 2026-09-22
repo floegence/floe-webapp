@@ -121,7 +121,7 @@ function SurfaceDialogHarness(props: {
           open={open()}
           onOpenChange={setOpen}
           title="Widget dialog"
-          description="Surface-scoped dialog"
+          bodyDescription="Surface-scoped dialog"
         >
           <button type="button" data-testid="dialog-action">Inside dialog</button>
         </Dialog>
@@ -146,7 +146,7 @@ function InitiallyOpenSurfaceDialogHarness() {
         onOpenChange={() => undefined}
         globalZIndex={4000}
         title="Owned dialog"
-        description="Surface ownership follows component location"
+        bodyDescription="Surface ownership follows component location"
       >
         <button type="button" data-testid="dialog-action">Inside owned dialog</button>
       </Dialog>
@@ -190,7 +190,7 @@ function LayerScopedDialogHarness() {
           open={open()}
           onOpenChange={setOpen}
           title="Layered dialog"
-          description="Boundary from host, mount in layer"
+          bodyDescription="Boundary from host, mount in layer"
         >
           <button
             type="button"
@@ -357,7 +357,7 @@ function CanvasDialogHarness() {
             open={open()}
             onOpenChange={setOpen}
             title="Canvas dialog"
-            description="Canvas-scoped dialog"
+            bodyDescription="Canvas-scoped dialog"
           >
             <button
               type="button"

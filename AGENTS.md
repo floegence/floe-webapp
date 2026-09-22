@@ -38,3 +38,9 @@
 - Standalone host-owned documents may consume the published `@floegence/floe-webapp-core/input-focus.css` asset without loading the shell. Map their semantic tokens to `--ring`, `--error`, `--accent`, and `--accent-foreground`; do not copy the rules or inject them into third-party frames.
 - Use the shared input focus CSS, including invalid, disabled, and forced-colors behavior. Do not add component-local focus shadows or work around the contract with broad `!important` resets. Existing decorative shadows remain unchanged on focus.
 - Validate computed focus styles and stable geometry in the browser, across the built-in shell themes, before publishing input style changes. Source checks must distinguish input surfaces from unrelated buttons.
+
+## Dialog Content Contract
+
+- Headers contain the title/identity and close controls only. Do not put descriptive copy in `title` or a custom `header`.
+- Use `bodyDescription` for plain-text guidance or `children` for rich body content. The removed `description` prop must not be restored as a header subtitle or compatibility alias.
+- Keep body guidance visible, accessible, and inside the content layout for dialogs and drawers, including custom scrolling and mobile layouts.

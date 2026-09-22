@@ -453,7 +453,7 @@ export function SurfaceComponentGallery(props: { progress?: number; dense?: bool
         open={dialog()}
         onOpenChange={setDialog}
         title="Workspace preferences"
-        description="A floating surface with the same material language."
+        bodyDescription="A floating surface with the same material language."
       >
         <div class="surface-gallery-stack">
           <Input aria-label="Dialog workspace" value="Studio workspace" />

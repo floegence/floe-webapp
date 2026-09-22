@@ -341,12 +341,17 @@ function main() {
   const bootPkg = readJson('packages/boot/package.json');
   const protocolPkg = readJson('packages/protocol/package.json');
   const initPkg = readJson('packages/init/package.json');
+  const dialogTypes = readFileSync('packages/core/dist/components/ui/Dialog.d.ts', 'utf8');
+  assert((dialogTypes.match(/bodyDescription\?: string/g) ?? []).length === 2,
+    'Dialog and ConfirmDialog must expose explicit body descriptions');
+  assert(!/\bdescription\?:/.test(dialogTypes),
+    'Dialog header descriptions must not be part of the published API');
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.63.0'
+      (version) => version === '0.64.0'
     ),
-    'Published Floe packages must all use version 0.63.0'
+    'Published Floe packages must all use version 0.64.0'
   );
 
   assert(

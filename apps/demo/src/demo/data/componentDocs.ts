@@ -678,9 +678,9 @@ export const dialogDoc: ComponentDoc = {
       description: 'Dialog title displayed in the header.',
     },
     {
-      name: 'description',
+      name: 'bodyDescription',
       type: 'string',
-      description: 'Description text below the title.',
+      description: 'Plain-text guidance at the start of the dialog body.',
     },
     {
       name: 'children',
@@ -726,7 +726,7 @@ function Example() {
         open={open()}
         onOpenChange={setOpen}
         title="Confirm Action"
-        description="Are you sure you want to proceed?"
+        bodyDescription="Are you sure you want to proceed?"
         footer={
           <>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>

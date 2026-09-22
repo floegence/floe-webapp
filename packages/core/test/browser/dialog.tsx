@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { Dialog } from '../../src/components/ui/Dialog';
+import { ConfirmDialog, Dialog } from '../../src/components/ui/Dialog';
 import { DialogPlacementProvider } from '../../src/components/ui/DialogPlacementContext';
 import { Dropdown } from '../../src/components/ui/Dropdown';
 import { InfiniteCanvas } from '../../src/components/ui/InfiniteCanvas';
@@ -16,6 +16,7 @@ function Fixture() {
   const [canvasDialog, setCanvasDialog] = createSignal(false);
   const [canvasViewport, setCanvasViewport] = createSignal({ x: 0, y: 0, scale: 0.8 });
   const [canvasActions, setCanvasActions] = createSignal(0);
+  const [stopSharing, setStopSharing] = createSignal(false);
   return (
     <>
       <main inert={present()} class="relative h-screen bg-background p-10" data-background>
@@ -40,6 +41,14 @@ function Fixture() {
           Background action
         </button>
         <output data-count>{count()}</output>
+        <button onClick={() => setStopSharing(true)}>Review stop sharing</button>
+        <ConfirmDialog
+          open={stopSharing()}
+          onOpenChange={setStopSharing}
+          title="Stop sharing"
+          bodyDescription="Disconnect this application from the workspace. Its windows and unsaved work stay on the host."
+          onConfirm={() => setStopSharing(false)}
+        />
         <div class="relative h-48 w-[600px]" data-dialog-canvas>
           <InfiniteCanvas
             viewport={canvasViewport()}

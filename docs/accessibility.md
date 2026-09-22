@@ -49,10 +49,19 @@ Downstream apps should continue to prefer semantic tokens instead of hard-coded 
 
 `Dialog` accepts `presentation="bottom-drawer"` for a bottom-aligned floating
 modal with reduced-motion-aware enter/exit transitions. `header={null}` removes
-the default visible header while retaining the accessible `title` and
-`description`; applications supply their own visible close action. `contentClass`
+the default visible header while retaining the accessible `title`;
+applications supply their own visible close action. `contentClass`
 customizes the body layout. `onPresenceChange` includes the closing animation so
 hosts can keep background input isolated until the overlay is removed.
+
+Dialog headers contain identity and controls only. `Dialog` and `ConfirmDialog`
+accept `bodyDescription` for plain-text guidance at the start of the body, linked
+through `aria-describedby`. This remains visible with a custom or hidden header.
+The former `description` prop is removed in 0.64.0: migrate it to
+`bodyDescription`, or put rich guidance in `children` in the content viewport.
+Do not recreate a subtitle in `title` or `header`. Description-only confirmations
+have one populated body between the header and footer, without empty placeholders.
+When customizing body padding or scrolling, keep the guidance inside that layout.
 
 Product-wide management drawers should use `DialogPlacementProvider mode="global"`
 when their background canvas is inert. Automatic placement intentionally follows
