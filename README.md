@@ -180,3 +180,13 @@ Filename rules match exact names, patterns and the longest registered suffix bef
 ## License
 
 [MIT](LICENSE)
+
+### Standalone first-party documents
+
+Import `@floegence/floe-webapp-core/standalone.css` for lightweight host-owned
+windows that do not render the shell. It includes the same built-in theme tokens,
+typography and shape tokens, surface material, and input focus rules. Set `.light`
+or `.dark`, `data-floe-shell-theme`, and `data-floe-surface-style` on the document
+root; declare `data-floe-surface` on each visible material boundary. Host code
+owns layout, locale and actions. Do not inject these styles into third-party
+application documents. This entry contains no renderer JavaScript or utility scan.

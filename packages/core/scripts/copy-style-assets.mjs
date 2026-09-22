@@ -9,6 +9,8 @@ const __dirname = dirname(__filename);
 const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
+  { src: resolve(pkgRoot, 'src/styles/primitives.css'), dest: resolve(pkgRoot, 'dist/primitives.css') },
+  { src: resolve(pkgRoot, 'src/styles/standalone.css'), dest: resolve(pkgRoot, 'dist/standalone.css') },
   { src: resolve(pkgRoot, 'src/styles/file-icons.css'), dest: resolve(pkgRoot, 'dist/file-icons.css') },
   {
     src: resolve(pkgRoot, 'src/styles/surface.css'),

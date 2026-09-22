@@ -89,6 +89,7 @@ describe('@floegence/floe-webapp-core package config', () => {
       './pdf': { types: './dist/pdf.d.ts', import: './dist/pdf.js' },
       './pdf.css': './dist/pdf.css',
       './pdf-assets': { types: './scripts/pdf-assets.d.mts', import: './scripts/pdf-assets.mjs' },
+      './standalone.css': './dist/standalone.css',
       './styles': './dist/styles.css',
       './tailwind': './dist/tailwind.css',
       './input-focus.css': './dist/input-focus.css',

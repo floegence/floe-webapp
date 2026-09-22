@@ -51,6 +51,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/workbench`
    - `@floegence/floe-webapp-core/styles`
    - `@floegence/floe-webapp-core/tailwind`
+   - `@floegence/floe-webapp-core/standalone.css` (themes and surface material for first-party standalone documents)
    - `@floegence/floe-webapp-core/input-focus.css` (standalone input borders without shell styles)
 4. Align registry behavior end-to-end:
    - Keep `FloeComponent.id`, sidebar items, command targets, and layout navigation consistent.

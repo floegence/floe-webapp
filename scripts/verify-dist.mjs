@@ -259,6 +259,8 @@ function main() {
   assertFile('packages/core/dist/themes.d.ts');
   assertFile('packages/core/dist/styles.css');
   assertFile('packages/core/dist/tailwind.css');
+  assertFile('packages/core/dist/standalone.css');
+  assertFile('packages/core/dist/primitives.css');
   assertFile('packages/core/dist/floe.css');
   assertFile('packages/core/dist/themes/light.css');
   assertFile('packages/core/dist/themes/dark.css');
@@ -349,9 +351,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.65.1'
+      (version) => version === '0.65.2'
     ),
-    'Published Floe packages must all use version 0.65.1'
+    'Published Floe packages must all use version 0.65.2'
   );
 
   assert(

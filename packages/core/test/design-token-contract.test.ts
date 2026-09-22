@@ -39,13 +39,15 @@ describe('design token contract', () => {
     }
   });
 
-  it('defines shared variables once in floe.css and consumes them through base typography hooks', () => {
+  it('defines shared variables once in primitives.css and consumes them through base typography hooks', () => {
     const floeCss = readFileSync(resolve(stylesDir, 'floe.css'), 'utf8');
     const lightCss = readFileSync(resolve(stylesDir, 'themes/light.css'), 'utf8');
-    const sharedVars = parseCssVariables(floeCss);
+    const primitivesCss = readFileSync(resolve(stylesDir, 'primitives.css'), 'utf8');
+    const sharedVars = parseCssVariables(primitivesCss);
+    expect(floeCss).toContain("@import './primitives.css'");
 
     for (const [name, value] of Object.entries(floeSharedCssVariables)) {
-      expect(sharedVars.get(name), `${name} in floe.css`).toBe(value);
+      expect(sharedVars.get(name), `${name} in primitives.css`).toBe(value);
     }
 
     expect(lightCss).not.toContain('--radius:');

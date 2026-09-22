@@ -1,0 +1,11 @@
+/* First-party standalone documents: the same themes, geometry tokens and
+ * material as Floe, without the shell, Tailwind utilities or renderer runtime.
+ * Set .light/.dark, data-floe-shell-theme and data-floe-surface-style on <html>.
+ * Applications own layout and declare data-floe-surface on visible boundaries.
+ */
+@import './primitives.css';
+@import './themes/light.css';
+@import './themes/dark.css';
+@import './themes/shell-presets.generated.css';
+@import './surface.css';
+@import './input-focus.css';
