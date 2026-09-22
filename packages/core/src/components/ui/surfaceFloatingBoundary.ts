@@ -1,4 +1,4 @@
-import { resolveMobileKeyboardViewportMetrics } from './mobileKeyboardViewport';
+import { readViewportSnapshot } from '../../viewport';
 import {
   isSurfacePortalMode,
   resolveSurfacePortalBoundaryRect,
@@ -25,21 +25,7 @@ export type SurfaceSafeArea = Readonly<{
 }>;
 
 export function readSurfaceSafeArea(): SurfaceSafeArea {
-  if (typeof document === 'undefined') return { top: 0, right: 0, bottom: 0, left: 0 };
-  const probe = document.createElement('div');
-  probe.style.cssText =
-    'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)';
-  document.documentElement.append(probe);
-  const style = getComputedStyle(probe);
-  const inset = (value: string) => Math.max(0, Number.parseFloat(value) || 0);
-  const result = {
-    top: inset(style.paddingTop),
-    right: inset(style.paddingRight),
-    bottom: inset(style.paddingBottom),
-    left: inset(style.paddingLeft),
-  };
-  probe.remove();
-  return result;
+  return typeof window === 'undefined' ? { top: 0, right: 0, bottom: 0, left: 0 } : readViewportSnapshot(window).safeArea;
 }
 
 export function resolveFloatingBoundary(
@@ -49,15 +35,14 @@ export function resolveFloatingBoundary(
 ): SurfacePortalRect | null {
   if (boundary === null || typeof window === 'undefined') return null;
   if (host.mode === 'surface' && !isSurfacePortalMode(host)) return null;
-  const viewport = resolveMobileKeyboardViewportMetrics(window);
-  const top = window.innerHeight - viewport.bottomPx - viewport.heightPx;
+  const { visible: viewport } = readViewportSnapshot(window);
   const visible = {
-    left: viewport.leftPx + safeArea.left,
-    top: top + safeArea.top,
-    right: viewport.leftPx + viewport.widthPx - safeArea.right,
-    bottom: top + viewport.heightPx - safeArea.bottom,
-    width: viewport.widthPx,
-    height: viewport.heightPx,
+    left: viewport.left + safeArea.left,
+    top: viewport.top + safeArea.top,
+    right: viewport.right - safeArea.right,
+    bottom: viewport.bottom - safeArea.bottom,
+    width: viewport.width,
+    height: viewport.height,
   };
   let explicit: SurfacePortalRect | undefined;
   if (boundary instanceof HTMLElement) {
@@ -81,7 +66,7 @@ export function resolveFloatingBoundary(
     return null;
   return intersectSurfaceRects(
     visible,
-    resolveSurfacePortalBoundaryRect(host),
+    ...(isSurfacePortalMode(host) ? [resolveSurfacePortalBoundaryRect(host)] : []),
     ...(explicit ? [explicit] : [])
   );
 }

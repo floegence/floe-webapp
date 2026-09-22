@@ -18,3 +18,5 @@ Note: local design/dev notes live in dotfile markdown (e.g. `.develop.md`, `.des
 - [Surface component coverage](./surface-components.md) — component-by-component material and state contracts.
 
 - [Document reload presentation](reload-placeholder.md): preserve anonymous layout before application scripts and hand off after authorized restoration.
+
+- [Mobile application viewport](mobile-viewport.md): retain application geometry and input through browser chrome and soft-keyboard changes.

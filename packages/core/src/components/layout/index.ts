@@ -52,3 +52,5 @@ export {
   type DisplayModeSwitcherProps,
 } from './DisplayModeSwitcher';
 export { DisplayModePageShell, type DisplayModePageShellProps } from './DisplayModePageShell';
+
+export { AppViewport, type AppViewportProps } from './AppViewport';

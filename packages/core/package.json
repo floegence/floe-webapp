@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.71.0",
+  "version": "0.72.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -121,6 +121,10 @@
     "./remote-input": {
       "types": "./dist/remote-input.d.ts",
       "import": "./dist/remote-input.js"
+    },
+    "./viewport": {
+      "types": "./dist/viewport.d.ts",
+      "import": "./dist/viewport.js"
     }
   },
   "files": [

@@ -229,6 +229,8 @@ function main() {
   assertFile('packages/core/dist/app.d.ts');
   assertFile('packages/core/dist/full.js');
   assertFile('packages/core/dist/full.d.ts');
+  assertFile('packages/core/dist/viewport.js');
+  assertFile('packages/core/dist/viewport.d.ts');
   assertFile('packages/core/dist/layout.js');
   assertFile('packages/core/dist/layout.d.ts');
   assertFile('packages/core/dist/deck.js');
@@ -362,9 +364,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.71.0'
+      (version) => version === '0.72.0'
     ),
-    'Published Floe packages must all use version 0.71.0'
+    'Published Floe packages must all use version 0.72.0'
   );
 
   assert(
@@ -407,6 +409,7 @@ function main() {
     'resource-cache',
     'reload-placeholder',
     'remote-input',
+    'viewport',
     'launchpad',
     'file-browser',
     'chat',

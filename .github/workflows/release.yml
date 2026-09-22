@@ -117,6 +117,9 @@ jobs:
       - name: Verify bottom bar companion morph in Chromium
         run: node scripts/check-bottom-bar-companion-browser.mjs
 
+      - name: Verify mobile viewport in Chromium and WebKit
+        run: node scripts/check-mobile-viewport-browser.mjs
+
       - name: Verify input history public API in Chromium
         run: node scripts/check-input-history-browser.mjs
 

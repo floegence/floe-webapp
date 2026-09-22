@@ -24,6 +24,7 @@ export default defineConfig({
         full: resolve(__dirname, 'src/full.ts'),
 
         layout: resolve(__dirname, 'src/layout.ts'),
+        viewport: resolve(__dirname, 'src/viewport.ts'),
         deck: resolve(__dirname, 'src/deck.ts'),
         ui: resolve(__dirname, 'src/ui.ts'),
         icons: resolve(__dirname, 'src/icons.ts'),

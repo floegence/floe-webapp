@@ -1,4 +1,5 @@
-import { Show, For, batch, createEffect, createMemo, createSignal, type JSX } from 'solid-js';
+import { Show, For, batch, createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js';
+import { observeViewport } from '../../viewport';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
@@ -44,6 +45,8 @@ export interface ShellSlotClassNames {
 
 export interface ShellProps {
   children: JSX.Element;
+  /** Fill a containing AppViewport or embedded host instead of the document viewport. */
+  fillParent?: boolean;
   logo?: JSX.Element;
   activityItems?: ActivityBarItem[];
   activityBottomItems?: ActivityBarItem[];
@@ -59,6 +62,10 @@ export interface ShellProps {
   activityBottomItemsMobileMode?: 'hidden' | 'topBar';
   topBarActions?: JSX.Element;
   bottomBarItems?: JSX.Element;
+  /** Stable content directly above mobile navigation, such as a composer anchor. */
+  mobileAccessory?: JSX.Element;
+  /** Hide navigation only while a focused editor is occluded by the soft keyboard. */
+  hideMobileNavigationWhenKeyboardOpen?: boolean;
   sidebarContent?: (activeTab: string) => JSX.Element;
   /** Defer user-requested Activity content commits until the selected control has painted. */
   activitySelectionMode?: 'sync' | 'ui-first';
@@ -92,6 +99,10 @@ export interface ShellProps {
  * - Bottom Bar (status)
  */
 export function Shell(props: ShellProps) {
+  const [keyboardOpen, setKeyboardOpen] = createSignal(false);
+  onMount(() => {
+    onCleanup(observeViewport(window, (snapshot) => setKeyboardOpen(snapshot.keyboardOpen)));
+  });
   const layout = useLayout();
   const floe = useResolvedFloeConfig();
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
@@ -385,6 +396,7 @@ export function Shell(props: ShellProps) {
   return (
     <div
       data-floe-shell=""
+      style={{ height: props.fillParent ? '100%' : undefined }}
       class={cn(
         // Use dvh when supported to avoid mobile browser UI causing layout jumps.
         'h-screen h-[100dvh] w-full flex flex-col overflow-hidden',
@@ -531,12 +543,16 @@ export function Shell(props: ShellProps) {
         </div>
       </div>
 
+      <Show when={isMobile() && props.mobileAccessory}>
+        <div data-floe-shell-slot="mobile-accessory" class="relative shrink-0">{props.mobileAccessory}</div>
+      </Show>
       {/* Bottom Bar / Mobile Tab Bar */}
       <Show when={!isMobile()}>
         <BottomBar class={props.slotClassNames?.bottomBar} height={props.slotClassNames?.bottomBarHeight}>{bottomBarContent()}</BottomBar>
       </Show>
       <Show when={isMobile() && activityItems().length > 0}>
         <MobileTabBar
+          hidden={Boolean(props.hideMobileNavigationWhenKeyboardOpen && keyboardOpen())}
           items={activityItems()}
           activeId={resolveMobileTabActiveId({
             activeId: activityVisualActiveId(),

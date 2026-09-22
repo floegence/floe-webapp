@@ -66,6 +66,24 @@ describe('SurfaceFloatingLayer', () => {
     vi.restoreAllMocks();
   });
 
+  it('converts client geometry to fixed CSS coordinates during Safari keyboard panning', () => {
+    const original = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return this.style.height === '100dvh' ? new DOMRect(0, -337, 402, 714) : original.call(this);
+    });
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: Object.assign(new EventTarget(), {
+      width: 402, height: 377, offsetLeft: 0, offsetTop: 337, scale: 1,
+    }) });
+    const host = document.createElement('div');
+    document.body.append(host);
+    try {
+      mount(() => <SurfaceFloatingLayer position={{ x: 12, y: 325 }} clamp={false} data-testid="panned-layer">Details</SurfaceFloatingLayer>, host);
+      expect((document.querySelector('[data-testid="panned-layer"]') as HTMLElement).style.top).toBe('662px');
+    } finally {
+      Object.defineProperty(window, 'visualViewport', { configurable: true, value: null });
+    }
+  });
+
   it('uses the contextmenu target to mount into the nearest surface host', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -464,6 +482,9 @@ describe('SurfaceFloatingPanel', () => {
         .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
       expect(panel.style.left).toBe(before);
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: 120 });
+      window.dispatchEvent(new Event('resize'));
+      tick();
+      tick();
       tick();
       expect(Number.parseFloat(panel.style.left) + 48).toBeLessThanOrEqual(112);
     } finally {

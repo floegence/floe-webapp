@@ -707,10 +707,6 @@
   pointer-events: auto;
   transform-origin: bottom center;
   transition:
-    left 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    top 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    width 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    height 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
     border-radius 200ms ease,
     border-color 180ms ease,
     opacity 120ms ease;
@@ -728,6 +724,12 @@
 .floe-bottom-bar-companion[data-companion-phase='expanding'],
 .floe-bottom-bar-companion[data-companion-phase='collapsing'] {
   will-change: left, top, width, height;
+  transition:
+    left 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
+    top 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
+    width 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
+    height 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
+    border-radius 200ms ease, border-color 180ms ease, opacity 120ms ease;
 }
 
 .floe-bottom-bar-companion[data-companion-visibility='hidden'],

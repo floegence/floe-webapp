@@ -1,4 +1,5 @@
-import { createMemo, splitProps, type JSX } from 'solid-js';
+import { observeViewport, type ViewportSnapshot } from '../../viewport';
+import { createMemo, createSignal, onMount, onCleanup, splitProps, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
@@ -11,7 +12,6 @@ import {
 import {
   isSurfacePortalMode,
   projectSurfacePortalPosition,
-  resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalHost,
   resolveSurfacePortalMount,
   SURFACE_FLOATING_LAYER_ATTR,
@@ -70,23 +70,27 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
     'children',
     'layerRef',
   ]);
+  const [viewport, setViewport] = createSignal<ViewportSnapshot>();
+  onMount(() => onCleanup(observeViewport(window, setViewport)));
   const surfaceHost = createMemo(() => resolveSurfacePortalHost({ owner: local.owner ?? null }));
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
   const safeArea = createMemo(() => {
     void local.position;
-    return readSurfaceSafeArea();
+    return viewport()?.safeArea ?? readSurfaceSafeArea();
   });
   const boundaryRect = () =>
-    local.boundary === undefined
-      ? resolveSurfacePortalBoundaryRect(surfaceHost())
-      : (resolveFloatingBoundary(surfaceHost(), local.boundary, safeArea()) ?? emptyBoundaryRect());
+    resolveFloatingBoundary(surfaceHost(), local.boundary, safeArea()) ?? emptyBoundaryRect();
   const shouldClamp = () => local.clamp !== false && Boolean(local.estimatedSize);
   const resolvedPosition = createMemo(() => {
     const position = local.position;
     if (!shouldClamp() || !local.estimatedSize) return position;
     return clampMenuPosition(position, local.estimatedSize, boundaryRect());
   });
-  const projectedPosition = () => projectSurfacePortalPosition(resolvedPosition(), surfaceHost());
+  const projectedPosition = () => {
+    const position = projectSurfacePortalPosition(resolvedPosition(), surfaceHost());
+    const offset = viewport()?.fixedOffset;
+    return isSurfaceMode() || !offset ? position : { x: position.x + offset.left, y: position.y + offset.top };
+  };
   const layerStyle = () => ({
     ...(local.style ?? {}),
     ...(local.boundary !== undefined && (boundaryRect().width <= 16 || boundaryRect().height <= 16)

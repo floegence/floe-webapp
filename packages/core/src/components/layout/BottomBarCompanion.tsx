@@ -1,5 +1,6 @@
 import { createEffect, createSignal, onCleanup, Show, untrack, type JSX } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { observeViewport, readViewportSnapshot } from '../../viewport';
 import { cn } from '../../utils/cn';
 
 export type BottomBarCompanionPhase = 'collapsed' | 'expanding' | 'expanded' | 'collapsing';
@@ -107,16 +108,16 @@ function expandedFrame(
   padding: number
 ): CompanionFrame {
   const view = mount.ownerDocument.defaultView;
-  const visualViewport = view?.visualViewport;
-  const viewportLeft = visualViewport?.offsetLeft ?? 0;
-  const viewportTop = visualViewport?.offsetTop ?? 0;
-  const viewportWidth = visualViewport?.width ?? view?.innerWidth ?? anchor.left + anchor.width;
-  const viewportHeight = visualViewport?.height ?? view?.innerHeight ?? anchor.top + anchor.height;
+  const viewport = view ? readViewportSnapshot(view).visible : null;
+  const viewportLeft = viewport?.left ?? 0;
+  const viewportTop = viewport?.top ?? 0;
+  const viewportWidth = viewport?.width ?? anchor.left + anchor.width;
+  const viewportHeight = viewport?.height ?? anchor.top + anchor.height;
   const insets = safeAreaInsets(mount);
   const safeLeft = viewportLeft + insets.left + padding;
   const safeRight = viewportLeft + viewportWidth - insets.right - padding;
   const safeTop = viewportTop + insets.top + padding;
-  const safeBottom = viewportTop + viewportHeight - insets.bottom;
+  const safeBottom = viewportTop + viewportHeight - (view && readViewportSnapshot(view).keyboardOpen ? 0 : insets.bottom);
   const availableWidth = Math.max(0, safeRight - safeLeft);
   const width = Math.min(expandedWidth, maxWidth, availableWidth);
   const desiredLeft = anchor.left + (anchor.width - width) / 2;
@@ -143,11 +144,13 @@ function sameFrame(left: CompanionFrame | null, right: CompanionFrame): boolean 
   );
 }
 
-function frameStyle(frame: CompanionFrame | null): JSX.CSSProperties {
+function frameStyle(frame: CompanionFrame | null, mount: HTMLElement | null): JSX.CSSProperties {
   if (!frame) return {};
+  const view = mount?.ownerDocument.defaultView;
+  const offset = view ? readViewportSnapshot(view).fixedOffset : { left: 0, top: 0 };
   return {
-    left: `${frame.left}px`,
-    top: `${frame.top}px`,
+    left: `${frame.left + offset.left}px`,
+    top: `${frame.top + offset.top}px`,
     width: `${frame.width}px`,
     height: `${frame.height}px`,
   };
@@ -245,6 +248,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     if (!next) return;
     const current = frame();
     const finalPhase: BottomBarCompanionPhase = open ? 'expanded' : 'collapsed';
+    if (!animate && sameFrame(current, next) && transitionProperty) return;
     if (!animate || reducedMotion() || sameFrame(current, next)) {
       setFrame(next);
       transitionProperty = null;
@@ -265,12 +269,15 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     transitionFrame = view.requestAnimationFrame(() => {
       transitionFrame = 0;
       transitionView = null;
-      setFrame(next);
+      setFrame(targetFrame(open) ?? next);
     });
     transitionView = view;
   };
 
   const scheduleGeometry = (animate: boolean, open: boolean) => {
+    // An already queued transition reads current geometry on its next frame.
+    // Focus/scroll notifications must not cancel the user's expand or collapse.
+    if (!animate && (geometryFrame || transitionFrame)) return;
     const view = ownerView();
     if (!view) {
       commitTargetFrame(open, animate);
@@ -385,20 +392,23 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
       observer.observe(document.documentElement, { childList: true, subtree: true });
       mutationObservers.push(observer);
     }
-    for (const view of views) {
-      view.addEventListener('resize', refresh);
-      view.visualViewport?.addEventListener('resize', refresh);
-      view.visualViewport?.addEventListener('scroll', refresh);
-    }
+    const viewportDisposers = [...views].map((view) => {
+      let previous = JSON.stringify(readViewportSnapshot(view));
+      return observeViewport(view, (snapshot) => {
+        const next = JSON.stringify(snapshot);
+        if (next === previous) return;
+        previous = next;
+        refresh();
+      });
+    });
+    // Anchors can move during local scroll without changing viewport dimensions.
+    for (const document of documents) document.addEventListener('scroll', refresh, true);
 
     onCleanup(() => {
       for (const observer of resizeObservers) observer.disconnect();
       for (const observer of mutationObservers) observer.disconnect();
-      for (const view of views) {
-        view.removeEventListener('resize', refresh);
-        view.visualViewport?.removeEventListener('resize', refresh);
-        view.visualViewport?.removeEventListener('scroll', refresh);
-      }
+      for (const dispose of viewportDisposers) dispose();
+      for (const document of documents) document.removeEventListener('scroll', refresh, true);
     });
   });
 
@@ -491,7 +501,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
               props.visible && mountConnected() && anchorReady() ? 'visible' : 'hidden'
             }
             data-companion-frame-ready={frame() ? 'true' : 'false'}
-            style={frameStyle(frame())}
+            style={frameStyle(frame(), portalMount())}
             onTransitionEnd={finishTransition}
           >
             <div

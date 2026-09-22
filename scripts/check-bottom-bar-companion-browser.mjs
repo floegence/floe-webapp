@@ -80,10 +80,11 @@ render(() => <App />, document.getElementById('root'));
     while (performance.now() - start < 500) {
       await new Promise(requestAnimationFrame);
       const box = surface.getBoundingClientRect();
-      samples.push({ width: box.width, height: box.height, bottom: box.bottom });
+      samples.push({ width: box.width, height: box.height, bottom: box.bottom, phase: surface.dataset.companionPhase });
     }
     return samples;
   });
+  if (!samples.some(s => s.width > 322 && s.width < 542)) console.log(samples.slice(0, 12));
   assert(
     samples.some((s) => s.width > 322 && s.width < 542 && s.height > 24 && s.height < 408),
     'width and height must interpolate together'

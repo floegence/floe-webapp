@@ -13,6 +13,7 @@ export interface MobileTabBarItem {
 }
 
 export interface MobileTabBarProps {
+  hidden?: boolean;
   items: MobileTabBarItem[];
   activeId: string;
   onSelect: (id: string) => void;
@@ -78,6 +79,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
 
   return (
     <nav
+      hidden={props.hidden}
       data-floe-shell-slot="mobile-tab-bar"
       class={cn(
         // Same safe-area rule as TopBar: keep the visual bar height stable, and
