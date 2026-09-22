@@ -120,6 +120,9 @@ jobs:
       - name: Verify input history public API in Chromium
         run: node scripts/check-input-history-browser.mjs
 
+      - name: Verify persistent resource cache in Chromium
+        run: node scripts/check-resource-cache-browser.mjs
+
       - name: Verify dist
         run: pnpm verify
 

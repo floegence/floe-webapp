@@ -237,6 +237,8 @@ function main() {
   assertFile('packages/core/dist/ui.d.ts');
   assertFile('packages/core/dist/icons.js');
   assertFile('packages/core/dist/icons.d.ts');
+  assertFile('packages/core/dist/resource-cache.js');
+  assertFile('packages/core/dist/resource-cache.d.ts');
   assertFile('packages/core/dist/loading.js');
   assertFile('packages/core/dist/loading.d.ts');
   assertFile('packages/core/dist/launchpad.js');
@@ -351,9 +353,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.65.2'
+      (version) => version === '0.66.0'
     ),
-    'Published Floe packages must all use version 0.65.2'
+    'Published Floe packages must all use version 0.66.0'
   );
 
   assert(
@@ -393,6 +395,7 @@ function main() {
     'ui',
     'icons',
     'loading',
+    'resource-cache',
     'launchpad',
     'file-browser',
     'chat',

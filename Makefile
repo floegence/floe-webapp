@@ -2,7 +2,7 @@
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache
 
 install:
 	pnpm install --frozen-lockfile
@@ -51,3 +51,7 @@ pdf:
 .PHONY: asset-recovery
 asset-recovery:
 	node scripts/check-asset-recovery-browser.mjs
+
+.PHONY: resource-cache
+resource-cache:
+	node scripts/check-resource-cache-browser.mjs

@@ -28,6 +28,7 @@ export default defineConfig({
         ui: resolve(__dirname, 'src/ui.ts'),
         icons: resolve(__dirname, 'src/icons.ts'),
         loading: resolve(__dirname, 'src/loading.ts'),
+        'resource-cache': resolve(__dirname, 'src/resource-cache.ts'),
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),

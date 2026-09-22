@@ -69,6 +69,7 @@ done
 - `@floegence/floe-webapp-core/ui`
 - `@floegence/floe-webapp-core/icons`
 - `@floegence/floe-webapp-core/loading`
+- `@floegence/floe-webapp-core/resource-cache` (asynchronous, scoped presentation snapshots; consumers retain authorization and polling ownership)
 - `@floegence/floe-webapp-core/launchpad`
 - `@floegence/floe-webapp-core/file-browser`
 - `@floegence/floe-webapp-core/chat`

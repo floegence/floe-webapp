@@ -44,6 +44,7 @@ describe('@floegence/floe-webapp-core package config', () => {
         types: './dist/icons.d.ts',
         import: './dist/icons.js',
       },
+      './resource-cache': { types: './dist/resource-cache.d.ts', import: './dist/resource-cache.js' },
       './loading': {
         types: './dist/loading.d.ts',
         import: './dist/loading.js',

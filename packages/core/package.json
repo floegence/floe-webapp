@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.65.2",
+  "version": "0.66.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -101,7 +101,11 @@
       "types": "./scripts/pdf-assets.d.mts",
       "import": "./scripts/pdf-assets.mjs"
     },
-    "./standalone.css": "./dist/standalone.css"
+    "./standalone.css": "./dist/standalone.css",
+    "./resource-cache": {
+      "types": "./dist/resource-cache.d.ts",
+      "import": "./dist/resource-cache.js"
+    }
   },
   "files": [
     "dist",
