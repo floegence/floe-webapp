@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createResourceCache, type ResourceCacheStorage } from '../src/resource-cache';
+import { createResourceCache, enforceResourceCacheBudget, type ResourceCacheStorage } from '../src/resource-cache';
 
 function storage() {
   const values = new Map<string, string>();
@@ -164,4 +164,13 @@ describe('persistent resource continuity', () => {
     expect([...values.values()].join()).not.toContain('private-credential');
     cache.dispose();
   });
+});
+
+it('shares the same budget policy with multi-owner asynchronous host storage', async () => {
+  const remove = vi.fn(async (_key: string) => {});
+  const removed = await enforceResourceCacheBudget({
+    list: async () => [{ key: 'owner-a', bytes: 20, lastAccessedAt: 1 }, { key: 'owner-b', bytes: 20, lastAccessedAt: 2 }], remove,
+  }, 32);
+  expect(removed).toEqual(['owner-a']);
+  expect(remove).toHaveBeenCalledWith('owner-a');
 });

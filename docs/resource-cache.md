@@ -38,3 +38,5 @@ so consumers must handle them. A cache is not a durable user-data store.
 
 Run the focused unit suite and `node scripts/check-resource-cache-browser.mjs`
 after building core to verify real IndexedDB restoration across a page reload.
+
+Native adapters that partition access by owner can use `enforceResourceCacheBudget` over their complete private storage index to enforce one physical byte budget. Return opaque adapter-owned keys from that internal index; do not expose another owner's records through the renderer bridge. The same eviction policy is used by the resource cache itself. Reusing a handle counts as recent use, and an evicted handle can persist its next successful refresh again.

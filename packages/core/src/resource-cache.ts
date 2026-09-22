@@ -41,6 +41,20 @@ export interface ResourceCache {
   dispose(): void;
 }
 
+/** Apply one byte budget to an adapter's complete storage namespace. */
+export async function enforceResourceCacheBudget(storage: Pick<ResourceCacheStorage, 'list' | 'remove'>, maxBytes: number): Promise<readonly string[]> {
+  const entries = [...await storage.list()].sort((a, b) => a.lastAccessedAt - b.lastAccessedAt);
+  let total = entries.reduce((sum, entry) => sum + entry.bytes, 0);
+  const removed: string[] = [];
+  for (const entry of entries) {
+    if (total <= Math.max(0, maxBytes)) break;
+    await storage.remove(entry.key);
+    removed.push(entry.key);
+    total -= entry.bytes;
+  }
+  return removed;
+}
+
 export function createResourceCache(options: {
   storage: ResourceCacheStorage;
   maxBytes?: number;
@@ -48,7 +62,7 @@ export function createResourceCache(options: {
 }): ResourceCache {
   const storage = options.storage;
   const maxBytes = Math.max(0, options.maxBytes ?? 32 * 1024 * 1024);
-  const resources = new Map<string, { scope: string; handle: CachedResource<unknown>; stop(): void }>();
+  const resources = new Map<string, { scope: string; handle: CachedResource<unknown>; accessedAt: number; evicted(): void; stop(): void }>();
   const pending = new Map<string, { value: string; valid(): boolean; stored(): void }>();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let writes = Promise.resolve();
@@ -59,13 +73,11 @@ export function createResourceCache(options: {
     return writes;
   };
   const trim = async () => {
-    const entries = [...await storage.list()].sort((a, b) => a.lastAccessedAt - b.lastAccessedAt);
-    let total = entries.reduce((sum, entry) => sum + entry.bytes, 0);
-    for (const entry of entries) {
-      if (total <= maxBytes) break;
-      await storage.remove(entry.key);
-      total -= entry.bytes;
-    }
+    const removed = await enforceResourceCacheBudget({
+      list: async () => (await storage.list()).map(entry => ({ ...entry, lastAccessedAt: Math.max(entry.lastAccessedAt, resources.get(entry.key)?.accessedAt ?? 0) })),
+      remove: key => storage.remove(key),
+    }, maxBytes);
+    for (const key of removed) resources.get(key)?.evicted();
   };
   const flush = async () => {
     clearTimeout(timer);
@@ -92,7 +104,7 @@ export function createResourceCache(options: {
     if (!definition.scope || !definition.key || !Number.isSafeInteger(definition.version)) throw new Error('Invalid resource identity');
     const key = JSON.stringify([definition.scope, definition.key, definition.version]);
     const existing = resources.get(key);
-    if (existing) return existing.handle as CachedResource<T>;
+    if (existing) { existing.accessedAt = Date.now(); return existing.handle as CachedResource<T>; }
     let state: ResourceSnapshot<T> = { data: undefined, refreshing: false, stale: true, error: undefined };
     const listeners = new Set<() => void>();
     let revision = 0;
@@ -182,7 +194,7 @@ export function createResourceCache(options: {
       },
       invalidate,
     };
-    resources.set(key, { scope: definition.scope, handle: handle as CachedResource<unknown>, stop: () => {
+    resources.set(key, { scope: definition.scope, accessedAt: Date.now(), evicted: () => { persisted = undefined; }, handle: handle as CachedResource<unknown>, stop: () => {
       ++requestID;
       controller?.abort();
       listeners.clear();
