@@ -1,4 +1,4 @@
-import { For, Suspense, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import { ErrorBoundary, For, Suspense, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { ViewActivationProvider } from '../../context/ViewActivationContext';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
@@ -25,6 +25,9 @@ export interface KeepAliveStackProps {
 
   /** Optional per-view Suspense boundary. The host owns localized loading presentation. */
   renderFallback?: (id: string) => JSX.Element;
+
+  /** Isolate a failed view without disposing its siblings. Reset does not retry cached dynamic imports. */
+  renderError?: (error: unknown, reset: () => void, id: string) => JSX.Element;
 }
 
 function normalizeId(id: unknown): string {
@@ -64,6 +67,7 @@ function KeepAliveItem(props: {
   active: Accessor<boolean>;
   activationMode: Accessor<'sync' | 'after-paint'>;
   renderFallback?: (id: string) => JSX.Element;
+  renderError?: KeepAliveStackProps['renderError'];
   class?: string;
   children: JSX.Element;
 }) {
@@ -98,6 +102,9 @@ function KeepAliveItem(props: {
   });
 
   const value = untrack(() => ({ id: props.id, visible: props.active, active: activationActive, activationSeq }));
+  const content = () => props.renderFallback ? (
+    <Suspense fallback={props.renderFallback(props.id)}>{props.children}</Suspense>
+  ) : props.children;
 
   return (
     <ViewActivationProvider value={value}>
@@ -108,9 +115,11 @@ function KeepAliveItem(props: {
         inert={!props.active()}
         style={{ display: props.active() ? 'block' : 'none' }}
       >
-        {props.renderFallback ? (
-          <Suspense fallback={props.renderFallback(props.id)}>{props.children}</Suspense>
-        ) : props.children}
+        {props.renderError ? (
+          <ErrorBoundary fallback={(error, reset) => props.renderError!(error, reset, props.id)}>
+            {content()}
+          </ErrorBoundary>
+        ) : content()}
       </div>
     </ViewActivationProvider>
   );
@@ -237,7 +246,7 @@ export function KeepAliveStack(props: KeepAliveStackProps) {
           const isActive = () => activeId() === id;
 
           return (
-            <KeepAliveItem id={id} active={isActive} activationMode={activationMode} renderFallback={props.renderFallback} class={cn('absolute inset-0', view()?.class)}>
+            <KeepAliveItem id={id} active={isActive} activationMode={activationMode} renderFallback={props.renderFallback} renderError={props.renderError} class={cn('absolute inset-0', view()?.class)}>
               {view()?.render()}
             </KeepAliveItem>
           );

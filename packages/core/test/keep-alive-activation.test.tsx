@@ -17,6 +17,41 @@ describe('KeepAliveStack activation presentation', () => {
     afterPaint.length = 0;
   });
 
+  it('replaces a rejected lazy page with a local error and preserves another page draft', async () => {
+    const host = document.createElement('div');
+    hosts.push(host);
+    const [active, setActive] = createSignal('warm');
+    let rejectModule!: (error: Error) => void;
+    const Broken = lazy(() => new Promise<{ default: () => JSX.Element }>((_, reject) => { rejectModule = reject; }));
+    const dispose = render(() => (
+      <KeepAliveStack
+        activeId={active()}
+        renderFallback={() => <div role="status">Loading</div>}
+        renderError={(error, _reset, id) => <div role="alert">Failed {id}: {String(error)}</div>}
+        views={[
+          { id: 'warm', render: () => <input aria-label="Draft" /> },
+          { id: 'broken', render: () => <Broken /> },
+        ]}
+      />
+    ), host);
+    try {
+      const draft = host.querySelector('input')!;
+      draft.value = 'Unsaved work';
+      setActive('broken');
+      rejectModule(new TypeError('Failed to fetch dynamically imported module'));
+      await vi.waitFor(() => expect(host.querySelector('[role="alert"]')?.textContent).toContain('Failed broken'));
+      expect(host.querySelector('[role="status"]')).toBeNull();
+      setActive('warm');
+      expect(host.querySelector('input')).toBe(draft);
+      expect(draft.value).toBe('Unsaved work');
+      expect(draft.parentElement?.style.display).toBe('block');
+      setActive('broken');
+      expect(host.querySelector('[role="alert"]')?.textContent).toContain('Failed broken');
+    } finally {
+      dispose();
+    }
+  });
+
   it('shows the target before publishing after-paint activation', async () => {
     const host = document.createElement('div');
     document.body.append(host);

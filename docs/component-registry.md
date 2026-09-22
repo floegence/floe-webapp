@@ -332,3 +332,34 @@ HTML. Preview output is never inserted into the application's DOM.
 Validation: `node scripts/check-chat-media-browser.mjs` covers interactive HTML,
 shell/network isolation, stable iframe expansion, media playback and seeking,
 image dialog dismissal, and narrow layout.
+
+## Recovery after a deployment or interrupted module load
+
+`ActivityAppsMain` and `KeepAliveStack` accept `renderError(error, reset, id)`.
+This installs a per-view error boundary outside Suspense: rejected lazy imports
+replace the loading placeholder, while navigation, sibling DOM, and unsaved
+sibling input remain available. The host supplies localized error presentation.
+`reset` can remount a failed render, but does not invalidate Solid or browser
+module caches; a rejected dynamic import should offer a document reload.
+
+`createDocumentAssetRecovery` from `@floegence/floe-webapp-core/app` captures the
+loaded document's ESM entry URLs and compares them with fresh HTML from a stable
+host-provided entry URL. Call `check()` when a secure connection becomes ready.
+Supply an authenticated `fetch` adapter when required. Checks are bounded,
+coalesced, abort on disposal, reject redirects, and never poll or navigate.
+Only valid HTML with module entries can establish a changed build. Unavailable
+or unauthorized HTML leaves connection recovery to the host.
+
+The controller exposes `reason()` (`updated`, `load-failed`, or null) and
+`checking()`. Vite's `vite:preloadError` event reports failed imports without
+suppressing their rejection, so the view boundary can settle into its error UI.
+A current-entry check does not clear a previous import failure: reusing the same
+lazy component cannot guarantee a new fetch. The host owns the explicit reload
+action, draft/save guidance, embedding-aware navigation, and notification copy.
+Never reload automatically over unsaved work. Serve entry HTML without storage
+and immutable assets under content-hashed names; entry URLs must change when the
+application's module graph changes.
+
+`node scripts/check-asset-recovery-browser.mjs` serves two real production builds
+in one browser session and verifies stale chunk 404s, interrupted downloads,
+error isolation, unchanged-version checks, retained drafts, and explicit reload.

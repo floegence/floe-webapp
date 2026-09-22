@@ -2,6 +2,7 @@
 import { spawn } from 'node:child_process';
 
 const CORE_CLIENT_TEST_ROOT_PATHS = [
+  'packages/core/test/document-asset-recovery.test.ts',
   'packages/core/test/code-block-copy.test.tsx',
   'packages/core/test/resize-observer.test.tsx',
   'packages/core/test/choice-controls.test.tsx',

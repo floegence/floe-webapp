@@ -68,7 +68,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.65.0');
+    expect(corePkg.version).toBe('0.65.1');
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);
@@ -195,7 +195,7 @@ describe('release dependency and runtime contract', () => {
     const makefile = readText('Makefile');
 
     expect(makefile).toMatch(
-      /^check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf$/mu
+      /^check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery$/mu
     );
     expect(makefile).toMatch(/^install:\n\tpnpm install --frozen-lockfile$/mu);
     expect(makefile).toMatch(

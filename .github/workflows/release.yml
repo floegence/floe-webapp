@@ -95,6 +95,7 @@ jobs:
           pnpm test:dialog
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation
+          node scripts/check-asset-recovery-browser.mjs
           pnpm test:file-menu
 
       - name: Verify PDF surface

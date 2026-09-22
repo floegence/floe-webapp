@@ -33,6 +33,9 @@ export interface ActivityAppsMainProps<TProtocol = unknown> {
 
   /** Target-local loading UI; leaves shell navigation available while a lazy page resolves. */
   renderFallback?: KeepAliveStackProps['renderFallback'];
+
+  /** Target-local error UI; the host chooses recovery without discarding other views. */
+  renderError?: KeepAliveStackProps['renderError'];
 }
 
 function defaultInclude<TProtocol>(component: FloeComponent<TProtocol>): boolean {
@@ -73,6 +76,7 @@ export function ActivityAppsMain<TProtocol = unknown>(props: ActivityAppsMainPro
       keepMounted={props.keepMounted}
       activationMode={props.activationMode}
       renderFallback={props.renderFallback}
+      renderError={props.renderError}
       class={props.class}
     />
   );
