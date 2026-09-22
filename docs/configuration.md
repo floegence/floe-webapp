@@ -290,3 +290,5 @@ removing the observed element resets the result to `null`.
 `contain` or `width` mode. It returns an unrounded positive scale, including
 enlargement above 1, or `null` while dimensions are unavailable. Consumers own
 toolbar space, page labels, manual zoom limits, and rendering resource budgets.
+
+Set `layout.sidebar.persistActiveTab: false` when the application owns navigation restoration. The layout ignores stored `activeTab` and starts with `defaultActiveTab`, and subsequent layout snapshots omit `activeTab`. Width, collapsed state, and terminal layout persistence remain enabled. The default retains existing tab persistence.

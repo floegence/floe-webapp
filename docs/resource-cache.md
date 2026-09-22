@@ -40,3 +40,5 @@ Run the focused unit suite and `node scripts/check-resource-cache-browser.mjs`
 after building core to verify real IndexedDB restoration across a page reload.
 
 Native adapters that partition access by owner can use `enforceResourceCacheBudget` over their complete private storage index to enforce one physical byte budget. Return opaque adapter-owned keys from that internal index; do not expose another owner's records through the renderer bridge. The same eviction policy is used by the resource cache itself. Reusing a handle counts as recent use, and an evicted handle can persist its next successful refresh again.
+
+`ResourceSnapshot.restoring` is true while the initial storage read is pending. It becomes false atomically with the restored data, or after a miss, rejected snapshot, or storage failure. Successful live data and invalidation end restoration immediately; late storage cannot replace them. Render available data first, and use `restoring` only when deciding whether an absent value is still being restored. `hydrate()` still waits for the actual storage read.

@@ -47,6 +47,7 @@ try {
   });
   assert.deepEqual(result.restored.data, ['Editor']);
   assert.equal(result.restored.refreshing, true);
+  assert.equal(result.restored.restoring, false);
   assert.deepEqual(result.current.data, ['Editor', 'Terminal']);
   assert.equal(result.current.refreshing, false);
   assert.equal(result.isolated, true);

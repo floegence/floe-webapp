@@ -76,7 +76,7 @@ export function createLayoutService(): LayoutContextValue {
   const initialState: LayoutStore = {
     sidebar: {
       width: persisted.sidebar?.width ?? cfg().sidebar.defaultWidth,
-      activeTab: persisted.sidebar?.activeTab ?? cfg().sidebar.defaultActiveTab,
+      activeTab: (cfg().sidebar.persistActiveTab !== false ? persisted.sidebar?.activeTab : undefined) ?? cfg().sidebar.defaultActiveTab,
       collapsed: persisted.sidebar?.collapsed ?? cfg().sidebar.defaultCollapsed,
     },
     terminal: {
@@ -100,7 +100,7 @@ export function createLayoutService(): LayoutContextValue {
     const state: PersistedLayoutStore = {
       sidebar: {
         width: store.sidebar.width,
-        activeTab: store.sidebar.activeTab,
+        ...(cfg().sidebar.persistActiveTab !== false ? { activeTab: store.sidebar.activeTab } : {}),
         collapsed: store.sidebar.collapsed,
       },
       terminal: {

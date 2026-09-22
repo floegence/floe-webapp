@@ -23,6 +23,40 @@ const definition = { scope: 'alice/host', key: 'apps', version: 1, decode: (valu
 } };
 
 describe('persistent resource continuity', () => {
+  it.each(['hit', 'empty', 'miss', 'corrupt', 'version', 'failure'])('finishes restoration atomically for %s storage', async outcome => {
+    const { adapter } = storage();
+    const disk = deferred<string | null>();
+    adapter.get = () => disk.promise;
+    const cache = createResourceCache({ storage: adapter });
+    const resource = cache.resource(definition);
+    const snapshots: unknown[] = [];
+    resource.subscribe(() => snapshots.push(resource.snapshot()));
+    expect(resource.snapshot()).toMatchObject({ data: undefined, restoring: true });
+    if (outcome === 'failure') disk.reject(new Error('unavailable'));
+    else disk.resolve(outcome === 'miss' ? null : outcome === 'corrupt' ? '{broken' : JSON.stringify({
+      version: outcome === 'version' ? 99 : 1, data: outcome === 'empty' ? [] : ['Editor'],
+    }));
+    await resource.hydrate();
+    expect(resource.snapshot()).toMatchObject({ restoring: false, refreshing: false });
+    expect(resource.snapshot().data).toEqual(outcome === 'hit' ? ['Editor'] : outcome === 'empty' ? [] : undefined);
+    expect(snapshots).toHaveLength(1);
+    cache.dispose();
+  });
+
+  it('ends presentation restoration when the network wins and fences the late disk read', async () => {
+    const { adapter } = storage();
+    const disk = deferred<string | null>();
+    adapter.get = () => disk.promise;
+    const cache = createResourceCache({ storage: adapter });
+    const resource = cache.resource(definition);
+    await resource.refresh(async () => []);
+    expect(resource.snapshot()).toMatchObject({ data: [], restoring: false });
+    disk.resolve(JSON.stringify({ version: 1, data: ['Old'] }));
+    await resource.hydrate();
+    expect(resource.snapshot()).toMatchObject({ data: [], restoring: false });
+    cache.dispose();
+  });
+
   it('restores the previous successful list while a new request is pending', async () => {
     const { adapter } = storage();
     const first = createResourceCache({ storage: adapter });

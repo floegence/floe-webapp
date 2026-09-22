@@ -67,6 +67,13 @@ execFileSync(
     '-e',
     [
       `import.meta.resolve('${packageNames[0]}')`,
+      `const { createResourceCache } = await import('${packageNames[0]}/resource-cache')`,
+      `const cache = createResourceCache({ storage: { get: async () => null, set: async () => {}, remove: async () => {}, list: async () => [] } })`,
+      `const resource = cache.resource({ scope: 'consumer', key: 'list', version: 1, decode: value => value })`,
+      `if (resource.snapshot().restoring !== true) throw new Error('missing resource restoration state')`,
+      `await resource.hydrate()`,
+      `if (resource.snapshot().restoring !== false) throw new Error('resource restoration did not finish')`,
+      `cache.dispose()`,
       `const boot = await import('${packageNames[1]}')`,
       `for (const name of ['createPrivateLoopbackControlplaneArtifactSource', 'createPrivateLoopbackDirectConnectionConfig', 'createHTTPDirectControlplaneArtifactSource', 'createHTTPDirectConnectionConfig']) if (typeof boot[name] !== 'function') throw new Error('missing Boot connection export: ' + name)`,
       `await import('${packageNames[2]}')`,

@@ -62,6 +62,8 @@ export interface FloeLayoutConfig {
     defaultWidth: number;
     clamp: { min: number; max: number };
     defaultActiveTab: string;
+    /** Disable when the consumer owns navigation persistence. Defaults to true. */
+    persistActiveTab?: boolean;
     defaultCollapsed: boolean;
   };
   terminal: {

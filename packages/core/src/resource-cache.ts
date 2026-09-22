@@ -9,6 +9,8 @@ export interface ResourceCacheStorage {
 
 export interface ResourceSnapshot<T> {
   readonly data: T | undefined;
+  /** True until storage settles, or live data/invalidation supersedes restoration. */
+  readonly restoring: boolean;
   readonly refreshing: boolean;
   readonly stale: boolean;
   readonly error: unknown;
@@ -105,7 +107,7 @@ export function createResourceCache(options: {
     const key = JSON.stringify([definition.scope, definition.key, definition.version]);
     const existing = resources.get(key);
     if (existing) { existing.accessedAt = Date.now(); return existing.handle as CachedResource<T>; }
-    let state: ResourceSnapshot<T> = { data: undefined, refreshing: false, stale: true, error: undefined };
+    let state: ResourceSnapshot<T> = { data: undefined, restoring: true, refreshing: false, stale: true, error: undefined };
     const listeners = new Set<() => void>();
     let revision = 0;
     let requestID = 0;
@@ -116,7 +118,7 @@ export function createResourceCache(options: {
     const notify = () => { for (const listener of listeners) listener(); };
     const accept = (value: T) => {
       ++revision;
-      state = { data: value, refreshing: state.refreshing, stale: false, error: undefined };
+      state = { data: value, restoring: false, refreshing: state.refreshing, stale: false, error: undefined };
       try {
         const next = JSON.stringify({ version: definition.version, data: definition.persist ? definition.persist(value) : value });
         serialized = next;
@@ -138,11 +140,14 @@ export function createResourceCache(options: {
         state = { ...state, data, stale: true };
         serialized = raw;
         persisted = raw;
-        notify();
       } catch {
         void enqueue(() => storage.remove(key));
       }
-    }).catch(() => undefined);
+    }).catch(() => undefined).finally(() => {
+      if (disposed || !state.restoring) return;
+      state = { ...state, restoring: false };
+      notify();
+    });
     const invalidate = (clear = false) => {
       ++revision;
       ++requestID;
@@ -152,7 +157,7 @@ export function createResourceCache(options: {
       serialized = undefined;
       persisted = undefined;
       pending.delete(key);
-      state = { data: clear ? undefined : state.data, refreshing: false, stale: true, error: undefined };
+      state = { data: clear ? undefined : state.data, restoring: false, refreshing: false, stale: true, error: undefined };
       notify();
       void enqueue(() => storage.remove(key));
     };

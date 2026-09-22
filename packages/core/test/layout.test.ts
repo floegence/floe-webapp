@@ -1,8 +1,29 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createLayoutService } from '../src/context/LayoutContext';
+import * as config from '../src/context/FloeConfigContext';
 import { withSolidRoot } from './withSolidRoot';
 
 describe('createLayoutService', () => {
+  it('lets the product own the initial tab while restoring other layout preferences', async () => {
+    const defaults = config.useResolvedFloeConfig();
+    const override = vi.spyOn(config, 'useResolvedFloeConfig').mockReturnValue({
+      config: { ...defaults.config, layout: { ...defaults.config.layout, sidebar: {
+        ...defaults.config.layout.sidebar, persistActiveTab: false, defaultActiveTab: 'settings',
+      } } },
+      persist: { ...defaults.persist, load: () => ({ sidebar: { activeTab: 'files', width: 360, collapsed: true } }) as never },
+    });
+    try {
+      await withSolidRoot(() => {
+        const layout = createLayoutService();
+        expect(layout.sidebarActiveTab()).toBe('settings');
+        expect(layout.sidebarWidth()).toBe(360);
+        expect(layout.sidebarCollapsed()).toBe(true);
+        layout.setSidebarActiveTab('ports');
+        expect(layout.sidebarActiveTab()).toBe('ports');
+      });
+    } finally { override.mockRestore(); }
+  });
+
   it('should clamp sidebar width and terminal height', async () => {
     await withSolidRoot(() => {
       const layout = createLayoutService();
