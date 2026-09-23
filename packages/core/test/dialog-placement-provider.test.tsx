@@ -34,11 +34,6 @@ function flushMicrotasks(): Promise<void> {
   return Promise.resolve();
 }
 
-async function flushFloatingExit(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 240));
-  await flushMicrotasks();
-}
-
 function GlobalSurfaceDialogHarness(props: { dialogZIndex?: number }) {
   const [open, setOpen] = createSignal(false);
   const [underlayActionCount, setUnderlayActionCount] = createSignal(0);
@@ -232,9 +227,10 @@ describe('dialog placement provider', () => {
     expect(host.querySelector('[data-testid="underlay-action-count"]')?.textContent).toBe('0');
     expect(overlayRoot.dataset.floatingPresence).toBe('exiting');
 
-    await flushFloatingExit();
-    expect(document.body.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
-    expect(document.activeElement).toBe(trigger);
+    await vi.waitFor(() => {
+      expect(document.body.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    });
   });
 
   it('prefers the dialog stacking layer over the provider default', async () => {

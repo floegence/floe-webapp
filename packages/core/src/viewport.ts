@@ -78,12 +78,15 @@ function measure(view: Window, probe: HTMLElement): ViewportSnapshot {
   const rect = probe.getBoundingClientRect();
   const css = view.getComputedStyle(probe);
   const inset = (value: string) => Math.max(0, Number.parseFloat(value) || 0);
+  const zoom = (element: Element | null) => element
+    ? dimension(Number.parseFloat(view.getComputedStyle(element).zoom), 1) : 1;
+  const rootZoom = zoom(view.document.documentElement);
   return resolveViewportSnapshot({
     width: rect.width || view.innerWidth,
-    height: rect.height / dimension(probe.currentCSSZoom, 1) || view.innerHeight,
+    height: rect.height / rootZoom || view.innerHeight,
     visualViewport: view.visualViewport,
     fixedOrigin: { left: rect.left, top: rect.top },
-    fixedScale: view.document.body?.currentCSSZoom,
+    fixedScale: rootZoom * zoom(view.document.body),
     safeArea: { top: inset(css.paddingTop), right: inset(css.paddingRight), bottom: inset(css.paddingBottom), left: inset(css.paddingLeft) },
     editing: editableFocus(view.document),
     touch: view.matchMedia?.('(any-pointer: coarse)').matches ?? false,

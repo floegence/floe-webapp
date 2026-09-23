@@ -1,4 +1,4 @@
-/* global window, document, Event, EventTarget */
+/* global window, document, Event, EventTarget, Element */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -47,6 +47,9 @@ render(()=><App/>,document.getElementById('root'));
         const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
         const errors=[];page.on('pageerror',error=>errors.push(error.message));
         await page.addInitScript(()=>{
+          // This optional DOM API is not available in every WebKit port.
+          Object.defineProperty(Element.prototype,'currentCSSZoom',{configurable:true,get:()=>undefined});
+          window.expectedFixedScale=1;
           const viewport=Object.assign(new EventTarget(),{width:390,height:700,offsetLeft:0,offsetTop:44,scale:1});
           Object.defineProperty(window,'visualViewport',{configurable:true,value:viewport});
           const computed=window.getComputedStyle.bind(window);
@@ -63,7 +66,7 @@ render(()=><App/>,document.getElementById('root'));
         const assertBounds=async()=>{
           await page.waitForFunction(()=>{
             const rect=document.querySelector('[role=dialog]')?.getBoundingClientRect(),v=window.viewportSnapshot;
-            if(!v || v.fixedScale!==document.body.currentCSSZoom || v.visible.width!==window.visualViewport.width || v.visible.height!==window.visualViewport.height || Math.abs(v.visible.top+v.fixedOffset.top-window.visualViewport.offsetTop)>1 || Math.abs(v.visible.left+v.fixedOffset.left-window.visualViewport.offsetLeft)>1) return false;
+            if(!v || v.fixedScale!==window.expectedFixedScale || v.visible.width!==window.visualViewport.width || v.visible.height!==window.visualViewport.height || Math.abs(v.visible.top+v.fixedOffset.top-window.visualViewport.offsetTop)>1 || Math.abs(v.visible.left+v.fixedOffset.left-window.visualViewport.offsetLeft)>1) return false;
             return rect && rect.top>=v.visible.top+v.safeArea.top-1 && rect.bottom<=v.visible.bottom-v.safeArea.bottom+1 && rect.left>=v.visible.left+v.safeArea.left-1 && rect.right<=v.visible.right-v.safeArea.right+1;
           },null,{timeout:3000});
           const close=page.getByRole('button',{name:'Close',exact:true});
@@ -81,10 +84,10 @@ render(()=><App/>,document.getElementById('root'));
         }
         // CSS zoom changes fixed CSS units while client viewport coordinates stay stable.
         for (const target of ['body', 'documentElement']) {
-          await page.evaluate(target=>{document[target].style.zoom='2';}, target);
+          await page.evaluate(target=>{window.expectedFixedScale=2;document[target].style.zoom='2';}, target);
           await assertBounds();
           assert.equal(await input.inputValue(), 'Retained 中文 draft');
-          await page.evaluate(target=>{document[target].style.zoom='';}, target);
+          await page.evaluate(target=>{window.expectedFixedScale=1;document[target].style.zoom='';}, target);
           await assertBounds();
         }
         // Safari can pan the fixed containing block while the keyboard is open.
