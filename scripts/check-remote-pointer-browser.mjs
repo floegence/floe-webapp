@@ -65,6 +65,17 @@ try {
         await page.evaluate(()=>{window.events=[]});
         await page.mouse.dblclick(100,200);
         assert.deepEqual(await page.evaluate(()=>window.events.filter(e=>e.kind==='down').map(e=>e.clicks)),[1,2]);
+        // Window decorations may take over a held mouse after a remote app asks
+        // to move/resize. Reset must leave native mousemove available to them.
+        await page.mouse.move(100,200);
+        await page.mouse.down();
+        await page.evaluate(()=>{
+          window.pointer.reset(); window.decorationMoves=0;
+          document.addEventListener('mousemove',()=>window.decorationMoves++);
+        });
+        await page.mouse.move(150,250,{steps:5});
+        assert.equal(await page.evaluate(()=>window.decorationMoves),5,'Decoration handoff retains native mouse movement');
+        await page.mouse.up();
         if (name==='chromium' && dpr===2) {
           await page.evaluate(()=>{window.events=[];window.activations=[]});
           const cdp=await context.newCDPSession(page);

@@ -209,8 +209,9 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
       if (activate(at,target)) button(true,at,target,e.button,Math.max(1,e.detail,twice ? 2 : 1));
     }
     capture(e.pointerId);
-    // This cancels compatibility mouse activation, not the CSS pinch-zoom policy.
-    e.preventDefault();
+    // Touch cannot also activate via compatibility mouse events. Direct mouse
+    // movement remains available if window decorations later take ownership.
+    if (e.pointerType === 'touch') e.preventDefault();
   });
   listen<PointerEvent>(surface, 'pointermove', e => {
     if (e.pointerType === 'touch') {

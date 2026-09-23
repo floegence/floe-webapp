@@ -42,6 +42,8 @@ and transport failure must call reset explicitly. Blur, hiding, viewport changes
 pointer cancellation and capture loss are handled by the controller. `dispose()`
 also removes all listeners and observers. Cancellation observers outside the
 content surface never consume events or deliver remote input.
+Mouse/pen cancellation leaves native compatibility mouse movement available to
+local window decorations that take over a server-requested move or resize.
 
 Run `pnpm exec vitest run packages/core/test/remote-pointer.test.ts` and
 `node scripts/check-remote-pointer-browser.mjs --source --all` during development.
