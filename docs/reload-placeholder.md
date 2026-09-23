@@ -29,6 +29,12 @@ controller owns one handoff:
   on explicit access revocation or navigation to a different presentation. Do
   not treat this geometry as authority to show cached resource contents.
 
+Mark a region with `data-floe-reload-omit` when it should stay blank during reload.
+Capture skips that element and all descendant surfaces, text, images, and controls;
+the surrounding shell is still captured. This is presentation policy only and does
+not change the live region's visibility, accessibility, or interactions. Explicit
+scroll restoration inside omitted regions remains available.
+
 Scroll containers may opt in with stable, product-owned
 `data-floe-reload-scroll="inventory"` identifiers. Only offsets and these fixed
 identifiers are retained; never use resource IDs as identifiers. `finish()`

@@ -98,6 +98,7 @@ function installReloadPlaceholder(options: ReloadPlaceholderOptions): void {
       boxes.push([x, y, width, height, Math.max(0, Math.min(radius, 100)), fill, border]);
     };
     for (const element of root.querySelectorAll(surfaces)) {
+      if (element.closest('[data-floe-reload-omit]')) continue;
       const bounds = rect(element);
       if (!bounds) continue;
       const style = getComputedStyle(element);
@@ -107,6 +108,7 @@ function installReloadPlaceholder(options: ReloadPlaceholderOptions): void {
     // Alpha is applied to a resolved color, never to HTML, URLs, text or input values.
     const mask = color(shade) ? `color-mix(in srgb, ${shade} 9%, ${background})` : '#d4d4d4';
     for (const element of root.querySelectorAll('img,svg,input,textarea,canvas,video')) {
+      if (element.closest('[data-floe-reload-omit]')) continue;
       const bounds = rect(element);
       if (bounds) add(bounds, mask, 'transparent', Math.min(bounds.height / 4, 8));
     }
@@ -116,7 +118,7 @@ function installReloadPlaceholder(options: ReloadPlaceholderOptions): void {
     let visited = 0;
     while ((node = walker.nextNode()) && boxes.length < maxBoxes && visited++ < 12000) {
       const parent = node.parentElement;
-      if (!parent || parent.closest('script,style,textarea,svg,[aria-hidden="true"]') || !rect(parent)) continue;
+      if (!parent || parent.closest('script,style,textarea,svg,[aria-hidden="true"],[data-floe-reload-omit]') || !rect(parent)) continue;
       range.selectNodeContents(node);
       for (const bounds of range.getClientRects()) {
         if (bounds.width < 2) continue;
