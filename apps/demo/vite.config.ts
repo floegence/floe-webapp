@@ -106,6 +106,7 @@ export default defineConfig(({ command }) => {
           main: resolve(__dirname, 'index.html'),
           navigation: resolve(__dirname, 'navigation.html'),
           settings: resolve(__dirname, 'settings.html'),
+          density: resolve(__dirname, 'density.html'),
         },
       },
     },

@@ -8,6 +8,8 @@ import {
   createMemo,
   createUniqueId,
   untrack,
+  children,
+  type JSX,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
@@ -1233,6 +1235,8 @@ export interface MonitoringChartProps {
   class?: string;
   /** Title displayed above the chart */
   title?: string;
+  /** Readings or other metadata displayed alongside the title and live status. */
+  headerMeta?: JSX.Element;
   /** Whether real-time updates are enabled */
   realtime?: boolean;
   /** Use smooth curves instead of straight lines */
@@ -1270,6 +1274,7 @@ export function MonitoringChart(props: MonitoringChartProps) {
     'showLegend',
     'class',
     'title',
+    'headerMeta',
     'realtime',
     'smooth',
     'yMin',
@@ -1283,6 +1288,8 @@ export function MonitoringChart(props: MonitoringChartProps) {
   const updateInterval = () => local.updateInterval ?? 2000;
   const realtime = () => local.realtime ?? false;
   const smooth = () => local.smooth ?? true;
+  const headerMeta = children(() => local.headerMeta);
+  const hasHeaderMeta = () => headerMeta.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '');
 
   // Internal data state for real-time updates
   const [internalSeries, setInternalSeries] = createSignal<ChartSeries[]>(
@@ -1330,17 +1337,24 @@ export function MonitoringChart(props: MonitoringChartProps) {
 
   return (
     <div class={cn('chart-monitoring', local.class)}>
-      <div class="chart-monitoring-header">
-        <Show when={local.title}>
-          <div class="chart-title">{local.title}</div>
-        </Show>
-        <Show when={realtime()}>
-          <div class="chart-monitoring-status">
-            <div class="chart-monitoring-dot" />
-            <span>Live</span>
+      <Show when={local.title || realtime() || hasHeaderMeta()}>
+        <div class="chart-monitoring-header">
+          <div class="chart-monitoring-heading">
+            <Show when={local.title}>
+              <div class="chart-title">{local.title}</div>
+            </Show>
+            <Show when={realtime()}>
+              <div class="chart-monitoring-status" aria-label="Live" title="Live">
+                <div class="chart-monitoring-dot" aria-hidden="true" />
+                <span aria-hidden="true">Live</span>
+              </div>
+            </Show>
           </div>
-        </Show>
-      </div>
+          <Show when={hasHeaderMeta()}>
+            <div class="chart-monitoring-meta">{headerMeta()}</div>
+          </Show>
+        </div>
+      </Show>
 
       <LineChart
         series={internalSeries()}

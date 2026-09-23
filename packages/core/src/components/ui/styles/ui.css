@@ -1189,13 +1189,42 @@
   /* Monitoring chart */
   .chart-monitoring {
     width: 100%;
+    min-width: 0;
+    container: monitoring-chart / inline-size;
   }
 
   .chart-monitoring-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     margin-bottom: 8px;
+  }
+
+  .chart-monitoring-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .chart-monitoring-heading .chart-title {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .chart-monitoring-meta {
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted-foreground);
+    text-align: end;
+  }
+
+  @container monitoring-chart (width < 480px) {
+    .chart-monitoring-status span { display: none; }
   }
 
   .chart-monitoring-status {

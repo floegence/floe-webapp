@@ -92,6 +92,7 @@ jobs:
           pnpm test:workbench-composition
           pnpm test:workbench-header
           pnpm test:settings
+          pnpm test:compact-surfaces
           pnpm test:dialog
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation

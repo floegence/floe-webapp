@@ -1,4 +1,4 @@
-import { For, Show, splitProps, type JSX } from 'solid-js';
+import { For, Show, children, splitProps, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 
 /** Host-owned routing and state stay outside this responsive settings frame. */
@@ -8,10 +8,13 @@ export function SettingsLayout(props: {
   children: JSX.Element;
   class?: string;
 }) {
+  const mobileNavigation = children(() => props.mobileNavigation);
   return (
     <div class={cn('floe-settings-layout', props.class)}>
       <aside class="floe-settings-layout__sidebar">{props.sidebar}</aside>
-      <div class="floe-settings-layout__mobile">{props.mobileNavigation}</div>
+      <Show when={mobileNavigation.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '')}>
+        <div class="floe-settings-layout__mobile">{mobileNavigation()}</div>
+      </Show>
       <div class="floe-settings-layout__content">{props.children}</div>
     </div>
   );
