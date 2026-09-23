@@ -32,6 +32,7 @@ export default defineConfig({
         'resource-cache': resolve(__dirname, 'src/resource-cache.ts'),
         'reload-placeholder': resolve(__dirname, 'src/reload-placeholder.ts'),
         'remote-input': resolve(__dirname, 'src/remote-input.ts'),
+        'remote-pointer': resolve(__dirname, 'src/remote-pointer.ts'),
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),

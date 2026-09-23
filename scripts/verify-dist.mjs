@@ -242,6 +242,9 @@ function main() {
   assertFile('packages/core/dist/remote-input.js');
   assertFile('packages/core/dist/remote-input.d.ts');
   assertFile('packages/core/dist/remote-input.css');
+  assertFile('packages/core/dist/remote-pointer.js');
+  assertFile('packages/core/dist/remote-pointer.d.ts');
+  assertFile('packages/core/dist/remote-pointer.css');
   assertFile('packages/core/dist/reload-placeholder.js');
   assertFile('packages/core/dist/reload-placeholder.d.ts');
   assertFile('packages/core/dist/resource-cache.js');
@@ -409,6 +412,7 @@ function main() {
     'resource-cache',
     'reload-placeholder',
     'remote-input',
+    'remote-pointer',
     'viewport',
     'launchpad',
     'file-browser',

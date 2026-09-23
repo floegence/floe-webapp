@@ -40,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install browser acceptance runtimes
-        run: pnpm exec playwright install --with-deps chromium webkit
+        run: pnpm exec playwright install --with-deps chromium webkit firefox
 
       - name: Check
         run: make check

@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
-  ...['progress-shimmer', 'window-status', 'remote-input'].map((name) => ({ src: resolve(pkgRoot, `src/styles/${name}.css`), dest: resolve(pkgRoot, `dist/${name}.css`) })),
+  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer'].map((name) => ({ src: resolve(pkgRoot, `src/styles/${name}.css`), dest: resolve(pkgRoot, `dist/${name}.css`) })),
   { src: resolve(pkgRoot, 'src/styles/primitives.css'), dest: resolve(pkgRoot, 'dist/primitives.css') },
   { src: resolve(pkgRoot, 'src/styles/standalone.css'), dest: resolve(pkgRoot, 'dist/standalone.css') },
   { src: resolve(pkgRoot, 'src/styles/file-icons.css'), dest: resolve(pkgRoot, 'dist/file-icons.css') },

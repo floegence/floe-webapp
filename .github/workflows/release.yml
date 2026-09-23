@@ -84,7 +84,7 @@ jobs:
 
       - name: Verify input focus in Chromium
         run: |
-          pnpm exec playwright install --with-deps chromium webkit
+          pnpm exec playwright install --with-deps chromium webkit firefox
           pnpm test:input-focus
           node scripts/check-content-sizing-browser.mjs
           node scripts/check-chat-media-browser.mjs
@@ -133,6 +133,9 @@ jobs:
 
       - name: Verify remote input ownership
         run: node scripts/check-remote-input-browser.mjs
+
+      - name: Verify remote pointer ownership
+        run: pnpm test:remote-pointer
 
       - name: Verify dist
         run: pnpm verify

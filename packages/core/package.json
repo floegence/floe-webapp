@@ -125,7 +125,12 @@
     "./viewport": {
       "types": "./dist/viewport.d.ts",
       "import": "./dist/viewport.js"
-    }
+    },
+    "./remote-pointer": {
+      "types": "./dist/remote-pointer.d.ts",
+      "import": "./dist/remote-pointer.js"
+    },
+    "./remote-pointer.css": "./dist/remote-pointer.css"
   },
   "files": [
     "dist",
