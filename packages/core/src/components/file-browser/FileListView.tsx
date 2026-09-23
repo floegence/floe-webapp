@@ -1,10 +1,14 @@
 import { For, Show, untrack, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
+import { Skeleton } from '../loading/Skeleton';
 import { cn } from '../../utils/cn';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
-import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
+import {
+  useFileBrowserDrag,
+  type FileBrowserDragContextValue,
+} from '../../context/FileBrowserDragContext';
 import { FileItemIcon } from './FileIcons';
 import type { FileItem, SortField, FilterMatchInfo } from './types';
 import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';
@@ -18,11 +22,17 @@ import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
 export interface FileListViewProps {
   class?: string;
+  /** No successful directory result exists yet. Do not set during background refresh. */
+  initializing?: boolean;
   /** Instance ID for drag operations */
   instanceId?: string;
   /** Whether drag and drop is enabled */
   enableDragDrop?: boolean;
 }
+
+const FILE_LIST_ROW_CLASS = 'w-full h-8 flex items-center text-xs';
+const FILE_LIST_NAME_CLASS = 'flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5';
+const FILE_LIST_META_CLASS = 'shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate';
 
 /**
  * Render file name with highlighted matched characters
@@ -262,7 +272,8 @@ export function FileListView(props: FileListViewProps) {
       const hiddenSizeRatio = ratios.size;
       const available = Math.max(0, 1 - hiddenSizeRatio);
 
-      let modifiedWidth = (available > 0 ? ratios.modifiedAt / available : ratios.modifiedAt) * width;
+      let modifiedWidth =
+        (available > 0 ? ratios.modifiedAt / available : ratios.modifiedAt) * width;
       modifiedWidth = clamp(modifiedWidth, minModified, Math.max(minModified, width - minName));
 
       return {
@@ -392,10 +403,14 @@ export function FileListView(props: FileListViewProps) {
   };
 
   return (
-    <div class={cn('flex flex-col h-full min-h-0', props.class)}>
+    <div
+      class={cn('flex flex-col h-full min-h-0', props.class)}
+      aria-busy={props.initializing || undefined}
+    >
       {/* Header */}
       <div
         ref={setHeaderEl}
+        data-file-list-header
         class="flex items-center border-b border-border text-[11px] text-muted-foreground font-medium"
       >
         <div
@@ -419,10 +434,7 @@ export function FileListView(props: FileListViewProps) {
             </span>
           </button>
           <Show when={columnLayout().showModified}>
-            <ResizeHandle
-              direction="horizontal"
-              onResize={handleResizeNameModified}
-            />
+            <ResizeHandle direction="horizontal" onResize={handleResizeNameModified} />
           </Show>
         </div>
 
@@ -440,10 +452,7 @@ export function FileListView(props: FileListViewProps) {
               <SortIndicator field="modifiedAt" />
             </button>
             <Show when={columnLayout().showSize}>
-              <ResizeHandle
-                direction="horizontal"
-                onResize={handleResizeModifiedSize}
-              />
+              <ResizeHandle direction="horizontal" onResize={handleResizeModifiedSize} />
             </Show>
           </div>
         </Show>
@@ -474,57 +483,80 @@ export function FileListView(props: FileListViewProps) {
         onPointerDown={marquee.onPointerDown}
       >
         <Show
-          when={ctx.currentFiles().length > 0}
+          when={!props.initializing}
           fallback={
-            <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
-              <Show
-                when={ctx.filterQueryApplied().trim()}
-                fallback={<span>This folder is empty</span>}
-              >
-                <span>No files matching "{ctx.filterQueryApplied()}"</span>
-                <button
-                  type="button"
-                  onClick={() => ctx.setFilterQuery('')}
-                  class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
-                >
-                  Clear Filter
-                </button>
-              </Show>
+            <div aria-hidden="true">
+              <For each={Array.from({ length: 8 })}>
+                {() => (
+                  <div data-file-browser-placeholder data-file-list-row class={FILE_LIST_ROW_CLASS}>
+                    <div class={FILE_LIST_NAME_CLASS}>
+                      <Skeleton class="h-4 w-4 shrink-0" />
+                      <Skeleton class="h-4 w-32 max-w-full" />
+                    </div>
+                    <Show when={columnLayout().showModified}>
+                      <div class={FILE_LIST_META_CLASS} style={{ width: `${modifiedWidthPx()}px` }}>
+                        <Skeleton class="h-4 w-20 max-w-full" />
+                      </div>
+                    </Show>
+                    <Show when={columnLayout().showSize}>
+                      <div class={FILE_LIST_META_CLASS} style={{ width: `${sizeWidthPx()}px` }}>
+                        <Skeleton class="h-4 w-10 max-w-full" />
+                      </div>
+                    </Show>
+                  </div>
+                )}
+              </For>
             </div>
           }
         >
-          <div
-            style={{
-              'padding-top': `${virtual.paddingTop()}px`,
-              'padding-bottom': `${virtual.paddingBottom()}px`,
-            }}
+          <Show
+            when={ctx.currentFiles().length > 0}
+            fallback={
+              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+                <Show
+                  when={ctx.filterQueryApplied().trim()}
+                  fallback={<span>This folder is empty</span>}
+                >
+                  <span>No files matching "{ctx.filterQueryApplied()}"</span>
+                  <button
+                    type="button"
+                    onClick={() => ctx.setFilterQuery('')}
+                    class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    Clear Filter
+                  </button>
+                </Show>
+              </div>
+            }
           >
-            <For each={visibleFiles()}>
-              {(item) => (
-                <FileListItem
-                  item={item}
-                  formatSize={formatSize}
-                  formatDate={formatDate}
-                  showModified={columnLayout().showModified}
-                  showSize={columnLayout().showSize}
-                  modifiedWidthPx={modifiedWidthPx()}
-                  sizeWidthPx={sizeWidthPx()}
-                  instanceId={instanceId()}
-                  enableDragDrop={isDragEnabled()}
-                  dragContext={dragContext}
-                  registerRow={registerRow}
-                />
-              )}
-            </For>
-          </div>
+            <div
+              style={{
+                'padding-top': `${virtual.paddingTop()}px`,
+                'padding-bottom': `${virtual.paddingBottom()}px`,
+              }}
+            >
+              <For each={visibleFiles()}>
+                {(item) => (
+                  <FileListItem
+                    item={item}
+                    formatSize={formatSize}
+                    formatDate={formatDate}
+                    showModified={columnLayout().showModified}
+                    showSize={columnLayout().showSize}
+                    modifiedWidthPx={modifiedWidthPx()}
+                    sizeWidthPx={sizeWidthPx()}
+                    instanceId={instanceId()}
+                    enableDragDrop={isDragEnabled()}
+                    dragContext={dragContext}
+                    registerRow={registerRow}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
         <Show when={marquee.overlayStyle()}>
-          {(style) => (
-            <div
-              class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}
-              style={style()}
-            />
-          )}
+          {(style) => <div class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS} style={style()} />}
         </Show>
       </div>
     </div>
@@ -646,9 +678,7 @@ function FileListItem(props: FileListItemProps) {
 
     // Get all selected items
     const selectedItems = ctx.getSelectedItemsList();
-    const itemsToDrag = selectedItems.length > 0 && isSelected()
-      ? selectedItems
-      : [props.item];
+    const itemsToDrag = selectedItems.length > 0 && isSelected() ? selectedItems : [props.item];
 
     // Create dragged items
     const draggedItems = itemsToDrag.map((fileItem) => ({
@@ -659,7 +689,11 @@ function FileListItem(props: FileListItemProps) {
 
     // Trigger haptic feedback on mobile
     if (isTouchLike() && 'vibrate' in navigator) {
-      try { navigator.vibrate(50); } catch { /* ignore */ }
+      try {
+        navigator.vibrate(50);
+      } catch {
+        /* ignore */
+      }
     }
 
     props.dragContext.startDrag(draggedItems, x, y);
@@ -814,20 +848,21 @@ function FileListItem(props: FileListItemProps) {
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
-    ctx.showContextMenu(createItemContextMenuEvent({
-      x: e.clientX,
-      y: e.clientY,
-      triggerItem: props.item,
-      items: selectedItems,
-      source: 'list',
-    }));
+    ctx.showContextMenu(
+      createItemContextMenuEvent({
+        x: e.clientX,
+        y: e.clientY,
+        triggerItem: props.item,
+        items: selectedItems,
+        source: 'list',
+      })
+    );
   };
 
   // Get drag state for styling
   const dragState = () => props.dragContext?.dragState();
   const isGlobalDragging = () => dragState()?.isDragging ?? false;
-  const isActiveDropTarget = () =>
-    isDropHovered() && isGlobalDragging() && canBeDropTarget();
+  const isActiveDropTarget = () => isDropHovered() && isGlobalDragging() && canBeDropTarget();
 
   return (
     <button
@@ -835,6 +870,7 @@ function FileListItem(props: FileListItemProps) {
         props.registerRow(props.item.id, el);
       }}
       type="button"
+      data-file-list-row
       data-file-browser-item-id={props.item.id}
       data-file-browser-item-path={props.item.path}
       {...fileBrowserTouchTargetAttrs}
@@ -846,7 +882,8 @@ function FileListItem(props: FileListItemProps) {
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       class={cn(
-        'group w-full h-8 flex items-center text-xs cursor-pointer',
+        FILE_LIST_ROW_CLASS,
+        'group cursor-pointer',
         'transition-all duration-150 ease-out',
         'hover:bg-accent/50',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
@@ -854,17 +891,19 @@ function FileListItem(props: FileListItemProps) {
         // Drag state styling - being dragged items become translucent
         isBeingDragged() && 'opacity-40 scale-[0.98]',
         // Drop target styling - enhanced visual feedback
-        isActiveDropTarget() && isValidDropTarget() && [
-          'bg-primary/15 outline outline-2 outline-primary/60',
-          'scale-[1.01] shadow-sm shadow-primary/10'
-        ],
-        isActiveDropTarget() && !isValidDropTarget() && [
-          'bg-destructive/10 outline outline-2 outline-dashed outline-destructive/50'
-        ]
+        isActiveDropTarget() &&
+          isValidDropTarget() && [
+            'bg-primary/15 outline outline-2 outline-primary/60',
+            'scale-[1.01] shadow-sm shadow-primary/10',
+          ],
+        isActiveDropTarget() &&
+          !isValidDropTarget() && [
+            'bg-destructive/10 outline outline-2 outline-dashed outline-destructive/50',
+          ]
       )}
     >
       {/* Name column */}
-      <div class="flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5">
+      <div class={FILE_LIST_NAME_CLASS}>
         <span class="relative flex-shrink-0 w-4 h-4">
           <FileItemIcon item={props.item} size={16} class="w-4 h-4" />
           <FileItemDecorationBadge item={props.item} size="xs" />
@@ -878,20 +917,14 @@ function FileListItem(props: FileListItemProps) {
 
       {/* Modified column */}
       <Show when={props.showModified}>
-        <div
-          class="shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate"
-          style={{ width: `${props.modifiedWidthPx}px` }}
-        >
+        <div class={FILE_LIST_META_CLASS} style={{ width: `${props.modifiedWidthPx}px` }}>
           {props.formatDate(props.item.modifiedAt)}
         </div>
       </Show>
 
       {/* Size column */}
       <Show when={props.showSize}>
-        <div
-          class="shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate"
-          style={{ width: `${props.sizeWidthPx}px` }}
-        >
+        <div class={FILE_LIST_META_CLASS} style={{ width: `${props.sizeWidthPx}px` }}>
           {props.item.type === 'folder' ? '-' : props.formatSize(props.item.size)}
         </div>
       </Show>

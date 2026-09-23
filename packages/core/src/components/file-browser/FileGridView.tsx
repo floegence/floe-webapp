@@ -1,9 +1,13 @@
 import { For, Show, untrack, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
+import { Skeleton } from '../loading/Skeleton';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { useVirtualWindow } from '../../hooks/useVirtualWindow';
 import { useFileBrowser } from './FileBrowserContext';
-import { useFileBrowserDrag, type FileBrowserDragContextValue } from '../../context/FileBrowserDragContext';
+import {
+  useFileBrowserDrag,
+  type FileBrowserDragContextValue,
+} from '../../context/FileBrowserDragContext';
 import { FileItemIcon } from './FileIcons';
 import type { FileItem, FilterMatchInfo } from './types';
 import { FileItemDecorationBadge, fileItemDecorationNameClass } from './FileItemDecorations';
@@ -15,11 +19,17 @@ import { isPrimaryModKeyPressed } from '../../utils/keybind';
 
 export interface FileGridViewProps {
   class?: string;
+  /** No successful directory result exists yet. Do not set during background refresh. */
+  initializing?: boolean;
   /** Instance ID for drag operations */
   instanceId?: string;
   /** Whether drag and drop is enabled */
   enableDragDrop?: boolean;
 }
+
+const FILE_GRID_TILE_CLASS = 'relative flex flex-col items-center gap-2 p-3 rounded-lg h-28';
+const FILE_GRID_ICON_CLASS = 'w-12 h-12 flex items-center justify-center rounded-lg relative';
+const FILE_GRID_NAME_CLASS = 'block w-full min-w-0 truncate px-1 text-xs text-center';
 
 /**
  * Render file name with highlighted matched characters
@@ -224,6 +234,7 @@ export function FileGridView(props: FileGridViewProps) {
         ctx.setScrollContainer(el);
       }}
       class={cn('relative h-full min-h-0 overflow-auto', props.class)}
+      aria-busy={props.initializing || undefined}
       onScroll={virtualRows.onScroll}
       onPointerDown={marquee.onPointerDown}
     >
@@ -231,53 +242,72 @@ export function FileGridView(props: FileGridViewProps) {
         {/* A 0-height element used to measure available content width without observing height changes during virtualization. */}
         <div ref={(el) => setMeasureEl(el)} class="w-full h-0" aria-hidden="true" />
         <Show
-          when={ctx.currentFiles().length > 0}
+          when={!props.initializing}
           fallback={
-            <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
-              <Show
-                when={ctx.filterQueryApplied().trim()}
-                fallback={<span>This folder is empty</span>}
-              >
-                <span>No files matching "{ctx.filterQueryApplied()}"</span>
-                <button
-                  type="button"
-                  onClick={() => ctx.setFilterQuery('')}
-                  class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
-                >
-                  Clear Filter
-                </button>
-              </Show>
+            <div
+              aria-hidden="true"
+              class="grid gap-2"
+              style={{ 'grid-template-columns': `repeat(${columns()}, minmax(0, 1fr))` }}
+            >
+              <For each={Array.from({ length: columns() * 2 })}>
+                {() => (
+                  <div data-file-browser-placeholder class={FILE_GRID_TILE_CLASS}>
+                    <div class={FILE_GRID_ICON_CLASS}>
+                      <Skeleton class="h-10 w-10 rounded-lg" />
+                    </div>
+                    <span class={FILE_GRID_NAME_CLASS}>
+                      <Skeleton class="mx-auto h-4 w-24 max-w-full" />
+                    </span>
+                  </div>
+                )}
+              </For>
             </div>
           }
         >
-          <div
-            class="grid gap-2"
-            style={{
-              'grid-template-columns': `repeat(${columns()}, minmax(0, 1fr))`,
-              'padding-top': `${virtualRows.paddingTop()}px`,
-              'padding-bottom': `${virtualRows.paddingBottom()}px`,
-            }}
+          <Show
+            when={ctx.currentFiles().length > 0}
+            fallback={
+              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+                <Show
+                  when={ctx.filterQueryApplied().trim()}
+                  fallback={<span>This folder is empty</span>}
+                >
+                  <span>No files matching "{ctx.filterQueryApplied()}"</span>
+                  <button
+                    type="button"
+                    onClick={() => ctx.setFilterQuery('')}
+                    class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    Clear Filter
+                  </button>
+                </Show>
+              </div>
+            }
           >
-            <For each={visibleFiles()}>
-              {(item) => (
-                <FileGridItem
-                  item={item}
-                  instanceId={instanceId()}
-                  enableDragDrop={isDragEnabled()}
-                  dragContext={dragContext}
-                  registerTile={registerTile}
-                />
-              )}
-            </For>
-          </div>
+            <div
+              class="grid gap-2"
+              style={{
+                'grid-template-columns': `repeat(${columns()}, minmax(0, 1fr))`,
+                'padding-top': `${virtualRows.paddingTop()}px`,
+                'padding-bottom': `${virtualRows.paddingBottom()}px`,
+              }}
+            >
+              <For each={visibleFiles()}>
+                {(item) => (
+                  <FileGridItem
+                    item={item}
+                    instanceId={instanceId()}
+                    enableDragDrop={isDragEnabled()}
+                    dragContext={dragContext}
+                    registerTile={registerTile}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
         </Show>
         <Show when={marquee.overlayStyle()}>
-          {(style) => (
-            <div
-              class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS}
-              style={style()}
-            />
-          )}
+          {(style) => <div class={FILE_BROWSER_MARQUEE_OVERLAY_CLASS} style={style()} />}
         </Show>
       </div>
     </div>
@@ -393,9 +423,7 @@ function FileGridItem(props: FileGridItemProps) {
 
     // Get all selected items
     const selectedItems = ctx.getSelectedItemsList();
-    const itemsToDrag = selectedItems.length > 0 && isSelected()
-      ? selectedItems
-      : [props.item];
+    const itemsToDrag = selectedItems.length > 0 && isSelected() ? selectedItems : [props.item];
 
     // Create dragged items
     const draggedItems = itemsToDrag.map((fileItem) => ({
@@ -406,7 +434,11 @@ function FileGridItem(props: FileGridItemProps) {
 
     // Trigger haptic feedback on mobile
     if (isTouchLike() && 'vibrate' in navigator) {
-      try { navigator.vibrate(50); } catch { /* ignore */ }
+      try {
+        navigator.vibrate(50);
+      } catch {
+        /* ignore */
+      }
     }
 
     props.dragContext.startDrag(draggedItems, x, y);
@@ -561,20 +593,21 @@ function FileGridItem(props: FileGridItemProps) {
     const selectedFromCurrent = ctx.getSelectedItemsList();
     const selectedItems = selectedFromCurrent.length > 0 ? selectedFromCurrent : [props.item];
 
-    ctx.showContextMenu(createItemContextMenuEvent({
-      x: e.clientX,
-      y: e.clientY,
-      triggerItem: props.item,
-      items: selectedItems,
-      source: 'grid',
-    }));
+    ctx.showContextMenu(
+      createItemContextMenuEvent({
+        x: e.clientX,
+        y: e.clientY,
+        triggerItem: props.item,
+        items: selectedItems,
+        source: 'grid',
+      })
+    );
   };
 
   // Get drag state for styling
   const dragState = () => props.dragContext?.dragState();
   const isGlobalDragging = () => dragState()?.isDragging ?? false;
-  const isActiveDropTarget = () =>
-    isDropHovered() && isGlobalDragging() && canBeDropTarget();
+  const isActiveDropTarget = () => isDropHovered() && isGlobalDragging() && canBeDropTarget();
 
   return (
     <button
@@ -594,7 +627,8 @@ function FileGridItem(props: FileGridItemProps) {
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       class={cn(
-        'group relative flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer h-28',
+        FILE_GRID_TILE_CLASS,
+        'group cursor-pointer',
         'transition-all duration-150 ease-out',
         'hover:bg-accent/50 hover:scale-[1.02]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -603,13 +637,13 @@ function FileGridItem(props: FileGridItemProps) {
         // Drag state styling - being dragged items become translucent and shrink
         isBeingDragged() && 'opacity-40 scale-90',
         // Drop target styling - enhanced visual feedback for folders
-        isActiveDropTarget() && isValidDropTarget() && [
-          'bg-primary/15 ring-2 ring-primary/60',
-          'scale-105 shadow-lg shadow-primary/15'
-        ],
-        isActiveDropTarget() && !isValidDropTarget() && [
-          'bg-destructive/10 ring-2 ring-dashed ring-destructive/50'
-        ]
+        isActiveDropTarget() &&
+          isValidDropTarget() && [
+            'bg-primary/15 ring-2 ring-primary/60',
+            'scale-105 shadow-lg shadow-primary/15',
+          ],
+        isActiveDropTarget() &&
+          !isValidDropTarget() && ['bg-destructive/10 ring-2 ring-dashed ring-destructive/50']
       )}
     >
       {/* Selection indicator */}
@@ -631,12 +665,7 @@ function FileGridItem(props: FileGridItemProps) {
       </Show>
 
       {/* Icon */}
-      <div
-        class={cn(
-          'w-12 h-12 flex items-center justify-center rounded-lg',
-          'relative'
-        )}
-      >
+      <div class={FILE_GRID_ICON_CLASS}>
         <FileItemIcon item={props.item} size={40} class="w-10 h-10" />
         <FileItemDecorationBadge item={props.item} size="md" />
       </div>
@@ -644,7 +673,7 @@ function FileGridItem(props: FileGridItemProps) {
       {/* Name */}
       <span
         class={cn(
-          'block w-full min-w-0 truncate px-1 text-xs text-center',
+          FILE_GRID_NAME_CLASS,
           'transition-colors duration-150',
           fileItemDecorationNameClass(props.item),
           isSelected() && 'font-medium'
@@ -661,9 +690,10 @@ function FileGridItem(props: FileGridItemProps) {
           'pointer-events-none'
         )}
         style={{
-          background: props.item.type === 'folder'
-            ? 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--warning) 8%, transparent), transparent 70%)'
-            : 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 70%)',
+          background:
+            props.item.type === 'folder'
+              ? 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--warning) 8%, transparent), transparent 70%)'
+              : 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 70%)',
         }}
       />
     </button>

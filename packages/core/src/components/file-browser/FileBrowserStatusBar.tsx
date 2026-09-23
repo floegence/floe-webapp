@@ -1,8 +1,11 @@
 import { Show, type JSX } from 'solid-js';
+import { Skeleton } from '../loading/Skeleton';
 import { cn } from '../../utils/cn';
 import { useFileBrowser } from './FileBrowserContext';
 
 export interface FileBrowserStatusBarProps {
+  /** Keep the status geometry without reporting an unconfirmed count or path. */
+  initializing?: boolean;
   /** Additional classes for the status bar container. */
   class?: string;
   /** Additional classes for the current-path label. */
@@ -35,28 +38,42 @@ export function FileBrowserStatusBar(props: FileBrowserStatusBarProps) {
   return (
     <div
       data-file-browser-status-bar="true"
+      aria-busy={props.initializing || undefined}
       class={cn(
         'flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-1 text-[10px] text-muted-foreground',
         props.class
       )}
     >
-      <div class="flex flex-wrap items-center gap-1.5">
-        <span>{props.formatItemCount?.(itemCount()) ?? defaultItemCount(itemCount())}</span>
-        <Show when={browser.filterQueryApplied().trim()}>
-          <span aria-hidden="true">·</span>
-          <span>{props.filteredLabel ?? 'Filtered'}</span>
-        </Show>
-        <Show when={selectedCount() > 0}>
-          <span aria-hidden="true">·</span>
-          <span>{props.formatSelectedCount?.(selectedCount()) ?? defaultSelectedCount(selectedCount())}</span>
-        </Show>
-      </div>
-      <div
-        class={cn('max-w-[200px] truncate text-right', props.pathClass)}
-        title={browser.currentPath()}
+      <Show
+        when={!props.initializing}
+        fallback={
+          <>
+            <Skeleton class="h-[1.5em] w-12" />
+            <Skeleton class="h-[1.5em] w-32" />
+          </>
+        }
       >
-        {browser.currentPath()}
-      </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span>{props.formatItemCount?.(itemCount()) ?? defaultItemCount(itemCount())}</span>
+          <Show when={browser.filterQueryApplied().trim()}>
+            <span aria-hidden="true">·</span>
+            <span>{props.filteredLabel ?? 'Filtered'}</span>
+          </Show>
+          <Show when={selectedCount() > 0}>
+            <span aria-hidden="true">·</span>
+            <span>
+              {props.formatSelectedCount?.(selectedCount()) ??
+                defaultSelectedCount(selectedCount())}
+            </span>
+          </Show>
+        </div>
+        <div
+          class={cn('max-w-[200px] truncate text-right', props.pathClass)}
+          title={browser.currentPath()}
+        >
+          {browser.currentPath()}
+        </div>
+      </Show>
     </div>
   );
 }

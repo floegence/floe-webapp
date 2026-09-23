@@ -20,3 +20,5 @@ Note: local design/dev notes live in dotfile markdown (e.g. `.develop.md`, `.des
 - [Document reload presentation](reload-placeholder.md): preserve anonymous layout before application scripts and hand off after authorized restoration.
 
 - [Mobile application viewport](mobile-viewport.md): retain application geometry and input through browser chrome and soft-keyboard changes.
+
+- [File loading](file-loading.md): Preserve list, grid, and status geometry before the first successful directory response.

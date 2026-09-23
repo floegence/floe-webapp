@@ -97,6 +97,7 @@ jobs:
           pnpm test:activity-navigation
           node scripts/check-asset-recovery-browser.mjs
           pnpm test:file-menu
+          node scripts/check-file-loading-browser.mjs
 
       - name: Verify PDF surface
         run: |
