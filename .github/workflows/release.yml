@@ -120,6 +120,9 @@ jobs:
       - name: Verify mobile viewport in Chromium and WebKit
         run: node scripts/check-mobile-viewport-browser.mjs
 
+      - name: Verify overlay viewport in Chromium and WebKit
+        run: node scripts/check-overlay-viewport-browser.mjs
+
       - name: Verify input history public API in Chromium
         run: node scripts/check-input-history-browser.mjs
 

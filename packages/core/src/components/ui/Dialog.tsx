@@ -5,6 +5,7 @@ import {
   createSignal,
   createUniqueId,
   onCleanup,
+  onMount,
   untrack,
   type JSX,
 } from 'solid-js';
@@ -31,6 +32,8 @@ import {
 } from './surfacePortalScope';
 import { createFloatingPresence } from './floatingPresence';
 import { useDialogPlacement } from './DialogPlacementContext';
+import { observeViewport, viewportStyle, type ViewportSnapshot } from '../../viewport';
+import { resolveFloatingBoundary } from './surfaceFloatingBoundary';
 
 export interface DialogProps {
   open: boolean;
@@ -49,8 +52,8 @@ export interface DialogProps {
   children: JSX.Element;
   footer?: JSX.Element;
   class?: string;
-  /** Bottom drawers retain the same modal and surface-placement contract. */
-  presentation?: 'dialog' | 'bottom-drawer';
+  /** Drawers retain the same modal, visible-viewport and surface-placement contract. */
+  presentation?: 'dialog' | 'bottom-drawer' | 'side-drawer';
   /** Undefined uses the default header; null leaves only the accessible title. */
   header?: JSX.Element;
   contentClass?: string;
@@ -96,6 +99,8 @@ function cancelSurfacePortalFrame(frameHandle: number): void {
  */
 export function Dialog(props: DialogProps) {
   const placement = useDialogPlacement();
+  const [viewport, setViewport] = createSignal<ViewportSnapshot>();
+  onMount(() => onCleanup(observeViewport(window, setViewport)));
   const baseId = createUniqueId();
   const titleId = () => `dialog-${baseId}-title`;
   const descriptionId = () => `dialog-${baseId}-description`;
@@ -103,6 +108,7 @@ export function Dialog(props: DialogProps) {
   const [ownerAnchor, setOwnerAnchor] = createSignal<HTMLElement | null>(null);
   const [ownerAnchorReadyVersion, setOwnerAnchorReadyVersion] = createSignal(0);
   const [surfaceGeometryVersion, setSurfaceGeometryVersion] = createSignal(0);
+  const isSideDrawer = () => props.presentation === 'side-drawer';
   const isBottomDrawer = () => props.presentation === 'bottom-drawer';
   const isMountedOpen = () => props.open && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
   const dialogPresence = createFloatingPresence({
@@ -134,10 +140,12 @@ export function Dialog(props: DialogProps) {
     isSurfaceMode() ? resolveSurfacePortalMount(surfaceHost()) : undefined;
   const globalZIndex = () => props.globalZIndex ?? placement.globalZIndex();
   const readProjectedBoundaryRectForHost = (host: ResolvedDialogSurfaceHost) =>
-    projectSurfacePortalRect(resolveSurfacePortalBoundaryRect(host), host);
+    projectSurfacePortalRect(
+      resolveFloatingBoundary(host, undefined, untrack(viewport)?.safeArea) ?? resolveSurfacePortalBoundaryRect(host), host);
   const readProjectedBoundaryRect = () => readProjectedBoundaryRectForHost(surfaceHost());
   const projectedBoundaryRect = createMemo(() => {
     surfaceGeometryVersion();
+    viewport();
     return readProjectedBoundaryRect();
   });
 
@@ -237,8 +245,9 @@ export function Dialog(props: DialogProps) {
             class={cn(
               isSurfaceMode()
                 ? 'absolute z-20 box-border p-3'
-                : cn('fixed inset-0 box-border p-4', globalZIndex() === undefined && 'z-50'),
+                : cn('fixed box-border p-4', globalZIndex() === undefined && 'z-50'),
               isBottomDrawer() && 'floe-bottom-drawer-overlay',
+              isSideDrawer() && 'floe-side-drawer-overlay',
               dialogPresence.exiting() && !isBottomDrawer() && 'pointer-events-none'
             )}
             style={
@@ -249,7 +258,18 @@ export function Dialog(props: DialogProps) {
                     width: `${projectedBoundaryRect().width}px`,
                     height: `${projectedBoundaryRect().height}px`,
                   }
-                : { 'z-index': globalZIndex() }
+                : {
+                    ...(viewport() ? viewportStyle(viewport()!) : { inset: '0' }),
+                    '--floe-dialog-safe-top': `${viewport()?.safeArea.top ?? 0}px`,
+                    '--floe-dialog-safe-right': `${viewport()?.safeArea.right ?? 0}px`,
+                    '--floe-dialog-safe-bottom': `${viewport()?.safeArea.bottom ?? 0}px`,
+                    '--floe-dialog-safe-left': `${viewport()?.safeArea.left ?? 0}px`,
+                    'padding-top': 'max(var(--floe-dialog-gap-y, 1rem), var(--floe-dialog-safe-top))',
+                    'padding-right': 'max(var(--floe-dialog-gap-x, 1rem), var(--floe-dialog-safe-right))',
+                    'padding-bottom': 'max(var(--floe-dialog-gap-y, 1rem), var(--floe-dialog-safe-bottom))',
+                    'padding-left': 'max(var(--floe-dialog-gap-x, 1rem), var(--floe-dialog-safe-left))',
+                    'z-index': globalZIndex(),
+                  }
             }
           >
             {/* Backdrop */}
@@ -275,8 +295,8 @@ export function Dialog(props: DialogProps) {
             {/* Dialog */}
             <div
               class={cn(
-                'pointer-events-none relative z-[1] flex h-full w-full justify-center',
-                isBottomDrawer() ? 'items-end' : 'items-center'
+                'pointer-events-none relative z-[1] flex h-full w-full',
+                isSideDrawer() ? 'items-stretch justify-end' : isBottomDrawer() ? 'items-end justify-center' : 'items-center justify-center'
               )}
             >
               <div
@@ -290,14 +310,15 @@ export function Dialog(props: DialogProps) {
                 class={cn(
                   isSurfaceMode()
                     ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
-                    : 'w-full max-w-md max-h-[85vh]',
+                    : 'w-full max-w-md',
                   'bg-card text-card-foreground rounded-md shadow-lg',
                   'border border-border',
                   'floe-floating-presence',
-                  isBottomDrawer() ? 'floe-bottom-drawer-panel' : 'floe-floating-dialog-panel',
+                  isBottomDrawer() ? 'floe-bottom-drawer-panel' : isSideDrawer() ? 'floe-side-drawer-panel' : 'floe-floating-dialog-panel',
                   'pointer-events-auto flex flex-col',
                   props.class
                 )}
+                style={{ 'max-height': '100%', 'min-height': '0', 'min-width': '0' }}
                 data-floating-presence={dialogPresence.state()}
                 inert={isBottomDrawer() && dialogPresence.exiting()}
                 role="dialog"
@@ -324,7 +345,7 @@ export function Dialog(props: DialogProps) {
                   <Show when={props.title}>
                     <div
                       data-floe-dialog-header
-                      class="flex items-start justify-between p-3 border-b border-border"
+                      class="flex shrink-0 items-start justify-between p-3 border-b border-border"
                     >
                       <div>
                         <Show when={props.title}>
@@ -369,7 +390,7 @@ export function Dialog(props: DialogProps) {
                 <Show when={props.footer}>
                   <div
                     data-floe-dialog-footer
-                    class="flex items-center justify-end gap-2 p-3 border-t border-border"
+                    class="flex shrink-0 items-center justify-end gap-2 p-3 border-t border-border"
                   >
                     {props.footer}
                   </div>

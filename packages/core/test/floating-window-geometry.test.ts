@@ -18,6 +18,19 @@ describe('floatingWindowGeometry', () => {
     });
   });
 
+  it('keeps a panned visible viewport origin when applying safe edge insets', () => {
+    expect(resolveFloatingWindowViewport(
+      { x: -20, y: 90, width: 390, height: 320 },
+      { top: 12, right: 10, bottom: 16, left: 10 },
+    )).toEqual({ x: -10, y: 102, width: 370, height: 292 });
+    expect(normalizeFloatingWindowRect({
+      rect: { x: 0, y: 0, width: 900, height: 900 },
+      minSize: { width: 420, height: 320 }, maxSize: { width: 1200, height: 1200 },
+      viewport: { x: 20, y: 120, width: 350, height: 280 },
+      mobile: false, mobilePadding: 16,
+    })).toEqual({ x: 20, y: 120, width: 350, height: 280 });
+  });
+
   it('commits the final pointer position when resizing from the east edge', () => {
     expect(resolveFloatingWindowRect({
       mode: 'resize',

@@ -608,8 +608,7 @@ describe('dialog surface scope', () => {
     expect(exitingOverlay?.getAttribute('aria-hidden')).toBe('true');
     expect(exitingOverlay?.classList.contains('pointer-events-none')).toBe(true);
 
-    await flushFloatingExit();
-    expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+    await vi.waitFor(() => expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull());
   });
 
   it('does not swallow clicks for a different local host while the dialog stays open', async () => {
@@ -664,8 +663,7 @@ describe('dialog surface scope', () => {
     expect(exitingOverlay?.getAttribute('data-floating-presence')).toBe('exiting');
     expect(exitingOverlay?.getAttribute('aria-hidden')).toBe('true');
 
-    await flushFloatingExit();
-    expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+    await vi.waitFor(() => expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull());
   });
 
   it('keeps a surface dialog clickable when mounted inside an infinite-canvas host', async () => {

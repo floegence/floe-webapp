@@ -25,10 +25,11 @@ import {
   type FloatingWindowResizeHandle,
   type FloatingWindowViewportInsets,
 } from './floatingWindowGeometry';
+import { observeViewport, type ViewportSnapshot } from '../../viewport';
 import { createFloatingPresence } from './floatingPresence';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
 import { SURFACE_FLOATING_LAYER_ATTR, SURFACE_PORTAL_LAYER_ATTR, resolveSurfacePortalHost } from './surfacePortalScope';
-import { resolveFloatingBoundary, readSurfaceSafeArea, type SurfaceFloatingBoundary } from './surfaceFloatingBoundary';
+import { resolveFloatingBoundary, type SurfaceFloatingBoundary } from './surfaceFloatingBoundary';
 
 export interface FloatingWindowProps {
   /** Whether the window is open */
@@ -85,16 +86,16 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const minSize = () => props.minSize ?? { width: 200, height: 150 };
   const maxSize = () => props.maxSize ?? { width: Infinity, height: Infinity };
   let anchor: HTMLSpanElement | undefined;
-  const safeArea = readSurfaceSafeArea();
-  const [boundaryInsets, setBoundaryInsets] = createSignal<FloatingWindowViewportInsets>({});
-  const [boundaryWidth, setBoundaryWidth] = createSignal(Infinity);
+  const [viewport, setViewport] = createSignal<ViewportSnapshot>();
+  const [boundary, setBoundary] = createSignal<FloatingWindowRect>({ x: 0, y: 0, width: 0, height: 0 }, {
+    equals: (a, b) => a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height,
+  });
   const [boundaryVisible, setBoundaryVisible] = createSignal(true);
-  const compact = () => Boolean(props.compactBelow && boundaryWidth() < props.compactBelow);
-  const viewportInsets = () => ({
-    top: (boundaryInsets().top ?? 0) + (props.viewportInsets?.top ?? 0),
-    right: (boundaryInsets().right ?? 0) + (props.viewportInsets?.right ?? 0),
-    bottom: (boundaryInsets().bottom ?? 0) + (props.viewportInsets?.bottom ?? 0),
-    left: (boundaryInsets().left ?? 0) + (props.viewportInsets?.left ?? 0),
+  const compact = () => Boolean(props.compactBelow && boundary().width < props.compactBelow);
+  const viewportInsets = () => props.viewportInsets;
+  const fixedPosition = (rect: { x: number; y: number }) => ({
+    x: rect.x + (viewport()?.fixedOffset.left ?? 0),
+    y: rect.y + (viewport()?.fixedOffset.top ?? 0),
   });
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
@@ -139,7 +140,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   let preferredPlacement: { x: number; y: number } | undefined;
   const rememberPreference = (rect: FloatingWindowRect) => {
     preferredRect = { ...rect };
-    const bounds = resolveFloatingWindowViewport({ width: window.innerWidth, height: window.innerHeight }, viewportInsets());
+    const bounds = resolveFloatingWindowViewport(boundary(), viewportInsets());
     preferredPlacement = {
       x: bounds.width > rect.width ? (rect.x - bounds.x) / (bounds.width - rect.width) : (preferredPlacement?.x ?? 0.5),
       y: bounds.height > rect.height ? (rect.y - bounds.y) / (bounds.height - rect.height) : (preferredPlacement?.y ?? 0.5),
@@ -175,7 +176,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const applyWindowRect = (rect: FloatingWindowRect) => {
     liveRect = rect;
     if (!windowRef) return;
-    windowRef.style.transform = `translate3d(${rect.x}px, ${rect.y}px, 0)`;
+    const fixed = fixedPosition(rect);
+    windowRef.style.transform = `translate3d(${fixed.x}px, ${fixed.y}px, 0)`;
     windowRef.style.width = `${rect.width}px`;
     windowRef.style.height = `${rect.height}px`;
   };
@@ -255,7 +257,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       resizeHandle,
       minSize: minSize(),
       maxSize: maxSize(),
-      viewport: { width: window.innerWidth, height: window.innerHeight },
+      viewport: boundary(),
       viewportInsets: viewportInsets(),
       mobile: isMobile(),
       mobilePadding: MOBILE_PADDING,
@@ -265,7 +267,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const syncRectToViewport = (options?: { center?: boolean }) => {
     if (typeof window === 'undefined') return;
 
-    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    const viewport = boundary();
     if (isMaximized() || compact()) {
       setCommittedRect(resolveFloatingWindowViewport(viewport, viewportInsets()));
       return;
@@ -330,35 +332,30 @@ export function FloatingWindow(props: FloatingWindowProps) {
   onCleanup(() => stopInteraction(false));
 
   onMount(() => {
-    let frame = 0;
     const measureBoundary = () => {
-      if (props.boundary !== undefined) {
-        const rect = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: anchor }), props.boundary, safeArea);
-        const next = rect ? { top: rect.top, left: rect.left, right: window.innerWidth - rect.right, bottom: window.innerHeight - rect.bottom } : {};
-        batch(() => {
-          setBoundaryVisible(Boolean(rect && rect.width > 16 && rect.height > 16));
-          setBoundaryWidth(rect?.width ?? 0);
-          setBoundaryInsets(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
-        });
-      } else {
-        setBoundaryVisible(true);
-        setBoundaryWidth(window.innerWidth);
-        setBoundaryInsets(previous => Object.keys(previous).length ? {} : previous);
-      }
-      frame = requestAnimationFrame(measureBoundary);
+      const snapshot = viewport();
+      const host = props.boundary === undefined
+        ? { host: null, boundaryHost: null, mountHost: null, mode: 'global' as const }
+        : resolveSurfacePortalHost({ owner: anchor });
+      const rect = resolveFloatingBoundary(host, props.boundary, snapshot?.safeArea);
+      batch(() => {
+        setBoundaryVisible(Boolean(rect && rect.width > 16 && rect.height > 16));
+        setBoundary(rect ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
+          : { x: 0, y: 0, width: 0, height: 0 });
+      });
     };
-    measureBoundary();
-    onCleanup(() => cancelAnimationFrame(frame));
-    if (!props.open) {
-      syncRectToViewport({ center: !props.defaultPosition });
-    }
-
-    const handleResize = () => {
-      if (activePointerId !== null) return;
-      syncRectToViewport({ center: false });
-    };
-    window.addEventListener('resize', handleResize);
-    onCleanup(() => window.removeEventListener('resize', handleResize));
+    onCleanup(observeViewport(window, snapshot => {
+      batch(() => { setViewport(snapshot); untrack(measureBoundary); });
+    }));
+    // Explicit surface boundaries can move with a Workbench transform without a resize.
+    createEffect(() => {
+      if (!props.open || props.boundary === undefined) return;
+      let frame = 0;
+      const followBoundary = () => { untrack(measureBoundary); frame = requestAnimationFrame(followBoundary); };
+      followBoundary();
+      onCleanup(() => cancelAnimationFrame(frame));
+    });
+    if (!props.open) syncRectToViewport({ center: !props.defaultPosition });
   });
 
   createEffect(() => {
@@ -378,6 +375,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   createEffect(() => {
     viewportInsets();
+    boundary();
     compact();
     if (!props.open || !hasOpenedOnce || activePointerId !== null) return;
     untrack(() => syncRectToViewport({ center: false }));
@@ -583,7 +581,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             visibility: boundaryVisible() ? undefined : 'hidden',
             width: `${size().width}px`,
             height: `${size().height}px`,
-            transform: `translate3d(${position().x}px, ${position().y}px, 0)`,
+            transform: `translate3d(${fixedPosition(position()).x}px, ${fixedPosition(position()).y}px, 0)`,
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,
           }}
@@ -682,7 +680,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
             <div
               data-floe-floating-window-content="true"
-              class="flex-1 overflow-auto p-3"
+              class="min-h-0 flex-1 overflow-auto overscroll-contain p-3"
             >
               {props.children}
             </div>

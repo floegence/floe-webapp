@@ -455,10 +455,29 @@
     --floe-floating-exit-scale: 1;
   }
 
+  .floe-side-drawer-overlay {
+    --floe-dialog-gap-y: 0px;
+    --floe-dialog-gap-x: 0px;
+    padding: 0;
+  }
+
+  .floe-side-drawer-panel {
+    height: 100%;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    --floe-floating-enter-x: min(8rem, 18vw);
+    --floe-floating-exit-x: min(6rem, 14vw);
+    --floe-floating-enter-y: 0;
+    --floe-floating-exit-y: 0;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
+    --floe-floating-origin: right center;
+  }
+
   .floe-bottom-drawer-overlay {
-    padding: max(1.25rem, env(safe-area-inset-top, 0px))
-      max(1.5rem, env(safe-area-inset-right, 0px)) max(1.25rem, env(safe-area-inset-bottom, 0px))
-      max(1.5rem, env(safe-area-inset-left, 0px));
+    --floe-dialog-gap-y: 1.25rem;
+    --floe-dialog-gap-x: 1.5rem;
+    padding: var(--floe-dialog-gap-y) var(--floe-dialog-gap-x);
   }
 
   .floe-bottom-drawer-backdrop {
@@ -480,9 +499,8 @@
 
   @media (max-width: 639px) {
     .floe-bottom-drawer-overlay {
-      padding: max(0.75rem, env(safe-area-inset-top, 0px))
-        max(0.75rem, env(safe-area-inset-right, 0px)) max(0.75rem, env(safe-area-inset-bottom, 0px))
-        max(0.75rem, env(safe-area-inset-left, 0px));
+      --floe-dialog-gap-y: 0.75rem;
+      --floe-dialog-gap-x: 0.75rem;
     }
   }
 

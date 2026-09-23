@@ -49,7 +49,7 @@ interface ResolveFloatingWindowRectOptions {
   resizeHandle: FloatingWindowResizeHandle;
   minSize: Size;
   maxSize: Size;
-  viewport: Size;
+  viewport: Size & { x?: number; y?: number };
   viewportInsets?: FloatingWindowViewportInsets;
   mobile: boolean;
   mobilePadding: number;
@@ -59,7 +59,7 @@ interface NormalizeFloatingWindowRectOptions {
   rect: FloatingWindowRect;
   minSize: Size;
   maxSize: Size;
-  viewport: Size;
+  viewport: Size & { x?: number; y?: number };
   viewportInsets?: FloatingWindowViewportInsets;
   mobile: boolean;
   mobilePadding: number;
@@ -83,7 +83,7 @@ function normalizeInset(value: unknown): number {
 }
 
 export function resolveFloatingWindowViewport(
-  viewport: Size,
+  viewport: Size & { x?: number; y?: number },
   insets: FloatingWindowViewportInsets = {},
 ): FloatingWindowViewport {
   const viewportWidth = Math.max(0, viewport.width);
@@ -94,8 +94,8 @@ export function resolveFloatingWindowViewport(
   const bottom = Math.min(normalizeInset(insets.bottom), Math.max(0, viewportHeight - top));
 
   return {
-    x: left,
-    y: top,
+    x: (viewport.x ?? 0) + left,
+    y: (viewport.y ?? 0) + top,
     width: Math.max(0, viewportWidth - left - right),
     height: Math.max(0, viewportHeight - top - bottom),
   };

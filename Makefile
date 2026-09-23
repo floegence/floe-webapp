@@ -2,7 +2,7 @@
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input mobile-viewport
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input mobile-viewport overlay-viewport
 
 install:
 	pnpm install --frozen-lockfile
@@ -69,3 +69,7 @@ remote-input:
 .PHONY: mobile-viewport
 mobile-viewport:
 	node scripts/check-mobile-viewport-browser.mjs
+
+.PHONY: overlay-viewport
+overlay-viewport:
+	node scripts/check-overlay-viewport-browser.mjs
