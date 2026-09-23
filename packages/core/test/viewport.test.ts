@@ -53,4 +53,12 @@ describe('visible application viewport', () => {
     expect(rotated.keyboardOpen).toBe(false);
     expect(resolveViewportSnapshot({ ...source, visualViewport: null }).visible.height).toBe(744);
   });
+
+  it('converts fixed geometry through inherited CSS zoom without scaling client bounds', () => {
+    const snapshot = resolveViewportSnapshot({ ...source, fixedScale: 2,
+      fixedOrigin: { left: -20, top: -100 },
+      visualViewport: { ...source.visualViewport, offsetLeft: 30, offsetTop: 120 } });
+    expect(snapshot.visible).toMatchObject({ left: 10, top: 20, width: 390, height: 744 });
+    expect(viewportStyle(snapshot)).toEqual({ position: 'fixed', left: '15px', top: '60px', width: '195px', height: '372px' });
+  });
 });

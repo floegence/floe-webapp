@@ -260,10 +260,10 @@ export function Dialog(props: DialogProps) {
                   }
                 : {
                     ...(viewport() ? viewportStyle(viewport()!) : { inset: '0' }),
-                    '--floe-dialog-safe-top': `${viewport()?.safeArea.top ?? 0}px`,
-                    '--floe-dialog-safe-right': `${viewport()?.safeArea.right ?? 0}px`,
-                    '--floe-dialog-safe-bottom': `${viewport()?.safeArea.bottom ?? 0}px`,
-                    '--floe-dialog-safe-left': `${viewport()?.safeArea.left ?? 0}px`,
+                    '--floe-dialog-safe-top': `${(viewport()?.safeArea.top ?? 0) / (viewport()?.fixedScale ?? 1)}px`,
+                    '--floe-dialog-safe-right': `${(viewport()?.safeArea.right ?? 0) / (viewport()?.fixedScale ?? 1)}px`,
+                    '--floe-dialog-safe-bottom': `${(viewport()?.safeArea.bottom ?? 0) / (viewport()?.fixedScale ?? 1)}px`,
+                    '--floe-dialog-safe-left': `${(viewport()?.safeArea.left ?? 0) / (viewport()?.fixedScale ?? 1)}px`,
                     'padding-top': 'max(var(--floe-dialog-gap-y, 1rem), var(--floe-dialog-safe-top))',
                     'padding-right': 'max(var(--floe-dialog-gap-x, 1rem), var(--floe-dialog-safe-right))',
                     'padding-bottom': 'max(var(--floe-dialog-gap-y, 1rem), var(--floe-dialog-safe-bottom))',

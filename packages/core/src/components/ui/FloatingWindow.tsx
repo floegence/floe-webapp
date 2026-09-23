@@ -93,9 +93,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [boundaryVisible, setBoundaryVisible] = createSignal(true);
   const compact = () => Boolean(props.compactBelow && boundary().width < props.compactBelow);
   const viewportInsets = () => props.viewportInsets;
+  const fixedScale = () => viewport()?.fixedScale ?? 1;
   const fixedPosition = (rect: { x: number; y: number }) => ({
-    x: rect.x + (viewport()?.fixedOffset.left ?? 0),
-    y: rect.y + (viewport()?.fixedOffset.top ?? 0),
+    x: (rect.x + (viewport()?.fixedOffset.left ?? 0)) / fixedScale(),
+    y: (rect.y + (viewport()?.fixedOffset.top ?? 0)) / fixedScale(),
   });
   const zIndex = () => props.zIndex ?? 100;
   const baseId = createUniqueId();
@@ -178,8 +179,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (!windowRef) return;
     const fixed = fixedPosition(rect);
     windowRef.style.transform = `translate3d(${fixed.x}px, ${fixed.y}px, 0)`;
-    windowRef.style.width = `${rect.width}px`;
-    windowRef.style.height = `${rect.height}px`;
+    windowRef.style.width = `${rect.width / fixedScale()}px`;
+    windowRef.style.height = `${rect.height / fixedScale()}px`;
   };
 
   const readCommittedRect = (): FloatingWindowRect => {
@@ -579,8 +580,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
           )}
           style={{
             visibility: boundaryVisible() ? undefined : 'hidden',
-            width: `${size().width}px`,
-            height: `${size().height}px`,
+            width: `${size().width / fixedScale()}px`,
+            height: `${size().height / fixedScale()}px`,
             transform: `translate3d(${fixedPosition(position()).x}px, ${fixedPosition(position()).y}px, 0)`,
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,

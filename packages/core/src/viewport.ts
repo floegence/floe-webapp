@@ -16,14 +16,17 @@ export interface ViewportSnapshot {
   layout: { width: number; height: number };
   safeArea: ViewportInsets;
   keyboardOpen: boolean;
-  /** Add to client coordinates when positioning a document-level fixed element. */
+  /** Add to client coordinates before dividing by fixedScale for document-level fixed CSS. */
   fixedOffset: { left: number; top: number };
+  /** Effective CSS zoom inherited by a document-body portal. Client bounds stay unscaled. */
+  fixedScale: number;
 }
 
 export interface ViewportSource {
   width: number;
   height: number;
   fixedOrigin?: { left: number; top: number };
+  fixedScale?: number;
   visualViewport?: {
     width: number; height: number; offsetLeft: number; offsetTop: number; scale?: number;
   } | null;
@@ -52,6 +55,7 @@ export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapsho
     safeArea: { ...source.safeArea, bottom: keyboardOpen ? 0 : source.safeArea.bottom },
     keyboardOpen,
     fixedOffset: { left: -origin.left, top: -origin.top },
+    fixedScale: dimension(source.fixedScale, 1),
   };
 }
 
@@ -76,9 +80,10 @@ function measure(view: Window, probe: HTMLElement): ViewportSnapshot {
   const inset = (value: string) => Math.max(0, Number.parseFloat(value) || 0);
   return resolveViewportSnapshot({
     width: rect.width || view.innerWidth,
-    height: rect.height || view.innerHeight,
+    height: rect.height / dimension(probe.currentCSSZoom, 1) || view.innerHeight,
     visualViewport: view.visualViewport,
     fixedOrigin: { left: rect.left, top: rect.top },
+    fixedScale: view.document.body?.currentCSSZoom,
     safeArea: { top: inset(css.paddingTop), right: inset(css.paddingRight), bottom: inset(css.paddingBottom), left: inset(css.paddingLeft) },
     editing: editableFocus(view.document),
     touch: view.matchMedia?.('(any-pointer: coarse)').matches ?? false,
@@ -117,8 +122,15 @@ export function observeViewport(view: Window, listener: (snapshot: ViewportSnaps
     ];
     if (view.visualViewport) targets.push([view.visualViewport, 'resize'], [view.visualViewport, 'scroll']);
     for (const [target, event] of targets) target.addEventListener(event, schedule);
+    // CSS zoom can change without a viewport resize. Observe only document roots,
+    // not content mutations or floating geometry writes.
+    const zoomObserver = new MutationObserver(schedule);
+    for (const root of [view.document.documentElement, view.document.body]) {
+      if (root) zoomObserver.observe(root, { attributes: true, attributeFilter: ['class', 'style'] });
+    }
     current.dispose = () => {
       for (const [target, event] of targets) target.removeEventListener(event, schedule);
+      zoomObserver.disconnect();
       if (frame) view.cancelAnimationFrame(frame);
       probe.remove();
       observers.delete(view);
@@ -137,7 +149,7 @@ export function observeViewport(view: Window, listener: (snapshot: ViewportSnaps
 
 /** Apply to one top-level application container, not nested content surfaces. */
 export function viewportStyle(snapshot: ViewportSnapshot): Record<string, string> {
-  const { visible } = snapshot;
-  return { position: 'fixed', left: `${visible.left + snapshot.fixedOffset.left}px`, top: `${visible.top + snapshot.fixedOffset.top}px`,
-    width: `${visible.width}px`, height: `${visible.height}px` };
+  const { visible, fixedScale } = snapshot;
+  return { position: 'fixed', left: `${(visible.left + snapshot.fixedOffset.left) / fixedScale}px`, top: `${(visible.top + snapshot.fixedOffset.top) / fixedScale}px`,
+    width: `${visible.width / fixedScale}px`, height: `${visible.height / fixedScale}px` };
 }

@@ -63,7 +63,7 @@ render(()=><App/>,document.getElementById('root'));
         const assertBounds=async()=>{
           await page.waitForFunction(()=>{
             const rect=document.querySelector('[role=dialog]')?.getBoundingClientRect(),v=window.viewportSnapshot;
-            if(!v || v.visible.width!==window.visualViewport.width || v.visible.height!==window.visualViewport.height || Math.abs(v.visible.top+v.fixedOffset.top-window.visualViewport.offsetTop)>1 || Math.abs(v.visible.left+v.fixedOffset.left-window.visualViewport.offsetLeft)>1) return false;
+            if(!v || v.fixedScale!==document.body.currentCSSZoom || v.visible.width!==window.visualViewport.width || v.visible.height!==window.visualViewport.height || Math.abs(v.visible.top+v.fixedOffset.top-window.visualViewport.offsetTop)>1 || Math.abs(v.visible.left+v.fixedOffset.left-window.visualViewport.offsetLeft)>1) return false;
             return rect && rect.top>=v.visible.top+v.safeArea.top-1 && rect.bottom<=v.visible.bottom-v.safeArea.bottom+1 && rect.left>=v.visible.left+v.safeArea.left-1 && rect.right<=v.visible.right-v.safeArea.right+1;
           },null,{timeout:3000});
           const close=page.getByRole('button',{name:'Close',exact:true});
@@ -78,6 +78,14 @@ render(()=><App/>,document.getElementById('root'));
           await page.evaluate(()=>window.setVisibleRect({height:320,offsetTop:120}));await assertBounds();
           assert.deepEqual(await input.evaluate(el=>({same:el===window.originalEditor,focused:document.activeElement===el,value:el.value,start:el.selectionStart,end:el.selectionEnd})),{same:true,focused:true,value:'Retained 中文 draft',start:3,end:5});
           await page.evaluate(()=>window.setVisibleRect({height:700,offsetTop:44}));await assertBounds();
+        }
+        // CSS zoom changes fixed CSS units while client viewport coordinates stay stable.
+        for (const target of ['body', 'documentElement']) {
+          await page.evaluate(target=>{document[target].style.zoom='2';}, target);
+          await assertBounds();
+          assert.equal(await input.inputValue(), 'Retained 中文 draft');
+          await page.evaluate(target=>{document[target].style.zoom='';}, target);
+          await assertBounds();
         }
         // Safari can pan the fixed containing block while the keyboard is open.
         await page.evaluate(()=>{document.documentElement.style.transform='translateY(-110px)';window.setVisibleRect({height:320,offsetTop:120});});

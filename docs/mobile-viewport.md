@@ -3,9 +3,11 @@
 `@floegence/floe-webapp-core/viewport` exposes `observeViewport`,
 `readViewportSnapshot`, and `viewportStyle` without a framework dependency.
 One observer per Window measures dynamic content size, visual viewport bounds,
-safe areas, and focused-editor keyboard occlusion. Visible bounds use client CSS pixels. `fixedOffset` converts client coordinates
-to fixed CSS positioning, including Safari keyboard page panning. `viewportStyle`
-applies that conversion once. Browser chrome changes, pinch zoom, and hardware-keyboard focus do not
+safe areas, and focused-editor keyboard occlusion. Visible bounds use client CSS pixels.
+Add `fixedOffset` and divide by `fixedScale` to convert client coordinates into
+document-body fixed CSS positioning, including Safari keyboard page panning and
+inherited CSS zoom. `viewportStyle` applies that conversion once. The shared
+observer tracks document-root zoom changes without polling. Browser chrome changes, pinch zoom, and hardware-keyboard focus do not
 by themselves indicate a soft keyboard. Subscriptions share event-driven updates;
 the last unsubscribe removes listeners and the measurement probe.
 
@@ -51,5 +53,5 @@ retain their existing frame-based transform observation.
 
 `scripts/check-overlay-viewport-browser.mjs` covers all three dialog presentations
 and floating windows in Chromium and WebKit, including safe areas, fixed-origin
-panning, repeated keyboard occlusion, rotation, editor retention and reading the
+panning, CSS zoom, repeated keyboard occlusion, rotation, editor retention and reading the
 last line. Run it with `--serve` for a task-owned Simulator Safari fixture.
