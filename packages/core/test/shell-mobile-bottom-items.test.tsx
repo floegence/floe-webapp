@@ -17,6 +17,22 @@ function renderWithCoreProviders(node: () => unknown): string {
 }
 
 describe('Shell mobile activityBottomItems', () => {
+  it('reclaims the mobile header while keeping a fixed navigation action outside scrolling tabs', async () => {
+    const { Shell } = await import('../src/components/layout/Shell');
+    const Icon = () => <span />;
+    const html = renderWithCoreProviders(() => (
+      <Shell topBarMobileMode="hidden"
+        activityItems={[{ id: 'main', icon: Icon, label: 'Main' }]}
+        mobileNavigationActions={[{ id: 'more', icon: Icon, label: 'More', onClick: () => {} }]}>
+        <button>Retained page</button>
+      </Shell>
+    ));
+    expect(html).not.toContain('data-floe-shell-slot="top-bar"');
+    expect(html).toContain('data-floe-mobile-navigation-actions');
+    expect(html).toContain('aria-label="More"');
+    expect(html).toContain('Retained page');
+  });
+
   it('should render activityBottomItems in TopBar actions when enabled', async () => {
     const { Shell } = await import('../src/components/layout/Shell');
     const DummyIcon = (p: { class?: string }) => <span class={p.class} />;
@@ -57,4 +73,3 @@ describe('Shell mobile activityBottomItems', () => {
     expect(html).toContain('data-test="custom-action"');
   });
 });
-

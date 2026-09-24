@@ -25,6 +25,18 @@ Use this shared contract instead of adding page-specific landmark wrappers aroun
 The shared navigation primitives carry the keyboard behavior that downstream apps should rely on:
 
 - `Tabs` and `MobileTabBar` implement roving `tabIndex` plus arrow/home/end navigation. Mobile navigation items forward the same disclosure state, controlled surface ID, popup kind, and trigger reference as `ActivityBar`, so product drawers can announce their state and restore focus to the actual mobile trigger.
+
+### Mobile shell navigation panels
+
+`Shell` accepts `topBarMobileMode="hidden"` to reclaim the toolbar row below the configured mobile breakpoint. Shell retains the top safe area. The default remains `visible`.
+
+`mobileNavigationActions` takes `MobileTabBarItem[]` and renders fixed 64px action buttons after the scrolling tabs. These are disclosure buttons rather than page tabs; supply localized labels, `ariaExpanded`, `ariaControls`, `ariaHasPopup`, and `buttonRef` as appropriate.
+
+`mobileNavigationPanel` takes `MobileNavigationPanelProps`: a stable `id`, controlled `open` and `onOpenChange`, localized `title`, `children`, and optional `trigger`, `closeLabel`, `header`, `class`, `contentClass`, `onKeyDown`, and `onPresenceChange`. Its default header supplies identity and a close button. `header={null}` lets an existing content surface supply these controls; mark its intended entry focus with `data-floe-autofocus`. Guidance belongs in the body.
+
+The panel is local to the Shell content area. Its backdrop and exit animation never cover bottom navigation. Covered content remains inert through exit, while Tab can traverse the panel and navigation. A panel is not a global modal and does not set `aria-modal`. Real global Dialogs retain precedence. The Shell keeps navigation visible above the software keyboard while a panel is present. Changing to desktop closes the panel without recreating page content.
+
+Hosts close the controlled panel when selecting a page and coordinate mutually exclusive product disclosures. Escape bubbles through nested controls first. Default close and backdrop dismissal restore the supplied trigger without scrolling; navigation-driven closes leave focus to the destination. The executable example in `packages/core/test/browser/mobile-navigation.tsx` demonstrates disclosure, retained content, search, and a nested global confirmation.
 - `Dropdown` exposes a semantic trigger wrapper, `aria-haspopup`, `aria-expanded`, and wrapped menu-item traversal rules.
 - `SidebarPane` mobile overlays use dialog semantics instead of visually-only drawers.
 

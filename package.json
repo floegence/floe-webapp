@@ -34,6 +34,7 @@
     "test:workbench-header": "node scripts/check-workbench-header-browser.mjs",
     "test:persistent-scrollbar": "node scripts/check-persistent-scrollbar-browser.mjs",
     "test:activity-navigation": "node scripts/check-activity-navigation-browser.mjs",
+    "test:mobile-navigation": "node scripts/check-mobile-navigation-browser.mjs",
     "test:pdf": "node scripts/check-pdf-browser.mjs",
     "test:window-status": "node scripts/check-window-status-browser.mjs",
     "test:remote-pointer": "node scripts/check-remote-pointer-browser.mjs --all"

@@ -1,4 +1,5 @@
 export { Shell, type ShellProps, type ShellSlotClassNames } from './Shell';
+export type { MobileNavigationPanelProps } from './MobileNavigationPanel';
 export { ActivityBar, type ActivityBarItem, type ActivityBarProps } from './ActivityBar';
 export type {
   BarItemContextMenuHandler,

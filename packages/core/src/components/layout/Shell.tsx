@@ -12,7 +12,8 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { TopBarIconButton } from './TopBarIconButton';
 import { BottomBar } from './BottomBar';
-import { MobileTabBar } from './MobileTabBar';
+import { MobileTabBar, type MobileTabBarItem } from './MobileTabBar';
+import { MobileNavigationPanel, type MobileNavigationPanelProps } from './MobileNavigationPanel';
 import { ActivityBar, type ActivityBarItem } from './ActivityBar';
 import { ResizeHandle } from './ResizeHandle';
 import { resolveMobileTabActiveId, resolveMobileTabSelect } from './mobileTabs';
@@ -44,6 +45,12 @@ export interface ShellSlotClassNames {
 }
 
 export interface ShellProps {
+  /** Defaults to visible; hidden transfers the top safe area to Shell. */
+  topBarMobileMode?: 'visible' | 'hidden';
+  /** Fixed actions outside the horizontally scrolling mobile tabs. */
+  mobileNavigationActions?: MobileTabBarItem[];
+  /** A controlled navigation surface above the persistent mobile tab bar. */
+  mobileNavigationPanel?: MobileNavigationPanelProps;
   children: JSX.Element;
   /** Fill a containing AppViewport or embedded host instead of the document viewport. */
   fillParent?: boolean;
@@ -107,6 +114,13 @@ export function Shell(props: ShellProps) {
   const floe = useResolvedFloeConfig();
   const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
+  const [navigationPanelPresent, setNavigationPanelPresent] = createSignal(false);
+  let navigationRef: HTMLElement | undefined;
+  const navigationPanelOpen = () => isMobile() && Boolean(props.mobileNavigationPanel?.open);
+  createEffect(() => {
+    if (!isMobile() && props.mobileNavigationPanel?.open) props.mobileNavigationPanel.onOpenChange(false);
+    if (navigationPanelOpen()) setMobileSidebarOpen(false);
+  });
   const [sidebarPreviewWidth, setSidebarPreviewWidth] = createSignal<number | null>(null);
   let mobileSidebarDrawerRef: HTMLDivElement | undefined;
   const sidebarHidden = () => props.sidebarMode === 'hidden';
@@ -403,6 +417,7 @@ export function Shell(props: ShellProps) {
         'bg-background text-foreground',
         // Prevent overscroll on the shell container
         'overscroll-none',
+        isMobile() && props.topBarMobileMode === 'hidden' && 'safe-top',
         props.slotClassNames?.root,
         props.class
       )}
@@ -420,15 +435,18 @@ export function Shell(props: ShellProps) {
       </a>
 
       {/* Top Bar */}
-      <TopBar
+      <Show when={!isMobile() || props.topBarMobileMode !== 'hidden'}><TopBar
         logo={props.logo}
         actions={effectiveTopBarActions()}
         ariaLabel={accessibility().topBarLabel}
         class={props.slotClassNames?.topBar}
-      />
+      /></Show>
 
       {/* Main area */}
+      <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden" data-floe-shell-slot="mobile-content-boundary">
       <div
+        inert={navigationPanelPresent()}
+        aria-hidden={navigationPanelPresent() ? 'true' : undefined}
         data-floe-shell-slot="main-layout"
         class="flex-1 min-h-0 flex overflow-hidden relative"
       >
@@ -544,15 +562,25 @@ export function Shell(props: ShellProps) {
       </div>
 
       <Show when={isMobile() && props.mobileAccessory}>
-        <div data-floe-shell-slot="mobile-accessory" class="relative shrink-0">{props.mobileAccessory}</div>
+        <div data-floe-shell-slot="mobile-accessory" class="relative shrink-0" inert={navigationPanelPresent()}>{props.mobileAccessory}</div>
       </Show>
+      <Show when={isMobile() && props.mobileNavigationPanel}>
+        <MobileNavigationPanel {...props.mobileNavigationPanel!} navigation={() => navigationRef}
+          onPresenceChange={(present) => {
+            setNavigationPanelPresent(present);
+            props.mobileNavigationPanel?.onPresenceChange?.(present);
+          }} />
+      </Show>
+      </div>
       {/* Bottom Bar / Mobile Tab Bar */}
       <Show when={!isMobile()}>
         <BottomBar class={props.slotClassNames?.bottomBar} height={props.slotClassNames?.bottomBarHeight}>{bottomBarContent()}</BottomBar>
       </Show>
-      <Show when={isMobile() && activityItems().length > 0}>
+      <Show when={isMobile() && (activityItems().length > 0 || props.mobileNavigationActions?.length)}>
         <MobileTabBar
-          hidden={Boolean(props.hideMobileNavigationWhenKeyboardOpen && keyboardOpen())}
+          ref={(element) => { navigationRef = element; }}
+          actions={props.mobileNavigationActions}
+          hidden={Boolean(props.hideMobileNavigationWhenKeyboardOpen && keyboardOpen() && !navigationPanelPresent())}
           items={activityItems()}
           activeId={resolveMobileTabActiveId({
             activeId: activityVisualActiveId(),

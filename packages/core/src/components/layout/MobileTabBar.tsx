@@ -14,6 +14,8 @@ export interface MobileTabBarItem extends Pick<ActivityBarItem, 'buttonRef' | 'a
 }
 
 export interface MobileTabBarProps {
+  ref?: (element: HTMLElement) => void;
+  actions?: MobileTabBarItem[];
   hidden?: boolean;
   items: MobileTabBarItem[];
   activeId: string;
@@ -80,6 +82,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
 
   return (
     <nav
+      ref={props.ref}
       hidden={props.hidden}
       data-floe-shell-slot="mobile-tab-bar"
       class={cn(
@@ -91,7 +94,8 @@ export function MobileTabBar(props: MobileTabBarProps) {
       style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
       aria-label={props.ariaLabel}
     >
-      <div class="relative h-14">
+      <div class="relative flex h-14">
+        <div class="relative min-w-0 flex-1">
         {/* Scroll indicators */}
         <Show when={canScrollLeft()}>
           <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
@@ -137,12 +141,22 @@ export function MobileTabBar(props: MobileTabBarProps) {
             )}
           </For>
         </div>
+        </div>
+        <Show when={props.actions?.length}>
+          <div data-floe-mobile-navigation-actions class="flex shrink-0 border-l border-border">
+            <For each={props.actions}>{(item) => <MobileTabItem item={item} action
+              isActive={false} index={0} itemCount={1}
+              onKeyboardSelect={() => {}}
+              onClick={() => item.onClick?.()} />}</For>
+          </div>
+        </Show>
       </div>
     </nav>
   );
 }
 
 interface MobileTabItemProps {
+  action?: boolean;
   item: MobileTabBarItem;
   isActive: boolean;
   index: number;
@@ -171,19 +185,22 @@ function MobileTabItem(props: MobileTabItemProps) {
         'min-w-16 h-full px-4 snap-center',
         'transition-[color] duration-150',
         'focus:outline-none focus-visible:bg-muted',
+        props.action && 'w-16 px-1',
+        expanded() && 'bg-muted text-foreground',
         props.isActive
           ? 'text-primary'
           : 'text-muted-foreground active:text-foreground'
       )}
       onClick={() => props.onClick()}
       aria-label={props.item.label}
-      aria-selected={props.isActive}
+      aria-selected={props.action ? undefined : props.isActive}
       aria-expanded={expanded()}
       aria-controls={props.item.ariaControls}
       aria-haspopup={props.item.ariaHasPopup}
-      role="tab"
-      tabIndex={props.isActive ? 0 : -1}
+      role={props.action ? undefined : 'tab'}
+      tabIndex={props.action || props.isActive ? 0 : -1}
       onKeyDown={(event) => {
+        if (props.action) return;
         let nextIndex: number | null = null;
         switch (event.key) {
           case 'ArrowRight':

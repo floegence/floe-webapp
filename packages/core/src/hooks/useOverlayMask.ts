@@ -17,6 +17,8 @@ const overlayMasks = new WeakMap<Document, OverlayMaskEntry[]>();
 export interface UseOverlayMaskOptions {
   open: Accessor<boolean>;
   root: Accessor<HTMLElement | undefined>;
+  /** Ordered focus regions that belong to one overlay, including persistent navigation. */
+  focusRoots?: Accessor<readonly HTMLElement[]>;
   onClose?: () => void;
   /** Treat additional nodes as part of the overlay surface (e.g. portaled layers). */
   containsTarget?: (target: EventTarget | null) => boolean;
@@ -205,7 +207,11 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       const root = options.root();
       if (!root) return;
 
-      const focusables = getFocusableElements(root);
+      const roots = options.focusRoots?.() ?? [root];
+      const focusables = options.focusRoots
+        ? [...new Set(roots.flatMap(getFocusableElements))].filter((element) =>
+            element.tabIndex >= 0 && !element.closest('[hidden], [inert], [aria-hidden="true"]'))
+        : getFocusableElements(root);
       if (!focusables.length) {
         e.preventDefault();
         try {
@@ -220,8 +226,17 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       const last = focusables[focusables.length - 1]!;
       const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
+      if (options.focusRoots) {
+        const index = active ? focusables.indexOf(active) : -1;
+        const next = index < 0 ? (e.shiftKey ? focusables.length - 1 : 0)
+          : (index + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length;
+        e.preventDefault();
+        focusables[next]?.focus({ preventScroll: true });
+        return;
+      }
+
       if (e.shiftKey) {
-        if (active === first || !active || !root.contains(active)) {
+        if (active === first || !active || !roots.some((region) => region.contains(active))) {
           e.preventDefault();
           try {
             last.focus();
@@ -230,7 +245,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
           }
         }
       } else {
-        if (active === last || !active || !root.contains(active)) {
+        if (active === last || !active || !roots.some((region) => region.contains(active))) {
           e.preventDefault();
           try {
             first.focus();
