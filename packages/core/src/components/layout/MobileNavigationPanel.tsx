@@ -43,13 +43,17 @@ export function MobileNavigationPanel(props: MobileNavigationPanelProps & {
     }
   });
   onCleanup(() => props.onPresenceChange?.(false));
+  const openPanelId = createMemo(() => props.open ? props.id : null);
   createEffect(() => {
-    const id = props.id;
-    if (!props.open) return;
+    const id = openPanelId();
+    if (id === null) return;
     restoreTarget = null;
+    let currentEntry = true;
+    onCleanup(() => { currentEntry = false; });
     // Explicit entry also moves focus from the still-interactive navigation trigger.
+    // Content updates must not schedule entry focus again while this panel stays open.
     deferAfterPaint(() => untrack(() => {
-      if (!props.open || props.id !== id || !panel?.isConnected) return;
+      if (!currentEntry || !props.open || props.id !== id || !panel?.isConnected) return;
       const active = panel.ownerDocument.activeElement;
       if (active && panel.contains(active)) return;
       (panel.querySelector<HTMLElement>('[data-floe-autofocus]') ?? panel).focus({ preventScroll: true });

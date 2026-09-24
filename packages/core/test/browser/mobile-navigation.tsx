@@ -10,6 +10,7 @@ function Example() {
   const [modal, setModal] = createSignal(false);
   const [trigger, setTrigger] = createSignal<HTMLButtonElement | null>(null);
   const [query, setQuery] = createSignal('');
+  const [toolsPage, setToolsPage] = createSignal(0);
   const Icon = () => <span>●</span>;
   return <FloeProvider><AppViewport><Shell fillParent topBarMobileMode="hidden" hideMobileNavigationWhenKeyboardOpen
     sidebarMode="hidden" activityItems={Array.from({ length: 10 }, (_, index) => ({
@@ -17,8 +18,9 @@ function Example() {
     }))}
     mobileNavigationActions={[{ id: 'more', label: 'More', icon: Icon, buttonRef: setTrigger,
       ariaExpanded: open, ariaControls: 'mobile-tools', ariaHasPopup: 'dialog', onClick: () => setOpen(!open()) }]}
-    mobileNavigationPanel={{ id: 'mobile-tools', open: open(), title: 'More', trigger: trigger(), onOpenChange: setOpen,
+    mobileNavigationPanel={{ id: 'mobile-tools', open: open() && toolsPage() >= 0, title: `More ${toolsPage()}`, trigger: trigger(), onOpenChange: setOpen,
       children: <div class="p-3"><input aria-label="Search tools" value={query()} onInput={event => setQuery(event.currentTarget.value)} style={{ 'font-size': '16px' }} />
+        <button onClick={() => setToolsPage(page => page + 1)}>Refresh tools</button>
         <button onClick={() => setModal(true)}>Confirm action</button>
         <div style={{ height: '900px' }}>Scrollable tools</div><button>Last action</button></div> }}>
     <div style={{ height: '1800px' }}><textarea aria-label="Retained draft" /><button>Page action</button></div>

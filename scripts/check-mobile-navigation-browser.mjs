@@ -1,4 +1,4 @@
-/* global document, window, Event, EventTarget */
+/* global document, window, Event, EventTarget, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -51,6 +51,14 @@ try {
           await panel.waitFor({ state: 'detached' });
         }
         await more.tap(); await panel.waitFor();
+        await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Close');
+        await panel.getByRole('button', { name: 'Refresh tools' }).evaluate(async element => {
+          element.click();
+          document.querySelector('[data-floe-mobile-navigation-actions] button').focus();
+          await new Promise(resolve => requestAnimationFrame(() => window.setTimeout(resolve, 0)));
+        });
+        assert.equal(await more.evaluate(element => document.activeElement === element), true,
+          'refreshing an open panel must not reclaim focus from navigation');
         await page.getByRole('textbox', { name: 'Search tools' }).fill('Query');
         await page.evaluate(() => window.setVisibleHeight(260));
         assert.equal(await nav.isVisible(), true);
