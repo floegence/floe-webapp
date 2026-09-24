@@ -189,7 +189,9 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
         root;
 
       try {
-        target.focus();
+        // Entry transforms may place the target outside a clipped surface.
+        // Focus ownership must not scroll the retained page during motion.
+        target.focus({ preventScroll: true });
       } catch {
         // Ignore focus failures (e.g. detached or non-focusable nodes).
       }
@@ -352,7 +354,7 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
           const active = document.activeElement;
           if (active && active !== document.body && active !== document.documentElement) return;
           try {
-            prevActive.focus();
+            prevActive.focus({ preventScroll: true });
           } catch {
             // ignore
           }

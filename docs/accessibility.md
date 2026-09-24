@@ -76,6 +76,12 @@ closes a menu or confirmation before its parent; Tab from a menu closes it and
 returns focus to its trigger. Closing a drawer retains a hit-testable backdrop
 until its exit completes.
 
+Automatic entry focus and restoration preserve ancestor scroll positions. In
+particular, a drawer's translated entry frame must not cause the browser to
+scroll its clipped page or projected surface to reveal the focused close button.
+Explicit Tab navigation still reveals targets inside the overlay's own scrollable
+content. Validate the entire enter/exit sequence, not only settled geometry.
+
 ## Downstream responsibilities
 
 Floe Webapp can guarantee shared structure and primitive behavior, but application teams still own product semantics.
