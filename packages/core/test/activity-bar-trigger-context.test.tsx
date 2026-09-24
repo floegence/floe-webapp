@@ -5,6 +5,7 @@ import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 
 import { ActivityBar } from '../src/components/layout/ActivityBar';
+import { MobileTabBar } from '../src/components/layout/MobileTabBar';
 
 const disposers: Array<() => void> = [];
 
@@ -14,35 +15,20 @@ afterEach(() => {
 });
 
 describe('ActivityBar disclosure trigger context', () => {
-  it('publishes the trigger element and reactive disclosure semantics', () => {
+  it.each([false, true])('publishes the trigger element and reactive disclosure semantics (mobile=%s)', (mobile) => {
     const host = document.createElement('div');
     document.body.append(host);
     const [expanded, setExpanded] = createSignal(false);
     const triggerUpdates: Array<HTMLButtonElement | null> = [];
     const Icon = (props: { class?: string }) => <span class={props.class} />;
 
-    disposers.push(
-      render(
-        () => (
-          <ActivityBar
-            items={[
-              {
-                id: 'plugins',
-                icon: Icon,
-                label: 'Plugins',
-                buttonRef: (button) => triggerUpdates.push(button),
-                ariaExpanded: expanded,
-                ariaControls: 'plugin-switcher',
-                ariaHasPopup: 'dialog',
-              },
-            ]}
-            activeId="terminal"
-            onActiveChange={() => undefined}
-          />
-        ),
-        host
-      )
-    );
+    const items = [{ id: 'plugins', icon: Icon, label: 'Plugins',
+      buttonRef: (button: HTMLButtonElement | null) => triggerUpdates.push(button),
+      ariaExpanded: expanded, ariaControls: 'plugin-switcher', ariaHasPopup: 'dialog' as const,
+    }];
+    disposers.push(render(() => mobile
+      ? <MobileTabBar items={items} activeId="terminal" onSelect={() => undefined} />
+      : <ActivityBar items={items} activeId="terminal" onActiveChange={() => undefined} />, host));
 
     const trigger = host.querySelector('button[aria-label="Plugins"]') as HTMLButtonElement;
     expect(triggerUpdates).toEqual([trigger]);

@@ -2,8 +2,9 @@ import { type Component, For, Show, createSignal, onCleanup, onMount } from 'sol
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
+import type { ActivityBarItem } from './ActivityBar';
 
-export interface MobileTabBarItem {
+export interface MobileTabBarItem extends Pick<ActivityBarItem, 'buttonRef' | 'ariaExpanded' | 'ariaControls' | 'ariaHasPopup'> {
   id: string;
   icon: Component<{ class?: string }>;
   label: string;
@@ -151,12 +152,19 @@ interface MobileTabItemProps {
 }
 
 function MobileTabItem(props: MobileTabItemProps) {
+  let buttonRef: HTMLButtonElement | undefined;
+  const expanded = () => typeof props.item.ariaExpanded === 'function'
+    ? props.item.ariaExpanded()
+    : props.item.ariaExpanded;
+  onMount(() => props.item.buttonRef?.(buttonRef ?? null));
+  onCleanup(() => props.item.buttonRef?.(null));
   const badgeValue = () => (
     typeof props.item.badge === 'function' ? props.item.badge() : props.item.badge
   );
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       class={cn(
         'relative flex-shrink-0 flex flex-col items-center justify-center',
@@ -170,6 +178,9 @@ function MobileTabItem(props: MobileTabItemProps) {
       onClick={() => props.onClick()}
       aria-label={props.item.label}
       aria-selected={props.isActive}
+      aria-expanded={expanded()}
+      aria-controls={props.item.ariaControls}
+      aria-haspopup={props.item.ariaHasPopup}
       role="tab"
       tabIndex={props.isActive ? 0 : -1}
       onKeyDown={(event) => {
