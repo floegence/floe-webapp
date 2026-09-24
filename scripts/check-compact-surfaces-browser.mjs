@@ -21,11 +21,11 @@ try {
       if (await page.locator('.floe-settings-layout__mobile').count()) failures.push(`${engine.name()}: absent navigation occupies space`);
       if (!(await page.getByTestId('reading').count())) failures.push(`${engine.name()}: chart metadata is missing`);
       if (await page.getByTestId('untitled-chart').locator('.chart-monitoring-header').count()) failures.push(`${engine.name()}: empty chart header occupies space`);
-      await page.getByRole('textbox').evaluate(element => { window.retainedSetting = element; });
+      await page.getByRole('textbox', { name: 'Retained setting' }).evaluate(element => { window.retainedSetting = element; });
       await page.getByRole('button', { name: 'Toggle navigation' }).click();
       await page.getByRole('combobox').waitFor({ state: 'attached' });
       await page.getByRole('button', { name: 'Toggle navigation' }).click();
-      assert.equal(await page.getByRole('textbox').evaluate(element => window.retainedSetting === element), true);
+      assert.equal(await page.getByRole('textbox', { name: 'Retained setting' }).evaluate(element => window.retainedSetting === element), true);
       if (await page.getByTestId('reading').count()) {
         await page.getByRole('button', { name: 'Update reading' }).click();
         assert.equal(await page.getByTestId('reading').textContent(), '25.0% · 8 cores');

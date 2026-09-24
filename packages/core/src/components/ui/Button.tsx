@@ -62,6 +62,7 @@ export function Button(props: ButtonProps) {
   return (
     <button
       type="button"
+      data-floe-control="button"
       data-floe-surface={local.variant === 'ghost' || local.variant === 'ghost-destructive' ? undefined : 'raised'}
       data-floe-surface-part="action"
       class={cn(

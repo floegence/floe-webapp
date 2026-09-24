@@ -596,7 +596,7 @@ export function Select(props: SelectProps) {
       triggerInputSurface
       triggerClass={cn(
         'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
-        'rounded border border-input bg-background text-xs shadow-sm',
+        'rounded border border-input bg-background text-[length:var(--floe-type-control)] shadow-sm',
         'transition-colors duration-100',
         props.class
       )}

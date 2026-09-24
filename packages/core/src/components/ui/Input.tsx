@@ -20,7 +20,7 @@ export interface InputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElemen
 
 const sizeStyles: Record<InputSize, string> = {
   sm: 'h-7 text-xs px-2',
-  md: 'h-8 text-xs px-2.5',
+  md: 'h-8 text-[length:var(--floe-type-control)] px-2.5',
   lg: 'h-9 text-sm px-3',
 };
 
@@ -57,6 +57,7 @@ export function Input(props: InputProps) {
 
       <input
         id={inputId()}
+        data-floe-control="input"
         data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
@@ -125,12 +126,13 @@ export function Textarea(props: TextareaProps) {
   return (
     <div>
       <textarea
+        data-floe-control="input"
         id={textareaId()}
         data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
-          'w-full min-h-16 rounded border border-input bg-background p-2.5 text-xs shadow-sm',
+          'w-full min-h-16 rounded border border-input bg-background p-2.5 text-[length:var(--floe-type-control)] shadow-sm',
           'placeholder:text-muted-foreground',
           'transition-colors duration-100',
           'focus:outline-none',
@@ -246,6 +248,7 @@ export function NumberInput(props: NumberInputProps) {
     <div class={props.class}>
       <div
         data-floe-input-surface
+        data-floe-control="compound-input"
         data-floe-surface="inset"
         aria-invalid={props.error ? true : undefined}
         aria-disabled={props.disabled ? true : undefined}
@@ -292,7 +295,7 @@ export function NumberInput(props: NumberInputProps) {
           aria-invalid={props.error ? true : undefined}
           aria-describedby={ariaDescribedBy()}
           class={cn(
-            'w-16 text-center text-xs bg-transparent border-none',
+            'w-16 text-center text-[length:var(--floe-type-control)] bg-transparent border-none',
             'outline-none focus:outline-none focus:ring-0',
             '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
             props.inputDisabled && 'cursor-default'
@@ -401,7 +404,7 @@ export function AffixInput(props: AffixInputProps) {
 
   const sizeConfig: Record<InputSize, { height: string; text: string; px: string }> = {
     sm: { height: 'h-7', text: 'text-xs', px: 'px-2' },
-    md: { height: 'h-8', text: 'text-xs', px: 'px-2.5' },
+    md: { height: 'h-8', text: 'text-[length:var(--floe-type-control)]', px: 'px-2.5' },
     lg: { height: 'h-9', text: 'text-sm', px: 'px-3' },
   };
 
@@ -424,6 +427,7 @@ export function AffixInput(props: AffixInputProps) {
     <div class={local.class}>
       <div
         data-floe-input-surface
+        data-floe-control="compound-input"
         data-floe-surface="inset"
         aria-invalid={local.error ? true : undefined}
         aria-disabled={rest.disabled ? true : undefined}
@@ -544,7 +548,7 @@ function AffixSelect(props: AffixSelectProps) {
 
   const sizeConfig: Record<InputSize, { height: string; text: string; px: string }> = {
     sm: { height: 'h-7', text: 'text-xs', px: 'px-2' },
-    md: { height: 'h-8', text: 'text-xs', px: 'px-2.5' },
+    md: { height: 'h-8', text: 'text-[length:var(--floe-type-control)]', px: 'px-2.5' },
     lg: { height: 'h-9', text: 'text-sm', px: 'px-3' },
   };
 

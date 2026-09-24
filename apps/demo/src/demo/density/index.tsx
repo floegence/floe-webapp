@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { FloeProvider } from '@floegence/floe-webapp-core';
-import { MonitoringChart, SettingsLayout } from '@floegence/floe-webapp-core/ui';
+import { AffixInput, Button, Input, MonitoringChart, NumberInput, Select, Textarea, SettingRow, SettingsLayout, SettingsSection } from '@floegence/floe-webapp-core/ui';
 import '../../index.css';
 
 function CompactSurfaces() {
@@ -21,6 +21,20 @@ function CompactSurfaces() {
     </section>
     <section data-testid="untitled-chart">
       <MonitoringChart series={[]} labels={[]} height={140} />
+    </section>
+    <section data-testid="interface-scale">
+      <SettingsSection title="Workspace settings" variant="page">
+        <SettingRow title="Workspace name" description="Used in navigation and project lists." control={<Input aria-label="Workspace name" value="Example" />} />
+        <div class="flex flex-wrap gap-2">
+          <Button size="sm">Inline action</Button><Button>Primary action</Button>
+        </div>
+      </SettingsSection>
+    </section>
+    <section data-testid="compound-scale" class="flex flex-wrap items-start gap-2">
+      <NumberInput value={2} onChange={() => undefined} />
+      <AffixInput aria-label="Service address" prefix="https://" value="example.test" />
+      <Select aria-label="Environment" onChange={() => undefined} value="local" options={[{ value: 'local', label: 'Local' }]} />
+      <Textarea aria-label="Workspace description" value="Draft description" />
     </section>
   </main>;
 }
