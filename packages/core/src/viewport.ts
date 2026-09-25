@@ -25,6 +25,8 @@ export interface ViewportSnapshot {
 export interface ViewportSource {
   width: number;
   height: number;
+  /** Native window height; Safari may resize it for the keyboard before visual bounds settle. */
+  innerHeight?: number;
   fixedOrigin?: { left: number; top: number };
   fixedScale?: number;
   visualViewport?: {
@@ -41,7 +43,15 @@ const dimension = (value: number | undefined, fallback: number) =>
 export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapshot {
   const visual = source.visualViewport;
   const width = dimension(visual?.width, source.width);
-  const height = dimension(visual?.height, source.height);
+  const normalZoom = Math.abs((visual?.scale ?? 1) - 1) < 0.01;
+  const windowHeight = dimension(source.innerHeight, source.height);
+  const resizedWindow = source.touch && source.editing && normalZoom && source.height - windowHeight > 100;
+  // Safari's focus animation can transiently clip visualViewport a second time
+  // (even reporting a negative height). A keyboard-resized native window remains
+  // a valid lower bound. Browsers retaining a full layout window still use visual
+  // bounds, and pinch zoom never expands to the unzoomed window.
+  const visualHeight = dimension(visual?.height, resizedWindow ? windowHeight : source.height);
+  const height = resizedWindow ? Math.max(visualHeight, windowHeight) : visualHeight;
   const origin = source.fixedOrigin ?? { left: 0, top: 0 };
   // Safari can pan fixed surfaces before publishing the matching visual offset.
   // Clamp after converting to client coordinates: clamping the offset alone
@@ -50,7 +60,7 @@ export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapsho
   const top = Math.max(0, (visual?.offsetTop || 0) + origin.top);
   // Browser chrome changes dvh too. Focus alone (e.g. a hardware keyboard),
   // accessory bars, and pinch zoom are not evidence of a soft keyboard.
-  const keyboardOpen = source.touch && source.editing && Math.abs((visual?.scale ?? 1) - 1) < 0.01
+  const keyboardOpen = source.touch && source.editing && normalZoom
     && source.height - height > 100;
   return {
     visible: { left, top, width, height, right: left + width, bottom: top + height },
@@ -87,6 +97,7 @@ function measure(view: Window, probe: HTMLElement): ViewportSnapshot {
   return resolveViewportSnapshot({
     width: rect.width || view.innerWidth,
     height: rect.height / rootZoom || view.innerHeight,
+    innerHeight: view.innerHeight,
     visualViewport: view.visualViewport,
     fixedOrigin: { left: rect.left, top: rect.top },
     fixedScale: rootZoom * zoom(view.document.body),

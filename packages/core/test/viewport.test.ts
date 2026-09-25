@@ -47,6 +47,24 @@ describe('visible application viewport', () => {
     expect(viewportStyle(snapshot).top).toBe('337px');
   });
 
+  it('retains the resized window height while Safari transiently clips its visual viewport', () => {
+    // Physical iPhone: native keyboard opening reports 294, 65, then 294px
+    // visual heights while innerHeight stays 294px after document normalization.
+    const nativeKeyboard = { ...source, width: 420, height: 692, innerHeight: 294, editing: true };
+    for (const height of [294, 65, -128, 294]) {
+      const snapshot = resolveViewportSnapshot({ ...nativeKeyboard,
+        visualViewport: { ...source.visualViewport, width: 420, height } });
+      expect(snapshot.visible.height).toBe(294);
+      expect(snapshot.keyboardOpen).toBe(true);
+    }
+    // Browsers retaining a full layout window still use the visual keyboard
+    // viewport. Native pinch zoom must not expand to the unzoomed window.
+    expect(resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
+      visualViewport: { ...source.visualViewport, height: 294 } }).visible.height).toBe(294);
+    expect(resolveViewportSnapshot({ ...nativeKeyboard,
+      visualViewport: { ...source.visualViewport, height: 147, scale: 2 } }).visible.height).toBe(147);
+  });
+
   it('keeps the visible origin on screen while Safari delays its visual offset event', () => {
     // Native Safari moves fixed surfaces before updating visualViewport.offsetTop.
     // Every intermediate snapshot must preserve the header and lower content edge.

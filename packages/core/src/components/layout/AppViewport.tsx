@@ -11,6 +11,15 @@ export interface AppViewportProps {
 export function AppViewport(props: AppViewportProps) {
   const [viewport, setViewport] = createSignal<ViewportSnapshot>();
   let root: HTMLDivElement | undefined;
+  const applicationStyle = () => {
+    const snapshot = viewport();
+    if (!snapshot) return { height: '100dvh' };
+    const style = viewportStyle(snapshot);
+    const scale = root?.ownerDocument.defaultView?.visualViewport?.scale ?? 1;
+    // The document origin is owned below. Reapplying Safari's delayed visual
+    // offset after normalizing native scroll would move the application twice.
+    return Math.abs(scale - 1) < 0.01 ? { ...style, left: '0px', top: '0px' } : style;
+  };
   onMount(() => {
     const view = root?.ownerDocument.defaultView;
     if (!view) return;
@@ -37,7 +46,7 @@ export function AppViewport(props: AppViewportProps) {
   return <div ref={root} class={props.class} data-floe-app-viewport=""
     data-keyboard-open={viewport()?.keyboardOpen || undefined}
     style={{ position: 'fixed', inset: '0', overflow: 'hidden', 'min-height': '0',
-      ...(viewport() ? viewportStyle(viewport()!) : { height: '100dvh' }) }}>
+      ...applicationStyle() }}>
     {props.children}
   </div>;
 }

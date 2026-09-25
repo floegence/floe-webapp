@@ -80,40 +80,43 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
       for (let i=0;i<3;i++) {
         await page.evaluate(() => window.setVisibleRect({height:420,offsetTop:30}));
         await page.waitForFunction(() => document.querySelector('nav')?.hidden === true);
-        await page.waitForFunction(() => document.querySelector('#composer').getBoundingClientRect().bottom <= 450);
+        await page.waitForFunction(() => document.querySelector('#composer').getBoundingClientRect().bottom <= 420);
         const result = await page.evaluate(() => {
           const editor=document.querySelector('textarea'), panel=document.querySelector('#composer').getBoundingClientRect();
           return {same:editor===window.originalEditor,focused:document.activeElement===editor,value:editor.value,selection:editor.selectionStart,bottom:panel.bottom,scroll:document.scrollingElement.scrollTop};
         });
         assert.deepEqual({...result,bottom:0}, {same:true,focused:true,value:'Draft 中文',selection:2,bottom:0,scroll:0});
-        assert(result.bottom >= 438, 'composer must follow the lower edge, not remain in the middle');
+        assert(result.bottom >= 408, 'composer must follow the lower edge, not remain in the middle');
         await page.evaluate(() => window.setVisibleRect({height:700,offsetTop:0}));
         await page.waitForFunction(() => document.querySelector('nav')?.hidden === false);
       }
       assert.equal(await page.evaluate(() => document.querySelector('nav')===window.originalNav), true);
-      // Reproduce Safari's asynchronous focus pan: the fixed origin moves first,
-      // visualViewport.offsetTop catches up in a later event (about 367ms on iOS).
-      for (const offsetTop of [0, 120, 280]) {
-        await page.evaluate(offsetTop => {
-          document.documentElement.style.transform = 'translateY(-280px)';
-          window.setVisibleRect({height:420, offsetTop});
-        }, offsetTop);
-        await page.waitForFunction(() => window.viewportSnapshot?.fixedOffset.top === 280);
+      // Replay native Safari's transient visual clipping and stale offsets.
+      // A translated document root does not model the native scroll lifecycle.
+      await page.evaluate(() => {
+        window.originalInnerHeight = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+        Object.defineProperty(window, 'innerHeight', { configurable: true, value: 294 });
+      });
+      for (const [height, offsetTop] of [[294, 398], [65, 398], [-128, 399], [294, 0]]) {
+        await page.evaluate(({height,offsetTop}) => window.setVisibleRect({height,offsetTop}), {height,offsetTop});
         await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
         const bounds = await page.evaluate(() => ({
-          visible: window.viewportSnapshot.visible,
           root: document.querySelector('[data-floe-app-viewport]').getBoundingClientRect().toJSON(),
           header: document.querySelector('[data-floe-shell-slot="top-bar"]').getBoundingClientRect().toJSON(),
           composer: document.querySelector('#composer').getBoundingClientRect().toJSON(),
+          focused: document.activeElement === window.originalEditor,
+          navHidden: document.querySelector('nav').hidden,
         }));
-        assert.equal(bounds.visible.top, 0, `delayed Safari offset ${offsetTop}: visible origin must stay on screen`);
-        assert.equal(bounds.root.top, 0, 'focus panning must not move the application above the screen');
-        assert.equal(bounds.header.top, 0, 'focus panning must not hide the header');
-        assert(bounds.composer.bottom >= 408 && bounds.composer.bottom <= 420,
-          'focus panning must not expose blank space below the composer');
+        assert.equal(bounds.root.height, 294, 'native keyboard animation must not collapse the application');
+        assert.equal(bounds.root.top, 0, 'stale native offsets must not displace the application');
+        assert.equal(bounds.header.top, 0, 'keyboard animation must retain the header');
+        assert.equal(bounds.focused, true);
+        assert.equal(bounds.navHidden, true);
+        assert(bounds.composer.bottom >= 282 && bounds.composer.bottom <= 294,
+          'keyboard animation must keep the composer at the visible lower edge');
       }
       await page.evaluate(() => {
-        document.documentElement.style.transform = '';
+        Object.defineProperty(window, 'innerHeight', window.originalInnerHeight);
         window.setVisibleRect({height:700, offsetTop:0});
       });
       await page.waitForFunction(() => window.viewportSnapshot.visible.height === 700);

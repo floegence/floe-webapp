@@ -17,6 +17,12 @@ chrome changes, pinch zoom, and hardware-keyboard focus do not
 by themselves indicate a soft keyboard. Subscriptions share event-driven updates;
 the last unsubscribe removes listeners and the measurement probe.
 
+During native keyboard animation, Safari can temporarily clip the visual viewport
+twice, including reporting a negative height. When the native window itself has
+resized for a focused keyboard, its height is a lower bound for the visible height.
+Browsers keeping the full layout window and native pinch zoom continue to use
+visual bounds. This is a measurement contract, without animation delays or polling.
+
 Use `AppViewport` from `@floegence/floe-webapp-core/layout` once at the document
 root. Set `Shell.fillParent` for Shells inside that host. Keep page scrolling inside content surfaces;
 do not wrap the host in another `100vh` shell. The host never remounts children
@@ -25,7 +31,9 @@ Safari's native focus pan can otherwise leave the reported keyboard viewport
 smaller than the usable screen, even after compensating the host position.
 Only document scroll is normalized: nested reading scroll, editor selection,
 and native pinch-zoom panning are preserved. Returning from pinch zoom restores
-the document origin. The scroll and viewport-resize listeners are removed with
+the document origin. At normal zoom the host remains at the document origin;
+it must not reapply a delayed visual offset after restoring native scroll. Pinch
+zoom retains the shared coordinate conversion. The scroll and viewport-resize listeners are removed with
 the host. Safe areas belong to chrome and floating boundaries, not an
 additional inset on the whole visible viewport.
 
