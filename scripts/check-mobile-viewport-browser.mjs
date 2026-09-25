@@ -98,7 +98,10 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
         Object.defineProperty(window, 'innerHeight', { configurable: true, value: 294 });
       });
       for (const [height, offsetTop] of [[294, 398], [65, 398], [-128, 399], [294, 0]]) {
-        await page.evaluate(({height,offsetTop}) => window.setVisibleRect({height,offsetTop}), {height,offsetTop});
+        await page.evaluate(({height,offsetTop}) => {
+          Object.defineProperty(window, 'innerHeight', { configurable: true, value: height === 294 && offsetTop === 398 ? 294 : 700 });
+          window.setVisibleRect({height,offsetTop});
+        }, {height,offsetTop});
         await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
         const bounds = await page.evaluate(() => ({
           root: document.querySelector('[data-floe-app-viewport]').getBoundingClientRect().toJSON(),

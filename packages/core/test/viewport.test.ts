@@ -65,6 +65,27 @@ describe('visible application viewport', () => {
       visualViewport: { ...source.visualViewport, height: 147, scale: 2 } }).visible.height).toBe(147);
   });
 
+  it('retains native keyboard measurement through asynchronous document normalization', () => {
+    const nativeKeyboard = { ...source, height: 692, innerHeight: 294, editing: true };
+    let previous = resolveViewportSnapshot({ ...nativeKeyboard,
+      visualViewport: { ...source.visualViewport, height: 294 } });
+    for (const height of [65, -128, 294]) {
+      previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
+        visualViewport: { ...source.visualViewport, height } }, previous);
+      expect(previous.visible.height).toBe(294);
+      expect(previous.keyboardOpen).toBe(true);
+    }
+    // A newly resized native window authorizes a different keyboard height.
+    previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 250,
+      visualViewport: { ...source.visualViewport, height: 250 } }, previous);
+    expect(previous.visible.height).toBe(250);
+    previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
+      visualViewport: { ...source.visualViewport, height: 692 } }, previous);
+    expect(previous.keyboardOpen).toBe(false);
+    expect(resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
+      visualViewport: { ...source.visualViewport, height: 200 } }, previous).visible.height).toBe(200);
+  });
+
   it('keeps the visible origin on screen while Safari delays its visual offset event', () => {
     // Native Safari moves fixed surfaces before updating visualViewport.offsetTop.
     // Every intermediate snapshot must preserve the header and lower content edge.

@@ -16,6 +16,8 @@ export interface ViewportSnapshot {
   layout: { width: number; height: number };
   safeArea: ViewportInsets;
   keyboardOpen: boolean;
+  /** Last native keyboard window measurement, retained while visual bounds catch up. */
+  keyboardWindowHeight?: number;
   /** Add to client coordinates before dividing by fixedScale for document-level fixed CSS. */
   fixedOffset: { left: number; top: number };
   /** Effective CSS zoom inherited by a document-body portal. Client bounds stay unscaled. */
@@ -40,18 +42,25 @@ export interface ViewportSource {
 const dimension = (value: number | undefined, fallback: number) =>
   Number.isFinite(value) && Number(value) > 0 ? Number(value) : Math.max(0, fallback);
 
-export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapshot {
+export function resolveViewportSnapshot(source: ViewportSource, previous?: ViewportSnapshot): ViewportSnapshot {
   const visual = source.visualViewport;
   const width = dimension(visual?.width, source.width);
   const normalZoom = Math.abs((visual?.scale ?? 1) - 1) < 0.01;
   const windowHeight = dimension(source.innerHeight, source.height);
-  const resizedWindow = source.touch && source.editing && normalZoom && source.height - windowHeight > 100;
+  const keyboardCandidate = source.touch && source.editing && normalZoom;
+  const resizedWindow = keyboardCandidate && source.height - windowHeight > 100;
+  const sameLayout = previous?.layout.width === source.width && previous.layout.height === source.height;
+  const keyboardWindowHeight = keyboardCandidate && source.height - dimension(visual?.height, 0) > 100
+    ? (resizedWindow ? windowHeight : sameLayout ? previous?.keyboardWindowHeight : undefined)
+    : undefined;
   // Safari's focus animation can transiently clip visualViewport a second time
   // (even reporting a negative height). A keyboard-resized native window remains
   // a valid lower bound. Browsers retaining a full layout window still use visual
-  // bounds, and pinch zoom never expands to the unzoomed window.
-  const visualHeight = dimension(visual?.height, resizedWindow ? windowHeight : source.height);
-  const height = resizedWindow ? Math.max(visualHeight, windowHeight) : visualHeight;
+  // bounds, and pinch zoom never expands to the unzoomed window. Native scroll
+  // normalization restores innerHeight before visual bounds catch up; retain
+  // the confirmed window measurement through that asynchronous handoff.
+  const visualHeight = dimension(visual?.height, keyboardWindowHeight ?? source.height);
+  const height = Math.max(visualHeight, keyboardWindowHeight ?? 0);
   const origin = source.fixedOrigin ?? { left: 0, top: 0 };
   // Safari can pan fixed surfaces before publishing the matching visual offset.
   // Clamp after converting to client coordinates: clamping the offset alone
@@ -67,6 +76,7 @@ export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapsho
     layout: { width: source.width, height: source.height },
     safeArea: { ...source.safeArea, bottom: keyboardOpen ? 0 : source.safeArea.bottom },
     keyboardOpen,
+    keyboardWindowHeight,
     fixedOffset: { left: -origin.left, top: -origin.top },
     fixedScale: dimension(source.fixedScale, 1),
   };
@@ -87,7 +97,7 @@ function createProbe(view: Window): HTMLElement {
   return probe;
 }
 
-function measure(view: Window, probe: HTMLElement): ViewportSnapshot {
+function measure(view: Window, probe: HTMLElement, previous?: ViewportSnapshot): ViewportSnapshot {
   const rect = probe.getBoundingClientRect();
   const css = view.getComputedStyle(probe);
   const inset = (value: string) => Math.max(0, Number.parseFloat(value) || 0);
@@ -104,7 +114,7 @@ function measure(view: Window, probe: HTMLElement): ViewportSnapshot {
     safeArea: { top: inset(css.paddingTop), right: inset(css.paddingRight), bottom: inset(css.paddingBottom), left: inset(css.paddingLeft) },
     editing: editableFocus(view.document),
     touch: view.matchMedia?.('(any-pointer: coarse)').matches ?? false,
-  });
+  }, previous);
 }
 
 type Observer = { snapshot: ViewportSnapshot; listeners: Set<(snapshot: ViewportSnapshot) => void>; dispose: () => void };
@@ -129,7 +139,7 @@ export function observeViewport(view: Window, listener: (snapshot: ViewportSnaps
       if (frame) return;
       frame = view.requestAnimationFrame(() => {
         frame = 0;
-        current.snapshot = measure(view, probe);
+        current.snapshot = measure(view, probe, current.snapshot);
         for (const notify of listeners) notify(current.snapshot);
       });
     };

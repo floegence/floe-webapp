@@ -20,6 +20,10 @@ the last unsubscribe removes listeners and the measurement probe.
 During native keyboard animation, Safari can temporarily clip the visual viewport
 twice, including reporting a negative height. When the native window itself has
 resized for a focused keyboard, its height is a lower bound for the visible height.
+The shared snapshot retains this confirmed measurement while native document
+normalization restores the window before the visual bounds catch up. A new native
+keyboard measurement replaces it; keyboard dismissal, focus loss, orientation
+change, and pinch zoom release it.
 Browsers keeping the full layout window and native pinch zoom continue to use
 visual bounds. This is a measurement contract, without animation delays or polling.
 
