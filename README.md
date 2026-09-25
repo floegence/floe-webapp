@@ -188,12 +188,15 @@ Filename rules match exact names, patterns and the longest registered suffix bef
 Import `@floegence/floe-webapp-core/standalone.css` for lightweight host-owned
 windows that do not render the shell. It includes the same built-in theme tokens,
 typography and shape tokens, surface material, and input focus rules. Desktop
-controls use 28px inline and 32px default sizes; control text uses 13px and body
-text uses 14px. The shared line and control-height tokens let product layouts
+controls use 28px inline and 32px default sizes; control text uses 12px/18px and body
+text uses 13px/20px. Ordinary list and navigation rows occupy 28px in total.
+Virtual file lists measure that same CSS row geometry for scroll offsets and reveal.
+The shared line and control-height tokens let product layouts
 use the same scale without changing the root font size. Settings use compact
 16px page headings and naturally wrapping rows. On coarse pointers, standard
-buttons and fields keep at least 44px targets, and editable fields use at least
-16px text. These rules do not scale editor, terminal, or embedded app content.
+buttons and fields keep at least 44px targets, navigation retains 13px/20px,
+body text retains 14px/22px, and editable fields use at least 16px text.
+These rules do not scale editor, terminal, or embedded app content.
 Set `.light`
 or `.dark`, `data-floe-shell-theme`, and `data-floe-surface-style` on the document
 root; declare `data-floe-surface` on each visible material boundary. Host code

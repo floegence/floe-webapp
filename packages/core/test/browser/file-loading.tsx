@@ -19,11 +19,11 @@ function Fixture() {
   browser.setListColumnRatios({ name: 0.5, modifiedAt: 0.3, size: 0.2 });
   Object.assign(window, {
     fileLoading: {
-      complete(empty = false) {
+      complete(empty = false, count = 12) {
         setFiles(
           empty
             ? []
-            : Array.from({ length: 12 }, (_, i) => ({
+            : Array.from({ length: count }, (_, i) => ({
                 id: String(i),
                 name: `file-${String(i).padStart(2, '0')}.txt`,
                 path: `/file-${i}.txt`,

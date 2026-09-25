@@ -1,4 +1,4 @@
-/* global window, requestAnimationFrame */
+/* global window, document, getComputedStyle, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
@@ -73,6 +73,35 @@ try {
       assert.deepEqual(errors, []);
       await page.close();
     }
+  for (const touch of [false, true]) {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 700 }, hasTouch: touch });
+    await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/file-loading.html?mode=list`);
+    await page.waitForFunction(() => !!window.fileLoading);
+    await page.evaluate(() => window.fileLoading.complete(false, 1000));
+    for (const rootSize of [16, 18, 20, 32]) {
+      await page.evaluate(size => { document.documentElement.style.fontSize = `${size}px`; }, rootSize);
+      await paint(page);
+      const expected = rootSize * (touch ? 2.75 : 1.75);
+      const first = page.locator('[data-file-browser-item-id]').first();
+      assert.equal(await first.evaluate(node => node.getBoundingClientRect().height), expected);
+      await first.evaluate(node => {
+        let viewport = node.parentElement;
+        while (getComputedStyle(viewport).overflowY !== 'auto') viewport = viewport.parentElement;
+        viewport.scrollTop = viewport.scrollHeight;
+      });
+      await paint(page);
+      await page.locator('[data-file-browser-item-id="999"]').waitFor();
+      const tail = await page.locator('[data-file-browser-item-id="999"]').evaluate(node => {
+        let viewport = node.parentElement;
+        while (getComputedStyle(viewport).overflowY !== 'auto') viewport = viewport.parentElement;
+        return { bottom: node.getBoundingClientRect().bottom, viewportBottom: viewport.getBoundingClientRect().bottom, height: viewport.scrollHeight };
+      });
+      assert.ok(Math.abs(tail.bottom - tail.viewportBottom) <= 1, 'The final virtual row reaches the viewport edge');
+      assert.ok(Math.abs(tail.height - 1000 * expected) <= 1, 'Virtual offsets match fractional rendered row heights');
+    }
+    await page.close();
+  }
+  console.log('File list density passed: desktop, touch, enlarged text and final virtual row.');
 } finally {
   await browser.close();
   await server.close();

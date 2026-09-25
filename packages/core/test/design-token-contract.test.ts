@@ -43,7 +43,8 @@ describe('design token contract', () => {
     const floeCss = readFileSync(resolve(stylesDir, 'floe.css'), 'utf8');
     const lightCss = readFileSync(resolve(stylesDir, 'themes/light.css'), 'utf8');
     const primitivesCss = readFileSync(resolve(stylesDir, 'primitives.css'), 'utf8');
-    const sharedVars = parseCssVariables(primitivesCss);
+    // Exported defaults describe the root; responsive descendants retain touch geometry.
+    const sharedVars = parseCssVariables(primitivesCss.match(/:root\s*\{([^}]+)\}/)?.[1] ?? '');
     expect(floeCss).toContain("@import './primitives.css'");
 
     for (const [name, value] of Object.entries(floeSharedCssVariables)) {

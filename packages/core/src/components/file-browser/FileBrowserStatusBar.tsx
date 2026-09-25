@@ -40,7 +40,7 @@ export function FileBrowserStatusBar(props: FileBrowserStatusBarProps) {
       data-file-browser-status-bar="true"
       aria-busy={props.initializing || undefined}
       class={cn(
-        'flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-1 text-[10px] text-muted-foreground',
+        'flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-1 text-[length:var(--floe-type-caption)] leading-4 text-muted-foreground',
         props.class
       )}
     >
@@ -48,8 +48,8 @@ export function FileBrowserStatusBar(props: FileBrowserStatusBarProps) {
         when={!props.initializing}
         fallback={
           <>
-            <Skeleton class="h-[1.5em] w-12" />
-            <Skeleton class="h-[1.5em] w-32" />
+            <Skeleton class="h-4 w-12" />
+            <Skeleton class="h-4 w-32" />
           </>
         }
       >

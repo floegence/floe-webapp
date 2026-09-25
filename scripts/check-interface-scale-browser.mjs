@@ -23,7 +23,7 @@ try {
     });
     assert.equal(metrics.heading.size, '16px');
     assert.equal(metrics.heading.weight, '500');
-    assert.equal(metrics.input.size, touch ? '16px' : '13px');
+    assert.equal(metrics.input.size, touch ? '16px' : '12px');
     assert.deepEqual(metrics.buttons, touch ? [44, 44] : [28, 32]);
     assert.equal(metrics.input.height, touch ? 44 : 32);
     assert.equal(metrics.overflow, false);
@@ -35,13 +35,29 @@ try {
     assert.equal(await input.inputValue(), 'Retained draft');
     const compounds = page.getByTestId('compound-scale');
     for (const field of await compounds.locator('input, textarea').all()) {
-      assert.equal(await field.evaluate(node => getComputedStyle(node).fontSize), touch ? '16px' : '13px');
+      assert.equal(await field.evaluate(node => getComputedStyle(node).fontSize), touch ? '16px' : '12px');
     }
     if (touch) {
       for (const button of await compounds.locator('button').all()) {
         const box = await button.boundingBox();
         assert.ok(box.height >= 44 && box.width >= 44, 'Compound controls retain touch targets');
       }
+    }
+    const reading = await page.getByTestId('reading-scale').evaluate(node => {
+      const css = getComputedStyle(node);
+      return { size: css.fontSize, line: css.lineHeight, root: getComputedStyle(document.documentElement).fontSize };
+    });
+    assert.deepEqual(reading, { size: touch ? '14px' : '13px', line: touch ? '22px' : '20px', root: '16px' });
+    const rows = await page.getByTestId('navigation-scale').locator('button').evaluateAll(nodes => nodes.map(node => {
+      const bounds = node.getBoundingClientRect(), css = getComputedStyle(node);
+      return { top: bounds.top, height: bounds.height, size: css.fontSize, line: css.lineHeight };
+    }));
+    assert.equal(rows.length, 20);
+    for (const [index, row] of rows.entries()) {
+      assert.equal(row.height, touch ? 44 : 28);
+      assert.equal(row.size, touch ? '13px' : '12px');
+      assert.equal(row.line, touch ? '20px' : '18px');
+      if (index) assert.equal(row.top - rows[index - 1].top, touch ? 44 : 28);
     }
     await page.close();
   }

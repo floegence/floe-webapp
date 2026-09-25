@@ -5,14 +5,14 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
   --floe-type-caption: 0.6875rem;
   --floe-type-supporting: 0.75rem;
-  --floe-type-control: 0.8125rem;
-  --floe-type-body: 0.875rem;
+  --floe-type-control: 0.75rem;
+  --floe-type-body: 0.8125rem;
   --floe-type-heading: 1rem;
-  --floe-line-control: 1.25rem;
-  --floe-line-body: 1.375rem;
+  --floe-line-control: 1.125rem;
+  --floe-line-body: 1.25rem;
   --floe-control-height-sm: 1.75rem;
   --floe-control-height-md: 2rem;
-  --floe-row-height: 2rem;
+  --floe-row-height: 1.75rem;
   --floe-space-1: 0.25rem;
   --floe-space-2: 0.5rem;
   --floe-space-3: 0.75rem;
@@ -25,6 +25,13 @@
 
 /* Compact visual controls retain usable, non-overlapping touch geometry. */
 @media (pointer: coarse) {
+  body {
+    --floe-type-control: 0.8125rem;
+    --floe-type-body: 0.875rem;
+    --floe-line-control: 1.25rem;
+    --floe-line-body: 1.375rem;
+    --floe-row-height: 2.75rem;
+  }
   [data-floe-control='button'],
   [data-floe-control='input'],
   [data-floe-control='compound-input'],

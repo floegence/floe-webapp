@@ -213,7 +213,7 @@ function FolderTreeItem(props: TreeItemProps) {
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
         class={cn(
-          'group flex items-center w-full py-1 text-xs',
+          'group flex items-center w-full min-h-[var(--floe-row-height)] py-1 text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
           'transition-all duration-150 ease-out',
           'hover:bg-sidebar-accent/60',
           isActive() && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',

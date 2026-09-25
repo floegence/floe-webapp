@@ -30,9 +30,9 @@ export interface FileListViewProps {
   enableDragDrop?: boolean;
 }
 
-const FILE_LIST_ROW_CLASS = 'w-full h-8 flex items-center text-xs';
-const FILE_LIST_NAME_CLASS = 'flex items-center gap-2 flex-1 min-w-0 px-3 py-1.5';
-const FILE_LIST_META_CLASS = 'shrink-0 px-3 py-1.5 text-left text-muted-foreground truncate';
+const FILE_LIST_ROW_CLASS = 'w-full h-[var(--floe-row-height)] flex items-center text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]';
+const FILE_LIST_NAME_CLASS = 'flex items-center gap-2 flex-1 min-w-0 px-3 py-1';
+const FILE_LIST_META_CLASS = 'shrink-0 px-3 py-1 text-left text-muted-foreground truncate';
 
 /**
  * Render file name with highlighted matched characters
@@ -90,10 +90,26 @@ export function FileListView(props: FileListViewProps) {
   const isDragEnabled = () => (props.enableDragDrop ?? true) && !!dragContext;
   const instanceId = () => props.instanceId ?? 'default';
 
-  const ROW_HEIGHT_PX = 32;
+  const [rowProbe, setRowProbe] = createSignal<HTMLDivElement | null>(null);
+  const [rowHeight, setRowHeight] = createSignal(28);
+  // Virtual offsets share the rendered rem/touch geometry, including enlarged text.
+  createEffect(() => {
+    const probe = rowProbe();
+    if (!probe) return;
+    const measure = () => {
+      if (!probe.getClientRects().length) return;
+      const height = Number.parseFloat(getComputedStyle(probe).height);
+      if (height > 0) setRowHeight(height);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(probe);
+    onCleanup(() => observer.disconnect());
+  });
   const virtual = useVirtualWindow({
     count: () => ctx.currentFiles().length,
-    itemSize: () => ROW_HEIGHT_PX,
+    itemSize: rowHeight,
     overscan: 12,
   });
 
@@ -116,8 +132,8 @@ export function FileListView(props: FileListViewProps) {
   const revealRowAtIndex = (index: number) => {
     if (!scrollEl) return;
 
-    const rowTop = index * ROW_HEIGHT_PX;
-    const rowBottom = rowTop + ROW_HEIGHT_PX;
+    const rowTop = index * rowHeight();
+    const rowBottom = rowTop + rowHeight();
     const viewportTop = scrollEl.scrollTop;
     const viewportBottom = viewportTop + scrollEl.clientHeight;
 
@@ -404,9 +420,10 @@ export function FileListView(props: FileListViewProps) {
 
   return (
     <div
-      class={cn('flex flex-col h-full min-h-0', props.class)}
+      class={cn('relative flex flex-col h-full min-h-0', props.class)}
       aria-busy={props.initializing || undefined}
     >
+      <div ref={setRowProbe} aria-hidden="true" class="absolute invisible pointer-events-none w-px h-[var(--floe-row-height)]" />
       {/* Header */}
       <div
         ref={setHeaderEl}
@@ -491,16 +508,16 @@ export function FileListView(props: FileListViewProps) {
                   <div data-file-browser-placeholder data-file-list-row class={FILE_LIST_ROW_CLASS}>
                     <div class={FILE_LIST_NAME_CLASS}>
                       <Skeleton class="h-4 w-4 shrink-0" />
-                      <Skeleton class="h-4 w-32 max-w-full" />
+                      <Skeleton class="h-[var(--floe-line-control)] w-32 max-w-full" />
                     </div>
                     <Show when={columnLayout().showModified}>
                       <div class={FILE_LIST_META_CLASS} style={{ width: `${modifiedWidthPx()}px` }}>
-                        <Skeleton class="h-4 w-20 max-w-full" />
+                        <Skeleton class="h-[var(--floe-line-control)] w-20 max-w-full" />
                       </div>
                     </Show>
                     <Show when={columnLayout().showSize}>
                       <div class={FILE_LIST_META_CLASS} style={{ width: `${sizeWidthPx()}px` }}>
-                        <Skeleton class="h-4 w-10 max-w-full" />
+                        <Skeleton class="h-[var(--floe-line-control)] w-10 max-w-full" />
                       </div>
                     </Show>
                   </div>
