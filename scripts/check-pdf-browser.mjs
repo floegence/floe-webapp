@@ -16,9 +16,18 @@ const browser = await chromium.launch({ headless: true });
 const artifacts = fileURLToPath(new URL('../.cache/pdf-surface/', import.meta.url));
 mkdirSync(artifacts, { recursive: true });
 const errors = [];
+const unembeddedFontWarnings = [];
+let checkingUnembeddedFont = false;
 const page = await browser.newPage({ viewport: { width: 1500, height: 1300 }, deviceScaleFactor: 2 });
 page.on('pageerror', error => errors.push(error.message));
 page.on('console', message => {
+  // This fixture deliberately has no STSong font program. Linux may use its
+  // system fallback, unlike embedded-font conversion failures checked above.
+  if (checkingUnembeddedFont && message.type() === 'warning'
+    && message.text() === 'Warning: Cannot load system font: STSongStd-Light, installing it could help to improve PDF rendering.') {
+    unembeddedFontWarnings.push(message.text());
+    return;
+  }
   if (message.type() === 'error' || (message.type() === 'warning' && /font|TypeError|ReferenceError/i.test(message.text()))) errors.push(message.text());
 });
 await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -115,6 +124,7 @@ try {
   assert.equal(form.fields.full_name[0].value, 'After PDF surface');
   assert.equal(form.fields.accepted[0].value, 'Yes');
   writeFileSync(`${artifacts}/forms.pdf`, Buffer.from(form.bytes));
+  checkingUnembeddedFont = true;
   await page.evaluate(() => window.pdfTest.load('mixed-unembedded.pdf'));
   await waitText();
   assert.match(await select('中文合同'), /中文合同预览/);
@@ -126,6 +136,6 @@ try {
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'Outside copy survives');
   await page.screenshot({ path: `${artifacts}/surface.png` });
   assert.deepEqual(errors, []);
-  writeFileSync(`${artifacts}/results.json`, JSON.stringify({ compatibilityWorkerRequests, embeddedFonts, matchingGlyphPixels: true, measurements, canvasBudget, search: await page.evaluate(() => window.pdfTest.state.searchState), errors }, null, 2));
+  writeFileSync(`${artifacts}/results.json`, JSON.stringify({ compatibilityWorkerRequests, embeddedFonts, matchingGlyphPixels: true, measurements, canvasBudget, search: await page.evaluate(() => window.pdfTest.state.searchState), unembeddedFontWarnings, errors }, null, 2));
   console.log('PDF surface: projection, selection/copy, CMaps, search, highlight undo/redo, form round-trip and input ownership passed.');
 } finally { await browser.close(); await server.close(); }
