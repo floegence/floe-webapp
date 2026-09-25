@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-/* global window, navigator, getSelection */
+/* global window, document, navigator, getSelection */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
@@ -18,7 +18,9 @@ mkdirSync(artifacts, { recursive: true });
 const errors = [];
 const page = await browser.newPage({ viewport: { width: 1500, height: 1300 }, deviceScaleFactor: 2 });
 page.on('pageerror', error => errors.push(error.message));
-page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+page.on('console', message => {
+  if (message.type() === 'error' || (message.type() === 'warning' && /font|TypeError|ReferenceError/i.test(message.text()))) errors.push(message.text());
+});
 await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 const measurements = [];
 const waitText = () => page.locator('.textLayer span').first().waitFor();
@@ -34,8 +36,33 @@ async function select(text) {
   return page.evaluate(() => getSelection()?.toString());
 }
 try {
-  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/pdf.html`);
+  const url = `http://127.0.0.1:${server.httpServer.address().port}/test/browser/pdf.html`;
+  // Compare actual embedded glyph pixels in the same browser, with and without
+  // the API missing in Electron 41 / Chromium 146. Text selection alone still
+  // succeeds when PDF.js silently substitutes a font after conversion fails.
+  const reference = await browser.newPage({ viewport: { width: 1500, height: 1300 }, deviceScaleFactor: 2 });
+  let referencePixels;
+  try {
+    await reference.goto(url);
+    await reference.evaluate(() => window.pdfReady);
+    referencePixels = await reference.locator('#viewer canvas').evaluate(canvas => canvas.toDataURL());
+  } finally { await reference.close(); }
+  await page.addInitScript(() => { Reflect.deleteProperty(Math, 'sumPrecise'); });
+  let compatibilityWorkerRequests = 0;
+  await page.route('**/pdf.worker.min.mjs', async route => {
+    const response = await route.fetch();
+    compatibilityWorkerRequests++;
+    await route.fulfill({ response, body: 'globalThis.__floePdfMissingSumPrecise = Reflect.deleteProperty(Math, "sumPrecise") && typeof Math.sumPrecise === "undefined";\n' + await response.text() });
+  });
+  await page.goto(url);
+  await page.evaluate(() => window.pdfReady);
   await waitText();
+  assert(compatibilityWorkerRequests > 0, 'Compatibility coverage must load a real PDF worker');
+  assert(await page.workers()[0].evaluate(() => globalThis.__floePdfMissingSumPrecise), 'The worker must begin without Math.sumPrecise');
+  assert.deepEqual(errors, [], 'Embedded font conversion must not fall back with a warning');
+  const embeddedFonts = await page.evaluate(() => Array.from(document.fonts).filter(font => font.family.startsWith('g_')).map(font => font.status));
+  assert(embeddedFonts.length > 0 && embeddedFonts.every(status => status === 'loaded'), 'Embedded PDF fonts must load');
+  assert.equal(await page.locator('#viewer canvas').evaluate(canvas => canvas.toDataURL()), referencePixels, 'Embedded Chinese and Latin glyph pixels must survive the missing API');
   for (const projection of [1, 0.65, 1.5]) {
     for (const zoom of [1, 1.5]) {
       await page.evaluate(async ({ projection, zoom }) => { window.pdfTest.project(projection); await window.pdfTest.zoom(zoom); }, { projection, zoom });
@@ -99,6 +126,6 @@ try {
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), 'Outside copy survives');
   await page.screenshot({ path: `${artifacts}/surface.png` });
   assert.deepEqual(errors, []);
-  writeFileSync(`${artifacts}/results.json`, JSON.stringify({ measurements, canvasBudget, search: await page.evaluate(() => window.pdfTest.state.searchState), errors }, null, 2));
+  writeFileSync(`${artifacts}/results.json`, JSON.stringify({ compatibilityWorkerRequests, embeddedFonts, matchingGlyphPixels: true, measurements, canvasBudget, search: await page.evaluate(() => window.pdfTest.state.searchState), errors }, null, 2));
   console.log('PDF surface: projection, selection/copy, CMaps, search, highlight undo/redo, form round-trip and input ownership passed.');
 } finally { await browser.close(); await server.close(); }

@@ -52,5 +52,6 @@ const api = {
     return { fields, annotations, bytes: Array.from(bytes) };
   },
 };
-Object.assign(window, { pdfTest: api });
-await api.load();
+const ready = api.load();
+Object.assign(window, { pdfTest: api, pdfReady: ready });
+await ready;

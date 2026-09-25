@@ -365,11 +365,18 @@ function main() {
   assert(!/\bdescription\?:/.test(dialogTypes),
     'Dialog header descriptions must not be part of the published API');
   assertSkillContract(corePkg);
+  for (const file of ['PdfDocumentSurface', 'localization']) {
+    const pdfRuntime = readFileSync(`packages/core/dist/pdf/${file}.js`, 'utf8');
+    assert(!/from ["']pdfjs-dist(?:["']|\/(?:build|web)\/)/.test(pdfRuntime),
+      `${file} must not import the modern PDF.js runtime`);
+    assert(pdfRuntime.includes('pdfjs-dist/legacy/'),
+      `${file} must use the official legacy PDF.js runtime`);
+  }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.78.5'
+      (version) => version === '0.78.6'
     ),
-    'Published Floe packages must all use version 0.78.5'
+    'Published Floe packages must all use version 0.78.6'
   );
 
   assert(

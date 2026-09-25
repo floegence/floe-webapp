@@ -6,21 +6,20 @@ import { readdirSync, readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const root = dirname(require.resolve('pdfjs-dist/package.json'));
 const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
-const prefix = `pdf-assets/${version}/`;
+const prefix = `pdf-assets/${version}/legacy/`;
 const files = new Map();
-function collect(directory) {
+function collect(directory, outputDirectory = directory) {
   for (const entry of readdirSync(join(root, directory), { withFileTypes: true })) {
     const file = join(directory, entry.name);
-    if (entry.isDirectory()) collect(file);
-    else files.set(file.replaceAll('\\', '/'), join(root, file));
+    const output = join(outputDirectory, entry.name);
+    if (entry.isDirectory()) collect(file, output);
+    else files.set(output.replaceAll('\\', '/'), join(root, file));
   }
 }
-for (const directory of ['cmaps', 'standard_fonts', 'wasm', 'iccs', 'web/images']) collect(directory);
-files.set('pdf.worker.min.mjs', join(root, 'build/pdf.worker.min.mjs'));
+for (const directory of ['cmaps', 'standard_fonts', 'wasm', 'iccs']) collect(directory);
+collect('legacy/web/images', 'images');
+files.set('pdf.worker.min.mjs', join(root, 'legacy/build/pdf.worker.min.mjs'));
 files.set('LICENSE', join(root, 'LICENSE'));
-for (const [name, path] of [...files]) if (name.startsWith('web/')) {
-  files.delete(name); files.set(name.slice(4), path);
-}
 
 /** Vite-compatible asset plugin. Keeps workers, CMaps, fonts, codecs and their
  * original notices self-hosted and versioned, outside the initial JS graph. */

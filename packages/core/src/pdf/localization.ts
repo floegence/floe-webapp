@@ -1,4 +1,4 @@
-import { GenericL10n } from 'pdfjs-dist/web/pdf_viewer.mjs';
+import { GenericL10n } from 'pdfjs-dist/legacy/web/pdf_viewer.mjs';
 
 export interface PdfLocalizedMessage {
   text?: string;

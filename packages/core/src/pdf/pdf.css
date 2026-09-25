@@ -1,4 +1,4 @@
-/* Import after pdfjs-dist/web/pdf_viewer.css. Layers use PDF page coordinates;
+/* Import after pdfjs-dist/legacy/web/pdf_viewer.css. Layers use PDF page coordinates;
    surrounding transforms belong to the host surface and need no compensating math. */
 .floe-pdf-page > .page {
   position: relative;

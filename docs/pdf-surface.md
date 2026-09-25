@@ -1,6 +1,10 @@
 # Embedded PDF surfaces
 
-`@floegence/floe-webapp-core/pdf` provides a host-neutral PDF.js 6.3.289 adapter.
+`@floegence/floe-webapp-core/pdf` provides a host-neutral PDF.js 6.3.289 adapter
+using the official legacy engine, viewer and worker. Embedded clients such as
+Electron 41 / Chromium 146 lack APIs including `Math.sumPrecise`; the modern
+worker can fail embedded font conversion and silently substitute incorrect glyphs.
+Keep the legacy build consistent across all PDF runtime imports and resources.
 Import it at the document feature boundary, not through the shell's initial
 module graph. The entry is deliberately absent from the root and `full` barrels.
 Hosts own document loading UI, viewport geometry, nearby-page virtualization,
@@ -10,7 +14,9 @@ Use `pdfAssetsPlugin()` from `@floegence/floe-webapp-core/pdf-assets` in Vite,
 import the default asset URL from `virtual:floe-pdf-assets`, and import
 `@floegence/floe-webapp-core/pdf.css`. The plugin emits versioned, same-origin
 workers, CMaps, standard fonts, codecs, ICC profiles, annotation icons and all
-their original license files. No CDN or remote font lookup is needed.
+their original license files beneath `pdf-assets/<version>/legacy/`. The build
+variant is part of the resource URL so a previously cached modern worker cannot
+be reused after upgrading the adapter. No CDN or remote font lookup is needed.
 
 Call `openPdfDocument(bytes, assetsUrl)` and retain its loading task. The adapter
 copies the bytes before worker transfer. Destroy the task after disposing the
@@ -70,6 +76,11 @@ subset of Noto Sans SC under the adjacent SIL Open Font License.
 clipboard at outer projections 1, 0.65 and 1.5 and PDF zooms 1 and 1.5, unembedded
 Chinese CMaps, search, form retention across zoom/remount, PDF-native field and
 highlight round trips, annotation undo/redo, and input outside the viewer.
+It removes `Math.sumPrecise` in both the browser document and a real worker,
+requires embedded fonts to load without conversion warnings, and compares the
+Chinese/Latin bitmap against the same browser's normal rendering. Text-layer
+content alone is not evidence of correct glyph rendering. Asset tests compare
+development responses and production output with the pinned legacy distribution.
 Artifacts are written to `.cache/pdf-surface`. These checks validate an embedded
 page owner; downstream products must additionally verify virtualization bounds,
 their projected Workbench shell, save errors and dirty close confirmation.

@@ -1,6 +1,6 @@
-import { AnnotationEditorUIManager, AnnotationMode, GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+import { AnnotationEditorUIManager, AnnotationMode, GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
-import { EventBus, GenericL10n, PDFFindController, PDFLinkService, PDFPageView } from 'pdfjs-dist/web/pdf_viewer.mjs';
+import { EventBus, GenericL10n, PDFFindController, PDFLinkService, PDFPageView } from 'pdfjs-dist/legacy/web/pdf_viewer.mjs';
 
 export interface PdfEditorState { canUndo: boolean; canRedo: boolean; hasSelectedAnnotation: boolean }
 export interface PdfSearchState { current: number; total: number; pending: boolean }
@@ -22,7 +22,8 @@ export interface PdfPageRenderer {
   dispose: () => void;
 }
 
-/** All resources are served by the host; PDF JavaScript and XFA are not enabled. */
+/** The official legacy runtime and worker support embedded clients without the
+ * newest JavaScript APIs. All resources are host-served; scripting and XFA are disabled. */
 export function openPdfDocument(bytes: Uint8Array<ArrayBuffer>, assetsUrl: string) {
   const base = new URL(assetsUrl, document.baseURI).href.replace(/\/?$/, '/');
   GlobalWorkerOptions.workerSrc = `${base}pdf.worker.min.mjs`;
