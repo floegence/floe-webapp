@@ -44,7 +44,7 @@ function App() {
   <textarea aria-label="Message" style={{width:'100%',height:'100%','font-size':'16px'}} />
  </BottomBarCompanion></FloeProvider>;
 }
-render(() => <App />, document.getElementById('root'));
+window.disposeApp = render(() => <App />, document.getElementById('root'));
 `);
   server = await createServer({ configFile: false, root: resolve(root, 'packages/core'), plugins: [solid(), {name:'viewport-evidence',configureServer(s){s.middlewares.use('/__viewport-evidence',(req,res)=>{let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{if(process.argv.includes('--serve')) console.log(body);res.end('ok');});});}}],
     optimizeDeps: { entries: [resolve(fixture, 'index.html')] }, server: {host:'127.0.0.1',port:0} });
@@ -117,9 +117,44 @@ render(() => <App />, document.getElementById('root'));
         window.setVisibleRect({height:700, offsetTop:0});
       });
       await page.waitForFunction(() => window.viewportSnapshot.visible.height === 700);
+      // Real iPhone Safari retained a 490px document pan after opening the
+      // keyboard. Its visual height stayed at 202px until the document returned
+      // to the origin, then recovered to 294px without changing editor focus.
+      // Model the native root scroll range independently of local reading scroll.
+      await page.locator('[data-scroll]').evaluate(el => { el.scrollTop = 777; });
+      await page.evaluate(() => {
+        document.body.style.minHeight = '1400px';
+        window.setVisibleRect({height:420,offsetTop:0});
+        window.scrollTo({top:490,left:0,behavior:'instant'});
+      });
+      await page.waitForFunction(() => window.scrollY === 0, undefined, {timeout:2000});
+      assert.deepEqual(await page.evaluate(() => ({
+        focused: document.activeElement === window.originalEditor,
+        same: document.querySelector('textarea') === window.originalEditor,
+        selection: [window.originalEditor.selectionStart,window.originalEditor.selectionEnd],
+        reading: document.querySelector('[data-scroll]').scrollTop,
+        header: document.querySelector('[data-floe-shell-slot="top-bar"]').getBoundingClientRect().top,
+      })), {focused:true,same:true,selection:[2,4],reading:777,header:0},
+      'normalizing native document panning must preserve editor and local reading state');
+      await page.evaluate(() => {
+        window.setVisibleRect({height:350,scale:2});
+        window.scrollTo({top:200,left:0,behavior:'instant'});
+      });
+      await page.waitForFunction(() => window.viewportSnapshot.visible.height === 350);
+      assert.equal(await page.evaluate(() => window.scrollY),200,'pinch zoom keeps native document panning');
+      await page.evaluate(() => window.setVisibleRect({height:700,scale:1}));
+      await page.waitForFunction(() => window.scrollY === 0);
+      await page.evaluate(() => { document.body.style.minHeight = ''; });
       await page.locator('[data-scroll]').evaluate(el => {el.scrollTop=el.scrollHeight;});
       assert.equal(await page.locator('[data-scroll]').evaluate(el => Math.abs(el.scrollHeight-el.scrollTop-el.clientHeight)<1),true);
       assert.deepEqual(errors,[]);
+      await page.evaluate(() => {
+        window.disposeApp();
+        document.body.style.minHeight = '1400px';
+        window.scrollTo({top:200,left:0,behavior:'instant'});
+      });
+      await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
+      assert.equal(await page.evaluate(() => window.scrollY),200,'unmount releases document scroll ownership');
       console.log(`${engine.name()}: visible bounds, keyboard navigation, retained input and last-row reachability passed`);
     } finally {await browser.close();}
   }

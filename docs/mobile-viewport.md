@@ -11,7 +11,7 @@ clamps the visible origin after converting to client coordinates.
 Safari may pan fixed surfaces before publishing the corresponding visual viewport
 offset; that intermediate state must not move the header above the screen or
 expose a gap beneath the application. The fixed-origin probe remains authoritative
-for positioning through that delay, without resetting document or panel scroll.
+for converting coordinates through that delay. The measurement API never changes scroll.
 The shared observer tracks document-root zoom changes without polling. Browser
 chrome changes, pinch zoom, and hardware-keyboard focus do not
 by themselves indicate a soft keyboard. Subscriptions share event-driven updates;
@@ -20,7 +20,13 @@ the last unsubscribe removes listeners and the measurement probe.
 Use `AppViewport` from `@floegence/floe-webapp-core/layout` once at the document
 root. Set `Shell.fillParent` for Shells inside that host. Keep page scrolling inside content surfaces;
 do not wrap the host in another `100vh` shell. The host never remounts children
-or changes focus. Safe areas belong to chrome and floating boundaries, not an
+or changes focus. At normal zoom it keeps the document scroll at the origin;
+Safari's native focus pan can otherwise leave the reported keyboard viewport
+smaller than the usable screen, even after compensating the host position.
+Only document scroll is normalized: nested reading scroll, editor selection,
+and native pinch-zoom panning are preserved. Returning from pinch zoom restores
+the document origin. The scroll and viewport-resize listeners are removed with
+the host. Safe areas belong to chrome and floating boundaries, not an
 additional inset on the whole visible viewport.
 
 `Shell.mobileAccessory` retains a bottom accessory immediately above navigation.
