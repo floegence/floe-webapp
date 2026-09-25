@@ -176,12 +176,12 @@ function NotificationToast(props: NotificationToastProps) {
         <div class="flex-1 min-w-0">
           <p class="font-medium text-sm">{props.notification.title}</p>
           <Show when={props.notification.message}>
-            <p class="mt-1 text-sm text-muted-foreground">{props.notification.message}</p>
+            <p class="mt-1 text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)] text-muted-foreground">{props.notification.message}</p>
           </Show>
           <Show when={props.notification.action}>
             <button
               type="button"
-              class="mt-2 text-sm font-medium text-foreground hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
+              class="mt-2 text-[length:var(--floe-type-control)] font-medium text-foreground hover:underline focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={() => props.notification.action?.onClick()}
             >
               {props.notification.action!.label}

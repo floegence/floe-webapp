@@ -378,7 +378,7 @@ export function Dialog(props: DialogProps) {
                   <Show when={props.bodyDescription}>
                     <p
                       id={descriptionId()}
-                      class="mb-3 shrink-0 text-sm text-muted-foreground last:mb-0"
+                      class="mb-3 shrink-0 text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)] text-muted-foreground last:mb-0"
                     >
                       {props.bodyDescription}
                     </p>

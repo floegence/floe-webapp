@@ -36,6 +36,7 @@ try {
       const footer = el.querySelector('[data-floe-dialog-footer]');
       const description = document.getElementById(el.getAttribute('aria-describedby'));
       return {
+        size: getComputedStyle(description).fontSize,
         title: header.textContent,
         inBody: description.parentElement === body,
         bodyChildren: body.children.length,
@@ -48,6 +49,7 @@ try {
       };
     });
     assert.deepEqual(layout, {
+      size: '12px',
       title: 'Stop sharing',
       inBody: true,
       bodyChildren: 1,
