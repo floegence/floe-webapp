@@ -91,6 +91,32 @@ render(() => <App />, document.getElementById('root'));
         await page.waitForFunction(() => document.querySelector('nav')?.hidden === false);
       }
       assert.equal(await page.evaluate(() => document.querySelector('nav')===window.originalNav), true);
+      // Reproduce Safari's asynchronous focus pan: the fixed origin moves first,
+      // visualViewport.offsetTop catches up in a later event (about 367ms on iOS).
+      for (const offsetTop of [0, 120, 280]) {
+        await page.evaluate(offsetTop => {
+          document.documentElement.style.transform = 'translateY(-280px)';
+          window.setVisibleRect({height:420, offsetTop});
+        }, offsetTop);
+        await page.waitForFunction(() => window.viewportSnapshot?.fixedOffset.top === 280);
+        await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
+        const bounds = await page.evaluate(() => ({
+          visible: window.viewportSnapshot.visible,
+          root: document.querySelector('[data-floe-app-viewport]').getBoundingClientRect().toJSON(),
+          header: document.querySelector('[data-floe-shell-slot="top-bar"]').getBoundingClientRect().toJSON(),
+          composer: document.querySelector('#composer').getBoundingClientRect().toJSON(),
+        }));
+        assert.equal(bounds.visible.top, 0, `delayed Safari offset ${offsetTop}: visible origin must stay on screen`);
+        assert.equal(bounds.root.top, 0, 'focus panning must not move the application above the screen');
+        assert.equal(bounds.header.top, 0, 'focus panning must not hide the header');
+        assert(bounds.composer.bottom >= 408 && bounds.composer.bottom <= 420,
+          'focus panning must not expose blank space below the composer');
+      }
+      await page.evaluate(() => {
+        document.documentElement.style.transform = '';
+        window.setVisibleRect({height:700, offsetTop:0});
+      });
+      await page.waitForFunction(() => window.viewportSnapshot.visible.height === 700);
       await page.locator('[data-scroll]').evaluate(el => {el.scrollTop=el.scrollHeight;});
       assert.equal(await page.locator('[data-scroll]').evaluate(el => Math.abs(el.scrollHeight-el.scrollTop-el.clientHeight)<1),true);
       assert.deepEqual(errors,[]);

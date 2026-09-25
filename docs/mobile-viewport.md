@@ -6,8 +6,14 @@ One observer per Window measures dynamic content size, visual viewport bounds,
 safe areas, and focused-editor keyboard occlusion. Visible bounds use client CSS pixels.
 Add `fixedOffset` and divide by `fixedScale` to convert client coordinates into
 document-body fixed CSS positioning, including Safari keyboard page panning and
-inherited CSS zoom. `viewportStyle` applies that conversion once. The shared
-observer tracks document-root zoom changes without polling. Browser chrome changes, pinch zoom, and hardware-keyboard focus do not
+inherited CSS zoom. `viewportStyle` applies that conversion once. The measurement
+clamps the visible origin after converting to client coordinates.
+Safari may pan fixed surfaces before publishing the corresponding visual viewport
+offset; that intermediate state must not move the header above the screen or
+expose a gap beneath the application. The fixed-origin probe remains authoritative
+for positioning through that delay, without resetting document or panel scroll.
+The shared observer tracks document-root zoom changes without polling. Browser
+chrome changes, pinch zoom, and hardware-keyboard focus do not
 by themselves indicate a soft keyboard. Subscriptions share event-driven updates;
 the last unsubscribe removes listeners and the measurement probe.
 

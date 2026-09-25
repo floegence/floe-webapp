@@ -43,8 +43,11 @@ export function resolveViewportSnapshot(source: ViewportSource): ViewportSnapsho
   const width = dimension(visual?.width, source.width);
   const height = dimension(visual?.height, source.height);
   const origin = source.fixedOrigin ?? { left: 0, top: 0 };
-  const left = Math.max(0, visual?.offsetLeft || 0) + origin.left;
-  const top = Math.max(0, visual?.offsetTop || 0) + origin.top;
+  // Safari can pan fixed surfaces before publishing the matching visual offset.
+  // Clamp after converting to client coordinates: clamping the offset alone
+  // admits a negative visible origin and moves the entire app off screen.
+  const left = Math.max(0, (visual?.offsetLeft || 0) + origin.left);
+  const top = Math.max(0, (visual?.offsetTop || 0) + origin.top);
   // Browser chrome changes dvh too. Focus alone (e.g. a hardware keyboard),
   // accessory bars, and pinch zoom are not evidence of a soft keyboard.
   const keyboardOpen = source.touch && source.editing && Math.abs((visual?.scale ?? 1) - 1) < 0.01

@@ -47,6 +47,18 @@ describe('visible application viewport', () => {
     expect(viewportStyle(snapshot).top).toBe('337px');
   });
 
+  it('keeps the visible origin on screen while Safari delays its visual offset event', () => {
+    // Native Safari moves fixed surfaces before updating visualViewport.offsetTop.
+    // Every intermediate snapshot must preserve the header and lower content edge.
+    for (const offsetTop of [0, 120, 337]) {
+      const snapshot = resolveViewportSnapshot({ ...source, editing: true,
+        fixedOrigin: { left: -12, top: -337 },
+        visualViewport: { ...source.visualViewport, height: 377, offsetLeft: 0, offsetTop } });
+      expect(snapshot.visible).toMatchObject({ left: 0, top: 0, bottom: 377 });
+      expect(viewportStyle(snapshot)).toMatchObject({ left: '12px', top: '337px' });
+    }
+  });
+
   it('uses the current orientation and handles absent visual viewport APIs', () => {
     const rotated = resolveViewportSnapshot({ ...source, width: 844, height: 390, editing: true,
       visualViewport: { width: 844, height: 390, offsetTop: 0, offsetLeft: 0, scale: 1 } });
