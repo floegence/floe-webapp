@@ -60,7 +60,7 @@ export const floeSharedCssVariables = {
   '--floe-type-caption': '0.6875rem',
   '--floe-type-supporting': '0.75rem',
   '--floe-type-control': '0.75rem',
-  '--floe-type-body': '0.8125rem',
+  '--floe-type-body': '0.75rem',
   '--floe-type-heading': '1rem',
   '--floe-line-control': '1.125rem',
   '--floe-line-body': '1.25rem',

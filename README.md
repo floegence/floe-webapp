@@ -189,7 +189,7 @@ Import `@floegence/floe-webapp-core/standalone.css` for lightweight host-owned
 windows that do not render the shell. It includes the same built-in theme tokens,
 typography and shape tokens, surface material, and input focus rules. Desktop
 controls use 28px inline and 32px default sizes; control text uses 12px/18px and body
-text uses 13px/20px. Ordinary list and navigation rows occupy 28px in total.
+text uses 12px/20px. Ordinary list and navigation rows occupy 28px in total.
 Virtual file lists measure that same CSS row geometry for scroll offsets and reveal.
 The shared line and control-height tokens let product layouts
 use the same scale without changing the root font size. Settings use compact

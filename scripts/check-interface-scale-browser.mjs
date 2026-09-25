@@ -47,7 +47,7 @@ try {
       const css = getComputedStyle(node);
       return { size: css.fontSize, line: css.lineHeight, root: getComputedStyle(document.documentElement).fontSize };
     });
-    assert.deepEqual(reading, { size: touch ? '14px' : '13px', line: touch ? '22px' : '20px', root: '16px' });
+    assert.deepEqual(reading, { size: touch ? '14px' : '12px', line: touch ? '22px' : '20px', root: '16px' });
     const rows = await page.getByTestId('navigation-scale').locator('button').evaluateAll(nodes => nodes.map(node => {
       const bounds = node.getBoundingClientRect(), css = getComputedStyle(node);
       return { top: bounds.top, height: bounds.height, size: css.fontSize, line: css.lineHeight };
