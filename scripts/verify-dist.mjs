@@ -367,9 +367,9 @@ function main() {
   assertSkillContract(corePkg);
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.78.4'
+      (version) => version === '0.78.5'
     ),
-    'Published Floe packages must all use version 0.78.4'
+    'Published Floe packages must all use version 0.78.5'
   );
 
   assert(
