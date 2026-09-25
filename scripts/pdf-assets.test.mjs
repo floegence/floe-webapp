@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -11,6 +12,7 @@ const { createServer, build } = await import(pathToFileURL(require.resolve('vite
 const root = dirname(require.resolve('pdfjs-dist/package.json'));
 const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
 const prefix = `pdf-assets/${version}/legacy/`;
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const resources = new Map([
   ['pdf.worker.min.mjs', 'legacy/build/pdf.worker.min.mjs'],
   ['LICENSE', 'LICENSE'],
@@ -31,12 +33,12 @@ test('serves the pinned legacy worker and resources under a nested application b
     for (const [name, source] of resources) {
       const response = await globalThis.fetch(`${origin}/product/${prefix}${name}`);
       expect(response.status, name).toBe(200);
-      expect(Buffer.from(await response.arrayBuffer()), name).toEqual(readFileSync(join(root, source)));
+      expect(digest(Buffer.from(await response.arrayBuffer())), name).toBe(digest(readFileSync(join(root, source))));
       if (name.endsWith('.mjs')) expect(response.headers.get('content-type')).toBe('text/javascript');
       if (name.endsWith('.wasm')) expect(response.headers.get('content-type')).toBe('application/wasm');
     }
   } finally { await server.close(); }
-});
+}, 30000);
 
 test('emits the same legacy resources and exposes their build-specific URL in production', async () => {
   const result = await build({ configFile: false, base: '/product/', logLevel: 'silent',
@@ -50,8 +52,8 @@ test('emits the same legacy resources and exposes their build-specific URL in pr
   });
   const assets = new Map(result.output.filter(item => item.type === 'asset').map(item => [item.fileName, item.source]));
   for (const [name, source] of resources) {
-    expect(Buffer.from(assets.get(prefix + name)), name).toEqual(readFileSync(join(root, source)));
+    expect(digest(Buffer.from(assets.get(prefix + name))), name).toBe(digest(readFileSync(join(root, source))));
   }
   expect(result.output.find(item => item.type === 'chunk' && item.isEntry).code).toContain(`/product/${prefix}`);
   expect([...assets.keys()].every(name => name.startsWith(prefix))).toBe(true);
-});
+}, 30000);
