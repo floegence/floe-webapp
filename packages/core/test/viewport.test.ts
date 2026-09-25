@@ -38,6 +38,13 @@ describe('visible application viewport', () => {
       visualViewport: { ...source.visualViewport, height: 372, scale: 2 } }).keyboardOpen).toBe(false);
   });
 
+  it('does not treat the partially panned native window as the keyboard height', () => {
+    const native = { ...source, width: 420, height: 692, innerHeight: 527, editing: true,
+      visualViewport: { ...source.visualViewport, width: 420, height: 371 } };
+    const snapshot = resolveViewportSnapshot(native);
+    expect(snapshot.visible.height).toBe(371);
+  });
+
   it('converts Safari keyboard page panning exactly once for fixed surfaces', () => {
     const snapshot = resolveViewportSnapshot({ ...source, editing: true,
       fixedOrigin: { left: 0, top: -337 },
@@ -47,43 +54,25 @@ describe('visible application viewport', () => {
     expect(viewportStyle(snapshot).top).toBe('337px');
   });
 
-  it('retains the resized window height while Safari transiently clips its visual viewport', () => {
-    // Physical iPhone: native keyboard opening reports 294, 65, then 294px
-    // visual heights while innerHeight stays 294px after document normalization.
-    const nativeKeyboard = { ...source, width: 420, height: 692, innerHeight: 294, editing: true };
-    for (const height of [294, 65, -128, 294]) {
-      const snapshot = resolveViewportSnapshot({ ...nativeKeyboard,
-        visualViewport: { ...source.visualViewport, width: 420, height } });
-      expect(snapshot.visible.height).toBe(294);
-      expect(snapshot.keyboardOpen).toBe(true);
-    }
-    // Browsers retaining a full layout window still use the visual keyboard
-    // viewport. Native pinch zoom must not expand to the unzoomed window.
-    expect(resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
-      visualViewport: { ...source.visualViewport, height: 294 } }).visible.height).toBe(294);
-    expect(resolveViewportSnapshot({ ...nativeKeyboard,
-      visualViewport: { ...source.visualViewport, height: 147, scale: 2 } }).visible.height).toBe(147);
+  it('retains the last valid visual height during invalid native animation samples', () => {
+    const keyboard = { ...source, editing: true,
+      visualViewport: { ...source.visualViewport, height: 294 } };
+    const previous = resolveViewportSnapshot(keyboard);
+    expect(resolveViewportSnapshot({ ...keyboard,
+      visualViewport: { ...source.visualViewport, height: -128 } }, previous).visible.height).toBe(294);
+    expect(resolveViewportSnapshot({ ...keyboard,
+      visualViewport: { ...source.visualViewport, height: 250 } }, previous).visible.height).toBe(250);
   });
 
-  it('retains native keyboard measurement through asynchronous document normalization', () => {
-    const nativeKeyboard = { ...source, height: 692, innerHeight: 294, editing: true };
-    let previous = resolveViewportSnapshot({ ...nativeKeyboard,
-      visualViewport: { ...source.visualViewport, height: 294 } });
-    for (const height of [65, -128, 294]) {
-      previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
-        visualViewport: { ...source.visualViewport, height } }, previous);
-      expect(previous.visible.height).toBe(294);
-      expect(previous.keyboardOpen).toBe(true);
-    }
-    // A newly resized native window authorizes a different keyboard height.
-    previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 250,
-      visualViewport: { ...source.visualViewport, height: 250 } }, previous);
-    expect(previous.visible.height).toBe(250);
-    previous = resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
-      visualViewport: { ...source.visualViewport, height: 692 } }, previous);
-    expect(previous.keyboardOpen).toBe(false);
-    expect(resolveViewportSnapshot({ ...nativeKeyboard, innerHeight: 692,
-      visualViewport: { ...source.visualViewport, height: 200 } }, previous).visible.height).toBe(200);
+  it('retains keyboard occlusion after focusout until the visible height recovers', () => {
+    const keyboard = { ...source, editing: true,
+      visualViewport: { ...source.visualViewport, height: 294 } };
+    const previous = resolveViewportSnapshot(keyboard);
+    const closing = resolveViewportSnapshot({ ...keyboard, editing: false }, previous);
+    expect(closing.keyboardOpen).toBe(true);
+    expect(closing.safeArea.bottom).toBe(0);
+    expect(resolveViewportSnapshot(source, closing).keyboardOpen).toBe(false);
+    expect(resolveViewportSnapshot({ ...keyboard, editing: false, width: 844, height: 390 }, closing).keyboardOpen).toBe(false);
   });
 
   it('keeps the visible origin on screen while Safari delays its visual offset event', () => {

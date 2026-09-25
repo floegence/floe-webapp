@@ -91,6 +91,35 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
         await page.waitForFunction(() => document.querySelector('nav')?.hidden === false);
       }
       assert.equal(await page.evaluate(() => document.querySelector('nav')===window.originalNav), true);
+      // Real touch on composer padding calls focus({preventScroll:true}). Safari
+      // leaves innerHeight unchanged and reports 294 -> 65 -> 294 over 56ms.
+      // Capture every published size, including the first two events in one frame.
+      const touchHeights = await page.evaluate(async () => {
+        const { observeViewport } = await import('../dist/viewport.js');
+        const heights = [];
+        const release = observeViewport(window, value => heights.push(value.visible.height));
+        window.setVisibleRect({height:294,offsetTop:0});
+        await new Promise(resolve => window.setTimeout(resolve, 6));
+        window.setVisibleRect({height:65,offsetTop:0});
+        await new Promise(resolve => window.setTimeout(resolve, 50));
+        window.setVisibleRect({height:294,offsetTop:0});
+        await new Promise(resolve => window.setTimeout(resolve, 120));
+        release();
+        return heights;
+      });
+      assert(!touchHeights.includes(65), 'native touch must not collapse the app to a transient visual height');
+      assert.equal(touchHeights.at(-1),294);
+      await page.evaluate(() => window.setVisibleRect({height:250,offsetTop:0}));
+      await page.waitForFunction(() => window.viewportSnapshot.visible.height === 250);
+      assert.equal(await input.evaluate(el => el === document.activeElement),true,
+        'a sustained keyboard mode change must resize without stealing input');
+      await input.evaluate(el => el.blur());
+      await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
+      assert.equal(await page.locator('nav').evaluate(el => el.hidden),true,
+        'focusout must not reveal navigation before the native keyboard finishes closing');
+      await page.evaluate(() => window.setVisibleRect({height:700,offsetTop:0}));
+      await page.waitForFunction(() => document.querySelector('nav').hidden === false);
+      await input.focus();
       // Replay native Safari's transient visual clipping and stale offsets.
       // A translated document root does not model the native scroll lifecycle.
       await page.evaluate(() => {

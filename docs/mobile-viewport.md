@@ -17,15 +17,21 @@ chrome changes, pinch zoom, and hardware-keyboard focus do not
 by themselves indicate a soft keyboard. Subscriptions share event-driven updates;
 the last unsubscribe removes listeners and the measurement probe.
 
-During native keyboard animation, Safari can temporarily clip the visual viewport
-twice, including reporting a negative height. When the native window itself has
-resized for a focused keyboard, its height is a lower bound for the visible height.
-The shared snapshot retains this confirmed measurement while native document
-normalization restores the window before the visual bounds catch up. A new native
-keyboard measurement replaces it; keyboard dismissal, focus loss, orientation
-change, and pinch zoom release it.
-Browsers keeping the full layout window and native pinch zoom continue to use
-visual bounds. This is a measurement contract, without animation delays or polling.
+During native keyboard animation, Safari can report a second visual contraction
+(for example, 294 → 65 → 294 CSS pixels within 56ms) even with `preventScroll`.
+`innerHeight` is not a keyboard measurement: focus panning can change it to a
+partially visible window height, while prevented panning leaves it unchanged.
+The observer measures on each native event so the first keyboard size cannot be
+lost when two events arrive in one animation frame. It publishes initial opening
+immediately. An additional contraction in the same layout must remain stable for
+100ms before publication. Recovery cancels that pending contraction; a sustained
+keyboard mode change is accepted. Expansion, dismissal, orientation changes and
+pinch zoom remain immediate. This bounded, event-driven settling replaces a
+permanent height floor and does not poll, focus, or blur an editor.
+Invalid nonpositive measurements retain the last valid visible height. Once a
+keyboard is confirmed, focusout alone does not clear occlusion: navigation and
+safe-area chrome recover when the visible viewport actually expands. Last
+unsubscribe cancels both a pending frame and a pending contraction.
 
 Use `AppViewport` from `@floegence/floe-webapp-core/layout` once at the document
 root. Set `Shell.fillParent` for Shells inside that host. Keep page scrolling inside content surfaces;
