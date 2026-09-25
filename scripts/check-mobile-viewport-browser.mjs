@@ -1,4 +1,4 @@
-/* global window, document, Event, EventTarget */
+/* global window, document, Event, EventTarget, MouseEvent */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -69,6 +69,45 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
       const input = page.getByRole('textbox', {name:'Message'});
       await input.waitFor();
       await page.waitForFunction(() => document.querySelector('#composer')?.getBoundingClientRect().height === 44);
+      await input.evaluate(editor => {
+        const focus = editor.focus.bind(editor);
+        window.nativeFocusOptions = [];
+        editor.focus = options => { window.nativeFocusOptions.push(options); focus(options); };
+        window.nativeMouseDownCancelled = null;
+        editor.addEventListener('mousedown', event => { window.nativeMouseDownCancelled = event.defaultPrevented; });
+      });
+      await input.click();
+      assert.deepEqual(await page.evaluate(() => window.nativeFocusOptions), [{preventScroll:true}],
+        'a completed pointer activation must focus the editor without native document panning');
+      assert.equal(await page.evaluate(() => window.nativeMouseDownCancelled),false,
+        'native caret placement must retain its default action');
+      await input.fill('Caret placement');
+      await input.click({position:{x:4,y:10}});
+      assert.equal(await input.evaluate(editor => editor.selectionStart),0,
+        'clicking an already focused editor must keep native caret placement');
+      assert.equal(await page.evaluate(() => window.nativeFocusOptions.length),1,
+        'repeated clicks must not reclaim focus or overwrite selection');
+      const excludedActivations = await input.evaluate(editor => {
+        editor.blur();
+        window.nativeFocusOptions = [];
+        const activate = (init = {}) => editor.dispatchEvent(new MouseEvent('mousedown', {
+          bubbles: true, cancelable: true, button: 0, ...init,
+        }));
+        for (const [attribute,value] of [['readonly',''],['disabled',''],['inputmode','none'],['inert','']]) {
+          editor.setAttribute(attribute,value);
+          activate();
+          editor.removeAttribute(attribute);
+        }
+        activate({button:2});
+        editor.addEventListener('mousedown', event => event.preventDefault(),{once:true});
+        activate();
+        window.setVisibleRect({scale:2});
+        activate();
+        window.setVisibleRect({scale:1});
+        return window.nativeFocusOptions;
+      });
+      assert.deepEqual(excludedActivations,[], 'ineligible and cancelled activations must not acquire focus');
+      await input.click();
       await page.evaluate(() => {window.originalEditor=document.querySelector('textarea');window.originalNav=document.querySelector('nav');});
       await page.setViewportSize({width:390,height:700});
       await page.evaluate(() => window.setVisibleRect({height:700}));
@@ -190,6 +229,15 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
       });
       await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
       assert.equal(await page.evaluate(() => window.scrollY),200,'unmount releases document scroll ownership');
+      assert.equal(await page.evaluate(() => {
+        const editor = document.createElement('textarea');
+        document.body.append(editor);
+        let focused = false;
+        editor.focus = () => { focused = true; };
+        editor.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));
+        editor.remove();
+        return focused;
+      }),false,'unmount releases native focus acquisition');
       console.log(`${engine.name()}: visible bounds, keyboard navigation, retained input and last-row reachability passed`);
     } finally {await browser.close();}
   }

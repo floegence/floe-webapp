@@ -36,7 +36,14 @@ unsubscribe cancels both a pending frame and a pending contraction.
 Use `AppViewport` from `@floegence/floe-webapp-core/layout` once at the document
 root. Set `Shell.fillParent` for Shells inside that host. Keep page scrolling inside content surfaces;
 do not wrap the host in another `100vh` shell. The host never remounts children
-or changes focus. At normal zoom it keeps the document scroll at the origin;
+or asynchronously restores focus. On a coarse-pointer device at normal zoom,
+an uncancelled primary `mousedown` on an unfocused editable control acquires
+that same control with `preventScroll`. Touch compatibility mouse events occur
+after release, avoiding layout movement during the touch gesture. The default
+action remains available for native caret placement. Disabled, read-only and
+inert controls retain their normal behavior. This document-level contract also
+covers body portals; consumers must not focus editor padding on `pointerdown`.
+At normal zoom the host keeps the document scroll at the origin;
 Safari's native focus pan can otherwise leave the reported keyboard viewport
 smaller than the usable screen, even after compensating the host position.
 Only document scroll is normalized: nested reading scroll, editor selection,

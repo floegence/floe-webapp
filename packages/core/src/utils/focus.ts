@@ -8,6 +8,13 @@ const FOCUSABLE_SELECTOR = [
   '[contenteditable="true"]',
 ].join(',');
 
+/** Native editors that can request a software keyboard. */
+export function isKeyboardEditingElement(element: Element | null): element is HTMLElement {
+  if (!element || typeof (element as HTMLElement).focus !== 'function'
+    || element.matches(':disabled, [readonly], [inputmode="none"]')) return false;
+  return element.matches('textarea, input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"], [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]');
+}
+
 export function getFirstFocusableElement(root: ParentNode): HTMLElement | null {
   if (typeof HTMLElement === 'undefined') return null;
   const el = root.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
@@ -23,4 +30,3 @@ export function getFocusableElements(root: ParentNode): HTMLElement[] {
   }
   return out;
 }
-

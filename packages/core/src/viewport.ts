@@ -1,3 +1,5 @@
+import { isKeyboardEditingElement } from './utils/focus';
+
 /** Framework-independent visible bounds, in getBoundingClientRect CSS pixels. */
 export interface ViewportRect {
   left: number;
@@ -72,8 +74,7 @@ export function resolveViewportSnapshot(source: ViewportSource, previous?: Viewp
 function editableFocus(document: Document): boolean {
   let element = document.activeElement;
   while (element?.shadowRoot?.activeElement) element = element.shadowRoot.activeElement;
-  if (!element || element.matches('[disabled], [readonly], [inputmode="none"]')) return false;
-  return element.matches('textarea, input:not([type]), input[type="text"], input[type="search"], input[type="email"], input[type="url"], input[type="tel"], input[type="password"], input[type="number"], [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]');
+  return isKeyboardEditingElement(element);
 }
 
 function createProbe(view: Window): HTMLElement {
