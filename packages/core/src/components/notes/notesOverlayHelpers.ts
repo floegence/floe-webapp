@@ -15,7 +15,6 @@ export const NOTES_TRASH_RETENTION_MS = 72 * 60 * 60 * 1000;
 export const NOTES_CANVAS_ZOOM_STEP = 1.18;
 export const NOTES_DEFAULT_FRAME_WIDTH = 1280;
 export const NOTES_DEFAULT_FRAME_HEIGHT = 880;
-export const NOTES_MOBILE_BREAKPOINT_PX = 960;
 
 const NOTE_COLOR_CLASS_SUFFIX: Readonly<Record<NoteColorToken, string>> = Object.freeze({
   amber: 'butter',

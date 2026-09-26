@@ -742,6 +742,10 @@ describe('NotesOverlay', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 767px)' && window.innerWidth < 768,
+      addEventListener() {}, removeEventListener() {},
+    }));
     if (typeof PointerEvent === 'undefined') {
       (globalThis as typeof globalThis & { PointerEvent?: typeof MouseEvent }).PointerEvent =
         MouseEvent as typeof PointerEvent;
@@ -784,6 +788,7 @@ describe('NotesOverlay', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     while (disposers.length) {
       disposers.pop()?.();
     }

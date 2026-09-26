@@ -1,24 +1,19 @@
-import { createSignal, onCleanup, onMount, type Accessor } from 'solid-js';
+import { createEffect, createSignal, onCleanup, type Accessor } from 'solid-js';
 
-/**
- * Reactive media query hook
- */
-export function useMediaQuery(query: string): Accessor<boolean> {
-  const [matches, setMatches] = createSignal(false);
-
-  onMount(() => {
+/** Observe a query synchronously, including reactive configuration changes. */
+export function useMediaQuery(query: string | Accessor<string>): Accessor<boolean> {
+  const resolve = () => typeof query === 'function' ? query() : query;
+  const [matches, setMatches] = createSignal(
+    typeof window !== 'undefined' && window.matchMedia(resolve()).matches,
+  );
+  createEffect(() => {
+    const value = resolve();
     if (typeof window === 'undefined') return;
-
-    const mediaQuery = window.matchMedia(query);
-    setMatches(mediaQuery.matches);
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      setMatches(e.matches);
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    onCleanup(() => mediaQuery.removeEventListener('change', handleChange));
+    const media = window.matchMedia(value);
+    setMatches(media.matches);
+    const changed = (event: MediaQueryListEvent) => setMatches(event.matches);
+    media.addEventListener('change', changed);
+    onCleanup(() => media.removeEventListener('change', changed));
   });
-
   return matches;
 }

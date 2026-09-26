@@ -1,13 +1,53 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSignal, type Accessor } from 'solid-js';
+import { createSignal, untrack, type Accessor } from 'solid-js';
 import { render } from 'solid-js/web';
 import { useResizeObserver, type Size } from '../src/hooks/useResizeObserver';
 import { useVirtualWindow } from '../src/hooks/useVirtualWindow';
+import { createAdaptiveSidebar } from '../src/hooks/createAdaptiveSidebar';
 
 afterEach(() => { vi.unstubAllGlobals(); document.body.replaceChildren(); });
 
 describe('useResizeObserver content dimensions', () => {
+  it('allocates sidebars by local space without changing the preferred width while hidden', () => {
+    let notify = () => {};
+    const disconnect = vi.fn();
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { notify = callback; }
+      observe() {}
+      disconnect = disconnect;
+    });
+    const element = document.createElement('div');
+    let width = 752;
+    let visible = true;
+    Object.defineProperties(element, {
+      clientWidth: { get: () => visible ? width : 0 },
+      clientHeight: { get: () => 720 },
+      getClientRects: { value: () => visible ? [{}] : [] },
+    });
+    const [sidebarWidth, setSidebarWidth] = createSignal(272);
+    let presentation: Accessor<'inline' | 'overlay'> = () => 'inline';
+    const dispose = render(() => {
+      presentation = createAdaptiveSidebar({ container: () => element, sidebarWidth, minContentWidth: () => 480 });
+      return element;
+    }, document.body);
+    try {
+      expect(presentation()).toBe('inline');
+      width = 751; notify();
+      expect(presentation()).toBe('overlay');
+      expect(untrack(sidebarWidth)).toBe(272);
+      width = 900; notify();
+      expect(presentation()).toBe('inline');
+      setSidebarWidth(440);
+      expect(presentation()).toBe('overlay');
+      visible = false; width = 1200; notify();
+      expect(presentation()).toBe('overlay');
+      visible = true; notify();
+      expect(presentation()).toBe('inline');
+    } finally { dispose(); }
+    expect(disconnect).toHaveBeenCalledOnce();
+  });
+
   it('preserves an opted-in hidden box while accepting real zero sizes and new elements', () => {
     let notify = () => {};
     vi.stubGlobal('ResizeObserver', class {

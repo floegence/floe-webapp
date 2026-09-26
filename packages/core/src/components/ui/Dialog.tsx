@@ -54,6 +54,8 @@ export interface DialogProps {
   class?: string;
   /** Drawers retain the same modal, visible-viewport and surface-placement contract. */
   presentation?: 'dialog' | 'bottom-drawer' | 'side-drawer';
+  /** Opening edge for a side drawer. Defaults to right. */
+  drawerSide?: 'left' | 'right';
   /** Undefined uses the default header; null leaves only the accessible title. */
   header?: JSX.Element;
   contentClass?: string;
@@ -244,7 +246,7 @@ export function Dialog(props: DialogProps) {
             }}
             class={cn(
               isSurfaceMode()
-                ? 'absolute z-20 box-border p-3'
+                ? cn('absolute z-20 box-border', !isSideDrawer() && 'p-3')
                 : cn('fixed box-border p-4', globalZIndex() === undefined && 'z-50'),
               isBottomDrawer() && 'floe-bottom-drawer-overlay',
               isSideDrawer() && 'floe-side-drawer-overlay',
@@ -296,12 +298,13 @@ export function Dialog(props: DialogProps) {
             <div
               class={cn(
                 'pointer-events-none relative z-[1] flex h-full w-full',
-                isSideDrawer() ? 'items-stretch justify-end' : isBottomDrawer() ? 'items-end justify-center' : 'items-center justify-center'
+                isSideDrawer() ? (props.drawerSide === 'left' ? 'items-stretch justify-start' : 'items-stretch justify-end') : isBottomDrawer() ? 'items-end justify-center' : 'items-center justify-center'
               )}
             >
               <div
                 ref={dialogRef}
                 data-floe-dialog-panel={baseId}
+                data-floe-drawer-side={isSideDrawer() ? (props.drawerSide ?? 'right') : undefined}
                 data-floe-surface="floating"
                 {...{
                   [DIALOG_SURFACE_BOUNDARY_ATTR]: dialogBoundaryId(),

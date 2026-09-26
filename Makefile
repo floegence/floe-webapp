@@ -2,7 +2,7 @@
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog adaptive-layout
 
 install:
 	pnpm install --frozen-lockfile
@@ -88,3 +88,7 @@ compact-surfaces:
 .PHONY: dialog
 dialog:
 	pnpm test:dialog
+
+.PHONY: adaptive-layout
+adaptive-layout:
+	pnpm test:adaptive-layout

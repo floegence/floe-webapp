@@ -476,6 +476,16 @@
     --floe-floating-origin: right center;
   }
 
+  .floe-side-drawer-panel[data-floe-drawer-side='left'] {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
+    --floe-floating-enter-x: max(-8rem, -18vw);
+    --floe-floating-exit-x: max(-6rem, -14vw);
+    --floe-floating-origin: left center;
+  }
+
   .floe-bottom-drawer-overlay {
     --floe-dialog-gap-y: 1.25rem;
     --floe-dialog-gap-x: 1.5rem;

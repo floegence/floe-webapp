@@ -11,7 +11,7 @@ export {
   type PersistApi,
 } from './FloeConfigContext';
 export { ThemeProvider, useTheme, createThemeService, type ThemeContextValue } from './ThemeContext';
-export { LayoutProvider, useLayout, createLayoutService, type LayoutContextValue } from './LayoutContext';
+export { LayoutProvider, useLayout, useMobileLayout, createLayoutService, type LayoutContextValue } from './LayoutContext';
 export { CommandProvider, useCommand, createCommandService, type Command, type CommandContextValue } from './CommandContext';
 export {
   NotificationProvider,

@@ -292,3 +292,31 @@ enlargement above 1, or `null` while dimensions are unavailable. Consumers own
 toolbar space, page labels, manual zoom limits, and rendering resource budgets.
 
 Set `layout.sidebar.persistActiveTab: false` when the application owns navigation restoration. The layout ignores stored `activeTab` and starts with `defaultActiveTab`, and subsequent layout snapshots omit `activeTab`. Width, collapsed state, and terminal layout persistence remain enabled. The default retains existing tab persistence.
+
+## Interaction mode and available space
+
+`LayoutProvider` owns `layout.mobileQuery` from its synchronous initial value through
+media-query changes and disposal, including applications without `Shell`.
+Shell, terminal widgets, floating windows and Notes consume that interaction mode.
+`useMobileLayout()` returns the provider state when present; standalone components
+without a layout provider observe the same configured query.
+The default remains `(max-width: 767px)`. Native desktop hosts can use `not all`;
+a browser product can opt into `(max-width: 767px) and (pointer: coarse) and (hover: none)`.
+Configure the policy when creating the provider; narrow content alone does not
+need to change the application's input or navigation model.
+
+`createAdaptiveSidebar({ container, sidebarWidth, minContentWidth })` accepts three
+accessors and returns an `inline`/`overlay` accessor. It measures the shared layout
+region in local CSS pixels, retains its last measurement while hidden, and never
+writes navigation or persisted preferences. A sidebar fits inline when the region
+is at least `sidebarWidth() + minContentWidth()` wide. Hosts own the temporary
+panel disclosure and retain their sidebar and main content across placement changes.
+
+`Shell.sidebarMinContentWidth` opts the shell sidebar into this policy, accounting
+for the activity rail. Narrow desktop shells keep the activity rail and toolbar;
+activity buttons open a retained left sidebar without changing the persisted
+collapsed preference. Widening restores inline placement. This option is off by default.
+
+`Dialog` with `presentation="side-drawer"` accepts `drawerSide="left" | "right"`
+(default `right`). Both edges share the existing focus, presence and local surface
+boundary contracts; hosts should reuse the dialog rather than building another mask.

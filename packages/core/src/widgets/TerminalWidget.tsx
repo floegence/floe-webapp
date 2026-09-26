@@ -6,10 +6,9 @@ import {
   Show,
   type Component,
 } from 'solid-js';
-import { useResolvedFloeConfig } from '../context/FloeConfigContext';
+import { useMobileLayout } from '../context/LayoutContext';
 import type { WidgetProps } from '../context/WidgetRegistry';
 import { MobileKeyboard } from '../components/ui/MobileKeyboard';
-import { useMediaQuery } from '../hooks/useMediaQuery';
 import { cn } from '../utils/cn';
 import {
   floeTouchSurfaceAttrs,
@@ -60,8 +59,7 @@ export function createTerminalWidget(
  * Terminal widget
  */
 export function TerminalWidget(props: TerminalWidgetProps) {
-  const floe = useResolvedFloeConfig();
-  const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
+  const isMobile = useMobileLayout();
   const [lines, setLines] = createSignal<TerminalWidgetLine[]>([
     { id: 1, type: 'output', content: 'Welcome to Floe Terminal' },
     { id: 2, type: 'output', content: 'Type "help" for available commands' },

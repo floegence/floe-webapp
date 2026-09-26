@@ -1,7 +1,8 @@
-import { createEffect, type Accessor } from 'solid-js';
+import { createEffect, onCleanup, type Accessor } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface SidebarState {
   width: number;
@@ -94,6 +95,17 @@ export function createLayoutService(): LayoutContextValue {
   const clampSidebarWidth = (width: number) =>
     Math.max(cfg().sidebar.clamp.min, Math.min(cfg().sidebar.clamp.max, width));
 
+  // Layout owns interaction mode even when no Shell is mounted.
+  createEffect(() => {
+    const query = cfg().mobileQuery;
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia(query);
+    setStore('isMobile', media.matches);
+    const changed = (event: MediaQueryListEvent) => setStore('isMobile', event.matches);
+    media.addEventListener('change', changed);
+    onCleanup(() => media.removeEventListener('change', changed));
+  });
+
   // Persist layout changes
   createEffect(() => {
     // Persist a plain snapshot to avoid proxy references leaking into storage.
@@ -184,4 +196,11 @@ export function createLayoutService(): LayoutContextValue {
     isMobile: () => store.isMobile,
     setIsMobile: (mobile: boolean) => setStore('isMobile', mobile),
   };
+}
+
+/** Standalone surfaces honor the same configuration without requiring a Shell. */
+export function useMobileLayout(): Accessor<boolean> {
+  const layout = useOptionalLayout();
+  const floe = useResolvedFloeConfig();
+  return layout?.isMobile ?? useMediaQuery(() => floe.config.layout.mobileQuery);
 }

@@ -97,6 +97,7 @@ jobs:
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation
           pnpm test:mobile-navigation
+          pnpm test:adaptive-layout
           node scripts/check-asset-recovery-browser.mjs
           pnpm test:file-menu
           node scripts/check-file-loading-browser.mjs

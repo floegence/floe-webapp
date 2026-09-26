@@ -1,17 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
 import { CommandProvider } from '../src/context/CommandContext';
-import { LayoutProvider } from '../src/context/LayoutContext';
+import { LayoutProvider, useLayout } from '../src/context/LayoutContext';
 
-// Force Shell into mobile mode for SSR markup assertions.
-vi.mock('../src/hooks/useMediaQuery', () => ({
-  useMediaQuery: () => () => true,
-}));
+function MobileState(props: { children: import('solid-js').JSX.Element }) {
+  useLayout().setIsMobile(true);
+  return <>{props.children}</>;
+}
 
 function renderWithCoreProviders(node: () => unknown): string {
   return renderToString(() => (
     <LayoutProvider>
-      <CommandProvider>{node()}</CommandProvider>
+      <CommandProvider><MobileState>{node()}</MobileState></CommandProvider>
     </LayoutProvider>
   ));
 }

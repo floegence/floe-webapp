@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { useNotification } from '../../context';
+import { useMobileLayout } from '../../context/LayoutContext';
 import { Paste, Plus, Trash } from '../../icons';
 import {
   estimateNotesContextMenuHeight,
@@ -14,7 +15,6 @@ import {
   getNormalizedOverviewPoint,
   hasLiveNotesForTopic,
   NOTES_CANVAS_ZOOM_STEP,
-  NOTES_MOBILE_BREAKPOINT_PX,
   normalizeNoteText,
   resolveCenteredViewport,
   resolveFrameSize,
@@ -81,7 +81,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
   const [copiedNoteID, setCopiedNoteID] = createSignal<string | null>(null);
   const [pendingDigitSequence, setPendingDigitSequence] = createSignal('');
   const [clock, setClock] = createSignal(Date.now());
-  const [isMobile, setIsMobile] = createSignal(false);
+  const isMobile = useMobileLayout();
   const [optimisticFrontNoteID, setOptimisticFrontNoteID] = createSignal<string | null>(null);
   const [overviewNavigationState, setOverviewNavigationState] =
     createSignal<NotesOverviewNavigationState | null>(null);
@@ -1157,18 +1157,6 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     if (next) {
       setTransientMoveProjections(next);
     }
-  });
-
-  createEffect(() => {
-    if (!options.open) return;
-
-    const syncLayoutMode = () => {
-      setIsMobile(window.innerWidth < NOTES_MOBILE_BREAKPOINT_PX);
-    };
-
-    syncLayoutMode();
-    window.addEventListener('resize', syncLayoutMode);
-    onCleanup(() => window.removeEventListener('resize', syncLayoutMode));
   });
 
   createEffect(() => {

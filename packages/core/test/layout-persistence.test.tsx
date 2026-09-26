@@ -8,7 +8,7 @@ let dispose: (() => void) | undefined;
 afterEach(() => { dispose?.(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 it.each([false, true, undefined])('persists dimensions independently of active tab policy %s', persistActiveTab => {
   vi.useFakeTimers();
-  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
   const values = new Map([['test-layout', JSON.stringify({ sidebar: { activeTab: 'files', width: 360, collapsed: true } })]]);
   let layout!: LayoutContextValue;
   function Probe() { layout = createLayoutService(); return null; }
@@ -28,4 +28,27 @@ it.each([false, true, undefined])('persists dimensions independently of active t
   expect(JSON.parse(values.get('test-layout')!).sidebar).toEqual({
     width: 400, collapsed: false, ...(persistActiveTab === false ? {} : { activeTab: 'ports' }),
   });
+});
+
+it('observes the configured interaction query without a Shell and releases its subscription', () => {
+  const queries = new Map<string, { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> }>();
+  vi.stubGlobal('matchMedia', (query: string) => {
+    if (!queries.has(query)) queries.set(query, { matches: query !== 'not all', addEventListener: vi.fn(), removeEventListener: vi.fn() });
+    return queries.get(query);
+  });
+  const query = '(max-width: 767px) and (pointer: coarse) and (hover: none)';
+  let layout!: LayoutContextValue;
+  let initial: boolean | undefined;
+  function Probe() { layout = createLayoutService(); initial = layout.isMobile(); return null; }
+  dispose = render(() => <FloeConfigProvider config={{ storage: { adapter: { getItem: () => null, setItem() {}, removeItem() {} } }, layout: { mobileQuery: query } }}><Probe /></FloeConfigProvider>, document.createElement('div'));
+  expect(initial).toBe(true);
+  const mobile = queries.get(query)!;
+  expect(mobile.addEventListener).toHaveBeenCalledOnce();
+  const change = mobile.addEventListener.mock.calls[0][1] as (event: { matches: boolean }) => void;
+  change({ matches: false });
+  expect(layout.isMobile()).toBe(false);
+  change({ matches: true });
+  expect(layout.isMobile()).toBe(true);
+  dispose(); dispose = undefined;
+  expect(mobile.removeEventListener).toHaveBeenCalledWith('change', change);
 });

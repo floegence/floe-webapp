@@ -3,7 +3,10 @@ import { observeViewport } from '../../viewport';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { createAdaptiveSidebar } from '../../hooks/createAdaptiveSidebar';
+import { useResizeObserver } from '../../hooks/useResizeObserver';
+import { Dialog } from '../ui/Dialog';
+import { DialogPlacementProvider } from '../ui/DialogPlacementContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint, deferNonBlocking } from '../../utils/defer';
@@ -45,6 +48,8 @@ export interface ShellSlotClassNames {
 }
 
 export interface ShellProps {
+  /** Opt into a retained desktop sidebar overlay when the main area would be narrower. */
+  sidebarMinContentWidth?: number;
   /** Defaults to visible; hidden transfers the top safe area to Shell. */
   topBarMobileMode?: 'visible' | 'hidden';
   /** Fixed actions outside the horizontally scrolling mobile tabs. */
@@ -112,7 +117,23 @@ export function Shell(props: ShellProps) {
   });
   const layout = useLayout();
   const floe = useResolvedFloeConfig();
-  const isMobile = useMediaQuery(floe.config.layout.mobileQuery);
+  const isMobile = layout.isMobile;
+  const [layoutRegion, setLayoutRegion] = createSignal<HTMLDivElement>();
+  const [activityRegion, setActivityRegion] = createSignal<HTMLDivElement>();
+  const activitySize = useResizeObserver(activityRegion);
+  const sidebarTriggers = new Map<string, HTMLButtonElement>();
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = createSignal(false);
+  const [desktopSidebarPresent, setDesktopSidebarPresent] = createSignal(false);
+  const sidebarPresentation = createAdaptiveSidebar({
+    container: layoutRegion,
+    sidebarWidth: () => (sidebarPreviewWidth() ?? layout.sidebarWidth()) + (activitySize()?.width ?? 0),
+    minContentWidth: () => props.sidebarMinContentWidth ?? 0,
+  });
+  const desktopSidebarOverlay = () => !isMobile() && Boolean(props.sidebarMinContentWidth)
+    && !sidebarHidden() && sidebarPresentation() === 'overlay';
+  createEffect(() => {
+    if (!desktopSidebarOverlay() || isFullScreen()) setDesktopSidebarOpen(false);
+  });
   const [mobileSidebarOpen, setMobileSidebarOpen] = createSignal(false);
   const [navigationPanelPresent, setNavigationPanelPresent] = createSignal(false);
   let navigationRef: HTMLElement | undefined;
@@ -142,7 +163,11 @@ export function Shell(props: ShellProps) {
       isMobile: isMobile(),
       resolveSidebarVisibilityMotion: props.resolveSidebarVisibilityMotion,
     });
-    layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion });
+    if (desktopSidebarOverlay()) {
+      sidebarTriggers.get(id)?.focus({ preventScroll: true });
+      layout.setSidebarActiveTab(id, { openSidebar: false, visibilityMotion });
+      setDesktopSidebarOpen(!fullScreen);
+    } else layout.setSidebarActiveTab(id, { openSidebar, visibilityMotion });
   };
   const activitySelection = createUIFirstSelection<string, ActivitySelectionMetadata>({
     committed: layout.sidebarActiveTab,
@@ -172,14 +197,6 @@ export function Shell(props: ShellProps) {
   // Sidebar is a structural part of the layout. When disabled, force-close the mobile drawer.
   createEffect(() => {
     if (sidebarHidden()) setMobileSidebarOpen(false);
-  });
-
-  // Sync media-query state to LayoutContext so feature components can rely on `useLayout().isMobile()`.
-  createEffect(() => {
-    const mobile = isMobile();
-    if (layout.isMobile() !== mobile) {
-      layout.setIsMobile(mobile);
-    }
   });
 
   // Close mobile sidebar when switching to desktop
@@ -212,6 +229,25 @@ export function Shell(props: ShellProps) {
         collapseBehavior: c.sidebar?.collapseBehavior ?? (c.sidebar?.fullScreen ? 'preserve' : 'toggle'),
       }));
   });
+
+  const desktopActivityItems = createMemo(() => activityItems().map(item => ({
+    ...item,
+    buttonRef: (button: HTMLButtonElement | null) => {
+      if (button) sidebarTriggers.set(item.id, button);
+      else sidebarTriggers.delete(item.id);
+      item.buttonRef?.(button);
+    },
+    ...(desktopSidebarOverlay() && !item.onClick ? {
+      ariaExpanded: () => desktopSidebarOpen() && layout.sidebarActiveTab() === item.id,
+      ariaHasPopup: 'dialog' as const,
+    } : {}),
+  })));
+  const setDesktopSidebarCollapsed = (collapsed: boolean) => {
+    if (desktopSidebarOverlay()) {
+      if (!collapsed) sidebarTriggers.get(layout.sidebarActiveTab())?.focus({ preventScroll: true });
+      setDesktopSidebarOpen(!collapsed);
+    } else layout.setSidebarCollapsed(collapsed);
+  };
 
   // Keep sidebar panels mounted after first activation to preserve state and avoid remount thrash
   // when switching between activity tabs (VSCode-like behavior on desktop).
@@ -362,7 +398,7 @@ export function Shell(props: ShellProps) {
     );
   });
 
-  const effectiveSidebarCollapsed = () => (sidebarHidden() ? true : layout.sidebarCollapsed());
+  const effectiveSidebarCollapsed = () => sidebarHidden() || (desktopSidebarOverlay() ? !desktopSidebarOpen() : layout.sidebarCollapsed());
   const effectiveSidebarWidth = () => sidebarPreviewWidth() ?? layout.sidebarWidth();
   const accessibility = () => floe.config.accessibility;
 
@@ -407,6 +443,8 @@ export function Shell(props: ShellProps) {
     }
   };
 
+  const retainedSidebar = <div class="h-full min-h-0 overflow-auto">{renderSidebarContent(layout.sidebarActiveTab())}</div>;
+
   return (
     <div
       data-floe-shell=""
@@ -447,6 +485,10 @@ export function Shell(props: ShellProps) {
       <div
         inert={navigationPanelPresent()}
         aria-hidden={navigationPanelPresent() ? 'true' : undefined}
+        ref={setLayoutRegion}
+        data-floe-dialog-surface-host={props.sidebarMinContentWidth ? 'true' : undefined}
+        data-floe-surface-portal-layer={props.sidebarMinContentWidth ? 'true' : undefined}
+        data-floe-shell-sidebar-presentation={desktopSidebarOverlay() ? 'overlay' : 'inline'}
         data-floe-shell-slot="main-layout"
         class="flex-1 min-h-0 flex overflow-hidden relative"
       >
@@ -454,20 +496,21 @@ export function Shell(props: ShellProps) {
         <Show when={!isMobile()}>
           {/* Activity Bar */}
           <Show when={activityItems().length > 0}>
-            <ActivityBar
-              items={activityItems()}
+            <div ref={setActivityRegion} class="flex shrink-0 min-h-0"><ActivityBar
+              items={desktopActivityItems()}
               bottomItems={props.activityBottomItems}
               activeId={activityVisualActiveId()}
               onActiveChange={requestSidebarActiveTab}
               collapsed={effectiveSidebarCollapsed()}
-              onCollapsedChange={sidebarHidden() ? undefined : layout.setSidebarCollapsed}
+              onCollapsedChange={sidebarHidden() ? undefined : setDesktopSidebarCollapsed}
               ariaLabel={accessibility().primaryNavigationLabel}
               class={props.slotClassNames?.activityBar}
-            />
+            /></div>
           </Show>
 
           {/* Sidebar - CSS-hidden when collapsed or when fullScreen component is active, DOM stays mounted */}
           <Show when={!sidebarHidden()}>
+            <Show when={!desktopSidebarOverlay()}>
             <Sidebar
               width={effectiveSidebarWidth()}
               collapsed={layout.sidebarCollapsed() || isFullScreen()}
@@ -483,8 +526,17 @@ export function Shell(props: ShellProps) {
               }
               class={props.slotClassNames?.sidebar}
             >
-              {renderSidebarContent(layout.sidebarActiveTab())}
+              {retainedSidebar}
             </Sidebar>
+            </Show>
+            <DialogPlacementProvider mode="auto">
+              <Dialog open={desktopSidebarOverlay() && desktopSidebarOpen() && !isFullScreen()}
+                onOpenChange={setDesktopSidebarOpen} onPresenceChange={setDesktopSidebarPresent}
+                presentation="side-drawer" drawerSide="left" title={accessibility().sidebarLabel}
+                class="floe-adaptive-shell-sidebar w-fit max-w-[calc(100%-48px)]" contentClass="flex-1 min-h-0 overflow-hidden p-0">
+                <div class="h-full min-h-0" style={{ width: `${effectiveSidebarWidth()}px`, 'max-width': '100%' }}>{retainedSidebar}</div>
+              </Dialog>
+            </DialogPlacementProvider>
           </Show>
         </Show>
 
@@ -517,13 +569,14 @@ export function Shell(props: ShellProps) {
             aria-label={accessibility().sidebarLabel}
           >
             <div class="h-full overflow-auto overscroll-contain">
-              {renderSidebarContent(layout.sidebarActiveTab())}
+              {retainedSidebar}
             </div>
           </div>
         </Show>
 
         {/* Content area */}
         <div
+          inert={desktopSidebarPresent()}
           data-floe-shell-slot="content-area"
           class={cn('flex-1 min-w-0 flex flex-col overflow-hidden', props.slotClassNames?.contentArea)}
         >
