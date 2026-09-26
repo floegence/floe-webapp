@@ -14,3 +14,5 @@ export {
   type UseFileBrowserDropTargetOptions,
   type FileBrowserDropTargetResult,
 } from './useFileBrowserDrag';
+
+export { createRetainedContent } from './createRetainedContent';

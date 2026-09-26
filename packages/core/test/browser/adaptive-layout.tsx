@@ -17,7 +17,7 @@ function Example() {
     <Probe />
     {params.has('standalone') ? <p>Standalone provider</p> : <Shell sidebarMinContentWidth={480}
       activityItems={[{ id: 'files', label: 'Files', icon: Icon }]}
-      sidebarContent={() => <div><input aria-label="Directory search" /><div style={{ height: '1000px' }}>Directories</div></div>}>
+      sidebarContent={() => <div data-retained-scroll style={{ height: '100%', overflow: 'auto' }}><input aria-label="Directory search" /><div style={{ height: '1000px' }}>Directories</div></div>}>
       <textarea aria-label="Retained draft" /><button>Main action</button>
     </Shell>}
   </FloeProvider>;

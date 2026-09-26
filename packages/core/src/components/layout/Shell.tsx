@@ -3,6 +3,7 @@ import { observeViewport } from '../../viewport';
 import { Dynamic } from 'solid-js/web';
 import { useLayout } from '../../context/LayoutContext';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { createRetainedContent } from '../../hooks/createRetainedContent';
 import { createAdaptiveSidebar } from '../../hooks/createAdaptiveSidebar';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 import { Dialog } from '../ui/Dialog';
@@ -443,7 +444,7 @@ export function Shell(props: ShellProps) {
     }
   };
 
-  const retainedSidebar = <div class="h-full min-h-0 overflow-auto">{renderSidebarContent(layout.sidebarActiveTab())}</div>;
+  const RetainedSidebar = createRetainedContent(() => <div class="h-full min-h-0 overflow-auto">{renderSidebarContent(layout.sidebarActiveTab())}</div>);
 
   return (
     <div
@@ -510,7 +511,7 @@ export function Shell(props: ShellProps) {
 
           {/* Sidebar - CSS-hidden when collapsed or when fullScreen component is active, DOM stays mounted */}
           <Show when={!sidebarHidden()}>
-            <Show when={!desktopSidebarOverlay()}>
+            <Show when={desktopSidebarOverlay()} fallback={(
             <Sidebar
               width={effectiveSidebarWidth()}
               collapsed={layout.sidebarCollapsed() || isFullScreen()}
@@ -526,17 +527,18 @@ export function Shell(props: ShellProps) {
               }
               class={props.slotClassNames?.sidebar}
             >
-              {retainedSidebar}
+              <RetainedSidebar />
             </Sidebar>
-            </Show>
+            )}>
             <DialogPlacementProvider mode="auto">
               <Dialog open={desktopSidebarOverlay() && desktopSidebarOpen() && !isFullScreen()}
                 onOpenChange={setDesktopSidebarOpen} onPresenceChange={setDesktopSidebarPresent}
                 presentation="side-drawer" drawerSide="left" title={accessibility().sidebarLabel}
                 class="floe-adaptive-shell-sidebar w-fit max-w-[calc(100%-48px)]" contentClass="flex-1 min-h-0 overflow-hidden p-0">
-                <div class="h-full min-h-0" style={{ width: `${effectiveSidebarWidth()}px`, 'max-width': '100%' }}>{retainedSidebar}</div>
+                <div class="h-full min-h-0" style={{ width: `${effectiveSidebarWidth()}px`, 'max-width': '100%' }}><RetainedSidebar /></div>
               </Dialog>
             </DialogPlacementProvider>
+            </Show>
           </Show>
         </Show>
 
@@ -569,7 +571,7 @@ export function Shell(props: ShellProps) {
             aria-label={accessibility().sidebarLabel}
           >
             <div class="h-full overflow-auto overscroll-contain">
-              {retainedSidebar}
+              <RetainedSidebar />
             </div>
           </div>
         </Show>

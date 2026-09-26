@@ -39,6 +39,7 @@ try {
       const search = page.getByRole('textbox', { name: 'Directory search' });
       await editor.fill('Keep 中文'); await search.fill('src');
       await page.evaluate(() => { window.editor = document.querySelector('textarea'); window.search = document.querySelector('input'); });
+      await page.locator('[data-retained-scroll]').evaluate(element => { element.scrollTop = 180; });
       for (const width of [640, 800, 640, 1024, 1280]) {
         await page.setViewportSize({ width, height: 800 });
         const overlay = width < 800;
@@ -55,14 +56,25 @@ try {
           const rect = await panel.boundingBox();
           assert.ok(Math.abs(rect.x - boundary.x) < 1, `desktop drawer opens from the left edge: ${JSON.stringify({rect, boundary, styles: await panel.evaluate(el => ({ side: el.dataset.floeDrawerSide, transform: getComputedStyle(el).transform, parent: getComputedStyle(el.parentElement).justifyContent, grandparent: getComputedStyle(el.parentElement.parentElement).padding }))})}`);
           assert.ok(rect.width <= boundary.width - 48, 'drawer leaves a visible dismissal strip');
+          assert.equal(await page.locator('[data-retained-scroll]').evaluate(element => element.scrollTop), 180);
           assert.equal(await search.inputValue(), 'src');
           await panel.press('Escape'); await panel.waitFor({ state: 'detached' });
           await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Files', undefined, { timeout: 3000 });
-        } else assert.equal(await search.inputValue(), 'src');
+        } else {
+          assert.equal(await search.inputValue(), 'src');
+          assert.equal(await page.locator('[data-retained-scroll]').evaluate(element => element.scrollTop), 180);
+        }
         assert.equal(await editor.evaluate(element => element === window.editor && element.value === 'Keep 中文'), true);
         if (!overlay) assert.equal(await search.evaluate(element => element === window.search), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
       }
+      // Widening an open drawer must transfer content without overlapping mounts.
+      await page.setViewportSize({ width: 640, height: 800 });
+      await page.getByRole('button', { name: 'Files', exact: true }).click();
+      await page.getByRole('dialog').waitFor();
+      await page.setViewportSize({ width: 1024, height: 800 });
+      await page.getByRole('dialog').waitFor({ state: 'detached' });
+      assert.equal(await page.locator('[data-retained-scroll]').evaluate(element => element.scrollTop), 180);
       assert.deepEqual(errors, []); await page.close();
       console.log(`${engine.name()}: configured mode, standalone resize, left sidebar, retained state and focus passed`);
     } finally { await browser.close(); }

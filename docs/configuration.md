@@ -320,3 +320,10 @@ collapsed preference. Widening restores inline placement. This option is off by 
 `Dialog` with `presentation="side-drawer"` accepts `drawerSide="left" | "right"`
 (default `right`). Both edges share the existing focus, presence and local surface
 boundary contracts; hosts should reuse the dialog rather than building another mask.
+
+When navigation changes placement, create its content once with
+`createRetainedContent(() => <Navigation />)` and render the returned component
+in exactly one placement at a time. Its parent owns the content lifetime;
+placement cleanup captures native scroll offsets before detachment and the next
+mount restores them. Dialog continues to own focus and disclosure. Reusing a bare
+DOM node alone does not preserve native scrolling through detach/reattach.
