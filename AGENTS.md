@@ -3,7 +3,7 @@
 ## Asynchronous Layout Contract
 
 - Buttons with a `loading` prop reserve their icon slot before work starts and expose `aria-busy`. Use `icon` instead of duplicating a child icon for these buttons.
-- Use `StableText` with every localized transient label when action text changes. Inactive labels contribute intrinsic size but never an accessible name. Do not fix text widths in pixels or remove meaningful progress/error feedback to prevent movement.
+- Use `StableText` with every localized transient label when action text changes. Inactive labels contribute intrinsic size but never an accessible name. Visible text stays vertically centered when reserved labels wrap; acceptance measures visible text against icons and control bounds, not only outer geometry. Do not fix text widths in pixels or remove meaningful progress/error feedback to prevent movement.
 - Use persistent `StatusRegion` slots for asynchronous feedback next to retained content. Keep long messages scrollable and errors accessible; user-driven disclosure may still change layout.
 - Inline Markdown media keeps a bounded viewport through resolution, decoding, failure, and retry. Images use contain sizing; full-size inspection remains available in the preview window.
 - Browser acceptance must compare control and neighbor geometry before, during, and after asynchronous work at desktop and narrow widths.

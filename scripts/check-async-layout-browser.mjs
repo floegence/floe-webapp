@@ -22,10 +22,28 @@ const server = await createServer({
   server: { host: '127.0.0.1', port: 0 },
 });
 let browser;
-const geometry = page => page.locator('[data-case], [data-media], [data-media-neighbor]').evaluateAll(nodes => nodes.map(node => {
+const geometry = page => page.locator('[data-case], [data-label-alignment], [data-media], [data-media-neighbor]').evaluateAll(nodes => nodes.map(node => {
   const { x, y, width, height } = node.getBoundingClientRect();
   return { id: node.getAttribute('data-case') ?? node.tagName, x, y, width, height };
 }));
+async function assertLabelAlignment(page) {
+  const labels = await page.locator('[data-label-alignment]').evaluateAll(buttons => buttons.map(button => {
+    const visible = button.querySelector('span[style*="inline-grid"] > span:last-child');
+    const range = document.createRange(); range.selectNodeContents(visible);
+    const text = range.getBoundingClientRect(), bounds = button.getBoundingClientRect();
+    const icon = button.firstElementChild.getBoundingClientRect();
+    return {
+      id: button.getAttribute('data-label-alignment'),
+      text: visible.textContent,
+      offset: Math.abs(text.y + text.height / 2 - icon.y - icon.height / 2),
+      contained: text.top >= bounds.top && text.bottom <= bounds.bottom && text.left >= bounds.left && text.right <= bounds.right,
+    };
+  }));
+  for (const label of labels) {
+    assert.ok(label.offset <= 2, `Visible label and icon must align: ${JSON.stringify(label)}`);
+    assert.ok(label.contained, `Visible label must fit: ${JSON.stringify(label)}`);
+  }
+}
 try {
   await server.listen();
   browser = await chromium.launch({ headless: true });
@@ -37,8 +55,10 @@ try {
     await page.goto(`${server.resolvedUrls.local[0]}test/browser/async-layout.html`);
     await page.waitForFunction(() => typeof window.resolveMedia === 'function');
     const idle = await geometry(page);
+    await assertLabelAlignment(page);
     await page.getByRole('button', { name: 'Toggle pending' }).click();
     const pending = await geometry(page);
+    await assertLabelAlignment(page);
     assert.equal(await page.locator('[data-case="plain"]').getAttribute('aria-busy'), 'true');
     assert.equal(await page.locator('[data-case="plain"]').isDisabled(), true);
     assert.equal(await page.getByRole('button', { name: 'Kopiert', exact: true }).count(), 1, 'Reserved labels must not enter the accessible name');

@@ -26,6 +26,14 @@ function Fixture() {
       <Button loading={loading()}><StableText reserve={['刷新', '正在刷新模型目录…']}>{loading() ? '正在刷新模型目录…' : '刷新'}</StableText></Button>
       <Button><StableText reserve={['Umgebungskennung kopieren', 'Kopiert']}>{loading() ? 'Kopiert' : 'Umgebungskennung kopieren'}</StableText></Button>
     </div>
+    <div data-case="constrained-labels" class="flex gap-2">
+      <Button data-label-alignment="fixed" size="sm" icon={Refresh} class="w-28">
+        <StableText reserve={['启动', '正在设置编辑器…']}>启动</StableText>
+      </Button>
+      <Button data-label-alignment="wrapped" size="sm" icon={Refresh} loading={loading()} class="w-28 h-auto py-2">
+        <StableText reserve={['启动', '正在设置编辑器…']}>{loading() ? '正在设置编辑器…' : '启动'}</StableText>
+      </Button>
+    </div>
     <StatusRegion data-case="feedback" class="text-xs" lines={2}>{loading() ? 'A long recoverable error. '.repeat(30) : ''}</StatusRegion>
     <p data-case="feedback-neighbor">Content after feedback</p>
     <section data-media>
