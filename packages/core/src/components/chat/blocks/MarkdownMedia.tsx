@@ -106,6 +106,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
 
   return (
     <span ref={root} class={cn('chat-media', expanded() && props.source.kind === 'html' && 'chat-media-expanded', props.class)} data-media-kind={props.source.kind}>
+      <span class="chat-media-viewport">
       <Switch>
         <Match when={status() === 'loading'}><span class="chat-media-placeholder" role="status">{props.labels.loading}</span></Match>
         <Match when={status() === 'error'}><span class="chat-media-placeholder" role="status"><span>{props.labels.unavailable}</span><button type="button" class="chat-media-retry" onClick={() => setRetry(value => value + 1)}><Refresh />{props.labels.retry}</button></span></Match>
@@ -120,6 +121,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           </Switch>
         </Match>
       </Switch>
+      </span>
       <span class="chat-media-header">
         <span class="chat-media-heading"><span class="chat-media-kind">{props.labels[props.source.kind]}</span><span class="chat-media-title" title={title()}>{title()}</span></span>
         <span class="chat-media-actions">

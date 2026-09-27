@@ -88,6 +88,7 @@ jobs:
           pnpm test:input-focus
           node scripts/check-content-sizing-browser.mjs
           node scripts/check-chat-media-browser.mjs
+          node scripts/check-async-layout-browser.mjs
           pnpm test:event-stream-media
           pnpm test:workbench-composition
           pnpm test:workbench-header

@@ -75,17 +75,15 @@ export function Button(props: ButtonProps) {
         local.class
       )}
       disabled={local.disabled || local.loading}
+      aria-busy={local.loading || undefined}
       {...rest}
     >
-      <Show
-        when={local.loading}
-        fallback={
-          local.icon && (
-            <Dynamic component={local.icon} class={iconSize()} />
-          )
-        }
-      >
-        <Loader2 class={cn(iconSize(), 'animate-spin')} />
+      <Show when={local.icon || 'loading' in props}>
+        <span aria-hidden="true" class={cn('inline-flex shrink-0 items-center justify-center', iconSize())}>
+          <Show when={local.loading} fallback={local.icon && <Dynamic component={local.icon} class="h-full w-full" />}>
+            <Loader2 class="h-full w-full animate-spin" />
+          </Show>
+        </span>
       </Show>
       {local.children}
     </button>
