@@ -2,6 +2,8 @@
 
 ## Asynchronous Layout Contract
 
+- Button labels always stay on one line, including pending and localized states. Reserve their intrinsic width and let the containing action group reflow whole controls; do not wrap labels or increase button height to fit them. The shared primitive applies the same default to native buttons.
+
 - Buttons with a `loading` prop reserve their icon slot before work starts and expose `aria-busy`. Use `icon` instead of duplicating a child icon for these buttons.
 - Use `StableText` with every localized transient label when action text changes. Inactive labels contribute intrinsic size but never an accessible name. Visible text stays vertically centered when reserved labels wrap; acceptance measures visible text against icons and control bounds, not only outer geometry. Do not fix text widths in pixels or remove meaningful progress/error feedback to prevent movement.
 - Use persistent `StatusRegion` slots for asynchronous feedback next to retained content. Keep long messages scrollable and errors accessible; user-driven disclosure may still change layout.

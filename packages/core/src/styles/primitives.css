@@ -23,6 +23,9 @@
   --floe-radius-floating: 12px;
 }
 
+/* Action labels stay on one line; their containing toolbar owns reflow. */
+:where(button) { white-space: nowrap; }
+
 /* Compact visual controls retain usable, non-overlapping touch geometry. */
 @media (pointer: coarse) {
   body {

@@ -26,13 +26,17 @@ function Fixture() {
       <Button loading={loading()}><StableText reserve={['刷新', '正在刷新模型目录…']}>{loading() ? '正在刷新模型目录…' : '刷新'}</StableText></Button>
       <Button><StableText reserve={['Umgebungskennung kopieren', 'Kopiert']}>{loading() ? 'Kopiert' : 'Umgebungskennung kopieren'}</StableText></Button>
     </div>
-    <div data-case="constrained-labels" class="flex gap-2">
+    <div data-case="constrained-labels" class="flex flex-wrap gap-2">
       <Button data-label-alignment="fixed" size="sm" icon={Refresh} class="w-28">
         <StableText reserve={['启动', '正在设置编辑器…']}>启动</StableText>
       </Button>
-      <Button data-label-alignment="wrapped" size="sm" icon={Refresh} loading={loading()} class="w-28 h-auto py-2">
+      <Button data-label-alignment="single-line" size="sm" icon={Refresh} loading={loading()} class="w-28">
         <StableText reserve={['启动', '正在设置编辑器…']}>{loading() ? '正在设置编辑器…' : '启动'}</StableText>
       </Button>
+      <button data-label-alignment="native" class="inline-flex min-w-max items-center gap-1.5 text-xs">
+        <Refresh class="h-3.5 w-3.5 shrink-0" />
+        <StableText reserve={['Start', 'Configuration de l’éditeur...']}>{loading() ? 'Configuration de l’éditeur...' : 'Start'}</StableText>
+      </button>
     </div>
     <StatusRegion data-case="feedback" class="text-xs" lines={2}>{loading() ? 'A long recoverable error. '.repeat(30) : ''}</StatusRegion>
     <p data-case="feedback-neighbor">Content after feedback</p>

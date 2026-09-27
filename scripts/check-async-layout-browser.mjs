@@ -1,4 +1,4 @@
-/* global window, document, Event */
+/* global window, document, Event, getComputedStyle */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
@@ -35,11 +35,15 @@ async function assertLabelAlignment(page) {
     return {
       id: button.getAttribute('data-label-alignment'),
       text: visible.textContent,
+      whiteSpace: getComputedStyle(button).whiteSpace,
+      lines: new Set([...range.getClientRects()].filter(rect => rect.width > 0).map(rect => rect.top)).size,
       offset: Math.abs(text.y + text.height / 2 - icon.y - icon.height / 2),
       contained: text.top >= bounds.top && text.bottom <= bounds.bottom && text.left >= bounds.left && text.right <= bounds.right,
     };
   }));
   for (const label of labels) {
+    assert.equal(label.whiteSpace, 'nowrap', `Buttons inherit the single-line contract: ${JSON.stringify(label)}`);
+    assert.equal(label.lines, 1, `Button labels must never wrap: ${JSON.stringify(label)}`);
     assert.ok(label.offset <= 2, `Visible label and icon must align: ${JSON.stringify(label)}`);
     assert.ok(label.contained, `Visible label must fit: ${JSON.stringify(label)}`);
   }
