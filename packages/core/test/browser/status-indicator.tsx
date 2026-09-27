@@ -5,6 +5,7 @@ import {
   type FeedbackIndicatorEntry,
 } from '../../src/components/ui/FeedbackIndicator';
 import '../../src/styles/globals.css';
+import { FloatingWindow } from '../../src/components/ui/FloatingWindow';
 
 function Fixture() {
   const mode = new URLSearchParams(location.search).get('mode');
@@ -76,4 +77,20 @@ function Fixture() {
     </div>
   );
 }
-render(Fixture, document.getElementById('root')!);
+function WindowFixture() {
+  const [open, setOpen] = createSignal(true);
+  return (
+    <FloatingWindow
+      open={open()}
+      onOpenChange={setOpen}
+      title="Feedback window"
+      defaultSize={{ width: 600, height: 600 }}
+    >
+      <Fixture />
+    </FloatingWindow>
+  );
+}
+render(
+  () => (new URLSearchParams(location.search).get('window') ? <WindowFixture /> : <Fixture />),
+  document.getElementById('root')!
+);

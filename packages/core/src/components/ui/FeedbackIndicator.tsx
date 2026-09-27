@@ -11,6 +11,7 @@ import {
 } from 'solid-js';
 import { AlertTriangle, Info, X } from '../icons';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { cn } from '../../utils/cn';
 import { SurfaceFloatingLayer } from './SurfaceFloatingLayer';
 import { calculateMenuPosition } from './menuUtils';
@@ -46,6 +47,8 @@ export interface FeedbackIndicatorProps {
 /** Compact feedback in an existing action row; no empty vertical status lane. */
 export function FeedbackIndicator(props: FeedbackIndicatorProps) {
   const id = createUniqueId();
+  const touch = useMediaQuery('(pointer: coarse)');
+  const controlSize = () => (touch() ? '2.75rem' : props.size === 'md' ? '2rem' : '1.75rem');
   const [open, setOpen] = createSignal(false);
   const [panel, setPanel] = createSignal<HTMLDivElement>();
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
@@ -85,7 +88,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
     autoFocus: false,
     restoreFocus: false,
     closeOnEscape: 'inside',
-    escapeKeyPhase: 'bubble',
+    escapeKeyPhase: 'capture',
     blockHotkeys: false,
   });
 
@@ -177,8 +180,8 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
       data-floe-status-indicator
       class={cn('inline-flex shrink-0 items-center justify-center align-middle', props.class)}
       style={{
-        width: props.size === 'md' ? '2rem' : '1.75rem',
-        height: props.size === 'md' ? '2rem' : '1.75rem',
+        width: controlSize(),
+        height: controlSize(),
       }}
     >
       <button
@@ -246,6 +249,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
             <button
               type="button"
               aria-label={props.closeLabel}
+              style={{ width: controlSize(), height: controlSize() }}
               class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-accent"
               onClick={() => close(true)}
             >

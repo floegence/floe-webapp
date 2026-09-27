@@ -50,6 +50,10 @@ try {
       );
       assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Refresh');
       const trigger = page.getByRole('button', { name: /Inventory feedback/ });
+      assert.ok(
+        (await trigger.evaluate(node => node.offsetHeight)) >= 44,
+        'Touch feedback has an accessible target'
+      );
       await trigger.focus();
       await page.keyboard.press('Enter');
       const panel = page.getByRole('dialog', { name: 'Inventory feedback' });
@@ -121,6 +125,29 @@ try {
       await page.close();
     }
   }
+  const windowPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await windowPage.goto(
+    `${server.resolvedUrls.local[0]}test/browser/status-indicator.html?window=1`
+  );
+  await windowPage.getByRole('button', { name: 'Refresh', exact: true }).click();
+  const windowTrigger = windowPage.getByRole('button', { name: /Inventory feedback/ });
+  await windowTrigger.click();
+  const windowDetails = windowPage.getByRole('dialog', { name: 'Inventory feedback' });
+  await windowDetails.waitFor();
+  await windowDetails.focus();
+  await windowPage.keyboard.press('Escape');
+  await windowDetails.waitFor({ state: 'hidden' });
+  assert.equal(
+    await windowPage.locator('[data-floe-floating-window-titlebar]').isVisible(),
+    true,
+    'Escape closes only nested feedback'
+  );
+  assert.equal(
+    await windowTrigger.evaluate((node) => node === document.activeElement),
+    true,
+    'Nested disclosure restores its trigger'
+  );
+  await windowPage.close();
   console.log('PASS: compact feedback preserves density, geometry, recovery and keyboard access');
 } finally {
   await browser?.close();
