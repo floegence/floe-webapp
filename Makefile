@@ -7,6 +7,7 @@ check: install flowersec-smoke-peer lint typecheck test build verify packed-cons
 .PHONY: async-layout
 async-layout:
 	node scripts/check-async-layout-browser.mjs
+	node scripts/check-status-indicator-browser.mjs
 
 install:
 	pnpm install --frozen-lockfile

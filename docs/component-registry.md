@@ -363,3 +363,7 @@ application's module graph changes.
 `node scripts/check-asset-recovery-browser.mjs` serves two real production builds
 in one browser session and verifies stale chunk 404s, interrupted downloads,
 error isolation, unchanged-version checks, retained drafts, and explicit reload.
+
+### Compact asynchronous feedback
+
+`FeedbackIndicator` owns an inline icon slot and a surface-aware, bounded details panel. Callers provide current entries (`id`, severity, localized summary, optional detail and actions), localized labels, and a stable focus destination. No entries means no visible or keyboard-focusable trigger; the inline footprint stays fixed. Background changes announce feedback without opening the panel or moving focus. Closing details never clears errors. Initial load failures and field validation stay directly visible. `StatusRegion` retains its fixed-line contract only for intentional progress or existing bounded feedback areas; never add empty rows above retained content.

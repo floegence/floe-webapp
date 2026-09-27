@@ -6,7 +6,7 @@
 
 - Buttons with a `loading` prop reserve their icon slot before work starts and expose `aria-busy`. Use `icon` instead of duplicating a child icon for these buttons.
 - Use `StableText` with every localized transient label when action text changes. Inactive labels contribute intrinsic size but never an accessible name. Visible text stays vertically centered when reserved labels wrap; acceptance measures visible text against icons and control bounds, not only outer geometry. Do not fix text widths in pixels or remove meaningful progress/error feedback to prevent movement.
-- Use persistent `StatusRegion` slots for asynchronous feedback next to retained content. Keep long messages scrollable and errors accessible; user-driven disclosure may still change layout.
+- Use `FeedbackIndicator` inside existing action rows for asynchronous feedback next to retained content. Normal views must not reserve empty feedback rows. Keep blocking errors and validation directly visible. Reserve `StatusRegion` only for intentional progress or existing bounded footer areas. Long messages and recovery actions remain accessible; user-driven disclosure may change layout.
 - Inline Markdown media keeps a bounded viewport through resolution, decoding, failure, and retry. Images use contain sizing; full-size inspection remains available in the preview window.
 - Browser acceptance must compare control and neighbor geometry before, during, and after asynchronous work at desktop and narrow widths.
 
