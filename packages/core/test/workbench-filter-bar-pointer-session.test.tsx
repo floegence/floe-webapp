@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createSignal, splitProps, type JSX } from 'solid-js';
+import { createSignal, splitProps, untrack, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -135,7 +135,7 @@ describe('WorkbenchFilterBar pointer session', () => {
     );
     options[1]!.click();
     await Promise.resolve();
-    expect(mode()).toBe('background');
+    expect(untrack(mode)).toBe('background');
     expect(trigger.querySelector('[data-custom-composition]')?.getAttribute('class')).toBe(
       'workbench-dock__icon'
     );
@@ -161,6 +161,39 @@ describe('WorkbenchFilterBar pointer session', () => {
     vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
     return callbacks;
   }
+
+  it('updates a retained host action icon when its reactive artwork changes', async () => {
+    const host = createWorkbenchHost();
+    const [alternate, setAlternate] = createSignal(false);
+    const InitialIcon = () => <svg data-action-artwork="initial" />;
+    const AlternateIcon = () => <svg data-action-artwork="alternate" />;
+    const action = {
+      id: 'host-action',
+      label: 'Host action',
+      get icon() {
+        return alternate() ? AlternateIcon : InitialIcon;
+      },
+      onActivate: () => {},
+    };
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{}}
+          onSoloFilter={() => {}}
+          dockActions={[action]}
+        />
+      ),
+      host
+    );
+    const button = host.querySelector('[data-workbench-dock-action="host-action"]')!;
+    expect(button.querySelector('[data-action-artwork="initial"]')).not.toBeNull();
+    setAlternate(true);
+    await Promise.resolve();
+    expect(button.querySelector('[data-action-artwork="alternate"]')).not.toBeNull();
+    expect(button.querySelector('[data-action-artwork="initial"]')).toBeNull();
+  });
 
   it('commits a dragged widget pill once when release is only observable through a later buttons=0 move', async () => {
     const host = createWorkbenchHost();

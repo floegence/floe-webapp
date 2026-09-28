@@ -269,7 +269,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     transitionFrame = view.requestAnimationFrame(() => {
       transitionFrame = 0;
       transitionView = null;
-      setFrame(targetFrame(open) ?? next);
+      setFrame(untrack(() => targetFrame(open)) ?? next);
     });
     transitionView = view;
   };
@@ -398,7 +398,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
         const next = JSON.stringify(snapshot);
         if (next === previous) return;
         previous = next;
-        refresh();
+        untrack(refresh);
       });
     });
     // Anchors can move during local scroll without changing viewport dimensions.

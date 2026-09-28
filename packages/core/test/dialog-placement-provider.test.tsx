@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createSignal } from 'solid-js';
+import { createSignal, untrack } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
 import {
@@ -474,7 +474,7 @@ describe('bottom drawer ownership', () => {
     confirm.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
     );
-    expect(child()).toBe(false);
+    expect(untrack(child)).toBe(false);
     expect(parentClose).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(document.activeElement).toBe(review));
   });

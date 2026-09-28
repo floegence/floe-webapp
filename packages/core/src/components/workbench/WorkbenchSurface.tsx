@@ -180,6 +180,7 @@ function focusWorkbenchSurfaceRoot(root: HTMLElement | null): void {
 }
 
 export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
+  const compositionMessages = createMemo(() => props.compositionMessages);
   const modelOptions: UseWorkbenchModelOptions = {
     state: () => props.state(),
     setState: (updater) => props.setState(updater),
@@ -470,7 +471,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       } catch {
         focusTarget.focus();
       }
-      setInputOwner(interactionAdapter().createCanvasInputOwner('background_focus'));
+      setInputOwner(untrack(interactionAdapter).createCanvasInputOwner('background_focus'));
     });
   };
 
@@ -900,7 +901,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
         },
       }}
     >
-      <WorkbenchCompositionMessagesContext.Provider value={() => props.compositionMessages}>
+      <WorkbenchCompositionMessagesContext.Provider value={compositionMessages}>
         <div
           ref={setSurfaceRootEl}
           class={`workbench-surface${props.class ? ` ${props.class}` : ''}`}

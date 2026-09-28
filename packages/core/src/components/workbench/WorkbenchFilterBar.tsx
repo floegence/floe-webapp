@@ -9,7 +9,7 @@ import {
   type Component,
   type JSX,
 } from 'solid-js';
-import { Portal } from 'solid-js/web';
+import { Dynamic, Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
 import { duration, easing } from '../../utils/animations';
 import {
@@ -494,7 +494,6 @@ function DockAction(props: {
 }) {
   const isHovered = () => props.hoverOffset === -1;
   const tileMotion = () => ({ scale: 1, y: 0, x: 0 });
-  const Icon = props.action.icon;
 
   return (
     <button
@@ -508,8 +507,8 @@ function DockAction(props: {
       }}
       aria-label={props.action.label}
       aria-pressed={props.action.active}
-      onPointerEnter={props.onEnter}
-      onPointerLeave={props.onLeave}
+      onPointerEnter={() => props.onEnter()}
+      onPointerLeave={() => props.onLeave()}
       onDragStart={(event) => event.preventDefault()}
       onClick={(event) => props.onActivate(event.currentTarget)}
     >
@@ -518,7 +517,7 @@ function DockAction(props: {
         animate={tileMotion()}
         transition={{ duration: duration.fast, easing: easing.easeOut }}
       >
-        <Icon class="workbench-dock__icon" />
+        <Dynamic component={props.action.icon} class="workbench-dock__icon" />
       </Motion.span>
       <Motion.span
         class="workbench-dock__tooltip"

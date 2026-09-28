@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createEffect, createSignal, type JSX } from 'solid-js';
+import { createEffect, createSignal, untrack, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -1151,7 +1151,7 @@ describe('WorkbenchWidget interaction ownership', () => {
       dispose = renderStatefulWidget(host, {
         ...filesWidgetDefinition,
         body: (props) => {
-          bodyProps = props;
+          bodyProps = untrack(() => props);
           return (
             <div>
               <textarea aria-label="Local editor" />
