@@ -11,20 +11,31 @@ const RENAME_MAP: Record<string, string> = {
 
 export function copyDir(src: string, dest: string, projectName?: string) {
   fs.mkdirSync(dest, { recursive: true });
-  for (const file of fs.readdirSync(src)) {
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const file = entry.name;
     const srcFile = path.join(src, file);
     // Rename files that start with underscore
     const destFileName = RENAME_MAP[file] || file;
     const destFile = path.join(dest, destFileName);
-    const stat = fs.statSync(srcFile);
-    if (stat.isDirectory()) {
+    if (entry.isDirectory()) {
       copyDir(srcFile, destFile);
-    } else if (projectName && destFileName === 'package.json') {
-      const pkg = JSON.parse(fs.readFileSync(srcFile, 'utf-8'));
-      pkg.name = projectName;
-      fs.writeFileSync(destFile, JSON.stringify(pkg, null, 2) + '\n', { flag: 'wx' });
     } else {
-      fs.copyFileSync(srcFile, destFile, fs.constants.COPYFILE_EXCL);
+      const descriptor = fs.openSync(srcFile, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+      try {
+        if (!fs.fstatSync(descriptor).isFile()) {
+          throw new Error(`Template entry is not a regular file: ${srcFile}`);
+        }
+        const source = fs.readFileSync(descriptor);
+        let content: string | Buffer = source;
+        if (projectName && destFileName === 'package.json') {
+          const pkg = JSON.parse(source.toString('utf-8'));
+          pkg.name = projectName;
+          content = JSON.stringify(pkg, null, 2) + '\n';
+        }
+        fs.writeFileSync(destFile, content, { flag: 'wx' });
+      } finally {
+        fs.closeSync(descriptor);
+      }
     }
   }
 }
