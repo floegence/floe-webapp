@@ -13,16 +13,16 @@
     "@floegence/floe-webapp-boot": "workspace:*",
     "@floegence/floe-webapp-core": "workspace:*",
     "@floegence/floe-webapp-protocol": "workspace:*",
-    "mermaid": "^11.16.0",
-    "shiki": "^3.21.0",
-    "solid-js": "^1.9.11",
+    "mermaid": "^11.17.2",
+    "shiki": "^3.23.0",
+    "solid-js": "^1.9.15",
     "solid-motionone": "^1.0.4"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.18",
-    "tailwindcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^7.3.2",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^7.3.6",
+    "vite-plugin-solid": "^2.11.14"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.81.1",
+  "version": "0.81.2",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -151,21 +151,21 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "diff": "^8.0.3",
-    "marked": "^17.0.1",
-    "mermaid": "^11.16.0",
+    "diff": "^8.0.4",
+    "marked": "^17.0.6",
+    "mermaid": "^11.17.2",
     "monaco-editor": "^0.55.1",
     "pdfjs-dist": "6.3.289",
-    "shiki": "^3.21.0",
+    "shiki": "^3.23.0",
     "solid-motionone": "^1.0.4",
-    "tailwind-merge": "^3.4.0"
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.18",
-    "solid-js": "^1.9.11",
-    "tailwindcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.3.3",
+    "solid-js": "^1.9.15",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^7.3.2",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^7.3.6",
+    "vite-plugin-solid": "^2.11.14"
   }
 }
