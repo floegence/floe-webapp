@@ -118,11 +118,12 @@ function assertInitTemplates() {
       .join(', ')}`
   );
 
+  const coreVersion = readJson('packages/core/package.json').version;
   for (const template of ['minimal', 'full']) {
     const templatePackage = readJson(`packages/init/templates/${template}/_package.json`);
     assert(
-      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === '^0.49.0',
-      `Init template ${template} must target @floegence/floe-webapp-core ^0.49.0`
+      templatePackage.dependencies?.['@floegence/floe-webapp-core'] === `^${coreVersion}`,
+      `Init template ${template} must target @floegence/floe-webapp-core ^${coreVersion}`
     );
   }
 

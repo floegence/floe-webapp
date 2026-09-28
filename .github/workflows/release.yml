@@ -153,6 +153,9 @@ jobs:
           GOWORK=off go test ./...
           GOWORK=off go vet ./...
 
+      - name: Verify packed consumers before publication
+        run: node scripts/verify-npm-release-consumer.mjs --packed
+
       - name: Check if @floegence/floe-webapp-core is already published
         id: core_exists
         run: |

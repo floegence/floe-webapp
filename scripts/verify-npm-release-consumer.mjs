@@ -111,11 +111,22 @@ for (const template of ['minimal', 'full']) {
   if (manifest.name !== projectName || typeof manifest.scripts?.dev !== 'string') {
     throw new Error(`The ${template} template must create a named, runnable project`);
   }
+  if (manifest.dependencies?.['@floegence/floe-webapp-core'] !== `^${version}`) {
+    throw new Error(`The ${template} template must target the current core release ${version}`);
+  }
   for (const file of ['SKILL.md', 'references/playbooks.md']) {
     const generated = readFileSync(join(project, 'skills/floe-webapp', file), 'utf8');
     const packaged = readFileSync(join(root, 'node_modules/@floegence/floe-webapp-init/skills/floe-webapp', file), 'utf8');
     if (generated !== packaged) throw new Error(`The ${template} template must include the current ${file}`);
   }
+  // A packed check installs the candidate tarball into this disposable project.
+  // The published check installs the generated manifest exactly as users receive it.
+  execFileSync('npm', ['install', '--prefix', project, '--no-audit', '--no-fund', '--ignore-scripts',
+    ...(process.argv.includes('--packed') ? [packageSpecs[0]] : []),
+  ], { cwd: project, stdio: 'inherit' });
+  execFileSync('npm', ['audit', '--prefix', project, '--audit-level=low'], { cwd: project, stdio: 'inherit' });
+  execFileSync(process.execPath, [join(project, 'node_modules/typescript/bin/tsc'), '--noEmit'], { cwd: project, stdio: 'inherit' });
+  execFileSync('npm', ['run', 'build', '--prefix', project], { cwd: project, stdio: 'inherit' });
 }
 
 const focusCSS = readFileSync(join(root, 'node_modules/@floegence/floe-webapp-core/dist/input-focus.css'), 'utf8');
