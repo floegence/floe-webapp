@@ -118,7 +118,6 @@ Examples:
     '../../templates',
     template
   );
-  const skillDir = path.resolve(fileURLToPath(import.meta.url), '../../skills');
 
   if (!fs.existsSync(templateDir)) {
     console.log(red(`Template directory not found: ${templateDir}`));
@@ -126,14 +125,6 @@ Examples:
   }
 
   copyDir(templateDir, root, path.basename(targetDir));
-
-  // Copy portable skills package to project root for non-template-first workflows
-  const targetSkillDir = path.join(root, 'skills');
-  if (fs.existsSync(skillDir)) {
-    copyDir(skillDir, targetSkillDir);
-  } else {
-    console.log(red(`Warning: skill directory not found: ${skillDir}`));
-  }
 
   // Done
   console.log(green('Done!\n'));

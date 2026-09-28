@@ -100,6 +100,24 @@ execFileSync('node', [join(root, 'node_modules', '.bin', 'floe-webapp-init'), '-
   stdio: 'inherit',
 });
 
+for (const template of ['minimal', 'full']) {
+  const projectName = `scaffold-${template}`;
+  const project = join(root, projectName);
+  execFileSync(process.execPath, [join(root, 'node_modules', '.bin', 'floe-webapp-init'), project, '--template', template], {
+    cwd: root,
+    stdio: 'inherit',
+  });
+  const manifest = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8'));
+  if (manifest.name !== projectName || typeof manifest.scripts?.dev !== 'string') {
+    throw new Error(`The ${template} template must create a named, runnable project`);
+  }
+  for (const file of ['SKILL.md', 'references/playbooks.md']) {
+    const generated = readFileSync(join(project, 'skills/floe-webapp', file), 'utf8');
+    const packaged = readFileSync(join(root, 'node_modules/@floegence/floe-webapp-init/skills/floe-webapp', file), 'utf8');
+    if (generated !== packaged) throw new Error(`The ${template} template must include the current ${file}`);
+  }
+}
+
 const focusCSS = readFileSync(join(root, 'node_modules/@floegence/floe-webapp-core/dist/input-focus.css'), 'utf8');
 if (!focusCSS.includes('[data-floe-input-surface]') || focusCSS.includes('@import')) {
   throw new Error('The standalone input focus contract must be shipped without shell imports');
