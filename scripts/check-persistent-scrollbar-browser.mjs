@@ -13,7 +13,10 @@ const { default: tailwind } = await import(
 const server = await createServer({
   configFile: false,
   root: fileURLToPath(new URL('../packages/core/', import.meta.url)),
-  optimizeDeps: { entries: ['test/browser/persistent-scrollbar.html'] },
+  optimizeDeps: {
+    entries: ['test/browser/persistent-scrollbar.html'],
+    include: ['clsx', 'tailwind-merge'],
+  },
   plugins: [solid(), tailwind()],
   resolve: { dedupe: ['solid-js'] },
   server: { host: '127.0.0.1', port: 0 },
@@ -24,7 +27,11 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
+  let navigations = 0;
   page.on('pageerror', (error) => errors.push(error.message));
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigations += 1;
+  });
   await page.goto(
     `http://127.0.0.1:${server.httpServer.address().port}/test/browser/persistent-scrollbar.html`
   );
@@ -113,6 +120,7 @@ try {
     'rgba(0, 0, 0, 0)'
   );
   assert.deepEqual(errors, []);
+  assert.equal(navigations, 1, 'dependency optimization does not reload the test page');
   console.log(
     'Persistent scrollbar passed: overflow lifecycle, native scroll sync, keyboard, track, scaled drag, reduced motion and forced colors.'
   );
