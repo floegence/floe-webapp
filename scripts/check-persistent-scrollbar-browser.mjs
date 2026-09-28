@@ -13,6 +13,7 @@ const { default: tailwind } = await import(
 const server = await createServer({
   configFile: false,
   root: fileURLToPath(new URL('../packages/core/', import.meta.url)),
+  optimizeDeps: { entries: ['test/browser/persistent-scrollbar.html'] },
   plugins: [solid(), tailwind()],
   resolve: { dedupe: ['solid-js'] },
   server: { host: '127.0.0.1', port: 0 },

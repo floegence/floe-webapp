@@ -11,6 +11,7 @@ const { default: tailwind } = await import(
 );
 const server = await createServer({
   configFile: false,
+  optimizeDeps: { entries: ['test/browser/file-menu.html'] },
   root: fileURLToPath(new URL('../packages/core/', import.meta.url)),
   plugins: [solid(), tailwind()],
   resolve: { dedupe: ['solid-js'] },

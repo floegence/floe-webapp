@@ -13,6 +13,7 @@ const { default: tailwind } = await import(
 );
 const server = await createServer({
   configFile: false,
+  optimizeDeps: { entries: ['test/browser/input-focus.html'] },
   root,
   plugins: [solid(), tailwind()],
   resolve: { dedupe: ['solid-js'] },

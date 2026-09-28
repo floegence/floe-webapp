@@ -10,6 +10,7 @@ import { pdfAssetsPlugin } from '../packages/core/scripts/pdf-assets.mjs';
 const require = createRequire(new URL('../packages/core/package.json', import.meta.url));
 const { createServer } = await import(pathToFileURL(require.resolve('vite')).href);
 const server = await createServer({ configFile: false, root: fileURLToPath(new URL('../packages/core/', import.meta.url)),
+  optimizeDeps: { entries: ['test/browser/pdf.html'] },
   plugins: [pdfAssetsPlugin()], server: { host: '127.0.0.1', port: 0 } });
 await server.listen();
 const browser = await chromium.launch({ headless: true });
