@@ -104,6 +104,9 @@ jobs:
           pnpm test:file-menu
           node scripts/check-file-loading-browser.mjs
 
+      - name: Verify SVG security and Monaco compatibility
+        run: node scripts/check-svg-editor-security-browser.mjs
+
       - name: Verify PDF surface
         run: |
           pnpm --filter @floegence/floe-webapp-core build

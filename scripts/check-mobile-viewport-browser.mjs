@@ -51,7 +51,7 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
   await server.listen();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').at(-1)}/`;
   if (process.argv.includes('--serve')) {
-    await writeFile('/tmp/floe-mobile-safari-url',url);
+    await writeFile(resolve(fixture, 'server-url'), url, { flag: 'wx' });
     console.log(url);
     await new Promise(resolve => {process.once('SIGTERM',resolve);process.once('SIGINT',resolve);});
   } else for (const engine of [chromium, webkit]) {

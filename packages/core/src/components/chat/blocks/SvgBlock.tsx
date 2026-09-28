@@ -1,4 +1,5 @@
 import { type Component } from 'solid-js';
+import DOMPurify from 'dompurify';
 import { cn } from '../../../utils/cn';
 
 export interface SvgBlockProps {
@@ -7,14 +8,11 @@ export interface SvgBlockProps {
 }
 
 export const SvgBlock: Component<SvgBlockProps> = (props) => {
-  // Basic SVG sanitization
-  const sanitizeSvg = (svg: string): string => {
-    // Remove potentially dangerous script/event handlers
-    return svg
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+="[^"]*"/gi, '')
-      .replace(/on\w+='[^']*'/gi, '');
-  };
+  // Server rendering has no DOM parser. Hydration renders the sanitized SVG
+  // once the browser can apply the same parser rules as the injection sink.
+  const sanitizeSvg = (svg: string): string => DOMPurify.isSupported
+    ? DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true } })
+    : '';
 
   return (
     <div

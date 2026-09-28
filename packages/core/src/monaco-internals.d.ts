@@ -1,29 +1,29 @@
-declare module 'monaco-editor/esm/vs/editor/edcore.main.js' {
+declare module 'monaco-editor/features/register.all' {
   const runtime: unknown;
   export default runtime;
 }
 
-declare module 'monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js' {
+declare module 'monaco-editor/editor/contrib/suggest/browser/suggestMemory.js' {
   const runtime: unknown;
   export default runtime;
 }
 
-declare module 'monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js' {
+declare module 'monaco-editor/editor/contrib/codelens/browser/codeLensCache.js' {
   const runtime: unknown;
   export default runtime;
 }
 
-declare module 'monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js' {
+declare module 'monaco-editor/editor/contrib/inlayHints/browser/inlayHintsContribution.js' {
   const runtime: unknown;
   export default runtime;
 }
 
-declare module 'monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js' {
+declare module 'monaco-editor/editor/common/services/treeViewsDndService.js' {
   const runtime: unknown;
   export default runtime;
 }
 
-declare module 'monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js' {
+declare module 'monaco-editor/platform/actionWidget/browser/actionWidget.js' {
   const runtime: unknown;
   export default runtime;
 }

@@ -59,6 +59,10 @@ execFileSync(
   ],
   { stdio: 'inherit' }
 );
+execFileSync('npm', ['audit', '--prefix', root, '--audit-level=low'], {
+  cwd: root,
+  stdio: 'inherit',
+});
 
 execFileSync(
   process.execPath,

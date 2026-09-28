@@ -14,6 +14,7 @@ const { default: tailwind } = await import(
 const server = await createServer({
   configFile: false,
   root,
+  optimizeDeps: { entries: ['test/browser/workbench-header.html'] },
   plugins: [solid(), tailwind()],
   resolve: { dedupe: ['solid-js'] },
   server: { host: '127.0.0.1', port: 0 },

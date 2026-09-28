@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference -- ambient Monaco shims must load for direct source consumers. */
 /// <reference path="../../monaco-internals.d.ts" />
 
-type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');
+type MonacoEditorApi = typeof import('monaco-editor/editor');
 
 export interface MonacoRuntimeFeatureSet {
   suggestMemory: boolean;
@@ -58,27 +58,27 @@ export function normalizeMonacoRuntimeFeatureSet(
 const MONACO_STANDALONE_BASELINE_MODULES: readonly MonacoStandaloneRuntimeModuleDescriptor[] = [
   {
     id: 'edcore.main',
-    load: () => import('monaco-editor/esm/vs/editor/edcore.main.js'),
+    load: () => import('monaco-editor/features/register.all'),
   },
   {
     id: 'suggestMemory',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js'),
+    load: () => import('monaco-editor/editor/contrib/suggest/browser/suggestMemory.js'),
   },
   {
     id: 'codeLensCache',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js'),
+    load: () => import('monaco-editor/editor/contrib/codelens/browser/codeLensCache.js'),
   },
   {
     id: 'inlayHintsContribution',
-    load: () => import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js'),
+    load: () => import('monaco-editor/editor/contrib/inlayHints/browser/inlayHintsContribution.js'),
   },
   {
     id: 'treeViewsDndService',
-    load: () => import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js'),
+    load: () => import('monaco-editor/editor/common/services/treeViewsDndService.js'),
   },
   {
     id: 'actionWidget',
-    load: () => import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js'),
+    load: () => import('monaco-editor/platform/actionWidget/browser/actionWidget.js'),
   },
 ];
 
@@ -178,7 +178,7 @@ export async function loadMonacoEditorApi(
     return pendingMonacoEditorApi;
   }
 
-  pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')
+  pendingMonacoEditorApi = import('monaco-editor/editor')
     .catch((error) => {
       pendingMonacoEditorApi = null;
       throw error;

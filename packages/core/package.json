@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.81.2",
+  "version": "0.81.3",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -152,9 +152,10 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "diff": "^8.0.4",
+    "dompurify": "^3.4.15",
     "marked": "^17.0.6",
     "mermaid": "^11.17.2",
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.57.0",
     "pdfjs-dist": "6.3.289",
     "shiki": "^3.23.0",
     "solid-motionone": "^1.0.4",

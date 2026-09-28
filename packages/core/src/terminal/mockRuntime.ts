@@ -125,7 +125,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     return output('staged tracked changes');
   }
 
-  const checkoutMatch = value.match(/^git checkout -b\s+(.+)$/);
+  const checkoutMatch = value.match(/^git checkout -b\s+(\S.*)$/);
   if (checkoutMatch) {
     return output(`Switched to a new branch '${checkoutMatch[1]}'`);
   }
@@ -135,7 +135,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     return output(`[main abc1234] ${commitMatch[1]}\n 3 files changed, 42 insertions(+), 8 deletions(-)`);
   }
 
-  const catMatch = value.match(/^cat\s+(.+)$/);
+  const catMatch = value.match(/^cat\s+(\S.*)$/);
   if (catMatch) {
     const content = getMockFileContent(profile.files, catMatch[1] ?? '');
     if (content) {
@@ -143,7 +143,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const vimMatch = value.match(/^vim\s+(.+)$/);
+  const vimMatch = value.match(/^vim\s+(\S.*)$/);
   if (vimMatch) {
     const target = normalizePathToken(vimMatch[1] ?? '');
     const content = getMockFileContent(profile.files, target);
@@ -157,17 +157,18 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     return output(`> pnpm ${pnpmMatch[1]}\ncompleted mock run for script '${pnpmMatch[1]}'`);
   }
 
-  const findMatch = value.match(/^find \. -name\s+(.+)$/);
+  const findMatch = value.match(/^find \. -name\s+(\S.*)$/);
   if (findMatch) {
     return output(['./README.md', './packages/core/src/terminal/suggestionEngine.ts'].join('\n'));
   }
 
-  const grepMatch = value.match(/^grep -R\s+(.+)\s+src\/?$/);
-  if (grepMatch) {
+  const recursiveGrep = value.match(/^grep -R\s+(\S.*)$/)?.[1];
+  const recursiveGrepArgs = recursiveGrep ? splitLastArgument(recursiveGrep) : null;
+  if (recursiveGrepArgs && ['src', 'src/'].includes(recursiveGrepArgs[1])) {
     return output('src/terminal/suggestionEngine.ts:getTerminalSuggestions');
   }
 
-  const grepFileMatch = value.match(/^grep\s+(-n|-i)\s+(.+?)\s+(.+)$/);
+  const grepFileMatch = value.match(/^grep\s+(-n|-i)\s+(\S+)\s+(\S.*)$/);
   if (grepFileMatch) {
     const flag = grepFileMatch[1] ?? '';
     const pattern = normalizeSearchPattern(grepFileMatch[2] ?? '');
@@ -179,7 +180,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const lessMatch = value.match(/^less\s+(.+)$/);
+  const lessMatch = value.match(/^less\s+(\S.*)$/);
   if (lessMatch) {
     const target = normalizePathToken(lessMatch[1] ?? '');
     const content = getMockFileContent(profile.files, target);
@@ -189,24 +190,24 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const mkdirMatch = value.match(/^mkdir\s+-p\s+(.+)$/);
+  const mkdirMatch = value.match(/^mkdir\s+-p\s+(\S.*)$/);
   if (mkdirMatch) {
     return output(`created directory ${normalizePathToken(mkdirMatch[1] ?? '')}`);
   }
 
-  const touchMatch = value.match(/^touch\s+(.+)$/);
+  const touchMatch = value.match(/^touch\s+(\S.*)$/);
   if (touchMatch) {
     return output(`updated timestamp for ${normalizePathToken(touchMatch[1] ?? '')}`);
   }
 
-  const chmodMatch = value.match(/^chmod\s+(.+?)\s+(.+)$/);
+  const chmodMatch = value.match(/^chmod\s+(\S+)\s+(\S.*)$/);
   if (chmodMatch) {
     return output(
       `mode ${chmodMatch[1] ?? ''} applied to ${normalizePathToken(chmodMatch[2] ?? '')}`,
     );
   }
 
-  const headMatch = value.match(/^head(?:\s+-n\s+(\d+))?(?:\s+-c\s+(\d+))?\s+(.+)$/);
+  const headMatch = value.match(/^head(?:\s+-n\s+(\d+))?(?:\s+-c\s+(\d+))?\s+(\S.*)$/);
   if (headMatch) {
     const lineCount = Number(headMatch[1] ?? 10);
     const charCount = headMatch[2] ? Number(headMatch[2]) : null;
@@ -222,7 +223,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const tailMatch = value.match(/^tail(?:\s+-n\s+(\d+))?(?:\s+-c\s+(\d+))?\s+(.+)$/);
+  const tailMatch = value.match(/^tail(?:\s+-n\s+(\d+))?(?:\s+-c\s+(\d+))?\s+(\S.*)$/);
   if (tailMatch) {
     const lineCount = Number(tailMatch[1] ?? 10);
     const charCount = tailMatch[2] ? Number(tailMatch[2]) : null;
@@ -238,7 +239,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const wcMatch = value.match(/^wc\s+(-[lwc])\s+(.+)$/);
+  const wcMatch = value.match(/^wc\s+(-[lwc])\s+(\S.*)$/);
   if (wcMatch) {
     const flag = wcMatch[1] ?? '';
     const target = normalizePathToken(wcMatch[2] ?? '');
@@ -249,7 +250,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const sortMatch = value.match(/^sort(?:\s+(-u|-r))?\s+(.+)$/);
+  const sortMatch = value.match(/^sort(?:\s+(-u|-r))?\s+(\S.*)$/);
   if (sortMatch) {
     const flag = sortMatch[1] ?? '';
     const target = normalizePathToken(sortMatch[2] ?? '');
@@ -260,10 +261,11 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const cutMatch = value.match(/^cut\s+(.+)\s+(.+)$/);
+  const cutArguments = value.match(/^cut\s+(\S.*)$/)?.[1];
+  const cutMatch = cutArguments ? splitLastArgument(cutArguments) : null;
   if (cutMatch) {
-    const optionsText = cutMatch[1] ?? '';
-    const target = normalizePathToken(cutMatch[2] ?? '');
+    const optionsText = cutMatch[0];
+    const target = normalizePathToken(cutMatch[1]);
     const content = getMockFileContent(profile.files, target);
 
     if (content) {
@@ -271,7 +273,7 @@ export const runTerminalMockCommand: TerminalRuntimeAdapter = (
     }
   }
 
-  const sedPrintMatch = value.match(/^sed -n '(\d+),(\d+)p'\s+(.+)$/);
+  const sedPrintMatch = value.match(/^sed -n '(\d+),(\d+)p'\s+(\S.*)$/);
   if (sedPrintMatch) {
     const start = Number(sedPrintMatch[1] ?? 1);
     const end = Number(sedPrintMatch[2] ?? start);
@@ -479,4 +481,13 @@ function runMockCut(content: string, optionsText: string): string {
     .split('\n')
     .map((line) => line.split(delimiter)[fieldIndex] ?? '')
     .join('\n');
+}
+
+function splitLastArgument(value: string): [string, string] | null {
+  let index = value.length - 1;
+  while (index >= 0 && !/\s/.test(value[index]!)) index -= 1;
+  if (index < 0) return null;
+  const argument = value.slice(index + 1);
+  const prefix = value.slice(0, index).trimEnd();
+  return prefix ? [prefix, argument] : null;
 }

@@ -112,35 +112,35 @@ describe('Monaco standalone runtime', () => {
     );
     expect(runtimeSrc).toContain('.then(() => undefined);');
     expect(runtimeSrc).toContain(
-      "type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');"
+      "type MonacoEditorApi = typeof import('monaco-editor/editor');"
     );
     expect(runtimeSrc).toContain('export async function loadMonacoEditorApi(');
     expect(runtimeSrc).toContain('await ensureMonacoStandaloneRuntime(options);');
     expect(runtimeSrc).toContain(
-      "pendingMonacoEditorApi = import('monaco-editor/esm/vs/editor/editor.api.js')"
+      "pendingMonacoEditorApi = import('monaco-editor/editor')"
     );
-    expect(runtimeSrc).toContain("import('monaco-editor/esm/vs/editor/edcore.main.js')");
+    expect(runtimeSrc).toContain("import('monaco-editor/features/register.all')");
     expect(runtimeSrc).toContain(
-      "import('monaco-editor/esm/vs/editor/contrib/suggest/browser/suggestMemory.js')"
-    );
-    expect(runtimeSrc).toContain(
-      "import('monaco-editor/esm/vs/editor/contrib/codelens/browser/codeLensCache.js')"
+      "import('monaco-editor/editor/contrib/suggest/browser/suggestMemory.js')"
     );
     expect(runtimeSrc).toContain(
-      "import('monaco-editor/esm/vs/editor/contrib/inlayHints/browser/inlayHintsContribution.js')"
+      "import('monaco-editor/editor/contrib/codelens/browser/codeLensCache.js')"
     );
     expect(runtimeSrc).toContain(
-      "import('monaco-editor/esm/vs/editor/common/services/treeViewsDndService.js')"
+      "import('monaco-editor/editor/contrib/inlayHints/browser/inlayHintsContribution.js')"
     );
     expect(runtimeSrc).toContain(
-      "import('monaco-editor/esm/vs/platform/actionWidget/browser/actionWidget.js')"
+      "import('monaco-editor/editor/common/services/treeViewsDndService.js')"
+    );
+    expect(runtimeSrc).toContain(
+      "import('monaco-editor/platform/actionWidget/browser/actionWidget.js')"
     );
     expect(runtimeSrc).toContain('const pendingByKey = new Map<string, Promise<void>>();');
     expect(runtimeSrc).toContain('areAllStandaloneFeaturesDisabled(features)');
 
     expect(codeEditorSrc).toContain('monaco = await loadMonacoEditorApi(props.runtimeOptions);');
     expect(codeEditorSrc).not.toContain(
-      "import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';"
+      "import * as monaco from 'monaco-editor/editor';"
     );
     expect(codeEditorSrc).toContain(
       'applyFloeMonacoTheme(monaco.editor, resolvedTheme, shellPreset);'
@@ -154,34 +154,34 @@ describe('Monaco standalone runtime', () => {
     ).toBeLessThan(codeEditorSrc.indexOf('editor = monaco.editor.create('));
 
     expect(languagesSrc).toContain(
-      "javascript: () => import('monaco-editor/esm/vs/basic-languages/javascript/javascript.contribution.js')"
+      "javascript: () => import('monaco-editor/languages/definitions/javascript/register')"
     );
     expect(languagesSrc).toContain(
-      "typescript: () => import('monaco-editor/esm/vs/basic-languages/typescript/typescript.contribution.js')"
+      "typescript: () => import('monaco-editor/languages/definitions/typescript/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/html/html.contribution.js')"
+      "() => import('monaco-editor/languages/definitions/html/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/language/html/monaco.contribution.js')"
+      "() => import('monaco-editor/languages/features/html/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/css/css.contribution.js')"
+      "() => import('monaco-editor/languages/definitions/css/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/scss/scss.contribution.js')"
+      "() => import('monaco-editor/languages/definitions/scss/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/basic-languages/less/less.contribution.js')"
+      "() => import('monaco-editor/languages/definitions/less/register')"
     );
     expect(languagesSrc).toContain(
-      "() => import('monaco-editor/esm/vs/language/css/monaco.contribution.js')"
+      "() => import('monaco-editor/languages/features/css/register')"
     );
     expect(languagesSrc).not.toContain(
-      "javascript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')"
+      "javascript: () => import('monaco-editor/languages/features/typescript/register')"
     );
     expect(languagesSrc).not.toContain(
-      "typescript: () => import('monaco-editor/esm/vs/language/typescript/monaco.contribution.js')"
+      "typescript: () => import('monaco-editor/languages/features/typescript/register')"
     );
   });
 });

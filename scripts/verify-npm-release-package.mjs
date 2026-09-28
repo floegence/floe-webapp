@@ -34,7 +34,7 @@ for (const name of packages) {
   const version = packageVersions.get(name);
   const metadata = await retry(async () => {
     const response = await globalThis.fetch(
-      `https://registry.npmjs.org/${encodeURIComponent(name).replace('%2F', '/')}/${version}`
+      `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}`
     );
     if (!response.ok) throw new Error(`registry returned ${response.status}`);
     return await response.json();

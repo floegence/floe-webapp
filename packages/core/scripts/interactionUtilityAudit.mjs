@@ -85,7 +85,7 @@ function parseManualUtility(baseUtility, manualTokenFamilies) {
 }
 
 function collectDefinedInteractionUtilities(cssContent, prefix) {
-  const escapedPrefix = prefix.replace(/:/g, '\\:');
+  const escapedPrefix = prefix.replace(/[\\:]/g, '\\$&');
   const pattern = new RegExp(`\\.((?:${escapeRegExp(escapedPrefix)}[^:{\\s]+))(?=[:{\\s])`, 'g');
   const defined = new Set();
 

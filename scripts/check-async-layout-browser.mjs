@@ -11,6 +11,7 @@ const { default: tailwind } = await import(require.resolve('@tailwindcss/vite'))
 const server = await createServer({
   configFile: false,
   root: fileURLToPath(new URL('../packages/core/', import.meta.url)),
+  optimizeDeps: { entries: ['test/browser/async-layout.html'] },
   plugins: [solid(), tailwind(), { name: 'delayed-media-fixture', configureServer(instance) {
     instance.middlewares.use((req, res, next) => {
       if (req.url !== '/test-image.svg') return next();

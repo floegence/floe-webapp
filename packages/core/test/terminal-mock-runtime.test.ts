@@ -3,6 +3,16 @@ import { runTerminalMockCommand } from '../src/terminal/mockRuntime';
 import { DEFAULT_TERMINAL_WORKSPACE_PROFILE } from '../src/terminal/workspaceProfile';
 
 describe('terminal mock runtime', () => {
+  it('handles long malformed command arguments without overlapping whitespace scans', () => {
+    const starts = ['git checkout -b', 'cat', 'vim', 'find . -name', 'grep -R', 'grep -n', 'less', 'mkdir -p', 'touch', 'chmod', 'head', 'tail', 'wc -c', 'sort', 'cut', "sed -n '0,0p'"];
+    const started = performance.now();
+    for (const start of starts) {
+      const command = `${start} ${' '.repeat(30_000)}x\n?`;
+      expect(runTerminalMockCommand(command).lines[0]?.type).toBeDefined();
+    }
+    expect(performance.now() - started).toBeLessThan(1_000);
+  });
+
   it('should resolve common terminal commands from the shared mock runtime', () => {
     expect(runTerminalMockCommand('pwd').lines[0]?.content).toBe(
       DEFAULT_TERMINAL_WORKSPACE_PROFILE.cwd,

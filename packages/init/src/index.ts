@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
+import { copyDir } from './scaffold';
 import { red, green, cyan, bold } from 'kolorist';
 
 // Template types
@@ -13,14 +14,6 @@ const TEMPLATES: { name: string; value: Template; description: string }[] = [
   { name: 'minimal', value: 'minimal', description: 'Basic setup with FloeApp' },
   { name: 'full', value: 'full', description: 'Full setup with sample pages' },
 ];
-
-// Rename files that start with underscore to their proper names
-// This is needed because npm ignores certain files like .gitignore
-const RENAME_MAP: Record<string, string> = {
-  '_package.json': 'package.json',
-  '_gitignore': '.gitignore',
-  '_env.example': '.env.example',
-};
 
 async function main() {
   console.log(`\n${bold(cyan('Floe Webapp'))}\n`);
@@ -132,7 +125,7 @@ Examples:
     process.exit(1);
   }
 
-  copyDir(templateDir, root);
+  copyDir(templateDir, root, path.basename(targetDir));
 
   // Copy portable skills package to project root for non-template-first workflows
   const targetSkillDir = path.join(root, 'skills');
@@ -140,14 +133,6 @@ Examples:
     copyDir(skillDir, targetSkillDir);
   } else {
     console.log(red(`Warning: skill directory not found: ${skillDir}`));
-  }
-
-  // Update package.json name
-  const pkgPath = path.join(root, 'package.json');
-  if (fs.existsSync(pkgPath)) {
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-    pkg.name = path.basename(targetDir);
-    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
   }
 
   // Done
@@ -158,22 +143,6 @@ Examples:
   console.log(`  pnpm dev\n`);
   console.log(`Skill package:\n`);
   console.log(`  ${bold('skills/floe-webapp/SKILL.md')}\n`);
-}
-
-function copyDir(src: string, dest: string) {
-  fs.mkdirSync(dest, { recursive: true });
-  for (const file of fs.readdirSync(src)) {
-    const srcFile = path.join(src, file);
-    // Rename files that start with underscore
-    const destFileName = RENAME_MAP[file] || file;
-    const destFile = path.join(dest, destFileName);
-    const stat = fs.statSync(srcFile);
-    if (stat.isDirectory()) {
-      copyDir(srcFile, destFile);
-    } else {
-      fs.copyFileSync(srcFile, destFile);
-    }
-  }
 }
 
 main().catch((err) => {

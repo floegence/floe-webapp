@@ -1,16 +1,15 @@
 import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
-import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
+import type * as Monaco from 'monaco-editor/editor';
 import { useTheme } from '../../context/ThemeContext';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
 
-import 'monaco-editor/min/vs/editor/editor.main.css';
 
 import { resolveCodeEditorLanguageSpec } from './languages';
 import { applyFloeMonacoTheme } from './monacoTheme';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
 import { loadMonacoEditorApi, type CodeEditorRuntimeOptions } from './monacoStandaloneRuntime';
 
-type MonacoEditorApi = typeof import('monaco-editor/esm/vs/editor/editor.api.js');
+type MonacoEditorApi = typeof import('monaco-editor/editor');
 type MonacoEditorOptions = Monaco.editor.IStandaloneEditorConstructionOptions;
 type MonacoStandaloneCodeEditor = Monaco.editor.IStandaloneCodeEditor;
 type MonacoTextModel = Monaco.editor.ITextModel;
