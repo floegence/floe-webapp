@@ -39,6 +39,17 @@ try {
         const page=await context.newPage(); const errors=[]; page.on('pageerror',e=>errors.push(e.message));
         await page.goto(`http://127.0.0.1:${server.address().port}/`);
         await page.waitForFunction(()=>window.pointer && document.querySelector('iframe').contentDocument.querySelector('#scroll'));
+        const immediate = await page.evaluate(async () => {
+          const canvas = document.querySelector('canvas');
+          const frame = window.requestAnimationFrame;
+          window.requestAnimationFrame = () => 999999;
+          try {
+            for (const x of [80, 100, 120]) canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles:true,pointerType:'mouse',clientX:x,clientY:100}));
+            await Promise.resolve();
+            return window.events.splice(0).map(event => ({kind:event.kind,x:event.clientX}));
+          } finally { window.pointer.reset(); window.requestAnimationFrame = frame; }
+        });
+        assert.deepEqual(immediate, [{kind:'move',x:120}], 'Remote motion must not wait for a local rendering frame');
         const result=await page.evaluate(async()=>{
           const surface=document.querySelector('#surface'), canvas=document.querySelector('canvas');
           const capture=surface.setPointerCapture;

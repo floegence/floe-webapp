@@ -60,6 +60,8 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
   let wheelTarget: T | null = null;
   let tap: {target: T; position: RemotePointerPosition; time: number} | null = null;
   let frame = 0;
+  let microtask = false;
+  let dispatchRevision = 0;
   let holdTimer = 0;
   let holding = false;
   let disposed = false;
@@ -99,6 +101,7 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
     surface.setPointerCapture?.(id); captures.add(id);
   }
   function flush() {
+    dispatchRevision++; microtask = false;
     if (frame) win!.cancelAnimationFrame(frame);
     frame = 0;
     const next = pending; pending = null;
@@ -111,6 +114,17 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
       command = {...command, dx:pending.command.dx+command.dx, dy:pending.command.dy+command.dy};
     }
     pending = {target, command};
+    // Pointer events are already coalesced by the browser. Forward the latest
+    // move in this task before rendering; a second animation-frame wait adds
+    // latency to remote input without protecting the local rendering work.
+    if (command.kind === 'move') {
+      if (!microtask) {
+        microtask = true;
+        const revision = dispatchRevision;
+        win!.queueMicrotask(() => { if (revision === dispatchRevision) flush(); });
+      }
+      return;
+    }
     if (!frame) {
       const mine = epoch;
       const request = win!.requestAnimationFrame(() => {
@@ -136,7 +150,7 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
     button(true, at, target, number, clicks); button(false, at, target, number, clicks);
   }
   function reset() {
-    epoch++;
+    epoch++; dispatchRevision++; microtask = false;
     endHold();
     if (frame) win!.cancelAnimationFrame(frame);
     frame = 0;

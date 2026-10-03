@@ -1,3 +1,4 @@
+export { Monitor, Keyboard, Clipboard, Unplug, Fullscreen, ExitFullscreen, SlidersHorizontal, Scan, ActualSize } from './RemoteControlIcons';
 import { refreshIconPaths } from './refreshPaths';
 import type { JSX } from 'solid-js';
 

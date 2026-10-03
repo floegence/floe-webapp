@@ -30,6 +30,8 @@ within 350 ms and 16 pixels on the same target form a double click. Movement bef
 left drag at the original point, while stationary release right clicks. Each touch
 chooses one outcome. A second touch cancels the gesture until every contact ends;
 browser pinch zoom never becomes remote input. Mouse and pen buttons remain direct.
+Mouse and drag motion coalesces within one JavaScript task and flushes in a
+microtask before local paint, without an additional animation-frame wait.
 Scroll is accumulated per animation frame and stops on release without inertia.
 Before delivering a later key, text or clipboard command, the consumer calls
 `flush()` so prior pointer movement keeps its transport order. This requires no

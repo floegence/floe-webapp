@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRemotePointer, type RemotePointerCommand, type RemotePointerOptions } from '../src/remote-pointer';
 
 let dispose: (() => void) | undefined;
-beforeEach(() => vi.useFakeTimers());
+beforeEach(() => vi.useFakeTimers({toFake:['setTimeout','clearTimeout','requestAnimationFrame','cancelAnimationFrame','performance','queueMicrotask']}));
 afterEach(() => { dispose?.(); dispose = undefined; document.body.replaceChildren(); vi.useRealTimers(); });
 
 function fixture(extra: Partial<RemotePointerOptions<object>> = {}) {
@@ -39,6 +39,25 @@ function fixture(extra: Partial<RemotePointerOptions<object>> = {}) {
 }
 
 describe('remote pointer ownership', () => {
+  it('coalesces moves at the microtask boundary without waiting for paint', () => {
+    const f = fixture();
+    f.event('pointermove', {pointerType:'mouse',clientX:120});
+    f.event('pointermove', {pointerType:'mouse',clientX:150});
+    expect(f.events).toEqual([]); vi.runAllTicks();
+    expect(f.commands()).toEqual([expect.objectContaining({kind:'move',clientX:150})]);
+    f.frame(); expect(f.events).toHaveLength(1);
+  });
+  it('discards a cancelled microtask and preserves the next target and key ordering', () => {
+    const f = fixture();
+    f.event('pointermove', {pointerType:'mouse',clientX:120});
+    f.pointer.reset(); f.replaceTarget();
+    f.event('pointermove', {pointerType:'mouse',clientX:180});
+    f.pointer.flush();
+    expect(f.commands()).toEqual([expect.objectContaining({kind:'move',clientX:180})]);
+    vi.runAllTicks(); expect(f.events).toHaveLength(1);
+    expect(f.events[0].target).toBe(f.target());
+  });
+
   it('turns an upward touch swipe into positive scroll without a mouse press or activation', () => {
     const f = fixture(); f.event('pointerdown');
     f.event('pointermove', {clientY:170}); f.event('pointermove', {clientY:155});
