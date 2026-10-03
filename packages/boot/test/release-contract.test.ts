@@ -68,7 +68,12 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.81.4');
+    expect(corePkg.version).toBe('0.81.5');
+    for (const template of ['minimal', 'full']) {
+      const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
+      expect(config.overrides.dompurify).toBe('^3.4.16');
+      expect(config.pnpm.overrides).toEqual(config.overrides);
+    }
     expect(bootPkg.version).toBe(corePkg.version);
     expect(protocolPkg.version).toBe(corePkg.version);
     expect(initPkg.version).toBe(corePkg.version);

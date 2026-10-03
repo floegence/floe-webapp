@@ -43,7 +43,9 @@ const packageSpecs = process.argv.includes('--packed')
   : packageNames.map((name) => `${name}@${version}`);
 writeFileSync(
   join(root, 'package.json'),
-  JSON.stringify({ name: 'floe-webapp-release-consumer', private: true }, null, 2)
+  // Exercise the public root override shipped by the CLI, because npm does not
+  // honor overrides declared by a dependency. Keep the full audit below.
+  JSON.stringify({ name: 'floe-webapp-release-consumer', private: true, overrides: JSON.parse(readFileSync('packages/init/templates/minimal/_package.json', 'utf8')).overrides }, null, 2)
 );
 execFileSync(
   'npm',

@@ -76,6 +76,20 @@ pnpm add @floegence/floe-webapp-core solid-js
 
 Add `@floegence/floe-webapp-protocol` only when the application needs Flowersec-backed sessions or typed remote capabilities. See the [getting started guide](docs/getting-started.md) for styles, providers, and a complete `FloeApp` example.
 
+Existing applications must include the following root `package.json` constraints
+before installing or updating. The CLI includes them in both templates. Monaco
+0.57.0 pins DOMPurify 3.4.15; npm does not inherit dependency overrides, so the
+application owns this explicit patched resolution. Keep this constraint until a
+Monaco release depends on DOMPurify 3.4.16 or newer. Run your package manager's
+full audit after installation.
+
+```json
+{
+  "overrides": { "dompurify": "^3.4.16" },
+  "pnpm": { "overrides": { "dompurify": "^3.4.16" } }
+}
+```
+
 ## Surfaces
 
 | Surface   | What it provides                                                                         | Start here                                       |

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@floegence/floe-webapp-core": "^0.81.4",
+    "@floegence/floe-webapp-core": "^0.81.5",
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
@@ -18,5 +18,13 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
     "vite-plugin-solid": "^2.11.0"
+  },
+  "overrides": {
+    "dompurify": "^3.4.16"
+  },
+  "pnpm": {
+    "overrides": {
+      "dompurify": "^3.4.16"
+    }
   }
 }
