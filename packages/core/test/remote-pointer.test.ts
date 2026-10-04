@@ -4,7 +4,7 @@ import { createRemotePointer, type RemotePointerCommand, type RemotePointerOptio
 
 let dispose: (() => void) | undefined;
 beforeEach(() => vi.useFakeTimers({toFake:['setTimeout','clearTimeout','requestAnimationFrame','cancelAnimationFrame','performance','queueMicrotask']}));
-afterEach(() => { dispose?.(); dispose = undefined; document.body.replaceChildren(); vi.useRealTimers(); });
+afterEach(() => { dispose?.(); dispose = undefined; document.body.replaceChildren(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 function fixture(extra: Partial<RemotePointerOptions<object>> = {}) {
   const surface = document.createElement('div');
@@ -39,6 +39,56 @@ function fixture(extra: Partial<RemotePointerOptions<object>> = {}) {
 }
 
 describe('remote pointer ownership', () => {
+  it('sends raw mouse motion before a rendering opportunity and ignores its later pointermove', () => {
+    vi.stubGlobal('onpointerrawupdate', null);
+    const f = fixture();
+    f.event('pointerrawupdate', {pointerType:'mouse',clientX:120});
+    f.event('pointerrawupdate', {pointerType:'mouse',clientX:150});
+    vi.runAllTicks();
+    expect(f.commands()).toEqual([expect.objectContaining({kind:'move',clientX:150})]);
+    f.event('pointermove', {pointerType:'mouse',clientX:150});
+    f.frame();
+    expect(f.events).toHaveLength(1);
+  });
+  it('keeps button-only pointermove chords ordered with raw motion and the final release', () => {
+    vi.stubGlobal('onpointerrawupdate', null);
+    const f = fixture();
+    f.event('pointerdown', {pointerType:'pen',buttons:1});
+    f.event('pointerrawupdate', {pointerType:'pen',buttons:1,clientX:140});
+    f.event('pointermove', {pointerType:'pen',buttons:3,button:2,clientX:140});
+    f.event('pointermove', {pointerType:'pen',buttons:1,button:2,clientX:140});
+    f.event('pointerrawupdate', {pointerType:'pen',buttons:1,clientX:170});
+    f.event('pointerup', {pointerType:'pen',clientX:175});
+    vi.runAllTicks();
+    expect(f.commands().map(e=>[e.kind,e.clientX,'button' in e ? e.button : null])).toEqual([
+      ['down',100,0],['move',140,null],['down',140,2],['up',140,2],['move',175,null],['up',175,0],
+    ]);
+  });
+  it('retires raw motion on reset, target loss and disposal without reviving held input', () => {
+    vi.stubGlobal('onpointerrawupdate', null);
+    const f = fixture();
+    f.event('pointerdown', {pointerType:'mouse',buttons:1});
+    f.event('pointerrawupdate', {pointerType:'mouse',buttons:1,clientX:140});
+    f.pointer.flush();
+    f.event('pointerrawupdate', {pointerType:'mouse',buttons:1,clientX:180});
+    f.pointer.reset();
+    f.disable();
+    f.event('pointerrawupdate', {pointerType:'mouse',buttons:1,clientX:190});
+    vi.runAllTicks();
+    expect(f.commands().map(e=>[e.kind,e.clientX])).toEqual([['down',100],['move',140],['up',140]]);
+    f.pointer.dispose(); f.replaceTarget();
+    f.event('pointerrawupdate', {pointerType:'mouse',clientX:200});
+    vi.runAllTicks(); expect(f.events).toHaveLength(3);
+  });
+  it('keeps touch scrolling on pointermove when raw events are available', () => {
+    vi.stubGlobal('onpointerrawupdate', null);
+    const f = fixture(); f.event('pointerdown');
+    f.event('pointerrawupdate', {clientY:160});
+    f.frame(); expect(f.events).toEqual([]);
+    f.event('pointermove', {clientY:160}); f.event('pointerup', {clientY:150});
+    expect(f.commands()).toEqual([expect.objectContaining({kind:'scroll',dy:50})]);
+    expect(f.activate).not.toHaveBeenCalled();
+  });
   it('coalesces moves at the microtask boundary without waiting for paint', () => {
     const f = fixture();
     f.event('pointermove', {pointerType:'mouse',clientX:120});

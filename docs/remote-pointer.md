@@ -32,6 +32,13 @@ chooses one outcome. A second touch cancels the gesture until every contact ends
 browser pinch zoom never becomes remote input. Mouse and pen buttons remain direct.
 Mouse and drag motion coalesces within one JavaScript task and flushes in a
 microtask before local paint, without an additional animation-frame wait.
+Where the browser exposes `pointerrawupdate`, mouse and pen motion uses that
+event so browser alignment of `pointermove` does not add a refresh interval.
+The later `pointermove` still reconciles button-only chords but does not resend
+motion. Browsers without raw events use `pointermove`; touch gestures always
+retain their existing `pointermove` path. Both paths share target validation,
+button ownership, flushing and cancellation. Consumers must not add their own
+raw-event listener or synthesize a second stream of pointer moves.
 Scroll is accumulated per animation frame and stops on release without inertia.
 Before delivering a later key, text or clipboard command, the consumer calls
 `flush()` so prior pointer movement keeps its transport order. This requires no

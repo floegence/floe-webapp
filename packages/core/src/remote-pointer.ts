@@ -227,16 +227,14 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
     // movement remains available if window decorations later take ownership.
     if (e.pointerType === 'touch') e.preventDefault();
   });
-  listen<PointerEvent>(surface, 'pointermove', e => {
-    if (e.pointerType === 'touch') {
-      advanceTouch(e); return;
-    }
+  const rawMotion = 'onpointerrawupdate' in win;
+  function advanceDirect(e: PointerEvent, motion: boolean) {
     if (blocked || contacts.size) return;
     const target = gesture?.target ?? options.resolveTarget(e);
     if (target === null || !valid(target)) { if (gesture) reset(); return; }
     const at = position(e);
     if (gesture) {
-      gesture.last = at;
+      if (motion) gesture.last = at;
       // Additional mouse/barrel buttons change on pointermove, not pointerdown.
       for (const [number, mask] of [[0,1],[1,4],[2,2],[3,8],[4,16]]) {
         const pressed = Boolean(e.buttons & mask);
@@ -245,7 +243,18 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
         }
       }
     }
-    queue({...at,kind:'move'},target);
+    if (motion) queue({...at,kind:'move'},target);
+  }
+  // Browsers can hold pointermove until the next rendering opportunity. Raw
+  // motion shares the same authority, ordering and cancellation path, without
+  // sending the later frame-aligned duplicate. Touch retains its gesture path.
+  if (rawMotion) listen<PointerEvent>(surface, 'pointerrawupdate', e => {
+    if (e.pointerType !== 'touch') advanceDirect(e, true);
+  });
+  listen<PointerEvent>(surface, 'pointermove', e => {
+    if (e.pointerType === 'touch') advanceTouch(e);
+    // Button chords can change without raw motion; still reconcile them here.
+    else advanceDirect(e, !rawMotion);
   });
   listen<PointerEvent>(surface, 'pointerup', e => {
     const current = gesture;

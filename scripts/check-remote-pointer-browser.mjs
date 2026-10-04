@@ -44,8 +44,13 @@ try {
           const frame = window.requestAnimationFrame;
           window.requestAnimationFrame = () => 999999;
           try {
-            for (const x of [80, 100, 120]) canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles:true,pointerType:'mouse',clientX:x,clientY:100}));
+            const motion = 'onpointerrawupdate' in window ? 'pointerrawupdate' : 'pointermove';
+            for (const x of [80, 100, 120]) canvas.dispatchEvent(new PointerEvent(motion, {bubbles:true,pointerType:'mouse',clientX:x,clientY:100}));
             await Promise.resolve();
+            if (motion === 'pointerrawupdate') {
+              canvas.dispatchEvent(new PointerEvent('pointermove', {bubbles:true,pointerType:'mouse',clientX:120,clientY:100}));
+              await Promise.resolve();
+            }
             return window.events.splice(0).map(event => ({kind:event.kind,x:event.clientX}));
           } finally { window.pointer.reset(); window.requestAnimationFrame = frame; }
         });
