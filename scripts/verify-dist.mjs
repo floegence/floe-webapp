@@ -261,6 +261,8 @@ function main() {
   assertFileContains('packages/core/dist/components/chat/index.d.ts', 'createInputHistoryController');
   assertFile('packages/core/dist/chat.d.ts');
   assertFile('packages/core/dist/chat-media.js');
+  assertFile('packages/core/dist/code-highlight.js');
+  assertFile('packages/core/dist/code-highlight.d.ts');
   execSync(`node --input-type=module -e 'const m = await import("./packages/core/dist/chat-media.js"); if (m.markdownMediaKind("clip.mp4") !== "video") process.exit(1)'`, { stdio: 'inherit' });
   assertFile('packages/core/dist/editor.js');
   assertFile('packages/core/dist/editor.d.ts');
@@ -375,9 +377,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.81.6'
+      (version) => version === '0.82.0'
     ),
-    'Published Floe packages must all use version 0.81.6'
+    'Published Floe packages must all use version 0.82.0'
   );
 
   assert(
@@ -426,6 +428,7 @@ function main() {
     'file-browser',
     'chat',
     'chat-media',
+    'code-highlight',
     'editor',
     'pdf',
     'widgets',

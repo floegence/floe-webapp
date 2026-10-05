@@ -9,6 +9,7 @@ export default defineConfig({
   // Using a relative base ensures worker assets referenced via `new URL(..., import.meta.url)`
   // resolve within the package instead of assuming the host app serves them from `/assets`.
   base: './',
+  worker: { format: 'es', rollupOptions: { output: { inlineDynamicImports: true } } },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
@@ -36,6 +37,7 @@ export default defineConfig({
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),
+        'code-highlight': resolve(__dirname, 'src/code-highlight.ts'),
         'chat-media': resolve(__dirname, 'src/chat-media.ts'),
         notes: resolve(__dirname, 'src/notes.ts'),
         editor: resolve(__dirname, 'src/editor.ts'),

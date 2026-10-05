@@ -73,6 +73,8 @@ execFileSync(
     '-e',
     [
       `import.meta.resolve('${packageNames[0]}')`,
+      `const { enhanceCodeBlock } = await import('${packageNames[0]}/code-highlight')`,
+      `if (typeof enhanceCodeBlock !== 'function') throw new Error('missing code enhancement API')`,
       `const { createRemotePointer } = await import('${packageNames[0]}/remote-pointer')`,
       `if (typeof createRemotePointer !== 'function') throw new Error('missing remote pointer controller')`,
       `import.meta.resolve('${packageNames[0]}/remote-pointer.css')`,

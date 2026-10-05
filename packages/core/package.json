@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.81.6",
+  "version": "0.82.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -130,7 +130,11 @@
       "types": "./dist/remote-pointer.d.ts",
       "import": "./dist/remote-pointer.js"
     },
-    "./remote-pointer.css": "./dist/remote-pointer.css"
+    "./remote-pointer.css": "./dist/remote-pointer.css",
+    "./code-highlight": {
+      "types": "./dist/code-highlight.d.ts",
+      "import": "./dist/code-highlight.js"
+    }
   },
   "files": [
     "dist",

@@ -42,6 +42,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/launchpad`
    - `@floegence/floe-webapp-core/file-browser`
    - `@floegence/floe-webapp-core/chat`
+   - `@floegence/floe-webapp-core/code-highlight` (visible committed code enhancement; worker parsing, selection-safe color-only spans)
    - `@floegence/floe-webapp-core/chat-media` (pure media parsing and HTML isolation helpers)
    - `@floegence/floe-webapp-core/notes`
    - `@floegence/floe-webapp-core/editor`

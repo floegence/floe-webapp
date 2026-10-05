@@ -38,7 +38,8 @@
     "test:mobile-navigation": "node scripts/check-mobile-navigation-browser.mjs",
     "test:pdf": "node scripts/check-pdf-browser.mjs",
     "test:window-status": "node scripts/check-window-status-browser.mjs",
-    "test:remote-pointer": "node scripts/check-remote-pointer-browser.mjs --all"
+    "test:remote-pointer": "node scripts/check-remote-pointer-browser.mjs --all",
+    "test:code-highlight": "node scripts/check-code-highlight-browser.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

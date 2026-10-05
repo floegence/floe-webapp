@@ -22,3 +22,5 @@ Note: local design/dev notes live in dotfile markdown (e.g. `.develop.md`, `.des
 - [Mobile application viewport](mobile-viewport.md): retain application geometry and input through browser chrome and soft-keyboard changes.
 
 - [File loading](file-loading.md): Preserve list, grid, and status geometry before the first successful directory response.
+
+- [Stable code highlighting](./code-highlighting.md) — Enhance committed code without replacing host frames, selection or layout.

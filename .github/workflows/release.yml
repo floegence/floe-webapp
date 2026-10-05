@@ -144,6 +144,9 @@ jobs:
       - name: Verify remote pointer ownership
         run: pnpm test:remote-pointer
 
+      - name: Verify built code highlighting
+        run: pnpm test:code-highlight
+
       - name: Verify dist
         run: pnpm verify
 
