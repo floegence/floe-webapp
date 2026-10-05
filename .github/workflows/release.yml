@@ -115,6 +115,9 @@ jobs:
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
+      - name: Verify graph canvas worker and interaction
+        run: node scripts/check-graph-browser.mjs
+
       - name: Verify progress shimmer across shell themes
         run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs
 

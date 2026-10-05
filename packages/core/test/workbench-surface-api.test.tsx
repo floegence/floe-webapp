@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 
 import { createSignal } from 'solid-js';
-import { render } from 'solid-js/web';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { render as renderSolid } from 'solid-js/web';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const disposers: Array<() => void> = [];
+const render: typeof renderSolid = (...args) => {
+  const dispose = renderSolid(...args);
+  disposers.push(dispose);
+  return dispose;
+};
 
 import {
   WORKBENCH_REGION_FILL_OPTIONS,
@@ -120,7 +127,16 @@ function mockWorkbenchCanvasFrame(host: HTMLElement): void {
 }
 
 describe('WorkbenchSurface api', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', vi.fn((query: string) => ({
+      matches: false, media: query, onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+    })));
+  });
   afterEach(() => {
+    while (disposers.length) disposers.pop()?.();
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
   });
 

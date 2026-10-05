@@ -16,6 +16,11 @@ describe('@floegence/floe-webapp-core package config', () => {
     expect(pkg.sideEffects).toBe(false);
 
     expect(pkg.exports).toEqual({
+      './graph': {
+        types: './dist/graph.d.ts',
+        import: './dist/graph.js',
+      },
+      './graph.css': './dist/graph.css',
       '.': {
         types: './dist/index.d.ts',
         import: './dist/index.js',

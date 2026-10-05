@@ -78,6 +78,8 @@ execFileSync(
       `const { createRemotePointer } = await import('${packageNames[0]}/remote-pointer')`,
       `if (typeof createRemotePointer !== 'function') throw new Error('missing remote pointer controller')`,
       `import.meta.resolve('${packageNames[0]}/remote-pointer.css')`,
+      `import.meta.resolve('${packageNames[0]}/graph')`,
+      `import.meta.resolve('${packageNames[0]}/graph.css')`,
       `const { createReloadPlaceholderScript } = await import('${packageNames[0]}/reload-placeholder')`,
       `new Function(createReloadPlaceholderScript({storageKey: 'consumer'}))`,
       `const { createResourceCache } = await import('${packageNames[0]}/resource-cache')`,

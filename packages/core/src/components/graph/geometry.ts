@@ -1,0 +1,47 @@
+import type { GraphBounds, GraphLayout, GraphPoint, GraphViewport } from './types';
+
+export function graphSectionPath(points: readonly GraphPoint[]): string {
+  return points.map((p, index) => `${index ? 'L' : 'M'}${p.x},${p.y}`).join(' ');
+}
+
+export function fitGraphViewport(
+  bounds: GraphBounds,
+  size: { width: number; height: number },
+  padding = 48
+): GraphViewport {
+  const scale = Math.max(
+    0.1,
+    Math.min(
+      1,
+      (size.width - padding * 2) / Math.max(1, bounds.width),
+      (size.height - padding * 2) / Math.max(1, bounds.height)
+    )
+  );
+  return {
+    x: (size.width - bounds.width * scale) / 2 - bounds.x * scale,
+    y: (size.height - bounds.height * scale) / 2 - bounds.y * scale,
+    scale,
+  };
+}
+
+/** Includes descendants so highlighting a group traces all of its direct routes. */
+export function graphRelatedEdges(layout: GraphLayout, nodeId: string): ReadonlySet<string> {
+  const members = new Set([nodeId]);
+  const children = new Map<string, string[]>();
+  for (const node of layout.nodes)
+    if (node.parentId)
+      children.set(node.parentId, [...(children.get(node.parentId) ?? []), node.id]);
+  const visit = (id: string) => {
+    for (const child of children.get(id) ?? [])
+      if (!members.has(child)) {
+        members.add(child);
+        visit(child);
+      }
+  };
+  visit(nodeId);
+  return new Set(
+    layout.edges
+      .filter((edge) => members.has(edge.source) || members.has(edge.target))
+      .map((edge) => edge.id)
+  );
+}

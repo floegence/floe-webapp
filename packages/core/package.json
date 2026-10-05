@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.82.1",
+  "version": "0.83.0",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -134,7 +134,12 @@
     "./code-highlight": {
       "types": "./dist/code-highlight.d.ts",
       "import": "./dist/code-highlight.js"
-    }
+    },
+    "./graph": {
+      "types": "./dist/graph.d.ts",
+      "import": "./dist/graph.js"
+    },
+    "./graph.css": "./dist/graph.css"
   },
   "files": [
     "dist",
@@ -157,6 +162,7 @@
     "clsx": "^2.1.1",
     "diff": "^8.0.4",
     "dompurify": "^3.4.16",
+    "elkjs": "0.12.0",
     "marked": "^17.0.6",
     "mermaid": "^11.17.2",
     "monaco-editor": "^0.57.0",

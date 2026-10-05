@@ -53,6 +53,8 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/terminal`
    - `@floegence/floe-webapp-core/themes`
    - `@floegence/floe-webapp-core/workbench`
+   - `@floegence/floe-webapp-core/graph` (controlled compound graphs, worker layout, orthogonal routes, and object interaction; see `docs/graph-canvas.md`)
+   - `@floegence/floe-webapp-core/graph.css` (graph geometry and theme-neutral route styles)
    - `@floegence/floe-webapp-core/styles`
    - `@floegence/floe-webapp-core/tailwind`
    - `@floegence/floe-webapp-core/window-status.css` (fixed host-window state layout; never draggable or Workbench content)

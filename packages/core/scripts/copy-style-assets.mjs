@@ -9,7 +9,9 @@ const __dirname = dirname(__filename);
 const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
-  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer'].map((name) => ({ src: resolve(pkgRoot, `src/styles/${name}.css`), dest: resolve(pkgRoot, `dist/${name}.css`) })),
+  { src: resolve(pkgRoot, 'node_modules/elkjs/LICENSE.md'), dest: resolve(pkgRoot, 'dist/licenses/elkjs.txt') },
+  { src: resolve(pkgRoot, 'src/components/graph/NOTICE.txt'), dest: resolve(pkgRoot, 'dist/licenses/graph-notice.txt') },
+  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer', 'graph'].map((name) => ({ src: resolve(pkgRoot, `src/styles/${name}.css`), dest: resolve(pkgRoot, `dist/${name}.css`) })),
   { src: resolve(pkgRoot, 'src/styles/primitives.css'), dest: resolve(pkgRoot, 'dist/primitives.css') },
   { src: resolve(pkgRoot, 'src/styles/standalone.css'), dest: resolve(pkgRoot, 'dist/standalone.css') },
   { src: resolve(pkgRoot, 'src/styles/file-icons.css'), dest: resolve(pkgRoot, 'dist/file-icons.css') },

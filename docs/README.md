@@ -16,6 +16,7 @@ This folder contains **public, version-controlled** documentation for downstream
 Note: local design/dev notes live in dotfile markdown (e.g. `.develop.md`, `.design.md`) and are intentionally ignored by git.
 
 - [Surface component coverage](./surface-components.md) — component-by-component material and state contracts.
+- [Graph canvas](./graph-canvas.md) — compound relationship graphs, worker layout, and accessible object interaction.
 
 - [Document reload presentation](reload-placeholder.md): preserve anonymous layout before application scripts and hand off after authorized restoration.
 

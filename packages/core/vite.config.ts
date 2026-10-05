@@ -47,6 +47,7 @@ export default defineConfig({
         themes: resolve(__dirname, 'src/themes.ts'),
         'window-status': resolve(__dirname, 'src/window-status.ts'),
         workbench: resolve(__dirname, 'src/workbench.ts'),
+        graph: resolve(__dirname, 'src/graph.ts'),
       },
       name: 'FloeCore',
       formats: ['es'],

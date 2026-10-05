@@ -263,6 +263,11 @@ function main() {
   assertFile('packages/core/dist/chat-media.js');
   assertFile('packages/core/dist/code-highlight.js');
   assertFile('packages/core/dist/code-highlight.d.ts');
+  assertFile('packages/core/dist/graph.js');
+  assertFile('packages/core/dist/graph.d.ts');
+  assertFile('packages/core/dist/graph.css');
+  assertFile('packages/core/dist/licenses/elkjs.txt');
+  assertFile('packages/core/dist/licenses/graph-notice.txt');
   execSync(`node --input-type=module -e 'const m = await import("./packages/core/dist/chat-media.js"); if (m.markdownMediaKind("clip.mp4") !== "video") process.exit(1)'`, { stdio: 'inherit' });
   assertFile('packages/core/dist/editor.js');
   assertFile('packages/core/dist/editor.d.ts');
@@ -377,9 +382,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.82.1'
+      (version) => version === '0.83.0'
     ),
-    'Published Floe packages must all use version 0.82.1'
+    'Published Floe packages must all use version 0.83.0'
   );
 
   assert(
@@ -429,6 +434,7 @@ function main() {
     'chat',
     'chat-media',
     'code-highlight',
+    'graph',
     'editor',
     'pdf',
     'widgets',

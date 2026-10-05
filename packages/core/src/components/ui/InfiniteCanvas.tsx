@@ -39,7 +39,7 @@ export interface InfiniteCanvasContextMenuEvent {
 }
 
 export interface InfiniteCanvasProps {
-  children: JSX.Element;
+  children: JSX.Element | ((viewport: Accessor<InfiniteCanvasPoint>) => JSX.Element);
   overlay?: (viewport: Accessor<InfiniteCanvasPoint>) => JSX.Element;
   viewport: InfiniteCanvasPoint;
   onViewportChange?: (viewport: InfiniteCanvasPoint) => void;
@@ -445,7 +445,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
           'transform-origin': '0 0',
         }}
       >
-        {props.children}
+        {typeof props.children === 'function' ? props.children(liveViewport) : props.children}
       </div>
       {props.overlay?.(liveViewport)}
     </div>
