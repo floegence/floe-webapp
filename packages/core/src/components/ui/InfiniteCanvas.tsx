@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { startHotInteraction } from '../../utils/hotInteraction';
 import {
@@ -112,6 +112,10 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     untrack(() => sanitizeViewport(props.viewport))
   );
   const [dragState, setDragState] = createSignal<DragState | null>(null);
+  const content = createMemo(() => {
+    const value = props.children;
+    return typeof value === 'function' ? value(liveViewport) : value;
+  });
   let rootRef: HTMLDivElement | undefined;
   let dragSession: PointerSessionController | undefined;
   let wheelCommitTimer: number | undefined;
@@ -445,7 +449,7 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
           'transform-origin': '0 0',
         }}
       >
-        {typeof props.children === 'function' ? props.children(liveViewport) : props.children}
+        {content()}
       </div>
       {props.overlay?.(liveViewport)}
     </div>

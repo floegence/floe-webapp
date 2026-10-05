@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createSignal } from 'solid-js';
-import { render } from 'solid-js/web';
+import { Portal, render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
@@ -116,6 +116,15 @@ function CanvasWheelHarness(props: {
 }
 
 describe('InfiniteCanvas wheel routing', () => {
+  it('mounts ordinary content and its floating tools exactly once', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <InfiniteCanvas viewport={INITIAL_VIEWPORT}>
+      <div>Canvas content</div>
+      <Portal><div data-testid="canvas-floating-tool">Floating tool</div></Portal>
+    </InfiniteCanvas>, host);
+    expect(document.querySelectorAll('[data-testid="canvas-floating-tool"]')).toHaveLength(1);
+  });
   afterEach(() => {
     while (disposers.length) {
       disposers.pop()?.();
