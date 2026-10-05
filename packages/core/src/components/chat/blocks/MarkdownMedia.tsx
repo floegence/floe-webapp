@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, Match, onCleanup, onMount, Show, Switch, type Component } from 'solid-js';
+import { createEffect, createMemo, createSignal, Match, on, onCleanup, onMount, Show, Switch, type Component } from 'solid-js';
 import { FloatingWindow } from '../../ui/FloatingWindow';
 import { ExternalLink, Eye, FolderOpen, Maximize, Refresh } from '../../icons';
 import { cn } from '../../../utils/cn';
@@ -35,6 +35,7 @@ export interface ResolvedMarkdownMedia {
 export interface MarkdownMediaProps {
   source: MarkdownMediaSource;
   labels: MarkdownMediaLabels;
+  /** Replace this callback when its authorization or resource context changes. Reads inside it do not trigger reloads. */
   resolve?: (source: MarkdownMediaSource, signal: AbortSignal) => Promise<ResolvedMarkdownMedia>;
   class?: string;
 }
@@ -73,11 +74,9 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     else setExpanded(true);
   };
 
-  createEffect(() => {
-    if (!visible()) return;
-    const request = source();
-    const resolver = props.resolve ?? resolveRemote;
-    retry();
+  createEffect(on([visible, source, () => props.resolve, retry], ([isVisible, request, resolve]) => {
+    if (!isVisible) return;
+    const resolver = resolve ?? resolveRemote;
     const controller = new AbortController();
     onCleanup(() => controller.abort());
     setResource(undefined);
@@ -102,7 +101,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       }
       if (!controller.signal.aborted) setStatus('ready');
     })().catch(() => { if (!controller.signal.aborted) setStatus('error'); });
-  });
+  }));
 
   return (
     <span ref={root} class={cn('chat-media', expanded() && props.source.kind === 'html' && 'chat-media-expanded', props.class)} data-media-kind={props.source.kind}>

@@ -323,6 +323,13 @@ exposes loading, failure, and retry states. Retain the same mounted component fo
 an unchanged Markdown segment during streaming. Images never autoplay; video and
 audio preload metadata and start only on user interaction.
 
+Resource loading depends only on visibility, the source, the resolver identity,
+and explicit retry. Reactive reads inside a host resolver do not subscribe the
+component to host snapshots. Keep the resolver stable while its resource and
+authorization context is unchanged; replace it when that context changes.
+Replacement aborts the previous request and discards its late response. Labels
+and unrelated host updates never restart loading or replace ready media nodes.
+
 HTML is limited to one million characters and rendered with `sandbox="allow-scripts"`
 without same-origin permission. Its leading CSP blocks network requests, nested
 frames, forms, external scripts, and assets. Inline styles/scripts and embedded
@@ -331,7 +338,8 @@ HTML. Preview output is never inserted into the application's DOM.
 
 Validation: `node scripts/check-chat-media-browser.mjs` covers interactive HTML,
 shell/network isolation, stable iframe expansion, media playback and seeking,
-image dialog dismissal, and narrow layout.
+image dialog dismissal, narrow layout, host snapshot stability, resolver/source
+replacement, stale responses, retry, and cancellation on disposal.
 
 ## Recovery after a deployment or interrupted module load
 
