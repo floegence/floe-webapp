@@ -53,6 +53,8 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
+  /** Absolute world positions. Descendants move with pinned groups; impossible containment or routing fails explicitly. */
+  positions?: readonly (GraphPoint & { nodeId: string })[];
   direction?: 'RIGHT' | 'DOWN' | 'LEFT' | 'UP';
   spacing?: number;
   groupPadding?: { top: number; right: number; bottom: number; left: number };

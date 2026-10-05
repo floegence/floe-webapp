@@ -1,3 +1,4 @@
+import { applyGraphPositions } from './positions';
 import type { ELK, ElkNode } from 'elkjs/lib/elk-api';
 import type {
   GraphInput,
@@ -135,21 +136,25 @@ export async function computeGraphLayout(
   };
   for (const child of graph.children ?? []) visit(child, 0, 0);
   recordEdges(graph);
-  const anchor = options.anchor && positions.get(options.anchor.nodeId);
+  const anchor =
+    !options.positions?.length && options.anchor && positions.get(options.anchor.nodeId);
   const dx = anchor ? options.anchor!.position.x - anchor.x : 0;
   const dy = anchor ? options.anchor!.position.y - anchor.y : 0;
   const outputNodes: GraphLayoutNode[] = input.nodes.map((node) => {
     const position = positions.get(node.id)!;
     return { ...node, ...position, x: position.x + dx, y: position.y + dy };
   });
-  return {
-    nodes: outputNodes,
-    edges: input.edges.map((edge) => ({
-      ...edge,
-      sections: (routes.get(edge.id) ?? []).map((s) =>
-        s.map((p) => ({ x: p.x + dx, y: p.y + dy }))
-      ),
-    })),
-    bounds: { x: dx, y: dy, width: graph.width ?? 0, height: graph.height ?? 0 },
-  };
+  return applyGraphPositions(
+    {
+      nodes: outputNodes,
+      edges: input.edges.map((edge) => ({
+        ...edge,
+        sections: (routes.get(edge.id) ?? []).map((s) =>
+          s.map((p) => ({ x: p.x + dx, y: p.y + dy }))
+        ),
+      })),
+      bounds: { x: dx, y: dy, width: graph.width ?? 0, height: graph.height ?? 0 },
+    },
+    options
+  );
 }

@@ -108,3 +108,58 @@ describe('graph layout contract', () => {
     expect(new Set(result.nodes.map((n) => `${n.x},${n.y}`)).size).toBe(500);
   });
 });
+
+describe('persisted graph positions', () => {
+  it('keeps exact positions and routes around intervening nodes', async () => {
+    const nodes = ['a', 'block', 'b'].map((id) => ({ id, label: id, width: 100, height: 80 }));
+    const layout = await computeGraphLayout(
+      { nodes, edges: [{ id: 'edge', label: '2', source: 'a', target: 'b' }] },
+      {
+        positions: [
+          { nodeId: 'a', x: 0, y: 0 },
+          { nodeId: 'block', x: 180, y: -20 },
+          { nodeId: 'b', x: 380, y: 0 },
+        ],
+      }
+    );
+    expect(layout.nodes.find((n) => n.id === 'b')).toMatchObject({ x: 380, y: 0 });
+    const path = layout.edges[0]!.sections[0]!;
+    expect(path.length).toBeGreaterThan(4);
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1]!,
+        b = path[i]!;
+      expect(a.x === b.x || a.y === b.y).toBe(true);
+      const crosses =
+        a.x === b.x
+          ? a.x > 180 && a.x < 280 && Math.max(a.y, b.y) > -20 && Math.min(a.y, b.y) < 60
+          : a.y > -20 && a.y < 60 && Math.max(a.x, b.x) > 180 && Math.min(a.x, b.x) < 280;
+      expect(crosses).toBe(false);
+    }
+  });
+  it('moves descendants with their group and retains self loops', async () => {
+    const before = await computeGraphLayout(input);
+    const group = before.nodes.find((n) => n.id === 'group')!;
+    const after = await computeGraphLayout(input, {
+      positions: [{ nodeId: 'group', x: group.x, y: group.y + 1000 }],
+    });
+    for (const child of before.nodes.filter((n) => n.parentId === 'group'))
+      expect(after.nodes.find((n) => n.id === child.id)).toMatchObject({
+        x: child.x,
+        y: child.y + 1000,
+      });
+    expect(after.edges.find((e) => e.id === 'loop')!.sections[0]!.length).toBeGreaterThan(3);
+  });
+  it('rejects unknown positions and impossible pinned containment', async () => {
+    await expect(
+      computeGraphLayout(input, { positions: [{ nodeId: 'absent', x: 0, y: 0 }] })
+    ).rejects.toThrow('Invalid graph position');
+    await expect(
+      computeGraphLayout(input, {
+        positions: [
+          { nodeId: 'group', x: 100, y: 100 },
+          { nodeId: 'a', x: 0, y: 0 },
+        ],
+      })
+    ).rejects.toThrow('outside group');
+  });
+});

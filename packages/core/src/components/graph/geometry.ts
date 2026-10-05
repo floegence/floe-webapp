@@ -45,3 +45,22 @@ export function graphRelatedEdges(layout: GraphLayout, nodeId: string): Readonly
       .map((edge) => edge.id)
   );
 }
+
+/** Put the short edge label on its longest routed segment, away from arrowheads. */
+export function graphEdgeLabelPosition(
+  sections: readonly (readonly GraphPoint[])[]
+): GraphPoint | null {
+  let best: GraphPoint | null = null,
+    length = 0;
+  for (const section of sections)
+    for (let index = 1; index < section.length; index++) {
+      const a = section[index - 1]!,
+        b = section[index]!;
+      const distance = Math.abs(b.x - a.x) + Math.abs(b.y - a.y);
+      if (distance > length) {
+        length = distance;
+        best = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
+    }
+  return best;
+}

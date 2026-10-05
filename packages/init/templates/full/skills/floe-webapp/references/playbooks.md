@@ -160,3 +160,17 @@ Keep the default `standard` material unchanged unless a host explicitly opts int
 Standalone first-party documents may use `@floegence/floe-webapp-core/standalone.css` for published theme, typography, surface material and input focus rules without shell JavaScript or utility styles. Set the same root theme, mode and material attributes as the parent application; keep host layout and localization independent.
 
 Whole-window status pages opt into `@floegence/floe-webapp-core/window-status.css`. Use the opaque default for access gates. Only retained, inert workspaces may use `data-backdrop="workspace"`; never put this glass on a draggable window or canvas widget. `@floegence/floe-webapp-core/window-status` exports fixed, scriptless illustration and retry SVG markup. `@floegence/floe-webapp-core/progress-shimmer.css` supplies the same opt-in working text as the main style entries. Hosts own state, locale, accessible names, and actions.
+
+
+## Compound graph layout positions
+
+Use the `/graph` entry and `/graph.css` for a graph canvas. The worker layout
+accepts optional `positions: [{ nodeId, x, y }]` in absolute world coordinates.
+Unpinned objects retain ELK geometry; children follow pinned groups. Explicit
+child positions must fit a pinned group's content area. Rerouting uses bounded
+orthogonal visibility search around entity cards. Invalid identities, impossible
+containment, obstructed ports, or exhausted routing budgets fail explicitly;
+keep the last valid layout and show the failure rather than dropping relations.
+When positions are present they take precedence over the transient anchor.
+Numeric edge labels remain visible as bundle counts. Other labels appear on
+focus, selection, or hover; callers retain all original relationship identities.

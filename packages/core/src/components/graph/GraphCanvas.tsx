@@ -10,7 +10,7 @@ import {
 } from 'solid-js';
 import { InfiniteCanvas } from '../ui/InfiniteCanvas';
 import { resolveSurfaceInteractionTargetRole } from '../ui/localInteractionSurface';
-import { graphRelatedEdges, graphSectionPath } from './geometry';
+import { graphEdgeLabelPosition, graphRelatedEdges, graphSectionPath } from './geometry';
 import type {
   GraphLayout,
   GraphLayoutNode,
@@ -244,6 +244,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
                   {(edge) => {
                     const object: GraphObjectRef = { kind: 'edge', id: edge.id };
                     const path = () => edge.sections.map(graphSectionPath).join(' ');
+                    const label = () => graphEdgeLabelPosition(edge.sections);
                     return (
                       <Show when={!isolatedEdges() || isolatedEdges()!.has(edge.id)}>
                         <g
@@ -256,6 +257,19 @@ export function GraphCanvas(props: GraphCanvasProps) {
                             d={path()}
                             marker-end={`url(#${arrowId})`}
                           />
+                          <Show when={label()}>
+                            {(position) => (
+                              <text
+                                class="floe-graph__edge-label"
+                                data-count={/^\d+$/.test(edge.label)}
+                                x={position().x}
+                                y={position().y - 6}
+                                aria-hidden="true"
+                              >
+                                {edge.label}
+                              </text>
+                            )}
+                          </Show>
                           <path
                             class="floe-graph__edge-target"
                             d={path()}

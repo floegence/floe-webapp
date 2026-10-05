@@ -91,3 +91,21 @@
     outline-color: Highlight;
   }
 }
+
+.floe-graph__edge-label {
+  fill: var(--graph-edge, var(--muted-foreground));
+  stroke: var(--graph-background, var(--background));
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  font: 11px var(--font-mono, monospace);
+  text-anchor: middle;
+  pointer-events: none;
+  opacity: 0;
+}
+.floe-graph__edge-label[data-count='true'] {
+  opacity: 0.7;
+}
+.floe-graph__edges [data-emphasized='true'] .floe-graph__edge-label,
+.floe-graph__edges [data-selected='true'] .floe-graph__edge-label {
+  opacity: 1;
+}
