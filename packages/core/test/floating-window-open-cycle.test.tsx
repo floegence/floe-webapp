@@ -40,12 +40,14 @@ describe('FloatingWindow open cycle', () => {
     const onOpenChange = vi.fn();
     mount(() => <FloatingWindow open title="Reading window" onOpenChange={onOpenChange}>
       <Show when={nestedOpen()}>
+        <div data-floe-surface-floating-layer="true">
         <div role={role} tabIndex={-1} data-testid="nested-overlay" onKeyDown={event => {
           if (event.key !== 'Escape') return;
           event.preventDefault();
           event.stopPropagation();
           setNestedOpen(false);
         }}>Nested surface</div>
+        </div>
       </Show>
     </FloatingWindow>, host);
     await flushAnimationFrame();
