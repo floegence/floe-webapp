@@ -51,6 +51,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Audit dependency graph
+        run: pnpm audit:dependencies
+
       - name: Require a release tag ref
         run: |
           set -euo pipefail
