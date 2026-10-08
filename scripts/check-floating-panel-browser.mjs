@@ -50,7 +50,8 @@ render(() => <App/>, document.getElementById('root'));
     root: resolve(root, 'packages/core'),
     plugins: [solid()],
     optimizeDeps: { entries: [resolve(fixture, 'index.html')] },
-    server: { host: '127.0.0.1', port: 0 },
+    // This fixture is immutable; delayed filesystem events must not reset its state.
+    server: { host: '127.0.0.1', port: 0, watch: null },
   });
   await server.listen();
   browser = process.env.FLOE_TEST_BROWSER_WS

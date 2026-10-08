@@ -370,7 +370,14 @@ try {
       await page.evaluate(() => window.surfaceFixture.setWindows(true));
       await page.waitForTimeout(160);
       await page.evaluate(() => window.surfaceFixture.setWindows(false));
-      await page.waitForTimeout(160);
+      // Exit includes paint frames around the 160ms transition. Measure after
+      // disposal and the compositor update, rather than while exit is in flight.
+      await page.waitForFunction(
+        () => !document.querySelector('[data-floe-floating-window-surface]')
+      );
+      await page.evaluate(() => new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }));
     };
     await cycleWindows();
     await session.send('HeapProfiler.collectGarbage');
@@ -380,7 +387,10 @@ try {
     for (let i = 0; i < 12; i++) await cycleWindows();
     await session.send('HeapProfiler.collectGarbage');
     const countersAfter = await session.send('Memory.getDOMCounters');
-    assert.ok(layerCount <= layersBefore, 'window cycles do not accumulate compositor layers');
+    assert.ok(
+      layerCount <= layersBefore,
+      `window cycles do not accumulate compositor layers (${layersBefore} -> ${layerCount})`
+    );
     assert.ok(countersAfter.nodes <= countersBefore.nodes, 'window cycles do not accumulate DOM');
     assert.ok(
       countersAfter.jsEventListeners <= countersBefore.jsEventListeners,
