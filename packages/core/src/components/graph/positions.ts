@@ -237,6 +237,13 @@ export function applyGraphPositions(
     for (const node of roots) arrange(node);
     separate(roots);
   }
+  return routeGraphGeometry({ ...layout, nodes: [...nodes.values()] });
+}
+
+/** Shared routing and bounds for explicit positions and packed compound geometry. */
+export function routeGraphGeometry(layout: GraphLayout): GraphLayout {
+  if (!layout.nodes.length) return layout;
+  const nodes = new Map(layout.nodes.map((node) => [node.id, node]));
   const edges = layout.edges.map((edge) => {
     const source = nodes.get(edge.source)!,
       target = nodes.get(edge.target)!;

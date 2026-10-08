@@ -53,6 +53,8 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
+  /** Desired width/height when packing disconnected objects, including group members. */
+  aspectRatio?: number;
   /** Absolute world positions. Descendants move with their group. Invalid positions always fail. */
   positions?: readonly (GraphPoint & { nodeId: string })[];
   /** Fixed (default) rejects impossible geometry. Preferred retains clear positions and separates colliding siblings, resizing groups around their content before routing. */

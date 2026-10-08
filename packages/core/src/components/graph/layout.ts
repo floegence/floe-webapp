@@ -1,4 +1,5 @@
 import { applyGraphPositions } from './positions';
+import { computePackedGraphLayout } from './packing';
 import type { ELK, ElkNode } from 'elkjs/lib/elk-api';
 import type {
   GraphInput,
@@ -53,12 +54,19 @@ export async function computeGraphLayout(
   engine: Pick<ELK, 'layout'>
 ): Promise<GraphLayout> {
   validateGraphInput(input);
+  if (
+    options.aspectRatio !== undefined &&
+    (!Number.isFinite(options.aspectRatio) || options.aspectRatio <= 0)
+  ) {
+    throw new Error('Graph layout aspect ratio must be finite and positive');
+  }
   const padding = options.groupPadding ?? { top: 64, right: 28, bottom: 28, left: 28 };
   if (
     ![...Object.values(padding), options.spacing ?? 64].every((n) => Number.isFinite(n) && n >= 0)
   ) {
     throw new Error('Graph layout spacing must be finite and nonnegative');
   }
+  if (options.aspectRatio !== undefined) return computePackedGraphLayout(input, options, engine);
   const nodes = new Map<string, ElkNode>();
   for (const node of input.nodes) {
     nodes.set(node.id, {

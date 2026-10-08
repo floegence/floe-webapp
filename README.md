@@ -156,6 +156,16 @@ The packages are independently consumable:
 | Build multi-window and sandbox launch flows                         | [Runtime](docs/runtime.md)                                   |
 | Work with canonical picker paths                                    | [Picker path semantics](docs/picker-paths.md)                |
 
+### Compound graph packing
+
+The `graph` entry point accepts `GraphLayoutOptions.aspectRatio` for compact
+automatic layout of independent objects and group members. Each containment
+level is laid out as peers at the requested width-to-height ratio, then the
+complete graph is routed with its original identities and ports. Connected
+relationships retain their flow direction; packing never adds relationships.
+Saved positions and inspection anchors keep their existing contracts. Omit the
+option to retain the default hierarchical layout.
+
 ## Develop This Repository
 
 Requirements: Node.js `>= 24` and pnpm `>= 9`.

@@ -30,6 +30,44 @@ const input: GraphInput = {
 };
 
 describe('graph layout contract', () => {
+  it('packs independent compound members and disconnected components into a readable aspect ratio', async () => {
+    const nodes: GraphInput['nodes'][number][] = [];
+    for (let g = 0; g < 5; g++) {
+      nodes.push({ id: `group-${g}`, label: `Group ${g}`, kind: 'group', width: 320, height: 100 });
+      for (let n = 0; n < 3; n++)
+        nodes.push({
+          id: `node-${g}-${n}`,
+          label: 'Node',
+          parentId: `group-${g}`,
+          width: 280,
+          height: 300,
+        });
+    }
+    const graph: GraphInput = {
+      nodes,
+      edges: [{ id: 'relation', label: 'Relationship', source: 'group-0', target: 'group-1' }],
+    };
+    const result = await computeGraphLayout(graph, { aspectRatio: 1.6, spacing: 32 });
+    expect(result.bounds.width / result.bounds.height).toBeGreaterThan(0.8);
+    expect(result.bounds.width / result.bounds.height).toBeLessThan(3);
+    const group = result.nodes.find((node) => node.id === 'group-0')!;
+    expect(group.width).toBeGreaterThan(550);
+    expect(group.height).toBeLessThan(1000);
+    for (const node of result.nodes) {
+      for (const other of result.nodes.filter(
+        (other) => other.id !== node.id && other.parentId === node.parentId
+      )) {
+        expect(
+          node.x + node.width <= other.x ||
+            other.x + other.width <= node.x ||
+            node.y + node.height <= other.y ||
+            other.y + other.height <= node.y
+        ).toBe(true);
+      }
+    }
+    expect(result.edges[0]!.sections.length).toBeGreaterThan(0);
+    expect(await computeGraphLayout(graph, { aspectRatio: 1.6, spacing: 32 })).toEqual(result);
+  });
   it('routes cycles, self loops, and compound edges orthogonally with absolute geometry', async () => {
     const layout = await computeGraphLayout(input);
     const group = layout.nodes.find((n) => n.id === 'group')!;
@@ -77,6 +115,72 @@ describe('graph layout contract', () => {
     expect(after.bounds.x * view.scale + view.x).toBeGreaterThanOrEqual(47);
     expect(after.bounds.y * view.scale + view.y).toBeGreaterThanOrEqual(47);
   });
+
+  it('retains packed cross-hierarchy routes, ports, cycles and the inspected anchor', async () => {
+    const options = { aspectRatio: 1.6, anchor: { nodeId: 'a', position: { x: 150, y: -200 } } };
+    const result = await computeGraphLayout(input, options);
+    const anchored = result.nodes.find((node) => node.id === 'a')!;
+    expect(anchored.x).toBeCloseTo(options.anchor.position.x);
+    expect(anchored.y).toBeCloseTo(options.anchor.position.y);
+    expect(result.edges.map((edge) => edge.id)).toEqual(input.edges.map((edge) => edge.id));
+    for (const edge of result.edges) {
+      const source = result.nodes.find((node) => node.id === edge.source)!;
+      const target = result.nodes.find((node) => node.id === edge.target)!;
+      const path = edge.sections[0]!;
+      const a = path[0]!,
+        b = path.at(-1)!;
+      for (const [point, node] of [
+        [a, source],
+        [b, target],
+      ] as const) {
+        expect(point.x).toBeGreaterThanOrEqual(node.x);
+        expect(point.x).toBeLessThanOrEqual(node.x + node.width);
+        expect(point.y).toBeGreaterThanOrEqual(node.y);
+        expect(point.y).toBeLessThanOrEqual(node.y + node.height);
+      }
+      for (let n = 1; n < path.length; n++)
+        expect(path[n]!.x === path[n - 1]!.x || path[n]!.y === path[n - 1]!.y).toBe(true);
+      if (edge.sourcePort === 'http') expect(a.x).toBe(source.x + source.width);
+    }
+    const pinned = await computeGraphLayout(input, {
+      aspectRatio: 1.6,
+      positionMode: 'preferred',
+      positions: [{ nodeId: 'a', x: 500, y: 600 }],
+    });
+    expect(pinned.nodes.find((node) => node.id === 'a')).toMatchObject({ x: 500, y: 600 });
+    expect(pinned.edges.every((edge) => edge.sections.length)).toBe(true);
+  });
+
+  it('packs nested groups without changing containment, dimensions or consumer input', async () => {
+    const nested: GraphInput = {
+      nodes: [
+        { id: 'root', label: 'Root', kind: 'group', width: 300, height: 100 },
+        { id: 'inner', label: 'Inner', kind: 'group', parentId: 'root', width: 300, height: 100 },
+        { id: 'leaf', label: 'Leaf', parentId: 'inner', width: 230, height: 250 },
+        { id: 'outside', label: 'Outside', width: 230, height: 250 },
+      ],
+      edges: [{ id: 'cross', label: 'Cross', source: 'leaf', target: 'outside' }],
+    };
+    const original = structuredClone(nested);
+    const result = await computeGraphLayout(nested, { aspectRatio: 1.6 });
+    expect(nested).toEqual(original);
+    for (const node of result.nodes) {
+      const parent = result.nodes.find((n) => n.id === node.parentId);
+      if (parent) {
+        expect(node.x).toBeGreaterThanOrEqual(parent.x + 28);
+        expect(node.y).toBeGreaterThanOrEqual(parent.y + 64);
+        expect(node.x + node.width).toBeLessThanOrEqual(parent.x + parent.width - 28);
+        expect(node.y + node.height).toBeLessThanOrEqual(parent.y + parent.height - 28);
+      }
+    }
+  });
+
+  it.each([0, -1, NaN, Infinity])(
+    'rejects an invalid packing aspect ratio %s',
+    async (aspectRatio) => {
+      await expect(computeGraphLayout(input, { aspectRatio })).rejects.toThrow('aspect ratio');
+    }
+  );
 
   it.each([
     { ...input, nodes: [...input.nodes, input.nodes[0]!] },

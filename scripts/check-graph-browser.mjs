@@ -39,6 +39,15 @@ function App(){
  window.preferGraph=async()=>{const result=await engine.layout({nodes,edges},{positionMode:'preferred',positions:[{nodeId:'a',x:0,y:0},{nodeId:'b',x:0,y:40},{nodeId:'c',x:0,y:90}]});setLayout(result);return result;};});
  onCleanup(()=>engine?.dispose());
  window.graphViewport=()=>viewport();
+ window.packGraph=async()=>{
+   const packedNodes=[];
+   for(let group=0;group<5;group++){
+     packedNodes.push({id:'packed-group-'+group,label:'Group '+group,kind:'group',width:320,height:100});
+     for(let node=0;node<3;node++) packedNodes.push({id:'packed-node-'+group+'-'+node,label:'Node',parentId:'packed-group-'+group,width:280,height:300});
+   }
+   const result=await engine.layout({nodes:packedNodes,edges:[{id:'packed-edge',label:'Relationship',source:'packed-group-0',target:'packed-group-1'}]},{aspectRatio:1.6,spacing:32});
+   setLayout(result);return result;
+ };
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
    onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
@@ -135,8 +144,15 @@ render(()=><App/>,document.getElementById('root'));
       );
   }
   assert.deepEqual(errors, []);
+  const packed = await page.evaluate(() => window.packGraph());
+  assert.equal(packed.nodes.length, 20);
+  assert.ok(packed.bounds.width / packed.bounds.height > 0.8);
+  assert.ok(packed.bounds.width / packed.bounds.height < 3);
+  assert.ok(packed.nodes.find((node) => node.id === 'packed-group-0').width > 550);
+  assert.ok(packed.edges.every((edge) => edge.sections.length > 0));
+  assert.deepEqual(errors, []);
   console.log(
-    'Graph worker, fixed/preferred positions, interaction, menus, native input, routes, and forced colors passed.'
+    'Graph worker, compound packing, fixed/preferred positions, interaction, menus, native input, routes, and forced colors passed.'
   );
 } finally {
   await browser?.close();
