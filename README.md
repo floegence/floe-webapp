@@ -230,6 +230,13 @@ root; declare `data-floe-surface` on each visible material boundary. Host code
 owns layout, locale and actions. Do not inject these styles into third-party
 application documents. This entry contains no renderer JavaScript or utility scan.
 
+### Floating window identity
+
+`FloatingWindow` accepts an optional `titleIcon` beside its plain-text `title`.
+The icon is decorative and excluded from the window's accessible name. The
+identity remains part of the shared drag region; `headerActions` and native
+window controls retain their own pointer and keyboard ownership.
+
 ### Whole-window status surfaces
 
 `@floegence/floe-webapp-core/window-status.css` provides the opt-in

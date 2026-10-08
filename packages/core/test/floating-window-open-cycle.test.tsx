@@ -33,6 +33,35 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('renders a decorative title icon without changing window identity or drag ownership', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const [iconVisible, setIconVisible] = createSignal(true);
+    mount(() => (
+      <FloatingWindow open onOpenChange={() => undefined} title="Canvas replies"
+        titleIcon={iconVisible() ? <svg data-testid="title-icon" /> : undefined}>
+        <p>Preserved conversation</p>
+      </FloatingWindow>
+    ), host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const title = root.querySelector('h2')!;
+    const icon = title.querySelector('[data-floe-floating-window-title-icon]');
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    expect(icon?.querySelector('svg')).not.toBeNull();
+    expect(title.textContent).toBe('Canvas replies');
+    expect(root.getAttribute('aria-labelledby')).toBe(title.id);
+    const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+    icon!.dispatchEvent(down);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+    window.dispatchEvent(new Event('blur'));
+    setIconVisible(false);
+    expect(root.querySelector('[data-floe-floating-window-title-icon]')).toBeNull();
+    expect(root.querySelector('h2')).toBe(title);
+    expect(root.querySelector('[data-floe-floating-window-content]')?.textContent).toBe('Preserved conversation');
+  });
+
   it('disables maximize controls and titlebar double-click while retaining drag and resize', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

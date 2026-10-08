@@ -132,7 +132,10 @@ try {
             await page.waitForTimeout(250);
             const actions = titlebar.locator('[data-floe-floating-window-header-actions]');
             const copy = actions.getByRole('button', { name: 'Copy reference', exact: true });
-            await titlebar.locator('h2').evaluate((element) => {
+            const identityIcon = titlebar.locator('[data-floe-floating-window-title-icon]');
+            assert.equal(await identityIcon.getAttribute('aria-hidden'), 'true');
+            assert.ok(await identityIcon.locator('svg').count() === 1);
+            await titlebar.locator('h2 > span:last-child').evaluate((element) => {
               element.textContent = 'A very long document filename that must preserve all header actions.md';
             });
             const actionRect = await actions.boundingBox();

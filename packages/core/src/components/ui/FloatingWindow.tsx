@@ -39,6 +39,8 @@ export interface FloatingWindowProps {
   onOpenChange: (open: boolean) => void;
   /** Window title */
   title?: string;
+  /** Decorative identity icon beside the title; excluded from the accessible name. */
+  titleIcon?: JSX.Element;
   /** Compact actions at the right of the title bar, before the window controls. */
   headerActions?: JSX.Element;
   /** Window content */
@@ -629,9 +631,14 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 <Show when={props.title}>
                   <h2
                     id={titleId()}
-                    class="text-xs leading-none font-medium truncate select-none"
+                    class="flex min-w-0 items-center gap-2 text-xs leading-none font-medium select-none"
                   >
-                    {props.title}
+                    <Show when={props.titleIcon}>
+                      <span data-floe-floating-window-title-icon="true" aria-hidden="true" class="flex size-4 shrink-0 items-center justify-center">
+                        {props.titleIcon}
+                      </span>
+                    </Show>
+                    <span class="min-w-0 truncate">{props.title}</span>
                   </h2>
                 </Show>
               </div>

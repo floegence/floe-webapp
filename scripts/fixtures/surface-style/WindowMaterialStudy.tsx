@@ -1,5 +1,6 @@
 import { createSignal, For, onMount, onCleanup, Show } from 'solid-js';
 import { builtInShellThemePresets, useTheme } from '@floegence/floe-webapp-core';
+import { FileText } from '@floegence/floe-webapp-core/icons';
 import {
   Button,
   Card,
@@ -167,6 +168,7 @@ export function WindowMaterialStudy() {
             open={open()[index]}
             onOpenChange={(value) => show(index, value)}
             title={['architecture.md', 'Workspace notes', 'Review checklist'][index]}
+            titleIcon={index === 0 && params.has('headerActions') ? <FileText class="size-4" /> : undefined}
             headerActions={index === 0 && params.has('headerActions') ? (
               <>
                 <Button
