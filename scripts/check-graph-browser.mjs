@@ -35,7 +35,8 @@ function App(){
  const [layout,setLayout]=createSignal(); const [viewport,setViewport]=createSignal({x:50,y:50,scale:1});
  const [menu,setMenu]=createSignal(null); let engine;
  const record=e=>{window.lastGraphEvent=e.object;setMenu(e)};
- onMount(async()=>{engine=createGraphLayoutEngine(); setLayout(await engine.layout({nodes,edges})); window.graphReady=true; window.moveGraph=async()=>{setLayout(await engine.layout({nodes,edges},{positions:[{nodeId:'g',x:60,y:220},{nodeId:'b',x:650,y:80},{nodeId:'c',x:950,y:80}]}));};});
+ onMount(async()=>{engine=createGraphLayoutEngine(); setLayout(await engine.layout({nodes,edges})); window.graphReady=true; window.moveGraph=async()=>{setLayout(await engine.layout({nodes,edges},{positions:[{nodeId:'g',x:60,y:220},{nodeId:'b',x:650,y:80},{nodeId:'c',x:950,y:80}]}));};
+ window.preferGraph=async()=>{const result=await engine.layout({nodes,edges},{positionMode:'preferred',positions:[{nodeId:'a',x:0,y:0},{nodeId:'b',x:0,y:40},{nodeId:'c',x:0,y:90}]});setLayout(result);return result;};});
  onCleanup(()=>engine?.dispose());
  window.graphViewport=()=>viewport();
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
@@ -119,7 +120,24 @@ render(()=><App/>,document.getElementById('root'));
     '1'
   );
   assert.deepEqual(errors, []);
-  console.log('Graph worker, interaction, menus, native input, routes, and forced colors passed.');
+  const preferred = await page.evaluate(() => window.preferGraph());
+  assert.equal(preferred.nodes.length, 4);
+  assert.equal(preferred.edges.length, 2);
+  for (const node of preferred.nodes) {
+    for (const other of preferred.nodes.filter(
+      (n) => n.id !== node.id && n.parentId === node.parentId
+    ))
+      assert.ok(
+        node.x + node.width <= other.x ||
+          other.x + other.width <= node.x ||
+          node.y + node.height <= other.y ||
+          other.y + other.height <= node.y
+      );
+  }
+  assert.deepEqual(errors, []);
+  console.log(
+    'Graph worker, fixed/preferred positions, interaction, menus, native input, routes, and forced colors passed.'
+  );
 } finally {
   await browser?.close();
   await server?.close();

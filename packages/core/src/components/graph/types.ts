@@ -53,8 +53,10 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
-  /** Absolute world positions. Descendants move with pinned groups; impossible containment or routing fails explicitly. */
+  /** Absolute world positions. Descendants move with their group. Invalid positions always fail. */
   positions?: readonly (GraphPoint & { nodeId: string })[];
+  /** Fixed (default) rejects impossible geometry. Preferred retains clear positions and separates colliding siblings, resizing groups around their content before routing. */
+  positionMode?: 'fixed' | 'preferred';
   direction?: 'RIGHT' | 'DOWN' | 'LEFT' | 'UP';
   spacing?: number;
   groupPadding?: { top: number; right: number; bottom: number; left: number };

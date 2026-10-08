@@ -33,14 +33,18 @@ rg "FloeApp|FloeRegistryRuntime|const components|FloeComponent\[]|useCommandCont
 
 1. Find the registration flow in the correct workspace surface.
 2. Keep every component contribution aligned:
+
 - Stable `id` string.
 - `sidebar` metadata (`order`, `renderIn`, `fullScreen`, `hiddenOnMobile`, optional `badge`, optional `collapseBehavior`).
 - `commands` targets using the same registered ids.
 - `statusBar` ordering and placement when applicable.
+
 3. Validate the shell wiring still renders through the intended runtime:
+
 - `FloeApp` for the standard shell.
 - `FloeRegistryRuntime` for custom shell assembly.
 - `ActivityAppsMain` or `KeepAliveStack` for main-view keep-alive flows.
+
 4. If you touch manual registry lifecycle, keep `ComponentRegistry.registerAll()` cleanup symmetry intact.
 
 ## Playbook C: Add Commands And Lifecycle Hooks
@@ -55,8 +59,10 @@ done
 ```
 
 2. Use the right command pattern:
+
 - `FloeComponent.commands[].execute(ctx)` for component-owned commands.
 - `useCommandContributions()` for app-level command groups that are not tied to a `FloeComponent`.
+
 3. Ensure command labels, ids, categories, keybinds, and navigation targets remain consistent.
 4. If protocol/config context is involved, trace it through `wrapAfterTheme`, `getProtocol`, and component context docs before editing.
 
@@ -64,6 +70,7 @@ done
 
 1. Treat `packages/core/package.json` `exports` as the source of truth.
 2. Prefer the most specific public subpath that matches the feature:
+
 - `@floegence/floe-webapp-core/app`
 - `@floegence/floe-webapp-core/layout`
 - `@floegence/floe-webapp-core/ui`
@@ -88,6 +95,7 @@ done
 - `@floegence/floe-webapp-core/tailwind`
 - `@floegence/floe-webapp-core/standalone.css`
 - `@floegence/floe-webapp-core/input-focus.css`
+
 3. Do not import `@floegence/floe-webapp-core/src/...`.
 4. Prefer `@floegence/floe-webapp-core/tailwind` for Tailwind v4 apps; use `@floegence/floe-webapp-core/styles` only as the no-Tailwind fallback.
 
@@ -103,18 +111,23 @@ done
 ```
 
 2. Apply the current guardrails from `docs/interaction-architecture.md`:
+
 - UI first for click/open/selection flows.
 - Classify modal overlays separately from non-modal anchored companions.
 - `useOverlayMask()` for modal overlays and modal drawers.
 - `BottomBarCompanion` from `@floegence/floe-webapp-core/layout` for a persistent Bottom Bar disclosure that grows from one explicit anchor into one stable shell. Keep `retained`, `visible`, and `open` orthogonal, provide an explicit mount, and do not wrap it with `FloatingWindow`, `SurfaceFloatingLayer`, or `useOverlayMask()`.
 - `startHotInteraction()` plus preview/commit separation for drag or resize flows.
 - No hot-path `transition-all` or geometry-following animation regressions.
+
 3. Validate responsive behavior manually in browser devtools at:
+
 - `390x844`
 - `430x932`
 - `768x1024`
 - `>=1280px`
+
 4. Verify interaction behavior on touch-like flows:
+
 - Navigation still reachable without hover.
 - Buttons, menus, and toggles remain usable on small screens.
 - No clipped text or horizontal overflow in primary views.
@@ -144,6 +157,7 @@ pnpm verify
 ```
 
 4. If a command fails:
+
 - Capture the first actionable error.
 - Fix the nearest root cause.
 - Re-run from the failed command onward.
@@ -161,7 +175,6 @@ Standalone first-party documents may use `@floegence/floe-webapp-core/standalone
 
 Whole-window status pages opt into `@floegence/floe-webapp-core/window-status.css`. Use the opaque default for access gates. Only retained, inert workspaces may use `data-backdrop="workspace"`; never put this glass on a draggable window or canvas widget. `@floegence/floe-webapp-core/window-status` exports fixed, scriptless illustration and retry SVG markup. `@floegence/floe-webapp-core/progress-shimmer.css` supplies the same opt-in working text as the main style entries. Hosts own state, locale, accessible names, and actions.
 
-
 ## Compound graph layout positions
 
 Use the `/graph` entry and `/graph.css` for a graph canvas. The worker layout
@@ -172,5 +185,12 @@ orthogonal visibility search around entity cards. Invalid identities, impossible
 containment, obstructed ports, or exhausted routing budgets fail explicitly;
 keep the last valid layout and show the failure rather than dropping relations.
 When positions are present they take precedence over the transient anchor.
+For authored or generated hints, opt into `positionMode: 'preferred'` instead
+of fixed coordinates. Floe separates overlapping siblings deterministically,
+fits groups around their children, and routes every relationship over the
+resulting geometry. Clear positions are retained. Requested spacing and padding
+are minima (at least 16 units between siblings and 12 units within groups).
+Invalid position identities or numbers and genuine worker/routing failures
+remain errors; no fallback layout or relationship dropping is performed.
 Numeric edge labels remain visible as bundle counts. Other labels appear on
 focus, selection, or hover; callers retain all original relationship identities.

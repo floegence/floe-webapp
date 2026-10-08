@@ -110,6 +110,138 @@ describe('graph layout contract', () => {
 });
 
 describe('persisted graph positions', () => {
+  it('repairs overlapping preferred positions without dropping nodes or relationships', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'masters', label: 'Masters', kind: 'group', width: 320, height: 100 },
+        { id: 'master', label: 'Master', parentId: 'masters', width: 280, height: 312 },
+        { id: 'workers', label: 'Workers', kind: 'group', width: 320, height: 100 },
+        { id: 'worker', label: 'Worker', parentId: 'workers', width: 280, height: 312 },
+        { id: 'database', label: 'Database', width: 220, height: 158 },
+      ],
+      edges: [
+        { id: 'mw', label: 'Schedules', source: 'master', target: 'worker' },
+        { id: 'wm', label: 'Reports', source: 'worker', target: 'masters' },
+        { id: 'db', label: 'Stores', source: 'workers', target: 'database' },
+        { id: 'loop', label: 'Replicates', source: 'workers', target: 'workers' },
+      ],
+    };
+    const options: GraphLayoutOptions = {
+      positionMode: 'preferred',
+      groupPadding: { top: 108, right: 20, bottom: 20, left: 20 },
+      positions: [
+        { nodeId: 'master', x: 0, y: -420 },
+        { nodeId: 'worker', x: 0, y: -140 },
+        { nodeId: 'database', x: 0, y: 180 },
+      ],
+    };
+    const layout = await computeGraphLayout(graph, options);
+    expect(layout.nodes).toHaveLength(graph.nodes.length);
+    expect(layout.edges.map((e) => e.id)).toEqual(graph.edges.map((e) => e.id));
+    expect(layout.nodes.find((n) => n.id === 'master')).toMatchObject({ x: 0, y: -420 });
+    for (const node of layout.nodes) {
+      const parent = layout.nodes.find((n) => n.id === node.parentId);
+      if (parent) {
+        expect(node.x).toBeGreaterThanOrEqual(parent.x + 20);
+        expect(node.y).toBeGreaterThanOrEqual(parent.y + 108);
+        expect(node.x + node.width).toBeLessThanOrEqual(parent.x + parent.width - 20);
+        expect(node.y + node.height).toBeLessThanOrEqual(parent.y + parent.height - 20);
+      }
+      for (const other of layout.nodes.filter(
+        (n) => n.id !== node.id && n.parentId === node.parentId
+      )) {
+        expect(
+          node.x + node.width <= other.x ||
+            other.x + other.width <= node.x ||
+            node.y + node.height <= other.y ||
+            other.y + other.height <= node.y
+        ).toBe(true);
+      }
+    }
+    for (const edge of layout.edges) {
+      expect(edge.sections[0]!.length).toBeGreaterThan(2);
+      for (const section of edge.sections)
+        for (let i = 1; i < section.length; i++) {
+          const a = section[i - 1]!,
+            b = section[i]!;
+          expect(a.x === b.x || a.y === b.y).toBe(true);
+          for (const node of layout.nodes.filter(
+            (n) => n.kind !== 'group' && n.id !== edge.source && n.id !== edge.target
+          )) {
+            expect(
+              a.x === b.x
+                ? a.x > node.x &&
+                    a.x < node.x + node.width &&
+                    Math.max(a.y, b.y) > node.y &&
+                    Math.min(a.y, b.y) < node.y + node.height
+                : a.y > node.y &&
+                    a.y < node.y + node.height &&
+                    Math.max(a.x, b.x) > node.x &&
+                    Math.min(a.x, b.x) < node.x + node.width
+            ).toBe(false);
+          }
+        }
+    }
+    expect(await computeGraphLayout(graph, options)).toEqual(layout);
+  });
+
+  it('keeps clear preferred coordinates and rejects malformed preferred positions', async () => {
+    const graph = { nodes: [{ id: 'a', label: 'A', width: 100, height: 80 }], edges: [] };
+    expect(
+      (
+        await computeGraphLayout(graph, {
+          positionMode: 'preferred',
+          positions: [{ nodeId: 'a', x: -20, y: 30 }],
+        })
+      ).nodes[0]
+    ).toMatchObject({ x: -20, y: 30 });
+    for (const positions of [
+      [{ nodeId: 'missing', x: 0, y: 0 }],
+      [{ nodeId: 'a', x: NaN, y: 0 }],
+      [
+        { nodeId: 'a', x: 0, y: 0 },
+        { nodeId: 'a', x: 1, y: 1 },
+      ],
+    ])
+      await expect(
+        computeGraphLayout(graph, { positionMode: 'preferred', positions })
+      ).rejects.toThrow('Invalid graph position');
+  });
+
+  it('repairs nested preferred containment and separates unpositioned siblings', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'outer', label: 'Outer', kind: 'group', width: 320, height: 100 },
+        { id: 'inner', label: 'Inner', kind: 'group', parentId: 'outer', width: 200, height: 80 },
+        { id: 'a', label: 'A', parentId: 'inner', width: 100, height: 80 },
+        { id: 'b', label: 'B', parentId: 'inner', width: 100, height: 80 },
+      ],
+      edges: [{ id: 'ab', label: 'Calls', source: 'a', target: 'b' }],
+    };
+    const before = await computeGraphLayout(graph);
+    const b = before.nodes.find((n) => n.id === 'b')!;
+    const after = await computeGraphLayout(graph, {
+      positionMode: 'preferred',
+      spacing: 0,
+      groupPadding: { top: 0, right: 0, bottom: 0, left: 0 },
+      positions: [
+        { nodeId: 'outer', x: 500, y: 500 },
+        { nodeId: 'inner', x: 200, y: 200 },
+        { nodeId: 'a', x: b.x, y: b.y },
+      ],
+    });
+    for (const node of after.nodes) {
+      const parent = after.nodes.find((n) => n.id === node.parentId);
+      if (parent) {
+        expect(node.x).toBeGreaterThanOrEqual(parent.x + 12);
+        expect(node.y).toBeGreaterThanOrEqual(parent.y + 12);
+        expect(node.x + node.width).toBeLessThanOrEqual(parent.x + parent.width - 12);
+        expect(node.y + node.height).toBeLessThanOrEqual(parent.y + parent.height - 12);
+      }
+    }
+    expect(after.edges[0]!.sections[0]!.length).toBeGreaterThan(2);
+  });
+
   it('keeps exact positions and routes around intervening nodes', async () => {
     const nodes = ['a', 'block', 'b'].map((id) => ({ id, label: id, width: 100, height: 80 }));
     const layout = await computeGraphLayout(

@@ -48,6 +48,20 @@ inspected node's world position when content dimensions change. For independent
 regions, hosts can lay out only that region and keep other layout results;
 never create a second mutable domain graph to persist renderer geometry.
 
+Optional `positions: [{ nodeId, x, y }]` use absolute world coordinates.
+`positionMode: 'fixed'` is the default: positions are exact, descendants move
+with their group, and impossible containment or obstructed routes reject the
+request. Use `positionMode: 'preferred'` for authored or generated layout hints.
+Clear coordinates are retained; overlapping siblings are separated deterministically
+by the smaller forward horizontal or vertical shift. Groups resize around their
+content, and moving a group moves its complete subtree. Requested spacing is a
+minimum, with at least 16 units between siblings and 12 units of group padding
+to keep routed endpoints clear. The worker routes this resulting geometry once;
+it never drops nodes or edges or retries with an unrelated automatic layout.
+Unknown, duplicate, or nonfinite positions still reject. Positions take
+precedence over the transient anchor in both modes. Preferred geometry is a
+render result; hosts need not rewrite persisted hints.
+
 The surface uses semantic theme tokens and supports forced colors. Consumers
 can set `--graph-background`, `--graph-dot`, `--graph-edge`, and
 `--graph-edge-active` without injecting arbitrary styles into graph documents.

@@ -3,6 +3,7 @@ import type {
   GraphLayout,
   GraphLayoutNode,
   GraphLayoutOptions,
+  GraphNode,
   GraphPoint,
 } from './types';
 
@@ -112,8 +113,12 @@ function route(start: GraphPoint, end: GraphPoint, obstacles: readonly Rect[]): 
   throw new Error('Pinned graph positions cannot be routed within the layout budget');
 }
 
-/** Apply optional absolute world positions, retaining unpinned ELK geometry and group containment. */
-export function applyGraphPositions(layout: GraphLayout, options: GraphLayoutOptions): GraphLayout {
+/** Apply explicit fixed or preferred positions, then route the resulting geometry once. */
+export function applyGraphPositions(
+  layout: GraphLayout,
+  options: GraphLayoutOptions,
+  input: readonly GraphNode[]
+): GraphLayout {
   if (!options.positions?.length) return layout;
   const nodes = new Map(layout.nodes.map((node) => [node.id, { ...node }]));
   const pins = new Map<string, GraphPoint>();
@@ -135,6 +140,8 @@ export function applyGraphPositions(layout: GraphLayout, options: GraphLayoutOpt
       children.set(node.parentId, members);
     }
   const padding = options.groupPadding ?? { top: 64, left: 28, right: 28, bottom: 28 };
+  const preferred = options.positionMode === 'preferred';
+  const minimums = new Map(input.map((node) => [node.id, node]));
   const move = (node: GraphLayoutNode, dx: number, dy: number) => {
     const old = { x: node.x, y: node.y },
       pin = pins.get(node.id);
@@ -143,6 +150,7 @@ export function applyGraphPositions(layout: GraphLayout, options: GraphLayoutOpt
     const members = children.get(node.id) ?? [];
     for (const child of members) move(child, node.x - old.x, node.y - old.y);
     if (!members.length) return;
+    if (preferred) return;
     const left = Math.min(...members.map((n) => n.x)) - padding.left,
       top = Math.min(...members.map((n) => n.y)) - padding.top;
     if (pin && (left < node.x || top < node.y))
@@ -163,6 +171,72 @@ export function applyGraphPositions(layout: GraphLayout, options: GraphLayoutOpt
     node.height = bottom - node.y;
   };
   for (const node of nodes.values()) if (!node.parentId) move(node, 0, 0);
+  if (preferred) {
+    // Sibling bounds include their whole subtree. Separating them therefore
+    // protects descendants and keeps group borders clear of other objects.
+    const gap = Math.max(16, options.spacing ?? 64);
+    const translate = (node: GraphLayoutNode, dx: number, dy: number) => {
+      node.x += dx;
+      node.y += dy;
+      for (const child of children.get(node.id) ?? []) translate(child, dx, dy);
+    };
+    const separate = (siblings: GraphLayoutNode[]) => {
+      const placed: GraphLayoutNode[] = [];
+      for (const node of [...siblings].sort(
+        (a, b) => a.y - b.y || a.x - b.x || a.id.localeCompare(b.id)
+      )) {
+        const horizontal = { x: node.x, y: node.y };
+        for (const other of [...placed].sort((a, b) => a.x - b.x)) {
+          if (
+            node.y < other.y + other.height + gap &&
+            node.y + node.height + gap > other.y &&
+            horizontal.x < other.x + other.width + gap &&
+            horizontal.x + node.width + gap > other.x
+          )
+            horizontal.x = other.x + other.width + gap;
+        }
+        const vertical = { x: node.x, y: node.y };
+        for (const other of [...placed].sort((a, b) => a.y - b.y)) {
+          if (
+            node.x < other.x + other.width + gap &&
+            node.x + node.width + gap > other.x &&
+            vertical.y < other.y + other.height + gap &&
+            vertical.y + node.height + gap > other.y
+          )
+            vertical.y = other.y + other.height + gap;
+        }
+        const next = horizontal.x - node.x < vertical.y - node.y ? horizontal : vertical;
+        translate(node, next.x - node.x, next.y - node.y);
+        placed.push(node);
+      }
+    };
+    const arrange = (node: GraphLayoutNode) => {
+      const members = children.get(node.id) ?? [];
+      if (!members.length) return;
+      for (const child of members) arrange(child);
+      separate(members);
+      // Preferred coordinates cannot pin a child outside its parent. Fit the
+      // container around actual content rather than retaining ELK's old bounds.
+      const left = Math.max(12, padding.left),
+        top = Math.max(12, padding.top),
+        right = Math.max(12, padding.right),
+        bottom = Math.max(12, padding.bottom);
+      const pin = pins.get(node.id);
+      node.x = Math.min(pin?.x ?? Infinity, Math.min(...members.map((n) => n.x)) - left);
+      node.y = Math.min(pin?.y ?? Infinity, Math.min(...members.map((n) => n.y)) - top);
+      node.width = Math.max(
+        minimums.get(node.id)!.width,
+        Math.max(...members.map((n) => n.x + n.width)) + right - node.x
+      );
+      node.height = Math.max(
+        minimums.get(node.id)!.height,
+        Math.max(...members.map((n) => n.y + n.height)) + bottom - node.y
+      );
+    };
+    const roots = [...nodes.values()].filter((node) => !node.parentId);
+    for (const node of roots) arrange(node);
+    separate(roots);
+  }
   const edges = layout.edges.map((edge) => {
     const source = nodes.get(edge.source)!,
       target = nodes.get(edge.target)!;

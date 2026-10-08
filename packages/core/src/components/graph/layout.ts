@@ -155,6 +155,7 @@ export async function computeGraphLayout(
       })),
       bounds: { x: dx, y: dy, width: graph.width ?? 0, height: graph.height ?? 0 },
     },
-    options
+    options,
+    input.nodes
   );
 }
