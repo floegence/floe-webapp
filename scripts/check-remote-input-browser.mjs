@@ -31,7 +31,13 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const engines = process.argv.includes('--all') ? { chromium, webkit, firefox } : { chromium };
 try {
   for (const [name, engine] of Object.entries(engines)) {
-    const browser = await engine.launch({ headless: true });
+    const browser = await engine.launch({
+      headless: true,
+      // Keep the loopback fixture direct when Firefox inherits a system proxy.
+      ...(name === 'firefox' ? {
+        firefoxUserPrefs: { 'network.proxy.allow_hijacking_localhost': false },
+      } : {}),
+    });
     try {
       const page = await browser.newPage({ viewport: { width: 390, height: 700 } });
       await page.goto(`http://127.0.0.1:${server.address().port}`);

@@ -88,11 +88,16 @@ render(() => <App/>, document.getElementById('root'));
         });
         await page.mouse.up();
       };
-      const waitForPanelBox = async (predicate, message) => {
+      const waitForPanelBox = async (predicate, message, requireStable = false) => {
         let latest = null;
+        let previous = null;
         for (let attempt = 0; attempt < 100; attempt += 1) {
           latest = await panel.boundingBox();
-          if (latest && predicate(latest)) return latest;
+          const stable = previous && latest && ['x', 'y', 'width', 'height'].every(
+            (key) => Math.abs(latest[key] - previous[key]) < 0.01
+          );
+          if (latest && predicate(latest) && (!requireStable || stable)) return latest;
+          previous = latest;
           await page.waitForTimeout(16);
         }
         assert.fail(`${message}: ${JSON.stringify(latest)}`);
@@ -210,7 +215,10 @@ render(() => <App/>, document.getElementById('root'));
           box.y >= resizedLauncherBounds.top - 2 &&
           box.x + box.width <= resizedLauncherBounds.right + 2 &&
           box.y + box.height <= resizedLauncherBounds.bottom + 2,
-        'launcher must remain inside app chrome insets after viewport resize'
+        // The viewport observer and projected geometry publish on animation frames.
+        // Take the keyboard baseline after resize has finished moving the panel.
+        'launcher must remain inside app chrome insets after viewport resize',
+        true
       );
 
       const beforeKeyboardX = resizedBall.x;
