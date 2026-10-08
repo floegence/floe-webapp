@@ -232,8 +232,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const isTargetInsideNestedOverlay = (target: EventTarget | null) => {
     const element = target instanceof Element ? target : null;
     const overlay = element?.closest('[role="menu"], [role="dialog"]');
-    const floatingLayer = overlay?.closest(`[data-floe-surface-floating-layer="true"]`);
-    return Boolean(floatingLayer && windowRef?.contains(floatingLayer));
+    const overlayOwner = overlay?.closest('[data-floe-surface-floating-layer="true"], [data-floe-dropdown]');
+    return Boolean(overlayOwner && windowRef?.contains(overlayOwner));
   };
 
   const readLiveRectFromDom = (): FloatingWindowRect | null => {

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Show, createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
+import { Dropdown } from '../src/components/ui/Dropdown';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
 
 vi.mock('../src/context/LayoutContext', () => ({
@@ -33,6 +34,35 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('lets the actual Dropdown menu handle Escape before the floating window closes', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const onOpenChange = vi.fn();
+    const [items, setItems] = createSignal([{ id: 'new', label: 'New conversation' }]);
+    mount(() => <FloatingWindow open title="Reading window" onOpenChange={onOpenChange}
+      headerActions={<Dropdown trigger={<span>Actions</span>} triggerAriaLabel="Reply actions"
+        items={items} onSelect={() => undefined} />}>
+      <p>Conversation</p>
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+
+    const trigger = document.querySelector<HTMLElement>('[data-floe-dropdown-trigger]')!;
+    trigger.click();
+    await flushAnimationFrame();
+    const menuItem = document.querySelector<HTMLElement>('[role="menuitem"]')!;
+    expect(document.querySelector('[role="menu"]')?.getAttribute('data-floe-surface')).toBe('floating');
+    setItems((current) => [...current, { id: 'open', label: 'Open conversation' }]);
+    expect(document.querySelectorAll('[role="menuitem"]')).toHaveLength(2);
+    menuItem.focus();
+    menuItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    await flushAnimationFrame();
+
+    expect(document.querySelector('[role="menu"]')?.getAttribute('data-floating-presence')).toBe('exiting');
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+    expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).not.toBeNull();
+  });
+
   it.each(['menu', 'dialog'])('lets a nested %s own Escape before the window closes', async role => {
     const host = document.createElement('div');
     document.body.appendChild(host);

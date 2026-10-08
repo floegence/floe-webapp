@@ -1,4 +1,4 @@
-import { createSignal, Show, Index, type JSX, createEffect, createMemo, onCleanup } from 'solid-js';
+import { createSignal, Show, Index, type Accessor, type JSX, createEffect, createMemo, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -45,7 +45,7 @@ export interface DropdownProps {
   triggerAriaLabel?: string;
   /** Treat the existing trigger boundary as a field (used by Select). */
   triggerInputSurface?: boolean;
-  items: DropdownItem[];
+  items: DropdownItem[] | Accessor<DropdownItem[]>;
   value?: string;
   onSelect: (id: string) => void;
   align?: 'start' | 'center' | 'end';
@@ -109,6 +109,7 @@ export function Dropdown(props: DropdownProps) {
   let menuRef: HTMLDivElement | undefined;
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
   const menuId = `${dropdownId}-menu`;
+  const items = () => typeof props.items === 'function' ? props.items() : props.items;
   const surfaceHost = createMemo<ResolvedSurfacePortalHost>(() =>
     menuPresence.mounted()
       ? resolveSurfacePortalHost({ owner: triggerRef })
@@ -318,7 +319,7 @@ export function Dropdown(props: DropdownProps) {
             id={menuId}
             onKeyDown={handleMenuKeyDown}
           >
-            <Index each={props.items}>
+            <Index each={items()}>
               {(item) => (
                 <Show
                   when={!item().separator}
