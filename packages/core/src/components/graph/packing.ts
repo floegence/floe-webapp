@@ -57,7 +57,7 @@ export async function computePackedGraphLayout(
       children: siblings.map((node) => ({ id: node.id, width: node.width, height: node.height })),
       edges: [...projected.values()],
       layoutOptions: {
-        'elk.algorithm': 'layered',
+        'elk.algorithm': projected.size ? 'layered' : 'rectpacking',
         'elk.direction': options.direction ?? 'RIGHT',
         'elk.edgeRouting': 'ORTHOGONAL',
         'elk.separateConnectedComponents': 'true',

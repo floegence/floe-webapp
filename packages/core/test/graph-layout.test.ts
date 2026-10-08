@@ -30,6 +30,22 @@ const input: GraphInput = {
 };
 
 describe('graph layout contract', () => {
+  it('keeps two independent short members side by side in a landscape group', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'group', label: 'Group', kind: 'group', width: 320, height: 100 },
+        { id: 'first', label: 'First', parentId: 'group', width: 280, height: 214 },
+        { id: 'second', label: 'Second', parentId: 'group', width: 280, height: 214 },
+      ],
+      edges: [],
+    };
+    const result = await computeGraphLayout(graph, { aspectRatio: 1.6, spacing: 32 });
+    const first = result.nodes.find((node) => node.id === 'first')!;
+    const second = result.nodes.find((node) => node.id === 'second')!;
+    expect(second.y).toBe(first.y);
+    expect(second.x).toBeGreaterThanOrEqual(first.x + first.width + 32);
+    expect(result.nodes.find((node) => node.id === 'group')!.width).toBeGreaterThan(550);
+  });
   it('packs independent compound members and disconnected components into a readable aspect ratio', async () => {
     const nodes: GraphInput['nodes'][number][] = [];
     for (let g = 0; g < 5; g++) {
