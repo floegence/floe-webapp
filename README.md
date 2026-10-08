@@ -236,6 +236,7 @@ application documents. This entry contains no renderer JavaScript or utility sca
 The icon is decorative and excluded from the window's accessible name. The
 identity remains part of the shared drag region; `headerActions` and native
 window controls retain their own pointer and keyboard ownership.
+Nested menus and dialogs own Escape before the containing window can close.
 
 ### Whole-window status surfaces
 

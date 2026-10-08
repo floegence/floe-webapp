@@ -29,7 +29,7 @@ import {
 import { observeViewport, type ViewportSnapshot } from '../../viewport';
 import { createFloatingPresence } from './floatingPresence';
 import { LOCAL_INTERACTION_SURFACE_ATTR } from './localInteractionSurface';
-import { SURFACE_FLOATING_LAYER_ATTR, SURFACE_PORTAL_LAYER_ATTR, resolveSurfacePortalHost } from './surfacePortalScope';
+import { SURFACE_PORTAL_LAYER_ATTR, resolveSurfacePortalHost } from './surfacePortalScope';
 import { resolveFloatingBoundary, type SurfaceFloatingBoundary } from './surfaceFloatingBoundary';
 
 export interface FloatingWindowProps {
@@ -229,14 +229,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const isTargetInsideWindow = (target: EventTarget | null) =>
     !!windowRef && target instanceof Node && windowRef.contains(target);
 
-  const isTargetInsideNestedFloatingMenu = (target: EventTarget | null) => {
+  const isTargetInsideNestedOverlay = (target: EventTarget | null) => {
     const element = target instanceof Element ? target : null;
-    const menu = element?.closest('[role="menu"], [role="dialog"]');
-    const floatingLayer = menu?.closest(`[${SURFACE_FLOATING_LAYER_ATTR}="true"]`);
-    // Portaled menus and dialogs are siblings of the window geometry node, so
-    // ownership cannot be inferred with `windowRef.contains`. Their explicit
-    // floating-layer marker is the shared overlay boundary.
-    return Boolean(floatingLayer);
+    const overlay = element?.closest('[role="menu"], [role="dialog"]');
+    return Boolean(overlay && overlay !== windowRef && windowRef?.contains(overlay));
   };
 
   const readLiveRectFromDom = (): FloatingWindowRect | null => {
@@ -405,7 +401,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
       const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
       if (!isTargetInsideWindow(e.target) && !isTargetInsideWindow(activeElement)) return;
-      if (isTargetInsideNestedFloatingMenu(e.target)) return;
+      if (isTargetInsideNestedOverlay(e.target)) return;
 
       e.preventDefault();
       if (typeof e.stopImmediatePropagation === 'function') {

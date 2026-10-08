@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createSignal } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
@@ -40,14 +40,12 @@ describe('FloatingWindow open cycle', () => {
     const onOpenChange = vi.fn();
     mount(() => <FloatingWindow open title="Reading window" onOpenChange={onOpenChange}>
       <Show when={nestedOpen()}>
-        <div data-floe-surface-floating-layer="true">
         <div role={role} tabIndex={-1} data-testid="nested-overlay" onKeyDown={event => {
           if (event.key !== 'Escape') return;
           event.preventDefault();
           event.stopPropagation();
           setNestedOpen(false);
         }}>Nested surface</div>
-        </div>
       </Show>
     </FloatingWindow>, host);
     await flushAnimationFrame();
