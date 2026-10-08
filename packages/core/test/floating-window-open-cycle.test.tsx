@@ -33,6 +33,35 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it.each(['menu', 'dialog'])('lets a nested %s own Escape before the window closes', async role => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const [nestedOpen, setNestedOpen] = createSignal(true);
+    const onOpenChange = vi.fn();
+    mount(() => <FloatingWindow open title="Reading window" onOpenChange={onOpenChange}>
+      <Show when={nestedOpen()}>
+        <div data-floe-surface-floating-layer="true">
+        <div role={role} tabIndex={-1} data-testid="nested-overlay" onKeyDown={event => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          setNestedOpen(false);
+        }}>Nested surface</div>
+        </div>
+      </Show>
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+    const nested = document.querySelector<HTMLElement>('[data-testid="nested-overlay"]')!;
+    nested.focus();
+    nested.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-testid="nested-overlay"]')).toBeNull();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    root.focus();
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
   it('renders a decorative title icon without changing window identity or drag ownership', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

@@ -231,9 +231,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
   const isTargetInsideNestedFloatingMenu = (target: EventTarget | null) => {
     const element = target instanceof Element ? target : null;
-    const menu = element?.closest('[role="menu"]');
+    const menu = element?.closest('[role="menu"], [role="dialog"]');
     const floatingLayer = menu?.closest(`[${SURFACE_FLOATING_LAYER_ATTR}="true"]`);
-    return Boolean(floatingLayer && windowRef?.contains(floatingLayer));
+    // Portaled menus and dialogs are siblings of the window geometry node, so
+    // ownership cannot be inferred with `windowRef.contains`. Their explicit
+    // floating-layer marker is the shared overlay boundary.
+    return Boolean(floatingLayer);
   };
 
   const readLiveRectFromDom = (): FloatingWindowRect | null => {
