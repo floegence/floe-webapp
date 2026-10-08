@@ -57,7 +57,7 @@ execFileSync(
     '--no-fund',
     '--ignore-scripts',
     ...packageSpecs,
-    'solid-js@1.9.11',
+    'solid-js@1.9.17',
   ],
   { stdio: 'inherit' }
 );

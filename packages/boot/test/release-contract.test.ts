@@ -68,10 +68,11 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.85.0');
+    expect(corePkg.version).toBe('0.85.1');
     for (const template of ['minimal', 'full']) {
       const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
       expect(config.overrides.dompurify).toBe('^3.4.16');
+      expect(config.overrides.katex).toBe('0.18.10');
       expect(config.pnpm.overrides).toEqual(config.overrides);
     }
     expect(bootPkg.version).toBe(corePkg.version);
@@ -161,7 +162,7 @@ describe('release dependency and runtime contract', () => {
     expect(release).toContain('scripts/verify-npm-release-consumer.mjs');
     expect(release).toContain('Require a release tag ref');
     const consumerSmoke = readText('scripts/verify-npm-release-consumer.mjs');
-    expect(consumerSmoke).toContain("'solid-js@1.9.11'");
+    expect(consumerSmoke).toContain("'solid-js@1.9.17'");
     expect(consumerSmoke).toContain("import.meta.resolve('${packageNames[0]}')");
     expect(consumerSmoke).toContain(
       "copyFileSync(new URL('./verify-npm-release-runtime-consumer.mjs', import.meta.url)"

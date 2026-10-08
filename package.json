@@ -61,6 +61,7 @@
   "pnpm": {
     "overrides": {
       "dompurify": "^3.4.16",
+      "katex": "0.18.10",
       "lodash-es": "^4.18.1",
       "postcss": "^8.5.23",
       "uuid": "^14.0.0",

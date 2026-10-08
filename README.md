@@ -80,13 +80,16 @@ Existing applications must include the following root `package.json` constraints
 before installing or updating. The CLI includes them in both templates. Monaco
 0.57.0 pins DOMPurify 3.4.15; npm does not inherit dependency overrides, so the
 application owns this explicit patched resolution. Keep this constraint until a
-Monaco release depends on DOMPurify 3.4.16 or newer. Run your package manager's
-full audit after installation.
+Monaco release depends on DOMPurify 3.4.16 or newer. Use Solid 1.9.17 or newer
+for its patched Seroval dependency. Mermaid still requests an older KaTeX minor;
+the root override selects the patched, non-deprecated 0.18.10 release. Keep that
+override until Mermaid requests a patched KaTeX release itself. Run your package
+manager's full audit after installation.
 
 ```json
 {
-  "overrides": { "dompurify": "^3.4.16" },
-  "pnpm": { "overrides": { "dompurify": "^3.4.16" } }
+  "overrides": { "dompurify": "^3.4.16", "katex": "0.18.10" },
+  "pnpm": { "overrides": { "dompurify": "^3.4.16", "katex": "0.18.10" } }
 }
 ```
 
@@ -135,7 +138,7 @@ The packages are independently consumable:
 | --------------------------------- | ------------------------------------------------------------------------- |
 | `@floegence/floe-webapp-core`     | Shell, UI primitives, workspace surfaces, themes, and extension contracts |
 | `@floegence/floe-webapp-protocol` | Flowersec-aware connection state and typed RPC wiring                     |
-| `@floegence/floe-webapp-boot`     | Browser session, handshake, reconnect assembly, and fetch-SSE helpers      |
+| `@floegence/floe-webapp-boot`     | Browser session, handshake, reconnect assembly, and fetch-SSE helpers     |
 | `@floegence/floe-webapp-init`     | CLI and templates for new Floe applications                               |
 
 ## Documentation
@@ -143,8 +146,8 @@ The packages are independently consumable:
 | Goal                                                                | Guide                                                        |
 | ------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Build and run the first app                                         | [Getting started](docs/getting-started.md)                   |
-| Restore successful resource data while refreshing | [Resource cache](docs/resource-cache.md) |
-| Own client composition and keyboard input for a remote surface | [Remote input](docs/remote-input.md) |
+| Restore successful resource data while refreshing                   | [Resource cache](docs/resource-cache.md)                     |
+| Own client composition and keyboard input for a remote surface      | [Remote input](docs/remote-input.md)                         |
 | Configure strings, storage, keybindings, themes, and shell defaults | [Configuration](docs/configuration.md)                       |
 | Register views, commands, navigation, and status contributions      | [Component registry](docs/component-registry.md)             |
 | Understand wheel, focus, activation, and selection ownership        | [Interaction architecture](docs/interaction-architecture.md) |
@@ -216,7 +219,6 @@ or `.dark`, `data-floe-shell-theme`, and `data-floe-surface-style` on the docume
 root; declare `data-floe-surface` on each visible material boundary. Host code
 owns layout, locale and actions. Do not inject these styles into third-party
 application documents. This entry contains no renderer JavaScript or utility scan.
-
 
 ### Whole-window status surfaces
 
