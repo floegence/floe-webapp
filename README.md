@@ -166,6 +166,11 @@ relationships retain their flow direction; packing never adds relationships.
 Saved positions and inspection anchors keep their existing contracts. Omit the
 option to retain the default hierarchical layout.
 
+Packed and positioned graphs use joint orthogonal routing through
+libavoid. Free connections use the available spans on all four node and group
+borders, avoid intervening objects, and separate shared segments into lanes.
+Explicit port sides remain fixed.
+
 ## Develop This Repository
 
 Requirements: Node.js `>= 24` and pnpm `>= 9`.

@@ -3,3 +3,14 @@ Copyright (c) 2017 Kiel University and others.
 Licensed under the Eclipse Public License 2.0. A copy is in elkjs.txt.
 Unmodified upstream source is available at https://github.com/kieler/elkjs/tree/0.12.0
 and https://registry.npmjs.org/elkjs/-/elkjs-0.12.0.tgz.
+
+Orthogonal routing uses libavoid-js 0.5.0-beta.5 and its separate unmodified
+libavoid.wasm library. libavoid is Copyright (C) Monash University and others;
+libavoid-js is maintained by Vladyslav Hnatiuk. Licensed under LGPL-2.1-or-later;
+a copy is in libavoid.txt. Corresponding source and build instructions are
+included in libavoid-sources.tar.gz. The unmodified source revisions are:
+https://github.com/Aksem/libavoid-js/tree/5062a42fbd82fff562afeebcbb7b1ed45eed8e75
+https://github.com/Aksem/adaptagrams/tree/0ab3467b4ed3523bb3e404a0dd7da7647d9eb13d
+The separate WASM library can be replaced with an API-compatible build.
+Extract the source archive, enter libavoid-js, and run python3 tools/generate.py
+(requires Docker), npm install, and npm run build to rebuild the library.

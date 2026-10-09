@@ -2,18 +2,39 @@ import { defineConfig } from 'vite';
 import solid from 'vite-plugin-solid';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
+import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
+
+const require = createRequire(import.meta.url);
+const routingWasm = resolve(dirname(require.resolve('libavoid-js')), 'libavoid.wasm');
 
 export default defineConfig({
-  plugins: [solid(), tailwindcss()],
+  plugins: [
+    {
+      name: 'libavoid-separate-wasm',
+      enforce: 'pre',
+      transform(code, id) {
+        if (!id.endsWith('/libavoid-js/dist/index.js')) return;
+        // Library-mode assets are inlined by default. Keep the LGPL library
+        // independently replaceable, including its default loader URL.
+        const asset = 'new URL("libavoid.wasm",import.meta.url)';
+        if (!code.includes(asset)) throw new Error('libavoid WASM loader contract changed');
+        return code.replace(asset, 'new URL("libavoid.wasm?no-inline",import.meta.url)');
+      },
+    },
+    solid(),
+    tailwindcss(),
+  ],
   // Library build outputs must be self-contained and embeddable as a dependency.
   // Using a relative base ensures worker assets referenced via `new URL(..., import.meta.url)`
   // resolve within the package instead of assuming the host app serves them from `/assets`.
   base: './',
   worker: { format: 'es', rollupOptions: { output: { inlineDynamicImports: true } } },
   resolve: {
-    alias: {
-      '@': resolve(__dirname, './src'),
-    },
+    alias: [
+      { find: '@', replacement: resolve(__dirname, './src') },
+      { find: 'libavoid-js/wasm?url&no-inline', replacement: `${routingWasm}?url&no-inline` },
+    ],
   },
   build: {
     emptyOutDir: false,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, readFileSync, writeFileSync, watch } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync, watch } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
@@ -9,12 +9,36 @@ const __dirname = dirname(__filename);
 const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
-  { src: resolve(pkgRoot, 'node_modules/elkjs/LICENSE.md'), dest: resolve(pkgRoot, 'dist/licenses/elkjs.txt') },
-  { src: resolve(pkgRoot, 'src/components/graph/NOTICE.txt'), dest: resolve(pkgRoot, 'dist/licenses/graph-notice.txt') },
-  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer', 'graph'].map((name) => ({ src: resolve(pkgRoot, `src/styles/${name}.css`), dest: resolve(pkgRoot, `dist/${name}.css`) })),
-  { src: resolve(pkgRoot, 'src/styles/primitives.css'), dest: resolve(pkgRoot, 'dist/primitives.css') },
-  { src: resolve(pkgRoot, 'src/styles/standalone.css'), dest: resolve(pkgRoot, 'dist/standalone.css') },
-  { src: resolve(pkgRoot, 'src/styles/file-icons.css'), dest: resolve(pkgRoot, 'dist/file-icons.css') },
+  {
+    src: resolve(pkgRoot, 'node_modules/elkjs/LICENSE.md'),
+    dest: resolve(pkgRoot, 'dist/licenses/elkjs.txt'),
+  },
+  {
+    src: resolve(pkgRoot, 'node_modules/libavoid-js/LICENSE'),
+    dest: resolve(pkgRoot, 'dist/licenses/libavoid.txt'),
+  },
+  {
+    src: resolve(pkgRoot, 'src/components/graph/NOTICE.txt'),
+    dest: resolve(pkgRoot, 'dist/licenses/graph-notice.txt'),
+  },
+  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer', 'graph'].map(
+    (name) => ({
+      src: resolve(pkgRoot, `src/styles/${name}.css`),
+      dest: resolve(pkgRoot, `dist/${name}.css`),
+    })
+  ),
+  {
+    src: resolve(pkgRoot, 'src/styles/primitives.css'),
+    dest: resolve(pkgRoot, 'dist/primitives.css'),
+  },
+  {
+    src: resolve(pkgRoot, 'src/styles/standalone.css'),
+    dest: resolve(pkgRoot, 'dist/standalone.css'),
+  },
+  {
+    src: resolve(pkgRoot, 'src/styles/file-icons.css'),
+    dest: resolve(pkgRoot, 'dist/file-icons.css'),
+  },
   {
     src: resolve(pkgRoot, 'src/styles/surface.css'),
     dest: resolve(pkgRoot, 'dist/surface.css'),
@@ -85,6 +109,10 @@ function copyFile({ src, dest }) {
 
 function copyAll() {
   for (const item of copies) copyFile(item);
+  copyFileSync(
+    resolve(pkgRoot, 'vendor/libavoid-sources.tar.gz'),
+    resolve(pkgRoot, 'dist/licenses/libavoid-sources.tar.gz')
+  );
 }
 
 const shouldWatch = process.argv.includes('--watch');

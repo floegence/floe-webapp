@@ -7,6 +7,7 @@ export default defineConfig({
   // and we want `solid-js/web` to resolve to its Node export (server renderer).
   resolve: {
     alias: [
+      { find: 'libavoid-js/wasm?url&no-inline', replacement: `${resolve(__dirname, 'packages/core/node_modules/libavoid-js/dist/libavoid.wasm')}?url&no-inline` },
       { find: '@floegence/floe-webapp-core/app', replacement: resolve(__dirname, 'packages/core/src/app.ts') },
       { find: '@floegence/floe-webapp-core/ui', replacement: resolve(__dirname, 'packages/core/src/ui.ts') },
       { find: '@floegence/floe-webapp-core/icons', replacement: resolve(__dirname, 'packages/core/src/icons.ts') },

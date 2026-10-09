@@ -267,6 +267,12 @@ function main() {
   assertFile('packages/core/dist/graph.d.ts');
   assertFile('packages/core/dist/graph.css');
   assertFile('packages/core/dist/licenses/elkjs.txt');
+  assertFile('packages/core/dist/licenses/libavoid.txt');
+  assertFile('packages/core/dist/libavoid.wasm');
+  assertFile('packages/core/dist/licenses/libavoid-sources.tar.gz');
+  assert(readFileSync('packages/core/dist/libavoid.wasm').equals(
+    readFileSync('packages/core/node_modules/libavoid-js/dist/libavoid.wasm')
+  ), 'Graph routing must ship the unmodified, separately replaceable libavoid WASM');
   assertFile('packages/core/dist/licenses/graph-notice.txt');
   execSync(`node --input-type=module -e 'const m = await import("./packages/core/dist/chat-media.js"); if (m.markdownMediaKind("clip.mp4") !== "video") process.exit(1)'`, { stdio: 'inherit' });
   assertFile('packages/core/dist/editor.js');
