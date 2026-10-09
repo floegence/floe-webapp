@@ -121,6 +121,28 @@ try {
         assert.deepEqual(await page.evaluate(() => window.events.splice(0)), []);
         await cdp.detach();
       }
+      await page.evaluate(() => { window.input.setTextInputMode('text'); window.input.focus(); window.events=[]; });
+      await page.keyboard.down('Shift');
+      await page.keyboard.press('KeyA');
+      await page.keyboard.up('Shift');
+      assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [['text','A','third']]);
+      await page.keyboard.press('Control+ArrowLeft');
+      assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [
+        ['key','Control',true,'third'], ['key','ArrowLeft',true,'third'],
+        ['key','ArrowLeft',false,'third'], ['key','Control',false,'third'],
+      ]);
+      await page.keyboard.type('ab!');
+      assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [['text','a','third'],['text','b','third'],['text','!','third']]);
+      await page.evaluate(() => {
+        const e=window.input.element;
+        e.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
+        window.input.setTextInputMode('physical');
+        e.dispatchEvent(new CompositionEvent('compositionend',{data:'stale mode text',bubbles:true}));
+        window.input.focus();
+      });
+      assert(!((await page.evaluate(() => window.events.splice(0))).some(e=>e[0]==='text')));
+      await page.keyboard.type('x');
+      assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [['key','x',true,'third'],['key','x',false,'third']]);
       await page.evaluate(() => { window.input.dispose(); });
       assert.equal(await page.locator('textarea').count(), 0);
       console.log(`PASS ${name}: composition transactions, Unicode, keys, mobile edits, target revocation and bounded anchoring`);

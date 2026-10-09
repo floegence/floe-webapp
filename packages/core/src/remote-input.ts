@@ -25,6 +25,8 @@ export interface RemoteInputOptions<T> {
 export interface RemoteInputController<T> {
   readonly element: HTMLTextAreaElement;
   bindTarget(target: T | null): void;
+  /** Physical preserves the host layout; text uses every local confirmed edit. */
+  setTextInputMode(mode: 'physical' | 'text'): void;
   setAnchor(clientX: number, clientY: number): void;
   focus(): void;
   setKeyboardVisible(visible: boolean): void;
@@ -64,6 +66,8 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
   // transaction. A new key/beforeinput starts a new intent, even for equal text.
   let compositionTail = false;
   let printable: RemoteInputKey | null = null;
+  let textInputMode: 'physical' | 'text' = 'physical';
+  const modifiers = new Map<string, RemoteInputKey>();
   const held = new Set<string>();
   const imeKeys = new Set<string>();
   let anchor: { x: number; y: number } | null = null;
@@ -108,6 +112,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     const previous = target;
     const pressed = held.size > 0;
     held.clear();
+    modifiers.clear();
     if (previous !== null && pressed) options.release(previous);
   }
   function reset() {
@@ -122,7 +127,22 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
   }
   function commit(text: string) {
     if (!text || target === null || disposed) return;
+    // A local edit must not inherit a remotely held shortcut modifier. Retain
+    // the locally held modifiers for a subsequent physical shortcut.
+    if (textInputMode === 'text' && held.size) {
+      held.clear(); options.release(target);
+    }
     options.commitText(text, target);
+  }
+  function forward(packet: RemoteInputKey) {
+    if (target === null) return;
+    if (textInputMode === 'text') {
+      for (const [name, modifier] of modifiers) {
+        if (!held.has(name)) { held.add(name); options.sendKey(modifier, target); }
+      }
+    }
+    held.add(packet.code || packet.key);
+    options.sendKey(packet, target);
   }
   function stroke(name: string) {
     if (target === null) return;
@@ -152,7 +172,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     // Preserve physical key semantics for ordinary direct typing, including
     // application shortcuts outside editable controls. Dead keys, AltGraph and
     // software keyboard input use the confirmed text, never guessed keycodes.
-    if (printable && value === printable.key && !printable.altKey && value.length === 1) {
+    if (textInputMode === 'physical' && printable && value === printable.key && !printable.altKey && value.length === 1) {
       const packet = printable;
       held.add(packet.code || packet.key);
       options.sendKey(packet, target);
@@ -171,17 +191,20 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     imeKeys.delete(identity(event));
     compositionTail = false;
     if (options.clipboard?.(event, target)) { printable = null; return; }
+    if (textInputMode === 'text' && /^(Shift|Control|Alt|Meta)(Left|Right)$/.test(event.code)) {
+      modifiers.set(identity(event), key(event, true)); return;
+    }
     if (event.key === 'Dead' || event.key === 'Unidentified') { printable = null; return; }
     if (Array.from(event.key).length === 1 && !event.metaKey && (!event.ctrlKey || event.getModifierState('AltGraph'))) {
       printable = key(event, true); return;
     }
     event.preventDefault();
-    held.add(identity(event));
-    options.sendKey(key(event, true), target);
+    forward(key(event, true));
   });
   listen<KeyboardEvent>(element, 'keyup', event => {
     event.stopPropagation();
     printable = null;
+    modifiers.delete(identity(event));
     if (imeKeys.delete(identity(event))) return;
     if (target !== null && held.delete(identity(event))) options.sendKey(key(event, false), target);
   });
@@ -222,6 +245,10 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
       if (disposed || Object.is(target, next)) return;
       reset(); target = next;
       element.disabled = next === null;
+    },
+    setTextInputMode(next) {
+      if (disposed || next === textInputMode) return;
+      reset(); textInputMode = next;
     },
     setAnchor(x, y) {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;

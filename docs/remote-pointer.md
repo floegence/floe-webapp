@@ -30,8 +30,10 @@ within 350 ms and 16 pixels on the same target form a double click. Movement bef
 left drag at the original point, while stationary release right clicks. Each touch
 chooses one outcome. A second touch cancels the gesture until every contact ends;
 browser pinch zoom never becomes remote input. Mouse and pen buttons remain direct.
-Mouse and drag motion coalesces within one JavaScript task and flushes in a
-microtask before local paint, without an additional animation-frame wait.
+Mouse and drag motion keeps only the latest position at a maximum of 120 Hz,
+independently of animation frames. The first move after idle flushes in a
+microtask; later moves use a bounded timer. Button edges and an explicit
+`flush()` deliver the final pending position immediately before the next event.
 Where the browser exposes `pointerrawupdate`, mouse and pen motion uses that
 event so browser alignment of `pointermove` does not add a refresh interval.
 The later `pointermove` still reconciles button-only chords but does not resend

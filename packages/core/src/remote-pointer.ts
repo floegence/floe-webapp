@@ -39,6 +39,7 @@ const SLOP = 8;
 const HOLD_MS = 450;
 const DOUBLE_MS = 350;
 const DOUBLE_DISTANCE = 16;
+const MOVE_INTERVAL_MS = 1000 / 120;
 
 /**
  * Own remote content pointer events once. Mark its content elements with
@@ -61,6 +62,8 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
   let tap: {target: T; position: RemotePointerPosition; time: number} | null = null;
   let frame = 0;
   let microtask = false;
+  let moveTimer = 0;
+  let lastMove = -Infinity;
   let dispatchRevision = 0;
   let holdTimer = 0;
   let holding = false;
@@ -85,6 +88,7 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
   function deliver(command: RemotePointerCommand, target: T) {
     const sent = valid(target) && options.sendPointer(command, target) !== false;
     if (sent && command.kind === 'move') {
+      lastMove = win!.performance.now();
       for (const item of held.values()) if (item.target === target) item.command = {...item.command,...position(command)};
     }
     return sent;
@@ -104,6 +108,7 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
     dispatchRevision++; microtask = false;
     if (frame) win!.cancelAnimationFrame(frame);
     frame = 0;
+    win!.clearTimeout(moveTimer); moveTimer = 0;
     const next = pending; pending = null;
     if (next && !deliver(next.command, next.target)) reset();
   }
@@ -114,14 +119,20 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
       command = {...command, dx:pending.command.dx+command.dx, dy:pending.command.dy+command.dy};
     }
     pending = {target, command};
-    // Pointer events are already coalesced by the browser. Forward the latest
-    // move in this task before rendering; a second animation-frame wait adds
-    // latency to remote input without protecting the local rendering work.
+    // Raw pointer devices may deliver 1000+ events/second. Keep one latest
+    // position at 120 Hz, independent of rendering. Edges and explicit flushes
+    // bypass pacing so a click, key or release cannot overtake its final move.
     if (command.kind === 'move') {
-      if (!microtask) {
+      if (!microtask && !moveTimer) {
         microtask = true;
         const revision = dispatchRevision;
-        win!.queueMicrotask(() => { if (revision === dispatchRevision) flush(); });
+        win!.queueMicrotask(() => {
+          if (revision !== dispatchRevision) return;
+          microtask = false;
+          const delay = MOVE_INTERVAL_MS - (win!.performance.now() - lastMove);
+          if (delay <= 0) flush();
+          else moveTimer = win!.setTimeout(() => { if (revision === dispatchRevision) flush(); }, Math.ceil(delay));
+        });
       }
       return;
     }
@@ -154,6 +165,8 @@ export function createRemotePointer<T>(options: RemotePointerOptions<T>): Remote
     endHold();
     if (frame) win!.cancelAnimationFrame(frame);
     frame = 0;
+    win!.clearTimeout(moveTimer); moveTimer = 0;
+    lastMove = -Infinity;
     const targets = new Set<T>();
     if (gesture) targets.add(gesture.target);
     if (pending) targets.add(pending.target);

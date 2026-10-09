@@ -55,6 +55,22 @@ try {
           } finally { window.pointer.reset(); window.requestAnimationFrame = frame; }
         });
         assert.deepEqual(immediate, [{kind:'move',x:120}], 'Remote motion must not wait for a local rendering frame');
+        const paced = await page.evaluate(async () => {
+          const canvas=document.querySelector('canvas');
+          const motion='onpointerrawupdate' in window?'pointerrawupdate':'pointermove';
+          window.events=[];
+          const start=window.performance.now();
+          for(let x=0;x<200;x++) {
+            canvas.dispatchEvent(new PointerEvent(motion,{bubbles:true,pointerType:'mouse',clientX:x,clientY:100}));
+            await new Promise(resolve=>window.setTimeout(resolve,1));
+          }
+          window.pointer.flush();
+          const output={duration:window.performance.now()-start,moves:window.events.filter(e=>e.kind==='move')};
+          window.pointer.reset(); window.events=[];
+          return output;
+        });
+        assert(paced.moves.length<=Math.ceil(paced.duration/8)+3,'High-rate motion exceeded bounded transport cadence');
+        assert.equal(paced.moves.at(-1).clientX,199,'Pacing lost the final pointer position');
         const result=await page.evaluate(async()=>{
           const surface=document.querySelector('#surface'), canvas=document.querySelector('canvas');
           const capture=surface.setPointerCapture;
