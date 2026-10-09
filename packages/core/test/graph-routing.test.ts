@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { routeGraphGeometry } from '../src/components/graph/positions';
 import type { GraphLayout, GraphLayoutNode, GraphPoint } from '../src/components/graph/types';
+import compoundGeometry from './fixtures/compound-border-geometry.json';
 
 const node = (id: string, x: number, y: number, width = 100, height = 80): GraphLayoutNode => ({
   id,
@@ -33,6 +34,20 @@ const turns = (path: readonly GraphPoint[]) => {
 };
 
 describe('readable graph routing', () => {
+  it('routes crowded compound borders and fractional coordinates without losing edges', async () => {
+    const input = structuredClone(compoundGeometry) as GraphLayout;
+    const result = await routeGraphGeometry(input);
+    expect(result.edges).toHaveLength(input.edges.length);
+    expect(await routeGraphGeometry(input)).toEqual(result);
+  });
+  it('clamps floating-point border fractions to the router domain', async () => {
+    const result = await routeGraphGeometry(
+      layout([node('a', 0, 0.1, 100, 0.2), node('b', 0, 20, 100, 80)], [['a', 'b']])
+    );
+    const path = result.edges[0]!.sections[0]!;
+    expect(path[0]!.y).toBeCloseTo(0.3);
+    expect(path.at(-1)!.y).toBe(20);
+  });
   it('routes contained endpoints outward without crossing the member card', async () => {
     const member = { ...node('member', 20, 108, 280, 180), parentId: 'group' };
     const input = layout(

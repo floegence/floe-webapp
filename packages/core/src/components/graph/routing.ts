@@ -106,6 +106,9 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
           offset,
         });
       });
+      let nextPinClass = sides.length + 2;
+      const borderPinClasses = new Map<string, number>();
+      const fraction = (value: number, size: number) => Math.max(0, Math.min(1, value / size));
       for (const node of layout.nodes) {
         const shape = shapes.get(node.id);
         if (!shape) continue;
@@ -113,8 +116,8 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
           const value = new avoid.ShapeConnectionPin(
             shape,
             id,
-            x / node.width,
-            y / node.height,
+            fraction(x, node.width),
+            fraction(y, node.height),
             true,
             0,
             direction
@@ -131,10 +134,19 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
         };
         for (const side of new Set(node.ports?.map((port) => port.side))) {
           const { x, y } = anchor(node, side);
-          pin(sides.indexOf(side) + 2, x - node.x, y - node.y, directions[side], false);
+          const pinClass = sides.indexOf(side) + 2;
+          pin(pinClass, x - node.x, y - node.y, directions[side], false);
+          borderPinClasses.set(
+            JSON.stringify([
+              node.id,
+              fraction(x - node.x, node.width),
+              fraction(y - node.y, node.height),
+              side,
+            ]),
+            pinClass
+          );
         }
       }
-      let nextPinClass = sides.length + 2;
       const endpoint = (
         id: string,
         portId: string | undefined,
@@ -151,12 +163,18 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
         if (shape) {
           // Shape-bound pins enforce outward visibility. Free points on a
           // buffered border can otherwise route back through the endpoint.
+          const x = fraction(position.x - node.x, node.width),
+            y = fraction(position.y - node.y, node.height);
+          const key = JSON.stringify([id, x, y, side]);
+          const existing = borderPinClasses.get(key);
+          if (existing !== undefined) return new avoid.ConnEnd(shape, existing);
           const pinClass = nextPinClass++;
+          borderPinClasses.set(key, pinClass);
           const pin = new avoid.ShapeConnectionPin(
             shape,
             pinClass,
-            (position.x - node.x) / node.width,
-            (position.y - node.y) / node.height,
+            x,
+            y,
             true,
             0,
             directions[side]
