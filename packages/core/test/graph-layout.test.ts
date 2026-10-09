@@ -30,6 +30,138 @@ const input: GraphInput = {
 };
 
 describe('graph layout contract', () => {
+  it.each([
+    ['RIGHT', 'x', 1],
+    ['DOWN', 'y', 1],
+    ['LEFT', 'x', -1],
+    ['UP', 'y', -1],
+  ] as const)('keeps authored layers in %s order', async (direction, axis, sign) => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'entry', label: 'Entry', width: 120, height: 90 },
+        { id: 'control-a', label: 'Control A', width: 140, height: 110 },
+        { id: 'control-b', label: 'Control B', width: 100, height: 130 },
+        { id: 'worker', label: 'Worker', width: 160, height: 100 },
+      ],
+      edges: [
+        { id: 'entry-control', label: '', source: 'entry', target: 'control-a' },
+        { id: 'control-worker', label: '', source: 'control-a', target: 'worker' },
+      ],
+    };
+    const result = await computeGraphLayout(graph, {
+      direction,
+      layers: [['entry'], ['control-a', 'control-b'], ['worker']],
+      spacing: 24,
+    });
+    const get = (id: string) => result.nodes.find((node) => node.id === id)!;
+    const coordinate = (id: string) =>
+      axis === 'x' ? get(id).x + get(id).width / 2 : get(id).y + get(id).height / 2;
+    expect(sign * (coordinate('control-a') - coordinate('entry'))).toBeGreaterThan(0);
+    expect(sign * (coordinate('worker') - coordinate('control-a'))).toBeGreaterThan(0);
+    expect(coordinate('control-a')).toBe(coordinate('control-b'));
+    for (const first of result.nodes) {
+      for (const second of result.nodes.filter((node) => node.id !== first.id)) {
+        expect(
+          first.x + first.width <= second.x ||
+            second.x + second.width <= first.x ||
+            first.y + first.height <= second.y ||
+            second.y + second.height <= first.y
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('places unranked roots near the closest declared layer and appends disconnected components', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        'entry',
+        'between',
+        'worker',
+        'worker-helper',
+        'isolated-a',
+        'isolated-b',
+        'alone',
+      ].map((id) => ({ id, label: id, width: 100, height: 70 })),
+      edges: [
+        { id: 'entry-between', label: '', source: 'entry', target: 'between' },
+        { id: 'between-worker', label: '', source: 'between', target: 'worker' },
+        { id: 'worker-helps', label: '', source: 'worker', target: 'worker-helper' },
+        { id: 'isolated-pair', label: '', source: 'isolated-a', target: 'isolated-b' },
+      ],
+    };
+    const result = await computeGraphLayout(graph, {
+      layers: [['entry'], ['worker']],
+      spacing: 20,
+    });
+    const get = (id: string) => result.nodes.find((node) => node.id === id)!;
+    expect(get('between').x).toBe(get('entry').x);
+    expect(get('worker-helper').x).toBe(get('worker').x);
+    expect(get('isolated-a').x).toBe(get('isolated-b').x);
+    expect(get('isolated-a').x).toBeGreaterThan(get('worker').x);
+    expect(get('alone').x).toBeGreaterThan(get('isolated-a').x);
+    expect(
+      await computeGraphLayout(graph, { layers: [['entry'], ['worker']], spacing: 20 })
+    ).toEqual(result);
+  });
+
+  it('uses preferred positions only to order objects inside their authored layer', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'entry', label: 'Entry', width: 100, height: 80 },
+        { id: 'first', label: 'First', width: 100, height: 80 },
+        { id: 'second', label: 'Second', width: 100, height: 80 },
+        { id: 'worker', label: 'Worker', width: 100, height: 80 },
+      ],
+      edges: [],
+    };
+    const result = await computeGraphLayout(graph, {
+      direction: 'RIGHT',
+      layers: [['entry'], ['first', 'second'], ['worker']],
+      positionMode: 'preferred',
+      positions: [
+        { nodeId: 'entry', x: 9000, y: 0 },
+        { nodeId: 'first', x: 8000, y: 400 },
+        { nodeId: 'second', x: -5000, y: 0 },
+        { nodeId: 'worker', x: 10000, y: 0 },
+      ],
+    });
+    const get = (id: string) => result.nodes.find((node) => node.id === id)!;
+    expect(get('second').y).toBeLessThan(get('first').y);
+    expect(get('first').x).toBeGreaterThan(get('entry').x);
+    expect(get('worker').x).toBeGreaterThan(get('first').x);
+    expect(result.nodes.some((node) => Math.abs(node.x) > 1000 || Math.abs(node.y) > 1000)).toBe(
+      false
+    );
+  });
+
+  it('ignores saved absolute positions in compact mode', async () => {
+    const result = await computeGraphLayout(
+      { nodes: [{ id: 'only', label: 'Only', width: 120, height: 80 }], edges: [] },
+      {
+        aspectRatio: 1.6,
+        positionMode: 'compact',
+        positions: [{ nodeId: 'only', x: 5000, y: 3000 }],
+      }
+    );
+    expect(result.nodes[0]!.x).not.toBe(5000);
+    expect(result.nodes[0]!.y).not.toBe(3000);
+    expect(result.bounds.width).toBeLessThan(500);
+    expect(result.bounds.height).toBeLessThan(500);
+  });
+
+  it('rejects empty, duplicate, unknown and nested layer assignments', async () => {
+    const graph: GraphInput = {
+      nodes: [
+        { id: 'group', label: 'Group', kind: 'group', width: 240, height: 100 },
+        { id: 'child', label: 'Child', parentId: 'group', width: 120, height: 80 },
+        { id: 'root', label: 'Root', width: 120, height: 80 },
+      ],
+      edges: [],
+    };
+    for (const layers of [[[]], [['root'], ['root']], [['missing']], [['child']]])
+      await expect(computeGraphLayout(graph, { layers })).rejects.toThrow();
+  });
+
   it('keeps two independent short members side by side in a landscape group', async () => {
     const graph: GraphInput = {
       nodes: [
@@ -155,8 +287,10 @@ describe('graph layout contract', () => {
         expect(point.y).toBeLessThanOrEqual(node.y + node.height);
       }
       for (let n = 1; n < path.length; n++)
-        expect(path[n]!.x === path[n - 1]!.x || path[n]!.y === path[n - 1]!.y,
-          JSON.stringify({ edge: edge.id, path })).toBe(true);
+        expect(
+          path[n]!.x === path[n - 1]!.x || path[n]!.y === path[n - 1]!.y,
+          JSON.stringify({ edge: edge.id, path })
+        ).toBe(true);
       if (edge.sourcePort === 'http') expect(a.x).toBe(source.x + source.width);
     }
     const pinned = await computeGraphLayout(input, {
@@ -232,9 +366,12 @@ describe('graph layout contract', () => {
 
 describe('persisted graph positions', () => {
   it('fits isolated nodes at their saved world positions even without relationships', async () => {
-    const layout = await computeGraphLayout({ nodes: [{ id: 'a', label: 'A', width: 100, height: 80 }], edges: [] }, {
-      positions: [{ nodeId: 'a', x: 5000, y: 3000 }],
-    });
+    const layout = await computeGraphLayout(
+      { nodes: [{ id: 'a', label: 'A', width: 100, height: 80 }], edges: [] },
+      {
+        positions: [{ nodeId: 'a', x: 5000, y: 3000 }],
+      }
+    );
     expect(layout.nodes[0]).toMatchObject({ x: 5000, y: 3000 });
     expect(layout.bounds).toEqual({ x: 5000, y: 3000, width: 100, height: 80 });
   });

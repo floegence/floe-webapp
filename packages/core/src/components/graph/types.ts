@@ -57,8 +57,10 @@ export interface GraphLayoutOptions {
   aspectRatio?: number;
   /** Absolute world positions. Descendants move with their group. Invalid positions always fail. */
   positions?: readonly (GraphPoint & { nodeId: string })[];
-  /** Fixed (default) rejects impossible geometry. Preferred retains clear positions and separates colliding siblings, resizing groups around their content before routing. */
-  positionMode?: 'fixed' | 'preferred';
+  /** Root-level ranks. Unassigned roots are placed deterministically near their closest ranked neighbors. */
+  layers?: readonly (readonly string[])[];
+  /** Fixed (default) rejects impossible geometry. Preferred retains positions; compact uses them only as stable ordering hints. */
+  positionMode?: 'fixed' | 'preferred' | 'compact';
   direction?: 'RIGHT' | 'DOWN' | 'LEFT' | 'UP';
   spacing?: number;
   groupPadding?: { top: number; right: number; bottom: number; left: number };

@@ -14,7 +14,7 @@ export function applyGraphPositions(
   options: GraphLayoutOptions,
   input: readonly GraphNode[]
 ): GraphLayout | Promise<GraphLayout> {
-  if (!options.positions?.length) return layout;
+  if (!options.positions?.length || options.positionMode === 'compact') return layout;
   const nodes = new Map(layout.nodes.map((node) => [node.id, { ...node }]));
   const pins = new Map<string, GraphPoint>();
   for (const pin of options.positions) {

@@ -54,6 +54,7 @@ export async function computeGraphLayout(
   engine: Pick<ELK, 'layout'>
 ): Promise<GraphLayout> {
   validateGraphInput(input);
+  const layoutInput = orderCompactNodes(input, options);
   if (
     options.aspectRatio !== undefined &&
     (!Number.isFinite(options.aspectRatio) || options.aspectRatio <= 0)
@@ -66,9 +67,15 @@ export async function computeGraphLayout(
   ) {
     throw new Error('Graph layout spacing must be finite and nonnegative');
   }
-  if (options.aspectRatio !== undefined) return computePackedGraphLayout(input, options, engine);
+  if (options.layers) {
+    validateGraphLayers(input, options.layers);
+    if (options.positionMode === 'fixed' && options.positions?.length)
+      throw new Error('Fixed positions cannot be combined with graph layers');
+  }
+  if (options.aspectRatio !== undefined || options.layers)
+    return computePackedGraphLayout(layoutInput, options, engine);
   const nodes = new Map<string, ElkNode>();
-  for (const node of input.nodes) {
+  for (const node of layoutInput.nodes) {
     nodes.set(node.id, {
       id: node.id,
       width: node.width,
@@ -87,20 +94,20 @@ export async function computeGraphLayout(
     });
   }
   const children: ElkNode[] = [];
-  for (const node of input.nodes) {
+  for (const node of layoutInput.nodes) {
     (node.parentId ? nodes.get(node.parentId)!.children! : children).push(nodes.get(node.id)!);
   }
   // This ID must not collide with any consumer-owned ID, including ports and edges.
   const used = new Set([
-    ...input.nodes.flatMap((n) => [n.id, ...(n.ports ?? []).map((p) => p.id)]),
-    ...input.edges.map((e) => e.id),
+    ...layoutInput.nodes.flatMap((n) => [n.id, ...(n.ports ?? []).map((p) => p.id)]),
+    ...layoutInput.edges.map((e) => e.id),
   ]);
   let rootId = '$graph';
   while (used.has(rootId)) rootId += '$';
   const graph: ElkNode = await engine.layout({
     id: rootId,
     children,
-    edges: input.edges.map((edge) => ({
+    edges: layoutInput.edges.map((edge) => ({
       id: edge.id,
       sources: [edge.sourcePort ?? edge.source],
       targets: [edge.targetPort ?? edge.target],
@@ -145,17 +152,19 @@ export async function computeGraphLayout(
   for (const child of graph.children ?? []) visit(child, 0, 0);
   recordEdges(graph);
   const anchor =
-    !options.positions?.length && options.anchor && positions.get(options.anchor.nodeId);
+    (!options.positions?.length || options.positionMode === 'compact') &&
+    options.anchor &&
+    positions.get(options.anchor.nodeId);
   const dx = anchor ? options.anchor!.position.x - anchor.x : 0;
   const dy = anchor ? options.anchor!.position.y - anchor.y : 0;
-  const outputNodes: GraphLayoutNode[] = input.nodes.map((node) => {
+  const outputNodes: GraphLayoutNode[] = layoutInput.nodes.map((node) => {
     const position = positions.get(node.id)!;
     return { ...node, ...position, x: position.x + dx, y: position.y + dy };
   });
   return applyGraphPositions(
     {
       nodes: outputNodes,
-      edges: input.edges.map((edge) => ({
+      edges: layoutInput.edges.map((edge) => ({
         ...edge,
         sections: (routes.get(edge.id) ?? []).map((s) =>
           s.map((p) => ({ x: p.x + dx, y: p.y + dy }))
@@ -164,6 +173,41 @@ export async function computeGraphLayout(
       bounds: { x: dx, y: dy, width: graph.width ?? 0, height: graph.height ?? 0 },
     },
     options,
-    input.nodes
+    layoutInput.nodes
   );
+}
+
+function orderCompactNodes(input: GraphInput, options: GraphLayoutOptions): GraphInput {
+  if (options.positionMode !== 'compact' || !options.positions?.length) return input;
+  const direction = options.direction ?? 'RIGHT';
+  const positions = new Map(
+    options.positions.map((position) => [
+      position.nodeId,
+      direction === 'RIGHT' || direction === 'LEFT' ? position.y : position.x,
+    ])
+  );
+  const originalOrder = new Map(input.nodes.map((node, index) => [node.id, index]));
+  const nodes = [...input.nodes].sort((a, b) => {
+    const parentOrder = (a.parentId ?? '').localeCompare(b.parentId ?? '');
+    const positionOrder =
+      options.layers && !a.parentId && !b.parentId
+        ? 0
+        : (positions.get(a.id) ?? Infinity) - (positions.get(b.id) ?? Infinity);
+    return parentOrder || positionOrder || originalOrder.get(a.id)! - originalOrder.get(b.id)!;
+  });
+  return { nodes, edges: input.edges };
+}
+
+function validateGraphLayers(input: GraphInput, layers: readonly (readonly string[])[]): void {
+  const nodes = new Map(input.nodes.map((node) => [node.id, node]));
+  const assigned = new Set<string>();
+  for (const [layerIndex, layer] of layers.entries()) {
+    if (!layer.length) throw new Error(`Graph layer must not be empty: ${layerIndex}`);
+    for (const id of layer) {
+      const node = nodes.get(id);
+      if (!node || node.parentId) throw new Error(`Graph layer object must be a root node: ${id}`);
+      if (assigned.has(id)) throw new Error(`Graph object appears in multiple layers: ${id}`);
+      assigned.add(id);
+    }
+  }
 }

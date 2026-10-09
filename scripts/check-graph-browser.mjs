@@ -62,6 +62,19 @@ function App(){
    ]},{positions:[{nodeId:'top',x:0,y:0},{nodeId:'bottom',x:0,y:180},
      {nodeId:'left',x:400,y:0},{nodeId:'right',x:580,y:130}]});
  };
+ window.layerGraph=async direction=>{
+   const nodes=[
+     {id:'entry',label:'Entry',width:120,height:90},
+     {id:'control-a',label:'Control A',width:140,height:110},
+     {id:'control-b',label:'Control B',width:100,height:130},
+     {id:'worker',label:'Worker',width:160,height:100},
+   ];
+   const result=await engine.layout({nodes,edges:[
+     {id:'entry-control',label:'',source:'entry',target:'control-a'},
+     {id:'control-worker',label:'',source:'control-a',target:'worker'},
+   ]},{direction,layers:[['entry'],['control-a','control-b'],['worker']],spacing:24});
+   setLayout(result);return result;
+ };
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
    onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
@@ -175,8 +188,19 @@ render(()=><App/>,document.getElementById('root'));
   for (const path of [vertical, out, back])
     for (let i = 1; i < path.length; i++)
       assert.ok(path[i].x === path[i - 1].x || path[i].y === path[i - 1].y);
+  for (const direction of ['RIGHT','DOWN','LEFT','UP']) {
+    const result = await page.evaluate((value) => window.layerGraph(value), direction);
+    const get = (id) => result.nodes.find((node) => node.id === id);
+    const horizontal = direction === 'RIGHT' || direction === 'LEFT';
+    const sign = direction === 'RIGHT' || direction === 'DOWN' ? 1 : -1;
+    const axis = (node) => horizontal ? node.x + node.width / 2 : node.y + node.height / 2;
+    assert.ok(sign * (axis(get('control-a')) - axis(get('entry'))) > 0);
+    assert.ok(sign * (axis(get('worker')) - axis(get('control-a'))) > 0);
+    assert.equal(axis(get('control-a')), axis(get('control-b')));
+    assert.equal(await page.locator('[data-graph-object="entry"]').count(), 1);
+  }
   console.log(
-    'Graph worker, compound packing, fixed/preferred positions, interaction, menus, native input, routes, and forced colors passed.'
+    'Graph worker, compound packing, fixed/preferred positions, directional layers, interaction, menus, native input, routes, and forced colors passed.'
   );
 } finally {
   await browser?.close();

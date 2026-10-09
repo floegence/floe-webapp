@@ -25,6 +25,12 @@ const length = (path: readonly GraphPoint[]) =>
   path
     .slice(1)
     .reduce((sum, p, i) => sum + Math.abs(p.x - path[i]!.x) + Math.abs(p.y - path[i]!.y), 0);
+const turns = (path: readonly GraphPoint[]) => {
+  const axes = path
+    .slice(1)
+    .map((point, index) => (point.x === path[index]!.x ? 'vertical' : 'horizontal'));
+  return axes.slice(1).filter((axis, index) => axis !== axes[index]).length;
+};
 
 describe('readable graph routing', () => {
   it('connects vertically adjacent boxes through their nearest facing borders', async () => {
@@ -35,6 +41,7 @@ describe('readable graph routing', () => {
     expect(path[0]!.y).toBe(80);
     expect(path.at(-1)!.y).toBe(180);
     expect(length(path)).toBeCloseTo(100);
+    expect(turns(path)).toBe(0);
   });
 
   it('uses the available border span instead of forcing side-center anchors', async () => {
@@ -44,7 +51,8 @@ describe('readable graph routing', () => {
     const path = result.edges[0]!.sections[0]!;
     expect(path[0]!.x).toBe(100);
     expect(path.at(-1)!.x).toBe(180);
-    expect(length(path)).toBeCloseTo(80);
+    expect(length(path), JSON.stringify(path)).toBeCloseTo(80);
+    expect(turns(path)).toBe(0);
   });
 
   it('connects diagonal neighbors near their facing corners', async () => {
@@ -53,6 +61,7 @@ describe('readable graph routing', () => {
     ).edges[0]!.sections[0]!;
     // Allow the router's clearance and lane spacing near corners.
     expect(length(path)).toBeLessThanOrEqual(220);
+    expect(turns(path)).toBeLessThanOrEqual(1);
   });
 
   it('separates reciprocal connections into distinct lanes and anchors', async () => {

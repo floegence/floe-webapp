@@ -60,59 +60,41 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
             return [node.id, shape] as const;
           })
       );
+      const endpointPins = new Map<
+        string,
+        {
+          sourceSide: GraphPort['side'];
+          targetSide: GraphPort['side'];
+          offset: number;
+        }
+      >();
+      const pairOrdinals = new Map<string, number>();
+      edges.forEach((edge) => {
+        const source = nodes.get(edge.source)!,
+          target = nodes.get(edge.target)!,
+          pair = facingSides(source, target),
+          sourceSide = edge.sourcePort
+            ? source.ports!.find((port) => port.id === edge.sourcePort)!.side
+            : edge.targetPort
+              ? opposite(target.ports!.find((port) => port.id === edge.targetPort)!.side)
+              : pair.source,
+          targetSide = edge.targetPort
+            ? target.ports!.find((port) => port.id === edge.targetPort)!.side
+            : edge.sourcePort
+              ? opposite(source.ports!.find((port) => port.id === edge.sourcePort)!.side)
+              : pair.target;
+        const key = [edge.source, edge.target].sort().join('\u0000');
+        const ordinal = pairOrdinals.get(key) ?? 0;
+        pairOrdinals.set(key, ordinal + 1);
+        endpointPins.set(edge.id, {
+          sourceSide,
+          targetSide,
+          offset: ordinal % 2 === 0 ? -6 : 6,
+        });
+      });
       for (const node of layout.nodes) {
         const shape = shapes.get(node.id);
         if (!shape) continue;
-        const neighbors = edges.flatMap((edge) =>
-          edge.source === node.id
-            ? [nodes.get(edge.target)!]
-            : edge.target === node.id
-              ? [nodes.get(edge.source)!]
-              : []
-        );
-        if (!neighbors.length) continue;
-        const span = (start: number, size: number, other: number, otherSize: number) => {
-          const low = Math.max(start, other),
-            high = Math.min(start + size, other + otherSize);
-          const inset = Math.min(8, size / 4);
-          return low < high
-            ? (low + high) / 2
-            : Math.max(start + inset, Math.min(start + size - inset, other + otherSize / 2));
-        };
-        const offsets = (size: number, centers: number[]) => {
-          const inset = Math.min(8, size / 4);
-          return [
-            ...new Set([
-              size / 2,
-              inset,
-              size - inset,
-              ...centers.flatMap((center) =>
-                Array.from({ length: neighbors.length + 1 }, (_, i) =>
-                  Math.max(inset, Math.min(size - inset, center + (i - neighbors.length / 2) * 8))
-                )
-              ),
-            ]),
-          ];
-        };
-        const xs = offsets(
-          node.width,
-          neighbors.map((other) => span(node.x, node.width, other.x, other.width) - node.x)
-        );
-        const ys = offsets(
-          node.height,
-          neighbors.map((other) => span(node.y, node.height, other.y, other.height) - node.y)
-        );
-        const fixed = (node.ports ?? []).map((port) => anchor(node, port.side));
-        const loop = edges.some((edge) => edge.source === node.id && edge.target === node.id);
-        const reserved = [
-          ...fixed,
-          ...(loop
-            ? [
-                { x: node.x + node.width, y: node.y + node.height / 3 },
-                { x: node.x + node.width, y: node.y + (node.height * 2) / 3 },
-              ]
-            : []),
-        ];
         const pin = (id: number, x: number, y: number, direction: number, exclusive: boolean) => {
           const value = new avoid.ShapeConnectionPin(
             shape,
@@ -133,60 +115,48 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
               Math.abs(y - node.height / 2)
           );
         };
-        const freePin = (x: number, y: number, direction: number) => {
-          if (!reserved.some((point) => point.x === node.x + x && point.y === node.y + y))
-            pin(1, x, y, direction, true);
-        };
-        for (const x of xs) {
-          freePin(x, 0, 1);
-          freePin(x, node.height, 2);
-        }
-        for (const y of ys) {
-          freePin(0, y, 4);
-          freePin(node.width, y, 8);
-        }
         for (const side of new Set(node.ports?.map((port) => port.side))) {
           const { x, y } = anchor(node, side);
           pin(sides.indexOf(side) + 2, x - node.x, y - node.y, directions[side], false);
         }
-        if (loop) {
-          pin(6, node.width, node.height / 3, 8, false);
-          pin(7, node.width, (node.height * 2) / 3, 8, false);
-        }
       }
-      const endpoint = (
-        id: string,
-        portId: string | undefined,
-        otherId: string,
-        target: boolean
-      ) => {
+      const endpoint = (id: string, portId: string | undefined, position: GraphPoint) => {
         const node = nodes.get(id)!,
           shape = shapes.get(id);
-        if (shape)
+        if (shape && portId)
           return new avoid.ConnEnd(
             shape,
-            portId
-              ? sides.indexOf(node.ports!.find((port) => port.id === portId)!.side) + 2
-              : id === otherId
-                ? target
-                  ? 7
-                  : 6
-                : 1
+            sides.indexOf(node.ports!.find((port) => port.id === portId)!.side) + 2
           );
-        const other = nodes.get(otherId)!;
-        const candidates = sides.map((side) => anchor(node, side));
-        candidates.sort((a, b) => distance(a, other) - distance(b, other));
-        const position = portId
+        const endpointPosition = portId
           ? anchor(node, node.ports!.find((port) => port.id === portId)!.side)
-          : candidates[0]!;
-        const point = new avoid.Point(position.x, position.y);
-        const end = new avoid.ConnEnd(point);
-        release(point);
+          : position;
+        const libavoidPoint = new avoid.Point(endpointPosition.x, endpointPosition.y);
+        const end = new avoid.ConnEnd(libavoidPoint);
+        release(libavoidPoint);
         return end;
       };
       const connections = edges.map((edge) => {
-        const source = endpoint(edge.source, edge.sourcePort, edge.target, false),
-          target = endpoint(edge.target, edge.targetPort, edge.source, true);
+        const sourceNode = nodes.get(edge.source)!,
+          targetNode = nodes.get(edge.target)!,
+          pins = endpointPins.get(edge.id)!;
+        const source = endpoint(
+            edge.source,
+            edge.sourcePort,
+            edge.source === edge.target
+              ? { x: sourceNode.x + sourceNode.width, y: sourceNode.y + sourceNode.height / 3 }
+              : projectedAnchor(sourceNode, pins.sourceSide, targetNode, pins.offset)
+          ),
+          target = endpoint(
+            edge.target,
+            edge.targetPort,
+            edge.source === edge.target
+              ? {
+                  x: targetNode.x + targetNode.width,
+                  y: targetNode.y + (targetNode.height * 2) / 3,
+                }
+              : projectedAnchor(targetNode, pins.targetSide, sourceNode, pins.offset)
+          );
         const connection = new avoid.ConnRef(router, source, target);
         release(source);
         release(target);
@@ -229,7 +199,11 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
     }
   }
   const edges = layout.edges.map((edge) => ({ ...edge, sections: [paths.get(edge.id)!] }));
-  return withBounds({ nodes: layout.nodes, edges, bounds: layout.bounds });
+  return withBounds({
+    nodes: layout.nodes,
+    edges,
+    bounds: layout.bounds,
+  });
 }
 
 function withBounds(layout: GraphLayout): GraphLayout {
@@ -265,9 +239,96 @@ function anchor(node: GraphLayoutNode, side: GraphPort['side']): GraphPoint {
           : node.y + node.height / 2,
   };
 }
-function distance(point: GraphPoint, node: GraphLayoutNode): number {
-  return (
-    Math.max(node.x - point.x, 0, point.x - node.x - node.width) +
-    Math.max(node.y - point.y, 0, point.y - node.y - node.height)
-  );
+function opposite(side: GraphPort['side']): GraphPort['side'] {
+  const oppositeSide: Record<GraphPort['side'], GraphPort['side']> = {
+    NORTH: 'SOUTH',
+    EAST: 'WEST',
+    SOUTH: 'NORTH',
+    WEST: 'EAST',
+  };
+  return oppositeSide[side];
+}
+function facingSides(
+  source: GraphLayoutNode,
+  target: GraphLayoutNode
+): { source: GraphPort['side']; target: GraphPort['side'] } {
+  const dx = target.x + target.width / 2 - (source.x + source.width / 2),
+    dy = target.y + target.height / 2 - (source.y + source.height / 2),
+    gapX = Math.max(source.x - (target.x + target.width), target.x - (source.x + source.width), 0),
+    gapY = Math.max(
+      source.y - (target.y + target.height),
+      target.y - (source.y + source.height),
+      0
+    );
+  const horizontal =
+    gapY === 0 && gapX > 0
+      ? true
+      : gapX === 0 && gapY > 0
+        ? false
+        : gapX === 0 && gapY === 0
+          ? Math.abs(dx) >= Math.abs(dy)
+          : gapX <= gapY;
+  const sourceSide: GraphPort['side'] = horizontal
+    ? dx >= 0
+      ? 'EAST'
+      : 'WEST'
+    : dy >= 0
+      ? 'SOUTH'
+      : 'NORTH';
+  return { source: sourceSide, target: opposite(sourceSide) };
+}
+function projectedAnchor(
+  node: GraphLayoutNode,
+  side: GraphPort['side'],
+  other: GraphLayoutNode,
+  offset = 0
+): GraphPoint {
+  const inset = (size: number) => Math.min(8, size / 4);
+  const clamp = (value: number, start: number, size: number) =>
+    Math.max(start + inset(size), Math.min(start + size - inset(size), value));
+  const overlap = (start: number, size: number, otherStart: number, otherSize: number) => {
+    const low = Math.max(start, otherStart),
+      high = Math.min(start + size, otherStart + otherSize);
+    return low < high ? (low + high) / 2 + offset : undefined;
+  };
+  const centerX = other.x + other.width / 2,
+    centerY = other.y + other.height / 2;
+  switch (side) {
+    case 'NORTH':
+      return {
+        x: clamp(
+          overlap(node.x, node.width, other.x, other.width) ?? centerX + offset,
+          node.x,
+          node.width
+        ),
+        y: node.y,
+      };
+    case 'EAST':
+      return {
+        x: node.x + node.width,
+        y: clamp(
+          overlap(node.y, node.height, other.y, other.height) ?? centerY + offset,
+          node.y,
+          node.height
+        ),
+      };
+    case 'SOUTH':
+      return {
+        x: clamp(
+          overlap(node.x, node.width, other.x, other.width) ?? centerX + offset,
+          node.x,
+          node.width
+        ),
+        y: node.y + node.height,
+      };
+    case 'WEST':
+      return {
+        x: node.x,
+        y: clamp(
+          overlap(node.y, node.height, other.y, other.height) ?? centerY + offset,
+          node.y,
+          node.height
+        ),
+      };
+  }
 }
