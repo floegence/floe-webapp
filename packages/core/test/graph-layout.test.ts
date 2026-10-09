@@ -231,6 +231,13 @@ describe('graph layout contract', () => {
 });
 
 describe('persisted graph positions', () => {
+  it('fits isolated nodes at their saved world positions even without relationships', async () => {
+    const layout = await computeGraphLayout({ nodes: [{ id: 'a', label: 'A', width: 100, height: 80 }], edges: [] }, {
+      positions: [{ nodeId: 'a', x: 5000, y: 3000 }],
+    });
+    expect(layout.nodes[0]).toMatchObject({ x: 5000, y: 3000 });
+    expect(layout.bounds).toEqual({ x: 5000, y: 3000, width: 100, height: 80 });
+  });
   it('repairs overlapping preferred positions without dropping nodes or relationships', async () => {
     const graph: GraphInput = {
       nodes: [

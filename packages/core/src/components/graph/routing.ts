@@ -9,7 +9,8 @@ const release = (value: unknown) => (value as { delete(): void }).delete();
 
 /** Joint orthogonal routing through the final rectangular geometry. */
 export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayout> {
-  if (!layout.nodes.length || !layout.edges.length) return layout;
+  if (!layout.nodes.length) return layout;
+  if (!layout.edges.length) return withBounds(layout);
   await (loaded ??= AvoidLib.load(import.meta.env.SSR ? undefined : wasmUrl).catch((error) => {
     loaded = undefined;
     throw error;
@@ -228,18 +229,22 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
     }
   }
   const edges = layout.edges.map((edge) => ({ ...edge, sections: [paths.get(edge.id)!] }));
+  return withBounds({ nodes: layout.nodes, edges, bounds: layout.bounds });
+}
+
+function withBounds(layout: GraphLayout): GraphLayout {
   const points = [
     ...layout.nodes.flatMap((node) => [
       { x: node.x, y: node.y },
       { x: node.x + node.width, y: node.y + node.height },
     ]),
-    ...edges.flatMap((edge) => edge.sections.flat()),
+    ...layout.edges.flatMap((edge) => edge.sections.flat()),
   ];
   const x = Math.min(...points.map((point) => point.x)),
     y = Math.min(...points.map((point) => point.y));
   return {
     nodes: layout.nodes,
-    edges,
+    edges: layout.edges,
     bounds: {
       x,
       y,
