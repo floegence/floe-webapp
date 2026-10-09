@@ -54,6 +54,11 @@ export async function computeGraphLayout(
   engine: Pick<ELK, 'layout'>
 ): Promise<GraphLayout> {
   validateGraphInput(input);
+  if (
+    options.edgeClearance !== undefined &&
+    (!Number.isFinite(options.edgeClearance) || options.edgeClearance < 0)
+  )
+    throw new Error('Graph edge clearance must be finite and nonnegative');
   const layoutInput = orderCompactNodes(input, options);
   if (
     options.aspectRatio !== undefined &&

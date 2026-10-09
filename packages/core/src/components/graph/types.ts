@@ -53,6 +53,8 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
+  /** Clearance around routing obstacles in world units. Defaults to 4; never changes node geometry. */
+  edgeClearance?: number;
   /** Desired width/height when packing disconnected objects, including group members. */
   aspectRatio?: number;
   /** Absolute world positions. Descendants move with their group. Invalid positions always fail. */

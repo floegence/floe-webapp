@@ -170,6 +170,11 @@ Packed and positioned graphs use joint orthogonal routing through
 libavoid. Free connections use the available spans on all four node and group
 borders, avoid intervening objects, and separate shared segments into lanes.
 Explicit port sides remain fixed.
+Set `GraphLayoutOptions.edgeClearance` to adjust obstacle spacing for routed
+connectors without moving nodes or changing their port anchors. It accepts
+finite nonnegative world units and defaults to 4. Setting it also opts the
+default hierarchical layout into joint routing; routes may extend beyond the
+node bounds and contribute to the graph bounds.
 
 ## Develop This Repository
 

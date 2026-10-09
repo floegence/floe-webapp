@@ -34,6 +34,39 @@ const turns = (path: readonly GraphPoint[]) => {
 };
 
 describe('readable graph routing', () => {
+  it('routes fixed same-side ports with configurable clearance without moving endpoints', async () => {
+    const nodes = [
+      node('a', 0, 0, 260, 44),
+      node('b', 0, 49, 260, 44),
+      node('c', 0, 98, 260, 44),
+    ].map((n) => ({ ...n, ports: [{ id: `port-${n.id}`, side: 'WEST' as const }] }));
+    const input = layout(nodes, [['a', 'c']]);
+    input.edges = input.edges.map((edge) => ({
+      ...edge,
+      sourcePort: 'port-a',
+      targetPort: 'port-c',
+    }));
+    const result = await routeGraphGeometry(input, { edgeClearance: 20 });
+    expect(result.nodes).toEqual(nodes);
+    const route = result.edges[0]!.sections[0]!;
+    expect(route[0]).toEqual({ x: 0, y: 22 });
+    expect(route.at(-1)).toEqual({ x: 0, y: 120 });
+    expect(Math.min(...route.map((p) => p.x))).toBeLessThanOrEqual(-20);
+    expect(await routeGraphGeometry(input, { edgeClearance: 20 })).toEqual(result);
+    const defaults = await routeGraphGeometry(input);
+    expect(Math.min(...defaults.edges[0]!.sections[0]!.map((p) => p.x))).toBe(-4);
+  });
+  it.each([-1, Infinity, NaN])('rejects invalid edge clearance %s', async (edgeClearance) => {
+    await expect(
+      routeGraphGeometry(layout([node('a', 0, 0)], []), { edgeClearance })
+    ).rejects.toThrow('Graph edge clearance must be finite and nonnegative');
+  });
+  it('retains a visible self loop beyond custom clearance', async () => {
+    const result = await routeGraphGeometry(layout([node('a', 0, 0)], [['a', 'a']]), {
+      edgeClearance: 32,
+    });
+    expect(Math.max(...result.edges[0]!.sections[0]!.map((p) => p.x))).toBeGreaterThan(132);
+  });
   it('routes crowded compound borders and fractional coordinates without losing edges', async () => {
     const input = structuredClone(compoundGeometry) as GraphLayout;
     const result = await routeGraphGeometry(input);

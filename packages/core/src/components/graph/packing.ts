@@ -113,7 +113,7 @@ export async function computePackedGraphLayout(
   };
   return options.positions?.length && options.positionMode !== 'compact' && !options.layers
     ? applyGraphPositions(layout, options, input.nodes)
-    : routeGraphGeometry(layout);
+    : routeGraphGeometry(layout, options);
 }
 
 function arrangeRootLayers(

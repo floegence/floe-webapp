@@ -1,6 +1,12 @@
 import { AvoidLib } from 'libavoid-js';
 import wasmUrl from 'libavoid-js/wasm?url&no-inline';
-import type { GraphLayout, GraphLayoutNode, GraphPoint, GraphPort } from './types';
+import type {
+  GraphLayout,
+  GraphLayoutNode,
+  GraphLayoutOptions,
+  GraphPoint,
+  GraphPort,
+} from './types';
 
 let loaded: Promise<void> | undefined;
 const directions = { NORTH: 1, SOUTH: 2, WEST: 4, EAST: 8 };
@@ -8,7 +14,13 @@ const sides = ['NORTH', 'EAST', 'SOUTH', 'WEST'] as const;
 const release = (value: unknown) => (value as { delete(): void }).delete();
 
 /** Joint orthogonal routing through the final rectangular geometry. */
-export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayout> {
+export async function routeGraphGeometry(
+  layout: GraphLayout,
+  options: Pick<GraphLayoutOptions, 'edgeClearance'> = {}
+): Promise<GraphLayout> {
+  const clearance = options.edgeClearance ?? 4;
+  if (!Number.isFinite(clearance) || clearance < 0)
+    throw new Error('Graph edge clearance must be finite and nonnegative');
   if (!layout.nodes.length) return layout;
   if (!layout.edges.length) return withBounds(layout);
   await (loaded ??= AvoidLib.load(import.meta.env.SSR ? undefined : wasmUrl).catch((error) => {
@@ -37,7 +49,7 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
   for (const { open, edges } of batches.values()) {
     const router = new avoid.Router(2);
     try {
-      router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, 4);
+      router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, clearance);
       router.setRoutingParameter(avoid.RoutingParameter.idealNudgingDistance, 8);
       router.setRoutingParameter(avoid.RoutingParameter.crossingPenalty, 80);
       router.setRoutingParameter(avoid.RoutingParameter.fixedSharedPathPenalty, 120);
@@ -220,7 +232,7 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
           const node = nodes.get(edge.source)!;
           const checkpoints = new avoid.CheckpointVector();
           for (const y of [node.y + node.height / 3, node.y + (node.height * 2) / 3]) {
-            const point = new avoid.Point(node.x + node.width + 24, y);
+            const point = new avoid.Point(node.x + node.width + Math.max(24, clearance + 4), y);
             const checkpoint = new avoid.Checkpoint(point);
             checkpoints.push_back(checkpoint);
             release(point);

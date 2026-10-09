@@ -14,7 +14,8 @@ export function applyGraphPositions(
   options: GraphLayoutOptions,
   input: readonly GraphNode[]
 ): GraphLayout | Promise<GraphLayout> {
-  if (!options.positions?.length || options.positionMode === 'compact') return layout;
+  if (!options.positions?.length || options.positionMode === 'compact')
+    return options.edgeClearance === undefined ? layout : routeGraphGeometry(layout, options);
   const nodes = new Map(layout.nodes.map((node) => [node.id, { ...node }]));
   const pins = new Map<string, GraphPoint>();
   for (const pin of options.positions) {
@@ -132,5 +133,5 @@ export function applyGraphPositions(
     for (const node of roots) arrange(node);
     separate(roots);
   }
-  return routeGraphGeometry({ ...layout, nodes: [...nodes.values()] });
+  return routeGraphGeometry({ ...layout, nodes: [...nodes.values()] }, options);
 }

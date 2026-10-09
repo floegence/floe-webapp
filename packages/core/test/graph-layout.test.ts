@@ -31,6 +31,61 @@ const input: GraphInput = {
 
 describe('graph layout contract', () => {
   it.each([
+    {},
+    { aspectRatio: 1.6 },
+    {
+      positions: [
+        { nodeId: 'a', x: 0, y: 0 },
+        { nodeId: 'b', x: 0, y: 120 },
+      ],
+      positionMode: 'fixed' as const,
+    },
+    {
+      positions: [
+        { nodeId: 'a', x: 0, y: 0 },
+        { nodeId: 'b', x: 0, y: 120 },
+      ],
+      positionMode: 'compact' as const,
+    },
+  ])('passes edge clearance through every layout mode: %j', async (options) => {
+    const graph: GraphInput = {
+      nodes: ['a', 'b'].map((id) => ({
+        id,
+        label: id,
+        width: 100,
+        height: 80,
+        ports: [{ id: `port-${id}`, side: 'WEST' as const }],
+      })),
+      edges: [
+        {
+          id: 'call',
+          label: '',
+          source: 'a',
+          target: 'b',
+          sourcePort: 'port-a',
+          targetPort: 'port-b',
+        },
+      ],
+    };
+    const result = await computeGraphLayout(graph, {
+      ...options,
+      direction: 'DOWN',
+      edgeClearance: 20,
+    });
+    const left = Math.min(...result.nodes.map((n) => n.x));
+    expect(Math.min(...result.edges[0]!.sections.flat().map((p) => p.x))).toBeLessThanOrEqual(
+      left - 20
+    );
+  });
+  it.each([-1, Infinity, NaN])(
+    'rejects invalid clearance before invoking ELK: %s',
+    async (edgeClearance) => {
+      await expect(computeGraphLayout(input, { edgeClearance })).rejects.toThrow(
+        'Graph edge clearance must be finite and nonnegative'
+      );
+    }
+  );
+  it.each([
     ['RIGHT', 'x', 1],
     ['DOWN', 'y', 1],
     ['LEFT', 'x', -1],
