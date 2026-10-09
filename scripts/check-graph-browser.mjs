@@ -75,6 +75,14 @@ function App(){
    ]},{direction,layers:[['entry'],['control-a','control-b'],['worker']],spacing:24});
    setLayout(result);return result;
  };
+ window.routeContained=async()=>engine.layout({nodes:[
+   {id:'group',label:'Group',kind:'group',width:632,height:308},
+   {id:'member',label:'Member',parentId:'group',width:280,height:180},
+   {id:'peer',label:'Peer',parentId:'group',width:280,height:180},
+ ],edges:[{id:'out',label:'',source:'member',target:'group'},
+   {id:'back',label:'',source:'group',target:'member'}]},
+ {groupPadding:{top:108,right:20,bottom:20,left:20},positions:[
+   {nodeId:'group',x:0,y:0},{nodeId:'member',x:20,y:108},{nodeId:'peer',x:332,y:108}]});
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
    onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
@@ -179,7 +187,7 @@ render(()=><App/>,document.getElementById('root'));
   assert.ok(packed.edges.every((edge) => edge.sections.length > 0));
   assert.deepEqual(errors, []);
   const borderRoutes = await page.evaluate(() => window.routeBorders());
-  const [vertical, out, back] = borderRoutes.edges.map(edge => edge.sections[0]);
+  const [vertical, out, back] = borderRoutes.edges.map((edge) => edge.sections[0]);
   assert.equal(vertical[0].y, 80);
   assert.equal(vertical.at(-1).y, 180);
   assert.equal(out[0].x, 500);
@@ -188,17 +196,32 @@ render(()=><App/>,document.getElementById('root'));
   for (const path of [vertical, out, back])
     for (let i = 1; i < path.length; i++)
       assert.ok(path[i].x === path[i - 1].x || path[i].y === path[i - 1].y);
-  for (const direction of ['RIGHT','DOWN','LEFT','UP']) {
+  for (const direction of ['RIGHT', 'DOWN', 'LEFT', 'UP']) {
     const result = await page.evaluate((value) => window.layerGraph(value), direction);
     const get = (id) => result.nodes.find((node) => node.id === id);
     const horizontal = direction === 'RIGHT' || direction === 'LEFT';
     const sign = direction === 'RIGHT' || direction === 'DOWN' ? 1 : -1;
-    const axis = (node) => horizontal ? node.x + node.width / 2 : node.y + node.height / 2;
+    const axis = (node) => (horizontal ? node.x + node.width / 2 : node.y + node.height / 2);
     assert.ok(sign * (axis(get('control-a')) - axis(get('entry'))) > 0);
     assert.ok(sign * (axis(get('worker')) - axis(get('control-a'))) > 0);
     assert.equal(axis(get('control-a')), axis(get('control-b')));
     assert.equal(await page.locator('[data-graph-object="entry"]').count(), 1);
   }
+  const contained = await page.evaluate(() => window.routeContained());
+  const member = contained.nodes.find((node) => node.id === 'member');
+  for (const edge of contained.edges)
+    for (const path of edge.sections)
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1],
+          b = path[i];
+        assert.ok(
+          Math.max(a.x, b.x) <= member.x ||
+            Math.min(a.x, b.x) >= member.x + member.width ||
+            Math.max(a.y, b.y) <= member.y ||
+            Math.min(a.y, b.y) >= member.y + member.height,
+          'contained endpoints never route through the member card'
+        );
+      }
   console.log(
     'Graph worker, compound packing, fixed/preferred positions, directional layers, interaction, menus, native input, routes, and forced colors passed.'
   );

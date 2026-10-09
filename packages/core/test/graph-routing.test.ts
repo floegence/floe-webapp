@@ -33,6 +33,34 @@ const turns = (path: readonly GraphPoint[]) => {
 };
 
 describe('readable graph routing', () => {
+  it('routes contained endpoints outward without crossing the member card', async () => {
+    const member = { ...node('member', 20, 108, 280, 180), parentId: 'group' };
+    const input = layout(
+      [
+        { ...node('group', 0, 0, 632, 308), kind: 'group' as const },
+        member,
+        { ...node('peer', 332, 108, 280, 180), parentId: 'group' },
+      ],
+      [
+        ['member', 'group'],
+        ['group', 'member'],
+      ]
+    );
+    const result = await routeGraphGeometry(input);
+    for (const edge of result.edges)
+      for (const path of edge.sections)
+        for (let i = 1; i < path.length; i++) {
+          const a = path[i - 1]!,
+            b = path[i]!;
+          expect(
+            Math.max(a.x, b.x) <= member.x ||
+              Math.min(a.x, b.x) >= member.x + member.width ||
+              Math.max(a.y, b.y) <= member.y ||
+              Math.min(a.y, b.y) >= member.y + member.height,
+            JSON.stringify(path)
+          ).toBe(true);
+        }
+  });
   it('connects vertically adjacent boxes through their nearest facing borders', async () => {
     const result = await routeGraphGeometry(
       layout([node('a', 0, 0), node('b', 0, 180)], [['a', 'b']])

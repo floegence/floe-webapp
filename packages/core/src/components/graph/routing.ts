@@ -68,6 +68,7 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
           offset: number;
         }
       >();
+      const obstacles = layout.nodes.filter((node) => shapes.has(node.id));
       const pairOrdinals = new Map<string, number>();
       edges.forEach((edge) => {
         const source = nodes.get(edge.source)!,
@@ -86,10 +87,23 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
         const key = [edge.source, edge.target].sort().join('\u0000');
         const ordinal = pairOrdinals.get(key) ?? 0;
         pairOrdinals.set(key, ordinal + 1);
+        const offset = ordinal % 2 === 0 ? -6 : 6;
+        const simple =
+          edge.source === edge.target
+            ? undefined
+            : simpleConnectionSides(
+                source,
+                target,
+                obstacles,
+                pair,
+                offset,
+                edge.sourcePort ? sourceSide : undefined,
+                edge.targetPort ? targetSide : undefined
+              );
         endpointPins.set(edge.id, {
-          sourceSide,
-          targetSide,
-          offset: ordinal % 2 === 0 ? -6 : 6,
+          sourceSide: simple?.source ?? sourceSide,
+          targetSide: simple?.target ?? targetSide,
+          offset,
         });
       });
       for (const node of layout.nodes) {
@@ -120,7 +134,13 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
           pin(sides.indexOf(side) + 2, x - node.x, y - node.y, directions[side], false);
         }
       }
-      const endpoint = (id: string, portId: string | undefined, position: GraphPoint) => {
+      let nextPinClass = sides.length + 2;
+      const endpoint = (
+        id: string,
+        portId: string | undefined,
+        position: GraphPoint,
+        side: GraphPort['side']
+      ) => {
         const node = nodes.get(id)!,
           shape = shapes.get(id);
         if (shape && portId)
@@ -128,6 +148,22 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
             shape,
             sides.indexOf(node.ports!.find((port) => port.id === portId)!.side) + 2
           );
+        if (shape) {
+          // Shape-bound pins enforce outward visibility. Free points on a
+          // buffered border can otherwise route back through the endpoint.
+          const pinClass = nextPinClass++;
+          const pin = new avoid.ShapeConnectionPin(
+            shape,
+            pinClass,
+            (position.x - node.x) / node.width,
+            (position.y - node.y) / node.height,
+            true,
+            0,
+            directions[side]
+          );
+          pin.setExclusive(false);
+          return new avoid.ConnEnd(shape, pinClass);
+        }
         const endpointPosition = portId
           ? anchor(node, node.ports!.find((port) => port.id === portId)!.side)
           : position;
@@ -145,7 +181,8 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
             edge.sourcePort,
             edge.source === edge.target
               ? { x: sourceNode.x + sourceNode.width, y: sourceNode.y + sourceNode.height / 3 }
-              : projectedAnchor(sourceNode, pins.sourceSide, targetNode, pins.offset)
+              : projectedAnchor(sourceNode, pins.sourceSide, targetNode, pins.offset),
+            edge.source === edge.target ? 'EAST' : pins.sourceSide
           ),
           target = endpoint(
             edge.target,
@@ -155,7 +192,8 @@ export async function routeGraphGeometry(layout: GraphLayout): Promise<GraphLayo
                   x: targetNode.x + targetNode.width,
                   y: targetNode.y + (targetNode.height * 2) / 3,
                 }
-              : projectedAnchor(targetNode, pins.targetSide, sourceNode, pins.offset)
+              : projectedAnchor(targetNode, pins.targetSide, sourceNode, pins.offset),
+            edge.source === edge.target ? 'EAST' : pins.targetSide
           );
         const connection = new avoid.ConnRef(router, source, target);
         release(source);
@@ -248,10 +286,91 @@ function opposite(side: GraphPort['side']): GraphPort['side'] {
   };
   return oppositeSide[side];
 }
+
+/** Choose clear straight/one-bend border candidates before joint routing. */
+function simpleConnectionSides(
+  source: GraphLayoutNode,
+  target: GraphLayoutNode,
+  obstacles: readonly GraphLayoutNode[],
+  facing: { source: GraphPort['side']; target: GraphPort['side'] },
+  offset: number,
+  sourcePort?: GraphPort['side'],
+  targetPort?: GraphPort['side']
+): { source: GraphPort['side']; target: GraphPort['side'] } | undefined {
+  let best: { source: GraphPort['side']; target: GraphPort['side']; score: number } | undefined;
+  const outward = (a: GraphPoint, b: GraphPoint, side: GraphPort['side']) =>
+    side === 'NORTH'
+      ? b.x === a.x && b.y < a.y
+      : side === 'SOUTH'
+        ? b.x === a.x && b.y > a.y
+        : side === 'WEST'
+          ? b.y === a.y && b.x < a.x
+          : b.y === a.y && b.x > a.x;
+  for (const from of sourcePort ? [sourcePort] : sides)
+    for (const to of targetPort ? [targetPort] : sides) {
+      const a = sourcePort ? anchor(source, from) : projectedAnchor(source, from, target, offset);
+      const b = targetPort ? anchor(target, to) : projectedAnchor(target, to, source, offset);
+      const candidates =
+        a.x === b.x || a.y === b.y
+          ? [[a, b]]
+          : [
+              [a, { x: b.x, y: a.y }, b],
+              [a, { x: a.x, y: b.y }, b],
+            ];
+      for (const path of candidates) {
+        if (obstacles.includes(source) && !outward(a, path[1]!, from)) continue;
+        if (obstacles.includes(target) && !outward(b, path.at(-2)!, to)) continue;
+        if (
+          path.slice(1).some((end, i) => {
+            const start = path[i]!;
+            return obstacles.some(
+              (node) =>
+                Math.max(start.x, end.x) > node.x &&
+                Math.min(start.x, end.x) < node.x + node.width &&
+                Math.max(start.y, end.y) > node.y &&
+                Math.min(start.y, end.y) < node.y + node.height
+            );
+          })
+        )
+          continue;
+        const length = path
+          .slice(1)
+          .reduce(
+            (sum, end, i) => sum + Math.abs(end.x - path[i]!.x) + Math.abs(end.y - path[i]!.y),
+            0
+          );
+        const score =
+          length +
+          (path.length - 2) * 32 +
+          (from === facing.source ? 0 : 16) +
+          (to === facing.target ? 0 : 16);
+        if (!best || score < best.score) best = { source: from, target: to, score };
+      }
+    }
+  return best;
+}
+
 function facingSides(
   source: GraphLayoutNode,
   target: GraphLayoutNode
 ): { source: GraphPort['side']; target: GraphPort['side'] } {
+  const contains = (outer: GraphLayoutNode, inner: GraphLayoutNode) =>
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height;
+  const outer = contains(source, target) ? source : contains(target, source) ? target : undefined;
+  if (outer) {
+    const inner = outer === source ? target : source;
+    const distances = {
+      NORTH: inner.y - outer.y,
+      EAST: outer.x + outer.width - inner.x - inner.width,
+      SOUTH: outer.y + outer.height - inner.y - inner.height,
+      WEST: inner.x - outer.x,
+    };
+    const side = [...sides].sort((a, b) => distances[a] - distances[b])[0]!;
+    return { source: side, target: side };
+  }
   const dx = target.x + target.width / 2 - (source.x + source.width / 2),
     dy = target.y + target.height / 2 - (source.y + source.height / 2),
     gapX = Math.max(source.x - (target.x + target.width), target.x - (source.x + source.width), 0),
