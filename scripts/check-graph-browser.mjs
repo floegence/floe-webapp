@@ -48,6 +48,20 @@ function App(){
    const result=await engine.layout({nodes:packedNodes,edges:[{id:'packed-edge',label:'Relationship',source:'packed-group-0',target:'packed-group-1'}]},{aspectRatio:1.6,spacing:32});
    setLayout(result);return result;
  };
+ window.routeBorders=async()=>{
+   const nodes=[
+     {id:'top',label:'Top',width:100,height:80},
+     {id:'bottom',label:'Bottom',width:100,height:80},
+     {id:'left',label:'Left',width:100,height:200},
+     {id:'right',label:'Right',width:100,height:80},
+   ];
+   return engine.layout({nodes,edges:[
+     {id:'vertical',label:'Vertical',source:'top',target:'bottom'},
+     {id:'out',label:'Out',source:'left',target:'right'},
+     {id:'back',label:'Back',source:'right',target:'left'},
+   ]},{positions:[{nodeId:'top',x:0,y:0},{nodeId:'bottom',x:0,y:180},
+     {nodeId:'left',x:400,y:0},{nodeId:'right',x:580,y:130}]});
+ };
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
    onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
@@ -151,6 +165,16 @@ render(()=><App/>,document.getElementById('root'));
   assert.ok(packed.nodes.find((node) => node.id === 'packed-group-0').width > 550);
   assert.ok(packed.edges.every((edge) => edge.sections.length > 0));
   assert.deepEqual(errors, []);
+  const borderRoutes = await page.evaluate(() => window.routeBorders());
+  const [vertical, out, back] = borderRoutes.edges.map(edge => edge.sections[0]);
+  assert.equal(vertical[0].y, 80);
+  assert.equal(vertical.at(-1).y, 180);
+  assert.equal(out[0].x, 500);
+  assert.equal(out.at(-1).x, 580);
+  assert.ok(Math.abs(out[0].y - back.at(-1).y) >= 6, 'reciprocal routes have separate anchors');
+  for (const path of [vertical, out, back])
+    for (let i = 1; i < path.length; i++)
+      assert.ok(path[i].x === path[i - 1].x || path[i].y === path[i - 1].y);
   console.log(
     'Graph worker, compound packing, fixed/preferred positions, interaction, menus, native input, routes, and forced colors passed.'
   );
