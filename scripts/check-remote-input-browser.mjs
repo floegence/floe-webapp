@@ -1,4 +1,4 @@
-/* global window, InputEvent, CompositionEvent, KeyboardEvent */
+/* global window, document, InputEvent, CompositionEvent, KeyboardEvent */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -174,9 +174,40 @@ try {
       assert(!((await page.evaluate(() => window.events.splice(0))).some(e=>e[0]==='text')));
       await page.keyboard.type('x');
       assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [['key','x',true,'third'],['key','x',false,'third']]);
+      const physicalOnly = await page.evaluate(() => {
+        const controller = window.input;
+        const editor = controller.element;
+        const surface = document.querySelector('#surface');
+        controller.setTextInputMode('text'); controller.focus();
+        editor.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        editor.dispatchEvent(new KeyboardEvent('keydown', { key:'Process', code:'KeyT', isComposing:true, bubbles:true, cancelable:true }));
+        controller.setTextInputMode('physical-only'); controller.focus();
+        window.events=[];
+        // A hardware key can have a Process label while the local IME is active.
+        // Login input must use its physical code without an editable local context.
+        surface.dispatchEvent(new KeyboardEvent('keydown', { key:'Process', code:'KeyT', isComposing:true, bubbles:true, cancelable:true }));
+        const immediate = window.events.splice(0);
+        surface.dispatchEvent(new KeyboardEvent('keyup', { key:'Process', code:'KeyT', isComposing:true, bubbles:true }));
+        surface.dispatchEvent(new KeyboardEvent('keydown', { key:'Unidentified', bubbles:true, cancelable:true }));
+        surface.dispatchEvent(new KeyboardEvent('keyup', { key:'Unidentified', bubbles:true }));
+        editor.dispatchEvent(new CompositionEvent('compositionend', { data:'discarded probe', bubbles:true }));
+        editor.value='discarded probe';
+        editor.dispatchEvent(new InputEvent('input', { inputType:'insertFromComposition', data:'discarded probe', bubbles:true }));
+        const tail = window.events.splice(0);
+        const nonEditing = document.activeElement === surface && editor.disabled && editor.value === '' && !editor.hasAttribute('data-composing');
+        surface.dispatchEvent(new KeyboardEvent('keydown', { key:'Shift',code:'ShiftLeft',bubbles:true,cancelable:true }));
+        controller.setTextInputMode('text'); controller.focus();
+        const revoked = window.events.splice(0);
+        return { immediate, tail, nonEditing, revoked, editingRestored: document.activeElement === editor && !editor.disabled };
+      });
+      assert.deepEqual(physicalOnly.immediate, [['key','Process',true,'third']], 'physical-only must dispatch hardware keys before local edits');
+      assert.deepEqual(physicalOnly.tail, [['key','Process',false,'third']], 'physical-only must discard all composition and text tails');
+      assert(physicalOnly.nonEditing, 'physical-only must focus a non-editable surface and keep the local editor empty');
+      assert.deepEqual(physicalOnly.revoked, [['key','Shift',true,'third'],['release','third']], 'mode change must release physical-only keys');
+      assert(physicalOnly.editingRestored, 'leaving physical-only must restore ordinary editing');
       await page.evaluate(() => { window.input.dispose(); });
       assert.equal(await page.locator('textarea').count(), 0);
-      console.log(`PASS ${name}: composition transactions, Unicode, keys, mobile edits, target revocation and bounded anchoring`);
+      console.log(`PASS ${name}: composition transactions, Unicode, keys, mobile edits, target revocation, physical-only IME isolation and bounded anchoring`);
     } finally { await browser.close(); }
   }
 } finally { await new Promise(resolve => server.close(resolve)); }

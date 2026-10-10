@@ -27,10 +27,19 @@ revocation; explicit left/right modifier events retain their original ownership.
 independent of the host keyboard layout. Modifiers remain local until a physical
 shortcut or navigation command needs them. A confirmed edit releases any remote
 modifiers before delivery. `setTextInputMode('physical')` restores the default.
-Switching mode cancels pending composition and releases held keys. The consumer
-must restore physical mode before admitting lock-screen input. A product offering
+Switching mode cancels pending composition and releases held keys. A product offering
 an explicitly selected clipboard-based text backend must disclose its clipboard
 replacement; that backend remains distinct from automatic clipboard syncing.
+
+For login or lock-screen input, select `setTextInputMode('physical-only')`.
+The same controller focuses the non-editable remote surface, disables and clears
+its textarea, and forwards hardware key codes directly on keydown and keyup.
+The local input method never creates credential text or delays a physical stroke.
+Composition, dead-key text, software-keyboard insertion and delayed editing tails
+cannot call `commitText` in this mode. A key without a physical code is ignored.
+The consumer still owns input authorization and which physical shortcuts are
+allowed. Leaving this mode releases held keys and restores the ordinary editor;
+the controller never replays old composition into it.
 
 `setAnchor(clientX, clientY)` positions the real input near the last interaction,
 clamped to the surface and visual viewport. `focus()` is for a deliberate content

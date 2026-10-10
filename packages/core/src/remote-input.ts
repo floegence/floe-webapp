@@ -25,8 +25,8 @@ export interface RemoteInputOptions<T> {
 export interface RemoteInputController<T> {
   readonly element: HTMLTextAreaElement;
   bindTarget(target: T | null): void;
-  /** Physical preserves the host layout; text uses every local confirmed edit. */
-  setTextInputMode(mode: 'physical' | 'text'): void;
+  /** Physical-only bypasses the local editor and input method entirely. */
+  setTextInputMode(mode: 'physical' | 'text' | 'physical-only'): void;
   setAnchor(clientX: number, clientY: number): void;
   focus(): void;
   setKeyboardVisible(visible: boolean): void;
@@ -66,7 +66,8 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
   // transaction. A new key/beforeinput starts a new intent, even for equal text.
   let compositionTail = false;
   let printable: RemoteInputKey | null = null;
-  let textInputMode: 'physical' | 'text' = 'physical';
+  let textInputMode: 'physical' | 'text' | 'physical-only' = 'physical';
+  let ownsSurfaceTabIndex = false;
   const modifiers = new Map<string, RemoteInputKey>();
   const held = new Set<string>();
   const inferredModifiers = new Set<string>();
@@ -128,7 +129,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     if (composition && doc.activeElement === element) element.blur();
   }
   function commit(text: string) {
-    if (!text || target === null || disposed) return;
+    if (!text || target === null || disposed || textInputMode === 'physical-only') return;
     // A local edit must not inherit a remotely held shortcut modifier. Retain
     // the locally held modifiers for a subsequent physical shortcut.
     if (textInputMode === 'text' && held.size) {
@@ -162,7 +163,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     if (target === bound) options.sendKey({...packet,pressed:false}, bound);
   }
   function finishInput(event: InputEvent) {
-    if (target === null || disposed) { clearBuffer(); return; }
+    if (target === null || disposed || textInputMode === 'physical-only') { clearBuffer(); return; }
     if (composition?.cancelled || (composition && composition.epoch !== epoch)) { clearBuffer(); return; }
     if (event.isComposing) {
       composition ??= {epoch,committed:false,cancelled:false};
@@ -189,9 +190,18 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     clearBuffer();
   }
 
-  listen<KeyboardEvent>(element, 'keydown', event => {
+  function keydown(event: KeyboardEvent) {
     if (target === null || disposed) return;
+    if ((event.currentTarget === surface) !== (textInputMode === 'physical-only')) return;
     event.stopPropagation();
+    if (textInputMode === 'physical-only') {
+      event.preventDefault();
+      imeKeys.delete(identity(event));
+      // A local IME may label hardware keys Process/Dead. The non-editable
+      // surface forwards their real code without creating local password text.
+      if (event.code && !options.clipboard?.(event, target)) forward(key(event, true));
+      return;
+    }
     if (composition?.cancelled && !event.isComposing && event.key !== 'Process' && event.keyCode !== 229) composition = null;
     if (event.isComposing || composition || event.key === 'Process' || event.keyCode === 229) {
       imeKeys.add(identity(event)); printable = null; return;
@@ -209,8 +219,9 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     }
     event.preventDefault();
     forward(key(event, true));
-  });
-  listen<KeyboardEvent>(element, 'keyup', event => {
+  }
+  function keyup(event: KeyboardEvent) {
+    if ((event.currentTarget === surface) !== (textInputMode === 'physical-only')) return;
     event.stopPropagation();
     printable = null;
     modifiers.delete(identity(event));
@@ -223,9 +234,13 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
       }
       inferredModifiers.clear();
     }
-  });
+  }
+  for (const owner of [element, surface]) {
+    listen<KeyboardEvent>(owner, 'keydown', keydown);
+    listen<KeyboardEvent>(owner, 'keyup', keyup);
+  }
   listen<InputEvent>(element, 'beforeinput', event => {
-    if (target === null || disposed) { event.preventDefault(); return; }
+    if (target === null || disposed || textInputMode === 'physical-only') { event.preventDefault(); clearBuffer(); return; }
     if (event.isComposing || composition || event.inputType === 'insertCompositionText' || event.inputType === 'deleteCompositionText') return;
     if (event.inputType === 'insertFromComposition') return;
     compositionTail = false;
@@ -235,6 +250,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
   });
   listen<InputEvent>(element, 'input', finishInput);
   listen<CompositionEvent>(element, 'compositionstart', () => {
+    if (textInputMode === 'physical-only') { clearBuffer(); return; }
     composition = {epoch,committed:false,cancelled:target === null};
     compositionTail = false; printable = null;
     element.dataset.composing = 'true'; position();
@@ -247,6 +263,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     if (previous && !previous.cancelled && !previous.committed && previous.epoch === epoch) commit(event.data);
   });
   listen(element, 'blur', () => { reset(); keyboardState(false); });
+  listen(surface, 'blur', () => { if (textInputMode === 'physical-only') reset(); });
   listen(win, 'blur', reset);
   listen(win, 'pagehide', reset);
   listen(win, 'resize', position);
@@ -254,30 +271,38 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     listen(win.visualViewport, 'resize', position);
     listen(win.visualViewport, 'scroll', position);
   }
+  function focus() {
+    if (target === null || disposed) return;
+    if (textInputMode === 'physical-only') {
+      if (!surface.hasAttribute('tabindex')) { surface.tabIndex = -1; ownsSurfaceTabIndex = true; }
+      surface.focus({preventScroll:true});
+    } else { element.focus({preventScroll:true}); position(); }
+  }
   position();
   return {
     element,
     bindTarget(next) {
       if (disposed || Object.is(target, next)) return;
       reset(); target = next;
-      element.disabled = next === null;
+      element.disabled = next === null || textInputMode === 'physical-only';
     },
     setTextInputMode(next) {
       if (disposed || next === textInputMode) return;
+      const focused = doc.activeElement === element || doc.activeElement === surface;
       reset(); textInputMode = next;
+      element.disabled = target === null || next === 'physical-only';
+      if (next === 'physical-only') keyboardState(false);
+      if (focused) focus();
     },
     setAnchor(x, y) {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
       anchor = {x,y}; position();
     },
-    focus() {
-      if (target === null || disposed) return;
-      element.focus({preventScroll:true}); position();
-    },
+    focus,
     setKeyboardVisible(visible) {
       if (visible && target !== null && !disposed) {
-        element.focus({preventScroll:true}); keyboardState(true); position();
-      } else { element.blur(); keyboardState(false); }
+        focus(); keyboardState(textInputMode !== 'physical-only');
+      } else { (textInputMode === 'physical-only' ? surface : element).blur(); keyboardState(false); }
     },
     release,
     reset,
@@ -285,6 +310,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
       if (disposed) return;
       reset(); disposed = true; target = null;
       for (const remove of cleanup) remove();
+      if (ownsSurfaceTabIndex) surface.removeAttribute('tabindex');
       element.remove(); keyboardState(false);
     },
   };
