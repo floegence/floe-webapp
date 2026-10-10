@@ -124,7 +124,7 @@ export async function computeGraphLayout(
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       'elk.spacing.nodeNode': String(options.spacing ?? 64),
       'elk.layered.spacing.nodeNodeBetweenLayers': String(options.spacing ?? 64),
-      'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+      'elk.layered.considerModelOrder.strategy': 'NODES',
       'elk.randomSeed': '1',
     },
   });

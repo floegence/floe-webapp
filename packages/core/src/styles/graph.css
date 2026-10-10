@@ -69,6 +69,57 @@
   stroke: var(--graph-edge-active, var(--foreground));
   stroke-width: 3px;
 }
+.floe-graph__minimap {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  width: clamp(112px, 20vw, 196px);
+  height: clamp(72px, 12vw, 120px);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  box-shadow: 0 3px 14px rgb(0 0 0 / 8%);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+.floe-graph__minimap:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.floe-graph__minimap-nodes {
+  fill: var(--muted-foreground);
+  opacity: 0.65;
+  pointer-events: none;
+}
+.floe-graph__minimap-groups {
+  fill: color-mix(in srgb, var(--primary) 10%, transparent);
+  stroke: var(--muted-foreground);
+  stroke-width: 0.7px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.floe-graph__minimap-edges {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 0.5px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.floe-graph__minimap-viewport {
+  fill: color-mix(in srgb, var(--primary) 12%, transparent);
+  stroke: var(--primary);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+}
+.floe-graph__minimap:active,
+.floe-graph__minimap:active .floe-graph__minimap-viewport {
+  cursor: grabbing;
+}
 .floe-graph__node:focus-visible,
 .floe-graph__group:focus-visible {
   outline: 2px solid var(--ring);
@@ -89,6 +140,21 @@
   .floe-graph__node:focus-visible,
   .floe-graph__group:focus-visible {
     outline-color: Highlight;
+  }
+  .floe-graph__minimap {
+    background: Canvas;
+    border-color: CanvasText;
+  }
+  .floe-graph__minimap-nodes {
+    fill: CanvasText;
+  }
+  .floe-graph__minimap-groups,
+  .floe-graph__minimap-edges {
+    stroke: CanvasText;
+  }
+  .floe-graph__minimap-viewport {
+    stroke: Highlight;
+    fill: transparent;
   }
 }
 

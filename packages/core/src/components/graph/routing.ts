@@ -133,6 +133,23 @@ export async function routeGraphGeometry(
         selfPosition?: GraphPoint,
         parallel = false
       ) => {
+        // Distant obstacles cannot improve a nearby border-to-border route.
+        // Keep every shape in libavoid, but derive anchor candidates only from
+        // the endpoint corridor; otherwise pin counts grow quadratically.
+        const margin = clearance + 8;
+        const corridor = {
+          left: Math.min(node.x, other.x) - margin,
+          right: Math.max(node.x + node.width, other.x + other.width) + margin,
+          top: Math.min(node.y, other.y) - margin,
+          bottom: Math.max(node.y + node.height, other.y + other.height) + margin,
+        };
+        const nearby = obstacles.filter(
+          (obstacle) =>
+            obstacle.x <= corridor.right &&
+            obstacle.x + obstacle.width >= corridor.left &&
+            obstacle.y <= corridor.bottom &&
+            obstacle.y + obstacle.height >= corridor.top
+        );
         const shape = shapes.get(node.id);
         if (shape && portId)
           return new avoid.ConnEnd(
@@ -160,7 +177,7 @@ export async function routeGraphGeometry(
                   horizontal ? projected.x : projected.y,
                   low,
                   high,
-                  ...obstacles
+                  ...nearby
                     .flatMap((obstacle) => {
                       const a = horizontal ? obstacle.x : obstacle.y,
                         b = a + (horizontal ? obstacle.width : obstacle.height);
@@ -168,7 +185,7 @@ export async function routeGraphGeometry(
                     })
                     .filter((value) => value >= low && value <= high),
                 ];
-                return coordinates.map((value) => ({
+                return [...new Set(coordinates)].map((value) => ({
                   side,
                   position: horizontal
                     ? { x: value, y: projected.y }

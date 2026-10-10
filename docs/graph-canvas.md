@@ -42,8 +42,11 @@ Automatic border anchors are chosen jointly from peer-facing spans and free
 obstacle corridors. Their attached segments can separate into lanes; batches
 with explicit ports or self loops preserve their exact endpoint constraints.
 `highlight` may control this from a nested host object. `selected` remains
-host-owned. Rendered cards are culled beyond the viewport with an overscan
-margin; this does not remove any graph records. Aggregate large domain sets
+host-owned. Rendered cards and edge segments are culled beyond the viewport with an overscan
+margin; selected objects remain mounted. This does not remove any graph records.
+Packing, coordinate normalization, and libavoid routing run in a dedicated
+worker; its packaged ELK child worker preserves the official ELK protocol.
+Pending requests reject on disposal or worker failure. Aggregate large domain sets
 before layout, then materialize detail on demand.
 
 `fitGraphViewport` centers the diagram. Layout's optional `anchor` preserves an
@@ -74,3 +77,20 @@ routes, cycles, self loops, malformed references, anchors, and large graphs.
 After building core, run `node scripts/check-graph-browser.mjs` for the public
 worker and browser interaction contract. This focused browser check belongs to
 local qualification, not ordinary source-only push validation.
+
+Set `GraphCanvas.minimap = { ariaLabel }` to show a compact interactive overview.
+It uses the main layout without starting another engine, renders the topology
+as three cached SVG paths, and shows the live viewport rectangle. Drag that
+rectangle to pan, click elsewhere to center, use arrow keys to navigate, or
+press Home to fit. Pointer capture, touch, theme tokens, and forced colors are
+owned by Floe; hosts supply the localized label.
+
+Run `node scripts/check-graph-scale-browser.mjs <evidence-directory>` after
+building Core for 100, 500, and 1,000 actual nodes, both ungrouped and in groups
+of ten. The check records complete layout/edge counts, layout and paint times,
+main-thread long tasks, visible DOM counts, and pan frame P95. It qualifies
+responsiveness and bounded layout completion without replacing large input
+graphs with domain aggregates. This is local performance qualification, not
+ordinary push CI. Anchor candidates use obstacles in each endpoint corridor;
+all obstacles remain in the routing engine. ELK retains stable node model order
+without its quadratic edge-model ordering pass.

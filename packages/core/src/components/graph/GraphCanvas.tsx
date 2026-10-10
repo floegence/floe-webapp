@@ -11,6 +11,7 @@ import {
 import { InfiniteCanvas } from '../ui/InfiniteCanvas';
 import { resolveSurfaceInteractionTargetRole } from '../ui/localInteractionSurface';
 import { graphEdgeLabelPosition, graphRelatedEdges, graphSectionPath } from './geometry';
+import { GraphMinimap } from './GraphMinimap';
 import type {
   GraphLayout,
   GraphLayoutNode,
@@ -41,6 +42,8 @@ export interface GraphCanvasProps {
   onInteractionStart?: () => void;
   /** Overlay content should use shared SurfaceFloatingLayer for point placement. */
   overlay?: JSX.Element;
+  /** Optional interactive overview. Its geometry follows the same visible layout. */
+  minimap?: { ariaLabel: string };
   class?: string;
 }
 
@@ -67,13 +70,19 @@ export function GraphCanvas(props: GraphCanvasProps) {
   });
   const isSelected = (object: GraphObjectRef) =>
     props.selected?.kind === object.kind && props.selected.id === object.id;
-  const visibleNodes = (viewport: GraphViewport) => {
+  const visibleBounds = (viewport: GraphViewport) => {
     const { width, height } = size();
-    if (!width || !height) return props.layout.nodes;
+    if (!width || !height) return undefined;
     const left = -viewport.x / viewport.scale - 240,
       top = -viewport.y / viewport.scale - 240;
     const right = left + width / viewport.scale + 480,
       bottom = top + height / viewport.scale + 480;
+    return { left, top, right, bottom };
+  };
+  const visibleNodes = (viewport: GraphViewport) => {
+    const bounds = visibleBounds(viewport);
+    if (!bounds) return props.layout.nodes;
+    const { left, top, right, bottom } = bounds;
     return props.layout.nodes.filter(
       (node) =>
         node.id === props.selected?.id ||
@@ -81,6 +90,36 @@ export function GraphCanvas(props: GraphCanvasProps) {
           node.x <= right &&
           node.y + node.height >= top &&
           node.y <= bottom)
+    );
+  };
+  const edgeGeometry = createMemo(() =>
+    props.layout.edges.map((edge) => ({
+      edge,
+      path: edge.sections.map(graphSectionPath).join(' '),
+      label: graphEdgeLabelPosition(edge.sections),
+      segments: edge.sections.flatMap((section) =>
+        section.slice(1).map((point, index) => ({
+          left: Math.min(point.x, section[index]!.x),
+          right: Math.max(point.x, section[index]!.x),
+          top: Math.min(point.y, section[index]!.y),
+          bottom: Math.max(point.y, section[index]!.y),
+        }))
+      ),
+    }))
+  );
+  const visibleEdges = (viewport: GraphViewport) => {
+    const bounds = visibleBounds(viewport);
+    if (!bounds) return edgeGeometry();
+    return edgeGeometry().filter(
+      ({ edge, segments }) =>
+        edge.id === props.selected?.id ||
+        segments.some(
+          (segment) =>
+            segment.left <= bounds.right &&
+            segment.right >= bounds.left &&
+            segment.top <= bounds.bottom &&
+            segment.bottom >= bounds.top
+        )
     );
   };
   const hover = (object: GraphObjectRef | null) => {
@@ -218,6 +257,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
           const visible = createMemo(() => visibleNodes(liveViewport()));
           const groups = createMemo(() => visible().filter((node) => node.kind === 'group'));
           const nodes = createMemo(() => visible().filter((node) => node.kind !== 'group'));
+          const edges = createMemo(() => visibleEdges(liveViewport()));
           return (
             <>
               <For each={groups()}>{render}</For>
@@ -240,11 +280,12 @@ export function GraphCanvas(props: GraphCanvasProps) {
                     />
                   </marker>
                 </defs>
-                <For each={props.layout.edges}>
-                  {(edge) => {
+                <For each={edges()}>
+                  {(geometry) => {
+                    const { edge } = geometry;
                     const object: GraphObjectRef = { kind: 'edge', id: edge.id };
-                    const path = () => edge.sections.map(graphSectionPath).join(' ');
-                    const label = () => graphEdgeLabelPosition(edge.sections);
+                    const path = () => geometry.path;
+                    const label = () => geometry.label;
                     return (
                       <Show when={!isolatedEdges() || isolatedEdges()!.has(edge.id)}>
                         <g
@@ -299,6 +340,18 @@ export function GraphCanvas(props: GraphCanvasProps) {
           );
         }}
       </InfiniteCanvas>
+      <Show when={props.minimap}>
+        {(minimap) => (
+          <GraphMinimap
+            layout={props.layout}
+            viewport={props.viewport}
+            size={size()}
+            onViewportChange={props.onViewportChange}
+            onInteractionStart={props.onInteractionStart}
+            ariaLabel={minimap().ariaLabel}
+          />
+        )}
+      </Show>
       {props.overlay}
     </div>
   );

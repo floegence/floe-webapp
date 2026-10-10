@@ -39,6 +39,18 @@ function App(){
  window.preferGraph=async()=>{const result=await engine.layout({nodes,edges},{positionMode:'preferred',positions:[{nodeId:'a',x:0,y:0},{nodeId:'b',x:0,y:40},{nodeId:'c',x:0,y:90}]});setLayout(result);return result;};});
  onCleanup(()=>engine?.dispose());
  window.graphViewport=()=>viewport();
+ window.restoreGraphViewport=value=>setViewport(value);
+ window.zoomGraph=()=>setViewport({...viewport(),x:0,y:0,scale:2});
+ window.verifyEngine=async()=>{
+   let rejected=false;
+   try { await engine.layout({nodes:[{id:'bad',label:'Bad',width:0,height:10}],edges:[]}); }
+   catch(error) { rejected=error.message.includes('Invalid dimensions'); }
+   const results=await Promise.all([engine.layout({nodes,edges}),engine.layout({nodes,edges})]);
+   const disposable=createGraphLayoutEngine();
+   const pending=disposable.layout({nodes,edges}); disposable.dispose();
+   let disposed=false; try { await pending; } catch(error) { disposed=error.message.includes('disposed'); }
+   return {rejected,disposed,equal:JSON.stringify(results[0])===JSON.stringify(results[1])};
+ };
  window.packGraph=async()=>{
    const packedNodes=[];
    for(let group=0;group<5;group++){
@@ -84,7 +96,7 @@ function App(){
  {groupPadding:{top:108,right:20,bottom:20,left:20},positions:[
    {nodeId:'group',x:0,y:0},{nodeId:'member',x:20,y:108},{nodeId:'peer',x:332,y:108}]});
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
-   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record}
+   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record} minimap={{ariaLabel:'Graph overview'}}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
    renderNode={(n,context)=><div style={{height:'100%',border:'1px solid #59616b',background:'#fff',padding:'12px'}}>
      <span>{n.label}</span><button onClick={context.openMenu} aria-label={'Actions for '+n.label}>...</button>
@@ -114,10 +126,55 @@ render(()=><App/>,document.getElementById('root'));
     .catch((error) => {
       throw new Error(`${error.message}\nPage errors: ${errors.join('\n')}`);
     });
+  assert.deepEqual(await page.evaluate(() => window.verifyEngine()), {
+    rejected: true,
+    disposed: true,
+    equal: true,
+  });
   const node = page.locator('[data-graph-object="a"]');
   await node.click({ position: { x: 30, y: 25 } });
   assert.deepEqual(await page.evaluate(() => window.lastGraphEvent), { kind: 'node', id: 'a' });
   await page.getByRole('button', { name: 'Close details' }).click();
+  const overview = page.getByRole('region', { name: 'Graph overview', exact: true });
+  const beforeOverview = await page.evaluate(() => window.graphViewport());
+  await overview.focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal((await page.evaluate(() => window.graphViewport())).x, beforeOverview.x - 240);
+  await page.keyboard.press('Home');
+  await page.evaluate(() => window.zoomGraph());
+  const overviewBox = await overview.boundingBox();
+  const viewportBeforeClick = await page.evaluate(() => window.graphViewport());
+  await overview.click({ position: { x: overviewBox.width * 0.8, y: overviewBox.height * 0.5 } });
+  const viewportAfterClick = await page.evaluate(() => window.graphViewport());
+  assert.notEqual(
+    viewportAfterClick.x,
+    viewportBeforeClick.x,
+    'overview click navigates the main canvas'
+  );
+  const viewportBox = await page.locator('.floe-graph__minimap-viewport').boundingBox();
+  await page.mouse.move(
+    Math.min(
+      overviewBox.x + overviewBox.width - 2,
+      Math.max(overviewBox.x + 2, viewportBox.x + viewportBox.width / 2)
+    ),
+    Math.min(
+      overviewBox.y + overviewBox.height - 2,
+      Math.max(overviewBox.y + 2, viewportBox.y + viewportBox.height / 2)
+    )
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    overviewBox.x + overviewBox.width * 0.6,
+    overviewBox.y + overviewBox.height * 0.6,
+    { steps: 6 }
+  );
+  await page.mouse.up();
+  assert.notDeepEqual(
+    await page.evaluate(() => window.graphViewport()),
+    viewportAfterClick,
+    'overview viewport supports pointer capture drag'
+  );
+  await page.evaluate((value) => window.restoreGraphViewport(value), beforeOverview);
   assert.equal(await page.locator('.floe-graph__edge-label[data-count="true"]').textContent(), '2');
   await page.evaluate(() => window.moveGraph());
   assert.equal(

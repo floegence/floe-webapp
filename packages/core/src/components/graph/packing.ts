@@ -83,7 +83,7 @@ export async function computePackedGraphLayout(
         'elk.spacing.componentComponent': String(options.spacing ?? 64),
         'elk.spacing.nodeNode': String(options.spacing ?? 64),
         'elk.layered.spacing.nodeNodeBetweenLayers': String(options.spacing ?? 64),
-        'elk.layered.considerModelOrder.strategy': 'NODES_AND_EDGES',
+        'elk.layered.considerModelOrder.strategy': 'NODES',
         'elk.padding': parentId
           ? `[top=${padding.top},left=${padding.left},bottom=${padding.bottom},right=${padding.right}]`
           : '[top=12,left=12,bottom=12,right=12]',
