@@ -1,5 +1,6 @@
 /* global window */
 import { mkdtemp, writeFile, readFile, rm, realpath } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -21,6 +22,9 @@ try {
   `);
   await build({configFile:false,root,base:'./',plugins:[graphBlobWorkersPlugin()],build:{outDir:join(root,'dist'),minify:true}});
   assert.deepEqual(await readFile(join(root,'dist/assets/libavoid.wasm')), await readFile('packages/core/dist/libavoid.wasm'));
+  if(process.platform==='darwin') {
+    console.log(execFileSync('swift',[resolve('scripts/fixtures/graph-blob-host.swift'),join(root,'dist')],{encoding:'utf8',timeout:30000}));
+  }
   const server = createServer(async (request,response) => {
     const file = request.url === '/' ? '/index.html' : request.url;
     response.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.wasm') ? 'application/wasm' : 'text/html');

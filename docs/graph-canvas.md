@@ -105,3 +105,10 @@ replaceable. The host must grant local file read access and include `blob:` in
 `script-src`, `worker-src`, and `connect-src`. No remote resource is required.
 Ordinary HTTP applications retain the default worker path. Do not transform
 worker internals or copy the layout/routing implementation in a product.
+
+Production consumers must keep the worker resource closure intact: the published
+layout worker references its ELK child worker and independently replaceable WASM
+through statically discoverable URLs. Run `node scripts/check-graph-production.mjs`
+after building Core to qualify actual built HTTP applications with Vite 7 and 8,
+including successful child-worker and raw-WASM requests. Development-server
+acceptance alone cannot prove that a host ships the complete worker closure.

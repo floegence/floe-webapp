@@ -17,7 +17,7 @@ export function graphBlobWorkersPlugin() {
   const elk = readFileSync(new URL(child, layoutURL), 'utf8');
   // Every package-owned resource URL is substituted by a local blob URL.
   layout = layout.replaceAll(`new URL("${child}", import.meta.url)`, 'new URL(__floeElkURL)');
-  layout = layout.replaceAll(/new URL\("[^"\n]*libavoid\.wasm", import\.meta\.url\)/g, 'new URL(__floeWasmURL)');
+  layout = layout.replaceAll(/new URL\("[^"\n]*libavoid\.wasm(?:\?no-inline)?", import\.meta\.url\)/g, 'new URL(__floeWasmURL)');
   const bootstrap = `
     const queue = [];
     self.onmessage = async ({data}) => {

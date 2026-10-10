@@ -68,7 +68,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.86.17');
+    expect(corePkg.version).toBe('0.86.18');
     for (const template of ['minimal', 'full']) {
       const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
       expect(config.overrides.dompurify).toBe('^3.4.16');
@@ -201,7 +201,7 @@ describe('release dependency and runtime contract', () => {
     const makefile = readText('Makefile');
 
     expect(makefile).toMatch(
-      /^check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog adaptive-layout async-layout svg-editor-security graph-blob-workers$/mu
+      /^check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog adaptive-layout async-layout svg-editor-security graph-blob-workers graph-production$/mu
     );
     expect(makefile).toMatch(/^install:\n\tpnpm install --frozen-lockfile$/mu);
     expect(makefile).toMatch(

@@ -116,7 +116,7 @@ jobs:
         run: pnpm -r --filter './packages/*' build
 
       - name: Verify graph canvas worker and interaction
-        run: node scripts/check-graph-browser.mjs && node scripts/check-graph-blob-workers.mjs
+        run: node scripts/check-graph-browser.mjs && node scripts/check-graph-blob-workers.mjs && node scripts/check-graph-production.mjs
 
       - name: Verify progress shimmer across shell themes
         run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs
