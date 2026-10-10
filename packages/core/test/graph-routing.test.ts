@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { routeGraphGeometry } from '../src/components/graph/positions';
 import type { GraphLayout, GraphLayoutNode, GraphPoint } from '../src/components/graph/types';
 import compoundGeometry from './fixtures/compound-border-geometry.json';
+import fanInGeometry from './fixtures/fan-in-border-geometry.json';
 
 const node = (id: string, x: number, y: number, width = 100, height = 80): GraphLayoutNode => ({
   id,
@@ -34,6 +35,44 @@ const turns = (path: readonly GraphPoint[]) => {
 };
 
 describe('readable graph routing', () => {
+  it.each([0, 1, 2, 3])(
+    'avoids independent fan-in crossings after %s quarter turns',
+    async (rotation) => {
+      const input = structuredClone(fanInGeometry) as GraphLayout;
+      for (let turn = 0; turn < rotation; turn++)
+        for (const node of input.nodes) {
+          const { x, y, width, height } = node;
+          Object.assign(node, { x: -y - height, y: x, width: height, height: width });
+        }
+      const result = await routeGraphGeometry(input);
+      const paths = [4, 5, 6, 9].map((index) => result.edges[index]!.sections[0]!);
+      for (let i = 0; i < paths.length; i++)
+        for (let j = i + 1; j < paths.length; j++)
+          for (let a = 1; a < paths[i]!.length; a++)
+            for (let b = 1; b < paths[j]!.length; b++) {
+              const start = paths[i]![a - 1]!,
+                end = paths[i]![a]!;
+              const otherStart = paths[j]![b - 1]!,
+                otherEnd = paths[j]![b]!;
+              const vertical = start.x === end.x;
+              if (vertical === (otherStart.x === otherEnd.x)) continue;
+              const x = vertical ? start.x : otherStart.x;
+              const y = vertical ? otherStart.y : start.y;
+              expect(
+                x > Math.min(start.x, end.x, otherStart.x, otherEnd.x) &&
+                  y > Math.min(start.y, end.y, otherStart.y, otherEnd.y) &&
+                  x < Math.max(start.x, end.x, otherStart.x, otherEnd.x) &&
+                  y < Math.max(start.y, end.y, otherStart.y, otherEnd.y),
+                JSON.stringify([paths[i], paths[j]])
+              ).toBe(false);
+            }
+      expect(turns(paths[0]!)).toBe(0);
+      expect(turns(paths[1]!)).toBe(0);
+      expect(turns(paths[2]!)).toBeLessThanOrEqual(2);
+      expect(turns(paths[3]!)).toBeLessThanOrEqual(1);
+      expect(await routeGraphGeometry(input)).toEqual(result);
+    }
+  );
   it('routes fixed same-side ports with configurable clearance without moving endpoints', async () => {
     const nodes = [
       node('a', 0, 0, 260, 44),

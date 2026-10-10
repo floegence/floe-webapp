@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@floegence/floe-webapp-core": "^0.86.12",
+    "@floegence/floe-webapp-core": "^0.86.13",
     "solid-js": "^1.9.17"
   },
   "devDependencies": {

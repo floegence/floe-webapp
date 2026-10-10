@@ -72,52 +72,14 @@ export async function routeGraphGeometry(
             return [node.id, shape] as const;
           })
       );
-      const endpointPins = new Map<
-        string,
-        {
-          sourceSide: GraphPort['side'];
-          targetSide: GraphPort['side'];
-          offset: number;
-        }
-      >();
-      const obstacles = layout.nodes.filter((node) => shapes.has(node.id));
       const pairOrdinals = new Map<string, number>();
-      edges.forEach((edge) => {
-        const source = nodes.get(edge.source)!,
-          target = nodes.get(edge.target)!,
-          pair = facingSides(source, target),
-          sourceSide = edge.sourcePort
-            ? source.ports!.find((port) => port.id === edge.sourcePort)!.side
-            : edge.targetPort
-              ? opposite(target.ports!.find((port) => port.id === edge.targetPort)!.side)
-              : pair.source,
-          targetSide = edge.targetPort
-            ? target.ports!.find((port) => port.id === edge.targetPort)!.side
-            : edge.sourcePort
-              ? opposite(source.ports!.find((port) => port.id === edge.sourcePort)!.side)
-              : pair.target;
+      const offsets = new Map<string, number>();
+      for (const edge of edges) {
         const key = [edge.source, edge.target].sort().join('\u0000');
         const ordinal = pairOrdinals.get(key) ?? 0;
         pairOrdinals.set(key, ordinal + 1);
-        const offset = ordinal % 2 === 0 ? -6 : 6;
-        const simple =
-          edge.source === edge.target
-            ? undefined
-            : simpleConnectionSides(
-                source,
-                target,
-                obstacles,
-                pair,
-                offset,
-                edge.sourcePort ? sourceSide : undefined,
-                edge.targetPort ? targetSide : undefined
-              );
-        endpointPins.set(edge.id, {
-          sourceSide: simple?.source ?? sourceSide,
-          targetSide: simple?.target ?? targetSide,
-          offset,
-        });
-      });
+        offsets.set(edge.id, ordinal % 2 === 0 ? -6 : 6);
+      }
       let nextPinClass = sides.length + 2;
       const borderPinClasses = new Map<string, number>();
       const fraction = (value: number, size: number) => Math.max(0, Math.min(1, value / size));
@@ -159,90 +121,175 @@ export async function routeGraphGeometry(
           );
         }
       }
+      const autoClasses = new Map<string, number>();
+      const obstacles = layout.nodes.filter((node) => shapes.has(node.id));
       const endpoint = (
-        id: string,
+        node: GraphLayoutNode,
+        other: GraphLayoutNode,
         portId: string | undefined,
-        position: GraphPoint,
-        side: GraphPort['side']
+        offset: number,
+        selfPosition?: GraphPoint,
+        parallel = false
       ) => {
-        const node = nodes.get(id)!,
-          shape = shapes.get(id);
+        const shape = shapes.get(node.id);
         if (shape && portId)
           return new avoid.ConnEnd(
             shape,
             sides.indexOf(node.ports!.find((port) => port.id === portId)!.side) + 2
           );
+        const candidates = portId
+          ? [
+              {
+                side: node.ports!.find((port) => port.id === portId)!.side,
+                position: anchor(node, node.ports!.find((port) => port.id === portId)!.side),
+              },
+            ]
+          : selfPosition
+            ? [{ side: 'EAST' as const, position: selfPosition }]
+            : (parallel ? [facingSides(node, other).source] : sides).flatMap((side) => {
+                const projected = projectedAnchor(node, side, other, offset);
+                if (parallel) return [{ side, position: projected }];
+                const horizontal = side === 'NORTH' || side === 'SOUTH';
+                const start = horizontal ? node.x : node.y,
+                  size = horizontal ? node.width : node.height;
+                const low = start + Math.min(8, size / 4),
+                  high = start + size - Math.min(8, size / 4);
+                const coordinates = [
+                  horizontal ? projected.x : projected.y,
+                  low,
+                  high,
+                  ...obstacles
+                    .flatMap((obstacle) => {
+                      const a = horizontal ? obstacle.x : obstacle.y,
+                        b = a + (horizontal ? obstacle.width : obstacle.height);
+                      return [a - clearance, b + clearance, a - clearance - 8, b + clearance + 8];
+                    })
+                    .filter((value) => value >= low && value <= high),
+                ];
+                return coordinates.map((value) => ({
+                  side,
+                  position: horizontal
+                    ? { x: value, y: projected.y }
+                    : { x: projected.x, y: value },
+                }));
+              });
         if (shape) {
-          // Shape-bound pins enforce outward visibility. Free points on a
-          // buffered border can otherwise route back through the endpoint.
-          const x = fraction(position.x - node.x, node.width),
-            y = fraction(position.y - node.y, node.height);
-          const key = JSON.stringify([id, x, y, side]);
-          const existing = borderPinClasses.get(key);
-          if (existing !== undefined) return new avoid.ConnEnd(shape, existing);
-          const pinClass = nextPinClass++;
-          borderPinClasses.set(key, pinClass);
-          const pin = new avoid.ShapeConnectionPin(
-            shape,
-            pinClass,
-            x,
-            y,
-            true,
-            0,
-            directions[side]
-          );
-          pin.setExclusive(false);
+          // One connection class exposes all automatic border candidates to
+          // joint routing, rather than committing to a crowded side beforehand.
+          const location = (side: GraphPort['side'], position: GraphPoint) =>
+            JSON.stringify([
+              node.id,
+              fraction(position.x - node.x, node.width),
+              fraction(position.y - node.y, node.height),
+              side,
+            ]);
+          const limited = Boolean(portId || selfPosition || parallel);
+          const existing = limited
+            ? borderPinClasses.get(location(candidates[0]!.side, candidates[0]!.position))
+            : autoClasses.get(node.id);
+          if (limited && existing !== undefined) return new avoid.ConnEnd(shape, existing);
+          const pinClass = existing ?? nextPinClass++;
+          if (!limited) autoClasses.set(node.id, pinClass);
+          for (const { side, position } of candidates) {
+            const key = location(side, position);
+            if (borderPinClasses.has(key)) continue;
+            borderPinClasses.set(key, pinClass);
+            const x = position.x - node.x,
+              y = position.y - node.y;
+            const pin = new avoid.ShapeConnectionPin(
+              shape,
+              pinClass,
+              fraction(x, node.width),
+              fraction(y, node.height),
+              true,
+              0,
+              directions[side]
+            );
+            pin.setExclusive(false);
+            pin.setConnectionCost(
+              node.width / 2 +
+                node.height / 2 -
+                Math.abs(x - node.width / 2) -
+                Math.abs(y - node.height / 2)
+            );
+          }
           return new avoid.ConnEnd(shape, pinClass);
         }
-        const endpointPosition = portId
-          ? anchor(node, node.ports!.find((port) => port.id === portId)!.side)
-          : position;
-        const libavoidPoint = new avoid.Point(endpointPosition.x, endpointPosition.y);
-        const end = new avoid.ConnEnd(libavoidPoint);
-        release(libavoidPoint);
+        // A traversable ancestor border is a free endpoint. Keep the side
+        // nearest to its contained peer, which approaches it from the interior.
+        const side = facingSides(node, other).source;
+        const position =
+          candidates.find((candidate) => candidate.side === side)?.position ??
+          candidates[0]!.position;
+        const point = new avoid.Point(position.x, position.y);
+        const end = new avoid.ConnEnd(point);
+        release(point);
         return end;
       };
-      const connections = edges.map((edge) => {
-        const sourceNode = nodes.get(edge.source)!,
-          targetNode = nodes.get(edge.target)!,
-          pins = endpointPins.get(edge.id)!;
-        const source = endpoint(
-            edge.source,
+      // Register constrained lanes first so automatic candidates never duplicate
+      // their physical pins under another class (libavoid cannot route those).
+      const limited = (edge: (typeof edges)[number]) =>
+        Number(
+          Boolean(
+            edge.sourcePort ||
+            edge.targetPort ||
+            edge.source === edge.target ||
+            pairOrdinals.get([edge.source, edge.target].sort().join('\u0000'))! > 1
+          )
+        );
+      const connections = [...edges]
+        .sort((a, b) => limited(b) - limited(a))
+        .map((edge) => {
+          const sourceNode = nodes.get(edge.source)!,
+            targetNode = nodes.get(edge.target)!;
+          const self = edge.source === edge.target;
+          const parallel = pairOrdinals.get([edge.source, edge.target].sort().join('\u0000'))! > 1;
+          const source = endpoint(
+            sourceNode,
+            targetNode,
             edge.sourcePort,
-            edge.source === edge.target
+            offsets.get(edge.id)!,
+            self
               ? { x: sourceNode.x + sourceNode.width, y: sourceNode.y + sourceNode.height / 3 }
-              : projectedAnchor(sourceNode, pins.sourceSide, targetNode, pins.offset),
-            edge.source === edge.target ? 'EAST' : pins.sourceSide
-          ),
-          target = endpoint(
-            edge.target,
+              : undefined,
+            parallel
+          );
+          const target = endpoint(
+            targetNode,
+            sourceNode,
             edge.targetPort,
-            edge.source === edge.target
+            offsets.get(edge.id)!,
+            self
               ? {
                   x: targetNode.x + targetNode.width,
                   y: targetNode.y + (targetNode.height * 2) / 3,
                 }
-              : projectedAnchor(targetNode, pins.targetSide, sourceNode, pins.offset),
-            edge.source === edge.target ? 'EAST' : pins.targetSide
+              : undefined,
+            parallel
           );
-        const connection = new avoid.ConnRef(router, source, target);
-        release(source);
-        release(target);
-        if (edge.source === edge.target) {
-          const node = nodes.get(edge.source)!;
-          const checkpoints = new avoid.CheckpointVector();
-          for (const y of [node.y + node.height / 3, node.y + (node.height * 2) / 3]) {
-            const point = new avoid.Point(node.x + node.width + Math.max(24, clearance + 4), y);
-            const checkpoint = new avoid.Checkpoint(point);
-            checkpoints.push_back(checkpoint);
-            release(point);
-            release(checkpoint);
+          const connection = new avoid.ConnRef(router, source, target);
+          release(source);
+          release(target);
+          if (self) {
+            const checkpoints = new avoid.CheckpointVector();
+            for (const y of [
+              sourceNode.y + sourceNode.height / 3,
+              sourceNode.y + (sourceNode.height * 2) / 3,
+            ]) {
+              const point = new avoid.Point(
+                sourceNode.x + sourceNode.width + Math.max(24, clearance + 4),
+                y
+              );
+              const checkpoint = new avoid.Checkpoint(point);
+              checkpoints.push_back(checkpoint);
+              release(point);
+              release(checkpoint);
+            }
+            connection.setRoutingCheckpoints(checkpoints);
+            release(checkpoints);
           }
-          connection.setRoutingCheckpoints(checkpoints);
-          release(checkpoints);
-        }
-        return { edge, connection };
-      });
+          return { edge, connection };
+        });
       router.processTransaction();
       for (const { edge, connection } of connections) {
         const route = connection.displayRoute();
@@ -307,79 +354,6 @@ function anchor(node: GraphLayoutNode, side: GraphPort['side']): GraphPoint {
           : node.y + node.height / 2,
   };
 }
-function opposite(side: GraphPort['side']): GraphPort['side'] {
-  const oppositeSide: Record<GraphPort['side'], GraphPort['side']> = {
-    NORTH: 'SOUTH',
-    EAST: 'WEST',
-    SOUTH: 'NORTH',
-    WEST: 'EAST',
-  };
-  return oppositeSide[side];
-}
-
-/** Choose clear straight/one-bend border candidates before joint routing. */
-function simpleConnectionSides(
-  source: GraphLayoutNode,
-  target: GraphLayoutNode,
-  obstacles: readonly GraphLayoutNode[],
-  facing: { source: GraphPort['side']; target: GraphPort['side'] },
-  offset: number,
-  sourcePort?: GraphPort['side'],
-  targetPort?: GraphPort['side']
-): { source: GraphPort['side']; target: GraphPort['side'] } | undefined {
-  let best: { source: GraphPort['side']; target: GraphPort['side']; score: number } | undefined;
-  const outward = (a: GraphPoint, b: GraphPoint, side: GraphPort['side']) =>
-    side === 'NORTH'
-      ? b.x === a.x && b.y < a.y
-      : side === 'SOUTH'
-        ? b.x === a.x && b.y > a.y
-        : side === 'WEST'
-          ? b.y === a.y && b.x < a.x
-          : b.y === a.y && b.x > a.x;
-  for (const from of sourcePort ? [sourcePort] : sides)
-    for (const to of targetPort ? [targetPort] : sides) {
-      const a = sourcePort ? anchor(source, from) : projectedAnchor(source, from, target, offset);
-      const b = targetPort ? anchor(target, to) : projectedAnchor(target, to, source, offset);
-      const candidates =
-        a.x === b.x || a.y === b.y
-          ? [[a, b]]
-          : [
-              [a, { x: b.x, y: a.y }, b],
-              [a, { x: a.x, y: b.y }, b],
-            ];
-      for (const path of candidates) {
-        if (obstacles.includes(source) && !outward(a, path[1]!, from)) continue;
-        if (obstacles.includes(target) && !outward(b, path.at(-2)!, to)) continue;
-        if (
-          path.slice(1).some((end, i) => {
-            const start = path[i]!;
-            return obstacles.some(
-              (node) =>
-                Math.max(start.x, end.x) > node.x &&
-                Math.min(start.x, end.x) < node.x + node.width &&
-                Math.max(start.y, end.y) > node.y &&
-                Math.min(start.y, end.y) < node.y + node.height
-            );
-          })
-        )
-          continue;
-        const length = path
-          .slice(1)
-          .reduce(
-            (sum, end, i) => sum + Math.abs(end.x - path[i]!.x) + Math.abs(end.y - path[i]!.y),
-            0
-          );
-        const score =
-          length +
-          (path.length - 2) * 32 +
-          (from === facing.source ? 0 : 16) +
-          (to === facing.target ? 0 : 16);
-        if (!best || score < best.score) best = { source: from, target: to, score };
-      }
-    }
-  return best;
-}
-
 function facingSides(
   source: GraphLayoutNode,
   target: GraphLayoutNode
@@ -424,7 +398,7 @@ function facingSides(
     : dy >= 0
       ? 'SOUTH'
       : 'NORTH';
-  return { source: sourceSide, target: opposite(sourceSide) };
+  return { source: sourceSide, target: sides[(sides.indexOf(sourceSide) + 2) % 4]! };
 }
 function projectedAnchor(
   node: GraphLayoutNode,

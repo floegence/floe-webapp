@@ -1,0 +1,333 @@
+{
+  "nodes": [
+    {
+      "id": "node-0",
+      "label": "node-0",
+      "kind": "group",
+      "width": 320,
+      "height": 305,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "node-1",
+      "label": "node-1",
+      "width": 220,
+      "height": 158,
+      "x": 352,
+      "y": 73.5
+    },
+    {
+      "id": "node-2",
+      "label": "node-2",
+      "width": 220,
+      "height": 158,
+      "x": 0,
+      "y": 337
+    },
+    {
+      "id": "node-3",
+      "label": "node-3",
+      "width": 220,
+      "height": 158,
+      "x": 252,
+      "y": 337
+    },
+    {
+      "id": "node-4",
+      "label": "node-4",
+      "kind": "node",
+      "width": 320,
+      "height": 438,
+      "x": 0,
+      "y": 669.5
+    },
+    {
+      "id": "node-5",
+      "label": "node-5",
+      "kind": "group",
+      "width": 366.6666666666667,
+      "height": 723,
+      "x": 352,
+      "y": 527
+    },
+    {
+      "id": "node-6",
+      "label": "node-6",
+      "width": 240,
+      "height": 90,
+      "x": 0,
+      "y": 1282
+    },
+    {
+      "id": "node-7",
+      "label": "node-7",
+      "width": 240,
+      "height": 90,
+      "x": 816,
+      "y": 1282
+    },
+    {
+      "id": "node-8",
+      "label": "node-8",
+      "width": 240,
+      "height": 90,
+      "x": 272,
+      "y": 1282
+    },
+    {
+      "id": "node-9",
+      "label": "node-9",
+      "width": 240,
+      "height": 90,
+      "x": 544,
+      "y": 1282
+    },
+    {
+      "id": "node-10",
+      "label": "node-10",
+      "kind": "node",
+      "width": 320,
+      "height": 261,
+      "x": 0,
+      "y": 1547.5
+    },
+    {
+      "id": "node-11",
+      "label": "node-11",
+      "kind": "group",
+      "width": 944,
+      "height": 548,
+      "x": 352,
+      "y": 1404
+    },
+    {
+      "id": "node-12",
+      "label": "node-12",
+      "width": 220,
+      "height": 158,
+      "x": 0,
+      "y": 1984
+    },
+    {
+      "id": "node-13",
+      "label": "node-13",
+      "width": 220,
+      "height": 158,
+      "x": 252,
+      "y": 1984
+    },
+    {
+      "id": "node-14",
+      "label": "node-14",
+      "width": 220,
+      "height": 158,
+      "x": 504,
+      "y": 1984
+    },
+    {
+      "id": "node-15",
+      "label": "node-15",
+      "parentId": "node-0",
+      "width": 280,
+      "height": 177,
+      "x": 20,
+      "y": 108
+    },
+    {
+      "id": "node-16",
+      "label": "node-16",
+      "parentId": "node-5",
+      "width": 280,
+      "height": 177,
+      "x": 418.6666666666667,
+      "y": 635
+    },
+    {
+      "id": "node-17",
+      "label": "node-17",
+      "parentId": "node-5",
+      "width": 280,
+      "height": 177,
+      "x": 372,
+      "y": 844
+    },
+    {
+      "id": "node-18",
+      "label": "node-18",
+      "parentId": "node-5",
+      "width": 280,
+      "height": 177,
+      "x": 418.6666666666667,
+      "y": 1053
+    },
+    {
+      "id": "node-19",
+      "label": "node-19",
+      "parentId": "node-11",
+      "width": 280,
+      "height": 420,
+      "x": 372,
+      "y": 1512
+    },
+    {
+      "id": "node-20",
+      "label": "node-20",
+      "parentId": "node-11",
+      "width": 280,
+      "height": 420,
+      "x": 684,
+      "y": 1512
+    },
+    {
+      "id": "node-21",
+      "label": "node-21",
+      "parentId": "node-11",
+      "width": 280,
+      "height": 292,
+      "x": 996,
+      "y": 1512
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "source": "node-0",
+      "target": "node-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-1",
+      "source": "node-2",
+      "target": "node-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-2",
+      "source": "node-4",
+      "target": "node-14",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-3",
+      "source": "node-4",
+      "target": "node-5",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-4",
+      "source": "node-6",
+      "target": "node-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-5",
+      "source": "node-8",
+      "target": "node-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-6",
+      "source": "node-9",
+      "target": "node-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-7",
+      "source": "node-6",
+      "target": "node-7",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-8",
+      "source": "node-7",
+      "target": "node-12",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-9",
+      "source": "node-11",
+      "target": "node-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-10",
+      "source": "node-3",
+      "target": "node-11",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-11",
+      "source": "node-1",
+      "target": "node-3",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-12",
+      "source": "node-11",
+      "target": "node-10",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-13",
+      "source": "node-8",
+      "target": "node-10",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-14",
+      "source": "node-10",
+      "target": "node-11",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-15",
+      "source": "node-10",
+      "target": "node-13",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-16",
+      "source": "node-16",
+      "target": "node-17",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-17",
+      "source": "node-17",
+      "target": "node-18",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-18",
+      "source": "node-18",
+      "target": "node-16",
+      "label": "",
+      "sections": []
+    }
+  ],
+  "bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 1296,
+    "height": 2142
+  }
+}

@@ -169,6 +169,9 @@ option to retain the default hierarchical layout.
 Packed and positioned graphs use joint orthogonal routing through
 libavoid. Free connections use the available spans on all four node and group
 borders, avoid intervening objects, and separate shared segments into lanes.
+Automatic anchors include clear corridors beside obstacle boundaries. Their
+border choices are resolved jointly, so independent fan-in connections can
+reach different parts of a group without being forced across one another.
 Explicit port sides remain fixed.
 Set `GraphLayoutOptions.edgeClearance` to adjust obstacle spacing for routed
 connectors without moving nodes or changing their port anchors. It accepts
