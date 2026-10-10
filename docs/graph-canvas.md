@@ -38,6 +38,9 @@ Put selectable detail text in a shared floating layer outside the zoomed plane.
 
 Routes are faint but visible by default. Hovering or focusing a node emphasizes
 its relations; a group traces descendant relations and hides unrelated edges.
+Automatic border anchors are chosen jointly from peer-facing spans and free
+obstacle corridors. Their attached segments can separate into lanes; batches
+with explicit ports or self loops preserve their exact endpoint constraints.
 `highlight` may control this from a nested host object. `selected` remains
 host-owned. Rendered cards are culled beyond the viewport with an overscan
 margin; this does not remove any graph records. Aggregate large domain sets

@@ -3,6 +3,7 @@ import { routeGraphGeometry } from '../src/components/graph/positions';
 import type { GraphLayout, GraphLayoutNode, GraphPoint } from '../src/components/graph/types';
 import compoundGeometry from './fixtures/compound-border-geometry.json';
 import fanInGeometry from './fixtures/fan-in-border-geometry.json';
+import layeredGeometry from './fixtures/layered-border-geometry.json';
 
 const node = (id: string, x: number, y: number, width = 100, height = 80): GraphLayoutNode => ({
   id,
@@ -35,6 +36,35 @@ const turns = (path: readonly GraphPoint[]) => {
 };
 
 describe('readable graph routing', () => {
+  it('separates shared lanes in a dense layered compound graph', async () => {
+    const result = await routeGraphGeometry(structuredClone(layeredGeometry) as GraphLayout);
+    const segments = result.edges.flatMap((edge) =>
+      edge.sections.flatMap((path) =>
+        path.slice(1).map((b, i) => ({ a: path[i]!, b, edge: edge.id }))
+      )
+    );
+    let shared = 0;
+    for (const [i, s] of segments.entries())
+      for (const t of segments.slice(i + 1)) {
+        if (s.edge === t.edge) continue;
+        const horizontal = s.a.y === s.b.y;
+        if (horizontal !== (t.a.y === t.b.y)) continue;
+        const fixed = horizontal ? 'y' : 'x',
+          axis = horizontal ? 'x' : 'y';
+        if (Math.abs(s.a[fixed] - t.a[fixed]) < 0.01) {
+          const overlap = Math.max(
+            0,
+            Math.min(Math.max(s.a[axis], s.b[axis]), Math.max(t.a[axis], t.b[axis])) -
+              Math.max(Math.min(s.a[axis], s.b[axis]), Math.min(t.a[axis], t.b[axis]))
+          );
+          shared += overlap;
+        }
+      }
+    expect(shared).toBeLessThan(1100);
+    expect(await routeGraphGeometry(structuredClone(layeredGeometry) as GraphLayout)).toEqual(
+      result
+    );
+  });
   it.each([0, 1, 2, 3])(
     'avoids independent fan-in crossings after %s quarter turns',
     async (rotation) => {

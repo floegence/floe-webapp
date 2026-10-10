@@ -54,9 +54,12 @@ export async function routeGraphGeometry(
       router.setRoutingParameter(avoid.RoutingParameter.crossingPenalty, 80);
       router.setRoutingParameter(avoid.RoutingParameter.fixedSharedPathPenalty, 120);
       router.setRoutingParameter(avoid.RoutingParameter.portDirectionPenalty, 0);
-      // Pins already provide separate border lanes. Moving their attached
-      // segments would collapse self loops and invalidate fixed-port geometry.
-      router.setRoutingOption(avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes, false);
+      // Automatic anchors may move along a border to separate shared lanes.
+      // Constrained ports and loops retain their exact endpoint geometry.
+      router.setRoutingOption(
+        avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes,
+        !edges.some((edge) => edge.sourcePort || edge.targetPort || edge.source === edge.target)
+      );
       router.setRoutingOption(avoid.RoutingOption.nudgeSharedPathsWithCommonEndPoint, true);
       const shapes = new Map(
         layout.nodes
@@ -121,7 +124,6 @@ export async function routeGraphGeometry(
           );
         }
       }
-      const autoClasses = new Map<string, number>();
       const obstacles = layout.nodes.filter((node) => shapes.has(node.id));
       const endpoint = (
         node: GraphLayoutNode,
@@ -174,8 +176,7 @@ export async function routeGraphGeometry(
                 }));
               });
         if (shape) {
-          // One connection class exposes all automatic border candidates to
-          // joint routing, rather than committing to a crowded side beforehand.
+          // Each connection chooses from its own peer-facing border candidates.
           const location = (side: GraphPort['side'], position: GraphPoint) =>
             JSON.stringify([
               node.id,
@@ -184,12 +185,15 @@ export async function routeGraphGeometry(
               side,
             ]);
           const limited = Boolean(portId || selfPosition || parallel);
-          const existing = limited
-            ? borderPinClasses.get(location(candidates[0]!.side, candidates[0]!.position))
-            : autoClasses.get(node.id);
-          if (limited && existing !== undefined) return new avoid.ConnEnd(shape, existing);
+          const existing =
+            limited ||
+            candidates.every((candidate) =>
+              borderPinClasses.has(location(candidate.side, candidate.position))
+            )
+              ? borderPinClasses.get(location(candidates[0]!.side, candidates[0]!.position))
+              : undefined;
+          if (existing !== undefined) return new avoid.ConnEnd(shape, existing);
           const pinClass = existing ?? nextPinClass++;
-          if (!limited) autoClasses.set(node.id, pinClass);
           for (const { side, position } of candidates) {
             const key = location(side, position);
             if (borderPinClasses.has(key)) continue;

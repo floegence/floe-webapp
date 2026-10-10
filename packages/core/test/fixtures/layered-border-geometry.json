@@ -1,0 +1,362 @@
+{
+  "nodes": [
+    {
+      "id": "object-0",
+      "label": "object-0",
+      "kind": "group",
+      "width": 320,
+      "height": 305,
+      "x": 252,
+      "y": 0
+    },
+    {
+      "id": "object-1",
+      "label": "object-1",
+      "parentId": "object-0",
+      "width": 280,
+      "height": 177,
+      "x": 272,
+      "y": 108
+    },
+    {
+      "id": "object-2",
+      "label": "object-2",
+      "kind": "group",
+      "width": 632,
+      "height": 469,
+      "x": 604,
+      "y": 190
+    },
+    {
+      "id": "object-3",
+      "label": "object-3",
+      "parentId": "object-2",
+      "width": 280,
+      "height": 341,
+      "x": 624,
+      "y": 298
+    },
+    {
+      "id": "object-4",
+      "label": "object-4",
+      "parentId": "object-2",
+      "width": 280,
+      "height": 324,
+      "x": 936,
+      "y": 306.5
+    },
+    {
+      "id": "object-5",
+      "label": "object-5",
+      "kind": "group",
+      "width": 944,
+      "height": 354,
+      "x": 1268,
+      "y": 0
+    },
+    {
+      "id": "object-6",
+      "label": "object-6",
+      "parentId": "object-5",
+      "width": 280,
+      "height": 226,
+      "x": 1288,
+      "y": 108
+    },
+    {
+      "id": "object-7",
+      "label": "object-7",
+      "parentId": "object-5",
+      "width": 280,
+      "height": 226,
+      "x": 1600,
+      "y": 108
+    },
+    {
+      "id": "object-8",
+      "label": "object-8",
+      "parentId": "object-5",
+      "width": 280,
+      "height": 226,
+      "x": 1912,
+      "y": 108
+    },
+    {
+      "id": "object-9",
+      "label": "object-9",
+      "kind": "group",
+      "width": 944,
+      "height": 578,
+      "x": 2244,
+      "y": 0
+    },
+    {
+      "id": "object-10",
+      "label": "object-10",
+      "parentId": "object-9",
+      "width": 280,
+      "height": 450,
+      "x": 2264,
+      "y": 108
+    },
+    {
+      "id": "object-11",
+      "label": "object-11",
+      "parentId": "object-9",
+      "width": 280,
+      "height": 341,
+      "x": 2576,
+      "y": 162.5
+    },
+    {
+      "id": "object-12",
+      "label": "object-12",
+      "parentId": "object-9",
+      "width": 280,
+      "height": 341,
+      "x": 2888,
+      "y": 162.5
+    },
+    {
+      "id": "object-13",
+      "label": "object-13",
+      "kind": "group",
+      "width": 320,
+      "height": 469,
+      "x": 3220,
+      "y": 380
+    },
+    {
+      "id": "object-14",
+      "label": "object-14",
+      "parentId": "object-13",
+      "width": 280,
+      "height": 341,
+      "x": 3240,
+      "y": 488
+    },
+    {
+      "id": "object-15",
+      "label": "object-15",
+      "width": 220,
+      "height": 158,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "object-16",
+      "label": "object-16",
+      "width": 220,
+      "height": 158,
+      "x": 810,
+      "y": 0
+    },
+    {
+      "id": "object-17",
+      "label": "object-17",
+      "width": 220,
+      "height": 158,
+      "x": 3270,
+      "y": 881
+    },
+    {
+      "id": "object-18",
+      "label": "object-18",
+      "width": 220,
+      "height": 158,
+      "x": 3270,
+      "y": 0
+    },
+    {
+      "id": "object-19",
+      "label": "object-19",
+      "width": 220,
+      "height": 158,
+      "x": 3270,
+      "y": 190
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "source": "object-1",
+      "target": "object-15",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-1",
+      "source": "object-15",
+      "target": "object-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-2",
+      "source": "object-1",
+      "target": "object-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-3",
+      "source": "object-1",
+      "target": "object-9",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-4",
+      "source": "object-1",
+      "target": "object-13",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-5",
+      "source": "object-1",
+      "target": "object-16",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-6",
+      "source": "object-2",
+      "target": "object-5",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-7",
+      "source": "object-3",
+      "target": "object-4",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-8",
+      "source": "object-3",
+      "target": "object-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-9",
+      "source": "object-3",
+      "target": "object-5",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-10",
+      "source": "object-4",
+      "target": "object-5",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-11",
+      "source": "object-6",
+      "target": "object-7",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-12",
+      "source": "object-7",
+      "target": "object-8",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-13",
+      "source": "object-2",
+      "target": "object-9",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-14",
+      "source": "object-9",
+      "target": "object-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-15",
+      "source": "object-10",
+      "target": "object-11",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-16",
+      "source": "object-11",
+      "target": "object-12",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-17",
+      "source": "object-13",
+      "target": "object-2",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-18",
+      "source": "object-13",
+      "target": "object-17",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-19",
+      "source": "object-13",
+      "target": "object-5",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-20",
+      "source": "object-13",
+      "target": "object-9",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-21",
+      "source": "object-2",
+      "target": "object-16",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-22",
+      "source": "object-2",
+      "target": "object-19",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-23",
+      "source": "object-9",
+      "target": "object-19",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "edge-24",
+      "source": "object-0",
+      "target": "object-18",
+      "label": "",
+      "sections": []
+    }
+  ],
+  "bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 1,
+    "height": 1
+  }
+}
