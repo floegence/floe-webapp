@@ -133,7 +133,38 @@ try {
       ]);
       await page.keyboard.type('ab!');
       assert.deepEqual(await page.evaluate(() => window.events.splice(0)), [['text','a','third'],['text','b','third'],['text','!','third']]);
+      for (const mode of ['text', 'physical']) {
+        const chord = await page.evaluate(mode => {
+          window.input.setTextInputMode(mode); window.input.focus(); window.events=[];
+          const e=window.input.element;
+          // The modifier can already be held when the surface gains focus.
+          e.dispatchEvent(new KeyboardEvent('keydown',{key:'a',code:'KeyA',ctrlKey:true,cancelable:true}));
+          e.dispatchEvent(new KeyboardEvent('keyup',{key:'a',code:'KeyA',ctrlKey:true}));
+          return window.events.splice(0);
+        }, mode);
+        assert.deepEqual(chord, [['key','Control',true,'third'],['key','a',true,'third'],
+          ['key','a',false,'third'],['key','Control',false,'third']], `${mode}: focused chord retains its modifier and releases it`);
+      }
+      const shifted = await page.evaluate(() => {
+        const e=window.input.element;
+        e.dispatchEvent(new KeyboardEvent('keydown',{key:'$',code:'Digit4',shiftKey:true,cancelable:true}));
+        e.value='$'; e.dispatchEvent(new InputEvent('input',{inputType:'insertText',data:'$',bubbles:true}));
+        e.dispatchEvent(new KeyboardEvent('keyup',{key:'$',code:'Digit4',shiftKey:true}));
+        return window.events.splice(0);
+      });
+      assert.deepEqual(shifted, [['key','Shift',true,'third'],['key','$',true,'third'],
+        ['key','$',false,'third'],['key','Shift',false,'third']]);
+      const revokedChord = await page.evaluate(() => {
+        const e=window.input.element;
+        e.dispatchEvent(new KeyboardEvent('keydown',{key:'a',code:'KeyA',ctrlKey:true,cancelable:true}));
+        window.input.bindTarget('successor');
+        e.dispatchEvent(new KeyboardEvent('keyup',{key:'a',code:'KeyA',ctrlKey:true}));
+        window.input.bindTarget('third'); window.input.focus();
+        return window.events.splice(0);
+      });
+      assert.deepEqual(revokedChord, [['key','Control',true,'third'],['key','a',true,'third'],['release','third']]);
       await page.evaluate(() => {
+        window.input.setTextInputMode('text');
         const e=window.input.element;
         e.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
         window.input.setTextInputMode('physical');

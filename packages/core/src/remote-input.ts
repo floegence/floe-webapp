@@ -69,6 +69,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
   let textInputMode: 'physical' | 'text' = 'physical';
   const modifiers = new Map<string, RemoteInputKey>();
   const held = new Set<string>();
+  const inferredModifiers = new Set<string>();
   const imeKeys = new Set<string>();
   let anchor: { x: number; y: number } | null = null;
   const cleanup: (() => void)[] = [];
@@ -113,6 +114,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     const pressed = held.size > 0;
     held.clear();
     modifiers.clear();
+    inferredModifiers.clear();
     if (previous !== null && pressed) options.release(previous);
   }
   function reset() {
@@ -130,15 +132,23 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     // A local edit must not inherit a remotely held shortcut modifier. Retain
     // the locally held modifiers for a subsequent physical shortcut.
     if (textInputMode === 'text' && held.size) {
-      held.clear(); options.release(target);
+      held.clear(); inferredModifiers.clear(); options.release(target);
     }
     options.commitText(text, target);
   }
   function forward(packet: RemoteInputKey) {
     if (target === null) return;
-    if (textInputMode === 'text') {
-      for (const [name, modifier] of modifiers) {
-        if (!held.has(name)) { held.add(name); options.sendKey(modifier, target); }
+    if (!/^(Shift|Control|Alt|Meta)(Left|Right)$/.test(packet.code)) {
+      // Focus can begin after a modifier's keydown. The next physical chord's
+      // flags are authoritative; inferred modifiers last only for that chord.
+      for (const [family, enabled] of [['Shift', packet.shiftKey], ['Control', packet.ctrlKey],
+        ['Alt', packet.altKey], ['Meta', packet.metaKey]] as const) {
+        if (!enabled || [...held].some(name => name === `${family}Left` || name === `${family}Right`)) continue;
+        const modifier = [...modifiers.values()].find(value => value.code === `${family}Left` || value.code === `${family}Right`)
+          ?? { ...packet, key: family, code: `${family}Left`, pressed: true, repeat: false, location: 1 };
+        held.add(modifier.code);
+        if (!modifiers.has(modifier.code)) inferredModifiers.add(modifier.code);
+        options.sendKey(modifier, target);
       }
     }
     held.add(packet.code || packet.key);
@@ -174,8 +184,7 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     // software keyboard input use the confirmed text, never guessed keycodes.
     if (textInputMode === 'physical' && printable && value === printable.key && !printable.altKey && value.length === 1) {
       const packet = printable;
-      held.add(packet.code || packet.key);
-      options.sendKey(packet, target);
+      forward(packet);
     } else commit(value);
     clearBuffer();
   }
@@ -207,6 +216,13 @@ export function createRemoteInput<T>(options: RemoteInputOptions<T>): RemoteInpu
     modifiers.delete(identity(event));
     if (imeKeys.delete(identity(event))) return;
     if (target !== null && held.delete(identity(event))) options.sendKey(key(event, false), target);
+    if (target !== null && ![...held].some(name => !/^(Shift|Control|Alt|Meta)(Left|Right)$/.test(name))) {
+      for (const code of inferredModifiers) {
+        held.delete(code);
+        options.sendKey({ ...key(event, false), code, key: code.replace(/Left$/, ''), location: 1 }, target);
+      }
+      inferredModifiers.clear();
+    }
   });
   listen<InputEvent>(element, 'beforeinput', event => {
     if (target === null || disposed) { event.preventDefault(); return; }

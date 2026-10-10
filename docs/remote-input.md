@@ -19,6 +19,9 @@ software keyboards or native text insertion. Composition navigation never also
 becomes a remote key. A backend must deliver committed text without recomposing it
 or borrowing the user's clipboard. It must reject unavailable or retired targets.
 Input is not replayed after reconnect; callbacks own operation-error presentation.
+When focus starts after a modifier was pressed, a physical key's modifier flags
+complete that chord. Inferred modifiers release with the last chord key or target
+revocation; explicit left/right modifier events retain their original ownership.
 
 `setTextInputMode('text')` also sends ordinary characters through `commitText`,
 independent of the host keyboard layout. Modifiers remain local until a physical
