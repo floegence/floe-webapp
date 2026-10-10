@@ -1,6 +1,12 @@
-import { createMemo } from 'solid-js';
+import { For, createMemo } from 'solid-js';
 import { fitGraphViewport, graphSectionPath } from './geometry';
-import type { GraphLayout, GraphViewport } from './types';
+import type { GraphLayout, GraphLayoutNode, GraphViewport } from './types';
+
+export interface GraphMinimapNodeStyle {
+  /** CSS colors, including theme variables. Omitted colors retain the defaults. */
+  fill?: string;
+  stroke?: string;
+}
 
 export interface GraphMinimapProps {
   layout: GraphLayout;
@@ -9,6 +15,8 @@ export interface GraphMinimapProps {
   onViewportChange: (viewport: GraphViewport) => void;
   onInteractionStart?: () => void;
   ariaLabel: string;
+  /** Host appearance over the exact layout. Equal styles share one SVG path. */
+  nodeStyle?: (node: GraphLayoutNode) => GraphMinimapNodeStyle | undefined;
 }
 
 /** A lightweight navigator over the exact main-canvas geometry. No second layout. */
@@ -25,13 +33,29 @@ export function GraphMinimap(props: GraphMinimapProps) {
       height: height + padding * 2,
     };
   });
-  const shape = (kind: 'node' | 'group') =>
-    props.layout.nodes
-      .filter((node) => (node.kind === 'group' ? 'group' : 'node') === kind)
-      .map((node) => `M${node.x},${node.y}h${node.width}v${node.height}h${-node.width}Z`)
-      .join('');
-  const nodes = createMemo(() => shape('node'));
-  const groups = createMemo(() => shape('group'));
+  const shapes = createMemo(() => {
+    const groups = new Map<string, GraphMinimapNodeStyle & { paths: string[] }>();
+    const nodes = new Map<string, GraphMinimapNodeStyle & { paths: string[] }>();
+    for (const node of props.layout.nodes) {
+      const style = props.nodeStyle?.(node) ?? {};
+      const batches = node.kind === 'group' ? groups : nodes;
+      const key = JSON.stringify([style.fill ?? null, style.stroke ?? null]);
+      let batch = batches.get(key);
+      if (!batch) {
+        batch = { ...style, paths: [] };
+        batches.set(key, batch);
+      }
+      batch.paths.push(`M${node.x},${node.y}h${node.width}v${node.height}h${-node.width}Z`);
+    }
+    const paths = (batches: typeof groups) =>
+      [...batches.values()].map(({ paths, ...style }) => ({ ...style, path: paths.join('') }));
+    return { groups: paths(groups), nodes: paths(nodes) };
+  });
+  const paint = (style: GraphMinimapNodeStyle) => ({
+    '--graph-minimap-fill': style.fill,
+    '--graph-minimap-stroke': style.stroke,
+    '--graph-minimap-opacity': style.fill || style.stroke ? '1' : undefined,
+  });
   const edges = createMemo(() =>
     props.layout.edges.flatMap((edge) => edge.sections.map(graphSectionPath)).join(' ')
   );
@@ -111,9 +135,13 @@ export function GraphMinimap(props: GraphMinimapProps) {
         );
       }}
     >
-      <path class="floe-graph__minimap-groups" d={groups()} />
+      <For each={shapes().groups}>
+        {(shape) => <path class="floe-graph__minimap-groups" d={shape.path} style={paint(shape)} />}
+      </For>
       <path class="floe-graph__minimap-edges" d={edges()} />
-      <path class="floe-graph__minimap-nodes" d={nodes()} />
+      <For each={shapes().nodes}>
+        {(shape) => <path class="floe-graph__minimap-nodes" d={shape.path} style={paint(shape)} />}
+      </For>
       <rect
         class="floe-graph__minimap-viewport"
         x={-props.viewport.x / props.viewport.scale}

@@ -90,13 +90,16 @@
   outline-offset: 2px;
 }
 .floe-graph__minimap-nodes {
-  fill: var(--muted-foreground);
-  opacity: 0.65;
+  fill: var(--graph-minimap-fill, var(--muted-foreground));
+  stroke: var(--graph-minimap-stroke, none);
+  stroke-width: 0.7px;
+  vector-effect: non-scaling-stroke;
+  opacity: var(--graph-minimap-opacity, 0.65);
   pointer-events: none;
 }
 .floe-graph__minimap-groups {
-  fill: color-mix(in srgb, var(--primary) 10%, transparent);
-  stroke: var(--muted-foreground);
+  fill: var(--graph-minimap-fill, color-mix(in srgb, var(--primary) 10%, transparent));
+  stroke: var(--graph-minimap-stroke, var(--muted-foreground));
   stroke-width: 0.7px;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -147,6 +150,11 @@
   }
   .floe-graph__minimap-nodes {
     fill: CanvasText;
+    stroke: CanvasText;
+    opacity: 1;
+  }
+  .floe-graph__minimap-groups {
+    fill: Canvas;
   }
   .floe-graph__minimap-groups,
   .floe-graph__minimap-edges {

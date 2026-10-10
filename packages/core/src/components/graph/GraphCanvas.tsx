@@ -11,7 +11,7 @@ import {
 import { InfiniteCanvas } from '../ui/InfiniteCanvas';
 import { resolveSurfaceInteractionTargetRole } from '../ui/localInteractionSurface';
 import { graphEdgeLabelPosition, graphRelatedEdges, graphSectionPath } from './geometry';
-import { GraphMinimap } from './GraphMinimap';
+import { GraphMinimap, type GraphMinimapProps } from './GraphMinimap';
 import type {
   GraphLayout,
   GraphLayoutNode,
@@ -43,7 +43,7 @@ export interface GraphCanvasProps {
   /** Overlay content should use shared SurfaceFloatingLayer for point placement. */
   overlay?: JSX.Element;
   /** Optional interactive overview. Its geometry follows the same visible layout. */
-  minimap?: { ariaLabel: string };
+  minimap?: Pick<GraphMinimapProps, 'ariaLabel' | 'nodeStyle'>;
   class?: string;
 }
 
@@ -349,6 +349,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
             onViewportChange={props.onViewportChange}
             onInteractionStart={props.onInteractionStart}
             ariaLabel={minimap().ariaLabel}
+            nodeStyle={minimap().nodeStyle}
           />
         )}
       </Show>

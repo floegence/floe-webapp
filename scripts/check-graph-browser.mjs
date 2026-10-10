@@ -1,4 +1,4 @@
-/* global window, getComputedStyle */
+/* global window, document, getComputedStyle */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -33,6 +33,8 @@ const edges=[{id:'ab',label:'2',source:'a',target:'b'},
  {id:'bc',label:'Database copies independent',source:'b',target:'c'}];
 function App(){
  const [layout,setLayout]=createSignal(); const [viewport,setViewport]=createSignal({x:50,y:50,scale:1});
+ const [minimapStyle,setMinimapStyle]=createSignal();
+ window.colorMinimap=enabled=>setMinimapStyle(enabled ? () => node=>({fill:node.kind==='group'?'var(--overview-group)':node.id==='b'?'var(--overview-resource)':'var(--overview-node)',stroke:'var(--overview-outline)'}) : undefined);
  const [menu,setMenu]=createSignal(null); let engine;
  const record=e=>{window.lastGraphEvent=e.object;setMenu(e)};
  onMount(async()=>{engine=createGraphLayoutEngine(); setLayout(await engine.layout({nodes,edges})); window.graphReady=true; window.moveGraph=async()=>{setLayout(await engine.layout({nodes,edges},{positions:[{nodeId:'g',x:60,y:220},{nodeId:'b',x:650,y:80},{nodeId:'c',x:950,y:80}]}));};
@@ -96,7 +98,7 @@ function App(){
  {groupPadding:{top:108,right:20,bottom:20,left:20},positions:[
    {nodeId:'group',x:0,y:0},{nodeId:'member',x:20,y:108},{nodeId:'peer',x:332,y:108}]});
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
-   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record} minimap={{ariaLabel:'Graph overview'}}
+   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record} minimap={{ariaLabel:'Graph overview',nodeStyle:minimapStyle()}}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
    renderNode={(n,context)=><div style={{height:'100%',border:'1px solid #59616b',background:'#fff',padding:'12px'}}>
      <span>{n.label}</span><button onClick={context.openMenu} aria-label={'Actions for '+n.label}>...</button>
@@ -136,6 +138,68 @@ render(()=><App/>,document.getElementById('root'));
   assert.deepEqual(await page.evaluate(() => window.lastGraphEvent), { kind: 'node', id: 'a' });
   await page.getByRole('button', { name: 'Close details' }).click();
   const overview = page.getByRole('region', { name: 'Graph overview', exact: true });
+  for (const palette of [
+    { group: '#e2d7bf', node: '#f4f4f4', resource: '#b3cbb3', outline: '#59616b' },
+    { group: '#393329', node: '#515151', resource: '#284336', outline: '#8495ad' },
+  ]) {
+    await overview.evaluate((element, colors) => {
+      for (const [key, value] of Object.entries(colors))
+        element.style.setProperty('--overview-' + key, value);
+      window.colorMinimap(true);
+    }, palette);
+    const paths = overview.locator('.floe-graph__minimap-nodes');
+    await page.waitForFunction(
+      () => document.querySelectorAll('.floe-graph__minimap-nodes').length === 2
+    );
+    const fills = await paths.evaluateAll((elements) =>
+      elements.map((element) => getComputedStyle(element).fill)
+    );
+    assert.equal(new Set(fills).size, 2, 'node categories keep distinct host-provided colors');
+    assert.equal(await paths.first().evaluate((element) => getComputedStyle(element).opacity), '1');
+    assert.equal(
+      await paths
+        .first()
+        .evaluate((element) => (element.getAttribute('d').match(/M/g) ?? []).length),
+      2,
+      'same-color nodes share one path'
+    );
+    assert.equal(
+      await overview.locator('path').count(),
+      4,
+      'path count follows styles, not node count'
+    );
+    const groupFill = await overview
+      .locator('.floe-graph__minimap-groups')
+      .evaluate((element) => getComputedStyle(element).fill);
+    assert.notEqual(groupFill, fills[0], 'groups retain their own fill');
+  }
+  await page.emulateMedia({ forcedColors: 'active' });
+  assert.equal(
+    await overview
+      .locator('.floe-graph__minimap-nodes')
+      .first()
+      .evaluate((element) => getComputedStyle(element).fill),
+    'rgb(0, 0, 0)',
+    'system colors override host-provided colors'
+  );
+  assert.equal(
+    await overview
+      .locator('.floe-graph__minimap-groups')
+      .evaluate((element) => getComputedStyle(element).fill),
+    'rgb(255, 255, 255)'
+  );
+  await page.emulateMedia({ forcedColors: 'none' });
+  await page.evaluate(() => window.colorMinimap(false));
+  await page.waitForFunction(
+    () => document.querySelectorAll('.floe-graph__minimap-nodes').length === 1
+  );
+  assert.equal(
+    await overview
+      .locator('.floe-graph__minimap-nodes')
+      .evaluate((element) => getComputedStyle(element).opacity),
+    '0.65',
+    'omitted styles retain the original default'
+  );
   const beforeOverview = await page.evaluate(() => window.graphViewport());
   await overview.focus();
   await page.keyboard.press('ArrowRight');
