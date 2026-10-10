@@ -16,6 +16,7 @@ describe('@floegence/floe-webapp-core package config', () => {
     expect(pkg.sideEffects).toBe(false);
 
     expect(pkg.exports).toEqual({
+      './graph-assets': { types: './scripts/graph-assets.d.mts', import: './scripts/graph-assets.mjs' },
       './graph': {
         types: './dist/graph.d.ts',
         import: './dist/graph.js',
@@ -111,6 +112,6 @@ describe('@floegence/floe-webapp-core package config', () => {
       './input-focus.css': './dist/input-focus.css',
     });
 
-    expect(pkg.files).toEqual(['dist', 'scripts/pdf-assets.mjs', 'scripts/pdf-assets.d.mts']);
+    expect(pkg.files).toEqual(['dist', 'scripts/pdf-assets.mjs', 'scripts/pdf-assets.d.mts', 'scripts/graph-assets.mjs', 'scripts/graph-assets.d.mts']);
   });
 });

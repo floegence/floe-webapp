@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.86.16",
+  "version": "0.86.17",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -139,12 +139,18 @@
       "types": "./dist/graph.d.ts",
       "import": "./dist/graph.js"
     },
-    "./graph.css": "./dist/graph.css"
+    "./graph.css": "./dist/graph.css",
+    "./graph-assets": {
+      "types": "./scripts/graph-assets.d.mts",
+      "import": "./scripts/graph-assets.mjs"
+    }
   },
   "files": [
     "dist",
     "scripts/pdf-assets.mjs",
-    "scripts/pdf-assets.d.mts"
+    "scripts/pdf-assets.d.mts",
+    "scripts/graph-assets.mjs",
+    "scripts/graph-assets.d.mts"
   ],
   "scripts": {
     "dev": "node ./scripts/dev.mjs",

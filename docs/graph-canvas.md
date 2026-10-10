@@ -94,3 +94,14 @@ graphs with domain aggregates. This is local performance qualification, not
 ordinary push CI. Anchor candidates use obstacles in each endpoint corridor;
 all obstacles remain in the routing engine. ELK retains stable node model order
 without its quadratic edge-model ordering pass.
+
+## Offline file-origin hosts
+
+Use `graphBlobWorkersPlugin` from `@floegence/floe-webapp-core/graph-assets`
+in the host Vite build when WKWebView cannot create file-origin workers.
+The plugin transports the unchanged published layout and ELK modules through
+local blob workers; it keeps the original `assets/libavoid.wasm` independently
+replaceable. The host must grant local file read access and include `blob:` in
+`script-src`, `worker-src`, and `connect-src`. No remote resource is required.
+Ordinary HTTP applications retain the default worker path. Do not transform
+worker internals or copy the layout/routing implementation in a product.
