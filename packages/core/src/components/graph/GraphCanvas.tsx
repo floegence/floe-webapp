@@ -254,6 +254,17 @@ export function GraphCanvas(props: GraphCanvasProps) {
         }
       >
         {(liveViewport) => {
+          const paintBounds = createMemo(() => {
+            const bounds = visibleBounds(liveViewport());
+            if (bounds) return bounds;
+            const { x, y, width, height } = props.layout.bounds;
+            return {
+              left: x - 240,
+              top: y - 240,
+              right: x + width + 240,
+              bottom: y + height + 240,
+            };
+          });
           const visible = createMemo(() => visibleNodes(liveViewport()));
           const groups = createMemo(() => visible().filter((node) => node.kind === 'group'));
           const nodes = createMemo(() => visible().filter((node) => node.kind !== 'group'));
@@ -261,7 +272,14 @@ export function GraphCanvas(props: GraphCanvasProps) {
           return (
             <>
               <For each={groups()}>{render}</For>
-              <svg class="floe-graph__edges" width="1" height="1" aria-label={props.ariaLabel}>
+              <svg
+                class="floe-graph__edges"
+                width={paintBounds().right - paintBounds().left}
+                height={paintBounds().bottom - paintBounds().top}
+                viewBox={`${paintBounds().left} ${paintBounds().top} ${paintBounds().right - paintBounds().left} ${paintBounds().bottom - paintBounds().top}`}
+                style={{ left: `${paintBounds().left}px`, top: `${paintBounds().top}px` }}
+                aria-label={props.ariaLabel}
+              >
                 <defs>
                   <marker
                     id={arrowId}

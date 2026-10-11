@@ -41,6 +41,11 @@ function App(){
  window.preferGraph=async()=>{const result=await engine.layout({nodes,edges},{positionMode:'preferred',positions:[{nodeId:'a',x:0,y:0},{nodeId:'b',x:0,y:40},{nodeId:'c',x:0,y:90}]});setLayout(result);return result;};});
  onCleanup(()=>engine?.dispose());
  window.graphViewport=()=>viewport();
+ window.longRoute=()=>{
+   setViewport({x:0,y:0,scale:1});
+   setLayout({nodes:[],edges:[{id:'long',label:'Long external call',source:'west',target:'east',sections:[[{x:-100000,y:160},{x:100000,y:160}]]}],bounds:{x:-100000,y:0,width:200000,height:320}});
+ };
+
  window.restoreGraphViewport=value=>setViewport(value);
  window.zoomGraph=()=>setViewport({...viewport(),x:0,y:0,scale:2});
  window.verifyEngine=async()=>{
@@ -343,6 +348,36 @@ render(()=><App/>,document.getElementById('root'));
           'contained endpoints never route through the member card'
         );
       }
+  await page.evaluate(() => window.longRoute());
+  const svg = page.locator('.floe-graph__edges');
+  const paint = await svg.evaluate((element) => ({
+    width: Number(element.getAttribute('width')),
+    height: Number(element.getAttribute('height')),
+    viewBox: element.getAttribute('viewBox'),
+    overflow: getComputedStyle(element).overflow,
+    route: element.querySelector('path.floe-graph__edge').getAttribute('d'),
+  }));
+  assert.equal(paint.width, 1680, 'edge paint is bounded by the viewport and overscan');
+  assert.equal(paint.height, 1180);
+  assert.equal(paint.overflow, 'hidden');
+  assert.ok(
+    paint.route.includes('-100000') && paint.route.includes('100000'),
+    'clipping preserves complete route geometry'
+  );
+  await page.mouse.click(400, 160);
+  assert.deepEqual(await page.evaluate(() => window.lastGraphEvent), { kind: 'edge', id: 'long' });
+  await page.getByRole('button', { name: 'Close details' }).click();
+  await page.mouse.move(400, 300);
+  await page.mouse.down();
+  await page.mouse.move(520, 340, { steps: 8 });
+  await page.mouse.up();
+  assert.notEqual(await svg.getAttribute('viewBox'), paint.viewBox, 'clip window follows pan');
+  assert.equal(
+    await svg.locator('.floe-graph__edge').count(),
+    1,
+    'crossing routes remain visible with both endpoints offscreen'
+  );
+  assert.deepEqual(errors, []);
   console.log(
     'Graph worker, compound packing, fixed/preferred positions, directional layers, interaction, menus, native input, routes, and forced colors passed.'
   );

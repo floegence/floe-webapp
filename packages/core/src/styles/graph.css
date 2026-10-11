@@ -37,8 +37,9 @@
 }
 .floe-graph__edges {
   position: absolute;
-  inset: 0;
-  overflow: visible;
+  /* A visible route may have endpoints far outside the viewport. Clip painting,
+   * not geometry, so its full world bounds do not expand the composited layer. */
+  overflow: hidden;
   z-index: 1;
   pointer-events: none;
 }
