@@ -53,6 +53,8 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
+  /** Explicit packing of a group's direct children; independent of global direction and edges. */
+  groupLayouts?: Readonly<Record<string, GraphGroupLayout>>;
   /** Clearance around routing obstacles in world units. Defaults to 4; never changes node geometry. */
   edgeClearance?: number;
   /** Desired width/height when packing disconnected objects, including group members. */
@@ -68,6 +70,13 @@ export interface GraphLayoutOptions {
   groupPadding?: { top: number; right: number; bottom: number; left: number };
   /** Keep the object under inspection at its previous world position after layout. */
   anchor?: { nodeId: string; position: GraphPoint };
+}
+
+export interface GraphGroupLayout {
+  /** Row fills left to right; column fills top to bottom. Omitted rules retain automatic layout. */
+  flow: 'row' | 'column';
+  /** Positive integer maximum per row/column. Omit for a single row/column. */
+  maxPerLine?: number;
 }
 
 export type GraphObjectRef = { kind: 'node' | 'edge'; id: string };

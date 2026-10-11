@@ -72,6 +72,24 @@ The surface uses semantic theme tokens and supports forced colors. Consumers
 can set `--graph-background`, `--graph-dot`, `--graph-edge`, and
 `--graph-edge-active` without injecting arbitrary styles into graph documents.
 
+## Explicit group packing
+
+`groupLayouts: { pool: { flow: 'row', maxPerLine: 3 } }` arranges a group's
+direct children in submitted order, independently of global `direction`, root
+`layers`, and relationship edges. `row` fills left to right and then wraps down;
+`column` fills top to bottom and then wraps right. `maxPerLine` is a positive
+safe integer; omit it for one row or column. Omitted group rules retain existing
+automatic layout. Unknown groups, ordinary node IDs, and invalid rules reject.
+
+Each row uses its maximum child height and each column its maximum child width.
+Nested groups participate as complete rectangles and do not inherit the parent's
+rule. The same packing runs in preferred and compact modes, preserving submitted
+order against member coordinate hints. Preferred group coordinates can move the
+complete subtree. Fixed coordinates on descendants of a ruled group reject;
+fixed coordinates on the group itself remain valid. All original relationships,
+ports, cycles, and self loops go through the existing router after placement.
+Only submitted visible objects contribute to the group's geometry.
+
 Validation: `pnpm test packages/core/test/graph-layout.test.ts` covers compound
 routes, cycles, self loops, malformed references, anchors, and large graphs.
 After building core, run `node scripts/check-graph-browser.mjs` for the public

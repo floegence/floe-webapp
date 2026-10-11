@@ -6,6 +6,7 @@ import type {
   GraphPoint,
 } from './types';
 import { routeGraphGeometry } from './routing';
+import { arrangeGroupMembers } from './group-layout';
 export { routeGraphGeometry } from './routing';
 
 /** Apply explicit fixed or preferred positions, then route the resulting geometry once. */
@@ -110,6 +111,20 @@ export function applyGraphPositions(
       const members = children.get(node.id) ?? [];
       if (!members.length) return;
       for (const child of members) arrange(child);
+      const rule = options.groupLayouts?.[node.id];
+      if (rule) {
+        const size = arrangeGroupMembers(
+          members,
+          rule,
+          padding,
+          options.spacing ?? 64,
+          translate,
+          node
+        );
+        node.width = Math.max(minimums.get(node.id)!.width, size.width);
+        node.height = Math.max(minimums.get(node.id)!.height, size.height);
+        return;
+      }
       separate(members);
       // Preferred coordinates cannot pin a child outside its parent. Fit the
       // container around actual content rather than retaining ELK's old bounds.

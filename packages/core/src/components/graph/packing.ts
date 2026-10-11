@@ -1,5 +1,6 @@
 import type { ELK, ElkNode } from 'elkjs/lib/elk-api';
 import { applyGraphPositions, routeGraphGeometry } from './positions';
+import { arrangeGroupMembers } from './group-layout';
 import type { GraphInput, GraphLayout, GraphLayoutNode, GraphLayoutOptions } from './types';
 
 /** Lay out each containment level as peers, then route the complete compound graph. */
@@ -44,7 +45,8 @@ export async function computePackedGraphLayout(
   };
   const arrange = async (parentId?: string): Promise<{ width: number; height: number }> => {
     const siblings = [...(children.get(parentId) ?? [])];
-    if (parentId !== undefined || !options.layers)
+    const rule = parentId === undefined ? undefined : options.groupLayouts?.[parentId];
+    if (!rule && (parentId !== undefined || !options.layers))
       siblings.sort(
         (a, b) =>
           (positionHints.get(a.id) ?? Infinity) - (positionHints.get(b.id) ?? Infinity) ||
@@ -57,6 +59,7 @@ export async function computePackedGraphLayout(
       node.height = Math.max(node.height, size.height);
     }
     if (!siblings.length) return { width: 0, height: 0 };
+    if (rule) return arrangeGroupMembers(siblings, rule, padding, options.spacing ?? 64, translate);
     if (parentId === undefined && options.layers)
       return arrangeRootLayers(siblings, input, options, peer, translate);
     const projected = new Map<string, { id: string; sources: string[]; targets: string[] }>();

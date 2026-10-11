@@ -94,6 +94,13 @@ function App(){
    ]},{direction,layers:[['entry'],['control-a','control-b'],['worker']],spacing:24});
    setLayout(result);return result;
  };
+ window.poolGraph=async (direction,flow)=>{
+   const members=Array.from({length:8},(_,i)=>({id:'member-'+i,label:'Member '+i,parentId:'pool',width:180,height:110+i*5}));
+   const result=await engine.layout({nodes:[{id:'pool',label:'Pool',kind:'group',width:200,height:80},...members],
+     edges:members.map((n,i)=>({id:'peer-'+i,label:'Peer',source:n.id,target:members[(i+1)%members.length].id}))},
+     {direction,groupLayouts:{pool:{flow,maxPerLine:3}},spacing:24,positionMode:'compact'});
+   setLayout(result);setViewport({x:20,y:20,scale:0.7});return result;
+ };
  window.routeContained=async()=>engine.layout({nodes:[
    {id:'group',label:'Group',kind:'group',width:632,height:308},
    {id:'member',label:'Member',parentId:'group',width:280,height:180},
@@ -305,6 +312,23 @@ render(()=><App/>,document.getElementById('root'));
       );
   }
   assert.deepEqual(errors, []);
+  for (const direction of ['RIGHT', 'DOWN', 'LEFT', 'UP']) {
+    for (const flow of ['row', 'column']) {
+      const result = await page.evaluate(
+        ({ direction, flow }) => window.poolGraph(direction, flow),
+        { direction, flow }
+      );
+      const lines = new Map();
+      for (const node of result.nodes.filter((n) => n.parentId === 'pool')) {
+        const cross = flow === 'row' ? node.y : node.x;
+        lines.set(cross, (lines.get(cross) ?? 0) + 1);
+      }
+      assert.deepEqual([...lines.values()], [3, 3, 2]);
+      assert.equal(result.edges.length, 8);
+      assert.ok(result.edges.every((e) => e.sections.length));
+      await page.locator('[data-graph-object="member-0"]').waitFor();
+    }
+  }
   const packed = await page.evaluate(() => window.packGraph());
   assert.equal(packed.nodes.length, 20);
   assert.ok(packed.bounds.width / packed.bounds.height > 0.8);

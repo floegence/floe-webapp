@@ -54,6 +54,7 @@ export async function computeGraphLayout(
   engine: Pick<ELK, 'layout'>
 ): Promise<GraphLayout> {
   validateGraphInput(input);
+  validateGroupLayouts(input, options);
   if (
     options.edgeClearance !== undefined &&
     (!Number.isFinite(options.edgeClearance) || options.edgeClearance < 0)
@@ -77,7 +78,11 @@ export async function computeGraphLayout(
     if (options.positionMode === 'fixed' && options.positions?.length)
       throw new Error('Fixed positions cannot be combined with graph layers');
   }
-  if (options.aspectRatio !== undefined || options.layers)
+  if (
+    options.aspectRatio !== undefined ||
+    options.layers ||
+    Object.keys(options.groupLayouts ?? {}).length
+  )
     return computePackedGraphLayout(layoutInput, options, engine);
   const nodes = new Map<string, ElkNode>();
   for (const node of layoutInput.nodes) {
@@ -195,12 +200,39 @@ function orderCompactNodes(input: GraphInput, options: GraphLayoutOptions): Grap
   const nodes = [...input.nodes].sort((a, b) => {
     const parentOrder = (a.parentId ?? '').localeCompare(b.parentId ?? '');
     const positionOrder =
-      options.layers && !a.parentId && !b.parentId
+      (options.layers && !a.parentId && !b.parentId) ||
+      (a.parentId === b.parentId && a.parentId && options.groupLayouts?.[a.parentId])
         ? 0
         : (positions.get(a.id) ?? Infinity) - (positions.get(b.id) ?? Infinity);
     return parentOrder || positionOrder || originalOrder.get(a.id)! - originalOrder.get(b.id)!;
   });
   return { nodes, edges: input.edges };
+}
+
+function validateGroupLayouts(input: GraphInput, options: GraphLayoutOptions): void {
+  const nodes = new Map(input.nodes.map((node) => [node.id, node]));
+  for (const [id, rule] of Object.entries(options.groupLayouts ?? {})) {
+    if (
+      nodes.get(id)?.kind !== 'group' ||
+      !rule ||
+      !['row', 'column'].includes(rule.flow) ||
+      (rule.maxPerLine !== undefined &&
+        (!Number.isSafeInteger(rule.maxPerLine) || rule.maxPerLine <= 0))
+    )
+      throw new Error(`Invalid graph group layout: ${id}`);
+  }
+  if ((options.positionMode ?? 'fixed') !== 'fixed') return;
+  for (const position of options.positions ?? []) {
+    for (
+      let parent = nodes.get(position.nodeId)?.parentId;
+      parent;
+      parent = nodes.get(parent)?.parentId
+    )
+      if (options.groupLayouts?.[parent])
+        throw new Error(
+          `Fixed positions cannot constrain members of a graph group layout: ${position.nodeId}`
+        );
+  }
 }
 
 function validateGraphLayers(input: GraphInput, layers: readonly (readonly string[])[]): void {
