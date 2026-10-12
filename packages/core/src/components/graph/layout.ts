@@ -1,12 +1,14 @@
-import { applyGraphPositions } from './positions';
+import { applyGraphPositions, routeGraphGeometry } from './positions';
 import { computePackedGraphLayout } from './packing';
 import type { ELK, ElkNode } from 'elkjs/lib/elk-api';
 import type {
   GraphInput,
+  GraphEdge,
   GraphLayout,
   GraphLayoutEdge,
   GraphLayoutNode,
   GraphLayoutOptions,
+  GraphRoutingOptions,
 } from './types';
 
 export function validateGraphInput(input: GraphInput): void {
@@ -54,6 +56,8 @@ export async function computeGraphLayout(
   engine: Pick<ELK, 'layout'>
 ): Promise<GraphLayout> {
   validateGraphInput(input);
+  if (options.routing !== undefined && !['all', 'none'].includes(options.routing))
+    throw new Error('Invalid graph routing mode');
   validateGroupLayouts(input, options);
   if (
     options.edgeClearance !== undefined &&
@@ -185,6 +189,26 @@ export async function computeGraphLayout(
     options,
     layoutInput.nodes
   );
+}
+
+/** Route an edge subset against authoritative fixed geometry without running placement. */
+export async function computeGraphRoutes(
+  geometry: Pick<GraphLayout, 'nodes' | 'bounds'>,
+  edges: readonly GraphEdge[],
+  options: GraphRoutingOptions = {}
+): Promise<readonly GraphLayoutEdge[]> {
+  validateGraphInput({ nodes: geometry.nodes, edges });
+  for (const node of geometry.nodes)
+    if (![node.x, node.y].every(Number.isFinite))
+      throw new Error(`Invalid geometry for graph node: ${node.id}`);
+  const routed = await routeGraphGeometry(
+    {
+      ...geometry,
+      edges: edges.map((edge) => ({ ...edge, sections: [] })),
+    },
+    options
+  );
+  return routed.edges;
 }
 
 function orderCompactNodes(input: GraphInput, options: GraphLayoutOptions): GraphInput {

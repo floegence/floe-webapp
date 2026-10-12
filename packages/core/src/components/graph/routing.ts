@@ -16,11 +16,16 @@ const release = (value: unknown) => (value as { delete(): void }).delete();
 /** Joint orthogonal routing through the final rectangular geometry. */
 export async function routeGraphGeometry(
   layout: GraphLayout,
-  options: Pick<GraphLayoutOptions, 'edgeClearance'> = {}
+  options: Pick<GraphLayoutOptions, 'edgeClearance' | 'routing'> = {}
 ): Promise<GraphLayout> {
   const clearance = options.edgeClearance ?? 4;
   if (!Number.isFinite(clearance) || clearance < 0)
     throw new Error('Graph edge clearance must be finite and nonnegative');
+  if (options.routing === 'none')
+    return withBounds({
+      ...layout,
+      edges: layout.edges.map((edge) => ({ ...edge, sections: [] })),
+    });
   if (!layout.nodes.length) return layout;
   if (!layout.edges.length) return withBounds(layout);
   await (loaded ??= AvoidLib.load(import.meta.env.SSR ? undefined : wasmUrl).catch((error) => {
@@ -350,6 +355,7 @@ function withBounds(layout: GraphLayout): GraphLayout {
     ]),
     ...layout.edges.flatMap((edge) => edge.sections.flat()),
   ];
+  if (!points.length) return { ...layout, bounds: { x: 0, y: 0, width: 0, height: 0 } };
   const x = Math.min(...points.map((point) => point.x)),
     y = Math.min(...points.map((point) => point.y));
   return {

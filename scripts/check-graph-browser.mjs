@@ -33,7 +33,7 @@ const edges=[{id:'ab',label:'2',source:'a',target:'b'},
  {id:'bc',label:'Database copies independent',source:'b',target:'c'}];
 function App(){
  const [layout,setLayout]=createSignal(); const [viewport,setViewport]=createSignal({x:50,y:50,scale:1});
- const [minimapStyle,setMinimapStyle]=createSignal();
+ const [minimapStyle,setMinimapStyle]=createSignal(); const [minimapEdges,setMinimapEdges]=createSignal();
  window.colorMinimap=enabled=>setMinimapStyle(enabled ? () => node=>({fill:node.kind==='group'?'var(--overview-group)':node.id==='b'?'var(--overview-resource)':'var(--overview-node)',stroke:'var(--overview-outline)'}) : undefined);
  const [menu,setMenu]=createSignal(null); let engine;
  const record=e=>{window.lastGraphEvent=e.object;setMenu(e)};
@@ -57,6 +57,21 @@ function App(){
    const pending=disposable.layout({nodes,edges}); disposable.dispose();
    let disposed=false; try { await pending; } catch(error) { disposed=error.message.includes('disposed'); }
    return {rejected,disposed,equal:JSON.stringify(results[0])===JSON.stringify(results[1])};
+ };
+ window.demandGraph=async()=>{
+   const geometry=await engine.layout({nodes,edges},{aspectRatio:1.6,routing:'none'});
+   const before=JSON.stringify(geometry);
+   const overview=await engine.route(geometry,[{id:'overview',source:'g',target:'b',label:''}]);
+   let previous; const requests=[];
+   for(let i=0;i<25;i++){
+     previous?.abort(); const controller=new AbortController(); previous=controller;
+     requests.push(engine.route(geometry,edges,{},{signal:controller.signal}).then(result=>({ok:true,result}),error=>({ok:false,name:error.name})));
+   }
+   const results=await Promise.all(requests);
+   const active=results.at(-1).result;
+   setMinimapEdges(overview); setLayout({...geometry,edges:active});
+   return {unchanged:before===JSON.stringify(geometry),deferred:geometry.edges.every(edge=>!edge.sections.length),
+     canceled:results.filter(result=>result.name==='AbortError').length,overview,active};
  };
  window.packGraph=async()=>{
    const packedNodes=[];
@@ -110,7 +125,7 @@ function App(){
  {groupPadding:{top:108,right:20,bottom:20,left:20},positions:[
    {nodeId:'group',x:0,y:0},{nodeId:'member',x:20,y:108},{nodeId:'peer',x:332,y:108}]});
  return <div style={{width:'1200px',height:'700px'}}><Show when={layout()}>{value=><GraphCanvas layout={value()} viewport={viewport()}
-   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record} minimap={{ariaLabel:'Graph overview',nodeStyle:minimapStyle()}}
+   onViewportChange={setViewport} ariaLabel="Graph acceptance" onActivate={record} onContextMenu={record} minimap={{ariaLabel:'Graph overview',nodeStyle:minimapStyle(),edges:minimapEdges()}}
    renderGroup={n=><div style={{height:'100%',border:'2px dashed #747b85',background:'#eceff1',padding:'12px'}}>{n.label}</div>}
    renderNode={(n,context)=><div style={{height:'100%',border:'1px solid #59616b',background:'#fff',padding:'12px'}}>
      <span>{n.label}</span><button onClick={context.openMenu} aria-label={'Actions for '+n.label}>...</button>
@@ -372,6 +387,20 @@ render(()=><App/>,document.getElementById('root'));
           'contained endpoints never route through the member card'
         );
       }
+  const demand = await page.evaluate(() => window.demandGraph());
+  assert.equal(demand.unchanged, true, 'route-only requests preserve geometry');
+  assert.equal(demand.deferred, true, 'placement does not route deferred edges');
+  assert.equal(demand.canceled, 24, 'superseded routes reject as cancellations');
+  assert.equal(demand.active.length, 2);
+  assert.equal(await page.locator('[data-graph-object="overview"]').count(), 0);
+  const overviewPath = demand.overview
+    .flatMap((edge) =>
+      edge.sections.map((section) =>
+        section.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')
+      )
+    )
+    .join(' ');
+  assert.equal(await page.locator('.floe-graph__minimap-edges').getAttribute('d'), overviewPath);
   await page.evaluate(() => window.longRoute());
   const svg = page.locator('.floe-graph__edges');
   const paint = await svg.evaluate((element) => ({

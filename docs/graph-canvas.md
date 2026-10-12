@@ -130,3 +130,21 @@ through statically discoverable URLs. Run `node scripts/check-graph-production.m
 after building Core to qualify actual built HTTP applications with Vite 7 and 8,
 including successful child-worker and raw-WASM requests. Development-server
 acceptance alone cannot prove that a host ships the complete worker closure.
+
+## Deferred edge routing
+
+`GraphLayoutOptions.routing: 'none'` retains the complete input topology for placement
+and returns edges with empty sections. Final bounds cover the placed nodes rather
+than hidden routes. The default `all` mode preserves existing consumers.
+
+`GraphLayoutEngine.route(geometry, edges, options, { signal })` runs the existing
+orthogonal router in the layout worker over fixed nodes. It returns only paths and
+never changes positions, dimensions or caller-owned bounds. All endpoint, port and
+finite geometry validation remains active. Aborting rejects with `AbortError`, skips
+queued work and discards late results; an already executing synchronous transaction
+is allowed to complete. Dispose rejects outstanding placement and route requests.
+
+Hosts may compose the fixed geometry with their current route subset and set
+`highlight={null}` to own the subset without automatic group isolation.
+`minimap.edges` keeps a persistent overview independent of transient main edges.
+Geometry memoization follows the stable node-array identity when only edges change.

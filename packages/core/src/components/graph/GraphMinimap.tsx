@@ -10,6 +10,8 @@ export interface GraphMinimapNodeStyle {
 
 export interface GraphMinimapProps {
   layout: GraphLayout;
+  /** Optional overview routes independent of transient main-canvas edges. */
+  edges?: GraphLayout['edges'];
   viewport: GraphViewport;
   size: { width: number; height: number };
   onViewportChange: (viewport: GraphViewport) => void;
@@ -23,8 +25,10 @@ export interface GraphMinimapProps {
 export function GraphMinimap(props: GraphMinimapProps) {
   let svg: SVGSVGElement | undefined;
   let drag: { id: number; x: number; y: number; viewport: GraphViewport } | undefined;
+  const layoutNodes = createMemo(() => props.layout.nodes);
+  const geometryBounds = createMemo(() => props.layout.bounds);
   const bounds = createMemo(() => {
-    const { x, y, width, height } = props.layout.bounds;
+    const { x, y, width, height } = geometryBounds();
     const padding = Math.max(width, height, 1) * 0.04;
     return {
       x: x - padding,
@@ -36,7 +40,7 @@ export function GraphMinimap(props: GraphMinimapProps) {
   const shapes = createMemo(() => {
     const groups = new Map<string, GraphMinimapNodeStyle & { paths: string[] }>();
     const nodes = new Map<string, GraphMinimapNodeStyle & { paths: string[] }>();
-    for (const node of props.layout.nodes) {
+    for (const node of layoutNodes()) {
       const style = props.nodeStyle?.(node) ?? {};
       const batches = node.kind === 'group' ? groups : nodes;
       const key = JSON.stringify([style.fill ?? null, style.stroke ?? null]);
@@ -57,7 +61,9 @@ export function GraphMinimap(props: GraphMinimapProps) {
     '--graph-minimap-opacity': style.fill || style.stroke ? '1' : undefined,
   });
   const edges = createMemo(() =>
-    props.layout.edges.flatMap((edge) => edge.sections.map(graphSectionPath)).join(' ')
+    (props.edges ?? props.layout.edges)
+      .flatMap((edge) => edge.sections.map(graphSectionPath))
+      .join(' ')
   );
   const worldPoint = (event: PointerEvent) => {
     const matrix = svg?.getScreenCTM();

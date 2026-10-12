@@ -43,7 +43,7 @@ export interface GraphCanvasProps {
   /** Overlay content should use shared SurfaceFloatingLayer for point placement. */
   overlay?: JSX.Element;
   /** Optional interactive overview. Its geometry follows the same visible layout. */
-  minimap?: Pick<GraphMinimapProps, 'ariaLabel' | 'nodeStyle'>;
+  minimap?: Pick<GraphMinimapProps, 'ariaLabel' | 'nodeStyle' | 'edges'>;
   class?: string;
 }
 
@@ -54,7 +54,8 @@ export function GraphCanvas(props: GraphCanvasProps) {
   const [hovered, setHovered] = createSignal<GraphObjectRef | null>(null);
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const highlight = () => (props.highlight === undefined ? hovered() : props.highlight);
-  const nodeMap = createMemo(() => new Map(props.layout.nodes.map((node) => [node.id, node])));
+  const nodes = createMemo(() => props.layout.nodes);
+  const nodeMap = createMemo(() => new Map(nodes().map((node) => [node.id, node])));
   const highlightedEdges = createMemo(() => {
     const current = highlight();
     return current?.kind === 'node'
@@ -81,9 +82,9 @@ export function GraphCanvas(props: GraphCanvasProps) {
   };
   const visibleNodes = (viewport: GraphViewport) => {
     const bounds = visibleBounds(viewport);
-    if (!bounds) return props.layout.nodes;
+    if (!bounds) return nodes();
     const { left, top, right, bottom } = bounds;
-    return props.layout.nodes.filter(
+    return nodes().filter(
       (node) =>
         node.id === props.selected?.id ||
         (node.x + node.width >= left &&
@@ -368,6 +369,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
             onInteractionStart={props.onInteractionStart}
             ariaLabel={minimap().ariaLabel}
             nodeStyle={minimap().nodeStyle}
+            edges={minimap().edges}
           />
         )}
       </Show>

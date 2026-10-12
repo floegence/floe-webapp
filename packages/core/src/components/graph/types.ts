@@ -53,6 +53,8 @@ export interface GraphLayout {
 }
 
 export interface GraphLayoutOptions {
+  /** Keep topology for placement while deferring final paths to engine.route. Defaults to all. */
+  routing?: 'all' | 'none';
   /** Explicit packing of a group's direct children; independent of global direction and edges. */
   groupLayouts?: Readonly<Record<string, GraphGroupLayout>>;
   /** Clearance around routing obstacles in world units. Defaults to 4; never changes node geometry. */
@@ -71,6 +73,8 @@ export interface GraphLayoutOptions {
   /** Keep the object under inspection at its previous world position after layout. */
   anchor?: { nodeId: string; position: GraphPoint };
 }
+
+export type GraphRoutingOptions = Pick<GraphLayoutOptions, 'edgeClearance'>;
 
 export interface GraphGroupLayout {
   /** Row fills left to right; column fills top to bottom. Omitted rules retain automatic layout. */
