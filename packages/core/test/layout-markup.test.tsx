@@ -17,6 +17,24 @@ function renderWithCoreProviders(node: () => unknown): string {
 }
 
 describe('layout markup', () => {
+  it('Shell omits the hidden bottom bar without evaluating its content', () => {
+    let contentReads = 0;
+    const html = renderWithCoreProviders(() => (
+      <Shell bottomBarMode="hidden" bottomBarItems={(() => {
+        contentReads += 1;
+        return <span>Hidden status</span>;
+      })()} slotClassNames={{ bottomBarHeight: 'h-7' }}>
+        <div>Main</div>
+      </Shell>
+    ));
+
+    expect(html).not.toContain('data-floe-shell-slot="bottom-bar"');
+    expect(html).not.toContain('Hidden status');
+    expect(html).not.toContain('h-7');
+    expect(contentReads).toBe(0);
+    expect(html).toContain('data-floe-shell-slot="main"');
+  });
+
   it('TopBar should not squeeze content when using safe-area padding', () => {
     const html = renderWithCoreProviders(() => <TopBar />);
 

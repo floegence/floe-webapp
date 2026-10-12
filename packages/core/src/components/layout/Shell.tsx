@@ -74,6 +74,8 @@ export interface ShellProps {
    */
   activityBottomItemsMobileMode?: 'hidden' | 'topBar';
   topBarActions?: JSX.Element;
+  /** Defaults to visible. Hidden omits the desktop status bar and its content without reserving space. Mobile navigation is unchanged. */
+  bottomBarMode?: 'visible' | 'hidden';
   bottomBarItems?: JSX.Element;
   /** Stable content directly above mobile navigation, such as a composer anchor. */
   mobileAccessory?: JSX.Element;
@@ -302,6 +304,7 @@ export function Shell(props: ShellProps) {
   });
 
   const bottomBarContent = createMemo<JSX.Element | undefined>(() => {
+    if (isMobile() || props.bottomBarMode === 'hidden') return undefined;
     if (props.bottomBarItems) return props.bottomBarItems;
     if (!registry) return undefined;
 
@@ -628,7 +631,7 @@ export function Shell(props: ShellProps) {
       </Show>
       </div>
       {/* Bottom Bar / Mobile Tab Bar */}
-      <Show when={!isMobile()}>
+      <Show when={!isMobile() && props.bottomBarMode !== 'hidden'}>
         <BottomBar class={props.slotClassNames?.bottomBar} height={props.slotClassNames?.bottomBarHeight}>{bottomBarContent()}</BottomBar>
       </Show>
       <Show when={isMobile() && (activityItems().length > 0 || props.mobileNavigationActions?.length)}>

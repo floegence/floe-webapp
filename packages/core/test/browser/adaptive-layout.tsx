@@ -16,6 +16,7 @@ function Example() {
   return <FloeProvider config={{ storage: { enabled: false }, layout: { mobileQuery, sidebar: { defaultWidth: 272, defaultActiveTab: 'files' } } }}>
     <Probe />
     {params.has('standalone') ? <p>Standalone provider</p> : <Shell sidebarMinContentWidth={480}
+      bottomBarMode={params.has('no-status') ? 'hidden' : 'visible'}
       activityItems={[{ id: 'files', label: 'Files', icon: Icon }]}
       sidebarContent={() => <div data-retained-scroll style={{ height: '100%', overflow: 'auto' }}><input aria-label="Directory search" /><div style={{ height: '1000px' }}>Directories</div></div>}>
       <textarea aria-label="Retained draft" /><button>Main action</button>

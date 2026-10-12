@@ -157,7 +157,8 @@ function frameStyle(frame: CompanionFrame | null, mount: HTMLElement | null): JS
 }
 
 /**
- * A non-modal surface that grows upward from a Bottom Bar anchor.
+ * A non-modal surface that grows upward from a measurable layout anchor.
+ * The anchor may live in a Bottom Bar or independently within an AppViewport.
  *
  * This is intentionally distinct from windows, popovers, and modal drawers:
  * it retains one fixed shell and one content host across collapsed and expanded

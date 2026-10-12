@@ -274,3 +274,11 @@ The browser-neutral `@floegence/floe-webapp-core/window-status` entry exports
 `windowStatusRefreshSvg`. These are trusted, fixed SVG strings without user
 input, scripts, or renderer dependencies. The retry artwork shares geometry
 with the renderer's `Refresh` icon. Hosts must escape their own dynamic copy.
+
+### Optional desktop status bar
+
+`Shell` renders its desktop status bar by default. Set `bottomBarMode="hidden"`
+to omit the bar and its content without reserving layout space. This does not
+change mobile navigation. `BottomBarCompanion` accepts a measurable layout
+anchor, including an independent anchor inside `AppViewport`, so a retained
+companion does not require a status bar.

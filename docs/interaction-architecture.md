@@ -91,7 +91,7 @@
 
 ### 2.5 non-modal anchored companion 语义
 
-`BottomBarCompanion` 是从 Bottom Bar 布局锚点向上展开的非模态 disclosure。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。
+`BottomBarCompanion` 是从可测量布局锚点向上展开的非模态 disclosure。锚点可以位于 Bottom Bar，也可以独立位于 `AppViewport`。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。
 
 共享契约：
 

@@ -35,6 +35,13 @@ try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await page.goto(`${server.resolvedUrls.local[0]}test/browser/adaptive-layout.html?host=browser`);
+      const withStatus = await page.locator('[data-floe-shell-slot="main-layout"]').boundingBox();
+      const status = await page.locator('[data-floe-shell-slot="bottom-bar"]').boundingBox();
+      await page.goto(`${server.resolvedUrls.local[0]}test/browser/adaptive-layout.html?host=browser&no-status`);
+      const withoutStatus = await page.locator('[data-floe-shell-slot="main-layout"]').boundingBox();
+      assert.equal(await page.locator('[data-floe-shell-slot="bottom-bar"]').count(), 0);
+      assert.ok(Math.abs(withoutStatus.height - withStatus.height - status.height) < 1,
+        'hidden status bar returns its complete height to the main layout');
       const editor = page.getByRole('textbox', { name: 'Retained draft' });
       const search = page.getByRole('textbox', { name: 'Directory search' });
       await editor.fill('Keep 中文'); await search.fill('src');
