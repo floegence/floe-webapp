@@ -203,6 +203,9 @@ render(() => <App/>, document.getElementById('root'));
       await page.emulateMedia({ reducedMotion: 'no-preference' });
 
       await page.setViewportSize({ width: 390, height: 500 });
+      // Projected panel geometry is measured each animation frame. The old box
+      // may already be in bounds, so read keyboard's baseline after resize paint.
+      await page.evaluate(() => new Promise(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(resolve))));
       const resizedLauncherBounds = await readLauncherBounds();
       const resizedBall = await waitForPanelBox(
         (box) =>
