@@ -18,6 +18,10 @@ import { Plus, X, ChevronRight } from '../icons';
 export interface TabItem {
   id: string;
   label: string;
+  /** DOM identity for references such as TabPanel.labelledBy. */
+  domId?: string;
+  /** DOM identity of the host-owned panel controlled by this tab. */
+  panelId?: string;
   icon?: JSX.Element;
   closable?: boolean;
   disabled?: boolean;
@@ -624,6 +628,8 @@ export function Tabs(props: TabsProps) {
                 class={getTabStyles(isCurrentActive(), item.disabled)}
                 onClick={() => handleTabClick(item.id, item.disabled)}
                 role="tab"
+                id={item.domId}
+                aria-controls={item.panelId}
                 data-floe-surface={isCurrentActive() ? 'raised' : 'flat'}
                 data-floe-surface-part="tab"
                 aria-selected={isCurrentActive()}

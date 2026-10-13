@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
-import { Tabs, resolveTabNavigationTargetId } from '../src/components/ui/Tabs';
+import { Tabs, TabPanel, resolveTabNavigationTargetId } from '../src/components/ui/Tabs';
 
 describe('Tabs accessibility', () => {
+  it('connects host-owned panels to explicit tab DOM identities', () => {
+    const html = renderToString(() => <>
+      <Tabs activeId="one" items={[{ id: 'one', label: 'One', domId: 'workspace-one-tab', panelId: 'workspace-one-panel' }]} />
+      <TabPanel id="workspace-one-panel" labelledBy="workspace-one-tab" active>Content</TabPanel>
+    </>);
+    expect(html).toContain('id="workspace-one-tab"');
+    expect(html).toContain('aria-controls="workspace-one-panel"');
+    expect(html).toContain('id="workspace-one-panel"');
+    expect(html).toContain('aria-labelledby="workspace-one-tab"');
+  });
   it('renders a tablist with roving tabindex semantics', () => {
     const html = renderToString(() => (
       <Tabs

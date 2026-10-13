@@ -24,6 +24,7 @@ Use this shared contract instead of adding page-specific landmark wrappers aroun
 
 The shared navigation primitives carry the keyboard behavior that downstream apps should rely on:
 
+- `Tabs` items may provide `domId` and `panelId` to connect host-owned panels with `aria-controls`. Set the matching `TabPanel` `id` and `labelledBy`; namespace these DOM identities per instance. Logical item IDs and selection, keyboard, focus, and presentation behavior remain unchanged.
 - `Tabs` and `MobileTabBar` implement roving `tabIndex` plus arrow/home/end navigation. Mobile navigation items forward the same disclosure state, controlled surface ID, popup kind, and trigger reference as `ActivityBar`, so product drawers can announce their state and restore focus to the actual mobile trigger.
 
 ### Mobile shell navigation panels
