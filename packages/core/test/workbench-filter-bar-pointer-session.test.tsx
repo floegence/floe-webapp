@@ -1119,6 +1119,86 @@ describe('WorkbenchFilterBar pointer session', () => {
     expect(host.querySelectorAll('.workbench-dock__divider')).toHaveLength(2);
   });
 
+  it('places trailing actions after components and before pins while retaining action interaction', () => {
+    const host = createWorkbenchHost();
+    const onActivate = vi.fn();
+    const onDockActivation = vi.fn();
+    const [mode, setMode] = createSignal<WorkbenchInteractionMode>('work');
+    dispose = render(
+      () => (
+        <WorkbenchFilterBar
+          widgetDefinitions={widgetDefinitions}
+          widgets={[]}
+          filters={{}}
+          onSoloFilter={() => {}}
+          mode={mode()}
+          componentOrder={['custom.files', 'sticky-note']}
+          dockActions={[
+            { id: 'leading', label: 'Leading action', icon: () => null, onActivate },
+            {
+              id: 'trailing-first',
+              label: 'Trailing first action',
+              icon: () => null,
+              onActivate,
+              dockPlacement: 'after-components',
+            },
+            {
+              id: 'trailing-second',
+              label: 'Trailing second action',
+              icon: () => null,
+              onActivate,
+              dockPlacement: 'after-components',
+            },
+          ]}
+          dockItems={[
+            { id: 'pin', label: 'Pinned app', icon: () => null, dockPlacement: 'after-components' },
+          ]}
+          onDockActivation={onDockActivation}
+        />
+      ),
+      host
+    );
+
+    const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('.workbench-dock button'));
+    expect(
+      buttons.map(
+        (button) =>
+          button.dataset.workbenchDockAction ??
+          button.dataset.workbenchDockItem ??
+          button.dataset.workbenchDockComponent ??
+          'mode'
+      )
+    ).toEqual([
+      'mode',
+      'leading',
+      'custom.files',
+      'sticky-note',
+      'trailing-first',
+      'trailing-second',
+      'pin',
+    ]);
+    const action = host.querySelector<HTMLButtonElement>(
+      '[data-workbench-dock-action="trailing-first"]'
+    )!;
+    expect(action.draggable).toBe(false);
+    expect(action.getAttribute('aria-label')).toBe('Trailing first action');
+    action.click();
+    expect(onActivate).toHaveBeenCalledWith(action);
+    expect(onDockActivation).toHaveBeenCalledWith({ kind: 'action', id: 'trailing-first' });
+
+    const component = host.querySelector('[data-workbench-dock-component="custom.files"]')!;
+    action.dispatchEvent(new MouseEvent('pointerenter'));
+    expect(
+      component.querySelector('[data-motion-animate]')?.getAttribute('data-motion-animate')
+    ).toBe(JSON.stringify({ scale: 1, y: 0, x: 0 }));
+
+    setMode('background');
+    expect(host.querySelector('[data-workbench-dock-action]')).toBeNull();
+    expect(host.querySelector('[data-workbench-dock-item="pin"]')).toBeNull();
+    setMode('work');
+    expect(host.querySelector('[data-workbench-dock-action="trailing-first"]')).not.toBeNull();
+  });
+
   it('projects an after-components external Dock placeholder at the visual tail', () => {
     const host = document.createElement('div');
     const source = document.createElement('button');

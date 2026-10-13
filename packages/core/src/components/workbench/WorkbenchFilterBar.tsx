@@ -55,6 +55,8 @@ export interface WorkbenchFilterBarProps {
   modeIcons?: WorkbenchDockModeIcons;
   /** Changes built-in Dock clicks without affecting drag-to-create behavior. */
   activationMode?: WorkbenchDockItemActivationMode;
+  /** Orders work-mode widgets and tools by id; unlisted entries retain their relative order at the end. */
+  componentOrder?: readonly (WorkbenchWidgetType | WorkbenchDockToolId)[];
   /** Solo a single dock component in the supplied mode scope; soloing it again shows the full scope. */
   onSoloFilter: (id: string, scope: readonly string[]) => void;
   onSelectMode?: (mode: WorkbenchInteractionMode) => void;
@@ -117,6 +119,8 @@ export type WorkbenchDockAction = Readonly<{
   label: string;
   icon: Component<{ class?: string }>;
   active?: boolean;
+  /** Places the action before or after components, always before host items in that group. */
+  dockPlacement?: WorkbenchDockItemPlacement;
   onActivate: (trigger: HTMLButtonElement) => void;
 }>;
 
@@ -598,7 +602,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const offsetFor = (slot: number): number => {
     const hovered = hoveredIndex();
     if (hovered === null) return 0;
-    if (hovered <= actionItems().length) return 0;
+    if (hovered <= leadingActionItems().length) return 0;
+    if (hovered >= trailingActionOffset() && hovered < trailingHostOffset()) return 0;
     if (hovered === slot) return -1;
     if (hovered === slot + 1) return -2;
     if (hovered === slot - 1) return 1;
@@ -923,7 +928,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       }));
     }
 
-    return [
+    const items = [
       ...WORKBENCH_WORK_TOOL_ITEMS.map((item) => ({
         id: item.tool,
         kind: 'tool' as const,
@@ -937,6 +942,11 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         icon: entry.icon,
       })),
     ];
+    const order = new Map(props.componentOrder?.map((id, index) => [id, index]));
+    return items.sort(
+      (a, b) =>
+        (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+    );
   });
   const hostDockItems = createMemo(() =>
     activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]
@@ -949,6 +959,27 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   );
   const actionItems = createMemo(() =>
     activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]
+  );
+  const leadingActionItems = createMemo(() =>
+    actionItems().filter((action) => action.dockPlacement !== 'after-components')
+  );
+  const trailingActionItems = createMemo(() =>
+    actionItems().filter((action) => action.dockPlacement === 'after-components')
+  );
+  const componentOffset = () => leadingActionItems().length + leadingHostDockItems().length + 1;
+  const trailingActionOffset = () => componentOffset() + componentItems().length;
+  const trailingHostOffset = () => trailingActionOffset() + trailingActionItems().length;
+  const DockActionAtSlot = (actionProps: { action: WorkbenchDockAction; slot: number }) => (
+    <DockAction
+      action={actionProps.action}
+      hoverOffset={offsetFor(actionProps.slot)}
+      onEnter={() => setHoveredIndex(actionProps.slot)}
+      onLeave={() => setHoveredIndex((current) => (current === actionProps.slot ? null : current))}
+      onActivate={(trigger) => {
+        props.onDockActivation?.({ kind: 'action', id: actionProps.action.id });
+        actionProps.action.onActivate(trigger);
+      }}
+    />
   );
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
   const componentFilterable = (): boolean => activeMode() !== 'background';
@@ -1082,29 +1113,15 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             </div>
           </Show>
         </div>
-        <Index each={actionItems()}>
-          {(action, index) => {
-            const slot = () => index + 1;
-            return (
-              <DockAction
-                action={action()}
-                hoverOffset={offsetFor(slot())}
-                onEnter={() => setHoveredIndex(slot())}
-                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
-                onActivate={(trigger) => {
-                  props.onDockActivation?.({ kind: 'action', id: action().id });
-                  action().onActivate(trigger);
-                }}
-              />
-            );
-          }}
+        <Index each={leadingActionItems()}>
+          {(action, index) => <DockActionAtSlot action={action()} slot={index + 1} />}
         </Index>
         <Show when={showExternalPlaceholder('before-components')}>
           <ExternalDockPlaceholder />
         </Show>
         <For each={leadingHostDockItems()}>
           {(item, index) => {
-            const slot = () => index() + actionItems().length + 1;
+            const slot = () => index() + leadingActionItems().length + 1;
             return (
               <DockItem
                 id={item.id}
@@ -1132,7 +1149,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         <span class="workbench-dock__divider" aria-hidden="true" />
         <For each={componentItems()}>
           {(entry, index) => {
-            const slot = () => index() + actionItems().length + leadingHostDockItems().length + 1;
+            const slot = () => index() + componentOffset();
             const presentation = () => componentPresentation(entry.kind, entry.id);
             return (
               <DockItem
@@ -1186,6 +1203,11 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             );
           }}
         </For>
+        <Index each={trailingActionItems()}>
+          {(action, index) => (
+            <DockActionAtSlot action={action()} slot={index + trailingActionOffset()} />
+          )}
+        </Index>
         <Show
           when={trailingHostDockItems().length > 0 || showExternalPlaceholder('after-components')}
         >
@@ -1193,12 +1215,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         </Show>
         <For each={trailingHostDockItems()}>
           {(item, index) => {
-            const slot = () =>
-              index() +
-              actionItems().length +
-              leadingHostDockItems().length +
-              componentItems().length +
-              1;
+            const slot = () => index() + trailingHostOffset();
             return (
               <DockItem
                 id={item.id}

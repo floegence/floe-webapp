@@ -130,6 +130,35 @@ function finishNavigation(now = 500): void {
 }
 
 describe('WorkbenchSurface Dock focus cycle', () => {
+  it('applies reactive product ordering while retaining unlisted tools and widgets', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const [order, setOrder] = createSignal(['missing', 'custom.terminal']);
+    const dispose = render(() => {
+      const [state, setState] = createSignal(createDefaultWorkbenchState(widgetDefinitions));
+      return (
+        <WorkbenchSurface
+          state={state}
+          setState={setState}
+          widgetDefinitions={widgetDefinitions}
+          dockComponentOrder={order()}
+        />
+      );
+    }, host);
+    try {
+      const componentIDs = () =>
+        Array.from(host.querySelectorAll<HTMLElement>('[data-workbench-dock-component]')).map(
+          (button) => button.dataset.workbenchDockComponent
+        );
+      expect(componentIDs()).toEqual(['custom.terminal', 'sticky-note', 'custom.files']);
+      setOrder(['custom.files', 'custom.terminal']);
+      await flushEffects();
+      expect(componentIDs()).toEqual(['custom.files', 'custom.terminal', 'sticky-note']);
+    } finally {
+      dispose();
+    }
+  });
+
   beforeEach(() => {
     animationFrames = [];
     resizeObserverCallback = null;

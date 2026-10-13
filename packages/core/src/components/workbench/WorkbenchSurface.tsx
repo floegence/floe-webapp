@@ -150,6 +150,8 @@ export interface WorkbenchSurfaceProps {
    * backward compatibility. Drag-to-create and host Dock items are unchanged.
    */
   dockItemActivationMode?: WorkbenchDockItemActivationMode;
+  /** Orders work-mode Dock widgets and tools; unlisted entries follow in their existing order. */
+  dockComponentOrder?: readonly (WorkbenchWidgetType | WorkbenchDockToolId)[];
   onDockItemClick?: (item: WorkbenchDockItemActivation) => boolean | void;
   /** Host artwork for the Dock mode trigger and its menu. */
   dockModeIcons?: WorkbenchDockModeIcons;
@@ -997,6 +999,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
             onItemClick={props.onDockItemClick}
             modeIcons={props.dockModeIcons}
             dockActions={props.dockActions}
+            componentOrder={props.dockComponentOrder}
             dockItems={props.dockItems}
             registerExternalDockDragController={props.registerExternalDockDragController}
             onDragPreviewChange={setDockDragPreview}

@@ -88,6 +88,21 @@ Workbench host items default to the leading host group. Set `WorkbenchHostDockIt
 
 `WorkbenchSurface.dockItemActivationMode` applies only to Floe's built-in component items. It defaults to `solo-filter`; `focus-cycle` navigates spatially ordered widgets, sticky notes, text, and background regions, or creates an empty type at the viewport center. It does not change `WorkbenchHostDockItem`, external drag, Dock action, mode switcher, or context-menu behavior. `onDockItemClick` remains the host's first-priority interception point in either mode.
 
+
+### Workbench Dock ordering
+
+`WorkbenchSurface.dockComponentOrder` orders work-mode widget and tool IDs.
+Unlisted entries follow in their existing relative order; unknown IDs create no
+entry. Omitting the order preserves the default tool-first layout. Composition
+Mode keeps its built-in tool order, and the mode switcher always stays first.
+
+`WorkbenchDockAction.dockPlacement` accepts `before-components` (the default) or
+`after-components`. Within each group, actions retain their supplied order and
+precede host items. Trailing actions therefore follow components and precede
+trailing pinned shortcuts. Actions remain non-draggable native buttons with
+unchanged activation, accessible names, and stable hover geometry. Host items
+and external drop previews continue to use their independent placement contract.
+
 ### fullScreen semantics
 
 `sidebar.fullScreen: true` means "this tab is a page":
