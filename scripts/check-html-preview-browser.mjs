@@ -127,8 +127,10 @@ try {
       await page.setViewportSize({ width: 360, height: 740 });
       await page.getByRole('button', { name: 'Open preview window' }).click();
       await floating.waitFor();
+      await page.waitForFunction(() => document.querySelector('.chat-media-preview-window')?.getAttribute('data-floating-presence') === 'open');
+      await floating.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
       const bounds = await floating.boundingBox();
-      assert.ok(bounds.width <= 360 && bounds.height <= 740);
+      assert.ok(bounds.width <= 360 && bounds.height <= 740, `${name} narrow window: ${JSON.stringify(bounds)}`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
       await copy.getByRole('link', { name: 'Slow file' }).click();
       await page.waitForFunction(() => window.htmlTest.pending);
