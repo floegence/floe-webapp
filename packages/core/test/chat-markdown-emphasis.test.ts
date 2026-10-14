@@ -39,6 +39,7 @@ describe('chat Markdown emphasis', () => {
       'abc_def_ghi and a**b**c',
       '***nested*** and **outer *inner* text**',
       '~~deleted~~ and ~deleted~',
+      '~~注意： ~~正文 and ~~ 注意：~~正文',
       '[**label**](https://example.com) and ![image](https://example.com/a.png)',
       'first\nsecond',
       '| a | b |\n| --- | --- |\n| **c** | d |',

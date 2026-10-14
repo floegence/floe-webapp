@@ -48,7 +48,8 @@ The parser uses `marked-cjk-friendly` for Chinese, Japanese, and Korean emphasis
 boundaries, including `**注意：**正文` and `这是**“引用”**的例子`. Whitespace
 inside emphasis delimiters and unmatched markers remain literal. This changes
 only display tokenization; it never normalizes stored messages or model inputs.
-Code, escapes, ordinary links, and non-CJK Markdown retain standard parsing.
+Only the extension's emphasis tokenizer is installed. Strikethrough, code,
+escapes, ordinary links, and non-CJK Markdown retain standard parsing.
 
 ### 3) Code diff: compute in Worker + virtualize rendering
 
