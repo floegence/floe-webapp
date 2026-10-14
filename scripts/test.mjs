@@ -47,6 +47,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/workbench-surface-api.test.tsx',
   'packages/core/test/workbench-surface-dock-focus-cycle.test.tsx',
   'packages/core/test/workbench-ui-first-activation.test.tsx',
+  'packages/core/test/chat-markdown-media-component.test.tsx',
 ];
 
 function isFlag(arg) {

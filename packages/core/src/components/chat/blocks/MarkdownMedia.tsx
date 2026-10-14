@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, Match, on, onCleanup, onMount, Show, Switch, type Component } from 'solid-js';
 import { FloatingWindow } from '../../ui/FloatingWindow';
-import { ExternalLink, Eye, FolderOpen, Maximize, Refresh } from '../../icons';
+import { ExternalLink, Eye, FolderOpen, Maximize, Minus, Refresh } from '../../icons';
 import { cn } from '../../../utils/cn';
 import { safeMarkdownMediaURL, sandboxedMarkdownHtml, type MarkdownMediaSource } from '../markdown/media';
 
@@ -11,6 +11,8 @@ export interface MarkdownMediaLabels {
   video: string;
   audio: string;
   html: string;
+  /** Label for opening an HTML file in the host's file preview surface. */
+  previewHTML?: string;
   loading: string;
   unavailable: string;
   retry: string;
@@ -26,7 +28,7 @@ export interface ResolvedMarkdownMedia {
   /** Optional host-authorized source link. */
   openURL?: string;
   loadHTML?: (signal: AbortSignal) => Promise<string>;
-  /** Open the image in the host's existing preview surface. */
+  /** Open the media in the host's existing preview surface. */
   preview?: { label: string; onSelect: () => void };
   /** Reveal the authorized file in its containing folder. Omit for non-file resources. */
   reveal?: { label: string; onSelect: () => void };
@@ -66,7 +68,9 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   const [expanded, setExpanded] = createSignal(false);
   const title = () => props.source.title || props.labels[props.source.kind];
   const source = createMemo(() => props.source);
-  const previewLabel = () => resource()?.preview?.label || props.labels.previewImage || props.labels.expand;
+  const previewLabel = () => resource()?.preview?.label
+    || (props.source.kind === 'image' ? props.labels.previewImage : props.labels.previewHTML)
+    || props.labels.open;
   const previewImage = (event: MouseEvent) => {
     previewTrigger = event.currentTarget as HTMLElement;
     const action = resource()?.preview;
@@ -130,8 +134,21 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           <Show when={status() === 'ready' && props.source.kind === 'image'}>
             <button type="button" class="chat-media-action" aria-label={previewLabel()} title={previewLabel()} onClick={previewImage}><Eye /></button>
           </Show>
+          <Show when={status() === 'ready' && resource()?.preview && props.source.kind !== 'image'}>
+            <button type="button" class="chat-media-action" data-chat-media-action="preview" aria-label={previewLabel()} title={previewLabel()} onClick={() => resource()?.preview?.onSelect()}><Eye /></button>
+          </Show>
           <Show when={status() === 'ready' && props.source.kind === 'html'}>
-            <button type="button" class="chat-media-action" aria-label={expanded() ? props.labels.collapse : props.labels.expand} title={expanded() ? props.labels.collapse : props.labels.expand} aria-expanded={expanded()} onClick={() => setExpanded(!expanded())}><Maximize /></button>
+            <button
+              type="button"
+              class="chat-media-action"
+              data-chat-media-action={expanded() ? 'collapse' : 'expand'}
+              aria-label={expanded() ? props.labels.collapse : props.labels.expand}
+              title={expanded() ? props.labels.collapse : props.labels.expand}
+              aria-expanded={expanded()}
+              onClick={() => setExpanded(!expanded())}
+            >
+              <Show when={expanded()} fallback={<Maximize />}><Minus /></Show>
+            </button>
           </Show>
           <Show when={props.source.kind !== 'image' && !resource()?.reveal && resource()?.openURL}>{url => <a class="chat-media-action" href={url()} target="_blank" rel="noopener noreferrer" aria-label={props.labels.open} title={props.labels.open}><ExternalLink /></a>}</Show>
         </span>
