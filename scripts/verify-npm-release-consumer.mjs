@@ -82,6 +82,7 @@ execFileSync(
       `import.meta.resolve('${packageNames[0]}/remote-pointer.css')`,
       `import.meta.resolve('${packageNames[0]}/graph')`,
       `import.meta.resolve('${packageNames[0]}/graph.css')`,
+      `import.meta.resolve('${packageNames[0]}/html-preview')`,
       `const { createReloadPlaceholderScript } = await import('${packageNames[0]}/reload-placeholder')`,
       `new Function(createReloadPlaceholderScript({storageKey: 'consumer'}))`,
       `const { createResourceCache } = await import('${packageNames[0]}/resource-cache')`,

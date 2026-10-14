@@ -2,7 +2,8 @@ import { createEffect, createMemo, createSignal, Match, on, onCleanup, onMount, 
 import { FloatingWindow } from '../../ui/FloatingWindow';
 import { ExternalLink, Eye, FolderOpen, Maximize, Minus, Refresh } from '../../icons';
 import { cn } from '../../../utils/cn';
-import { safeMarkdownMediaURL, sandboxedMarkdownHtml, type MarkdownMediaSource } from '../markdown/media';
+import { safeMarkdownMediaURL, type MarkdownMediaSource } from '../markdown/media';
+import { SandboxedHtmlFrame } from '../../html-preview/SandboxedHtmlFrame';
 
 export interface MarkdownMediaLabels {
   image: string;
@@ -13,6 +14,10 @@ export interface MarkdownMediaLabels {
   html: string;
   /** Label for opening an HTML file in the host's file preview surface. */
   previewHTML?: string;
+  /** Label for an independent floating preview of inline HTML. */
+  previewHTMLWindow?: string;
+  linkUnavailable?: string;
+  anchorUnavailable?: string;
   loading: string;
   unavailable: string;
   retry: string;
@@ -39,6 +44,8 @@ export interface MarkdownMediaProps {
   labels: MarkdownMediaLabels;
   /** Replace this callback when its authorization or resource context changes. Reads inside it do not trigger reloads. */
   resolve?: (source: MarkdownMediaSource, signal: AbortSignal) => Promise<ResolvedMarkdownMedia>;
+  /** Resolve and authorize a user-activated HTML link using the source's host context. */
+  onOpenLink?: (source: MarkdownMediaSource, href: string, signal: AbortSignal) => void | Promise<void>;
   class?: string;
 }
 
@@ -66,10 +73,12 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'error'>('loading');
   const [retry, setRetry] = createSignal(0);
   const [expanded, setExpanded] = createSignal(false);
+  const [htmlPreviewOpen, setHtmlPreviewOpen] = createSignal(false);
   const title = () => props.source.title || props.labels[props.source.kind];
   const source = createMemo(() => props.source);
   const previewLabel = () => resource()?.preview?.label
-    || (props.source.kind === 'image' ? props.labels.previewImage : props.labels.previewHTML)
+    || (props.source.kind === 'image' ? props.labels.previewImage
+      : props.labels.previewHTMLWindow ?? 'Open preview window')
     || props.labels.open;
   const previewImage = (event: MouseEvent) => {
     previewTrigger = event.currentTarget as HTMLElement;
@@ -77,6 +86,21 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     if (action) action.onSelect();
     else setExpanded(true);
   };
+  const previewHTML = (event: MouseEvent) => {
+    previewTrigger = event.currentTarget as HTMLElement;
+    const action = resource()?.preview;
+    if (action) action.onSelect();
+    else setHtmlPreviewOpen(true);
+  };
+  const openHtmlLink = () => {
+    const handler = props.onOpenLink;
+    const request = source();
+    return handler ? (href: string, signal: AbortSignal) => handler(request, href, signal) : undefined;
+  };
+  const htmlLabels = () => ({
+    linkUnavailable: props.labels.linkUnavailable ?? 'Opening links is unavailable in this preview.',
+    anchorUnavailable: props.labels.anchorUnavailable ?? 'The linked section was not found.',
+  });
 
   createEffect(on([visible, source, () => props.resolve, retry], ([isVisible, request, resolve]) => {
     if (!isVisible) return;
@@ -87,10 +111,11 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     setDocument(undefined);
     setStatus('loading');
     setExpanded(false);
+    setHtmlPreviewOpen(false);
     void (async () => {
       if (request.kind === 'html' && request.html !== undefined) {
         if (request.html.length > 1_000_000) throw new Error('HTML preview is too large');
-        if (!controller.signal.aborted) setDocument(sandboxedMarkdownHtml(request.html));
+        if (!controller.signal.aborted) setDocument(request.html);
       } else {
         const resolved = await resolver(request, controller.signal);
         if (controller.signal.aborted) return;
@@ -99,7 +124,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           const html = await resolved.loadHTML(controller.signal);
           if (controller.signal.aborted) return;
           if (html.length > 1_000_000) throw new Error('HTML preview is too large');
-          setDocument(sandboxedMarkdownHtml(html));
+          setDocument(html);
         } else if (!resolved.src) throw new Error('Media URL is required');
         setResource(resolved);
       }
@@ -120,7 +145,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
             </Match>
             <Match when={props.source.kind === 'video'}><video class="chat-media-video" src={resource()?.src} controls playsinline preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
             <Match when={props.source.kind === 'audio'}><audio class="chat-media-audio" src={resource()?.src} controls preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
-            <Match when={props.source.kind === 'html'}><iframe class="chat-media-html" title={title()} srcdoc={document()} sandbox="allow-scripts" referrerPolicy="no-referrer" /></Match>
+            <Match when={props.source.kind === 'html'}><SandboxedHtmlFrame class="chat-media-html" title={title()} html={document() ?? ''} labels={htmlLabels()} onOpenLink={openHtmlLink()} /></Match>
           </Switch>
         </Match>
       </Switch>
@@ -134,8 +159,8 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           <Show when={status() === 'ready' && props.source.kind === 'image'}>
             <button type="button" class="chat-media-action" aria-label={previewLabel()} title={previewLabel()} onClick={previewImage}><Eye /></button>
           </Show>
-          <Show when={status() === 'ready' && resource()?.preview && props.source.kind !== 'image'}>
-            <button type="button" class="chat-media-action" data-chat-media-action="preview" aria-label={previewLabel()} title={previewLabel()} onClick={() => resource()?.preview?.onSelect()}><Eye /></button>
+          <Show when={status() === 'ready' && props.source.kind !== 'image' && (props.source.kind === 'html' || resource()?.preview)}>
+            <button type="button" class="chat-media-action" data-chat-media-action="preview" aria-label={previewLabel()} title={previewLabel()} onClick={previewHTML}><Eye /></button>
           </Show>
           <Show when={status() === 'ready' && props.source.kind === 'html'}>
             <button
@@ -159,6 +184,16 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           defaultSize={{ width: 960, height: 680 }} minSize={{ width: 280, height: 240 }} compactBelow={640}
           class="chat-media-preview-window">
           <div class="chat-media-preview-content" ref={element => queueMicrotask(() => element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true }))}><img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" /></div>
+        </FloatingWindow>
+      </Show>
+      <Show when={props.source.kind === 'html'}>
+        <FloatingWindow open={htmlPreviewOpen()} onOpenChange={open => { setHtmlPreviewOpen(open); if (!open) previewTrigger?.focus({ preventScroll: true }); }} title={title()}
+          labels={{ close: props.labels.close, maximize: props.labels.expand, restore: props.labels.collapse }}
+          defaultSize={{ width: 960, height: 680 }} minSize={{ width: 280, height: 240 }} compactBelow={640}
+          class="chat-media-preview-window">
+          <div class="chat-media-preview-content" ref={element => queueMicrotask(() => element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true }))}>
+            <SandboxedHtmlFrame class="chat-media-html" title={title()} html={document() ?? ''} labels={htmlLabels()} onOpenLink={openHtmlLink()} />
+          </div>
         </FloatingWindow>
       </Show>
     </span>

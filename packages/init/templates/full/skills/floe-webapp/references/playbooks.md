@@ -84,6 +84,7 @@ done
 - `@floegence/floe-webapp-core/chat`
 - `@floegence/floe-webapp-core/markdown` (`createMarkdownParser` shares GFM and CJK emphasis rules with custom chat renderers)
 - `@floegence/floe-webapp-core/chat-media` (pure media parsing and HTML isolation helpers)
+- `@floegence/floe-webapp-core/html-preview` (isolated HTML frame with local anchors and user-activated link intents; hosts resolve paths and authorize opens)
 - `@floegence/floe-webapp-core/notes`
 - `@floegence/floe-webapp-core/editor`
 - `@floegence/floe-webapp-core/widgets`

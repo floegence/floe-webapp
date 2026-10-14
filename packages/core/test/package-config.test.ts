@@ -76,6 +76,7 @@ describe('@floegence/floe-webapp-core package config', () => {
       './markdown': { types: './dist/markdown.d.ts', import: './dist/markdown.js' },
       './code-highlight': { types: './dist/code-highlight.d.ts', import: './dist/code-highlight.js' },
       './chat-media': { types: './dist/chat-media.d.ts', import: './dist/chat-media.js' },
+      './html-preview': { types: './dist/html-preview.d.ts', import: './dist/html-preview.js' },
       './notes': {
         types: './dist/notes.d.ts',
         import: './dist/notes.js',

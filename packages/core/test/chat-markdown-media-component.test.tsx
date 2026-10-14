@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'solid-js/web';
 import { MarkdownMedia } from '../src/components/chat/blocks/MarkdownMedia';
 
@@ -22,9 +22,16 @@ const labels = {
 
 const disposers: Array<() => void> = [];
 
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', vi.fn((media: string) => ({
+    matches: false, media, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+  })));
+});
+
 afterEach(() => {
   while (disposers.length) disposers.pop()!();
   document.body.innerHTML = '';
+  vi.unstubAllGlobals();
 });
 
 async function flush(): Promise<void> {
@@ -33,6 +40,24 @@ async function flush(): Promise<void> {
 }
 
 describe('MarkdownMedia HTML controls', () => {
+  it('opens an inline HTML snapshot in a floating window without replacing the inline frame', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    disposers.push(render(() => <MarkdownMedia
+      source={{ kind: 'html', html: '<main>Inline report</main>', title: 'Report' }}
+      labels={labels}
+    />, host));
+    await flush();
+    const frame = host.querySelector('iframe');
+    const preview = host.querySelector<HTMLButtonElement>('[data-chat-media-action="preview"]');
+    expect(preview).not.toBeNull();
+    preview!.click();
+    await flush();
+    expect(document.querySelector('.chat-media-preview-window iframe')?.getAttribute('srcdoc')).toContain('Inline report');
+    expect(host.querySelector('iframe')).toBe(frame);
+    expect(host.querySelector('[data-chat-media-action="expand"]')).not.toBeNull();
+  });
+
   it('exposes a host preview action and distinct expand/collapse controls', async () => {
     const openPreview = vi.fn();
     const host = document.createElement('div');

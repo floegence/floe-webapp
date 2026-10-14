@@ -62,6 +62,7 @@ export default defineConfig({
         markdown: resolve(__dirname, 'src/markdown.ts'),
         'code-highlight': resolve(__dirname, 'src/code-highlight.ts'),
         'chat-media': resolve(__dirname, 'src/chat-media.ts'),
+        'html-preview': resolve(__dirname, 'src/html-preview.ts'),
         notes: resolve(__dirname, 'src/notes.ts'),
         editor: resolve(__dirname, 'src/editor.ts'),
         pdf: resolve(__dirname, 'src/pdf.ts'),

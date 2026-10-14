@@ -45,6 +45,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/markdown` (`createMarkdownParser` with CJK-aware emphasis; never rewrite stored text to repair display)
    - `@floegence/floe-webapp-core/code-highlight` (visible committed code enhancement; worker parsing, selection-safe color-only spans)
    - `@floegence/floe-webapp-core/chat-media` (pure media parsing and HTML isolation helpers)
+   - `@floegence/floe-webapp-core/html-preview` (isolated HTML frame with local anchors and user-activated link intents; hosts resolve paths and authorize opens)
    - `@floegence/floe-webapp-core/notes`
    - `@floegence/floe-webapp-core/editor`
    - `@floegence/floe-webapp-core/pdf` (layered PDF surfaces; see `docs/pdf-surface.md`)

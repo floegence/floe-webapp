@@ -351,10 +351,32 @@ frames, forms, external scripts, and assets. Inline styles/scripts and embedded
 data images remain usable. A host must also bound bytes before decoding fetched
 HTML. Preview output is never inserted into the application's DOM.
 
+Inline HTML without a host preview action offers a separate floating window
+using the same HTML snapshot. Opening or closing that copy preserves the inline
+document and chat position; script and form state is independent in each copy.
+Use `previewHTMLWindow`, `linkUnavailable`, and `anchorUnavailable` for localized
+actions and feedback. Expansion remains a separate action on the inline frame.
+
+`SandboxedHtmlFrame` from `@floegence/floe-webapp-core/html-preview` shares this
+isolation and link handling with file viewers. Fragment links scroll within the
+current document without navigating its URL. Other real user link activations
+pass the original `href` to optional `onOpenLink(href, signal)`; MarkdownMedia's
+callback also receives its source. Hosts bind the source context, validate
+protocols, resolve paths, authorize reads, and choose their existing opening
+surface. Missing handlers and rejected promises show feedback beside the retained
+document. Replace source/resolver identity when its authorization changes and
+honor the abort signal before asynchronous side effects. Never resolve relative
+paths against the application URL. The private per-document message port carries
+link intent only; page scripts, synthetic clicks, sibling frames, and obsolete
+documents cannot use it to invoke the host. No resource-loading API is exposed.
+
 Validation: `node scripts/check-chat-media-browser.mjs` covers interactive HTML,
 shell/network isolation, stable iframe expansion, media playback and seeking,
 image dialog dismissal, narrow layout, host snapshot stability, resolver/source
 replacement, stale responses, retry, and cancellation on disposal.
+`node scripts/check-html-preview-browser.mjs` covers local anchors, authenticated
+link activation, independent floating copies, feedback, keyboard focus, narrow
+layouts, cancellation, and isolation in Chromium and WebKit.
 
 ## Recovery after a deployment or interrupted module load
 

@@ -263,6 +263,8 @@ function main() {
   assertFile('packages/core/dist/markdown.js');
   assertFile('packages/core/dist/markdown.d.ts');
   assertFile('packages/core/dist/chat-media.js');
+  assertFile('packages/core/dist/html-preview.js');
+  assertFile('packages/core/dist/html-preview.d.ts');
   assertFile('packages/core/dist/code-highlight.js');
   assertFile('packages/core/dist/code-highlight.d.ts');
   assertFile('packages/core/dist/graph.js');
@@ -390,9 +392,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.86.31'
+      (version) => version === '0.86.32'
     ),
-    'Published Floe packages must all use version 0.86.31'
+    'Published Floe packages must all use version 0.86.32'
   );
 
   assert(
@@ -442,6 +444,7 @@ function main() {
     'chat',
     'markdown',
     'chat-media',
+    'html-preview',
     'code-highlight',
     'graph',
     'editor',
