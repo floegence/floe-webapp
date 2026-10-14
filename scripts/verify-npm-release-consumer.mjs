@@ -73,6 +73,8 @@ execFileSync(
     '-e',
     [
       `import.meta.resolve('${packageNames[0]}')`,
+      `const { createMarkdownParser } = await import('${packageNames[0]}/markdown')`,
+      `if (!createMarkdownParser({breaks:false}).parse('**注意：**正文').includes('<strong>注意：</strong>正文')) throw new Error('missing CJK emphasis parsing')`,
       `const { enhanceCodeBlock } = await import('${packageNames[0]}/code-highlight')`,
       `if (typeof enhanceCodeBlock !== 'function') throw new Error('missing code enhancement API')`,
       `const { createRemotePointer } = await import('${packageNames[0]}/remote-pointer')`,

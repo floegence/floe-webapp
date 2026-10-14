@@ -20,6 +20,10 @@ Floe Webapp is a composable application framework for products that need more th
 
 Your product keeps control of its routes, business state, RPC contract, and branded experience. Floe supplies the reusable system around them.
 
+Chat Markdown supports Chinese, Japanese, and Korean emphasis around punctuation.
+Custom chat renderers can reuse `createMarkdownParser` from
+`@floegence/floe-webapp-core/markdown`; see the [rendering guide](docs/chat-ui-first-rendering.md).
+
 ## One Shell, Three Ways To Work
 
 Workbench gives product-owned tools a persistent canvas with shared window chrome, navigation, themes, focus behavior, and widget lifecycle semantics. The demo opens in work mode with a clean, non-overlapping layout.

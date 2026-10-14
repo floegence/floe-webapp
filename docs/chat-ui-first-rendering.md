@@ -38,6 +38,18 @@ After streaming ends, Markdown is rendered to HTML **outside** the current paint
 - Large Markdown: parsing is offloaded to a **Markdown Worker**.
 - If no Worker is configured for large Markdown: keep plain text (never block).
 
+The main-thread and worker paths use the same isolated parser. Hosts with their
+own renderers can call `createMarkdownParser` from
+`@floegence/floe-webapp-core/markdown`, then install their renderer or inline
+extensions with `parser.use(...)`. It defaults to GFM with line breaks enabled;
+hosts can override Marked options without changing another parser instance.
+
+The parser uses `marked-cjk-friendly` for Chinese, Japanese, and Korean emphasis
+boundaries, including `**注意：**正文` and `这是**“引用”**的例子`. Whitespace
+inside emphasis delimiters and unmatched markers remain literal. This changes
+only display tokenization; it never normalizes stored messages or model inputs.
+Code, escapes, ordinary links, and non-CJK Markdown retain standard parsing.
+
 ### 3) Code diff: compute in Worker + virtualize rendering
 
 The code-diff block no longer computes diff synchronously in render.

@@ -1,11 +1,9 @@
 import { marked } from 'marked';
+import { createMarkdownParser } from './parser';
 
 // Keep the markdown configuration centralized so both main-thread and Worker rendering
 // produce identical HTML.
-marked.setOptions({
-  gfm: true,
-  breaks: true,
-});
+const parser = createMarkdownParser();
 
 const renderer = new marked.Renderer();
 
@@ -41,10 +39,10 @@ renderer.blockquote = function (this: unknown, token: { text: string }) {
   return `<blockquote class="chat-md-blockquote">${token.text}</blockquote>`;
 };
 
-marked.use({ renderer });
+parser.use({ renderer });
 
 export function renderMarkdownToHtml(content: string): string {
   // Marked can return string | Promise<string> depending on options; we force sync.
-  return marked.parse(content, { async: false }) as string;
+  return parser.parse(content, { async: false });
 }
 

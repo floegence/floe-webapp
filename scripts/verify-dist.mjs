@@ -260,6 +260,8 @@ function main() {
   assertFileContains('packages/core/dist/chat.js', 'createInputHistoryController');
   assertFileContains('packages/core/dist/components/chat/index.d.ts', 'createInputHistoryController');
   assertFile('packages/core/dist/chat.d.ts');
+  assertFile('packages/core/dist/markdown.js');
+  assertFile('packages/core/dist/markdown.d.ts');
   assertFile('packages/core/dist/chat-media.js');
   assertFile('packages/core/dist/code-highlight.js');
   assertFile('packages/core/dist/code-highlight.d.ts');
@@ -388,9 +390,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.86.28'
+      (version) => version === '0.86.29'
     ),
-    'Published Floe packages must all use version 0.86.28'
+    'Published Floe packages must all use version 0.86.29'
   );
 
   assert(
@@ -438,6 +440,7 @@ function main() {
     'launchpad',
     'file-browser',
     'chat',
+    'markdown',
     'chat-media',
     'code-highlight',
     'graph',
