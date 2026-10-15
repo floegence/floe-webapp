@@ -37,10 +37,19 @@ window.mediaTest = {
   reject: index => requests[index].reject(new Error('Unavailable')),
   dispose,
 };`;
+const canvasFixture = `import { createSignal } from 'solid-js';
+import { render } from 'solid-js/web';
+import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/MarkdownMedia';
+import '/packages/core/src/styles/globals.css';
+const [html,setHTML]=createSignal('<main>Partial source</main>');
+const [state,setState]=createSignal('generating');
+render(()=><main style="max-width:680px;margin:auto"><MarkdownMedia labels={${JSON.stringify(labels)}} source={{kind:'html',html:html(),title:'Canvas'}} htmlState={state()}/></main>,document.getElementById('root'));
+window.canvasTest={append:()=>setHTML('<main>Partial source grows</main>'),interrupt:()=>setState('incomplete'),finish:()=>{setHTML('<button>Try interaction</button>');setState(undefined)}};`;
 let forbiddenRequests = 0;
-const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx' || id === '/lifecycle.tsx') return id; }, load(id) { if (id === '/fixture.tsx') return fixture; if (id === '/lifecycle.tsx') return lifecycleFixture; }, configureServer(instance) {
+const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx' || id === '/lifecycle.tsx' || id === '/canvas.tsx') return id; }, load(id) { if (id === '/fixture.tsx') return fixture; if (id === '/lifecycle.tsx') return lifecycleFixture; if (id === '/canvas.tsx') return canvasFixture; }, configureServer(instance) {
   instance.middlewares.use((req, res, next) => {
     if (req.url === '/') { res.setHeader('Content-Type','text/html'); res.end('<html><head><style>:root{--background:#fff;--card:#fff;--foreground:#262626;--muted:#f5f5f5;--muted-foreground:#666;--border:#ddd;--ring:#555}body{font-family:system-ui}button,a{color:inherit}button{border:0}svg{width:20px}</style></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>'); }
+    else if (req.url === '/canvas') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/canvas.tsx"></script></body></html>'); }
     else if (req.url === '/lifecycle') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/lifecycle.tsx"></script></body></html>'); }
     else if (req.url === '/media.mp4') { const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? ''); const start = range ? Number(range[1]) : 0; const end = range?.[2] ? Math.min(Number(range[2]),video.length-1) : video.length-1; res.writeHead(range ? 206 : 200, {'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':end-start+1,...(range ? {'Content-Range':`bytes ${start}-${end}/${video.length}`} : {})}); res.end(video.subarray(start,end+1)); }
     else if (req.url.split('?')[0] === '/image.svg') { res.setHeader('Content-Type','image/svg+xml'); res.end('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="280"><rect width="640" height="280" fill="#dde5d7"/><circle cx="320" cy="140" r="80" fill="#597b58"/></svg>'); }
@@ -98,6 +107,43 @@ try {
   await page.setViewportSize({width:360,height:900});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.screenshot({path:'/tmp/floe-chat-media-mobile.png',fullPage:true});
+  await page.goto(new URL('/canvas', server.resolvedUrls.local[0]).href);
+  const canvas = page.locator('.chat-html-canvas');
+  await canvas.locator('[data-chat-media-action=source]').waitFor();
+  assert.equal(await canvas.getAttribute('data-state'), 'generating');
+  assert.equal(await canvas.locator('iframe').count(), 0);
+  const generating = await canvas.boundingBox();
+  await page.screenshot({path:'/tmp/floe-html-canvas-generating.png'});
+  await canvas.locator('[data-chat-media-action=source]').click();
+  await page.evaluate(() => window.canvasTest.append());
+  assert.equal(await canvas.locator('pre').textContent(), '<main>Partial source grows</main>');
+  await page.evaluate(() => window.canvasTest.interrupt());
+  assert.equal(await canvas.getAttribute('data-state'), 'incomplete');
+  assert.equal(await canvas.locator('iframe').count(), 0);
+  await page.evaluate(() => window.canvasTest.finish());
+  await canvas.locator('iframe').waitFor({state:'attached'});
+  assert.equal(await canvas.getAttribute('data-view'), 'source');
+  const completed = await canvas.boundingBox();
+  assert.equal(generating.height, completed.height, 'Completion must not shift neighboring content');
+  await canvas.locator('[data-chat-media-action=source]').click();
+  const completedFrame = await canvas.locator('iframe').elementHandle();
+  await canvas.locator('[data-chat-media-action=source]').click();
+  await canvas.locator('[data-chat-media-action=source]').click();
+  assert.equal(await completedFrame.evaluate(node => node === document.querySelector('iframe')), true);
+  for (const width of [680,375,320]) {
+    await page.setViewportSize({width,height:800});
+    for (const theme of ['light','dark']) {
+      await page.evaluate(theme => document.documentElement.classList.toggle('dark',theme === 'dark'),theme);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
+      const sheet = await canvas.locator('.chat-html-sheet').boundingBox();
+      const controls = await canvas.locator('.chat-html-controls').boundingBox();
+      assert.ok(sheet.y + sheet.height < controls.y, 'Actions must never overlap the HTML');
+      await canvas.locator('.chat-html-sheet').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
+      await page.screenshot({path:'/tmp/floe-html-canvas-'+theme+'-'+width+'.png'});
+    }
+  }
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName),'none');
   await page.goto(new URL('/lifecycle', server.resolvedUrls.local[0]).href);
   await page.waitForFunction(() => window.mediaTest?.stats().calls === 1);
   for (let index = 0; index < 3; index++) await page.evaluate(() => window.mediaTest.bump());

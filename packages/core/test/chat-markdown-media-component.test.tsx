@@ -2,6 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'solid-js/web';
+import { createSignal } from 'solid-js';
 import { MarkdownMedia } from '../src/components/chat/blocks/MarkdownMedia';
 
 const labels = {
@@ -40,6 +41,28 @@ async function flush(): Promise<void> {
 }
 
 describe('MarkdownMedia HTML controls', () => {
+  it('bounds generating HTML without executing partial scripts and retains source view at completion', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const [source, setSource] = createSignal({ kind: 'html' as const, html: '<script>partial', title: 'Report' });
+    const [htmlState, setHtmlState] = createSignal<'generating' | 'incomplete' | undefined>('generating');
+    disposers.push(render(() => <MarkdownMedia source={source()} htmlState={htmlState()} labels={labels} />, host));
+    await flush();
+    expect(host.querySelector('.chat-html-canvas')?.getAttribute('data-state')).toBe('generating');
+    expect(host.querySelector('iframe')).toBeNull();
+    host.querySelector<HTMLButtonElement>('[data-chat-media-action=source]')!.click();
+    expect(host.querySelector('pre')?.textContent).toBe('<script>partial');
+    setHtmlState('incomplete');
+    await flush();
+    expect(host.querySelector('.chat-html-canvas')?.getAttribute('data-state')).toBe('incomplete');
+    expect(host.querySelector('iframe')).toBeNull();
+    setSource({ kind: 'html', html: '<main>Complete</main>', title: 'Report' });
+    setHtmlState(undefined);
+    await flush();
+    expect(host.querySelector('pre')?.textContent).toBe('<main>Complete</main>');
+    expect(host.querySelector('[data-chat-media-action=source]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(host.querySelector('iframe')?.getAttribute('sandbox')).toBe('allow-scripts');
+  });
   it('opens an inline HTML snapshot in a floating window without replacing the inline frame', async () => {
     const host = document.createElement('div');
     document.body.append(host);
@@ -49,9 +72,12 @@ describe('MarkdownMedia HTML controls', () => {
     />, host));
     await flush();
     const frame = host.querySelector('iframe');
-    const preview = host.querySelector<HTMLButtonElement>('[data-chat-media-action="preview"]');
+    host.querySelector<HTMLElement>('[aria-label="More actions"]')!.click();
+    await flush();
+    const preview = Array.from(document.querySelectorAll<HTMLElement>('[role=menuitem]')).find(item => item.textContent?.includes('Open preview window'));
     expect(preview).not.toBeNull();
     preview!.click();
+    await new Promise(resolve => setTimeout(resolve, 50));
     await flush();
     expect(document.querySelector('.chat-media-preview-window iframe')?.getAttribute('srcdoc')).toContain('Inline report');
     expect(host.querySelector('iframe')).toBe(frame);
@@ -79,12 +105,15 @@ describe('MarkdownMedia HTML controls', () => {
     );
 
     await flush();
-    const preview = host.querySelector<HTMLButtonElement>('[data-chat-media-action="preview"]');
+    host.querySelector<HTMLElement>('[aria-label="More actions"]')!.click();
+    await flush();
+    const preview = Array.from(document.querySelectorAll<HTMLElement>('[role=menuitem]')).find(item => item.textContent?.includes(labels.previewHTML));
     const expand = host.querySelector<HTMLButtonElement>('[data-chat-media-action="expand"]');
-    expect(preview?.getAttribute('aria-label')).toBe(labels.previewHTML);
+    expect(preview?.textContent).toContain(labels.previewHTML);
     expect(expand?.getAttribute('aria-label')).toBe(labels.expand);
 
     preview?.click();
+    await new Promise(resolve => setTimeout(resolve, 50));
     expect(openPreview).toHaveBeenCalledOnce();
 
     expand?.click();

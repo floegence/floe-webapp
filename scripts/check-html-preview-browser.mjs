@@ -110,7 +110,8 @@ try {
       await frame.getByRole('button', { name: 'Change', exact: true }).click();
       const inline = await page.locator('iframe').elementHandle();
       const scroll = await page.evaluate(() => window.scrollY);
-      await page.getByRole('button', { name: 'Open preview window' }).click();
+      await page.getByRole('button', { name: 'More actions' }).click();
+      await page.getByRole('menuitem', { name: 'Open preview window' }).click();
       const floating = page.locator('.chat-media-preview-window');
       await floating.waitFor();
       const copy = floating.frameLocator('iframe');
@@ -123,9 +124,10 @@ try {
       await page.waitForFunction(() => window.htmlTest.opened.length === 4);
       await page.getByRole('button', { name: 'Close preview', exact: true }).click();
       await floating.waitFor({ state: 'detached' });
-      assert.equal(await page.getByRole('button', { name: 'Open preview window' }).evaluate(element => element === document.activeElement), true);
+      assert.equal(await page.getByRole('button', { name: 'More actions' }).evaluate(element => element === document.activeElement), true);
       await page.setViewportSize({ width: 360, height: 740 });
-      await page.getByRole('button', { name: 'Open preview window' }).click();
+      await page.getByRole('button', { name: 'More actions' }).click();
+      await page.getByRole('menuitem', { name: 'Open preview window' }).click();
       await floating.waitFor();
       await page.waitForFunction(() => document.querySelector('.chat-media-preview-window')?.getAttribute('data-floating-presence') === 'open');
       await floating.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
