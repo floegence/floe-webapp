@@ -113,6 +113,31 @@ try {
   assert.equal(await canvas.getAttribute('data-state'), 'generating');
   assert.equal(await canvas.locator('iframe').count(), 0);
   const generating = await canvas.boundingBox();
+  const status = canvas.locator('.chat-html-loading');
+  const shimmer = status.locator('[data-floe-progress-shimmer=text]');
+  assert.equal(await canvas.locator('.chat-html-skeleton').count(), 0, 'Generation must not display a decorative skeleton frame');
+  assert.equal(await canvas.locator('.chat-html-sheet').isVisible(), false);
+  for (const width of [680, 375, 320]) {
+    await page.setViewportSize({width, height:800});
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(theme => document.documentElement.classList.toggle('dark',theme === 'dark'),theme);
+      const surface = await canvas.boundingBox();
+      const text = await shimmer.boundingBox();
+      assert.ok(Math.abs(text.x + text.width / 2 - surface.x - surface.width / 2) < 1, 'Busy text must be horizontally centered');
+      assert.ok(Math.abs(text.y + text.height / 2 - surface.y - surface.height / 2) < 1, 'Busy text must be vertically centered');
+      assert.equal(await shimmer.evaluate(node => getComputedStyle(node).animationName), 'floe-progress-shimmer');
+      assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName), 'chat-html-sweep');
+      assert.equal(await status.evaluate(node => getComputedStyle(node).borderWidth), '0px');
+      await page.screenshot({path:'/tmp/floe-html-generating-'+theme+'-'+width+'.png'});
+    }
+  }
+  for (const media of [{reducedMotion:'reduce'}, {forcedColors:'active'}]) {
+    await page.emulateMedia(media);
+    assert.equal(await shimmer.evaluate(node => getComputedStyle(node).animationName), 'none');
+    assert.notEqual(await shimmer.evaluate(node => getComputedStyle(node).webkitTextFillColor), 'rgba(0, 0, 0, 0)');
+    await page.emulateMedia({reducedMotion:'no-preference', forcedColors:'none'});
+  }
+  await page.setViewportSize({width:360,height:900});
   await page.screenshot({path:'/tmp/floe-html-canvas-generating.png'});
   await canvas.locator('[data-chat-media-action=source]').click();
   await page.evaluate(() => window.canvasTest.append());
@@ -120,6 +145,10 @@ try {
   await page.evaluate(() => window.canvasTest.interrupt());
   assert.equal(await canvas.getAttribute('data-state'), 'incomplete');
   assert.equal(await canvas.locator('iframe').count(), 0);
+  await canvas.locator('[data-chat-media-action=source]').click();
+  assert.equal(await status.locator('[data-floe-progress-shimmer]').count(), 0, 'Interrupted generation must settle its text animation');
+  assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName), 'none');
+  await canvas.locator('[data-chat-media-action=source]').click();
   await page.evaluate(() => window.canvasTest.finish());
   await canvas.locator('iframe').waitFor({state:'attached'});
   assert.equal(await canvas.getAttribute('data-view'), 'source');

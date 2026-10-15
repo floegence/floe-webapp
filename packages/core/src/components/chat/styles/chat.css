@@ -1902,12 +1902,7 @@ pre.chat-md-code-block *::selection,
   .chat-html-sheet .chat-media-html { height: 100%; border-radius: 0; }
   .chat-html-source { display: block; margin: 0; padding: 1.25rem; overflow: auto; overscroll-behavior: contain; white-space: pre; font: .6875rem/1.85 var(--font-mono); color: var(--foreground); }
   .chat-html-source code { padding: 0; color: inherit; background: none; font: inherit; }
-  .chat-html-loading { position: absolute; inset: 3.5rem var(--canvas-inset) 4.25rem; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; text-align: center; color: var(--muted-foreground); font-size: .75rem; }
-  .chat-html-skeleton { display: flex; flex-direction: column; justify-content: center; gap: .875rem; width: min(72%, 19rem); height: 11rem; padding: 1.75rem; border: 1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius: .625rem; background: color-mix(in srgb, var(--background) 65%, transparent); }
-  .chat-html-skeleton > span { height: .375rem; border-radius: 1rem; background: color-mix(in srgb, var(--muted-foreground) 12%, transparent); }
-  .chat-html-skeleton > span:first-child { width: 35%; height: .5rem; margin-bottom: .75rem; }
-  .chat-html-skeleton > span:nth-child(3) { width: 82%; }
-  .chat-html-skeleton > span:last-child { width: 60%; }
+  .chat-html-loading { position: absolute; inset: 3.5rem var(--canvas-inset); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; text-align: center; color: var(--muted-foreground); font-size: .75rem; }
   .chat-html-orb { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 2.125rem; height: 2.125rem; padding: 0; border: 1px solid color-mix(in srgb, var(--border) 80%, transparent); border-radius: 50%; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 88%, transparent); box-shadow: 0 2px 5px rgb(0 0 0 / .035); backdrop-filter: blur(12px); cursor: pointer; transition: color 140ms, background 140ms, transform 140ms; }
   .chat-html-orb:hover { color: var(--foreground); background: var(--background); transform: translateY(-1px); }
   .chat-html-orb[aria-pressed="true"] { color: var(--foreground); background: var(--muted); }

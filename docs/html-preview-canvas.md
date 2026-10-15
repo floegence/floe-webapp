@@ -25,6 +25,10 @@ The canvas keeps the same dimensions through loading, failure, retry, and
 completion. Controls remain available on touch, respect keyboard focus, and
 stay outside the document at narrow widths. Reduced motion disables the dotted
 sheen; light, dark, and forced-color themes use semantic colors.
+During generation and loading, only a centered status label appears over the
+dots. The label uses the shared progress text shimmer; no skeleton card or
+placeholder bars frame it. Both animations settle when generation stops, and
+reduced motion or forced colors keep the status text readable without motion.
 
 Run the media component tests and scripts/check-chat-media-browser.mjs for
 state, geometry, source persistence, and sandbox acceptance. The dedicated

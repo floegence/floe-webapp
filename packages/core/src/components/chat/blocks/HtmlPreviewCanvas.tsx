@@ -70,8 +70,7 @@ export const HtmlPreviewCanvas: Component<HtmlPreviewCanvasProps> = (props) => {
     <Show when={sourceVisible()}><pre ref={source} class="chat-html-source" tabIndex={0} aria-label={props.labels.showSource ?? 'HTML source'}><code>{props.html}</code></pre></Show>
     <Show when={!sourceVisible() && props.state !== 'ready'}>
       <span class="chat-html-loading" role="status">
-        <Show when={props.state === 'loading' || props.state === 'generating'}><span class="chat-html-skeleton" aria-hidden="true"><span /><span /><span /><span /></span></Show>
-        <span>{statusLabel()}</span>
+        <span data-floe-progress-shimmer={props.state === 'loading' || props.state === 'generating' ? 'text' : undefined}>{statusLabel()}</span>
         <Show when={props.state === 'error'}><button type="button" class="chat-media-retry" onClick={() => props.onRetry()}><Refresh />{props.labels.retry}</button></Show>
       </span>
     </Show>

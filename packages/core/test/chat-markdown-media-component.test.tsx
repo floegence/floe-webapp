@@ -50,12 +50,18 @@ describe('MarkdownMedia HTML controls', () => {
     await flush();
     expect(host.querySelector('.chat-html-canvas')?.getAttribute('data-state')).toBe('generating');
     expect(host.querySelector('iframe')).toBeNull();
+    expect(host.querySelector('.chat-html-skeleton')).toBeNull();
+    expect(host.querySelector('[role=status] [data-floe-progress-shimmer=text]')?.textContent).toBe(labels.loading);
     host.querySelector<HTMLButtonElement>('[data-chat-media-action=source]')!.click();
     expect(host.querySelector('pre')?.textContent).toBe('<script>partial');
     setHtmlState('incomplete');
     await flush();
     expect(host.querySelector('.chat-html-canvas')?.getAttribute('data-state')).toBe('incomplete');
     expect(host.querySelector('iframe')).toBeNull();
+    host.querySelector<HTMLButtonElement>('[data-chat-media-action=source]')!.click();
+    expect(host.querySelector('[role=status]')?.textContent).toContain('Generation interrupted');
+    expect(host.querySelector('[data-floe-progress-shimmer]')).toBeNull();
+    host.querySelector<HTMLButtonElement>('[data-chat-media-action=source]')!.click();
     setSource({ kind: 'html', html: '<main>Complete</main>', title: 'Report' });
     setHtmlState(undefined);
     await flush();
