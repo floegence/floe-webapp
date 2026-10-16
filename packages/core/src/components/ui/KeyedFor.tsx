@@ -1,4 +1,4 @@
-import { For, createMemo, type Accessor, type JSX } from 'solid-js';
+import { For, createMemo, untrack, type Accessor, type JSX } from 'solid-js';
 
 export interface KeyedForProps<T, K extends string | number> {
   each: readonly T[] | null | undefined;
@@ -22,9 +22,15 @@ export function KeyedFor<T, K extends string | number>(props: KeyedForProps<T, K
   });
   // IMPORTANT: retained nodes must read the current item, including callbacks
   // and disabled state. Capturing the first object silently executes stale work.
-  return <For each={snapshot().keys} fallback={props.fallback}>{(key, index) =>
+  return <For each={snapshot().keys} fallback={props.fallback}>{(key, index) => {
+    // The removed owner's cleanup still reads its last value. It must never
+    // observe undefined between the new snapshot and For disposing that owner.
+    const item = createMemo<T>(previous => {
+      const values = snapshot().values;
+      return values.has(key) ? values.get(key)! : previous;
+    }, untrack(() => snapshot().values.get(key)!));
     // Render callbacks receive accessors intentionally; the child owns their reads.
     // eslint-disable-next-line solid/reactivity
-    props.children(() => snapshot().values.get(key)!, index)
-  }</For>;
+    return props.children(item, index);
+  }}</For>;
 }
