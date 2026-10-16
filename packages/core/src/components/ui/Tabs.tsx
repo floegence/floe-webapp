@@ -1,7 +1,6 @@
 import {
   splitProps,
   type JSX,
-  For,
   Show,
   createSignal,
   createEffect,
@@ -10,6 +9,7 @@ import {
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { deferAfterPaint } from '../../utils/defer';
+import { KeyedFor } from './KeyedFor';
 import { createUIFirstSelection } from '../../utils/uiFirstSelection';
 import { useViewActivation } from '../../context/ViewActivationContext';
 import { Plus, X, ChevronRight } from '../icons';
@@ -614,49 +614,50 @@ export function Tabs(props: TabsProps) {
             }}
           />
         </Show>
-        <For each={local.items}>
+        {/* IMPORTANT: Observational item replacements must retain focused tab nodes and use current data. */}
+        <KeyedFor each={local.items} by={item => item.id}>
           {(item) => {
-            const isCurrentActive = () => item.id === optimisticActiveId();
-            const isClosable = () => item.closable ?? defaultClosable();
+            const isCurrentActive = () => item().id === optimisticActiveId();
+            const isClosable = () => item().closable ?? defaultClosable();
 
             return (
               <div
                 ref={(el) => {
-                  tabEls.set(item.id, el);
-                  onCleanup(() => tabEls.delete(item.id));
+                  tabEls.set(item().id, el);
+                  onCleanup(() => tabEls.delete(item().id));
                 }}
-                class={getTabStyles(isCurrentActive(), item.disabled)}
-                onClick={() => handleTabClick(item.id, item.disabled)}
+                class={getTabStyles(isCurrentActive(), item().disabled)}
+                onClick={() => handleTabClick(item().id, item().disabled)}
                 role="tab"
-                id={item.domId}
-                aria-controls={item.panelId}
+                id={item().domId}
+                aria-controls={item().panelId}
                 data-floe-surface={isCurrentActive() ? 'raised' : 'flat'}
                 data-floe-surface-part="tab"
                 aria-selected={isCurrentActive()}
-                aria-disabled={item.disabled}
-                tabIndex={item.disabled ? -1 : isCurrentActive() ? 0 : -1}
+                aria-disabled={item().disabled}
+                tabIndex={item().disabled ? -1 : isCurrentActive() ? 0 : -1}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    handleTabClick(item.id, item.disabled);
+                    handleTabClick(item().id, item().disabled);
                     return;
                   }
-                  handleTabKeyNavigation(e, item);
+                  handleTabKeyNavigation(e, item());
                 }}
               >
                 {/* Tab icon */}
-                <Show when={item.icon}>
-                  <span class="flex-shrink-0">{item.icon}</span>
+                <Show when={item().icon}>
+                  <span class="flex-shrink-0">{item().icon}</span>
                 </Show>
 
                 {/* Tab label */}
-                <span class="truncate max-w-32">{item.label}</span>
+                <span class="truncate max-w-32">{item().label}</span>
 
                 {/* Close button - show red background only on hover */}
-                <Show when={isClosable() && !item.disabled}>
+                <Show when={isClosable() && !item().disabled}>
                   <button
                     type="button"
-                    onClick={(e) => handleClose(e, item.id)}
+                    onClick={(e) => handleClose(e, item().id)}
                     class={cn(
                       'flex-shrink-0 flex items-center justify-center',
                       'w-5 h-5 rounded cursor-pointer',
@@ -668,7 +669,7 @@ export function Tabs(props: TabsProps) {
                       'ml-1.5',
                       local.slotClassNames?.closeButton
                     )}
-                    aria-label={`Close ${item.label}`}
+                    aria-label={`Close ${item().label}`}
                   >
                     <X class="w-3 h-3" />
                   </button>
@@ -676,7 +677,7 @@ export function Tabs(props: TabsProps) {
               </div>
             );
           }}
-        </For>
+        </KeyedFor>
       </div>
 
       {/* Add button - fixed outside scroll container */}

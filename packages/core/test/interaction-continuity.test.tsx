@@ -5,6 +5,16 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { useOverlayMask } from '../src/hooks';
 import { KeyedFor } from '../src/components/ui/KeyedFor';
 import { Stepper, type StepItem } from '../src/components/ui/Stepper';
+import { Tabs } from '../src/components/ui/Tabs';
+it('retains the selected tab node and focus across fresh observations', () => {
+  const [items, setItems] = createSignal([{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]);
+  dispose = render(() => <Tabs items={items()} activeId="b" />, document.body);
+  const tab = document.querySelectorAll<HTMLElement>('[role="tab"]')[1]!; tab.focus();
+  setItems([{ id: 'a', label: 'new A' }, { id: 'b', label: 'new B' }]);
+  expect(document.querySelectorAll('[role="tab"]')[1]).toBe(tab);
+  expect(tab.textContent).toContain('new B'); expect(document.activeElement).toBe(tab);
+  expect(tab.getAttribute('aria-selected')).toBe('true');
+});
 it('exports overlay ownership through the public hooks barrel', () => { expect(useOverlayMask).toBeTypeOf('function'); });
 let dispose: (() => void) | undefined;
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
