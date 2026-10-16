@@ -2,8 +2,10 @@
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, expect, it, vi } from 'vitest';
+import { useOverlayMask } from '../src/hooks';
 import { KeyedFor } from '../src/components/ui/KeyedFor';
 import { Stepper, type StepItem } from '../src/components/ui/Stepper';
+it('exports overlay ownership through the public hooks barrel', () => { expect(useOverlayMask).toBeTypeOf('function'); });
 let dispose: (() => void) | undefined;
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
 it('retains focused steps while replacing observations and invokes the current action', () => {

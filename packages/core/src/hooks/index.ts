@@ -16,3 +16,4 @@ export {
 } from './useFileBrowserDrag';
 
 export { createRetainedContent } from './createRetainedContent';
+export { useOverlayMask, type UseOverlayMaskOptions } from './useOverlayMask';
