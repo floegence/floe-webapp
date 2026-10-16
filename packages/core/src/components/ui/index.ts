@@ -342,3 +342,5 @@ export {
   type SettingsSectionProps,
   type SettingRowProps,
 } from './Settings';
+
+export { KeyedFor, type KeyedForProps } from './KeyedFor';

@@ -2,7 +2,8 @@
  * Stepper component for multi-step workflows.
  * Displays a horizontal or vertical list of steps with visual indicators for progress.
  */
-import { For, Show, splitProps, type JSX, type Accessor, createMemo } from 'solid-js';
+import { Show, splitProps, type JSX, type Accessor, createMemo } from 'solid-js';
+import { KeyedFor } from './KeyedFor';
 import { cn } from '../../utils/cn';
 import { Check } from '../icons';
 
@@ -307,7 +308,7 @@ export function Stepper(props: StepperProps) {
       )}
       aria-label="Progress"
     >
-      <For each={local.steps}>
+      <KeyedFor each={local.steps} by={step => step.id}>
         {(step, index) => {
           const status = () => getStepStatus(index());
           const clickable = () => isClickable(index());
@@ -326,12 +327,12 @@ export function Stepper(props: StepperProps) {
               <Show when={orientation() === 'horizontal'}>
                 <div class="flex items-center w-full">
                   <StepIndicator
-                    step={step}
+                    step={step()}
                     index={index()}
                     status={status()}
                     variant={variant()}
                     size={size()}
-                    onClick={() => handleStepClick(index(), step)}
+                    onClick={() => handleStepClick(index(), step())}
                     clickable={clickable()}
                   />
                   <Show when={showConnector() && !isLast()}>
@@ -344,7 +345,7 @@ export function Stepper(props: StepperProps) {
                 </div>
                 <div class="mt-2">
                   <StepLabel
-                    step={step}
+                    step={step()}
                     status={status()}
                     size={size()}
                     orientation="horizontal"
@@ -356,12 +357,12 @@ export function Stepper(props: StepperProps) {
               <Show when={orientation() === 'vertical'}>
                 <div class="flex flex-col items-center">
                   <StepIndicator
-                    step={step}
+                    step={step()}
                     index={index()}
                     status={status()}
                     variant={variant()}
                     size={size()}
-                    onClick={() => handleStepClick(index(), step)}
+                    onClick={() => handleStepClick(index(), step())}
                     clickable={clickable()}
                   />
                   <Show when={showConnector() && !isLast()}>
@@ -374,7 +375,7 @@ export function Stepper(props: StepperProps) {
                 </div>
                 <div class="flex-1 pb-4">
                   <StepLabel
-                    step={step}
+                    step={step()}
                     status={status()}
                     size={size()}
                     orientation="vertical"
@@ -384,7 +385,7 @@ export function Stepper(props: StepperProps) {
             </div>
           );
         }}
-      </For>
+      </KeyedFor>
     </nav>
   );
 }

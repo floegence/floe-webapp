@@ -286,3 +286,13 @@ to omit the bar and its content without reserving layout space. This does not
 change mobile navigation. `BottomBarCompanion` accepts a measurable layout
 anchor, including an independent anchor inside `AppViewport`, so a retained
 companion does not require a status bar.
+
+### Stable observed lists
+
+Use the exported KeyedFor from @floegence/floe-webapp-core/ui when immutable
+observations replace list objects while users interact with their controls.
+The each prop supplies the current list; by returns a unique string or number
+identity. Children receive item and index accessors. Read these in reactive
+properties and event handlers so retained nodes use current labels, permissions
+and callbacks. Removed identities dispose their owners; duplicate identities are
+rejected. Stepper applies this contract to StepItem.id.
