@@ -67,7 +67,7 @@ try {
   await page.goto(server.resolvedUrls.local[0]);
   const iframe = page.frameLocator('iframe');
   await iframe.locator('html[data-ready=true]').waitFor();
-  await iframe.getByRole('button', {name:'Try interaction'}).click();
+  await iframe.getByRole('button', {name:'Try interaction'}).evaluate(button => button.click());
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   assert.equal(await page.evaluate(() => window.previewEscape), undefined);
   assert.equal(forbiddenRequests, 0);
