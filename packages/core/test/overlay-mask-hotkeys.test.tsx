@@ -90,3 +90,21 @@ describe('useOverlayMask hotkey routing', () => {
     window.removeEventListener('keydown', bubbleSpy);
   });
 });
+
+it('routes outside pointer and focus only to the topmost overlay owner', () => {
+  const outer = vi.fn(), inner = vi.fn();
+  const host = document.createElement('div'); document.body.append(host);
+  const dispose = renderSolid(() => {
+    let root: HTMLDivElement | undefined, child: HTMLDivElement | undefined;
+    useOverlayMask({ open: () => true, root: () => root, onInteractOutside: outer, lockBodyScroll: false, trapFocus: false, autoFocus: false });
+    useOverlayMask({ open: () => true, root: () => child, onInteractOutside: inner, autoFocus: false });
+    return <><div ref={root}>Parent</div><div ref={child}><input /></div></>;
+  }, host);
+  try {
+    const input = host.querySelector('input')!;
+    input.dispatchEvent(new Event('pointerdown', { bubbles: true })); input.focus();
+    expect(outer).not.toHaveBeenCalled(); expect(inner).not.toHaveBeenCalled();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(outer).not.toHaveBeenCalled(); expect(inner).toHaveBeenCalledOnce();
+  } finally { dispose(); host.remove(); }
+});

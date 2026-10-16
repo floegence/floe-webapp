@@ -20,6 +20,8 @@ export interface UseOverlayMaskOptions {
   /** Ordered focus regions that belong to one overlay, including persistent navigation. */
   focusRoots?: Accessor<readonly HTMLElement[]>;
   onClose?: () => void;
+  /** Outside pointer/focus interactions routed only to the owning overlay layer. */
+  onInteractOutside?: (event: PointerEvent | FocusEvent) => void;
   /** Treat additional nodes as part of the overlay surface (e.g. portaled layers). */
   containsTarget?: (target: EventTarget | null) => boolean;
   /** Optional alternate close path for Escape pressed outside the overlay surface. */
@@ -319,6 +321,13 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
       if (e.cancelable) e.preventDefault();
     };
 
+    const handleInteractOutside = (event: PointerEvent | FocusEvent) => {
+      if (ownsTarget(event.target) && !entry.contains(event.target)) options.onInteractOutside?.(event);
+    };
+    if (options.onInteractOutside) {
+      document.addEventListener('pointerdown', handleInteractOutside, true);
+      document.addEventListener('focusin', handleInteractOutside);
+    }
     if (shouldTrapFocus) document.addEventListener('keydown', handleTabTrap, true);
     const escapeTarget = escapeKeyPhase === 'capture' ? window : document;
     if (escapeCloseMode !== 'none')
@@ -342,6 +351,8 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
 
     onCleanup(() => {
       active = false;
+      document.removeEventListener('pointerdown', handleInteractOutside, true);
+      document.removeEventListener('focusin', handleInteractOutside);
       masks.splice(masks.indexOf(entry), 1);
       if (shouldTrapFocus) document.removeEventListener('keydown', handleTabTrap, true);
       if (escapeCloseMode !== 'none')
