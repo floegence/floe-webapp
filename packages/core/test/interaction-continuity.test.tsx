@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { createSignal } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, expect, it, vi } from 'vitest';
 import { useOverlayMask } from '../src/hooks';
@@ -18,6 +18,27 @@ it('retains the selected tab node and focus across fresh observations', () => {
 it('exports overlay ownership through the public hooks barrel', () => { expect(useOverlayMask).toBeTypeOf('function'); });
 let dispose: (() => void) | undefined;
 afterEach(() => { dispose?.(); document.body.replaceChildren(); });
+it('keeps the last item readable during removed owner cleanup', () => {
+  const [items, setItems] = createSignal([{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]);
+  const cleaned = vi.fn();
+  dispose = render(() => <KeyedFor each={items()} by={item => item.id}>{item => {
+    onCleanup(() => cleaned(item().id));
+    return <button>{item().label}</button>;
+  }}</KeyedFor>, document.body);
+  expect(() => setItems([{ id: 'b', label: 'new B' }])).not.toThrow();
+  expect(cleaned).toHaveBeenCalledExactlyOnceWith('a');
+});
+it('retains controlled selection after a user choice and equivalent item updates', async () => {
+  const [items, setItems] = createSignal([{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }]);
+  const [active, setActive] = createSignal('a');
+  dispose = render(() => <Tabs items={items()} activeId={active()} onChange={setActive} />, document.body);
+  const tab = document.querySelectorAll<HTMLElement>('[role=tab]')[1]!; tab.click();
+  await new Promise(resolve => setTimeout(resolve, 50));
+  // eslint-disable-next-line solid/reactivity -- assertion reads the committed result.
+  expect(active()).toBe('b'); tab.focus();
+  setItems([{ id: 'a', label: 'new A' }, { id: 'b', label: 'new B' }]);
+  expect(tab.getAttribute('aria-selected')).toBe('true'); expect(document.activeElement).toBe(tab);
+});
 it('retains focused steps while replacing observations and invokes the current action', () => {
   const [steps, setSteps] = createSignal<StepItem[]>([{ id: 'connect', label: 'Connect' }, { id: 'confirm', label: 'Confirm' }]);
   const clicked = vi.fn();
