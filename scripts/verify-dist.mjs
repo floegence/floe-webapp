@@ -392,9 +392,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.86.42'
+      (version) => version === '0.86.43'
     ),
-    'Published Floe packages must all use version 0.86.42'
+    'Published Floe packages must all use version 0.86.43'
   );
 
   assert(

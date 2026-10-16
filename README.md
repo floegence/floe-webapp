@@ -251,7 +251,9 @@ application documents. This entry contains no renderer JavaScript or utility sca
 
 Inline code consumes the paired `--inline-code-foreground` and
 `--inline-code-background` theme tokens. Every built-in shell theme supplies
-its own quiet fill and readable accent, including Classic and High Contrast Light.
+its own saturated blue, teal, ochre, or gold foreground on a quiet fill, including
+Classic and High Contrast Light. Reference accents avoid purple and remain
+visually distinct from ordinary body text.
 The shared renderer uses a borderless, wrapping code span; fenced code keeps its
 separate surface and highlighting. Native text selection remains available, and
 forced-colors mode uses system colors. Product Markdown renderers can consume the
