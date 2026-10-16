@@ -331,8 +331,10 @@ helpers do not authorize resources, infer local filesystem access, or parse host
 API routes.
 
 Media appears directly in the conversation, without an enclosing border or
-title bar. Quiet captions sit below the content; source/enlarge actions appear
-on hover, keyboard focus, or touch devices. The component preserves native playback controls, supports image enlargement in the
+title bar. Quiet captions sit below the content. Images sit in a padded dotted
+canvas with always-visible, independent circular preview and folder actions
+above the image. Video and audio actions appear on hover, keyboard focus, or
+touch devices. The component preserves native playback controls, supports image enlargement in the
 shared surface-aware dialog, expands HTML without replacing its iframe, and
 exposes loading, failure, and retry states. Retain the same mounted component for
 an unchanged Markdown segment during streaming. Images never autoplay; video and

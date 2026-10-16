@@ -3,8 +3,12 @@
 MarkdownMedia presents HTML in one bounded dotted canvas, with circular expand
 and source controls outside the document. Its actions menu retains the host's
 file preview and reveal operations, an independent inline preview window,
-source copying, and explicit reload. Images, video, and audio keep their own
-existing presentation.
+source copying, and explicit reload. Images share its dotted background and
+independent circular controls at the top right. Their padded, contain-sized
+viewport keeps the full image visible below the controls, including on touch
+screens. Clicking the image or eye still opens the host preview or shared
+floating window; the folder action keeps the host's authorized navigation.
+Video and audio retain their native playback presentation.
 
 Hosts may pass htmlState="generating" or htmlState="incomplete" with the current
 partial source. Neither state executes HTML. Omit htmlState only after the

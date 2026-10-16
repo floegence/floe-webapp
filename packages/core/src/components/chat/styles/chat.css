@@ -1847,7 +1847,7 @@ pre.chat-md-code-block *::selection,
 @layer components {
   .chat-media { position: relative; display: flex; flex-direction: column; width: fit-content; max-width: min(100%, 42rem); min-width: 0; margin: .8rem 0 1rem; color: var(--foreground); text-align: left; }
   .chat-media[data-media-kind="html"] { width: 100%; }
-  .chat-media[data-media-kind="image"] { width: min(100%, 36rem); }
+  .chat-media[data-media-kind="image"] { width: 100%; }
   .chat-media-viewport { display: block; width: 100%; min-width: 0; overflow: hidden; }
   .chat-media[data-media-kind="image"] .chat-media-viewport,
   .chat-media[data-media-kind="video"] .chat-media-viewport { aspect-ratio: 16 / 9; }
@@ -1888,12 +1888,18 @@ pre.chat-md-code-block *::selection,
   @media (max-width: 480px) { .chat-media[data-media-kind="html"] .chat-media-viewport, .chat-media-html { height: 18rem; } .chat-media-expanded[data-media-kind="html"] .chat-media-viewport { height: min(70vh, 48rem); } }
 }
 
-/* HTML outputs retain one quiet, bounded canvas throughout their lifecycle. */
+/* Images and HTML retain one quiet, bounded canvas throughout their lifecycle. */
 @layer components {
-  .chat-html-canvas { --canvas-inset: clamp(1rem, 5%, 3rem); position: relative; isolation: isolate; display: block; width: 100%; height: 28rem; overflow: hidden; border: 1px solid color-mix(in srgb, var(--border) 65%, transparent); border-radius: 1rem; background: color-mix(in srgb, var(--muted) 38%, var(--background)); }
+  .chat-html-canvas, .chat-media[data-media-kind="image"] .chat-media-viewport { position: relative; isolation: isolate; display: block; width: 100%; overflow: hidden; border: 1px solid color-mix(in srgb, var(--border) 65%, transparent); border-radius: 1rem; background: color-mix(in srgb, var(--muted) 38%, var(--background)); }
+  .chat-html-canvas { --canvas-inset: clamp(1rem, 5%, 3rem); height: 28rem; }
+  .chat-media[data-media-kind="image"] .chat-media-viewport { min-height: 14rem; padding: 3.5rem clamp(1rem, 5%, 2rem) 1.5rem; border: 0; }
+  .chat-media[data-media-kind="image"] .chat-media-viewport::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; }
+  .chat-media[data-media-kind="image"] .chat-media-placeholder { padding: 0; border-radius: 0; background: transparent; }
+  .chat-media[data-media-kind="image"] :is(.chat-media-image-button, .chat-media-image) { border-radius: .25rem; }
+  .chat-media[data-media-kind="image"] .chat-media-actions { top: .875rem; right: .875rem; gap: .5rem; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; color: var(--muted-foreground); opacity: 1; transform: none; }
   .chat-media-expanded .chat-html-canvas { height: min(78vh, 52rem); }
   .chat-html-dots, .chat-html-sheen { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
-  .chat-html-dots { background-image: radial-gradient(circle, color-mix(in srgb, var(--muted-foreground) 24%, transparent) .75px, transparent .9px); background-size: 20px 20px; background-position: 9px 9px; }
+  .chat-html-dots, .chat-media[data-media-kind="image"] .chat-media-viewport::before { background-image: radial-gradient(circle, color-mix(in srgb, var(--muted-foreground) 24%, transparent) .75px, transparent .9px); background-size: 20px 20px; background-position: 9px 9px; }
   .chat-html-sheen { opacity: 0; background: linear-gradient(115deg, transparent 25%, color-mix(in srgb, var(--foreground) 20%, transparent) 49%, transparent 73%); background-size: 250% 100%; mask-image: radial-gradient(circle, black .9px, transparent 1.1px); mask-size: 20px 20px; mask-position: 9px 9px; }
   .chat-html-canvas:is([data-state="generating"], [data-state="loading"]) .chat-html-sheen { opacity: 1; animation: chat-html-sweep 3.4s ease-in-out infinite; }
   .chat-html-sheet, .chat-html-source { position: absolute; inset: 3.5rem var(--canvas-inset) 4.25rem; display: flex; min-width: 0; min-height: 0; overflow: hidden; border: 1px solid color-mix(in srgb, var(--border) 75%, transparent); border-radius: .625rem; box-shadow: 0 14px 40px rgb(0 0 0 / .06), 0 2px 6px rgb(0 0 0 / .03); background: var(--background); }
@@ -1903,10 +1909,10 @@ pre.chat-md-code-block *::selection,
   .chat-html-source { display: block; margin: 0; padding: 1.25rem; overflow: auto; overscroll-behavior: contain; white-space: pre; font: .6875rem/1.85 var(--font-mono); color: var(--foreground); }
   .chat-html-source code { padding: 0; color: inherit; background: none; font: inherit; }
   .chat-html-loading { position: absolute; inset: 3.5rem var(--canvas-inset); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; text-align: center; color: var(--muted-foreground); font-size: .75rem; }
-  .chat-html-orb { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 2.125rem; height: 2.125rem; padding: 0; border: 1px solid color-mix(in srgb, var(--border) 80%, transparent); border-radius: 50%; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 88%, transparent); box-shadow: 0 2px 5px rgb(0 0 0 / .035); backdrop-filter: blur(12px); cursor: pointer; transition: color 140ms, background 140ms, transform 140ms; }
-  .chat-html-orb:hover { color: var(--foreground); background: var(--background); transform: translateY(-1px); }
+  .chat-html-orb, .chat-media[data-media-kind="image"] .chat-media-action { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 2.125rem; height: 2.125rem; padding: 0; border: 1px solid color-mix(in srgb, var(--border) 80%, transparent); border-radius: 50%; color: var(--muted-foreground); background: color-mix(in srgb, var(--background) 88%, transparent); box-shadow: 0 2px 5px rgb(0 0 0 / .035); backdrop-filter: blur(12px); cursor: pointer; transition: color 140ms, background 140ms, transform 140ms; }
+  .chat-html-orb:hover, .chat-media[data-media-kind="image"] .chat-media-action:hover { color: var(--foreground); background: var(--background); transform: translateY(-1px); }
   .chat-html-orb[aria-pressed="true"] { color: var(--foreground); background: var(--muted); }
-  .chat-html-orb:focus-visible, .chat-html-source:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  .chat-html-orb:focus-visible, .chat-html-source:focus-visible, .chat-media[data-media-kind="image"] .chat-media-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
   .chat-html-orb svg { width: .9375rem; height: .9375rem; }
   .chat-html-expand { position: absolute; top: .875rem; right: .875rem; }
   .chat-html-controls { position: absolute; bottom: .875rem; left: .875rem; display: flex; align-items: center; gap: .5rem; }
@@ -1914,7 +1920,7 @@ pre.chat-md-code-block *::selection,
   .chat-html-feedback svg { width: .875rem; height: .875rem; flex-shrink: 0; }
   @keyframes chat-html-sweep { from { background-position: 120% 0; } to { background-position: -80% 0; } }
   @media (max-width: 480px) { .chat-html-canvas { height: 25rem; --canvas-inset: 1rem; } }
-  @media (pointer: coarse) { .chat-html-orb { width: 2.625rem; height: 2.625rem; } .chat-html-controls { bottom: .75rem; left: .75rem; } }
-  @media (prefers-reduced-motion: reduce) { .chat-html-sheen { animation: none !important; background-position: 50% 0; } .chat-html-orb, .chat-html-sheet { transition: none; } }
-  @media (forced-colors: active) { .chat-html-orb, .chat-html-source, .chat-html-canvas { border-color: CanvasText; } .chat-html-sheen { display: none; } }
+  @media (pointer: coarse) { .chat-html-orb, .chat-media[data-media-kind="image"] .chat-media-action { width: 2.625rem; height: 2.625rem; } .chat-media[data-media-kind="image"] .chat-media-viewport { padding-top: 4rem; } .chat-html-controls { bottom: .75rem; left: .75rem; } }
+  @media (prefers-reduced-motion: reduce) { .chat-html-sheen { animation: none !important; background-position: 50% 0; } .chat-html-orb, .chat-html-sheet, .chat-media[data-media-kind="image"] .chat-media-action { transition: none; } }
+  @media (forced-colors: active) { .chat-html-orb, .chat-html-source, .chat-html-canvas, .chat-media[data-media-kind="image"] .chat-media-action { border-color: CanvasText; } .chat-html-sheen { display: none; } }
 }

@@ -1,4 +1,4 @@
-/* global window, document, innerWidth, getComputedStyle */
+/* global window, document, innerWidth, getComputedStyle, location */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -19,6 +19,7 @@ render(() => <main style="max-width:680px;margin:auto"><MarkdownMedia labels={la
 const lifecycleFixture = `import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/MarkdownMedia';
+import '/packages/core/src/styles/globals.css';
 const [snapshot, setSnapshot] = createSignal(0);
 const [source, setSource] = createSignal({kind:'image',title:'Stable image',src:'/first.png'});
 const requests = [];
@@ -48,20 +49,21 @@ window.canvasTest={append:()=>setHTML('<main>Partial source grows</main>'),inter
 let forbiddenRequests = 0;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx' || id === '/lifecycle.tsx' || id === '/canvas.tsx') return id; }, load(id) { if (id === '/fixture.tsx') return fixture; if (id === '/lifecycle.tsx') return lifecycleFixture; if (id === '/canvas.tsx') return canvasFixture; }, configureServer(instance) {
   instance.middlewares.use((req, res, next) => {
-    if (req.url === '/') { res.setHeader('Content-Type','text/html'); res.end('<html><head><style>:root{--background:#fff;--card:#fff;--foreground:#262626;--muted:#f5f5f5;--muted-foreground:#666;--border:#ddd;--ring:#555}body{font-family:system-ui}button,a{color:inherit}button{border:0}svg{width:20px}</style></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>'); }
+    if (req.url === '/') { res.setHeader('Content-Type','text/html'); res.end('<html><head><style>:root{--background:#fff;--card:#fff;--foreground:#262626;--muted:#f5f5f5;--muted-foreground:#666;--border:#ddd;--ring:#555}body{font-family:system-ui}</style></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>'); }
     else if (req.url === '/canvas') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/canvas.tsx"></script></body></html>'); }
     else if (req.url === '/lifecycle') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/lifecycle.tsx"></script></body></html>'); }
     else if (req.url === '/media.mp4') { const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? ''); const start = range ? Number(range[1]) : 0; const end = range?.[2] ? Math.min(Number(range[2]),video.length-1) : video.length-1; res.writeHead(range ? 206 : 200, {'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':end-start+1,...(range ? {'Content-Range':`bytes ${start}-${end}/${video.length}`} : {})}); res.end(video.subarray(start,end+1)); }
-    else if (req.url.split('?')[0] === '/image.svg') { res.setHeader('Content-Type','image/svg+xml'); res.end('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="280"><rect width="640" height="280" fill="#dde5d7"/><circle cx="320" cy="140" r="80" fill="#597b58"/></svg>'); }
+    else if (req.url.split('?')[0] === '/image.svg') { const portrait = req.url.includes('portrait'); res.setHeader('Content-Type','image/svg+xml'); res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="${portrait ? 280 : 640}" height="${portrait ? 640 : 280}"><rect width="100%" height="100%" fill="#dde5d7"/><circle cx="50%" cy="50%" r="80" fill="#597b58"/></svg>`); }
     else if (req.url === '/should-not-fetch') { forbiddenRequests++; res.end('blocked'); }
     else next();
   });
 } }], server: {host:'127.0.0.1',port:0,hmr:false} });
 let browser;
+let page;
 try {
   await server.listen();
   browser = await chromium.launch({headless:true,channel:'chromium'});
-  const page = await browser.newPage({viewport:{width:1000,height:1100}});
+  page = await browser.newPage({viewport:{width:1000,height:1100}});
   await page.goto(server.resolvedUrls.local[0]);
   const iframe = page.frameLocator('iframe');
   await iframe.locator('html[data-ready=true]').waitFor();
@@ -98,7 +100,7 @@ try {
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   await page.locator('[data-media-kind=html]').getByRole('button', {name:'Collapse preview'}).click();
   await page.mouse.click(2, 2);
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-media-kind=image] .chat-media-actions')).opacity === '0');
+  assert.equal(await hosted.locator('.chat-media-actions').evaluate(node => getComputedStyle(node).opacity), '1', 'Image actions remain discoverable without hover');
   assert.equal(await page.locator('[data-media-kind=image]').first().evaluate(node => getComputedStyle(node).borderWidth), '0px');
   assert.equal(await page.locator('[data-media-kind=video]').evaluate(node => getComputedStyle(node).borderWidth), '0px');
   await page.locator('iframe').scrollIntoViewIfNeeded();
@@ -107,6 +109,64 @@ try {
   await page.setViewportSize({width:360,height:900});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.screenshot({path:'/tmp/floe-chat-media-mobile.png',fullPage:true});
+  for (const width of [1000, 390, 320]) {
+    await page.setViewportSize({width, height:900});
+    await hosted.scrollIntoViewIfNeeded();
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(theme => document.documentElement.classList.toggle('dark', theme === 'dark'), theme);
+      const geometry = await hosted.evaluate(node => {
+        const viewport = node.querySelector('.chat-media-viewport');
+        const image = node.querySelector('.chat-media-image');
+        const actions = node.querySelector('.chat-media-actions');
+        const buttons = Array.from(actions.querySelectorAll('button'));
+        const rect = element => { const {x, y, width, height} = element.getBoundingClientRect(); return {x, y, width, height}; };
+        return { canvas: rect(viewport), image: rect(image), actions: rect(actions),
+          dots: getComputedStyle(viewport, '::before').backgroundImage,
+          actionBackground: getComputedStyle(actions).backgroundColor,
+          actionBorder: getComputedStyle(actions).borderWidth,
+          buttons: buttons.map(button => ({...rect(button), radius: getComputedStyle(button).borderRadius})),
+          fit: getComputedStyle(image).objectFit,
+          overflow: document.documentElement.scrollWidth > innerWidth };
+      });
+      assert.match(geometry.dots, /radial-gradient/, 'Images use the same dotted canvas as HTML');
+      assert.equal(geometry.fit, 'contain');
+      assert.equal(geometry.actionBackground, 'rgba(0, 0, 0, 0)', 'Actions have no enclosing toolbar surface');
+      assert.equal(geometry.actionBorder, '0px');
+      assert.equal(geometry.overflow, false);
+      assert.ok(geometry.image.x > geometry.canvas.x && geometry.image.y > geometry.canvas.y, 'Canvas padding remains visible around the image');
+      assert.ok(geometry.actions.y + geometry.actions.height <= geometry.image.y, 'Actions never cover the image');
+      assert.ok(geometry.actions.x + geometry.actions.width <= geometry.canvas.x + geometry.canvas.width);
+      for (const button of geometry.buttons) {
+        assert.equal(button.width, button.height);
+        assert.equal(button.radius, '50%');
+      }
+      await hosted.screenshot({path:`/tmp/floe-chat-image-canvas-${theme}-${width}.png`});
+      const bounds = await hosted.boundingBox();
+      await hosted.locator('img').evaluate(image => { image.src = location.origin + '/image.svg?portrait'; });
+      await page.waitForFunction(() => document.querySelector('#host-image img').naturalHeight === 640);
+      assert.deepEqual(await hosted.boundingBox(), bounds, 'Portrait images keep the canvas and caption stable');
+      await hosted.screenshot({path:`/tmp/floe-chat-image-portrait-${theme}-${width}.png`});
+      await hosted.locator('img').evaluate(image => { image.src = location.origin + '/image.svg'; });
+      await page.waitForFunction(() => document.querySelector('#host-image img').naturalWidth === 640);
+    }
+  }
+  await page.emulateMedia({reducedMotion:'reduce', forcedColors:'active'});
+  assert.equal(await hosted.locator('.chat-media-action').first().evaluate(node => getComputedStyle(node).transitionDuration), '0s');
+  assert.equal(await hosted.locator('.chat-media-action').first().evaluate(node => getComputedStyle(node).borderWidth), '1px');
+  await page.emulateMedia({reducedMotion:'no-preference', forcedColors:'none'});
+  const touch = await browser.newPage({viewport:{width:390, height:844}, hasTouch:true, isMobile:true});
+  await touch.goto(server.resolvedUrls.local[0]);
+  const touchImage = touch.locator('#host-image');
+  await touchImage.scrollIntoViewIfNeeded();
+  await touchImage.locator('.chat-media-image').waitFor();
+  const touchButton = await touchImage.getByRole('button', {name:'Preview image', exact:true}).boundingBox();
+  const touchContent = await touchImage.locator('.chat-media-image').boundingBox();
+  assert.ok(touchButton.width >= 42 && touchButton.height >= 42, 'Touch actions retain a usable target');
+  assert.ok(touchButton.y + touchButton.height <= touchContent.y, 'Touch actions remain above the image');
+  await touchImage.getByRole('button', {name:'Open containing folder', exact:true}).tap();
+  assert.equal(await touch.evaluate(() => window.revealCount), 1);
+  await touchImage.screenshot({path:'/tmp/floe-chat-image-canvas-touch.png'});
+  await touch.close();
   await page.goto(new URL('/canvas', server.resolvedUrls.local[0]).href);
   const canvas = page.locator('.chat-html-canvas');
   await canvas.locator('[data-chat-media-action=source]').waitFor();
@@ -175,10 +235,12 @@ try {
   assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName),'none');
   await page.goto(new URL('/lifecycle', server.resolvedUrls.local[0]).href);
   await page.waitForFunction(() => window.mediaTest?.stats().calls === 1);
+  const loadingCanvas = await page.locator('.chat-media-viewport').boundingBox();
   for (let index = 0; index < 3; index++) await page.evaluate(() => window.mediaTest.bump());
   assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:1,aborted:0}, 'Host reads must not become media reload dependencies');
   await page.evaluate(() => window.mediaTest.accept(0, 'first'));
   await page.locator('img.chat-media-image').waitFor();
+  assert.deepEqual(await page.locator('.chat-media-viewport').boundingBox(), loadingCanvas, 'Resolution keeps canvas geometry stable');
   const image = await page.locator('img.chat-media-image').elementHandle();
   await page.evaluate(() => window.mediaTest.bump());
   assert.equal(await image.evaluate(node => node === document.querySelector('img.chat-media-image')), true);
@@ -193,12 +255,18 @@ try {
   await page.evaluate(() => window.mediaTest.source('/retry.png'));
   await page.waitForFunction(() => window.mediaTest.stats().calls === 4);
   await page.evaluate(() => window.mediaTest.reject(3));
+  await page.getByRole('button', {name:'Retry',exact:true}).waitFor();
+  assert.deepEqual(await page.locator('.chat-media-viewport').boundingBox(), loadingCanvas, 'Failure keeps canvas geometry stable');
   await page.getByRole('button', {name:'Retry',exact:true}).click();
   await page.waitForFunction(() => window.mediaTest.stats().calls === 5);
+  assert.deepEqual(await page.locator('.chat-media-viewport').boundingBox(), loadingCanvas, 'Retry keeps canvas geometry stable');
   await page.evaluate(() => window.mediaTest.dispose());
   assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:5,aborted:5});
   await page.evaluate(() => window.mediaTest.accept(4, 'disposed'));
   assert.equal(await page.locator('img.chat-media-image').count(), 0);
   console.log('PASS: stable host snapshots, explicit source/resolver invalidation, stale response rejection, retry, disposal');
   console.log('PASS: interactive sandbox, network isolation, stable expansion, video playback/seek, image window, host preview/reveal actions, keyboard, narrow layout');
+} catch (error) {
+  await page?.screenshot({path:'/tmp/floe-chat-media-failure.png',fullPage:true});
+  throw error;
 } finally { await browser?.close(); await server.close(); }
