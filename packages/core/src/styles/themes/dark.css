@@ -9,6 +9,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #202223;
   --foreground: #e5e6e2;
+  --inline-code-foreground: #BBC9AF;
+  --inline-code-background: #2E3130;
   --primary: #bccbb8;
   --primary-foreground: #20291f;
   --secondary: #303435;

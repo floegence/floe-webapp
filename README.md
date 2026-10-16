@@ -247,6 +247,18 @@ root; declare `data-floe-surface` on each visible material boundary. Host code
 owns layout, locale and actions. Do not inject these styles into third-party
 application documents. This entry contains no renderer JavaScript or utility scan.
 
+### Inline Markdown code
+
+Inline code consumes the paired `--inline-code-foreground` and
+`--inline-code-background` theme tokens. Every built-in shell theme supplies
+its own quiet fill and readable accent, including Classic and High Contrast Light.
+The shared renderer uses a borderless, wrapping code span; fenced code keeps its
+separate surface and highlighting. Native text selection remains available, and
+forced-colors mode uses system colors. Product Markdown renderers can consume the
+same pair without keeping a second theme palette. Custom presets created with
+`createShellThemePreset` may provide `inlineCode: { foreground, background }`;
+omitting it uses that custom palette's foreground and muted surface.
+
 ### Floating window identity
 
 `FloatingWindow` accepts an optional `titleIcon` beside its plain-text `title`.

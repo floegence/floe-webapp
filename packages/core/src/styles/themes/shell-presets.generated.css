@@ -8,6 +8,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f4f1ed;
   --foreground: #202a37;
+  --inline-code-foreground: #795c40;
+  --inline-code-background: #eae5df;
   --primary: #202a37;
   --primary-foreground: #fffdfa;
   --secondary: #f1efec;
@@ -88,6 +90,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f1e8;
   --foreground: #243447;
+  --inline-code-foreground: #775d3f;
+  --inline-code-background: #ebe5da;
   --primary: #243447;
   --primary-foreground: #fffdf8;
   --secondary: #eae4d8;
@@ -163,6 +167,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #eef3f7;
   --foreground: #1f3442;
+  --inline-code-foreground: #3b607c;
+  --inline-code-background: #e0e7ed;
   --primary: #234e63;
   --primary-foreground: #ffffff;
   --secondary: #e2eaf0;
@@ -238,6 +244,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #eef4ec;
   --foreground: #20372d;
+  --inline-code-foreground: #3c684c;
+  --inline-code-background: #e0e9df;
   --primary: #24523d;
   --primary-foreground: #ffffff;
   --secondary: #e2ebdf;
@@ -313,6 +321,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #fff5e1;
   --foreground: #3f2d1c;
+  --inline-code-foreground: #865622;
+  --inline-code-background: #f5e8d2;
   --primary: #874000;
   --primary-foreground: #ffffff;
   --secondary: #f3e7d0;
@@ -388,6 +398,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f0fa;
   --foreground: #30253d;
+  --inline-code-foreground: #71548b;
+  --inline-code-background: #eae4f1;
   --primary: #51407e;
   --primary-foreground: #ffffff;
   --secondary: #eae1f2;
@@ -463,6 +475,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #ffffff;
   --foreground: #1f1f1f;
+  --inline-code-foreground: #355f8b;
+  --inline-code-background: #eff2f6;
   --primary: #005fb8;
   --primary-foreground: #ffffff;
   --secondary: #ededed;
@@ -538,6 +552,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f5f5f5;
   --foreground: #333333;
+  --inline-code-foreground: #625987;
+  --inline-code-background: #e9e9ec;
   --primary: #4b61b9;
   --primary-foreground: #ffffff;
   --secondary: #e8e8e8;
@@ -613,6 +629,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #fdf6e3;
   --foreground: #586e75;
+  --inline-code-foreground: #426c70;
+  --inline-code-background: #eeebda;
   --primary: #075e73;
   --primary-foreground: #ffffff;
   --secondary: #eee8d5;
@@ -688,6 +706,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #f6f8fa;
   --foreground: #24292f;
+  --inline-code-foreground: #3e6085;
+  --inline-code-background: #e7ecf1;
   --primary: #0969da;
   --primary-foreground: #ffffff;
   --secondary: #eaeef2;
@@ -763,6 +783,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 14%), 0 12px 28px -8px rgb(0 0 0 / 18%);
   --background: #ffffff;
   --foreground: #000000;
+  --inline-code-foreground: #000078;
+  --inline-code-background: #ebebf4;
   --primary: #0000a8;
   --primary-foreground: #ffffff;
   --secondary: #e0e0e0;
@@ -838,6 +860,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #0c0c0d;
   --foreground: #f2f1ee;
+  --inline-code-foreground: #aac7bd;
+  --inline-code-background: #1a1d1d;
   --primary: #e8e7e3;
   --primary-foreground: #161617;
   --secondary: #252526;
@@ -913,6 +937,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #0b1420;
   --foreground: #eaf2f7;
+  --inline-code-foreground: #a5b9d7;
+  --inline-code-background: #192330;
   --primary: #86a6e7;
   --primary-foreground: #0b1420;
   --secondary: #1a2938;
@@ -988,6 +1014,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #171b22;
   --foreground: #eef1f5;
+  --inline-code-foreground: #b1c0d1;
+  --inline-code-background: #252a32;
   --primary: #a8b7c8;
   --primary-foreground: #171b22;
   --secondary: #29323d;
@@ -1063,6 +1091,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #0b1a17;
   --foreground: #edf6f1;
+  --inline-code-foreground: #9dcdb7;
+  --inline-code-background: #182a25;
   --primary: #71d0b1;
   --primary-foreground: #0b1a17;
   --secondary: #1b312b;
@@ -1138,6 +1168,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1d1115;
   --foreground: #fff1f1;
+  --inline-code-foreground: #d9b09d;
+  --inline-code-background: #2e1f21;
   --primary: #ff9b7a;
   --primary-foreground: #1d1115;
   --secondary: #352329;
@@ -1213,6 +1245,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #071a25;
   --foreground: #e9f7fc;
+  --inline-code-foreground: #9bcddc;
+  --inline-code-background: #142a35;
   --primary: #69d4ff;
   --primary-foreground: #071a25;
   --secondary: #153544;
@@ -1288,6 +1322,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1e1e1e;
   --foreground: #d4d4d4;
+  --inline-code-foreground: #a8c3dc;
+  --inline-code-background: #2a2d2f;
   --primary: #3794ff;
   --primary-foreground: #101010;
   --secondary: #2d2d30;
@@ -1363,6 +1399,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #272822;
   --foreground: #f8f8f2;
+  --inline-code-foreground: #cdd3a4;
+  --inline-code-background: #36372e;
   --primary: #f92672;
   --primary-foreground: #11120f;
   --secondary: #3a3b34;
@@ -1438,6 +1476,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #2e3440;
   --foreground: #eceff4;
+  --inline-code-foreground: #afc8d1;
+  --inline-code-background: #3a414d;
   --primary: #88c0d0;
   --primary-foreground: #1b222c;
   --secondary: #434c5e;
@@ -1513,6 +1553,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #282a36;
   --foreground: #f8f8f2;
+  --inline-code-foreground: #cab5e2;
+  --inline-code-background: #373745;
   --primary: #bd93f9;
   --primary-foreground: #1d1e26;
   --secondary: #3b3f51;
@@ -1588,6 +1630,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #000c18;
   --foreground: #ddeeff;
+  --inline-code-foreground: #95c4da;
+  --inline-code-background: #0d1d29;
   --primary: #00a4ef;
   --primary-foreground: #00111d;
   --secondary: #0b2536;
@@ -1663,6 +1707,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1a1a1c;
   --foreground: #e0e0e4;
+  --inline-code-foreground: #bcb8ce;
+  --inline-code-background: #29282c;
   --primary: #e0e0e4;
   --primary-foreground: #1a1a1c;
   --secondary: #2c2c30;
@@ -1738,6 +1784,8 @@
   --floe-window-shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 12px 28px -8px rgb(0 0 0 / 32%);
   --background: #1c1c1e;
   --foreground: #f2f2f7;
+  --inline-code-foreground: #a9c5c6;
+  --inline-code-background: #292b2d;
   --primary: #0a84ff;
   --primary-foreground: #101012;
   --secondary: #3a3a3c;

@@ -25,6 +25,8 @@ type ShellThemeTokenName =
   | '--floe-window-shadow'
   | '--background'
   | '--foreground'
+  | '--inline-code-foreground'
+  | '--inline-code-background'
   | '--primary'
   | '--primary-foreground'
   | '--secondary'
@@ -97,6 +99,8 @@ export const REQUIRED_SHELL_THEME_TOKENS: readonly ShellThemeTokenName[] = [
 
   '--background',
   '--foreground',
+  '--inline-code-foreground',
+  '--inline-code-background',
   '--primary',
   '--primary-foreground',
   '--secondary',
@@ -167,6 +171,8 @@ interface ShellThemePaletteDefinition {
   mode: FloeShellThemeMode;
   background: string;
   foreground: string;
+  /** Paired colors for inline code on reading surfaces. */
+  inlineCode?: { foreground: string; background: string };
   card: string;
   muted: string;
   accent?: string;
@@ -254,6 +260,8 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     ...(definition.mode === 'dark' ? DARK_WINDOW_TOKENS : LIGHT_WINDOW_TOKENS),
     '--background': definition.background,
     '--foreground': definition.foreground,
+    '--inline-code-foreground': definition.inlineCode?.foreground ?? definition.foreground,
+    '--inline-code-background': definition.inlineCode?.background ?? definition.muted,
     '--primary': definition.primary,
     '--primary-foreground': definition.primaryForeground,
     '--secondary': definition.muted,
@@ -480,6 +488,7 @@ const classicDarkPreset = {
 export const builtInShellThemePresets = [
   createShellThemePreset({
     name: 'porcelain-light',
+    inlineCode: { foreground: '#795C40', background: '#EAE5DF' },
     displayName: 'Porcelain Light',
     description: 'Original Redeven warm ivory and blue-gray ink, with quiet modern surfaces.',
     fileIconColors: {
@@ -519,6 +528,7 @@ export const builtInShellThemePresets = [
   classicLightPreset,
   createShellThemePreset({
     name: 'paper',
+    inlineCode: { foreground: '#775D3F', background: '#EBE5DA' },
     displayName: 'Paper',
     description: 'Warm paper and deep ink for focused reading.',
     mode: 'light',
@@ -540,6 +550,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'mist',
+    inlineCode: { foreground: '#3B607C', background: '#E0E7ED' },
     displayName: 'Mist',
     description: 'Cool, quiet layers for monitoring and dense data.',
     mode: 'light',
@@ -561,6 +572,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'meadow',
+    inlineCode: { foreground: '#3C684C', background: '#E0E9DF' },
     displayName: 'Meadow',
     description: 'Natural greens for collaborative daily work.',
     mode: 'light',
@@ -582,6 +594,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'citrus',
+    inlineCode: { foreground: '#865622', background: '#F5E8D2' },
     displayName: 'Citrus',
     description: 'Warm cream and amber for lively commercial work.',
     mode: 'light',
@@ -603,6 +616,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'lilac',
+    inlineCode: { foreground: '#71548B', background: '#EAE4F1' },
     displayName: 'Lilac',
     description: 'Soft violet structure for creative and client work.',
     mode: 'light',
@@ -624,6 +638,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'light-plus',
+    inlineCode: { foreground: '#355F8B', background: '#EFF2F6' },
     displayName: 'Light+',
     description: 'VS Code clarity with crisp blue actions and neutral chrome.',
     mode: 'light',
@@ -654,6 +669,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'quiet-light',
+    inlineCode: { foreground: '#625987', background: '#E9E9EC' },
     displayName: 'Quiet Light',
     description: 'Soft gray surfaces and calm indigo for long coding sessions.',
     mode: 'light',
@@ -684,6 +700,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'solarized-light',
+    inlineCode: { foreground: '#426C70', background: '#EEEBDA' },
     displayName: 'Solarized Light',
     description: 'Solarized warmth with measured cyan, green, and amber syntax.',
     mode: 'light',
@@ -714,6 +731,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'github-light',
+    inlineCode: { foreground: '#3E6085', background: '#E7ECF1' },
     displayName: 'GitHub Light',
     description: 'Clean repository neutrals with familiar blue and green accents.',
     mode: 'light',
@@ -744,6 +762,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'hc-light',
+    inlineCode: { foreground: '#000078', background: '#EBEBF4' },
     displayName: 'High Contrast Light',
     description: 'Maximum edge definition for bright environments and low vision.',
     mode: 'light',
@@ -774,6 +793,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'porcelain-dark',
+    inlineCode: { foreground: '#AAC7BD', background: '#1A1D1D' },
     displayName: 'Porcelain Dark',
     description: 'Warm white text and neutral controls on a near-black canvas with quiet charcoal surfaces.',
     mode: 'dark',
@@ -807,6 +827,7 @@ export const builtInShellThemePresets = [
   classicDarkPreset,
   createShellThemePreset({
     name: 'ink',
+    inlineCode: { foreground: '#A5B9D7', background: '#192330' },
     displayName: 'Ink',
     description: 'Blue-black focus with a restrained engineering blue.',
     mode: 'dark',
@@ -828,6 +849,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'slate',
+    inlineCode: { foreground: '#B1C0D1', background: '#252A32' },
     displayName: 'Slate',
     description: 'Neutral graphite layers for enterprise operations.',
     mode: 'dark',
@@ -849,6 +871,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'forest',
+    inlineCode: { foreground: '#9DCDB7', background: '#182A25' },
     displayName: 'Forest',
     description: 'Deep greens and copper for calm live monitoring.',
     mode: 'dark',
@@ -870,6 +893,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'ember',
+    inlineCode: { foreground: '#D9B09D', background: '#2E1F21' },
     displayName: 'Ember',
     description: 'Charcoal warmth for releases and high-attention work.',
     mode: 'dark',
@@ -891,6 +915,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'ocean',
+    inlineCode: { foreground: '#9BCDDC', background: '#142A35' },
     displayName: 'Ocean',
     description: 'High-clarity cyan for streams, terminals, and tools.',
     mode: 'dark',
@@ -912,6 +937,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'dark-plus',
+    inlineCode: { foreground: '#A8C3DC', background: '#2A2D2F' },
     displayName: 'Dark+',
     description: 'The familiar VS Code dark workbench with balanced syntax color.',
     mode: 'dark',
@@ -942,6 +968,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'monokai',
+    inlineCode: { foreground: '#CDD3A4', background: '#36372E' },
     displayName: 'Monokai',
     description: 'Warm charcoal with vivid pink, green, cyan, and yellow code.',
     mode: 'dark',
@@ -972,6 +999,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'nord',
+    inlineCode: { foreground: '#AFC8D1', background: '#3A414D' },
     displayName: 'Nord',
     description: 'Arctic blue-gray surfaces with restrained frost accents.',
     mode: 'dark',
@@ -1002,6 +1030,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'dracula',
+    inlineCode: { foreground: '#CAB5E2', background: '#373745' },
     displayName: 'Dracula',
     description: 'Deep violet charcoal with bright pink, green, and cyan syntax.',
     mode: 'dark',
@@ -1032,6 +1061,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'abyss',
+    inlineCode: { foreground: '#95C4DA', background: '#0D1D29' },
     displayName: 'Abyss',
     description: 'Near-black ocean depth with electric cyan tool highlights.',
     mode: 'dark',
@@ -1062,6 +1092,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'studio',
+    inlineCode: { foreground: '#BCB8CE', background: '#29282C' },
     displayName: 'Studio',
     description: 'Neutral near-black workspace: clean dark surfaces with zero color cast.',
     mode: 'dark',
@@ -1092,6 +1123,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'graphite',
+    inlineCode: { foreground: '#A9C5C6', background: '#292B2D' },
     displayName: 'Graphite',
     description: 'macOS system dark: neutral warm surfaces, system-blue active state, teal and amber chart palette.',
     mode: 'dark',
