@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 import { useOverlayMask } from '../src/hooks/useOverlayMask';
 
@@ -107,4 +108,25 @@ it('routes outside pointer and focus only to the topmost overlay owner', () => {
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(outer).not.toHaveBeenCalled(); expect(inner).toHaveBeenCalledOnce();
   } finally { dispose(); host.remove(); }
+});
+
+it('does not restore a retired overlay trigger over a newly opened interaction owner', async () => {
+  vi.useFakeTimers();
+  const host = document.createElement('div'); document.body.append(host);
+  const trigger = document.createElement('button'); document.body.append(trigger); trigger.focus();
+  const [oldOpen, setOldOpen] = createSignal(true), [nextOpen, setNextOpen] = createSignal(false);
+  const outside = vi.fn();
+  const dispose = renderSolid(() => {
+    let oldRoot: HTMLDivElement | undefined, nextRoot: HTMLDivElement | undefined;
+    useOverlayMask({ open: oldOpen, root: () => oldRoot, autoFocus: false });
+    useOverlayMask({ open: nextOpen, root: () => nextRoot, autoFocus: false, lockBodyScroll: false, onInteractOutside: outside });
+    return <><div ref={oldRoot}><input /></div><div ref={nextRoot}><input /></div></>;
+  }, host);
+  try {
+    host.querySelector('input')!.focus();
+    setOldOpen(false); (document.activeElement as HTMLElement).blur(); setNextOpen(true);
+    await vi.runAllTimersAsync();
+    expect(outside).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(trigger);
+  } finally { dispose(); host.remove(); trigger.remove(); vi.useRealTimers(); }
 });
