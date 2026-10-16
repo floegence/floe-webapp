@@ -377,6 +377,8 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
         // Restore focus after unmount/paint to avoid forcing layout in the close stack.
         deferAfterPaint(() => {
           if (typeof document === 'undefined') return;
+          // IMPORTANT: A live successor owns focus; retired exits cannot dismiss it by restoring an old trigger.
+          if (overlayMasks.get(document)?.some((mask) => !mask.contains(prevActive))) return;
           const active = document.activeElement;
           if (active && active !== document.body && active !== document.documentElement) return;
           try {
