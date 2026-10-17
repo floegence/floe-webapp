@@ -4,7 +4,6 @@ import {
   buildPresentation,
   parseZip,
   RECOMMENDED_ZIP_LIMITS,
-  type SlideHandle,
 } from '@aiden0z/pptx-renderer/browser';
 
 export interface PptxSurfaceOptions {
@@ -12,9 +11,16 @@ export interface PptxSurfaceOptions {
   onNodeError?: (nodeId: string, error: unknown) => void;
 }
 
+export interface PptxPageHandle {
+  readonly element: HTMLElement;
+  readonly ready: Promise<void>;
+  dispose(): void;
+  [Symbol.dispose](): void;
+}
+
 /** A read-only presentation. External relationships never acquire network authority. */
 export class PptxDocumentSurface {
-  private readonly handles = new Set<SlideHandle>();
+  private readonly handles = new Set<PptxPageHandle>();
   private disposed = false;
   private constructor(
     private readonly viewer: PptxViewer,
@@ -112,7 +118,7 @@ export class PptxDocumentSurface {
     return new PptxDocumentSurface(viewer, hasExternalLinks);
   }
 
-  renderPage(index: number, container: HTMLElement): SlideHandle {
+  renderPage(index: number, container: HTMLElement): PptxPageHandle {
     if (this.disposed) throw new Error('Presentation is closed.');
     if (!Number.isInteger(index) || index < 0 || index >= this.pageCount)
       throw new RangeError('Invalid presentation page.');

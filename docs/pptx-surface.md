@@ -43,3 +43,9 @@ Acceptance: `pnpm exec vitest run packages/core/test/pptx.test.ts` covers resour
 ownership and input boundaries. `node scripts/check-pptx-browser.mjs` exercises
 the actual engine, selectable text, external-reference isolation, and cleanup.
 Pass a local PPTX path to exercise its charts and layout without committing it.
+
+The standalone renderer is bundled into the lazy surface during the Floe build.
+It is a pinned build dependency, not a production dependency: clean consumers
+must not install its duplicate ECharts, ZIP, or font tool development trees.
+Public page handles use Floe-owned structural types so declarations remain
+self-contained without the renderer package.

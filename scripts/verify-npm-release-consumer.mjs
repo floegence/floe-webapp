@@ -9,6 +9,7 @@ import {
   writeFileSync,
   readdirSync,
   statSync,
+  existsSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -65,6 +66,11 @@ execFileSync('npm', ['audit', '--prefix', root, '--audit-level=low'], {
   cwd: root,
   stdio: 'inherit',
 });
+
+for (const name of ['@aiden0z/pptx-renderer', 'mtx-decompressor', 'echarts', 'zrender']) {
+  if (existsSync(join(root, 'node_modules', name)))
+    throw new Error('Bundled PPTX runtime must not install development assets: ' + name);
+}
 
 execFileSync(
   process.execPath,
@@ -136,6 +142,10 @@ for (const template of ['minimal', 'full']) {
     ...(process.argv.includes('--packed') ? [packageSpecs[0]] : []),
   ], { cwd: project, stdio: 'inherit' });
   execFileSync('npm', ['audit', '--prefix', project, '--audit-level=low'], { cwd: project, stdio: 'inherit' });
+  writeFileSync(join(project, 'src/pptx-contract.ts'), [
+    "import type { PptxDocumentSurface, PptxPageHandle } from '@floegence/floe-webapp-core/pptx';",
+    "export const mountPage = (source: PptxDocumentSurface): PptxPageHandle => source.renderPage(0, document.createElement('div'));",
+  ].join('\n'));
   execFileSync(process.execPath, [join(project, 'node_modules/typescript/bin/tsc'), '--noEmit'], { cwd: project, stdio: 'inherit' });
   execFileSync('npm', ['run', 'build', '--prefix', project], { cwd: project, stdio: 'inherit' });
 }
