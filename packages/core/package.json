@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.86.43",
+  "version": "0.86.44",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -151,6 +151,10 @@
     "./graph-assets": {
       "types": "./scripts/graph-assets.d.mts",
       "import": "./scripts/graph-assets.mjs"
+    },
+    "./pptx": {
+      "types": "./dist/pptx.d.ts",
+      "import": "./dist/pptx.js"
     }
   },
   "files": [
@@ -185,7 +189,8 @@
     "pdfjs-dist": "6.3.289",
     "shiki": "^3.23.0",
     "solid-motionone": "^1.0.4",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "@aiden0z/pptx-renderer": "1.3.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

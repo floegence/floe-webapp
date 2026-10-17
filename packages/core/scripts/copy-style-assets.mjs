@@ -9,6 +9,11 @@ const __dirname = dirname(__filename);
 const pkgRoot = resolve(__dirname, '..');
 
 const copies = [
+  ...['LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses/mtx-decompressor-MPL-2.0.txt',
+    'licenses/ECMA-text-copyright-notice.txt', 'scripts/ooxml-geometry/source-manifest.json'].map((name) => ({
+    src: resolve(pkgRoot, 'node_modules/@aiden0z/pptx-renderer', name),
+    dest: resolve(pkgRoot, 'dist/licenses/pptx', name.split('/').at(-1)),
+  })),
   {
     src: resolve(pkgRoot, 'node_modules/elkjs/LICENSE.md'),
     dest: resolve(pkgRoot, 'dist/licenses/elkjs.txt'),
@@ -108,6 +113,10 @@ function copyFile({ src, dest }) {
 }
 
 function copyAll() {
+  mkdirSync(resolve(pkgRoot, 'dist/licenses/pptx'), { recursive: true });
+  for (const name of ['bundled-dependencies.txt', 'mtx-decompressor-v1.4.2.tar.gz']) {
+    copyFileSync(resolve(pkgRoot, 'vendor/pptx', name), resolve(pkgRoot, 'dist/licenses/pptx', name));
+  }
   for (const item of copies) copyFile(item);
   copyFileSync(
     resolve(pkgRoot, 'vendor/libavoid-sources.tar.gz'),

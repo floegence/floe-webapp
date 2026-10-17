@@ -109,10 +109,11 @@ jobs:
       - name: Verify SVG security and Monaco compatibility
         run: node scripts/check-svg-editor-security-browser.mjs
 
-      - name: Verify PDF surface
+      - name: Verify document surfaces
         run: |
           pnpm --filter @floegence/floe-webapp-core build
           pnpm test:pdf
+          node scripts/check-pptx-browser.mjs
 
       - name: Build packages
         run: pnpm -r --filter './packages/*' build

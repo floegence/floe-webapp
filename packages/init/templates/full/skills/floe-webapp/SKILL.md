@@ -49,6 +49,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/notes`
    - `@floegence/floe-webapp-core/editor`
    - `@floegence/floe-webapp-core/pdf` (layered PDF surfaces; see `docs/pdf-surface.md`)
+   - `@floegence/floe-webapp-core/pptx` (lazy static PPTX surface; see `docs/pptx-surface.md`)
    - `@floegence/floe-webapp-core/pdf.css`
    - `@floegence/floe-webapp-core/pdf-assets` (Vite self-hosted asset adapter)
    - `@floegence/floe-webapp-core/widgets`

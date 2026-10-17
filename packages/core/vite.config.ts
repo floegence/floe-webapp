@@ -66,6 +66,7 @@ export default defineConfig({
         notes: resolve(__dirname, 'src/notes.ts'),
         editor: resolve(__dirname, 'src/editor.ts'),
         pdf: resolve(__dirname, 'src/pdf.ts'),
+        pptx: resolve(__dirname, 'src/pptx.ts'),
         widgets: resolve(__dirname, 'src/widgets.ts'),
         terminal: resolve(__dirname, 'src/terminal.ts'),
         themes: resolve(__dirname, 'src/themes.ts'),

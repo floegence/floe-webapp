@@ -267,6 +267,9 @@ function main() {
   assertFile('packages/core/dist/html-preview.d.ts');
   assertFile('packages/core/dist/code-highlight.js');
   assertFile('packages/core/dist/code-highlight.d.ts');
+  assertFile('packages/core/dist/pptx.js');
+  assertFile('packages/core/dist/pptx.d.ts');
+  for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'mtx-decompressor-MPL-2.0.txt', 'ECMA-text-copyright-notice.txt', 'source-manifest.json', 'bundled-dependencies.txt', 'mtx-decompressor-v1.4.2.tar.gz']) assertFile('packages/core/dist/licenses/pptx/' + name);
   assertFile('packages/core/dist/graph.js');
   assertFile('packages/core/dist/graph.d.ts');
   assertFile('packages/core/dist/graph.css');
@@ -392,9 +395,9 @@ function main() {
   }
   assert(
     [corePkg.version, bootPkg.version, protocolPkg.version, initPkg.version].every(
-      (version) => version === '0.86.43'
+      (version) => version === '0.86.44'
     ),
-    'Published Floe packages must all use version 0.86.43'
+    'Published Floe packages must all use version 0.86.44'
   );
 
   assert(
