@@ -8,7 +8,7 @@ import {
 import { ShellThemePicker } from './ShellThemePicker';
 
 describe('ShellThemePicker', () => {
-  it('renders system mode and five theme choices for each color mode', () => {
+  it('renders system mode and every published theme choice', () => {
     const html = renderToString(() => (
       <FloeProvider
         config={{
@@ -29,6 +29,6 @@ describe('ShellThemePicker', () => {
     for (const preset of builtInShellThemePresets) {
       expect(html).toContain(preset.displayName);
     }
-    expect(html.match(/role="radio"/g)).toHaveLength(26);
+    expect(html.match(/role="radio"/g)).toHaveLength(28);
   });
 });

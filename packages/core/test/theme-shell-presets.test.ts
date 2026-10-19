@@ -71,11 +71,11 @@ describe('built-in shell theme presets', () => {
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')[0]?.name).toBe('porcelain-dark');
   });
 
-  it('ships all 26 presets with the default Porcelain theme first in each mode', () => {
-    expect(builtInShellThemePresets).toHaveLength(26);
-    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(12);
-    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(14);
-    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(26);
+  it('ships all 28 presets with the default Porcelain theme first in each mode', () => {
+    expect(builtInShellThemePresets).toHaveLength(28);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')).toHaveLength(13);
+    expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')).toHaveLength(15);
+    expect(new Set(builtInShellThemePresets.map((preset) => preset.name)).size).toBe(28);
 
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';

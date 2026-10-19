@@ -44,7 +44,7 @@ their independent meaning.
 Input boundaries use `--input`; focus uses `--ring` through `input-focus.css`.
 Decorative seams never override those boundaries. Soft input faces mix card and
 background equally. Placeholder text uses the full muted-foreground color.
-The packed 26-theme, two-material matrix checks text at 4.5:1 and input boundaries
+The packed 28-theme, two-material matrix checks text at 4.5:1 and input boundaries
 at 3:1. Only affected semantic roles change when a palette fails these checks.
 Auxiliary copy must also retain 4.5:1 on navigation, muted and selected choice
 faces; checking only the page canvas misses the descriptions inside RadioOption.
@@ -62,7 +62,7 @@ original warm ivory canvas (`#F4F1ED`), blue-gray ink and primary action
 (`#202A37`), and warm sidebar (`#EEECE9`). Its dark partner uses a slate canvas,
 warm ivory text, and soft blue-gray actions. Both receive the same material,
 control-boundary, focus, and motion rules; they do not restore decorative glow.
-The catalog now contains 26 presets. Stored selections retain version 1.
+The catalog now contains 28 presets. Stored selections retain version 1.
 
 Porcelain Light also retains the original file identification colors: gold
 folders/configuration/archives, blue code/audio, red documents and green images.
@@ -262,3 +262,9 @@ Artifacts live under `.cache/surface-style`: baseline/current tarballs, packed p
 After user acceptance and explicit merge/release authorization, release Floe through its normal workflow. Redeven can then upgrade to that published version, opt into the style using theme configuration, mark business surfaces where needed, and remove duplicated generic shadow, blur, hover-depth, and input-focus overrides. Retain product-owned layout and semantic colors. Do not use sibling aliases, `file:`, `link:`, or a copied implementation as formal consumption. Perform real Redeven terminal, editor, Flower, and Workbench validation as a separate downstream change.
 
 Retain the feature worktree and runnable previews during acceptance. After acceptance and release authorization, preserve the validation evidence, integrate the reviewed commits, publish the matching package set, verify registry readback, and clean up the feature branch and worktree.
+
+Cloud White keeps reading, card, popover and terminal surfaces pure white with
+soft graphite text, a nearly white sidebar and restrained blue actions. Soft
+Black uses a near-black canvas and subtly raised panels with warm-gray text,
+muted status and syntax colors, and palette-relative dark window material. Both
+are optional presets; defaults and valid stored selections remain unchanged.

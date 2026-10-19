@@ -199,6 +199,8 @@ interface ShellThemePaletteDefinition {
   glow?: string;
   /** File identification paint is independent of status text contrast. */
   fileIconColors?: Partial<Record<'primary' | 'warning' | 'info' | 'success' | 'error', string>>;
+  status?: Partial<Record<keyof typeof LIGHT_STATUS, string>>;
+  windowTokens?: Partial<Record<keyof typeof LIGHT_WINDOW_TOKENS, string>>;
   syntax?: {
     comment: string;
     keyword: string;
@@ -237,7 +239,10 @@ const DARK_STATUS = {
 } as const;
 
 export function createShellThemePreset(definition: ShellThemePaletteDefinition): FloeThemePreset {
-  const status = definition.mode === 'light' ? LIGHT_STATUS : DARK_STATUS;
+  const status = {
+    ...(definition.mode === 'light' ? LIGHT_STATUS : DARK_STATUS),
+    ...definition.status,
+  };
   const selectionOnPrimary =
     definition.mode === 'light'
       ? { background: '#F4C95D', foreground: '#243447' }
@@ -258,6 +263,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
 
   const tokenMap: Record<ShellThemeTokenName, string> & FloeThemeTokenMap = {
     ...(definition.mode === 'dark' ? DARK_WINDOW_TOKENS : LIGHT_WINDOW_TOKENS),
+    ...definition.windowTokens,
     '--background': definition.background,
     '--foreground': definition.foreground,
     '--inline-code-foreground': definition.inlineCode?.foreground ?? definition.foreground,
@@ -523,6 +529,37 @@ export const builtInShellThemePresets = [
       type: '#245B9B',
       function: '#6847A0',
       constant: '#9C225E',
+    },
+  }),
+  createShellThemePreset({
+    name: 'cloud-white',
+    displayName: 'Cloud White',
+    description: 'Pure white reading surfaces with soft graphite text and restrained blue actions.',
+    mode: 'light',
+    background: '#FFFFFF',
+    foreground: '#30343B',
+    card: '#FFFFFF',
+    muted: '#F6F7F9',
+    accent: '#EAF0FB',
+    mutedForeground: '#666D79',
+    primary: '#365FC0',
+    primaryForeground: '#FFFFFF',
+    border: '#E3E6EB',
+    input: '#8A919B',
+    sidebar: '#FAFBFC',
+    terminalBackground: '#FFFFFF',
+    terminalForeground: '#30343B',
+    selectionBackground: '#365FC0',
+    selectionForeground: '#FFFFFF',
+    inlineCode: { foreground: '#365FC0', background: '#F6F7F9' },
+    chart: ['#365FC0', '#317456', '#7B51A0', '#8A641D', '#246F96'],
+    status: {
+      success: '#317456', warning: '#8A641D', error: '#B34751',
+      info: '#365FC0', note: '#7B51A0', tip: '#287B83',
+    },
+    syntax: {
+      comment: '#666D79', keyword: '#7B51A0', string: '#317456',
+      number: '#8A641D', type: '#365FC0', function: '#287B83', constant: '#B34751',
     },
   }),
   classicLightPreset,
@@ -822,6 +859,41 @@ export const builtInShellThemePresets = [
       type: '#79B8FF',
       function: '#71C8C0',
       constant: '#E9A4A0',
+    },
+  }),
+  createShellThemePreset({
+    name: 'soft-black',
+    displayName: 'Soft Black',
+    description: 'Near-black surfaces, soft warm-gray text and muted semantic colors for quiet focus.',
+    mode: 'dark',
+    background: '#09090B',
+    foreground: '#C6C5C1',
+    card: '#101113',
+    muted: '#17181B',
+    accent: '#1C2432',
+    mutedForeground: '#96979D',
+    primary: '#9AAED3',
+    primaryForeground: '#111722',
+    border: '#292B30',
+    input: '#666971',
+    sidebar: '#0D0E10',
+    terminalBackground: '#09090B',
+    terminalForeground: '#C6C5C1',
+    selectionBackground: '#38445C',
+    selectionForeground: '#DEDDD8',
+    inlineCode: { foreground: '#E2B766', background: '#1B1915' },
+    chart: ['#9AAED3', '#91B39B', '#C594C8', '#D0B07B', '#6DB8D2'],
+    status: {
+      success: '#91B39B', warning: '#C8B28A', error: '#D29292',
+      info: '#9AAED3', note: '#B5A1CA', tip: '#84B6BD',
+    },
+    windowTokens: {
+      '--floe-window-background': 'var(--card)',
+      '--floe-window-titlebar-background': 'color-mix(in srgb, var(--card) 95%, var(--foreground))',
+    },
+    syntax: {
+      comment: '#96979D', keyword: '#B5A1CA', string: '#91B39B',
+      number: '#C8B28A', type: '#9AAED3', function: '#84B6BD', constant: '#D29292',
     },
   }),
   classicDarkPreset,

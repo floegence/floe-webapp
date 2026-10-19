@@ -191,7 +191,7 @@ Run `pnpm test:workbench-example` for full-app navigation, editing without
 viewport movement, saved state, and absence of review chrome in Chromium and
 WebKit. Set `FLOE_DEMO_URL` to reuse a running demo server.
 
-Run `pnpm test:workbench-demo-parity` for reference integrity, all 26 themes and
+Run `pnpm test:workbench-demo-parity` for reference integrity, all 28 themes and
 936 color/material comparisons, toolbar geometry, editing, duplication, empty
 names, dragging, narrow layouts, and idle layout/style work. Evidence is written
 to `.cache/workbench-parity/`. `pnpm test:workbench-composition` also exercises
