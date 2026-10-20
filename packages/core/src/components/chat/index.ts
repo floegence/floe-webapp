@@ -81,6 +81,7 @@ export {
 // Hooks
 export {
   useVirtualList,
+  createVirtualListLayout,
   useCodeHighlight,
   useMermaid,
   useAutoScroll,
@@ -110,6 +111,8 @@ export {
   type UseVirtualListOptions,
   type UseVirtualListReturn,
   type VirtualItem,
+  type VirtualListAnchor,
+  type VirtualListLayout,
   type UseAutoScrollOptions,
   type UseAttachmentsOptions,
 } from './hooks';

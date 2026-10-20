@@ -161,3 +161,48 @@ one request AbortController; late results cannot replace current media. Hosts
 should release temporary URLs when that signal aborts. Failures remain retryable.
 Preview dismissal restores focus only from its own connected window to its
 connected trigger, so navigation retains focus.
+
+## Bounded host windows and worker sessions
+
+The headless `createVirtualListLayout` chat export owns geometry only. Ordered
+stable keys retain measurements through prepend and same-count replacement;
+eviction releases measurements. `captureAnchor` / `anchorOffset` on
+`useVirtualList` expose the same key-and-offset geometry. The host owns scroll
+writes, focus, selection pinning and data paging. Do not install a second
+automatic scroll owner alongside a product tail controller. Reset is linear in
+the supplied window; measurement and prefix lookup use a Fenwick tree. Products
+must bound that window instead of passing all history on every token.
+
+Import `createMarkdownSessionWorker` and `createMarkdownWorkerClient` from the
+markdown entry for incremental parsing outside the main thread. Open one session
+per visible source, send `reset`, `append` and `finish`, then close it on disposal.
+The client stores source lengths and request identity, not a second parser or
+transcript. The default deadline is 15 seconds; queued source/configuration is
+limited to 1 MiB. The worker admits 32 sessions and 8 Mi UTF-16 source units
+across them. These source/transport budgets do not measure actual JS heap. Hosts
+must also bound rendered output: worker parsing does not make a giant token
+response or giant DOM cheap.
+
+Hosts with extensions install `createMarkdownSessionHandler(createParser)` in
+their module worker using the same parser factory, extensions and configuration
+as their renderer. The default worker handles the standard parser and the
+established full-HTML API from one asset. Apply returned batches through the
+existing safe rendering entry; worker results do not authorize links or media.
+
+Parser errors release the affected session. Transport errors, invalid response
+identity, timeout and disposal reject pending requests and terminate the owned
+worker. Hosts show bounded readable source and Retry on failure, without
+synchronously parsing a full replacement. Closing a reader is distinct from
+stopping the Agent.
+
+The established full-result API remains an explicit complete-result operation
+with its existing source-size behavior. Initialization and request waiters now
+reject on replacement, timeout, error or termination. Its optional cache is
+bounded by 200 entries and 16 MiB of source-plus-HTML UTF-16 bytes. It is not the
+incremental streaming path or a large-history window cache.
+
+`make long-thread-primitives` checks consumers of actual distribution entries:
+geometry, host scroll ownership, 50 release cycles, worker batch equivalence,
+host extensions and failures, and large parsing while animation frames continue.
+These are component checks, not production Flower latency, memory-plateau or
+end-to-end acceptance.

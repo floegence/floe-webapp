@@ -79,7 +79,11 @@ execFileSync(
     '-e',
     [
       `import.meta.resolve('${packageNames[0]}')`,
-      `const { createMarkdownParser, createIncrementalMarkdownParser } = await import('${packageNames[0]}/markdown')`,
+      `const { createMarkdownParser, createIncrementalMarkdownParser, createMarkdownSessionHandler, createMarkdownWorkerClient, createMarkdownSessionWorker } = await import('${packageNames[0]}/markdown')`,
+      `if ([createMarkdownSessionHandler, createMarkdownWorkerClient, createMarkdownSessionWorker].some(value => typeof value !== 'function')) throw new Error('missing Markdown worker session API')`,
+      `const sessionHandler = createMarkdownSessionHandler(() => createMarkdownParser())`,
+      `if (sessionHandler.handle({type:'markdown-session',request:1,session:1,sequence:0,operation:'open',offset:0}).error) throw new Error('Markdown session admission failed')`,
+      `sessionHandler.close()`,
       `if (!createMarkdownParser({breaks:false}).parse('**注意：**正文').includes('<strong>注意：</strong>正文')) throw new Error('missing CJK emphasis parsing')`,
       `const incremental = createIncrementalMarkdownParser(createMarkdownParser({breaks:false}))`,
       `incremental.reset('First\\n\\nTail')`,

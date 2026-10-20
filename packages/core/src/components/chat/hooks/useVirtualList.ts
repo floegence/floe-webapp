@@ -1,18 +1,16 @@
-import { createSignal, createMemo, onMount, onCleanup, createEffect, untrack, type Accessor } from 'solid-js';
+import { createSignal, createMemo, onMount, onCleanup, untrack, type Accessor } from 'solid-js';
 import type { VirtualListConfig } from '../types';
 
-export interface VirtualItem {
-  index: number;
-  start: number;
-  size: number;
-  key: string;
-}
+import { createVirtualListLayout, type VirtualItem, type VirtualListAnchor } from './virtualListLayout';
+export { createVirtualListLayout, type VirtualItem, type VirtualListAnchor, type VirtualListLayout } from './virtualListLayout';
 
 export interface UseVirtualListOptions {
   count: Accessor<number>;
   getItemKey: (index: number) => string;
   getItemHeight: (index: number) => number;
   config: VirtualListConfig;
+  /** Explicit ordered identities for prepend, eviction and same-count replacement. */
+  itemKeys?: Accessor<readonly string[]>;
 }
 
 export interface UseVirtualListReturn {
@@ -33,6 +31,9 @@ export interface UseVirtualListReturn {
    * Call this from a ResizeObserver for visible items.
    */
   setItemHeight: (index: number, height: number) => void;
+  setItemHeightByKey: (key: string, height: number) => void;
+  captureAnchor: () => VirtualListAnchor | undefined;
+  anchorOffset: (anchor: VirtualListAnchor) => number | undefined;
 }
 
 export function useVirtualList(options: UseVirtualListOptions): UseVirtualListReturn {
@@ -47,144 +48,66 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
 
   let rafId: number | null = null;
 
-  // Variable-height measurements.
-  // We use a Fenwick tree (Binary Indexed Tree) for:
-  // - O(log n) height updates when an item is measured
-  // - O(log n) prefix-sum queries
-  // - O(log n) lowerBound (find first item whose end >= scrollTop)
-  //
-  // This avoids O(n) rebuild work on every measurement update.
-  let sizeByIndex: number[] = [];
-  let bit: number[] = [];
+  const layout = createVirtualListLayout(config.defaultItemHeight);
 
-  const normalizeHeight = (h: number): number => {
-    if (!Number.isFinite(h) || h <= 0) return config.defaultItemHeight;
-    return Math.max(1, Math.round(h));
-  };
-
-  const bitInit = (n: number) => {
-    sizeByIndex = new Array(n);
-    bit = new Array(n + 1).fill(0);
-  };
-
-  const bitAdd = (idx1: number, delta: number) => {
-    // idx1 is 1-based.
-    for (let i = idx1; i < bit.length; i += i & -i) {
-      bit[i] += delta;
-    }
-  };
-
-  const bitSum = (idx1: number): number => {
-    // Sum of first idx1 items (idx1 is 0..n).
-    let out = 0;
-    for (let i = idx1; i > 0; i -= i & -i) {
-      out += bit[i];
-    }
-    return out;
-  };
-
-  const highestPowerOfTwoLE = (n: number): number => {
-    let p = 1;
-    while ((p << 1) <= n) p <<= 1;
-    return p;
-  };
-
-  const lowerBound = (target: number, n: number): number => {
-    // Returns the first index (0-based) such that prefixSum(index+1) >= target.
-    // Clamped to [0, n-1].
-    if (n <= 0) return 0;
-    if (target <= 0) return 0;
-    const total = bitSum(n);
-    if (target >= total) return n - 1;
-
-    let idx = 0; // 1-based index accumulator (0 means "before first element")
-    let acc = 0;
-    for (let step = highestPowerOfTwoLE(n); step !== 0; step >>= 1) {
-      const next = idx + step;
-      if (next <= n && acc + bit[next] < target) {
-        acc += bit[next];
-        idx = next;
-      }
-    }
-    // idx is the largest 1-based index with prefixSum(idx) < target.
-    // Desired 1-based position is idx+1. Convert to 0-based index: idx.
-    return Math.max(0, Math.min(n - 1, idx));
-  };
-
-  // 版本信号：尺寸变更时触发响应式重算（visibleRange、paddingTop 等）。
-  // 使用 rAF 合并同一帧内的多次 setItemHeight 调用，避免过多同步更新。
+  // Publish measured geometry at most once per animation frame.
   const [measureVersion, setMeasureVersion] = createSignal(0);
   let pendingMeasureTick = false;
+  let measureFrame: number | undefined;
+  let measureTimer: ReturnType<typeof setTimeout> | undefined;
+  let disposed = false;
   const bumpMeasureVersion = () => {
-    if (pendingMeasureTick) return;
+    if (disposed || pendingMeasureTick) return;
     pendingMeasureTick = true;
     const commit = () => {
       pendingMeasureTick = false;
+      measureFrame = undefined;
+      measureTimer = undefined;
+      if (disposed) return;
       setMeasureVersion((v) => v + 1);
     };
     if (typeof requestAnimationFrame === 'undefined') {
-      setTimeout(commit, 0);
+      measureTimer = setTimeout(commit, 0);
       return;
     }
-    requestAnimationFrame(commit);
+    measureFrame = requestAnimationFrame(commit);
   };
 
-  const rebuild = (n: number) => {
-    bitInit(n);
-    // Avoid tracking getItemKey/getItemHeight dependencies: rebuild is keyed by count().
-    untrack(() => {
-      for (let i = 0; i < n; i += 1) {
-        // Ensure stable key evaluation so host stores can map ids -> cached heights.
-        void getItemKey(i);
-        const h = normalizeHeight(getItemHeight(i));
-        sizeByIndex[i] = h;
-        bitAdd(i + 1, h);
-      }
-    });
-    bumpMeasureVersion();
-  };
-
-  createEffect(() => {
-    rebuild(count());
+  const layoutRevision = createMemo(() => {
+    const length = count();
+    if (!Number.isInteger(length) || length < 0) throw new Error('Virtual list count must be a non-negative integer');
+    const keys = options.itemKeys?.();
+    if (keys && keys.length !== length) throw new Error('Virtual list keys must match count');
+    untrack(() => layout.reset(keys ?? Array.from({ length }, (_, i) => getItemKey(i)), getItemHeight));
+    return {};
   });
 
   // Visible range
   const visibleRange = createMemo(() => {
+    layoutRevision();
     // Depend on measurement updates.
     measureVersion();
 
-    const n = count();
-    if (n <= 0) {
-      return { start: 0, end: 0 };
-    }
-
-    const viewportStart = scrollTop();
-    const viewportEnd = viewportStart + containerHeight();
-
-    const startBase = lowerBound(viewportStart, n);
-    const endBase = lowerBound(viewportEnd, n);
-
-    const start = Math.max(0, startBase - config.overscan);
-    const end = Math.min(n, endBase + 1 + config.overscan);
-
-    return { start, end };
+    return layout.range(scrollTop(), containerHeight(), config.overscan);
   });
 
   // Virtual items
   const virtualItems = createMemo(() => {
+    layoutRevision();
+    measureVersion();
     const { start, end } = visibleRange();
     const items: VirtualItem[] = [];
 
     // Start offset is the sum of the first `start` items.
-    let offset = bitSum(start);
+    let offset = layout.prefix(start);
 
     for (let i = start; i < end; i += 1) {
-      const size = sizeByIndex[i] ?? config.defaultItemHeight;
+      const size = layout.item(i)?.size ?? config.defaultItemHeight;
       items.push({
         index: i,
         start: offset,
         size,
-        key: getItemKey(i),
+        key: layout.item(i)!.key,
       });
       offset += size;
     }
@@ -193,20 +116,23 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   });
 
   const totalHeight = createMemo(() => {
+    layoutRevision();
     measureVersion();
-    return bitSum(count());
+    return layout.total();
   });
 
   const paddingTop = createMemo(() => {
+    layoutRevision();
     measureVersion();
-    return bitSum(visibleRange().start);
+    return layout.prefix(visibleRange().start);
   });
 
   const paddingBottom = createMemo(() => {
+    layoutRevision();
     measureVersion();
     const n = count();
     const end = visibleRange().end;
-    return Math.max(0, bitSum(n) - bitSum(Math.min(n, end)));
+    return Math.max(0, layout.total() - layout.prefix(Math.min(n, end)));
   });
 
   // Scroll handler (high-frequency): rAF throttled to avoid sync work on every scroll event.
@@ -249,7 +175,10 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
   });
 
   onCleanup(() => {
+    disposed = true;
     resizeObserver?.disconnect();
+    if (measureFrame !== undefined) cancelAnimationFrame(measureFrame);
+    if (measureTimer !== undefined) clearTimeout(measureTimer);
     if (rafId !== null && typeof cancelAnimationFrame !== 'undefined') {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -262,18 +191,18 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
 
     const n = count();
     if (index < 0 || index >= n) return;
-    const size = sizeByIndex[index] ?? config.defaultItemHeight;
+    const size = layout.item(index)?.size ?? config.defaultItemHeight;
     let targetScroll: number;
 
     switch (align) {
       case 'start':
-        targetScroll = bitSum(index);
+        targetScroll = layout.prefix(index);
         break;
       case 'center':
-        targetScroll = bitSum(index) - containerHeight() / 2 + size / 2;
+        targetScroll = layout.prefix(index) - containerHeight() / 2 + size / 2;
         break;
       case 'end':
-        targetScroll = bitSum(index + 1) - containerHeight();
+        targetScroll = layout.prefix(index + 1) - containerHeight();
         break;
     }
 
@@ -286,17 +215,12 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     scrollEl.scrollTo({ top: scrollEl.scrollHeight, behavior: 'smooth' });
   };
 
+  const setItemHeightByKey = (key: string, height: number) => {
+    if (layout.measure(key, height)) bumpMeasureVersion();
+  };
   const setItemHeight = (index: number, height: number) => {
-    const n = count();
-    if (index < 0 || index >= n) return;
-
-    const next = normalizeHeight(height);
-    const prev = sizeByIndex[index] ?? config.defaultItemHeight;
-    if (next === prev) return;
-
-    sizeByIndex[index] = next;
-    bitAdd(index + 1, next - prev);
-    bumpMeasureVersion();
+    const item = layout.item(index);
+    if (item) setItemHeightByKey(item.key, height);
   };
 
   return {
@@ -317,5 +241,8 @@ export function useVirtualList(options: UseVirtualListOptions): UseVirtualListRe
     isAtBottom,
     visibleRange,
     setItemHeight,
+    setItemHeightByKey,
+    captureAnchor: () => layout.anchor(scrollEl?.scrollTop ?? scrollTop()),
+    anchorOffset: (anchor) => layout.offset(anchor),
   };
 }
