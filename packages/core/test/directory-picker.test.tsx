@@ -66,6 +66,24 @@ describe('directory picker presentations', () => {
     expect(document.querySelector('button button')).toBeNull();
   });
 
+  it('keeps keyboard navigation on current rows after filtering and inserting favorites', async () => {
+    const [paths, setPaths] = createSignal<readonly string[]>(['/srv/alpha', '/srv/beta', '/srv/beta-two']);
+    mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={() => {}}
+      loadPathContext={async () => context} loadDirectory={async () => []}
+      directoryFavorites={{ get paths() { return paths(); }, editable: true }} />);
+    await flush(); button('Favorites').click(); await flush();
+    const filter = document.querySelector<HTMLInputElement>('[aria-label="Filter favorites by name or path"]')!;
+    filter.value = 'beta'; filter.dispatchEvent(new Event('input', { bubbles: true }));
+    let rows = document.querySelectorAll<HTMLButtonElement>('[data-picker-favorite-path]');
+    rows[0].focus(); rows[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(rows[1]);
+    filter.value = ''; filter.dispatchEvent(new Event('input', { bubbles: true }));
+    setPaths(['/srv/first', ...paths()]);
+    rows = document.querySelectorAll<HTMLButtonElement>('[data-picker-favorite-path]');
+    rows[0].focus(); rows[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(rows[1]);
+  });
+
   it('scrolls keyboard focus to the tenth recent directory', async () => {
     const scroll = vi.fn();
     mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={() => {}}

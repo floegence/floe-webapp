@@ -191,7 +191,7 @@ export function PickerPanel(props: PickerPanelProps & {
             <Show when={folders().length} fallback={<Show when={source.currentPath()}><p class="px-3 py-6 text-center text-xs text-muted-foreground">{copy().empty}</p></Show>}>
               <For each={folders()}>{(item, index) => (
                 <PickerDirectoryRow path={item.path} favorites={props.directoryFavorites} copy={copy()} scopeKey={props.scopeKey} disabled={props.disabled || props.filter?.(item) === false} onError={setFavoriteError}>
-                <button ref={(element) => { rows[index()] = element; }} type="button"
+                <button ref={(element) => { createEffect(() => { rows[index()] = element; }); }} type="button"
                   data-picker-row-path={item.path} disabled={props.disabled || props.filter?.(item) === false}
                   class="flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => { void source.navigate(item.path); }} onKeyDown={(event) => focusRow(event, index(), rows, folders().length)}>
@@ -218,7 +218,7 @@ export function PickerPanel(props: PickerPanelProps & {
             <Show when={shortcutPaths().length} fallback={<p class="px-3 py-6 text-center text-xs text-muted-foreground" role="status">{props.directoryFavorites?.loading ? copy().loading : props.directoryFavorites?.error ? copy().favoritesLoadFailed : filter().trim() ? copy().favoritesNoMatches : copy().favoritesEmpty}</p>}>
             <For each={shortcutPaths()}>{(path, index) => (
               <PickerDirectoryRow path={path} favorites={props.directoryFavorites} copy={copy()} scopeKey={props.scopeKey} disabled={props.disabled} onError={setFavoriteError}>
-              <button ref={(element) => { suggestionRows[index()] = element; }} type="button"
+              <button ref={(element) => { createEffect(() => { suggestionRows[index()] = element; }); }} type="button"
                 data-picker-suggested-path={source.view() === 'suggestions' ? path : undefined}
                 data-picker-favorite-path={source.view() === 'favorites' ? path : undefined} title={path} aria-label={path}
                 disabled={props.disabled || !source.context()}
