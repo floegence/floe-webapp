@@ -54,7 +54,7 @@ describe('directory picker presentations', () => {
       loadPathContext={async () => context} loadDirectory={load}
       directoryFavorites={{ paths: ['/srv/alpha', '/srv/beta'], editable: true, onSetFavorite: setFavorite }} />);
     await flush(); button('Favorites').click(); await flush();
-    document.querySelector<HTMLButtonElement>('[aria-label="Remove directory from favorites: /srv/beta"]')!.click();
+    document.querySelector<HTMLButtonElement>('[aria-label="Unfavorite: /srv/beta"]')!.click();
     await flush(); expect(setFavorite).toHaveBeenCalledExactlyOnceWith('/srv/beta', false);
     expect(load).toHaveBeenCalledTimes(1);
     const filter = document.querySelector<HTMLInputElement>('[aria-label="Filter favorites by name or path"]')!;

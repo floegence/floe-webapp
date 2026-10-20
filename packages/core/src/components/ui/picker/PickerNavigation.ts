@@ -51,7 +51,7 @@ export interface PickerCopy {
 }
 
 export const defaultPickerCopy: PickerCopy = {
-  favorites: 'Favorites', favoriteDirectory: 'Add directory to favorites', unfavoriteDirectory: 'Remove directory from favorites',
+  favorites: 'Favorites', favoriteDirectory: 'Favorite', unfavoriteDirectory: 'Unfavorite',
   favoritesEmpty: 'Star a directory to keep it here.', favoritesFilter: 'Filter favorites by name or path',
   favoritesNoMatches: 'No matching favorites', favoritesLoadFailed: 'Could not load favorites',
   path: 'Directory path', go: 'Go', roots: 'Locations', root: 'Root',
