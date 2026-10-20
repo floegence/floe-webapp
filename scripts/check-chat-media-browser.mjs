@@ -1,4 +1,4 @@
-/* global window, document, innerWidth, getComputedStyle, location */
+/* global window, document, innerWidth, getComputedStyle, location, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -31,6 +31,7 @@ const [resolver, setResolver] = createSignal(resolve);
 const dispose = render(() => <MarkdownMedia source={source()} labels={${JSON.stringify(labels)}} resolve={resolver()}/>, document.getElementById('root'));
 window.mediaTest = {
   bump: () => setSnapshot(value => value + 1),
+  equalSource: () => setSource(value => ({...value})),
   source: src => setSource({kind:'image',title:'Stable image',src}),
   resolver: () => setResolver(() => (source, signal) => resolve(source, signal)),
   stats: () => ({calls: requests.length, aborted: requests.filter(request => request.signal.aborted).length}),
@@ -233,6 +234,7 @@ try {
   }
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName),'none');
+  await page.setViewportSize({width:1000,height:900});
   await page.goto(new URL('/lifecycle', server.resolvedUrls.local[0]).href);
   await page.waitForFunction(() => window.mediaTest?.stats().calls === 1);
   const loadingCanvas = await page.locator('.chat-media-viewport').boundingBox();
@@ -245,7 +247,28 @@ try {
   await page.evaluate(() => window.mediaTest.bump());
   assert.equal(await image.evaluate(node => node === document.querySelector('img.chat-media-image')), true);
   assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:1,aborted:0});
+  await page.locator('.chat-media-image-button').click();
+  await page.locator('.chat-media-preview-window').waitFor();
+  const preview = await page.locator('.chat-media-preview-window').elementHandle();
+  await page.evaluate(async () => {
+    for (let index = 0; index < 300; index++) {
+      await new Promise(requestAnimationFrame);
+      window.mediaTest.bump();
+      window.mediaTest.equalSource();
+    }
+  });
+  assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:1,aborted:0});
+  assert.equal(await image.evaluate(node => node === document.querySelector('img.chat-media-image')), true);
+  assert.equal(await preview.evaluate(node => node === document.querySelector('.chat-media-preview-window')), true);
+  await page.keyboard.press('Escape');
+  await page.locator('.chat-media-preview-window').waitFor({state:'hidden'});
+  assert.equal(await page.locator('.chat-media-image-button').evaluate(node => node === document.activeElement), true);
+  await page.locator('.chat-media-image-button').click();
+  await page.locator('.chat-media-preview-window').waitFor();
+  await page.evaluate(() => { const input = document.createElement('input'); input.id = 'navigation'; input.style.position = 'fixed'; document.body.append(input); input.focus({preventScroll:true}); });
   await page.evaluate(() => window.mediaTest.source('/second.png'));
+  await page.locator('.chat-media-preview-window').waitFor({state:'hidden'});
+  assert.equal(await page.locator('#navigation').evaluate(node => node === document.activeElement), true);
   await page.waitForFunction(() => window.mediaTest.stats().calls === 2);
   await page.evaluate(() => window.mediaTest.resolver());
   await page.waitForFunction(() => window.mediaTest.stats().calls === 3);

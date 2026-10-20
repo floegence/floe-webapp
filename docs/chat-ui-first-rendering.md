@@ -111,3 +111,18 @@ Manual smoke:
 - Chat: stream Markdown; typing/scrolling stays responsive.
 - Chat: open a large diff block; the UI remains responsive while it computes/renders.
 
+
+### Media request ownership
+
+`MarkdownMedia` compares the complete `kind`, `src`, `html`, and `title` source
+values. Equal reconstructed sources retain the request, decoded media, and open
+preview. Hosts must replace `resolve` when authorization or resource context
+changes; resolver reads are not reactive loading dependencies.
+
+The optional `loadTimeoutMs` is one positive finite deadline for resolution and
+HTML loading. Omission leaves loading unbounded. Invalid values fail before
+loading. Timeout, failure, Retry, source or resolver changes, and disposal share
+one request AbortController; late results cannot replace current media. Hosts
+should release temporary URLs when that signal aborts. Failures remain retryable.
+Preview dismissal restores focus only from its own connected window to its
+connected trigger, so navigation retains focus.

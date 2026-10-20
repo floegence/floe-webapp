@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'solid-js/web';
 import { createSignal } from 'solid-js';
+import type { MarkdownMediaSource } from '../src/components/chat/markdown/media';
 import { MarkdownMedia } from '../src/components/chat/blocks/MarkdownMedia';
 
 const labels = {
@@ -126,5 +127,89 @@ describe('MarkdownMedia HTML controls', () => {
     const collapse = host.querySelector<HTMLButtonElement>('[data-chat-media-action="collapse"]');
     expect(collapse?.getAttribute('aria-label')).toBe(labels.collapse);
     expect(collapse?.querySelector('svg path')).not.toBeNull();
+  });
+});
+
+
+describe('MarkdownMedia request lifecycle', () => {
+  it('retains an equal complete source and invalidates every changed source field', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const initial: MarkdownMediaSource = { kind: 'image', src: '/one.png', title: 'One', html: 'metadata' };
+    const [source, setSource] = createSignal(initial);
+    const signals: AbortSignal[] = [];
+    const resolve = vi.fn(async (_source: MarkdownMediaSource, signal: AbortSignal) => { signals.push(signal); return { src: '/resolved.png' }; });
+    const [resolver, setResolver] = createSignal(resolve);
+    disposers.push(render(() => <MarkdownMedia source={source()} labels={labels} resolve={resolver()} />, host));
+    await flush();
+    const image = host.querySelector('img');
+    for (let index = 0; index < 300; index++) { setSource({ ...initial }); await flush(); }
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(host.querySelector('img')).toBe(image);
+    for (const change of [{ title: 'Two' }, { html: 'changed' }, { src: '/two.png' }, { kind: 'video' as const }]) {
+      setSource(previous => ({ ...previous, ...change }));
+      await flush();
+    }
+    expect(resolve).toHaveBeenCalledTimes(5);
+    setResolver(() => async (source, signal) => resolve(source, signal));
+    await flush();
+    expect(resolve).toHaveBeenCalledTimes(6);
+    expect(signals.slice(0, -1).every(signal => signal.aborted)).toBe(true);
+  });
+
+  it.each([0, -1, NaN, Infinity])('rejects invalid timeout %s without invoking the resolver', async loadTimeoutMs => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const resolve = vi.fn(async () => ({ src: '/resolved.png' }));
+    disposers.push(render(() => <MarkdownMedia source={{ kind: 'image', src: '/one.png', title: 'One' }} labels={labels} resolve={resolve} loadTimeoutMs={loadTimeoutMs} />, host));
+    await flush();
+    expect(resolve).not.toHaveBeenCalled();
+    expect(host.querySelector('.chat-media-retry')).not.toBeNull();
+  });
+
+  it('times out ignoring cancellation, retries once, and rejects late results', async () => {
+    vi.useFakeTimers();
+    try {
+      const host = document.createElement('div');
+      document.body.append(host);
+      const requests: Array<{ signal: AbortSignal; accept: (value: { src: string }) => void }> = [];
+      const resolve = (_source: MarkdownMediaSource, signal: AbortSignal) => new Promise<{ src: string }>(accept => requests.push({ signal, accept }));
+      const dispose = render(() => <MarkdownMedia source={{ kind: 'image', src: '/one.png', title: 'One' }} labels={labels} resolve={resolve} loadTimeoutMs={100} />, host);
+      disposers.push(dispose);
+      await flush();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(requests[0].signal.aborted).toBe(true);
+      expect(host.querySelector('.chat-media-retry')).not.toBeNull();
+      host.querySelector<HTMLButtonElement>('.chat-media-retry')!.click();
+      await flush();
+      expect(requests).toHaveLength(2);
+      requests[1].accept({ src: '/current.png' });
+      await flush();
+      requests[0].accept({ src: '/late.png' });
+      await flush();
+      expect(host.querySelector('img')?.getAttribute('src')).toBe('/current.png');
+      host.querySelector('img')!.dispatchEvent(new Event('error'));
+      expect(host.querySelector('.chat-media-retry')).not.toBeNull();
+      expect(requests[1].signal.aborted).toBe(true);
+      dispose();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('uses one deadline for resolution and HTML loading', async () => {
+    vi.useFakeTimers();
+    try {
+      const host = document.createElement('div');
+      document.body.append(host);
+      let signal: AbortSignal | undefined;
+      const loadHTML = vi.fn((requestSignal: AbortSignal) => { signal = requestSignal; return new Promise<string>(() => {}); });
+      const resolve = async () => ({ loadHTML });
+      disposers.push(render(() => <MarkdownMedia source={{ kind: 'html', src: '/one.html', title: 'One' }} labels={labels} resolve={resolve} loadTimeoutMs={100} />, host));
+      await flush();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(loadHTML).toHaveBeenCalledOnce();
+      expect(signal?.aborted).toBe(true);
+      expect(host.querySelector('.chat-media-retry')).not.toBeNull();
+    } finally { vi.useRealTimers(); }
   });
 });

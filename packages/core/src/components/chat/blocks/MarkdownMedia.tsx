@@ -56,6 +56,8 @@ export interface MarkdownMediaProps {
   labels: MarkdownMediaLabels;
   /** Replace this callback when its authorization or resource context changes. Reads inside it do not trigger reloads. */
   resolve?: (source: MarkdownMediaSource, signal: AbortSignal) => Promise<ResolvedMarkdownMedia>;
+  /** Positive finite deadline shared by resolution and HTML loading. Omit for no deadline. */
+  loadTimeoutMs?: number;
   /** Resolve and authorize a user-activated HTML link using the source's host context. */
   onOpenLink?: (source: MarkdownMediaSource, href: string, signal: AbortSignal) => void | Promise<void>;
   class?: string;
@@ -71,6 +73,7 @@ async function resolveRemote(source: MarkdownMediaSource): Promise<ResolvedMarkd
 export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   let root!: HTMLSpanElement;
   let previewTrigger: HTMLElement | undefined;
+  let previewContent: HTMLElement | undefined;
   const [visible, setVisible] = createSignal(false);
   onMount(() => {
     if (typeof IntersectionObserver === 'undefined') { setVisible(true); return; }
@@ -87,7 +90,26 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   const [expanded, setExpanded] = createSignal(false);
   const [htmlPreviewOpen, setHtmlPreviewOpen] = createSignal(false);
   const title = () => props.source.title || props.labels[props.source.kind];
-  const source = createMemo(() => props.source);
+  const source = createMemo(() => props.source, undefined, {
+    equals: (previous, next) => previous.kind === next.kind && previous.src === next.src
+      && previous.html === next.html && previous.title === next.title,
+  });
+  let failRequest = () => {};
+  const closePreview = (setOpen: (open: boolean) => void) => {
+    const active = root.ownerDocument.activeElement;
+    const restoreFocus = active instanceof Element && previewContent?.closest('[role=dialog]')?.contains(active)
+      && previewTrigger?.isConnected;
+    setOpen(false);
+    if (restoreFocus) previewTrigger?.focus({ preventScroll: true });
+  };
+  const focusPreview = (element: HTMLElement) => {
+    previewContent = element;
+    queueMicrotask(() => {
+      if (element.isConnected && root.ownerDocument.activeElement === previewTrigger) {
+        element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true });
+      }
+    });
+  };
   const previewLabel = () => resource()?.preview?.label
     || (props.source.kind === 'image' ? props.labels.previewImage
       : props.labels.previewHTMLWindow ?? 'Open preview window')
@@ -114,17 +136,32 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     anchorUnavailable: props.labels.anchorUnavailable ?? 'The linked section was not found.',
   });
 
-  createEffect(on([visible, source, () => props.resolve, retry, () => props.htmlState], ([isVisible, request, resolve]) => {
+  createEffect(on([visible, source, () => props.resolve, retry, () => props.htmlState, () => props.loadTimeoutMs], ([isVisible, request, resolve, , , timeout]) => {
     if (!isVisible) return;
     const resolver = resolve ?? resolveRemote;
     const controller = new AbortController();
-    onCleanup(() => controller.abort());
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const clearTimer = () => { if (timer !== undefined) { clearTimeout(timer); timer = undefined; } };
+    onCleanup(() => { clearTimer(); controller.abort(); });
+    failRequest = () => {
+      if (controller.signal.aborted) return;
+      clearTimer();
+      setStatus('error');
+      setExpanded(false);
+      setHtmlPreviewOpen(false);
+      setResource(undefined);
+      setDocument(undefined);
+      controller.abort();
+    };
+    const fail = failRequest;
     setResource(undefined);
     setDocument(undefined);
     setStatus('loading');
     setHtmlPreviewOpen(false);
     if (request.kind !== 'html') setExpanded(false);
+    if (timeout !== undefined && (!Number.isFinite(timeout) || timeout <= 0)) { fail(); return; }
     if (request.kind === 'html' && props.htmlState) { setDocument(request.html); return; }
+    if (timeout !== undefined) timer = setTimeout(fail, timeout);
     void (async () => {
       if (request.kind === 'html' && request.html !== undefined) {
         if (request.html.length > 1_000_000) throw new Error('HTML preview is too large');
@@ -142,7 +179,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
         setResource(resolved);
       }
       if (!controller.signal.aborted) setStatus('ready');
-    })().catch(() => { if (!controller.signal.aborted) setStatus('error'); });
+    })().catch(fail).finally(clearTimer);
   }));
 
   return (
@@ -155,10 +192,10 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
         <Match when={status() === 'ready'}>
           <Switch>
             <Match when={props.source.kind === 'image'}>
-              <button type="button" class="chat-media-image-button" aria-label={`${previewLabel()}: ${title()}`} onClick={previewImage}><img class="chat-media-image" src={resource()?.src} alt={title()} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setStatus('error')} /></button>
+              <button type="button" class="chat-media-image-button" aria-label={`${previewLabel()}: ${title()}`} onClick={previewImage}><img class="chat-media-image" src={resource()?.src} alt={title()} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => failRequest()} /></button>
             </Match>
-            <Match when={props.source.kind === 'video'}><video class="chat-media-video" src={resource()?.src} controls playsinline preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
-            <Match when={props.source.kind === 'audio'}><audio class="chat-media-audio" src={resource()?.src} controls preload="metadata" aria-label={title()} onError={() => setStatus('error')} /></Match>
+            <Match when={props.source.kind === 'video'}><video class="chat-media-video" src={resource()?.src} controls playsinline preload="metadata" aria-label={title()} onError={() => failRequest()} /></Match>
+            <Match when={props.source.kind === 'audio'}><audio class="chat-media-audio" src={resource()?.src} controls preload="metadata" aria-label={title()} onError={() => failRequest()} /></Match>
           </Switch>
         </Match>
       </Switch>
@@ -185,19 +222,19 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
         </HtmlPreviewCanvas>
       </Show>
       <Show when={props.source.kind === 'image'}>
-        <FloatingWindow open={expanded()} onOpenChange={open => { setExpanded(open); if (!open) previewTrigger?.focus({ preventScroll: true }); }} title={title()}
+        <FloatingWindow open={expanded()} onOpenChange={open => open ? setExpanded(true) : closePreview(setExpanded)} title={title()}
           labels={{ close: props.labels.close, maximize: props.labels.expand, restore: props.labels.collapse }}
           defaultSize={{ width: 960, height: 680 }} minSize={{ width: 280, height: 240 }} compactBelow={640}
           class="chat-media-preview-window">
-          <div class="chat-media-preview-content" ref={element => queueMicrotask(() => element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true }))}><img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" /></div>
+          <div class="chat-media-preview-content" ref={focusPreview}><img src={resource()?.src} alt={title()} referrerPolicy="no-referrer" class="chat-media-full-image" /></div>
         </FloatingWindow>
       </Show>
       <Show when={props.source.kind === 'html'}>
-        <FloatingWindow open={htmlPreviewOpen()} onOpenChange={open => { setHtmlPreviewOpen(open); if (!open) previewTrigger?.focus({ preventScroll: true }); }} title={title()}
+        <FloatingWindow open={htmlPreviewOpen()} onOpenChange={open => open ? setHtmlPreviewOpen(true) : closePreview(setHtmlPreviewOpen)} title={title()}
           labels={{ close: props.labels.close, maximize: props.labels.expand, restore: props.labels.collapse }}
           defaultSize={{ width: 960, height: 680 }} minSize={{ width: 280, height: 240 }} compactBelow={640}
           class="chat-media-preview-window">
-          <div class="chat-media-preview-content" ref={element => queueMicrotask(() => element.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true }))}>
+          <div class="chat-media-preview-content" ref={focusPreview}>
             <SandboxedHtmlFrame class="chat-media-html" title={title()} html={document() ?? ''} labels={htmlLabels()} onOpenLink={openHtmlLink()} />
           </div>
         </FloatingWindow>
