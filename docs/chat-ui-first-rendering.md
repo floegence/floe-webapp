@@ -58,6 +58,8 @@ Hosts that render rich Markdown while generation is active can use
 remains the semantic authority. Each message owns one parser; call `reset` for
 its initial source, `append` with new source only, and `finish` at completion.
 An edit or replacement uses `reset`, rather than guessing a text difference.
+Resets validate the full replacement source while retaining unchanged block IDs
+and emitting explicit changes for corrected or removed blocks.
 
 The returned batch contains block `replace`/`remove`, code or literal
 `append_text`, and inline token-range `inline` changes. Apply the entire batch

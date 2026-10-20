@@ -41,7 +41,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
   let sourceChunks: { start: number; text: string }[] = [];
   let inputLength = 0;
   let previousCR = false;
-  let blocks: Block[] = [];
+  const blocks: Block[] = [];
   let links: Links = Object.create(null);
   let stableLinks: Links = Object.create(null);
   let nextID = 1;
@@ -406,24 +406,20 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
   }
 
   function reset(text = ''): MarkdownUpdate {
-    const removed: MarkdownBlockChange[] = blocks.map((block) => ({
-      kind: 'remove',
-      id: block.id,
-    }));
     inputLength = text.length;
     previousCR = false;
     const normalized = normalize(text);
     sourceLength = normalized.length;
     sourceChunks = normalized ? [{ start: 0, text: normalized }] : [];
-    blocks = [];
     links = Object.create(null);
     stableLinks = Object.create(null);
     dependencies.clear();
     active = 0;
     fence = undefined;
     fullParses++;
-    const update = parseActive();
-    return { ...update, changes: [...removed, ...update.changes] };
+    // A reset is a full validation boundary, but unchanged blocks retain their
+    // public identities so consumers can preserve selection and enhancements.
+    return parseActive(true);
   }
 
   function snapshot(): TokensList {

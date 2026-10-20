@@ -63,6 +63,32 @@ function consumer(markdown: ReturnType<typeof createMarkdownParser>) {
 }
 
 describe('incremental Markdown', () => {
+  it('retains unchanged block identities when replacing a corrected source', () => {
+    const markdown = createMarkdownParser({ breaks: false });
+    const model = createIncrementalMarkdownParser(markdown);
+    const prefix = '~~~python\ndef weather():\n    return True\n~~~\n\n';
+    const initial = model.reset(prefix + 'Tail');
+    const code = initial.changes.find(
+      (change) => change.kind === 'replace' && change.block.token.type === 'code'
+    );
+    expect(code?.kind).toBe('replace');
+    if (code?.kind !== 'replace') throw new Error('code block missing');
+    const id = code.block.id;
+    const view = consumer(markdown);
+    view.apply(initial);
+    for (const tail of ['**Corrected**', 'Replacement', '']) {
+      const update = model.reset(prefix + tail);
+      expect(
+        update.changes.some((change) =>
+          change.kind === 'replace' ? change.block.id === id : change.id === id
+        )
+      ).toBe(false);
+      view.apply(update);
+      expect(view.html()).toBe(markdown.parse(prefix + tail));
+    }
+    view.apply(model.reset('Different'));
+    expect(view.html()).toBe(markdown.parse('Different'));
+  });
   it('honors inline extension starts before taking the literal append path', () => {
     const markdown = createMarkdownParser({ breaks: false });
     markdown.use({
