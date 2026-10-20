@@ -19,7 +19,13 @@ export type MarkdownUpdate = Readonly<{
 }>;
 
 type Block = { id: number; start: number; token: Token; references: Set<string> };
-type InlineTail = { from: number; source: string; unresolved: boolean; lastChar: string };
+type InlineTail = {
+  from: number;
+  source: string;
+  unresolved: boolean;
+  extensionPending: boolean;
+  lastChar: string;
+};
 type Fence = {
   mark: string;
   minimum: number;
@@ -111,6 +117,20 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     return state.candidate && state.count >= state.minimum;
   }
 
+  function extensionSyntax(text: string): boolean {
+    const extensions = markdown.defaults.extensions;
+    if (!extensions || !extensions.inline?.length) return false;
+    // Extensions without a start hint may recognize any input. They retain
+    // their complete dependency region until the authoritative lexer resolves it.
+    const starts = extensions.startInline ?? [];
+    if (starts.length < extensions.inline.length) return true;
+    const lexer = new markdown.Lexer({ ...markdown.defaults });
+    return starts.some((start) => {
+      const offset = start.call({ lexer }, text);
+      return typeof offset === 'number' && offset >= 0;
+    });
+  }
+
   // Complete tokens and literal text before a whitespace checkpoint are stable.
   // Unmatched delimiters retain their dependency region until Marked resolves it.
   function prepareInline(paragraph: Tokens.Paragraph, from = 0) {
@@ -118,7 +138,10 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     let firstUnresolved = -1;
     for (let i = from; i < tokens.length; i++) {
       const token = tokens[i]!;
-      if (token.type === 'text' && /[\\\x60*_[<~]/u.test(token.raw)) {
+      if (
+        token.type === 'text' &&
+        (/[\\\x60*_[<~]/u.test(token.raw) || extensionSyntax(token.raw))
+      ) {
         firstUnresolved = i;
         break;
       }
@@ -155,6 +178,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       from: at,
       source: text,
       unresolved: firstUnresolved >= 0,
+      extensionPending: extensionSyntax(text),
       lastChar: text.slice(-1),
     };
   }
@@ -312,6 +336,8 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       const literal =
         leaf?.type === 'text' &&
         tail.from === paragraph.tokens.length - 1 &&
+        !extensionSyntax(delta) &&
+        !tail.extensionPending &&
         !/[\\\x60*_[\]<>~&:/.@;|="'()-]/u.test(delta) &&
         !/[\\\x60*_[\]<>~&:/.@;|="'()-]$/u.test(tail.lastChar);
       paragraph.raw += delta;
@@ -348,6 +374,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
             from: index + 1,
             source: suffix,
             unresolved: false,
+            extensionPending: false,
             lastChar: suffix.slice(-1),
           };
         } else {

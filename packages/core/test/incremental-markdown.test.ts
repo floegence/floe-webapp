@@ -63,6 +63,41 @@ function consumer(markdown: ReturnType<typeof createMarkdownParser>) {
 }
 
 describe('incremental Markdown', () => {
+  it('honors inline extension starts before taking the literal append path', () => {
+    const markdown = createMarkdownParser({ breaks: false });
+    markdown.use({
+      extensions: [
+        {
+          name: 'citation',
+          level: 'inline',
+          start(source) {
+            return source.indexOf('\uE200');
+          },
+          tokenizer(source) {
+            const match = /^\uE200cite\uE202[^\uE201]*\uE201/.exec(source);
+            return match ? { type: 'citation', raw: match[0], text: 'citation' } : undefined;
+          },
+          renderer() {
+            return '<span>citation</span>';
+          },
+        },
+      ],
+    });
+    const model = createIncrementalMarkdownParser(markdown);
+    const view = consumer(markdown);
+    let source = 'Ordinary text ';
+    view.apply(model.reset(source));
+    for (const delta of ['\uE200', 'cite', '\uE202', 'reference', '\uE201', ' after']) {
+      source += delta;
+      view.apply(model.append(delta));
+      expect(view.html(), JSON.stringify(source)).toBe(markdown.parse(source));
+    }
+    view.apply(model.reset('x'.repeat(1 << 20)));
+    const before = model.diagnostics().parsedCharacters;
+    for (let i = 0; i < 100; i++) view.apply(model.append(' more text'));
+    expect(model.diagnostics().parsedCharacters - before).toBeLessThan(100);
+  });
+
   it.each(examples)('matches authoritative parsing at every append: %s', (source) => {
     for (const size of [1, 2, 7, 31]) {
       const markdown = createMarkdownParser({ breaks: false });

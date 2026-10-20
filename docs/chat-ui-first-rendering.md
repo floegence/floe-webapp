@@ -70,7 +70,10 @@ verification, not a streaming render input. Block offsets use normalized LF
 source positions; `sourceLength` counts the original UTF-16 input, including
 CRLF split across appends.
 
-Ordinary literal and open fenced-code growth processes new text only. Paragraph
+Ordinary literal and open fenced-code growth processes new text only. Inline
+extension start hints participate in the same dependency boundary, including
+partial prefixes split across updates. Extensions without start hints retain
+the complete inline dependency region for correctness. Paragraph
 syntax reparses the live inline dependency region; complete inline tokens and
 whitespace checkpoints remain stable. Structural changes reparse the active
 block region, including adjacent list continuation. Reference definitions
@@ -141,7 +144,6 @@ Manual smoke:
 
 - Chat: stream Markdown; typing/scrolling stays responsive.
 - Chat: open a large diff block; the UI remains responsive while it computes/renders.
-
 
 ### Media request ownership
 
