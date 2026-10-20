@@ -97,6 +97,7 @@ jobs:
           pnpm test:settings
           pnpm test:compact-surfaces
           pnpm test:dialog
+          node scripts/check-directory-favorites-browser.mjs
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation
           node scripts/check-tabs-accessibility-browser.mjs

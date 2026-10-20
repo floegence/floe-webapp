@@ -103,7 +103,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
   };
 
   const confirmSelection = (paths = selectedPaths()) => {
-    if (paths.length === 0 || !source.valid()) return;
+    if (props.disabled || paths.length === 0 || source.view() !== 'browse' || !source.valid()) return;
     const onSelect = props.onSelect;
     props.onOpenChange(false);
     deferNonBlocking(() => onSelect([...paths]));
@@ -142,7 +142,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
             variant="primary"
             size="sm"
             onClick={() => confirmSelection()}
-            disabled={selectedPaths().length === 0 || !source.valid()}
+            disabled={selectedPaths().length === 0 || source.view() !== 'browse' || !source.valid()}
           >
             {props.confirmText ?? 'Select'}
           </Button>
@@ -151,7 +151,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <div class="flex min-h-[140px] overflow-hidden rounded border border-border">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[140px] overflow-hidden rounded border border-border">
           <div
             {...props.scrollViewportProps}
             class="max-h-[200px] min-h-[140px] min-w-0 flex-1 overflow-y-auto"
@@ -206,7 +206,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
               </For>
             </Show>
           </div>
-        </div>
+        </div></Show>
 
 
       </div>

@@ -18,6 +18,13 @@ export interface PickerPathContext {
 export type PickerDirectoryLoader = (path: string, options: { showHidden: boolean }) => Promise<readonly FileItem[]>;
 
 export interface PickerCopy {
+  favorites: string;
+  favoriteDirectory: string;
+  unfavoriteDirectory: string;
+  favoritesEmpty: string;
+  favoritesFilter: string;
+  favoritesNoMatches: string;
+  favoritesLoadFailed: string;
   path: string;
   go: string;
   roots: string;
@@ -44,6 +51,9 @@ export interface PickerCopy {
 }
 
 export const defaultPickerCopy: PickerCopy = {
+  favorites: 'Favorites', favoriteDirectory: 'Add directory to favorites', unfavoriteDirectory: 'Remove directory from favorites',
+  favoritesEmpty: 'Star a directory to keep it here.', favoritesFilter: 'Filter favorites by name or path',
+  favoritesNoMatches: 'No matching favorites', favoritesLoadFailed: 'Could not load favorites',
   path: 'Directory path', go: 'Go', roots: 'Locations', root: 'Root',
   showHidden: 'Show hidden items', loading: 'Loading directory…', retry: 'Retry',
   empty: 'No directories here', emptyFiles: 'No matching files in this directory', invalidPath: 'Enter an absolute path or a path starting with ~/',

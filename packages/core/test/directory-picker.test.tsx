@@ -31,6 +31,52 @@ beforeEach(() => {
 afterEach(() => { while (disposers.length) disposers.pop()?.(); document.body.replaceChildren(); vi.unstubAllGlobals(); });
 
 describe('directory picker presentations', () => {
+  it('keeps empty favorites available and never confirms a shortcut view', async () => {
+    const onSelect = vi.fn(); const refresh = vi.fn(); const validity = vi.fn();
+    mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={onSelect} confirmText="Choose"
+      loadPathContext={async () => context} loadDirectory={async () => []} onValidityChange={validity}
+      directoryFavorites={{ paths: [], editable: true, onRefresh: refresh }} />);
+    await flush();
+    expect(button('Choose').disabled).toBe(false);
+    button('Favorites').click(); await flush();
+    expect(document.querySelector('[data-picker-favorites]')?.textContent).toContain('Star a directory');
+    expect(button('Choose').disabled).toBe(true);
+    expect(validity).toHaveBeenLastCalledWith(false);
+    button('Choose').click(); expect(onSelect).not.toHaveBeenCalled();
+    button('Home').click(); await flush();
+    expect(button('Choose').disabled).toBe(false);
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it('filters favorites and separates starring from validated navigation', async () => {
+    const setFavorite = vi.fn(async () => {}); const load = vi.fn(async () => []);
+    mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={() => {}} confirmText="Choose"
+      loadPathContext={async () => context} loadDirectory={load}
+      directoryFavorites={{ paths: ['/srv/alpha', '/srv/beta'], editable: true, onSetFavorite: setFavorite }} />);
+    await flush(); button('Favorites').click(); await flush();
+    document.querySelector<HTMLButtonElement>('[aria-label="Remove directory from favorites: /srv/beta"]')!.click();
+    await flush(); expect(setFavorite).toHaveBeenCalledExactlyOnceWith('/srv/beta', false);
+    expect(load).toHaveBeenCalledTimes(1);
+    const filter = document.querySelector<HTMLInputElement>('[aria-label="Filter favorites by name or path"]')!;
+    filter.value = 'alpha'; filter.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(document.querySelectorAll('[data-picker-favorite-path]')).toHaveLength(1);
+    document.querySelector<HTMLButtonElement>('[data-picker-favorite-path]')!.click(); await flush();
+    expect(load).toHaveBeenLastCalledWith('/srv/alpha', { showHidden: false });
+    expect(button('Choose').disabled).toBe(false);
+    expect(document.querySelector('button button')).toBeNull();
+  });
+
+  it('scrolls keyboard focus to the tenth recent directory', async () => {
+    const scroll = vi.fn();
+    mount(() => <DirectoryPicker open onOpenChange={() => {}} onSelect={() => {}}
+      loadPathContext={async () => context} loadDirectory={async () => []}
+      suggestedPaths={Array.from({ length: 10 }, (_, index) => '/srv/project-' + index)} />);
+    await flush();
+    const rows = document.querySelectorAll<HTMLButtonElement>('[data-picker-suggested-path]');
+    rows[9].scrollIntoView = scroll; rows[0].focus();
+    rows[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(rows[9]); expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+  });
   it('navigates suggested absolute directories through validation without confirming or granting access', async () => {
     const onSelect = vi.fn();
     const loadDirectory = vi.fn(async (path: string) => {

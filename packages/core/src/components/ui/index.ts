@@ -344,3 +344,6 @@ export {
 } from './Settings';
 
 export { KeyedFor, type KeyedForProps } from './KeyedFor';
+
+export { DirectoryFavoriteButton } from './picker/DirectoryFavorites';
+export type { DirectoryFavorites } from './picker/DirectoryFavorites';

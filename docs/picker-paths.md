@@ -53,6 +53,31 @@ while the suggestions tab is visible. Failed
 or pending navigation continues to block confirmation. No suggestion history is
 stored by the picker.
 
+## Controlled directory favorites
+
+All four presentations accept optional `directoryFavorites` metadata. Hosts supply
+ordered absolute `paths`, `loading`, a localized `error`, `editable`,
+`pendingPaths`, `onRefresh()` and async `onSetFavorite(path, favorite)`.
+The host owns authenticated scope, durable storage, item-level transactions and
+cross-client refresh. Pickers never persist this metadata or infer permissions.
+Without the contract, existing root and suggestion behavior is unchanged.
+
+Favorites remain a visible location even when empty. A local name/path filter
+only searches the supplied list. Separate navigation and star buttons avoid
+nested controls and accidental navigation. Current validated directories, folder
+rows and suggestions expose the same favorite action; context menus capture the
+path and owner, support Shift+F10/Escape and restore focus through the shared
+overlay stack. Touch users can use the visible star. Busy actions retain their
+geometry and failures remain visible without blocking ordinary browsing.
+
+Favorites and suggestions are shortcut views, never valid selections. Directory
+confirmation, embedded validity and file confirmation all use the same view
+owner. Navigating a shortcut returns to browsing and validates the target through
+the existing loader. File lists are shown only while browsing; ordered selections
+and save filenames survive location switches. Shortcut lists have constrained
+scrolling, forward host viewport markers, and scroll keyboard focus into view
+with ArrowUp/ArrowDown/Home/End. Hosts still control list limits and ranking.
+
 ## Migration from 0.48.x
 
 This is an intentional minor-version API break while the package is pre-1.0.

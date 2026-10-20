@@ -53,7 +53,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
   // ── Save / Cancel ─────────────────────────────────────────────────────
 
   const handleSave = () => {
-    if (!source.valid()) return;
+    if (props.disabled || source.view() !== 'browse' || !source.valid()) return;
     const name = fileName().trim();
     if (!name) {
       setFileNameError(pickerCopy(props).fileNameRequired);
@@ -125,7 +125,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
             <Button variant="ghost" size="sm" onClick={handleCancel}>
               {props.cancelText ?? pickerCopy(props).cancel}
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim() || !source.valid()}>
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!fileName().trim() || source.view() !== 'browse' || !source.valid()}>
               {props.confirmText ?? 'Save'}
             </Button>
           </div>
@@ -134,7 +134,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <div class="flex min-h-[100px] overflow-hidden rounded border border-border">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[100px] overflow-hidden rounded border border-border">
           <div {...props.scrollViewportProps} class="max-h-[160px] w-full min-w-0 overflow-y-auto">
             <Show
               when={currentFiles().length > 0}
@@ -169,7 +169,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
               </For>
             </Show>
           </div>
-        </div>
+        </div></Show>
 
 
       </div>
