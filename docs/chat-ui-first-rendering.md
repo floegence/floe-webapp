@@ -51,6 +51,37 @@ only display tokenization; it never normalizes stored messages or model inputs.
 Only the extension's emphasis tokenizer is installed. Strikethrough, code,
 escapes, ordinary links, and non-CJK Markdown retain standard parsing.
 
+#### Append-only host rendering
+
+Hosts that render rich Markdown while generation is active can use
+`createIncrementalMarkdownParser(parser)` from the same public entry. Marked
+remains the semantic authority. Each message owns one parser; call `reset` for
+its initial source, `append` with new source only, and `finish` at completion.
+An edit or replacement uses `reset`, rather than guessing a text difference.
+
+The returned batch contains block `replace`/`remove`, code or literal
+`append_text`, and inline token-range `inline` changes. Apply the entire batch
+atomically. Block IDs survive content changes at the same source position;
+inline indices address the preceding batch's paragraph tokens. Consumers retain
+their DOM for unaffected blocks and inline tokens. Token payloads are detached
+from parser state; the reference dictionary is immutable and shared until a
+block parse changes it. `snapshot` is an explicit full-copy read for export or
+verification, not a streaming render input. Block offsets use normalized LF
+source positions; `sourceLength` counts the original UTF-16 input, including
+CRLF split across appends.
+
+Ordinary literal and open fenced-code growth processes new text only. Paragraph
+syntax reparses the live inline dependency region; complete inline tokens and
+whitespace checkpoints remain stable. Structural changes reparse the active
+block region, including adjacent list continuation. Reference definitions
+invalidate indexed dependent blocks. Unclosed syntax retains the dependency
+region it can still affect. `finish` performs one authoritative full parse and
+publishes necessary corrections, retaining unchanged block IDs.
+
+This parser does not sanitize HTML or authorize media. Host renderers own that
+public boundary, citations, media presentation, and DOM disposal. The existing
+generic Chat Markdown block keeps its documented deferred rendering policy.
+
 ### 3) Code diff: compute in Worker + virtualize rendering
 
 The code-diff block no longer computes diff synchronously in render.
