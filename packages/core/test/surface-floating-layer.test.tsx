@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { SurfaceFloatingPanel } from '../src/components/ui/SurfaceFloatingPanel';
+import { SurfaceAnchoredLayer } from '../src/components/ui/SurfaceAnchoredLayer';
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import { __resetSurfacePortalScopeForTests } from '../src/components/ui/surfacePortalScope';
 import { WorkbenchDockPopoverSurface } from '../src/components/workbench/WorkbenchDockPopoverSurface';
@@ -64,6 +65,7 @@ describe('SurfaceFloatingLayer', () => {
     document.body.innerHTML = '';
     __resetSurfacePortalScopeForTests();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('converts client geometry to fixed CSS coordinates during Safari keyboard panning', () => {
@@ -372,6 +374,60 @@ describe('SurfaceFloatingLayer', () => {
     expect(layer?.querySelector('.workbench-dock-popover__arrow')).toBeTruthy();
     expect(document.body.contains(layer)).toBe(true);
     expect(surface.contains(layer)).toBe(true);
+  });
+
+  it('anchors a side panel, flips at the boundary and retains content during movement', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const flush = () => { while (frames.length) frames.shift()!(0); };
+    const anchor = document.createElement('button');
+    host.append(anchor);
+    let left = 8;
+    let top = 96;
+    Object.defineProperty(anchor, 'getBoundingClientRect', { value: () => new DOMRect(left, top, 40, 40) });
+    const disconnected = vi.fn();
+    mount(() => (
+      <SurfaceAnchoredLayer
+        anchor={anchor}
+        placement="right"
+        gap={16}
+        onAnchorDisconnect={disconnected}
+        data-testid="side-panel"
+        layerRef={(element) => {
+          Object.defineProperty(element, 'getBoundingClientRect', { value: () => new DOMRect(0, 0, 424, 427) });
+        }}
+      ><input aria-label="Retained search" /></SurfaceAnchoredLayer>
+    ), host);
+    await Promise.resolve();
+    flush();
+    const layer = document.querySelector('[data-testid="side-panel"]') as HTMLElement;
+    const input = layer.querySelector('input')!;
+    input.value = 'Draft';
+    expect(layer.style.left).toBe('64px');
+    expect(layer.style.top).toBe('12px');
+    expect(layer.dataset.placement).toBe('right');
+    expect(layer.style.getPropertyValue('--floe-anchored-layer-anchor-y')).toBe('104px');
+    left = 750;
+    top = 550;
+    window.dispatchEvent(new Event('resize'));
+    flush();
+    expect(layer.dataset.placement).toBe('left');
+    expect(layer.style.left).toBe('310px');
+    expect(layer.style.top).toBe('161px');
+    expect(layer.querySelector('input')).toBe(input);
+    expect(input.value).toBe('Draft');
+    anchor.remove();
+    await Promise.resolve();
+    flush();
+    expect(disconnected).toHaveBeenCalledOnce();
+    expect(layer.style.visibility).toBe('hidden');
   });
 
   it('keeps the Dock and its popovers on one shared corner radius', () => {

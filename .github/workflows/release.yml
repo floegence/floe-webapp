@@ -137,7 +137,9 @@ jobs:
         run: node scripts/check-mobile-viewport-browser.mjs
 
       - name: Verify overlay viewport in Chromium and WebKit
-        run: node scripts/check-overlay-viewport-browser.mjs
+        run: |
+          node scripts/check-overlay-viewport-browser.mjs
+          node scripts/check-anchored-layer-browser.mjs
 
       - name: Verify input history public API in Chromium
         run: node scripts/check-input-history-browser.mjs
