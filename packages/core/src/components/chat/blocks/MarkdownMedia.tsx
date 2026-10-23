@@ -217,7 +217,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       </span>
       </>}>
         <HtmlPreviewCanvas state={props.htmlState ?? status()} html={document() ?? props.source.html ?? ''} labels={props.labels} expanded={expanded()}
-          onExpand={() => setExpanded(value => !value)} onRetry={() => setRetry(value => value + 1)} onPreview={() => previewHTML()} previewLabel={previewLabel()} resource={resource()}>
+          onExpand={() => setExpanded(value => !value)} onRetry={() => setRetry(value => value + 1)} onPreview={previewHTML} previewLabel={previewLabel()} resource={resource()}>
           <Show when={status() === 'ready' && !props.htmlState}><SandboxedHtmlFrame class="chat-media-html" title={title()} html={document() ?? ''} labels={htmlLabels()} onOpenLink={openHtmlLink()} /></Show>
         </HtmlPreviewCanvas>
       </Show>

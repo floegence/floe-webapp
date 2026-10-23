@@ -10,7 +10,7 @@ export interface HtmlPreviewCanvasProps {
   expanded: boolean;
   onExpand: () => void;
   onRetry: () => void;
-  onPreview: () => void;
+  onPreview: (event?: MouseEvent) => void;
   previewLabel: string;
   resource?: ResolvedMarkdownMedia;
   children: JSX.Element;
@@ -74,18 +74,24 @@ export const HtmlPreviewCanvas: Component<HtmlPreviewCanvasProps> = (props) => {
         <Show when={props.state === 'error'}><button type="button" class="chat-media-retry" onClick={() => props.onRetry()}><Refresh />{props.labels.retry}</button></Show>
       </span>
     </Show>
-    <button type="button" class="chat-html-orb chat-html-expand" data-chat-media-action={props.expanded ? 'collapse' : 'expand'}
-      aria-expanded={props.expanded} aria-label={props.expanded ? props.labels.collapse : props.labels.expand} title={props.expanded ? props.labels.collapse : props.labels.expand} onClick={() => props.onExpand()}>
-      <Show when={props.expanded} fallback={<Maximize />}><Minus /></Show>
-    </button>
-    <span class="chat-html-controls">
-      <button type="button" class="chat-html-orb" data-chat-media-action="source" aria-pressed={sourceVisible()}
-        aria-label={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} title={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} onClick={() => setSourceVisible(value => !value)}>
-        <Show when={sourceVisible()} fallback={<Code />}><Eye /></Show>
-      </button>
-      <Dropdown trigger={<MoreHorizontal />} triggerClass="chat-html-orb" triggerAriaLabel={props.labels.more ?? 'More actions'} items={items} align="start"
-        onSelect={id => { if (id === 'copy') void copy(); else if (id === 'preview') props.onPreview(); else if (id === 'replay') props.onRetry(); else if (id === 'reveal') props.resource?.reveal?.onSelect(); else if (id === 'open' && props.resource?.openURL) window.open(props.resource.openURL, '_blank', 'noopener,noreferrer'); }} />
+    <span class="chat-html-toolbar">
+      <span class="chat-html-controls">
+        <button type="button" class="chat-html-orb" data-chat-media-action="source" aria-pressed={sourceVisible()}
+          aria-label={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} title={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} onClick={() => setSourceVisible(value => !value)}>
+          <Show when={sourceVisible()} fallback={<Code />}><Eye /></Show>
+        </button>
+        <Dropdown trigger={<MoreHorizontal />} triggerClass="chat-html-orb" triggerAriaLabel={props.labels.more ?? 'More actions'} items={items} align="start"
+          onSelect={id => { if (id === 'copy') void copy(); else if (id === 'preview') props.onPreview(); else if (id === 'replay') props.onRetry(); else if (id === 'reveal') props.resource?.reveal?.onSelect(); else if (id === 'open' && props.resource?.openURL) window.open(props.resource.openURL, '_blank', 'noopener,noreferrer'); }} />
+      </span>
+      <Show when={feedback()}><span class="chat-html-feedback" role="status"><Check /><span>{feedback()}</span></span></Show>
+      <span class="chat-html-window-actions">
+        <button type="button" class="chat-html-orb" data-chat-media-action="preview" disabled={props.state !== 'ready'}
+          aria-label={props.previewLabel} title={props.previewLabel} onClick={event => props.onPreview(event)}><ExternalLink /></button>
+        <button type="button" class="chat-html-orb chat-html-expand" data-chat-media-action={props.expanded ? 'collapse' : 'expand'}
+          aria-expanded={props.expanded} aria-label={props.expanded ? props.labels.collapse : props.labels.expand} title={props.expanded ? props.labels.collapse : props.labels.expand} onClick={() => props.onExpand()}>
+          <Show when={props.expanded} fallback={<Maximize />}><Minus /></Show>
+        </button>
+      </span>
     </span>
-    <Show when={feedback()}><span class="chat-html-feedback" role="status"><Check />{feedback()}</span></Show>
   </span>;
 };

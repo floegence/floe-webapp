@@ -356,6 +356,9 @@ HTML. Preview output is never inserted into the application's DOM.
 Inline HTML without a host preview action offers a separate floating window
 using the same HTML snapshot. Opening or closing that copy preserves the inline
 document and chat position; script and form state is independent in each copy.
+The circular arrow at the top right opens that window directly, or invokes the
+host preview when provided. Source, more actions, preview, and expansion share
+one compact top row so the document can use the rest of the canvas.
 Use `previewHTMLWindow`, `linkUnavailable`, and `anchorUnavailable` for localized
 actions and feedback. Expansion remains a separate action on the inline frame.
 

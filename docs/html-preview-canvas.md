@@ -1,7 +1,13 @@
 # Inline HTML canvas
 
-MarkdownMedia presents HTML in one bounded dotted canvas, with circular expand
-and source controls outside the document. Its actions menu retains the host's
+MarkdownMedia presents HTML in one bounded dotted canvas with a compact top
+toolbar. A circular arrow button at the top right opens the host preview or an
+independent floating copy directly, beside the separate expand control. It stays
+disabled until the document is ready. Source and more actions sit on the left;
+the document fills the remaining area with narrow side and bottom insets.
+The toolbar never covers the document, including on touch screens.
+Closing an independent preview restores keyboard focus to its opening control.
+Its actions menu retains the host's
 file preview and reveal operations, an independent inline preview window,
 source copying, and explicit reload. Images share its dotted background and
 independent circular controls at the top right. Their padded, contain-sized

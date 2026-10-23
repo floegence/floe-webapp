@@ -1,4 +1,4 @@
-/* global window, document, innerWidth, getComputedStyle, location, requestAnimationFrame */
+/* global window, document, innerWidth, getComputedStyle, location, requestAnimationFrame, navigator */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -46,7 +46,7 @@ import '/packages/core/src/styles/globals.css';
 const [html,setHTML]=createSignal('<main>Partial source</main>');
 const [state,setState]=createSignal('generating');
 render(()=><main style="max-width:680px;margin:auto"><MarkdownMedia labels={${JSON.stringify(labels)}} source={{kind:'html',html:html(),title:'Canvas'}} htmlState={state()}/></main>,document.getElementById('root'));
-window.canvasTest={append:()=>setHTML('<main>Partial source grows</main>'),interrupt:()=>setState('incomplete'),finish:()=>{setHTML('<button>Try interaction</button>');setState(undefined)}};`;
+window.canvasTest={generate:()=>setState('generating'),append:()=>setHTML('<main>Partial source grows</main>'),interrupt:()=>setState('incomplete'),finish:()=>{setHTML('<button>Try interaction</button>');setState(undefined)}};`;
 let forbiddenRequests = 0;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx' || id === '/lifecycle.tsx' || id === '/canvas.tsx') return id; }, load(id) { if (id === '/fixture.tsx') return fixture; if (id === '/lifecycle.tsx') return lifecycleFixture; if (id === '/canvas.tsx') return canvasFixture; }, configureServer(instance) {
   instance.middlewares.use((req, res, next) => {
@@ -174,6 +174,7 @@ try {
   assert.equal(await canvas.getAttribute('data-state'), 'generating');
   assert.equal(await canvas.locator('iframe').count(), 0);
   const generating = await canvas.boundingBox();
+  assert.equal(await canvas.locator('[data-chat-media-action=preview]').isDisabled(), true);
   const status = canvas.locator('.chat-html-loading');
   const shimmer = status.locator('[data-floe-progress-shimmer=text]');
   assert.equal(await canvas.locator('.chat-html-skeleton').count(), 0, 'Generation must not display a decorative skeleton frame');
@@ -205,6 +206,7 @@ try {
   assert.equal(await canvas.locator('pre').textContent(), '<main>Partial source grows</main>');
   await page.evaluate(() => window.canvasTest.interrupt());
   assert.equal(await canvas.getAttribute('data-state'), 'incomplete');
+  assert.equal(await canvas.locator('[data-chat-media-action=preview]').isDisabled(), true);
   assert.equal(await canvas.locator('iframe').count(), 0);
   await canvas.locator('[data-chat-media-action=source]').click();
   assert.equal(await status.locator('[data-floe-progress-shimmer]').count(), 0, 'Interrupted generation must settle its text animation');
@@ -225,13 +227,42 @@ try {
     for (const theme of ['light','dark']) {
       await page.evaluate(theme => document.documentElement.classList.toggle('dark',theme === 'dark'),theme);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
-      const sheet = await canvas.locator('.chat-html-sheet').boundingBox();
-      const controls = await canvas.locator('.chat-html-controls').boundingBox();
-      assert.ok(sheet.y + sheet.height < controls.y, 'Actions must never overlap the HTML');
+      const stableGeometry = await canvasGeometry(canvas);
+      for (const state of ['generate', 'interrupt', 'finish']) {
+        await page.evaluate(state => window.canvasTest[state](), state);
+        assert.deepEqual(await canvasGeometry(canvas), stableGeometry, 'Generation and completion preserve canvas and controls');
+      }
+      await checkHTMLGeometry(canvas);
       await canvas.locator('.chat-html-sheet').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
       await page.screenshot({path:'/tmp/floe-html-canvas-'+theme+'-'+width+'.png'});
     }
   }
+  await page.mouse.move(700, 700);
+  const beforeFeedback = await canvasGeometry(canvas);
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: async () => { throw new Error('Clipboard denied'); } },
+  }));
+  await canvas.getByRole('button', {name:'More actions'}).click();
+  await page.getByRole('menuitem', {name:'Copy HTML'}).click();
+  await canvas.getByRole('status').filter({hasText:'Select and copy the source.'}).waitFor();
+  assert.equal(await canvas.getAttribute('data-view'), 'source');
+  assert.deepEqual(await canvasGeometry(canvas), beforeFeedback, 'Copy feedback does not move the controls');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  const touchHTML = await browser.newPage({viewport:{width:320, height:740}, hasTouch:true, isMobile:true});
+  await touchHTML.goto(new URL('/canvas', server.resolvedUrls.local[0]).href);
+  await touchHTML.waitForFunction(() => window.canvasTest);
+  await touchHTML.evaluate(() => window.canvasTest.finish());
+  const touchCanvas = touchHTML.locator('.chat-html-canvas');
+  await touchCanvas.locator('iframe').waitFor();
+  await checkHTMLGeometry(touchCanvas);
+  const touchPreview = touchCanvas.locator('[data-chat-media-action=preview]');
+  const touchPreviewBounds = await touchPreview.boundingBox();
+  assert.ok(touchPreviewBounds.width >= 42 && touchPreviewBounds.height >= 42);
+  await touchPreview.tap();
+  await touchHTML.locator('.chat-media-preview-window iframe').waitFor();
+  await touchHTML.screenshot({path:'/tmp/floe-html-direct-preview-touch.png'});
+  await touchHTML.close();
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName),'none');
   await page.setViewportSize({width:1000,height:900});
@@ -293,3 +324,35 @@ try {
   await page?.screenshot({path:'/tmp/floe-chat-media-failure.png',fullPage:true});
   throw error;
 } finally { await browser?.close(); await server.close(); }
+
+async function checkHTMLGeometry(canvas) {
+  const surface = await canvas.boundingBox();
+  const sheet = await canvas.locator('.chat-html-sheet').boundingBox();
+  const controls = await canvas.locator('.chat-html-toolbar').boundingBox();
+  const preview = canvas.locator('[data-chat-media-action=preview]');
+  const previewBounds = await preview.boundingBox();
+  assert.equal(await preview.isDisabled(), false);
+  assert.ok(controls.y + controls.height < sheet.y, 'Actions stay above the HTML');
+  assert.ok(previewBounds.x > surface.x + surface.width / 2, 'Preview is directly available at the top right');
+  assert.equal(previewBounds.width, previewBounds.height);
+  assert.equal(await preview.evaluate(node => getComputedStyle(node).borderRadius), '50%');
+  assert.ok(sheet.width / surface.width > .92, 'HTML uses at least 92% of the canvas width');
+  assert.ok(sheet.height / surface.height > .82, 'HTML uses at least 82% of the canvas height');
+  for (const button of await canvas.locator('.chat-html-toolbar .chat-html-orb').all()) {
+    const bounds = await button.boundingBox();
+    assert.ok(bounds.x >= surface.x && bounds.x + bounds.width <= surface.x + surface.width);
+    assert.ok(bounds.y + bounds.height < sheet.y, 'Every control stays outside the content');
+  }
+}
+
+async function canvasGeometry(canvas) {
+  return canvas.evaluate(async node => {
+    const buttons = [...node.querySelectorAll('.chat-html-toolbar .chat-html-orb')];
+    await Promise.all(buttons.flatMap(button => button.getAnimations().map(animation => animation.finished)));
+    const bounds = element => {
+      const {x, y, width, height} = element.getBoundingClientRect();
+      return {x, y, width, height};
+    };
+    return [node, ...buttons].map(bounds);
+  });
+}

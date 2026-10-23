@@ -51,6 +51,7 @@ describe('MarkdownMedia HTML controls', () => {
     await flush();
     expect(host.querySelector('.chat-html-canvas')?.getAttribute('data-state')).toBe('generating');
     expect(host.querySelector('iframe')).toBeNull();
+    expect(host.querySelector<HTMLButtonElement>('[data-chat-media-action=preview]')?.disabled).toBe(true);
     expect(host.querySelector('.chat-html-skeleton')).toBeNull();
     expect(host.querySelector('[role=status] [data-floe-progress-shimmer=text]')?.textContent).toBe(labels.loading);
     host.querySelector<HTMLButtonElement>('[data-chat-media-action=source]')!.click();
@@ -70,7 +71,7 @@ describe('MarkdownMedia HTML controls', () => {
     expect(host.querySelector('[data-chat-media-action=source]')?.getAttribute('aria-pressed')).toBe('true');
     expect(host.querySelector('iframe')?.getAttribute('sandbox')).toBe('allow-scripts');
   });
-  it('opens an inline HTML snapshot in a floating window without replacing the inline frame', async () => {
+  it.each(['button', 'menu'])('opens an inline HTML snapshot from the %s without replacing the inline frame', async (trigger) => {
     const host = document.createElement('div');
     document.body.append(host);
     disposers.push(render(() => <MarkdownMedia
@@ -79,10 +80,14 @@ describe('MarkdownMedia HTML controls', () => {
     />, host));
     await flush();
     const frame = host.querySelector('iframe');
-    host.querySelector<HTMLElement>('[aria-label="More actions"]')!.click();
-    await flush();
-    const preview = Array.from(document.querySelectorAll<HTMLElement>('[role=menuitem]')).find(item => item.textContent?.includes('Open preview window'));
-    expect(preview).not.toBeNull();
+    if (trigger === 'menu') {
+      host.querySelector<HTMLElement>('[aria-label="More actions"]')!.click();
+      await flush();
+    }
+    const preview = trigger === 'button'
+      ? host.querySelector<HTMLButtonElement>('[data-chat-media-action=preview]')
+      : Array.from(document.querySelectorAll<HTMLElement>('[role=menuitem]')).find(item => item.textContent?.includes('Open preview window'));
+    expect(preview).toBeTruthy();
     preview!.click();
     await new Promise(resolve => setTimeout(resolve, 50));
     await flush();
@@ -112,11 +117,9 @@ describe('MarkdownMedia HTML controls', () => {
     );
 
     await flush();
-    host.querySelector<HTMLElement>('[aria-label="More actions"]')!.click();
-    await flush();
-    const preview = Array.from(document.querySelectorAll<HTMLElement>('[role=menuitem]')).find(item => item.textContent?.includes(labels.previewHTML));
+    const preview = host.querySelector<HTMLButtonElement>('[data-chat-media-action=preview]');
     const expand = host.querySelector<HTMLButtonElement>('[data-chat-media-action="expand"]');
-    expect(preview?.textContent).toContain(labels.previewHTML);
+    expect(preview?.getAttribute('aria-label')).toBe(labels.previewHTML);
     expect(expand?.getAttribute('aria-label')).toBe(labels.expand);
 
     preview?.click();
