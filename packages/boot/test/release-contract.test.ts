@@ -68,10 +68,10 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.86.56');
+    expect(corePkg.version).toBe('0.86.57');
     for (const template of ['minimal', 'full']) {
       const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
-      expect(config.overrides.dompurify).toBe('^3.4.16');
+      expect(config.overrides.dompurify).toBe('^3.4.17');
       expect(config.overrides.katex).toBe('0.18.10');
       expect(config.pnpm.overrides).toEqual(config.overrides);
     }

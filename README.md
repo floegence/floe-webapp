@@ -84,7 +84,7 @@ Existing applications must include the following root `package.json` constraints
 before installing or updating. The CLI includes them in both templates. Monaco
 0.57.0 pins DOMPurify 3.4.15; npm does not inherit dependency overrides, so the
 application owns this explicit patched resolution. Keep this constraint until a
-Monaco release depends on DOMPurify 3.4.16 or newer. Use Solid 1.9.17 or newer
+Monaco release depends on DOMPurify 3.4.17 or newer. Use Solid 1.9.17 or newer
 for its patched Seroval dependency. Mermaid still requests an older KaTeX minor;
 the root override selects the patched, non-deprecated 0.18.10 release. Keep that
 override until Mermaid requests a patched KaTeX release itself. Run your package
@@ -92,8 +92,8 @@ manager's full audit after installation.
 
 ```json
 {
-  "overrides": { "dompurify": "^3.4.16", "katex": "0.18.10" },
-  "pnpm": { "overrides": { "dompurify": "^3.4.16", "katex": "0.18.10" } }
+  "overrides": { "dompurify": "^3.4.17", "katex": "0.18.10" },
+  "pnpm": { "overrides": { "dompurify": "^3.4.17", "katex": "0.18.10" } }
 }
 ```
 
