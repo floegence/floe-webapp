@@ -182,8 +182,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const applyWindowRect = (rect: FloatingWindowRect) => {
-    settleAnimation?.cancel();
-    settleAnimation = undefined;
+    if (rect.x !== liveRect.x || rect.y !== liveRect.y
+      || rect.width !== liveRect.width || rect.height !== liveRect.height) {
+      settleAnimation?.cancel();
+      settleAnimation = undefined;
+    }
     liveRect = rect;
     if (!windowRef) return;
     const fixed = fixedPosition(rect);
@@ -204,6 +207,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const setCommittedRect = (rect: FloatingWindowRect) => {
+    if (rect.x !== liveRect.x || rect.y !== liveRect.y
+      || rect.width !== liveRect.width || rect.height !== liveRect.height) {
+      settleAnimation?.cancel();
+      settleAnimation = undefined;
+    }
     liveRect = rect;
     setPosition((current) => (
       current.x === rect.x && current.y === rect.y
@@ -268,7 +276,9 @@ export function FloatingWindow(props: FloatingWindowProps) {
       const anchorX = Math.max(0, Math.min(1, (dragStartPos.x - dragStartRect.x) / Math.max(1, dragStartRect.width)));
       const anchorY = Math.max(0, Math.min(dragTitlebarHeight, dragStartPos.y - dragStartRect.y));
       dragStartRect = { ...restored, x: dragStartPos.x - restored.width * anchorX, y: dragStartPos.y - anchorY };
-      batch(() => { setIsMaximized(false); setCommittedRect(dragStartRect); });
+      // Geometry stays imperative until release. Committing here lets deferred
+      // renderer style effects overwrite the same frame's pointer displacement.
+      setIsMaximized(false);
     }
 
     applyWindowRect(resolveFloatingWindowRect({
@@ -491,11 +501,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
   createEffect(() => {
     if (!props.open) return;
     const rect = readCommittedRect();
-    if (activePointerId === null) {
-      applyWindowRect(rect);
-    } else {
-      liveRect = rect;
-    }
+    // Coordinate conversion may change during a held gesture; committed
+    // placement must never replace its current imperative geometry.
+    fixedScale();
+    void viewport()?.fixedOffset;
+    applyWindowRect(activePointerId === null ? rect : liveRect);
   });
 
   const handleDragStart = (e: PointerEvent) => {
@@ -628,9 +638,6 @@ export function FloatingWindow(props: FloatingWindowProps) {
           )}
           style={{
             visibility: boundaryVisible() ? undefined : 'hidden',
-            width: `${size().width / fixedScale()}px`,
-            height: `${size().height / fixedScale()}px`,
-            transform: `translate3d(${fixedPosition(position()).x}px, ${fixedPosition(position()).y}px, 0)`,
             'z-index': zIndex(),
             'will-change': isDragging() ? 'transform' : isResizing() ? 'transform, width, height' : undefined,
           }}

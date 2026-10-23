@@ -60,6 +60,8 @@ try {
         assert(Math.min(header.y + header.height, 776) - Math.max(header.y, 48) >= 23, 'titlebar stays vertically reachable');
         assert(Math.abs(held.x - 180) < Math.abs(target.x - 260), 'overscroll resists pointer movement');
         await page.mouse.up();
+        await settle();
+        assert(await panel.evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), 'return animation survives the reactive geometry commit');
         await within();
       }
       await reset();
@@ -78,6 +80,8 @@ try {
       await page.mouse.move(638, 144);
       await settle();
       const restored = await panel.boundingBox();
+      await settle();
+      assert.deepEqual(await panel.boundingBox(), restored, 'deferred rendering must not overwrite pointer geometry');
       assert.equal(restored.width, 420);
       assert.equal(restored.height, 300);
       assert(Math.abs(restored.x - 428) < 1 && Math.abs(restored.y - 128) < 1, 'restored header follows the original grab point');
