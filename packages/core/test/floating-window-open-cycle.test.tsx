@@ -34,6 +34,24 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('applies committed geometry when an initially closed window mounts', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const [open, setOpen] = createSignal(false);
+    mount(() => <FloatingWindow open={open()} onOpenChange={setOpen}
+      defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}>
+      <textarea />
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+    expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBeNull();
+    setOpen(true);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    expect(root.style.width).toBe('420px');
+    expect(root.style.height).toBe('300px');
+    expect(root.style.transform).toBe('translate3d(80px, 60px, 0)');
+  });
+
   it('restores on a deliberate titlebar drag and retains the pointer anchor and content', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

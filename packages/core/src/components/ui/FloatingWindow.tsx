@@ -624,7 +624,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
     <Show when={windowPresence.mounted()}>
       <Portal>
         <div
-          ref={windowRef}
+          ref={(element) => {
+            windowRef = element;
+            untrack(() => applyWindowRect(readCommittedRect()));
+          }}
           data-floe-geometry-surface="floating-window"
           data-floating-presence={windowPresence.state()}
           aria-hidden={windowPresence.exiting() || !boundaryVisible() ? 'true' : undefined}
