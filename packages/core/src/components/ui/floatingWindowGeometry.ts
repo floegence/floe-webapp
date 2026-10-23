@@ -44,6 +44,7 @@ interface ResolveFloatingWindowRectOptions {
   pointer: PointerPosition;
   dragStartPos: PointerPosition;
   dragStartRect: FloatingWindowRect;
+  dragTitlebarHeight?: number;
   resizeStartPos: PointerPosition;
   resizeStartRect: FloatingWindowRect;
   resizeHandle: FloatingWindowResizeHandle;
@@ -68,6 +69,14 @@ interface NormalizeFloatingWindowRectOptions {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+// Continuous at the edge, with increasing resistance and a finite excursion.
+function resistOverscroll(value: number, min: number, max: number, before: number, after: number): number {
+  const edge = clamp(value, min, max);
+  const distance = value - edge;
+  const limit = Math.max(0, distance < 0 ? before : after);
+  return edge + (limit === 0 ? 0 : distance * limit / (limit + Math.abs(distance)));
 }
 
 function resolveBounds(min: number, max: number, available: number): { min: number; max: number } {
@@ -135,12 +144,18 @@ export function resolveFloatingWindowRect(options: ResolveFloatingWindowRectOpti
   if (mode === 'drag') {
     const xMax = Math.max(safeViewport.x, safeRight - dragStartRect.width);
     const yMax = Math.max(safeViewport.y, safeBottom - dragStartRect.height);
+    const visibleWidth = Math.min(160, dragStartRect.width, safeViewport.width);
+    const titlebarHeight = Math.min(options.dragTitlebarHeight ?? 32, dragStartRect.height);
+    const visibleTitlebarHeight = Math.min(24, titlebarHeight, safeViewport.height);
+    const horizontalExcursion = Math.min(160, dragStartRect.width - visibleWidth);
     return {
       ...dragStartRect,
       x: mobile
         ? clamp(safeViewport.x + mobilePadding, safeViewport.x, xMax)
-        : clamp(dragStartRect.x + deltaX, safeViewport.x, xMax),
-      y: clamp(dragStartRect.y + deltaY, safeViewport.y, yMax),
+        : resistOverscroll(dragStartRect.x + deltaX, safeViewport.x, xMax,
+          horizontalExcursion, Math.min(horizontalExcursion, safeRight - visibleWidth - xMax)),
+      y: resistOverscroll(dragStartRect.y + deltaY, safeViewport.y, yMax,
+        titlebarHeight - visibleTitlebarHeight, Math.min(160, safeBottom - visibleTitlebarHeight - yMax)),
     };
   }
 

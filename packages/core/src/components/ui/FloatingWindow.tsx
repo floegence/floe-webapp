@@ -121,17 +121,20 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
   let dragStartPos = { x: 0, y: 0 };
   let dragStartRect: FloatingWindowRect = { x: 0, y: 0, width: 0, height: 0 };
+  let dragTitlebarHeight = 32;
   let resizeStartPos = { x: 0, y: 0 };
   let resizeStartRect: FloatingWindowRect = { x: 0, y: 0, width: 0, height: 0 };
   let resizeHandle: FloatingWindowResizeHandle = 'se';
 
   let windowRef: HTMLDivElement | undefined;
+  let titlebarRef: HTMLDivElement | undefined;
   let activePointerId: number | null = null;
   let pointerSession: PointerSessionController | undefined;
   let mode: 'drag' | 'resize' | null = null;
   let lastPointerPos = { x: 0, y: 0 };
   let rafId: number | null = null;
   let stopHotInteraction: (() => void) | null = null;
+  let settleAnimation: Animation | undefined;
   let hasOpenedOnce = false;
   let liveRect: FloatingWindowRect = {
     x: props.defaultPosition?.x ?? 0,
@@ -179,6 +182,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const applyWindowRect = (rect: FloatingWindowRect) => {
+    settleAnimation?.cancel();
+    settleAnimation = undefined;
     liveRect = rect;
     if (!windowRef) return;
     const fixed = fixedPosition(rect);
@@ -252,11 +257,26 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (activePointerId === null || mode === null) return;
     if (typeof window === 'undefined') return;
 
+    if (mode === 'drag' && isMaximized()) {
+      // A click, double-click, or small pointer tremor must keep maximization.
+      if (Math.hypot(lastPointerPos.x - dragStartPos.x, lastPointerPos.y - dragStartPos.y) < 4) return;
+      const restored = normalizeFloatingWindowRect({
+        rect: preferredRect, minSize: minSize(), maxSize: maxSize(),
+        viewport: boundary(), viewportInsets: viewportInsets(),
+        mobile: props.boundary === undefined && isMobile(), mobilePadding: MOBILE_PADDING,
+      });
+      const anchorX = Math.max(0, Math.min(1, (dragStartPos.x - dragStartRect.x) / Math.max(1, dragStartRect.width)));
+      const anchorY = Math.max(0, Math.min(dragTitlebarHeight, dragStartPos.y - dragStartRect.y));
+      dragStartRect = { ...restored, x: dragStartPos.x - restored.width * anchorX, y: dragStartPos.y - anchorY };
+      batch(() => { setIsMaximized(false); setCommittedRect(dragStartRect); });
+    }
+
     applyWindowRect(resolveFloatingWindowRect({
       mode,
       pointer: lastPointerPos,
       dragStartPos,
       dragStartRect,
+      dragTitlebarHeight,
       resizeStartPos,
       resizeStartRect,
       resizeHandle,
@@ -264,7 +284,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
       maxSize: maxSize(),
       viewport: boundary(),
       viewportInsets: viewportInsets(),
-      mobile: isMobile(),
+      mobile: props.boundary === undefined && isMobile(),
       mobilePadding: MOBILE_PADDING,
     }));
   };
@@ -311,7 +331,13 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (commit) {
       applyLatestPointerRect();
     }
-    const committedRect = commit ? (readLiveRectFromDom() ?? liveRect) : null;
+    const wasDragging = mode === 'drag';
+    const releasedRect = commit && !(wasDragging && isMaximized()) ? (readLiveRectFromDom() ?? liveRect) : null;
+    const committedRect = releasedRect ? normalizeFloatingWindowRect({
+      rect: releasedRect, minSize: minSize(), maxSize: maxSize(),
+      viewport: boundary(), viewportInsets: viewportInsets(),
+      mobile: props.boundary === undefined && isMobile(), mobilePadding: MOBILE_PADDING,
+    }) : null;
 
     batch(() => {
       if (committedRect) {
@@ -328,13 +354,26 @@ export function FloatingWindow(props: FloatingWindowProps) {
     });
     setGlobalInteractionStyles(false, '');
     pointerSession = undefined;
+    if (committedRect) {
+      applyWindowRect(committedRect);
+      if (wasDragging && releasedRect && windowRef?.animate
+        && (releasedRect.x !== committedRect.x || releasedRect.y !== committedRect.y)
+        && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        const from = fixedPosition(releasedRect);
+        const to = fixedPosition(committedRect);
+        settleAnimation = windowRef.animate([
+          { transform: `translate3d(${from.x}px, ${from.y}px, 0)` },
+          { transform: `translate3d(${to.x}px, ${to.y}px, 0)` },
+        ], { duration: 180, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      }
+    }
   };
 
   const stopInteraction = (commit = false) => {
     if (pointerSession) pointerSession.stop({ commit });
     else finishInteraction(commit);
   };
-  onCleanup(() => stopInteraction(false));
+  onCleanup(() => { stopInteraction(false); settleAnimation?.cancel(); });
 
   onMount(() => {
     const measureBoundary = () => {
@@ -460,7 +499,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   });
 
   const handleDragStart = (e: PointerEvent) => {
-    if (!draggable() || isMaximized() || compact() || activePointerId !== null) return;
+    if (!draggable() || compact() || activePointerId !== null) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
@@ -468,6 +507,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
 
     e.preventDefault();
 
+    settleAnimation?.cancel();
+    settleAnimation = undefined;
+    dragTitlebarHeight = e.currentTarget instanceof HTMLElement
+      ? (e.currentTarget.getBoundingClientRect().height || 32) : 32;
     activePointerId = e.pointerId;
     mode = 'drag';
     setIsDragging(true);
@@ -519,7 +562,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const startWindowPointerSession = (event: PointerEvent) => {
     pointerSession = startPointerSession({
       pointerEvent: event,
-      captureEl: windowRef,
+      // Keep click/double-click targeting on the titlebar while retaining capture.
+      captureEl: mode === 'drag' ? titlebarRef : windowRef,
       onMove: handlePointerMove,
       onEnd: ({ commit, reason, snapshot }) => {
         lastPointerPos = { x: snapshot.latestClientX, y: snapshot.latestClientY };
@@ -617,11 +661,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
           >
             <div
               data-floe-floating-window-titlebar="true"
+              ref={titlebarRef}
               class={cn(
                 'flex shrink-0 items-center justify-between h-8',
                 'border-b',
                 isMaximized() ? 'rounded-none' : 'rounded-t-md',
-                draggable() && !isMaximized() && !compact() && 'cursor-move'
+                draggable() && !compact() && 'cursor-move'
               )}
               onPointerDown={handleDragStart}
               onDblClick={handleTitleBarDoubleClick}

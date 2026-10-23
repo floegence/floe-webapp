@@ -82,7 +82,15 @@ Projected dialogs intersect the host boundary with the safe visible viewport
 before projecting into host coordinates.
 
 `FloatingWindow` uses the same visible boundary for opening, dragging, resizing,
-and maximizing. Viewport changes project the remembered user geometry without
+and maximizing. During a titlebar drag, elastic overscroll adds increasing resistance,
+limits the excursion to 160 client pixels, and retains at least 160 by 24 pixels
+of the titlebar (or the available size in a smaller boundary). Release, pointer
+cancellation, capture loss, and window blur settle the complete window back inside
+the current safe boundary. The 180 ms return animation respects reduced motion.
+Dragging a maximized header beyond a 4 client-pixel threshold restores the preferred
+size under the original horizontal grab fraction and vertical header offset, then
+continues the same pointer session. Clicks, titlebar controls, double-click toggling,
+and mounted content retain their existing behavior. Viewport changes project the remembered user geometry without
 replacing the content, moving focus, or overwriting the preferred window size.
 `viewportInsets` reserves additional host chrome inside that boundary. Global
 windows subscribe to viewport events; only explicit moving surface boundaries

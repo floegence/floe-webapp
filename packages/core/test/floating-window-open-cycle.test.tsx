@@ -34,6 +34,43 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('restores on a deliberate titlebar drag and retains the pointer anchor and content', async () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <FloatingWindow open onOpenChange={() => undefined}
+      defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}>
+      <textarea />
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const titlebar = root.querySelector<HTMLElement>('[data-floe-floating-window-titlebar]')!;
+    const draft = root.querySelector('textarea')!;
+    draft.value = 'Keep this draft';
+    const pointer = (type: string, x: number, y: number, buttons = 1) => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, buttons, clientX: x, clientY: y });
+      Object.defineProperties(event, { pointerId: { value: 19 }, pointerType: { value: 'mouse' } });
+      return event;
+    };
+    root.querySelector<HTMLButtonElement>('[data-floe-floating-window-control="maximize"]')!.click();
+    titlebar.dispatchEvent(pointer('pointerdown', 600, 16));
+    document.dispatchEvent(pointer('pointerup', 600, 16, 0));
+    expect(root.style.width).toBe('1200px');
+    titlebar.dispatchEvent(pointer('pointerdown', 600, 16));
+    document.dispatchEvent(pointer('pointermove', 601, 17));
+    await flushAnimationFrame();
+    expect(root.style.width).toBe('1200px');
+    document.dispatchEvent(pointer('pointermove', 640, 96));
+    await flushAnimationFrame();
+    expect(root.style.width).toBe('420px');
+    expect(root.style.height).toBe('300px');
+    expect(root.style.transform).toBe('translate3d(430px, 80px, 0)');
+    document.dispatchEvent(pointer('pointermove', 660, 116));
+    await flushAnimationFrame();
+    expect(root.style.transform).toBe('translate3d(450px, 100px, 0)');
+    expect(root.querySelector('textarea')).toBe(draft);
+    expect(draft.value).toBe('Keep this draft');
+  });
+
   it('lets the actual Dropdown menu handle Escape before the floating window closes', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -257,7 +294,7 @@ describe('FloatingWindow open cycle', () => {
       else {
         const event = new MouseEvent(reason, { bubbles: true, clientX: 110, clientY: 110 });
         Object.defineProperty(event, 'pointerId', { value: 7 });
-        root.dispatchEvent(event);
+        title.dispatchEvent(event);
       }
       expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
       expect(document.querySelector('[data-floe-surface-interacting="true"]')).toBeNull();

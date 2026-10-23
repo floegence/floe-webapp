@@ -81,6 +81,7 @@ mobile-viewport:
 
 .PHONY: overlay-viewport
 overlay-viewport:
+	node scripts/check-floating-window-drag-browser.mjs
 	node scripts/check-overlay-viewport-browser.mjs
 	node scripts/check-anchored-layer-browser.mjs
 

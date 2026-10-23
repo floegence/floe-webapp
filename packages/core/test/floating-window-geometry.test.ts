@@ -53,8 +53,8 @@ describe('floatingWindowGeometry', () => {
     });
   });
 
-  it('keeps desktop drag movement inside the safe viewport', () => {
-    expect(resolveFloatingWindowRect({
+  it('resists desktop overscroll while keeping a reachable titlebar', () => {
+    const rect = resolveFloatingWindowRect({
       mode: 'drag',
       pointer: { x: 1400, y: 0 },
       dragStartPos: { x: 280, y: 120 },
@@ -68,12 +68,37 @@ describe('floatingWindowGeometry', () => {
       viewportInsets: { top: 40, right: 144 },
       mobile: false,
       mobilePadding: 16,
-    })).toEqual({
-      x: 836,
-      y: 40,
-      width: 300,
-      height: 240,
     });
+    expect(rect.x).toBeGreaterThan(836);
+    expect(rect.x).toBeLessThan(1136 - 160);
+    expect(rect.y).toBeLessThan(40);
+    expect(rect.y + 32).toBeGreaterThanOrEqual(40 + 24);
+    expect(normalizeFloatingWindowRect({
+      rect, minSize: { width: 200, height: 150 }, maxSize: { width: 900, height: 700 },
+      viewport: { width: 1280, height: 720 }, viewportInsets: { top: 40, right: 144 },
+      mobile: false, mobilePadding: 16,
+    })).toEqual({ x: 836, y: 40, width: 300, height: 240 });
+  });
+
+  it('increases resistance continuously and never loses the titlebar at any edge', () => {
+    const start = { x: 40, y: 60, width: 420, height: 300 };
+    const resolve = (x: number, y: number) => resolveFloatingWindowRect({
+      mode: 'drag', pointer: { x, y }, dragStartPos: { x: 0, y: 0 }, dragStartRect: start,
+      resizeStartPos: { x: 0, y: 0 }, resizeStartRect: start, resizeHandle: 'se',
+      minSize: { width: 200, height: 150 }, maxSize: { width: 1000, height: 800 },
+      viewport: { x: 40, y: 60, width: 1000, height: 700 }, mobile: false, mobilePadding: 16,
+    });
+    expect(resolve(0, 0)).toEqual(start);
+    expect(resolve(100, 100)).toEqual({ ...start, x: 140, y: 160 });
+    const near = resolve(-40, -40);
+    const far = resolve(-80, -80);
+    expect(start.x - near.x).toBeLessThan(40);
+    expect(near.x - far.x).toBeLessThan(start.x - near.x);
+    for (const x of [-1e9, 1e9]) for (const y of [-1e9, 1e9]) {
+      const rect = resolve(x, y);
+      expect(Math.min(rect.x + rect.width, 1040) - Math.max(rect.x, 40)).toBeGreaterThanOrEqual(160);
+      expect(Math.min(rect.y + 32, 760) - Math.max(rect.y, 60)).toBeGreaterThanOrEqual(24);
+    }
   });
 
   it('caps resize growth at the safe viewport edge', () => {

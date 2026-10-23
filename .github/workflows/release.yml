@@ -127,6 +127,7 @@ jobs:
 
       - name: Verify floating panel interaction in Chromium
         run: |
+          node scripts/check-floating-window-drag-browser.mjs
           node scripts/check-floating-panel-browser.mjs
           node scripts/check-floating-panel-lifecycle.mjs
 
