@@ -30,12 +30,16 @@
  * CSS variables at runtime.
  */
 
-/* Border radius - these work fine with var() */
+/* Border radius - these work fine with var().
+ * Steps move in even increments so nested surfaces (panel > card > control)
+ * keep a consistent visual rhythm instead of mixing unrelated corner sizes. */
 @theme {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 6px);
+  --radius-3xl: calc(var(--radius) + 10px);
 }
 
 /* Custom color utilities using CSS variables */
@@ -606,6 +610,103 @@
       --floe-floating-presence-y: 0 !important;
       --floe-floating-presence-scale: 1 !important;
       will-change: opacity;
+    }
+  }
+
+  /*
+   * Hover motion.
+   *
+   * These utilities touch transform, color and shadow only. Width, height,
+   * padding, border width and position stay untouched so action groups,
+   * toolbars and drag/resize geometry never reflow while the pointer moves.
+   * Labels keep their own intrinsic box: lift happens on the control, never
+   * by growing the text.
+   */
+  .floe-hover-lift {
+    transition:
+      transform var(--floe-duration-fast) var(--floe-ease-out),
+      box-shadow var(--floe-duration-base) var(--floe-ease-out),
+      background-color var(--floe-duration-fast) var(--floe-ease-in-out),
+      border-color var(--floe-duration-fast) var(--floe-ease-in-out),
+      color var(--floe-duration-fast) var(--floe-ease-in-out);
+  }
+
+  .floe-hover-lift:hover {
+    transform: translateY(var(--floe-hover-lift));
+  }
+
+  .floe-hover-lift:active {
+    transform: translateY(0) scale(0.99);
+    transition-duration: var(--floe-duration-instant);
+  }
+
+  /* Rows, menu items and list entries shift tint instead of moving, so dense
+   * lists stay perceptually still while still feeling responsive. */
+  .floe-hover-surface {
+    transition:
+      background-color var(--floe-duration-fast) var(--floe-ease-in-out),
+      color var(--floe-duration-fast) var(--floe-ease-in-out),
+      border-color var(--floe-duration-fast) var(--floe-ease-in-out),
+      box-shadow var(--floe-duration-base) var(--floe-ease-out);
+  }
+
+  /* Soft highlight for hovered cards and panels: a one-pixel inner hairline
+   * plus a whisper of elevation, never a hard ring. */
+  .floe-hover-raised {
+    transition:
+      transform var(--floe-duration-base) var(--floe-ease-out),
+      box-shadow var(--floe-duration-base) var(--floe-ease-out),
+      border-color var(--floe-duration-fast) var(--floe-ease-in-out);
+  }
+
+  .floe-hover-raised:hover {
+    transform: translateY(var(--floe-hover-lift));
+    box-shadow:
+      0 1px 0 0 color-mix(in srgb, var(--foreground) 5%, transparent) inset,
+      0 10px 24px -14px color-mix(in srgb, var(--foreground) 35%, transparent);
+  }
+
+  /* Pointer feedback for icon-only affordances: the icon sits in a rounded
+   * well that fills on hover, matching the shell's soft surface language. */
+  .floe-hover-well {
+    transition:
+      background-color var(--floe-duration-fast) var(--floe-ease-in-out),
+      color var(--floe-duration-fast) var(--floe-ease-in-out),
+      transform var(--floe-duration-fast) var(--floe-ease-out);
+  }
+
+  .floe-hover-well:hover {
+    background-color: color-mix(in srgb, var(--accent) 80%, transparent);
+  }
+
+  .floe-hover-well:active {
+    transform: scale(0.94);
+    transition-duration: var(--floe-duration-instant);
+  }
+
+  /* Text and icon nudges: tiny directional shift that reads as intent without
+   * disturbing the layout box. */
+  .floe-hover-nudge-x {
+    transition: transform var(--floe-duration-fast) var(--floe-ease-out);
+  }
+
+  .floe-hover-nudge-x:hover {
+    transform: translateX(2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floe-hover-lift,
+    .floe-hover-lift:hover,
+    .floe-hover-lift:active,
+    .floe-hover-surface,
+    .floe-hover-raised,
+    .floe-hover-raised:hover,
+    .floe-hover-well,
+    .floe-hover-well:active,
+    .floe-hover-nudge-x,
+    .floe-hover-nudge-x:hover {
+      transform: none;
+      transition-duration: 1ms;
     }
   }
 }

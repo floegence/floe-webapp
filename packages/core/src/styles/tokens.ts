@@ -54,9 +54,11 @@ export interface FloeMotionToken {
 }
 
 export const floeSharedCssVariables = {
-  '--radius': '0.375rem',
-  '--font-sans': "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  '--font-mono': "'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace",
+  '--radius': '0.625rem',
+  '--font-sans':
+    "'Inter', 'InterVariable', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
+  '--font-mono':
+    "'JetBrains Mono', 'SFMono-Regular', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace",
   '--floe-type-caption': '0.6875rem',
   '--floe-type-supporting': '0.75rem',
   '--floe-type-control': '0.75rem',
@@ -72,9 +74,23 @@ export const floeSharedCssVariables = {
   '--floe-space-3': '0.75rem',
   '--floe-space-4': '1rem',
   '--floe-space-6': '1.5rem',
-  '--floe-radius-control': '0.375rem',
-  '--floe-radius-group': '0.5rem',
-  '--floe-radius-floating': '12px',
+  '--floe-radius-control': '0.5rem',
+  '--floe-radius-group': '0.75rem',
+  '--floe-radius-card': '1rem',
+  '--floe-radius-panel': '1.25rem',
+  '--floe-radius-floating': '16px',
+  '--floe-tracking-tight': '-0.02em',
+  '--floe-tracking-normal': '-0.011em',
+  '--floe-tracking-caps': '0.06em',
+  '--floe-ease-out': 'cubic-bezier(0.22, 1, 0.36, 1)',
+  '--floe-ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+  '--floe-ease-spring': 'cubic-bezier(0.34, 1.4, 0.64, 1)',
+  '--floe-duration-instant': '90ms',
+  '--floe-duration-fast': '140ms',
+  '--floe-duration-base': '190ms',
+  '--floe-duration-slow': '260ms',
+  '--floe-hover-lift': '-1px',
+  '--floe-hover-lift-strong': '-2px',
 } as const satisfies Record<FloeCssVariableName, string>;
 
 export const floeColorTokenCategories = [
@@ -649,16 +665,20 @@ export const floeSpacingTokens = [
 
 export const floeRadiusTokens = [
   { name: 'None', value: '0', variable: '-', className: 'rounded-none' },
-  { name: 'SM', value: '0.125rem', variable: '-', className: 'rounded-sm' },
+  { name: 'SM', value: '0.25rem', variable: '-', className: 'rounded-sm' },
   {
     name: 'Default',
     value: floeSharedCssVariables['--radius'],
     variable: '--radius',
     className: 'rounded',
   },
-  { name: 'MD', value: '0.5rem', variable: '-', className: 'rounded-md' },
-  { name: 'LG', value: '0.75rem', variable: '-', className: 'rounded-lg' },
-  { name: 'XL', value: '1rem', variable: '-', className: 'rounded-xl' },
+  { name: 'Control', value: floeSharedCssVariables['--floe-radius-control'], variable: '--floe-radius-control', className: '-' },
+  { name: 'MD', value: '0.75rem', variable: '-', className: 'rounded-md' },
+  { name: 'Group', value: floeSharedCssVariables['--floe-radius-group'], variable: '--floe-radius-group', className: '-' },
+  { name: 'LG', value: '1rem', variable: '-', className: 'rounded-lg' },
+  { name: 'Card', value: floeSharedCssVariables['--floe-radius-card'], variable: '--floe-radius-card', className: '-' },
+  { name: 'XL', value: '1.25rem', variable: '-', className: 'rounded-xl' },
+  { name: 'Panel', value: floeSharedCssVariables['--floe-radius-panel'], variable: '--floe-radius-panel', className: '-' },
   { name: '2XL', value: '1.5rem', variable: '-', className: 'rounded-2xl' },
   { name: 'Full', value: '9999px', variable: '-', className: 'rounded-full' },
 ] as const satisfies readonly FloeRadiusToken[];
@@ -699,6 +719,27 @@ export const floeMotionTokens = [
     keyframes: 'glow-pulse',
     usage: 'Neon and emphasis effects',
     description: 'Pulsing glow animation for elevated emphasis.',
+  },
+  {
+    name: 'Hover Lift',
+    keyframes: 'transition-transform',
+    usage: 'floe-hover-lift / hover:-translate-y-px',
+    description:
+      'One-pixel rise with an eased return on pointer hover. Transform only, so control geometry never changes.',
+  },
+  {
+    name: 'Hover Surface',
+    keyframes: 'transition-colors',
+    usage: 'floe-hover-surface',
+    description:
+      'Tint-shift hover feedback for rows and chips that must not move, such as menu items and list rows.',
+  },
+  {
+    name: 'Press Settle',
+    keyframes: 'transition-transform',
+    usage: 'active:translate-y-0 active:scale-[0.985]',
+    description:
+      'A small inward settle on press that returns instantly, keeping hit targets and neighbor geometry stable.',
   },
 ] as const satisfies readonly FloeMotionToken[];
 

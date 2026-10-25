@@ -53,9 +53,9 @@ export function TopBar(props: TopBarProps) {
             'flex-1 max-w-sm flex items-center gap-2 h-[26px] px-2.5',
             paletteEnabled() ? 'cursor-pointer' : 'cursor-not-allowed',
             'text-[11px] text-muted-foreground tracking-tight',
-            'bg-muted/30 hover:bg-muted/60 rounded-md',
-            'border border-border/40 hover:border-border/70',
-            'transition-colors duration-100',
+            'bg-muted/40 hover:bg-muted/70 rounded-lg',
+            'border border-border/60',
+            'transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             !paletteEnabled() && 'opacity-50 hover:bg-muted/30'
           )}

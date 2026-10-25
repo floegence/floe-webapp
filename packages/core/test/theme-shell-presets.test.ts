@@ -33,29 +33,29 @@ describe('built-in shell theme presets', () => {
   it('uses one neutral Classic Dark palette for renderer, preview and host metadata', () => {
     const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-dark')!;
     const tokens = preset.semanticTokens!;
-    expect(tokens['--background']).toBe('#202223');
-    expect(tokens['--card']).toBe('#282b2c');
-    expect(tokens['--popover']).toBe('#2b2e2f');
-    expect(tokens['--primary']).toBe('#bccbb8');
-    expect(tokens['--activity-bar']).toBe('#17191a');
+    expect(tokens['--background']).toBe('#0b0b0c');
+    expect(tokens['--card']).toBe('#141416');
+    expect(tokens['--popover']).toBe('#17171a');
+    expect(tokens['--primary']).toBe('#f2f2f3');
+    expect(tokens['--activity-bar']).toBe('#0a0a0b');
     expect(preset.preview?.background.toLowerCase()).toBe(tokens['--background']);
     expect(preset.preview?.surface?.toLowerCase()).toBe(tokens['--card']);
     expect(preset.preview?.primary?.toLowerCase()).toBe(tokens['--primary']);
-    expect(preset.monaco?.dark?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#C19BE8');
-    expect(tokens['--terminal-background']).toBe('hsl(222 32% 7%)');
-    expect(tokens['--chart-4']).toBe('oklch(0.72 0.19 150)');
+    expect(preset.monaco?.dark?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#c4b5fd');
+    expect(tokens['--terminal-background']).toBe('#08080a');
+    expect(tokens['--chart-4']).toBe('#4ade80');
   });
 
   it('pairs Classic Light with the same quiet surface hierarchy', () => {
     const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-light')!;
-    expect(preset.semanticTokens?.['--background']).toBe('#f8f7f2');
-    expect(preset.semanticTokens?.['--primary']).toBe('#465a43');
+    expect(preset.semanticTokens?.['--background']).toBe('#fafaf8');
+    expect(preset.semanticTokens?.['--primary']).toBe('#17181a');
     expect(preset.preview?.background).toBe(preset.semanticTokens?.['--background']);
     expect(preset.preview?.surface).toBe(preset.semanticTokens?.['--card']);
-    expect(preset.monaco?.light?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#005FB8');
+    expect(preset.monaco?.light?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#0b6bcb');
   });
 
-  it('defaults to warm porcelain with a near-black neutral dark canvas', () => {
+  it('keeps porcelain available as an opt-in preset', () => {
     const light = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-light');
     const dark = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-dark');
     expect(light?.semanticTokens?.['--background']).toBe('#F4F1ED');
@@ -66,7 +66,7 @@ describe('built-in shell theme presets', () => {
     expect(dark?.semanticTokens?.['--background']).toBe('#0C0C0D');
     expect(dark?.semanticTokens?.['--foreground']).toBe('#F2F1EE');
     expect(dark?.semanticTokens?.['--primary']).toBe('#E8E7E3');
-    expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({ light: 'porcelain-light', dark: 'porcelain-dark' });
+    expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({ light: 'classic-light', dark: 'classic-dark' });
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'light')[0]?.name).toBe('porcelain-light');
     expect(getShellThemePresetsForMode(builtInShellThemePresets, 'dark')[0]?.name).toBe('porcelain-dark');
   });
@@ -117,10 +117,10 @@ describe('built-in shell theme presets', () => {
         builtInShellThemePresets,
         BUILT_IN_SHELL_THEME_DEFAULTS
       )
-    ).toEqual({ version: 1, light: 'porcelain-light', dark: 'forest' });
+    ).toEqual({ version: 1, light: 'classic-light', dark: 'forest' });
     expect(
       normalizeShellThemeSelection('paper', builtInShellThemePresets, BUILT_IN_SHELL_THEME_DEFAULTS)
-    ).toEqual({ version: 1, light: 'porcelain-light', dark: 'porcelain-dark' });
+    ).toEqual({ version: 1, light: 'classic-light', dark: 'classic-dark' });
   });
 
   it('keeps generated pre-paint CSS in sync with the catalog token names', () => {
@@ -165,7 +165,7 @@ describe('built-in shell theme presets', () => {
     const demoIndex = readFileSync(resolve(testDir, '../../../apps/demo/index.html'), 'utf8');
 
     expect(demoIndex).toContain(
-      "const defaults = { light: 'porcelain-light', dark: 'porcelain-dark' }"
+      "const defaults = { light: 'classic-light', dark: 'classic-dark' }"
     );
     for (const preset of builtInShellThemePresets) {
       expect(demoIndex).toContain(`'${preset.name}'`);

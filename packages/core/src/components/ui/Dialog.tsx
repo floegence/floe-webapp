@@ -314,7 +314,7 @@ export function Dialog(props: DialogProps) {
                   isSurfaceMode()
                     ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
                     : 'w-full max-w-md',
-                  'bg-card text-card-foreground rounded-md shadow-lg',
+                  'bg-popover text-popover-foreground rounded-2xl shadow-2xl',
                   'border border-border',
                   'floe-floating-presence',
                   isBottomDrawer() ? 'floe-bottom-drawer-panel' : isSideDrawer() ? 'floe-side-drawer-panel' : 'floe-floating-dialog-panel',

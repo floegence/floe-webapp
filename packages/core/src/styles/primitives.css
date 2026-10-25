@@ -1,8 +1,17 @@
 /* Shared typography, spacing and shape; no layout or palette ownership. */
 :root {
-  --radius: 0.375rem;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  /* Shape: the shell reads as soft, rounded planes rather than hard panels.
+   * Every control derives from these so one change keeps the system coherent. */
+  --radius: 0.625rem;
+  --floe-radius-control: 0.5rem;
+  --floe-radius-group: 0.75rem;
+  --floe-radius-card: 1rem;
+  --floe-radius-panel: 1.25rem;
+  --floe-radius-floating: 16px;
+
+  /* Type: a precise geometric humanist voice with optical sizing. */
+  --font-sans: 'Inter', 'InterVariable', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
   --floe-type-caption: 0.6875rem;
   --floe-type-supporting: 0.75rem;
   --floe-type-control: 0.75rem;
@@ -10,17 +19,31 @@
   --floe-type-heading: 1rem;
   --floe-line-control: 1.125rem;
   --floe-line-body: 1.25rem;
+  /* Soft tracking keeps rounded geometry from reading as loose at small sizes. */
+  --floe-tracking-tight: -0.02em;
+  --floe-tracking-normal: -0.011em;
+  --floe-tracking-caps: 0.06em;
   --floe-control-height-sm: 1.75rem;
   --floe-control-height-md: 2rem;
   --floe-row-height: 1.75rem;
+
   --floe-space-1: 0.25rem;
   --floe-space-2: 0.5rem;
   --floe-space-3: 0.75rem;
   --floe-space-4: 1rem;
   --floe-space-6: 1.5rem;
-  --floe-radius-control: 0.375rem;
-  --floe-radius-group: 0.5rem;
-  --floe-radius-floating: 12px;
+
+  /* Motion: short, eased, transform-and-color only. Geometry surfaces never animate. */
+  --floe-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --floe-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --floe-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --floe-duration-instant: 90ms;
+  --floe-duration-fast: 140ms;
+  --floe-duration-base: 190ms;
+  --floe-duration-slow: 260ms;
+  /* Hover lift shared by interactive chrome. Fixed values keep press geometry stable. */
+  --floe-hover-lift: -1px;
+  --floe-hover-lift-strong: -2px;
 }
 
 /* Action labels stay on one line; their containing toolbar owns reflow. */

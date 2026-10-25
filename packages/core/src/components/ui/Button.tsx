@@ -21,20 +21,24 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
-  primary: 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:bg-primary/80',
-  secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 active:bg-secondary/70',
-  outline: 'border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
+  default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-sm active:bg-primary/82',
+  primary: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-sm active:bg-primary/82',
+  secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 active:bg-secondary/68',
+  outline:
+    'border border-border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:bg-accent/80',
   ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
   'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:bg-error/80',
-  destructive: 'bg-error text-error-foreground shadow-sm hover:bg-error/90 active:bg-error/80',
+  destructive: 'bg-error text-error-foreground shadow-xs hover:bg-error/90 hover:shadow-sm active:bg-error/82',
 };
 
+/* Radii step with control height so every button reads as the same soft
+ * family. Press feedback stays color-only: control geometry never moves on
+ * click, which keeps adjacent action groups stable. */
 const sizeStyles: Record<ButtonSize, string> = {
-  xs: 'h-6 px-2 text-[11px] rounded',
-  sm: 'h-7 px-2.5 text-xs rounded',
-  md: 'h-8 px-3 text-xs rounded-md',
-  lg: 'h-9 px-4 text-sm rounded-md',
+  xs: 'h-6 px-2 text-[11px] rounded-md',
+  sm: 'h-7 px-2.5 text-xs rounded-md',
+  md: 'h-8 px-3 text-xs rounded-lg',
+  lg: 'h-9 px-4 text-sm rounded-lg',
   icon: 'h-8 w-8 rounded-md',
 };
 
@@ -67,7 +71,8 @@ export function Button(props: ButtonProps) {
       data-floe-surface-part="action"
       class={cn(
         'inline-flex min-w-max items-center justify-center gap-1.5 whitespace-nowrap font-medium cursor-pointer',
-        'transition-[color,background-color,border-color] duration-120',
+        'tracking-[var(--floe-tracking-normal)]',
+        'transition-[color,background-color,border-color,box-shadow,opacity] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
         variantStyles[local.variant ?? 'default'],

@@ -298,10 +298,10 @@ export function Dropdown(props: DropdownProps) {
             ref={menuRef}
             class={cn(
               portalLayout.isSurfaceMode()
-                ? 'absolute z-20 min-w-36 py-0.5'
-                : 'fixed z-50 min-w-36 py-0.5',
-              'bg-popover text-popover-foreground',
-              'rounded border border-border shadow-md',
+                ? 'absolute z-20 min-w-36'
+                : 'fixed z-50 min-w-36',
+              'bg-popover text-popover-foreground p-1',
+              'rounded-xl border border-border shadow-lg',
               'floe-floating-presence floe-floating-menu'
             )}
             data-floe-dropdown={dropdownId}
@@ -467,8 +467,8 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
           type="button"
           ref={buttonRef}
           class={cn(
-            'w-full flex items-center gap-1.5 px-2 py-1 text-xs',
-            'transition-colors duration-75',
+            'w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg',
+            'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
             'focus:outline-none focus:bg-accent',
             props.item.tone === 'danger' && 'text-destructive',
             props.item.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent cursor-pointer'
@@ -516,10 +516,10 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
             ref={submenuRef}
             class={cn(
               props.portalLayout.isSurfaceMode()
-                ? 'absolute z-20 min-w-36 py-0.5'
-                : 'fixed z-50 min-w-36 py-0.5',
-              'bg-popover text-popover-foreground',
-              'rounded border border-border shadow-md',
+                ? 'absolute z-20 min-w-36'
+                : 'fixed z-50 min-w-36',
+              'bg-popover text-popover-foreground p-1',
+              'rounded-xl border border-border shadow-lg',
               'floe-floating-presence floe-floating-menu floe-floating-submenu'
             )}
             data-floe-dropdown={props.dropdownId}

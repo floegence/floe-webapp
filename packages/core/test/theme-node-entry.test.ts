@@ -7,8 +7,8 @@ import {
 describe('browser-neutral shell theme entrypoint', () => {
   it('exposes complete semantic metadata without a DOM bootstrap', () => {
     expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({
-      light: 'porcelain-light',
-      dark: 'porcelain-dark',
+      light: 'classic-light',
+      dark: 'classic-dark',
     });
     expect(builtInShellThemePresets).toHaveLength(28);
     for (const preset of builtInShellThemePresets) {

@@ -114,8 +114,8 @@ export function SidebarItem(props: SidebarItemProps) {
     <button
       type="button"
       class={cn(
-        'w-full min-h-[var(--floe-row-height)] flex items-center gap-2 px-2.5 py-1 text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)] cursor-pointer',
-        'transition-colors duration-75',
+        'w-full min-h-[var(--floe-row-height)] flex items-center gap-2 px-2.5 py-1 mx-1 rounded-lg text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)] cursor-pointer',
+        'transition-[background-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
         'hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring',
         props.active && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',

@@ -173,10 +173,11 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         type="button"
         class={cn(
           'relative w-full aspect-square flex items-center justify-center cursor-pointer',
-          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
+          'group/activity-item focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
+          'transition-[color,background-color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
           props.isActive
-            ? 'text-activity-bar-foreground-active bg-accent'
-            : 'text-activity-bar-foreground transition-[color,background-color] duration-100 hover:text-activity-bar-foreground-active hover:bg-accent/50'
+            ? 'text-activity-bar-foreground-active'
+            : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active'
         )}
         onClick={() => props.onClick()}
         onContextMenu={handleContextMenu}
@@ -187,13 +188,27 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         aria-controls={props.item.ariaControls}
         aria-haspopup={props.item.ariaHasPopup ?? (props.item.onContextMenu ? 'menu' : undefined)}
       >
-        {/* Active indicator - positioned at left edge, full height */}
-        <Show when={props.isActive}>
-          <div class="absolute left-0 top-0 w-1 h-full bg-primary rounded-r" />
-        </Show>
+        {/* Soft rounded plate: the rail marks location with a filled shape
+            instead of a hard edge bar, so navigation reads as quiet chrome. */}
+        <span
+          aria-hidden="true"
+          class={cn(
+            'absolute inset-x-1.5 inset-y-1.5 rounded-lg',
+            'transition-[background-color,opacity] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            props.isActive
+              ? 'bg-accent opacity-100'
+              : 'bg-accent opacity-0 group-hover/activity-item:opacity-60'
+          )}
+        />
 
         {/* Icon */}
-        <Dynamic component={props.item.icon} class="w-5 h-5" />
+        <Dynamic
+          component={props.item.icon}
+          class={cn(
+            'relative w-5 h-5 transition-transform duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-spring)]',
+            props.isActive ? 'scale-100' : 'group-hover/activity-item:scale-105'
+          )}
+        />
 
         {/* Badge */}
         <Show when={badgeValue()}>

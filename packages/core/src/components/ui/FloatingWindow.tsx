@@ -659,7 +659,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
             class={cn(
               'relative flex h-full w-full flex-col overflow-hidden',
-              'text-card-foreground rounded-md',
+              'text-card-foreground rounded-2xl',
               'border',
               'floe-floating-presence floe-floating-window-motion',
               (isDragging() || isResizing()) && 'floe-floating-presence--suspended',
@@ -675,7 +675,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               class={cn(
                 'flex shrink-0 items-center justify-between h-8',
                 'border-b',
-                isMaximized() ? 'rounded-none' : 'rounded-t-md',
+                isMaximized() ? 'rounded-none' : 'rounded-t-2xl',
                 draggable() && !compact() && 'cursor-move'
               )}
               onPointerDown={handleDragStart}

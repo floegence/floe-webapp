@@ -97,19 +97,21 @@ export function Card(props: CardProps) {
     }
   });
 
-  const baseStyles = 'rounded-[10px] duration-180 ease-out';
-  const transitions = () => local.enableTilt || variant() === 'hover-lift'
+  const baseStyles =
+    'rounded-xl duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]';
+  const transitions = () => (local.enableTilt || variant() === 'hover-lift'
     ? 'transition-[color,background-color,border-color,box-shadow,transform]'
-    : 'transition-[color,background-color,border-color]';
+    : 'transition-[color,background-color,border-color,box-shadow]');
 
   const variantStyles: Record<CardVariant, string> = {
-    default: 'bg-card border border-border shadow-sm hover:shadow-sm',
-    'hover-lift': 'bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5',
+    default: 'bg-card border border-border shadow-xs',
+    'hover-lift':
+      'bg-card border border-border shadow-xs hover:-translate-y-[var(--floe-hover-lift)] hover:shadow-[0_14px_30px_-20px_color-mix(in_srgb,var(--foreground)_45%,transparent)]',
     'gradient-border': 'relative bg-card overflow-hidden',
-    glass: 'backdrop-blur-xl bg-card/30 border border-border/50 shadow-lg',
+    glass: 'backdrop-blur-xl bg-card/40 border border-border/60 shadow-lg',
     spotlight: 'relative bg-card border border-border overflow-hidden',
     shimmer: 'relative bg-card border border-border overflow-hidden',
-    glow: 'bg-card border border-border shadow-sm',
+    glow: 'bg-card border border-border shadow-xs',
   };
 
   const gradientBorderContent = () => {

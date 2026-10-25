@@ -535,7 +535,7 @@ export function Tabs(props: TabsProps) {
       base,
       cursor,
       sizeStyles[local.size ?? 'md'],
-      'rounded-t',
+      'rounded-lg',
       indicatorThicknessClasses().tabBorderClass,
       isCurrentActive
         ? cn(activeIndicatorClass, 'text-foreground bg-background', local.slotClassNames?.tabActive)

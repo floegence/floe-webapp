@@ -46,8 +46,8 @@ describe('Cloud White and Soft Black', () => {
 
   it('admits both new selections without changing defaults or existing choices', () => {
     expect(BUILT_IN_SHELL_THEME_DEFAULTS).toEqual({
-      light: 'porcelain-light',
-      dark: 'porcelain-dark',
+      light: 'classic-light',
+      dark: 'classic-dark',
     });
     for (const selection of [
       { version: 1, light: 'cloud-white', dark: 'soft-black' },

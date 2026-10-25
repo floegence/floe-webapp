@@ -62,9 +62,9 @@ export function Input(props: InputProps) {
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
-          'w-full rounded border border-input bg-background shadow-sm',
+          'w-full rounded-lg border border-input bg-background shadow-xs',
           'placeholder:text-muted-foreground',
-          'transition-colors duration-100',
+          'transition-[border-color,box-shadow,background-color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
           'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
           local.error && 'border-error',

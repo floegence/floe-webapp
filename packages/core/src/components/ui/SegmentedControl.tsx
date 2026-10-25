@@ -29,18 +29,18 @@ export interface SegmentedControlProps extends Omit<JSX.HTMLAttributes<HTMLDivEl
 
 const sizeStyles: Record<SegmentedControlSize, { container: string; button: string; icon: string }> = {
   sm: {
-    container: 'p-0.5 gap-0.5',
-    button: 'px-2 py-1 text-[11px]',
+    container: 'p-1 gap-0.5',
+    button: 'px-2.5 py-1 text-[11px] rounded-md',
     icon: 'w-3 h-3',
   },
   md: {
-    container: 'p-0.5 gap-0.5',
-    button: 'px-3 py-1.5 text-xs',
+    container: 'p-1 gap-0.5',
+    button: 'px-3 py-1.5 text-xs rounded-md',
     icon: 'w-3.5 h-3.5',
   },
   lg: {
     container: 'p-1 gap-1',
-    button: 'px-4 py-2 text-sm',
+    button: 'px-4 py-2 text-sm rounded-lg',
     icon: 'w-4 h-4',
   },
 };
