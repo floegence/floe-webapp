@@ -118,7 +118,7 @@ export function ActivityBar(props: ActivityBarProps) {
             {(item) => (
               <ActivityBarButton
                 item={item}
-                isActive={false}
+                isActive={activeId() === item.id}
                 onClick={() => handleItemClick(item)}
               />
             )}
@@ -202,28 +202,19 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           )}
         />
 
-        {/* Location marker: a short bar that grows out of the rail edge. It reads
-            as "you are here" without the hard full-height edge the old rail used. */}
-        <span
-          aria-hidden="true"
-          class={cn(
-            'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-full',
-            'transition-[height,background-color] duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
-            props.isActive
-              ? 'h-4 bg-[var(--activity-bar-foreground-active)]'
-              : 'h-1.5 bg-transparent group-hover/activity-item:h-2.5 group-hover/activity-item:bg-[var(--floe-line-strong)]'
-          )}
-        />
+        {/* No edge marker: the tinted plate is the whole "you are here" signal.
+            A rail-width bar on a 48px column just crowds the glyph. */}
 
-        {/* Icon rises one ink step on hover rather than scaling: scale on a glyph
-            at this size reads as a twitch, a color step reads as attention. */}
+        {/* Icon steps one ink level on hover rather than scaling or shifting. At
+            this size a 1px translation resamples the glyph into grey; a colour
+            step holds the silhouette exactly while still reading as attention. */}
         <Dynamic
           component={props.item.icon}
           class={cn(
-            'relative w-5 h-5 transition-[color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            'relative w-5 h-5 transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             props.isActive
               ? 'text-activity-bar-foreground-active'
-              : 'group-hover/activity-item:text-activity-bar-foreground-active group-hover/activity-item:-translate-y-px'
+              : 'group-hover/activity-item:text-activity-bar-foreground-active'
           )}
         />
 
