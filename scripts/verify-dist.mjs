@@ -319,7 +319,9 @@ function main() {
 
   // Release artifacts must include the latest close-button hover behavior.
   assertFileContains('packages/core/dist/components/ui/Button.js', 'ghost-destructive');
-  assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-error');
+  // The destructive variant paints its hover state from an error color-mix, so
+  // the literal `hover:bg-error` class is no longer part of the button bundle.
+  assertFileContains('packages/core/dist/components/ui/Button.js', 'hover:bg-[color-mix(in_srgb');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:bg-error:hover');
   assertFileContains('packages/core/dist/floe.css', '.hover\\:text-error-foreground:hover');
   assertFileContains('packages/core/dist/styles.css', '.floe-bottom-bar-companion');

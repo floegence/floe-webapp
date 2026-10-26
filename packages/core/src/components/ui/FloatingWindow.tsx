@@ -180,6 +180,11 @@ export function FloatingWindow(props: FloatingWindowProps) {
       kind: mode === 'resize' ? 'resize' : 'drag',
       cursor,
       lockUserSelect: true,
+      // The titlebar declares its own cursor and travels with the pointer, so a
+      // document-wide lock shows nothing at the pointer while restyling the whole
+      // document. Resize handles are a few pixels wide and the pointer can leave
+      // them at the size limits, so they keep the lock.
+      lockDocumentStyles: mode !== 'drag',
     });
   };
 
@@ -679,7 +684,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 'flex shrink-0 items-center justify-between h-8',
                 'border-b',
                 isMaximized() ? 'rounded-none' : 'rounded-t-2xl',
-                draggable() && !compact() && 'cursor-move'
+                draggable() && !compact() && (isDragging() ? 'cursor-grabbing' : 'cursor-move')
               )}
               onPointerDown={handleDragStart}
               onDblClick={handleTitleBarDoubleClick}

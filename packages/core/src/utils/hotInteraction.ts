@@ -9,6 +9,13 @@ export interface StartHotInteractionOptions {
   kind: HotInteractionKind;
   cursor: string;
   lockUserSelect?: boolean;
+  /**
+   * `cursor` and `user-select` inherit, so writing them on `document.body`
+   * recalculates styles for the whole document. A surface that keeps the pointer
+   * inside its own bounds can declare the cursor itself and opt out; the
+   * hot-interaction attribute still suppresses animations for the gesture.
+   */
+  lockDocumentStyles?: boolean;
 }
 
 const activeCounts = new Map<HotInteractionKind, number>();
@@ -40,10 +47,12 @@ export function startHotInteraction(options: StartHotInteractionOptions): () => 
   activeCounts.set(options.kind, nextCount);
   syncRootAttribute();
 
-  const unlockBody = lockBodyStyle({
-    cursor: options.cursor,
-    ...(options.lockUserSelect === false ? {} : { 'user-select': 'none' }),
-  });
+  const unlockBody = options.lockDocumentStyles === false
+    ? null
+    : lockBodyStyle({
+      cursor: options.cursor,
+      ...(options.lockUserSelect === false ? {} : { 'user-select': 'none' }),
+    });
 
   let active = true;
 
@@ -51,7 +60,7 @@ export function startHotInteraction(options: StartHotInteractionOptions): () => 
     if (!active) return;
     active = false;
 
-    unlockBody();
+    unlockBody?.();
 
     const currentCount = activeCounts.get(options.kind) ?? 0;
     if (currentCount <= 1) {
