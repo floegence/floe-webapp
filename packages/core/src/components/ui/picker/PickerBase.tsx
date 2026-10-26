@@ -170,7 +170,7 @@ export function PickerPanel(props: PickerPanelProps & {
             <Button size="sm" variant="ghost" disabled={props.directoryFavorites?.loading} onClick={() => { setFavoriteError(''); void props.directoryFavorites?.onRefresh?.(); }}>{copy().retry}</Button></div>
         </Show>
         <Show when={source.error() && !shortcuts()}>
-          <div class="flex items-start gap-2 rounded border border-error/30 bg-error/5 px-2 py-1.5 text-xs" role="alert">
+          <div class="flex items-start gap-2 rounded-xs border border-error/30 bg-error/5 px-2 py-1.5 text-xs" role="alert">
             <span class="min-w-0 flex-1 break-words">{pickerErrorMessage(props, source.error())}</span>
             <Button size="sm" variant="ghost" onClick={() => { void source.retry(); }} disabled={props.disabled || source.pending()}>{copy().retry}</Button>
           </div>
@@ -179,13 +179,13 @@ export function PickerPanel(props: PickerPanelProps & {
         <nav aria-label={copy().currentDirectory} class="flex min-w-0 flex-wrap items-center gap-0.5 text-xs">
           <For each={breadcrumbs()}>{(segment, index) => <>
             <Show when={index() > 0}><ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-soft)]" /></Show>
-            <button type="button" class="max-w-full cursor-pointer truncate rounded px-1 py-0.5 hover:bg-[var(--floe-state-hover)] focus-visible:ring-1 focus-visible:ring-ring"
+            <button type="button" class="max-w-full cursor-pointer truncate rounded-xs px-1 py-0.5 hover:bg-[var(--floe-state-hover)] focus-visible:ring-1 focus-visible:ring-ring"
               title={segment.path} disabled={props.disabled} aria-current={segment.path === source.currentPath() ? 'location' : undefined}
               onClick={() => { void source.navigate(segment.path); }}>{segment.name}</button>
           </>}</For>
           <Show when={props.directoryFavorites}><DirectoryFavoriteButton path={source.currentPath()} favorites={props.directoryFavorites!} copy={copy()} disabled={props.disabled || !source.valid()} onError={setFavoriteError} /></Show>
         </nav>
-        <div {...props.scrollViewportProps} class={cn('min-h-[120px] overflow-y-auto rounded border border-[var(--floe-line)]', props.scrollViewportProps?.class)}
+        <div {...props.scrollViewportProps} class={cn('min-h-[120px] overflow-y-auto rounded-xs border border-[var(--floe-line)]', props.scrollViewportProps?.class)}
           style={{ 'max-height': props.treeMaxHeight ?? '240px' }}>
           <Show when={!source.pending() || source.currentPath()} fallback={<p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]" role="status">{copy().loading}</p>}>
             <Show when={folders().length} fallback={<Show when={source.currentPath()}><p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]">{copy().empty}</p></Show>}>
@@ -222,7 +222,7 @@ export function PickerPanel(props: PickerPanelProps & {
                 data-picker-suggested-path={source.view() === 'suggestions' ? path : undefined}
                 data-picker-favorite-path={source.view() === 'favorites' ? path : undefined} title={path} aria-label={path}
                 disabled={props.disabled || !source.context()}
-                class="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-2 py-2.5 text-left hover:bg-[var(--floe-state-selected)] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-sm px-2 py-2.5 text-left hover:bg-[var(--floe-state-selected)] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => {
                   navigate(path);
                 }}
@@ -230,7 +230,7 @@ export function PickerPanel(props: PickerPanelProps & {
                 <FolderOpen class="h-4 w-4 shrink-0 text-[var(--floe-ink-soft)]" />
                 <span class="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span class="truncate text-xs font-medium">{path.split('/').filter(Boolean).at(-1) ?? copy().root}</span>
-                  <span class="truncate text-[11px] text-[var(--floe-ink-soft)]">{path}</span>
+                  <span class="truncate text-caption text-[var(--floe-ink-soft)]">{path}</span>
                 </span>
                 <ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-quiet)]" />
               </button>

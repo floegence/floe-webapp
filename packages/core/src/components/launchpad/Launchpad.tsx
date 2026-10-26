@@ -305,10 +305,10 @@ export function Launchpad(props: LaunchpadProps) {
 
       {/* Keyboard hints */}
       <div class="absolute bottom-4 right-4 text-[var(--floe-ink-quiet)] text-xs hidden md:block">
-        <kbd class="px-1.5 py-0.5 rounded border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono mr-1">ESC</kbd> to close
+        <kbd class="px-1.5 py-0.5 rounded-xs border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono mr-1">ESC</kbd> to close
         <span class="mx-2">|</span>
-        <kbd class="px-1.5 py-0.5 rounded border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono mr-1">←</kbd>
-        <kbd class="px-1.5 py-0.5 rounded border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono">→</kbd> to navigate
+        <kbd class="px-1.5 py-0.5 rounded-xs border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono mr-1">←</kbd>
+        <kbd class="px-1.5 py-0.5 rounded-xs border border-[var(--floe-line)] bg-card/80 text-foreground/80 font-mono">→</kbd> to navigate
       </div>
     </div>
   );

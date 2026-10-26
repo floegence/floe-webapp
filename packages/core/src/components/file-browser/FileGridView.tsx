@@ -27,8 +27,8 @@ export interface FileGridViewProps {
   enableDragDrop?: boolean;
 }
 
-const FILE_GRID_TILE_CLASS = 'relative flex flex-col items-center gap-2 p-3 rounded-lg h-28';
-const FILE_GRID_ICON_CLASS = 'w-12 h-12 flex items-center justify-center rounded-lg relative';
+const FILE_GRID_TILE_CLASS = 'relative flex flex-col items-center gap-2 p-3 rounded-control h-28';
+const FILE_GRID_ICON_CLASS = 'w-12 h-12 flex items-center justify-center rounded-control relative';
 const FILE_GRID_NAME_CLASS = 'block w-full min-w-0 truncate px-1 text-xs text-center';
 
 /**
@@ -253,7 +253,7 @@ export function FileGridView(props: FileGridViewProps) {
                 {() => (
                   <div data-file-browser-placeholder class={FILE_GRID_TILE_CLASS}>
                     <div class={FILE_GRID_ICON_CLASS}>
-                      <Skeleton class="h-10 w-10 rounded-lg" />
+                      <Skeleton class="h-10 w-10 rounded-control" />
                     </div>
                     <span class={FILE_GRID_NAME_CLASS}>
                       <Skeleton class="mx-auto h-4 w-24 max-w-full" />
@@ -276,7 +276,7 @@ export function FileGridView(props: FileGridViewProps) {
                   <button
                     type="button"
                     onClick={() => ctx.setFilterQuery('')}
-                    class="px-2 py-1 rounded bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
+                    class="px-2 py-1 rounded-xs bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
                   >
                     Clear Filter
                   </button>
@@ -629,10 +629,12 @@ function FileGridItem(props: FileGridItemProps) {
       class={cn(
         FILE_GRID_TILE_CLASS,
         'group cursor-pointer',
-        'transition-all duration-[var(--floe-duration-fast)] ease-out',
-        'hover:bg-[var(--floe-state-selected)] hover:scale-[1.02]',
+        'transition-[background-color,transform,opacity,box-shadow] duration-[var(--floe-duration-fast)] ease-out',
+        /* Hover is the fill, not a zoom: a tile that grows under the pointer
+         * makes the grid shift. Press settles on the shared scale step. */
+        'hover:bg-[var(--floe-state-selected)]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        'active:scale-[0.98]',
+        'active:scale-[var(--floe-press-scale)]',
         isSelected() && 'bg-[var(--floe-state-selected)] ring-2 ring-primary/50',
         // Drag state styling - being dragged items become translucent and shrink
         isBeingDragged() && 'opacity-40 scale-90',
@@ -640,7 +642,7 @@ function FileGridItem(props: FileGridItemProps) {
         isActiveDropTarget() &&
           isValidDropTarget() && [
             'bg-primary/15 ring-2 ring-primary/60',
-            'scale-105 shadow-[var(--floe-elevation-float)] shadow-primary/15',
+            'scale-105 shadow-[var(--floe-elevation-float)]',
           ],
         isActiveDropTarget() &&
           !isValidDropTarget() && ['bg-destructive/10 ring-2 ring-dashed ring-destructive/50']
@@ -685,7 +687,7 @@ function FileGridItem(props: FileGridItemProps) {
       {/* Subtle glow effect on hover */}
       <div
         class={cn(
-          'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-[var(--floe-duration-slow)]',
+          'absolute inset-0 rounded-control opacity-0 transition-opacity duration-[var(--floe-duration-slow)]',
           'group-hover:opacity-100',
           'pointer-events-none'
         )}

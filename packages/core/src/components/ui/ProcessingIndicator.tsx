@@ -185,7 +185,7 @@ function MinimalVariant(props: VariantProps) {
       <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] processing-text-shimmer">
         {props.label}
         <Show when={props.elapsed}>
-          <span class="ml-1.5 font-mono text-[10px] opacity-50">{props.elapsed}</span>
+          <span class="ml-1.5 font-mono text-caption opacity-50">{props.elapsed}</span>
         </Show>
       </span>
     </div>
@@ -232,9 +232,9 @@ function CardVariant(props: VariantProps) {
   return (
     /* One plane, one hairline. The animated gradient frame and the inner
      * inset seam it needed are gone: the status surface reads as a small
-     * floating plane, and the shimmer stays inside its own rounded bounds. */
+     * floating plane, and the shimmer stays inside its own rounded-xs bounds. */
     <div
-      class="relative overflow-hidden rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-card"
+      class="relative overflow-hidden rounded-group border border-[var(--floe-line)] bg-card"
       data-floe-surface="floating"
       data-floe-surface-part="status"
     >

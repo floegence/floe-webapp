@@ -39,16 +39,40 @@ describe('design token contract', () => {
     }
   });
 
-  it('defines shared variables once in primitives.css and consumes them through base typography hooks', () => {
+  it('defines each shared variable exactly once across the token sources', () => {
     const floeCss = readFileSync(resolve(stylesDir, 'floe.css'), 'utf8');
     const lightCss = readFileSync(resolve(stylesDir, 'themes/light.css'), 'utf8');
-    const primitivesCss = readFileSync(resolve(stylesDir, 'primitives.css'), 'utf8');
-    // Exported defaults describe the root; responsive descendants retain touch geometry.
-    const sharedVars = parseCssVariables(primitivesCss.match(/:root\s*\{([^}]+)\}/)?.[1] ?? '');
+    // Two files own the scale and neither may restate the other's names:
+    // `primitives.css` holds the root font/tracking/spacing defaults, and
+    // `language.css` holds shape, type, motion and elevation. When both declared
+    // the same `--floe-*` names, whichever was imported last silently won.
+    const tokenSources = ['primitives.css', 'language.css'].map((file) => ({
+      file,
+      css: readFileSync(resolve(stylesDir, file), 'utf8'),
+    }));
+    const declared = new Map<string, string>();
+    for (const { file, css } of tokenSources) {
+      // `language.css` scopes its scale to `:root, [data-floe-theme]`. Only the
+      // first block counts — later ones live inside `@media (forced-colors)` and
+      // intentionally override the same names.
+      const root = css.match(/:root[^{]*\{([^}]+)\}/)?.[1] ?? '';
+      for (const [, name, value] of root.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+        expect(declared.has(name), `${name} is declared in both ${file} and another token source`).toBe(false);
+        declared.set(name, value.trim());
+      }
+    }
+    // Resolve `var()` references after both files are merged, so a token that
+    // points at one owned by the other file still yields its literal value.
+    const sharedVars = new Map<string, string>();
+    for (const [name, raw] of declared) {
+      const reference = /^var\((--[\w-]+)\)$/.exec(raw)?.[1];
+      sharedVars.set(name, reference ? (declared.get(reference) ?? raw) : raw);
+    }
     expect(floeCss).toContain("@import './primitives.css'");
+    expect(floeCss).toContain("@import './language.css'");
 
     for (const [name, value] of Object.entries(floeSharedCssVariables)) {
-      expect(sharedVars.get(name), `${name} in primitives.css`).toBe(value);
+      expect(sharedVars.get(name), `${name} not found in primitives.css or language.css`).toBe(value);
     }
 
     expect(lightCss).not.toContain('--radius:');

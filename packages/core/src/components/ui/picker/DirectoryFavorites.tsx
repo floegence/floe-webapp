@@ -79,8 +79,8 @@ export function PickerDirectoryRow(props: {
     {props.children}
     <Show when={props.favorites}>{(favorites) => <DirectoryFavoriteButton path={props.path} favorites={favorites()} copy={props.copy} disabled={props.disabled} onError={props.onError} />}</Show>
     <Show when={menu()}>{(target) => <SurfaceFloatingLayer position={target()} owner={target().owner} estimatedSize={{ width: 250, height: 40 }} layerRef={element => { menuRoot = element; }}
-      data-picker-favorite-menu="" role="menu" class="z-50 rounded-md border border-[var(--floe-line)] bg-background p-1 shadow-[var(--floe-elevation-float)]">
-      <button ref={menuButton} type="button" role="menuitem" class="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-xs hover:bg-[var(--floe-state-selected)] focus:bg-[var(--floe-state-selected)] focus:outline-none"
+      data-picker-favorite-menu="" role="menu" class="z-50 rounded-panel border border-[var(--floe-line)] bg-background p-1 shadow-[var(--floe-elevation-float)]">
+      <button ref={menuButton} type="button" role="menuitem" class="flex w-full cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-left text-xs hover:bg-[var(--floe-state-selected)] focus:bg-[var(--floe-state-selected)] focus:outline-none"
         disabled={!target().favorites.editable || !target().favorites.onSetFavorite || target().favorites.pendingPaths?.includes(target().path)}
         onClick={() => {
           const captured = target();

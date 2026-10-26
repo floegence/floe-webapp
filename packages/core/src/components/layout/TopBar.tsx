@@ -36,12 +36,12 @@ export function TopBar(props: TopBarProps) {
         {/* Logo */}
         <div class="flex items-center gap-2 flex-shrink-0">
           {props.logo || (
-            <div class="w-6 h-6 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+            <div class="w-6 h-6 rounded-xs bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
               F
             </div>
           )}
           <Show when={props.title}>
-            <span class="font-medium text-[11px] tracking-tight hidden sm:inline">{props.title}</span>
+            <span class="font-medium text-caption tracking-tight hidden sm:inline">{props.title}</span>
           </Show>
         </div>
 
@@ -52,8 +52,8 @@ export function TopBar(props: TopBarProps) {
           class={cn(
             'flex-1 max-w-sm flex items-center gap-2 h-[26px] px-2.5',
             paletteEnabled() ? 'cursor-pointer' : 'cursor-not-allowed',
-            'text-[11px] text-[var(--floe-ink-soft)] tracking-tight',
-            'bg-[var(--floe-well)] hover:bg-[var(--floe-well-strong)] rounded-[var(--floe-radius-md)]',
+            'text-caption text-[var(--floe-ink-soft)] tracking-tight',
+            'bg-[var(--floe-well)] hover:bg-[var(--floe-well-strong)] rounded-control',
             'border border-[var(--floe-line)]',
             'transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -64,7 +64,7 @@ export function TopBar(props: TopBarProps) {
           <Search class="w-3 h-3 shrink-0" />
           <span class="flex-1 text-left hidden sm:inline truncate">{floe.config.strings.topBar.searchPlaceholder}</span>
           <Show when={paletteEnabled()}>
-            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/60 border border-[var(--floe-line)] font-mono shrink-0 leading-none">
+            <kbd class="hidden md:inline text-caption px-1 py-0.5 rounded-xs bg-background/60 border border-[var(--floe-line)] font-mono shrink-0 leading-none">
               {command.getKeybindDisplay(floe.config.commands.palette.keybind)}
             </kbd>
           </Show>

@@ -41,7 +41,7 @@ export function SkeletonText(props: { lines?: number; class?: string }) {
 
 export function SkeletonCard(props: { class?: string }) {
   return (
-    <div class={cn('rounded-lg border border-[var(--floe-line)] p-4 space-y-4', props.class)}>
+    <div class={cn('rounded-control border border-[var(--floe-line)] p-4 space-y-4', props.class)}>
       <div class="flex items-center gap-3">
         <Skeleton class="h-10 w-10 rounded-full" />
         <div class="space-y-2 flex-1">
@@ -63,7 +63,7 @@ export function SkeletonList(props: { count?: number; class?: string }) {
       <For each={indices()}>
         {() => (
           <div class="flex items-center gap-3">
-            <Skeleton class="h-8 w-8 rounded" />
+            <Skeleton class="h-8 w-8 rounded-xs" />
             <div class="flex-1 space-y-1">
               <Skeleton class="h-4 w-2/3" />
               <Skeleton class="h-3 w-1/3" />

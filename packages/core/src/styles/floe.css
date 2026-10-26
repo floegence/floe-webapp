@@ -31,16 +31,63 @@
  * CSS variables at runtime.
  */
 
-/* Border radius - these work fine with var().
- * Steps move in even increments so nested surfaces (panel > card > control)
- * keep a consistent visual rhythm instead of mixing unrelated corner sizes. */
+/*
+ * Tailwind scale → language scale.
+ *
+ * Utilities are the vocabulary components actually write, so every Tailwind
+ * scale the language owns is mapped onto the language token rather than left at
+ * the Tailwind default. Without this, `rounded-xl`, `ease-out`, `shadow-sm` and
+ * `text-sm` spoke a second, parallel design system: numerically close enough to
+ * look accidental, different enough to break the ladder when either side moved.
+ *
+ * Each mapping below resolves at computed-value time, so the language file stays
+ * the only place a value is written.
+ */
 @theme {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 2px);
-  --radius-2xl: calc(var(--radius) + 6px);
-  --radius-3xl: calc(var(--radius) + 10px);
+  /* Radius — the ladder is concentric: xs 4 · sm 6 · md 8 · control 10 ·
+   * group 12 · card 16 · panel 20.
+   *
+   * Named by what the surface is, not by how big it is — `rounded-control` says
+   * which rung to read, where `rounded-lg` (Tailwind's 8px scale) could only
+   * ever be a guess. The bare `rounded` utility has no `@theme` override in v4,
+   * so every call site now names its rung; nothing resolves to a literal. */
+  --radius-xs: var(--floe-radius-xs);
+  --radius-sm: var(--floe-radius-sm);
+  --radius-md: var(--floe-radius-md);
+  --radius-control: var(--floe-radius-control);
+  --radius-group: var(--floe-radius-group);
+  --radius-card: var(--floe-radius-card);
+  --radius-panel: var(--floe-radius-panel);
+
+  /* Motion — `ease-out` and `ease-in-out` were the Tailwind curves, which start
+   * abruptly and settle late; the language curves decelerate. */
+  --ease-out: var(--floe-ease-out);
+  --ease-in-out: var(--floe-ease-in-out);
+
+  /* Elevation — three steps, so a shadow utility can no longer invent a fourth. */
+  --shadow: var(--floe-elevation-raised);
+  --shadow-sm: var(--floe-elevation-raised);
+  --shadow-md: var(--floe-elevation-float);
+  --shadow-lg: var(--floe-elevation-float);
+  --shadow-xl: var(--floe-elevation-float-strong);
+  --shadow-2xl: var(--floe-elevation-float-strong);
+
+  /* Type — one step per role: caption 11 · supporting 12 · control and body 13
+   * · heading 16 · display 22. Tailwind's 14px control size had no seat on that
+   * ladder, which is why control text drifted between 12, 13 and 14px.
+   *
+   * `text-caption` is the role-named utility. Metadata, badges and axis labels
+   * used to hard-code `text-[10px]` or `text-[11px]`; the smaller value sat below
+   * the ladder and existed only because a single component needed two pixels. */
+  --text-caption: var(--floe-type-caption);
+  --text-xs: var(--floe-type-supporting);
+  --text-sm: var(--floe-type-control);
+  --text-base: var(--floe-type-heading);
+  --text-lg: var(--floe-type-display);
+  --text-caption--line-height: var(--floe-line-caption);
+  --text-xs--line-height: var(--floe-line-caption);
+  --text-sm--line-height: var(--floe-line-control);
+  --text-base--line-height: var(--floe-line-heading);
 }
 
 /* Custom color utilities using CSS variables */
@@ -669,9 +716,12 @@
 
   .floe-hover-raised:hover {
     transform: translateY(var(--floe-hover-lift));
+    /* The inner line is the hairline step, not a fifth shadow strength; the
+     * outer one is the first elevation. Previously this was a bespoke recipe
+     * that put two more distances into the language. */
     box-shadow:
-      0 1px 0 0 color-mix(in srgb, var(--foreground) 5%, transparent) inset,
-      0 10px 24px -14px color-mix(in srgb, var(--foreground) 35%, transparent);
+      0 1px 0 0 var(--floe-line-quiet) inset,
+      var(--floe-elevation-raised);
   }
 
   /* Pointer feedback for icon-only affordances: the icon sits in a rounded
@@ -846,29 +896,32 @@
   pointer-events: auto;
   transform-origin: bottom center;
   transition:
-    border-radius 200ms ease,
-    border-color 180ms ease,
-    opacity 120ms ease;
+    border-radius var(--floe-duration-base) var(--floe-ease-out),
+    border-color var(--floe-duration-fast) var(--floe-ease-out),
+    opacity var(--floe-duration-fast) var(--floe-ease-out);
 }
 
 .floe-bottom-bar-companion[data-companion-phase='expanding'],
 .floe-bottom-bar-companion[data-companion-phase='expanded'] {
   border-radius: var(--floe-bottom-bar-companion-expanded-radius, 0.5rem);
   border-color: color-mix(in srgb, var(--border) 96%, transparent);
-  box-shadow:
-    0 22px 54px -24px color-mix(in srgb, var(--foreground) 34%, transparent),
-    0 6px 18px -12px color-mix(in srgb, var(--foreground) 24%, transparent);
+  box-shadow: var(--floe-elevation-float-strong);
 }
 
 .floe-bottom-bar-companion[data-companion-phase='expanding'],
 .floe-bottom-bar-companion[data-companion-phase='collapsing'] {
   will-change: left, top, width, height;
+  /* Geometry morphs on the slow step with the language curve; the driver
+   * re-measures between phases, so a longer duration would only widen the
+   * window where the measured target and the visible box disagree. */
   transition:
-    left 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    top 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    width 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    height 360ms cubic-bezier(0.22, 0.8, 0.24, 1),
-    border-radius 200ms ease, border-color 180ms ease, opacity 120ms ease;
+    left var(--floe-duration-slow) var(--floe-ease-out),
+    top var(--floe-duration-slow) var(--floe-ease-out),
+    width var(--floe-duration-slow) var(--floe-ease-out),
+    height var(--floe-duration-slow) var(--floe-ease-out),
+    border-radius var(--floe-duration-base) var(--floe-ease-out),
+    border-color var(--floe-duration-fast) var(--floe-ease-out),
+    opacity var(--floe-duration-fast) var(--floe-ease-out);
 }
 
 .floe-bottom-bar-companion[data-companion-visibility='hidden'],

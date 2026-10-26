@@ -187,7 +187,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
       <button
         ref={trigger}
         type="button"
-        class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-[var(--floe-radius-sm)] hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-sm hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         style={{
           visibility: active() ? 'visible' : 'hidden',
           color:
@@ -237,7 +237,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
           aria-label={props.label}
           tabindex={-1}
           data-floe-surface="floating"
-          class="flex flex-col overflow-hidden rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)]"
+          class="flex flex-col overflow-hidden rounded-group border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)]"
           style={{
             width: `${bounds().width}px`,
             'max-height': `${bounds().height}px`,
@@ -250,7 +250,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
               type="button"
               aria-label={props.closeLabel}
               style={{ width: controlSize(), height: controlSize() }}
-              class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[var(--floe-radius-sm)] hover:bg-[var(--floe-state-hover)]"
+              class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-sm hover:bg-[var(--floe-state-hover)]"
               onClick={() => close(true)}
             >
               <X class="h-4 w-4" />

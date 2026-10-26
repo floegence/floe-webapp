@@ -51,8 +51,8 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
             ? 'rounded-full border border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] px-3 py-1.5 text-[var(--floe-ink)] shadow-sm'
             : 'rounded-full border border-[var(--floe-line)] bg-[var(--floe-plane-raised)] px-3 py-1.5 hover:bg-[var(--floe-state-hover)]/40'
           : props.active
-            ? 'rounded-[var(--floe-radius-group)] border border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] px-3.5 py-3 shadow-sm'
-            : 'rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-[var(--floe-plane-raised)]/90 px-3.5 py-3 hover:border-foreground/15 hover:bg-[var(--floe-state-hover)]/20'
+            ? 'rounded-group border border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] px-3.5 py-3 shadow-sm'
+            : 'rounded-group border border-[var(--floe-line)] bg-[var(--floe-plane-raised)]/90 px-3.5 py-3 hover:border-foreground/15 hover:bg-[var(--floe-state-hover)]/20'
       )}
       onClick={() => props.onSelect()}
     >
@@ -62,13 +62,13 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
           <>
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--floe-ink-soft)]/70">
+                <p class="text-caption font-semibold uppercase tracking-[0.18em] text-[var(--floe-ink-soft)]/70">
                   {presetDetails()?.category ?? 'Theme Preset'}
                 </p>
                 <p class="mt-1 text-sm font-semibold text-[var(--floe-ink)]">{props.preset.displayName}</p>
               </div>
               <Show when={props.active}>
-                <span class="rounded-full border border-[var(--floe-accent-line)] bg-[var(--floe-plane)]/80 px-2 py-0.5 text-[10px] font-medium text-[var(--floe-accent-ink)]">
+                <span class="rounded-full border border-[var(--floe-accent-line)] bg-[var(--floe-plane)]/80 px-2 py-0.5 text-caption font-medium text-[var(--floe-accent-ink)]">
                   Active
                 </span>
               </Show>
@@ -85,17 +85,17 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
               </For>
             </div>
 
-            <p class="mt-3 text-[11px] leading-4 text-[var(--floe-ink)]/85">
+            <p class="mt-3 text-caption leading-4 text-[var(--floe-ink)]/85">
               {props.preset.description ?? 'Named chart theme preset.'}
             </p>
-            <p class="mt-2 text-[10px] leading-4 text-[var(--floe-ink-soft)]">
+            <p class="mt-2 text-caption leading-4 text-[var(--floe-ink-soft)]">
               {presetDetails()?.bestFor}
             </p>
 
             <div class="mt-3 flex flex-wrap gap-1.5">
               <For each={presetDetails()?.traits ?? []}>
                 {(trait) => (
-                  <span class="rounded-full border border-[var(--floe-line)]/70 bg-[var(--floe-plane)]/80 px-2 py-0.5 text-[10px] font-medium text-[var(--floe-ink-soft)]">
+                  <span class="rounded-full border border-[var(--floe-line)]/70 bg-[var(--floe-plane)]/80 px-2 py-0.5 text-caption font-medium text-[var(--floe-ink-soft)]">
                     {trait}
                   </span>
                 )}
@@ -117,7 +117,7 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
           </div>
           <span class="text-xs font-medium whitespace-nowrap">{props.preset.displayName}</span>
           <Show when={props.active}>
-            <span class="rounded-full bg-[var(--floe-plane)]/80 px-1.5 py-0.5 text-[9px] font-medium text-[var(--floe-ink-soft)]">
+            <span class="rounded-full bg-[var(--floe-plane)]/80 px-1.5 py-0.5 text-[length:var(--floe-type-micro)] font-medium text-[var(--floe-ink-soft)]">
               Active
             </span>
           </Show>

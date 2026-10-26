@@ -169,7 +169,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
         type="button"
         onClick={ctx.toggleSidebar}
         class={cn(
-          'md:hidden flex items-center justify-center w-7 h-7 rounded cursor-pointer',
+          'md:hidden flex items-center justify-center w-7 h-7 rounded-xs cursor-pointer',
           'transition-colors duration-[var(--floe-duration-fast)]',
           'hover:bg-[var(--floe-state-press)]',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -186,7 +186,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
         onClick={ctx.navigateUp}
         disabled={!canNavigateUp()}
         class={cn(
-          'flex items-center justify-center w-7 h-7 rounded cursor-pointer',
+          'flex items-center justify-center w-7 h-7 rounded-xs cursor-pointer',
           'transition-colors duration-[var(--floe-duration-fast)]',
           'hover:bg-[var(--floe-state-press)]',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
@@ -200,7 +200,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       {/* Breadcrumb navigation - hidden when filter is active on mobile */}
       <div
         class={cn(
-          'flex-1 min-w-0 overflow-hidden transition-all duration-[var(--floe-duration-base)]',
+          'flex-1 min-w-0 overflow-hidden transition-colors duration-[var(--floe-duration-base)]',
           ctx.isFilterActive() && 'hidden sm:block sm:flex-1'
         )}
       >
@@ -210,7 +210,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       {/* Filter search box */}
       <div
         class={cn(
-          'flex items-center gap-1 transition-all duration-[var(--floe-duration-base)] ease-out',
+          'flex items-center gap-1 transition-colors duration-[var(--floe-duration-base)] ease-out',
           ctx.isFilterActive()
             ? 'flex-1 sm:flex-none sm:w-48'
             : 'w-7'
@@ -223,7 +223,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
               type="button"
               onClick={handleFilterToggle}
               class={cn(
-                'flex items-center justify-center w-7 h-7 rounded cursor-pointer',
+                'flex items-center justify-center w-7 h-7 rounded-xs cursor-pointer',
                 'transition-colors duration-[var(--floe-duration-fast)]',
                 'hover:bg-[var(--floe-state-press)]',
                 'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
@@ -234,7 +234,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
             </button>
           }
         >
-          <div data-floe-input-surface class="flex items-center flex-1 gap-1 px-2 py-1 bg-[var(--floe-well)] rounded-md border border-[var(--floe-line)]">
+          <div data-floe-input-surface class="flex items-center flex-1 gap-1 px-2 py-1 bg-[var(--floe-well)] rounded-control border border-[var(--floe-line)]">
             <SearchIcon class="w-3.5 h-3.5 text-[var(--floe-ink-soft)] flex-shrink-0" />
             <input
               ref={(el) => {
@@ -274,7 +274,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       </div>
 
       {/* View mode toggle */}
-      <div class="flex items-center gap-0.5 p-0.5 bg-[var(--floe-well)] rounded-md">
+      <div class="flex items-center gap-0.5 p-0.5 bg-[var(--floe-well)] rounded-group">
         <ViewModeButton
           mode="list"
           currentMode={ctx.viewMode()}
@@ -316,11 +316,11 @@ function ViewModeButton(props: ViewModeButtonProps) {
       type="button"
       onClick={() => props.onClick()}
       class={cn(
-        'flex items-center justify-center w-6 h-6 rounded cursor-pointer',
-        'transition-all duration-[var(--floe-duration-fast)]',
+        'flex items-center justify-center w-6 h-6 rounded-sm cursor-pointer',
+        'transition-colors duration-[var(--floe-duration-fast)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         isActive()
-          ? 'bg-background shadow-sm text-foreground'
+          ? 'bg-background shadow-[var(--floe-elevation-raised)] text-foreground'
           : 'text-[var(--floe-ink-soft)] hover:text-foreground'
       )}
       aria-label={props.label}

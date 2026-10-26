@@ -81,7 +81,7 @@ export function Input(props: InputProps) {
       </Show>
 
       <Show when={local.error}>
-        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-caption text-error" role="alert">
           {local.error}
         </p>
       </Show>
@@ -138,7 +138,7 @@ export function Textarea(props: TextareaProps) {
         {...rest}
       />
       <Show when={local.error}>
-        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-caption text-error" role="alert">
           {local.error}
         </p>
       </Show>
@@ -315,7 +315,7 @@ export function NumberInput(props: NumberInputProps) {
       </div>
 
       <Show when={props.error}>
-        <p id={errorId} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId} class="mt-1 text-caption text-error" role="alert">
           {props.error}
         </p>
       </Show>
@@ -505,7 +505,7 @@ export function AffixInput(props: AffixInputProps) {
       </div>
 
       <Show when={local.error}>
-        <p id={errorId()} class="mt-1 text-[11px] text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-caption text-error" role="alert">
           {local.error}
         </p>
       </Show>
@@ -641,7 +641,7 @@ function AffixSelect(props: AffixSelectProps) {
             class={cn(
               'fixed z-50 min-w-24 py-0.5',
               'bg-popover text-popover-foreground',
-              'rounded-[var(--floe-radius-group)] border border-[var(--floe-line)]',
+              'rounded-group border border-[var(--floe-line)]',
               'shadow-[var(--floe-elevation-float)]',
               'floe-floating-presence floe-floating-menu'
             )}
@@ -658,7 +658,7 @@ function AffixSelect(props: AffixSelectProps) {
                   onClick={() => handleSelect(option.value)}
                   class={cn(
                     'w-full flex items-center px-2.5 cursor-pointer',
-                    'min-h-[var(--floe-row-height)] rounded-[var(--floe-radius-sm)]',
+                    'min-h-[var(--floe-row-height)] rounded-sm',
                     'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
                     'text-[var(--floe-ink-soft)] hover:text-foreground',
                     'focus:outline-none',

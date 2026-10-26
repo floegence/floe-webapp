@@ -39,7 +39,7 @@ function ThemeTile(props: ThemeTileProps) {
       aria-checked={props.selected}
       aria-label={`${props.preset.displayName}: ${props.preset.description ?? props.mode}`}
       class={cn(
-        'group min-w-0 rounded-[var(--floe-radius-md)] border p-2 text-left transition-colors',
+        'group min-w-0 rounded-md border p-2 text-left transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
         props.active
           ? 'border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] shadow-sm'
@@ -50,7 +50,7 @@ function ThemeTile(props: ThemeTileProps) {
       onClick={() => props.onSelect()}
     >
       <span
-        class="relative block h-11 overflow-hidden rounded border"
+        class="relative block h-11 overflow-hidden rounded-xs border"
         style={{
           background: preview()?.background ?? tokens()['--background'],
           'border-color': preview()?.border ?? tokens()['--border'],
@@ -85,7 +85,7 @@ function ThemeTile(props: ThemeTileProps) {
           <span class="block truncate text-xs font-semibold text-[var(--floe-ink)]">
             {props.preset.displayName}
           </span>
-          <span class="mt-0.5 block text-[10px] leading-3.5 text-[var(--floe-ink-soft)]">
+          <span class="mt-0.5 block text-caption leading-3.5 text-[var(--floe-ink-soft)]">
             {props.preset.description}
           </span>
         </span>
@@ -115,7 +115,7 @@ export function ShellThemePicker() {
     return (
       <div>
         <div class="mb-1.5 flex items-center gap-2">
-          <span class="text-[10px] font-semibold uppercase text-[var(--floe-ink-soft)]">{label}</span>
+          <span class="text-caption font-semibold uppercase text-[var(--floe-ink-soft)]">{label}</span>
           <span class="h-px flex-1 bg-border" aria-hidden="true" />
         </div>
         <div class="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label={label}>
@@ -138,7 +138,7 @@ export function ShellThemePicker() {
   return (
     <div class="space-y-3">
       <div
-        class="grid grid-cols-3 overflow-hidden rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-0.5"
+        class="grid grid-cols-3 overflow-hidden rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] p-0.5"
         role="group"
         aria-label="Color mode"
       >
@@ -150,7 +150,7 @@ export function ShellThemePicker() {
                 type="button"
                 aria-pressed={theme.theme() === mode.value}
                 class={cn(
-                  'inline-flex h-7 min-w-0 items-center justify-center gap-1 rounded-sm px-1.5 text-[11px] font-medium transition-colors',
+                  'inline-flex h-7 min-w-0 items-center justify-center gap-1 rounded-sm px-1.5 text-caption font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   theme.theme() === mode.value
                     ? 'bg-[var(--floe-plane-raised)] text-[var(--floe-ink)] shadow-sm'

@@ -56,7 +56,7 @@ export function SidebarPane(props: SidebarPaneProps) {
           style={{ width: `${width()}px` }}
         >
           <div class="flex items-center justify-between px-3 py-2 border-b border-sidebar-border">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">{props.title}</span>
+            <span class="text-caption font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">{props.title}</span>
             <Show when={props.headerActions || showCloseButton()}>
               <div class="flex min-w-0 items-center gap-1.5">
                 <Show when={props.headerActions}>
@@ -66,7 +66,7 @@ export function SidebarPane(props: SidebarPaneProps) {
                   <button
                     type="button"
                     onClick={() => props.onClose?.()}
-                    class="flex items-center justify-center w-5 h-5 rounded-[var(--floe-radius-xs)] cursor-pointer hover:bg-[var(--floe-state-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
+                    class="flex items-center justify-center w-5 h-5 rounded-xs cursor-pointer hover:bg-[var(--floe-state-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
                     aria-label="Close sidebar"
                   >
                     <svg

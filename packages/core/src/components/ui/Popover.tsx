@@ -178,7 +178,7 @@ export function Popover(props: PopoverProps) {
             class={cn(
               isSurfaceMode() ? 'absolute z-20' : 'fixed z-50',
               'bg-popover text-popover-foreground',
-              'rounded-[var(--floe-radius-floating)] border border-[var(--floe-line)]',
+              'rounded-panel border border-[var(--floe-line)]',
               'shadow-[var(--floe-window-shadow)]',
               'floe-floating-presence floe-floating-menu',
               props.class

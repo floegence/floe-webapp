@@ -93,7 +93,7 @@ export function MobileNavigationPanel(props: MobileNavigationPanelProps & {
             <header class="flex shrink-0 items-center gap-2 border-b px-4 py-2">
               <h2 id={titleId} class="min-w-0 flex-1 text-base font-semibold">{props.title}</h2>
               <button type="button" data-floe-autofocus aria-label={props.closeLabel ?? 'Close'}
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--floe-radius-md)] hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={dismiss}><X class="h-5 w-5" /></button>
             </header>
           </Show>

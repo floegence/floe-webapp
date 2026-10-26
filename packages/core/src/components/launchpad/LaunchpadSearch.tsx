@@ -16,9 +16,9 @@ export function LaunchpadSearch(props: LaunchpadSearchProps) {
           value={props.value}
           onInput={(e) => props.onChange(e.currentTarget.value)}
           placeholder={props.placeholder ?? 'Search'}
-          class="w-full h-10 pl-10 pr-4 rounded-lg bg-card/80 backdrop-blur-sm
+          class="w-full h-10 pl-10 pr-4 rounded-control bg-card/80 backdrop-blur-sm
                  border border-[var(--floe-line)] text-foreground placeholder:text-[var(--floe-ink-quiet)]
-                 outline-none transition-all duration-[var(--floe-duration-base)] shadow-sm"
+                 outline-none transition-[border-color,box-shadow,background-color] duration-[var(--floe-duration-base)] shadow-[var(--floe-elevation-raised)]"
         />
       </div>
     </div>

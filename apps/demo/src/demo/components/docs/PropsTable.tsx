@@ -27,7 +27,7 @@ export function PropsTable(props: PropsTableProps) {
           {props.componentName} Props
         </h3>
       </Show>
-      <div class="overflow-x-auto rounded-[var(--floe-radius-group)] border border-[var(--floe-line)]">
+      <div class="overflow-x-auto rounded-group border border-[var(--floe-line)]">
         <table class="w-full text-[length:var(--floe-type-caption)]">
           <thead>
             <tr class="bg-[var(--floe-well)] border-b border-[var(--floe-line)]">
@@ -64,7 +64,7 @@ export function PropsTable(props: PropsTableProps) {
                     </Show>
                   </td>
                   <td class="px-3 py-2 whitespace-nowrap">
-                    <code class="font-mono text-[length:var(--floe-type-caption)] px-1.5 py-0.5 rounded-[var(--floe-radius-xs)] border border-[var(--floe-line)] bg-[var(--floe-well)] text-[var(--floe-ink-soft)]">
+                    <code class="font-mono text-[length:var(--floe-type-caption)] px-1.5 py-0.5 rounded-xs border border-[var(--floe-line)] bg-[var(--floe-well)] text-[var(--floe-ink-soft)]">
                       {prop.type}
                     </code>
                   </td>

@@ -107,10 +107,10 @@ function mapTopic(topic: DemoTopic, sortOrder: number): NotesTopic {
 }
 
 function toSizeBucket(value: number): NotesSizeBucket {
-  const rounded = Math.round(value);
-  if (rounded <= 1) return 1;
-  if (rounded >= 5) return 5;
-  return rounded as NotesSizeBucket;
+  const clamped = Math.round(value);
+  if (clamped <= 1) return 1;
+  if (clamped >= 5) return 5;
+  return clamped as NotesSizeBucket;
 }
 
 function mapItem(note: NotesNote, previewText: string, sizeBucket: NotesSizeBucket): NotesItem {

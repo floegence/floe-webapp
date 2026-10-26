@@ -233,7 +233,7 @@ export function FileListView(props: FileListViewProps) {
     return (
       <span
         class={cn(
-          'ml-1 transition-all duration-[var(--floe-duration-fast)]',
+          'ml-1 transition-opacity duration-[var(--floe-duration-fast)]',
           isActive() ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'
         )}
       >
@@ -261,7 +261,7 @@ export function FileListView(props: FileListViewProps) {
     const showSize = isMdUp();
     const ratios = ctx.listColumnRatios();
 
-    // Min widths tuned for the current typography (text-[11px] header, text-xs rows).
+    // Min widths tuned for the current typography (text-caption header, text-xs rows).
     const minName = 160;
     const minModified = 120;
     const minSize = 80;
@@ -428,7 +428,7 @@ export function FileListView(props: FileListViewProps) {
       <div
         ref={setHeaderEl}
         data-file-list-header
-        class="flex items-center border-b border-[var(--floe-line)] text-[11px] text-[var(--floe-ink-soft)] font-medium"
+        class="flex items-center border-b border-[var(--floe-line)] text-caption text-[var(--floe-ink-soft)] font-medium"
       >
         <div
           class={cn(
@@ -538,7 +538,7 @@ export function FileListView(props: FileListViewProps) {
                   <button
                     type="button"
                     onClick={() => ctx.setFilterQuery('')}
-                    class="px-2 py-1 rounded bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
+                    class="px-2 py-1 rounded-xs bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
                   >
                     Clear Filter
                   </button>
@@ -901,7 +901,7 @@ function FileListItem(props: FileListItemProps) {
       class={cn(
         FILE_LIST_ROW_CLASS,
         'group cursor-pointer',
-        'transition-all duration-[var(--floe-duration-fast)] ease-out',
+        'transition-[background-color,transform,opacity,box-shadow] duration-[var(--floe-duration-fast)] ease-out',
         'hover:bg-[var(--floe-state-selected)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
         isSelected() && 'bg-[var(--floe-state-selected)] text-accent-foreground',
@@ -911,7 +911,7 @@ function FileListItem(props: FileListItemProps) {
         isActiveDropTarget() &&
           isValidDropTarget() && [
             'bg-primary/15 outline outline-2 outline-primary/60',
-            'scale-[1.01] shadow-sm shadow-primary/10',
+            'scale-[1.01] shadow-[var(--floe-elevation-raised)]',
           ],
         isActiveDropTarget() &&
           !isValidDropTarget() && [

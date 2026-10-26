@@ -174,7 +174,7 @@ export function HighlightBlock(props: HighlightBlockProps) {
             stroke-linecap="round"
             stroke-linejoin="round"
             class={cn(
-              'w-3 h-3 opacity-50 transition-transform duration-200',
+              'w-3 h-3 opacity-50 transition-transform duration-[var(--floe-duration-base)]',
               !isCollapsed() && 'rotate-90'
             )}
           >

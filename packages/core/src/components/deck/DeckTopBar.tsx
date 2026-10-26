@@ -97,7 +97,7 @@ export function DeckTopBar(props: DeckTopBarProps) {
           ref={triggerRef}
           onClick={handleToggle}
           class={cn(
-            'flex items-center gap-1 px-1.5 h-5 rounded text-[10px]',
+            'flex items-center gap-1 px-1.5 h-5 rounded-xs text-caption',
             'text-[var(--floe-ink-quiet)] hover:text-foreground hover:bg-[var(--floe-state-hover)]',
             'transition-colors cursor-pointer'
           )}
@@ -121,7 +121,7 @@ export function DeckTopBar(props: DeckTopBarProps) {
               class={cn(
                 'fixed z-[9999]',
                 'min-w-[180px] max-h-[300px] overflow-y-auto',
-                'bg-popover border border-[var(--floe-line)] rounded-md shadow-[var(--floe-elevation-float-strong)]',
+                'bg-popover border border-[var(--floe-line)] rounded-panel shadow-[var(--floe-elevation-float-strong)]',
                 'animate-in fade-in slide-in-from-top-1 duration-[var(--floe-duration-fast)]'
               )}
               style={{
@@ -133,7 +133,7 @@ export function DeckTopBar(props: DeckTopBarProps) {
                 <For each={Array.from(widgetRegistry.widgets().values())}>
                   {(widget) => (
                     <button
-                      class="w-full flex items-center gap-2 px-3 py-2 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
+                      class="w-full flex items-center gap-2 px-3 py-2 rounded-xs hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                       onClick={(e) => handleAddWidget(e, widget.type)}
                     >
                       <Show when={widget.icon} fallback={<div class="w-4 h-4" />}>
@@ -175,7 +175,7 @@ export function DeckTopBar(props: DeckTopBarProps) {
             });
           }}
           class={cn(
-            'flex items-center gap-1 px-1.5 h-5 rounded text-[10px]',
+            'flex items-center gap-1 px-1.5 h-5 rounded-xs text-caption',
             'text-[var(--floe-ink-quiet)] hover:text-foreground hover:bg-[var(--floe-state-hover)]',
             'transition-colors cursor-pointer'
           )}

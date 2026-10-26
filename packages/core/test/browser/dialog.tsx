@@ -91,7 +91,7 @@ function Fixture() {
           <section class="flex h-full min-h-0 flex-col">
             <header class="flex shrink-0 items-center gap-4 border-b p-4">
               <h1>Plugin Center</h1>
-              <input aria-label="Search plugins" class="rounded border p-2" />
+              <input aria-label="Search plugins" class="rounded-md border p-2" />
               <Dropdown
                 trigger={<span>Source filter</span>}
                 value={filter()}

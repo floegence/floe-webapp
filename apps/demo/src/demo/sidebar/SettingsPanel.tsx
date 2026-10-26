@@ -66,12 +66,12 @@ export function SettingsPanel() {
             {protocol.status() === 'connected' ? 'Disconnect' : 'Connect'}
           </Button>
         </div>
-        <p class="mt-1.5 text-[11px] text-[var(--floe-ink-soft)]">
+        <p class="mt-1.5 text-caption text-[var(--floe-ink-soft)]">
           Configure with <code class="font-mono">VITE_FLOE_CONTROLPLANE_BASE_URL</code> and{' '}
           <code class="font-mono">VITE_FLOE_ENDPOINT_ID</code>.
         </p>
         <Show when={protocol.error()}>
-          <p class="mt-1.5 text-[11px] text-error">{protocol.error()?.message}</p>
+          <p class="mt-1.5 text-caption text-error">{protocol.error()?.message}</p>
         </Show>
       </SidebarSection>
 
@@ -80,7 +80,7 @@ export function SettingsPanel() {
       </SidebarSection>
 
       <SidebarSection title="Chart Theme">
-        <p class="mb-2 text-[11px] text-[var(--floe-ink-soft)]">
+        <p class="mb-2 text-caption text-[var(--floe-ink-soft)]">
           Compare named chart themes live. The sample charts update instantly without changing the
           shell light or dark mode.
         </p>

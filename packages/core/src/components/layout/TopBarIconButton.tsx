@@ -34,7 +34,7 @@ export function TopBarIconButton(props: TopBarIconButtonProps) {
       class={cn(
         'inline-flex items-center justify-center',
         'w-[var(--floe-control-height-md)] h-[var(--floe-control-height-md)]',
-        'rounded-[var(--floe-radius-md)] cursor-pointer',
+        'rounded-control cursor-pointer',
         'text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)]',
         'active:bg-[var(--floe-state-press)]',
         'transition-[background-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',

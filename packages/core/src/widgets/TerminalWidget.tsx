@@ -204,7 +204,7 @@ export function TerminalWidget(props: TerminalWidgetProps) {
     >
       <div class="flex h-full min-h-0 flex-col">
         <div
-          class="flex items-center justify-between border-b px-3 py-2 text-[11px]"
+          class="flex items-center justify-between border-b px-3 py-2 text-caption"
           style={{
             'border-color': 'color-mix(in srgb, var(--terminal-foreground) 10%, transparent)',
             color: 'color-mix(in srgb, var(--terminal-foreground) 72%, transparent)',
@@ -222,7 +222,7 @@ export function TerminalWidget(props: TerminalWidgetProps) {
           <Show when={isMobile() && !props.isEditMode}>
             <button
               type="button"
-              class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors"
+              class="rounded-full px-2.5 py-1 text-caption font-semibold uppercase tracking-[0.16em] transition-colors"
               style={{
                 background: 'color-mix(in srgb, var(--terminal-foreground) 8%, transparent)',
                 color: 'color-mix(in srgb, var(--terminal-foreground) 82%, transparent)',
@@ -239,7 +239,7 @@ export function TerminalWidget(props: TerminalWidgetProps) {
 
         <div
           ref={outputRef}
-          class="flex-1 overflow-y-auto px-3 py-3 transition-[padding] duration-200"
+          class="flex-1 overflow-y-auto px-3 py-3 transition-[padding] duration-[var(--floe-duration-base)]"
           style={{
             'padding-bottom':
               isMobile() && mobileKeyboardVisible()
@@ -262,7 +262,7 @@ export function TerminalWidget(props: TerminalWidgetProps) {
           </For>
 
           <div
-            class="mt-2 rounded-xl px-3 py-2"
+            class="mt-2 rounded-group px-3 py-2"
             style={{
               background:
                 'color-mix(in srgb, var(--terminal-foreground) 5%, transparent)',
@@ -292,7 +292,7 @@ export function TerminalWidget(props: TerminalWidgetProps) {
                   >
                     <span class="whitespace-pre-wrap break-all text-terminal-foreground">
                       {promptPreview().before}
-                      <span class="mx-[1px] inline-block min-w-[0.65ch] rounded-[2px] bg-terminal-foreground text-terminal-background">
+                      <span class="mx-[1px] inline-block min-w-[0.65ch] bg-terminal-foreground text-terminal-background">
                         {promptPreview().cursor}
                       </span>
                       {promptPreview().after}

@@ -302,7 +302,7 @@ export function Dropdown(props: DropdownProps) {
                 ? 'absolute z-20 min-w-36'
                 : 'fixed z-50 min-w-36',
               'bg-popover text-popover-foreground p-1',
-              'rounded-[var(--floe-radius-floating)] border border-[var(--floe-line)]',
+              'rounded-panel border border-[var(--floe-line)]',
               'shadow-[var(--floe-elevation-float)]',
               'floe-floating-presence floe-floating-menu'
             )}
@@ -472,7 +472,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
           data-floe-interactive="item"
           class={cn(
             'w-full flex items-center gap-2 px-2',
-            'min-h-[var(--floe-row-height)] rounded-[var(--floe-radius-sm)]',
+            'min-h-[var(--floe-row-height)] rounded-sm',
             'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
             'focus:outline-none',
             props.item.tone === 'danger' ? 'text-error' : 'text-[var(--floe-ink-soft)]',
@@ -524,7 +524,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                 ? 'absolute z-20 min-w-36'
                 : 'fixed z-50 min-w-36',
               'bg-popover text-popover-foreground p-1',
-              'rounded-[var(--floe-radius-floating)] border border-[var(--floe-line)]',
+              'rounded-panel border border-[var(--floe-line)]',
               'shadow-[var(--floe-elevation-float)]',
               'floe-floating-presence floe-floating-menu floe-floating-submenu'
             )}

@@ -154,7 +154,7 @@ const MermaidSkeleton: Component = () => (
 const ToolCallSkeleton: Component = () => (
   <div class="chat-tool-skeleton">
     <div class="flex items-center gap-2 p-3">
-      <Skeleton class="h-4 w-4 rounded" />
+      <Skeleton class="h-4 w-4 rounded-xs" />
       <Skeleton class="h-4 w-32" />
     </div>
   </div>

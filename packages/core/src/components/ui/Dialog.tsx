@@ -312,7 +312,7 @@ export function Dialog(props: DialogProps) {
                   isSurfaceMode()
                     ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
                     : 'w-full max-w-md',
-                  'bg-popover text-popover-foreground rounded-[var(--floe-radius-floating)] shadow-[var(--floe-elevation-float-strong)]',
+                  'bg-popover text-popover-foreground rounded-panel shadow-[var(--floe-elevation-float-strong)]',
                   'border border-[var(--floe-line)]',
                   'floe-floating-presence',
                   isBottomDrawer() ? 'floe-bottom-drawer-panel' : isSideDrawer() ? 'floe-side-drawer-panel' : 'floe-floating-dialog-panel',

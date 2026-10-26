@@ -239,7 +239,7 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
       onKeyDown={handleKeyDown}
       class={cn(
         'flex flex-col h-full min-h-0 bg-background',
-        'border border-[var(--floe-line)] rounded-lg overflow-hidden',
+        'border border-[var(--floe-line)] rounded-control overflow-hidden',
         'shadow-sm',
         props.class
       )}

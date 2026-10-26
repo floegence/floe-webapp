@@ -30,13 +30,16 @@ export function Card(props: CardProps) {
       data-floe-card-variant={variant()}
       data-floe-interactive={variant() === 'interactive' ? 'lift' : undefined}
       class={cn(
-        'rounded-[var(--floe-radius-card)]',
+        'rounded-card',
         'bg-card text-card-foreground',
         'duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
         variant() === 'default' && 'border border-transparent',
         variant() === 'well' && 'bg-[var(--floe-well)] border border-transparent',
-        variant() === 'interactive' &&
-          'border border-transparent cursor-pointer hover:-translate-y-[var(--floe-hover-lift)] hover:shadow-[var(--floe-elevation-raised)]',
+        /* The rise and its shadow live in the interaction contract
+         * (`data-floe-interactive='lift'` in language.css), so every clickable
+         * plane in the app travels the same pixel through the same token. The
+         * class string keeps only what is specific to this card. */
+        variant() === 'interactive' && 'border border-transparent cursor-pointer',
         local.class
       )}
       {...rest}

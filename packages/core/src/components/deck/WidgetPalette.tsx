@@ -63,7 +63,7 @@ export function WidgetPalette(props: WidgetPaletteProps) {
         <div class="flex items-center justify-between p-3 border-b border-[var(--floe-line)]">
           <h2 class="text-sm font-semibold">Add Widget</h2>
           <button
-            class="p-1 rounded hover:bg-[var(--floe-state-hover)] transition-colors cursor-pointer"
+            class="p-1 rounded-xs hover:bg-[var(--floe-state-hover)] transition-colors cursor-pointer"
             onClick={() => setIsOpen(false)}
           >
             <X class="w-4 h-4" />
@@ -83,7 +83,7 @@ export function WidgetPalette(props: WidgetPaletteProps) {
                   <div class="mb-2">
                     {/* Category header */}
                     <button
-                      class="w-full flex items-center gap-2 p-2 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
+                      class="w-full flex items-center gap-2 p-2 rounded-xs hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                       onClick={() => toggleCategory(category.key)}
                     >
                       <ChevronRight
@@ -102,7 +102,7 @@ export function WidgetPalette(props: WidgetPaletteProps) {
                         <For each={widgets()}>
                           {(widget) => (
                             <button
-                              class="w-full flex items-center gap-2 p-2 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
+                              class="w-full flex items-center gap-2 p-2 rounded-xs hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                               onClick={() => handleAddWidget(widget.type)}
                             >
                               <Show when={widget.icon} fallback={<div class="w-4 h-4" />}>

@@ -7,7 +7,7 @@ export default function ReportsPage() {
       <p class="mt-2 text-xs text-[var(--floe-ink-soft)]">Workspace activity at a glance.</p>
       <div class="mt-8 grid gap-4 sm:grid-cols-3">
         <For each={[['Files', '480'], ['Services', '6'], ['Open reviews', '12']]}>{([label, value]) => (
-          <article class="rounded-[var(--floe-radius-control)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-5">
+          <article class="rounded-control border border-[var(--floe-line)] bg-[var(--floe-well)] p-5">
             <p class="text-xs text-[var(--floe-ink-soft)]">{label}</p>
             <p class="mt-3 text-2xl font-semibold">{value}</p>
           </article>
@@ -15,7 +15,7 @@ export default function ReportsPage() {
       </div>
       <label class="mt-8 block text-xs">
         Review notes
-        <textarea class="mt-3 block min-h-32 w-full rounded-[var(--floe-radius-control)] border border-input bg-[var(--floe-plane)] p-3" placeholder="Keep your notes while moving between pages…" />
+        <textarea class="mt-3 block min-h-32 w-full rounded-control border border-input bg-[var(--floe-plane)] p-3" placeholder="Keep your notes while moving between pages…" />
       </label>
     </section>
   );

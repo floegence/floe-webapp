@@ -168,7 +168,7 @@ export function FileBrowserDragPreview() {
             {/* Preview card */}
             <div
               class={cn(
-                'flex flex-col gap-1 p-2.5 rounded-lg',
+                'flex flex-col gap-1 p-2.5 rounded-control',
                 'bg-card border border-[var(--floe-line)]',
                 'shadow-[var(--floe-elevation-raised)]',
                 'min-w-[150px] max-w-[220px]',
@@ -196,7 +196,7 @@ export function FileBrowserDragPreview() {
 
               {/* "and X more" indicator */}
               <Show when={remainingCount() > 0}>
-                <div class="text-[10px] text-[var(--floe-ink-soft)] pl-6">
+                <div class="text-caption text-[var(--floe-ink-soft)] pl-6">
                   and {remainingCount()} more...
                 </div>
               </Show>
@@ -205,7 +205,7 @@ export function FileBrowserDragPreview() {
               <Show when={showDropIndicator()}>
                 <div
                   class={cn(
-                    'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-[var(--floe-line)] text-[11px] font-medium',
+                    'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-[var(--floe-line)] text-caption font-medium',
                     'transition-colors duration-[var(--floe-duration-fast)]',
                     isValidDrop() ? 'text-success' : 'text-error'
                   )}
@@ -234,8 +234,8 @@ export function FileBrowserDragPreview() {
                   'min-w-[20px] h-5 px-1.5 rounded-full',
                   'bg-foreground text-background',
                   'flex items-center justify-center',
-                  'text-[10px] font-semibold',
-                  'shadow-sm',
+                  'text-caption font-semibold',
+                  'shadow-[var(--floe-elevation-raised)]',
                   // Entrance animation (only when not exiting)
                   !isExiting() && 'animate-in zoom-in-50 duration-[var(--floe-duration-base)]'
                 )}

@@ -31,7 +31,7 @@ const sizeStyles: Record<SwitchSize, {
     thumb: 'w-3 h-3',
     thumbTranslate: 'translate-x-3',
     label: 'text-xs leading-4',
-    description: 'text-[10px] leading-3',
+    description: 'text-caption leading-[var(--floe-line-caption)]',
     trackHeight: 16,
   },
   md: {
@@ -39,7 +39,7 @@ const sizeStyles: Record<SwitchSize, {
     thumb: 'w-4 h-4',
     thumbTranslate: 'translate-x-4',
     label: 'text-xs leading-5',
-    description: 'text-[11px] leading-4',
+    description: 'text-caption leading-[var(--floe-line-caption)]',
     trackHeight: 20,
   },
   lg: {

@@ -17,7 +17,7 @@ export interface CommandPaletteProps {
 }
 
 const KBD =
-  'px-1.5 py-0.5 rounded-[var(--floe-radius-xs)] border border-[var(--floe-line)] ' +
+  'px-1.5 py-0.5 rounded-xs border border-[var(--floe-line)] ' +
   'bg-[var(--floe-well)] text-[var(--floe-ink-quiet)] ' +
   'text-[length:var(--floe-type-caption)] font-mono leading-none';
 
@@ -129,7 +129,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
             props.zIndex === undefined && 'z-50',
             'w-full max-w-xl',
             'bg-popover text-popover-foreground',
-            'rounded-[var(--floe-radius-panel)]',
+            'rounded-panel',
             'border border-[var(--floe-line)]',
             'shadow-[var(--floe-elevation-float-strong)]',
             'floe-floating-presence floe-floating-dialog-panel',
@@ -185,7 +185,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
                           <button
                             type="button"
                             class={cn(
-                              'w-full flex items-center gap-3 px-3 mx-1 rounded-[var(--floe-radius-md)]',
+                              'w-full flex items-center gap-3 px-3 mx-1 rounded-sm',
                               'min-h-[var(--floe-row-height)] cursor-pointer',
                               'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
                               'text-[var(--floe-ink-soft)] hover:text-foreground',

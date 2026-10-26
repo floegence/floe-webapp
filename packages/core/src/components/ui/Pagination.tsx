@@ -205,7 +205,7 @@ export function Pagination(props: PaginationProps) {
         onClick={handleClick}
         title={buttonProps.title}
         class={cn(
-          'inline-flex items-center justify-center rounded-[var(--floe-radius-sm)] font-medium',
+          'inline-flex items-center justify-center rounded-sm font-medium',
           'transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] cursor-pointer',
           styles().button,
           buttonProps.isActive
@@ -317,7 +317,7 @@ export function Pagination(props: PaginationProps) {
                 onChange={(e) => local.onPageSizeChange?.(parseInt(e.target.value, 10))}
                 disabled={local.disabled}
                 class={cn(
-                  'rounded-md border border-[var(--floe-line)] bg-background px-2 focus:outline-none',
+                  'rounded-control border border-[var(--floe-line)] bg-background px-2 focus:outline-none',
                   styles().input,
                   local.disabled && 'opacity-50 cursor-not-allowed'
                 )}
@@ -407,7 +407,7 @@ export function Pagination(props: PaginationProps) {
                 onKeyDown={(e) => e.key === 'Enter' && handleJumpTo(e)}
                 onBlur={handleJumpTo}
                 class={cn(
-                  'rounded-md border border-[var(--floe-line)] bg-background px-2 text-center',
+                  'rounded-control border border-[var(--floe-line)] bg-background px-2 text-center',
                   'focus:outline-none',
                   '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
                   styles().input,

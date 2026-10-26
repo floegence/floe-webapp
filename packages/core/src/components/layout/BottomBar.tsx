@@ -20,7 +20,7 @@ export function BottomBar(props: BottomBarProps) {
         props.height ?? 'h-5',
         'shrink-0 flex items-center justify-between px-1.5',
         'bg-background border-t border-[var(--floe-line)]',
-        'text-[10px] text-[var(--floe-ink-soft)] font-mono',
+        'text-caption text-[var(--floe-ink-soft)] font-mono',
         props.class
       )}
       style={{ 'background-color': 'var(--activity-bar)', 'border-top-color': 'var(--bottom-bar-border)' }}

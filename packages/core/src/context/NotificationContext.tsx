@@ -162,8 +162,8 @@ function NotificationToast(props: NotificationToastProps) {
   return (
     <div
       class={cn(
-        'animate-in slide-in-from-right fade-in duration-200',
-        'rounded-lg border border-border border-l-[3px] p-3.5',
+        'animate-in slide-in-from-right fade-in duration-[var(--floe-duration-base)]',
+        'rounded-control border border-border border-l-[3px] p-3.5',
         'shadow-md',
         'bg-card text-card-foreground',
         typeStyles[props.notification.type]

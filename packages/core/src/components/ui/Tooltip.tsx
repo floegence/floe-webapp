@@ -76,7 +76,7 @@ export function Tooltip(props: TooltipProps) {
           class={cn(
             'absolute z-50 px-2.5 py-1.5',
             'bg-popover text-popover-foreground text-[length:var(--floe-type-caption)]',
-            'rounded-[var(--floe-radius-md)] border border-[var(--floe-line)]',
+            'rounded-panel border border-[var(--floe-line)]',
             'shadow-[var(--floe-elevation-float)]',
             'tracking-[var(--floe-tracking-normal)]',
             'whitespace-nowrap',

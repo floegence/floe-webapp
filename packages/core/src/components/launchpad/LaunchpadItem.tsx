@@ -36,10 +36,10 @@ export function LaunchpadItem(props: LaunchpadItemProps) {
   return (
     <button
       type="button"
-      class="launchpad-item group flex flex-col items-center gap-2 rounded-[var(--floe-radius-panel)] p-3
+      class="launchpad-item group flex flex-col items-center gap-2 rounded-panel p-3
              cursor-pointer bg-transparent select-none outline-none
              transition-[transform,background-color] duration-[var(--floe-duration-base)] ease-out
-             hover:scale-[1.02] hover:bg-card/20 focus-visible:bg-card/30 active:scale-95"
+             hover:-translate-y-[var(--floe-hover-lift)] hover:bg-card/20 focus-visible:bg-card/30 active:scale-[var(--floe-press-scale)]"
       style={{
         '--item-index': props.index,
         'animation-delay': `${props.index * 30}ms`,
@@ -51,12 +51,14 @@ export function LaunchpadItem(props: LaunchpadItemProps) {
       title={props.item.description ?? props.item.name}
     >
       <div
-        class="w-14 h-14 rounded-[var(--floe-radius-panel)] flex items-center justify-center shadow-[var(--floe-elevation-float)]
-               transition-transform duration-[var(--floe-duration-base)] group-hover:scale-105"
+        class="w-14 h-14 rounded-panel flex items-center justify-center shadow-[var(--floe-elevation-float)]
+               transition-transform duration-[var(--floe-duration-base)] group-hover:-translate-y-[var(--floe-hover-lift)]"
+        /* No inline shadow: the class above already asks for the float step,
+         * and the old override was a fourth elevation recipe that existed only
+         * here. The tile is a coloured chip on the canvas, not a window. */
         style={{
           background: background(),
           color: props.item.color ? 'white' : 'var(--primary-foreground)',
-          'box-shadow': '0 16px 32px -20px color-mix(in srgb, var(--foreground) 55%, transparent)',
         }}
       >
         <props.item.icon class="w-7 h-7" />

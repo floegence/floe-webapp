@@ -151,7 +151,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <Show when={source.view() === 'browse'}><div class="flex min-h-[140px] overflow-hidden rounded border border-[var(--floe-line)]">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[140px] overflow-hidden rounded-xs border border-[var(--floe-line)]">
           <div
             {...props.scrollViewportProps}
             class="max-h-[200px] min-h-[140px] min-w-0 flex-1 overflow-y-auto"
@@ -194,7 +194,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
                       <FileItemIcon item={file} size={16} class="w-4 h-4 flex-shrink-0" />
                       <span class="truncate">{file.name}</span>
                       <Show when={selectedIndex() >= 0}>
-                        <span class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">
+                        <span class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption text-primary-foreground">
                           <Show when={selectionMode() === 'multiple'} fallback={<Check class="h-3 w-3" />}>
                             {selectedIndex() + 1}
                           </Show>

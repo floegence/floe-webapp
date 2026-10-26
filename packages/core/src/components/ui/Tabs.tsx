@@ -545,7 +545,7 @@ export function Tabs(props: TabsProps) {
       base,
       cursor,
       sizeStyles[local.size ?? 'md'],
-      'rounded-[var(--floe-radius-control)]',
+      'rounded-control',
       indicatorThicknessClasses().tabBorderClass,
       /* The selected face is painted by the surface layer (`data-floe-surface`
        * plus `aria-selected`), which keeps the fill, hairline and first
@@ -580,7 +580,7 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded-[var(--floe-radius-control)] cursor-pointer',
+            'w-6 h-6 rounded-control cursor-pointer',
             'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollLeft()
               ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'
@@ -617,7 +617,7 @@ export function Tabs(props: TabsProps) {
               indicatorThicknessClasses().sliderHeightClass,
               indicatorColorClasses().sliderBgClass,
               indicatorAnimated()
-                ? 'transition-[transform,width] duration-200 ease-out motion-reduce:transition-none'
+                ? 'transition-[transform,width] duration-[var(--floe-duration-base)] ease-out motion-reduce:transition-none'
                 : 'transition-none',
               'will-change-transform',
               local.slotClassNames?.indicator
@@ -676,7 +676,7 @@ export function Tabs(props: TabsProps) {
                     data-floe-interactive="icon"
                     class={cn(
                       'flex-shrink-0 flex items-center justify-center',
-                      'w-5 h-5 rounded-[var(--floe-radius-control)] cursor-pointer',
+                      'w-5 h-5 rounded-control cursor-pointer',
                       'bg-transparent text-[var(--floe-ink-quiet)]',
                       closeDangerHover()
                         ? 'hover:bg-error hover:text-error-foreground'
@@ -707,7 +707,7 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'rounded-[var(--floe-radius-control)] cursor-pointer',
+            'rounded-control cursor-pointer',
             'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)]',
             local.size === 'sm' ? 'w-6 h-6' : 'w-7 h-7',
             local.slotClassNames?.addButton
@@ -727,7 +727,7 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded-[var(--floe-radius-control)] cursor-pointer',
+            'w-6 h-6 rounded-control cursor-pointer',
             'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollRight()
               ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'

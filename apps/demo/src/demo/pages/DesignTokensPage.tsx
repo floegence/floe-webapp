@@ -32,12 +32,12 @@ function ColorSwatch(props: ColorSwatchProps) {
       />
       <div class="flex-1 min-w-0">
         <div class="text-xs font-medium truncate">{props.token.name}</div>
-        <code class="text-[10px] text-muted-foreground font-mono">
+        <code class="text-caption text-muted-foreground font-mono">
           {props.token.variable}
         </code>
       </div>
       <div class="text-right flex-shrink-0">
-        <code class="text-[10px] text-muted-foreground font-mono block">
+        <code class="text-caption text-muted-foreground font-mono block">
           {value()}
         </code>
       </div>
@@ -55,7 +55,7 @@ function TokenCategoryCard(props: TokenCategoryCardProps) {
     <div class="space-y-3">
       <div>
         <h3 class="text-sm font-medium">{props.category.name}</h3>
-        <p class="text-[11px] text-muted-foreground">{props.category.description}</p>
+        <p class="text-caption text-muted-foreground">{props.category.description}</p>
       </div>
       <div class="space-y-1">
         <For each={props.category.tokens}>
@@ -75,7 +75,7 @@ export function DesignTokensPage() {
       {/* Header */}
       <div class="space-y-1">
         <h1 class="text-lg font-bold">Design Tokens</h1>
-        <p class="text-[11px] text-muted-foreground">
+        <p class="text-caption text-muted-foreground">
           Design tokens are the visual design atoms of the design system. They define colors, typography, spacing, and more.
           Current theme: <span class="font-medium">{resolvedTheme()}</span>
         </p>
@@ -84,11 +84,11 @@ export function DesignTokensPage() {
       {/* Colors Section */}
       <section class="space-y-3">
         <h2 class="text-sm font-semibold">Surface materials</h2>
-        <p class="text-[11px] text-muted-foreground">Surface style is independent of color. Optional shadow tokens override local defaults; raised, inset, and floating roles retain the existing layout.</p>
+        <p class="text-caption text-muted-foreground">Surface style is independent of color. Optional shadow tokens override local defaults; raised, inset, and floating roles retain the existing layout.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <For each={floeSurfaceTokens}>{token => <div class="border border-border rounded-lg p-4 bg-card" data-floe-surface={token.role === 'interacting' ? 'floating' : token.role} data-floe-surface-interacting={token.role === 'interacting' ? 'true' : undefined}>
+          <For each={floeSurfaceTokens}>{token => <div class="border border-border rounded-control p-4 bg-card" data-floe-surface={token.role === 'interacting' ? 'floating' : token.role} data-floe-surface-interacting={token.role === 'interacting' ? 'true' : undefined}>
             <p class="text-xs font-medium">{token.role}</p>
-            <code class="text-[10px] break-all text-muted-foreground">{token.variable}</code>
+            <code class="text-caption break-all text-muted-foreground">{token.variable}</code>
           </div>}</For>
         </div>
       </section>
@@ -127,9 +127,9 @@ export function DesignTokensPage() {
                         >
                           {font.name} - The quick brown fox
                         </div>
-                        <p class="text-[10px] text-muted-foreground">{font.description}</p>
+                        <p class="text-caption text-muted-foreground">{font.description}</p>
                       </div>
-                      <code class="text-[10px] text-muted-foreground font-mono max-w-48 truncate">
+                      <code class="text-caption text-muted-foreground font-mono max-w-48 truncate">
                         {font.value}
                       </code>
                     </div>
@@ -160,7 +160,7 @@ export function DesignTokensPage() {
                           <td class="px-3 py-2 font-mono text-muted-foreground">{token.size}</td>
                           <td class="px-3 py-2 font-mono text-muted-foreground">{token.lineHeight}</td>
                           <td class="px-3 py-2">
-                            <code class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">
+                            <code class="px-1.5 py-0.5 rounded-xs bg-muted text-caption font-mono">
                               {token.className}
                             </code>
                           </td>
@@ -207,13 +207,13 @@ export function DesignTokensPage() {
                         <td class="px-3 py-2 font-mono text-muted-foreground">{token.value}</td>
                         <td class="px-3 py-2 font-mono text-muted-foreground">{token.pixels}</td>
                         <td class="px-3 py-2">
-                          <code class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">
+                          <code class="px-1.5 py-0.5 rounded-xs bg-muted text-caption font-mono">
                             {token.className}
                           </code>
                         </td>
                         <td class="px-3 py-2">
                           <div
-                            class="bg-primary/20 border border-primary/40 rounded"
+                            class="bg-primary/20 border border-primary/40 rounded-xs"
                             style={{ width: token.value, height: '16px' }}
                           />
                         </td>
@@ -245,7 +245,7 @@ export function DesignTokensPage() {
                     />
                     <div class="text-center">
                       <div class="text-xs font-medium">{token.name}</div>
-                      <code class="text-[10px] text-muted-foreground font-mono">
+                      <code class="text-caption text-muted-foreground font-mono">
                         {token.value}
                       </code>
                     </div>
@@ -281,12 +281,12 @@ export function DesignTokensPage() {
                       <tr class="border-b border-border last:border-b-0">
                         <td class="px-3 py-2 font-medium">{token.name}</td>
                         <td class="px-3 py-2">
-                          <code class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">
+                          <code class="px-1.5 py-0.5 rounded-xs bg-muted text-caption font-mono">
                             {token.keyframes}
                           </code>
                         </td>
                         <td class="px-3 py-2">
-                          <code class="px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">
+                          <code class="px-1.5 py-0.5 rounded-xs bg-muted text-caption font-mono">
                             {token.usage}
                           </code>
                         </td>

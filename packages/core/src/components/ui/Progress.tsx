@@ -93,7 +93,7 @@ export function LinearProgress(props: LinearProgressProps) {
       </Show>
       <div
         class={cn(
-          'relative w-full overflow-hidden rounded-[var(--floe-radius-xs)] bg-[var(--floe-well)]',
+          'relative w-full overflow-hidden rounded-xs bg-[var(--floe-well)]',
           linearSizeStyles[size()].track
         )}
         data-floe-surface="inset"
@@ -106,7 +106,7 @@ export function LinearProgress(props: LinearProgressProps) {
         {/* Buffer bar */}
         <Show when={local.buffer}>
           <div
-            class="absolute inset-0 rounded-[var(--floe-radius-xs)] bg-[color-mix(in_srgb,var(--floe-ink)_16%,transparent)] transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]"
+            class="absolute inset-0 rounded-xs bg-[color-mix(in_srgb,var(--floe-ink)_16%,transparent)] transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]"
             style={{ width: `${bufferPercentage()}%` }}
           />
         </Show>
@@ -116,7 +116,7 @@ export function LinearProgress(props: LinearProgressProps) {
           data-floe-surface="raised"
           data-floe-surface-part="progress-fill"
           class={cn(
-            'h-full rounded-[var(--floe-radius-xs)] transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]',
+            'h-full rounded-xs transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]',
             colorStyles[color()].bar,
             local.striped && 'bg-striped',
             local.animated && local.striped && 'animate-stripe',
@@ -368,7 +368,7 @@ export function SegmentedProgress(props: SegmentedProgressProps) {
               data-floe-surface={index() < filledSegments() ? 'raised' : 'inset'}
               data-floe-surface-part="progress-fill"
               class={cn(
-                'flex-1 rounded-[var(--floe-radius-xs)] transition-colors duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
+                'flex-1 rounded-xs transition-colors duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
                 linearSizeStyles[size()].track,
                 index() < filledSegments() ? colorStyles[color()].bar : 'bg-[var(--floe-well)]'
               )}

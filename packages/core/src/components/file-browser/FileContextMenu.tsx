@@ -674,7 +674,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
         </Show>
         <span class="min-w-0 flex-1 text-left [overflow-wrap:anywhere]">{props.item.label}</span>
         <Show when={props.item.shortcut && !hasChildren()}>
-          <span class="shrink-0 text-[10px] text-[var(--floe-ink-soft)] opacity-60">
+          <span class="shrink-0 text-caption text-[var(--floe-ink-soft)] opacity-60">
             {props.item.shortcut}
           </span>
         </Show>
@@ -691,7 +691,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
             onScroll={() => setSubmenuScrollRevision((value) => value + 1)}
             class={cn(
               props.portalLayout.isSurfaceMode() ? 'absolute z-20 py-1' : 'fixed z-50 py-1',
-              'bg-popover border border-[var(--floe-line)] rounded-lg shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
+              'bg-popover border border-[var(--floe-line)] rounded-control shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
               submenuIsPositioned() && 'animate-in fade-in slide-in-from-left-1'
             )}
             data-floe-context-menu={props.contextMenuId}
@@ -1035,7 +1035,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
       onScroll={() => setScrollRevision((value) => value + 1)}
       class={cn(
         portalLayout.isSurfaceMode() ? 'absolute z-20 py-1' : 'fixed z-50 py-1',
-        'bg-popover border border-[var(--floe-line)] rounded-lg shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
+        'bg-popover border border-[var(--floe-line)] rounded-control shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
         isPositioned() && (touch() ? 'animate-in fade-in' : 'animate-in fade-in zoom-in-95')
       )}
       data-floe-context-menu={contextMenuId}

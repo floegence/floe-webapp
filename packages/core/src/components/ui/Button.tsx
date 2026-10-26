@@ -32,17 +32,17 @@ const variantStyles: Record<ButtonVariant, string> = {
     'border border-[var(--floe-line-strong)] bg-transparent text-foreground hover:bg-[var(--floe-state-hover)] hover:border-[color-mix(in_srgb,var(--foreground)_26%,transparent)]',
   ghost: 'bg-transparent text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)] hover:text-foreground',
   'ghost-destructive': 'bg-transparent text-[var(--floe-ink-soft)] hover:bg-[color-mix(in_srgb,var(--error)_12%,transparent)] hover:text-error',
-  destructive: 'bg-error text-error-foreground hover:bg-[color-mix(in_srgb,var(--error)_90%,#000)]',
+  destructive: 'bg-error text-error-foreground hover:bg-[color-mix(in_srgb,var(--error)_88%,var(--foreground))]',
 };
 
 /* One control scale: 24 / 28 / 32 / 36. Radius is the language's control
  * radius for the two working sizes and steps down only at xs. */
 const sizeStyles: Record<ButtonSize, string> = {
-  xs: 'h-[var(--floe-control-height-xs)] px-2 text-[length:var(--floe-type-caption)] rounded-[var(--floe-radius-sm)]',
-  sm: 'h-[var(--floe-control-height-sm)] px-2.5 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-md)]',
-  md: 'h-[var(--floe-control-height-md)] px-3 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-control)]',
-  lg: 'h-[var(--floe-control-height-lg)] px-3.5 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-control)]',
-  icon: 'h-[var(--floe-control-height-md)] w-[var(--floe-control-height-md)] rounded-[var(--floe-radius-control)]',
+  xs: 'h-[var(--floe-control-height-xs)] px-2 text-[length:var(--floe-type-caption)] rounded-sm',
+  sm: 'h-[var(--floe-control-height-sm)] px-2.5 text-[length:var(--floe-type-control)] rounded-md',
+  md: 'h-[var(--floe-control-height-md)] px-3 text-[length:var(--floe-type-control)] rounded-control',
+  lg: 'h-[var(--floe-control-height-lg)] px-3.5 text-[length:var(--floe-type-control)] rounded-control',
+  icon: 'h-[var(--floe-control-height-md)] w-[var(--floe-control-height-md)] rounded-control',
 };
 
 const iconSizeStyles: Record<ButtonSize, string> = {

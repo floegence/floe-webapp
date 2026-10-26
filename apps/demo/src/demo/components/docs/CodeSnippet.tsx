@@ -78,7 +78,7 @@ export function CodeSnippet(props: CodeSnippetProps) {
   return (
     <div
       class={cn(
-        'overflow-hidden rounded-[var(--floe-radius-group)]',
+        'overflow-hidden rounded-group',
         'border border-[var(--floe-line)]',
         props.class
       )}
@@ -105,7 +105,7 @@ export function CodeSnippet(props: CodeSnippetProps) {
               title={copied() ? 'Copied!' : 'Copy code'}
             >
               <Show when={copied()} fallback={<CopyIcon class="w-3 h-3" />}>
-                <CheckIcon class="w-3 h-3 text-[#3fb950]" />
+                <CheckIcon class="w-3 h-3 text-success" />
               </Show>
             </Button>
           </Show>
@@ -123,10 +123,10 @@ export function CodeSnippet(props: CodeSnippetProps) {
         <Show
           when={!isLoading()}
           fallback={
-            <div class="p-3 space-y-1.5 bg-[#0d1117]">
-              <Skeleton class="h-3 w-3/4 bg-[#21262d]" />
-              <Skeleton class="h-3 w-1/2 bg-[#21262d]" />
-              <Skeleton class="h-3 w-2/3 bg-[#21262d]" />
+            <div class="p-3 space-y-1.5 bg-[var(--floe-plane)]">
+              <Skeleton class="h-3 w-3/4 bg-[var(--floe-well)]" />
+              <Skeleton class="h-3 w-1/2 bg-[var(--floe-well)]" />
+              <Skeleton class="h-3 w-2/3 bg-[var(--floe-well)]" />
             </div>
           }
         >

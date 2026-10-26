@@ -72,8 +72,8 @@ export function LayoutSelector(props: LayoutSelectorProps) {
       {/* Trigger button */}
       <button
         class={cn(
-          'flex items-center gap-1 px-1.5 h-5 rounded',
-          'hover:bg-[var(--floe-state-hover)] transition-colors text-[10px] cursor-pointer',
+          'flex items-center gap-1 px-1.5 h-5 rounded-xs',
+          'hover:bg-[var(--floe-state-hover)] transition-colors text-caption cursor-pointer',
           isOpen() && 'bg-[var(--floe-well)]'
         )}
         onClick={() => setIsOpen(!isOpen())}
@@ -87,7 +87,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
       {/* Dropdown */}
       <Show when={isOpen()}>
         <div
-          class="absolute top-full left-0 mt-1 w-48 bg-popover border border-[var(--floe-line)] rounded shadow-[var(--floe-elevation-float)] z-50 overflow-hidden"
+          class="absolute top-full left-0 mt-1 w-48 bg-popover border border-[var(--floe-line)] rounded-xs shadow-[var(--floe-elevation-float)] z-50 overflow-hidden"
         >
           <div class="max-h-48 overflow-y-auto py-0.5">
             <For each={layouts()}>
@@ -116,7 +116,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                       fallback={
                         <input
                           type="text"
-                          class="flex-1 text-[10px] bg-background border border-[var(--floe-line)] rounded px-1 py-0.5"
+                          class="flex-1 text-caption bg-background border border-[var(--floe-line)] rounded-xs px-1 py-0.5"
                           value={renameValue()}
                           onInput={(e) => setRenameValue(e.currentTarget.value)}
                           onKeyDown={(e) => {
@@ -129,10 +129,10 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                         />
                       }
                     >
-                      <span class="flex-1 text-[10px] truncate text-foreground/80">
+                      <span class="flex-1 text-caption truncate text-foreground/80">
                         {wsLayout.name}
                         {wsLayout.isPreset && (
-                          <span class="ml-1 text-[9px] text-[var(--floe-ink-quiet)]">(preset)</span>
+                          <span class="ml-1 text-[var(--floe-ink-quiet)]">(preset)</span>
                         )}
                       </span>
                     </Show>
@@ -141,7 +141,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                     <Show when={!isRenamingThis()}>
                       <div class="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          class="p-0.5 rounded hover:bg-background transition-colors cursor-pointer"
+                          class="p-0.5 rounded-xs hover:bg-background transition-colors cursor-pointer"
                           onClick={(e) => handleDuplicate(wsLayout.id, e)}
                           title="Duplicate"
                         >
@@ -149,14 +149,14 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                         </button>
                         <Show when={!wsLayout.isPreset}>
                           <button
-                            class="p-0.5 rounded hover:bg-background transition-colors cursor-pointer"
+                            class="p-0.5 rounded-xs hover:bg-background transition-colors cursor-pointer"
                             onClick={(e) => startRename(wsLayout.id, wsLayout.name, e)}
                             title="Rename"
                           >
                             <Pencil class="w-2.5 h-2.5 text-[var(--floe-ink-quiet)]" />
                           </button>
                           <button
-                            class="p-0.5 rounded hover:bg-destructive/10 transition-colors cursor-pointer"
+                            class="p-0.5 rounded-xs hover:bg-destructive/10 transition-colors cursor-pointer"
                             onClick={(e) => handleDelete(wsLayout.id, e)}
                             title="Delete"
                           >
@@ -174,7 +174,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
           {/* Create new layout */}
           <div class="border-t border-[var(--floe-line)] px-1.5 py-1">
             <button
-              class="w-full text-left text-[10px] text-primary/80 hover:text-[var(--floe-accent-ink)] cursor-pointer"
+              class="w-full text-left text-caption text-primary/80 hover:text-[var(--floe-accent-ink)] cursor-pointer"
               onClick={() => {
                 setIsOpen(false);
                 // Close UI first, then mutate deck state.

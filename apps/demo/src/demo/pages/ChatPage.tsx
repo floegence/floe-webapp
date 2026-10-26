@@ -596,7 +596,7 @@ The chat component supports:
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-base font-semibold">Chat Component Demo</h1>
-            <p class="text-[11px] text-[var(--floe-ink-soft)] mt-0.5">
+            <p class="text-caption text-[var(--floe-ink-soft)] mt-0.5">
               Showcasing all message block types with rich styling
             </p>
           </div>

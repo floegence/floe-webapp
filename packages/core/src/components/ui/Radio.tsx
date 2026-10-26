@@ -59,13 +59,13 @@ const sizeStyles: Record<RadioSize, { outer: string; inner: string; label: strin
     outer: 'w-3.5 h-3.5',
     inner: 'w-1.5 h-1.5',
     label: 'text-xs',
-    description: 'text-[10px]',
+    description: 'text-caption',
   },
   md: {
     outer: 'w-4 h-4',
     inner: 'w-2 h-2',
-    label: 'text-xs',
-    description: 'text-[11px]',
+    label: 'text-sm',
+    description: 'text-caption',
   },
   lg: {
     outer: 'w-5 h-5',
@@ -125,7 +125,7 @@ export function RadioGroup(props: RadioGroupProps) {
 
     if (v === 'button') {
       return cn(
-        'inline-flex rounded-md border border-[var(--floe-line)] overflow-hidden',
+        'inline-flex rounded-group border border-[var(--floe-line)] overflow-hidden',
         isHorizontal ? 'flex-row' : 'flex-col'
       );
     }
@@ -207,7 +207,7 @@ export function RadioOption(props: RadioOptionProps) {
       data-floe-surface-part="indicator"
       data-floe-selected={isChecked() ? 'true' : undefined}
       class={cn(
-        'rounded-full border-2 transition-colors duration-150',
+        'rounded-full border-2 transition-colors duration-[var(--floe-duration-fast)]',
         'flex items-center justify-center',
         sizeStyles[size()].outer,
         isChecked()
@@ -221,7 +221,7 @@ export function RadioOption(props: RadioOptionProps) {
         data-floe-surface="flat"
         data-floe-surface-part="radio-dot"
         class={cn(
-          'rounded-full bg-primary-foreground transition-transform duration-150',
+          'rounded-full bg-primary-foreground transition-transform duration-[var(--floe-duration-fast)]',
           sizeStyles[size()].inner,
           isChecked() ? 'scale-100' : 'scale-0'
         )}
@@ -269,7 +269,7 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'cursor-pointer select-none transition-colors duration-150',
+            'cursor-pointer select-none transition-colors duration-[var(--floe-duration-fast)]',
             'border-r border-[var(--floe-line)] last:border-r-0',
             buttonSizeStyles[size()],
             isChecked()
@@ -292,7 +292,7 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'relative cursor-pointer select-none rounded-[var(--floe-radius-group)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            'relative cursor-pointer select-none rounded-group border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             cardSizeStyles[size()],
             isChecked()
               ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
@@ -339,7 +339,7 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
-            'rounded-[var(--floe-radius-md)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] text-center',
+            'rounded-control border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] text-center',
             tileSizeStyles[size()].container,
             isChecked()
               ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
@@ -354,7 +354,7 @@ export function RadioOption(props: RadioOptionProps) {
               const Icon = getIcon();
               return (
                 <div class={cn(
-                  'mb-2 transition-colors duration-150',
+                  'mb-2 transition-colors duration-[var(--floe-duration-fast)]',
                   isChecked() ? 'text-[var(--floe-accent-ink)]' : 'text-[var(--floe-ink-quiet)]'
                 )}>
                   <Icon class={tileSizeStyles[size()].icon} />
@@ -364,7 +364,7 @@ export function RadioOption(props: RadioOptionProps) {
           </Show>
           <Show when={local.label}>
             <span class={cn(
-              'font-medium transition-colors duration-150',
+              'font-medium transition-colors duration-[var(--floe-duration-fast)]',
               sizeStyles[size()].label,
               isChecked() ? 'text-[var(--floe-ink)]' : 'text-[var(--floe-ink-soft)]'
             )}>

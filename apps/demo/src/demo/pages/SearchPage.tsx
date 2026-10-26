@@ -19,7 +19,7 @@ function HighlightedText(props: { text: string; query: string }) {
     >
       <span class="truncate">
         {props.text.slice(0, index())}
-        <mark class="rounded bg-warning/20 px-0.5 text-[var(--floe-ink)]">
+        <mark class="rounded-xs bg-warning/20 px-0.5 text-[var(--floe-ink)]">
           {props.text.slice(index(), index() + props.query.length)}
         </mark>
         {props.text.slice(index() + props.query.length)}
@@ -43,7 +43,7 @@ export function SearchPage(props: SearchPageProps) {
         </p>
       </div>
 
-      <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-control)] overflow-hidden">
+      <Panel class="border border-[var(--floe-line)] rounded-control overflow-hidden">
         <PanelHeader actions={
           <div class="flex items-center gap-2">
             <Button

@@ -2265,6 +2265,8 @@ export const SuccessIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--success)" opacity="0.2" />
@@ -2287,6 +2289,8 @@ export const ErrorIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--error)" opacity="0.2" />
@@ -2309,6 +2313,8 @@ export const WarningIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2336,6 +2342,8 @@ export const InfoIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--info)" opacity="0.2" />
@@ -2352,6 +2360,8 @@ export const SparkleIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2379,6 +2389,8 @@ export const LoadingIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="none" stroke="var(--muted)" stroke-width="2" opacity="0.3" />
@@ -2393,6 +2405,8 @@ export const HeartIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2418,6 +2432,8 @@ export const StarIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <polygon
@@ -2443,6 +2459,8 @@ export const BellIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2476,6 +2494,8 @@ export const CloudIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2501,6 +2521,8 @@ export const DatabaseIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <ellipse cx="12" cy="5" rx="9" ry="3" fill="var(--primary)" opacity="0.2" />
@@ -2517,6 +2539,8 @@ export const TerminalIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect x="2" y="4" width="20" height="16" rx="2" fill="var(--success)" opacity="0.2" />
@@ -2533,6 +2557,8 @@ export const MailIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="20" height="16" x="2" y="4" rx="2" fill="var(--info)" opacity="0.2" />
@@ -2548,6 +2574,8 @@ export const LockIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="18" height="11" x="3" y="11" rx="2" ry="2" fill="var(--warning)" opacity="0.2" />
@@ -2563,6 +2591,8 @@ export const ShieldIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2589,6 +2619,8 @@ export const ZapIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2614,6 +2646,8 @@ export const GlobeIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--info)" opacity="0.2" />
@@ -2630,6 +2664,8 @@ export const ClockIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--info)" opacity="0.2" />
@@ -2645,6 +2681,8 @@ export const CalendarIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="18" height="18" x="3" y="4" rx="2" fill="var(--error)" opacity="0.2" />
@@ -2662,6 +2700,8 @@ export const CameraIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2688,6 +2728,8 @@ export const MicIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="var(--error)" opacity="0.2" />
@@ -2704,6 +2746,8 @@ export const SettingsIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2730,6 +2774,8 @@ export const UserIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="8" r="5" fill="var(--info)" opacity="0.2" />
@@ -2746,6 +2792,8 @@ export const HomeIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2779,6 +2827,8 @@ export const SearchIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="11" cy="11" r="8" fill="var(--primary)" opacity="0.2" />
@@ -2794,6 +2844,8 @@ export const DownloadIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="var(--success)" opacity="0.2" />
@@ -2810,6 +2862,8 @@ export const UploadIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" fill="var(--info)" opacity="0.2" />
@@ -2826,6 +2880,8 @@ export const GitBranchIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <line x1="6" x2="6" y1="3" y2="15" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" />
@@ -2842,6 +2898,8 @@ export const BookmarkIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2867,6 +2925,8 @@ export const PlayIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--success)" opacity="0.2" />
@@ -2882,6 +2942,8 @@ export const PauseIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--warning)" opacity="0.2" />
@@ -2898,6 +2960,8 @@ export const SendIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -2924,6 +2988,8 @@ export const TrashIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" fill="var(--error)" opacity="0.2" />
@@ -2940,6 +3006,8 @@ export const CopyIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="14" height="14" x="8" y="8" rx="2" ry="2" fill="var(--info)" opacity="0.2" />
@@ -2955,6 +3023,8 @@ export const CodeIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <polyline points="16 18 22 12 16 6" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -2969,6 +3039,8 @@ export const ImageIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="18" height="18" x="3" y="3" rx="2" ry="2" fill="var(--primary)" opacity="0.2" />
@@ -2985,6 +3057,8 @@ export const VideoIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect x="2" y="6" width="14" height="12" rx="2" fill="var(--error)" opacity="0.2" />
@@ -3000,6 +3074,8 @@ export const PackageIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -3026,6 +3102,8 @@ export const LayersIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path
@@ -3053,6 +3131,8 @@ export const CheckIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--success)" opacity="0.2" />
@@ -3068,6 +3148,8 @@ export const CloseIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--error)" opacity="0.2" />
@@ -3083,6 +3165,8 @@ export const PlusIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--success)" opacity="0.2" />
@@ -3098,6 +3182,8 @@ export const MinusIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--error)" opacity="0.2" />
@@ -3113,6 +3199,8 @@ export const EditIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" fill="var(--info)" opacity="0.2" />
@@ -3128,6 +3216,8 @@ export const RefreshIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3144,6 +3234,8 @@ export const LinkIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="var(--info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3158,6 +3250,8 @@ export const EyeIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" fill="var(--info)" opacity="0.2" />
@@ -3173,6 +3267,8 @@ export const FilterIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" fill="var(--primary)" opacity="0.2" />
@@ -3187,6 +3283,8 @@ export const PinIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" fill="var(--error)" opacity="0.2" />
@@ -3202,6 +3300,8 @@ export const TagIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" fill="var(--primary)" opacity="0.2" />
@@ -3217,6 +3317,8 @@ export const MessageIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="var(--info)" opacity="0.2" />
@@ -3231,6 +3333,8 @@ export const HelpIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--info)" opacity="0.2" />
@@ -3247,6 +3351,8 @@ export const BugIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M8 2l1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3263,6 +3369,8 @@ export const RocketIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" fill="var(--primary)" opacity="0.2" />
@@ -3279,6 +3387,8 @@ export const FireIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="var(--warning)" opacity="0.3" />
@@ -3293,6 +3403,8 @@ export const ThumbsUpIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M7 10v12M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z" fill="var(--success)" opacity="0.2" />
@@ -3307,6 +3419,8 @@ export const ThumbsDownIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M17 14V2M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22h0a3.13 3.13 0 0 1-3-3.88Z" fill="var(--error)" opacity="0.2" />
@@ -3321,6 +3435,8 @@ export const ShareIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="18" cy="5" r="3" fill="var(--info)" opacity="0.2" stroke="var(--info)" stroke-width="2" />
@@ -3338,6 +3454,8 @@ export const SaveIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--success)" opacity="0.2" />
@@ -3354,6 +3472,8 @@ export const WifiIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M5 13a10 10 0 0 1 14 0" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3370,6 +3490,8 @@ export const WifiOffIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M12 20h.01" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3389,6 +3511,8 @@ export const BatteryIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="16" height="10" x="2" y="7" rx="2" ry="2" fill="var(--success)" opacity="0.2" />
@@ -3405,6 +3529,8 @@ export const MapPinIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="var(--error)" opacity="0.2" />
@@ -3420,6 +3546,8 @@ export const SunIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="4" fill="var(--warning)" opacity="0.3" />
@@ -3435,6 +3563,8 @@ export const MoonIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="var(--primary)" opacity="0.2" />
@@ -3449,6 +3579,8 @@ export const FolderPlusIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" fill="var(--warning)" opacity="0.2" />
@@ -3464,6 +3596,8 @@ export const FilePlusIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" fill="var(--success)" opacity="0.2" />
@@ -3480,6 +3614,8 @@ export const ArchiveIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="20" height="5" x="2" y="3" rx="1" fill="var(--warning)" opacity="0.3" />
@@ -3497,6 +3633,8 @@ export const CreditCardIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="20" height="14" x="2" y="5" rx="2" fill="var(--primary)" opacity="0.2" />
@@ -3512,6 +3650,8 @@ export const DollarIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--success)" opacity="0.2" />
@@ -3528,6 +3668,8 @@ export const ChartIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect x="3" y="3" width="18" height="18" rx="2" fill="var(--success)" opacity="0.2" />
@@ -3543,6 +3685,8 @@ export const ActivityIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3556,6 +3700,8 @@ export const HeadphonesIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" fill="var(--primary)" opacity="0.2" />
@@ -3570,6 +3716,8 @@ export const VolumeIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="var(--info)" opacity="0.2" />
@@ -3586,6 +3734,8 @@ export const MuteIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="var(--error)" opacity="0.2" />
@@ -3602,6 +3752,8 @@ export const PowerIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M12 2v10" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -3616,6 +3768,8 @@ export const AwardIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="8" r="6" fill="var(--warning)" opacity="0.2" />
@@ -3631,6 +3785,8 @@ export const GiftIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect x="3" y="8" width="18" height="4" rx="1" fill="var(--error)" opacity="0.3" />
@@ -3648,6 +3804,8 @@ export const TargetIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--error)" opacity="0.1" stroke="var(--error)" stroke-width="2" />
@@ -3663,6 +3821,8 @@ export const CompassIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="12" cy="12" r="10" fill="var(--info)" opacity="0.2" />
@@ -3678,6 +3838,8 @@ export const KeyIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <circle cx="7.5" cy="15.5" r="5.5" fill="var(--warning)" opacity="0.2" stroke="var(--warning)" stroke-width="2" />
@@ -3693,6 +3855,8 @@ export const PrinterIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" fill="var(--muted-foreground)" opacity="0.2" />
@@ -3709,6 +3873,8 @@ export const BotIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="16" height="12" x="4" y="8" rx="2" fill="var(--primary)" opacity="0.2" />
@@ -3728,6 +3894,8 @@ export const MagicIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" fill="var(--warning)" opacity="0.3" />
@@ -3784,6 +3952,8 @@ export const PasteIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z" fill="var(--info)" opacity="0.3" />
@@ -3801,6 +3971,8 @@ export const CopyCheckIcon = (props: IconProps = {}) => (
     width={props.size ?? 24}
     height={props.size ?? 24}
     viewBox="0 0 24 24"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     class={props.class}
   >
     <rect width="14" height="14" x="8" y="8" rx="2" ry="2" fill="var(--success)" opacity="0.2" />

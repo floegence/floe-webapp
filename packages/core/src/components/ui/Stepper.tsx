@@ -55,10 +55,10 @@ export interface StepperProps {
 
 const sizeConfig = {
   sm: {
-    indicator: 'w-6 h-6 text-[10px]',
+    indicator: 'w-6 h-6 text-caption',
     iconSize: 'w-3 h-3',
     label: 'text-xs',
-    description: 'text-[10px]',
+    description: 'text-caption',
     connector: 'h-px mx-2',
     connectorVertical: 'w-px min-h-4 my-1',
     gap: 'gap-1',
@@ -101,11 +101,14 @@ function StepIndicator(props: StepIndicatorProps) {
   const isCurrent = () => props.status === 'current';
 
   const baseClasses = () => cn(
-    'flex items-center justify-center rounded-full transition-all duration-200',
+    'flex items-center justify-center rounded-full transition-[background-color,color,transform] duration-[var(--floe-duration-base)]',
     'font-medium select-none flex-shrink-0',
     config().indicator,
+    /* A hovered dot steps up the same pixel as every other surface. It used to
+     * scale by 10%, which is a different motion language for a 12px element —
+     * and at that size it reads as a size change, not as a response. */
     props.clickable && !props.step.disabled
-      ? 'cursor-pointer hover:scale-110'
+      ? 'cursor-pointer hover:-translate-y-[var(--floe-hover-lift)]'
       : props.step.disabled
         ? 'cursor-not-allowed opacity-50'
         : ''
@@ -199,7 +202,7 @@ function StepLabel(props: StepLabelProps) {
       <div class={cn(
         'flex items-center gap-1',
         config().label,
-        'font-medium transition-colors duration-200',
+        'font-medium transition-colors duration-[var(--floe-duration-base)]',
         isCurrent() && 'text-foreground',
         !isCurrent() && 'text-[var(--floe-ink-soft)]',
         props.step.disabled && 'opacity-50'
@@ -239,7 +242,7 @@ function Connector(props: ConnectorProps) {
       data-floe-surface="inset"
       data-floe-surface-part="progress-track"
       class={cn(
-        'transition-colors duration-300',
+        'transition-colors duration-[var(--floe-duration-slow)]',
         props.orientation === 'horizontal'
           ? cn('flex-1', config().connector)
           : cn(config().connectorVertical, 'mx-auto'),

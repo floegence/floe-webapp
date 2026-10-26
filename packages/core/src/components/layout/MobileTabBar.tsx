@@ -238,7 +238,7 @@ function MobileTabItem(props: MobileTabItemProps) {
             class={cn(
               'absolute -top-1 -right-2 min-w-4 h-4 px-1',
               'flex items-center justify-center',
-              'text-[10px] font-medium rounded-full',
+              'text-caption font-medium rounded-full',
               'bg-primary text-primary-foreground'
             )}
           >
@@ -252,7 +252,7 @@ function MobileTabItem(props: MobileTabItemProps) {
       {/* Label */}
       <span
         class={cn(
-          'mt-1 text-[10px] font-medium truncate max-w-full',
+          'mt-1 text-caption font-medium truncate max-w-full',
           props.isActive && 'font-semibold'
         )}
       >

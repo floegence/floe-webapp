@@ -83,7 +83,7 @@ function CanvasPage() {
       </div>
       <label class="flex shrink-0 items-center gap-3 border-t border-[var(--floe-line)] bg-[var(--floe-well)] px-6 py-4 text-xs">
         Draft
-        <input class="min-w-0 flex-1 rounded-[var(--floe-radius-md)] border border-input bg-[var(--floe-plane)] px-3 py-2" placeholder="Write something, switch pages, then return…" />
+        <input class="min-w-0 flex-1 rounded-md border border-input bg-[var(--floe-plane)] px-3 py-2" placeholder="Write something, switch pages, then return…" />
       </label>
     </section>
   );
@@ -95,7 +95,7 @@ function LoadingPage(props: { name: string }) {
       <h1 class="text-sm font-semibold">{props.name}</h1>
       <p class="mt-2 text-xs text-[var(--floe-ink-soft)]">Opening {props.name.toLowerCase()}…</p>
       <div class="mt-8 grid gap-4 sm:grid-cols-3" aria-hidden="true">
-        <For each={[0, 1, 2]}>{() => <div class="h-28 rounded-[var(--floe-radius-control)] border border-[var(--floe-line)] bg-[var(--floe-well)]" />}</For>
+        <For each={[0, 1, 2]}>{() => <div class="h-28 rounded-control border border-[var(--floe-line)] bg-[var(--floe-well)]" />}</For>
       </div>
     </section>
   );

@@ -194,7 +194,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         <span
           aria-hidden="true"
           class={cn(
-            'absolute inset-1 rounded-[var(--floe-radius-md)]',
+            'absolute inset-1 rounded-md',
             'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             props.isActive
               ? 'bg-[var(--floe-state-selected)]'

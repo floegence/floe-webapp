@@ -59,13 +59,13 @@ const sizeStyles: Record<CheckboxSize, { box: string; icon: string; label: strin
     box: 'w-3.5 h-3.5',
     icon: 'w-2.5 h-2.5',
     label: 'text-xs',
-    description: 'text-[10px]',
+    description: 'text-caption',
   },
   md: {
     box: 'w-4 h-4',
     icon: 'w-3 h-3',
-    label: 'text-xs',
-    description: 'text-[11px]',
+    label: 'text-sm',
+    description: 'text-caption',
   },
   lg: {
     box: 'w-5 h-5',
@@ -145,7 +145,7 @@ export function CheckboxGroup(props: CheckboxGroupProps) {
 
     if (v === 'button') {
       return cn(
-        'inline-flex rounded-md border border-[var(--floe-line)] overflow-hidden',
+        'inline-flex rounded-group border border-[var(--floe-line)] overflow-hidden',
         isHorizontal ? 'flex-row' : 'flex-col'
       );
     }
@@ -230,7 +230,7 @@ export function Checkbox(props: CheckboxProps) {
       data-floe-surface-part="indicator"
       data-floe-selected={isChecked() || local.indeterminate ? 'true' : undefined}
       class={cn(
-        'rounded-[var(--floe-radius-xs)] border-2 transition-[background-color,border-color,color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+        'rounded-xs border-2 transition-[background-color,border-color,color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
         'flex items-center justify-center',
         sizeStyles[size()].box,
         isChecked() || local.indeterminate
@@ -240,10 +240,10 @@ export function Checkbox(props: CheckboxProps) {
       )}
     >
       <Show when={local.indeterminate}>
-        <MinusIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-150')} />
+        <MinusIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-[var(--floe-duration-fast)]')} />
       </Show>
       <Show when={!local.indeterminate && isChecked()}>
-        <CheckIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-150')} />
+        <CheckIcon class={cn(sizeStyles[size()].icon, 'transition-transform duration-[var(--floe-duration-fast)]')} />
       </Show>
     </div>
   );
@@ -314,7 +314,7 @@ export function Checkbox(props: CheckboxProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'cursor-pointer select-none transition-colors duration-150',
+            'cursor-pointer select-none transition-colors duration-[var(--floe-duration-fast)]',
             'border-r border-[var(--floe-line)] last:border-r-0',
             buttonSizeStyles[size()],
             isChecked()
@@ -337,7 +337,7 @@ export function Checkbox(props: CheckboxProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'relative cursor-pointer select-none rounded-[var(--floe-radius-group)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            'relative cursor-pointer select-none rounded-group border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             cardSizeStyles[size()],
             isChecked()
               ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
@@ -383,7 +383,7 @@ export function Checkbox(props: CheckboxProps) {
           data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
-            'rounded-[var(--floe-radius-md)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] text-center',
+            'rounded-control border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] text-center',
             tileSizeStyles[size()].container,
             isChecked()
               ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
@@ -398,7 +398,7 @@ export function Checkbox(props: CheckboxProps) {
               const Icon = getIcon();
               return (
                 <div class={cn(
-                  'mb-2 transition-colors duration-150',
+                  'mb-2 transition-colors duration-[var(--floe-duration-fast)]',
                   isChecked() ? 'text-[var(--floe-accent-ink)]' : 'text-[var(--floe-ink-quiet)]'
                 )}>
                   <Icon class={tileSizeStyles[size()].icon} />
@@ -408,7 +408,7 @@ export function Checkbox(props: CheckboxProps) {
           </Show>
           <Show when={local.label}>
             <span class={cn(
-              'font-medium transition-colors duration-150',
+              'font-medium transition-colors duration-[var(--floe-duration-fast)]',
               sizeStyles[size()].label,
               isChecked() ? 'text-[var(--floe-ink)]' : 'text-[var(--floe-ink-soft)]'
             )}>

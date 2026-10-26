@@ -310,7 +310,7 @@ function SectionHeader(props: {
         <div class="space-y-0.5">
           <h2 class="text-sm font-medium">{props.title}</h2>
           <Show when={props.description}>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">{props.description}</p>
+            <p class="text-caption text-[var(--floe-ink-soft)]">{props.description}</p>
           </Show>
         </div>
         <Show when={props.actions}>
@@ -542,7 +542,7 @@ function WizardDemo() {
         onStepClick={(index) => wizard.goToStep(index)}
       />
 
-      <div class="p-4 border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] bg-[var(--floe-well)] min-h-[100px]">
+      <div class="p-4 border border-[var(--floe-line)] rounded-md bg-[var(--floe-well)] min-h-[100px]">
         <Show when={wizard.currentStep() === 0}>
           <div class="space-y-2">
             <h4 class="text-sm font-medium">Step 1: Account Setup</h4>
@@ -1200,7 +1200,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
       <div id="overview" class="space-y-3 scroll-mt-4">
         <div class="space-y-1">
           <h1 class="text-lg font-bold">Floe Webapp Demo</h1>
-          <p class="text-[11px] text-[var(--floe-ink-soft)]">
+          <p class="text-caption text-[var(--floe-ink-soft)]">
             This playground showcases all core UI components, layout primitives, and loading states.
           </p>
         </div>
@@ -1256,7 +1256,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
             <div class="flex flex-wrap gap-1.5">
               <Button variant="default">Default</Button>
@@ -1300,12 +1300,12 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             <div class="space-y-3">
               <div class="space-y-1">
-                <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Semantic Roles</p>
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Semantic Roles</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">
                   Variants carry meaning before color: neutral for baseline metadata, primary for
                   active context, success for confirmed state, warning for follow-up risk, error for
                   blockers, and info for supporting signals.
@@ -1313,51 +1313,51 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
 
               <div class="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="neutral">
                     Neutral
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Counts, timestamps, ownership, repository facts.
                   </p>
                 </div>
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="primary">
                     Primary
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Current branch, active environment, selected domain.
                   </p>
                 </div>
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="success">
                     Success
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Confirmed readiness, passing checks, healthy state.
                   </p>
                 </div>
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="warning">
                     Warning
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Review needed, pending follow-up, elevated attention.
                   </p>
                 </div>
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="error">
                     Error
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Blocked release, failing requirement, hard issue.
                   </p>
                 </div>
-                <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
+                <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-3 flex items-center justify-between gap-3">
                   <Tag tone="soft" variant="info">
                     Info
                   </Tag>
-                  <p class="text-[11px] text-right text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-right text-[var(--floe-ink-soft)]">
                     Telemetry, ownership signal, operational context.
                   </p>
                 </div>
@@ -1366,8 +1366,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-2">
               <div class="space-y-1">
-                <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Solid</p>
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Solid</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">
                   Use solid tags when the metadata needs stronger first-pass emphasis in a dense
                   scan.
                 </p>
@@ -1384,8 +1384,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-2">
               <div class="space-y-1">
-                <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Soft</p>
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Soft</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">
                   Use soft tags when metadata should stay ambient and merge into the surrounding
                   surface language.
                 </p>
@@ -1414,8 +1414,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-3">
               <div class="space-y-1">
-                <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Theme Surface Strategy</p>
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Theme Surface Strategy</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">
                   Soft tags now follow two theme-native surface languages: matte fog in light mode
                   and translucent color film in dark mode.
                 </p>
@@ -1423,10 +1423,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
               <div class="grid grid-cols-1 gap-3 xl:grid-cols-2">
                 <div class="light">
-                  <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
+                  <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
                     <div class="space-y-1">
                       <p class="text-xs font-medium">Light Theme · Matte Fog</p>
-                      <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                      <p class="text-caption text-[var(--floe-ink-soft)]">
                         Soft tags read like lightly tinted paper labels with quiet borders and
                         denser ink.
                       </p>
@@ -1457,10 +1457,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
 
                 <div class="dark">
-                  <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
+                  <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
                     <div class="space-y-1">
                       <p class="text-xs font-medium">Dark Theme · Translucent Film</p>
-                      <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                      <p class="text-caption text-[var(--floe-ink-soft)]">
                         Soft tags keep the same semantic accents, but they sit like a tinted film on
                         top of the dark surface instead of a pasted light chip.
                       </p>
@@ -1493,7 +1493,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Sizes & Density</p>
+              <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Sizes & Density</p>
               <div class="flex flex-wrap items-center gap-2">
                 <Tag size="sm" variant="neutral">
                   SOC 2
@@ -1508,7 +1508,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] font-medium text-[var(--floe-ink-soft)]">Icons & Status Dots</p>
+              <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Icons & Status Dots</p>
               <div class="flex flex-wrap gap-2">
                 <Tag variant="primary" icon={GitBranch}>
                   release/2026.03
@@ -1529,11 +1529,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
+              <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="space-y-1">
                     <p class="text-xs font-medium">Release Readiness</p>
-                    <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                    <p class="text-caption text-[var(--floe-ink-soft)]">
                       Deep surfaces keep dense metadata calm inside operational panels.
                     </p>
                   </div>
@@ -1552,10 +1552,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
               </div>
 
-              <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
+              <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
                 <div class="space-y-1">
                   <p class="text-xs font-medium">Security Review</p>
-                  <p class="text-[11px] text-[var(--floe-ink-soft)]">
+                  <p class="text-caption text-[var(--floe-ink-soft)]">
                     Variants stay restrained instead of leaning on loud, saturated badges.
                   </p>
                 </div>
@@ -1593,11 +1593,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Basic Tabs */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Default Variant</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Default Variant</p>
               <Tabs
                 items={[
                   { id: 'tab1', label: 'Overview' },
@@ -1610,19 +1610,19 @@ export function ShowcasePage(props: ShowcasePageProps) {
               />
               <TabPanel
                 active={basicTabsActive() === 'tab1'}
-                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded"
+                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md"
               >
                 Overview content - This is the first tab panel.
               </TabPanel>
               <TabPanel
                 active={basicTabsActive() === 'tab2'}
-                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded"
+                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md"
               >
                 Analytics content - View your metrics here.
               </TabPanel>
               <TabPanel
                 active={basicTabsActive() === 'tab3'}
-                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded"
+                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md"
               >
                 Reports content - Generate and export reports.
               </TabPanel>
@@ -1630,7 +1630,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Card-like Composition */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Card-style Composition</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Card-style Composition</p>
               <Tabs
                 items={[
                   { id: 'home', label: 'Home', icon: <Files class="w-3 h-3" /> },
@@ -1653,7 +1653,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Slider Indicator */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Slider Indicator (Small Size)
               </p>
               <Tabs
@@ -1676,8 +1676,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Dynamic Tabs with Add/Close */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Dynamic Tabs (Add/Close)</p>
-              <p class="text-[10px] text-[var(--floe-ink-soft)]">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Dynamic Tabs (Add/Close)</p>
+              <p class="text-caption text-[var(--floe-ink-soft)]">
                 Click + to add new tabs. Close button has red background.
               </p>
               <Tabs
@@ -1689,7 +1689,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 showAdd
                 closable
               />
-              <TabPanel active class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded">
+              <TabPanel active class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md">
                 Currently editing:{' '}
                 {dynamicTabs().find((t) => t.id === dynamicActiveTab())?.label || 'None'}
               </TabPanel>
@@ -1697,8 +1697,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Scrollable Tabs */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Scrollable Tabs (15 tabs)</p>
-              <p class="text-[10px] text-[var(--floe-ink-soft)]">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Scrollable Tabs (15 tabs)</p>
+              <p class="text-caption text-[var(--floe-ink-soft)]">
                 Scroll arrows appear when tabs overflow. Touch-friendly on mobile.
               </p>
               <Tabs
@@ -1706,7 +1706,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 activeId={scrollableTabsActive()}
                 onChange={setScrollableTabsActive}
               />
-              <div class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded">
+              <div class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md">
                 Selected: {scrollableTabsActive()}
               </div>
             </div>
@@ -1737,7 +1737,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Card Variants */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Variants</p>
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Variants</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Card variant="default">
               <CardHeader>
@@ -1779,7 +1779,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Composed card */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Composition</p>
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Composition</p>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <Card>
               <CardHeader>
@@ -1789,11 +1789,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent class="pt-3 space-y-2">
-                <div class="flex items-center justify-between rounded-[var(--floe-radius-md)] bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
+                <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
                   <span class="text-[length:var(--floe-type-control)]">Render on save</span>
                   <Switch size="sm" checked />
                 </div>
-                <div class="flex items-center justify-between rounded-[var(--floe-radius-md)] bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
+                <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
                   <span class="text-[length:var(--floe-type-control)]">Respect project config</span>
                   <Switch size="sm" />
                 </div>
@@ -1814,7 +1814,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <CardDescription>A card can nest by stepping down, not by adding lines.</CardDescription>
               </CardHeader>
               <CardContent class="pt-3 space-y-2">
-                <div class="rounded-[var(--floe-radius-md)] bg-[var(--floe-plane-raised)] px-3 py-2">
+                <div class="rounded-md bg-[var(--floe-plane-raised)] px-3 py-2">
                   <p class="text-[length:var(--floe-type-control)] font-medium">Nested plane</p>
                   <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">
                     The inner card returns to the card fill, so the step is visible without a hairline.
@@ -1860,7 +1860,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Basic Input & Textarea */}
         <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Input & Textarea</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2">
               <Input size="sm" placeholder="Small input" />
@@ -1887,7 +1887,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* NumberInput */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">NumberInput</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1">
@@ -1968,7 +1968,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* AffixInput */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">AffixInput</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent class="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1">
@@ -2094,7 +2094,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Default Variant */}
             <div class="space-y-3">
@@ -2174,21 +2174,21 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Small</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Small</label>
                   <RadioGroup value="a" onChange={() => {}} size="sm">
                     <RadioOption value="a" label="Small A" />
                     <RadioOption value="b" label="Small B" />
                   </RadioGroup>
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Medium</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Medium</label>
                   <RadioGroup value="a" onChange={() => {}} size="md">
                     <RadioOption value="a" label="Medium A" />
                     <RadioOption value="b" label="Medium B" />
                   </RadioGroup>
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Large</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Large</label>
                   <RadioGroup value="a" onChange={() => {}} size="lg">
                     <RadioOption value="a" label="Large A" />
                     <RadioOption value="b" label="Large B" />
@@ -2228,7 +2228,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Basic Switch */}
             <div class="space-y-3">
@@ -2317,7 +2317,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Basic */}
             <div class="space-y-3">
@@ -2443,7 +2443,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Basic Checkbox */}
             <div class="space-y-3">
@@ -2574,7 +2574,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Default Pagination */}
             <div class="space-y-3">
@@ -2647,15 +2647,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
               <div class="flex flex-col gap-4">
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Small</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Small</label>
                   <Pagination page={5} totalPages={10} onChange={() => {}} size="sm" />
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Medium</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Medium</label>
                   <Pagination page={5} totalPages={10} onChange={() => {}} size="md" />
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-2 block">Large</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Large</label>
                   <Pagination page={5} totalPages={10} onChange={() => {}} size="lg" />
                 </div>
               </div>
@@ -2683,7 +2683,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Linear Progress */}
             <div class="space-y-3">
@@ -2745,15 +2745,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
               <div class="space-y-3">
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-1 block">Small</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-1 block">Small</label>
                   <LinearProgress value={60} size="sm" />
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-1 block">Medium</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-1 block">Medium</label>
                   <LinearProgress value={60} size="md" />
                 </div>
                 <div>
-                  <label class="text-[10px] text-[var(--floe-ink-soft)] mb-1 block">Large</label>
+                  <label class="text-caption text-[var(--floe-ink-soft)] mb-1 block">Large</label>
                   <LinearProgress value={60} size="lg" />
                 </div>
               </div>
@@ -2824,7 +2824,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent>
             <Form
               class="max-w-md"
@@ -2888,7 +2888,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Validation Example */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Form with Validation Errors</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <Form class="max-w-sm">
                 <FormField>
@@ -2945,11 +2945,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Stepper Variants */}
         <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Stepper Variants</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Default Variant */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Default</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Default</p>
               <Stepper
                 steps={[
                   { id: 'details', label: 'Details' },
@@ -2963,7 +2963,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Minimal Variant */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Minimal</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Minimal</p>
               <Stepper
                 variant="minimal"
                 steps={[
@@ -2977,7 +2977,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Dots Variant */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Dots</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Dots</p>
               <Stepper
                 variant="dots"
                 steps={[
@@ -2995,10 +2995,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Stepper Sizes */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Stepper Sizes</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent class="space-y-4">
               <div class="space-y-2">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">Small</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">Small</p>
                 <Stepper
                   size="sm"
                   steps={[
@@ -3010,7 +3010,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 />
               </div>
               <div class="space-y-2">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">Medium (default)</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">Medium (default)</p>
                 <Stepper
                   size="md"
                   steps={[
@@ -3022,7 +3022,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 />
               </div>
               <div class="space-y-2">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">Large</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">Large</p>
                 <Stepper
                   size="lg"
                   steps={[
@@ -3040,7 +3040,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Interactive Wizard Example */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Interactive Wizard</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <WizardDemo />
             </PanelContent>
@@ -3081,10 +3081,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Basic Dropdown & Select */}
         <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Dropdown & Select</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap items-start gap-4">
             <div class="space-y-1.5">
-              <p class="text-[11px] text-[var(--floe-ink-soft)]">Dropdown</p>
+              <p class="text-caption text-[var(--floe-ink-soft)]">Dropdown</p>
               <Dropdown
                 value={dropdownValue()}
                 onSelect={(id) => {
@@ -3093,11 +3093,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 }}
                 items={dropdownItems}
                 trigger={<span>Menu ({dropdownValue()})</span>}
-                triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-[var(--floe-radius-md)]"
+                triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
               />
             </div>
             <div class="space-y-1.5 w-56">
-              <p class="text-[11px] text-[var(--floe-ink-soft)]">Select</p>
+              <p class="text-caption text-[var(--floe-ink-soft)]">Select</p>
               <Select
                 value={selectValue()}
                 onChange={(v) => {
@@ -3111,7 +3111,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   { value: 'dark', label: 'Dark' },
                 ]}
               />
-              <p class="text-[11px] text-[var(--floe-ink-soft)]">Selected: {selectValue()}</p>
+              <p class="text-caption text-[var(--floe-ink-soft)]">Selected: {selectValue()}</p>
             </div>
           </PanelContent>
         </Panel>
@@ -3119,28 +3119,28 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Cascade Dropdown */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Cascade Dropdown</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent class="flex flex-wrap items-start gap-4">
               <div class="space-y-1.5">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">With Submenus</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">With Submenus</p>
                 <Dropdown
                   onSelect={(id) => {
                     notifications.info('Action Selected', `You clicked: ${id}`);
                   }}
                   items={cascadeItems}
                   trigger={<span>Actions</span>}
-                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-[var(--floe-radius-md)]"
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
               <div class="space-y-1.5">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">File Menu Style</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">File Menu Style</p>
                 <Dropdown
                   onSelect={(id) => {
                     notifications.info('File Action', `Action: ${id}`);
                   }}
                   items={fileMenuItems}
                   trigger={<span>File</span>}
-                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-[var(--floe-radius-md)]"
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
             </PanelContent>
@@ -3150,10 +3150,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Dropdown with Custom Content */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Dropdown with Custom Content</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent class="flex flex-wrap items-start gap-4">
               <div class="space-y-1.5">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">With NumberInput</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">With NumberInput</p>
                 <Dropdown
                   onSelect={() => {}}
                   items={[
@@ -3183,11 +3183,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'reset', label: 'Reset to Default' },
                   ]}
                   trigger={<span>Settings ({dropdownQuantity()})</span>}
-                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-[var(--floe-radius-md)]"
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
               <div class="space-y-1.5">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">Zoom Control</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">Zoom Control</p>
                 <Dropdown
                   onSelect={(id) => {
                     if (id === 'fit') {
@@ -3222,7 +3222,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     { id: 'fit', label: 'Fit to Window' },
                   ]}
                   trigger={<span>Zoom: {zoomLevel()}%</span>}
-                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-[var(--floe-radius-md)]"
+                  triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
             </PanelContent>
@@ -3241,7 +3241,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Popover Documentation */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Popover Component</h3>
-          <p class="text-[11px] text-[var(--floe-ink-soft)] mb-3">
+          <p class="text-caption text-[var(--floe-ink-soft)] mb-3">
             A non-modal anchored panel. Unlike Dropdown it carries no menu semantics, so it can
             host forms, previews or reading content. It reuses the same placement, portal ownership
             and exit motion as the menu layer.
@@ -3276,7 +3276,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               width={280}
               trigger={<Button variant="ghost">What&apos;s new</Button>}
             >
-              <div class="space-y-1.5 p-3 text-[11px]">
+              <div class="space-y-1.5 p-3 text-caption">
                 <p class="font-medium">Release notes</p>
                 <p class="text-[var(--floe-ink-soft)]">
                   One refined surface, lighter overlay motion, and one control radius across fields
@@ -3316,7 +3316,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-3 items-center">
             <Tooltip content="Top tooltip" placement="top">
               <Button variant="outline">Top</Button>
@@ -3328,7 +3328,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Button variant="outline">Left</Button>
             </Tooltip>
             <Tooltip
-              content={<span class="font-mono text-[10px]">Custom JSX content</span>}
+              content={<span class="font-mono text-caption">Custom JSX content</span>}
               placement="right"
             >
               <Button variant="outline">Right</Button>
@@ -3357,7 +3357,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
             <Button variant="outline" onClick={openConfirm}>
@@ -3400,14 +3400,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <Input placeholder="Type something..." />
             <Textarea placeholder="Longer content..." />
             <div class="space-y-1.5">
-              <p class="text-[11px] text-[var(--floe-ink-soft)]">
+              <p class="text-caption text-[var(--floe-ink-soft)]">
                 Tip: press{' '}
-                <kbd class="font-mono text-[10px] px-1 py-0.5 rounded bg-[var(--floe-well)] border border-[var(--floe-line)]">
+                <kbd class="font-mono text-caption px-1 py-0.5 rounded-xs bg-[var(--floe-well)] border border-[var(--floe-line)]">
                   Esc
                 </kbd>{' '}
                 to close.
               </p>
-              <div class="h-32 rounded border border-[var(--floe-line)] bg-[var(--floe-well)]" />
+              <div class="h-32 rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)]" />
             </div>
           </div>
         </Dialog>
@@ -3439,10 +3439,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Directory Picker"
           description="Modal directory selector with tree navigation, path input, breadcrumb, and new folder creation."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDirectoryPickerOpen(true)}>Open Directory Picker</Button>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: folder tree, path input with Go, breadcrumb, new folder, filter prop
             </p>
           </PanelContent>
@@ -3479,10 +3479,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="File Open Picker"
           description="Modal file selector with filtering, ordered multi-selection, and responsive keyboard navigation."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFileOpenPickerOpen(true)}>Open File Picker</Button>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: single or multiple selection, file filters, order, limits, and lazy folders
             </p>
           </PanelContent>
@@ -3524,7 +3524,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         />
 
         {/* Basic Usage */}
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
             <h3 class="text-xs font-medium">Basic Usage & Size Variants</h3>
             <div class="flex flex-col gap-3 max-w-md">
@@ -3556,7 +3556,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 placeholder="With error state"
               />
             </div>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               Selected: {directoryInputValue() || '(none)'}
             </p>
           </PanelContent>
@@ -3565,7 +3565,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
         {/* Form Integration Example */}
         <div class="pt-4 border-t border-[var(--floe-line)]">
           <h3 class="text-xs font-medium mb-3">Form Integration</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <Form
                 class="max-w-md"
@@ -3654,10 +3654,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="File Save Picker"
           description="Save-as dialog with directory tree, file list panel, and filename input."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFileSavePickerOpen(true)}>Open File Save Picker</Button>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: split view (folder tree + file list), click file to fill name, filename
               validation, new folder
             </p>
@@ -3709,10 +3709,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFloatingWindowOpen(true)}>Open Floating Window</Button>
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: drag title bar, resize edges/corners, maximize/restore, stay open while the
               page remains interactive
             </p>
@@ -3788,7 +3788,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="flex flex-wrap gap-2 items-center">
             <Button onClick={() => command.open()}>Open</Button>
             <Button
@@ -3829,7 +3829,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </Button>
           }
         />
-        <div class="h-[420px] border border-[var(--floe-line)] rounded-[var(--floe-radius-control)] overflow-hidden">
+        <div class="h-[420px] border border-[var(--floe-line)] rounded-control overflow-hidden">
           <FileBrowser
             files={demoFileBrowserData}
             initialPath="/src/components/ui/primitives"
@@ -3843,7 +3843,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             onOpen={(item) => notifications.success('Opened', item.name)}
           />
         </div>
-        <p class="text-[11px] text-[var(--floe-ink-soft)]">
+        <p class="text-caption text-[var(--floe-ink-soft)]">
           Features: List/Grid view toggle, collapsible sidebar tree,{' '}
           <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments),
           sortable columns, single/range/toggle selection, marquee selection, and context-aware right-click behavior.
@@ -3881,11 +3881,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           }
         />
 
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
             <div class="flex flex-wrap items-center gap-4">
               <div class="space-y-1.5">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">SnakeLoader</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">SnakeLoader</p>
                 <div class="flex items-center gap-3">
                   <SnakeLoader size="sm" />
                   <SnakeLoader size="md" />
@@ -3894,7 +3894,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
 
               <div class="space-y-1.5 flex-1 min-w-64">
-                <p class="text-[11px] text-[var(--floe-ink-soft)]">Skeleton</p>
+                <p class="text-caption text-[var(--floe-ink-soft)]">Skeleton</p>
                 <div class="space-y-1.5">
                   <Skeleton class="h-3 w-1/3" />
                   <Skeleton class="h-3 w-2/3" />
@@ -3938,31 +3938,31 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Icons"
           description="All built-in icons shipped with @floegence/floe-webapp-core (monochrome and colored)."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
             <div>
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium mb-2">Monochrome Icons</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium mb-2">Monochrome Icons</p>
               <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 <For each={icons()}>
                   {(item) => (
-                    <div class="flex items-center gap-2 rounded border border-[var(--floe-line)] bg-[var(--floe-well)] px-2 py-1.5">
+                    <div class="flex items-center gap-2 rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] px-2 py-1.5">
                       <item.icon class="w-4 h-4" />
-                      <span class="text-[10px] truncate">{item.name}</span>
+                      <span class="text-caption truncate">{item.name}</span>
                     </div>
                   )}
                 </For>
               </div>
             </div>
             <div>
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium mb-2">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium mb-2">
                 Colored Icons (Status, Files, UI)
               </p>
               <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                 <For each={coloredIcons()}>
                   {(item) => (
-                    <div class="flex items-center gap-2 rounded border border-[var(--floe-line)] bg-[var(--floe-well)] px-2 py-1.5">
+                    <div class="flex items-center gap-2 rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] px-2 py-1.5">
                       <item.icon class="w-5 h-5" />
-                      <span class="text-[10px] truncate">{item.name}</span>
+                      <span class="text-caption truncate">{item.name}</span>
                     </div>
                   )}
                 </For>
@@ -3978,11 +3978,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Quote Block"
           description="Clean blockquote component for documentation and code comments."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-1.5">
-                <p class="text-[10px] text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
+                <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
                   Default
                 </p>
                 <QuoteBlock>
@@ -3991,7 +3991,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
+                <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
                   Subtle
                 </p>
                 <QuoteBlock variant="subtle" author="Rob Pike">
@@ -4000,7 +4000,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
+                <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
                   Bordered
                 </p>
                 <QuoteBlock
@@ -4013,7 +4013,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
               </div>
 
               <div class="space-y-1.5">
-                <p class="text-[10px] text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
+                <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
                   Code
                 </p>
                 <QuoteBlock variant="code">
@@ -4023,7 +4023,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-1.5">
-              <p class="text-[10px] text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
+              <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
                 Inline
               </p>
               <div class="flex flex-wrap gap-2 items-center text-xs text-[var(--floe-ink-soft)]">
@@ -4052,7 +4052,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Highlight Block"
           description="Callout/admonition component for highlighting important content with semantic variants."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-3">
             <InfoBlock title="Information">
               This is an informational callout. Use it to provide additional context or helpful
@@ -4101,11 +4101,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
           title="Processing Indicator"
           description="Premium status indicators with sophisticated animations for AI states, workflows, and background tasks."
         />
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-6">
             {/* Premium Variants */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Aurora Variant - Flowing Northern Lights
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4120,7 +4120,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Neural Variant - AI Network Visualization
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4135,7 +4135,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Orbit Variant - Multi-layer Orbital System
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4150,7 +4150,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Quantum Variant - Dot Grid Wave
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4165,7 +4165,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Pulse Variant - Expanding Rings
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4180,7 +4180,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Atom Variant - 3D Electron Orbits
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4196,7 +4196,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Classic Variants */}
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Elegant Variant - Layered Orb
               </p>
               <div class="flex flex-wrap gap-6">
@@ -4211,7 +4211,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Card Variant - Glassmorphism
               </p>
               <div class="max-w-md">
@@ -4225,7 +4225,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Pill Variant - Gradient Border
               </p>
               <div class="flex flex-wrap gap-3">
@@ -4236,7 +4236,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
                 Minimal Variant - Inline Waveform
               </p>
               <div class="flex flex-wrap gap-4">
@@ -4272,10 +4272,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Line Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
             Line Chart - Trend Visualization
           </p>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <LineChart
                 title="Weekly Performance"
@@ -4294,8 +4294,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Area Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">Area Chart - Volume Data</p>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Area Chart - Volume Data</p>
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <AreaChart
                 title="Traffic Overview"
@@ -4327,10 +4327,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Bar Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
             Bar Chart - Categorical Comparison
           </p>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <DataBarChart
                 title="Sales by Region"
@@ -4350,11 +4350,11 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Pie Charts */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
             Pie & Donut Charts - Proportions
           </p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+            <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
               <PanelContent>
                 <DataPieChart
                   title="Market Share"
@@ -4368,7 +4368,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 />
               </PanelContent>
             </Panel>
-            <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+            <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
               <PanelContent>
                 <DataPieChart
                   title="Resource Usage"
@@ -4388,14 +4388,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
         {/* Monitoring Chart */}
         <div class="space-y-2">
-          <p class="text-[11px] text-[var(--floe-ink-soft)] font-medium">
+          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
             Monitoring Chart - Real-time Dashboard
           </p>
-          <p class="text-[10px] text-[var(--floe-ink-soft)]">
+          <p class="text-caption text-[var(--floe-ink-soft)]">
             Live updating chart for monitoring metrics. The chart updates automatically with
             simulated data.
           </p>
-          <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
             <PanelContent>
               <MonitoringChart
                 title="System Metrics"
@@ -4444,9 +4444,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
           description="Terminal-oriented full web keyboard that owns the whole touch input session without relying on the mobile system keyboard."
         />
 
-        <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-md)] overflow-hidden">
+        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
           <PanelContent class="space-y-3">
-            <p class="text-[11px] text-[var(--floe-ink-soft)]">
+            <p class="text-caption text-[var(--floe-ink-soft)]">
               This version is intentionally a full web keyboard instead of an accessory dock. The
               demo also injects app-level terminal extensions through the public terminal API, so
               docker, ssh, and tmux suggestions/runtime live in the host app instead of being baked
@@ -4544,7 +4544,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                     >
                       Clear
                     </Button>
-                    <span class="text-[11px] text-[var(--floe-ink-soft)]">
+                    <span class="text-caption text-[var(--floe-ink-soft)]">
                       Full web keyboard:{' '}
                       <code class="font-mono">{visible() ? 'active' : 'hidden'}</code>
                     </span>
@@ -4552,7 +4552,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
                   <div
                     ref={terminalRef}
-                    class="bg-black/80 rounded-[var(--floe-radius-md)] p-3 min-h-[120px] max-h-[220px] overflow-y-auto font-mono text-xs text-green-400 leading-relaxed"
+                    class="bg-black/80 rounded-md p-3 min-h-[120px] max-h-[220px] overflow-y-auto font-mono text-xs text-green-400 leading-relaxed"
                   >
                     <For each={lines()}>{(line) => <div>{line}</div>}</For>
                     <div>
@@ -4566,24 +4566,24 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
-                      <p class="text-[11px] font-semibold">Terminal Actions First</p>
-                      <p class="mt-1 text-[11px] text-[var(--floe-ink-soft)]">
+                    <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
+                      <p class="text-caption font-semibold">Terminal Actions First</p>
+                      <p class="mt-1 text-caption text-[var(--floe-ink-soft)]">
                         Esc, Tab, Ctrl, Alt, Backspace, Enter, and terminal punctuation stay in a
                         dedicated utility strip instead of hiding behind system keyboard modes.
                       </p>
                     </div>
-                    <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
-                      <p class="text-[11px] font-semibold">Smart Suggestions</p>
-                      <p class="mt-1 text-[11px] text-[var(--floe-ink-soft)]">
+                    <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
+                      <p class="text-caption font-semibold">Smart Suggestions</p>
+                      <p class="mt-1 text-caption text-[var(--floe-ink-soft)]">
                         Candidate commands sit in a dedicated suggestion rail, separate from the
                         keycaps, and update from the current terminal input instead of mimicking a
                         system IME bar.
                       </p>
                     </div>
-                    <div class="rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
-                      <p class="text-[11px] font-semibold">Host-Level Extensions</p>
-                      <p class="mt-1 text-[11px] text-[var(--floe-ink-soft)]">
+                    <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)] p-3">
+                      <p class="text-caption font-semibold">Host-Level Extensions</p>
+                      <p class="mt-1 text-caption text-[var(--floe-ink-soft)]">
                         The host app extends the shared terminal model with docker, ssh, and tmux
                         providers plus a custom runtime adapter, without forking the keyboard UI.
                       </p>

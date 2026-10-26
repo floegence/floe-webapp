@@ -171,10 +171,10 @@ const DEFAULT_BOARD_BOUNDS: NotesRect = Object.freeze({
 });
 
 function normalizeBucket(bucket: number): NotesSizeBucket {
-  const rounded = Math.round(Number(bucket) || 1);
-  if (rounded <= 1) return 1;
-  if (rounded >= 5) return 5;
-  return rounded as NotesSizeBucket;
+  const clamped = Math.round(Number(bucket) || 1);
+  if (clamped <= 1) return 1;
+  if (clamped >= 5) return 5;
+  return clamped as NotesSizeBucket;
 }
 
 function sortTopics(topics: readonly NotesTopic[]): NotesTopic[] {

@@ -87,7 +87,7 @@ export function SidebarSection(props: SidebarSectionProps) {
   return (
     <section class={cn('flex flex-col', props.class)}>
       {props.title && (
-        <div class="flex items-center justify-between px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">
+        <div class="flex items-center justify-between px-2.5 py-2 text-caption font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">
           <span>{props.title}</span>
           {props.actions}
         </div>
@@ -116,7 +116,7 @@ export function SidebarItem(props: SidebarItemProps) {
       data-floe-interactive="row"
       data-selected={props.active ? 'true' : undefined}
       class={cn(
-        'group w-full min-h-[var(--floe-row-height)] flex items-center gap-2 pl-2.5 pr-2 mx-1 rounded-[var(--floe-radius-md)]',
+        'group w-full min-h-[var(--floe-row-height)] flex items-center gap-2 pl-2.5 pr-2 mx-1 rounded-sm',
         'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)] cursor-pointer',
         'text-[var(--floe-ink-soft)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',

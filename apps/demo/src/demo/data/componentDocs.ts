@@ -1478,7 +1478,7 @@ export const panelDoc: ComponentDoc = {
     ],
     bestPractices: [
       'Use with PanelContent for proper padding',
-      'Apply border and rounded classes for visibility',
+      'Apply border and radius utilities for visibility',
       'Maintain consistent spacing between panels',
     ],
     avoid: ['Deeply nesting panels', 'Using without proper styling'],

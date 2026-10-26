@@ -98,7 +98,7 @@ export const ChatSidebar: Component<ChatSidebarProps> = (props) => {
               <button
                 type="button"
                 class={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs cursor-pointer rounded-sm
-                  transition-colors duration-75
+                  transition-colors duration-[var(--floe-duration-instant)]
                   hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground
                   focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring
                   ${selectedThreadId() === thread.id ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''}`}
@@ -114,11 +114,11 @@ export const ChatSidebar: Component<ChatSidebarProps> = (props) => {
                       <span class="w-1.5 h-1.5 rounded-full bg-[var(--floe-accent-ink)] flex-shrink-0" />
                     </Show>
                   </div>
-                  <p class="text-[10px] text-[var(--floe-ink-soft)] truncate mt-0.5">
+                  <p class="text-caption text-[var(--floe-ink-soft)] truncate mt-0.5">
                     {thread.preview}
                   </p>
                 </div>
-                <span class="text-[10px] text-[var(--floe-ink-soft)] flex-shrink-0">
+                <span class="text-caption text-[var(--floe-ink-soft)] flex-shrink-0">
                   {formatTimestamp(thread.timestamp)}
                 </span>
               </button>

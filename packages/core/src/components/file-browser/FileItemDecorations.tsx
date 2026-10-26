@@ -35,9 +35,12 @@ const NAME_TONE_CLASSES: Record<FileItemDecorationTone, string> = {
 type FileItemDecorationBadgeSize = 'xs' | 'sm' | 'md';
 
 const BADGE_SIZE_CLASSES: Record<FileItemDecorationBadgeSize, string> = {
-  xs: '-left-0.5 -top-0.5 h-2 min-w-2 px-[1px] text-[5px] ring-[0.5px]',
-  sm: '-left-1 -top-1 h-3.5 min-w-3.5 px-[3px] text-[7px] ring-1 shadow-sm',
-  md: '-left-1 -top-1 h-4 min-w-4 px-1 text-[8px] ring-1 shadow-sm',
+  /* Chip type is a ladder step, not a per-size invention: 5/7/8px were three
+   * hand-picked values below the caption floor. `nano` for the smallest chip,
+   * `micro` above it. */
+  xs: '-left-0.5 -top-0.5 h-2 min-w-2 px-[1px] text-[length:var(--floe-type-nano)] ring-[0.5px]',
+  sm: '-left-1 -top-1 h-3.5 min-w-3.5 px-[3px] text-[length:var(--floe-type-micro)] ring-1 shadow-[var(--floe-elevation-raised)]',
+  md: '-left-1 -top-1 h-4 min-w-4 px-1 text-[length:var(--floe-type-micro)] ring-1 shadow-[var(--floe-elevation-raised)]',
 };
 
 function normalizeDecorationTone(tone: string | undefined): FileItemDecorationTone {

@@ -35,19 +35,19 @@ const sizeStyles: Record<SegmentedControlSize, { container: string; button: stri
   sm: {
     container: 'p-0.5 gap-0.5',
     button:
-      'h-[var(--floe-control-height-xs)] px-[var(--floe-control-padding-sm)] rounded-[var(--floe-radius-sm)]',
+      'h-[var(--floe-control-height-xs)] px-[var(--floe-control-padding-sm)] rounded-sm',
     icon: 'w-3 h-3',
   },
   md: {
     container: 'p-0.5 gap-0.5',
     button:
-      'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-md)] rounded-[var(--floe-radius-sm)]',
+      'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-md)] rounded-sm',
     icon: 'w-3.5 h-3.5',
   },
   lg: {
     container: 'p-1 gap-0.5',
     button:
-      'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-lg)] rounded-[var(--floe-radius-md)]',
+      'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-lg)] rounded-md',
     icon: 'w-4 h-4',
   },
 };
@@ -99,7 +99,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
       data-floe-surface-part="rail"
       class={cn(
         'floe-segmented-control inline-flex items-center border',
-        'rounded-[var(--floe-radius-group)]',
+        'rounded-group',
         'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
         styles().container,
         local.disabled && 'opacity-50 pointer-events-none',

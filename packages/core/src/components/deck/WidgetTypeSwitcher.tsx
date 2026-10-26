@@ -80,7 +80,7 @@ export function WidgetTypeSwitcher(props: WidgetTypeSwitcherProps) {
       <button
         ref={triggerRef}
         class={cn(
-          'p-0.5 rounded hover:bg-[var(--floe-state-hover)] text-[var(--floe-ink-soft)] hover:text-foreground',
+          'p-0.5 rounded-xs hover:bg-[var(--floe-state-hover)] text-[var(--floe-ink-soft)] hover:text-foreground',
           'transition-colors cursor-pointer pointer-events-auto flex items-center gap-0.5',
           props.class
         )}
@@ -105,7 +105,7 @@ export function WidgetTypeSwitcher(props: WidgetTypeSwitcherProps) {
             class={cn(
               'fixed z-[9999]',
               'min-w-[160px] max-h-[240px] overflow-y-auto',
-              'bg-popover border border-[var(--floe-line)] rounded-md shadow-[var(--floe-elevation-float-strong)]',
+              'bg-popover border border-[var(--floe-line)] rounded-panel shadow-[var(--floe-elevation-float-strong)]',
               'animate-in fade-in slide-in-from-top-1 duration-[var(--floe-duration-fast)]'
             )}
             style={{
@@ -120,7 +120,7 @@ export function WidgetTypeSwitcher(props: WidgetTypeSwitcherProps) {
               <For each={availableWidgets()}>
                 {(widget) => (
                   <button
-                    class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
+                    class="w-full flex items-center gap-2 px-2 py-1.5 rounded-xs hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                     onClick={(e) => handleSwitch(e, widget.type)}
                   >
                     <Show when={widget.icon} fallback={<div class="w-4 h-4" />}>

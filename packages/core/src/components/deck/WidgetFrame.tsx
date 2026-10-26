@@ -79,7 +79,7 @@ export function WidgetFrame(props: WidgetFrameProps) {
         {/* Remove button — subtle unless the card is hovered. */}
         <Show when={interactive()}>
           <button
-            class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-[var(--floe-ink-soft)] hover:text-destructive transition-all cursor-pointer"
+            class="opacity-0 group-hover:opacity-100 p-0.5 rounded-xs hover:bg-destructive/10 text-[var(--floe-ink-soft)] hover:text-destructive transition-[opacity,background-color,color] cursor-pointer"
             onClick={handleRemove}
             title="Remove widget"
           >

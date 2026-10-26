@@ -134,7 +134,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <Show when={source.view() === 'browse'}><div class="flex min-h-[100px] overflow-hidden rounded border border-[var(--floe-line)]">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[100px] overflow-hidden rounded-xs border border-[var(--floe-line)]">
           <div {...props.scrollViewportProps} class="max-h-[160px] w-full min-w-0 overflow-y-auto">
             <Show
               when={currentFiles().length > 0}
@@ -151,7 +151,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
                     onClick={() => handleFileClick(file)}
                     class={cn(
                       'flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 cursor-pointer',
-                      'transition-colors duration-100',
+                      'transition-colors duration-[var(--floe-duration-instant)]',
                       'hover:bg-[var(--floe-state-hover)]',
                       'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
                       fileName() === file.name && 'bg-[var(--floe-state-selected)] text-foreground font-medium'

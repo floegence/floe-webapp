@@ -256,7 +256,7 @@ export function FormMessage(props: FormMessageProps) {
     <Show when={hasError()}>
       <p
         id={fieldCtx.errorId}
-        class={cn('text-[11px] text-error', local.class)}
+        class={cn('text-caption text-error', local.class)}
         role="alert"
       >
         {local.error ?? local.children}

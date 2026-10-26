@@ -169,6 +169,10 @@
   --floe-type-heading: 1rem;
   --floe-type-heading-sm: 0.9375rem;
   --floe-type-display: 1.375rem;
+  /* Below caption. Only decorative chips that must fit inside an 8-10px
+   * badge belong here — never running text, metadata or a control label. */
+  --floe-type-micro: 0.5rem;
+  --floe-type-nano: 0.4375rem;
   --floe-line-caption: 0.9375rem;
   --floe-line-control: 1.25rem;
   --floe-line-body: 1.375rem;
@@ -243,6 +247,14 @@
   transform: scale(var(--floe-press-scale));
 }
 
+/* Clickable planes rise one step and take the first elevation. A card is not a
+ * control: it travels instead of settling, and the shadow says it detached from
+ * the canvas rather than competing with the fill step. */
+[data-floe-interactive='lift']:hover {
+  transform: translateY(var(--floe-hover-lift));
+  box-shadow: var(--floe-elevation-raised);
+}
+
 /*
  * The field surface. One recipe for every editable boundary — text inputs,
  * textareas, compound number/select fields, dropdown triggers and directory
@@ -288,6 +300,10 @@
   }
   [data-floe-interactive='press']:active {
     transform: none;
+  }
+  [data-floe-interactive='lift']:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
 

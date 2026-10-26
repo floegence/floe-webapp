@@ -108,7 +108,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
 
   return (
     <div class="p-4 h-full">
-      <Panel class="h-full border border-[var(--floe-line)] rounded-[var(--floe-radius-control)] overflow-hidden">
+      <Panel class="h-full border border-[var(--floe-line)] rounded-control overflow-hidden">
         <PanelHeader
           actions={
             <div class="flex items-center gap-2">

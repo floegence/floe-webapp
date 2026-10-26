@@ -63,21 +63,21 @@ export function QuoteBlock(props: QuoteBlockProps) {
         // Bordered variant - Full border for emphasis
         variant() === 'bordered' && [
           'px-3 py-2',
-          'border border-[var(--floe-line)] rounded-md',
+          'border border-[var(--floe-line)] rounded-control',
           'border-l-2',
           'bg-[var(--floe-well)]',
         ],
         // Code variant - Monospace, terminal-like
         variant() === 'code' && [
           'px-3 py-2',
-          'bg-[var(--floe-well)] rounded-[var(--floe-radius-xs)]',
+          'bg-[var(--floe-well)] rounded-xs',
           'font-mono',
           'border-l-2',
         ],
         // Inline variant - Compact, for tight spaces
         variant() === 'inline' && [
           'px-2 py-1',
-          'bg-[var(--floe-well)] rounded-[var(--floe-radius-xs)]',
+          'bg-[var(--floe-well)] rounded-xs',
           'text-[var(--floe-ink-quiet)]',
         ],
         local.class
@@ -88,8 +88,8 @@ export function QuoteBlock(props: QuoteBlockProps) {
       {/* Quote content */}
       <div class={cn(
         'text-xs leading-relaxed text-foreground/80',
-        variant() === 'code' && 'text-[11px]',
-        variant() === 'inline' && 'text-[11px]',
+        variant() === 'code' && 'text-caption',
+        variant() === 'inline' && 'text-caption',
       )}>
         {local.children}
       </div>

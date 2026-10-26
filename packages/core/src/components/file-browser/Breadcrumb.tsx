@@ -205,8 +205,8 @@ function CollapsedSegments(props: CollapsedSegmentsProps) {
     <Dropdown
       trigger={<span>…</span>}
       triggerClass={cn(
-        'inline-flex items-center text-xs px-1.5 py-0.5 rounded flex-shrink-0',
-        'transition-all duration-[var(--floe-duration-fast)]',
+        'inline-flex items-center text-xs px-1.5 py-0.5 rounded-xs flex-shrink-0',
+        'transition-colors duration-[var(--floe-duration-fast)]',
         'text-[var(--floe-ink-soft)] hover:text-foreground hover:bg-[var(--floe-state-hover)]'
       )}
       triggerAriaLabel="Show hidden path segments"
@@ -230,8 +230,8 @@ function BreadcrumbItem(props: BreadcrumbItemProps) {
       onClick={() => props.onClick()}
       disabled={props.isLast}
       class={cn(
-        'text-xs px-1.5 py-0.5 rounded cursor-pointer flex-shrink-0',
-        'transition-all duration-[var(--floe-duration-fast)]',
+        'text-xs px-1.5 py-0.5 rounded-xs cursor-pointer flex-shrink-0',
+        'transition-colors duration-[var(--floe-duration-fast)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         props.isLast
           ? 'font-medium text-foreground cursor-default'
