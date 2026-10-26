@@ -95,6 +95,14 @@ export function Button(props: ButtonProps) {
         </span>
       </Show>
       {local.children}
+      {/* A loading-capable button with no icon still reserves its leading slot so
+          the spinner never displaces the label. Mirror that slot on the trailing
+          side: without it the reserved-but-empty box reads as a left indent and
+          pushes the label off the control's centre. Symmetric reservation keeps
+          the label centred and keeps width identical between rest and pending. */}
+      <Show when={!local.icon && 'loading' in props}>
+        <span aria-hidden="true" class={cn('inline-flex shrink-0', iconSize())} />
+      </Show>
     </button>
   );
 }

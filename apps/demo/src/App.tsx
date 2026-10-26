@@ -1,6 +1,8 @@
 import {
   Show,
   Suspense,
+  Switch,
+  Match,
   createMemo,
   createSignal,
   createEffect,
@@ -77,6 +79,7 @@ import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
+import { DEFAULT_SHOWCASE_SECTION } from './demo/showcaseCatalog';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
 import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
@@ -96,6 +99,10 @@ const SearchPage = lazy(() =>
 );
 const ShowcasePage = lazy(() =>
   import('./demo/pages/ShowcasePage').then((m) => ({ default: m.ShowcasePage }))
+);
+const HomePage = lazy(() => import('./demo/pages/HomePage').then((m) => ({ default: m.HomePage })));
+const ScenariosPage = lazy(() =>
+  import('./demo/pages/ScenariosPage').then((m) => ({ default: m.ScenariosPage }))
 );
 const DeckPage = lazy(() => import('./demo/pages/DeckPage').then((m) => ({ default: m.DeckPage })));
 const ChatPage = lazy(() => import('./demo/pages/ChatPage').then((m) => ({ default: m.ChatPage })));
@@ -160,10 +167,15 @@ function AppContent() {
     return demoFiles.filter((f) => f.path.toLowerCase().includes(q)).slice(0, 50);
   });
 
-  const jumpTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // The showcase is a set of pages, not one long scroll. This is the page the
+  // sidebar and the catalog grid both select.
+  const [showcaseSection, setShowcaseSection] = usePersisted<string>(
+    'demo.showcaseSection.v1',
+    DEFAULT_SHOWCASE_SECTION
+  );
+  const selectShowcaseSection = (id: string) => {
+    setShowcaseSection(id);
+    if (layout.sidebarActiveTab() !== 'showcase') setSidebarActiveTab('showcase');
   };
 
   const openFile = (id: string) => {
@@ -364,13 +376,14 @@ function AppContent() {
 
   const DemoProtocolStatus: Component = () => {
     const state = protocol.status();
-    const status = state === 'connected'
-      ? 'connected'
-      : state === 'connecting' || state === 'waiting'
-        ? 'connecting'
-        : state === 'failed'
-          ? 'error'
-          : 'disconnected';
+    const status =
+      state === 'connected'
+        ? 'connected'
+        : state === 'connecting' || state === 'waiting'
+          ? 'connecting'
+          : state === 'failed'
+            ? 'error'
+            : 'disconnected';
     return <StatusIndicator status={status} />;
   };
 
@@ -380,7 +393,35 @@ function AppContent() {
 
   const DemoLanguageItem: Component = () => <BottomBarItem>{activeFile().language}</BottomBarItem>;
 
-  const ShowcaseView: Component = () => <ShowcaseSidebar onJumpTo={jumpTo} onOpenFile={openFile} />;
+  const ShowcaseView: Component = () => (
+    <ShowcaseSidebar
+      activeSection={showcaseSection()}
+      onSelectSection={selectShowcaseSection}
+      onOpenFile={openFile}
+    />
+  );
+
+  // The showcase tab holds three kinds of page: the introduction, the scenario
+  // gallery, and the component catalog. The sidebar selects which one, so the
+  // render has to follow the persisted section rather than mount once.
+  const ShowcaseRoute: Component = () => (
+    <Switch
+      fallback={
+        <ShowcasePage
+          section={showcaseSection()}
+          onOpenFile={openFile}
+          onSelectSection={selectShowcaseSection}
+        />
+      }
+    >
+      <Match when={showcaseSection() === 'home'}>
+        <HomePage onSelectSection={selectShowcaseSection} onOpenFile={openFile} />
+      </Match>
+      <Match when={showcaseSection() === 'scenarios'}>
+        <ScenariosPage onSelectSection={selectShowcaseSection} />
+      </Match>
+    </Switch>
+  );
 
   const FilesView: Component = () => (
     <FileExplorer files={demoFiles} activeFileId={activeFileId} onSelectFile={setActiveFileId} />
@@ -684,8 +725,7 @@ function AppContent() {
   const desktopMainViews: KeepAliveView[] = [
     {
       id: 'showcase',
-      render: () =>
-        renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
+      render: () => renderLazyPage(<ShowcaseRoute />, 'showcase'),
     },
     {
       id: 'files',
@@ -719,8 +759,7 @@ function AppContent() {
   const mobileMainViews: KeepAliveView[] = [
     {
       id: 'showcase',
-      render: () =>
-        renderLazyPage(<ShowcasePage onOpenFile={openFile} onJumpTo={jumpTo} />, 'showcase'),
+      render: () => renderLazyPage(<ShowcaseRoute />, 'showcase'),
     },
     {
       id: 'files',
@@ -764,14 +803,22 @@ function AppContent() {
   const DesktopMain: Component = () => (
     <>
       <ActivityAppsMain activationMode="after-paint" />
-      <KeepAliveStack views={desktopMainViews} activeId={layout.sidebarActiveTab()} activationMode="after-paint" />
+      <KeepAliveStack
+        views={desktopMainViews}
+        activeId={layout.sidebarActiveTab()}
+        activationMode="after-paint"
+      />
     </>
   );
 
   const MobileMain: Component = () => (
     <>
       <ActivityAppsMain activationMode="after-paint" />
-      <KeepAliveStack views={mobileMainViews} activeId={layout.sidebarActiveTab()} activationMode="after-paint" />
+      <KeepAliveStack
+        views={mobileMainViews}
+        activeId={layout.sidebarActiveTab()}
+        activationMode="after-paint"
+      />
     </>
   );
 

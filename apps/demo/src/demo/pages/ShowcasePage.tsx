@@ -1,6 +1,12 @@
 import { SurfaceComponentGallery } from '../components/SurfaceComponentGallery';
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
-import { PropsTable, CodeSnippet, UsageGuidelines } from '../components/docs';
+import {
+  PropsTable,
+  CodeSnippet,
+  UsageGuidelines,
+  ShowcaseFrame,
+  DemoSurface,
+} from '../components/docs';
 import {
   buttonDoc,
   tagDoc,
@@ -82,8 +88,6 @@ import {
   Loader2,
   LoadingOverlay,
   Moon,
-  Panel,
-  PanelContent,
   Popover,
   Search,
   Select,
@@ -109,9 +113,7 @@ import {
   FormDivider,
   FormRow,
   useCommand,
-  useLayout,
   useNotification,
-  useTheme,
   // New components
   QuoteBlock,
   InfoBlock,
@@ -292,10 +294,14 @@ import {
   type TerminalSuggestionProvider,
 } from '@floegence/floe-webapp-core/terminal';
 import { ChartThemePicker } from '../components/ChartThemePicker';
+import { COMPONENT_GROUPS, SHOWCASE_COMPONENTS } from '../showcaseCatalog';
 
 export interface ShowcasePageProps {
+  /** Component page to render. Each showcase section is its own page; the
+   *  sidebar picks one at a time instead of stacking all of them. */
+  section: string;
   onOpenFile: (id: string) => void;
-  onJumpTo: (id: string) => void;
+  onSelectSection: (id: string) => void;
 }
 
 function SectionHeader(props: {
@@ -305,19 +311,24 @@ function SectionHeader(props: {
   actions?: JSX.Element;
 }) {
   return (
-    <div id={props.id} class="scroll-mt-4">
-      <div class="flex flex-wrap items-end justify-between gap-2">
-        <div class="space-y-0.5">
-          <h2 class="text-sm font-medium">{props.title}</h2>
-          <Show when={props.description}>
-            <p class="text-caption text-[var(--floe-ink-soft)]">{props.description}</p>
-          </Show>
-        </div>
-        <Show when={props.actions}>
-          <div class="flex items-center gap-1.5">{props.actions}</div>
+    <header
+      id={props.id}
+      class="flex scroll-mt-4 flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-[var(--floe-line-quiet)] pb-3"
+    >
+      <div class="min-w-0 space-y-1">
+        <h1 class="text-lg font-semibold leading-tight tracking-[var(--floe-tracking-tight)]">
+          {props.title}
+        </h1>
+        <Show when={props.description}>
+          <p class="max-w-[68ch] text-caption leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
+            {props.description}
+          </p>
         </Show>
       </div>
-    </div>
+      <Show when={props.actions}>
+        <div class="flex shrink-0 items-center gap-2">{props.actions}</div>
+      </Show>
+    </header>
   );
 }
 
@@ -545,22 +556,30 @@ function WizardDemo() {
       <div class="p-4 border border-[var(--floe-line)] rounded-md bg-[var(--floe-well)] min-h-[100px]">
         <Show when={wizard.currentStep() === 0}>
           <div class="space-y-2">
-            <h4 class="text-sm font-medium">Step 1: Account Setup</h4>
+            <h4 class="text-[length:var(--floe-type-control)] font-medium">
+              Step 1: Account Setup
+            </h4>
             <p class="text-xs text-[var(--floe-ink-soft)]">Create your account credentials.</p>
             <Input placeholder="Email address" class="max-w-xs" />
           </div>
         </Show>
         <Show when={wizard.currentStep() === 1}>
           <div class="space-y-2">
-            <h4 class="text-sm font-medium">Step 2: Profile Information</h4>
+            <h4 class="text-[length:var(--floe-type-control)] font-medium">
+              Step 2: Profile Information
+            </h4>
             <p class="text-xs text-[var(--floe-ink-soft)]">Tell us about yourself.</p>
             <Input placeholder="Full name" class="max-w-xs" />
           </div>
         </Show>
         <Show when={wizard.currentStep() === 2}>
           <div class="space-y-2">
-            <h4 class="text-sm font-medium">Step 3: Review & Confirm</h4>
-            <p class="text-xs text-[var(--floe-ink-soft)]">Review your information and complete setup.</p>
+            <h4 class="text-[length:var(--floe-type-control)] font-medium">
+              Step 3: Review & Confirm
+            </h4>
+            <p class="text-xs text-[var(--floe-ink-soft)]">
+              Review your information and complete setup.
+            </p>
             <p class="text-xs">All steps completed. Ready to finish!</p>
           </div>
         </Show>
@@ -866,10 +885,12 @@ const demoFileBrowserData: FileItem[] = [
 ];
 
 export function ShowcasePage(props: ShowcasePageProps) {
+  // One page per component. The gallery renders every section's markup behind
+  // a guard so the many signals they share stay in one scope; only the active
+  // section is mounted, so a page costs what its own demo costs.
+  const isSection = (id: string) => props.section === id;
   const command = useCommand();
   const notifications = useNotification();
-  const theme = useTheme();
-  const layout = useLayout();
 
   const [dialogOpen, setDialogOpen] = createSignal(false);
   const [confirmOpen, setConfirmOpen] = createSignal(false);
@@ -1195,69 +1216,75 @@ export function ShowcasePage(props: ShowcasePageProps) {
   };
 
   return (
-    <div class="p-4 max-w-5xl mx-auto space-y-6">
-      <section id="surface-system" class="scroll-mt-4"><SurfaceComponentGallery /></section>
-      <div id="overview" class="space-y-3 scroll-mt-4">
-        <div class="space-y-1">
-          <h1 class="text-lg font-bold">Floe Webapp Demo</h1>
-          <p class="text-caption text-[var(--floe-ink-soft)]">
-            This playground showcases all core UI components, layout primitives, and loading states.
-          </p>
-        </div>
+    <ShowcaseFrame class="space-y-6">
+      {/* Catalog index: the gallery's front door. Every card opens that
+          component's own page, so the sidebar and this grid are two views of
+          the same navigation model. */}
+      <Show when={isSection('overview')}>
+        <div id="overview" class="space-y-4">
+          <div class="space-y-1">
+            <h1 class="text-lg font-bold">Components</h1>
+            <p class="text-caption text-[var(--floe-ink-soft)]">
+              {SHOWCASE_COMPONENTS.length} pages across the core library. Pick one to see it live,
+              with usage guidance, source and props.
+            </p>
+          </div>
 
-        <div class="flex flex-wrap gap-2">
-          <Button onClick={() => command.open()}>
-            Open Command Palette ({command.getKeybindDisplay('mod+k')})
-          </Button>
-          <Button variant="outline" onClick={() => theme.toggleTheme()}>
-            Toggle Theme ({theme.resolvedTheme()})
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              layout.toggleTerminal();
-              notifications.info('Terminal', layout.terminalOpened() ? 'Opened' : 'Closed');
-            }}
-          >
-            Toggle Terminal Panel
-          </Button>
+          <For each={COMPONENT_GROUPS}>
+            {(group) => (
+              <div class="space-y-2">
+                <h2 class="text-caption font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">
+                  {group.label}
+                </h2>
+                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <For each={group.items}>
+                    {(item) => (
+                      <button
+                        type="button"
+                        data-floe-interactive="lift"
+                        data-floe-surface="raised"
+                        class="group flex flex-col items-start gap-1 rounded-control border border-[var(--floe-line)] px-3 py-2.5 text-left cursor-pointer transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] hover:border-[var(--floe-line-strong)]"
+                        // Catalog tiles are layout containers: their
+                        // description wraps. `:where(button)` sets nowrap from
+                        // an unlayered sheet, which beats every utility layer.
+                        style={{ 'white-space': 'normal' }}
+                        onClick={() => props.onSelectSection(item.id)}
+                      >
+                        <span class="text-[length:var(--floe-type-control)] font-medium">
+                          {item.label}
+                        </span>
+                        <span class="text-caption leading-snug text-[var(--floe-ink-soft)]">
+                          {item.description}
+                        </span>
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </div>
+            )}
+          </For>
         </div>
+      </Show>
 
-        <div class="flex flex-wrap gap-1.5">
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-buttons')}>
-            Jump: Buttons
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-tags')}>
-            Jump: Tags
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-tabs')}>
-            Jump: Tabs
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-cards')}>
-            Jump: Cards
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('ui-dialogs')}>
-            Jump: Dialogs
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => props.onJumpTo('loading-overlay')}>
-            Jump: Loading
-          </Button>
-        </div>
-      </div>
+      <Show when={isSection('surface-system')}>
+        <section id="surface-system" class="scroll-mt-4">
+          <SurfaceComponentGallery />
+        </section>
+      </Show>
 
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-buttons"
-          title="Buttons"
-          description="Variants, sizes, disabled and loading states."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.button')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-4">
+      <Show when={isSection('ui-buttons')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-buttons"
+            title="Buttons"
+            description="Variants, sizes, disabled and loading states."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.button')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-4">
             <div class="flex flex-wrap gap-1.5">
               <Button variant="default">Default</Button>
               <Button variant="primary">Primary</Button>
@@ -1276,32 +1303,32 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Button loading>Loading</Button>
               <Button disabled>Disabled</Button>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Button Documentation */}
-        <UsageGuidelines
-          whenToUse={buttonDoc.usage.whenToUse}
-          bestPractices={buttonDoc.usage.bestPractices}
-          avoid={buttonDoc.usage.avoid}
-        />
-        <CodeSnippet title="Button.tsx" code={buttonDoc.examples[0].code} language="tsx" />
-        <PropsTable props={buttonDoc.props} componentName="Button" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-tags"
-          title="Tags"
-          description="Metadata labels built from semantic roles and two surface tones for dense professional UIs."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.tag')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+          {/* Button Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={buttonDoc.usage.whenToUse}
+            bestPractices={buttonDoc.usage.bestPractices}
+            avoid={buttonDoc.usage.avoid}
+          />
+          <CodeSnippet title="Button.tsx" code={buttonDoc.examples[0].code} language="tsx" />
+          <PropsTable props={buttonDoc.props} componentName="Button" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-tags')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-tags"
+            title="Tags"
+            description="Metadata labels built from semantic roles and two surface tones for dense professional UIs."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.tag')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             <div class="space-y-3">
               <div class="space-y-1">
                 <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Semantic Roles</p>
@@ -1366,7 +1393,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-2">
               <div class="space-y-1">
-                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Solid</p>
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">
+                  Tone Mapping · Solid
+                </p>
                 <p class="text-caption text-[var(--floe-ink-soft)]">
                   Use solid tags when the metadata needs stronger first-pass emphasis in a dense
                   scan.
@@ -1384,7 +1413,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-2">
               <div class="space-y-1">
-                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Tone Mapping · Soft</p>
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">
+                  Tone Mapping · Soft
+                </p>
                 <p class="text-caption text-[var(--floe-ink-soft)]">
                   Use soft tags when metadata should stay ambient and merge into the surrounding
                   surface language.
@@ -1414,7 +1445,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             <div class="space-y-3">
               <div class="space-y-1">
-                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Theme Surface Strategy</p>
+                <p class="text-caption font-medium text-[var(--floe-ink-soft)]">
+                  Theme Surface Strategy
+                </p>
                 <p class="text-caption text-[var(--floe-ink-soft)]">
                   Soft tags now follow two theme-native surface languages: matte fog in light mode
                   and translucent color film in dark mode.
@@ -1425,7 +1458,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <div class="light">
                   <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
                     <div class="space-y-1">
-                      <p class="text-xs font-medium">Light Theme · Matte Fog</p>
+                      <p class="text-[length:var(--floe-type-control)] font-medium">
+                        Light Theme · Matte Fog
+                      </p>
                       <p class="text-caption text-[var(--floe-ink-soft)]">
                         Soft tags read like lightly tinted paper labels with quiet borders and
                         denser ink.
@@ -1459,7 +1494,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <div class="dark">
                   <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 text-[var(--floe-ink)] space-y-3">
                     <div class="space-y-1">
-                      <p class="text-xs font-medium">Dark Theme · Translucent Film</p>
+                      <p class="text-[length:var(--floe-type-control)] font-medium">
+                        Dark Theme · Translucent Film
+                      </p>
                       <p class="text-caption text-[var(--floe-ink-soft)]">
                         Soft tags keep the same semantic accents, but they sit like a tinted film on
                         top of the dark surface instead of a pasted light chip.
@@ -1508,7 +1545,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
             </div>
 
             <div class="space-y-2">
-              <p class="text-caption font-medium text-[var(--floe-ink-soft)]">Icons & Status Dots</p>
+              <p class="text-caption font-medium text-[var(--floe-ink-soft)]">
+                Icons & Status Dots
+              </p>
               <div class="flex flex-wrap gap-2">
                 <Tag variant="primary" icon={GitBranch}>
                   release/2026.03
@@ -1532,7 +1571,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="space-y-1">
-                    <p class="text-xs font-medium">Release Readiness</p>
+                    <p class="text-[length:var(--floe-type-control)] font-medium">
+                      Release Readiness
+                    </p>
                     <p class="text-caption text-[var(--floe-ink-soft)]">
                       Deep surfaces keep dense metadata calm inside operational panels.
                     </p>
@@ -1554,7 +1595,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
               <div class="rounded-md border border-[var(--floe-line)] bg-[var(--floe-plane)] p-4 space-y-3">
                 <div class="space-y-1">
-                  <p class="text-xs font-medium">Security Review</p>
+                  <p class="text-[length:var(--floe-type-control)] font-medium">Security Review</p>
                   <p class="text-caption text-[var(--floe-ink-soft)]">
                     Variants stay restrained instead of leaning on loud, saturated badges.
                   </p>
@@ -1570,31 +1611,31 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
               </div>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <UsageGuidelines
-          whenToUse={tagDoc.usage.whenToUse}
-          bestPractices={tagDoc.usage.bestPractices}
-          avoid={tagDoc.usage.avoid}
-        />
-        <CodeSnippet title="Tag.tsx" code={tagDoc.examples[0].code} language="tsx" />
-        <PropsTable props={tagDoc.props} componentName="Tag" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-tabs"
-          title="Tabs"
-          description="Composable tabs with configurable indicator/add/close/overflow behaviors."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.tabs')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={tagDoc.usage.whenToUse}
+            bestPractices={tagDoc.usage.bestPractices}
+            avoid={tagDoc.usage.avoid}
+          />
+          <CodeSnippet title="Tag.tsx" code={tagDoc.examples[0].code} language="tsx" />
+          <PropsTable props={tagDoc.props} componentName="Tag" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-tabs')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-tabs"
+            title="Tabs"
+            description="Composable tabs with configurable indicator/add/close/overflow behaviors."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.tabs')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Basic Tabs */}
             <div class="space-y-2">
               <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Default Variant</p>
@@ -1630,7 +1671,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Card-like Composition */}
             <div class="space-y-2">
-              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Card-style Composition</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+                Card-style Composition
+              </p>
               <Tabs
                 items={[
                   { id: 'home', label: 'Home', icon: <Files class="w-3 h-3" /> },
@@ -1676,7 +1719,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Dynamic Tabs with Add/Close */}
             <div class="space-y-2">
-              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Dynamic Tabs (Add/Close)</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+                Dynamic Tabs (Add/Close)
+              </p>
               <p class="text-caption text-[var(--floe-ink-soft)]">
                 Click + to add new tabs. Close button has red background.
               </p>
@@ -1689,7 +1734,10 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 showAdd
                 closable
               />
-              <TabPanel active class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md">
+              <TabPanel
+                active
+                class="p-3 text-xs text-[var(--floe-ink-soft)] bg-[var(--floe-well)] rounded-md"
+              >
                 Currently editing:{' '}
                 {dynamicTabs().find((t) => t.id === dynamicActiveTab())?.label || 'None'}
               </TabPanel>
@@ -1697,7 +1745,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Scrollable Tabs */}
             <div class="space-y-2">
-              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Scrollable Tabs (15 tabs)</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+                Scrollable Tabs (15 tabs)
+              </p>
               <p class="text-caption text-[var(--floe-ink-soft)]">
                 Scroll arrows appear when tabs overflow. Touch-friendly on mobile.
               </p>
@@ -1710,158 +1760,167 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 Selected: {scrollableTabsActive()}
               </div>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Tabs Documentation */}
-        <UsageGuidelines
-          whenToUse={tabsDoc.usage.whenToUse}
-          bestPractices={tabsDoc.usage.bestPractices}
-          avoid={tabsDoc.usage.avoid}
-        />
-        <CodeSnippet title="Tabs.tsx" code={tabsDoc.examples[0].code} language="tsx" />
-        <PropsTable props={tabsDoc.props} componentName="Tabs" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-cards"
-          title="Cards"
-          description="Cards are planes, not boxes: separation comes from the fill step and the canvas gutter, never from a contour or a resting shadow."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.card')}>
-              View Source
-            </Button>
-          }
-        />
-
-        {/* Card Variants */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Variants</p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Card variant="default">
-              <CardHeader>
-                <CardTitle>Default</CardTitle>
-                <CardDescription>A filled content plane on the canvas.</CardDescription>
-              </CardHeader>
-              <CardContent class="pt-3">
-                <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
-                  No border, no shadow at rest. The page gutter does the separating.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card variant="interactive">
-              <CardHeader>
-                <CardTitle>Interactive</CardTitle>
-                <CardDescription>Lifts one step and takes the first elevation.</CardDescription>
-              </CardHeader>
-              <CardContent class="pt-3">
-                <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
-                  Hover me: one pixel up, one shadow step, same corner radius.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card variant="well">
-              <CardHeader>
-                <CardTitle>Well</CardTitle>
-                <CardDescription>Recessed into its host for secondary content.</CardDescription>
-              </CardHeader>
-              <CardContent class="pt-3">
-                <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
-                  The inverse fill step: below the surface instead of above it.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Tabs Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={tabsDoc.usage.whenToUse}
+            bestPractices={tabsDoc.usage.bestPractices}
+            avoid={tabsDoc.usage.avoid}
+          />
+          <CodeSnippet title="Tabs.tsx" code={tabsDoc.examples[0].code} language="tsx" />
+          <PropsTable props={tabsDoc.props} componentName="Tabs" />
         </div>
-
-        {/* Composed card */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Composition</p>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Terminal Integration</CardTitle>
-                <CardDescription>
-                  Syntax highlighting, command history and multi-tab support.
-                </CardDescription>
-              </CardHeader>
-              <CardContent class="pt-3 space-y-2">
-                <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
-                  <span class="text-[length:var(--floe-type-control)]">Render on save</span>
-                  <Switch size="sm" checked />
-                </div>
-                <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
-                  <span class="text-[length:var(--floe-type-control)]">Respect project config</span>
-                  <Switch size="sm" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button size="sm" variant="primary">
-                  Apply
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Cancel
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card variant="well">
-              <CardHeader>
-                <CardTitle>Inside a well</CardTitle>
-                <CardDescription>A card can nest by stepping down, not by adding lines.</CardDescription>
-              </CardHeader>
-              <CardContent class="pt-3 space-y-2">
-                <div class="rounded-md bg-[var(--floe-plane-raised)] px-3 py-2">
-                  <p class="text-[length:var(--floe-type-control)] font-medium">Nested plane</p>
-                  <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">
-                    The inner card returns to the card fill, so the step is visible without a hairline.
-                  </p>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <Tag variant="success">Ready</Tag>
-                  <Tag variant="warning" tone="soft">
-                    Review
-                  </Tag>
-                  <Tag variant="neutral" tone="soft">
-                    Draft
-                  </Tag>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Card Documentation */}
-        <UsageGuidelines
-          whenToUse={cardDoc.usage.whenToUse}
-          bestPractices={cardDoc.usage.bestPractices}
-          avoid={cardDoc.usage.avoid}
-        />
-        <CodeSnippet title="Card.tsx" code={cardDoc.examples[0].code} language="tsx" />
-        <PropsTable props={cardDoc.props} componentName="Card" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-inputs"
-          title="Inputs"
-          description="Text inputs, number inputs, and inputs with prefix/suffix support."
-          actions={
-            <div class="flex items-center gap-1.5">
-              <Button variant="outline" onClick={() => props.onOpenFile('core.input')}>
+      </Show>
+      <Show when={isSection('ui-cards')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-cards"
+            title="Cards"
+            description="Cards are planes, not boxes: separation comes from the fill step and the canvas gutter, never from a contour or a resting shadow."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.card')}>
                 View Source
               </Button>
-            </div>
-          }
-        />
+            }
+          />
 
-        {/* Basic Input & Textarea */}
-        <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Input & Textarea</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card Variants */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Variants</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Card variant="default">
+                <CardHeader>
+                  <CardTitle>Default</CardTitle>
+                  <CardDescription>A filled content plane on the canvas.</CardDescription>
+                </CardHeader>
+                <CardContent class="pt-3">
+                  <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
+                    No border, no shadow at rest. The page gutter does the separating.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card variant="interactive">
+                <CardHeader>
+                  <CardTitle>Interactive</CardTitle>
+                  <CardDescription>Lifts one step and takes the first elevation.</CardDescription>
+                </CardHeader>
+                <CardContent class="pt-3">
+                  <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
+                    Hover me: one pixel up, one shadow step, same corner radius.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card variant="well">
+                <CardHeader>
+                  <CardTitle>Well</CardTitle>
+                  <CardDescription>Recessed into its host for secondary content.</CardDescription>
+                </CardHeader>
+                <CardContent class="pt-3">
+                  <p class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
+                    The inverse fill step: below the surface instead of above it.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Composed card */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Composition</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Terminal Integration</CardTitle>
+                  <CardDescription>
+                    Syntax highlighting, command history and multi-tab support.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent class="pt-3 space-y-2">
+                  <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
+                    <span class="text-[length:var(--floe-type-control)]">Render on save</span>
+                    <Switch size="sm" checked />
+                  </div>
+                  <div class="flex items-center justify-between rounded-md bg-[var(--floe-well)] px-3 min-h-[var(--floe-row-height)]">
+                    <span class="text-[length:var(--floe-type-control)]">
+                      Respect project config
+                    </span>
+                    <Switch size="sm" />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button size="sm" variant="primary">
+                    Apply
+                  </Button>
+                  <Button size="sm" variant="ghost">
+                    Cancel
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              <Card variant="well">
+                <CardHeader>
+                  <CardTitle>Inside a well</CardTitle>
+                  <CardDescription>
+                    A card can nest by stepping down, not by adding lines.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent class="pt-3 space-y-2">
+                  <div class="rounded-md bg-[var(--floe-plane-raised)] px-3 py-2">
+                    <p class="text-[length:var(--floe-type-control)] font-medium">Nested plane</p>
+                    <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">
+                      The inner card returns to the card fill, so the step is visible without a
+                      hairline.
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <Tag variant="success">Ready</Tag>
+                    <Tag variant="warning" tone="soft">
+                      Review
+                    </Tag>
+                    <Tag variant="neutral" tone="soft">
+                      Draft
+                    </Tag>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Card Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={cardDoc.usage.whenToUse}
+            bestPractices={cardDoc.usage.bestPractices}
+            avoid={cardDoc.usage.avoid}
+          />
+          <CodeSnippet title="Card.tsx" code={cardDoc.examples[0].code} language="tsx" />
+          <PropsTable props={cardDoc.props} componentName="Card" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-inputs')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-inputs"
+            title="Inputs"
+            description="Text inputs, number inputs, and inputs with prefix/suffix support."
+            actions={
+              <div class="flex items-center gap-1.5">
+                <Button variant="outline" onClick={() => props.onOpenFile('core.input')}>
+                  View Source
+                </Button>
+              </div>
+            }
+          />
+
+          {/* Basic Input & Textarea */}
+          <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+            Basic Input & Textarea
+          </h3>
+          <DemoSurface contentClass="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2">
               <Input size="sm" placeholder="Small input" />
               <Input size="md" placeholder="Medium input" />
@@ -1872,23 +1931,24 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Input placeholder="Error state" error="Something went wrong" />
               <Textarea placeholder="Textarea (resizable)" />
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Input Documentation */}
-        <UsageGuidelines
-          whenToUse={inputDoc.usage.whenToUse}
-          bestPractices={inputDoc.usage.bestPractices}
-          avoid={inputDoc.usage.avoid}
-        />
-        <CodeSnippet title="Input.tsx" code={inputDoc.examples[0].code} language="tsx" />
-        <PropsTable props={inputDoc.props} componentName="Input" />
+          {/* Input Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={inputDoc.usage.whenToUse}
+            bestPractices={inputDoc.usage.bestPractices}
+            avoid={inputDoc.usage.avoid}
+          />
+          <CodeSnippet title="Input.tsx" code={inputDoc.examples[0].code} language="tsx" />
+          <PropsTable props={inputDoc.props} componentName="Input" />
 
-        {/* NumberInput */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">NumberInput</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent class="space-y-4">
+          {/* NumberInput */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              NumberInput
+            </h3>
+            <DemoSurface contentClass="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1">
                   <label class="text-xs text-[var(--floe-ink-soft)]">Default (0-100)</label>
@@ -1916,7 +1976,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   />
                 </div>
                 <div class="space-y-1">
-                  <label class="text-xs text-[var(--floe-ink-soft)]">Button Only (inputDisabled)</label>
+                  <label class="text-xs text-[var(--floe-ink-soft)]">
+                    Button Only (inputDisabled)
+                  </label>
                   <NumberInput
                     value={buttonOnlyValue()}
                     onChange={(v) => {
@@ -1947,29 +2009,30 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   <NumberInput value={10} onChange={() => {}} disabled />
                 </div>
               </div>
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
 
-          <div class="mt-4">
-            <UsageGuidelines
-              whenToUse={numberInputDoc.usage.whenToUse}
-              bestPractices={numberInputDoc.usage.bestPractices}
-              avoid={numberInputDoc.usage.avoid}
-            />
-            <CodeSnippet
-              title="NumberInput.tsx"
-              code={numberInputDoc.examples[0].code}
-              language="tsx"
-            />
-            <PropsTable props={numberInputDoc.props} componentName="NumberInput" />
+            <div class="mt-4">
+              <UsageGuidelines
+                class="border-t border-[var(--floe-line-quiet)] pt-4"
+                whenToUse={numberInputDoc.usage.whenToUse}
+                bestPractices={numberInputDoc.usage.bestPractices}
+                avoid={numberInputDoc.usage.avoid}
+              />
+              <CodeSnippet
+                title="NumberInput.tsx"
+                code={numberInputDoc.examples[0].code}
+                language="tsx"
+              />
+              <PropsTable props={numberInputDoc.props} componentName="NumberInput" />
+            </div>
           </div>
-        </div>
 
-        {/* AffixInput */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">AffixInput</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent class="space-y-4">
+          {/* AffixInput */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              AffixInput
+            </h3>
+            <DemoSurface contentClass="space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-1">
                   <label class="text-xs text-[var(--floe-ink-soft)]">Fixed prefix & suffix</label>
@@ -2063,42 +2126,45 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   <AffixInput prefix="@" placeholder="username" disabled />
                 </div>
               </div>
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
 
-          <div class="mt-4">
-            <UsageGuidelines
-              whenToUse={affixInputDoc.usage.whenToUse}
-              bestPractices={affixInputDoc.usage.bestPractices}
-              avoid={affixInputDoc.usage.avoid}
-            />
-            <CodeSnippet
-              title="AffixInput.tsx"
-              code={affixInputDoc.examples[0].code}
-              language="tsx"
-            />
-            <PropsTable props={affixInputDoc.props} componentName="AffixInput" />
+            <div class="mt-4">
+              <UsageGuidelines
+                class="border-t border-[var(--floe-line-quiet)] pt-4"
+                whenToUse={affixInputDoc.usage.whenToUse}
+                bestPractices={affixInputDoc.usage.bestPractices}
+                avoid={affixInputDoc.usage.avoid}
+              />
+              <CodeSnippet
+                title="AffixInput.tsx"
+                code={affixInputDoc.examples[0].code}
+                language="tsx"
+              />
+              <PropsTable props={affixInputDoc.props} componentName="AffixInput" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Radio Button */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-radio"
-          title="Radio"
-          description="Radio button group for selecting a single option from a list. Supports multiple visual variants."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.radio')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* Radio Button */}
+      </Show>
+      <Show when={isSection('ui-radio')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-radio"
+            title="Radio"
+            description="Radio button group for selecting a single option from a list. Supports multiple visual variants."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.radio')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Default Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Default Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Default Variant
+              </h4>
               <RadioGroup
                 value={radioValue()}
                 onChange={(v) => {
@@ -2114,7 +2180,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Button Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
                 Button Variant (Segmented Control)
               </h4>
               <RadioGroup
@@ -2131,7 +2197,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Card Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Card Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Card Variant
+              </h4>
               <RadioGroup
                 value={planValue()}
                 onChange={(v) => {
@@ -2156,7 +2224,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Tile Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Tile Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Tile Variant
+              </h4>
               <RadioGroup
                 value={radioValue()}
                 onChange={setRadioValue}
@@ -2171,7 +2241,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Small</label>
@@ -2199,40 +2271,45 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Disabled */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Disabled</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Disabled
+              </h4>
               <RadioGroup value="option1" onChange={() => {}} disabled>
                 <RadioOption value="option1" label="Disabled option 1" />
                 <RadioOption value="option2" label="Disabled option 2" />
               </RadioGroup>
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={radioDoc.usage.whenToUse}
-          bestPractices={radioDoc.usage.bestPractices}
-          avoid={radioDoc.usage.avoid}
-        />
-        <CodeSnippet title="Radio.tsx" code={radioDoc.examples[0].code} language="tsx" />
-        <PropsTable props={radioDoc.props} componentName="RadioGroup" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={radioDoc.usage.whenToUse}
+            bestPractices={radioDoc.usage.bestPractices}
+            avoid={radioDoc.usage.avoid}
+          />
+          <CodeSnippet title="Radio.tsx" code={radioDoc.examples[0].code} language="tsx" />
+          <PropsTable props={radioDoc.props} componentName="RadioGroup" />
+        </div>
 
-      {/* Switch */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-switch"
-          title="Switch"
-          description="Toggle switch for binary on/off states."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.switch')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* Switch */}
+      </Show>
+      <Show when={isSection('ui-switch')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-switch"
+            title="Switch"
+            description="Toggle switch for binary on/off states."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.switch')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Basic Switch */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Switch</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Basic Switch
+              </h4>
               <div class="flex flex-col gap-3">
                 <Switch
                   checked={switchValue()}
@@ -2253,7 +2330,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Label positions */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Label Positions</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Label Positions
+              </h4>
               <div class="flex flex-col gap-3">
                 <Switch
                   checked={true}
@@ -2272,7 +2351,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Switch checked={true} onChange={() => {}} label="Small" size="sm" />
                 <Switch checked={true} onChange={() => {}} label="Medium" size="md" />
@@ -2282,7 +2363,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* States */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">States</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                States
+              </h4>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Switch checked={false} onChange={() => {}} label="Unchecked" />
                 <Switch checked={true} onChange={() => {}} label="Checked" />
@@ -2290,38 +2373,41 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <Switch checked={true} onChange={() => {}} label="Disabled checked" disabled />
               </div>
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={switchDoc.usage.whenToUse}
-          bestPractices={switchDoc.usage.bestPractices}
-          avoid={switchDoc.usage.avoid}
-        />
-        <CodeSnippet title="Switch.tsx" code={switchDoc.examples[0].code} language="tsx" />
-        <PropsTable props={switchDoc.props} componentName="Switch" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={switchDoc.usage.whenToUse}
+            bestPractices={switchDoc.usage.bestPractices}
+            avoid={switchDoc.usage.avoid}
+          />
+          <CodeSnippet title="Switch.tsx" code={switchDoc.examples[0].code} language="tsx" />
+          <PropsTable props={switchDoc.props} componentName="Switch" />
+        </div>
 
-      {/* SegmentedControl */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-segmented-control"
-          title="SegmentedControl"
-          description="A toggle button group for switching between mutually exclusive options like view modes (UI/JSON) or filters."
-          actions={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => props.onOpenFile('core.segmented-control')}
-            >
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* SegmentedControl */}
+      </Show>
+      <Show when={isSection('ui-segmented-control')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-segmented-control"
+            title="SegmentedControl"
+            description="A toggle button group for switching between mutually exclusive options like view modes (UI/JSON) or filters."
+            actions={
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => props.onOpenFile('core.segmented-control')}
+              >
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Basic */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Usage</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Basic Usage
+              </h4>
               <SegmentedControl
                 value="ui"
                 onChange={() => {}}
@@ -2334,7 +2420,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Multiple Options */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Multiple Options</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Multiple Options
+              </h4>
               <SegmentedControl
                 value="list"
                 onChange={() => {}}
@@ -2348,7 +2436,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="flex flex-col gap-3">
                 <SegmentedControl
                   value="a"
@@ -2382,7 +2472,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* With Icons */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">With Icons</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                With Icons
+              </h4>
               <SegmentedControl
                 value="code"
                 onChange={() => {}}
@@ -2395,7 +2487,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Disabled */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">States</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                States
+              </h4>
               <div class="flex flex-col gap-3">
                 <SegmentedControl
                   value="a"
@@ -2416,38 +2510,41 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 />
               </div>
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={segmentedControlDoc.usage.whenToUse}
-          bestPractices={segmentedControlDoc.usage.bestPractices}
-          avoid={segmentedControlDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="SegmentedControl.tsx"
-          code={segmentedControlDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={segmentedControlDoc.props} componentName="SegmentedControl" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={segmentedControlDoc.usage.whenToUse}
+            bestPractices={segmentedControlDoc.usage.bestPractices}
+            avoid={segmentedControlDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="SegmentedControl.tsx"
+            code={segmentedControlDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={segmentedControlDoc.props} componentName="SegmentedControl" />
+        </div>
 
-      {/* Checkbox */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-checkbox"
-          title="Checkbox"
-          description="Checkbox component for multi-select options. Supports multiple visual variants like Radio."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.checkbox')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* Checkbox */}
+      </Show>
+      <Show when={isSection('ui-checkbox')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-checkbox"
+            title="Checkbox"
+            description="Checkbox component for multi-select options. Supports multiple visual variants like Radio."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.checkbox')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Basic Checkbox */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Standalone Checkbox</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Standalone Checkbox
+              </h4>
               <div class="flex flex-col gap-2">
                 <Checkbox
                   checked={singleCheckbox()}
@@ -2469,7 +2566,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* CheckboxGroup - Default */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">CheckboxGroup - Default</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                CheckboxGroup - Default
+              </h4>
               <CheckboxGroup
                 value={checkboxValues()}
                 onChange={(v) => {
@@ -2485,7 +2584,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* CheckboxGroup - Button Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
                 Button Variant (Multi-select)
               </h4>
               <CheckboxGroup
@@ -2502,7 +2601,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* CheckboxGroup - Card Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Card Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Card Variant
+              </h4>
               <CheckboxGroup value={checkboxValues()} onChange={setCheckboxValues} variant="card">
                 <Checkbox
                   value="option1"
@@ -2520,7 +2621,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* CheckboxGroup - Tile Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Tile Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Tile Variant
+              </h4>
               <CheckboxGroup
                 value={checkboxValues()}
                 onChange={setCheckboxValues}
@@ -2535,7 +2638,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="flex items-center gap-6">
                 <Checkbox checked={true} onChange={() => {}} label="Small" size="sm" />
                 <Checkbox checked={true} onChange={() => {}} label="Medium" size="md" />
@@ -2545,40 +2650,45 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Disabled */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Disabled</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Disabled
+              </h4>
               <div class="flex items-center gap-4">
                 <Checkbox checked={false} onChange={() => {}} label="Unchecked disabled" disabled />
                 <Checkbox checked={true} onChange={() => {}} label="Checked disabled" disabled />
               </div>
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={checkboxDoc.usage.whenToUse}
-          bestPractices={checkboxDoc.usage.bestPractices}
-          avoid={checkboxDoc.usage.avoid}
-        />
-        <CodeSnippet title="Checkbox.tsx" code={checkboxDoc.examples[0].code} language="tsx" />
-        <PropsTable props={checkboxDoc.props} componentName="Checkbox" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={checkboxDoc.usage.whenToUse}
+            bestPractices={checkboxDoc.usage.bestPractices}
+            avoid={checkboxDoc.usage.avoid}
+          />
+          <CodeSnippet title="Checkbox.tsx" code={checkboxDoc.examples[0].code} language="tsx" />
+          <PropsTable props={checkboxDoc.props} componentName="Checkbox" />
+        </div>
 
-      {/* Pagination */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-pagination"
-          title="Pagination"
-          description="Navigation component for paginated content. Multiple variants for different use cases."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.pagination')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* Pagination */}
+      </Show>
+      <Show when={isSection('ui-pagination')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-pagination"
+            title="Pagination"
+            description="Navigation component for paginated content. Multiple variants for different use cases."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.pagination')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Default Pagination */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Default Pagination</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Default Pagination
+              </h4>
               <Pagination
                 page={currentPage()}
                 totalPages={20}
@@ -2591,7 +2701,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* With First/Last & Jump */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">With First/Last & Jump To</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                With First/Last & Jump To
+              </h4>
               <Pagination
                 page={currentPage()}
                 totalPages={20}
@@ -2603,7 +2715,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* With Page Size */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">With Page Size Selector</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                With Page Size Selector
+              </h4>
               <Pagination
                 page={currentPage()}
                 totalPages={20}
@@ -2621,7 +2735,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Simple Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Simple Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Simple Variant
+              </h4>
               <Pagination
                 page={currentPage()}
                 totalPages={20}
@@ -2632,7 +2748,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Minimal Variant */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Minimal Variant</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Minimal Variant
+              </h4>
               <Pagination
                 page={currentPage()}
                 totalPages={20}
@@ -2644,7 +2762,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="flex flex-col gap-4">
                 <div>
                   <label class="text-caption text-[var(--floe-ink-soft)] mb-2 block">Small</label>
@@ -2660,34 +2780,41 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </div>
               </div>
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={paginationDoc.usage.whenToUse}
-          bestPractices={paginationDoc.usage.bestPractices}
-          avoid={paginationDoc.usage.avoid}
-        />
-        <CodeSnippet title="Pagination.tsx" code={paginationDoc.examples[0].code} language="tsx" />
-        <PropsTable props={paginationDoc.props} componentName="Pagination" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={paginationDoc.usage.whenToUse}
+            bestPractices={paginationDoc.usage.bestPractices}
+            avoid={paginationDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="Pagination.tsx"
+            code={paginationDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={paginationDoc.props} componentName="Pagination" />
+        </div>
 
-      {/* Progress */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-progress"
-          title="Progress"
-          description="Progress indicators for loading states and task completion. Linear, circular, segmented, and step variants."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.progress')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+        {/* Progress */}
+      </Show>
+      <Show when={isSection('ui-progress')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-progress"
+            title="Progress"
+            description="Progress indicators for loading states and task completion. Linear, circular, segmented, and step variants."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.progress')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Linear Progress */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Linear Progress</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Linear Progress
+              </h4>
               <div class="space-y-4">
                 <LinearProgress value={progressValue()} showLabel />
                 <div class="flex gap-2">
@@ -2709,7 +2836,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Linear Progress Variants */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Colors</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Colors
+              </h4>
               <div class="space-y-3">
                 <LinearProgress value={80} color="primary" />
                 <LinearProgress value={65} color="success" />
@@ -2721,7 +2850,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Striped & Animated */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Striped & Animated</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Striped & Animated
+              </h4>
               <div class="space-y-3">
                 <LinearProgress value={75} striped />
                 <LinearProgress value={60} striped animated />
@@ -2730,19 +2861,25 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Indeterminate */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Indeterminate (Loading)</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Indeterminate (Loading)
+              </h4>
               <LinearProgress indeterminate />
             </div>
 
             {/* With Buffer */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">With Buffer</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                With Buffer
+              </h4>
               <LinearProgress value={45} buffer={70} />
             </div>
 
             {/* Sizes */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Sizes</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Sizes
+              </h4>
               <div class="space-y-3">
                 <div>
                   <label class="text-caption text-[var(--floe-ink-soft)] mb-1 block">Small</label>
@@ -2761,7 +2898,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Circular Progress */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Circular Progress</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Circular Progress
+              </h4>
               <div class="flex items-center gap-4">
                 <CircularProgress value={progressValue()} showLabel size="sm" />
                 <CircularProgress value={progressValue()} showLabel size="md" />
@@ -2772,7 +2911,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Circular Colors */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Circular Colors</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Circular Colors
+              </h4>
               <div class="flex items-center gap-4">
                 <CircularProgress value={75} showLabel color="primary" />
                 <CircularProgress value={75} showLabel color="success" />
@@ -2784,7 +2925,9 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Segmented Progress */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Segmented Progress</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Segmented Progress
+              </h4>
               <div class="space-y-3">
                 <SegmentedProgress value={progressValue()} segments={5} showLabel />
                 <SegmentedProgress value={80} segments={10} color="success" />
@@ -2794,38 +2937,41 @@ export function ShowcasePage(props: ShowcasePageProps) {
 
             {/* Steps Progress */}
             <div class="space-y-3">
-              <h4 class="text-xs font-medium text-[var(--floe-ink-soft)]">Steps Progress</h4>
+              <h4 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+                Steps Progress
+              </h4>
               <StepsProgress current={2} steps={['Account', 'Profile', 'Review', 'Complete']} />
             </div>
-          </PanelContent>
-        </Panel>
-        <UsageGuidelines
-          whenToUse={linearProgressDoc.usage.whenToUse}
-          bestPractices={linearProgressDoc.usage.bestPractices}
-          avoid={linearProgressDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="Progress.tsx"
-          code={linearProgressDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={linearProgressDoc.props} componentName="LinearProgress" />
-      </div>
+          </DemoSurface>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={linearProgressDoc.usage.whenToUse}
+            bestPractices={linearProgressDoc.usage.bestPractices}
+            avoid={linearProgressDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="Progress.tsx"
+            code={linearProgressDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={linearProgressDoc.props} componentName="LinearProgress" />
+        </div>
 
-      {/* Form Components */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-forms"
-          title="Form"
-          description="Composable form components for accessible forms with validation."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.form')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent>
+        {/* Form Components */}
+      </Show>
+      <Show when={isSection('ui-forms')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-forms"
+            title="Form"
+            description="Composable form components for accessible forms with validation."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.form')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface>
             <Form
               class="max-w-md"
               onSubmit={() => {
@@ -2882,14 +3028,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <Button type="submit">Create Account</Button>
               </FormActions>
             </Form>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Validation Example */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Form with Validation Errors</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Validation Example */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Form with Validation Errors
+            </h3>
+            <DemoSurface>
               <Form class="max-w-sm">
                 <FormField>
                   <FormLabel required>Username</FormLabel>
@@ -2914,39 +3060,42 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   </Button>
                 </FormActions>
               </Form>
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
+          </div>
+
+          {/* Form Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={formDoc.usage.whenToUse}
+            bestPractices={formDoc.usage.bestPractices}
+            avoid={formDoc.usage.avoid}
+          />
+          <CodeSnippet title="Form.tsx" code={formDoc.examples[0].code} language="tsx" />
+          <PropsTable props={formDoc.props} componentName="Form" />
         </div>
 
-        {/* Form Documentation */}
-        <UsageGuidelines
-          whenToUse={formDoc.usage.whenToUse}
-          bestPractices={formDoc.usage.bestPractices}
-          avoid={formDoc.usage.avoid}
-        />
-        <CodeSnippet title="Form.tsx" code={formDoc.examples[0].code} language="tsx" />
-        <PropsTable props={formDoc.props} componentName="Form" />
-      </div>
-
-      {/* ============================================================
+        {/* ============================================================
           STEPPER & WIZARD SECTION
           ============================================================ */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-stepper"
-          title="Stepper & Wizard"
-          description="Multi-step progress indicators and wizard components for guided workflows."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.stepper')}>
-              View Source
-            </Button>
-          }
-        />
+      </Show>
+      <Show when={isSection('ui-stepper')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-stepper"
+            title="Stepper & Wizard"
+            description="Multi-step progress indicators and wizard components for guided workflows."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.stepper')}>
+                View Source
+              </Button>
+            }
+          />
 
-        {/* Stepper Variants */}
-        <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Stepper Variants</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+          {/* Stepper Variants */}
+          <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+            Stepper Variants
+          </h3>
+          <DemoSurface contentClass="space-y-6">
             {/* Default Variant */}
             <div class="space-y-2">
               <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Default</p>
@@ -2989,14 +3138,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 currentStep={0}
               />
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Stepper Sizes */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Stepper Sizes</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent class="space-y-4">
+          {/* Stepper Sizes */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Stepper Sizes
+            </h3>
+            <DemoSurface contentClass="space-y-4">
               <div class="space-y-2">
                 <p class="text-caption text-[var(--floe-ink-soft)]">Small</p>
                 <Stepper
@@ -3033,56 +3182,62 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   currentStep={1}
                 />
               </div>
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Interactive Wizard Example */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Interactive Wizard</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Interactive Wizard Example */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Interactive Wizard
+            </h3>
+            <DemoSurface>
               <WizardDemo />
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
+          </div>
+
+          {/* Stepper Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={stepperDoc.usage.whenToUse}
+            bestPractices={stepperDoc.usage.bestPractices}
+            avoid={stepperDoc.usage.avoid}
+          />
+          <CodeSnippet title="Stepper.tsx" code={stepperDoc.examples[0].code} language="tsx" />
+          <PropsTable props={stepperDoc.props} componentName="Stepper" />
+
+          {/* Wizard Documentation */}
+          <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mt-6">
+            Wizard Component
+          </h3>
+          <CodeSnippet title="Wizard.tsx" code={wizardDoc.examples[0].code} language="tsx" />
+          <PropsTable props={wizardDoc.props} componentName="Wizard" />
+
+          {/* useWizard Hook Documentation */}
+          <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mt-6">
+            useWizard Hook
+          </h3>
+          <CodeSnippet title="useWizard.ts" code={useWizardDoc.examples[0].code} language="tsx" />
+          <PropsTable props={useWizardDoc.props} componentName="useWizard" />
         </div>
+      </Show>
+      <Show when={isSection('ui-menus')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-menus"
+            title="Dropdown & Select"
+            description="Menu items, cascade submenus, custom content, and a Select wrapper."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.dropdown')}>
+                View Source
+              </Button>
+            }
+          />
 
-        {/* Stepper Documentation */}
-        <UsageGuidelines
-          whenToUse={stepperDoc.usage.whenToUse}
-          bestPractices={stepperDoc.usage.bestPractices}
-          avoid={stepperDoc.usage.avoid}
-        />
-        <CodeSnippet title="Stepper.tsx" code={stepperDoc.examples[0].code} language="tsx" />
-        <PropsTable props={stepperDoc.props} componentName="Stepper" />
-
-        {/* Wizard Documentation */}
-        <h3 class="text-xs font-medium text-[var(--floe-ink-soft)] mt-6">Wizard Component</h3>
-        <CodeSnippet title="Wizard.tsx" code={wizardDoc.examples[0].code} language="tsx" />
-        <PropsTable props={wizardDoc.props} componentName="Wizard" />
-
-        {/* useWizard Hook Documentation */}
-        <h3 class="text-xs font-medium text-[var(--floe-ink-soft)] mt-6">useWizard Hook</h3>
-        <CodeSnippet title="useWizard.ts" code={useWizardDoc.examples[0].code} language="tsx" />
-        <PropsTable props={useWizardDoc.props} componentName="useWizard" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-menus"
-          title="Dropdown & Select"
-          description="Menu items, cascade submenus, custom content, and a Select wrapper."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.dropdown')}>
-              View Source
-            </Button>
-          }
-        />
-
-        {/* Basic Dropdown & Select */}
-        <h3 class="text-xs font-medium text-[var(--floe-ink-soft)]">Basic Dropdown & Select</h3>
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap items-start gap-4">
+          {/* Basic Dropdown & Select */}
+          <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+            Basic Dropdown & Select
+          </h3>
+          <DemoSurface contentClass="flex flex-wrap items-start gap-4">
             <div class="space-y-1.5">
               <p class="text-caption text-[var(--floe-ink-soft)]">Dropdown</p>
               <Dropdown
@@ -3113,14 +3268,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
               />
               <p class="text-caption text-[var(--floe-ink-soft)]">Selected: {selectValue()}</p>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Cascade Dropdown */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Cascade Dropdown</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent class="flex flex-wrap items-start gap-4">
+          {/* Cascade Dropdown */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Cascade Dropdown
+            </h3>
+            <DemoSurface contentClass="flex flex-wrap items-start gap-4">
               <div class="space-y-1.5">
                 <p class="text-caption text-[var(--floe-ink-soft)]">With Submenus</p>
                 <Dropdown
@@ -3143,15 +3298,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Dropdown with Custom Content */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Dropdown with Custom Content</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent class="flex flex-wrap items-start gap-4">
+          {/* Dropdown with Custom Content */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Dropdown with Custom Content
+            </h3>
+            <DemoSurface contentClass="flex flex-wrap items-start gap-4">
               <div class="space-y-1.5">
                 <p class="text-caption text-[var(--floe-ink-soft)]">With NumberInput</p>
                 <Dropdown
@@ -3225,99 +3380,104 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   triggerClass="inline-flex items-center justify-center gap-1.5 font-medium cursor-pointer transition-colors duration-[var(--floe-duration-fast)] border border-input bg-[var(--floe-plane)] shadow-sm hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-accent-ink)]-foreground h-8 px-3 text-xs rounded-md"
                 />
               </div>
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Dropdown Documentation */}
-        <UsageGuidelines
-          whenToUse={dropdownDoc.usage.whenToUse}
-          bestPractices={dropdownDoc.usage.bestPractices}
-          avoid={dropdownDoc.usage.avoid}
-        />
-        <CodeSnippet title="Dropdown.tsx" code={dropdownDoc.examples[0].code} language="tsx" />
-        <PropsTable props={dropdownDoc.props} componentName="Dropdown" />
+          {/* Dropdown Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={dropdownDoc.usage.whenToUse}
+            bestPractices={dropdownDoc.usage.bestPractices}
+            avoid={dropdownDoc.usage.avoid}
+          />
+          <CodeSnippet title="Dropdown.tsx" code={dropdownDoc.examples[0].code} language="tsx" />
+          <PropsTable props={dropdownDoc.props} componentName="Dropdown" />
 
-        {/* Popover Documentation */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Popover Component</h3>
-          <p class="text-caption text-[var(--floe-ink-soft)] mb-3">
-            A non-modal anchored panel. Unlike Dropdown it carries no menu semantics, so it can
-            host forms, previews or reading content. It reuses the same placement, portal ownership
-            and exit motion as the menu layer.
-          </p>
-          <div class="flex flex-wrap items-center gap-2">
-            <Popover
-              ariaLabel="Workspace filters"
-              width={240}
-              trigger={
-                <Button variant="outline" icon={Search}>
-                  Filters
-                </Button>
-              }
-            >
-              {(close) => (
-                <div class="space-y-2 p-3">
-                  <Input placeholder="Filter by name" />
-                  <div class="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={close}>
-                      Reset
-                    </Button>
-                    <Button size="sm" onClick={close}>
-                      Apply
-                    </Button>
+          {/* Popover Documentation */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Popover Component
+            </h3>
+            <p class="text-caption text-[var(--floe-ink-soft)] mb-3">
+              A non-modal anchored panel. Unlike Dropdown it carries no menu semantics, so it can
+              host forms, previews or reading content. It reuses the same placement, portal
+              ownership and exit motion as the menu layer.
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <Popover
+                ariaLabel="Workspace filters"
+                width={240}
+                trigger={
+                  <Button variant="outline" icon={Search}>
+                    Filters
+                  </Button>
+                }
+              >
+                {(close) => (
+                  <div class="space-y-2 p-3">
+                    <Input placeholder="Filter by name" />
+                    <div class="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={close}>
+                        Reset
+                      </Button>
+                      <Button size="sm" onClick={close}>
+                        Apply
+                      </Button>
+                    </div>
                   </div>
+                )}
+              </Popover>
+              <Popover
+                placement="bottom-end"
+                ariaLabel="Release notes"
+                width={280}
+                trigger={<Button variant="ghost">What&apos;s new</Button>}
+              >
+                <div class="space-y-1.5 p-3 text-caption">
+                  <p class="font-medium">Release notes</p>
+                  <p class="text-[var(--floe-ink-soft)]">
+                    One refined surface, lighter overlay motion, and one control radius across
+                    fields and actions.
+                  </p>
                 </div>
-              )}
-            </Popover>
-            <Popover
-              placement="bottom-end"
-              ariaLabel="Release notes"
-              width={280}
-              trigger={<Button variant="ghost">What&apos;s new</Button>}
-            >
-              <div class="space-y-1.5 p-3 text-caption">
-                <p class="font-medium">Release notes</p>
-                <p class="text-[var(--floe-ink-soft)]">
-                  One refined surface, lighter overlay motion, and one control radius across fields
-                  and actions.
-                </p>
-              </div>
-            </Popover>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Select Documentation */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Select Component
+            </h3>
+            <UsageGuidelines
+              class="border-t border-[var(--floe-line-quiet)] pt-4"
+              whenToUse={selectDoc.usage.whenToUse}
+              bestPractices={selectDoc.usage.bestPractices}
+              avoid={selectDoc.usage.avoid}
+            />
+            <CodeSnippet
+              title="Select.tsx"
+              code={selectDoc.examples[0].code}
+              language="tsx"
+              class="mt-3"
+            />
+            <PropsTable props={selectDoc.props} componentName="Select" class="mt-3" />
           </div>
         </div>
-
-        {/* Select Documentation */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Select Component</h3>
-          <UsageGuidelines
-            whenToUse={selectDoc.usage.whenToUse}
-            bestPractices={selectDoc.usage.bestPractices}
-            avoid={selectDoc.usage.avoid}
+      </Show>
+      <Show when={isSection('ui-tooltips')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-tooltips"
+            title="Tooltip"
+            description="Hover or focus to show tooltips (placements + custom content)."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.tooltip')}>
+                View Source
+              </Button>
+            }
           />
-          <CodeSnippet
-            title="Select.tsx"
-            code={selectDoc.examples[0].code}
-            language="tsx"
-            class="mt-3"
-          />
-          <PropsTable props={selectDoc.props} componentName="Select" class="mt-3" />
-        </div>
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-tooltips"
-          title="Tooltip"
-          description="Hover or focus to show tooltips (placements + custom content)."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.tooltip')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-3 items-center">
+          <DemoSurface contentClass="flex flex-wrap gap-3 items-center">
             <Tooltip content="Top tooltip" placement="top">
               <Button variant="outline">Top</Button>
             </Tooltip>
@@ -3333,32 +3493,32 @@ export function ShowcasePage(props: ShowcasePageProps) {
             >
               <Button variant="outline">Right</Button>
             </Tooltip>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Tooltip Documentation */}
-        <UsageGuidelines
-          whenToUse={tooltipDoc.usage.whenToUse}
-          bestPractices={tooltipDoc.usage.bestPractices}
-          avoid={tooltipDoc.usage.avoid}
-        />
-        <CodeSnippet title="Tooltip.tsx" code={tooltipDoc.examples[0].code} language="tsx" />
-        <PropsTable props={tooltipDoc.props} componentName="Tooltip" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-dialogs"
-          title="Dialogs"
-          description="Dialog + ConfirmDialog (async confirm) with non-blocking flows."
-          actions={
-            <Button variant="outline" onClick={() => props.onOpenFile('core.dialog')}>
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+          {/* Tooltip Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={tooltipDoc.usage.whenToUse}
+            bestPractices={tooltipDoc.usage.bestPractices}
+            avoid={tooltipDoc.usage.avoid}
+          />
+          <CodeSnippet title="Tooltip.tsx" code={tooltipDoc.examples[0].code} language="tsx" />
+          <PropsTable props={tooltipDoc.props} componentName="Tooltip" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-dialogs')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-dialogs"
+            title="Dialogs"
+            description="Dialog + ConfirmDialog (async confirm) with non-blocking flows."
+            actions={
+              <Button variant="outline" onClick={() => props.onOpenFile('core.dialog')}>
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDialogOpen(true)}>Open Dialog</Button>
             <Button variant="outline" onClick={openConfirm}>
               Open Confirm Dialog
@@ -3371,162 +3531,165 @@ export function ShowcasePage(props: ShowcasePageProps) {
             >
               Trigger Notification
             </Button>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <Dialog
-          open={dialogOpen()}
-          onOpenChange={setDialogOpen}
-          title="Example Dialog"
-          bodyDescription="This dialog demonstrates header/footer + scrollable content."
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-                Close
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setDialogOpen(false);
-                  notifications.success('Saved', 'Changes have been saved.');
-                }}
-              >
-                Save
-              </Button>
-            </>
-          }
-        >
-          <div class="space-y-2">
-            <Input placeholder="Type something..." />
-            <Textarea placeholder="Longer content..." />
-            <div class="space-y-1.5">
-              <p class="text-caption text-[var(--floe-ink-soft)]">
-                Tip: press{' '}
-                <kbd class="font-mono text-caption px-1 py-0.5 rounded-xs bg-[var(--floe-well)] border border-[var(--floe-line)]">
-                  Esc
-                </kbd>{' '}
-                to close.
-              </p>
-              <div class="h-32 rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)]" />
+          <Dialog
+            open={dialogOpen()}
+            onOpenChange={setDialogOpen}
+            title="Example Dialog"
+            bodyDescription="This dialog demonstrates header/footer + scrollable content."
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => setDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setDialogOpen(false);
+                    notifications.success('Saved', 'Changes have been saved.');
+                  }}
+                >
+                  Save
+                </Button>
+              </>
+            }
+          >
+            <div class="space-y-2">
+              <Input placeholder="Type something..." />
+              <Textarea placeholder="Longer content..." />
+              <div class="space-y-1.5">
+                <p class="text-caption text-[var(--floe-ink-soft)]">
+                  Tip: press{' '}
+                  <kbd class="font-mono text-caption px-1 py-0.5 rounded-xs bg-[var(--floe-well)] border border-[var(--floe-line)]">
+                    Esc
+                  </kbd>{' '}
+                  to close.
+                </p>
+                <div class="h-32 rounded-md border border-[var(--floe-line)] bg-[var(--floe-well)]" />
+              </div>
             </div>
-          </div>
-        </Dialog>
+          </Dialog>
 
-        <ConfirmDialog
-          open={confirmOpen()}
-          onOpenChange={setConfirmOpen}
-          title="Confirm action"
-          bodyDescription="This confirm dialog simulates an async operation."
-          confirmText="Run"
-          cancelText="Cancel"
-          loading={confirmLoading()}
-          onConfirm={confirmAction}
-        />
+          <ConfirmDialog
+            open={confirmOpen()}
+            onOpenChange={setConfirmOpen}
+            title="Confirm action"
+            bodyDescription="This confirm dialog simulates an async operation."
+            confirmText="Run"
+            cancelText="Cancel"
+            loading={confirmLoading()}
+            onConfirm={confirmAction}
+          />
 
-        {/* Dialog Documentation */}
-        <UsageGuidelines
-          whenToUse={dialogDoc.usage.whenToUse}
-          bestPractices={dialogDoc.usage.bestPractices}
-          avoid={dialogDoc.usage.avoid}
-        />
-        <CodeSnippet title="Dialog.tsx" code={dialogDoc.examples[0].code} language="tsx" />
-        <PropsTable props={dialogDoc.props} componentName="Dialog" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-directory-picker"
-          title="Directory Picker"
-          description="Modal directory selector with tree navigation, path input, breadcrumb, and new folder creation."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+          {/* Dialog Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={dialogDoc.usage.whenToUse}
+            bestPractices={dialogDoc.usage.bestPractices}
+            avoid={dialogDoc.usage.avoid}
+          />
+          <CodeSnippet title="Dialog.tsx" code={dialogDoc.examples[0].code} language="tsx" />
+          <PropsTable props={dialogDoc.props} componentName="Dialog" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-directory-picker')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-directory-picker"
+            title="Directory Picker"
+            description="Modal directory selector with tree navigation, path input, breadcrumb, and new folder creation."
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setDirectoryPickerOpen(true)}>Open Directory Picker</Button>
             <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: folder tree, path input with Go, breadcrumb, new folder, filter prop
             </p>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <DirectoryPicker
-          open={directoryPickerOpen()}
-          onOpenChange={setDirectoryPickerOpen}
-          files={demoFileBrowserData}
-          initialPath="/src"
-          onSelect={(path) => {
-            notifications.success('Directory Selected', path);
-          }}
-          onCreateFolder={handleDemoCreateFolder}
-        />
+          <DirectoryPicker
+            open={directoryPickerOpen()}
+            onOpenChange={setDirectoryPickerOpen}
+            files={demoFileBrowserData}
+            initialPath="/src"
+            onSelect={(path) => {
+              notifications.success('Directory Selected', path);
+            }}
+            onCreateFolder={handleDemoCreateFolder}
+          />
 
-        {/* DirectoryPicker Documentation */}
-        <UsageGuidelines
-          whenToUse={directoryPickerDoc.usage.whenToUse}
-          bestPractices={directoryPickerDoc.usage.bestPractices}
-          avoid={directoryPickerDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="DirectoryPicker.tsx"
-          code={directoryPickerDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={directoryPickerDoc.props} componentName="DirectoryPicker" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-file-open-picker"
-          title="File Open Picker"
-          description="Modal file selector with filtering, ordered multi-selection, and responsive keyboard navigation."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+          {/* DirectoryPicker Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={directoryPickerDoc.usage.whenToUse}
+            bestPractices={directoryPickerDoc.usage.bestPractices}
+            avoid={directoryPickerDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="DirectoryPicker.tsx"
+            code={directoryPickerDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={directoryPickerDoc.props} componentName="DirectoryPicker" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-file-open-picker')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-file-open-picker"
+            title="File Open Picker"
+            description="Modal file selector with filtering, ordered multi-selection, and responsive keyboard navigation."
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFileOpenPickerOpen(true)}>Open File Picker</Button>
             <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: single or multiple selection, file filters, order, limits, and lazy folders
             </p>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <FileOpenPicker
-          open={fileOpenPickerOpen()}
-          onOpenChange={setFileOpenPickerOpen}
-          files={demoFileBrowserData}
-          initialPath="/src"
-          selectionMode="multiple"
-          maxSelections={3}
-          fileFilter={(item) => ['ts', 'tsx', 'json'].includes(item.extension ?? '')}
-          onSelect={(paths) => {
-            notifications.success('Files Selected', paths.join(', '));
-          }}
-          onCreateFolder={handleDemoCreateFolder}
-        />
+          <FileOpenPicker
+            open={fileOpenPickerOpen()}
+            onOpenChange={setFileOpenPickerOpen}
+            files={demoFileBrowserData}
+            initialPath="/src"
+            selectionMode="multiple"
+            maxSelections={3}
+            fileFilter={(item) => ['ts', 'tsx', 'json'].includes(item.extension ?? '')}
+            onSelect={(paths) => {
+              notifications.success('Files Selected', paths.join(', '));
+            }}
+            onCreateFolder={handleDemoCreateFolder}
+          />
 
-        <UsageGuidelines
-          whenToUse={fileOpenPickerDoc.usage.whenToUse}
-          bestPractices={fileOpenPickerDoc.usage.bestPractices}
-          avoid={fileOpenPickerDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="FileOpenPicker.tsx"
-          code={fileOpenPickerDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={fileOpenPickerDoc.props} componentName="FileOpenPicker" />
-      </div>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={fileOpenPickerDoc.usage.whenToUse}
+            bestPractices={fileOpenPickerDoc.usage.bestPractices}
+            avoid={fileOpenPickerDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="FileOpenPicker.tsx"
+            code={fileOpenPickerDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={fileOpenPickerDoc.props} componentName="FileOpenPicker" />
+        </div>
 
-      {/* DirectoryInput Section */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-directory-input"
-          title="Directory Input"
-          description="Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked."
-        />
+        {/* DirectoryInput Section */}
+      </Show>
+      <Show when={isSection('ui-directory-input')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-directory-input"
+            title="Directory Input"
+            description="Form-compatible input for selecting directories. Shows selected path and opens a picker dialog when clicked."
+          />
 
-        {/* Basic Usage */}
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-4">
-            <h3 class="text-xs font-medium">Basic Usage & Size Variants</h3>
+          {/* Basic Usage */}
+          <DemoSurface contentClass="space-y-4">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)]">
+              Basic Usage & Size Variants
+            </h3>
             <div class="flex flex-col gap-3 max-w-md">
               <DirectoryInput
                 value={directoryInputValue()}
@@ -3559,14 +3722,14 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <p class="text-caption text-[var(--floe-ink-soft)]">
               Selected: {directoryInputValue() || '(none)'}
             </p>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* Form Integration Example */}
-        <div class="pt-4 border-t border-[var(--floe-line)]">
-          <h3 class="text-xs font-medium mb-3">Form Integration</h3>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Form Integration Example */}
+          <div class="pt-4 border-t border-[var(--floe-line)]">
+            <h3 class="text-caption font-medium uppercase tracking-[0.04em] text-[var(--floe-ink-quiet)] mb-3">
+              Form Integration
+            </h3>
+            <DemoSurface>
               <Form
                 class="max-w-md"
                 onSubmit={() => {
@@ -3630,166 +3793,166 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   </Button>
                 </FormActions>
               </Form>
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
+          </div>
+
+          {/* DirectoryInput Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={directoryInputDoc.usage.whenToUse}
+            bestPractices={directoryInputDoc.usage.bestPractices}
+            avoid={directoryInputDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="DirectoryInput.tsx"
+            code={directoryInputDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={directoryInputDoc.props} componentName="DirectoryInput" />
         </div>
-
-        {/* DirectoryInput Documentation */}
-        <UsageGuidelines
-          whenToUse={directoryInputDoc.usage.whenToUse}
-          bestPractices={directoryInputDoc.usage.bestPractices}
-          avoid={directoryInputDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="DirectoryInput.tsx"
-          code={directoryInputDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={directoryInputDoc.props} componentName="DirectoryInput" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-file-save-picker"
-          title="File Save Picker"
-          description="Save-as dialog with directory tree, file list panel, and filename input."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+      </Show>
+      <Show when={isSection('ui-file-save-picker')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-file-save-picker"
+            title="File Save Picker"
+            description="Save-as dialog with directory tree, file list panel, and filename input."
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFileSavePickerOpen(true)}>Open File Save Picker</Button>
             <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: split view (folder tree + file list), click file to fill name, filename
               validation, new folder
             </p>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <FileSavePicker
-          open={fileSavePickerOpen()}
-          onOpenChange={setFileSavePickerOpen}
-          files={demoFileBrowserData}
-          initialPath="/src"
-          initialFileName="report.pdf"
-          onSave={(dirPath, fileName) => {
-            notifications.success('File Saved', `${dirPath}/${fileName}`);
-          }}
-          onCreateFolder={handleDemoCreateFolder}
-          validateFileName={(name) => {
-            if (name.includes(' ')) return 'Filename must not contain spaces';
-            return '';
-          }}
-        />
+          <FileSavePicker
+            open={fileSavePickerOpen()}
+            onOpenChange={setFileSavePickerOpen}
+            files={demoFileBrowserData}
+            initialPath="/src"
+            initialFileName="report.pdf"
+            onSave={(dirPath, fileName) => {
+              notifications.success('File Saved', `${dirPath}/${fileName}`);
+            }}
+            onCreateFolder={handleDemoCreateFolder}
+            validateFileName={(name) => {
+              if (name.includes(' ')) return 'Filename must not contain spaces';
+              return '';
+            }}
+          />
 
-        {/* FileSavePicker Documentation */}
-        <UsageGuidelines
-          whenToUse={fileSavePickerDoc.usage.whenToUse}
-          bestPractices={fileSavePickerDoc.usage.bestPractices}
-          avoid={fileSavePickerDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="FileSavePicker.tsx"
-          code={fileSavePickerDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={fileSavePickerDoc.props} componentName="FileSavePicker" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-floating-window"
-          title="Floating Window"
-          description="Persistent modeless tool window with drag, resize, maximize/restore, and close buttons."
-          actions={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => props.onOpenFile('core.floating-window')}
-            >
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+          {/* FileSavePicker Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={fileSavePickerDoc.usage.whenToUse}
+            bestPractices={fileSavePickerDoc.usage.bestPractices}
+            avoid={fileSavePickerDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="FileSavePicker.tsx"
+            code={fileSavePickerDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={fileSavePickerDoc.props} componentName="FileSavePicker" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-floating-window')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-floating-window"
+            title="Floating Window"
+            description="Persistent modeless tool window with drag, resize, maximize/restore, and close buttons."
+            actions={
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => props.onOpenFile('core.floating-window')}
+              >
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => setFloatingWindowOpen(true)}>Open Floating Window</Button>
             <p class="text-caption text-[var(--floe-ink-soft)]">
               Features: drag title bar, resize edges/corners, maximize/restore, stay open while the
               page remains interactive
             </p>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <FloatingWindow
-          open={floatingWindowOpen()}
-          onOpenChange={setFloatingWindowOpen}
-          title="Floating Window Demo"
-          defaultSize={{ width: 450, height: 320 }}
-          minSize={{ width: 280, height: 200 }}
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => setFloatingWindowOpen(false)}>
-                Close
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setFloatingWindowOpen(false);
-                  notifications.success('Done', 'Window action completed.');
-                }}
-              >
-                Confirm
-              </Button>
-            </>
-          }
-        >
-          <div class="space-y-3">
-            <p class="text-xs text-[var(--floe-ink-soft)]">
-              This is a floating window component. Try these interactions:
-            </p>
-            <ul class="text-xs text-[var(--floe-ink-soft)] space-y-1 list-disc list-inside">
-              <li>Drag the title bar to move the window</li>
-              <li>Drag edges or corners to resize</li>
-              <li>Double-click title bar to maximize/restore</li>
-              <li>Click the maximize button in the title bar</li>
-              <li>Press Escape or click X to close</li>
-            </ul>
-            <div class="pt-2">
-              <Input placeholder="Type something..." />
+          <FloatingWindow
+            open={floatingWindowOpen()}
+            onOpenChange={setFloatingWindowOpen}
+            title="Floating Window Demo"
+            defaultSize={{ width: 450, height: 320 }}
+            minSize={{ width: 280, height: 200 }}
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => setFloatingWindowOpen(false)}>
+                  Close
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setFloatingWindowOpen(false);
+                    notifications.success('Done', 'Window action completed.');
+                  }}
+                >
+                  Confirm
+                </Button>
+              </>
+            }
+          >
+            <div class="space-y-3">
+              <p class="text-xs text-[var(--floe-ink-soft)]">
+                This is a floating window component. Try these interactions:
+              </p>
+              <ul class="text-xs text-[var(--floe-ink-soft)] space-y-1 list-disc list-inside">
+                <li>Drag the title bar to move the window</li>
+                <li>Drag edges or corners to resize</li>
+                <li>Double-click title bar to maximize/restore</li>
+                <li>Click the maximize button in the title bar</li>
+                <li>Press Escape or click X to close</li>
+              </ul>
+              <div class="pt-2">
+                <Input placeholder="Type something..." />
+              </div>
             </div>
-          </div>
-        </FloatingWindow>
+          </FloatingWindow>
 
-        {/* FloatingWindow Documentation */}
-        <UsageGuidelines
-          whenToUse={floatingWindowDoc.usage.whenToUse}
-          bestPractices={floatingWindowDoc.usage.bestPractices}
-          avoid={floatingWindowDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="FloatingWindow.tsx"
-          code={floatingWindowDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={floatingWindowDoc.props} componentName="FloatingWindow" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-command-palette"
-          title="Command Palette"
-          description="Press Mod+K (or click the top search bar) to open it."
-          actions={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => props.onOpenFile('core.command-palette')}
-            >
-              View Source
-            </Button>
-          }
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="flex flex-wrap gap-2 items-center">
+          {/* FloatingWindow Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={floatingWindowDoc.usage.whenToUse}
+            bestPractices={floatingWindowDoc.usage.bestPractices}
+            avoid={floatingWindowDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="FloatingWindow.tsx"
+            code={floatingWindowDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={floatingWindowDoc.props} componentName="FloatingWindow" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-command-palette')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-command-palette"
+            title="Command Palette"
+            description="Press Mod+K (or click the top search bar) to open it."
+            actions={
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => props.onOpenFile('core.command-palette')}
+              >
+                View Source
+              </Button>
+            }
+          />
+          <DemoSurface contentClass="flex flex-wrap gap-2 items-center">
             <Button onClick={() => command.open()}>Open</Button>
             <Button
               variant="outline"
@@ -3797,92 +3960,95 @@ export function ShowcasePage(props: ShowcasePageProps) {
             >
               Show tip
             </Button>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* CommandPalette Documentation */}
-        <UsageGuidelines
-          whenToUse={commandPaletteDoc.usage.whenToUse}
-          bestPractices={commandPaletteDoc.usage.bestPractices}
-          avoid={commandPaletteDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="CommandPalette.tsx"
-          code={commandPaletteDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={commandPaletteDoc.props} componentName="CommandPalette" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-file-browser"
-          title="File Browser"
-          description="Professional file browser with list/grid views, directory tree, breadcrumb navigation, and shared multi-selection semantics."
-          actions={
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => props.onOpenFile('core.file-browser')}
-            >
-              View Source
-            </Button>
-          }
-        />
-        <div class="h-[420px] border border-[var(--floe-line)] rounded-control overflow-hidden">
-          <FileBrowser
-            files={demoFileBrowserData}
-            initialPath="/src/components/ui/primitives"
-            initialViewMode="list"
-            onNavigate={(path) => notifications.info('Navigate', `Path: ${path}`)}
-            onSelect={(items) => {
-              if (items.length > 0) {
-                notifications.info('Selected', items.map((i) => i.name).join(', '));
-              }
-            }}
-            onOpen={(item) => notifications.success('Opened', item.name)}
+          {/* CommandPalette Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={commandPaletteDoc.usage.whenToUse}
+            bestPractices={commandPaletteDoc.usage.bestPractices}
+            avoid={commandPaletteDoc.usage.avoid}
           />
+          <CodeSnippet
+            title="CommandPalette.tsx"
+            code={commandPaletteDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={commandPaletteDoc.props} componentName="CommandPalette" />
         </div>
-        <p class="text-caption text-[var(--floe-ink-soft)]">
-          Features: List/Grid view toggle, collapsible sidebar tree,{' '}
-          <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments),
-          sortable columns, single/range/toggle selection, marquee selection, and context-aware right-click behavior.
-        </p>
-
-        {/* FileBrowser Documentation */}
-        <UsageGuidelines
-          whenToUse={fileBrowserDoc.usage.whenToUse}
-          bestPractices={fileBrowserDoc.usage.bestPractices}
-          avoid={fileBrowserDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="FileBrowser.tsx"
-          code={fileBrowserDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={fileBrowserDoc.props} componentName="FileBrowser" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="loading-overlay"
-          title="Loading"
-          description="SnakeLoader + Skeleton + LoadingOverlay."
-          actions={
-            <div class="flex items-center gap-1.5">
+      </Show>
+      <Show when={isSection('ui-file-browser')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-file-browser"
+            title="File Browser"
+            description="Professional file browser with list/grid views, directory tree, breadcrumb navigation, and shared multi-selection semantics."
+            actions={
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => props.onOpenFile('core.loading-overlay')}
+                onClick={() => props.onOpenFile('core.file-browser')}
               >
-                View Overlay Source
+                View Source
               </Button>
-            </div>
-          }
-        />
+            }
+          />
+          <div class="h-[420px] border border-[var(--floe-line)] rounded-control overflow-hidden">
+            <FileBrowser
+              files={demoFileBrowserData}
+              initialPath="/src/components/ui/primitives"
+              initialViewMode="list"
+              onNavigate={(path) => notifications.info('Navigate', `Path: ${path}`)}
+              onSelect={(items) => {
+                if (items.length > 0) {
+                  notifications.info('Selected', items.map((i) => i.name).join(', '));
+                }
+              }}
+              onOpen={(item) => notifications.success('Opened', item.name)}
+            />
+          </div>
+          <p class="text-caption text-[var(--floe-ink-soft)]">
+            Features: List/Grid view toggle, collapsible sidebar tree,{' '}
+            <strong>breadcrumb with path folding</strong> (click "…" to see collapsed segments),
+            sortable columns, single/range/toggle selection, marquee selection, and context-aware
+            right-click behavior.
+          </p>
 
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-4">
+          {/* FileBrowser Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={fileBrowserDoc.usage.whenToUse}
+            bestPractices={fileBrowserDoc.usage.bestPractices}
+            avoid={fileBrowserDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="FileBrowser.tsx"
+            code={fileBrowserDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={fileBrowserDoc.props} componentName="FileBrowser" />
+        </div>
+      </Show>
+      <Show when={isSection('loading-overlay')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="loading-overlay"
+            title="Loading"
+            description="SnakeLoader + Skeleton + LoadingOverlay."
+            actions={
+              <div class="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => props.onOpenFile('core.loading-overlay')}
+                >
+                  View Overlay Source
+                </Button>
+              </div>
+            }
+          />
+
+          <DemoSurface contentClass="space-y-4">
             <div class="flex flex-wrap items-center gap-4">
               <div class="space-y-1.5">
                 <p class="text-caption text-[var(--floe-ink-soft)]">SnakeLoader</p>
@@ -3909,39 +4075,41 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 Hide
               </Button>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <LoadingOverlay visible={overlayVisible()} fullscreen message="Loading something..." />
+          <LoadingOverlay visible={overlayVisible()} fullscreen message="Loading something..." />
 
-        {/* Loading Documentation */}
-        <UsageGuidelines
-          whenToUse={loadingOverlayDoc.usage.whenToUse}
-          bestPractices={loadingOverlayDoc.usage.bestPractices}
-          avoid={loadingOverlayDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="Loading Components"
-          code={skeletonDoc.examples[0].code}
-          language="tsx"
-        />
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <PropsTable props={skeletonDoc.props} componentName="Skeleton" />
-          <PropsTable props={snakeLoaderDoc.props} componentName="SnakeLoader" />
-          <PropsTable props={loadingOverlayDoc.props} componentName="LoadingOverlay" />
+          {/* Loading Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={loadingOverlayDoc.usage.whenToUse}
+            bestPractices={loadingOverlayDoc.usage.bestPractices}
+            avoid={loadingOverlayDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="Loading Components"
+            code={skeletonDoc.examples[0].code}
+            language="tsx"
+          />
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <PropsTable props={skeletonDoc.props} componentName="Skeleton" />
+            <PropsTable props={snakeLoaderDoc.props} componentName="SnakeLoader" />
+            <PropsTable props={loadingOverlayDoc.props} componentName="LoadingOverlay" />
+          </div>
         </div>
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="icons"
-          title="Icons"
-          description="All built-in icons shipped with @floegence/floe-webapp-core (monochrome and colored)."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-4">
+      </Show>
+      <Show when={isSection('icons')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="icons"
+            title="Icons"
+            description="All built-in icons shipped with @floegence/floe-webapp-core (monochrome and colored)."
+          />
+          <DemoSurface contentClass="space-y-4">
             <div>
-              <p class="text-caption text-[var(--floe-ink-soft)] font-medium mb-2">Monochrome Icons</p>
+              <p class="text-caption text-[var(--floe-ink-soft)] font-medium mb-2">
+                Monochrome Icons
+              </p>
               <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 <For each={icons()}>
                   {(item) => (
@@ -3968,18 +4136,17 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </For>
               </div>
             </div>
-          </PanelContent>
-        </Panel>
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-quote-block"
-          title="Quote Block"
-          description="Clean blockquote component for documentation and code comments."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-4">
+          </DemoSurface>
+        </div>
+      </Show>
+      <Show when={isSection('ui-quote-block')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-quote-block"
+            title="Quote Block"
+            description="Clean blockquote component for documentation and code comments."
+          />
+          <DemoSurface contentClass="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-1.5">
                 <p class="text-caption text-[var(--floe-ink-soft)]/60 font-medium uppercase tracking-wide">
@@ -4033,27 +4200,31 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </QuoteBlock>
               </div>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* QuoteBlock Documentation */}
-        <UsageGuidelines
-          whenToUse={quoteBlockDoc.usage.whenToUse}
-          bestPractices={quoteBlockDoc.usage.bestPractices}
-          avoid={quoteBlockDoc.usage.avoid}
-        />
-        <CodeSnippet title="QuoteBlock.tsx" code={quoteBlockDoc.examples[0].code} language="tsx" />
-        <PropsTable props={quoteBlockDoc.props} componentName="QuoteBlock" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-highlight-block"
-          title="Highlight Block"
-          description="Callout/admonition component for highlighting important content with semantic variants."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-3">
+          {/* QuoteBlock Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={quoteBlockDoc.usage.whenToUse}
+            bestPractices={quoteBlockDoc.usage.bestPractices}
+            avoid={quoteBlockDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="QuoteBlock.tsx"
+            code={quoteBlockDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={quoteBlockDoc.props} componentName="QuoteBlock" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-highlight-block')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-highlight-block"
+            title="Highlight Block"
+            description="Callout/admonition component for highlighting important content with semantic variants."
+          />
+          <DemoSurface contentClass="space-y-3">
             <InfoBlock title="Information">
               This is an informational callout. Use it to provide additional context or helpful
               tips.
@@ -4078,31 +4249,31 @@ export function ShowcasePage(props: ShowcasePageProps) {
             <TipBlock title="Pro Tip">
               Use keyboard shortcuts to improve your productivity: Cmd+K to open command palette.
             </TipBlock>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* HighlightBlock Documentation */}
-        <UsageGuidelines
-          whenToUse={highlightBlockDoc.usage.whenToUse}
-          bestPractices={highlightBlockDoc.usage.bestPractices}
-          avoid={highlightBlockDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="HighlightBlock.tsx"
-          code={highlightBlockDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={highlightBlockDoc.props} componentName="HighlightBlock" />
-      </div>
-
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-processing-indicator"
-          title="Processing Indicator"
-          description="Premium status indicators with sophisticated animations for AI states, workflows, and background tasks."
-        />
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-6">
+          {/* HighlightBlock Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={highlightBlockDoc.usage.whenToUse}
+            bestPractices={highlightBlockDoc.usage.bestPractices}
+            avoid={highlightBlockDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="HighlightBlock.tsx"
+            code={highlightBlockDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={highlightBlockDoc.props} componentName="HighlightBlock" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-processing-indicator')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-processing-indicator"
+            title="Processing Indicator"
+            description="Premium status indicators with sophisticated animations for AI states, workflows, and background tasks."
+          />
+          <DemoSurface contentClass="space-y-6">
             {/* Premium Variants */}
             <div class="space-y-2">
               <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
@@ -4245,38 +4416,38 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 <ProcessingIndicator variant="minimal" status="loading" />
               </div>
             </div>
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        {/* ProcessingIndicator Documentation */}
-        <UsageGuidelines
-          whenToUse={processingIndicatorDoc.usage.whenToUse}
-          bestPractices={processingIndicatorDoc.usage.bestPractices}
-          avoid={processingIndicatorDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="ProcessingIndicator.tsx"
-          code={processingIndicatorDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={processingIndicatorDoc.props} componentName="ProcessingIndicator" />
-      </div>
+          {/* ProcessingIndicator Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={processingIndicatorDoc.usage.whenToUse}
+            bestPractices={processingIndicatorDoc.usage.bestPractices}
+            avoid={processingIndicatorDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="ProcessingIndicator.tsx"
+            code={processingIndicatorDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={processingIndicatorDoc.props} componentName="ProcessingIndicator" />
+        </div>
+      </Show>
+      <Show when={isSection('ui-charts')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-charts"
+            title="Charts"
+            description="Compare named chart themes against the same sample data without changing the shell light or dark mode."
+            actions={<ChartThemePicker compact class="justify-end" />}
+          />
 
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-charts"
-          title="Charts"
-          description="Compare named chart themes against the same sample data without changing the shell light or dark mode."
-          actions={<ChartThemePicker compact class="justify-end" />}
-        />
-
-        {/* Line Chart */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
-            Line Chart - Trend Visualization
-          </p>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Line Chart */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+              Line Chart - Trend Visualization
+            </p>
+            <DemoSurface>
               <LineChart
                 title="Weekly Performance"
                 series={[
@@ -4288,15 +4459,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 showArea
                 variant="gradient"
               />
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Area Chart */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">Area Chart - Volume Data</p>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Area Chart */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+              Area Chart - Volume Data
+            </p>
+            <DemoSurface>
               <AreaChart
                 title="Traffic Overview"
                 series={[
@@ -4321,17 +4492,15 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 ]}
                 height={200}
               />
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Bar Chart */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
-            Bar Chart - Categorical Comparison
-          </p>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Bar Chart */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+              Bar Chart - Categorical Comparison
+            </p>
+            <DemoSurface>
               <DataBarChart
                 title="Sales by Region"
                 data={[
@@ -4344,18 +4513,16 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 height={200}
                 variant="gradient"
               />
-            </PanelContent>
-          </Panel>
-        </div>
+            </DemoSurface>
+          </div>
 
-        {/* Pie Charts */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
-            Pie & Donut Charts - Proportions
-          </p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-              <PanelContent>
+          {/* Pie Charts */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+              Pie & Donut Charts - Proportions
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DemoSurface>
                 <DataPieChart
                   title="Market Share"
                   data={[
@@ -4366,10 +4533,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   ]}
                   size={160}
                 />
-              </PanelContent>
-            </Panel>
-            <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-              <PanelContent>
+              </DemoSurface>
+              <DemoSurface>
                 <DataPieChart
                   title="Resource Usage"
                   data={[
@@ -4381,22 +4546,20 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   size={160}
                   innerRadius={0.6}
                 />
-              </PanelContent>
-            </Panel>
+              </DemoSurface>
+            </div>
           </div>
-        </div>
 
-        {/* Monitoring Chart */}
-        <div class="space-y-2">
-          <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
-            Monitoring Chart - Real-time Dashboard
-          </p>
-          <p class="text-caption text-[var(--floe-ink-soft)]">
-            Live updating chart for monitoring metrics. The chart updates automatically with
-            simulated data.
-          </p>
-          <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-            <PanelContent>
+          {/* Monitoring Chart */}
+          <div class="space-y-2">
+            <p class="text-caption text-[var(--floe-ink-soft)] font-medium">
+              Monitoring Chart - Real-time Dashboard
+            </p>
+            <p class="text-caption text-[var(--floe-ink-soft)]">
+              Live updating chart for monitoring metrics. The chart updates automatically with
+              simulated data.
+            </p>
+            <DemoSurface>
               <MonitoringChart
                 title="System Metrics"
                 series={[
@@ -4416,36 +4579,37 @@ export function ShowcasePage(props: ShowcasePageProps) {
                   label: 'now',
                 })}
               />
-            </PanelContent>
-          </Panel>
+            </DemoSurface>
+          </div>
+
+          {/* Charts Documentation */}
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={lineChartDoc.usage.whenToUse}
+            bestPractices={lineChartDoc.usage.bestPractices}
+            avoid={lineChartDoc.usage.avoid}
+          />
+          <CodeSnippet title="Charts" code={lineChartDoc.examples[0].code} language="tsx" />
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <PropsTable props={lineChartDoc.props} componentName="LineChart" />
+            <PropsTable props={barChartDoc.props} componentName="DataBarChart" />
+            <PropsTable props={pieChartDoc.props} componentName="DataPieChart" />
+          </div>
         </div>
 
-        {/* Charts Documentation */}
-        <UsageGuidelines
-          whenToUse={lineChartDoc.usage.whenToUse}
-          bestPractices={lineChartDoc.usage.bestPractices}
-          avoid={lineChartDoc.usage.avoid}
-        />
-        <CodeSnippet title="Charts" code={lineChartDoc.examples[0].code} language="tsx" />
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <PropsTable props={lineChartDoc.props} componentName="LineChart" />
-          <PropsTable props={barChartDoc.props} componentName="DataBarChart" />
-          <PropsTable props={pieChartDoc.props} componentName="DataPieChart" />
-        </div>
-      </div>
-
-      {/* ================================================================
+        {/* ================================================================
           Mobile Keyboard
           ================================================================ */}
-      <div class="space-y-4">
-        <SectionHeader
-          id="ui-mobile-keyboard"
-          title="Mobile Keyboard"
-          description="Terminal-oriented full web keyboard that owns the whole touch input session without relying on the mobile system keyboard."
-        />
+      </Show>
+      <Show when={isSection('ui-mobile-keyboard')}>
+        <div class="space-y-4">
+          <SectionHeader
+            id="ui-mobile-keyboard"
+            title="Mobile Keyboard"
+            description="Terminal-oriented full web keyboard that owns the whole touch input session without relying on the mobile system keyboard."
+          />
 
-        <Panel class="border border-[var(--floe-line)] rounded-md overflow-hidden">
-          <PanelContent class="space-y-3">
+          <DemoSurface contentClass="space-y-3">
             <p class="text-caption text-[var(--floe-ink-soft)]">
               This version is intentionally a full web keyboard instead of an accessory dock. The
               demo also injects app-level terminal extensions through the public terminal API, so
@@ -4603,21 +4767,22 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 </>
               );
             })()}
-          </PanelContent>
-        </Panel>
+          </DemoSurface>
 
-        <UsageGuidelines
-          whenToUse={mobileKeyboardDoc.usage.whenToUse}
-          bestPractices={mobileKeyboardDoc.usage.bestPractices}
-          avoid={mobileKeyboardDoc.usage.avoid}
-        />
-        <CodeSnippet
-          title="MobileKeyboard"
-          code={mobileKeyboardDoc.examples[0].code}
-          language="tsx"
-        />
-        <PropsTable props={mobileKeyboardDoc.props} componentName="MobileKeyboard" />
-      </div>
-    </div>
+          <UsageGuidelines
+            class="border-t border-[var(--floe-line-quiet)] pt-4"
+            whenToUse={mobileKeyboardDoc.usage.whenToUse}
+            bestPractices={mobileKeyboardDoc.usage.bestPractices}
+            avoid={mobileKeyboardDoc.usage.avoid}
+          />
+          <CodeSnippet
+            title="MobileKeyboard"
+            code={mobileKeyboardDoc.examples[0].code}
+            language="tsx"
+          />
+          <PropsTable props={mobileKeyboardDoc.props} componentName="MobileKeyboard" />
+        </div>
+      </Show>
+    </ShowcaseFrame>
   );
 }
