@@ -256,7 +256,7 @@ export function FileGridView(props: FileGridViewProps) {
                       <Skeleton class="h-10 w-10 rounded-control" />
                     </div>
                     <span class={FILE_GRID_NAME_CLASS}>
-                      <Skeleton class="mx-auto h-4 w-24 max-w-full" />
+                      <Skeleton class="mx-auto h-[var(--floe-line-caption)] w-24 max-w-full" />
                     </span>
                   </div>
                 )}
