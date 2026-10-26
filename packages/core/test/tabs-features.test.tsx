@@ -16,8 +16,15 @@ describe('Tabs composable features', () => {
       />
     ));
 
+    // The selected face is painted by the surface layer from
+    // `data-floe-surface` + `aria-selected`: a raised plane with a hairline,
+    // identical to every other selected control. The component contributes the
+    // indicator thickness and the ink; it never paints a colored block.
     expect(html).toContain('border-b-2');
-    expect(html).toContain('border-primary text-foreground bg-background');
+    expect(html).toContain('aria-selected="true"');
+    expect(html).toContain('text-foreground');
+    expect(html).not.toContain('border-primary');
+    expect(html).not.toContain('text-foreground bg-background');
   });
 
   it('should hide active border when indicator.mode is none', () => {
@@ -29,8 +36,9 @@ describe('Tabs composable features', () => {
       />
     ));
 
-    expect(html).toContain('border-transparent text-foreground bg-background');
-    expect(html).not.toContain('border-primary text-foreground bg-background');
+    expect(html).toContain('border-transparent');
+    expect(html).toContain('aria-selected="true"');
+    expect(html).not.toContain('border-primary');
   });
 
   it('should keep legacy closable/showAdd behavior to preserve X and + buttons', () => {

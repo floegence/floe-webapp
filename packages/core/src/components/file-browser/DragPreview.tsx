@@ -169,13 +169,13 @@ export function FileBrowserDragPreview() {
             <div
               class={cn(
                 'flex flex-col gap-1 p-2.5 rounded-lg',
-                'bg-card border border-border',
-                'shadow-md',
+                'bg-card border border-[var(--floe-line)]',
+                'shadow-[var(--floe-elevation-raised)]',
                 'min-w-[150px] max-w-[220px]',
                 // Entrance animation (only when not exiting)
-                !isExiting() && 'animate-in fade-in zoom-in-95 duration-150',
+                !isExiting() && 'animate-in fade-in zoom-in-95 duration-[var(--floe-duration-fast)]',
                 // Border transitions
-                'transition-[border-color,box-shadow] duration-150',
+                'transition-[border-color,box-shadow] duration-[var(--floe-duration-fast)]',
                 showDropIndicator() && isValidDrop() && 'border-success/60',
                 showDropIndicator() && !isValidDrop() && 'border-error/60',
                 // Committed state
@@ -196,7 +196,7 @@ export function FileBrowserDragPreview() {
 
               {/* "and X more" indicator */}
               <Show when={remainingCount() > 0}>
-                <div class="text-[10px] text-muted-foreground pl-6">
+                <div class="text-[10px] text-[var(--floe-ink-soft)] pl-6">
                   and {remainingCount()} more...
                 </div>
               </Show>
@@ -205,8 +205,8 @@ export function FileBrowserDragPreview() {
               <Show when={showDropIndicator()}>
                 <div
                   class={cn(
-                    'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-border text-[11px] font-medium',
-                    'transition-colors duration-150',
+                    'flex items-center gap-1.5 pt-1.5 mt-1 border-t border-[var(--floe-line)] text-[11px] font-medium',
+                    'transition-colors duration-[var(--floe-duration-fast)]',
                     isValidDrop() ? 'text-success' : 'text-error'
                   )}
                 >
@@ -237,7 +237,7 @@ export function FileBrowserDragPreview() {
                   'text-[10px] font-semibold',
                   'shadow-sm',
                   // Entrance animation (only when not exiting)
-                  !isExiting() && 'animate-in zoom-in-50 duration-200'
+                  !isExiting() && 'animate-in zoom-in-50 duration-[var(--floe-duration-base)]'
                 )}
               >
                 {totalItemCount()}

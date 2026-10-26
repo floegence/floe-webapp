@@ -23,7 +23,7 @@ export function DropZonePreview(props: DropZonePreviewProps) {
         'border-2 border-dashed',
         props.isValid !== false ? 'border-info/60 bg-info/10 ring-1 ring-inset ring-info/25' : 'border-error/60 bg-error/10 ring-1 ring-inset ring-error/25',
         // Subtle animation
-        'animate-in fade-in duration-150'
+        'animate-in fade-in duration-[var(--floe-duration-fast)]'
       )}
       style={{
         'grid-area': gridArea(),

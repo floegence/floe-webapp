@@ -48,9 +48,9 @@ try {
       await page.goto(
         `http://127.0.0.1:${server.httpServer.address().port}/test/browser/workbench-composition.html?projected=${engine.endsWith('projected') ? '1' : '0'}`
       );
-      await page.evaluate((soft) => {
-        document.documentElement.dataset.floeSurfaceStyle = soft ? 'soft-neumorphic' : 'standard';
-      }, engine.includes('soft'));
+      await page.evaluate(() => {
+        document.documentElement.dataset.floeSurfaceStyle = 'soft-neumorphic';
+      });
       const note = page.locator('.workbench-sticky__body');
       await note.waitFor();
       await page.addStyleTag({

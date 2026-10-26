@@ -69,6 +69,11 @@ export {
   type SurfaceFloatingLayerSize,
 } from './SurfaceFloatingLayer';
 export { Tooltip, type TooltipProps } from './Tooltip';
+export {
+  Popover,
+  type PopoverProps,
+  type PopoverPlacement,
+} from './Popover';
 export { CommandPalette } from './CommandPalette';
 export {
   InfiniteCanvas,
@@ -150,10 +155,6 @@ export {
   CardDescription,
   CardContent,
   CardFooter,
-  Interactive3DCard,
-  AnimatedBorderCard,
-  NeonCard,
-  MorphCard,
   type CardProps,
   type CardVariant,
   type CardHeaderProps,
@@ -161,10 +162,6 @@ export {
   type CardDescriptionProps,
   type CardContentProps,
   type CardFooterProps,
-  type Interactive3DCardProps,
-  type AnimatedBorderCardProps,
-  type NeonCardProps,
-  type MorphCardProps,
 } from './Card';
 export {
   Tabs,

@@ -657,9 +657,9 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
         }
         class={cn(
           'w-full flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer',
-          'transition-colors duration-75',
-          'hover:bg-accent hover:text-accent-foreground',
-          'focus:outline-none focus-visible:bg-accent focus-visible:text-accent-foreground',
+          'transition-colors duration-[var(--floe-duration-instant)]',
+          'hover:bg-[var(--floe-state-selected)] hover:text-accent-foreground',
+          'focus:outline-none focus-visible:bg-[var(--floe-state-selected)] focus-visible:text-accent-foreground',
           'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent',
           props.item.type === 'delete' && 'text-error hover:bg-error/10 hover:text-error'
         )}
@@ -674,12 +674,12 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
         </Show>
         <span class="min-w-0 flex-1 text-left [overflow-wrap:anywhere]">{props.item.label}</span>
         <Show when={props.item.shortcut && !hasChildren()}>
-          <span class="shrink-0 text-[10px] text-muted-foreground opacity-60">
+          <span class="shrink-0 text-[10px] text-[var(--floe-ink-soft)] opacity-60">
             {props.item.shortcut}
           </span>
         </Show>
         <Show when={hasChildren()}>
-          <ChevronRight class="w-3 h-3 shrink-0 text-muted-foreground" />
+          <ChevronRight class="w-3 h-3 shrink-0 text-[var(--floe-ink-soft)]" />
         </Show>
       </button>
 
@@ -691,7 +691,7 @@ function ContextMenuEntry(props: ContextMenuEntryProps) {
             onScroll={() => setSubmenuScrollRevision((value) => value + 1)}
             class={cn(
               props.portalLayout.isSurfaceMode() ? 'absolute z-20 py-1' : 'fixed z-50 py-1',
-              'bg-popover border border-border rounded-lg shadow-lg overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
+              'bg-popover border border-[var(--floe-line)] rounded-lg shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
               submenuIsPositioned() && 'animate-in fade-in slide-in-from-left-1'
             )}
             data-floe-context-menu={props.contextMenuId}
@@ -1035,7 +1035,7 @@ export function FileContextMenu(props: FileContextMenuProps) {
       onScroll={() => setScrollRevision((value) => value + 1)}
       class={cn(
         portalLayout.isSurfaceMode() ? 'absolute z-20 py-1' : 'fixed z-50 py-1',
-        'bg-popover border border-border rounded-lg shadow-lg overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
+        'bg-popover border border-[var(--floe-line)] rounded-lg shadow-[var(--floe-elevation-float)] overflow-y-auto overscroll-contain touch-pan-y motion-reduce:animate-none',
         isPositioned() && (touch() ? 'animate-in fade-in' : 'animate-in fade-in zoom-in-95')
       )}
       data-floe-context-menu={contextMenuId}
@@ -1065,13 +1065,13 @@ export function FileContextMenu(props: FileContextMenuProps) {
         <button
           type="button"
           role="menuitem"
-          class="flex w-full items-center gap-2 border-b px-3 py-1.5 text-xs cursor-pointer hover:bg-accent focus-visible:bg-accent focus:outline-none"
+          class="flex w-full items-center gap-2 border-b px-3 py-1.5 text-xs cursor-pointer hover:bg-[var(--floe-state-selected)] focus-visible:bg-[var(--floe-state-selected)] focus:outline-none"
           style={{ 'min-height': touch() ? '44px' : undefined }}
           onClick={goBack}
         >
           <ChevronLeft class="h-3.5 w-3.5 shrink-0" />
           <span>{props.backLabel ?? 'Back'}</span>
-          <span class="min-w-0 flex-1 truncate text-right text-muted-foreground">
+          <span class="min-w-0 flex-1 truncate text-right text-[var(--floe-ink-soft)]">
             {inlinePath().at(-1)?.label}
           </span>
         </button>

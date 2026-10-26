@@ -254,10 +254,10 @@ describe('Dropdown surface scope', () => {
     const items = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
     expect(items).toHaveLength(2);
     expect(items[0]?.dataset.tone).toBe('danger');
-    expect(items[0]?.classList.contains('text-destructive')).toBe(true);
+    expect(items[0]?.classList.contains('text-error')).toBe(true);
     expect(items[0]?.querySelector('[data-testid="danger-icon"]')).toBeTruthy();
     expect(items[1]?.disabled).toBe(true);
-    expect(items[1]?.classList.contains('text-destructive')).toBe(true);
+    expect(items[1]?.classList.contains('text-error')).toBe(true);
     expect(items[1]?.classList.contains('opacity-50')).toBe(true);
   });
 

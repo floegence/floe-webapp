@@ -26,7 +26,7 @@ export function MobileNavigationPanel(props: MobileNavigationPanelProps & {
   navigation: () => HTMLElement | undefined;
 }) {
   const titleId = `mobile-navigation-${createUniqueId()}`;
-  const presence = createFloatingPresence({ open: () => props.open, exitDurationMs: 180 });
+  const presence = createFloatingPresence({ open: () => props.open, element: () => panel });
   let panel: HTMLDivElement | undefined;
   let restoreTarget: HTMLElement | null = null;
   const dismiss = () => {
@@ -86,14 +86,14 @@ export function MobileNavigationPanel(props: MobileNavigationPanelProps & {
           data-floe-mobile-navigation-panel data-floe-surface="floating" data-floe-surface-portal-layer="true"
           data-floating-presence={presence.state()} inert={presence.exiting()}
           aria-hidden={presence.exiting() ? 'true' : undefined}
-          class={cn('pointer-events-auto relative flex min-h-0 w-full max-w-[640px] flex-col border border-border bg-card text-card-foreground shadow-xl floe-floating-presence floe-bottom-drawer-panel', props.class)}
+          class={cn('pointer-events-auto relative flex min-h-0 w-full max-w-[640px] flex-col border border-[var(--floe-line)] bg-card text-card-foreground shadow-[var(--floe-elevation-float-strong)] floe-floating-presence floe-bottom-drawer-panel', props.class)}
           style={{ 'max-height': 'min(680px, 86%)', 'border-radius': '24px' }}
           onKeyDown={(event) => props.onKeyDown?.(event)}>
           <Show when={props.header === undefined} fallback={<><h2 id={titleId} class="sr-only">{props.title}</h2>{props.header}</>}>
             <header class="flex shrink-0 items-center gap-2 border-b px-4 py-2">
               <h2 id={titleId} class="min-w-0 flex-1 text-base font-semibold">{props.title}</h2>
               <button type="button" data-floe-autofocus aria-label={props.closeLabel ?? 'Close'}
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--floe-radius-md)] hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={dismiss}><X class="h-5 w-5" /></button>
             </header>
           </Show>

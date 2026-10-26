@@ -23,11 +23,9 @@ import {
   useNotification,
   usePersisted,
   useTheme,
-  isFloeSurfaceStyle,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
-import { SurfaceStylePicker } from './demo/components/SurfaceStylePicker';
 import {
   configureSyncHighlighter,
   createMarkdownWorker,
@@ -107,7 +105,7 @@ const WorkbenchPage = lazy(() =>
 const renderLazyPage = (view: JSX.Element, label: string): JSX.Element => (
   <Suspense
     fallback={
-      <div class="h-full min-h-[240px] w-full flex items-center justify-center text-xs text-muted-foreground">
+      <div class="h-full min-h-[240px] w-full flex items-center justify-center text-xs text-[var(--floe-ink-soft)]">
         Loading {label}...
       </div>
     }
@@ -650,8 +648,6 @@ function AppContent() {
 
   onMount(() => {
     const preview = new URLSearchParams(window.location.search);
-    const surface = preview.get('surface');
-    if (isFloeSurfaceStyle(surface)) theme.setSurfaceStyle(surface);
     const colorMode = preview.get('mode');
     if (colorMode === 'light' || colorMode === 'dark') theme.setTheme(colorMode);
     const shellPreset = theme.shellPresets().find((preset) => preset.name === preview.get('theme'));
@@ -702,7 +698,7 @@ function AppContent() {
       render: () => (
         <div class="p-4 max-w-2xl mx-auto space-y-3">
           <h1 class="text-lg font-semibold">Settings</h1>
-          <p class="text-xs text-muted-foreground">
+          <p class="text-xs text-[var(--floe-ink-soft)]">
             Settings are rendered in the sidebar. Use the command palette to discover demo commands.
           </p>
           <div class="max-w-sm">
@@ -725,7 +721,7 @@ function AppContent() {
       render: () =>
         renderLazyPage(
           <>
-            <div class="p-3 border-b border-border bg-background sticky top-0 z-10">
+            <div class="p-3 border-b border-[var(--floe-line)] bg-[var(--floe-plane)] sticky top-0 z-10">
               <Select
                 value={activeFileId()}
                 onChange={setActiveFileId}
@@ -778,7 +774,6 @@ function AppContent() {
   const HeaderActions: Component = () => (
     <div class="flex items-center gap-2">
       <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
-      <SurfaceStylePicker compact />
       <Button variant="ghost" size="icon" onClick={() => theme.toggleTheme()} title="Toggle theme">
         {theme.resolvedTheme() === 'light' ? <Moon class="w-4 h-4" /> : <Sun class="w-4 h-4" />}
       </Button>
@@ -805,7 +800,7 @@ function AppContent() {
           ]}
           topBarActions={<HeaderActions />}
           terminalPanel={
-            <div class="h-full flex items-center justify-center text-muted-foreground text-xs">
+            <div class="h-full flex items-center justify-center text-[var(--floe-ink-soft)] text-xs">
               <Terminal class="w-4 h-4 mr-1.5" />
               Terminal placeholder
             </div>
@@ -862,7 +857,6 @@ export function App() {
     },
     theme: {
       defaultPreset: 'default',
-      defaultSurfaceStyle: 'soft-neumorphic',
       presets: demoChartThemePresets,
       shellPresets: builtInShellThemePresets,
       defaultShellPreset: BUILT_IN_SHELL_THEME_DEFAULTS,

@@ -103,6 +103,7 @@ export function Dropdown(props: DropdownProps) {
   const [open, setOpen] = createSignal(false);
   const menuPresence = createFloatingPresence({
     open,
+    element: () => menuRef,
   });
   const [menuPosition, setMenuPosition] = createSignal({ x: -9999, y: -9999 });
   let triggerRef: HTMLDivElement | undefined;
@@ -301,7 +302,8 @@ export function Dropdown(props: DropdownProps) {
                 ? 'absolute z-20 min-w-36'
                 : 'fixed z-50 min-w-36',
               'bg-popover text-popover-foreground p-1',
-              'rounded-xl border border-border shadow-lg',
+              'rounded-[var(--floe-radius-floating)] border border-[var(--floe-line)]',
+              'shadow-[var(--floe-elevation-float)]',
               'floe-floating-presence floe-floating-menu'
             )}
             data-floe-dropdown={dropdownId}
@@ -358,6 +360,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const submenuActive = () => Boolean(submenuOpen() && hasChildren());
   const submenuPresence = createFloatingPresence({
     open: submenuActive,
+    element: () => submenuRef,
   });
   const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
   let itemRef: HTMLDivElement | undefined;
@@ -451,7 +454,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
         <div
           class={cn(
             'w-full px-2 py-1.5',
-            props.item.tone === 'danger' && 'text-destructive',
+            props.item.tone === 'danger' && 'text-error',
             props.item.disabled && 'opacity-50 pointer-events-none'
           )}
           data-tone={props.item.tone ?? 'default'}
@@ -466,12 +469,14 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
         <button
           type="button"
           ref={buttonRef}
+          data-floe-interactive="item"
           class={cn(
-            'w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-lg',
-            'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
-            'focus:outline-none focus:bg-accent',
-            props.item.tone === 'danger' && 'text-destructive',
-            props.item.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent cursor-pointer'
+            'w-full flex items-center gap-2 px-2',
+            'min-h-[var(--floe-row-height)] rounded-[var(--floe-radius-sm)]',
+            'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
+            'focus:outline-none',
+            props.item.tone === 'danger' ? 'text-error' : 'text-[var(--floe-ink-soft)]',
+            props.item.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           )}
           role="menuitem"
           id={menuItemId}
@@ -504,7 +509,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
           </Show>
           <span class="flex-1 text-left">{props.item.label}</span>
           <Show when={hasChildren()}>
-            <ChevronRight class="w-3 h-3 text-muted-foreground" />
+            <ChevronRight class="w-3 h-3 text-[var(--floe-ink-quiet)]" />
           </Show>
         </button>
       </Show>
@@ -519,7 +524,8 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
                 ? 'absolute z-20 min-w-36'
                 : 'fixed z-50 min-w-36',
               'bg-popover text-popover-foreground p-1',
-              'rounded-xl border border-border shadow-lg',
+              'rounded-[var(--floe-radius-floating)] border border-[var(--floe-line)]',
+              'shadow-[var(--floe-elevation-float)]',
               'floe-floating-presence floe-floating-menu floe-floating-submenu'
             )}
             data-floe-dropdown={props.dropdownId}
@@ -597,16 +603,15 @@ export function Select(props: SelectProps) {
       triggerInputSurface
       triggerClass={cn(
         'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
-        'rounded border border-input bg-background text-[length:var(--floe-type-control)] shadow-sm',
-        'transition-colors duration-100',
+        'floe-field text-[length:var(--floe-type-control)]',
         props.class
       )}
       trigger={
         <>
-          <span class={cn('truncate', !selectedOption() && 'text-muted-foreground')}>
+          <span class={cn('truncate', !selectedOption() && 'text-[var(--floe-ink-soft)]')}>
             {selectedOption()?.label ?? props.placeholder ?? 'Select...'}
           </span>
-          <ChevronDown class="w-3.5 h-3.5 text-muted-foreground" />
+          <ChevronDown class="w-3.5 h-3.5 text-[var(--floe-ink-quiet)]" />
         </>
       }
       items={items()}

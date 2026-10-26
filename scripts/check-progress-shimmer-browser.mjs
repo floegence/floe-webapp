@@ -97,9 +97,9 @@ try {
     const themes = await page.evaluate(() =>
       window.surfaceFixture.themes.map(({ name, mode }) => ({ name, mode }))
     );
-    for (const material of ['standard', 'soft-neumorphic']) {
-      await page.evaluate((v) => window.surfaceFixture.theme.setSurfaceStyle(v), material);
+    {
       for (const theme of themes) {
+        const material = 'soft-neumorphic';
         await page.evaluate(
           (t) => window.surfaceFixture.theme.selectShellTheme(t.mode, t.name),
           theme

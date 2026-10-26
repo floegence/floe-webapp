@@ -31,9 +31,9 @@ export interface LinearProgressProps extends Omit<JSX.HTMLAttributes<HTMLDivElem
 }
 
 const linearSizeStyles: Record<ProgressSize, { track: string; label: string }> = {
-  sm: { track: 'h-1', label: 'text-[10px]' },
-  md: { track: 'h-2', label: 'text-xs' },
-  lg: { track: 'h-3', label: 'text-xs' },
+  sm: { track: 'h-1', label: 'text-[length:var(--floe-type-caption)]' },
+  md: { track: 'h-1.5', label: 'text-[length:var(--floe-type-caption)]' },
+  lg: { track: 'h-2', label: 'text-[length:var(--floe-type-supporting)]' },
 };
 
 const colorStyles: Record<ProgressColor, { bar: string; label: string }> = {
@@ -76,18 +76,24 @@ export function LinearProgress(props: LinearProgressProps) {
   return (
     <div class={cn('w-full', local.class)} {...rest}>
       <Show when={local.showLabel}>
-        <div class="flex justify-between mb-1">
-          <span class={cn('text-muted-foreground', linearSizeStyles[size()].label)}>
+        <div class="mb-[var(--floe-gap-inline)] flex items-baseline justify-between">
+          <span class={cn('text-[var(--floe-ink-soft)]', linearSizeStyles[size()].label)}>
             Progress
           </span>
-          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].label)}>
+          <span
+            class={cn(
+              'font-medium tabular-nums',
+              linearSizeStyles[size()].label,
+              colorStyles[color()].label
+            )}
+          >
             {label()}
           </span>
         </div>
       </Show>
       <div
         class={cn(
-          'relative w-full overflow-hidden rounded-full bg-muted',
+          'relative w-full overflow-hidden rounded-[var(--floe-radius-xs)] bg-[var(--floe-well)]',
           linearSizeStyles[size()].track
         )}
         data-floe-surface="inset"
@@ -100,7 +106,7 @@ export function LinearProgress(props: LinearProgressProps) {
         {/* Buffer bar */}
         <Show when={local.buffer}>
           <div
-            class="absolute inset-0 bg-muted-foreground/20 transition-all duration-300 rounded-full"
+            class="absolute inset-0 rounded-[var(--floe-radius-xs)] bg-[color-mix(in_srgb,var(--floe-ink)_16%,transparent)] transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]"
             style={{ width: `${bufferPercentage()}%` }}
           />
         </Show>
@@ -110,7 +116,7 @@ export function LinearProgress(props: LinearProgressProps) {
           data-floe-surface="raised"
           data-floe-surface-part="progress-fill"
           class={cn(
-            'h-full rounded-full transition-all duration-300',
+            'h-full rounded-[var(--floe-radius-xs)] transition-[width] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]',
             colorStyles[color()].bar,
             local.striped && 'bg-striped',
             local.animated && local.striped && 'animate-stripe',
@@ -222,10 +228,8 @@ export function CircularProgress(props: CircularProgressProps) {
 
   const labelSize = () => {
     const s = pixelSize();
-    if (s <= 32) return 'text-[8px]';
-    if (s <= 48) return 'text-[10px]';
-    if (s <= 64) return 'text-xs';
-    return 'text-sm';
+    if (s <= 48) return 'text-[length:var(--floe-type-caption)]';
+    return 'text-[length:var(--floe-type-supporting)]';
   };
 
   return (
@@ -254,7 +258,7 @@ export function CircularProgress(props: CircularProgressProps) {
             fill="none"
             stroke="currentColor"
             stroke-width={strokeWidth()}
-            class="text-muted"
+            class="text-[var(--floe-well-strong)]"
           />
         </Show>
 
@@ -270,7 +274,7 @@ export function CircularProgress(props: CircularProgressProps) {
           stroke-dasharray={String(circumference())}
           stroke-dashoffset={local.indeterminate ? circumference() * 0.75 : strokeDashoffset()}
           class={cn(
-            'transition-all duration-300',
+            'transition-[stroke-dashoffset] duration-[var(--floe-duration-slow)] ease-[var(--floe-ease-out)]',
             colorStyles[color()].label
           )}
         />
@@ -335,11 +339,17 @@ export function SegmentedProgress(props: SegmentedProgressProps) {
   return (
     <div class={cn('w-full', local.class)} {...rest}>
       <Show when={local.showLabel}>
-        <div class="flex justify-between mb-1">
-          <span class={cn('text-muted-foreground', linearSizeStyles[size()].label)}>
+        <div class="mb-[var(--floe-gap-inline)] flex items-baseline justify-between">
+          <span class={cn('text-[var(--floe-ink-soft)]', linearSizeStyles[size()].label)}>
             Progress
           </span>
-          <span class={cn('font-medium tabular-nums', linearSizeStyles[size()].label, colorStyles[color()].label)}>
+          <span
+            class={cn(
+              'font-medium tabular-nums',
+              linearSizeStyles[size()].label,
+              colorStyles[color()].label
+            )}
+          >
             {Math.round(percentage())}%
           </span>
         </div>
@@ -358,9 +368,9 @@ export function SegmentedProgress(props: SegmentedProgressProps) {
               data-floe-surface={index() < filledSegments() ? 'raised' : 'inset'}
               data-floe-surface-part="progress-fill"
               class={cn(
-                'flex-1 rounded-full transition-colors duration-200',
+                'flex-1 rounded-[var(--floe-radius-xs)] transition-colors duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
                 linearSizeStyles[size()].track,
-                index() < filledSegments() ? colorStyles[color()].bar : 'bg-muted'
+                index() < filledSegments() ? colorStyles[color()].bar : 'bg-[var(--floe-well)]'
               )}
             />
           )}
@@ -387,9 +397,21 @@ export interface StepsProgressProps extends Omit<JSX.HTMLAttributes<HTMLDivEleme
 }
 
 const stepSizeStyles: Record<ProgressSize, { dot: string; label: string; connector: string }> = {
-  sm: { dot: 'w-5 h-5 text-[10px]', label: 'text-[10px]', connector: 'h-0.5' },
-  md: { dot: 'w-6 h-6 text-xs', label: 'text-xs', connector: 'h-0.5' },
-  lg: { dot: 'w-8 h-8 text-sm', label: 'text-sm', connector: 'h-1' },
+  sm: {
+    dot: 'w-5 h-5 text-[length:var(--floe-type-caption)]',
+    label: 'text-[length:var(--floe-type-caption)]',
+    connector: 'h-px',
+  },
+  md: {
+    dot: 'w-6 h-6 text-[length:var(--floe-type-caption)]',
+    label: 'text-[length:var(--floe-type-supporting)]',
+    connector: 'h-px',
+  },
+  lg: {
+    dot: 'w-8 h-8 text-[length:var(--floe-type-supporting)]',
+    label: 'text-[length:var(--floe-type-control)]',
+    connector: 'h-0.5',
+  },
 };
 
 export function StepsProgress(props: StepsProgressProps) {
@@ -442,11 +464,16 @@ export function StepsProgress(props: StepsProgressProps) {
                   data-floe-surface-part="step"
                   data-floe-step-state={state()}
                   class={cn(
-                  'flex items-center justify-center rounded-full font-medium transition-colors duration-200 shrink-0',
+                  'flex shrink-0 items-center justify-center rounded-full font-medium transition-colors duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
                   stepSizeStyles[size()].dot,
                   state() === 'completed' && cn(colorStyles[color()].bar, 'text-primary-foreground'),
-                  state() === 'current' && cn('border-2', `border-current ${colorStyles[color()].label}`, 'bg-background'),
-                  state() === 'pending' && 'bg-muted text-muted-foreground'
+                  state() === 'current' &&
+                    cn(
+                      `border ${colorStyles[color()].label}`,
+                      'border-current bg-[var(--floe-plane)]'
+                    ),
+                  state() === 'pending' &&
+                    'bg-[var(--floe-well)] text-[var(--floe-ink-soft)]'
                 )}>
                   {state() === 'completed' ? (
                     <svg class="w-3 h-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
@@ -460,10 +487,17 @@ export function StepsProgress(props: StepsProgressProps) {
                 {/* Connector */}
                 <Show when={!isLast()}>
                   <div data-floe-surface="inset" data-floe-surface-part="progress-track" class={cn(
-                    'transition-colors duration-200',
+                    'transition-colors duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
                     isVertical()
-                      ? cn('w-0.5 h-8 my-1', index() < local.current ? colorStyles[color()].bar : 'bg-muted')
-                      : cn('flex-1 mx-2', stepSizeStyles[size()].connector, index() < local.current ? colorStyles[color()].bar : 'bg-muted')
+                      ? cn(
+                          'w-px h-8 my-1',
+                          index() < local.current ? colorStyles[color()].bar : 'bg-[var(--floe-well-strong)]'
+                        )
+                      : cn(
+                          'flex-1 mx-2',
+                          stepSizeStyles[size()].connector,
+                          index() < local.current ? colorStyles[color()].bar : 'bg-[var(--floe-well-strong)]'
+                        )
                   )} />
                 </Show>
               </div>
@@ -472,7 +506,9 @@ export function StepsProgress(props: StepsProgressProps) {
               <span class={cn(
                 'mt-2 text-center',
                 stepSizeStyles[size()].label,
-                state() === 'current' ? 'text-foreground font-medium' : 'text-muted-foreground',
+                state() === 'current'
+                  ? 'font-medium text-[var(--floe-ink)]'
+                  : 'text-[var(--floe-ink-soft)]',
                 isVertical() && 'ml-3 mt-0'
               )}>
                 {step}

@@ -239,14 +239,14 @@ function FileBrowserInner(props: FileBrowserInnerProps) {
       onKeyDown={handleKeyDown}
       class={cn(
         'flex flex-col h-full min-h-0 bg-background',
-        'border border-border rounded-lg overflow-hidden',
+        'border border-[var(--floe-line)] rounded-lg overflow-hidden',
         'shadow-sm',
         props.class
       )}
     >
       {/* Optional header */}
       <Show when={props.header}>
-        <div class="border-b border-border">{props.header}</div>
+        <div class="border-b border-[var(--floe-line)]">{props.header}</div>
       </Show>
 
       {/* Main content area */}

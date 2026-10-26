@@ -46,10 +46,10 @@ async function open(version, entry, mode, surface) {
 try {
   for (const entry of ['styles', 'tailwind']) {
     for (const mode of ['light', 'dark']) {
-      const page = await open('current', entry, mode, 'standard');
+      const page = await open('current', entry, mode, 'soft-neumorphic');
       const errors = [];
       page.on('pageerror', (e) => errors.push(e.message));
-      const baseline = await open('baseline', entry, mode, 'standard');
+      const baseline = await open('baseline', entry, mode, 'soft-neumorphic');
       const before = await page.evaluate(snapshot);
       const radioFaceSelector =
         '[data-floe-surface-part="indicator"]:has([data-floe-surface-part="radio-dot"])';
@@ -77,7 +77,6 @@ try {
       await baseline.screenshot({ path: resolve(output, `${entry}-A-${mode}.png`) });
       await baseline.close();
       await page.screenshot({ path: resolve(output, `${entry}-B-${mode}.png`) });
-      await page.evaluate(() => window.surfaceFixture.theme.setSurfaceStyle('soft-neumorphic'));
       await page.waitForTimeout(350);
       const after = await page.evaluate(snapshot);
       assert.deepEqual(

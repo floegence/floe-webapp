@@ -16,6 +16,11 @@ export interface CommandPaletteProps {
   zIndex?: number;
 }
 
+const KBD =
+  'px-1.5 py-0.5 rounded-[var(--floe-radius-xs)] border border-[var(--floe-line)] ' +
+  'bg-[var(--floe-well)] text-[var(--floe-ink-quiet)] ' +
+  'text-[length:var(--floe-type-caption)] font-mono leading-none';
+
 export function CommandPalette(props: CommandPaletteProps = {}) {
   const command = useCommand();
   const floe = useResolvedFloeConfig();
@@ -24,6 +29,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
   const [selectedIndex, setSelectedIndex] = createSignal(0);
   const palettePresence = createFloatingPresence({
     open: command.isOpen,
+    element: () => rootRef,
   });
 
   useOverlayMask({
@@ -105,7 +111,8 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
         {/* Backdrop */}
         <div
           class={cn(
-            'fixed inset-0 bg-background/60 backdrop-blur-sm floe-floating-presence floe-floating-backdrop',
+            'fixed inset-0 bg-[color-mix(in_srgb,var(--background)_62%,transparent)] backdrop-blur-[2px]',
+            'floe-floating-presence floe-floating-backdrop',
             props.zIndex === undefined && 'z-50'
           )}
           style={{ 'z-index': props.zIndex }}
@@ -121,8 +128,10 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
             'fixed left-1/2 top-[20%] -translate-x-1/2',
             props.zIndex === undefined && 'z-50',
             'w-full max-w-xl',
-            'bg-popover text-popover-foreground rounded-lg shadow-2xl',
-            'border border-border',
+            'bg-popover text-popover-foreground',
+            'rounded-[var(--floe-radius-panel)]',
+            'border border-[var(--floe-line)]',
+            'shadow-[var(--floe-elevation-float-strong)]',
             'floe-floating-presence floe-floating-dialog-panel',
             'overflow-hidden'
           )}
@@ -133,23 +142,25 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
           onKeyDown={handleKeyDown}
         >
           {/* Search input */}
-          <div data-floe-input-surface data-floe-surface="inset" class="flex items-center gap-3 px-4 pt-1 border-b border-border">
-            <Search class="w-5 h-5 text-muted-foreground flex-shrink-0" />
+          <div
+            data-floe-input-surface
+            class="flex items-center gap-3 px-4 border-b border-[var(--floe-line)]"
+          >
+            <Search class="w-4 h-4 text-[var(--floe-ink-quiet)] flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
               placeholder={floe.config.strings.commandPalette.placeholder}
               class={cn(
-                'flex-1 h-12 bg-transparent text-sm',
-                'placeholder:text-muted-foreground',
+                'flex-1 h-12 bg-transparent',
+                'text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)]',
+                'placeholder:text-[var(--floe-ink-ghost)]',
                 'focus:outline-none'
               )}
               value={command.search()}
               onInput={(e) => command.setSearch(e.currentTarget.value)}
             />
-            <kbd class="text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted font-mono">
-              {floe.config.strings.commandPalette.esc}
-            </kbd>
+            <kbd class={KBD}>{floe.config.strings.commandPalette.esc}</kbd>
           </div>
 
           {/* Results */}
@@ -157,7 +168,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
             <Show
               when={command.filteredCommands().length > 0}
               fallback={
-                <div class="px-4 py-8 text-center text-sm text-muted-foreground">
+                <div class="px-4 py-10 text-center text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
                   {floe.config.strings.commandPalette.empty}
                 </div>
               }
@@ -165,7 +176,7 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
               <For each={groupedCommands()}>
                 {([category, commands]) => (
                   <div>
-                    <div class="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <div class="px-3 pt-3 pb-1 text-[length:var(--floe-type-caption)] font-semibold uppercase tracking-[0.06em] text-[var(--floe-ink-quiet)]">
                       {category}
                     </div>
                     <For each={commands}>
@@ -174,33 +185,32 @@ export function CommandPalette(props: CommandPaletteProps = {}) {
                           <button
                             type="button"
                             class={cn(
-                              'w-full flex items-center gap-3 px-4 py-2 text-sm cursor-pointer',
-                              'transition-colors duration-75',
+                              'w-full flex items-center gap-3 px-3 mx-1 rounded-[var(--floe-radius-md)]',
+                              'min-h-[var(--floe-row-height)] cursor-pointer',
+                              'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
+                              'text-[var(--floe-ink-soft)] hover:text-foreground',
                               'focus:outline-none',
-                              selectedIndex() === entry.index
-                                ? 'bg-accent text-accent-foreground'
-                                : 'hover:bg-accent/50'
+                              selectedIndex() === entry.index &&
+                                'bg-[var(--floe-state-selected)] text-foreground'
                             )}
                             onClick={() => command.execute(entry.cmd.id)}
                             onMouseEnter={() => setSelectedIndex(entry.index)}
                           >
                             <Show when={entry.cmd.icon}>
-                              <span class="w-5 h-5 flex items-center justify-center text-muted-foreground">
-                                <Dynamic component={entry.cmd.icon} class="w-5 h-5" />
+                              <span class="w-4 h-4 flex items-center justify-center text-[var(--floe-ink-quiet)]">
+                                <Dynamic component={entry.cmd.icon} class="w-4 h-4" />
                               </span>
                             </Show>
                             <div class="flex-1 text-left">
                               <span>{entry.cmd.title}</span>
                               <Show when={entry.cmd.description}>
-                                <span class="ml-2 text-muted-foreground text-xs">
+                                <span class="ml-2 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-quiet)]">
                                   {entry.cmd.description}
                                 </span>
                               </Show>
                             </div>
                             <Show when={entry.cmd.keybind}>
-                              <kbd class="text-xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted font-mono">
-                                {command.getKeybindDisplay(entry.cmd.keybind!)}
-                              </kbd>
+                              <kbd class={KBD}>{command.getKeybindDisplay(entry.cmd.keybind!)}</kbd>
                             </Show>
                           </button>
                         );

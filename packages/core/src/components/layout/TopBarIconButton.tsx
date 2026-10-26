@@ -33,8 +33,11 @@ export function TopBarIconButton(props: TopBarIconButtonProps) {
       type="button"
       class={cn(
         'inline-flex items-center justify-center',
-        'w-8 h-8 rounded cursor-pointer',
-        'hover:bg-muted/60 active:bg-muted/80 transition-colors',
+        'w-[var(--floe-control-height-md)] h-[var(--floe-control-height-md)]',
+        'rounded-[var(--floe-radius-md)] cursor-pointer',
+        'text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)]',
+        'active:bg-[var(--floe-state-press)]',
+        'transition-[background-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
         'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
         local.class

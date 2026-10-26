@@ -115,9 +115,7 @@ export function Dialog(props: DialogProps) {
   const isMountedOpen = () => props.open && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
   const dialogPresence = createFloatingPresence({
     open: isMountedOpen,
-    get exitDurationMs() {
-      return isBottomDrawer() ? 180 : 160;
-    },
+    element: () => dialogRef,
   });
   const isPresenceMounted = () =>
     dialogPresence.mounted() && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
@@ -314,8 +312,8 @@ export function Dialog(props: DialogProps) {
                   isSurfaceMode()
                     ? 'flex max-h-[calc(100%-1rem)] w-[min(32rem,calc(100%-1rem))] max-w-[calc(100%-1rem)] flex-col'
                     : 'w-full max-w-md',
-                  'bg-popover text-popover-foreground rounded-2xl shadow-2xl',
-                  'border border-border',
+                  'bg-popover text-popover-foreground rounded-[var(--floe-radius-floating)] shadow-[var(--floe-elevation-float-strong)]',
+                  'border border-[var(--floe-line)]',
                   'floe-floating-presence',
                   isBottomDrawer() ? 'floe-bottom-drawer-panel' : isSideDrawer() ? 'floe-side-drawer-panel' : 'floe-floating-dialog-panel',
                   'pointer-events-auto flex flex-col',
@@ -348,11 +346,14 @@ export function Dialog(props: DialogProps) {
                   <Show when={props.title}>
                     <div
                       data-floe-dialog-header
-                      class="flex shrink-0 items-start justify-between p-3 border-b border-border"
+                      class="flex shrink-0 items-start justify-between gap-[var(--floe-gap-control)] px-[var(--floe-pad-group)] py-[var(--floe-pad-control)] border-b border-[var(--floe-line)]"
                     >
                       <div>
                         <Show when={props.title}>
-                          <h2 id={titleId()} class="text-sm font-semibold">
+                          <h2
+                          id={titleId()}
+                          class="text-[length:var(--floe-type-heading-sm)] font-semibold leading-[var(--floe-line-heading)] tracking-[var(--floe-tracking-tight)] text-[var(--floe-ink)]"
+                        >
                             {props.title}
                           </h2>
                         </Show>
@@ -374,14 +375,14 @@ export function Dialog(props: DialogProps) {
                 <div
                   data-floe-dialog-body
                   class={cn(
-                    'min-h-0 flex-1 overflow-auto overscroll-contain p-3',
+                    'min-h-0 flex-1 overflow-auto overscroll-contain px-[var(--floe-pad-group)] py-[var(--floe-pad-group)]',
                     props.contentClass
                   )}
                 >
                   <Show when={props.bodyDescription}>
                     <p
                       id={descriptionId()}
-                      class="mb-3 shrink-0 text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)] text-muted-foreground last:mb-0"
+                      class="mb-3 shrink-0 text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)] text-[var(--floe-ink-soft)] last:mb-0"
                     >
                       {props.bodyDescription}
                     </p>
@@ -393,7 +394,7 @@ export function Dialog(props: DialogProps) {
                 <Show when={props.footer}>
                   <div
                     data-floe-dialog-footer
-                    class="flex shrink-0 items-center justify-end gap-2 p-3 border-t border-border"
+                    class="flex shrink-0 items-center justify-end gap-[var(--floe-gap-control)] px-[var(--floe-pad-group)] py-[var(--floe-pad-control)] border-t border-[var(--floe-line)]"
                   >
                     {props.footer}
                   </div>

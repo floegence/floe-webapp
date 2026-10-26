@@ -130,7 +130,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
       class={cn('max-w-2xl', props.class)}
       footer={
         <div class="flex items-center w-full gap-2">
-          <span class="flex-1 text-[11px] text-muted-foreground truncate">
+          <span class="flex-1 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] truncate">
             {selectedPaths().length === 0
               ? pickerCopy(props).noFilesSelected
               : pickerCopy(props).selectedCount(selectedPaths().length)}
@@ -151,7 +151,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <Show when={source.view() === 'browse'}><div class="flex min-h-[140px] overflow-hidden rounded border border-border">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[140px] overflow-hidden rounded border border-[var(--floe-line)]">
           <div
             {...props.scrollViewportProps}
             class="max-h-[200px] min-h-[140px] min-w-0 flex-1 overflow-y-auto"
@@ -161,7 +161,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
             <Show
               when={currentFiles().length > 0}
               fallback={
-                <div class="flex h-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
+                <div class="flex h-full items-center justify-center px-4 text-center text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
                   {props.emptyText ?? pickerCopy(props).emptyFiles}
                 </div>
               }
@@ -185,10 +185,10 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
                       onKeyDown={(event) => handleFileKeyDown(event, index())}
                       class={cn(
                         'flex min-h-9 w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs',
-                        'transition-colors duration-100 hover:bg-accent/60',
+                        'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] hover:bg-[var(--floe-state-hover)]',
                         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
                         'disabled:cursor-not-allowed disabled:opacity-45',
-                        selectedIndex() >= 0 && 'bg-accent text-accent-foreground font-medium',
+                        selectedIndex() >= 0 && 'bg-[var(--floe-state-selected)] text-foreground font-medium',
                       )}
                     >
                       <FileItemIcon item={file} size={16} class="w-4 h-4 flex-shrink-0" />

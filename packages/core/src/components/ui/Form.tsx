@@ -222,7 +222,7 @@ export function FormDescription(props: FormDescriptionProps) {
   return (
     <p
       id={fieldCtx.helperId}
-      class={cn('text-[11px] text-muted-foreground', local.class)}
+      class={cn('text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]', local.class)}
     >
       {local.children}
     </p>
@@ -332,7 +332,7 @@ export function FormSection(props: FormSectionProps) {
             <h3 class="text-sm font-medium text-foreground">{local.title}</h3>
           </Show>
           <Show when={local.description}>
-            <p class="text-[11px] text-muted-foreground">{local.description}</p>
+            <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">{local.description}</p>
           </Show>
         </div>
       </Show>
@@ -367,7 +367,7 @@ export function FormDivider(props: FormDividerProps) {
     >
       <div class={cn('flex items-center gap-3 my-4', local.class)}>
         <div class="flex-1 h-px bg-border" />
-        <span class="text-[11px] text-muted-foreground uppercase tracking-wider">
+        <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-quiet)] uppercase tracking-[0.06em]">
           {local.label}
         </span>
         <div class="flex-1 h-px bg-border" />

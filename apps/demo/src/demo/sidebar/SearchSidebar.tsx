@@ -27,7 +27,7 @@ export function SearchSidebar(props: SearchSidebarProps) {
           leftIcon={<Search class="w-4 h-4" />}
         />
         <div class="mt-2">
-          <p class="text-[11px] text-muted-foreground">
+          <p class="text-[11px] text-[var(--floe-ink-soft)]">
             <Show when={props.query()} fallback="Type to search.">
               {props.results().length} results
             </Show>

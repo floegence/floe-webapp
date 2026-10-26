@@ -159,7 +159,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
   return (
     <div
       class={cn(
-        'flex items-center gap-2 px-2 py-1.5 border-b border-border',
+        'flex items-center gap-2 px-2 py-1.5 border-b border-[var(--floe-line)]',
         'bg-background/50 backdrop-blur-sm',
         props.class
       )}
@@ -170,10 +170,10 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
         onClick={ctx.toggleSidebar}
         class={cn(
           'md:hidden flex items-center justify-center w-7 h-7 rounded cursor-pointer',
-          'transition-colors duration-100',
-          'hover:bg-muted/70',
+          'transition-colors duration-[var(--floe-duration-fast)]',
+          'hover:bg-[var(--floe-state-press)]',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-          !ctx.sidebarCollapsed() && 'bg-muted/50'
+          !ctx.sidebarCollapsed() && 'bg-[var(--floe-well)]'
         )}
         aria-label="Toggle sidebar"
       >
@@ -187,8 +187,8 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
         disabled={!canNavigateUp()}
         class={cn(
           'flex items-center justify-center w-7 h-7 rounded cursor-pointer',
-          'transition-colors duration-100',
-          'hover:bg-muted/70',
+          'transition-colors duration-[var(--floe-duration-fast)]',
+          'hover:bg-[var(--floe-state-press)]',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
           'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent'
         )}
@@ -200,7 +200,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       {/* Breadcrumb navigation - hidden when filter is active on mobile */}
       <div
         class={cn(
-          'flex-1 min-w-0 overflow-hidden transition-all duration-200',
+          'flex-1 min-w-0 overflow-hidden transition-all duration-[var(--floe-duration-base)]',
           ctx.isFilterActive() && 'hidden sm:block sm:flex-1'
         )}
       >
@@ -210,7 +210,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       {/* Filter search box */}
       <div
         class={cn(
-          'flex items-center gap-1 transition-all duration-200 ease-out',
+          'flex items-center gap-1 transition-all duration-[var(--floe-duration-base)] ease-out',
           ctx.isFilterActive()
             ? 'flex-1 sm:flex-none sm:w-48'
             : 'w-7'
@@ -224,8 +224,8 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
               onClick={handleFilterToggle}
               class={cn(
                 'flex items-center justify-center w-7 h-7 rounded cursor-pointer',
-                'transition-colors duration-100',
-                'hover:bg-muted/70',
+                'transition-colors duration-[var(--floe-duration-fast)]',
+                'hover:bg-[var(--floe-state-press)]',
                 'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring'
               )}
               aria-label="Filter files"
@@ -234,8 +234,8 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
             </button>
           }
         >
-          <div data-floe-input-surface class="flex items-center flex-1 gap-1 px-2 py-1 bg-muted/50 rounded-md border border-border/50">
-            <SearchIcon class="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+          <div data-floe-input-surface class="flex items-center flex-1 gap-1 px-2 py-1 bg-[var(--floe-well)] rounded-md border border-[var(--floe-line)]">
+            <SearchIcon class="w-3.5 h-3.5 text-[var(--floe-ink-soft)] flex-shrink-0" />
             <input
               ref={(el) => {
                 inputRef = el;
@@ -251,7 +251,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
                 'flex-1 min-w-0 bg-transparent text-xs',
                 'outline-none border-0 ring-0 shadow-none appearance-none',
                 'focus:outline-none focus:ring-0',
-                'placeholder:text-muted-foreground/60'
+                'placeholder:text-[var(--floe-ink-quiet)]'
               )}
               aria-label="Filter files by name"
             />
@@ -261,8 +261,8 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
                 onClick={handleClearFilter}
                 class={cn(
                   'flex items-center justify-center w-4 h-4 rounded-sm cursor-pointer',
-                  'text-muted-foreground hover:text-foreground',
-                  'transition-colors duration-100'
+                  'text-[var(--floe-ink-soft)] hover:text-foreground',
+                  'transition-colors duration-[var(--floe-duration-fast)]'
                 )}
                 aria-label="Clear filter"
               >
@@ -274,7 +274,7 @@ export function FileBrowserToolbar(props: FileBrowserToolbarProps) {
       </div>
 
       {/* View mode toggle */}
-      <div class="flex items-center gap-0.5 p-0.5 bg-muted/50 rounded-md">
+      <div class="flex items-center gap-0.5 p-0.5 bg-[var(--floe-well)] rounded-md">
         <ViewModeButton
           mode="list"
           currentMode={ctx.viewMode()}
@@ -317,11 +317,11 @@ function ViewModeButton(props: ViewModeButtonProps) {
       onClick={() => props.onClick()}
       class={cn(
         'flex items-center justify-center w-6 h-6 rounded cursor-pointer',
-        'transition-all duration-150',
+        'transition-all duration-[var(--floe-duration-fast)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         isActive()
           ? 'bg-background shadow-sm text-foreground'
-          : 'text-muted-foreground hover:text-foreground'
+          : 'text-[var(--floe-ink-soft)] hover:text-foreground'
       )}
       aria-label={props.label}
       aria-pressed={isActive()}

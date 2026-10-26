@@ -172,7 +172,7 @@ export const DeckPage: Component = () => {
   });
 
   return (
-    <div class="h-full flex flex-col bg-background">
+    <div class="h-full flex flex-col bg-[var(--floe-plane)]">
       <DeckTopBar />
       <div class="flex-1 min-h-0 overflow-hidden">
         <DeckGrid />

@@ -23,8 +23,7 @@ try {
   await page.getByText('No settings found').waitFor();
   await page.getByRole('textbox', { name: 'Search settings' }).fill('');
   const themes = await page.evaluate(() => window.settingsFixture.themes.map(({ name, mode }) => ({ name, mode })));
-  for (const surface of ['standard', 'soft-neumorphic']) {
-    await page.evaluate((value) => window.settingsFixture.theme.setSurfaceStyle(value), surface);
+  {
     for (const theme of themes) {
       await page.evaluate((value) => window.settingsFixture.theme.selectShellTheme(value.mode, value.name), theme);
       const input = page.getByRole('textbox', { name: 'Workspace directory', exact: true });

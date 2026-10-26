@@ -59,7 +59,7 @@ export async function openFixture(
   version = 'current',
   entry = 'styles',
   mode = 'light',
-  surface = 'standard',
+  surface = 'soft-neumorphic',
   viewport = { width: 1440, height: 1080 }
 ) {
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });

@@ -36,9 +36,9 @@ export function LaunchpadItem(props: LaunchpadItemProps) {
   return (
     <button
       type="button"
-      class="launchpad-item group flex flex-col items-center gap-2 rounded-2xl p-3
+      class="launchpad-item group flex flex-col items-center gap-2 rounded-[var(--floe-radius-panel)] p-3
              cursor-pointer bg-transparent select-none outline-none
-             transition-[transform,background-color] duration-200 ease-out
+             transition-[transform,background-color] duration-[var(--floe-duration-base)] ease-out
              hover:scale-[1.02] hover:bg-card/20 focus-visible:bg-card/30 active:scale-95"
       style={{
         '--item-index': props.index,
@@ -51,8 +51,8 @@ export function LaunchpadItem(props: LaunchpadItemProps) {
       title={props.item.description ?? props.item.name}
     >
       <div
-        class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg
-               transition-transform duration-200 group-hover:scale-105"
+        class="w-14 h-14 rounded-[var(--floe-radius-panel)] flex items-center justify-center shadow-[var(--floe-elevation-float)]
+               transition-transform duration-[var(--floe-duration-base)] group-hover:scale-105"
         style={{
           background: background(),
           color: props.item.color ? 'white' : 'var(--primary-foreground)',

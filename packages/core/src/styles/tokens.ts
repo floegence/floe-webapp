@@ -774,9 +774,9 @@ export function getFloeColorTokenValue(
 /** Optional shadow overrides. Defaults resolve at each role so local palettes
  * participate without masking overrides supplied by the theme service. */
 export const floeSurfaceTokens = [
-  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: '0 1px 3px -2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: 'inset 0 1px 1px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight)' },
-  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: 'var(--floe-window-shadow)' },
+  { variable: '--floe-surface-shadow-raised', role: 'raised', fallback: 'var(--floe-elevation-raised)' },
+  { variable: '--floe-surface-shadow-inset', role: 'inset', fallback: '0 0 transparent' },
+  { variable: '--floe-surface-shadow-floating', role: 'floating', fallback: 'var(--floe-elevation-float)' },
   { variable: '--floe-surface-shadow-interacting', role: 'interacting', fallback: '0 1px 2px var(--floe-surface-shade)' },
 ] as const;
 

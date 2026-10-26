@@ -35,25 +35,42 @@ describe('SegmentedControl', () => {
     expect(html).toContain('aria-checked="false"');
     expect(html).toContain('floe-segmented-control');
     expect(html).toContain('floe-segmented-control__item');
-    expect(html).toContain('floe-segmented-control__item--active');
+    expect(html).toContain('data-floe-surface-part="segment"');
+    expect(html).toContain('data-floe-surface="raised"');
   });
 
   it('keeps segmented control contrast semantics explicit across light and dark themes', () => {
     const styles = read('packages/core/src/components/ui/styles/ui.css');
+    /* Assert against this component's own block: other sections of ui.css are
+     * migrated separately and must not colour this contract. */
+    const blockStart = styles.indexOf('Segmented Control - clear selection contrast');
+    const blockEnd = styles.indexOf('Tag - metadata, not a badge of honour');
+    const segmented = styles.slice(blockStart, blockEnd);
 
-    expect(styles).toContain('.floe-segmented-control {');
-    expect(styles).toContain('.dark .floe-segmented-control {');
-    expect(styles).toContain('--segmented-control-item-active-bg');
-    expect(styles).toContain('--segmented-control-item-active-border');
-    expect(styles).toContain(
+    /* One recipe for both modes, and no per-mode override is allowed.
+     *
+     * The selected segment is the semantic pair, not a plane step. A selection
+     * is a state, so it has to be legible as one on its own: the fill must
+     * carry 3:1 against the rail beneath it and the label 4.5:1 against that
+     * fill, which a translucent wash plus a hairline cannot do at any alpha
+     * (measured 1.0–1.4:1 across the presets). `--primary` against `--card` is
+     * the one opaque thing on the rail; relief would restate the fill, so it
+     * stays off and the shadow token remains explicit as `none`.
+     *
+     * scripts/check-selection-contrast-browser.mjs measures the rendered
+     * result in all 28 presets; this test pins the source-level recipe. */
+    expect(segmented).toContain('.floe-segmented-control {');
+    expect(segmented).not.toContain('.dark .floe-segmented-control {');
+    expect(segmented).toContain('--segmented-control-bg: var(--floe-well);');
+    expect(segmented).toContain('--segmented-control-item-active-bg: var(--primary);');
+    expect(segmented).toContain('--segmented-control-item-active-border: var(--primary);');
+    expect(segmented).toContain('--segmented-control-item-active-color: var(--primary-foreground);');
+    expect(segmented).toContain('--segmented-control-item-active-shadow: none');
+    expect(segmented).toContain(
       ".floe-segmented-control__item[aria-checked='false']:hover:not(:disabled) {"
     );
-    expect(styles).toContain('.floe-segmented-control__item--active {');
-    expect(styles).toContain('--segmented-control-item-active-bg: var(--primary)');
-    expect(styles).toContain('--segmented-control-item-active-color: var(--primary-foreground)');
-    expect(styles).toContain('--segmented-control-item-active-shadow: none');
-    expect(styles).not.toContain(
-      '.floe-segmented-control__item--active {\n    background: linear-gradient('
-    );
+    expect(segmented).toContain(".floe-segmented-control__item[aria-checked='true'] {");
+    // The rail stays a well: the accent belongs to the selected item only.
+    expect(segmented).not.toContain('--segmented-control-item-active-bg: var(--floe-accent-soft)');
   });
 });

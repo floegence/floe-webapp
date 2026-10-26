@@ -19,7 +19,7 @@ function HighlightedText(props: { text: string; query: string }) {
     >
       <span class="truncate">
         {props.text.slice(0, index())}
-        <mark class="rounded bg-warning/20 px-0.5 text-foreground">
+        <mark class="rounded bg-warning/20 px-0.5 text-[var(--floe-ink)]">
           {props.text.slice(index(), index() + props.query.length)}
         </mark>
         {props.text.slice(index() + props.query.length)}
@@ -38,12 +38,12 @@ export function SearchPage(props: SearchPageProps) {
     <div class="p-6 max-w-5xl mx-auto space-y-6">
       <div class="space-y-2">
         <h1 class="text-2xl font-semibold">Search</h1>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-sm text-[var(--floe-ink-soft)]">
           Search over the demo workspace (files + docs + core sources).
         </p>
       </div>
 
-      <Panel class="border border-border rounded-lg overflow-hidden">
+      <Panel class="border border-[var(--floe-line)] rounded-[var(--floe-radius-control)] overflow-hidden">
         <PanelHeader actions={
           <div class="flex items-center gap-2">
             <Button
@@ -59,18 +59,18 @@ export function SearchPage(props: SearchPageProps) {
           </div>
         }>
           <div class="flex items-center gap-2">
-            <span class="text-muted-foreground">Query:</span>
+            <span class="text-[var(--floe-ink-soft)]">Query:</span>
             <span class="font-mono text-xs">{props.query() || '(empty)'}</span>
-            <span class="text-muted-foreground">·</span>
-            <span class="text-muted-foreground">{props.results().length} results</span>
+            <span class="text-[var(--floe-ink-soft)]">·</span>
+            <span class="text-[var(--floe-ink-soft)]">{props.results().length} results</span>
           </div>
         </PanelHeader>
         <PanelContent noPadding>
-          <div class="divide-y divide-border">
+          <div class="divide-y divide-[var(--floe-line)]">
             <Show
               when={props.results().length > 0}
               fallback={
-                <div class="p-4 text-sm text-muted-foreground">
+                <div class="p-4 text-sm text-[var(--floe-ink-soft)]">
                   Type in the Search sidebar to see results.
                 </div>
               }
@@ -79,14 +79,14 @@ export function SearchPage(props: SearchPageProps) {
                 {(file) => (
                   <button
                     type="button"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--floe-state-hover)] transition-colors"
                     onClick={() => props.onOpenFile(file.id)}
                   >
-                    <span class="w-24 shrink-0 text-xs font-mono text-muted-foreground">
+                    <span class="w-24 shrink-0 text-xs font-mono text-[var(--floe-ink-soft)]">
                       {file.language}
                     </span>
                     <HighlightedText text={file.path} query={props.query()} />
-                    <span class="ml-auto text-xs text-muted-foreground">Open</span>
+                    <span class="ml-auto text-xs text-[var(--floe-ink-soft)]">Open</span>
                   </button>
                 )}
               </For>

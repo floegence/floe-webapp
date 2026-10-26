@@ -16,11 +16,11 @@ export const ConnectionStatus: Component<ConnectionStatusProps> = (props) => {
       case 'connected':
         return { label: 'Connected', color: 'text-success' };
       case 'disconnected':
-        return { label: 'Disconnected', color: 'text-muted-foreground' };
+        return { label: 'Disconnected', color: 'text-[var(--floe-ink-soft)]' };
       case 'error':
         return { label: 'Connection Error', color: 'text-error' };
       default:
-        return { label: 'Unknown', color: 'text-muted-foreground' };
+        return { label: 'Unknown', color: 'text-[var(--floe-ink-soft)]' };
     }
   };
 

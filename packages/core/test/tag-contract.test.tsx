@@ -13,6 +13,31 @@ function read(relativePath: string): string {
   return readFileSync(resolve(repoRoot, relativePath), 'utf8');
 }
 
+function block(source: string, selector: string): string {
+  const start = source.indexOf(`${selector} {`);
+  if (start < 0) return '';
+  const end = source.indexOf('\n  }', start);
+  return end < 0 ? '' : source.slice(start, end);
+}
+
+/* A selector may break across lines, so find the rule by its own opening brace
+ * and walk the braces to the matching close rather than guessing at indentation. */
+function rule(source: string, selector: string): string {
+  const start = source.indexOf(selector);
+  if (start < 0) return '';
+  const open = source.indexOf('{', start);
+  if (open < 0) return '';
+  let depth = 0;
+  for (let i = open; i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1;
+    else if (source[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(open + 1, i);
+    }
+  }
+  return '';
+}
+
 describe('Tag', () => {
   it('renders semantic tags with tone, size, dot, and icon adornments', () => {
     const html = renderToString(() => (
@@ -25,55 +50,48 @@ describe('Tag', () => {
     expect(html).toContain('floe-tag--success');
     expect(html).toContain('floe-tag--lg');
     expect(html).toContain('floe-tag--soft');
+    expect(html).toContain('data-floe-tone="soft"');
     expect(html).toContain('floe-tag__dot');
     expect(html).toContain('floe-tag__icon');
     expect(html).toContain('Stable');
   });
 
-  it('keeps the shared tag styles consistent across light and dark themes', () => {
+  it('derives every tone from one accent token instead of a per-color ladder', () => {
     const styles = read('packages/core/src/components/ui/styles/ui.css');
-    const tagBlock = styles.match(/\.floe-tag\s*\{[\s\S]*?\n {2}\}/)?.[0] ?? '';
 
-    expect(styles).toContain(':root,');
-    expect(styles).toContain('.light {');
-    expect(styles).toContain('.dark {');
-    expect(styles).toContain('--tag-solid-ink-strong: var(--primary-foreground);');
-    expect(styles).toContain('--tag-solid-ink-strong: var(--foreground);');
-    expect(styles).toContain('--tag-soft-surface-base: white;');
-    expect(styles).toContain('--tag-soft-surface-base: transparent;');
-    expect(styles).toContain(
-      '--tag-primary-accent: color-mix(in srgb, var(--info) 74%, var(--foreground));'
-    );
-    expect(styles).toContain(
-      '--tag-primary-accent: color-mix(in srgb, var(--info) 80%, white 20%);'
-    );
-    expect(styles).toContain(
-      '--tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 86%, var(--muted));'
-    );
-    expect(styles).toContain(
-      '--tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 20%, var(--background));'
-    );
-    expect(styles).toContain('.floe-tag');
-    expect(styles).toContain('.floe-tag--solid');
-    expect(styles).toContain('.floe-tag--soft');
-    expect(styles).toContain('.floe-tag--primary');
-    expect(styles).toContain('.floe-tag--warning');
-    expect(styles).toContain('.floe-tag--info');
-    expect(styles).not.toContain('.dark .floe-tag {');
-    expect(styles).not.toContain('.dark .floe-tag--primary');
-    expect(styles).not.toContain('.dark .floe-tag--success');
-    expect(styles).toContain(
-      '--tag-success-accent: color-mix(in srgb, var(--success) 70%, var(--foreground));'
-    );
-    expect(styles).toContain(
-      '--tag-success-accent: color-mix(in srgb, var(--success) 80%, white 20%);'
-    );
-    expect(styles).toContain('var(--tag-soft-surface-base) var(--tag-soft-surface-strength)');
-    expect(styles).toContain('var(--tag-soft-line-base) var(--tag-soft-line-strength)');
-    expect(styles).toContain('var(--tag-soft-ink-base) var(--tag-soft-ink-strength)');
+    expect(styles).not.toContain('--tag-solid-');
+    expect(styles).not.toContain('--tag-soft-');
     expect(styles).not.toContain('#');
-    expect(tagBlock).toContain('background-color: var(--tag-surface);');
-    expect(tagBlock).not.toContain('linear-gradient(');
-    expect(tagBlock).not.toContain('box-shadow:');
+
+    const base = block(styles, '.floe-tag');
+    expect(base).toContain('--tag-accent: var(--floe-ink-soft);');
+    expect(base).not.toContain('linear-gradient(');
+    expect(base).not.toContain('box-shadow:');
+    expect(base).not.toContain('background-color: var(');
+
+    for (const [variant, accent] of [
+      ['neutral', 'var(--floe-ink-soft)'],
+      ['primary', 'var(--floe-accent-ink)'],
+      ['success', 'var(--success)'],
+      ['warning', 'var(--warning)'],
+      ['error', 'var(--error)'],
+      ['info', 'var(--info)'],
+    ]) {
+      expect(block(styles, `.floe-tag--${variant}`)).toContain(
+        `--tag-accent: ${accent};`
+      );
+    }
+  });
+
+  it('paints the two tones as an outline and a wash in the surface layer', () => {
+    const surface = read('packages/core/src/styles/surface.css');
+
+    const soft = rule(surface, "[data-floe-surface-part='badge'][data-floe-tone='soft']");
+    expect(soft).toContain('background-color: transparent;');
+    expect(soft).toContain('border-color: var(--floe-line-strong);');
+
+    const solid = rule(surface, "[data-floe-surface-part='badge'][data-floe-tone='solid']");
+    expect(solid).toContain('background-color: color-mix(in srgb, var(--tag-accent) 15%, transparent);');
+    expect(solid).toContain('border-color: color-mix(in srgb, var(--tag-accent) 26%, transparent);');
   });
 });

@@ -119,10 +119,10 @@ export function ResizeHandle(props: ResizeHandleProps) {
       class={cn(
         'absolute z-20 group',
         isHorizontal()
-          ? 'top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5 transition-[background-color,width] duration-100'
-          : 'left-0 top-0 h-1 w-full cursor-row-resize hover:h-1.5 transition-[background-color,height] duration-100',
+          ? 'top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5 transition-[background-color,width] duration-[var(--floe-duration-fast)]'
+          : 'left-0 top-0 h-1 w-full cursor-row-resize hover:h-1.5 transition-[background-color,height] duration-[var(--floe-duration-fast)]',
         isDragging() && 'bg-primary',
-        !isDragging() && 'hover:bg-primary/50',
+        !isDragging() && 'hover:bg-[var(--floe-accent-line)]',
         props.class
       )}
       style={{ 'touch-action': 'none' }}
@@ -148,10 +148,10 @@ export function ResizeHandle(props: ResizeHandleProps) {
       {/* Visual indicator */}
       <div
         class={cn(
-          'absolute opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+          'absolute opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--floe-duration-fast)]',
           isHorizontal()
-            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full bg-muted-foreground/30'
-            : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-0.5 w-8 rounded-full bg-muted-foreground/30'
+            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-px h-8 rounded-full bg-[var(--floe-control-edge)]'
+            : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-px w-8 rounded-full bg-[var(--floe-control-edge)]'
         )}
       />
     </div>

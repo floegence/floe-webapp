@@ -125,7 +125,7 @@ export function RadioGroup(props: RadioGroupProps) {
 
     if (v === 'button') {
       return cn(
-        'inline-flex rounded-md border border-border overflow-hidden',
+        'inline-flex rounded-md border border-[var(--floe-line)] overflow-hidden',
         isHorizontal ? 'flex-row' : 'flex-col'
       );
     }
@@ -212,7 +212,7 @@ export function RadioOption(props: RadioOptionProps) {
         sizeStyles[size()].outer,
         isChecked()
           ? 'border-primary bg-primary'
-          : cn('border-input bg-background', variant() === 'default' && 'hover:border-primary/50'),
+          : cn('border-[var(--floe-control-edge)] bg-transparent', variant() === 'default' && 'hover:border-[var(--floe-control-edge-hover)]'),
         isDisabled() && 'cursor-not-allowed',
         'peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2'
       )}
@@ -252,7 +252,7 @@ export function RadioOption(props: RadioOptionProps) {
                 </span>
               </Show>
               <Show when={local.description}>
-                <span class={cn('text-muted-foreground', sizeStyles[size()].description)}>
+                <span class={cn('text-[var(--floe-ink-soft)]', sizeStyles[size()].description)}>
                   {local.description}
                 </span>
               </Show>
@@ -270,11 +270,11 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-choice-variant={variant()}
           class={cn(
             'cursor-pointer select-none transition-colors duration-150',
-            'border-r border-border last:border-r-0',
+            'border-r border-[var(--floe-line)] last:border-r-0',
             buttonSizeStyles[size()],
             isChecked()
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-background text-foreground hover:bg-muted',
+              ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]'
+              : 'bg-transparent text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-ink)]',
             isDisabled() && 'opacity-50 cursor-not-allowed',
             local.class
           )}
@@ -292,11 +292,11 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-selected={isChecked() ? 'true' : undefined}
           data-floe-choice-variant={variant()}
           class={cn(
-            'relative cursor-pointer select-none rounded-lg border-2 transition-[background-color,border-color,color] duration-120',
+            'relative cursor-pointer select-none rounded-[var(--floe-radius-group)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             cardSizeStyles[size()],
             isChecked()
-              ? 'border-primary bg-primary/5'
-              : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50',
+              ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
+              : 'border-[var(--floe-line)] bg-transparent hover:border-[var(--floe-line-strong)] hover:bg-[var(--floe-state-hover)]',
             isDisabled() && 'opacity-50 cursor-not-allowed',
             local.class
           )}
@@ -313,7 +313,7 @@ export function RadioOption(props: RadioOptionProps) {
                 </span>
               </Show>
               <Show when={local.description}>
-                <span class={cn('text-muted-foreground mt-0.5', sizeStyles[size()].description)}>
+                <span class={cn('text-[var(--floe-ink-soft)] mt-0.5', sizeStyles[size()].description)}>
                   {local.description}
                 </span>
               </Show>
@@ -322,7 +322,7 @@ export function RadioOption(props: RadioOptionProps) {
           {/* Checkmark indicator */}
           <Show when={isChecked()}>
             <div class="absolute top-2 right-2">
-              <svg class="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="w-4 h-4 text-[var(--floe-accent-ink)]" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
             </div>
@@ -339,11 +339,11 @@ export function RadioOption(props: RadioOptionProps) {
           data-floe-choice-variant={variant()}
           class={cn(
             'relative flex flex-col items-center justify-center cursor-pointer select-none',
-            'rounded-lg border-2 transition-[background-color,border-color,color] duration-120 text-center',
+            'rounded-[var(--floe-radius-md)] border transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] text-center',
             tileSizeStyles[size()].container,
             isChecked()
-              ? 'border-primary bg-primary/5'
-              : 'border-border bg-background hover:border-primary/50 hover:bg-muted/50',
+              ? 'border-[var(--floe-accent-line)] bg-[var(--floe-state-selected)]'
+              : 'border-[var(--floe-line)] bg-transparent hover:border-[var(--floe-line-strong)] hover:bg-[var(--floe-state-hover)]',
             isDisabled() && 'opacity-50 cursor-not-allowed',
             local.class
           )}
@@ -355,7 +355,7 @@ export function RadioOption(props: RadioOptionProps) {
               return (
                 <div class={cn(
                   'mb-2 transition-colors duration-150',
-                  isChecked() ? 'text-primary' : 'text-muted-foreground'
+                  isChecked() ? 'text-[var(--floe-accent-ink)]' : 'text-[var(--floe-ink-quiet)]'
                 )}>
                   <Icon class={tileSizeStyles[size()].icon} />
                 </div>
@@ -366,13 +366,13 @@ export function RadioOption(props: RadioOptionProps) {
             <span class={cn(
               'font-medium transition-colors duration-150',
               sizeStyles[size()].label,
-              isChecked() ? 'text-primary' : 'text-foreground'
+              isChecked() ? 'text-[var(--floe-ink)]' : 'text-[var(--floe-ink-soft)]'
             )}>
               {local.label}
             </span>
           </Show>
           <Show when={local.description}>
-            <span class={cn('text-muted-foreground mt-0.5', sizeStyles[size()].description)}>
+            <span class={cn('text-[var(--floe-ink-soft)] mt-0.5', sizeStyles[size()].description)}>
               {local.description}
             </span>
           </Show>

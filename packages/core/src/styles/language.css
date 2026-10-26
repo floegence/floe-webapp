@@ -1,0 +1,304 @@
+/*
+ * Floe visual language — the single source of truth for planes, ink, state and
+ * elevation. Every component recipe derives from this file; nothing here is a
+ * component. A theme only supplies the six base colors, and the rest of the
+ * ladder is derived from them, so every preset inherits the same system.
+ *
+ * Four ideas carry the whole language:
+ *
+ * 1. Depth is a fill step, not a line. Planes separate by a few percent of ink;
+ *    a hairline appears only where two planes would otherwise land on the same
+ *    value. Cards therefore carry no border at rest.
+ * 2. One state ramp. Hover, press and selection are all percentages of ink —
+ *    the same three alphas everywhere, so a row, a tab and a menu item respond
+ *    with one gesture. Brand color never means "hovered".
+ * 3. Corners are concentric. A child radius is its parent's radius minus the
+ *    gap between them, so nested groups never show a mismatched curve.
+ * 4. Motion is decisive. Short, decelerating, color-and-transform only.
+ */
+
+:root,
+[data-floe-theme] {
+  /* ---------------------------------------------------------------------
+   * Planes — four steps of depth. `plane` is the page ground, `surface` is a
+   * content plane sitting on it, `well` is recessed into a surface (fields,
+   * code, rails, track backgrounds), `float` is lifted above everything with
+   * a real shadow. Values are derived so a preset only has to pick its canvas.
+   * ------------------------------------------------------------------- */
+  --floe-plane: var(--background);
+  --floe-plane-raised: var(--card);
+  --floe-plane-float: var(--popover);
+  --floe-well: color-mix(in srgb, var(--foreground) 4.5%, var(--card));
+  --floe-well-strong: color-mix(in srgb, var(--foreground) 7%, var(--card));
+  --floe-well-on-plane: color-mix(in srgb, var(--foreground) 4%, var(--background));
+
+  /* ---------------------------------------------------------------------
+   * Ink — a four-step reading ramp. `ink` is body, `ink-soft` secondary copy,
+   * `ink-quiet` metadata and icons that sit outside the reading path,
+   * `ink-ghost` placeholders and disabled. Never invent a fifth grey.
+   * ------------------------------------------------------------------- */
+  --floe-ink: var(--foreground);
+  --floe-ink-soft: var(--muted-foreground);
+  --floe-ink-quiet: color-mix(in srgb, var(--foreground) 62%, var(--background));
+  --floe-ink-ghost: color-mix(in srgb, var(--foreground) 44%, var(--background));
+
+  /* ---------------------------------------------------------------------
+   * Hairlines — one width (1px), three strengths. `line` separates equal-value
+   * planes, `line-strong` marks an editable boundary that must stay findable,
+   * `line-quiet` is a divider inside dense content.
+   * ------------------------------------------------------------------- */
+  --floe-line: color-mix(in srgb, var(--foreground) 9%, transparent);
+  --floe-line-strong: color-mix(in srgb, var(--foreground) 18%, transparent);
+  --floe-line-quiet: color-mix(in srgb, var(--foreground) 5.5%, transparent);
+  --floe-line-inverse: color-mix(in srgb, var(--primary-foreground) 16%, transparent);
+
+  /* ---------------------------------------------------------------------
+   * Fields — a well with a whisper of an edge. The fill (not a line) says
+   * "you can type here"; the edge exists so the well has a boundary at all,
+   * and it brightens on hover, then more on focus.
+   *
+   * The edge is calibrated against the field's own fill, not the card, since
+   * that is the pair that decides whether a boundary is visible. 22% ink is
+   * the lowest value where every preset lands inside the quiet band this
+   * repository already uses for idle fields (1.25–2:1, set for porcelain-dark
+   * in b80c3e8): it measures 1.26 at the narrowest (solarized-light) and 1.76
+   * at the widest (forest). 16% left ten presets below 1.25, and in the dark
+   * presets it collapsed onto the fill entirely.
+   *
+   * The resting edge is deliberately below the 3:1 of a hit-area boundary:
+   * the well fill, the visible label and the field's own text identify the
+   * control, and `--ring` carries the 3:1 focus boundary. A labelled text
+   * field is what WCAG 1.4.11 excepts; the check that guards this file
+   * enforces the band rather than letting the edge disappear.
+   * ------------------------------------------------------------------- */
+  --floe-field-fill: var(--floe-well);
+  --floe-field-fill-hover: var(--floe-well-strong);
+  --floe-field-edge: color-mix(in srgb, var(--foreground) 22%, var(--card));
+  --floe-field-edge-hover: color-mix(in srgb, var(--foreground) 32%, var(--card));
+  --floe-field-placeholder: color-mix(in srgb, var(--foreground) 42%, var(--background));
+  /* An unchecked box or switch has no fill of its own, so its boundary *is*
+  * the control and must clear 3:1 against every plane it can sit on. */
+  --floe-control-edge: color-mix(in srgb, var(--foreground) 50%, var(--card));
+  --floe-control-edge-hover: color-mix(in srgb, var(--foreground) 66%, var(--card));
+
+  /* ---------------------------------------------------------------------
+   * State — the only hover/press/selection values in the system. They are
+   * translucent so they compose over any plane without a second palette.
+   * ------------------------------------------------------------------- */
+  --floe-state-hover: color-mix(in srgb, var(--foreground) 5.5%, transparent);
+  --floe-state-press: color-mix(in srgb, var(--foreground) 9%, transparent);
+  --floe-state-selected: color-mix(in srgb, var(--primary) 8%, transparent);
+  --floe-state-selected-strong: color-mix(in srgb, var(--primary) 12%, transparent);
+  --floe-state-on-inverse-hover: color-mix(in srgb, var(--primary-foreground) 12%, transparent);
+
+  /* Accent — jade is the one chromatic voice: focus, selection and positive
+   * emphasis. It is never used for a resting surface. */
+  --floe-accent-ink: var(--ring);
+  --floe-accent-soft: color-mix(in srgb, var(--ring) 12%, transparent);
+  --floe-accent-line: color-mix(in srgb, var(--ring) 34%, transparent);
+
+  /* ---------------------------------------------------------------------
+   * Elevation — three steps, used sparingly. Resting cards get `none`; the
+   * hairline + fill step already separate them. `raised` is for interactive
+   * cards on hover, `float` for popovers, menus, dialogs and windows.
+   * ------------------------------------------------------------------- */
+  --floe-elevation-raised:
+    0 1px 2px -1px color-mix(in srgb, #000 8%, transparent),
+    0 1px 1px -0.5px color-mix(in srgb, #000 5%, transparent);
+  --floe-elevation-float:
+    0 12px 32px -8px color-mix(in srgb, #000 18%, transparent),
+    0 4px 10px -4px color-mix(in srgb, #000 10%, transparent),
+    0 1px 2px -1px color-mix(in srgb, #000 8%, transparent);
+  --floe-elevation-float-strong:
+    0 24px 56px -12px color-mix(in srgb, #000 26%, transparent),
+    0 8px 20px -8px color-mix(in srgb, #000 14%, transparent),
+    0 1px 2px -1px color-mix(in srgb, #000 8%, transparent);
+
+  /* ---------------------------------------------------------------------
+   * Shape — concentric ladder. sm 6 · md 8 · control 10 · group 12 ·
+   * card 16 · panel 20 · float 20. A 10px control inside a 16px card with
+   * 8px padding lands on 8px, which is md: the curve stays parallel.
+   * ------------------------------------------------------------------- */
+  --floe-radius-xs: 0.25rem;
+  --floe-radius-sm: 0.375rem;
+  --floe-radius-md: 0.5rem;
+  --floe-radius-control: 0.625rem;
+  --floe-radius-field: 0.625rem;
+  --floe-radius-group: 0.75rem;
+  --floe-radius-card: 1rem;
+  --floe-radius-panel: 1.25rem;
+  --floe-radius-floating: 1.25rem;
+
+  /* ---------------------------------------------------------------------
+   * Density — one control scale, one row scale. sm 28 · md 32 · lg 36.
+   * Rows sit at 30 so a list of rows reads calmer than a toolbar.
+   * ------------------------------------------------------------------- */
+  --floe-control-height-xs: 1.5rem;
+  --floe-control-height-sm: 1.75rem;
+  --floe-control-height-md: 2rem;
+  --floe-control-height-lg: 2.25rem;
+  --floe-control-padding-sm: 0.5rem;
+  --floe-control-padding-md: 0.625rem;
+  --floe-control-padding-lg: 0.875rem;
+  --floe-row-height: 1.875rem;
+  --floe-row-height-compact: 1.625rem;
+
+  /* ---------------------------------------------------------------------
+   * Box rhythm — five paddings and three gaps. A control pad keeps a 10px
+   * radius concentric inside a 12px group; a card pad is the gutter that
+   * makes a plane read as an object rather than a rectangle.
+   * ------------------------------------------------------------------- */
+  --floe-pad-tight: 0.375rem;
+  --floe-pad-control: 0.5rem;
+  --floe-pad-group: 0.75rem;
+  --floe-pad-card: 0.875rem;
+  --floe-pad-panel: 1rem;
+  --floe-gap-inline: 0.25rem;
+  --floe-gap-control: 0.375rem;
+  --floe-gap-group: 0.75rem;
+  --floe-gap-section: 1.25rem;
+
+  /* ---------------------------------------------------------------------
+   * Type — 11 caption · 12 supporting · 13 control and body · 16 heading.
+   * One step per role; no component picks its own size.
+   * ------------------------------------------------------------------- */
+  --floe-type-caption: 0.6875rem;
+  --floe-type-supporting: 0.75rem;
+  --floe-type-control: 0.8125rem;
+  --floe-type-body: 0.8125rem;
+  --floe-type-heading: 1rem;
+  --floe-type-heading-sm: 0.9375rem;
+  --floe-type-display: 1.375rem;
+  --floe-line-caption: 0.9375rem;
+  --floe-line-control: 1.25rem;
+  --floe-line-body: 1.375rem;
+  --floe-line-heading: 1.375rem;
+
+  /* ---------------------------------------------------------------------
+   * Motion — one decelerating curve and one settle curve. Nothing bounces
+   * except a deliberate spring for a control that changes shape.
+   * ------------------------------------------------------------------- */
+  --floe-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --floe-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --floe-ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --floe-duration-instant: 90ms;
+  --floe-duration-fast: 140ms;
+  --floe-duration-base: 200ms;
+  --floe-duration-slow: 280ms;
+  --floe-duration-float: 240ms;
+  --floe-hover-lift: -1px;
+  --floe-press-scale: 0.985;
+  --floe-hover-lift-strong: -2px;
+}
+
+/*
+ * The interaction primitives. Components compose these instead of writing
+ * their own hover recipes, which is what kept the old set inconsistent.
+ */
+
+/* Every interactive surface moves through the same transition set. */
+[data-floe-interactive] {
+  transition:
+    background-color var(--floe-duration-fast) var(--floe-ease-out),
+    border-color var(--floe-duration-fast) var(--floe-ease-out),
+    color var(--floe-duration-fast) var(--floe-ease-out),
+    box-shadow var(--floe-duration-base) var(--floe-ease-out),
+    transform var(--floe-duration-fast) var(--floe-ease-out);
+}
+
+/* Rows, tabs, menu items: fill is transparent, so the state layer composes
+ * over whatever plane hosts them. A control that declares a surface part owns
+ * its own face (surface.css) and keeps the state layer off its fill, so a
+ * selected tab is not repainted by the generic selection tint. */
+[data-floe-interactive]:where(
+    [data-floe-interactive='row'],
+    [data-floe-interactive='item']
+  ):not([data-floe-surface-part]):hover {
+  background-color: var(--floe-state-hover);
+  color: var(--floe-ink);
+}
+
+[data-floe-interactive]:where(
+    [data-floe-interactive='row'],
+    [data-floe-interactive='item']
+  ):not([data-floe-surface-part]):active {
+  background-color: var(--floe-state-press);
+}
+
+[data-floe-interactive]:not([data-floe-surface-part]):where(
+    [aria-selected='true'],
+    [data-selected='true']
+  ) {
+  background-color: var(--floe-state-selected);
+  color: var(--floe-ink);
+}
+
+/* Icon buttons rise a single step of ink on hover, in addition to the fill. */
+[data-floe-interactive='icon']:hover {
+  color: var(--floe-ink);
+}
+
+/* Pressible controls settle rather than travel. */
+[data-floe-interactive='press']:active {
+  transform: scale(var(--floe-press-scale));
+}
+
+/*
+ * The field surface. One recipe for every editable boundary — text inputs,
+ * textareas, compound number/select fields, dropdown triggers and directory
+ * pickers — so a form never mixes two field looks. It is a filled well with a
+ * whisper edge, not a box: the fill carries the affordance, the edge only
+ * gives the well an end, and focus brightens the edge (see input-focus.css,
+ * which owns the color-only focus contract).
+ */
+@layer components {
+  .floe-field {
+    border: 1px solid var(--floe-field-edge);
+    border-radius: var(--floe-radius-field);
+    background-color: var(--floe-field-fill);
+    color: var(--floe-ink);
+    transition:
+      background-color var(--floe-duration-fast) var(--floe-ease-out),
+      border-color var(--floe-duration-fast) var(--floe-ease-out);
+  }
+
+  .floe-field:hover:not(:disabled):not([aria-disabled='true']) {
+    border-color: var(--floe-field-edge-hover);
+  }
+
+  .floe-field::placeholder {
+    color: var(--floe-field-placeholder);
+    opacity: 1;
+  }
+
+  .floe-field[aria-invalid='true'] {
+    border-color: color-mix(in srgb, var(--error) 62%, var(--card));
+  }
+
+  .floe-field:disabled,
+  .floe-field[aria-disabled='true'] {
+    background-color: var(--floe-plane);
+    border-color: var(--floe-line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-floe-interactive] {
+    transition-duration: 1ms;
+  }
+  [data-floe-interactive='press']:active {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  [data-floe-theme] {
+    --floe-line: CanvasText;
+    --floe-line-strong: CanvasText;
+    --floe-state-hover: Highlight;
+    --floe-state-selected: Highlight;
+    --floe-elevation-float: none;
+    --floe-elevation-float-strong: none;
+  }
+}

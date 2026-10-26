@@ -37,7 +37,7 @@ export function PanelHeader(props: PanelHeaderProps) {
     <div
       class={cn(
         'flex items-center justify-between px-3 py-1.5',
-        'border-b border-border',
+        'border-b border-[var(--floe-line)]',
         'text-xs font-medium tracking-tight',
         props.class
       )}

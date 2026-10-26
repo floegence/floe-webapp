@@ -108,7 +108,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
 
   return (
     <div class="p-4 h-full">
-      <Panel class="h-full border border-border rounded-lg overflow-hidden">
+      <Panel class="h-full border border-[var(--floe-line)] rounded-[var(--floe-radius-control)] overflow-hidden">
         <PanelHeader
           actions={
             <div class="flex items-center gap-2">
@@ -151,7 +151,7 @@ export function FileViewerPage(props: FileViewerPageProps) {
           }
         >
           <div class="min-w-0">
-            <p class="text-xs text-muted-foreground">File</p>
+            <p class="text-xs text-[var(--floe-ink-soft)]">File</p>
             <p class="text-sm font-mono truncate">
               {props.file().path}
               <Show when={isDirty()}>

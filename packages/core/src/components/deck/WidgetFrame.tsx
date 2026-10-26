@@ -45,7 +45,7 @@ export function WidgetFrame(props: WidgetFrameProps) {
       {/* Header — four-way-arrow cursor on hover, grabbing while active. */}
       <div
         class={cn(
-          'widget-header flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30',
+          'widget-header flex items-center gap-1 px-2 py-1.5 border-b border-[var(--floe-line)] bg-[var(--floe-well)]',
           'select-none',
           interactive() && !props.isDragging && 'cursor-move',
           props.isDragging && 'cursor-grabbing'
@@ -53,7 +53,7 @@ export function WidgetFrame(props: WidgetFrameProps) {
         data-widget-drag-handle={interactive() ? props.widget.id : undefined}
       >
         <Show when={interactive()}>
-          <div class="text-muted-foreground/50 pointer-events-none">
+          <div class="text-[var(--floe-ink-ghost)] pointer-events-none">
             <GripVertical class="w-3.5 h-3.5" />
           </div>
         </Show>
@@ -62,7 +62,7 @@ export function WidgetFrame(props: WidgetFrameProps) {
         <Show when={props.widgetDef?.icon}>
           {(Icon) => {
             const IconComponent = Icon();
-            return <IconComponent class="w-3.5 h-3.5 text-muted-foreground" />;
+            return <IconComponent class="w-3.5 h-3.5 text-[var(--floe-ink-soft)]" />;
           }}
         </Show>
 
@@ -79,7 +79,7 @@ export function WidgetFrame(props: WidgetFrameProps) {
         {/* Remove button — subtle unless the card is hovered. */}
         <Show when={interactive()}>
           <button
-            class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
+            class="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive/10 text-[var(--floe-ink-soft)] hover:text-destructive transition-all cursor-pointer"
             onClick={handleRemove}
             title="Remove widget"
           >

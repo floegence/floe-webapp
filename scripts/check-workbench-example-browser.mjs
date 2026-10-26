@@ -41,7 +41,7 @@ try {
         const page = await context.newPage();
         const errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
-        await page.goto(`${origin}/?view=workbench&theme=${theme}&surface=standard`);
+        await page.goto(`${origin}/?view=workbench&theme=${theme}&surface=soft-neumorphic`);
         await board(page, 'overview-title').waitFor();
         assert.equal(await page.locator('html').getAttribute('data-floe-shell-theme'), theme);
         assert.equal(

@@ -178,11 +178,11 @@ function MinimalVariant(props: VariantProps) {
       <div class="flex items-end gap-0.5 h-3">
         <For each={[0, 1, 2, 3]}>
           {(i) => (
-            <div class="w-0.5 bg-primary rounded-full processing-bar" style={{ 'animation-delay': `${i * 100}ms` }} />
+            <div class="w-0.5 bg-[var(--floe-ink-soft)] rounded-full processing-bar" style={{ 'animation-delay': `${i * 100}ms` }} />
           )}
         </For>
       </div>
-      <span class="text-[11px] text-muted-foreground processing-text-shimmer">
+      <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] processing-text-shimmer">
         {props.label}
         <Show when={props.elapsed}>
           <span class="ml-1.5 font-mono text-[10px] opacity-50">{props.elapsed}</span>
@@ -196,30 +196,29 @@ function MinimalVariant(props: VariantProps) {
 // Pill Variant - Gradient border with flowing animation
 // =============================================================================
 function PillVariant(props: VariantProps) {
+  /* A status chip is a small floating plane, not a neon ring: the language's
+   * hairline and float elevation instead of a spinning conic gradient, and one
+   * breathing accent dot as the only motion. */
   return (
-    <div class="relative inline-flex">
-      <div class="absolute -inset-[1px] rounded-full processing-gradient-border overflow-hidden">
-        <div
-          class="absolute inset-0 processing-gradient-spin"
-          style={{ background: `conic-gradient(from 0deg, var(--primary), transparent, var(--primary))` }}
-        />
-      </div>
-      <div data-floe-surface="raised" data-floe-surface-part="status" class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background">
-        <div class="relative w-4 h-4">
-          <For each={[0, 1, 2]}>
-            {(i) => (
-              <div
-                class="absolute w-1.5 h-1.5 rounded-full bg-primary processing-orbit-dot"
-                style={{ 'animation-delay': `${i * 200}ms` }}
-              />
-            )}
-          </For>
-        </div>
-        <ShimmerText class="text-[11px] font-medium">{props.label}</ShimmerText>
-        <Show when={props.elapsed}>
-          <span class="text-[10px] font-mono text-muted-foreground">{props.elapsed}</span>
-        </Show>
-      </div>
+    <div
+      data-floe-surface="floating"
+      data-floe-surface-part="status"
+      role="status"
+      aria-live="polite"
+      class="inline-flex items-center gap-[var(--floe-gap-control)] rounded-full border border-[var(--floe-line)] bg-[var(--floe-plane-float)] px-[var(--floe-pad-control)] py-[0.3125rem]"
+    >
+      <span
+        class="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--floe-accent-ink)] motion-safe:animate-pulse"
+        aria-hidden="true"
+      />
+      <ShimmerText class="text-[length:var(--floe-type-caption)] font-medium leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
+        {props.label}
+      </ShimmerText>
+      <Show when={props.elapsed}>
+        <span class="font-mono text-[length:var(--floe-type-caption)] text-[var(--floe-ink-ghost)] tabular-nums">
+          {props.elapsed}
+        </span>
+      </Show>
     </div>
   );
 }
@@ -231,27 +230,33 @@ function CardVariant(props: VariantProps) {
   const id = createUniqueId();
 
   return (
-    <div class="relative rounded-xl overflow-hidden">
-      <div class="absolute inset-0 rounded-xl processing-card-border" />
-      <div data-floe-surface="floating" data-floe-surface-part="status" class="relative m-[1px] rounded-[11px] bg-card/95 backdrop-blur-sm px-4 py-3">
-        <div class="absolute inset-0 processing-shimmer-sweep" />
+    /* One plane, one hairline. The animated gradient frame and the inner
+     * inset seam it needed are gone: the status surface reads as a small
+     * floating plane, and the shimmer stays inside its own rounded bounds. */
+    <div
+      class="relative overflow-hidden rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-card"
+      data-floe-surface="floating"
+      data-floe-surface-part="status"
+    >
+      <div class="relative px-4 py-3">
+        <div class="pointer-events-none absolute inset-0 processing-shimmer-sweep opacity-40" />
         <div class="relative flex items-center gap-3">
           <div class="relative w-11 h-11">
             <svg class="absolute inset-0 w-full h-full" viewBox="0 0 44 44" shape-rendering="geometricPrecision">
               <defs>
                 <radialGradient id={`orb-${id}`} cx="30%" cy="30%">
-                  <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.35' }} />
-                  <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.04' }} />
+                  <stop offset="0%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.35' }} />
+                  <stop offset="100%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.04' }} />
                 </radialGradient>
               </defs>
               <circle cx="22" cy="22" r="16" fill={`url(#orb-${id})`} class="processing-breathe" />
               {/* Crisp ring + arcs (no blurry glow) */}
-              <circle cx="22" cy="22" r="16" fill="none" stroke="var(--primary)" stroke-opacity="0.12" stroke-width="1.5" />
-              <path d="M 22 6 A 16 16 0 0 1 38 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85" class="processing-arc-spin" />
-              <path d="M 22 38 A 16 16 0 0 1 6 22" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.35" class="processing-arc-spin" />
+              <circle cx="22" cy="22" r="16" fill="none" stroke="var(--floe-accent-ink)" stroke-opacity="0.12" stroke-width="1.5" />
+              <path d="M 22 6 A 16 16 0 0 1 38 22" fill="none" stroke="var(--floe-accent-ink)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.85" class="processing-arc-spin" />
+              <path d="M 22 38 A 16 16 0 0 1 6 22" fill="none" stroke="var(--floe-accent-ink)" stroke-width="2" stroke-linecap="round" stroke-opacity="0.35" class="processing-arc-spin" />
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
-              <svg class="w-4 h-4 text-primary processing-icon-morph" viewBox="0 0 24 24" fill="none">
+              <svg class="w-4 h-4 text-[var(--floe-accent-ink)] processing-icon-morph" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L12 6M12 18L12 22M2 12L6 12M18 12L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 <path d="M5.6 5.6L8.5 8.5M15.5 15.5L18.4 18.4M5.6 18.4L8.5 15.5M15.5 8.5L18.4 5.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5" />
               </svg>
@@ -263,7 +268,7 @@ function CardVariant(props: VariantProps) {
               <WaveformDots size="sm" />
             </div>
             <Show when={props.description || props.elapsed}>
-              <p class="text-[10px] text-muted-foreground mt-0.5 truncate">
+              <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5 truncate">
                 {props.description}
                 <Show when={props.description && props.elapsed}> · </Show>
                 <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -288,21 +293,21 @@ function ElegantVariant(props: VariantProps) {
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 32 32">
           <defs>
             <linearGradient id={`elegant-grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }}>
+              <stop offset="0%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '1' }}>
                 <animate attributeName="stop-opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite" />
               </stop>
-              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.3' }}>
+              <stop offset="100%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.3' }}>
                 <animate attributeName="stop-opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
               </stop>
             </linearGradient>
           </defs>
           <circle cx="16" cy="16" r="14" fill="none" stroke={`url(#elegant-grad-${id})`} stroke-width="1.5" stroke-dasharray="22 66" class="processing-ring-spin" />
-          <circle cx="16" cy="16" r="8" fill="var(--primary)" fill-opacity="0.15" class="processing-morph-circle" />
-          <circle cx="16" cy="16" r="3" fill="var(--primary)" class="processing-breathe" />
+          <circle cx="16" cy="16" r="8" fill="var(--floe-accent-ink)" fill-opacity="0.15" class="processing-morph-circle" />
+          <circle cx="16" cy="16" r="3" fill="var(--floe-accent-ink)" class="processing-breathe" />
         </svg>
         <For each={[0, 1, 2]}>
           {(i) => (
-            <div class="absolute w-1 h-1 rounded-full bg-primary processing-particle" style={{ 'animation-delay': `${i * 400}ms`, '--particle-index': i }} />
+            <div class="absolute w-1 h-1 rounded-full bg-[var(--floe-accent-ink)] processing-particle" style={{ 'animation-delay': `${i * 400}ms`, '--particle-index': i }} />
           )}
         </For>
       </div>
@@ -310,11 +315,11 @@ function ElegantVariant(props: VariantProps) {
         <div class="flex items-baseline gap-2">
           <ShimmerText class="text-xs font-medium tracking-wide">{props.label}</ShimmerText>
           <Show when={props.elapsed}>
-            <span class="text-[10px] font-mono text-muted-foreground">{props.elapsed}</span>
+            <span class="text-[length:var(--floe-type-caption)] font-mono text-[var(--floe-ink-quiet)]">{props.elapsed}</span>
           </Show>
         </div>
         <Show when={props.description}>
-          <span class="text-[10px] text-muted-foreground/70 mt-0.5">{props.description}</span>
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-ghost)] mt-0.5">{props.description}</span>
         </Show>
       </div>
     </div>
@@ -333,15 +338,15 @@ function AuroraVariant(props: VariantProps) {
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
           <defs>
             <radialGradient id={`aurora-center-${id}`} cx="30%" cy="30%">
-              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
-              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.6' }} />
+              <stop offset="0%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '1' }} />
+              <stop offset="100%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.6' }} />
             </radialGradient>
           </defs>
           {/* Outer arc - slow rotation */}
           <circle
             cx="20" cy="20" r="18"
             fill="none"
-            stroke="var(--primary)"
+            stroke="var(--floe-accent-ink)"
             stroke-width="2.5"
             stroke-linecap="round"
             stroke-dasharray="28 85"
@@ -351,7 +356,7 @@ function AuroraVariant(props: VariantProps) {
           <circle
             cx="20" cy="20" r="13"
             fill="none"
-            stroke="var(--primary)"
+            stroke="var(--floe-accent-ink)"
             stroke-width="2.5"
             stroke-opacity="0.6"
             stroke-linecap="round"
@@ -362,7 +367,7 @@ function AuroraVariant(props: VariantProps) {
           <circle
             cx="20" cy="20" r="8"
             fill="none"
-            stroke="var(--primary)"
+            stroke="var(--floe-accent-ink)"
             stroke-width="2"
             stroke-opacity="0.3"
             stroke-linecap="round"
@@ -385,7 +390,7 @@ function AuroraVariant(props: VariantProps) {
           <FlowingDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -400,8 +405,6 @@ function AuroraVariant(props: VariantProps) {
 // Neural Variant - AI neural network inspired
 // =============================================================================
 function NeuralVariant(props: VariantProps) {
-  const id = createUniqueId();
-
   // Base node positions
   const baseNodes = [
     { x: 20, y: 8 },   // 0: top
@@ -457,14 +460,8 @@ function NeuralVariant(props: VariantProps) {
     <div class="flex items-center gap-4">
       <div class="relative w-10 h-10">
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
-          <defs>
-            <filter id={`neural-glow-${id}`}>
-              <feGaussianBlur stdDeviation="1" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
-          </defs>
           {/* Edges (follow animated node positions) */}
-          <g stroke="var(--primary)" stroke-opacity="0.3" fill="none">
+          <g stroke="var(--floe-accent-ink)" stroke-opacity="0.3" fill="none">
             <For each={connections}>
               {([from, to]) => (
                 <line
@@ -478,10 +475,10 @@ function NeuralVariant(props: VariantProps) {
             </For>
           </g>
           {/* Flow particles */}
-          <g filter={`url(#neural-glow-${id})`}>
+          <g>
             <For each={[0, 1, 2, 3, 4]}>
               {(i) => (
-                <circle r="1.5" fill="var(--primary)" class="processing-neural-pulse">
+                <circle r="1.5" fill="var(--floe-accent-ink)" class="processing-neural-pulse">
                   <animateMotion
                     dur="1.5s"
                     repeatCount="indefinite"
@@ -493,14 +490,14 @@ function NeuralVariant(props: VariantProps) {
             </For>
           </g>
           {/* Nodes (animated) */}
-          <g filter={`url(#neural-glow-${id})`}>
+          <g>
             <For each={nodePositions()}>
               {(node, i) => (
                 <circle
                   cx={node.x}
                   cy={node.y}
                   r={i() === 5 ? 4 : 2.5}
-                  fill="var(--primary)"
+                  fill="var(--floe-accent-ink)"
                   fill-opacity={i() === 5 ? 1 : 0.7}
                 />
               )}
@@ -514,7 +511,7 @@ function NeuralVariant(props: VariantProps) {
           <NeuralDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -537,25 +534,24 @@ function OrbitVariant(props: VariantProps) {
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 48 48">
           <defs>
             <radialGradient id={`orbit-center-${id}`}>
-              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
-              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.4' }} />
+              <stop offset="0%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '1' }} />
+              <stop offset="100%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.4' }} />
             </radialGradient>
-            <filter id={`orbit-blur-${id}`}><feGaussianBlur stdDeviation="0.5" /></filter>
           </defs>
-          <circle cx="24" cy="24" r="10" fill="none" stroke="var(--primary)" stroke-opacity="0.1" stroke-width="1" />
-          <circle cx="24" cy="24" r="16" fill="none" stroke="var(--primary)" stroke-opacity="0.08" stroke-width="1" />
-          <circle cx="24" cy="24" r="22" fill="none" stroke="var(--primary)" stroke-opacity="0.05" stroke-width="1" />
+          <circle cx="24" cy="24" r="10" fill="none" stroke="var(--floe-accent-ink)" stroke-opacity="0.1" stroke-width="1" />
+          <circle cx="24" cy="24" r="16" fill="none" stroke="var(--floe-accent-ink)" stroke-opacity="0.08" stroke-width="1" />
+          <circle cx="24" cy="24" r="22" fill="none" stroke="var(--floe-accent-ink)" stroke-opacity="0.05" stroke-width="1" />
           <circle cx="24" cy="24" r="5" fill={`url(#orbit-center-${id})`} class="processing-breathe" />
-          <circle cx="24" cy="24" r="3" fill="var(--primary)" />
-          <g filter={`url(#orbit-blur-${id})`}>
-            <circle r="2" fill="var(--primary)"><animateMotion dur="2s" repeatCount="indefinite" path="M24,14 A10,10 0 1,1 23.99,14" /></circle>
-            <circle r="1.5" fill="var(--primary)" fill-opacity="0.8"><animateMotion dur="3s" repeatCount="indefinite" path="M24,8 A16,16 0 1,1 23.99,8" begin="0.5s" /></circle>
-            <circle r="1.5" fill="var(--primary)" fill-opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" path="M24,8 A16,16 0 1,1 23.99,8" begin="2s" /></circle>
-            <circle r="1" fill="var(--primary)" fill-opacity="0.5"><animateMotion dur="4s" repeatCount="indefinite" path="M24,2 A22,22 0 1,1 23.99,2" begin="1s" /></circle>
+          <circle cx="24" cy="24" r="3" fill="var(--floe-accent-ink)" />
+          <g>
+            <circle r="2" fill="var(--floe-accent-ink)"><animateMotion dur="2s" repeatCount="indefinite" path="M24,14 A10,10 0 1,1 23.99,14" /></circle>
+            <circle r="1.5" fill="var(--floe-accent-ink)" fill-opacity="0.8"><animateMotion dur="3s" repeatCount="indefinite" path="M24,8 A16,16 0 1,1 23.99,8" begin="0.5s" /></circle>
+            <circle r="1.5" fill="var(--floe-accent-ink)" fill-opacity="0.6"><animateMotion dur="3s" repeatCount="indefinite" path="M24,8 A16,16 0 1,1 23.99,8" begin="2s" /></circle>
+            <circle r="1" fill="var(--floe-accent-ink)" fill-opacity="0.5"><animateMotion dur="4s" repeatCount="indefinite" path="M24,2 A22,22 0 1,1 23.99,2" begin="1s" /></circle>
           </g>
           <For each={[0, 60, 120, 180, 240, 300]}>
             {(angle) => (
-              <line x1="24" y1="24" x2={24 + 20 * Math.cos((angle * Math.PI) / 180)} y2={24 + 20 * Math.sin((angle * Math.PI) / 180)} stroke="var(--primary)" stroke-opacity="0.1" stroke-width="0.5" class="processing-ray" style={{ 'animation-delay': `${angle * 5}ms` }} />
+              <line x1="24" y1="24" x2={24 + 20 * Math.cos((angle * Math.PI) / 180)} y2={24 + 20 * Math.sin((angle * Math.PI) / 180)} stroke="var(--floe-accent-ink)" stroke-opacity="0.1" stroke-width="0.5" class="processing-ray" style={{ 'animation-delay': `${angle * 5}ms` }} />
             )}
           </For>
         </svg>
@@ -566,7 +562,7 @@ function OrbitVariant(props: VariantProps) {
           <OrbitDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -604,7 +600,7 @@ function QuantumVariant(props: VariantProps) {
                 width={squareSize}
                 height={squareSize}
                 rx="1"
-                fill="var(--primary)"
+                fill="var(--floe-accent-ink)"
                 class="processing-quantum-dot-wave"
                 style={{ 'animation-delay': `${i() * 80}ms` }}
               />
@@ -618,7 +614,7 @@ function QuantumVariant(props: VariantProps) {
           <SequentialDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -643,7 +639,7 @@ function PulseVariant(props: VariantProps) {
               <circle
                 cx="20" cy="20" r="5"
                 fill="none"
-                stroke="var(--primary)"
+                stroke="var(--floe-accent-ink)"
                 stroke-width="1.5"
                 class="processing-pulse-ring"
                 style={{ 'animation-delay': `${i * 500}ms` }}
@@ -654,12 +650,12 @@ function PulseVariant(props: VariantProps) {
           <circle
             cx="20" cy="20" r="16"
             fill="none"
-            stroke="var(--primary)"
+            stroke="var(--floe-accent-ink)"
             stroke-width="1"
             stroke-opacity="0.15"
           />
           {/* Center dot with pulse */}
-          <circle cx="20" cy="20" r="4" fill="var(--primary)" class="processing-pulse-center" />
+          <circle cx="20" cy="20" r="4" fill="var(--floe-accent-ink)" class="processing-pulse-center" />
         </svg>
       </div>
       <div class="flex flex-col">
@@ -668,7 +664,7 @@ function PulseVariant(props: VariantProps) {
           <SequentialDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}><span class="font-mono">{props.elapsed}</span></Show>
@@ -764,16 +760,9 @@ function AtomVariant(props: VariantProps) {
       <div class="relative w-10 h-10">
         <svg class="absolute inset-0 w-full h-full" viewBox="0 0 40 40">
           <defs>
-            <filter id={`atom-glow-${id}`}>
-              <feGaussianBlur stdDeviation="1.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
             <radialGradient id={`nucleus-grad-${id}`} cx="35%" cy="35%">
-              <stop offset="0%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '1' }} />
-              <stop offset="100%" style={{ 'stop-color': 'var(--primary)', 'stop-opacity': '0.6' }} />
+              <stop offset="0%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '1' }} />
+              <stop offset="100%" style={{ 'stop-color': 'var(--floe-accent-ink)', 'stop-opacity': '0.6' }} />
             </radialGradient>
           </defs>
 
@@ -787,7 +776,7 @@ function AtomVariant(props: VariantProps) {
                   rx={orbit.rx}
                   ry={orbit.ry}
                   fill="none"
-                  stroke="var(--primary)"
+                  stroke="var(--floe-accent-ink)"
                   stroke-width="0.5"
                   transform={`rotate(${orbit.rotateZ} 20 20)`}
                 />
@@ -802,30 +791,30 @@ function AtomVariant(props: VariantProps) {
                 cx={electron.x}
                 cy={electron.y}
                 r={2}
-                fill="var(--primary)"
+                fill="var(--floe-accent-ink)"
                 opacity={0.5}
               />
             )}
           </For>
 
           {/* Nucleus */}
-          <g filter={`url(#atom-glow-${id})`}>
+          <g>
             <circle cx="20" cy="20" r="4" fill={`url(#nucleus-grad-${id})`} />
             {/* Proton/neutron highlights */}
-            <circle cx="19" cy="19" r="1.2" fill="var(--primary)" opacity="0.8" />
-            <circle cx="21" cy="20.5" r="1" fill="var(--primary)" opacity="0.6" />
-            <circle cx="19.5" cy="21" r="0.8" fill="var(--primary)" opacity="0.5" />
+            <circle cx="19" cy="19" r="1.2" fill="var(--floe-accent-ink)" opacity="0.8" />
+            <circle cx="21" cy="20.5" r="1" fill="var(--floe-accent-ink)" opacity="0.6" />
+            <circle cx="19.5" cy="21" r="0.8" fill="var(--floe-accent-ink)" opacity="0.5" />
           </g>
 
           {/* Front electrons (z >= 0) */}
-          <g filter={`url(#atom-glow-${id})`}>
+          <g>
             <For each={electronLayers().front}>
               {(electron) => (
                 <circle
                   cx={electron.x}
                   cy={electron.y}
                   r={2}
-                  fill="var(--primary)"
+                  fill="var(--floe-accent-ink)"
                   opacity={1}
                 />
               )}
@@ -839,7 +828,7 @@ function AtomVariant(props: VariantProps) {
           <OrbitDots />
         </div>
         <Show when={props.description || props.elapsed}>
-          <span class="text-[10px] text-muted-foreground mt-0.5">
+          <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] mt-0.5">
             {props.description}
             <Show when={props.description && props.elapsed}> · </Show>
             <Show when={props.elapsed}>
@@ -861,7 +850,7 @@ function WaveformDots(props: { size?: 'sm' | 'md' }) {
   const h = () => (props.size === 'sm' ? 'h-2' : 'h-3');
   return (
     <div class={cn('flex items-end gap-0.5', h())}>
-      <For each={[0, 1, 2, 3, 4]}>{(i) => <div class="w-0.5 bg-primary/60 rounded-full processing-waveform" style={{ 'animation-delay': `${i * 80}ms` }} />}</For>
+      <For each={[0, 1, 2, 3, 4]}>{(i) => <div class="w-0.5 bg-[var(--floe-accent-ink)]/60 rounded-full processing-waveform" style={{ 'animation-delay': `${i * 80}ms` }} />}</For>
     </div>
   );
 }
@@ -870,7 +859,7 @@ function WaveformDots(props: { size?: 'sm' | 'md' }) {
 function FlowingDots() {
   return (
     <div class="flex items-center gap-1">
-      <For each={[0, 1, 2]}>{(i) => <div class="w-1 h-1 rounded-full bg-primary processing-flow-dot" style={{ 'animation-delay': `${i * 200}ms` }} />}</For>
+      <For each={[0, 1, 2]}>{(i) => <div class="w-1 h-1 rounded-full bg-[var(--floe-accent-ink)] processing-flow-dot" style={{ 'animation-delay': `${i * 200}ms` }} />}</For>
     </div>
   );
 }
@@ -879,7 +868,7 @@ function FlowingDots() {
 function NeuralDots() {
   return (
     <div class="flex items-center gap-0.5">
-      <For each={[0, 1, 2, 3]}>{(i) => <div class="w-1 h-1 rounded-full bg-primary processing-neural-dot" style={{ 'animation-delay': `${i * 150}ms` }} />}</For>
+      <For each={[0, 1, 2, 3]}>{(i) => <div class="w-1 h-1 rounded-full bg-[var(--floe-accent-ink)] processing-neural-dot" style={{ 'animation-delay': `${i * 150}ms` }} />}</For>
     </div>
   );
 }
@@ -888,8 +877,8 @@ function NeuralDots() {
 function OrbitDots() {
   return (
     <div class="relative w-4 h-4">
-      <div class="absolute inset-0 flex items-center justify-center"><div class="w-1 h-1 rounded-full bg-primary" /></div>
-      <For each={[0, 1, 2]}>{(i) => <div class="absolute w-0.5 h-0.5 rounded-full bg-primary/70 processing-micro-orbit" style={{ 'animation-delay': `${i * 300}ms`, '--orbit-index': i }} />}</For>
+      <div class="absolute inset-0 flex items-center justify-center"><div class="w-1 h-1 rounded-full bg-[var(--floe-accent-ink)]" /></div>
+      <For each={[0, 1, 2]}>{(i) => <div class="absolute w-0.5 h-0.5 rounded-full bg-[var(--floe-accent-ink)]/70 processing-micro-orbit" style={{ 'animation-delay': `${i * 300}ms`, '--orbit-index': i }} />}</For>
     </div>
   );
 }
@@ -898,7 +887,7 @@ function OrbitDots() {
 function SequentialDots() {
   return (
     <div class="flex items-center gap-1">
-      <For each={[0, 1, 2]}>{(i) => <div class="w-1 h-1 rounded-full bg-primary processing-sequential-dot" style={{ 'animation-delay': `${i * 200}ms` }} />}</For>
+      <For each={[0, 1, 2]}>{(i) => <div class="w-1 h-1 rounded-full bg-[var(--floe-accent-ink)] processing-sequential-dot" style={{ 'animation-delay': `${i * 200}ms` }} />}</For>
     </div>
   );
 }

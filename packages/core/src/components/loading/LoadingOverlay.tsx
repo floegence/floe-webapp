@@ -35,7 +35,7 @@ export function LoadingOverlay(props: LoadingOverlayProps) {
         <SnakeLoader size="lg" />
       </div>
       <Show when={props.message}>
-        <p class="text-sm text-muted-foreground processing-text-glow">{props.message}</p>
+        <p class="text-sm text-[var(--floe-ink-soft)] processing-text-glow">{props.message}</p>
       </Show>
     </div>
   );

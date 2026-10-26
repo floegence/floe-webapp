@@ -33,7 +33,7 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
   const getStatusColor = () => {
     switch (props.block.status) {
       case 'pending':
-        return 'text-muted-foreground';
+        return 'text-[var(--floe-ink-soft)]';
       case 'running':
         return 'text-info';
       case 'success':
@@ -41,7 +41,7 @@ export const ToolCallBlock: Component<ToolCallBlockProps> = (props) => {
       case 'error':
         return 'text-error';
       default:
-        return 'text-muted-foreground';
+        return 'text-[var(--floe-ink-soft)]';
     }
   };
 

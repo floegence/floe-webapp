@@ -27,20 +27,27 @@ export interface SegmentedControlProps extends Omit<JSX.HTMLAttributes<HTMLDivEl
   disabled?: boolean;
 }
 
+/* Segment heights follow the shared control scale so a segmented control and a
+ * Button of the same size sit on one baseline in an action row. The padding
+ * ring around the segments is the gap half of the concentric radius: a 10px
+ * segment inside a 12px rail with 2px of ring lands exactly parallel. */
 const sizeStyles: Record<SegmentedControlSize, { container: string; button: string; icon: string }> = {
   sm: {
-    container: 'p-1 gap-0.5',
-    button: 'px-2.5 py-1 text-[11px] rounded-md',
+    container: 'p-0.5 gap-0.5',
+    button:
+      'h-[var(--floe-control-height-xs)] px-[var(--floe-control-padding-sm)] rounded-[var(--floe-radius-sm)]',
     icon: 'w-3 h-3',
   },
   md: {
-    container: 'p-1 gap-0.5',
-    button: 'px-3 py-1.5 text-xs rounded-md',
+    container: 'p-0.5 gap-0.5',
+    button:
+      'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-md)] rounded-[var(--floe-radius-sm)]',
     icon: 'w-3.5 h-3.5',
   },
   lg: {
-    container: 'p-1 gap-1',
-    button: 'px-4 py-2 text-sm rounded-lg',
+    container: 'p-1 gap-0.5',
+    button:
+      'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-lg)] rounded-[var(--floe-radius-md)]',
     icon: 'w-4 h-4',
   },
 };
@@ -91,7 +98,9 @@ export function SegmentedControl(props: SegmentedControlProps) {
       data-floe-surface="inset"
       data-floe-surface-part="rail"
       class={cn(
-        'floe-segmented-control inline-flex items-center rounded-lg border',
+        'floe-segmented-control inline-flex items-center border',
+        'rounded-[var(--floe-radius-group)]',
+        'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
         styles().container,
         local.disabled && 'opacity-50 pointer-events-none',
         local.class
@@ -109,15 +118,18 @@ export function SegmentedControl(props: SegmentedControlProps) {
               role="radio"
               data-floe-surface={isSelected() ? 'raised' : 'flat'}
               data-floe-surface-part="segment"
+              data-floe-interactive="item"
               aria-checked={isSelected()}
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}
               class={cn(
-                'floe-segmented-control__item font-medium rounded-md transition-[background-color,border-color,color] duration-120 cursor-pointer',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                'floe-segmented-control__item font-medium cursor-pointer border',
+                'transition-[background-color,border-color,color,box-shadow] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--floe-plane)]',
                 styles().button,
-                'border',
-                isSelected() && 'floe-segmented-control__item--active',
+                isSelected()
+                  ? 'text-[var(--primary-foreground)]'
+                  : 'text-[var(--floe-ink-soft)] hover:text-foreground',
                 isDisabled() && 'cursor-not-allowed opacity-50'
               )}
             >

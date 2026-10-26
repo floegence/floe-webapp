@@ -1,8 +1,10 @@
 export type ThemeType = 'light' | 'dark' | 'system';
-export type FloeSurfaceStyle = 'standard' | 'soft-neumorphic';
+/** One refined surface material. The former `standard` variant was removed:
+ * components no longer choose between an embossed and a flat material. */
+export type FloeSurfaceStyle = 'soft-neumorphic';
 
 export function isFloeSurfaceStyle(value: unknown): value is FloeSurfaceStyle {
-  return value === 'standard' || value === 'soft-neumorphic';
+  return value === 'soft-neumorphic';
 }
 
 export function applySurfaceStyleAttribute(style: FloeSurfaceStyle | undefined, target?: ThemeTarget): void {

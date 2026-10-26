@@ -187,15 +187,20 @@ function resolveIndicatorColorClasses(token: TabsIndicatorColorToken): {
 } {
   switch (token) {
     case 'border':
-      return { tabBorderClass: 'border-border', sliderBgClass: 'bg-border' };
+      return { tabBorderClass: 'border-[var(--floe-line)]', sliderBgClass: 'bg-[var(--floe-line)]' };
     case 'muted-foreground':
       return {
         tabBorderClass: 'border-muted-foreground',
-        sliderBgClass: 'bg-muted-foreground',
+        sliderBgClass: 'bg-[var(--floe-ink-ghost)]',
       };
     case 'primary':
     default:
-      return { tabBorderClass: 'border-primary', sliderBgClass: 'bg-primary' };
+      /* The `primary` token name is kept for API compatibility; in the current
+       * language the commitment marker is jade, not a solid black underline. */
+      return {
+        tabBorderClass: 'border-[var(--floe-accent-ink)]',
+        sliderBgClass: 'bg-[var(--floe-accent-ink)]',
+      };
   }
 }
 
@@ -510,14 +515,19 @@ export function Tabs(props: TabsProps) {
 
   // Size styles
   const sizeStyles = {
-    sm: 'h-7 px-2 text-[11px]',
-    md: 'h-8 px-3 text-xs',
+    sm: 'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-sm)]',
+    md: 'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-md)]',
   };
 
   // Styles for tab items
   const getTabStyles = (isCurrentActive: boolean, disabled?: boolean) => {
-    const base =
-      'inline-flex items-center gap-1.5 font-medium transition-colors duration-120 whitespace-nowrap';
+    /* Every recipe below comes from language.css: the rail supplies the well,
+     * the selected face is the surface layer's job, and movement uses the one
+     * motion family. The component only chooses which primitive applies. */
+    const base = cn(
+      'inline-flex items-center gap-1.5 whitespace-nowrap',
+      'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]'
+    );
     const cursor = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
 
     const activeIndicatorClass = (() => {
@@ -535,15 +545,18 @@ export function Tabs(props: TabsProps) {
       base,
       cursor,
       sizeStyles[local.size ?? 'md'],
-      'rounded-lg',
+      'rounded-[var(--floe-radius-control)]',
       indicatorThicknessClasses().tabBorderClass,
+      /* The selected face is painted by the surface layer (`data-floe-surface`
+       * plus `aria-selected`), which keeps the fill, hairline and first
+       * elevation step identical to every other selected control. */
       isCurrentActive
-        ? cn(activeIndicatorClass, 'text-foreground bg-background', local.slotClassNames?.tabActive)
+        ? cn(activeIndicatorClass, 'text-foreground', local.slotClassNames?.tabActive)
         : cn(
-            'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50',
+            'border-transparent text-[var(--floe-ink-soft)]',
             local.slotClassNames?.tabInactive
           ),
-      disabled && 'hover:bg-transparent hover:text-muted-foreground hover:border-transparent',
+      disabled && 'opacity-50',
       local.slotClassNames?.tab
     );
   };
@@ -552,7 +565,7 @@ export function Tabs(props: TabsProps) {
     <div
       class={cn(
         'relative flex items-center gap-0.5',
-        showContainerBorder() && 'border-b border-border',
+        showContainerBorder() && 'border-b border-[var(--floe-line)]',
         local.slotClassNames?.root,
         local.class
       )}
@@ -564,12 +577,13 @@ export function Tabs(props: TabsProps) {
           type="button"
           onClick={scrollLeft}
           disabled={!canScrollLeft()}
+          data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded cursor-pointer',
-            'transition-[color,background-color,opacity] duration-120',
+            'w-6 h-6 rounded-[var(--floe-radius-control)] cursor-pointer',
+            'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollLeft()
-              ? 'text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-100'
+              ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'
               : 'opacity-0 pointer-events-none',
             local.slotClassNames?.scrollButton
           )}
@@ -633,6 +647,7 @@ export function Tabs(props: TabsProps) {
                 aria-controls={item().panelId}
                 data-floe-surface={isCurrentActive() ? 'raised' : 'flat'}
                 data-floe-surface-part="tab"
+                data-floe-interactive="item"
                 aria-selected={isCurrentActive()}
                 aria-disabled={item().disabled}
                 tabIndex={item().disabled ? -1 : isCurrentActive() ? 0 : -1}
@@ -658,14 +673,14 @@ export function Tabs(props: TabsProps) {
                   <button
                     type="button"
                     onClick={(e) => handleClose(e, item().id)}
+                    data-floe-interactive="icon"
                     class={cn(
                       'flex-shrink-0 flex items-center justify-center',
-                      'w-5 h-5 rounded cursor-pointer',
-                      'bg-transparent text-muted-foreground',
+                      'w-5 h-5 rounded-[var(--floe-radius-control)] cursor-pointer',
+                      'bg-transparent text-[var(--floe-ink-quiet)]',
                       closeDangerHover()
                         ? 'hover:bg-error hover:text-error-foreground'
-                        : 'hover:bg-muted/80 hover:text-foreground',
-                      'transition-colors duration-120',
+                        : 'hover:bg-[var(--floe-state-hover)]',
                       'ml-1.5',
                       local.slotClassNames?.closeButton
                     )}
@@ -689,11 +704,11 @@ export function Tabs(props: TabsProps) {
             if (!onAdd) return;
             deferAfterPaint(() => onAdd());
           }}
+          data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'rounded hover:bg-muted/80 cursor-pointer',
-            'text-muted-foreground hover:text-foreground',
-            'transition-colors duration-120',
+            'rounded-[var(--floe-radius-control)] cursor-pointer',
+            'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)]',
             local.size === 'sm' ? 'w-6 h-6' : 'w-7 h-7',
             local.slotClassNames?.addButton
           )}
@@ -709,12 +724,13 @@ export function Tabs(props: TabsProps) {
           type="button"
           onClick={scrollRight}
           disabled={!canScrollRight()}
+          data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded cursor-pointer',
-            'transition-[color,background-color,opacity] duration-120',
+            'w-6 h-6 rounded-[var(--floe-radius-control)] cursor-pointer',
+            'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollRight()
-              ? 'text-muted-foreground hover:text-foreground hover:bg-muted/80 opacity-100'
+              ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'
               : 'opacity-0 pointer-events-none',
             local.slotClassNames?.scrollButton
           )}

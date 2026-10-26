@@ -35,12 +35,12 @@ try {
   });
   const themes = await page.evaluate(() => window.inputFocusThemes);
   const variants = themes.flatMap((theme) =>
-    ['standard', 'soft-neumorphic'].map((surface) => ({ ...theme, surface }))
+    [{ ...theme, surface: 'soft-neumorphic' }]
   );
   for (const theme of variants) {
     await page.evaluate((theme) => {
       document.documentElement.dataset.floeShellTheme = theme.name;
-      document.documentElement.dataset.floeSurfaceStyle = theme.surface;
+      document.documentElement.dataset.floeSurfaceStyle = 'soft-neumorphic';
       document.documentElement.classList.toggle('dark', theme.mode === 'dark');
     }, theme);
     const results = await page.evaluate(() => {

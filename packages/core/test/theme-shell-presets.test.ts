@@ -33,23 +33,25 @@ describe('built-in shell theme presets', () => {
   it('uses one neutral Classic Dark palette for renderer, preview and host metadata', () => {
     const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-dark')!;
     const tokens = preset.semanticTokens!;
-    expect(tokens['--background']).toBe('#0b0b0c');
-    expect(tokens['--card']).toBe('#141416');
-    expect(tokens['--popover']).toBe('#17171a');
-    expect(tokens['--primary']).toBe('#f2f2f3');
-    expect(tokens['--activity-bar']).toBe('#0a0a0b');
+    /* Paper Dark: a canvas that never reaches black, so a raised card reads as
+     * a separate sheet rather than a lighter rectangle on a void. */
+    expect(tokens['--background']).toBe('#0d0e0d');
+    expect(tokens['--card']).toBe('#161716');
+    expect(tokens['--popover']).toBe('#1a1b1a');
+    expect(tokens['--primary']).toBe('#e9e8e3');
+    expect(tokens['--activity-bar']).toBe('#0a0b0a');
     expect(preset.preview?.background.toLowerCase()).toBe(tokens['--background']);
     expect(preset.preview?.surface?.toLowerCase()).toBe(tokens['--card']);
     expect(preset.preview?.primary?.toLowerCase()).toBe(tokens['--primary']);
     expect(preset.monaco?.dark?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#c4b5fd');
-    expect(tokens['--terminal-background']).toBe('#08080a');
-    expect(tokens['--chart-4']).toBe('#4ade80');
+    expect(tokens['--terminal-background']).toBe('#080908');
+    expect(tokens['--chart-4']).toBe('#e8756b');
   });
 
   it('pairs Classic Light with the same quiet surface hierarchy', () => {
     const preset = builtInShellThemePresets.find((entry) => entry.name === 'classic-light')!;
-    expect(preset.semanticTokens?.['--background']).toBe('#fafaf8');
-    expect(preset.semanticTokens?.['--primary']).toBe('#17181a');
+    expect(preset.semanticTokens?.['--background']).toBe('#f6f4ef');
+    expect(preset.semanticTokens?.['--primary']).toBe('#1c1d1b');
     expect(preset.preview?.background).toBe(preset.semanticTokens?.['--background']);
     expect(preset.preview?.surface).toBe(preset.semanticTokens?.['--card']);
     expect(preset.monaco?.light?.rules.find((rule) => rule.token === 'keyword')?.foreground).toBe('#0b6bcb');

@@ -19,8 +19,8 @@ export function BottomBar(props: BottomBarProps) {
       class={cn(
         props.height ?? 'h-5',
         'shrink-0 flex items-center justify-between px-1.5',
-        'bg-background border-t border-border',
-        'text-[10px] text-muted-foreground font-mono',
+        'bg-background border-t border-[var(--floe-line)]',
+        'text-[10px] text-[var(--floe-ink-soft)] font-mono',
         props.class
       )}
       style={{ 'background-color': 'var(--activity-bar)', 'border-top-color': 'var(--bottom-bar-border)' }}
@@ -43,8 +43,8 @@ export interface BottomBarItemProps {
 export function BottomBarItem(props: BottomBarItemProps) {
   const baseClass = () => cn(
     'flex items-center gap-1 px-1 py-0.5 rounded-sm',
-    props.onClick && 'hover:bg-muted/80 cursor-pointer',
-    'transition-colors duration-75',
+    props.onClick && 'hover:bg-[var(--floe-state-hover)] cursor-pointer',
+    'transition-colors duration-[var(--floe-duration-instant)]',
     props.class
   );
 
@@ -86,7 +86,7 @@ export function StatusIndicator(props: StatusIndicatorProps) {
   const floe = useResolvedFloeConfig();
   const statusColors = {
     connected: 'bg-success',
-    disconnected: 'bg-muted-foreground',
+    disconnected: 'bg-[var(--floe-ink-ghost)]',
     connecting: 'bg-warning animate-pulse',
     error: 'bg-error',
   };

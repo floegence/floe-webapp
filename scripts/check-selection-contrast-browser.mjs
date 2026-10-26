@@ -58,14 +58,13 @@ try {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(
-      `${runtime.baseURL}/${version}-${entry}/dist/?panel=components&surface=standard`
+      `${runtime.baseURL}/${version}-${entry}/dist/?panel=components&surface=soft-neumorphic`
     );
     await page.waitForFunction(() => !!window.surfaceFixture);
     const themes = await page.evaluate(() =>
       window.surfaceFixture.themes.map(({ name, mode }) => ({ name, mode }))
     );
-    for (const surface of ['standard', 'soft-neumorphic']) {
-      await page.evaluate((value) => window.surfaceFixture.theme.setSurfaceStyle(value), surface);
+    for (const surface of ['soft-neumorphic']) {
       for (const theme of themes) {
         await page.evaluate(
           (value) => window.surfaceFixture.theme.selectShellTheme(value.mode, value.name),
@@ -91,8 +90,7 @@ try {
         await page.screenshot({ path: resolve(output, `${entry}-${surface}-${theme.name}.png`) });
       }
     }
-    for (const surface of ['standard', 'soft-neumorphic']) {
-      await page.evaluate((value) => window.surfaceFixture.theme.setSurfaceStyle(value), surface);
+    for (const surface of ['soft-neumorphic']) {
       await page.emulateMedia({ forcedColors: 'active', reducedMotion: 'reduce' });
       const forced = await page.evaluate(sample);
       assert.ok(

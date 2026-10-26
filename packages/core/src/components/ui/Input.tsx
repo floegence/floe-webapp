@@ -50,7 +50,7 @@ export function Input(props: InputProps) {
   return (
     <div class="relative">
       <Show when={local.leftIcon}>
-        <div class="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+        <div class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
           {local.leftIcon}
         </div>
       </Show>
@@ -62,12 +62,9 @@ export function Input(props: InputProps) {
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
-          'w-full rounded-lg border border-input bg-background shadow-xs',
-          'placeholder:text-muted-foreground',
-          'transition-[border-color,box-shadow,background-color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
+          'floe-field w-full',
           'focus:outline-none',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          local.error && 'border-error',
+          'disabled:cursor-not-allowed disabled:opacity-60',
           sizeStyles[local.size ?? 'md'],
           // Icon padding must come AFTER sizeStyles to override px-*
           local.leftIcon && 'pl-10',
@@ -78,7 +75,7 @@ export function Input(props: InputProps) {
       />
 
       <Show when={local.rightIcon}>
-        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
           {local.rightIcon}
         </div>
       </Show>
@@ -90,7 +87,7 @@ export function Input(props: InputProps) {
       </Show>
 
       <Show when={local.helperText && !local.error}>
-        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
           {local.helperText}
         </p>
       </Show>
@@ -132,13 +129,10 @@ export function Textarea(props: TextareaProps) {
         aria-invalid={local.error ? true : undefined}
         aria-describedby={ariaDescribedBy()}
         class={cn(
-          'w-full min-h-16 rounded border border-input bg-background p-2.5 text-[length:var(--floe-type-control)] shadow-sm',
-          'placeholder:text-muted-foreground',
-          'transition-colors duration-100',
+          'floe-field w-full min-h-16 p-2.5 text-[length:var(--floe-type-control)]',
           'focus:outline-none',
-          'disabled:cursor-not-allowed disabled:opacity-50',
+          'disabled:cursor-not-allowed disabled:opacity-60',
           'resize-y',
-          local.error && 'border-error',
           local.class
         )}
         {...rest}
@@ -149,7 +143,7 @@ export function Textarea(props: TextareaProps) {
         </p>
       </Show>
       <Show when={local.helperText && !local.error}>
-        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
           {local.helperText}
         </p>
       </Show>
@@ -253,10 +247,8 @@ export function NumberInput(props: NumberInputProps) {
         aria-invalid={props.error ? true : undefined}
         aria-disabled={props.disabled ? true : undefined}
         class={cn(
-          'inline-flex items-center rounded border border-input bg-background shadow-sm',
-          'transition-colors duration-100',
-          props.disabled && 'opacity-50 cursor-not-allowed',
-          props.error && 'border-error',
+          'floe-field inline-flex items-center',
+          props.disabled && 'cursor-not-allowed',
           config().height
         )}
       >
@@ -266,11 +258,11 @@ export function NumberInput(props: NumberInputProps) {
           onClick={handleDecrement}
           disabled={!canDecrement()}
           class={cn(
-            'flex items-center justify-center border-r border-input cursor-pointer',
-            'text-muted-foreground transition-colors',
-            'hover:bg-accent hover:text-foreground',
+            'flex items-center justify-center border-r border-[var(--floe-line)] cursor-pointer',
+            'text-[var(--floe-ink-soft)] transition-colors',
+            'hover:bg-[var(--floe-state-hover)] hover:text-foreground',
             'focus:outline-none',
-            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[var(--floe-ink-soft)]',
             config().btnSize,
             config().height
           )}
@@ -308,11 +300,11 @@ export function NumberInput(props: NumberInputProps) {
           onClick={handleIncrement}
           disabled={!canIncrement()}
           class={cn(
-            'flex items-center justify-center border-l border-input cursor-pointer',
-            'text-muted-foreground transition-colors',
-            'hover:bg-accent hover:text-foreground',
+            'flex items-center justify-center border-l border-[var(--floe-line)] cursor-pointer',
+            'text-[var(--floe-ink-soft)] transition-colors',
+            'hover:bg-[var(--floe-state-hover)] hover:text-foreground',
             'focus:outline-none',
-            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground',
+            'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[var(--floe-ink-soft)]',
             config().btnSize,
             config().height
           )}
@@ -329,7 +321,7 @@ export function NumberInput(props: NumberInputProps) {
       </Show>
 
       <Show when={props.helperText && !props.error}>
-        <p id={helperId} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
           {props.helperText}
         </p>
       </Show>
@@ -432,10 +424,8 @@ export function AffixInput(props: AffixInputProps) {
         aria-invalid={local.error ? true : undefined}
         aria-disabled={rest.disabled ? true : undefined}
         class={cn(
-          'inline-flex items-center rounded border border-input bg-background shadow-sm',
-          'transition-colors duration-100',
-          rest.disabled && 'opacity-50 cursor-not-allowed',
-          local.error && 'border-error',
+          'floe-field inline-flex items-center',
+          rest.disabled && 'cursor-not-allowed',
           config().height
         )}
       >
@@ -446,7 +436,7 @@ export function AffixInput(props: AffixInputProps) {
             fallback={
               <span
                 class={cn(
-                  'flex items-center border-r border-input bg-muted/50 text-muted-foreground',
+                  'flex items-center border-r border-[var(--floe-line)] bg-[var(--floe-state-hover)] text-[var(--floe-ink-soft)]',
                   config().text,
                   config().px,
                   config().height
@@ -475,7 +465,7 @@ export function AffixInput(props: AffixInputProps) {
           aria-describedby={ariaDescribedBy()}
           class={cn(
             'flex-1 min-w-0 bg-transparent border-none',
-            'placeholder:text-muted-foreground',
+            'placeholder:text-[var(--floe-field-placeholder)]',
             'outline-none focus:outline-none focus:ring-0',
             'disabled:cursor-not-allowed',
             config().text,
@@ -491,7 +481,7 @@ export function AffixInput(props: AffixInputProps) {
             fallback={
               <span
                 class={cn(
-                  'flex items-center border-l border-input bg-muted/50 text-muted-foreground',
+                  'flex items-center border-l border-[var(--floe-line)] bg-[var(--floe-state-hover)] text-[var(--floe-ink-soft)]',
                   config().text,
                   config().px,
                   config().height
@@ -521,7 +511,7 @@ export function AffixInput(props: AffixInputProps) {
       </Show>
 
       <Show when={local.helperText && !local.error}>
-        <p id={helperId()} class="mt-1 text-[11px] text-muted-foreground">
+        <p id={helperId()} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
           {local.helperText}
         </p>
       </Show>
@@ -628,11 +618,13 @@ function AffixSelect(props: AffixSelectProps) {
           setOpen((v) => !v);
         }}
         class={cn(
-          'flex items-center gap-1 bg-muted/50 text-muted-foreground cursor-pointer',
-          'hover:bg-muted hover:text-foreground transition-colors',
+          'flex items-center gap-1 cursor-pointer',
+          'bg-[var(--floe-state-hover)] text-[var(--floe-ink-soft)]',
+          'hover:bg-[var(--floe-state-press)] hover:text-foreground',
+          'transition-[background-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
           'focus:outline-none',
-          'disabled:cursor-not-allowed disabled:hover:bg-muted/50 disabled:hover:text-muted-foreground',
-          props.position === 'prefix' ? 'border-r border-input' : 'border-l border-input',
+          'disabled:cursor-not-allowed disabled:bg-[var(--floe-state-hover)] disabled:hover:text-[var(--floe-ink-soft)]',
+          props.position === 'prefix' ? 'border-r border-[var(--floe-line)]' : 'border-l border-[var(--floe-line)]',
           config().text,
           config().px,
           config().height
@@ -649,8 +641,9 @@ function AffixSelect(props: AffixSelectProps) {
             class={cn(
               'fixed z-50 min-w-24 py-0.5',
               'bg-popover text-popover-foreground',
-              'rounded border border-border shadow-md',
-              'animate-in fade-in slide-in-from-top-1'
+              'rounded-[var(--floe-radius-group)] border border-[var(--floe-line)]',
+              'shadow-[var(--floe-elevation-float)]',
+              'floe-floating-presence floe-floating-menu'
             )}
             style={{
               left: `${menuPosition().x}px`,
@@ -664,12 +657,15 @@ function AffixSelect(props: AffixSelectProps) {
                   type="button"
                   onClick={() => handleSelect(option.value)}
                   class={cn(
-                    'w-full flex items-center px-2.5 py-1.5 text-xs cursor-pointer',
-                    'transition-colors duration-75',
-                    'hover:bg-accent',
-                    'focus:outline-none focus:bg-accent',
-                    props.value === option.value && 'bg-accent/50 font-medium'
+                    'w-full flex items-center px-2.5 cursor-pointer',
+                    'min-h-[var(--floe-row-height)] rounded-[var(--floe-radius-sm)]',
+                    'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
+                    'text-[var(--floe-ink-soft)] hover:text-foreground',
+                    'focus:outline-none',
+                    props.value === option.value &&
+                      'bg-[var(--floe-state-selected)] text-foreground font-medium'
                   )}
+                  data-floe-interactive="item"
                   role="option"
                   aria-selected={props.value === option.value}
                 >

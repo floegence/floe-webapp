@@ -159,12 +159,12 @@ export function Breadcrumb(props: BreadcrumbProps) {
         {(segment, index) => (
           <>
             <Show when={index() > 0}>
-              <ChevronRight class="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+              <ChevronRight class="w-3 h-3 text-[var(--floe-ink-ghost)] flex-shrink-0" />
             </Show>
             {/* Insert the collapsed ellipsis dropdown after Root */}
             <Show when={collapsedInfo().shouldCollapse && index() === 1}>
               <CollapsedSegments segments={collapsedInfo().collapsed} onSelect={handleClick} />
-              <ChevronRight class="w-3 h-3 text-muted-foreground/50 flex-shrink-0" />
+              <ChevronRight class="w-3 h-3 text-[var(--floe-ink-ghost)] flex-shrink-0" />
             </Show>
             <BreadcrumbItem
               segment={segment}
@@ -206,8 +206,8 @@ function CollapsedSegments(props: CollapsedSegmentsProps) {
       trigger={<span>…</span>}
       triggerClass={cn(
         'inline-flex items-center text-xs px-1.5 py-0.5 rounded flex-shrink-0',
-        'transition-all duration-100',
-        'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+        'transition-all duration-[var(--floe-duration-fast)]',
+        'text-[var(--floe-ink-soft)] hover:text-foreground hover:bg-[var(--floe-state-hover)]'
       )}
       triggerAriaLabel="Show hidden path segments"
       items={items()}
@@ -231,11 +231,11 @@ function BreadcrumbItem(props: BreadcrumbItemProps) {
       disabled={props.isLast}
       class={cn(
         'text-xs px-1.5 py-0.5 rounded cursor-pointer flex-shrink-0',
-        'transition-all duration-100',
+        'transition-all duration-[var(--floe-duration-fast)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         props.isLast
           ? 'font-medium text-foreground cursor-default'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          : 'text-[var(--floe-ink-soft)] hover:text-foreground hover:bg-[var(--floe-state-hover)]'
       )}
     >
       <span class="truncate max-w-[120px] block">{props.segment.name}</span>

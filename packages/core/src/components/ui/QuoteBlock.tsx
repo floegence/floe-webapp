@@ -50,35 +50,35 @@ export function QuoteBlock(props: QuoteBlockProps) {
         variant() === 'default' && [
           'pl-3 py-2 pr-3',
           'border-l-2',
-          'bg-muted/50',
+          'bg-[var(--floe-well)]',
           'rounded-r',
         ],
         // Subtle variant - Lighter background, visible border
         variant() === 'subtle' && [
           'pl-3 py-1.5 pr-3',
           'border-l-2',
-          'bg-muted/30',
+          'bg-[var(--floe-well)]',
           'rounded-r',
         ],
         // Bordered variant - Full border for emphasis
         variant() === 'bordered' && [
           'px-3 py-2',
-          'border border-border rounded-md',
+          'border border-[var(--floe-line)] rounded-md',
           'border-l-2',
-          'bg-muted/40',
+          'bg-[var(--floe-well)]',
         ],
         // Code variant - Monospace, terminal-like
         variant() === 'code' && [
           'px-3 py-2',
-          'bg-muted/50 rounded',
+          'bg-[var(--floe-well)] rounded-[var(--floe-radius-xs)]',
           'font-mono',
           'border-l-2',
         ],
         // Inline variant - Compact, for tight spaces
         variant() === 'inline' && [
           'px-2 py-1',
-          'bg-muted/40 rounded',
-          'text-muted-foreground',
+          'bg-[var(--floe-well)] rounded-[var(--floe-radius-xs)]',
+          'text-[var(--floe-ink-quiet)]',
         ],
         local.class
       )}
@@ -97,7 +97,7 @@ export function QuoteBlock(props: QuoteBlockProps) {
       {/* Citation/Author */}
       <Show when={local.citation || local.author}>
         <footer class={cn(
-          'mt-1.5 text-[10px] text-muted-foreground/70 not-italic',
+          'mt-1.5 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-quiet)] not-italic',
           variant() === 'code' && 'font-mono',
         )}>
           <Show when={local.author}>

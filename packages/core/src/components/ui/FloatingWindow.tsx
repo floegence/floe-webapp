@@ -118,6 +118,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   const [isActive, setIsActive] = createSignal(false);
   const windowPresence = createFloatingPresence({
     open: () => props.open,
+    element: () => windowPanelRef,
   });
   let dragStartPos = { x: 0, y: 0 };
   let dragStartRect: FloatingWindowRect = { x: 0, y: 0, width: 0, height: 0 };
@@ -127,6 +128,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   let resizeHandle: FloatingWindowResizeHandle = 'se';
 
   let windowRef: HTMLDivElement | undefined;
+  let windowPanelRef: HTMLDivElement | undefined;
   let titlebarRef: HTMLDivElement | undefined;
   let activePointerId: number | null = null;
   let pointerSession: PointerSessionController | undefined;
@@ -650,6 +652,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
           onPointerDown={handleSurfacePointerDown}
         >
           <div
+            ref={windowPanelRef}
             data-floe-dialog-surface-host="true"
             {...{ [SURFACE_PORTAL_LAYER_ATTR]: 'true' }}
             data-floe-floating-window-surface="true"
@@ -659,7 +662,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             {...{ [LOCAL_INTERACTION_SURFACE_ATTR]: 'true' }}
             class={cn(
               'relative flex h-full w-full flex-col overflow-hidden',
-              'text-card-foreground rounded-2xl',
+              'text-card-foreground rounded-[var(--floe-radius-panel)]',
               'border',
               'floe-floating-presence floe-floating-window-motion',
               (isDragging() || isResizing()) && 'floe-floating-presence--suspended',
@@ -753,7 +756,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
             <Show when={props.footer}>
               <div
                 data-floe-floating-window-footer="true"
-                class="flex items-center justify-end gap-2 p-3 border-t border-border"
+                class="flex items-center justify-end gap-2 p-3 border-t border-[var(--floe-line)]"
               >
                 {props.footer}
               </div>

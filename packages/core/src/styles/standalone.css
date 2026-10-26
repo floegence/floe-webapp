@@ -5,6 +5,7 @@
  * Applications own layout and declare data-floe-surface on visible boundaries.
  */
 @import './primitives.css';
+@import './language.css';
 @import './themes/light.css';
 @import './themes/dark.css';
 @import './themes/shell-presets.generated.css';

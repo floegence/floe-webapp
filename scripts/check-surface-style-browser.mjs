@@ -44,8 +44,8 @@ try {
     const samples = [
       '[data-case="card"]',
       '[data-case="secondary"]',
-      '[data-case="glass"]',
-      '[data-case="lift"]',
+      '[data-case="well"]',
+      '[data-case="interactive"]',
       '.workbench-widget',
       '[aria-label="Workspace name"]',
     ];

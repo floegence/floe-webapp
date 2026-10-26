@@ -117,7 +117,7 @@ function StepIndicator(props: StepIndicatorProps) {
         'w-3 h-3 md:w-4 md:h-4',
         isCompleted() && 'bg-primary',
         isCurrent() && 'bg-primary ring-4 ring-primary/20',
-        !isCompleted() && !isCurrent() && 'bg-muted'
+        !isCompleted() && !isCurrent() && 'bg-[var(--floe-well)]'
       );
     }
 
@@ -126,15 +126,15 @@ function StepIndicator(props: StepIndicatorProps) {
         'border-2',
         isCompleted() && 'border-primary bg-primary text-primary-foreground',
         isCurrent() && 'border-primary text-primary bg-transparent',
-        !isCompleted() && !isCurrent() && 'border-muted text-muted-foreground bg-transparent'
+        !isCompleted() && !isCurrent() && 'border-[var(--floe-control-edge)] text-[var(--floe-ink-soft)] bg-transparent'
       );
     }
 
     // Default variant
     return cn(
-      isCompleted() && 'bg-primary text-primary-foreground shadow-sm',
-      isCurrent() && 'bg-primary text-primary-foreground shadow-md ring-4 ring-primary/20',
-      !isCompleted() && !isCurrent() && 'bg-muted text-muted-foreground'
+      isCompleted() && 'bg-primary text-primary-foreground',
+      isCurrent() && 'bg-primary text-primary-foreground ring-4 ring-[var(--floe-accent-soft)]',
+      !isCompleted() && !isCurrent() && 'bg-[var(--floe-well)] text-[var(--floe-ink-soft)]'
     );
   };
 
@@ -201,18 +201,18 @@ function StepLabel(props: StepLabelProps) {
         config().label,
         'font-medium transition-colors duration-200',
         isCurrent() && 'text-foreground',
-        !isCurrent() && 'text-muted-foreground',
+        !isCurrent() && 'text-[var(--floe-ink-soft)]',
         props.step.disabled && 'opacity-50'
       )}>
         <span>{props.step.label}</span>
         <Show when={props.step.optional}>
-          <span class="text-muted-foreground/60 font-normal">(Optional)</span>
+          <span class="text-[var(--floe-ink-ghost)] font-normal">(Optional)</span>
         </Show>
       </div>
       <Show when={props.step.description}>
         <p class={cn(
           config().description,
-          'text-muted-foreground',
+          'text-[var(--floe-ink-soft)]',
           isUpcoming() && 'opacity-60',
           props.step.disabled && 'opacity-50'
         )}>
@@ -243,7 +243,7 @@ function Connector(props: ConnectorProps) {
         props.orientation === 'horizontal'
           ? cn('flex-1', config().connector)
           : cn(config().connectorVertical, 'mx-auto'),
-        props.completed ? 'bg-primary' : 'bg-muted'
+        props.completed ? 'bg-primary' : 'bg-[var(--floe-well)]'
       )}
     />
   );

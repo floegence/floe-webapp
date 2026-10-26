@@ -1,5 +1,6 @@
 @import './progress-shimmer.css';
 @import './primitives.css';
+@import './language.css';
 @import './input-focus.css';
 @import './surface.css';
 @import './file-icons.css';
@@ -407,8 +408,8 @@
 /* Animation utilities */
 @layer utilities {
   .floe-floating-presence {
-    --floe-floating-enter-duration: 220ms;
-    --floe-floating-exit-duration: 160ms;
+    --floe-floating-enter-duration: 260ms;
+    --floe-floating-exit-duration: 180ms;
     --floe-floating-presence-x: 0;
     --floe-floating-presence-y: 0;
     --floe-floating-presence-scale: 1;
@@ -422,16 +423,20 @@
     transform: translate(var(--floe-floating-presence-x), var(--floe-floating-presence-y)) scale(var(--floe-floating-presence-scale));
     transform-origin: var(--floe-floating-origin, center);
     transition:
-      opacity var(--floe-floating-enter-duration) ease-out,
-      transform var(--floe-floating-enter-duration) cubic-bezier(0.2, 0.75, 0.25, 1);
-    will-change: opacity, transform;
+      opacity var(--floe-floating-enter-duration) var(--floe-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+      transform var(--floe-floating-enter-duration) cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Promotion is scoped to the frames that move. A settled overlay holding
+   * `will-change` keeps a compositor layer alive for as long as it is open,
+   * which costs memory and rasterisation on every window, menu and dialog that
+   * merely sits on screen. Only the two transitions need it. */
   .floe-floating-presence[data-floating-presence='entering'] {
     opacity: 0;
     --floe-floating-presence-x: var(--floe-floating-enter-x);
     --floe-floating-presence-y: var(--floe-floating-enter-y);
     --floe-floating-presence-scale: var(--floe-floating-enter-scale);
+    will-change: opacity, transform;
   }
 
   .floe-floating-presence[data-floating-presence='exiting'] {
@@ -440,9 +445,10 @@
     --floe-floating-presence-x: var(--floe-floating-exit-x);
     --floe-floating-presence-y: var(--floe-floating-exit-y);
     --floe-floating-presence-scale: var(--floe-floating-exit-scale);
+    will-change: opacity, transform;
     transition:
-      opacity var(--floe-floating-exit-duration) ease-in,
-      transform var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 1, 1);
+      opacity var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 0.6, 1),
+      transform var(--floe-floating-exit-duration) cubic-bezier(0.4, 0, 0.6, 1);
   }
 
   .floe-floating-presence--suspended {
@@ -455,10 +461,11 @@
   }
 
   .floe-floating-dialog-panel {
-    --floe-floating-enter-y: 0.25rem;
-    --floe-floating-exit-y: 0.125rem;
-    --floe-floating-enter-scale: 1;
-    --floe-floating-exit-scale: 1;
+    --floe-floating-enter-y: 0.75rem;
+    --floe-floating-exit-y: 0.375rem;
+    --floe-floating-enter-scale: 0.965;
+    --floe-floating-exit-scale: 0.985;
+    --floe-floating-origin: center top;
   }
 
   .floe-side-drawer-overlay {
@@ -509,7 +516,7 @@
     --floe-floating-exit-y: calc(100% + 1.25rem);
     --floe-floating-enter-scale: 1;
     --floe-floating-exit-scale: 1;
-    border-radius: 1rem;
+    border-radius: var(--floe-radius-panel);
     overflow: hidden;
   }
 
@@ -521,12 +528,12 @@
   }
 
   .floe-floating-menu {
-    --floe-floating-enter-duration: 220ms;
+    --floe-floating-enter-duration: 240ms;
     --floe-floating-exit-duration: 160ms;
-    --floe-floating-enter-y: -0.25rem;
+    --floe-floating-enter-y: -0.375rem;
     --floe-floating-exit-y: -0.125rem;
-    --floe-floating-enter-scale: 1;
-    --floe-floating-exit-scale: 1;
+    --floe-floating-enter-scale: 0.97;
+    --floe-floating-exit-scale: 0.99;
     --floe-floating-origin: top;
   }
 
@@ -537,29 +544,30 @@
   }
 
   .floe-floating-tooltip {
-    --floe-floating-enter-duration: 80ms;
-    --floe-floating-exit-duration: 70ms;
+    --floe-floating-enter-duration: 140ms;
+    --floe-floating-exit-duration: 90ms;
     --floe-floating-enter-y: -0.125rem;
     --floe-floating-exit-y: -0.0625rem;
-    --floe-floating-enter-scale: 1;
+    --floe-floating-enter-scale: 0.96;
     --floe-floating-exit-scale: 1;
   }
 
   .floe-floating-window-motion {
-    --floe-floating-enter-y: 4px;
-    --floe-floating-exit-y: 2px;
-    --floe-floating-enter-duration: 220ms;
-    --floe-floating-exit-duration: 160ms;
-    --floe-floating-enter-scale: 1;
-    --floe-floating-exit-scale: 1;
+    --floe-floating-enter-y: 8px;
+    --floe-floating-exit-y: 4px;
+    --floe-floating-enter-duration: 260ms;
+    --floe-floating-exit-duration: 180ms;
+    --floe-floating-enter-scale: 0.98;
+    --floe-floating-exit-scale: 0.99;
+    --floe-floating-origin: center top;
   }
 
   .animate-in {
-    animation: animate-in 200ms ease-out;
+    animation: animate-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .animate-out {
-    animation: animate-out 150ms ease-in;
+    animation: animate-out 150ms cubic-bezier(0.4, 0, 0.6, 1);
   }
 
   .slide-in-from-top {

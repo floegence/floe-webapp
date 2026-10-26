@@ -585,56 +585,41 @@ function Example() {
 export const cardDoc: ComponentDoc = {
   name: 'Card',
   description:
-    'Container component with multiple visual variants including 3D effects, gradients, and glass morphism.',
+    'A content plane on the canvas. Separation comes from a fill step and the page gutter, so a card carries no contour and no resting shadow.',
   props: [
     {
       name: 'variant',
-      type: "'default' | 'hover-lift' | 'gradient-border' | 'glass' | 'spotlight' | 'shimmer' | 'glow'",
+      type: "'default' | 'interactive' | 'well'",
       default: "'default'",
-      description: 'Visual effect variant of the card.',
-    },
-    {
-      name: 'enableTilt',
-      type: 'boolean',
-      default: 'false',
-      description: 'Enable 3D perspective tilt effect on hover.',
-    },
-    {
-      name: 'gradientColors',
-      type: 'string',
-      description: 'Custom gradient colors for gradient-border variant.',
-    },
-    {
-      name: 'glowColor',
-      type: 'string',
-      description: 'Glow color for glow variant (CSS color value).',
+      description:
+        'Plane role. `interactive` adds the hover lift and the first elevation step; `well` recesses the card into its host.',
     },
   ],
   usage: {
     whenToUse: [
-      'Grouping related content',
-      'Feature highlights or product cards',
-      'Dashboard widgets',
+      'Grouping related content into one reading unit',
+      'Dashboard widgets and summary blocks',
+      'Clickable tiles that open a detail view',
     ],
     bestPractices: [
-      'Use subtle variants (default, hover-lift) for most cases',
-      'Reserve flashy variants for marketing or emphasis',
-      'Maintain consistent card sizes in grids',
+      'Separate cards with the page gutter rather than borders or shadows',
+      'Use `interactive` only when the whole card is clickable',
+      'Step down to `well` for grouped secondary content instead of nesting borders',
     ],
     avoid: [
-      'Multiple animated variants in the same view',
-      'Cards without clear visual boundaries',
-      'Very deep nesting of cards',
+      'Decorating a card with glow, gradient or 3D tilt',
+      'Nesting cards more than one level deep',
+      'Mixing `well` and `default` at the same depth in one grid',
     ],
   },
   examples: [
     {
-      title: 'Card with Header and Footer',
+      title: 'Card with header, content and footer',
       code: `import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Button } from '@floegence/floe-webapp-core/full';
 
 function Example() {
   return (
-    <Card variant="hover-lift">
+    <Card variant="interactive">
       <CardHeader>
         <CardTitle>Feature Card</CardTitle>
         <CardDescription>A brief description</CardDescription>

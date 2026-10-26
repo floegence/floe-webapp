@@ -90,10 +90,8 @@ function Content() {
   const [state, setState] = createSignal(initialState);
   const [dialog, setDialog] = createSignal(false);
   const [windows, setWindows] = createSignal(false);
-  const surfaceTheme = theme as typeof theme & { setSurfaceStyle?: (style: string) => void };
   onMount(() => {
-    surfaceTheme.setSurfaceStyle?.(params.get('surface') ?? 'standard');
-    Object.assign(window, {
+      Object.assign(window, {
       surfaceFixture: {
         theme,
         state,
@@ -113,15 +111,6 @@ function Content() {
         <div class="controls surface-controls">
           <Button variant="ghost" title="Toggle color mode" onClick={() => theme.toggleTheme()}>
             Theme
-          </Button>
-          <Button variant="secondary" onClick={() => surfaceTheme.setSurfaceStyle?.('standard')}>
-            Standard
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => surfaceTheme.setSurfaceStyle?.('soft-neumorphic')}
-          >
-            Soft neumorphic
           </Button>
         </div>
       }
@@ -217,11 +206,11 @@ function Content() {
                     />
                   </section>
                   <div class="controls">
-                    <Card variant="glass" data-case="glass">
-                      <CardContent>Explicit glass</CardContent>
+                    <Card variant="well" data-case="well">
+                      <CardContent>Recessed well</CardContent>
                     </Card>
-                    <Card variant="hover-lift" data-case="lift">
-                      <CardContent>Explicit hover lift</CardContent>
+                    <Card variant="interactive" data-case="interactive">
+                      <CardContent>Interactive lift</CardContent>
                     </Card>
                     <Card data-floe-surface="flat" data-case="flat">
                       <CardContent>Flat content</CardContent>

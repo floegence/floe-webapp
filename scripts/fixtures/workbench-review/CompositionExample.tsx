@@ -63,7 +63,7 @@ const theme =
   builtInShellThemePresets.find((p) => p.name === 'paper')!;
 document.documentElement.dataset.floeShellTheme = theme.name;
 document.documentElement.classList.add(theme.mode ?? 'light');
-document.documentElement.dataset.floeSurfaceStyle = params.get('surface') ?? 'standard';
+document.documentElement.dataset.floeSurfaceStyle = 'soft-neumorphic';
 document.documentElement.lang = locale;
 const [state, setState] = createSignal<WorkbenchState>(initial);
 const selection = (id: string): WorkbenchSelection | null =>

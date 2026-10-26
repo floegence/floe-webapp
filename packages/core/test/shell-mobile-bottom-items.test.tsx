@@ -52,7 +52,7 @@ describe('Shell mobile activityBottomItems', () => {
     ));
 
     expect(html).toContain('aria-label="Settings"');
-    expect(html).toContain('hover:bg-muted/60');
+    expect(html).toContain('hover:bg-[var(--floe-state-hover)]');
     expect(html).toContain('data-test="custom-action"');
   });
 

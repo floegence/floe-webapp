@@ -65,8 +65,8 @@ describe('layout markup', () => {
       </TopBarIconButton>
     ));
 
-    expect(html).toContain('w-8 h-8');
-    expect(html).toContain('hover:bg-muted/60');
+    expect(html).toContain('w-[var(--floe-control-height-md)] h-[var(--floe-control-height-md)]');
+    expect(html).toContain('hover:bg-[var(--floe-state-hover)]');
   });
 
   it('TopBarIconButton should omit the tooltip host wrapper when tooltip={false}', () => {

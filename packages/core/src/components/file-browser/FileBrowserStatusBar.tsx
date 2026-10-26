@@ -40,7 +40,7 @@ export function FileBrowserStatusBar(props: FileBrowserStatusBarProps) {
       data-file-browser-status-bar="true"
       aria-busy={props.initializing || undefined}
       class={cn(
-        'flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-1 text-[length:var(--floe-type-caption)] leading-4 text-muted-foreground',
+        'flex flex-wrap items-center justify-between gap-2 border-t border-[var(--floe-line)] px-3 py-1 text-[length:var(--floe-type-caption)] leading-4 text-[var(--floe-ink-soft)]',
         props.class
       )}
     >

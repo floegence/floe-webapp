@@ -21,8 +21,11 @@ describe('close button polish', () => {
       </Button>
     ));
 
-    expect(html).toContain('hover:bg-error');
-    expect(html).toContain('hover:text-error-foreground');
+    /* A close affordance is a quiet control until hovered: then the danger
+     * arrives as a 12% error wash under error-colored ink, never a filled
+     * destructive button competing with the content it dismisses. */
+    expect(html).toContain('hover:bg-[color-mix(in_srgb,var(--error)_12%,transparent)]');
+    expect(html).toContain('hover:text-error');
     expect(html).not.toContain('hover:bg-accent');
   });
 

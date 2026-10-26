@@ -20,26 +20,29 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
   icon?: Component<{ class?: string }>;
 }
 
+/* Variants derive from the language's state ramp: ink for the one primary
+ * action, a well for secondary, a hairline for outline, and a transparent
+ * state layer for ghost. No variant carries a resting shadow, so a toolbar of
+ * buttons sits flat on its bar and only the pressed/primary pair has weight. */
 const variantStyles: Record<ButtonVariant, string> = {
-  default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-sm active:bg-primary/82',
-  primary: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-sm active:bg-primary/82',
-  secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 active:bg-secondary/68',
+  default: 'bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,var(--primary)_92%,var(--primary-foreground))]',
+  primary: 'bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,var(--primary)_92%,var(--primary-foreground))]',
+  secondary: 'bg-[var(--floe-well)] text-foreground hover:bg-[var(--floe-well-strong)]',
   outline:
-    'border border-border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground hover:shadow-sm active:bg-accent/80',
-  ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80',
-  'ghost-destructive': 'bg-transparent text-muted-foreground hover:bg-error hover:text-error-foreground active:bg-error/80',
-  destructive: 'bg-error text-error-foreground shadow-xs hover:bg-error/90 hover:shadow-sm active:bg-error/82',
+    'border border-[var(--floe-line-strong)] bg-transparent text-foreground hover:bg-[var(--floe-state-hover)] hover:border-[color-mix(in_srgb,var(--foreground)_26%,transparent)]',
+  ghost: 'bg-transparent text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)] hover:text-foreground',
+  'ghost-destructive': 'bg-transparent text-[var(--floe-ink-soft)] hover:bg-[color-mix(in_srgb,var(--error)_12%,transparent)] hover:text-error',
+  destructive: 'bg-error text-error-foreground hover:bg-[color-mix(in_srgb,var(--error)_90%,#000)]',
 };
 
-/* Radii step with control height so every button reads as the same soft
- * family. Press feedback stays color-only: control geometry never moves on
- * click, which keeps adjacent action groups stable. */
+/* One control scale: 24 / 28 / 32 / 36. Radius is the language's control
+ * radius for the two working sizes and steps down only at xs. */
 const sizeStyles: Record<ButtonSize, string> = {
-  xs: 'h-6 px-2 text-[11px] rounded-md',
-  sm: 'h-7 px-2.5 text-xs rounded-md',
-  md: 'h-8 px-3 text-xs rounded-lg',
-  lg: 'h-9 px-4 text-sm rounded-lg',
-  icon: 'h-8 w-8 rounded-md',
+  xs: 'h-[var(--floe-control-height-xs)] px-2 text-[length:var(--floe-type-caption)] rounded-[var(--floe-radius-sm)]',
+  sm: 'h-[var(--floe-control-height-sm)] px-2.5 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-md)]',
+  md: 'h-[var(--floe-control-height-md)] px-3 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-control)]',
+  lg: 'h-[var(--floe-control-height-lg)] px-3.5 text-[length:var(--floe-type-control)] rounded-[var(--floe-radius-control)]',
+  icon: 'h-[var(--floe-control-height-md)] w-[var(--floe-control-height-md)] rounded-[var(--floe-radius-control)]',
 };
 
 const iconSizeStyles: Record<ButtonSize, string> = {
@@ -67,13 +70,14 @@ export function Button(props: ButtonProps) {
     <button
       type="button"
       data-floe-control="button"
-      data-floe-surface={local.variant === 'ghost' || local.variant === 'ghost-destructive' ? undefined : 'raised'}
+      data-floe-surface={local.variant === 'ghost' || local.variant === 'ghost-destructive' || local.variant === 'outline' ? undefined : 'flat'}
       data-floe-surface-part="action"
       class={cn(
         'inline-flex min-w-max items-center justify-center gap-1.5 whitespace-nowrap font-medium cursor-pointer',
         'tracking-[var(--floe-tracking-normal)]',
-        'transition-[color,background-color,border-color,box-shadow,opacity] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+        'active:scale-[var(--floe-press-scale)]',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--floe-plane)]',
         'disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed',
         variantStyles[local.variant ?? 'default'],
         sizeStyles[local.size ?? 'md'],

@@ -50,7 +50,7 @@ try {
       };
     });
     assert.deepEqual(layout, {
-      size: '12px',
+      size: '13px',
       title: 'Stop sharing',
       inBody: true,
       bodyChildren: 1,

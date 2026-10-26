@@ -19,17 +19,17 @@ const BADGE_TONE_CLASSES: Record<FileItemDecorationTone, string> = {
   success: 'bg-success text-success-foreground',
   warning: 'bg-warning text-warning-foreground',
   error: 'bg-error text-error-foreground',
-  muted: 'bg-muted text-muted-foreground',
+  muted: 'bg-[var(--floe-well)] text-[var(--floe-ink-soft)]',
 };
 
 const NAME_TONE_CLASSES: Record<FileItemDecorationTone, string> = {
   default: '',
-  primary: 'text-primary',
+  primary: 'text-[var(--floe-accent-ink)]',
   info: 'text-info',
   success: 'text-success',
   warning: 'text-warning',
   error: 'text-error',
-  muted: 'text-muted-foreground',
+  muted: 'text-[var(--floe-ink-soft)]',
 };
 
 type FileItemDecorationBadgeSize = 'xs' | 'sm' | 'md';

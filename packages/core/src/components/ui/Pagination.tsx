@@ -205,11 +205,12 @@ export function Pagination(props: PaginationProps) {
         onClick={handleClick}
         title={buttonProps.title}
         class={cn(
-          'inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150 cursor-pointer',
+          'inline-flex items-center justify-center rounded-[var(--floe-radius-sm)] font-medium',
+          'transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)] cursor-pointer',
           styles().button,
           buttonProps.isActive
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-background text-foreground hover:bg-muted border border-border',
+            ? 'bg-[var(--floe-plane)] text-[var(--floe-ink)] border border-[var(--floe-accent-line)] shadow-[var(--floe-elevation-raised)]'
+            : 'bg-transparent text-[var(--floe-ink-soft)] border border-[var(--floe-line)] hover:border-[var(--floe-line-strong)] hover:bg-[var(--floe-state-hover)] hover:text-[var(--floe-ink)]',
           (buttonProps.disabled || local.disabled) && 'opacity-50 cursor-not-allowed'
         )}
       >
@@ -234,7 +235,7 @@ export function Pagination(props: PaginationProps) {
           >
             <ChevronLeftIcon class="w-4 h-4" />
           </PageButton>
-          <span class={cn('text-muted-foreground px-2', styles().text)}>
+          <span class={cn('text-[var(--floe-ink-soft)] px-2', styles().text)}>
             Page {local.page} of {local.totalPages}
           </span>
           <PageButton
@@ -270,7 +271,7 @@ export function Pagination(props: PaginationProps) {
           >
             <ChevronLeftIcon class="w-4 h-4" />
           </PageButton>
-          <span class={cn('text-muted-foreground px-3 tabular-nums', styles().text)}>
+          <span class={cn('text-[var(--floe-ink-soft)] px-3 tabular-nums', styles().text)}>
             {local.page} / {local.totalPages}
           </span>
           <PageButton
@@ -301,7 +302,7 @@ export function Pagination(props: PaginationProps) {
         >
           {/* Items count */}
           <Show when={local.totalItems !== undefined}>
-            <span class={cn('text-muted-foreground', styles().text)}>
+            <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>
               {local.totalItems} items
             </span>
           </Show>
@@ -309,14 +310,14 @@ export function Pagination(props: PaginationProps) {
           {/* Page size selector */}
           <Show when={local.showPageSize && local.pageSizes}>
             <div class="flex items-center gap-2">
-              <span class={cn('text-muted-foreground', styles().text)}>Show</span>
+              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>Show</span>
               <select
                 data-floe-surface="inset"
                 value={local.pageSize}
                 onChange={(e) => local.onPageSizeChange?.(parseInt(e.target.value, 10))}
                 disabled={local.disabled}
                 class={cn(
-                  'rounded-md border border-border bg-background px-2 focus:outline-none',
+                  'rounded-md border border-[var(--floe-line)] bg-background px-2 focus:outline-none',
                   styles().input,
                   local.disabled && 'opacity-50 cursor-not-allowed'
                 )}
@@ -355,7 +356,7 @@ export function Pagination(props: PaginationProps) {
               {(item) => (
                 <>
                   {item === 'ellipsis' ? (
-                    <span class={cn('px-2 text-muted-foreground', styles().text)}>
+                    <span class={cn('px-2 text-[var(--floe-ink-soft)]', styles().text)}>
                       <MoreIcon class="w-4 h-4" />
                     </span>
                   ) : (
@@ -395,7 +396,7 @@ export function Pagination(props: PaginationProps) {
           {/* Jump to page */}
           <Show when={local.showJumpTo}>
             <div class="flex items-center gap-2">
-              <span class={cn('text-muted-foreground', styles().text)}>Go to</span>
+              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>Go to</span>
               <input
                 data-floe-surface="inset"
                 type="number"
@@ -406,7 +407,7 @@ export function Pagination(props: PaginationProps) {
                 onKeyDown={(e) => e.key === 'Enter' && handleJumpTo(e)}
                 onBlur={handleJumpTo}
                 class={cn(
-                  'rounded-md border border-border bg-background px-2 text-center',
+                  'rounded-md border border-[var(--floe-line)] bg-background px-2 text-center',
                   'focus:outline-none',
                   '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
                   styles().input,

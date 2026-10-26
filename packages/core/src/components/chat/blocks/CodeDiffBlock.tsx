@@ -95,7 +95,7 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
           </Show>
           <Show
             when={stats()}
-            fallback={<span class="chat-code-diff-stats text-muted-foreground">...</span>}
+            fallback={<span class="chat-code-diff-stats text-[var(--floe-ink-soft)]">...</span>}
           >
             <span class="chat-code-diff-stats">
               <span class="text-success">+{stats()!.added}</span>
@@ -140,10 +140,10 @@ export const CodeDiffBlock: Component<CodeDiffBlockProps> = (props) => {
         fallback={
           <div class="chat-code-diff-content">
             <Show when={isLoading()}>
-              <div class="p-3 text-xs text-muted-foreground">Computing diff...</div>
+              <div class="p-3 text-xs text-[var(--floe-ink-soft)]">Computing diff...</div>
             </Show>
             <Show when={!isLoading()}>
-              <div class="p-3 text-xs text-muted-foreground">
+              <div class="p-3 text-xs text-[var(--floe-ink-soft)]">
                 Diff is too large to render without a worker. Configure `configureDiffWorker(createDiffWorker())`.
               </div>
             </Show>

@@ -32,7 +32,7 @@ export interface FileListViewProps {
 
 const FILE_LIST_ROW_CLASS = 'w-full h-[var(--floe-row-height)] flex items-center text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]';
 const FILE_LIST_NAME_CLASS = 'flex items-center gap-2 flex-1 min-w-0 px-3 py-1';
-const FILE_LIST_META_CLASS = 'shrink-0 px-3 py-1 text-left text-muted-foreground truncate';
+const FILE_LIST_META_CLASS = 'shrink-0 px-3 py-1 text-left text-[var(--floe-ink-soft)] truncate';
 
 /**
  * Render file name with highlighted matched characters
@@ -233,13 +233,13 @@ export function FileListView(props: FileListViewProps) {
     return (
       <span
         class={cn(
-          'ml-1 transition-all duration-150',
+          'ml-1 transition-all duration-[var(--floe-duration-fast)]',
           isActive() ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'
         )}
       >
         <ChevronDown
           class={cn(
-            'w-3 h-3 transition-transform duration-150',
+            'w-3 h-3 transition-transform duration-[var(--floe-duration-fast)]',
             isActive() && config().direction === 'asc' && 'rotate-180'
           )}
         />
@@ -428,18 +428,18 @@ export function FileListView(props: FileListViewProps) {
       <div
         ref={setHeaderEl}
         data-file-list-header
-        class="flex items-center border-b border-border text-[11px] text-muted-foreground font-medium"
+        class="flex items-center border-b border-[var(--floe-line)] text-[11px] text-[var(--floe-ink-soft)] font-medium"
       >
         <div
           class={cn(
             'relative flex-1 min-w-0',
-            columnLayout().showModified && 'border-r border-border'
+            columnLayout().showModified && 'border-r border-[var(--floe-line)]'
           )}
         >
           <button
             type="button"
             onClick={() => handleSort('name')}
-            class="group w-full flex items-center min-w-0 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+            class="group w-full flex items-center min-w-0 px-3 py-2 cursor-pointer hover:bg-[var(--floe-state-hover)] transition-colors"
           >
             {/* Align header label with row content (icons + name). */}
             <span class="flex items-center gap-2 min-w-0">
@@ -457,13 +457,13 @@ export function FileListView(props: FileListViewProps) {
 
         <Show when={columnLayout().showModified}>
           <div
-            class={cn('relative shrink-0', columnLayout().showSize && 'border-r border-border')}
+            class={cn('relative shrink-0', columnLayout().showSize && 'border-r border-[var(--floe-line)]')}
             style={{ width: `${modifiedWidthPx()}px` }}
           >
             <button
               type="button"
               onClick={() => handleSort('modifiedAt')}
-              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-[var(--floe-state-hover)] transition-colors"
             >
               Modified
               <SortIndicator field="modifiedAt" />
@@ -479,7 +479,7 @@ export function FileListView(props: FileListViewProps) {
             <button
               type="button"
               onClick={() => handleSort('size')}
-              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+              class="group w-full flex items-center justify-start text-left px-3 py-2 cursor-pointer hover:bg-[var(--floe-state-hover)] transition-colors"
             >
               Size
               <SortIndicator field="size" />
@@ -529,7 +529,7 @@ export function FileListView(props: FileListViewProps) {
           <Show
             when={ctx.currentFiles().length > 0}
             fallback={
-              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-[var(--floe-ink-soft)]">
                 <Show
                   when={ctx.filterQueryApplied().trim()}
                   fallback={<span>This folder is empty</span>}
@@ -538,7 +538,7 @@ export function FileListView(props: FileListViewProps) {
                   <button
                     type="button"
                     onClick={() => ctx.setFilterQuery('')}
-                    class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                    class="px-2 py-1 rounded bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
                   >
                     Clear Filter
                   </button>
@@ -901,10 +901,10 @@ function FileListItem(props: FileListItemProps) {
       class={cn(
         FILE_LIST_ROW_CLASS,
         'group cursor-pointer',
-        'transition-all duration-150 ease-out',
-        'hover:bg-accent/50',
+        'transition-all duration-[var(--floe-duration-fast)] ease-out',
+        'hover:bg-[var(--floe-state-selected)]',
         'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-        isSelected() && 'bg-accent text-accent-foreground',
+        isSelected() && 'bg-[var(--floe-state-selected)] text-accent-foreground',
         // Drag state styling - being dragged items become translucent
         isBeingDragged() && 'opacity-40 scale-[0.98]',
         // Drop target styling - enhanced visual feedback

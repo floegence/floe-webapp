@@ -50,10 +50,10 @@ export function DeckCell(props: DeckCellProps) {
       data-floe-geometry-surface="deck-widget"
       class={cn(
         'deck-cell relative rounded-md overflow-hidden group',
-        'bg-card border border-border',
-        !props.isDragging && !props.isResizing && 'transition-shadow duration-150 ease-out',
+        'bg-card border border-[var(--floe-line)]',
+        !props.isDragging && !props.isResizing && 'transition-shadow duration-[var(--floe-duration-fast)] ease-out',
         props.isDragging && 'shadow-2xl z-50 ring-2 ring-primary/70',
-        props.isResizing && 'shadow-lg z-50 ring-2 ring-primary',
+        props.isResizing && 'shadow-[var(--floe-elevation-float)] z-50 ring-2 ring-[var(--floe-accent-soft)]',
         !props.isDragging && !props.isResizing && 'hover:ring-1 hover:ring-primary/50',
         'select-none',
         props.isDragging && 'cursor-grabbing'
@@ -88,7 +88,7 @@ export function DeckCell(props: DeckCellProps) {
 
 function PlaceholderWidget(props: { type: string }) {
   return (
-    <div class="h-full flex items-center justify-center text-muted-foreground text-xs">
+    <div class="h-full flex items-center justify-center text-[var(--floe-ink-soft)] text-xs">
       <span>Widget: {props.type}</span>
     </div>
   );

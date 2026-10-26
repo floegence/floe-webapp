@@ -207,7 +207,7 @@ export function DeckGrid(props: DeckGridProps) {
         // Only enable vertical scroll when content exceeds 24 rows
         needsScroll() ? 'overflow-y-scroll' : 'overflow-y-hidden',
         'grid p-1',
-        showGridBackground() && 'bg-muted/20',
+        showGridBackground() && 'bg-[var(--floe-well)]',
         props.class
       )}
       style={{

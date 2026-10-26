@@ -23,24 +23,24 @@ export function PropsTable(props: PropsTableProps) {
   return (
     <div class={cn('space-y-2', props.class)}>
       <Show when={props.componentName}>
-        <h3 class="text-xs font-medium text-foreground">
+        <h3 class="text-[length:var(--floe-type-supporting)] font-medium text-[var(--floe-ink-soft)]">
           {props.componentName} Props
         </h3>
       </Show>
-      <div class="overflow-x-auto rounded-md border border-border">
-        <table class="w-full text-xs">
+      <div class="overflow-x-auto rounded-[var(--floe-radius-group)] border border-[var(--floe-line)]">
+        <table class="w-full text-[length:var(--floe-type-caption)]">
           <thead>
-            <tr class="bg-muted/50 border-b border-border">
-              <th class="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+            <tr class="bg-[var(--floe-well)] border-b border-[var(--floe-line)]">
+              <th class="px-3 py-2 text-left font-medium text-[var(--floe-ink-quiet)] whitespace-nowrap">
                 Prop
               </th>
-              <th class="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+              <th class="px-3 py-2 text-left font-medium text-[var(--floe-ink-quiet)] whitespace-nowrap">
                 Type
               </th>
-              <th class="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
+              <th class="px-3 py-2 text-left font-medium text-[var(--floe-ink-quiet)] whitespace-nowrap">
                 Default
               </th>
-              <th class="px-3 py-2 text-left font-medium text-muted-foreground">
+              <th class="px-3 py-2 text-left font-medium text-[var(--floe-ink-quiet)]">
                 Description
               </th>
             </tr>
@@ -50,20 +50,21 @@ export function PropsTable(props: PropsTableProps) {
               {(prop) => (
                 <tr
                   class={cn(
-                    'border-b border-border last:border-b-0',
-                    'hover:bg-muted/30 transition-colors'
+                    'border-b border-[var(--floe-line-quiet)] last:border-b-0',
+                    'hover:bg-[var(--floe-state-hover)]',
+                    'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]'
                   )}
                 >
                   <td class="px-3 py-2 whitespace-nowrap">
-                    <code class="font-mono text-[11px] text-primary">
+                    <code class="font-mono text-[length:var(--floe-type-caption)] text-[var(--floe-ink)]">
                       {prop.name}
                     </code>
                     <Show when={prop.required}>
-                      <span class="ml-1 text-error text-[10px]">*</span>
+                      <span class="ml-1 text-error text-[length:var(--floe-type-caption)]">*</span>
                     </Show>
                   </td>
                   <td class="px-3 py-2 whitespace-nowrap">
-                    <code class="font-mono text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    <code class="font-mono text-[length:var(--floe-type-caption)] px-1.5 py-0.5 rounded-[var(--floe-radius-xs)] border border-[var(--floe-line)] bg-[var(--floe-well)] text-[var(--floe-ink-soft)]">
                       {prop.type}
                     </code>
                   </td>
@@ -71,15 +72,15 @@ export function PropsTable(props: PropsTableProps) {
                     <Show
                       when={prop.default !== undefined}
                       fallback={
-                        <span class="text-muted-foreground/50">-</span>
+                        <span class="text-[var(--floe-ink-ghost)]">-</span>
                       }
                     >
-                      <code class="font-mono text-[11px] text-muted-foreground">
+                      <code class="font-mono text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">
                         {prop.default}
                       </code>
                     </Show>
                   </td>
-                  <td class="px-3 py-2 text-muted-foreground">
+                  <td class="px-3 py-2 text-[var(--floe-ink-soft)]">
                     {prop.description}
                   </td>
                 </tr>
@@ -89,7 +90,7 @@ export function PropsTable(props: PropsTableProps) {
         </table>
       </div>
       <Show when={props.props.some(p => p.required)}>
-        <p class="text-[10px] text-muted-foreground">
+        <p class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-quiet)]">
           <span class="text-error">*</span> Required prop
         </p>
       </Show>

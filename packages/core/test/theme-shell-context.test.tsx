@@ -83,22 +83,20 @@ describe('shell theme context', () => {
     return { ...storage, service, host };
   }
 
-  it('defaults to soft material and changes only material without remounting input or writing palette keys', () => {
+  it('applies the single refined material without remounting input or writing palette keys', () => {
     const { service, host, values } = mountSurface();
     const input = host.querySelector('input')!;
     input.value = 'unsubmitted draft';
     input.focus();
     input.setSelectionRange(2, 7);
     expect(service.surfaceStyle()).toBe('soft-neumorphic');
-    service.setSurfaceStyle('standard');
-    expect(document.documentElement.dataset.floeSurfaceStyle).toBe('standard');
+    expect(document.documentElement.dataset.floeSurfaceStyle).toBe('soft-neumorphic');
     expect(host.querySelector('input')).toBe(input);
     expect(document.activeElement).toBe(input);
     expect(input.value).toBe('unsubmitted draft');
     expect(input.selectionStart).toBe(2);
     vi.runAllTimers();
-    expect([...values.keys()]).toEqual(['material-theme-surface-style']);
-    expect(JSON.parse(values.get('material-theme-surface-style')!)).toBe('standard');
+    expect(values.size).toBe(0);
     dispose?.();
     dispose = undefined;
     expect(document.documentElement.hasAttribute('data-floe-surface-style')).toBe(false);
@@ -146,31 +144,27 @@ describe('shell theme context', () => {
     }
   );
 
-  it('restores a custom storage key and honors persistence disabled', () => {
+  it('upgrades a stale standard value and ignores persistence for the single material', () => {
     const { service, values } = mountSurface(
       { surfaceStyleStorageKey: 'surface' },
-      { 'material-surface': 'soft-neumorphic' }
+      { 'material-surface': 'standard' }
     );
     expect(service.surfaceStyle()).toBe('soft-neumorphic');
-    service.setSurfaceStyle('standard');
+    service.setSurfaceStyle('soft-neumorphic');
     vi.runAllTimers();
-    expect(JSON.parse(values.get('material-surface')!)).toBe('standard');
+    expect(values.size).toBe(0);
     dispose?.();
     dispose = undefined;
     const disabled = mountSurface(
-      { defaultSurfaceStyle: 'standard' },
-      { 'material-theme-surface-style': 'soft-neumorphic' },
+      {},
+      { 'material-theme-surface-style': 'standard' },
       false
     );
-    expect(disabled.service.surfaceStyle()).toBe('standard');
-    disabled.service.setSurfaceStyle('soft-neumorphic');
-    vi.runAllTimers();
+    expect(disabled.service.surfaceStyle()).toBe('soft-neumorphic');
+    // Persistence is off, so the stale seed cannot be migrated away — it must
+    // at least stay untouched rather than be rewritten with the new material.
     expect(disabled.values.size).toBe(1);
-    disabled.service.setSurfaceStyle('standard');
-    vi.runAllTimers();
-    expect(JSON.parse(disabled.values.get('material-theme-surface-style')!)).toBe(
-      'soft-neumorphic'
-    );
+    expect(disabled.values.get('material-theme-surface-style')).toBe('"standard"');
   });
 
   it('preserves token source order and clears obsolete material token overrides', () => {
@@ -188,13 +182,11 @@ describe('shell theme context', () => {
     expect(document.documentElement.style.getPropertyValue('--floe-surface-shadow-raised')).toBe(
       '2px 2px 3px blue'
     );
-    service.setSurfaceStyle('soft-neumorphic');
     service.setTheme('dark');
     expect(document.documentElement.style.getPropertyValue('--floe-surface-shadow-raised')).toBe(
       '1px 1px 2px red'
     );
     service.setThemePreset('plain');
-    service.setSurfaceStyle('standard');
     expect(document.documentElement.style.getPropertyValue('--floe-surface-shadow-raised')).toBe(
       '1px 1px 2px red'
     );
@@ -216,7 +208,6 @@ describe('shell theme context', () => {
     });
     const input = host.querySelector('input')!;
     input.value = 'unsaved notes';
-    service.setSurfaceStyle('soft-neumorphic');
     service.selectShellTheme('dark', 'forest');
     expect(document.documentElement.style.getPropertyValue('--floe-window-background')).toBe('#f0f1f2');
     service.setThemePreset('plain');

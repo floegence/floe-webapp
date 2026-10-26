@@ -213,4 +213,89 @@ describe('createFloatingPresence', () => {
     disposers.pop()?.();
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  describe('with a motion element', () => {
+    function createElementPresence() {
+      let setOpen: ((open: boolean) => void) | undefined;
+      let presence: FloatingPresence | undefined;
+      const element = document.createElement('div');
+
+      createRoot((dispose) => {
+        disposers.push(dispose);
+        const [open, setHarnessOpen] = createSignal(true);
+        setOpen = setHarnessOpen;
+        presence = createFloatingPresence({ open, element: () => element });
+      });
+
+      vi.stubGlobal('getComputedStyle', (() => ({
+        transitionDuration: '0.18s, 0.18s',
+        transitionProperty: 'opacity, transform',
+      })) as typeof getComputedStyle);
+
+      return {
+        element,
+        setOpen: (open: boolean) => setOpen?.(open),
+        mounted: () => presence?.mounted() ?? false,
+        state: () => presence?.state(),
+      };
+    }
+
+    function transition(type: string, propertyName: string) {
+      const event = new Event(type, { bubbles: true }) as TransitionEvent;
+      Object.defineProperty(event, 'propertyName', { value: propertyName });
+      return event;
+    }
+
+    it('waits for every animated property before unmounting', async () => {
+      const presence = createElementPresence();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+
+      presence.setOpen(false);
+      await Promise.resolve();
+      expect(presence.state()).toBe('exiting');
+
+      presence.element.dispatchEvent(transition('transitionrun', 'opacity'));
+      presence.element.dispatchEvent(transition('transitionrun', 'transform'));
+      presence.element.dispatchEvent(transition('transitionend', 'opacity'));
+      await Promise.resolve();
+      expect(presence.mounted()).toBe(true);
+
+      presence.element.dispatchEvent(transition('transitionend', 'transform'));
+      await Promise.resolve();
+      expect(presence.mounted()).toBe(false);
+    });
+
+    it('ignores transitions reported by descendants', async () => {
+      const presence = createElementPresence();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+
+      presence.setOpen(false);
+      await Promise.resolve();
+      presence.element.dispatchEvent(transition('transitionrun', 'opacity'));
+      presence.element.dispatchEvent(transition('transitionrun', 'transform'));
+
+      const child = document.createElement('span');
+      presence.element.append(child);
+      child.dispatchEvent(transition('transitionend', 'opacity'));
+      child.dispatchEvent(transition('transitionend', 'transform'));
+      await Promise.resolve();
+      expect(presence.mounted()).toBe(true);
+    });
+
+    it('does not wait forever when the transition never reports', async () => {
+      const presence = createElementPresence();
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+
+      presence.setOpen(false);
+      await Promise.resolve();
+      expect(presence.mounted()).toBe(true);
+
+      vi.advanceTimersByTime(300);
+      await Promise.resolve();
+      expect(presence.mounted()).toBe(false);
+    });
+  });
 });

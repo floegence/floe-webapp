@@ -12,18 +12,22 @@
  * propagate that private value through its editor/content descendants. */
 /* Preblend quiet seams onto the carrying background. Opaque borders avoid an
  * extra blending path when native editors repaint their text and caret. */
+/* The language owns the seams. Surfaces no longer invent their own edge
+ * percentages or shadows: a seam is the language's hairline preblended onto the
+ * carrying canvas (opaque, so editors repaint text and caret without a second
+ * blend pass), and elevation comes from the language's three-step ladder. */
 :root {
-  --floe-surface-edge: color-mix(in srgb, var(--foreground) 11.5%, var(--background));
-  --floe-surface-divider: color-mix(in srgb, var(--foreground) 8.5%, var(--background));
-  --floe-surface-highlight: rgb(255 255 255 / 50%);
-  --floe-surface-shade: rgb(0 0 0 / 12%);
+  --floe-surface-edge: color-mix(in srgb, var(--foreground) 9%, var(--background));
+  --floe-surface-divider: color-mix(in srgb, var(--foreground) 5.5%, var(--background));
+  --floe-surface-highlight: transparent;
+  --floe-surface-shade: color-mix(in srgb, #000 8%, transparent);
 }
 
 /* Keep dimensions and semantic palette tokens intact. Neutral boundaries become
  * quiet seams; material and existing fills carry the grouping. High contrast
  * retains the original boundaries. Explicit rich Card variants stay independent. */
 @media (forced-colors: none) {
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not([data-floe-shell-theme='hc-light']))
     :is(
       .border-border,
       [class~='border-border/40'],
@@ -37,13 +41,24 @@
         .border-input,
         [data-floe-input-surface],
         [data-floe-input-surface] *,
+        /* A form field draws its own boundary. The seam is a hairline preblended
+         * onto the page ground, which is right for a divider sitting on that
+         * ground and wrong for a well carved into a card: 9% over the page
+         * against a 4.5% fill lands within one step of the fill, so the edge
+         * vanishes instead of quietening. Fields carry `--floe-field-edge`,
+         * measured against the plane they actually sit on. */
+        input,
+        textarea,
+        select,
+        .floe-field,
+        [data-floe-control],
         [data-floe-surface-part='tab'],
         [data-floe-card-variant]:not([data-floe-card-variant='default'])
       )
     ) {
     border-color: var(--floe-surface-edge);
   }
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not([data-floe-shell-theme='hc-light']))
     :is(
       [data-floe-shell-slot],
       .workbench-widget__header,
@@ -58,7 +73,7 @@
     --terminal-panel-border: var(--floe-surface-divider);
     border-color: var(--floe-surface-divider);
   }
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not([data-floe-shell-theme='hc-light']))
     :is(
       .bg-border,
       .workbench-dock__divider,
@@ -69,41 +84,39 @@
     ) {
     background-color: var(--floe-surface-divider);
   }
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not([data-floe-shell-theme='hc-light']))
     .workbench-canvas__grid {
     opacity: 0.35;
   }
-  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+  :root:not([data-floe-shell-theme='hc-light'])
     [data-floe-surface-divider] {
     border-color: var(--floe-surface-divider);
   }
-  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+  :root:not([data-floe-shell-theme='hc-light'])
     .workbench-surface {
     --wb-dock-material-border: var(--floe-surface-edge);
     --wb-dock-material-border-top: var(--floe-surface-edge);
     --wb-dock-material-shadow: var(
       --floe-surface-shadow-raised,
-      0 2px 5px -2px var(--floe-surface-shade),
-      inset 0 1px 1px var(--floe-surface-highlight)
+      0 2px 5px -2px var(--floe-surface-shade)
     );
   }
 }
 :root.dark {
   --floe-surface-highlight: transparent;
-  --floe-surface-shadow-raised: 0 0 transparent;
+  --floe-surface-shadow-raised: var(--floe-elevation-raised);
   --floe-surface-shadow-inset: 0 0 transparent;
-  --floe-surface-shade: rgb(0 0 0 / 20%);
+  --floe-surface-shade: color-mix(in srgb, #000 34%, transparent);
 }
 
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+[data-floe-surface] {
   --floe-surface-decoration: 0 0 transparent;
   box-shadow: var(--floe-surface-decoration);
 }
 
 /* Material never owns movement. Keep the motion component's property list,
  * duration and easing together instead of remapping its transition shorthand. */
-[data-floe-surface-style='soft-neumorphic']
-  [data-floe-surface]:not(
+[data-floe-surface]:not(
     :where(
       .floe-floating-presence,
       [data-floe-surface-part='switch-thumb'],
@@ -114,24 +127,16 @@
   transition-property: color, background-color, border-color, opacity;
 }
 
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='raised'] {
-  --floe-surface-decoration: var(
-    --floe-surface-shadow-raised,
-    0 1px 3px -2px var(--floe-surface-shade),
-    inset 0 1px 1px var(--floe-surface-highlight)
-  );
+[data-floe-surface='raised'] {
+  --floe-surface-decoration: var(--floe-surface-shadow-raised, var(--floe-elevation-raised));
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='inset'] {
-  --floe-surface-decoration: var(
-    --floe-surface-shadow-inset,
-    inset 0 1px 1px var(--floe-surface-shade),
-    inset 0 -1px 1px var(--floe-surface-highlight)
-  );
+[data-floe-surface='inset'] {
+  --floe-surface-decoration: var(--floe-surface-shadow-inset, 0 0 transparent);
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='floating'] {
+[data-floe-surface='floating'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-floating,
-    var(--floe-window-shadow)
+    var(--floe-elevation-float)
   );
   background-color: var(--popover);
   -webkit-backdrop-filter: none;
@@ -140,25 +145,24 @@
 
 /* The geometry owner must not clip the moving panel's external shadow. Paint
  * containment belongs on the existing panel that also owns content clipping. */
-[data-floe-surface-style='soft-neumorphic'] [data-floe-geometry-surface='floating-window'] {
+[data-floe-geometry-surface='floating-window'] {
   contain: layout style;
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-floating-window-surface='true'] {
+[data-floe-floating-window-surface='true'] {
   contain: paint;
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
+[data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
   background-color: rgb(0 0 0 / 16%);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-:root.dark[data-floe-surface-style='soft-neumorphic'] [data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
+:root.dark[data-floe-dialog-backdrop]:not(.floe-bottom-drawer-backdrop) {
   background-color: rgb(0 0 0 / 36%);
 }
 
 /* A new selection is visible in its first painted frame. Fading the two faces
  * leaves the old choice visually active after the native state has changed. */
-[data-floe-surface-style='soft-neumorphic']
-  :is(
+:is(
     [data-floe-surface-part='choice'],
     [data-floe-surface-part='indicator'],
     [data-floe-surface-part='tab'],
@@ -169,18 +173,16 @@
 
 /* A compound input has one decorative boundary, including host compositions
  * that contain an Input component. Dense nested actions stay flat. */
-[data-floe-surface-style='soft-neumorphic'] [data-floe-input-surface] [data-floe-surface],
-[data-floe-surface-style='soft-neumorphic']
-  [data-floe-surface='raised']
+[data-floe-input-surface] [data-floe-surface],
+[data-floe-surface='raised']
   [data-floe-surface='raised']:not([data-floe-surface-part]),
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='flat'] {
+[data-floe-surface='flat'] {
   --floe-surface-decoration: 0 0 transparent;
 }
 
 /* Decoration cannot replace independent keyboard indicators. Inputs, including
  * button-based compound fields, continue to use input-focus.css exclusively. */
-[data-floe-surface-style='soft-neumorphic']
-  [data-floe-surface]:focus-visible:not(
+[data-floe-surface]:focus-visible:not(
     :where(input, textarea, select, [data-floe-input-surface], [data-floe-input-surface] *)
   ) {
   box-shadow:
@@ -189,24 +191,23 @@
     var(--floe-surface-decoration);
 }
 
-[data-floe-surface-style='soft-neumorphic'] .workbench-widget[data-floe-surface] {
+.workbench-widget[data-floe-surface] {
   /* Some local palettes use translucent body tints. Composite onto an opaque
    * card base instead of reintroducing glass or letting content bleed through. */
   background: linear-gradient(var(--wb-widget-body), var(--wb-widget-body)), var(--card);
 }
-[data-floe-surface-style='soft-neumorphic'] .workbench-widget.is-selected {
+.workbench-widget.is-selected {
   border-color: transparent;
 }
-[data-floe-surface-style='soft-neumorphic']
-  .workbench-widget.is-selected
+.workbench-widget.is-selected
   .workbench-widget__header {
   background: color-mix(in srgb, var(--wb-accent) 8%, var(--card));
   color: var(--wb-accent);
 }
-[data-floe-surface-style='soft-neumorphic'] [data-floe-surface-interacting='true'] {
+[data-floe-surface-interacting='true'] {
   --floe-surface-decoration: var(
     --floe-surface-shadow-interacting,
-    0 1px 2px var(--floe-surface-shade)
+    var(--floe-elevation-raised)
   );
   transition: none;
 }
@@ -215,13 +216,11 @@
  * Tight static highlights carry material without large soft shadows per item.
  * Functional transforms, progress widths, and SVG strokes retain their motion. */
 @media (forced-colors: none) {
-  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light']) {
-    --floe-surface-compact-raised:
-      0 1px 2px var(--floe-surface-shade), inset 0 1px 1px var(--floe-surface-highlight);
-    --floe-surface-compact-inset:
-      inset 0 1px 1px var(--floe-surface-shade), inset 0 -1px 1px var(--floe-surface-highlight);
+  :root:not([data-floe-shell-theme='hc-light']) {
+    --floe-surface-compact-raised: var(--floe-elevation-raised);
+    --floe-surface-compact-inset: 0 0 transparent;
   }
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
+  :where(:root:not([data-floe-shell-theme='hc-light'])) {
     & [data-floe-surface-part][data-floe-surface='raised'] {
       --floe-surface-decoration: var(
         --floe-surface-shadow-raised,
@@ -234,12 +233,28 @@
         var(--floe-surface-compact-inset)
       );
     }
+    /* Two tags, two gestures. An outline rides along with content; a wash
+     * wins the eye inside a list. The accent is the tone's own color, so one
+     * recipe covers every semantic variant in every preset. */
+    &
+      [data-floe-surface-part='badge'][data-floe-tone='soft']:not(
+        [data-floe-surface='flat']
+      ) {
+      background-color: transparent;
+      border-color: var(--floe-line-strong);
+    }
+    &
+      [data-floe-surface-part='badge'][data-floe-tone='solid']:not(
+        [data-floe-surface='flat']
+      ) {
+      background-color: color-mix(in srgb, var(--tag-accent) 15%, transparent);
+      border-color: color-mix(in srgb, var(--tag-accent) 26%, transparent);
+    }
     & [data-floe-surface-part='badge'] {
       /* These can repeat in dense lists. Keep lighting inside the painted box. */
       --floe-surface-decoration: var(
         --floe-surface-shadow-raised,
-        inset 0 1px 1px var(--floe-surface-highlight),
-        inset 0 -1px 1px var(--floe-surface-shade)
+        0 0 0 1px color-mix(in srgb, var(--foreground) 6%, transparent)
       );
     }
     & [data-floe-surface-part='badge'][data-floe-surface='inset'],
@@ -259,10 +274,16 @@
       --floe-surface-decoration: var(--floe-surface-shadow-raised, none);
     }
     & :is([data-floe-surface-part='rail'], [data-floe-surface-part='tab-rail']) {
-      background-color: color-mix(in srgb, var(--card) 65%, var(--muted));
+      background-color: var(--floe-well);
     }
     /* Keep the existing box metrics, but let the carrying fill reach the edge.
      * An opaque seam based on the page background becomes a dark frame here. */
+    /* A card is a filled plane on the canvas. Its separation is the fill step
+     * plus the canvas gutter, so it carries no contour and no resting shadow. */
+    & [data-floe-card-variant='default'][data-floe-surface] {
+      border-color: transparent;
+      --floe-surface-decoration: 0 0 transparent;
+    }
     &
       :is(
         [data-floe-card-variant='default'],
@@ -282,25 +303,46 @@
       [data-floe-surface-part='choice']:not([data-floe-selected='true']):hover:not(
         :has(:disabled)
       ) {
-      background-color: color-mix(in srgb, var(--foreground) 4%, var(--card));
+      background-color: var(--floe-state-hover);
     }
     & [data-floe-surface-part='choice'][data-floe-selected='true'] {
-      background-color: var(--accent);
+      background-color: var(--floe-state-selected);
     }
-    /* Compact choices need a clear selected face, independent of material.
-     * Large choice cards retain their native dot/checkmark and quiet tint. */
+    /* A committed compact choice is a filled control, because the fill is the
+     * state indicator and has to carry 3:1 against its rail by itself. A
+     * translucent wash with a 34% accent hairline measures about 1.1:1, which
+     * reads as the same surface turned slightly warmer, not as a selection.
+     * The semantic pair is the one opaque thing on the rail; relief would only
+     * restate the fill, so it stays off. */
     & [data-floe-choice-variant='button'][data-floe-selected='true'],
     & [data-floe-surface-part='segment'][aria-checked='true'] {
       background-color: var(--primary);
       color: var(--primary-foreground);
+      border-color: var(--primary);
       --floe-surface-decoration: 0 0 transparent;
     }
-    & [data-floe-surface-part='tab'][aria-selected='true'] {
-      background-color: var(--accent);
+    /* A selected tab is a surface sitting proud of its rail: solid fill, the
+     * language's hairline and the first elevation step. This is the one place a
+     * small control is allowed relief, because the rail sits directly behind it. */
+    & [data-floe-surface-part='tab']:not([aria-selected='true']):hover:not(:has(:disabled)) {
+      background-color: var(--floe-state-hover);
       color: var(--foreground);
+    }
+    & [data-floe-surface-part='tab'][aria-selected='true'] {
+      background-color: var(--card);
+      color: var(--foreground);
+      border-color: var(--floe-line);
+      --floe-surface-decoration: var(--floe-elevation-raised);
     }
     & [data-floe-surface-part='segment'][aria-checked='false'] {
       background-color: transparent;
+    }
+    &
+      [data-floe-surface-part='segment'][aria-checked='false']:hover:not(
+        :disabled
+      ):not(:has(:disabled)) {
+      background-color: var(--floe-state-hover);
+      color: var(--foreground);
     }
     & [data-floe-surface-part='tab'].border-primary {
       border-color: color-mix(in srgb, var(--primary) 24%, var(--card));
@@ -314,8 +356,8 @@
       background-color: var(--card);
     }
     & [data-floe-surface-part='step'][data-floe-step-state='current'] {
-      background-color: color-mix(in srgb, var(--primary) 16%, var(--card));
-      color: var(--primary);
+      background-color: var(--floe-state-selected-strong);
+      color: var(--foreground);
     }
     & [data-floe-surface-part='indicator']:not([data-floe-selected='true']),
     & [data-floe-surface-part='switch-track']:not([data-floe-selected='true']) {
@@ -332,13 +374,8 @@
         [data-floe-surface-part='indicator'],
         [data-floe-surface-part='switch-track']
       )[data-floe-surface='inset'] {
-      /* At 14–24 px, a one-pixel light edge and tight well stay legible at 1x.
-       * Broad opposing blurs make both the contour and the glyph look unfocused. */
-      --floe-surface-decoration: var(
-        --floe-surface-shadow-inset,
-        inset 0 1px 1px var(--floe-surface-shade),
-        inset 0 -1px 0 var(--floe-surface-highlight)
-      );
+      /* Small indicators rely on their own fill contrast, not on relief. */
+      --floe-surface-decoration: var(--floe-surface-shadow-inset, 0 0 transparent);
     }
     & [data-floe-surface-part='switch-track'] {
       transition-duration: 140ms;
@@ -348,7 +385,7 @@
       /* A hollow hairline keeps an unchecked radio quieter than its selected dot.
        * Border-box dimensions and hit targets stay fixed; there is no blurred well. */
       border-width: 1px;
-      border-color: color-mix(in srgb, var(--muted-foreground) 88%, var(--card));
+      border-color: color-mix(in srgb, var(--muted-foreground) 72%, var(--card));
       background-color: transparent;
       --floe-surface-decoration: var(--floe-surface-shadow-inset, none);
     }
@@ -356,7 +393,7 @@
       [data-floe-surface-part='indicator'][data-floe-selected='true']:has(
         [data-floe-surface-part='radio-dot']
       ) {
-      background-color: color-mix(in srgb, var(--primary) 6%, var(--card));
+      background-color: var(--floe-state-selected);
     }
     & [data-floe-surface-part='radio-dot'] {
       background-color: var(--foreground);
@@ -366,10 +403,8 @@
       transition-property: width, background-color;
     }
     & [data-floe-surface-part='action']:active:not(:disabled) {
-      --floe-surface-decoration: var(
-        --floe-surface-shadow-inset,
-        var(--floe-surface-compact-inset)
-      );
+      /* Press settles the control instead of embossing it. */
+      --floe-surface-decoration: 0 0 transparent;
     }
     /* Hidden native inputs delegate their indicator to the visible existing
      * face. A pointer selection does not receive this keyboard-only outline. */
@@ -382,34 +417,34 @@
       box-shadow: var(--floe-surface-decoration);
     }
   }
-  :where(:root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])) {
+  :where(:root:not([data-floe-shell-theme='hc-light'])) {
     & :is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
-      background-color: color-mix(in srgb, var(--card) 50%, var(--background));
+      background-color: var(--floe-well);
     }
   }
 }
 
-/* Text-labelled actions, rails and fields use one contour. Stacked inset and
- * contact shadows turn a quiet toolbar into an embossed frame in light mode.
+/* Text-labelled actions and fields use one contour. Stacked inset and contact
+ * shadows turn a quiet toolbar into an embossed frame.
+ * A rail and a tab rail are wells, not planes: they recede behind their
+ * segments, and the relief belongs to the one selected item inside them. Giving
+ * the well the raised step made it cast a drop shadow in dark palettes while
+ * staying flat in light ones, so the same control had two different shapes.
  * Small check/switch indicators retain their independent relief and contrast. */
-[data-floe-surface-style='soft-neumorphic']
-  :is(
+:is(
     [data-floe-surface-part='action'],
-    [data-floe-surface-part='rail'],
-    [data-floe-surface-part='tab-rail'],
     [data-floe-surface-part='tab'],
     [data-floe-surface-part='segment']
   )[data-floe-surface] {
   --floe-surface-decoration: var(--floe-surface-shadow-raised, 0 0 transparent);
 }
-[data-floe-surface-style='soft-neumorphic']
-  :is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
+:is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
   --floe-surface-decoration: var(--floe-surface-shadow-inset, 0 0 transparent);
 }
 
 /* Explicit host opt-outs and compound input boundaries outrank compact states. */
-:root[data-floe-surface-style='soft-neumorphic'] [data-floe-surface='flat'],
-:root[data-floe-surface-style='soft-neumorphic'] [data-floe-input-surface] [data-floe-surface] {
+:root[data-floe-surface='flat'],
+:root[data-floe-input-surface] [data-floe-surface] {
   --floe-surface-decoration: 0 0 transparent;
 }
 
@@ -417,7 +452,7 @@
  * distinct from ordinary Cards, Dialogs and menus. Only this visible panel owns
  * material; the outer geometry owner and its input lifecycle stay unchanged. */
 @media (forced-colors: none) {
-  :root[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+  :root:not([data-floe-shell-theme='hc-light'])
     [data-floe-floating-window-surface='true'][data-floe-surface='floating'] {
     --floe-window-radius: var(--floe-radius-floating);
     background: var(--floe-window-background);
@@ -462,36 +497,45 @@
   }
 }
 
-/* Dark shell palettes use a restrained dark step for active chrome so the
- * window remains discoverable without a bright outline or animated glow. */
-:root.dark[data-floe-surface-style='soft-neumorphic']:not([data-floe-shell-theme='hc-light'])
+/* Dark shell palettes use a restrained step for active chrome so the window
+ * remains discoverable without a bright outline or animated glow. The step is
+ * taken toward the foreground, not toward the page ground: an accent wash alone
+ * lands within three 8-bit units of a near-black window body (soft-black
+ * measured 19,20,21 on 16,17,19), so the titlebar stopped being identifiable in
+ * grayscale at all. Foreground is light in every dark preset, so mixing 8% of it
+ * guarantees an upward step from any accent while title text keeps 5.3:1 or
+ * better. Light presets take no such step: their background is already far from
+ * the accent wash, and darkening it there would eat title text contrast. */
+:root.dark:not([data-floe-shell-theme='hc-light'])
   [data-floe-floating-window-surface='true'][data-floe-floating-window-state='active']
   > [data-floe-floating-window-titlebar='true'] {
-  background-color: color-mix(in srgb, var(--background) 38%, var(--floe-window-titlebar-background));
+  background-color: color-mix(
+    in srgb,
+    var(--accent) 24%,
+    color-mix(in srgb, var(--foreground) 8%, var(--floe-window-titlebar-background))
+  );
 }
 
 /* FloatingWindow keeps rich text at scale 1 throughout its short presence
- * motion. Only presence promotes this panel; the existing geometry owner
- * already promotes direct drag/resize, so adding a second hot layer is wasteful. */
-:root[data-floe-surface-style='soft-neumorphic'] .floe-floating-window-motion {
+ * motion: a window is a large reading surface, so a scale that suits a menu
+ * would blur its text mid-flight. The class lives on the panel, not on <html>,
+ * so the selector has to match the panel or the override never applies.
+ *
+ * Promotion belongs to the two transitioning states only; a settled window must
+ * not hold a compositor layer (see .floe-floating-presence in floe.css). */
+.floe-floating-window-motion {
   --floe-floating-enter-scale: 1;
   --floe-floating-exit-scale: 1;
   --floe-floating-enter-y: 3px;
   --floe-floating-exit-y: 2px;
-  will-change: auto;
-}
-:root[data-floe-surface-style='soft-neumorphic'] .floe-floating-window-motion:is(
-  [data-floating-presence='entering'], [data-floating-presence='exiting']
-) {
-  will-change: opacity, transform;
 }
 
 /* High contrast stays flat, with real boundaries and keyboard indicators. */
-:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+:root[data-floe-shell-theme='hc-light']
   [data-floe-surface] {
   --floe-surface-decoration: 0 0 transparent;
 }
-:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+:root[data-floe-shell-theme='hc-light']
   .workbench-widget.is-selected {
   border-color: var(--wb-accent);
 }
@@ -505,25 +549,28 @@
     box-shadow: none;
     transition: none;
   }
-  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+  [data-floe-surface] {
     --floe-surface-decoration: 0 0 transparent;
   }
-  [data-floe-surface-style='soft-neumorphic']
     [data-floe-surface]:focus-visible:not(
       :where(input, textarea, select, [data-floe-input-surface], [data-floe-input-surface] *)
     ) {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }
-  [data-floe-surface-style='soft-neumorphic'] .workbench-widget.is-selected {
+  .workbench-widget.is-selected {
     border-color: Highlight;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface] {
+  /* `:root` carries the specificity this reset needs: a surface part may pair
+   * two attribute selectors to own a transition of its own, and a bare
+   * `[data-floe-surface]` would lose to it. Reduced motion is a user setting,
+   * so it must win without `!important`. */
+  :root [data-floe-surface] {
     transition: none;
   }
-  [data-floe-surface-style='soft-neumorphic'] [data-floe-surface-part='indicator'] > svg {
+  :root [data-floe-surface-part='indicator'] > svg {
     animation: none;
   }
 }
@@ -539,18 +586,16 @@
   }
 }
 
-:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+:root[data-floe-shell-theme='hc-light']
   [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
-:root[data-floe-surface-style='soft-neumorphic'][data-floe-shell-theme='hc-light']
+:root[data-floe-shell-theme='hc-light']
   [data-floe-choice-input]:focus-visible
   + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
   outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
 @media (forced-colors: active) {
-  [data-floe-surface-style='soft-neumorphic']
     [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
-  [data-floe-surface-style='soft-neumorphic']
     [data-floe-choice-input]:focus-visible
     + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
     outline: 2px solid Highlight;

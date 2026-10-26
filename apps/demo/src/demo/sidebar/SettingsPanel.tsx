@@ -6,7 +6,6 @@ import { createControlplaneArtifactSource } from '@floegence/floe-webapp-boot';
 import { useProtocol, type ConnectConfig } from '@floegence/floe-webapp-protocol';
 import { ChartThemePicker } from '../components/ChartThemePicker';
 import { ShellThemePicker } from '../components/ShellThemePicker';
-import { SurfaceStylePicker, surfaceStyleCopy } from '../components/SurfaceStylePicker';
 
 export function SettingsPanel() {
   const notifications = useNotification();
@@ -50,7 +49,7 @@ export function SettingsPanel() {
     <SidebarContent>
       <SidebarSection title="Connection">
         <div class="flex items-center gap-2">
-          <span class="text-xs text-muted-foreground">Status: {protocol.status()}</span>
+          <span class="text-xs text-[var(--floe-ink-soft)]">Status: {protocol.status()}</span>
           <Button
             size="sm"
             variant={protocol.status() === 'connected' ? 'outline' : 'default'}
@@ -67,7 +66,7 @@ export function SettingsPanel() {
             {protocol.status() === 'connected' ? 'Disconnect' : 'Connect'}
           </Button>
         </div>
-        <p class="mt-1.5 text-[11px] text-muted-foreground">
+        <p class="mt-1.5 text-[11px] text-[var(--floe-ink-soft)]">
           Configure with <code class="font-mono">VITE_FLOE_CONTROLPLANE_BASE_URL</code> and{' '}
           <code class="font-mono">VITE_FLOE_ENDPOINT_ID</code>.
         </p>
@@ -80,13 +79,8 @@ export function SettingsPanel() {
         <ShellThemePicker />
       </SidebarSection>
 
-      <SidebarSection title={surfaceStyleCopy.title}>
-        <p class="mb-2 text-[11px] text-muted-foreground">{surfaceStyleCopy.description}</p>
-        <SurfaceStylePicker />
-      </SidebarSection>
-
       <SidebarSection title="Chart Theme">
-        <p class="mb-2 text-[11px] text-muted-foreground">
+        <p class="mb-2 text-[11px] text-[var(--floe-ink-soft)]">
           Compare named chart themes live. The sample charts update instantly without changing the
           shell light or dark mode.
         </p>

@@ -47,7 +47,7 @@ describe('SidebarPane markup', () => {
   it('should render as a mobile drawer with close affordances', () => {
     const html = renderSidebarPane({ mobile: true });
 
-    expect(html).toContain('absolute inset-y-0 left-0 z-10 shadow-lg');
+    expect(html).toContain('absolute inset-y-0 left-0 z-10 shadow-[var(--floe-elevation-float)]');
     expect(html).toContain('aria-label="Close sidebar"');
     expect(html).toContain('absolute inset-0 bg-background/60 backdrop-blur-sm z-[9]');
   });

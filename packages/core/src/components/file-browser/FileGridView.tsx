@@ -267,7 +267,7 @@ export function FileGridView(props: FileGridViewProps) {
           <Show
             when={ctx.currentFiles().length > 0}
             fallback={
-              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-muted-foreground">
+              <div class="flex flex-col items-center justify-center h-32 gap-2 text-xs text-[var(--floe-ink-soft)]">
                 <Show
                   when={ctx.filterQueryApplied().trim()}
                   fallback={<span>This folder is empty</span>}
@@ -276,7 +276,7 @@ export function FileGridView(props: FileGridViewProps) {
                   <button
                     type="button"
                     onClick={() => ctx.setFilterQuery('')}
-                    class="px-2 py-1 rounded bg-muted hover:bg-muted/80 transition-colors"
+                    class="px-2 py-1 rounded bg-[var(--floe-well)] hover:bg-[var(--floe-state-press)] transition-colors"
                   >
                     Clear Filter
                   </button>
@@ -629,18 +629,18 @@ function FileGridItem(props: FileGridItemProps) {
       class={cn(
         FILE_GRID_TILE_CLASS,
         'group cursor-pointer',
-        'transition-all duration-150 ease-out',
-        'hover:bg-accent/50 hover:scale-[1.02]',
+        'transition-all duration-[var(--floe-duration-fast)] ease-out',
+        'hover:bg-[var(--floe-state-selected)] hover:scale-[1.02]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         'active:scale-[0.98]',
-        isSelected() && 'bg-accent ring-2 ring-primary/50',
+        isSelected() && 'bg-[var(--floe-state-selected)] ring-2 ring-primary/50',
         // Drag state styling - being dragged items become translucent and shrink
         isBeingDragged() && 'opacity-40 scale-90',
         // Drop target styling - enhanced visual feedback for folders
         isActiveDropTarget() &&
           isValidDropTarget() && [
             'bg-primary/15 ring-2 ring-primary/60',
-            'scale-105 shadow-lg shadow-primary/15',
+            'scale-105 shadow-[var(--floe-elevation-float)] shadow-primary/15',
           ],
         isActiveDropTarget() &&
           !isValidDropTarget() && ['bg-destructive/10 ring-2 ring-dashed ring-destructive/50']
@@ -674,7 +674,7 @@ function FileGridItem(props: FileGridItemProps) {
       <span
         class={cn(
           FILE_GRID_NAME_CLASS,
-          'transition-colors duration-150',
+          'transition-colors duration-[var(--floe-duration-fast)]',
           fileItemDecorationNameClass(props.item),
           isSelected() && 'font-medium'
         )}
@@ -685,7 +685,7 @@ function FileGridItem(props: FileGridItemProps) {
       {/* Subtle glow effect on hover */}
       <div
         class={cn(
-          'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300',
+          'absolute inset-0 rounded-lg opacity-0 transition-opacity duration-[var(--floe-duration-slow)]',
           'group-hover:opacity-100',
           'pointer-events-none'
         )}

@@ -187,7 +187,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
       <button
         ref={trigger}
         type="button"
-        class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-[var(--floe-radius-sm)] hover:bg-[var(--floe-state-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         style={{
           visibility: active() ? 'visible' : 'hidden',
           color:
@@ -237,20 +237,20 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
           aria-label={props.label}
           tabindex={-1}
           data-floe-surface="floating"
-          class="flex flex-col overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-lg"
+          class="flex flex-col overflow-hidden rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)]"
           style={{
             width: `${bounds().width}px`,
             'max-height': `${bounds().height}px`,
             visibility: positioned() ? 'visible' : 'hidden',
           }}
         >
-          <div class="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
+          <div class="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--floe-line)] px-3 py-2">
             <span class="min-w-0 truncate text-xs font-medium">{props.label}</span>
             <button
               type="button"
               aria-label={props.closeLabel}
               style={{ width: controlSize(), height: controlSize() }}
-              class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-accent"
+              class="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[var(--floe-radius-sm)] hover:bg-[var(--floe-state-hover)]"
               onClick={() => close(true)}
             >
               <X class="h-4 w-4" />
@@ -267,7 +267,7 @@ export function FeedbackIndicator(props: FeedbackIndicatorProps) {
           >
             <For each={props.entries}>
               {(entry) => (
-                <section class="space-y-2 border-b border-border pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
+                <section class="space-y-2 border-b border-[var(--floe-line)] pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
                   <p class="font-medium">{entry.summary}</p>
                   <Show when={entry.detail}>
                     <div>{entry.detail}</div>

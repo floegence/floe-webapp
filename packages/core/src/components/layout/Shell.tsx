@@ -467,8 +467,8 @@ export function Shell(props: ShellProps) {
       <a
         href={`#${accessibility().mainContentId}`}
         class={cn(
-          'fixed left-3 top-3 z-[120] rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-md',
-          'transition-transform duration-150 motion-reduce:transition-none',
+          'fixed left-3 top-3 z-[120] rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-[var(--floe-elevation-raised)]',
+          'transition-transform duration-[var(--floe-duration-fast)] motion-reduce:transition-none',
           '-translate-y-[200%] focus:translate-y-0'
         )}
         onClick={() => focusMainContent()}
@@ -564,8 +564,8 @@ export function Shell(props: ShellProps) {
               'absolute left-0 top-0 bottom-0 z-50',
               'w-72 max-w-[80vw]',
               'bg-sidebar border-r border-sidebar-border',
-              'shadow-xl',
-              'animate-in slide-in-from-left duration-200',
+              'shadow-[var(--floe-elevation-float-strong)]',
+              'animate-in slide-in-from-left duration-[var(--floe-duration-base)]',
               props.slotClassNames?.mobileSidebarDrawer
             )}
             tabIndex={-1}
@@ -601,7 +601,7 @@ export function Shell(props: ShellProps) {
             <div
               data-floe-shell-slot="terminal-panel"
               class={cn(
-                'relative shrink-0 border-t border-border bg-terminal-background overflow-hidden',
+                'relative shrink-0 border-t border-[var(--floe-line)] bg-terminal-background overflow-hidden',
                 props.slotClassNames?.terminalPanel
               )}
               style={{

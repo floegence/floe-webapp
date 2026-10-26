@@ -92,7 +92,7 @@ export function ActivityBar(props: ActivityBarProps) {
       data-floe-shell-slot="activity-bar"
       class={cn(
         'w-10 md:w-12 flex flex-col justify-between shrink-0 min-h-0',
-        'bg-activity-bar border-r border-border',
+        'bg-activity-bar border-r border-[var(--floe-line-quiet)]',
         props.class
       )}
       style={{ 'border-right-color': 'var(--activity-bar-border)' }}
@@ -171,13 +171,12 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
       <button
         ref={buttonRef}
         type="button"
+        data-floe-interactive="press"
         class={cn(
-          'relative w-full aspect-square flex items-center justify-center cursor-pointer',
-          'group/activity-item focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
-          'transition-[color,background-color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
-          props.isActive
-            ? 'text-activity-bar-foreground-active'
-            : 'text-activity-bar-foreground hover:text-activity-bar-foreground-active'
+          'group/activity-item relative w-full aspect-square flex items-center justify-center cursor-pointer',
+          'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
+          'text-activity-bar-foreground',
+          props.isActive && 'text-activity-bar-foreground-active'
         )}
         onClick={() => props.onClick()}
         onContextMenu={handleContextMenu}
@@ -188,25 +187,43 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         aria-controls={props.item.ariaControls}
         aria-haspopup={props.item.ariaHasPopup ?? (props.item.onContextMenu ? 'menu' : undefined)}
       >
-        {/* Soft rounded plate: the rail marks location with a filled shape
-            instead of a hard edge bar, so navigation reads as quiet chrome. */}
+        {/* The plate is the language's state layer, painted on the element itself.
+            Hovering fades ink in; the active item holds a permanent tint. Animating
+            `background-color` (not element opacity) keeps the icon at full contrast
+            throughout, so hovering never dims or restyles the glyph. */}
         <span
           aria-hidden="true"
           class={cn(
-            'absolute inset-x-1.5 inset-y-1.5 rounded-lg',
-            'transition-[background-color,opacity] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            'absolute inset-1 rounded-[var(--floe-radius-md)]',
+            'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             props.isActive
-              ? 'bg-accent opacity-100'
-              : 'bg-accent opacity-0 group-hover/activity-item:opacity-60'
+              ? 'bg-[var(--floe-state-selected)]'
+              : 'bg-transparent group-hover/activity-item:bg-[var(--floe-state-hover)]'
           )}
         />
 
-        {/* Icon */}
+        {/* Location marker: a short bar that grows out of the rail edge. It reads
+            as "you are here" without the hard full-height edge the old rail used. */}
+        <span
+          aria-hidden="true"
+          class={cn(
+            'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] rounded-full',
+            'transition-[height,background-color] duration-[var(--floe-duration-base)] ease-[var(--floe-ease-out)]',
+            props.isActive
+              ? 'h-4 bg-[var(--activity-bar-foreground-active)]'
+              : 'h-1.5 bg-transparent group-hover/activity-item:h-2.5 group-hover/activity-item:bg-[var(--floe-line-strong)]'
+          )}
+        />
+
+        {/* Icon rises one ink step on hover rather than scaling: scale on a glyph
+            at this size reads as a twitch, a color step reads as attention. */}
         <Dynamic
           component={props.item.icon}
           class={cn(
-            'relative w-5 h-5 transition-transform duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-spring)]',
-            props.isActive ? 'scale-100' : 'group-hover/activity-item:scale-105'
+            'relative w-5 h-5 transition-[color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            props.isActive
+              ? 'text-activity-bar-foreground-active'
+              : 'group-hover/activity-item:text-activity-bar-foreground-active group-hover/activity-item:-translate-y-px'
           )}
         />
 
@@ -216,7 +233,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
             class={cn(
               'absolute top-0.5 right-0.5 min-w-3.5 h-3.5 px-1',
               'flex items-center justify-center',
-              'text-[9px] font-medium rounded-full',
+              'text-[length:var(--floe-type-caption)] font-medium rounded-full',
               'bg-activity-bar-badge text-activity-bar-badge-foreground'
             )}
           >

@@ -18,7 +18,7 @@ try {
   const fenced = await page.locator('pre').evaluate(node => [getComputedStyle(node).backgroundColor, getComputedStyle(node).color]);
   for (const width of [1000, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const material of ['standard', 'soft-neumorphic']) {
+    for (const material of ['soft-neumorphic']) {
       for (const preset of builtInShellThemePresets) {
         await page.evaluate(({ name, mode, material }) => {
           const root = document.documentElement;

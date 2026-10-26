@@ -130,13 +130,13 @@ export function PickerPanel(props: PickerPanelProps & {
           )}</For>
         </div>
       }>
-        <div role="tablist" aria-label={copy().roots} class="mb-1 flex min-w-0 items-center gap-4 border-b border-border">
+        <div role="tablist" aria-label={copy().roots} class="mb-1 flex min-w-0 items-center gap-4 border-b border-[var(--floe-line)]">
           <For each={tabs()}>{(tab) => (
             <button ref={(element) => tabRows.set(tab.id, element)} type="button" role="tab"
               id={`${panelId}-${tab.id}`} aria-controls={panelId} aria-selected={activeTab() === tab.id}
               tabIndex={activeTab() === tab.id ? 0 : -1} disabled={tab.disabled} title={'path' in tab ? tab.path : tab.label}
               class={cn('min-w-0 cursor-pointer truncate border-b-2 px-0.5 py-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-                activeTab() === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+                activeTab() === tab.id ? 'border-primary text-[var(--floe-accent-ink)]' : 'border-transparent text-[var(--floe-ink-soft)] hover:text-foreground')}
               onClick={() => {
                 if ('path' in tab) navigate(tab.path);
                 else { source.setView(tab.id as PickerLocation); if (tab.id === 'favorites') void props.directoryFavorites?.onRefresh?.(); }
@@ -178,31 +178,31 @@ export function PickerPanel(props: PickerPanelProps & {
         <Show when={shortcuts()} fallback={<>
         <nav aria-label={copy().currentDirectory} class="flex min-w-0 flex-wrap items-center gap-0.5 text-xs">
           <For each={breadcrumbs()}>{(segment, index) => <>
-            <Show when={index() > 0}><ChevronRight class="h-3 w-3 shrink-0 text-muted-foreground" /></Show>
-            <button type="button" class="max-w-full cursor-pointer truncate rounded px-1 py-0.5 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring"
+            <Show when={index() > 0}><ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-soft)]" /></Show>
+            <button type="button" class="max-w-full cursor-pointer truncate rounded px-1 py-0.5 hover:bg-[var(--floe-state-hover)] focus-visible:ring-1 focus-visible:ring-ring"
               title={segment.path} disabled={props.disabled} aria-current={segment.path === source.currentPath() ? 'location' : undefined}
               onClick={() => { void source.navigate(segment.path); }}>{segment.name}</button>
           </>}</For>
           <Show when={props.directoryFavorites}><DirectoryFavoriteButton path={source.currentPath()} favorites={props.directoryFavorites!} copy={copy()} disabled={props.disabled || !source.valid()} onError={setFavoriteError} /></Show>
         </nav>
-        <div {...props.scrollViewportProps} class={cn('min-h-[120px] overflow-y-auto rounded border border-border', props.scrollViewportProps?.class)}
+        <div {...props.scrollViewportProps} class={cn('min-h-[120px] overflow-y-auto rounded border border-[var(--floe-line)]', props.scrollViewportProps?.class)}
           style={{ 'max-height': props.treeMaxHeight ?? '240px' }}>
-          <Show when={!source.pending() || source.currentPath()} fallback={<p class="px-3 py-6 text-center text-xs text-muted-foreground" role="status">{copy().loading}</p>}>
-            <Show when={folders().length} fallback={<Show when={source.currentPath()}><p class="px-3 py-6 text-center text-xs text-muted-foreground">{copy().empty}</p></Show>}>
+          <Show when={!source.pending() || source.currentPath()} fallback={<p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]" role="status">{copy().loading}</p>}>
+            <Show when={folders().length} fallback={<Show when={source.currentPath()}><p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]">{copy().empty}</p></Show>}>
               <For each={folders()}>{(item, index) => (
                 <PickerDirectoryRow path={item.path} favorites={props.directoryFavorites} copy={copy()} scopeKey={props.scopeKey} disabled={props.disabled || props.filter?.(item) === false} onError={setFavoriteError}>
                 <button ref={(element) => { createEffect(() => { rows[index()] = element; }); }} type="button"
                   data-picker-row-path={item.path} disabled={props.disabled || props.filter?.(item) === false}
-                  class="flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-[var(--floe-state-selected)] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => { void source.navigate(item.path); }} onKeyDown={(event) => focusRow(event, index(), rows, folders().length)}>
-                  <FileItemIcon item={item} size={16} class="h-4 w-4 shrink-0" /><span class="min-w-0 flex-1 truncate">{item.name}</span><ChevronRight class="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <FileItemIcon item={item} size={16} class="h-4 w-4 shrink-0" /><span class="min-w-0 flex-1 truncate">{item.name}</span><ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-soft)]" />
                 </button>
                 </PickerDirectoryRow>
               )}</For>
             </Show>
           </Show>
         </div>
-        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--floe-ink-soft)]">
           <label class="flex cursor-pointer items-center gap-1.5"><input type="checkbox" class="cursor-pointer" checked={source.showHidden()} disabled={props.disabled || !source.context()}
             onChange={(event) => { void source.setShowHidden(event.currentTarget.checked); }} />{copy().showHidden}</label>
           <Show when={source.pending() && source.currentPath()}><span role="status">{copy().loading}</span></Show>
@@ -215,24 +215,24 @@ export function PickerPanel(props: PickerPanelProps & {
             aria-busy={source.view() === 'favorites' && props.directoryFavorites?.loading}
             class={cn('min-h-[180px] min-w-0 overflow-y-auto', props.scrollViewportProps?.class)}
             style={{ 'max-height': props.treeMaxHeight ?? '240px' }}>
-            <Show when={shortcutPaths().length} fallback={<p class="px-3 py-6 text-center text-xs text-muted-foreground" role="status">{props.directoryFavorites?.loading ? copy().loading : props.directoryFavorites?.error ? copy().favoritesLoadFailed : filter().trim() ? copy().favoritesNoMatches : copy().favoritesEmpty}</p>}>
+            <Show when={shortcutPaths().length} fallback={<p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]" role="status">{props.directoryFavorites?.loading ? copy().loading : props.directoryFavorites?.error ? copy().favoritesLoadFailed : filter().trim() ? copy().favoritesNoMatches : copy().favoritesEmpty}</p>}>
             <For each={shortcutPaths()}>{(path, index) => (
               <PickerDirectoryRow path={path} favorites={props.directoryFavorites} copy={copy()} scopeKey={props.scopeKey} disabled={props.disabled} onError={setFavoriteError}>
               <button ref={(element) => { createEffect(() => { suggestionRows[index()] = element; }); }} type="button"
                 data-picker-suggested-path={source.view() === 'suggestions' ? path : undefined}
                 data-picker-favorite-path={source.view() === 'favorites' ? path : undefined} title={path} aria-label={path}
                 disabled={props.disabled || !source.context()}
-                class="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-2 py-2.5 text-left hover:bg-accent/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-2 py-2.5 text-left hover:bg-[var(--floe-state-selected)] focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={() => {
                   navigate(path);
                 }}
                 onKeyDown={(event) => focusRow(event, index(), suggestionRows, shortcutPaths().length)}>
-                <FolderOpen class="h-4 w-4 shrink-0 text-muted-foreground" />
+                <FolderOpen class="h-4 w-4 shrink-0 text-[var(--floe-ink-soft)]" />
                 <span class="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span class="truncate text-xs font-medium">{path.split('/').filter(Boolean).at(-1) ?? copy().root}</span>
-                  <span class="truncate text-[11px] text-muted-foreground">{path}</span>
+                  <span class="truncate text-[11px] text-[var(--floe-ink-soft)]">{path}</span>
                 </span>
-                <ChevronRight class="h-3 w-3 shrink-0 text-muted-foreground/60" />
+                <ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-quiet)]" />
               </button>
               </PickerDirectoryRow>
             )}</For>

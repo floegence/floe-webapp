@@ -592,11 +592,11 @@ The chat component supports:
   return (
     <div class={`h-full flex flex-col ${props.class ?? ''}`}>
       {/* Header */}
-      <div class="flex-shrink-0 px-4 py-3 border-b border-border bg-background">
+      <div class="flex-shrink-0 px-4 py-3 border-b border-[var(--floe-line)] bg-[var(--floe-plane)]">
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-base font-semibold">Chat Component Demo</h1>
-            <p class="text-[11px] text-muted-foreground mt-0.5">
+            <p class="text-[11px] text-[var(--floe-ink-soft)] mt-0.5">
               Showcasing all message block types with rich styling
             </p>
           </div>
@@ -630,7 +630,7 @@ The chat component supports:
           />
         ) : (
           <div class="flex items-center justify-center h-full">
-            <div class="text-muted-foreground text-sm">Loading...</div>
+            <div class="text-[var(--floe-ink-soft)] text-sm">Loading...</div>
           </div>
         )}
       </div>

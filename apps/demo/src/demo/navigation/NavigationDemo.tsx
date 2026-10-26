@@ -67,11 +67,11 @@ function CanvasPage() {
   });
   return (
     <section class="flex h-full min-h-0 flex-col" data-navigation-page="canvas">
-      <header class="shrink-0 border-b border-border bg-muted/30 px-6 py-4">
+      <header class="shrink-0 border-b border-[var(--floe-line)] bg-[var(--floe-well)] px-6 py-4">
         <h1 class="text-sm font-semibold">Canvas</h1>
-        <p class="mt-1 text-xs text-muted-foreground">A retained drawing surface. Your draft below stays with this page.</p>
+        <p class="mt-1 text-xs text-[var(--floe-ink-soft)]">A retained drawing surface. Your draft below stays with this page.</p>
       </header>
-      <div ref={host} class="relative min-h-0 flex-1 bg-background text-foreground">
+      <div ref={host} class="relative min-h-0 flex-1 bg-[var(--floe-plane)] text-[var(--floe-ink)]">
         <canvas
           ref={canvas}
           class="absolute inset-0 h-full w-full"
@@ -81,9 +81,9 @@ function CanvasPage() {
           data-effects-active={activation.active()}
         />
       </div>
-      <label class="flex shrink-0 items-center gap-3 border-t border-border bg-muted/30 px-6 py-4 text-xs">
+      <label class="flex shrink-0 items-center gap-3 border-t border-[var(--floe-line)] bg-[var(--floe-well)] px-6 py-4 text-xs">
         Draft
-        <input class="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2" placeholder="Write something, switch pages, then return…" />
+        <input class="min-w-0 flex-1 rounded-[var(--floe-radius-md)] border border-input bg-[var(--floe-plane)] px-3 py-2" placeholder="Write something, switch pages, then return…" />
       </label>
     </section>
   );
@@ -91,11 +91,11 @@ function CanvasPage() {
 
 function LoadingPage(props: { name: string }) {
   return (
-    <section class="h-full bg-background px-6 py-5" role="status" aria-busy="true" data-navigation-loading>
+    <section class="h-full bg-[var(--floe-plane)] px-6 py-5" role="status" aria-busy="true" data-navigation-loading>
       <h1 class="text-sm font-semibold">{props.name}</h1>
-      <p class="mt-2 text-xs text-muted-foreground">Opening {props.name.toLowerCase()}…</p>
+      <p class="mt-2 text-xs text-[var(--floe-ink-soft)]">Opening {props.name.toLowerCase()}…</p>
       <div class="mt-8 grid gap-4 sm:grid-cols-3" aria-hidden="true">
-        <For each={[0, 1, 2]}>{() => <div class="h-28 rounded-lg border border-border bg-muted/30" />}</For>
+        <For each={[0, 1, 2]}>{() => <div class="h-28 rounded-[var(--floe-radius-control)] border border-[var(--floe-line)] bg-[var(--floe-well)]" />}</For>
       </div>
     </section>
   );
@@ -117,14 +117,14 @@ function NavigationShell() {
       logo={<img src="/logo.svg" alt="Floe" class="h-7 w-7" />}
       topBarActions={(
         <div class="flex items-center gap-3">
-          <span class="text-xs text-muted-foreground">Activity navigation</span>
+          <span class="text-xs text-[var(--floe-ink-soft)]">Activity navigation</span>
           <Button variant="ghost" size="icon" title="Toggle theme" onClick={() => theme.toggleTheme()}>
             {theme.resolvedTheme() === 'dark' ? <Sun class="h-4 w-4" /> : <Moon class="h-4 w-4" />}
           </Button>
         </div>
       )}
       bottomBarItems={[
-        <span class="text-xs text-muted-foreground">Scroll Files, switch pages, and return to the same place.</span>,
+        <span class="text-xs text-[var(--floe-ink-soft)]">Scroll Files, switch pages, and return to the same place.</span>,
       ]}
     >
       <ActivityAppsMain

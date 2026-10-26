@@ -332,6 +332,14 @@
     animation: processing-bar 1s ease-in-out infinite;
   }
 
+  /* The spinning conic gradient paints on its own compositing layer, which the
+     parent's rounded `overflow: hidden` does not reliably clip — any uncovered
+     corner shows up as a stray hairline outside the pill. Clip the ring itself
+     so only the intended 1px edge can ever render. */
+  .processing-gradient-border {
+    clip-path: inset(0 round 9999px);
+  }
+
   .processing-gradient-spin {
     animation: processing-gradient-spin 2s linear infinite;
   }
@@ -637,53 +645,46 @@
      ============================================================================= */
 
   .highlight-block {
-    --hb-accent: var(--primary);
-    --hb-border: color-mix(in srgb, var(--hb-accent) 34%, var(--border));
-    --hb-header-bg: color-mix(in srgb, var(--hb-accent) 18%, var(--card));
-    --hb-content-bg: color-mix(in srgb, var(--hb-accent) 10%, var(--card));
-    --hb-title: color-mix(in srgb, var(--hb-accent) 78%, var(--foreground));
+    --hb-accent: var(--floe-ink-quiet);
+    --hb-ink: var(--floe-ink);
 
-    border-radius: 6px;
+    border-radius: var(--floe-radius-group);
     overflow: hidden;
-    border: 1px solid var(--hb-border);
+    border: 1px solid transparent;
+    background-color: color-mix(in srgb, var(--hb-accent) 7%, transparent);
   }
 
   .highlight-block-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px 8px 14px;
-    background: var(--hb-header-bg);
-    border-left: 3px solid var(--hb-accent);
-    margin-left: -1px;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.875rem 0;
+    color: var(--hb-accent);
   }
 
   .highlight-block-icon {
     flex-shrink: 0;
-    opacity: 0.95;
-    color: var(--hb-title);
+    color: var(--hb-accent);
   }
 
   .highlight-block-title {
-    font-size: 11px;
+    font-size: var(--floe-type-caption);
+    line-height: var(--floe-line-caption);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--hb-title);
+    letter-spacing: 0.06em;
+    color: var(--hb-accent);
   }
 
   .highlight-block-content {
-    padding: 10px 14px 12px 17px;
-    background: var(--hb-content-bg);
-    border-left: 3px solid transparent;
-    margin-left: -1px;
-    font-size: 12px;
-    line-height: 1.65;
-    color: color-mix(in srgb, var(--foreground) 90%, transparent);
+    padding: 0.375rem 0.875rem 0.6875rem;
+    font-size: var(--floe-type-supporting);
+    line-height: var(--floe-line-body);
+    color: var(--hb-ink);
   }
 
   .highlight-block-content > p {
-    margin-bottom: 6px;
+    margin-bottom: 0.375rem;
   }
   .highlight-block-content > p:last-child {
     margin-bottom: 0;
@@ -691,8 +692,8 @@
 
   .highlight-block-content > ul,
   .highlight-block-content > ol {
-    padding-left: 16px;
-    margin-bottom: 6px;
+    padding-left: 1rem;
+    margin-bottom: 0.375rem;
   }
 
   .highlight-block-content > ul {
@@ -702,6 +703,10 @@
     list-style-type: decimal;
   }
 
+  /* Semantic variants tint the same quiet well rather than filling a block.
+   * Each callout reads its own `--highlight-block-*-accent`, which every preset
+   * tunes for its own planes — borrowing the shared status colors here would
+   * override that tuning and put a 4.5:1 status fill on a 7% wash. */
   .highlight-block-info {
     --hb-accent: var(--highlight-block-info-accent);
   }
@@ -731,11 +736,15 @@
      ============================================================================= */
 
   .floe-segmented-control {
-    --segmented-control-bg: color-mix(in srgb, var(--muted) 74%, var(--background));
-    --segmented-control-border: color-mix(in srgb, var(--border) 82%, transparent);
-    --segmented-control-item-color: var(--muted-foreground);
-    --segmented-control-item-hover-bg: color-mix(in srgb, var(--background) 74%, var(--muted) 26%);
-    --segmented-control-item-hover-color: var(--foreground);
+    /* The rail is a well: recessed, one hairline, no accent. The selected
+     * segment is the one opaque thing inside it, in the semantic pair, because
+     * a translucent tint cannot reach the 3:1 that marks a selection. Relief
+     * would be a second, weaker way of saying the same thing, so it stays off. */
+    --segmented-control-bg: var(--floe-well);
+    --segmented-control-border: var(--floe-line);
+    --segmented-control-item-color: var(--floe-ink-soft);
+    --segmented-control-item-hover-bg: var(--floe-state-hover);
+    --segmented-control-item-hover-color: var(--floe-ink);
     --segmented-control-item-active-bg: var(--primary);
     --segmented-control-item-active-border: var(--primary);
     --segmented-control-item-active-color: var(--primary-foreground);
@@ -743,16 +752,6 @@
 
     background-color: var(--segmented-control-bg);
     border-color: var(--segmented-control-border);
-  }
-
-  .dark .floe-segmented-control {
-    --segmented-control-bg: color-mix(in srgb, var(--muted) 56%, var(--background) 44%);
-    --segmented-control-border: color-mix(in srgb, var(--border) 78%, var(--foreground) 22%);
-    --segmented-control-item-hover-bg: color-mix(
-      in srgb,
-      var(--foreground) 8%,
-      var(--background) 92%
-    );
   }
 
   .floe-segmented-control__item {
@@ -765,7 +764,7 @@
     color: var(--segmented-control-item-hover-color);
   }
 
-  .floe-segmented-control__item--active {
+  .floe-segmented-control__item[aria-checked='true'] {
     border-color: var(--segmented-control-item-active-border);
     background-color: var(--segmented-control-item-active-bg);
     color: var(--segmented-control-item-active-color);
@@ -773,179 +772,82 @@
   }
 
   /* =============================================================================
-     Tag - Professional metadata labels
+     Tag - metadata, not a badge of honour
+
+     One recipe per tone. The hue only ever arrives as a translucent wash of the
+     semantic color over the plane it sits on, plus the ink mixed with the same
+     color, so a tag works on a card, on a well and in dark mode without a
+     second ladder. There is no solid color block and no white-on-color text:
+     status color should read as a whisper of meaning, not a sticker.
      ============================================================================= */
 
-  :root,
-  .light {
-    --tag-solid-ink-strong: var(--primary-foreground);
-    --tag-soft-surface-base: white;
-    --tag-soft-line-base: white;
-    --tag-soft-ink-base: var(--foreground);
-    --tag-soft-surface-strength: 84%;
-    --tag-soft-line-strength: 68%;
-    --tag-soft-ink-strength: 74%;
-
-    --tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 86%, var(--muted));
-    --tag-neutral-solid-line: color-mix(in srgb, var(--foreground) 72%, var(--border));
-    --tag-neutral-accent: color-mix(in srgb, var(--foreground) 44%, var(--muted-foreground));
-
-    --tag-primary-solid-surface: color-mix(in srgb, var(--info) 78%, var(--foreground));
-    --tag-primary-solid-line: color-mix(in srgb, var(--info) 88%, var(--foreground));
-    --tag-primary-accent: color-mix(in srgb, var(--info) 74%, var(--foreground));
-
-    --tag-success-solid-surface: color-mix(in srgb, var(--success) 72%, var(--foreground));
-    --tag-success-solid-line: color-mix(in srgb, var(--success) 88%, var(--foreground));
-    --tag-success-accent: color-mix(in srgb, var(--success) 70%, var(--foreground));
-
-    --tag-warning-solid-surface: color-mix(in srgb, var(--warning) 78%, var(--foreground));
-    --tag-warning-solid-line: color-mix(in srgb, var(--warning) 92%, var(--foreground));
-    --tag-warning-accent: color-mix(in srgb, var(--warning) 68%, var(--foreground));
-
-    --tag-error-solid-surface: color-mix(in srgb, var(--error) 70%, var(--foreground));
-    --tag-error-solid-line: color-mix(in srgb, var(--error) 86%, var(--foreground));
-    --tag-error-accent: color-mix(in srgb, var(--error) 70%, var(--foreground));
-
-    --tag-info-solid-surface: color-mix(in srgb, var(--info) 66%, var(--foreground));
-    --tag-info-solid-line: color-mix(in srgb, var(--info) 78%, var(--foreground));
-    --tag-info-accent: color-mix(in srgb, var(--info) 62%, var(--foreground));
-  }
-
-  .dark {
-    --tag-solid-ink-strong: var(--foreground);
-    --tag-soft-surface-base: transparent;
-    --tag-soft-line-base: transparent;
-    --tag-soft-ink-base: var(--foreground);
-    --tag-soft-surface-strength: 88%;
-    --tag-soft-line-strength: 76%;
-    --tag-soft-ink-strength: 82%;
-
-    --tag-neutral-solid-surface: color-mix(in srgb, var(--foreground) 20%, var(--background));
-    --tag-neutral-solid-line: color-mix(in srgb, var(--foreground) 28%, var(--border));
-    --tag-neutral-accent: color-mix(in srgb, var(--foreground) 58%, var(--muted-foreground));
-
-    --tag-primary-solid-surface: color-mix(in srgb, var(--info) 54%, var(--background));
-    --tag-primary-solid-line: color-mix(in srgb, var(--info) 70%, var(--border));
-    --tag-primary-accent: color-mix(in srgb, var(--info) 80%, white 20%);
-
-    --tag-success-solid-surface: color-mix(in srgb, var(--success) 52%, var(--background));
-    --tag-success-solid-line: color-mix(in srgb, var(--success) 68%, var(--border));
-    --tag-success-accent: color-mix(in srgb, var(--success) 80%, white 20%);
-
-    --tag-warning-solid-surface: color-mix(in srgb, var(--warning) 62%, var(--background));
-    --tag-warning-solid-line: color-mix(in srgb, var(--warning) 78%, var(--border));
-    --tag-warning-accent: color-mix(in srgb, var(--warning) 80%, white 20%);
-
-    --tag-error-solid-surface: color-mix(in srgb, var(--error) 48%, var(--background));
-    --tag-error-solid-line: color-mix(in srgb, var(--error) 64%, var(--border));
-    --tag-error-accent: color-mix(in srgb, var(--error) 80%, white 20%);
-
-    --tag-info-solid-surface: color-mix(in srgb, var(--info) 40%, var(--background));
-    --tag-info-solid-line: color-mix(in srgb, var(--info) 54%, var(--border));
-    --tag-info-accent: color-mix(in srgb, var(--info) 72%, white 28%);
-  }
-
+  /* Two tones, two gestures. `soft` is an outline: no fill, a hairline and
+   * accent-tinted ink, for metadata that rides along with content. `solid` is
+   * a wash: the accent fills the chip so state reads at a glance in a list.
+   * Neither paints a colour block, so status stays a whisper of meaning. */
   .floe-tag {
-    --tag-solid-surface: var(--tag-neutral-solid-surface);
-    --tag-solid-line: var(--tag-neutral-solid-line);
-    --tag-solid-ink: var(--tag-solid-ink-strong);
-    --tag-soft-accent: var(--tag-neutral-accent);
-    --tag-surface: var(--tag-solid-surface);
-    --tag-line: var(--tag-solid-line);
-    --tag-ink: var(--tag-solid-ink);
+    --tag-accent: var(--floe-ink-soft);
 
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.375rem;
     max-width: 100%;
     min-width: 0;
     white-space: nowrap;
-    border-radius: 8px;
-    border: 1px solid var(--tag-line);
-    background-color: var(--tag-surface);
-    color: var(--tag-ink);
+    border-radius: var(--floe-radius-sm);
+    border: 1px solid transparent;
+    color: color-mix(in srgb, var(--tag-accent) 76%, var(--floe-ink));
     font-weight: 600;
-    letter-spacing: 0.015em;
+    letter-spacing: 0.005em;
   }
 
+  /* Fill and edge belong to the surface layer, which paints every badge part. */
   .floe-tag--solid {
-    --tag-surface: var(--tag-solid-surface);
-    --tag-line: var(--tag-solid-line);
-    --tag-ink: var(--tag-solid-ink);
+    color: color-mix(in srgb, var(--tag-accent) 88%, var(--floe-ink));
   }
 
   .floe-tag--neutral {
-    --tag-solid-surface: var(--tag-neutral-solid-surface);
-    --tag-solid-line: var(--tag-neutral-solid-line);
-    --tag-soft-accent: var(--tag-neutral-accent);
+    --tag-accent: var(--floe-ink-soft);
   }
 
   .floe-tag--primary {
-    --tag-solid-surface: var(--tag-primary-solid-surface);
-    --tag-solid-line: var(--tag-primary-solid-line);
-    --tag-soft-accent: var(--tag-primary-accent);
+    --tag-accent: var(--floe-accent-ink);
   }
 
   .floe-tag--success {
-    --tag-solid-surface: var(--tag-success-solid-surface);
-    --tag-solid-line: var(--tag-success-solid-line);
-    --tag-soft-accent: var(--tag-success-accent);
+    --tag-accent: var(--success);
   }
 
   .floe-tag--warning {
-    --tag-solid-surface: var(--tag-warning-solid-surface);
-    --tag-solid-line: var(--tag-warning-solid-line);
-    --tag-soft-accent: var(--tag-warning-accent);
+    --tag-accent: var(--warning);
   }
 
   .floe-tag--error {
-    --tag-solid-surface: var(--tag-error-solid-surface);
-    --tag-solid-line: var(--tag-error-solid-line);
-    --tag-soft-accent: var(--tag-error-accent);
+    --tag-accent: var(--error);
   }
 
   .floe-tag--info {
-    --tag-solid-surface: var(--tag-info-solid-surface);
-    --tag-solid-line: var(--tag-info-solid-line);
-    --tag-soft-accent: var(--tag-info-accent);
-  }
-
-  .floe-tag--soft {
-    --tag-surface: color-mix(
-      in srgb,
-      var(--tag-soft-surface-base) var(--tag-soft-surface-strength),
-      var(--tag-soft-accent)
-    );
-    --tag-line: color-mix(
-      in srgb,
-      var(--tag-soft-line-base) var(--tag-soft-line-strength),
-      var(--tag-soft-accent)
-    );
-    --tag-ink: color-mix(
-      in srgb,
-      var(--tag-soft-ink-base) var(--tag-soft-ink-strength),
-      var(--tag-soft-accent)
-    );
+    --tag-accent: var(--info);
   }
 
   .floe-tag--sm {
-    min-height: 18px;
-    padding: 0 7px;
-    font-size: 10px;
+    min-height: 1.125rem;
+    padding: 0 0.375rem;
+    font-size: var(--floe-type-caption);
     line-height: 1;
   }
 
   .floe-tag--md {
-    min-height: 22px;
-    padding: 0 8px;
-    font-size: 11px;
+    min-height: 1.375rem;
+    padding: 0 0.4375rem;
+    font-size: var(--floe-type-caption);
     line-height: 1;
   }
 
   .floe-tag--lg {
-    min-height: 26px;
-    padding: 0 10px;
-    font-size: 12px;
+    min-height: 1.625rem;
+    padding: 0 0.5625rem;
+    font-size: var(--floe-type-supporting);
     line-height: 1;
   }
 
@@ -960,8 +862,8 @@
   }
 
   .floe-tag__dot {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     flex: none;
     border-radius: 999px;
     background: currentColor;
@@ -982,23 +884,29 @@
     width: 13px;
     height: 13px;
   }
-
   /* =============================================================================
-     Charts - Professional Data Visualization
+     Charts — data as ink, not as decoration
+
+     A chart is a reading surface. Grid lines are the quietest rule in the
+     ladder, the axis is tiny caps in the ghost ink, and the series colors are
+     the only saturated thing on the plane. Nothing glows, nothing casts a
+     shadow except the tooltip, and every transient reads on the motion family.
      ============================================================================= */
 
   .chart-container {
     width: 100%;
     position: relative;
+    color: var(--floe-ink);
   }
 
   .chart-title {
-    font-size: 11px;
+    font-size: var(--floe-type-caption);
     font-weight: 600;
-    color: var(--foreground);
-    margin-bottom: 12px;
+    line-height: var(--floe-line-caption);
+    color: var(--floe-ink-soft);
+    margin-bottom: var(--floe-gap-group);
+    letter-spacing: var(--floe-tracking-caps, 0.06em);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
   }
 
   .chart-svg {
@@ -1006,33 +914,37 @@
     overflow: visible;
   }
 
-  /* Grid lines */
+  /* Grid — one hairline, solid. Dashes turn a grid into visual noise. */
   .chart-grid-line {
-    stroke: var(--border);
+    stroke: var(--floe-line-quiet);
     stroke-width: 1;
-    stroke-dasharray: 4 4;
+    stroke-dasharray: none;
   }
 
-  /* Axis labels */
   .chart-axis-label {
-    font-size: 10px;
-    fill: var(--muted-foreground);
+    font-size: var(--floe-type-caption);
+    fill: var(--floe-ink-ghost);
     font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
   }
 
   /* Line chart */
   .chart-line {
-    transition: stroke-dashoffset 0.8s ease-out;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke-dashoffset var(--floe-duration-slow) var(--floe-ease-out);
   }
 
   .chart-area {
-    transition: opacity 0.6s ease-out;
+    transition: opacity var(--floe-duration-slow) var(--floe-ease-out);
   }
 
   .chart-point {
+    stroke-width: 2;
     transition:
-      opacity 0.3s ease,
-      r 0.15s ease;
+      opacity var(--floe-duration-fast) var(--floe-ease-out),
+      r var(--floe-duration-fast) var(--floe-ease-out);
     cursor: pointer;
   }
 
@@ -1040,42 +952,42 @@
     r: 6;
   }
 
-  /* Crosshair */
+  /* Crosshair — a quiet accent, not a primary-colored rule */
   .chart-crosshair {
-    stroke: var(--primary);
+    stroke: var(--floe-accent-line);
     stroke-width: 1;
-    stroke-dasharray: 4 2;
-    opacity: 0.6;
+    stroke-dasharray: none;
     pointer-events: none;
   }
 
   .chart-crosshair-point {
-    stroke: var(--background);
+    stroke: var(--floe-plane-float);
     stroke-width: 2;
     pointer-events: none;
   }
 
-  /* Tooltip */
+  /* Tooltip — the one floating object in a chart */
   .chart-tooltip-bg {
-    fill: var(--popover);
-    stroke: var(--border);
+    fill: var(--floe-plane-float);
+    stroke: var(--floe-line);
     stroke-width: 1;
-    filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--foreground) 12%, transparent));
+    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--floe-ink) 14%, transparent));
     pointer-events: none;
   }
 
   .chart-tooltip-label {
-    font-size: 9px;
+    font-size: var(--floe-type-caption);
     font-weight: 600;
-    fill: var(--foreground);
+    fill: var(--floe-ink-soft);
     font-family: var(--font-sans);
     pointer-events: none;
   }
 
   .chart-tooltip-value {
-    font-size: 8px;
-    fill: var(--muted-foreground);
+    font-size: var(--floe-type-caption);
+    fill: var(--floe-ink);
     font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     pointer-events: none;
   }
 
@@ -1085,19 +997,22 @@
 
   /* Bar chart */
   .chart-bar {
-    transition: opacity 0.15s ease;
+    transition:
+      opacity var(--floe-duration-fast) var(--floe-ease-out),
+      filter var(--floe-duration-fast) var(--floe-ease-out);
     cursor: pointer;
   }
 
   .chart-bar:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.06);
   }
 
   .chart-bar-value {
-    font-size: 10px;
-    fill: var(--foreground);
-    font-weight: 500;
+    font-size: var(--floe-type-caption);
+    fill: var(--floe-ink-soft);
+    font-weight: 600;
     font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 
   /* Pie chart */
@@ -1112,7 +1027,7 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 24px;
+    gap: var(--floe-gap-section);
   }
 
   .chart-pie-svg {
@@ -1121,69 +1036,74 @@
 
   .chart-pie-slice {
     transition:
-      transform 0.15s ease,
-      filter 0.15s ease;
+      transform var(--floe-duration-fast) var(--floe-ease-out),
+      filter var(--floe-duration-fast) var(--floe-ease-out);
     transform-origin: center;
     cursor: pointer;
   }
 
   .chart-pie-slice:hover {
-    transform: scale(1.03);
-    filter: brightness(1.1);
+    transform: scale(1.02);
+    filter: brightness(1.06);
   }
 
   .chart-pie-center-label {
-    font-size: 18px;
-    font-weight: 700;
-    fill: var(--foreground);
+    font-size: var(--floe-type-heading);
+    font-weight: 600;
+    fill: var(--floe-ink);
     font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
   }
 
   .chart-pie-center-sublabel {
-    font-size: 8px;
-    fill: var(--muted-foreground);
+    font-size: var(--floe-type-caption);
+    fill: var(--floe-ink-ghost);
     font-family: var(--font-sans);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .chart-pie-legend {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--floe-gap-control);
   }
 
-  /* Legend */
+  /* Legend — swatch, label, value: one row rhythm */
   .chart-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 12px;
+    gap: var(--floe-gap-group);
+    margin-top: var(--floe-gap-group);
     justify-content: center;
   }
 
   .chart-legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--floe-gap-inline);
   }
 
   .chart-legend-color {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--floe-radius-xs);
     flex-shrink: 0;
   }
 
   .chart-legend-label {
-    font-size: 11px;
-    color: var(--muted-foreground);
+    font-size: var(--floe-type-supporting);
+    color: var(--floe-ink-soft);
+    line-height: var(--floe-line-caption);
   }
 
   .chart-legend-value {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--foreground);
+    font-size: var(--floe-type-supporting);
+    font-weight: 600;
+    color: var(--floe-ink);
     font-family: var(--font-mono);
-    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+    margin-left: var(--floe-gap-inline);
   }
 
   /* Monitoring chart */
@@ -1197,14 +1117,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: var(--floe-gap-control);
+    margin-bottom: var(--floe-gap-control);
   }
 
   .chart-monitoring-heading {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--floe-gap-control);
     min-width: 0;
   }
 
@@ -1217,9 +1137,9 @@
     flex-shrink: 0;
     max-width: 100%;
     overflow-wrap: anywhere;
-    font-size: 11px;
+    font-size: var(--floe-type-caption);
     font-variant-numeric: tabular-nums;
-    color: var(--muted-foreground);
+    color: var(--floe-ink-soft);
     text-align: end;
   }
 
@@ -1230,30 +1150,30 @@
   .chart-monitoring-status {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    color: var(--muted-foreground);
+    gap: var(--floe-gap-inline);
+    font-size: var(--floe-type-caption);
+    color: var(--floe-ink-ghost);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
 
   .chart-monitoring-dot {
     width: 6px;
     height: 6px;
-    border-radius: 50%;
+    border-radius: var(--floe-radius-xs);
     background: var(--success);
-    animation: chart-monitoring-pulse 1.5s ease-in-out infinite;
+    animation: chart-monitoring-pulse 2.4s var(--floe-ease-in-out) infinite;
   }
 
   @keyframes chart-monitoring-pulse {
     0%,
     100% {
       opacity: 1;
-      box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 38%, transparent);
     }
     50% {
-      opacity: 0.8;
-      box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 0%, transparent);
+      opacity: 0.72;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 0%, transparent);
     }
   }
 
@@ -1270,18 +1190,14 @@
     }
 
     .chart-legend {
-      gap: 8px;
+      gap: var(--floe-gap-control);
     }
 
     .chart-legend-item {
-      gap: 4px;
-    }
-
-    .chart-legend-label,
-    .chart-legend-value {
-      font-size: 10px;
+      gap: var(--floe-gap-inline);
     }
   }
+
 
   /* ============================================
      Mobile Keyboard

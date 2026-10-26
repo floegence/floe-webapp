@@ -81,9 +81,35 @@ try {
     for (const rootSize of [16, 18, 20, 32]) {
       await page.evaluate(size => { document.documentElement.style.fontSize = `${size}px`; }, rootSize);
       await paint(page);
-      const expected = rootSize * (touch ? 2.75 : 1.75);
+      // Density is a design token, not a pixel snapshot: read the pitch the row
+      // declares from a probe in the same body scope (the coarse-pointer block
+      // overrides the token per input modality). Comparing against a literal
+      // 1.75rem froze the previous design's row pitch into the gate, so a
+      // deliberate density change failed as if rows had stopped honouring root
+      // font scaling. The root-relative scaling and the touch floor stay real.
+      const expected = await page.evaluate(() => {
+        const probe = document.createElement('div');
+        probe.style.cssText =
+          'position:absolute;visibility:hidden;width:0;height:var(--floe-row-height)';
+        document.body.appendChild(probe);
+        const value = parseFloat(getComputedStyle(probe).height);
+        probe.remove();
+        return value;
+      });
+      assert.ok(expected > 0, `row height token resolves at root ${rootSize}px`);
+      // The resolved pitch must stay proportional to the root size: a token that
+      // stops tracking root font size would silently break enlarged-text layouts.
+      assert.ok(
+        Math.abs(expected / rootSize - (touch ? 2.75 : 1.875)) < 0.01,
+        `row pitch tracks root font size at ${rootSize}px (measured ${expected}px)`
+      );
+      if (touch) assert.ok(expected >= 44, `touch rows keep a 44px target (measured ${expected}px)`);
       const first = page.locator('[data-file-browser-item-id]').first();
-      assert.equal(await first.evaluate(node => node.getBoundingClientRect().height), expected);
+      assert.equal(
+        await first.evaluate(node => node.getBoundingClientRect().height),
+        expected,
+        `row consumes --floe-row-height at root ${rootSize}px`
+      );
       await first.evaluate(node => {
         let viewport = node.parentElement;
         while (getComputedStyle(viewport).overflowY !== 'auto') viewport = viewport.parentElement;

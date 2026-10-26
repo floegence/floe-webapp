@@ -40,10 +40,10 @@ export function SidebarPane(props: SidebarPaneProps) {
       <aside
         data-floe-geometry-surface="sidebar-pane"
         class={cn(
-          'flex-shrink-0 border-r border-border bg-sidebar relative',
-          'transition-[width,transform,box-shadow] duration-200 ease-out',
+          'flex-shrink-0 border-r border-[var(--floe-line)] bg-sidebar relative',
+          'transition-[width,transform,box-shadow] duration-[var(--floe-duration-base)] ease-out',
           'overflow-hidden',
-          showMobileOverlay() && 'absolute inset-y-0 left-0 z-10 shadow-lg',
+          showMobileOverlay() && 'absolute inset-y-0 left-0 z-10 shadow-[var(--floe-elevation-float)]',
           props.class
         )}
         style={{ width: open() ? `${width()}px` : '0px' }}
@@ -56,7 +56,7 @@ export function SidebarPane(props: SidebarPaneProps) {
           style={{ width: `${width()}px` }}
         >
           <div class="flex items-center justify-between px-3 py-2 border-b border-sidebar-border">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">{props.title}</span>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">{props.title}</span>
             <Show when={props.headerActions || showCloseButton()}>
               <div class="flex min-w-0 items-center gap-1.5">
                 <Show when={props.headerActions}>
@@ -66,7 +66,7 @@ export function SidebarPane(props: SidebarPaneProps) {
                   <button
                     type="button"
                     onClick={() => props.onClose?.()}
-                    class="flex items-center justify-center w-5 h-5 rounded cursor-pointer hover:bg-sidebar-accent/80 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring focus-visible:ring-inset"
+                    class="flex items-center justify-center w-5 h-5 rounded-[var(--floe-radius-xs)] cursor-pointer hover:bg-[var(--floe-state-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset"
                     aria-label="Close sidebar"
                   >
                     <svg

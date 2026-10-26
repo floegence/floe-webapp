@@ -39,13 +39,13 @@ function ThemeTile(props: ThemeTileProps) {
       aria-checked={props.selected}
       aria-label={`${props.preset.displayName}: ${props.preset.description ?? props.mode}`}
       class={cn(
-        'group min-w-0 rounded-md border p-2 text-left transition-colors',
+        'group min-w-0 rounded-[var(--floe-radius-md)] border p-2 text-left transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background',
         props.active
-          ? 'border-primary bg-accent/60 shadow-sm'
+          ? 'border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] shadow-sm'
           : props.selected
-            ? 'border-input bg-card/80'
-            : 'border-border bg-card/80 hover:border-input hover:bg-accent/40'
+            ? 'border-input bg-[var(--floe-plane-raised)]/80'
+            : 'border-[var(--floe-line)] bg-[var(--floe-plane-raised)]/80 hover:border-input hover:bg-[var(--floe-state-hover)]/40'
       )}
       onClick={() => props.onSelect()}
     >
@@ -82,17 +82,17 @@ function ThemeTile(props: ThemeTileProps) {
 
       <span class="mt-2 flex min-w-0 items-start justify-between gap-1.5">
         <span class="min-w-0">
-          <span class="block truncate text-xs font-semibold text-foreground">
+          <span class="block truncate text-xs font-semibold text-[var(--floe-ink)]">
             {props.preset.displayName}
           </span>
-          <span class="mt-0.5 block text-[10px] leading-3.5 text-muted-foreground">
+          <span class="mt-0.5 block text-[10px] leading-3.5 text-[var(--floe-ink-soft)]">
             {props.preset.description}
           </span>
         </span>
         <Show when={props.selected}>
           <span
             class={cn(
-              'mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground',
+              'mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--floe-accent-ink)] text-[var(--floe-plane)]',
               !props.active && 'opacity-65'
             )}
             aria-hidden="true"
@@ -115,7 +115,7 @@ export function ShellThemePicker() {
     return (
       <div>
         <div class="mb-1.5 flex items-center gap-2">
-          <span class="text-[10px] font-semibold uppercase text-muted-foreground">{label}</span>
+          <span class="text-[10px] font-semibold uppercase text-[var(--floe-ink-soft)]">{label}</span>
           <span class="h-px flex-1 bg-border" aria-hidden="true" />
         </div>
         <div class="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label={label}>
@@ -138,7 +138,7 @@ export function ShellThemePicker() {
   return (
     <div class="space-y-3">
       <div
-        class="grid grid-cols-3 overflow-hidden rounded-md border border-border bg-muted/40 p-0.5"
+        class="grid grid-cols-3 overflow-hidden rounded-[var(--floe-radius-md)] border border-[var(--floe-line)] bg-[var(--floe-well)] p-0.5"
         role="group"
         aria-label="Color mode"
       >
@@ -153,8 +153,8 @@ export function ShellThemePicker() {
                   'inline-flex h-7 min-w-0 items-center justify-center gap-1 rounded-sm px-1.5 text-[11px] font-medium transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   theme.theme() === mode.value
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+                    ? 'bg-[var(--floe-plane-raised)] text-[var(--floe-ink)] shadow-sm'
+                    : 'text-[var(--floe-ink-soft)] hover:bg-[var(--floe-state-hover)]/50 hover:text-[var(--floe-ink)]'
                 )}
                 onClick={() => theme.setTheme(mode.value)}
               >

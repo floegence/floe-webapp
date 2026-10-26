@@ -26,7 +26,7 @@ export function TopBar(props: TopBarProps) {
       class={cn(
         // Safe-area padding must not be applied on a fixed-height element (border-box),
         // otherwise the content gets squeezed on iOS notch devices.
-        'shrink-0 bg-background border-b border-border safe-top safe-left safe-right',
+        'shrink-0 bg-background border-b border-[var(--floe-line)] safe-top safe-left safe-right',
         props.class
       )}
       style={{ 'background-color': 'var(--activity-bar)', 'border-bottom-color': 'var(--top-bar-border)' }}
@@ -52,19 +52,19 @@ export function TopBar(props: TopBarProps) {
           class={cn(
             'flex-1 max-w-sm flex items-center gap-2 h-[26px] px-2.5',
             paletteEnabled() ? 'cursor-pointer' : 'cursor-not-allowed',
-            'text-[11px] text-muted-foreground tracking-tight',
-            'bg-muted/40 hover:bg-muted/70 rounded-lg',
-            'border border-border/60',
+            'text-[11px] text-[var(--floe-ink-soft)] tracking-tight',
+            'bg-[var(--floe-well)] hover:bg-[var(--floe-well-strong)] rounded-[var(--floe-radius-md)]',
+            'border border-[var(--floe-line)]',
             'transition-[background-color,border-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
             'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-            !paletteEnabled() && 'opacity-50 hover:bg-muted/30'
+            !paletteEnabled() && 'opacity-50 hover:bg-transparent'
           )}
           onClick={() => paletteEnabled() && command.open()}
         >
           <Search class="w-3 h-3 shrink-0" />
           <span class="flex-1 text-left hidden sm:inline truncate">{floe.config.strings.topBar.searchPlaceholder}</span>
           <Show when={paletteEnabled()}>
-            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/60 border border-border/40 font-mono shrink-0 leading-none">
+            <kbd class="hidden md:inline text-[10px] px-1 py-0.5 rounded bg-background/60 border border-[var(--floe-line)] font-mono shrink-0 leading-none">
               {command.getKeybindDisplay(floe.config.commands.palette.keybind)}
             </kbd>
           </Show>

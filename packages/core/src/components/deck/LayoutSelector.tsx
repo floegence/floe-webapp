@@ -73,21 +73,21 @@ export function LayoutSelector(props: LayoutSelectorProps) {
       <button
         class={cn(
           'flex items-center gap-1 px-1.5 h-5 rounded',
-          'hover:bg-muted/50 transition-colors text-[10px] cursor-pointer',
-          isOpen() && 'bg-muted/50'
+          'hover:bg-[var(--floe-state-hover)] transition-colors text-[10px] cursor-pointer',
+          isOpen() && 'bg-[var(--floe-well)]'
         )}
         onClick={() => setIsOpen(!isOpen())}
       >
-        <span class="truncate max-w-[80px] text-muted-foreground/80 font-medium">{activeLayout()?.name ?? 'Layout'}</span>
+        <span class="truncate max-w-[80px] text-[var(--floe-ink-quiet)] font-medium">{activeLayout()?.name ?? 'Layout'}</span>
         <ChevronDown
-          class={cn('w-2.5 h-2.5 text-muted-foreground/50 transition-transform', isOpen() && 'rotate-180')}
+          class={cn('w-2.5 h-2.5 text-[var(--floe-ink-ghost)] transition-transform', isOpen() && 'rotate-180')}
         />
       </button>
 
       {/* Dropdown */}
       <Show when={isOpen()}>
         <div
-          class="absolute top-full left-0 mt-1 w-48 bg-popover border border-border/60 rounded shadow-lg z-50 overflow-hidden"
+          class="absolute top-full left-0 mt-1 w-48 bg-popover border border-[var(--floe-line)] rounded shadow-[var(--floe-elevation-float)] z-50 overflow-hidden"
         >
           <div class="max-h-48 overflow-y-auto py-0.5">
             <For each={layouts()}>
@@ -98,15 +98,15 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                 return (
                   <div
                     class={cn(
-                      'flex items-center gap-1.5 px-1.5 py-1 hover:bg-muted/60 transition-colors cursor-pointer group',
-                      isActive() && 'bg-muted/60'
+                      'flex items-center gap-1.5 px-1.5 py-1 hover:bg-[var(--floe-state-press)] transition-colors cursor-pointer group',
+                      isActive() && 'bg-[var(--floe-well)]'
                     )}
                     onClick={() => !isRenamingThis() && handleSelect(wsLayout.id)}
                   >
                     {/* Check icon for active */}
                     <div class="w-3 h-3 flex-shrink-0">
                       <Show when={isActive()}>
-                        <Check class="w-3 h-3 text-primary" />
+                        <Check class="w-3 h-3 text-[var(--floe-accent-ink)]" />
                       </Show>
                     </div>
 
@@ -116,7 +116,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                       fallback={
                         <input
                           type="text"
-                          class="flex-1 text-[10px] bg-background border border-border rounded px-1 py-0.5"
+                          class="flex-1 text-[10px] bg-background border border-[var(--floe-line)] rounded px-1 py-0.5"
                           value={renameValue()}
                           onInput={(e) => setRenameValue(e.currentTarget.value)}
                           onKeyDown={(e) => {
@@ -132,7 +132,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                       <span class="flex-1 text-[10px] truncate text-foreground/80">
                         {wsLayout.name}
                         {wsLayout.isPreset && (
-                          <span class="ml-1 text-[9px] text-muted-foreground/60">(preset)</span>
+                          <span class="ml-1 text-[9px] text-[var(--floe-ink-quiet)]">(preset)</span>
                         )}
                       </span>
                     </Show>
@@ -145,7 +145,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                           onClick={(e) => handleDuplicate(wsLayout.id, e)}
                           title="Duplicate"
                         >
-                          <Copy class="w-2.5 h-2.5 text-muted-foreground/70" />
+                          <Copy class="w-2.5 h-2.5 text-[var(--floe-ink-quiet)]" />
                         </button>
                         <Show when={!wsLayout.isPreset}>
                           <button
@@ -153,7 +153,7 @@ export function LayoutSelector(props: LayoutSelectorProps) {
                             onClick={(e) => startRename(wsLayout.id, wsLayout.name, e)}
                             title="Rename"
                           >
-                            <Pencil class="w-2.5 h-2.5 text-muted-foreground/70" />
+                            <Pencil class="w-2.5 h-2.5 text-[var(--floe-ink-quiet)]" />
                           </button>
                           <button
                             class="p-0.5 rounded hover:bg-destructive/10 transition-colors cursor-pointer"
@@ -172,9 +172,9 @@ export function LayoutSelector(props: LayoutSelectorProps) {
           </div>
 
           {/* Create new layout */}
-          <div class="border-t border-border/40 px-1.5 py-1">
+          <div class="border-t border-[var(--floe-line)] px-1.5 py-1">
             <button
-              class="w-full text-left text-[10px] text-primary/80 hover:text-primary cursor-pointer"
+              class="w-full text-left text-[10px] text-primary/80 hover:text-[var(--floe-accent-ink)] cursor-pointer"
               onClick={() => {
                 setIsOpen(false);
                 // Close UI first, then mutate deck state.

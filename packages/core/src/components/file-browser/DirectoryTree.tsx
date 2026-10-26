@@ -214,7 +214,7 @@ function FolderTreeItem(props: TreeItemProps) {
         onPointerLeave={handlePointerLeave}
         class={cn(
           'group flex items-center w-full min-h-[var(--floe-row-height)] py-1 text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
-          'transition-all duration-150 ease-out',
+          'transition-all duration-[var(--floe-duration-fast)] ease-out',
           'hover:bg-sidebar-accent/60',
           isActive() && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
           // Drop target styling - enhanced visual feedback
@@ -238,7 +238,7 @@ function FolderTreeItem(props: TreeItemProps) {
             onClick={handleToggle}
             class={cn(
               'flex-shrink-0 w-3.5 h-3.5 flex items-center justify-center cursor-pointer',
-              'transition-transform duration-150',
+              'transition-transform duration-[var(--floe-duration-fast)]',
               isExpanded() && 'rotate-90',
               'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring'
             )}
@@ -273,7 +273,7 @@ function FolderTreeItem(props: TreeItemProps) {
 
           {/* Subfolder count badge */}
           <Show when={hasSubfolders()}>
-            <span class="ml-auto mr-2 text-[10px] text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity">
+            <span class="ml-auto mr-2 text-[10px] text-[var(--floe-ink-quiet)] opacity-0 group-hover:opacity-100 transition-opacity">
               {subfolderCount()}
             </span>
           </Show>
@@ -284,7 +284,7 @@ function FolderTreeItem(props: TreeItemProps) {
       <Show when={isExpanded() && hasSubfolders()}>
         <div
           class={cn(
-            'overflow-hidden transition-all duration-200',
+            'overflow-hidden transition-all duration-[var(--floe-duration-base)]',
             isExpanded() ? 'opacity-100' : 'opacity-0'
           )}
         >

@@ -37,6 +37,10 @@ const copies = [
     dest: resolve(pkgRoot, 'dist/primitives.css'),
   },
   {
+    src: resolve(pkgRoot, 'src/styles/language.css'),
+    dest: resolve(pkgRoot, 'dist/language.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/styles/standalone.css'),
     dest: resolve(pkgRoot, 'dist/standalone.css'),
   },

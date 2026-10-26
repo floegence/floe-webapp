@@ -76,17 +76,23 @@ export function CodeSnippet(props: CodeSnippetProps) {
   };
 
   return (
-    <div class={cn('rounded-md overflow-hidden', props.class)}>
+    <div
+      class={cn(
+        'overflow-hidden rounded-[var(--floe-radius-group)]',
+        'border border-[var(--floe-line)]',
+        props.class
+      )}
+    >
       {/* Header with title and copy button */}
       <Show when={props.title || showCopyButton()}>
-        <div class="flex items-center justify-between px-3 py-1.5 bg-[#161b22] border-b border-[#30363d]">
+        <div class="flex items-center justify-between px-3 py-1.5 bg-[var(--floe-well)] border-b border-[var(--floe-line)]">
           <Show when={props.title}>
-            <span class="text-[11px] text-[#8b949e] font-mono">
+            <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] font-mono">
               {props.title}
             </span>
           </Show>
           <Show when={!props.title}>
-            <span class="text-[11px] text-[#8b949e] font-mono uppercase">
+            <span class="text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] font-mono uppercase tracking-[0.06em]">
               {language()}
             </span>
           </Show>
@@ -95,7 +101,7 @@ export function CodeSnippet(props: CodeSnippetProps) {
               variant="ghost"
               size="xs"
               onClick={handleCopy}
-              class="h-5 px-1.5 text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#21262d]"
+              class="text-[var(--floe-ink-quiet)] hover:text-[var(--floe-ink)]"
               title={copied() ? 'Copied!' : 'Copy code'}
             >
               <Show when={copied()} fallback={<CopyIcon class="w-3 h-3" />}>

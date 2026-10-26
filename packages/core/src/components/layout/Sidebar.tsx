@@ -30,7 +30,7 @@ export function Sidebar(props: SidebarProps) {
         'bg-sidebar text-sidebar-foreground',
         'border-r border-sidebar-border',
         'overflow-hidden',
-        visibilityMotion() === 'animated' && 'transition-[width] duration-150 ease-out',
+        visibilityMotion() === 'animated' && 'transition-[width] duration-[var(--floe-duration-fast)] ease-out',
         props.class
       )}
       style={{
@@ -87,7 +87,7 @@ export function SidebarSection(props: SidebarSectionProps) {
   return (
     <section class={cn('flex flex-col', props.class)}>
       {props.title && (
-        <div class="flex items-center justify-between px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+        <div class="flex items-center justify-between px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)]">
           <span>{props.title}</span>
           {props.actions}
         </div>
@@ -113,18 +113,31 @@ export function SidebarItem(props: SidebarItemProps) {
   return (
     <button
       type="button"
+      data-floe-interactive="row"
+      data-selected={props.active ? 'true' : undefined}
       class={cn(
-        'w-full min-h-[var(--floe-row-height)] flex items-center gap-2 px-2.5 py-1 mx-1 rounded-lg text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)] cursor-pointer',
-        'transition-[background-color,color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-in-out)]',
-        'hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-sidebar-ring',
-        props.active && 'bg-sidebar-accent text-sidebar-accent-foreground font-medium',
+        'group w-full min-h-[var(--floe-row-height)] flex items-center gap-2 pl-2.5 pr-2 mx-1 rounded-[var(--floe-radius-md)]',
+        'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)] cursor-pointer',
+        'text-[var(--floe-ink-soft)]',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
+        props.active && 'text-foreground font-medium',
         props.class
       )}
       style={{ 'padding-left': props.indent ? `${10 + props.indent * 10}px` : undefined }}
       onClick={() => props.onClick?.()}
     >
-      {props.icon && <span class="flex-shrink-0 w-4 h-4 opacity-60">{props.icon}</span>}
+      {props.icon && (
+        <span
+          class={cn(
+            'flex-shrink-0 w-4 h-4 transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+            props.active
+              ? 'text-[var(--floe-ink-soft)]'
+              : 'text-[var(--floe-ink-quiet)] group-hover:text-[var(--floe-ink)]'
+          )}
+        >
+          {props.icon}
+        </span>
+      )}
       <span class="flex-1 truncate text-left">{props.children}</span>
     </button>
   );

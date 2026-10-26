@@ -30,14 +30,14 @@ export function DirectoryInput(props: DirectoryInputProps) {
   return <div class={props.class}>
     <button data-floe-input-surface data-floe-surface="inset" aria-invalid={props.error ? true : undefined} type="button" onClick={() => setExpanded((value) => !value)} disabled={props.disabled}
       aria-expanded={expanded()} title={props.value} class={cn(
-        'flex w-full cursor-pointer items-center gap-2 rounded border border-input bg-background px-2 text-left shadow-sm disabled:cursor-not-allowed disabled:opacity-50',
+        'floe-field flex w-full cursor-pointer items-center gap-2 px-2 text-left disabled:cursor-not-allowed disabled:opacity-60',
         props.size === 'lg' ? 'h-9 text-sm' : props.size === 'md' ? 'h-8 text-xs' : 'h-7 text-xs',
       )}>
-      <Folder class="h-4 w-4 shrink-0 text-muted-foreground" /><span class="min-w-0 flex-1 truncate">{displayValue() || props.placeholder || 'Select a directory…'}</span>
+      <Folder class="h-4 w-4 shrink-0 text-[var(--floe-ink-quiet)]" /><span class="min-w-0 flex-1 truncate">{displayValue() || props.placeholder || 'Select a directory…'}</span>
       <ChevronRight class={cn('h-3.5 w-3.5 shrink-0 transition-transform', expanded() && 'rotate-90')} />
     </button>
     <Show when={expanded()}><div class="mt-2"><PickerPanel {...props} source={source} /></div></Show>
     <Show when={props.error}><p role="alert" class="mt-1 text-xs text-error">{props.error}</p></Show>
-    <Show when={props.helperText && !props.error}><p class="mt-1 text-xs text-muted-foreground">{props.helperText}</p></Show>
+    <Show when={props.helperText && !props.error}><p class="mt-1 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]">{props.helperText}</p></Show>
   </div>;
 }

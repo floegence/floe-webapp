@@ -88,7 +88,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
       class={cn(
         // Same safe-area rule as TopBar: keep the visual bar height stable, and
         // add safe-area padding on an outer wrapper (avoid squeezing content).
-        'relative shrink-0 bg-background border-t border-border safe-bottom safe-left safe-right',
+        'relative shrink-0 bg-background border-t border-[var(--floe-line)] safe-bottom safe-left safe-right',
         props.class
       )}
       style={{ 'border-top-color': 'var(--bottom-bar-border)' }}
@@ -143,7 +143,7 @@ export function MobileTabBar(props: MobileTabBarProps) {
         </div>
         </div>
         <Show when={props.actions?.length}>
-          <div data-floe-mobile-navigation-actions class="flex shrink-0 border-l border-border">
+          <div data-floe-mobile-navigation-actions class="flex shrink-0 border-l border-[var(--floe-line)]">
             <For each={props.actions}>{(item) => <MobileTabItem item={item} action
               isActive={false} index={0} itemCount={1}
               onKeyboardSelect={() => {}}
@@ -183,13 +183,13 @@ function MobileTabItem(props: MobileTabItemProps) {
       class={cn(
         'relative flex-shrink-0 flex flex-col items-center justify-center',
         'min-w-16 h-full px-4 snap-center',
-        'transition-[color] duration-150',
-        'focus:outline-none focus-visible:bg-muted',
+        'transition-[color,background-color] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+        'hover:bg-[var(--floe-state-hover)] focus:outline-none focus-visible:bg-[var(--floe-state-press)]',
         props.action && 'w-16 px-1',
-        expanded() && 'bg-muted text-foreground',
+        expanded() && 'bg-[var(--floe-state-selected)] text-foreground',
         props.isActive
-          ? 'text-primary'
-          : 'text-muted-foreground active:text-foreground'
+          ? 'text-[var(--floe-accent-ink)]'
+          : 'text-[var(--floe-ink-soft)] active:text-foreground'
       )}
       onClick={() => props.onClick()}
       aria-label={props.item.label}
@@ -227,7 +227,7 @@ function MobileTabItem(props: MobileTabItemProps) {
       {/* Icon with scale animation */}
       <div
         class={cn(
-          'relative transition-transform duration-150',
+          'relative transition-transform duration-[var(--floe-duration-fast)]',
           props.isActive && 'scale-110'
         )}
       >

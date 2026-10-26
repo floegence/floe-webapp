@@ -95,7 +95,8 @@ export function Switch(props: SwitchProps) {
         data-floe-surface-part="switch-track"
         data-floe-selected={local.checked ? 'true' : undefined}
         class={cn(
-          'rounded-full transition-colors duration-200 cursor-pointer',
+          'rounded-full cursor-pointer',
+          'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
           styles().track,
           local.checked ? 'bg-primary' : 'bg-input',
           local.disabled && 'cursor-not-allowed',
@@ -106,7 +107,9 @@ export function Switch(props: SwitchProps) {
           data-floe-surface="raised"
           data-floe-surface-part="switch-thumb"
           class={cn(
-            'rounded-full bg-background shadow-sm transition-transform duration-200',
+            'rounded-full bg-background',
+            'shadow-[var(--floe-elevation-raised)]',
+            'transition-transform duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             styles().thumb,
             'absolute top-0.5 left-0.5',
             local.checked ? styles().thumbTranslate : 'translate-x-0'
@@ -125,7 +128,7 @@ export function Switch(props: SwitchProps) {
           </span>
         </Show>
         <Show when={local.description}>
-          <span class={cn('text-muted-foreground', styles().description)}>
+          <span class={cn('text-[var(--floe-ink-soft)]', styles().description)}>
             {local.description}
           </span>
         </Show>

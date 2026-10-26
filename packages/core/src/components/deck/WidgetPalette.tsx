@@ -43,7 +43,7 @@ export function WidgetPalette(props: WidgetPaletteProps) {
         <Button
           variant="outline"
           size="sm"
-          class={cn('fixed bottom-4 right-4 z-50 shadow-lg', props.class)}
+          class={cn('fixed bottom-4 right-4 z-50 shadow-[var(--floe-elevation-float)]', props.class)}
           onClick={() => setIsOpen(true)}
         >
           <Plus class="w-4 h-4 mr-1" />
@@ -54,16 +54,16 @@ export function WidgetPalette(props: WidgetPaletteProps) {
       {/* Palette panel */}
       <div
         class={cn(
-          'fixed right-0 top-0 bottom-0 w-72 bg-background border-l border-border shadow-xl z-50',
-          'transform transition-transform duration-200',
+          'fixed right-0 top-0 bottom-0 w-72 bg-background border-l border-[var(--floe-line)] shadow-[var(--floe-elevation-float-strong)] z-50',
+          'transform transition-transform duration-[var(--floe-duration-base)]',
           isOpen() ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div class="flex items-center justify-between p-3 border-b border-border">
+        <div class="flex items-center justify-between p-3 border-b border-[var(--floe-line)]">
           <h2 class="text-sm font-semibold">Add Widget</h2>
           <button
-            class="p-1 rounded hover:bg-muted transition-colors cursor-pointer"
+            class="p-1 rounded hover:bg-[var(--floe-state-hover)] transition-colors cursor-pointer"
             onClick={() => setIsOpen(false)}
           >
             <X class="w-4 h-4" />
@@ -83,17 +83,17 @@ export function WidgetPalette(props: WidgetPaletteProps) {
                   <div class="mb-2">
                     {/* Category header */}
                     <button
-                      class="w-full flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors text-left cursor-pointer"
+                      class="w-full flex items-center gap-2 p-2 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                       onClick={() => toggleCategory(category.key)}
                     >
                       <ChevronRight
                         class={cn(
-                          'w-4 h-4 text-muted-foreground transition-transform',
+                          'w-4 h-4 text-[var(--floe-ink-soft)] transition-transform',
                           isExpanded() && 'rotate-90'
                         )}
                       />
                       <span class="text-sm font-medium">{category.label}</span>
-                      <span class="ml-auto text-xs text-muted-foreground">{widgets().length}</span>
+                      <span class="ml-auto text-xs text-[var(--floe-ink-soft)]">{widgets().length}</span>
                     </button>
 
                     {/* Widget list */}
@@ -102,13 +102,13 @@ export function WidgetPalette(props: WidgetPaletteProps) {
                         <For each={widgets()}>
                           {(widget) => (
                             <button
-                              class="w-full flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors text-left cursor-pointer"
+                              class="w-full flex items-center gap-2 p-2 rounded hover:bg-[var(--floe-state-hover)] transition-colors text-left cursor-pointer"
                               onClick={() => handleAddWidget(widget.type)}
                             >
                               <Show when={widget.icon} fallback={<div class="w-4 h-4" />}>
                                 {(Icon) => {
                                   const IconComponent = Icon();
-                                  return <IconComponent class="w-4 h-4 text-muted-foreground" />;
+                                  return <IconComponent class="w-4 h-4 text-[var(--floe-ink-soft)]" />;
                                 }}
                               </Show>
                               <span class="text-sm">{widget.name}</span>
@@ -125,7 +125,7 @@ export function WidgetPalette(props: WidgetPaletteProps) {
 
           {/* Empty state */}
           <Show when={widgetRegistry.widgets().size === 0}>
-            <div class="text-center text-muted-foreground text-sm py-8">
+            <div class="text-center text-[var(--floe-ink-soft)] text-sm py-8">
               No widgets registered
             </div>
           </Show>

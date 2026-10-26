@@ -53,16 +53,20 @@ export function createThemeService(): ThemeContextValue {
   const storageKey = () => floe.config.theme.storageKey;
   const defaultTheme = () => floe.config.theme.defaultTheme;
   const surfaceStyleStorageKey = () => floe.config.theme.surfaceStyleStorageKey ?? `${storageKey()}-surface-style`;
-  const configuredSurfaceStyle = floe.config.theme.defaultSurfaceStyle;
-  const defaultSurfaceStyle = isFloeSurfaceStyle(configuredSurfaceStyle) ? configuredSurfaceStyle : 'standard';
+  const defaultSurfaceStyle: FloeSurfaceStyle = 'soft-neumorphic';
   const storedSurfaceStyle = floe.persist.load<unknown>(surfaceStyleStorageKey(), defaultSurfaceStyle);
+  if (!isFloeSurfaceStyle(storedSurfaceStyle)) {
+    // A retired material (`standard`) was read as the only material above, so the
+    // stale key would otherwise outlive the upgrade and be re-read forever.
+    floe.persist.remove(surfaceStyleStorageKey());
+  }
   const [surfaceStyle, setSurfaceStyleSignal] = createSignal<FloeSurfaceStyle>(
     isFloeSurfaceStyle(storedSurfaceStyle) ? storedSurfaceStyle : defaultSurfaceStyle
   );
+  // Only one material exists, so the setter keeps the public API but has
+  // nothing to store: persisting a constant would only leave stale keys behind.
   const setSurfaceStyle = (style: FloeSurfaceStyle) => {
-    const next = isFloeSurfaceStyle(style) ? style : defaultSurfaceStyle;
-    setSurfaceStyleSignal(next);
-    floe.persist.debouncedSave(surfaceStyleStorageKey(), next);
+    setSurfaceStyleSignal(isFloeSurfaceStyle(style) ? style : defaultSurfaceStyle);
   };
   // Material updates never rerun palette application or recreate the consumer tree.
   createEffect(() => applySurfaceStyleAttribute(surfaceStyle()));

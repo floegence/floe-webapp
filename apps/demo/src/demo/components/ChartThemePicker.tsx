@@ -48,11 +48,11 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
         'min-w-0 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         props.compact
           ? props.active
-            ? 'rounded-full border border-primary bg-accent/80 px-3 py-1.5 text-foreground shadow-sm'
-            : 'rounded-full border border-border bg-card px-3 py-1.5 hover:bg-accent/40'
+            ? 'rounded-full border border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] px-3 py-1.5 text-[var(--floe-ink)] shadow-sm'
+            : 'rounded-full border border-[var(--floe-line)] bg-[var(--floe-plane-raised)] px-3 py-1.5 hover:bg-[var(--floe-state-hover)]/40'
           : props.active
-            ? 'rounded-xl border border-primary bg-accent/60 px-3.5 py-3 shadow-sm'
-            : 'rounded-xl border border-border bg-card/90 px-3.5 py-3 hover:border-foreground/15 hover:bg-accent/20'
+            ? 'rounded-[var(--floe-radius-group)] border border-[var(--floe-accent-line)] bg-[var(--floe-accent-soft)] px-3.5 py-3 shadow-sm'
+            : 'rounded-[var(--floe-radius-group)] border border-[var(--floe-line)] bg-[var(--floe-plane-raised)]/90 px-3.5 py-3 hover:border-foreground/15 hover:bg-[var(--floe-state-hover)]/20'
       )}
       onClick={() => props.onSelect()}
     >
@@ -62,13 +62,13 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
           <>
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--floe-ink-soft)]/70">
                   {presetDetails()?.category ?? 'Theme Preset'}
                 </p>
-                <p class="mt-1 text-sm font-semibold text-foreground">{props.preset.displayName}</p>
+                <p class="mt-1 text-sm font-semibold text-[var(--floe-ink)]">{props.preset.displayName}</p>
               </div>
               <Show when={props.active}>
-                <span class="rounded-full border border-primary/35 bg-background/80 px-2 py-0.5 text-[10px] font-medium text-primary">
+                <span class="rounded-full border border-[var(--floe-accent-line)] bg-[var(--floe-plane)]/80 px-2 py-0.5 text-[10px] font-medium text-[var(--floe-accent-ink)]">
                   Active
                 </span>
               </Show>
@@ -85,17 +85,17 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
               </For>
             </div>
 
-            <p class="mt-3 text-[11px] leading-4 text-foreground/85">
+            <p class="mt-3 text-[11px] leading-4 text-[var(--floe-ink)]/85">
               {props.preset.description ?? 'Named chart theme preset.'}
             </p>
-            <p class="mt-2 text-[10px] leading-4 text-muted-foreground">
+            <p class="mt-2 text-[10px] leading-4 text-[var(--floe-ink-soft)]">
               {presetDetails()?.bestFor}
             </p>
 
             <div class="mt-3 flex flex-wrap gap-1.5">
               <For each={presetDetails()?.traits ?? []}>
                 {(trait) => (
-                  <span class="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <span class="rounded-full border border-[var(--floe-line)]/70 bg-[var(--floe-plane)]/80 px-2 py-0.5 text-[10px] font-medium text-[var(--floe-ink-soft)]">
                     {trait}
                   </span>
                 )}
@@ -117,7 +117,7 @@ function ChartThemePresetButton(props: ChartThemePresetButtonProps) {
           </div>
           <span class="text-xs font-medium whitespace-nowrap">{props.preset.displayName}</span>
           <Show when={props.active}>
-            <span class="rounded-full bg-background/80 px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+            <span class="rounded-full bg-[var(--floe-plane)]/80 px-1.5 py-0.5 text-[9px] font-medium text-[var(--floe-ink-soft)]">
               Active
             </span>
           </Show>

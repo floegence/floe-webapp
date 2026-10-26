@@ -111,14 +111,14 @@ export const ChatSidebar: Component<ChatSidebarProps> = (props) => {
                   <div class="flex items-center gap-2">
                     <span class="truncate">{thread.title}</span>
                     <Show when={thread.unread}>
-                      <span class="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      <span class="w-1.5 h-1.5 rounded-full bg-[var(--floe-accent-ink)] flex-shrink-0" />
                     </Show>
                   </div>
-                  <p class="text-[10px] text-muted-foreground truncate mt-0.5">
+                  <p class="text-[10px] text-[var(--floe-ink-soft)] truncate mt-0.5">
                     {thread.preview}
                   </p>
                 </div>
-                <span class="text-[10px] text-muted-foreground flex-shrink-0">
+                <span class="text-[10px] text-[var(--floe-ink-soft)] flex-shrink-0">
                   {formatTimestamp(thread.timestamp)}
                 </span>
               </button>

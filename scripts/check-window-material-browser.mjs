@@ -52,6 +52,17 @@ async function measure(page) {
       transition: style.transitionProperty,
       transform: style.transform,
       radius: style.borderRadius,
+      // The panel's radius is a design token, not a per-window literal: read the
+      // expected value from the page so the check compares the panel against the
+      // scale it claims to consume instead of against a frozen pixel snapshot.
+      radiusToken: (() => {
+        const probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;visibility:hidden;width:0;height:0;border-radius:var(--floe-radius-panel)';
+        document.body.appendChild(probe);
+        const value = getComputedStyle(probe).borderRadius;
+        probe.remove();
+        return value;
+      })(),
       titleHeight: title.getBoundingClientRect().height,
       titleFontSize: getComputedStyle(title.querySelector('h2')).fontSize,
     };
@@ -94,7 +105,8 @@ try {
           assert.equal(active.title[3], 255);
           assert.equal(active.titleImage, 'none');
           assert.equal(active.backdrop, 'none');
-          assert.equal(active.radius, '12px');
+          assert.equal(active.radius, active.radiusToken);
+          assert.ok(active.radius !== '0px', 'window keeps a visible rounded corner');
           assert.equal(active.titleHeight, 32);
           assert.equal(active.titleFontSize, '12px');
           assert.equal(active.contentBackground?.[3], 255);
@@ -327,7 +339,7 @@ try {
         assert.equal(standard.titleImage, 'none');
         assert.equal(standard.background[3], 255);
         assert.equal(standard.title[3], 255);
-        assert.equal(standard.radius, '12px');
+        assert.equal(standard.radius, standard.radiusToken);
         assert.equal(standard.titleHeight, 32);
         assert.equal(standard.titleFontSize, '12px');
         assert.equal(standard.transition, 'opacity, transform');

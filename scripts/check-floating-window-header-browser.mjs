@@ -12,7 +12,7 @@ const cases = [];
 const report = { cases };
 try {
   for (const entry of demo ? ['demo'] : ['styles', 'tailwind']) {
-    for (const surface of ['standard', 'soft-neumorphic']) {
+    for (const surface of ['soft-neumorphic']) {
       for (const mode of ['light', 'dark']) {
         for (const width of [390, 1440]) {
           const name = `${entry}-${surface}-${mode}-${width}`;

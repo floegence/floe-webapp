@@ -104,7 +104,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
         <div class="flex flex-col w-full gap-2">
           {/* Filename input */}
           <div class="flex items-center gap-1.5">
-            <label class="text-xs text-muted-foreground flex-shrink-0">{pickerCopy(props).fileName}</label>
+            <label class="text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)] flex-shrink-0">{pickerCopy(props).fileName}</label>
             <div class="flex-1">
               <Input
                 size="sm"
@@ -119,7 +119,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
 
           {/* Full path preview + buttons */}
           <div class="flex items-center gap-2">
-            <span class="flex-1 text-[11px] text-muted-foreground truncate" title={fullPath()}>
+            <span class="flex-1 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] truncate" title={fullPath()}>
               {fullPath()}
             </span>
             <Button variant="ghost" size="sm" onClick={handleCancel}>
@@ -134,12 +134,12 @@ export function FileSavePicker(props: FileSavePickerProps) {
     >
       <div class="flex flex-col gap-2 -mt-1">
         <PickerPanel {...props} source={source} />
-        <Show when={source.view() === 'browse'}><div class="flex min-h-[100px] overflow-hidden rounded border border-border">
+        <Show when={source.view() === 'browse'}><div class="flex min-h-[100px] overflow-hidden rounded border border-[var(--floe-line)]">
           <div {...props.scrollViewportProps} class="max-h-[160px] w-full min-w-0 overflow-y-auto">
             <Show
               when={currentFiles().length > 0}
               fallback={
-                <div class="flex items-center justify-center h-full text-xs text-muted-foreground">
+                <div class="flex items-center justify-center h-full text-[length:var(--floe-type-supporting)] text-[var(--floe-ink-soft)]">
                   {pickerCopy(props).emptyFiles}
                 </div>
               }
@@ -152,15 +152,15 @@ export function FileSavePicker(props: FileSavePickerProps) {
                     class={cn(
                       'flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 cursor-pointer',
                       'transition-colors duration-100',
-                      'hover:bg-accent/60',
+                      'hover:bg-[var(--floe-state-hover)]',
                       'focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
-                      fileName() === file.name && 'bg-accent text-accent-foreground font-medium'
+                      fileName() === file.name && 'bg-[var(--floe-state-selected)] text-foreground font-medium'
                     )}
                   >
                     <FileItemIcon item={file} size={16} class="w-4 h-4 flex-shrink-0" />
                     <span class="truncate">{file.name}</span>
                     <Show when={file.size != null}>
-                      <span class="ml-auto text-[10px] text-muted-foreground/60 flex-shrink-0">
+                      <span class="ml-auto text-[length:var(--floe-type-caption)] text-[var(--floe-ink-ghost)] flex-shrink-0">
                         {formatFileSize(file.size!)}
                       </span>
                     </Show>

@@ -41,7 +41,7 @@ export function SkeletonText(props: { lines?: number; class?: string }) {
 
 export function SkeletonCard(props: { class?: string }) {
   return (
-    <div class={cn('rounded-lg border border-border p-4 space-y-4', props.class)}>
+    <div class={cn('rounded-lg border border-[var(--floe-line)] p-4 space-y-4', props.class)}>
       <div class="flex items-center gap-3">
         <Skeleton class="h-10 w-10 rounded-full" />
         <div class="space-y-2 flex-1">
