@@ -22,14 +22,12 @@ describe('Shell mobile activityBottomItems', () => {
     const Icon = () => <span />;
     const html = renderWithCoreProviders(() => (
       <Shell topBarMobileMode="hidden"
-        bottomBarMode="hidden"
         activityItems={[{ id: 'main', icon: Icon, label: 'Main' }]}
         mobileNavigationActions={[{ id: 'more', icon: Icon, label: 'More', onClick: () => {} }]}>
         <button>Retained page</button>
       </Shell>
     ));
     expect(html).not.toContain('data-floe-shell-slot="top-bar"');
-    expect(html).not.toContain('data-floe-shell-slot="bottom-bar"');
     expect(html).toContain('data-floe-mobile-navigation-actions');
     expect(html).toContain('aria-label="More"');
     expect(html).toContain('Retained page');

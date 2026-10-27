@@ -32,7 +32,6 @@ export {
   type FloeComponent,
   type ComponentContext,
   type CommandContribution,
-  type StatusBarContribution,
   type ComponentRegistryValue,
 } from './ComponentRegistry';
 export {

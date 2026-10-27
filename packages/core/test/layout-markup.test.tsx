@@ -17,21 +17,16 @@ function renderWithCoreProviders(node: () => unknown): string {
 }
 
 describe('layout markup', () => {
-  it('Shell omits the hidden bottom bar without evaluating its content', () => {
-    let contentReads = 0;
+  it('Shell has no desktop bottom bar slot', () => {
     const html = renderWithCoreProviders(() => (
-      <Shell bottomBarMode="hidden" bottomBarItems={(() => {
-        contentReads += 1;
-        return <span>Hidden status</span>;
-      })()} slotClassNames={{ bottomBarHeight: 'h-7' }}>
+      <Shell>
         <div>Main</div>
       </Shell>
     ));
 
+    // Shell-wide chrome ends at the content area; per-widget and per-page
+    // affordances own everything below it.
     expect(html).not.toContain('data-floe-shell-slot="bottom-bar"');
-    expect(html).not.toContain('Hidden status');
-    expect(html).not.toContain('h-7');
-    expect(contentReads).toBe(0);
     expect(html).toContain('data-floe-shell-slot="main"');
   });
 
@@ -111,7 +106,6 @@ describe('layout markup', () => {
           sidebar: 'shell-sidebar-class',
           contentArea: 'shell-content-area-class',
           main: 'shell-main-class',
-          bottomBar: 'shell-bottom-bar-class',
         }}
       >
         <div>Main</div>
@@ -124,14 +118,12 @@ describe('layout markup', () => {
     expect(html).toContain('data-floe-shell-slot="sidebar"');
     expect(html).toContain('data-floe-shell-slot="content-area"');
     expect(html).toContain('data-floe-shell-slot="main"');
-    expect(html).toContain('data-floe-shell-slot="bottom-bar"');
     expect(html).toContain('shell-root-class');
     expect(html).toContain('shell-top-bar-class');
     expect(html).toContain('shell-activity-bar-class');
     expect(html).toContain('shell-sidebar-class');
     expect(html).toContain('shell-content-area-class');
     expect(html).toContain('shell-main-class');
-    expect(html).toContain('shell-bottom-bar-class');
   });
 
   it('Sidebar should expose visibility-motion markup and drop width transitions for instant motion', () => {

@@ -293,13 +293,13 @@ The browser-neutral `@floegence/floe-webapp-core/window-status` entry exports
 input, scripts, or renderer dependencies. The retry artwork shares geometry
 with the renderer's `Refresh` icon. Hosts must escape their own dynamic copy.
 
-### Optional desktop status bar
+### Desktop chrome ends at the content area
 
-`Shell` renders its desktop status bar by default. Set `bottomBarMode="hidden"`
-to omit the bar and its content without reserving layout space. This does not
-change mobile navigation. `BottomBarCompanion` accepts a measurable layout
-anchor, including an independent anchor inside `AppViewport`, so a retained
-companion does not require a status bar.
+`Shell` has no global desktop status bar. Shell-wide chrome stops at the content
+area, so per-widget and per-page affordances own everything below it and host
+apps place their own status language where it belongs. `BottomBarCompanion`
+remains available and accepts a measurable layout anchor, including an
+independent anchor inside `AppViewport`.
 
 ### Stable observed lists
 

@@ -337,7 +337,7 @@ import { Shell } from '@floegence/floe-webapp-core/layout';
 <Shell
   slotClassNames={{
     topBar: 'backdrop-blur-md',
-    bottomBar: 'text-[11px]',
+    sidebar: 'text-[12px]',
   }}
 />;
 ```

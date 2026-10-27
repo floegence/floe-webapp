@@ -56,9 +56,6 @@ function stableContribution<TProtocol>(
     get commands() {
       return record.current.commands;
     },
-    get statusBar() {
-      return record.current.statusBar;
-    },
     async onMount(context) {
       const definition = record.current;
       record.mountedDefinition = definition;

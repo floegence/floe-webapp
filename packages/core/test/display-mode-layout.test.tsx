@@ -27,7 +27,11 @@ describe('display mode shared layout contract', () => {
     expect(html).toContain('Activity');
     expect(html).toContain('Deck');
     expect(html).toContain('Workbench');
-    expect(html).toContain('display-mode-switcher__pill-bg');
+    // The selection travels as one pill on the shared rail surface rather than
+    // as a per-option fill. The pill itself is measured after mount, so the
+    // rendered markup only carries the rail and its faces.
+    expect(html).toContain('data-floe-surface-part="rail"');
+    expect(html).toContain('display-mode-switcher__label');
   });
 
   it('normalizes persisted values back into the final display mode contract', () => {
@@ -49,8 +53,12 @@ describe('display mode shared layout contract', () => {
     expect(layoutIndex).toContain('DisplayModePageShell');
     expect(pageShell).toContain('<TopBar');
     expect(pageShell).toContain('display-mode-page-shell__body');
-    expect(styles).toContain('.display-mode-switcher {');
+    expect(styles).toContain('.display-mode-switcher__icon {');
+    expect(read('packages/core/src/styles/surface.css')).toContain(
+      "[data-floe-surface-part='segment-pill']"
+    );
     expect(styles).toContain('.display-mode-page-shell {');
+    expect(styles).not.toContain('#e5e5e5');
     expect(globals).toContain("@import '../components/layout/displayMode.css';");
     expect(tailwind).toContain("@import './display-mode.css';");
   });

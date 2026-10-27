@@ -21,14 +21,6 @@ export {
 export { TopBar, type TopBarProps } from './TopBar';
 export { TopBarIconButton, type TopBarIconButtonProps } from './TopBarIconButton';
 export {
-  BottomBar,
-  BottomBarItem,
-  StatusIndicator,
-  type BottomBarProps,
-  type BottomBarItemProps,
-  type StatusIndicatorProps,
-} from './BottomBar';
-export {
   BottomBarCompanion,
   type BottomBarCompanionDismissReason,
   type BottomBarCompanionPhase,
@@ -53,5 +45,6 @@ export {
   type DisplayModeSwitcherProps,
 } from './DisplayModeSwitcher';
 export { DisplayModePageShell, type DisplayModePageShellProps } from './DisplayModePageShell';
+export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
 
 export { AppViewport, type AppViewportProps } from './AppViewport';

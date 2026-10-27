@@ -8,7 +8,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
 ## Scope
 
 - Implement or refactor repo workspace packages/apps and scaffolded Floe-Webapp apps.
-- Add or update registry-driven navigation (`FloeComponent`, `commands`, `statusBar`, lifecycle hooks, app-level command contributions).
+- Add or update registry-driven navigation (`FloeComponent`, `commands`, lifecycle hooks, app-level command contributions).
 - Diagnose framework-usage issues and local lint/typecheck/test/build/verify failures.
 
 ## Required Inputs

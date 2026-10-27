@@ -61,7 +61,6 @@ Key fields (see the type in `packages/core/src/context/ComponentRegistry.tsx`):
 - `component`: the registered Solid component
 - `sidebar`: sidebar/mobile-tab contribution flags
 - `commands`: command palette contributions
-- `statusBar`: bottom bar contributions (desktop)
 - `onMount(ctx)` / `onUnmount()`: lifecycle hooks
 
 ## Sidebar & Mobile Tabs
@@ -261,15 +260,6 @@ export function usePortalCommands() {
 ```
 
 `useCommandContributions()` registers commands on mount and automatically unregisters them on cleanup.
-
-## Status Bar
-
-Status bar items are contributed through `FloeComponent.statusBar`.
-
-Shell renders them in:
-
-- `packages/core/src/components/layout/BottomBar.tsx`
-- `packages/core/src/components/layout/Shell.tsx`
 
 ## Per-component Storage & Logger
 

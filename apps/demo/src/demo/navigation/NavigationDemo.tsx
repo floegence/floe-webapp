@@ -9,9 +9,8 @@ import {
   useViewActivation,
 } from '@floegence/floe-webapp-core';
 import { FileBrowser, type FileItem } from '@floegence/floe-webapp-core/file-browser';
-import { Files, Layers, LayoutDashboard, Moon, Sun } from '@floegence/floe-webapp-core/icons';
-import { Shell } from '@floegence/floe-webapp-core/layout';
-import { Button } from '@floegence/floe-webapp-core/ui';
+import { Files, Layers, LayoutDashboard } from '@floegence/floe-webapp-core/icons';
+import { Shell, ThemeToggle } from '@floegence/floe-webapp-core/layout';
 
 const Reports = lazy(() => import('./ReportsPage'));
 const workspaceFiles: FileItem[] = Array.from({ length: 480 }, (_, index) => ({
@@ -103,7 +102,6 @@ function LoadingPage(props: { name: string }) {
 
 function NavigationShell() {
   const layout = useLayout();
-  const theme = useTheme();
   const items = [
     { id: 'files', icon: Files, label: 'Files', collapseBehavior: 'preserve' as const },
     { id: 'canvas', icon: Layers, label: 'Canvas', collapseBehavior: 'preserve' as const },
@@ -118,14 +116,9 @@ function NavigationShell() {
       topBarActions={(
         <div class="flex items-center gap-3">
           <span class="text-xs text-[var(--floe-ink-soft)]">Activity navigation</span>
-          <Button variant="ghost" size="icon" title="Toggle theme" onClick={() => theme.toggleTheme()}>
-            {theme.resolvedTheme() === 'dark' ? <Sun class="h-4 w-4" /> : <Moon class="h-4 w-4" />}
-          </Button>
+          <ThemeToggle />
         </div>
       )}
-      bottomBarItems={[
-        <span class="text-xs text-[var(--floe-ink-soft)]">Scroll Files, switch pages, and return to the same place.</span>,
-      ]}
     >
       <ActivityAppsMain
         activationMode="after-paint"

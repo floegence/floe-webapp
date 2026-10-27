@@ -37,7 +37,6 @@ rg "FloeApp|FloeRegistryRuntime|const components|FloeComponent\[]|useCommandCont
 - Stable `id` string.
 - `sidebar` metadata (`order`, `renderIn`, `fullScreen`, `hiddenOnMobile`, optional `badge`, optional `collapseBehavior`).
 - `commands` targets using the same registered ids.
-- `statusBar` ordering and placement when applicable.
 
 3. Validate the shell wiring still renders through the intended runtime:
 

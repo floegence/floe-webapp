@@ -117,7 +117,7 @@ import { Shell } from '@floegence/floe-webapp-core/layout';
 <Shell
   slotClassNames={{
     topBar: 'backdrop-blur-md',
-    bottomBar: 'text-[11px]',
+    sidebar: 'text-[12px]',
   }}
 >
   <div />
@@ -133,7 +133,6 @@ Stable selectors:
 - `[data-floe-shell-slot="content-area"]`
 - `[data-floe-shell-slot="main"]`
 - `[data-floe-shell-slot="terminal-panel"]`
-- `[data-floe-shell-slot="bottom-bar"]`
 - `[data-floe-shell-slot="mobile-tab-bar"]`
 
 ### Top bar icon buttons
@@ -208,7 +207,7 @@ config={{
         '--chrome-border': 'color-mix(in srgb, var(--border) 85%, var(--foreground) 15%)',
       },
       dark: {
-        '--bottom-bar-border': 'hsl(220 18% 26%)',
+        '--terminal-panel-border': 'hsl(220 18% 26%)',
       },
     },
   },
@@ -220,7 +219,6 @@ Recommended token-first shell chrome variables:
 - `--chrome-border`
 - `--top-bar-border`
 - `--activity-bar-border`
-- `--bottom-bar-border`
 - `--terminal-panel-border`
 
 Implementation references:

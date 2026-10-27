@@ -51,13 +51,6 @@ export interface CommandContribution<TProtocol = unknown> {
   execute: (ctx: ComponentContext<TProtocol>) => void | Promise<void>;
 }
 
-export interface StatusBarContribution {
-  id: string;
-  position: 'left' | 'right';
-  order?: number;
-  component: Component;
-}
-
 export type SidebarCollapseBehavior = 'toggle' | 'preserve';
 
 export interface FloeComponent<TProtocol = unknown> {
@@ -98,7 +91,6 @@ export interface FloeComponent<TProtocol = unknown> {
   };
 
   commands?: CommandContribution<TProtocol>[];
-  statusBar?: StatusBarContribution[];
 
   onMount?: (context: ComponentContext<TProtocol>) => void | Promise<void>;
   onUnmount?: () => void | Promise<void>;
@@ -119,7 +111,6 @@ export interface ComponentRegistryValue<TProtocol = unknown> {
   mountedComponents: Accessor<Set<string>>;
   sidebarItems: Accessor<Array<FloeComponent<TProtocol> & { order: number }>>;
   allCommands: Accessor<CommandContribution<TProtocol>[]>;
-  statusBarItems: Accessor<StatusBarContribution[]>;
 
   getComponent: (id: string) => FloeComponent<TProtocol> | undefined;
 }
@@ -309,14 +300,6 @@ export function createComponentRegistry(): ComponentRegistryValue<unknown> {
     return cmds;
   };
 
-  const statusBarItems: Accessor<StatusBarContribution[]> = () => {
-    const items: StatusBarContribution[] = [];
-    for (const comp of components().values()) {
-      if (comp.statusBar) items.push(...comp.statusBar);
-    }
-    return items;
-  };
-
   return {
     register,
     registerAll,
@@ -331,7 +314,6 @@ export function createComponentRegistry(): ComponentRegistryValue<unknown> {
     mountedComponents,
     sidebarItems,
     allCommands,
-    statusBarItems,
 
     getComponent,
   };

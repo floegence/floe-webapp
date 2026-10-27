@@ -564,7 +564,15 @@ export function Tabs(props: TabsProps) {
   return (
     <div
       class={cn(
-        'relative flex items-center gap-0.5',
+        /* One strip, one baseline: the rail, the scroll buttons and the add
+         * button all take their height from the row, so nothing floats above
+         * the rule. The rail's fill is carried onto those trailing controls,
+         * otherwise the band stops short and leaves a notch beside the last
+         * control. */
+        'relative flex items-stretch',
+        local.size === 'sm'
+          ? 'min-h-[var(--floe-control-height-sm)]'
+          : 'min-h-[var(--floe-control-height-md)]',
         showContainerBorder() && 'border-b border-[var(--floe-line)]',
         local.slotClassNames?.root,
         local.class
@@ -580,7 +588,7 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded-control cursor-pointer',
+            'w-6 rounded-control cursor-pointer bg-[var(--floe-well)] border border-[var(--floe-line)]',
             'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollLeft()
               ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'
@@ -606,6 +614,11 @@ export function Tabs(props: TabsProps) {
         role="tablist"
         data-floe-surface="inset"
         data-floe-surface-part="tab-rail"
+        /* A half-visible tab reads as a rendering fault. The rail fades toward
+         * whichever edge still has more content behind it, so the cut is a
+         * deliberate cue that the strip continues. */
+        data-floe-overflow-start={canScrollLeft() ? '' : undefined}
+        data-floe-overflow-end={canScrollRight() ? '' : undefined}
         aria-orientation="horizontal"
         aria-label={local.ariaLabel}
       >
@@ -707,9 +720,9 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'rounded-control cursor-pointer',
-            'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)]',
-            local.size === 'sm' ? 'w-6 h-6' : 'w-7 h-7',
+            'rounded-control cursor-pointer bg-[var(--floe-well)] border border-[var(--floe-line)]',
+            'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] hover:text-foreground',
+            local.size === 'sm' ? 'w-7' : 'w-8',
             local.slotClassNames?.addButton
           )}
           aria-label="Add new tab"
@@ -727,7 +740,7 @@ export function Tabs(props: TabsProps) {
           data-floe-interactive="icon"
           class={cn(
             'flex-shrink-0 flex items-center justify-center',
-            'w-6 h-6 rounded-control cursor-pointer',
+            'w-6 rounded-control cursor-pointer bg-[var(--floe-well)] border border-[var(--floe-line)]',
             'transition-opacity duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
             canScrollRight()
               ? 'text-[var(--floe-ink-quiet)] hover:bg-[var(--floe-state-hover)] opacity-100'

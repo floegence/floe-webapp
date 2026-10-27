@@ -91,7 +91,7 @@ Key fields (current core API):
 - `sidebar.fullScreen`
 - `sidebar.renderIn: 'sidebar' | 'main'`
 - `sidebar.hiddenOnMobile`
-- `commands`, `statusBar`
+- `commands`
 - `onMount`, `onUnmount`
 
 Design note:

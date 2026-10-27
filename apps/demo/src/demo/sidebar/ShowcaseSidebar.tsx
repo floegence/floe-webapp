@@ -11,7 +11,6 @@ import {
   FileCode,
   Grid3x3,
   Home,
-  Layers,
   Search,
   Sparkles,
 } from '@floegence/floe-webapp-core/icons';
@@ -65,12 +64,11 @@ export function ShowcaseSidebar(props: ShowcaseSidebarProps) {
 
   return (
     <div class="flex h-full min-h-0 flex-col">
-      {/* Identity: this sidebar belongs to a product, so it says which one. */}
-      <div class="flex shrink-0 items-center gap-2.5 border-b border-sidebar-border px-3 py-3">
-        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground">
-          <Layers class="h-4 w-4" />
-        </span>
-        <div class="min-w-0 flex-1">
+      {/* Identity: the top bar already carries the brand mark, so this band
+       * names the product in type only. Two marks side by side read as two
+       * products. */}
+      <div class="flex shrink-0 flex-col justify-center border-b border-sidebar-border px-3 py-3">
+        <div class="min-w-0">
           <div class="truncate text-[length:var(--floe-type-control)] font-semibold leading-tight">
             Floe Webapp
           </div>

@@ -14,51 +14,8 @@
     overflow: hidden;
   }
 
-  .display-mode-switcher {
-    display: inline-flex;
-    align-items: center;
-    gap: 1px;
-    padding: 2px;
-    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 60%, transparent);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--muted, #f1f1f1) 70%, transparent);
-  }
-
-  .display-mode-switcher__pill {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--muted-foreground, #888);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: -0.005em;
-    cursor: pointer;
-    isolation: isolate;
-    transition: color 140ms ease;
-  }
-
-  .display-mode-switcher__pill:hover,
-  .display-mode-switcher__pill.is-active {
-    color: var(--foreground, #111);
-  }
-
-  .display-mode-switcher__pill-bg {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    border: 1px solid color-mix(in srgb, var(--border, #e5e5e5) 70%, transparent);
-    border-radius: 6px;
-    background: var(--card, #fff);
-    box-shadow:
-      0 1px 2px color-mix(in srgb, var(--foreground, #000) 6%, transparent),
-      0 1px 0 color-mix(in srgb, white 60%, transparent) inset;
-  }
-
+  /* The switcher's geometry, fill and radius come from the shared rail and
+   * raised surfaces; this file only keeps what is specific to the mode set. */
   .display-mode-switcher__icon {
     width: 12px;
     height: 12px;

@@ -15,7 +15,6 @@ import { useComponentRegistry } from '../../context/ComponentRegistry';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { TopBarIconButton } from './TopBarIconButton';
-import { BottomBar } from './BottomBar';
 import { MobileTabBar, type MobileTabBarItem } from './MobileTabBar';
 import { MobileNavigationPanel, type MobileNavigationPanelProps } from './MobileNavigationPanel';
 import { ActivityBar, type ActivityBarItem } from './ActivityBar';
@@ -42,9 +41,6 @@ export interface ShellSlotClassNames {
   contentArea?: string;
   main?: string;
   terminalPanel?: string;
-  bottomBar?: string;
-  /** Height class for the bottom bar, defaults to 'h-5' (20px). Use Tailwind height classes like 'h-7' (28px). */
-  bottomBarHeight?: string;
   mobileTabBar?: string;
 }
 
@@ -74,9 +70,6 @@ export interface ShellProps {
    */
   activityBottomItemsMobileMode?: 'hidden' | 'topBar';
   topBarActions?: JSX.Element;
-  /** Defaults to visible. Hidden omits the desktop status bar and its content without reserving space. Mobile navigation is unchanged. */
-  bottomBarMode?: 'visible' | 'hidden';
-  bottomBarItems?: JSX.Element;
   /** Stable content directly above mobile navigation, such as a composer anchor. */
   mobileAccessory?: JSX.Element;
   /** Hide navigation only while a focused editor is occluded by the soft keyboard. */
@@ -301,31 +294,6 @@ export function Shell(props: ShellProps) {
     if (isMobile() && isFullScreen()) {
       setMobileSidebarOpen(false);
     }
-  });
-
-  const bottomBarContent = createMemo<JSX.Element | undefined>(() => {
-    if (isMobile() || props.bottomBarMode === 'hidden') return undefined;
-    if (props.bottomBarItems) return props.bottomBarItems;
-    if (!registry) return undefined;
-
-    const items = [...registry.statusBarItems()].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
-    const left = items.filter((i) => i.position === 'left');
-    const right = items.filter((i) => i.position === 'right');
-
-    return (
-      <>
-        <div class="flex items-center gap-2">
-          <For each={left}>
-            {(item) => <Dynamic component={item.component} />}
-          </For>
-        </div>
-        <div class="flex items-center gap-2">
-          <For each={right}>
-            {(item) => <Dynamic component={item.component} />}
-          </For>
-        </div>
-      </>
-    );
   });
 
   // Set default active tab when items are available and none is selected.
@@ -630,10 +598,9 @@ export function Shell(props: ShellProps) {
           }} />
       </Show>
       </div>
-      {/* Bottom Bar / Mobile Tab Bar */}
-      <Show when={!isMobile() && props.bottomBarMode !== 'hidden'}>
-        <BottomBar class={props.slotClassNames?.bottomBar} height={props.slotClassNames?.bottomBarHeight}>{bottomBarContent()}</BottomBar>
-      </Show>
+      {/* Mobile Tab Bar. The desktop shell has no global status bar: shell-wide
+       * chrome ends at the content area, and per-widget or per-page affordances
+       * own everything below it. */}
       <Show when={isMobile() && (activityItems().length > 0 || props.mobileNavigationActions?.length)}>
         <MobileTabBar
           ref={(element) => { navigationRef = element; }}

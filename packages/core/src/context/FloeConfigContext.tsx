@@ -169,12 +169,6 @@ export interface FloeStrings {
     cancel: string;
     confirm: string;
   };
-  statusIndicator: {
-    connected: string;
-    disconnected: string;
-    connecting: string;
-    error: string;
-  };
 }
 
 export interface FloeConfig {
@@ -280,12 +274,6 @@ export const DEFAULT_FLOE_CONFIG: FloeConfig = {
     confirmDialog: {
       cancel: 'Cancel',
       confirm: 'Confirm',
-    },
-    statusIndicator: {
-      connected: 'Connected',
-      disconnected: 'Disconnected',
-      connecting: 'Connecting',
-      error: 'Error',
     },
   },
 };

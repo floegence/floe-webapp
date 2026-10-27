@@ -25,6 +25,7 @@ import {
   useNotification,
   usePersisted,
   useTheme,
+  cn,
   type FloeComponent,
 } from '@floegence/floe-webapp-core';
 import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
@@ -36,20 +37,18 @@ import {
   configureDiffWorker,
 } from '@floegence/floe-webapp-core/chat';
 import {
-  BottomBarItem,
   DisplayModePageShell,
   DisplayModeSwitcher,
   KeepAliveStack,
   Shell,
-  StatusIndicator,
+  ThemeToggle,
   sanitizeDisplayMode,
   type KeepAliveView,
 } from '@floegence/floe-webapp-core/layout';
-import { Button, CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
+import { CommandPalette, Select } from '@floegence/floe-webapp-core/ui';
 import {
   Bookmark,
   Files,
-  GitBranch,
   Grid3x3,
   Layers,
   LayoutDashboard,
@@ -370,29 +369,6 @@ function AppContent() {
     setSidebarActiveTab('files');
   });
 
-  const DemoBranchItem: Component = () => (
-    <BottomBarItem icon={<GitBranch class="w-3 h-3" />}>main</BottomBarItem>
-  );
-
-  const DemoProtocolStatus: Component = () => {
-    const state = protocol.status();
-    const status =
-      state === 'connected'
-        ? 'connected'
-        : state === 'connecting' || state === 'waiting'
-          ? 'connecting'
-          : state === 'failed'
-            ? 'error'
-            : 'disconnected';
-    return <StatusIndicator status={status} />;
-  };
-
-  const DemoActiveFileItem: Component = () => (
-    <BottomBarItem>{activeFile().path.split('/').slice(-1)[0]}</BottomBarItem>
-  );
-
-  const DemoLanguageItem: Component = () => <BottomBarItem>{activeFile().language}</BottomBarItem>;
-
   const ShowcaseView: Component = () => (
     <ShowcaseSidebar
       activeSection={showcaseSection()}
@@ -561,12 +537,6 @@ function AppContent() {
           category: 'Demo',
           execute: () => openFile('core.shell'),
         },
-      ],
-      statusBar: [
-        { id: 'status.connection', position: 'left', order: 0, component: DemoProtocolStatus },
-        { id: 'status.branch', position: 'left', order: 10, component: DemoBranchItem },
-        { id: 'status.file', position: 'right', order: 0, component: DemoActiveFileItem },
-        { id: 'status.lang', position: 'right', order: 10, component: DemoLanguageItem },
       ],
     },
     {
@@ -822,14 +792,45 @@ function AppContent() {
     </>
   );
 
+  // The shell has no global status bar any more, so the connection state lives
+  // with the other shell-level controls instead of a strip under the content.
+  const DemoConnectionChip: Component = () => {
+    const state = () => protocol.status();
+    const tone = () =>
+      state() === 'connected'
+        ? 'var(--success)'
+        : state() === 'connecting' || state() === 'waiting'
+          ? 'var(--warning)'
+          : 'var(--error)';
+    const label = () =>
+      state() === 'connected'
+        ? 'Connected'
+        : state() === 'connecting' || state() === 'waiting'
+          ? 'Connecting'
+          : state() === 'failed'
+            ? 'Error'
+            : 'Disconnected';
+    return (
+      <span class="hidden items-center gap-1.5 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] sm:inline-flex">
+        <span
+          class={cn(
+            'h-1.5 w-1.5 rounded-full',
+            (state() === 'connecting' || state() === 'waiting') && 'animate-pulse'
+          )}
+          style={{ 'background-color': tone() }}
+        />
+        {label()}
+      </span>
+    );
+  };
+
   // Shared header actions: rendered in every display mode's top bar so the
   // user can switch modes (and toggle the theme) without losing context.
   const HeaderActions: Component = () => (
     <div class="flex items-center gap-2">
+      <DemoConnectionChip />
       <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
-      <Button variant="ghost" size="icon" onClick={() => theme.toggleTheme()} title="Toggle theme">
-        {theme.resolvedTheme() === 'light' ? <Moon class="w-4 h-4" /> : <Sun class="w-4 h-4" />}
-      </Button>
+      <ThemeToggle />
     </div>
   );
 
