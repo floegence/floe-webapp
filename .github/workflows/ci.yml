@@ -43,7 +43,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Audit dependency graph
-        run: pnpm audit --audit-level=low
+        run: pnpm audit:dependencies
 
       - name: Install browser acceptance runtimes
         run: pnpm exec playwright install --with-deps chromium webkit firefox

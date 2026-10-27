@@ -32,7 +32,10 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const engines = process.argv.includes('--all') ? {chromium,firefox,webkit} : {chromium};
 try {
   for (const [name,engine] of Object.entries(engines)) {
-    const browser = await engine.launch();
+    // Keep the loopback fixture direct when Firefox inherits a system proxy.
+    const browser = await engine.launch(name === 'firefox' ? {
+      firefoxUserPrefs: { 'network.proxy.allow_hijacking_localhost': false },
+    } : {});
     try {
       for (const dpr of [1,1.25,1.5,2,3]) {
         const context = await browser.newContext({viewport:{width:390,height:740},deviceScaleFactor:dpr,hasTouch:true,...(name==='chromium'?{isMobile:true}:{})});
