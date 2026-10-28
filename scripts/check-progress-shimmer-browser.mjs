@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle, requestAnimationFrame, createImageBitmap, Blob */
+/* global window, document, getComputedStyle, requestAnimationFrame, setTimeout, createImageBitmap, Blob */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -94,6 +94,62 @@ try {
     page.on('pageerror', (e) => report.errors.push(String(e)));
     await page.goto(`${runtime.baseURL}/current-${entry}/dist/?panel=progress`);
     await page.waitForFunction(() => !!window.progressFixture && !!window.surfaceFixture);
+    for (const interaction of ['drag', 'resize', 'drag resize']) {
+      const continuity = await page.evaluate(async (interaction) => {
+        const root = document.documentElement;
+        const elements = [
+          ...document.querySelectorAll('[data-floe-progress-shimmer], .processing-text-shimmer'),
+        ];
+        const animations = elements.map((element) =>
+          element
+            .getAnimations({ subtree: true })
+            .find((animation) => animation.animationName === 'floe-progress-shimmer')
+        );
+        const geometry = elements.map((element) => {
+          const box = element.getBoundingClientRect();
+          return [box.x, box.y, box.width, box.height];
+        });
+        root.setAttribute('data-floe-hot-interaction', interaction);
+        await new Promise(requestAnimationFrame);
+        const paused = animations.every((animation) => animation.playState === 'paused');
+        const times = animations.map((animation) => animation.currentTime);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const frozen = animations.every(
+          (animation, index) => animation.currentTime === times[index]
+        );
+        const stable = elements.every((element, index) => {
+          const box = element.getBoundingClientRect();
+          return [box.x, box.y, box.width, box.height].every(
+            (value, axis) => value === geometry[index][axis]
+          );
+        });
+        const text = elements.find((element) => element.dataset.floeProgressShimmer === 'text');
+        const original = text.textContent;
+        text.textContent = 'Progress continues during interaction';
+        const readable =
+          text.textContent.includes('continues') && getComputedStyle(text).visibility === 'visible';
+        text.textContent = original;
+        root.removeAttribute('data-floe-hot-interaction');
+        await new Promise(requestAnimationFrame);
+        const resumed = elements.every(
+          (element, index) =>
+            element
+              .getAnimations({ subtree: true })
+              .find((animation) => animation.animationName === 'floe-progress-shimmer') ===
+              animations[index] && animations[index].playState === 'running'
+        );
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const advancing = animations.every(
+          (animation, index) => animation.currentTime > times[index]
+        );
+        return { interaction, paused, frozen, stable, readable, resumed, advancing };
+      }, interaction);
+      report.accessibility.push({ entry, ...continuity });
+      for (const [key, value] of Object.entries(continuity)) {
+        if (key !== 'interaction')
+          assert.equal(value, true, entry + '/' + interaction + ': ' + key);
+      }
+    }
     const themes = await page.evaluate(() =>
       window.surfaceFixture.themes.map(({ name, mode }) => ({ name, mode }))
     );

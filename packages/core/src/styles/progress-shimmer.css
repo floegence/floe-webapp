@@ -75,6 +75,16 @@
     animation: floe-progress-shimmer 2.4s linear infinite;
   }
 
+  /* Continuous paint can add compositor deadlines to direct manipulation.
+   * Hold the existing highlight phase while the shared interaction owner is
+   * active; text, operation state and layout continue updating normally. */
+  :is([data-floe-hot-interaction~='drag'], [data-floe-hot-interaction~='resize'])
+    :is([data-floe-progress-shimmer='text'], .processing-text-shimmer),
+  :is([data-floe-hot-interaction~='drag'], [data-floe-hot-interaction~='resize'])
+    [data-floe-progress-shimmer='surface']::before {
+    animation-play-state: paused;
+  }
+
   @media (prefers-reduced-motion: reduce), (forced-colors: active) {
     :is([data-floe-progress-shimmer='text'], .processing-text-shimmer) {
       animation: none;

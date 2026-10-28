@@ -285,7 +285,9 @@ can inline the published `progress-shimmer.css` with their selected Floe theme
 tokens; it is also included by the standard style entries. Mark only active
 working text with `data-floe-progress-shimmer="text"` and remove it on settlement.
 This preserves one accessible text copy and respects reduced motion and forced
-colors. Do not add spinning icons or animated progress bars to this surface.
+colors. During a shared drag or resize interaction, shimmer holds its current
+phase and resumes afterward; content and operation state keep updating. Do not add
+spinning icons or animated progress bars to this surface.
 
 The browser-neutral `@floegence/floe-webapp-core/window-status` entry exports
 `windowStatusIllustrationSvg('access' | 'editor' | 'service')` and
