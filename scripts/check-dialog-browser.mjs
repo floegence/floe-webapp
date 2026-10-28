@@ -144,6 +144,81 @@ try {
   await canvasDialog.waitFor({ state: 'detached' });
   assert.equal(await page.locator('[data-canvas-viewport]').textContent(), canvasViewport);
 
+  // A body whose content is chosen rather than typed — the shape dialog reveals
+  // guidance for one option — must travel to its new height instead of snapping,
+  // and must do that once per change rather than fighting its own frames.
+  await page.evaluate(() => {
+    window.__heightAnimations = [];
+    const pixels = (value) => Number.parseFloat(String(value));
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (keyframes, options) {
+      const frames = Array.isArray(keyframes) ? keyframes : [];
+      if (frames.some((frame) => frame && 'height' in frame)) {
+        window.__heightAnimations.push({
+          panel: this.hasAttribute('data-floe-dialog-panel'),
+          from: pixels(frames[0].height),
+          to: pixels(frames[frames.length - 1].height),
+          duration: typeof options === 'number' ? options : options?.duration,
+          easing: typeof options === 'number' ? null : options?.easing,
+          fill: typeof options === 'number' ? null : options?.fill,
+        });
+      }
+      return animate.call(this, keyframes, options);
+    };
+  });
+
+  await page.getByRole('button', { name: 'Open shape settings', exact: true }).click();
+  const shapeDialog = page.getByRole('dialog', { name: 'Shape settings', exact: true });
+  // The marker sits on the dialog root itself, not on a child.
+  const shapePanel = page.locator('[data-floe-dialog-panel]');
+  await shapePanel.waitFor();
+  await page.waitForTimeout(400);
+  const compactHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
+  assert.equal(await page.locator('[data-shape-help]').count(), 0);
+
+  await shapeDialog.getByRole('radio', { name: 'Detailed', exact: true }).click();
+  await page.waitForTimeout(40);
+  const growingHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
+  await page.waitForTimeout(400);
+  await page.locator('[data-shape-help]').waitFor();
+  const detailedHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
+  assert.ok(detailedHeight > compactHeight + 8, 'the detailed body is taller');
+  assert.ok(
+    growingHeight > compactHeight && growingHeight < detailedHeight,
+    `the panel travels between its heights, got ${growingHeight}px between ${compactHeight} and ${detailedHeight}`
+  );
+  assert.equal(
+    await shapePanel.evaluate((el) => el.style.height),
+    '',
+    'the animated height is released once it lands'
+  );
+
+  await shapeDialog.getByRole('radio', { name: 'Compact', exact: true }).click();
+  await page.waitForTimeout(400);
+  const backHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
+  assert.ok(Math.abs(backHeight - compactHeight) < 1, 'the panel returns to its compact height');
+
+  const heightAnimations = await page.evaluate(() => window.__heightAnimations);
+  assert.equal(heightAnimations.length, 2, 'one height pass per change');
+  for (const animation of heightAnimations) {
+    assert.deepEqual(
+      { panel: animation.panel, duration: animation.duration, easing: animation.easing, fill: animation.fill },
+      {
+        panel: true,
+        duration: 220,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'none',
+      }
+    );
+  }
+  assert.ok(Math.abs(heightAnimations[0].from - compactHeight) < 1, 'grow starts at the old height');
+  assert.ok(Math.abs(heightAnimations[0].to - detailedHeight) < 1, 'grow ends at the new height');
+  assert.ok(Math.abs(heightAnimations[1].from - detailedHeight) < 1, 'shrink starts at the old height');
+  assert.ok(Math.abs(heightAnimations[1].to - compactHeight) < 1, 'shrink ends at the new height');
+
+  await page.keyboard.press('Escape');
+  await shapeDialog.waitFor({ state: 'detached' });
+
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.getByRole('button', { name: 'Manage plugins', exact: true }).click();
   assert.ok(

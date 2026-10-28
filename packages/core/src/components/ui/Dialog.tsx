@@ -31,6 +31,7 @@ import {
   type SurfacePortalBoundaryRect,
 } from './surfacePortalScope';
 import { createFloatingPresence } from './floatingPresence';
+import { observeDialogHeight } from './dialogHeightMotion';
 import { useDialogPlacement } from './DialogPlacementContext';
 import { observeViewport, viewportStyle, type ViewportSnapshot } from '../../viewport';
 import { resolveFloatingBoundary } from './surfaceFloatingBoundary';
@@ -119,6 +120,17 @@ export function Dialog(props: DialogProps) {
   });
   const isPresenceMounted = () =>
     dialogPresence.mounted() && Boolean(ownerAnchor()) && ownerAnchorReadyVersion() > 0;
+  // A dialog that swaps content — a wizard step, a settings tab, a field that
+  // reveals help — otherwise snaps to its new height. Hand the settled panel to
+  // the height motion so the change reads as one surface resizing rather than
+  // two surfaces replacing each other. Opening and closing keep their own
+  // motion, which is why the observer waits for the panel to settle.
+  createEffect(() => {
+    const panel = dialogRef;
+    const presence = dialogPresence.state();
+    if (!panel || presence !== 'open' || !isPresenceMounted()) return;
+    onCleanup(observeDialogHeight(panel, { isSettled: () => dialogPresence.state() === 'open' }));
+  });
   createEffect(() => props.onPresenceChange?.(isPresenceMounted()));
   onCleanup(() => props.onPresenceChange?.(false));
   const setDialogOwnerAnchor = (element: HTMLElement): void => {

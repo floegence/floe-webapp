@@ -38,6 +38,7 @@ export {
   type FloatingPresenceOptions,
   type FloatingPresenceState,
 } from './floatingPresence';
+export { observeDialogHeight } from './dialogHeightMotion';
 export {
   MENU_ITEM_SELECTOR,
   focusMenuItem,

@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import { render } from 'solid-js/web';
 import { ConfirmDialog, Dialog } from '../../src/components/ui/Dialog';
 import { DialogPlacementProvider } from '../../src/components/ui/DialogPlacementContext';
@@ -17,6 +17,8 @@ function Fixture() {
   const [canvasViewport, setCanvasViewport] = createSignal({ x: 0, y: 0, scale: 0.8 });
   const [canvasActions, setCanvasActions] = createSignal(0);
   const [stopSharing, setStopSharing] = createSignal(false);
+  const [shapeDialog, setShapeDialog] = createSignal(false);
+  const [showHelp, setShowHelp] = createSignal(false);
   return (
     <>
       <main inert={present()} class="relative h-screen bg-background p-10" data-background>
@@ -49,6 +51,35 @@ function Fixture() {
           bodyDescription="Disconnect this application from the workspace. Its windows and unsaved work stay on the host."
           onConfirm={() => setStopSharing(false)}
         />
+        {/* A dialog whose body is chosen rather than typed: picking the option
+          * that reveals guidance changes the panel height. */}
+        <button onClick={() => setShapeDialog(true)}>Open shape settings</button>
+        <Dialog open={shapeDialog()} onOpenChange={setShapeDialog} title="Shape settings">
+          <label>
+            <input
+              type="radio"
+              name="shape-mode"
+              checked={!showHelp()}
+              onChange={() => setShowHelp(false)}
+            />
+            Compact
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="shape-mode"
+              checked={showHelp()}
+              onChange={() => setShowHelp(true)}
+            />
+            Detailed
+          </label>
+          <Show when={showHelp()}>
+            <p data-shape-help>
+              Detailed mode lists every inherited setting, which is why the panel is taller than
+              the compact one.
+            </p>
+          </Show>
+        </Dialog>
         <div class="relative h-48 w-[600px]" data-dialog-canvas>
           <InfiniteCanvas
             viewport={canvasViewport()}
