@@ -46,12 +46,14 @@ export function observeDialogHeight(
   let previous = measure();
   let running: Animation | null = null;
   let disposed = false;
-  let pending: number | null = null;
-  let pendingHeight = 0;
+  let observer: ResizeObserver | null = null;
 
   const release = () => {
     running = null;
     element.style.willChange = '';
+    // The panel is still again, so what remains to report is a real content
+    // change rather than one of the animation's own frames.
+    if (!disposed && observer) observer.observe(element, { box: 'border-box' });
   };
 
   const animateTo = (to: number) => {
@@ -60,6 +62,13 @@ export function observeDialogHeight(
     if (!Number.isFinite(from) || Math.abs(from - to) < 0.5) return;
     if (prefersReducedMotion()) return;
 
+    // Starting an animation from inside the observer callback mutates the box it
+    // has just measured, and WebKit reports that as "ResizeObserver loop completed
+    // with undelivered notifications" — a page error the overlay checks treat as a
+    // failure. Stop observing for the duration instead: every size the animation
+    // reports would only be its own interpolation, so there is nothing to hear
+    // until it lands, and `release` measures the content's real height again.
+    observer?.unobserve(element);
     const animation = element.animate(
       [{ height: `${from}px` }, { height: `${to}px` }],
       {
@@ -84,34 +93,7 @@ export function observeDialogHeight(
     };
   };
 
-  // Starting an animation from inside the observer callback mutates the box it
-  // has just measured, and WebKit reports that as "ResizeObserver loop completed
-  // with undelivered notifications" — a page error the overlay checks treat as a
-  // failure. The observer stays continuous and still sees every change; only the
-  // mutation moves out of its delivery cycle. Coalescing into one frame means a
-  // burst of reflow steps animates once, from the height before the burst.
-  const schedule = (to: number) => {
-    pendingHeight = to;
-    if (pending !== null) return;
-    if (typeof globalThis.requestAnimationFrame !== 'function') {
-      animateTo(to);
-      return;
-    }
-    pending = globalThis.requestAnimationFrame(() => {
-      pending = null;
-      if (disposed || running) return;
-      const target = pendingHeight;
-      // The panel may have settled back or started leaving between the callback
-      // and this frame; re-check the state only the callback could observe then.
-      if ((options.isSettled && !options.isSettled()) || ownsMotion()) {
-        previous = target;
-        return;
-      }
-      animateTo(target);
-    });
-  };
-
-  const observer = new ResizeObserverCtor((entries) => {
+  observer = new ResizeObserverCtor((entries) => {
     const entry = entries[entries.length - 1];
     if (!entry) return;
     // While a height animation runs, every reported size is one of that
@@ -129,16 +111,12 @@ export function observeDialogHeight(
       previous = reported;
       return;
     }
-    schedule(reported);
+    animateTo(reported);
   });
   observer.observe(element, { box: 'border-box' });
 
   return () => {
     disposed = true;
-    if (pending !== null && typeof globalThis.cancelAnimationFrame === 'function') {
-      globalThis.cancelAnimationFrame(pending);
-    }
-    pending = null;
     observer.disconnect();
     running?.cancel();
     running = null;

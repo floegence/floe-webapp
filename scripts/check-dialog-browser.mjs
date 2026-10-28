@@ -1,4 +1,4 @@
-/* global document, getComputedStyle, window, Element */
+/* global document, getComputedStyle, window, Element, performance, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
@@ -176,16 +176,29 @@ try {
   const compactHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
   assert.equal(await page.locator('[data-shape-help]').count(), 0);
 
+  // Sample every frame across the change instead of reading one fixed offset:
+  // how soon the observer hears the new height depends on the frame the click
+  // lands in, and a single early sample reads the old height on a slow frame.
+  await page.evaluate(() => {
+    window.__heightSamples = [];
+    const panel = document.querySelector('[data-floe-dialog-panel]');
+    const start = performance.now();
+    const tick = () => {
+      window.__heightSamples.push(panel.getBoundingClientRect().height);
+      if (performance.now() - start < 400) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
   await shapeDialog.getByRole('radio', { name: 'Detailed', exact: true }).click();
-  await page.waitForTimeout(40);
-  const growingHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(450);
   await page.locator('[data-shape-help]').waitFor();
   const detailedHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
+  const samples = await page.evaluate(() => window.__heightSamples);
   assert.ok(detailedHeight > compactHeight + 8, 'the detailed body is taller');
+  const travelling = samples.filter((height) => height > compactHeight + 1 && height < detailedHeight - 1);
   assert.ok(
-    growingHeight > compactHeight && growingHeight < detailedHeight,
-    `the panel travels between its heights, got ${growingHeight}px between ${compactHeight} and ${detailedHeight}`
+    travelling.length > 0,
+    `the panel travels between its heights, got samples ${JSON.stringify(samples.map(Math.round))} between ${compactHeight} and ${detailedHeight}`
   );
   assert.equal(
     await shapePanel.evaluate((el) => el.style.height),
