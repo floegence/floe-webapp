@@ -59,9 +59,27 @@ try {
         const header = await titlebar.boundingBox();
         assert(Math.min(header.y + header.height, 776) - Math.max(header.y, 48) >= 23, 'titlebar stays vertically reachable');
         assert(Math.abs(held.x - 180) < Math.abs(target.x - 260), 'overscroll resists pointer movement');
+        // Observe release in the browser. A test-runner round trip can outlive
+        // the 180 ms animation on a busy WebKit worker. Retain its identity and
+        // reject cancellation rather than requiring it to still be running.
+        await panel.evaluate(el => {
+          window.returnAnimationEvidence = new Promise(resolve => {
+            document.addEventListener('pointerup', () => {
+              const animation = el.getAnimations().find(value => value.playState === 'running');
+              if (!animation) { resolve({ started: false }); return; }
+              const completed = animation.finished.then(() => true, () => false);
+              requestAnimationFrame(() => requestAnimationFrame(async () => {
+                const afterCommit = animation.playState;
+                resolve({ started: true, afterCommit, completed: await completed });
+              }));
+            }, { capture: true, once: true });
+          });
+        });
         await page.mouse.up();
-        await settle();
-        assert(await panel.evaluate(el => el.getAnimations().some(animation => animation.playState === 'running')), 'return animation survives the reactive geometry commit');
+        const recovery = await page.evaluate(() => window.returnAnimationEvidence);
+        assert.equal(recovery.started, true, 'release starts the return animation');
+        assert(['running', 'finished'].includes(recovery.afterCommit), 'return animation survives the reactive geometry commit');
+        assert.equal(recovery.completed, true, 'return animation finishes without cancellation');
         await within();
       }
       await reset();
