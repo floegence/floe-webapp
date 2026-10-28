@@ -62,6 +62,12 @@
   },
   "packageManager": "pnpm@9.15.0",
   "pnpm": {
+    "//auditConfig": "deepmerge@4.3.1 reaches us only as a build-time devDependency of packages/init (unbuild > @rollup/plugin-node-resolve); it is never bundled into a published package, and no patched version exists yet. Drop this entry once upstream ships a fix.",
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2026-93753"
+      ]
+    },
     "overrides": {
       "dompurify": "^3.4.17",
       "katex": "0.18.10",
