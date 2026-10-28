@@ -46,6 +46,8 @@ export function observeDialogHeight(
   let previous = measure();
   let running: Animation | null = null;
   let disposed = false;
+  let pending: number | null = null;
+  let pendingHeight = 0;
 
   const release = () => {
     running = null;
@@ -82,6 +84,33 @@ export function observeDialogHeight(
     };
   };
 
+  // Starting an animation from inside the observer callback mutates the box it
+  // has just measured, and WebKit reports that as "ResizeObserver loop completed
+  // with undelivered notifications" — a page error the overlay checks treat as a
+  // failure. The observer stays continuous and still sees every change; only the
+  // mutation moves out of its delivery cycle. Coalescing into one frame means a
+  // burst of reflow steps animates once, from the height before the burst.
+  const schedule = (to: number) => {
+    pendingHeight = to;
+    if (pending !== null) return;
+    if (typeof globalThis.requestAnimationFrame !== 'function') {
+      animateTo(to);
+      return;
+    }
+    pending = globalThis.requestAnimationFrame(() => {
+      pending = null;
+      if (disposed || running) return;
+      const target = pendingHeight;
+      // The panel may have settled back or started leaving between the callback
+      // and this frame; re-check the state only the callback could observe then.
+      if ((options.isSettled && !options.isSettled()) || ownsMotion()) {
+        previous = target;
+        return;
+      }
+      animateTo(target);
+    });
+  };
+
   const observer = new ResizeObserverCtor((entries) => {
     const entry = entries[entries.length - 1];
     if (!entry) return;
@@ -100,12 +129,16 @@ export function observeDialogHeight(
       previous = reported;
       return;
     }
-    animateTo(reported);
+    schedule(reported);
   });
   observer.observe(element, { box: 'border-box' });
 
   return () => {
     disposed = true;
+    if (pending !== null && typeof globalThis.cancelAnimationFrame === 'function') {
+      globalThis.cancelAnimationFrame(pending);
+    }
+    pending = null;
     observer.disconnect();
     running?.cancel();
     running = null;
