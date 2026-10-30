@@ -1,9 +1,10 @@
 import { createEffect, createMemo, createSignal, createUniqueId, For, on, onCleanup, Show, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { FileItemIcon } from '../../file-browser/FileIcons';
-import { ChevronRight, FolderOpen } from '../../icons';
+import { ChevronRight, FolderOpen, FolderPlus } from '../../icons';
 import { Button } from '../Button';
 import { Input } from '../Input';
+import { Popover } from '../Popover';
 import { DirectoryFavoriteButton, PickerDirectoryRow, type DirectoryFavorites } from './DirectoryFavorites';
 import { resolveTabNavigationTargetId } from '../Tabs';
 import {
@@ -176,6 +177,7 @@ export function PickerPanel(props: PickerPanelProps & {
           </div>
         </Show>
         <Show when={shortcuts()} fallback={<>
+        <div class="flex min-w-0 flex-wrap items-center justify-between gap-2">
         <nav aria-label={copy().currentDirectory} class="flex min-w-0 flex-wrap items-center gap-0.5 text-xs">
           <For each={breadcrumbs()}>{(segment, index) => <>
             <Show when={index() > 0}><ChevronRight class="h-3 w-3 shrink-0 text-[var(--floe-ink-soft)]" /></Show>
@@ -185,6 +187,8 @@ export function PickerPanel(props: PickerPanelProps & {
           </>}</For>
           <Show when={props.directoryFavorites}><DirectoryFavoriteButton path={source.currentPath()} favorites={props.directoryFavorites!} copy={copy()} disabled={props.disabled || !source.valid()} onError={setFavoriteError} /></Show>
         </nav>
+        <Show when={props.onCreateFolder}><NewFolderSection {...props} /></Show>
+        </div>
         <div {...props.scrollViewportProps} class={cn('min-h-[120px] overflow-y-auto rounded-xs border border-[var(--floe-line)]', props.scrollViewportProps?.class)}
           style={{ 'max-height': props.treeMaxHeight ?? '240px' }}>
           <Show when={!source.pending() || source.currentPath()} fallback={<p class="px-3 py-6 text-center text-xs text-[var(--floe-ink-soft)]" role="status">{copy().loading}</p>}>
@@ -207,7 +211,6 @@ export function PickerPanel(props: PickerPanelProps & {
             onChange={(event) => { void source.setShowHidden(event.currentTarget.checked); }} />{copy().showHidden}</label>
           <Show when={source.pending() && source.currentPath()}><span role="status">{copy().loading}</span></Show>
         </div>
-        <Show when={props.onCreateFolder}><NewFolderSection {...props} /></Show>
         </>}>
           <Show when={source.view() === 'favorites'}><Input size="sm" aria-label={copy().favoritesFilter} placeholder={copy().favoritesFilter} value={filter()} onInput={(event) => setFilter(event.currentTarget.value)} /></Show>
           <div {...props.scrollViewportProps} data-picker-suggestions={source.view() === 'suggestions' ? '' : undefined}
@@ -253,6 +256,7 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
   let generation = 0;
   let input: HTMLInputElement | undefined;
   let trigger: HTMLButtonElement | undefined;
+  const nameId = createUniqueId();
   const validName = () => Boolean(name().trim()) && !['.', '..'].includes(name().trim())
     && !name().includes('/') && !name().includes(String.fromCharCode(0));
   const reset = () => {
@@ -261,6 +265,11 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
   };
   createEffect(on(() => [props.scopeKey, props.source.context(), props.source.active(), props.source.pathInput()] as const, reset));
   onCleanup(() => { generation++; });
+  createEffect(on(visible, open => {
+    if (!open) return;
+    const frame = requestAnimationFrame(() => input?.focus());
+    onCleanup(() => cancelAnimationFrame(frame));
+  }));
   const cancel = () => { reset(); queueMicrotask(() => trigger?.focus()); };
   const create = async () => {
     if (props.disabled || !validName() || !props.source.valid() || !props.onCreateFolder || busy()) return;
@@ -279,24 +288,39 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
       if (current()) { setFailure(error); queueMicrotask(() => input?.focus()); }
     } finally { if (generation === requestGeneration) setBusy(false); }
   };
-  return <div data-picker-create-folder="">
-    <Show when={visible()} fallback={<Button ref={trigger} size="sm" variant="ghost" disabled={props.disabled || !props.source.valid()}
-      onClick={() => { setVisible(true); queueMicrotask(() => input?.focus()); }}><FolderOpen class="mr-1 h-3.5 w-3.5" />{copy().newFolder}</Button>}>
-      <div class="flex flex-wrap items-center gap-1.5" onKeyDown={(event) => {
+  return <Popover open={visible()} placement="bottom-end" ariaLabel={copy().newFolder}
+    class="w-80 overflow-hidden" onOpenChange={next => {
+      if (busy()) return;
+      if (next) {
+        if (!props.disabled && props.source.valid()) setVisible(true);
+      } else reset();
+    }} trigger={<Button ref={trigger} size="sm" variant="ghost" icon={FolderPlus}
+      aria-haspopup="dialog" aria-expanded={visible()} disabled={props.disabled || !props.source.valid()}>{copy().newFolder}</Button>}>
+    <form data-picker-create-folder="" class="flex min-w-0 flex-col gap-4 p-4"
+      onSubmit={event => { event.preventDefault(); void create(); }}
+      onKeyDown={event => {
         if (event.isComposing) return;
-        if (event.key === 'Enter' && event.target === input) { event.preventDefault(); event.stopPropagation(); void create(); }
         if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy()) cancel(); }
       }}>
-        <Input ref={input} class="min-w-0 flex-1 basis-32" size="sm" aria-label={copy().folderName} value={name()}
-          onInput={(event) => { setName(event.currentTarget.value); setFailure(null); }} disabled={props.disabled || busy()} />
-        <div class="flex shrink-0 items-center gap-1.5">
-          <Button size="sm" loading={busy()} disabled={props.disabled || busy() || !validName() || !props.source.valid()} onClick={() => { void create(); }}>{copy().create}</Button>
-          <Button size="sm" variant="ghost-destructive" disabled={props.disabled || busy()} onClick={cancel}>{copy().cancel}</Button>
+      <div class="flex min-w-0 items-start gap-2.5">
+        <FolderPlus class="mt-0.5 h-4 w-4 shrink-0 text-[var(--floe-ink-soft)]" />
+        <div class="min-w-0 flex-1">
+          <h3 class="text-sm font-medium">{copy().newFolder}</h3>
+          <p class="mt-1 truncate text-xs text-[var(--floe-ink-soft)]" title={props.source.currentPath()}>{props.source.currentPath()}</p>
         </div>
       </div>
-    </Show>
-    <Show when={failure()}><p role="alert" class="mt-1 break-words text-xs text-error">{pickerErrorMessage(props, failure())}</p></Show>
-  </div>;
+      <div class="flex min-w-0 flex-col gap-1.5">
+        <label for={nameId} class="text-xs font-medium">{copy().folderName}</label>
+        <Input id={nameId} aria-label={copy().folderName} ref={element => { input = element; queueMicrotask(() => { if (untrack(visible)) element.focus(); }); }}
+          value={name()} error={failure() ? pickerErrorMessage(props, failure()) : undefined}
+          onInput={event => { setName(event.currentTarget.value); setFailure(null); }} disabled={props.disabled || busy()} />
+      </div>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <Button type="button" size="sm" variant="ghost-destructive" disabled={busy()} onClick={cancel}>{copy().cancel}</Button>
+        <Button type="submit" size="sm" variant="primary" loading={busy()} disabled={props.disabled || busy() || !validName() || !props.source.valid()}>{copy().create}</Button>
+      </div>
+    </form>
+  </Popover>;
 }
 
 export const normalizePath = parsePickerPath;

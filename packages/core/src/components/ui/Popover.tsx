@@ -99,10 +99,12 @@ export function Popover(props: PopoverProps) {
     root: () => panelRef,
     containsTarget: (target) => {
       const element = target instanceof Element ? target : document.activeElement;
+      if (panelRef?.contains(element ?? null)) return true;
       if (element?.closest(`[data-floe-popover="${popoverId}"]`)) return true;
       return Boolean(triggerRef?.contains(element ?? null));
     },
     onClose: () => setOpen(false),
+    onInteractOutside: () => setOpen(false),
     onEscapeOutside: () => setOpen(false),
     lockBodyScroll: false,
     trapFocus: false,

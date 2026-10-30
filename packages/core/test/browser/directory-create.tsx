@@ -4,6 +4,7 @@ import { DirectoryPicker } from '../../src/components/ui/DirectoryPicker';
 import '../../src/styles/globals.css';
 function Fixture() {
   const [open, setOpen] = createSignal(false);
+  const [scopeKey, setScopeKey] = createSignal(0);
   const [selected, setSelected] = createSignal('');
   const [calls, setCalls] = createSignal(0);
   const paths = new Set<string>();
@@ -19,8 +20,8 @@ function Fixture() {
       paths.add(path);
     },
   };
-  return <main class="min-h-screen bg-background p-4 text-foreground"><button onClick={() => setOpen(true)}>Choose directory</button><output data-selected>{selected()}</output><output data-calls>{calls()}</output>
-    <DirectoryPicker {...props} open={open()} onOpenChange={setOpen} title="Working directory" confirmText="Choose" onSelect={setSelected} />
+  return <main class="min-h-screen bg-background p-4 text-foreground"><button onClick={() => setOpen(true)}>Choose directory</button><button onClick={() => setScopeKey(value => value + 1)}>Reset location</button><button onClick={() => setOpen(false)}>Close picker</button><output data-selected>{selected()}</output><output data-calls>{calls()}</output>
+    <DirectoryPicker {...props} scopeKey={String(scopeKey())} open={open()} onOpenChange={setOpen} title="Working directory" confirmText="Choose" onSelect={setSelected} />
   </main>;
 }
 render(() => <Fixture />, document.getElementById('root')!);
