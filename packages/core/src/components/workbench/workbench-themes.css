@@ -1136,7 +1136,7 @@
     --wb-text: var(--foreground);
   }
   html.dark .workbench-surface[data-workbench-theme] {
-    --wb-canvas: oklch(from var(--background) clamp(0.175, calc(l - 0.08), 0.28) c h);
+    --wb-canvas: oklch(from var(--background) clamp(0.21, calc(l - 0.08), 0.28) c h);
     --wb-window: color-mix(in oklab, var(--background) 94%, var(--foreground));
     --wb-window-title: color-mix(in oklab, var(--wb-window) 94%, var(--foreground));
     --wb-window-edge: oklch(from var(--wb-window) calc(l + 0.075) calc(c * 0.25) h);

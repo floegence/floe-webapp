@@ -57,6 +57,24 @@ try {
         content:
           '*,*::before,*::after { transition: none !important; animation: none !important; }',
       });
+      const canvasTone = await page.evaluate(() => {
+        const root = document.documentElement;
+        const previousTheme = root.dataset.floeShellTheme;
+        const previousClass = root.className;
+        root.dataset.floeShellTheme = 'porcelain-dark';
+        root.classList.add('dark');
+        root.classList.remove('light');
+        const canvas = document.querySelector('.workbench-canvas');
+        const context = document.createElement('canvas').getContext('2d');
+        context.fillStyle = getComputedStyle(canvas).backgroundColor;
+        context.fillRect(0, 0, 1, 1);
+        const rgb = [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+        if (previousTheme === undefined) delete root.dataset.floeShellTheme;
+        else root.dataset.floeShellTheme = previousTheme;
+        root.className = previousClass;
+        return rgb;
+      });
+      assert.deepEqual(canvasTone, [24, 24, 25], `${engine}: subtle porcelain-dark canvas #181819`);
       const setMode = async (mode) => {
         if (
           (await page.locator('[data-workbench-mode]').getAttribute('data-workbench-mode')) === mode

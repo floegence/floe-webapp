@@ -272,6 +272,11 @@ export function usePortalCommands() {
 
 ### Workbench composition surfaces
 
+Shared matte palettes own canvas, widget and header surfaces. Dark canvases retain
+the shell hue with a 0.21 OKLCH lightness floor (Porcelain Dark renders #181819),
+giving near-black product bodies a quiet separation without changing widget
+fills, borders, shadows or the grid. Light palettes retain their existing canvas.
+
 Sticky notes support `material: 'tint' | 'tab' | 'ruled'` independently of their color. Missing material in older layouts resolves to `tint`. Hosts must persist the material with the note and include it when comparing or synchronizing layouts. Notes remain editable in composition mode; business widgets retain their mode-specific input lock.
 
 Background region names are optional. Empty names round-trip as empty strings, render no label, and can be restored through the selected region's Add name action. Regions support a transparent `frame` material as well as solid color fields, hatch, and the existing dotted, grid, and wash materials. Moving a region changes its boundary without moving its contents.
