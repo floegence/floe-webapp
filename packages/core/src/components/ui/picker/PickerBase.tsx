@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, createUniqueId, For, on, Show, untrack, type Accessor, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, createUniqueId, For, on, onCleanup, Show, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../../utils/cn';
 import { FileItemIcon } from '../../file-browser/FileIcons';
 import { ChevronRight, FolderOpen } from '../../icons';
@@ -250,26 +250,52 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
   const [busy, setBusy] = createSignal(false);
   const [failure, setFailure] = createSignal<unknown>(null);
   const copy = () => pickerCopy(props);
+  let generation = 0;
+  let input: HTMLInputElement | undefined;
+  let trigger: HTMLButtonElement | undefined;
+  const validName = () => Boolean(name().trim()) && !['.', '..'].includes(name().trim())
+    && !name().includes('/') && !name().includes(String.fromCharCode(0));
+  const reset = () => {
+    generation++;
+    setVisible(false); setName(''); setBusy(false); setFailure(null);
+  };
+  createEffect(on(() => [props.scopeKey, props.source.context(), props.source.active(), props.source.pathInput()] as const, reset));
+  onCleanup(() => { generation++; });
+  const cancel = () => { reset(); queueMicrotask(() => trigger?.focus()); };
   const create = async () => {
-    if (!name().trim() || !props.source.valid() || !props.onCreateFolder || busy()) return;
+    if (props.disabled || !validName() || !props.source.valid() || !props.onCreateFolder || busy()) return;
     const target = props.source.currentPath();
+    const requestGeneration = generation;
+    const currentIntent = props.source.captureIntent();
+    const current = () => generation === requestGeneration && currentIntent();
     setBusy(true); setFailure(null);
     try {
       await props.onCreateFolder(target, name().trim());
+      if (!current()) return;
       setName(''); setVisible(false);
-      if (props.source.active() && target === props.source.currentPath()) await props.source.navigate(target);
-    } catch (error) { setFailure(error); }
-    finally { setBusy(false); }
+      await props.source.navigate(target);
+      if (generation === requestGeneration && props.source.active()) queueMicrotask(() => trigger?.focus());
+    } catch (error) {
+      if (current()) { setFailure(error); queueMicrotask(() => input?.focus()); }
+    } finally { if (generation === requestGeneration) setBusy(false); }
   };
-  return <div>
-    <Show when={visible()} fallback={<Button size="sm" variant="ghost" disabled={props.disabled || !props.source.valid()} onClick={() => setVisible(true)}><FolderOpen class="mr-1 h-3.5 w-3.5" />{copy().newFolder}</Button>}>
-      <div class="flex items-center gap-1.5">
-        <Input size="sm" aria-label={copy().folderName} value={name()} onInput={(event) => setName(event.currentTarget.value)} disabled={props.disabled || busy()} />
-        <Button size="sm" disabled={props.disabled || busy() || !name().trim() || !props.source.valid()} onClick={() => { void create(); }}>{copy().create}</Button>
-        <Button size="sm" variant="ghost-destructive" disabled={props.disabled || busy()} onClick={() => setVisible(false)}>{copy().cancel}</Button>
+  return <div data-picker-create-folder="">
+    <Show when={visible()} fallback={<Button ref={trigger} size="sm" variant="ghost" disabled={props.disabled || !props.source.valid()}
+      onClick={() => { setVisible(true); queueMicrotask(() => input?.focus()); }}><FolderOpen class="mr-1 h-3.5 w-3.5" />{copy().newFolder}</Button>}>
+      <div class="flex flex-wrap items-center gap-1.5" onKeyDown={(event) => {
+        if (event.isComposing) return;
+        if (event.key === 'Enter' && event.target === input) { event.preventDefault(); event.stopPropagation(); void create(); }
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); if (!busy()) cancel(); }
+      }}>
+        <Input ref={input} class="min-w-0 flex-1 basis-32" size="sm" aria-label={copy().folderName} value={name()}
+          onInput={(event) => { setName(event.currentTarget.value); setFailure(null); }} disabled={props.disabled || busy()} />
+        <div class="flex shrink-0 items-center gap-1.5">
+          <Button size="sm" loading={busy()} disabled={props.disabled || busy() || !validName() || !props.source.valid()} onClick={() => { void create(); }}>{copy().create}</Button>
+          <Button size="sm" variant="ghost-destructive" disabled={props.disabled || busy()} onClick={cancel}>{copy().cancel}</Button>
+        </div>
       </div>
     </Show>
-    <Show when={failure()}><p role="alert" class="text-xs text-error">{pickerErrorMessage(props, failure())}</p></Show>
+    <Show when={failure()}><p role="alert" class="mt-1 break-words text-xs text-error">{pickerErrorMessage(props, failure())}</p></Show>
   </div>;
 }
 

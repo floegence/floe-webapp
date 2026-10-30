@@ -222,6 +222,12 @@ export function createFilesystemPickerDataSource(
   return {
     context, currentPath, entries, pathInput, pending, error, showHidden, active, valid,
     open, close, navigate,
+    /** Capture the exact navigation intent before a host-owned asynchronous effect. */
+    captureIntent() {
+      const requestEpoch = epoch;
+      const requestIntent = intent;
+      return () => epoch === requestEpoch && intent === requestIntent;
+    },
     setPathInput(value: string) {
       intent += 1;
       batch(() => { writePathInput(value); setPending(false); setError(null); });

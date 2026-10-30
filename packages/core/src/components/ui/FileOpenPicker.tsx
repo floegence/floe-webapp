@@ -124,6 +124,7 @@ export function FileOpenPicker(props: FileOpenPickerProps) {
 
   return (
     <Dialog
+      escapeKeyPhase="bubble"
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={props.title ?? 'Select File'}

@@ -96,6 +96,7 @@ export function FileSavePicker(props: FileSavePickerProps) {
 
   return (
     <Dialog
+      escapeKeyPhase="bubble"
       open={props.open}
       onOpenChange={props.onOpenChange}
       title={props.title ?? 'Save File'}

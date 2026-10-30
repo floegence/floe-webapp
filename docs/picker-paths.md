@@ -91,3 +91,9 @@ Static examples may continue to provide `files` containing an absolute tree;
 they use the same navigation state and a static directory lookup. They do not
 stand in for permission-checked remote loaders. Do not mix static and remote
 authority or construct a second navigation/cache owner around the picker.
+
+## Creating a directory
+
+Hosts opt in with onCreateFolder(parentPath, name) and retain filesystem write authorization. The picker accepts one nonempty child name, excluding dot segments, slashes and NUL; it never interprets a name as a nested or absolute path. New folder focuses the input, Enter submits once, and Escape cancels the form before dismissing its dialog. The pending button retains its geometry and exposes busy state. Failure preserves the editable name; cancel clears it. Success refreshes the parent listing and does not confirm selection. Navigation, scope replacement, close and unmount retire the form; a late effect result cannot change a newer intent or replay the write. Canceling the picker does not undo an already submitted filesystem operation.
+
+The check-directory-create-browser.mjs acceptance covers keyboard behavior, failure recovery, stale results and responsive light/dark geometry.

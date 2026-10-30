@@ -25,7 +25,7 @@ export function DirectoryPicker(props: DirectoryPickerProps) {
     props.onSelect(path);
     props.onOpenChange(false);
   };
-  return <Dialog open={props.open} onOpenChange={props.onOpenChange} title={props.title ?? 'Select Directory'}
+  return <Dialog escapeKeyPhase="bubble" open={props.open} onOpenChange={props.onOpenChange} title={props.title ?? 'Select Directory'}
     class={cn('max-w-lg', props.class)} footer={<div class="flex w-full items-center gap-2">
       <span class="min-w-0 flex-1 truncate text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]" title={source.currentPath()}>{source.currentPath()}</span>
       <Button variant="ghost" size="sm" onClick={() => props.onOpenChange(false)}>{props.cancelText ?? pickerCopy(props).cancel}</Button>

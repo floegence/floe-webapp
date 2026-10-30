@@ -4,6 +4,20 @@ import { createFilesystemPickerDataSource, type PickerPathContext } from '../src
 const context: PickerPathContext = { homePathAbs: '/home/alice', defaultRootId: 'project', roots: [{ id: 'project', label: 'Project', pathAbs: '/srv/project' }] };
 
 describe('picker navigation ownership', () => {
+  it('retires effect completions after editing, same-path navigation, reopen and close', async () => {
+    await createRoot(async dispose => {
+      const source = createFilesystemPickerDataSource(() => ({ pathContext: context, loadDirectory: async () => [] }));
+      await source.open();
+      let current = source.captureIntent();
+      expect(current()).toBe(true);
+      source.setPathInput('/pending'); expect(current()).toBe(false);
+      await source.navigate('/srv/project'); current = source.captureIntent();
+      await source.navigate('/srv/project'); expect(current()).toBe(false);
+      current = source.captureIntent(); await source.open(); expect(current()).toBe(false);
+      current = source.captureIntent(); source.close(); expect(current()).toBe(false);
+      dispose();
+    });
+  });
   it('uses the declared default root and refreshes context on reopening', async () => {
     let current = context;
     const loadDirectory = vi.fn(async () => []);
