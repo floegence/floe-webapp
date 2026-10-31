@@ -2,7 +2,7 @@
 
 ## Scope
 
-This review keeps Floe's current design language and improves the demo's information hierarchy, executable workflows, state semantics, navigation, accessibility and consistency. It adds no visual dependency or continuous decorative work. The shared CSS and interaction geometry remain unchanged.
+This review keeps Floe's current design language and improves the demo's information hierarchy, executable workflows, state semantics, navigation, accessibility and consistency. It adds no visual dependency or continuous decorative work. The follow-up corrects shared tab face geometry and reorganizes the four scenario views with lazy, static CSS. Control heights and existing interaction ownership remain unchanged.
 
 The review environment is isolated in the floe-webapp-design-review worktree on codex/floe-design-review, based on cf8753b3c6d489228c5238048a373f44a4518822. Main is not merged or modified. There is no push, release or pull request.
 
@@ -19,7 +19,7 @@ The review environment is isolated in the floe-webapp-design-review worktree on 
 
 ## Performance boundaries
 
-Core styles.css is byte-identical to the baseline. Scenario code and syntax highlighting load on demand; Home does not initialize the code highlighter or rich-content workers. The task simulation owns one bounded timer and stops on cancellation, failure or completion.
+The follow-up adds static tab indicator utilities to core styles.css. Scenario layout CSS loads only with ScenariosPage. Scenario code and syntax highlighting load on demand; Home does not initialize the code highlighter or rich-content workers. The task simulation owns one bounded timer and stops on cancellation, failure or completion.
 
 Surface qualification compares packed baseline/current packages using the same fixture and five interleaved repetitions. The repository's performance thresholds trigger investigation rather than granting permission to spend rendering time. The complete light-mode run includes list scrolling, chat streaming, terminal output, window dragging/resizing/presence, canvas navigation, menus/dialogs, typing, dense controls, progress updates and control toggles.
 
@@ -29,10 +29,10 @@ These are local browser measurements, not cross-device guarantees or downstream 
 
 The production preview is available at http://127.0.0.1:61341/?view=showcase&section=home. It serves the independent worktree build using Vite preview with strict port binding. The development server on port 61340 was stopped after production verification. Local logs and screenshots live under .cache/design-review; packed-consumer performance traces live under .cache/surface-style. These generated files and the task-local Node 24.20.0 runtime are untracked.
 
-## Completed checks
+## Prior implementation evidence (e4e6fec8)
 
 - Repository gate: installation, Go smoke/vet, lint, typecheck, 1,313 tests, production build and distribution verification passed. The first packed-consumer audit stopped because npm closed its TLS connection. Retrying that target passed, including the audit, and every remaining make check target completed. Logs: make-check-final.log and make-check-resumed.log.
-- A narrow direct-link inspection found the last scenario tab outside the visible rail. The final solution uses concise, unambiguous tab names (Overview, Files, Tasks, Examples) while preserving the shared Tabs implementation and control sizes. The production acceptance suite checks that the selected tab is fully visible.
+- A narrow direct-link inspection found the last scenario tab outside the visible rail. The final solution uses concise, unambiguous tab names (Overview, Files, Tasks, Examples) without adding shared-tab layout measurements or shrinking controls. The production acceptance suite checks that the selected tab is fully visible.
 - Complete workflows passed at 390, 430, 768 and 1440 pixels, including long names, async control geometry, local saves/reload, explicit failure/cancellation/retry and composed actions. Navigation coverage also exercises actual storage rejection and recovery, scoped reset, browser history, mode changes, reduced motion, lazy Home and the dark logo.
 - The complete 12-workload light-mode surface comparison passed its existing criteria. Drag qualification passed with 8.3 ms median P95 input-to-next-frame latency and 0% missed frames on this machine. Traces and the baseline identity remain available locally.
 
@@ -40,9 +40,25 @@ Production qualification on port 61341 passed the complete workflow/navigation s
 
 Home requested 237,034 gzip-equivalent JavaScript bytes and 75,164 CSS bytes across 11 JS/CSS resources, versus 1,785,417 JavaScript bytes and 106,874 CSS bytes across 58 resources for the baseline. The comparison opens the same explicit Home route with a fresh context and observes requests for two seconds. This is approximately 86.7% less requested JavaScript; it is not an assertion of an equivalent latency improvement. Existing large editor and rich-content chunks remain on demand, with Vite's existing large-chunk advisory preserved.
 
-An isolated dense-control rerun also passed the existing paired-sample rule with zero missed frames. Its paint median was 14.4% higher, but only two of five matched repetitions increased by more than 10%; the earlier complete run had three of five. Retain this variability as a measurement limit, not a claim of universal zero regression. The stylesheet remains byte-identical; the final implementation retains the baseline Tabs code with no additional layout measurement.
+An isolated dense-control rerun also passed the existing paired-sample rule with zero missed frames. Its paint median was 14.4% higher, but only two of five matched repetitions increased by more than 10%; the earlier complete run had three of five. Retain this variability as a measurement limit, not a claim of universal zero regression. At that revision the stylesheet was byte-identical and Tabs retained the baseline code. The follow-up below supersedes that implementation claim, while still adding no layout measurement.
 
 The final dark control-toggle comparison passed after removing the experimental shared-tab measurement change. Standard-material input-to-next-frame P95 was 6.9 ms versus 7.3 ms for baseline, with zero missed frames in both. The rejected experiment and its failing rasterization report remain in design-review-dark-final; the final evidence is design-review-dark-delivery. No thresholds were changed. The delivery build passed lint, full typecheck, production workflow/navigation acceptance and distribution verification again.
+
+## Tab alignment and scenario composition follow-up
+
+The user reported an asymmetric selected tab and inconsistent scenario layouts. The preserved pre-change build is in .cache/design-review/followup/before-dist. Its closable tab measured 0px top / 2px bottom borders and a -1px label/close-control center offset at a 32px height. The new browser regression fails on that build and passes after correction: symmetric 1px borders and zero center offset, with the same 32px height. Indicator thickness is painted with an absolute pseudo-element, so no extra node, measurement, observer or animation loop is introduced. The connected-panel sample retains transparent border space instead of removing it.
+
+Examples now groups the nine existing working cards into three related, content-height columns. At narrower container widths it uses two or one columns. DOM and keyboard order follow those groups. Overview pairs the four metrics with the chart; Files and Tasks use a primary workspace plus supporting context/output. The page uses existing Floe color, radius, typography and controls with one consistent card/gutter rhythm. A container query responds to available content width, including the shell sidebar. No new dependency, blur, image or remote request is added.
+
+- Full make check passed: 1,313 tests, lint, typecheck, build, distribution and packed consumers, plus the required browser gates. The final demo stylesheet was then moved to its lazy route and rebuilt; lint and dedicated visual checks passed after that change.
+- Development and final production workflows passed at 390, 430, 768 and 1440px, including local persistence, failure/recovery, cancellation, checklist snapshots, copying, messaging and notification actions.
+- Visual regression checks cover light/dark tab centering, add/close, nine-card retention, card containment, consistent gutters and long project names at 390, 430, 768, 1280 and 1440px. Additional inspection at 1920px found no card overflow.
+- Desktop/mobile screenshots in light and dark were inspected. The production visual suite passed after the final build. Evidence, failed pre-fix checks and subsequent passing logs are retained in .cache/design-review/followup.
+- Final Home resources: 237,224 gzip-equivalent JavaScript bytes and 75,308 CSS bytes across 12 requests. The 3,292-byte scenario stylesheet is a separate lazy asset and is absent from Home requests. The small increase over the prior review revision is recorded explicitly; startup transfer is not a latency measurement.
+
+Performance follow-up uses five interleaved control-toggle repetitions (including tabs) with the preserved cf8753b3 baseline and identical packed fixtures. Light mode passed. In the first dark matrix, standard/current versus standard/baseline passed (paint 38.34 vs 41.80 ms/s; raster 4.53 vs 4.53 ms/s; input P95 7.5 vs 7.4 ms). Current soft versus baseline standard triggered a raster investigation (6.03 vs 4.53 ms/s, four paired increases). This failed cross-material report is retained, not discarded.
+
+The subsequent dark **same-material** comparison used soft baseline and soft current, with no source, workload, data or threshold changes. It passed: paint 38.21 vs 37.77 ms/s (+1.2%, one paired increase), raster 4.92 vs 5.82 ms/s, input P95 7.7 vs 7.8 ms. Every recorded sample in these follow-up runs had zero missed frames and zero long tasks. The same-material result does not establish a repeatable regression from this change, but the first cross-material alert and sample variability remain limitations. Reports: design-review-followup-light, design-review-followup-dark and design-review-followup-dark-matched under .cache/surface-style. This is local control-toggle evidence, not a universal performance guarantee or a rerun of the previous full workload suite.
 
 The user remains the owner of product acceptance; this branch has not been integrated.
 

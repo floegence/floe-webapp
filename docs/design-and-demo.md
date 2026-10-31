@@ -6,6 +6,12 @@ Floe retains its existing visual language: opaque reading planes, restrained neu
 
 Home prioritizes complete workflows. Components retains the executable state matrix, usage guidance and public API examples. Guidance remains visible without borrowing warning or success styling for emphasis. The showcase catalog remains the owner of navigation names and page membership.
 
+## Composition and tab geometry
+
+Scenarios uses one lazy demo stylesheet, Floe tokens, and responsive container queries. Related examples stay in three DOM-ordered columns at wide sizes, two columns when space allows, and one column on narrow surfaces. Cards use intrinsic content heights and a consistent gutter; no JavaScript masonry or size observers are needed. Overview pairs summary metrics with the chart. Files and tasks share a primary workspace plus a secondary context/output panel. The visible field width follows its containing form.
+
+Shared Tabs keeps symmetric face borders and vertically centered content at both control sizes. The configured active-border marker is an absolute CSS pseudo-element; its thickness cannot displace the label or close button. Slider mode retains its existing measurement path. No extra nodes, effects, observers, animation loops, or geometry reads are added to tab selection. A connected-panel example uses a transparent bottom border rather than removing its layout space.
+
 ## State semantics
 
 - Numeric direction and business assessment are independent. Falling duration can improve; increasing activity can remain neutral. Percentage-point differences are explicit.

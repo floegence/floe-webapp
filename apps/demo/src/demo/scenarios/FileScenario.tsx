@@ -90,7 +90,7 @@ export function FileScenario() {
   };
   return (
     <div class="space-y-4" data-scenario="files">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="scenario-heading">
         <div>
           <h2 class="text-base font-semibold">Files & editing</h2>
           <p class="text-caption text-[var(--floe-ink-soft)]">
@@ -101,118 +101,120 @@ export function FileScenario() {
           Reset example files
         </Button>
       </div>
-      <Card>
-        <CardContent class="grid gap-4 pt-4 md:grid-cols-[12rem_minmax(0,1fr)]">
-          <nav aria-label="Example files" class="space-y-3">
-            <Input
-              aria-label="Search example files"
-              placeholder="Find a file"
-              value={query()}
-              onInput={(event) => setQuery(event.currentTarget.value)}
-              leftIcon={<Search class="h-3.5 w-3.5" />}
-            />
-            <ul class="space-y-1">
-              <For each={filtered()}>
+      <div class="scenario-workspace">
+        <Card>
+          <CardContent class="scenario-editor-layout">
+            <nav aria-label="Example files" class="scenario-file-navigation space-y-3">
+              <Input
+                aria-label="Search example files"
+                placeholder="Find a file"
+                value={query()}
+                onInput={(event) => setQuery(event.currentTarget.value)}
+                leftIcon={<Search class="h-3.5 w-3.5" />}
+              />
+              <ul class="space-y-1">
+                <For each={filtered()}>
+                  {(file) => (
+                    <li>
+                      <button
+                        type="button"
+                        aria-current={active() === file.id ? 'page' : undefined}
+                        class="flex min-h-9 w-full items-center gap-2 rounded-control px-2 text-left text-xs hover:bg-[var(--floe-state-hover)]"
+                        classList={{ 'bg-[var(--floe-state-selected)]': active() === file.id }}
+                        onClick={() => setActive(file.id)}
+                      >
+                        <FileCode class="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span class="flex-1">{file.name}</span>
+                        <Show when={dirty(file.id)}>
+                          <span class="text-caption" aria-label="Unsaved changes">
+                            ●
+                          </span>
+                        </Show>
+                      </button>
+                    </li>
+                  )}
+                </For>
+              </ul>
+              <Show when={!filtered().length}>
+                <div class="space-y-2 py-3 text-xs">
+                  <p>No matching files.</p>
+                  <Button size="sm" variant="ghost" onClick={() => setQuery('')}>
+                    Clear file search
+                  </Button>
+                </div>
+              </Show>
+            </nav>
+            <div class="min-w-0 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h3 class="text-sm font-medium">{active()}</h3>
+                <Tag size="sm" tone="soft">
+                  {dirty(active()) ? 'Unsaved changes' : 'Saved locally'}
+                </Tag>
+              </div>
+              <For each={SAMPLE_FILES}>
                 {(file) => (
-                  <li>
-                    <button
-                      type="button"
-                      aria-current={active() === file.id ? 'page' : undefined}
-                      class="flex min-h-9 w-full items-center gap-2 rounded-control px-2 text-left text-xs hover:bg-[var(--floe-state-hover)]"
-                      classList={{ 'bg-[var(--floe-state-selected)]': active() === file.id }}
-                      onClick={() => setActive(file.id)}
-                    >
-                      <FileCode class="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span class="flex-1">{file.name}</span>
-                      <Show when={dirty(file.id)}>
-                        <span class="text-caption" aria-label="Unsaved changes">
-                          ●
-                        </span>
-                      </Show>
-                    </button>
-                  </li>
+                  <textarea
+                    hidden={active() !== file.id}
+                    aria-label={`Edit ${file.name}`}
+                    class="scenario-file-editor floe-field h-72 w-full resize-y rounded-control p-3 font-mono text-xs leading-relaxed"
+                    spellcheck={false}
+                    value={drafts()[file.id] ?? file.content}
+                    onInput={(event) => {
+                      setDrafts({ ...drafts(), [file.id]: event.currentTarget.value });
+                      setFeedback('');
+                    }}
+                  />
                 )}
               </For>
-            </ul>
-            <Show when={!filtered().length}>
-              <div class="space-y-2 py-3 text-xs">
-                <p>No matching files.</p>
-                <Button size="sm" variant="ghost" onClick={() => setQuery('')}>
-                  Clear file search
-                </Button>
-              </div>
-            </Show>
-          </nav>
-          <div class="min-w-0 space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="text-sm font-medium">{active()}</h3>
-              <Tag size="sm" tone="soft">
-                {dirty(active()) ? 'Unsaved changes' : 'Saved locally'}
-              </Tag>
-            </div>
-            <For each={SAMPLE_FILES}>
-              {(file) => (
-                <textarea
-                  hidden={active() !== file.id}
-                  aria-label={`Edit ${file.name}`}
-                  class="floe-field h-72 w-full resize-y rounded-control p-3 font-mono text-xs leading-relaxed"
-                  spellcheck={false}
-                  value={drafts()[file.id] ?? file.content}
-                  onInput={(event) => {
-                    setDrafts({ ...drafts(), [file.id]: event.currentTarget.value });
-                    setFeedback('');
-                  }}
+              <Show when={error()}>
+                <p role="alert" class="text-xs text-error">
+                  {error()}
+                </p>
+              </Show>
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <Checkbox
+                  checked={fail()}
+                  onChange={setFail}
+                  label="Simulate a save failure"
+                  disabled={saving()}
                 />
-              )}
-            </For>
-            <Show when={error()}>
-              <p role="alert" class="text-xs text-error">
-                {error()}
-              </p>
-            </Show>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <Checkbox
-                checked={fail()}
-                onChange={setFail}
-                label="Simulate a save failure"
-                disabled={saving()}
-              />
-              <div class="flex items-center gap-2">
-                <FeedbackIndicator
-                  entries={
-                    feedback() ? [{ id: 'saved', severity: 'info', summary: feedback() }] : []
-                  }
-                  label="Save feedback"
-                  closeLabel="Close save feedback"
-                  restoreFocus={() => saveButton}
-                />
-                <Button
-                  ref={saveButton}
-                  variant="primary"
-                  icon={Save}
-                  loading={saving()}
-                  disabled={!dirty(active())}
-                  onClick={save}
-                >
-                  Save file
-                </Button>
+                <div class="flex items-center gap-2">
+                  <FeedbackIndicator
+                    entries={
+                      feedback() ? [{ id: 'saved', severity: 'info', summary: feedback() }] : []
+                    }
+                    label="Save feedback"
+                    closeLabel="Close save feedback"
+                    restoreFocus={() => saveButton}
+                  />
+                  <Button
+                    ref={saveButton}
+                    variant="primary"
+                    icon={Save}
+                    loading={saving()}
+                    disabled={!dirty(active())}
+                    onClick={save}
+                  >
+                    Save file
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>What to try</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol class="list-decimal space-y-1 pl-5 text-xs text-[var(--floe-ink-soft)]">
-            <li>Edit a file, switch to another file, then return.</li>
-            <li>Save it and reload this page to inspect the retained content.</li>
-            <li>Enable the failure case, edit again, and retry with your draft intact.</li>
-          </ol>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle class="scenario-card-heading">What to try</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol class="list-decimal space-y-4 pl-4 text-xs leading-relaxed text-[var(--floe-ink-soft)]">
+              <li>Edit a file, switch to another file, then return.</li>
+              <li>Save it and reload this page to inspect the retained content.</li>
+              <li>Enable the failure case, edit again, and retry with your draft intact.</li>
+            </ol>
+          </CardContent>
+        </Card>
+      </div>
       <Dialog
         open={resetOpen()}
         onOpenChange={setResetOpen}

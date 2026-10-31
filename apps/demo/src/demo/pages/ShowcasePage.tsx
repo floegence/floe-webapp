@@ -1684,7 +1684,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 onChange={setCardTabsActive}
                 features={{ indicator: { mode: 'none' } }}
                 slotClassNames={{
-                  tab: 'rounded-t-[var(--floe-radius-control)] border border-b-0',
+                  tab: 'rounded-t-[var(--floe-radius-control)] border border-b-transparent',
                   tabActive: 'border-[var(--floe-line)] -mb-px z-10',
                   tabInactive: 'border-transparent',
                 }}

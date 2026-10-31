@@ -32,7 +32,7 @@ function Metric(props: {
   const format = (value: number) =>
     new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }).format(value);
   return (
-    <div class="space-y-1" data-metric={props.label}>
+    <div class="scenario-metric space-y-1" data-metric={props.label}>
       <dt class="text-caption text-[var(--floe-ink-soft)]">{props.label}</dt>
       <dd class="text-xl font-semibold tabular-nums">
         {format(props.current)}
@@ -95,7 +95,7 @@ export function OverviewScenario() {
   };
   return (
     <div class="space-y-4" data-scenario="overview">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="scenario-heading">
         <div>
           <h2 class="text-base font-semibold">Workspace overview</h2>
           <p class="text-caption text-[var(--floe-ink-soft)]">
@@ -109,7 +109,7 @@ export function OverviewScenario() {
       <Card>
         <CardHeader class="flex-row flex-wrap items-center justify-between gap-3">
           <div>
-            <CardTitle>Deployment health</CardTitle>
+            <CardTitle class="scenario-card-heading">Deployment health</CardTitle>
             <p class="mt-1 text-caption text-[var(--floe-ink-soft)]">
               Last {range()} days · compared with the preceding {range()} days
             </p>
@@ -127,8 +127,8 @@ export function OverviewScenario() {
             ]}
           />
         </CardHeader>
-        <CardContent class="space-y-5">
-          <dl class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <CardContent class="scenario-health">
+          <dl class="grid grid-cols-2 gap-3">
             <Metric
               label="Deployments"
               current={current().count}
@@ -156,8 +156,8 @@ export function OverviewScenario() {
               preference="lower"
             />
           </dl>
-          <figure aria-label={`Deployments over the last ${range()} days`}>
-            <DataBarChart data={deploymentBuckets(range())} height={185} animate={false} />
+          <figure class="scenario-chart" aria-label={`Deployments over the last ${range()} days`}>
+            <DataBarChart data={deploymentBuckets(range())} height={230} animate={false} />
             <figcaption class="text-caption text-[var(--floe-ink-soft)]">
               {range() === 7 ? 'Daily' : range() === 30 ? 'Five-day' : 'Fifteen-day'} totals · all
               environments
@@ -167,8 +167,8 @@ export function OverviewScenario() {
       </Card>
       <Card>
         <CardHeader class="gap-3">
-          <CardTitle>Deployment history</CardTitle>
-          <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <CardTitle class="scenario-card-heading">Deployment history</CardTitle>
+          <div class="grid gap-3 sm:grid-cols-[minmax(0,24rem)_auto] sm:justify-between">
             <Input
               aria-label="Search deployments"
               placeholder="Search service, revision or status"
@@ -225,7 +225,7 @@ export function OverviewScenario() {
                   <li>
                     <button
                       type="button"
-                      class="flex w-full items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left hover:bg-[var(--floe-state-hover)]"
+                      class="flex w-full items-center justify-between gap-3 rounded-control px-3 py-3 text-left hover:bg-[var(--floe-state-hover)]"
                       onClick={() => setSelected(row)}
                       aria-label={`Inspect ${row.service} ${row.revision}`}
                     >

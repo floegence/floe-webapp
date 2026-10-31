@@ -102,7 +102,7 @@ try {
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     console.log('Core workflows passed at width ' + viewport.width);
     await page.getByRole('tab', { name: 'Examples', exact: true }).click();
-    await page.getByRole('heading', { name: 'More compositions', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Everyday building blocks', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Create project', exact: true }).click();
     await page.getByText('Use at least 3 characters.', { exact: true }).waitFor();
     const projectName =
@@ -150,7 +150,7 @@ try {
     await page.keyboard.press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     await page
-      .getByRole('heading', { name: 'More compositions', exact: true })
+      .getByRole('heading', { name: 'Everyday building blocks', exact: true })
       .scrollIntoViewIfNeeded();
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
@@ -165,7 +165,7 @@ try {
       await page.screenshot({ path: output + '/home-' + mode + '-' + viewport.width + '.png' });
     }
     await page.goto(route('?view=showcase&section=scenarios&scenario=compositions&mode=dark'));
-    await page.getByRole('heading', { name: 'More compositions', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Everyday building blocks', exact: true }).waitFor();
     await page.waitForFunction(() => {
       const tab = document.getElementById('scenario-tab-compositions');
       const target = tab.getBoundingClientRect();

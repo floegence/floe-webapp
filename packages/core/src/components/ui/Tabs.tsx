@@ -165,32 +165,35 @@ function normalizeIndicatorThickness(px?: number): 1 | 2 | 3 | 4 {
 }
 
 function resolveIndicatorThicknessClasses(px: 1 | 2 | 3 | 4): {
-  tabBorderClass: string;
+  tabMarkerClass: string;
   sliderHeightClass: string;
 } {
   switch (px) {
     case 1:
-      return { tabBorderClass: 'border-b', sliderHeightClass: 'h-px' };
+      return { tabMarkerClass: 'after:h-px', sliderHeightClass: 'h-px' };
     case 3:
-      return { tabBorderClass: 'border-b-[3px]', sliderHeightClass: 'h-[3px]' };
+      return { tabMarkerClass: 'after:h-[3px]', sliderHeightClass: 'h-[3px]' };
     case 4:
-      return { tabBorderClass: 'border-b-4', sliderHeightClass: 'h-1' };
+      return { tabMarkerClass: 'after:h-1', sliderHeightClass: 'h-1' };
     case 2:
     default:
-      return { tabBorderClass: 'border-b-2', sliderHeightClass: 'h-0.5' };
+      return { tabMarkerClass: 'after:h-0.5', sliderHeightClass: 'h-0.5' };
   }
 }
 
 function resolveIndicatorColorClasses(token: TabsIndicatorColorToken): {
-  tabBorderClass: string;
+  tabMarkerClass: string;
   sliderBgClass: string;
 } {
   switch (token) {
     case 'border':
-      return { tabBorderClass: 'border-[var(--floe-line)]', sliderBgClass: 'bg-[var(--floe-line)]' };
+      return {
+        tabMarkerClass: 'after:bg-[var(--floe-line)]',
+        sliderBgClass: 'bg-[var(--floe-line)]',
+      };
     case 'muted-foreground':
       return {
-        tabBorderClass: 'border-muted-foreground',
+        tabMarkerClass: 'after:bg-[var(--floe-ink-ghost)]',
         sliderBgClass: 'bg-[var(--floe-ink-ghost)]',
       };
     case 'primary':
@@ -198,7 +201,7 @@ function resolveIndicatorColorClasses(token: TabsIndicatorColorToken): {
       /* The `primary` token name is kept for API compatibility; in the current
        * language the commitment marker is jade, not a solid black underline. */
       return {
-        tabBorderClass: 'border-[var(--floe-accent-ink)]',
+        tabMarkerClass: 'after:bg-[var(--floe-accent-ink)]',
         sliderBgClass: 'bg-[var(--floe-accent-ink)]',
       };
   }
@@ -525,37 +528,36 @@ export function Tabs(props: TabsProps) {
      * the selected face is the surface layer's job, and movement uses the one
      * motion family. The component only chooses which primitive applies. */
     const base = cn(
-      'inline-flex items-center gap-1.5 whitespace-nowrap',
+      'relative inline-flex items-center gap-1.5 whitespace-nowrap',
       'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]'
     );
     const cursor = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
 
-    const activeIndicatorClass = (() => {
+    // The indicator is paint-only. A bottom-only border lifts tab content by
+    // half its thickness. A pseudo-element preserves geometry without adding
+    // nodes, effects, or measurements to tab switching.
+    const activeIndicatorClass = () => {
       const mode = indicatorMode();
-      if (mode === 'none') return 'border-transparent';
-      if (mode === 'slider') {
-        return sliderGeometry().visible
-          ? 'border-transparent'
-          : indicatorColorClasses().tabBorderClass;
-      }
-      return indicatorColorClasses().tabBorderClass;
-    })();
+      if (mode === 'none' || (mode === 'slider' && sliderGeometry().visible)) return '';
+      return cn(
+        "after:pointer-events-none after:absolute after:bottom-0 after:inset-x-2 after:rounded-full after:content-['']",
+        indicatorThicknessClasses().tabMarkerClass,
+        indicatorColorClasses().tabMarkerClass
+      );
+    };
 
     return cn(
       base,
       cursor,
       sizeStyles[local.size ?? 'md'],
       'rounded-control',
-      indicatorThicknessClasses().tabBorderClass,
+      'border',
       /* The selected face is painted by the surface layer (`data-floe-surface`
        * plus `aria-selected`), which keeps the fill, hairline and first
        * elevation step identical to every other selected control. */
       isCurrentActive
-        ? cn(activeIndicatorClass, 'text-foreground', local.slotClassNames?.tabActive)
-        : cn(
-            'border-transparent text-[var(--floe-ink-soft)]',
-            local.slotClassNames?.tabInactive
-          ),
+        ? cn(activeIndicatorClass(), 'text-foreground', local.slotClassNames?.tabActive)
+        : cn('border-transparent text-[var(--floe-ink-soft)]', local.slotClassNames?.tabInactive),
       disabled && 'opacity-50',
       local.slotClassNames?.tab
     );
@@ -605,7 +607,7 @@ export function Tabs(props: TabsProps) {
       <div
         ref={scrollContainerRef}
         class={cn(
-          'relative flex-1 flex items-end gap-0.5 overflow-x-auto',
+          'relative flex-1 flex items-center gap-0.5 overflow-x-auto',
           'scrollbar-none',
           // Hide scrollbar for all browsers
           '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
@@ -642,7 +644,7 @@ export function Tabs(props: TabsProps) {
           />
         </Show>
         {/* IMPORTANT: Observational item replacements must retain focused tab nodes and use current data. */}
-        <KeyedFor each={local.items} by={item => item.id}>
+        <KeyedFor each={local.items} by={(item) => item.id}>
           {(item) => {
             const isCurrentActive = () => item().id === optimisticActiveId();
             const isClosable = () => item().closable ?? defaultClosable();

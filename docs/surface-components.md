@@ -23,7 +23,7 @@ The optional soft neumorphic material is a lightweight shared component system: 
 | Checkbox | Recessed square, semantic checked/mixed face; button/card/tile selection shares Radio treatment | Native checked/indeterminate meaning and multi-select semantics; the mixed property and ARIA now match the visual indicator |
 | Switch | Tight recessed track and a crisp shadow-free thumb, readable at 1× and 2× | Native switch state; 140ms reversible translate, existing travel, focus and disabled behavior |
 | SegmentedControl | Quiet rail and solid primary selected segment, without decorative shadow | Selection, keyboard focus, per-option and whole-control disabled states |
-| Tabs | Quiet rail and colored selected tab face; existing indicator remains meaningful | Overflow, close/add actions, optimistic selection, configurable slider geometry |
+| Tabs | Quiet rail, symmetric face border and centered label/close control; paint-only active marker preserves configured thickness | Overflow, close/add actions, optimistic selection, configurable slider geometry |
 | Pagination | Compact raised page controls, pressed current page | Page selection, bounds, disabled arrows, native page-size and jump controls |
 | LinearProgress | Recessed track and clean semantic fill | Width/value, buffer, stripes, indeterminate and labels |
 | CircularProgress | Circular recessed/raised carrying surface around the semantic vector track | Stroke geometry, percentage, size, hidden track and indeterminate rotation |

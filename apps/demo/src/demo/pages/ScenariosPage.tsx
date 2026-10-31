@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'solid-js';
 import { KeepAliveStack } from '@floegence/floe-webapp-core/layout';
-import { Tabs, Tag } from '@floegence/floe-webapp-core/ui';
+import { Tabs } from '@floegence/floe-webapp-core/ui';
 import { ShowcaseFrame } from '../components/docs';
+import '../scenarios/scenarios.css';
 
 const Overview = lazy(() =>
   import('../scenarios/OverviewScenario').then((m) => ({ default: m.OverviewScenario }))
@@ -57,22 +58,17 @@ export function ScenariosPage(props: {
     },
   ];
   return (
-    <ShowcaseFrame class="space-y-5">
-      <header class="space-y-2">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-xl font-semibold tracking-[var(--floe-tracking-tight)]">
-            Try a complete workflow
-          </h1>
-          <Tag size="sm" tone="soft">
-            Local examples
-          </Tag>
-        </div>
-        <p class="max-w-2xl text-sm text-[var(--floe-ink-soft)]">
-          Explore data, keep an editing session, or follow a task through success and recovery.
-          Every control uses the public Floe components.
+    <ShowcaseFrame class="scenario-page">
+      <header class="scenario-intro">
+        <h1>Floe in practice.</h1>
+        <p>
+          Thoughtful workflows, built with Floe. Explore a workspace, edit a file, or prepare your
+          next release.
         </p>
       </header>
       <Tabs
+        ariaLabel="Scenario navigation"
+        class="scenario-navigation"
         activeId={active()}
         onChange={select}
         items={[

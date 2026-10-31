@@ -20,7 +20,8 @@ describe('Tabs composable features', () => {
     // `data-floe-surface` + `aria-selected`: a raised plane with a hairline,
     // identical to every other selected control. The component contributes the
     // indicator thickness and the ink; it never paints a colored block.
-    expect(html).toContain('border-b-2');
+    expect(html).toContain('after:h-0.5');
+    expect(html).not.toContain('border-b-2');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain('text-foreground');
     expect(html).not.toContain('border-primary');
@@ -39,6 +40,7 @@ describe('Tabs composable features', () => {
     expect(html).toContain('border-transparent');
     expect(html).toContain('aria-selected="true"');
     expect(html).not.toContain('border-primary');
+    expect(html).not.toContain('after:content');
   });
 
   it('should keep legacy closable/showAdd behavior to preserve X and + buttons', () => {
