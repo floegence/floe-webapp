@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import {
   Grid3x3,
   LayoutDashboard,
@@ -14,6 +14,8 @@ import { SHOWCASE_COMPONENTS } from '../showcaseCatalog';
 export interface HomePageProps {
   onSelectSection: (id: string) => void;
   onOpenFile: (id: string) => void;
+  onOpenScenario: (id: string) => void;
+  onOpenMode: (mode: 'activity' | 'deck' | 'workbench') => void;
 }
 
 /* The demo's front door. It answers the three questions a first-time visitor
@@ -82,14 +84,14 @@ const CAPABILITIES = [
   },
   {
     title: 'Extension points',
-    body: 'Register components, sidebar views, status-bar items, commands and launchpad entries; the shell composes them without knowing your business.',
+    body: 'Register components, sidebar views, commands and launchpad entries; the shell composes them without knowing your business.',
     section: 'overview',
     icon: Grid3x3,
   },
 ] as const;
 
 const SHIPPED = [
-  { label: 'Shell & navigation', detail: 'Activity bar, sidebar, top bar, status bar' },
+  { label: 'Shell & navigation', detail: 'Activity bar, sidebar, top bar, commands' },
   { label: 'Workbench canvas', detail: 'Widgets, stacking, projection, embedded input' },
   { label: 'Deck grid', detail: 'Drag, resize, presets, persistence' },
   { label: 'Chat & markdown', detail: 'Streaming blocks, media, workers, code highlight' },
@@ -101,6 +103,7 @@ const SHIPPED = [
 
 export function HomePage(props: HomePageProps) {
   const componentCount = () => SHOWCASE_COMPONENTS.length;
+  const [showCode, setShowCode] = createSignal(false);
 
   return (
     <ShowcaseFrame class="space-y-10">
@@ -121,22 +124,87 @@ export function HomePage(props: HomePageProps) {
         <div class="max-w-2xl space-y-2">
           <h1 class="text-2xl font-semibold tracking-[var(--floe-tracking-tight)]">Floe Webapp</h1>
           <p class="text-[length:var(--floe-type-body)] leading-[var(--floe-line-body)] text-[var(--floe-ink-soft)]">
-            A composable application framework for products that need more than a page and a
-            sidebar. It supplies the shell, the interaction contracts and the workspace surfaces;
-            your product keeps its routes, business state and voice.
+            A focused workspace for complex work. Bring files, live data and long-running tasks
+            together with a consistent interface that keeps your place as you work.
           </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <Button variant="primary" onClick={() => props.onSelectSection('overview')}>
-            Browse {componentCount()} components
+          <Button variant="primary" onClick={() => props.onSelectSection('scenarios')}>
+            Try a workflow
           </Button>
-          <Button variant="outline" onClick={() => props.onSelectSection('scenarios')}>
-            See composed scenarios
+          <Button variant="outline" onClick={() => props.onSelectSection('overview')}>
+            Browse {componentCount()} components
           </Button>
           <Button variant="ghost" onClick={() => props.onOpenFile('docs.getting-started')}>
             Read getting started
           </Button>
+        </div>
+      </section>
+
+      <section class="space-y-3" aria-labelledby="workflow-heading">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="workflow-heading" class="text-base font-semibold">
+            Start with real interactions
+          </h2>
+          <span class="text-caption text-[var(--floe-ink-soft)]">
+            Local examples · no account required
+          </span>
+        </div>
+        <div class="grid gap-3 md:grid-cols-3">
+          <For
+            each={[
+              {
+                id: 'overview',
+                number: '01',
+                title: 'Understand your workspace',
+                body: 'Change the time range, filter deployments and inspect a result.',
+                action: 'Explore overview',
+              },
+              {
+                id: 'files',
+                number: '02',
+                title: 'Keep your editing flow',
+                body: 'Find a file, keep a draft and recover from a failed save.',
+                action: 'Open file workspace',
+              },
+              {
+                id: 'task',
+                number: '03',
+                title: 'Follow work to completion',
+                body: 'Run a check, cancel it or recover and inspect the report.',
+                action: 'Run a task',
+              },
+            ]}
+          >
+            {(item) => (
+              <a
+                href={`?view=showcase&section=scenarios&scenario=${item.id}`}
+                onClick={(event) => {
+                  if (
+                    event.button === 0 &&
+                    !event.metaKey &&
+                    !event.ctrlKey &&
+                    !event.shiftKey &&
+                    !event.altKey
+                  ) {
+                    event.preventDefault();
+                    props.onOpenScenario(item.id);
+                  }
+                }}
+                class="flex flex-col gap-3 rounded-card bg-card p-[var(--floe-pad-panel)] text-left hover:bg-[var(--floe-well)]"
+              >
+                <span class="text-caption tabular-nums text-[var(--floe-ink-quiet)]">
+                  {item.number}
+                </span>
+                <h3 class="text-sm font-semibold">{item.title}</h3>
+                <p class="flex-1 text-xs leading-relaxed text-[var(--floe-ink-soft)]">
+                  {item.body}
+                </p>
+                <span class="text-xs font-medium">{item.action} →</span>
+              </a>
+            )}
+          </For>
         </div>
       </section>
 
@@ -155,9 +223,21 @@ export function HomePage(props: HomePageProps) {
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
           <For each={MODES}>
             {(mode) => (
-              <div
-                data-floe-surface="raised"
-                class="flex flex-col gap-2 rounded-card border border-[var(--floe-line)] p-[var(--floe-pad-card)]"
+              <a
+                href={mode.id === 'activity' ? '?view=showcase&section=home' : '?view=' + mode.id}
+                onClick={(event) => {
+                  if (
+                    event.button === 0 &&
+                    !event.metaKey &&
+                    !event.ctrlKey &&
+                    !event.shiftKey &&
+                    !event.altKey
+                  ) {
+                    event.preventDefault();
+                    props.onOpenMode(mode.id);
+                  }
+                }}
+                class="flex flex-col gap-2 rounded-card bg-card p-[var(--floe-pad-card)] text-left hover:bg-[var(--floe-well)]"
               >
                 <div class="flex items-center gap-2">
                   <span class="flex h-7 w-7 items-center justify-center rounded-control bg-[var(--floe-well)] text-[var(--floe-ink-soft)]">
@@ -171,7 +251,8 @@ export function HomePage(props: HomePageProps) {
                   </div>
                 </div>
                 <p class="text-caption leading-snug text-[var(--floe-ink-soft)]">{mode.summary}</p>
-              </div>
+                <span class="mt-1 text-xs font-medium">Open {mode.label} →</span>
+              </a>
             )}
           </For>
         </div>
@@ -224,7 +305,14 @@ export function HomePage(props: HomePageProps) {
             chrome.
           </p>
         </div>
-        <CodeSnippet title="App.tsx" language="tsx" code={QUICK_START} maxHeight="360px" />
+        <details onToggle={(event) => setShowCode(event.currentTarget.open)}>
+          <summary class="cursor-pointer rounded-control py-2 text-sm font-medium">
+            View the starter code
+          </summary>
+          <Show when={showCode()}>
+            <CodeSnippet title="App.tsx" language="tsx" code={QUICK_START} maxHeight="360px" />
+          </Show>
+        </details>
       </section>
 
       {/* What ships */}

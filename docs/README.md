@@ -7,6 +7,8 @@ This folder contains **public, version-controlled** documentation for downstream
 - Configuration (FloeConfig): `docs/configuration.md`
 - Surface Styles: `docs/surface-style.md`
 - Accessibility Contract: `docs/accessibility.md`
+- Design and Demo Contract: `docs/design-and-demo.md`
+- [Design review acceptance](./design-review-acceptance.md) — Review scope, qualification evidence and manual walkthrough.
 - Component Registry & Contributions: `docs/component-registry.md`
 - Interaction Architecture & Guardrails: `docs/interaction-architecture.md`
 - Picker Path Semantics: `docs/picker-paths.md`

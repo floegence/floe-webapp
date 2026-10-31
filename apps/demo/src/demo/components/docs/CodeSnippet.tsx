@@ -1,7 +1,8 @@
-import { createSignal, onMount, Show, createMemo, createEffect, on } from 'solid-js';
+import { createSignal, onMount, Show, createMemo, createEffect, on, onCleanup } from 'solid-js';
+import { ensureDemoHighlighting } from '../../highlighting';
 import { cn } from '@floegence/floe-webapp-core';
 import { highlightCode } from '@floegence/floe-webapp-core/chat';
-import { Button } from '@floegence/floe-webapp-core/ui';
+import { Button, FeedbackIndicator } from '@floegence/floe-webapp-core/ui';
 import { CheckIcon, CopyIcon } from '@floegence/floe-webapp-core/icons';
 import { Skeleton } from '@floegence/floe-webapp-core/loading';
 
@@ -22,66 +23,58 @@ export interface CodeSnippetProps {
 export function CodeSnippet(props: CodeSnippetProps) {
   const [highlightedHtml, setHighlightedHtml] = createSignal<string | null>(null);
   const [copied, setCopied] = createSignal(false);
+  const [copyError, setCopyError] = createSignal('');
+  let copyButton: HTMLButtonElement | undefined;
+  let disposed = false;
   const [isLoading, setIsLoading] = createSignal(true);
-  const [retryCount, setRetryCount] = createSignal(0);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  let request = 0;
+  onCleanup(() => {
+    disposed = true;
+    request += 1;
+    clearTimeout(copyTimer);
+  });
 
   const language = createMemo(() => props.language ?? 'tsx');
   const showCopyButton = createMemo(() => props.showCopyButton !== false);
 
   const highlightCodeAsync = async () => {
+    const current = ++request;
+    const code = props.code;
+    const lang = language();
     setIsLoading(true);
     try {
-      const html = await highlightCode(props.code, language(), 'github-dark');
-      setHighlightedHtml(html);
-
-      // Check if we got actual highlighting (contains span with style) or just fallback
-      // If fallback and we haven't retried too many times, retry after a short delay
-      const hasHighlighting = html.includes('style="') || html.includes('class="line"');
-      if (!hasHighlighting && retryCount() < 3) {
-        setTimeout(() => {
-          setRetryCount((c) => c + 1);
-        }, 200);
-      }
+      await ensureDemoHighlighting();
+      const html = await highlightCode(code, lang, 'github-dark');
+      if (current === request) setHighlightedHtml(html);
     } catch (error) {
       console.error('Failed to highlight code:', error);
-      // Fallback to plain text
-      setHighlightedHtml(`<pre class="shiki"><code>${escapeHtml(props.code)}</code></pre>`);
+      if (current === request)
+        setHighlightedHtml('<pre class="shiki"><code>' + escapeHtml(code) + '</code></pre>');
     } finally {
-      setIsLoading(false);
+      if (current === request) setIsLoading(false);
     }
   };
-
-  // Highlight code on mount
-  onMount(() => {
-    highlightCodeAsync();
-  });
-
-  // Re-highlight when code/language changes or on retry
-  createEffect(
-    on([() => props.code, language, retryCount], () => {
-      if (retryCount() > 0) {
-        highlightCodeAsync();
-      }
-    })
-  );
+  onMount(() => void highlightCodeAsync());
+  createEffect(on([() => props.code, language], () => void highlightCodeAsync(), { defer: true }));
 
   const handleCopy = async () => {
+    setCopyError('');
     try {
       await navigator.clipboard.writeText(props.code);
+      if (disposed) return;
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(copyTimer);
+      copyTimer = setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy code:', error);
+      if (!disposed) setCopyError('Clipboard unavailable. Select the code and copy it manually.');
     }
   };
 
   return (
     <div
-      class={cn(
-        'overflow-hidden rounded-group',
-        'border border-[var(--floe-line)]',
-        props.class
-      )}
+      class={cn('overflow-hidden rounded-group', 'border border-[var(--floe-line)]', props.class)}
     >
       {/* Header with title and copy button */}
       <Show when={props.title || showCopyButton()}>
@@ -97,17 +90,29 @@ export function CodeSnippet(props: CodeSnippetProps) {
             </span>
           </Show>
           <Show when={showCopyButton()}>
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={handleCopy}
-              class="text-[var(--floe-ink-quiet)] hover:text-[var(--floe-ink)]"
-              title={copied() ? 'Copied!' : 'Copy code'}
-            >
-              <Show when={copied()} fallback={<CopyIcon class="w-3 h-3" />}>
-                <CheckIcon class="w-3 h-3 text-success" />
-              </Show>
-            </Button>
+            <div class="flex items-center gap-2">
+              <FeedbackIndicator
+                entries={
+                  copyError() ? [{ id: 'copy-error', severity: 'error', summary: copyError() }] : []
+                }
+                label="Copy feedback"
+                closeLabel="Close copy feedback"
+                restoreFocus={() => copyButton}
+              />
+              <Button
+                ref={copyButton}
+                aria-label={copied() ? 'Code copied' : 'Copy code'}
+                variant="ghost"
+                size="xs"
+                onClick={handleCopy}
+                class="text-[var(--floe-ink-quiet)] hover:text-[var(--floe-ink)]"
+                title={copied() ? 'Copied!' : 'Copy code'}
+              >
+                <Show when={copied()} fallback={<CopyIcon class="w-3 h-3" />}>
+                  <CheckIcon class="w-3 h-3 text-success" />
+                </Show>
+              </Button>
+            </div>
           </Show>
         </div>
       </Show>
@@ -130,8 +135,11 @@ export function CodeSnippet(props: CodeSnippetProps) {
             </div>
           }
         >
-          {/* eslint-disable-next-line solid/no-innerhtml -- Shiki output is trusted */}
-          <div class="chat-code-content [&_pre]:m-0 [&_pre]:p-3" innerHTML={highlightedHtml() ?? ''} />
+          <div
+            class="chat-code-content [&_pre]:m-0 [&_pre]:p-3"
+            // eslint-disable-next-line solid/no-innerhtml -- Highlighter output escapes code; fallback is escaped locally.
+            innerHTML={highlightedHtml() ?? ''}
+          />
         </Show>
       </div>
     </div>

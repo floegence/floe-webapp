@@ -10,6 +10,10 @@ This document describes:
 
 ## Shared guarantees
 
+### Named value selectors
+
+`Select` accepts `ariaLabel`, `ariaLabelledBy`, and `ariaDescribedBy`. Prefer a visible field label referenced by `ariaLabelledBy`; otherwise provide a localized `ariaLabel`. A selected option is a value, not a substitute for the field identity. `Dropdown` exposes corresponding `triggerAriaLabel`, `triggerAriaLabelledBy`, and `triggerAriaDescribedBy` properties on its existing trigger without changing geometry or focus ownership.
+
 ### Shell landmarks and skip navigation
 
 `Shell` reads `config.accessibility` and provides a shared accessibility contract for application chrome:

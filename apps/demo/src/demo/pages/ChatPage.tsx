@@ -1,9 +1,14 @@
-import { createSignal, onMount, type Component } from 'solid-js';
-import { createHighlighter } from 'shiki';
+import { createSignal, onMount, onCleanup, type Component } from 'solid-js';
+import { ensureDemoHighlighting } from '../highlighting';
 import mermaid from 'mermaid';
 import { useNotification } from '@floegence/floe-webapp-core';
 import { Button } from '@floegence/floe-webapp-core/ui';
-import { ChatContainer, configureSyncHighlighter, configureSyncMermaid, type Attachment, type Message } from '@floegence/floe-webapp-core/chat';
+import {
+  ChatContainer,
+  configureSyncMermaid,
+  type Attachment,
+  type Message,
+} from '@floegence/floe-webapp-core/chat';
 
 // Demo messages showcasing ALL block types with rich content
 const createDemoMessages = (): Message[] => [
@@ -48,10 +53,14 @@ This demo showcases **all message block types** supported by the chat component.
     blocks: [
       {
         type: 'thinking',
-        content: 'Analyzing the request for code examples... Preparing TypeScript and Python samples...',
+        content:
+          'Analyzing the request for code examples... Preparing TypeScript and Python samples...',
         duration: 1200,
       },
-      { type: 'text', content: 'Here are examples in different languages with full syntax highlighting:' },
+      {
+        type: 'text',
+        content: 'Here are examples in different languages with full syntax highlighting:',
+      },
       {
         type: 'code',
         language: 'typescript',
@@ -82,7 +91,7 @@ async function fetchUsers(filter?: Partial<User>): Promise<User[]> {
 const admins = await fetchUsers({ role: 'admin' });
 console.log(\`Found \${admins.length} admin users\`);`,
       },
-      { type: 'text', content: 'And here\'s a Python example with async/await:' },
+      { type: 'text', content: "And here's a Python example with async/await:" },
       {
         type: 'code',
         language: 'python',
@@ -127,7 +136,9 @@ asyncio.run(main())`,
   {
     id: 'msg-user-diff',
     role: 'user',
-    blocks: [{ type: 'text', content: 'Can you show me the changes you made to the configuration file?' }],
+    blocks: [
+      { type: 'text', content: 'Can you show me the changes you made to the configuration file?' },
+    ],
     status: 'complete',
     timestamp: Date.now() - 400000,
   },
@@ -135,7 +146,11 @@ asyncio.run(main())`,
     id: 'msg-diff-example',
     role: 'assistant',
     blocks: [
-      { type: 'text', content: 'I\'ve updated the configuration with better defaults and added new features. Here\'s the diff:' },
+      {
+        type: 'text',
+        content:
+          "I've updated the configuration with better defaults and added new features. Here's the diff:",
+      },
       {
         type: 'code-diff',
         language: 'typescript',
@@ -188,7 +203,7 @@ asyncio.run(main())`,
     id: 'msg-shell-example',
     role: 'assistant',
     blocks: [
-      { type: 'text', content: 'I\'ll run a few commands to check the project status:' },
+      { type: 'text', content: "I'll run a few commands to check the project status:" },
       {
         type: 'shell',
         command: 'git status --short',
@@ -246,7 +261,7 @@ Coverage: 87.5% statements, 82.3% branches`,
     id: 'msg-diagram-example',
     role: 'assistant',
     blocks: [
-      { type: 'text', content: 'Here\'s a comprehensive system architecture diagram:' },
+      { type: 'text', content: "Here's a comprehensive system architecture diagram:" },
       {
         type: 'mermaid',
         content: `flowchart TB
@@ -281,7 +296,7 @@ Coverage: 87.5% statements, 82.3% branches`,
     DATA --> DB & S3
     NOTIFY --> CACHE`,
       },
-      { type: 'text', content: 'And here\'s the user authentication flow:' },
+      { type: 'text', content: "And here's the user authentication flow:" },
       {
         type: 'mermaid',
         content: `sequenceDiagram
@@ -313,7 +328,9 @@ Coverage: 87.5% statements, 82.3% branches`,
   {
     id: 'msg-user-search',
     role: 'user',
-    blocks: [{ type: 'text', content: 'Search for files containing "authentication" in the codebase.' }],
+    blocks: [
+      { type: 'text', content: 'Search for files containing "authentication" in the codebase.' },
+    ],
     status: 'complete',
     timestamp: Date.now() - 100000,
   },
@@ -329,8 +346,16 @@ Coverage: 87.5% statements, 82.3% branches`,
         status: 'success',
         result: {
           matches: [
-            { file: 'src/auth/authentication.ts', line: 15, content: 'export class AuthenticationService' },
-            { file: 'src/middleware/auth.ts', line: 8, content: 'async function validateAuthentication' },
+            {
+              file: 'src/auth/authentication.ts',
+              line: 15,
+              content: 'export class AuthenticationService',
+            },
+            {
+              file: 'src/middleware/auth.ts',
+              line: 8,
+              content: 'async function validateAuthentication',
+            },
             { file: 'src/utils/jwt.ts', line: 22, content: '// Authentication token helper' },
           ],
           totalMatches: 3,
@@ -366,7 +391,7 @@ Coverage: 87.5% statements, 82.3% branches`,
   {
     id: 'msg-user-tasks',
     role: 'user',
-    blocks: [{ type: 'text', content: 'What\'s the status of the project tasks?' }],
+    blocks: [{ type: 'text', content: "What's the status of the project tasks?" }],
     status: 'complete',
     timestamp: Date.now() - 50000,
   },
@@ -374,7 +399,7 @@ Coverage: 87.5% statements, 82.3% branches`,
     id: 'msg-checklist-example',
     role: 'assistant',
     blocks: [
-      { type: 'text', content: 'Here\'s the current project progress:' },
+      { type: 'text', content: "Here's the current project progress:" },
       {
         type: 'checklist',
         items: [
@@ -479,6 +504,11 @@ export const ChatPage: Component<ChatPageProps> = (props) => {
   const [demoMessages, setDemoMessages] = createSignal<Message[]>([]);
   const [isReady, setIsReady] = createSignal(false);
 
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+  });
+
   // Initialize renderers BEFORE loading messages
   onMount(async () => {
     // Initialize Mermaid
@@ -507,44 +537,18 @@ export const ChatPage: Component<ChatPageProps> = (props) => {
       },
     });
 
-    // Initialize Shiki highlighter
-    try {
-      const highlighter = await createHighlighter({
-        themes: ['github-dark', 'github-light'],
-        langs: ['typescript', 'javascript', 'tsx', 'jsx', 'python', 'json', 'html', 'css', 'bash', 'text', 'shell'],
-      });
+    await ensureDemoHighlighting();
+    if (disposed) return;
 
-      configureSyncHighlighter({
-        codeToHtml: (code: string, options: { lang: string; theme: string }) => {
-          try {
-            const loadedLangs = highlighter.getLoadedLanguages();
-            const lang = loadedLangs.includes(options.lang as never) ? options.lang : 'text';
-            return highlighter.codeToHtml(code, {
-              lang,
-              theme: options.theme || 'github-dark',
-            });
-          } catch {
-            const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `<pre class="shiki"><code>${escaped}</code></pre>`;
-          }
-        },
-      });
-    } catch (error) {
-      console.error('Failed to initialize Shiki:', error);
-      configureSyncHighlighter({
-        codeToHtml: (code: string) => {
-          const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<pre class="shiki"><code>${escaped}</code></pre>`;
-        },
-      });
-    }
-
-    // Now load messages after renderers are ready
     setDemoMessages(createDemoMessages());
     setIsReady(true);
   });
 
-  const handleSendMessage = async (_content: string, attachments: Attachment[], addMessage: (msg: Message) => void) => {
+  const handleSendMessage = async (
+    _content: string,
+    attachments: Attachment[],
+    addMessage: (msg: Message) => void
+  ) => {
     // Simulate AI response
     await new Promise((r) => setTimeout(r, 800));
 

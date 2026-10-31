@@ -852,6 +852,11 @@ export const selectDoc: ComponentDoc = {
       default: 'false',
       description: 'Disables the select.',
     },
+    {
+      name: 'ariaLabel / ariaLabelledBy / ariaDescribedBy',
+      type: 'string',
+      description: 'Name the field independently of its selected value and associate visible guidance. Prefer ariaLabelledBy for a visible label.',
+    },
   ],
   usage: {
     whenToUse: [

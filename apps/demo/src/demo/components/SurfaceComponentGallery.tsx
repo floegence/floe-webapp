@@ -68,22 +68,22 @@ export function SurfaceComponentGallery(props: { progress?: number; dense?: bool
       <style>{`
       .surface-gallery { color:var(--foreground); width:100%; }
       .surface-gallery-intro { margin-bottom:28px; }
-      .surface-gallery-intro h2 { font-size:24px; font-weight:650; letter-spacing:-.025em; }
+      .surface-gallery-intro h2 { font-size:var(--floe-type-heading); font-weight:600; letter-spacing:-.025em; }
       .surface-gallery-intro p,.surface-gallery-heading p { color:var(--muted-foreground); font-size:12px; margin-top:6px; line-height:1.6; }
       .surface-gallery-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
       .surface-gallery-heading { margin-bottom:12px; }
-      .surface-gallery-heading h3 { font-size:14px; font-weight:600; }
+      .surface-gallery-heading h3 { font-size:var(--floe-type-body); font-weight:600; }
       .surface-gallery-stack { display:flex; flex-direction:column; gap:20px; padding:6px; }
       .surface-gallery-row { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
-      .surface-gallery-label { font-size:10px; color:var(--muted-foreground); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
-      .surface-gallery-field { display:flex; flex-direction:column; gap:7px; font-size:11px; }
+      .surface-gallery-label { font-size:var(--floe-type-caption); color:var(--muted-foreground); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+      .surface-gallery-field { display:flex; flex-direction:column; gap:7px; font-size:var(--floe-type-caption); }
       .surface-gallery-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
       .surface-gallery-variants { margin-top:32px; } .surface-gallery-variants summary { cursor:pointer; font-size:13px; font-weight:600; margin-bottom:22px; }
       .surface-gallery-dense { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-top:32px; }
       @media(max-width:760px) { .surface-gallery-grid { grid-template-columns:minmax(0,1fr); gap:24px; } .surface-gallery-dense {grid-template-columns:repeat(2,minmax(0,1fr));} }
     `}</style>
       <header class="surface-gallery-intro">
-        <h2>Every detail, in the same light.</h2>
+        <h2>Floe design reference</h2>
         <p>
           Explore selection, depth and feedback across the component system. Use the theme and
           surface controls to compare.
@@ -93,7 +93,7 @@ export function SurfaceComponentGallery(props: { progress?: number; dense?: bool
         <Group
           id="tags"
           title="Tags & status"
-          description="Small embossed badges and recessed tints retain each semantic color."
+          description="Color and readable labels carry the same meaning in every theme."
         >
           <For each={['solid', 'soft'] as const}>
             {(tone) => (
@@ -394,6 +394,7 @@ export function SurfaceComponentGallery(props: { progress?: number; dense?: bool
             <div class="surface-gallery-row">
               <Button size="xs">Extra small</Button>
               <Select
+                ariaLabel="Deployment destination"
                 value={radio()}
                 onChange={setRadio}
                 options={[

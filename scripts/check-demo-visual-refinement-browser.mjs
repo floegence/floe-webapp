@@ -1,5 +1,6 @@
 /* global window */
 import assert from 'node:assert/strict';
+import { URL } from 'node:url';
 import { chromium } from 'playwright';
 
 const baseURL = process.env.FLOE_DEMO_URL ?? 'http://127.0.0.1:61210/';
@@ -14,15 +15,10 @@ const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 
 try {
-  await page.goto(baseURL);
-  await page.getByRole('button', { name: 'Showcase', exact: true }).click();
+  await page.goto(new URL('?view=showcase&section=ui-buttons', baseURL).href);
   await page.waitForTimeout(350);
 
-  assert.equal(
-    await page.locator('html').getAttribute('data-floe-surface-style'),
-    'soft-neumorphic',
-    'demo defaults to the refined soft material'
-  );
+  await page.getByRole('heading', { name: 'Buttons', exact: true }).waitFor();
 
   const primary = page.getByRole('button', { name: 'Primary', exact: true }).first();
   await primary.scrollIntoViewIfNeeded();

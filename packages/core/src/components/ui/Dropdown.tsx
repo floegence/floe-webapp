@@ -43,6 +43,8 @@ export interface DropdownProps {
   trigger: JSX.Element;
   triggerClass?: string;
   triggerAriaLabel?: string;
+  triggerAriaLabelledBy?: string;
+  triggerAriaDescribedBy?: string;
   /** Treat the existing trigger boundary as a field (used by Select). */
   triggerInputSurface?: boolean;
   items: DropdownItem[] | Accessor<DropdownItem[]>;
@@ -284,6 +286,8 @@ export function Dropdown(props: DropdownProps) {
         aria-expanded={open()}
         aria-controls={menuId}
         aria-label={props.triggerAriaLabel}
+        aria-labelledby={props.triggerAriaLabelledBy}
+        aria-describedby={props.triggerAriaDescribedBy}
         aria-disabled={props.disabled ? 'true' : undefined}
         data-floe-dropdown-trigger=""
         data-floe-input-surface={props.triggerInputSurface ? 'true' : undefined}
@@ -582,6 +586,11 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
  * Simple select dropdown
  */
 export interface SelectProps {
+  /** Localized field name, independent of the currently selected value. */
+  ariaLabel?: string;
+  /** Prefer a visible field label when one is available. */
+  ariaLabelledBy?: string;
+  ariaDescribedBy?: string;
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
@@ -601,6 +610,9 @@ export function Select(props: SelectProps) {
   return (
     <Dropdown
       triggerInputSurface
+      triggerAriaLabel={props.ariaLabel}
+      triggerAriaLabelledBy={props.ariaLabelledBy}
+      triggerAriaDescribedBy={props.ariaDescribedBy}
       triggerClass={cn(
         'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
         'floe-field text-[length:var(--floe-type-control)]',

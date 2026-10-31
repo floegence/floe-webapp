@@ -29,7 +29,7 @@ export const START_PAGES: ShowcaseEntry[] = [
   {
     id: 'scenarios',
     label: 'Scenarios',
-    description: 'Composed product surfaces built only from the library.',
+    description: 'Complete local workflows for data, editing and asynchronous tasks.',
   },
   {
     id: 'overview',

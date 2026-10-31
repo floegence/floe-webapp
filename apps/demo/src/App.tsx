@@ -1,17 +1,16 @@
 import {
   Show,
   Suspense,
-  Switch,
-  Match,
   createMemo,
+  batch,
   createSignal,
   createEffect,
   onMount,
+  onCleanup,
   lazy,
   type Component,
   type JSX,
 } from 'solid-js';
-import { createHighlighter } from 'shiki';
 import {
   FileBrowserDragProvider,
   FloeProvider,
@@ -30,11 +29,12 @@ import {
 } from '@floegence/floe-webapp-core';
 import { ActivityAppsMain } from '@floegence/floe-webapp-core/app';
 import {
-  configureSyncHighlighter,
   createMarkdownWorker,
   configureMarkdownWorker,
   createDiffWorker,
   configureDiffWorker,
+  terminateMarkdownWorker,
+  terminateDiffWorker,
 } from '@floegence/floe-webapp-core/chat';
 import {
   DisplayModePageShell,
@@ -73,12 +73,14 @@ import {
   type ProtocolContract,
 } from '@floegence/floe-webapp-protocol';
 
+import { FloeLogo } from './demo/components/FloeLogo';
+import { ensureDemoHighlighting } from './demo/highlighting';
 import { demoFiles } from './demo/workspace';
 import { FileExplorer } from './demo/sidebar/FileExplorer';
 import { SearchSidebar } from './demo/sidebar/SearchSidebar';
 import { SettingsPanel } from './demo/sidebar/SettingsPanel';
 import { ShowcaseSidebar } from './demo/sidebar/ShowcaseSidebar';
-import { DEFAULT_SHOWCASE_SECTION } from './demo/showcaseCatalog';
+import { DEFAULT_SHOWCASE_SECTION, SHOWCASE_BY_ID } from './demo/showcaseCatalog';
 import { ChatSidebar } from './demo/sidebar/ChatSidebar';
 import { demoChartThemePresets } from './demo/chartThemePresets';
 import { NotesDemoProvider } from './demo/notes/NotesDemoContext';
@@ -172,10 +174,21 @@ function AppContent() {
     'demo.showcaseSection.v1',
     DEFAULT_SHOWCASE_SECTION
   );
-  const selectShowcaseSection = (id: string) => {
-    setShowcaseSection(id);
-    if (layout.sidebarActiveTab() !== 'showcase') setSidebarActiveTab('showcase');
-  };
+  const [scenario, setScenario] = usePersisted<string>('demo.scenario.v1', 'overview');
+  const selectShowcaseSection = (id: string) =>
+    batch(() => {
+      if (!SHOWCASE_BY_ID.has(id)) return;
+      setShowcaseSection(id);
+      setDisplayMode('activity');
+      if (layout.sidebarActiveTab() !== 'showcase') setSidebarActiveTab('showcase');
+    });
+
+  const openScenario = (id: string) =>
+    batch(() => {
+      if (!['overview', 'files', 'task', 'compositions'].includes(id)) return;
+      setScenario(id);
+      selectShowcaseSection('scenarios');
+    });
 
   const openFile = (id: string) => {
     setActiveFileId(id);
@@ -195,6 +208,27 @@ function AppContent() {
   );
   const displayMode = () => sanitizeDisplayMode(persistedDisplayMode());
   const setDisplayMode = (mode: DisplayMode) => setPersistedDisplayMode(mode);
+  const openDisplayMode = (mode: DisplayMode) => setDisplayMode(mode);
+  const [routeReady, setRouteReady] = createSignal(false);
+  const currentRoute = () => {
+    const url = new URL(location.href);
+    const mode = displayMode();
+    const tab = layout.sidebarActiveTab();
+    url.searchParams.set('view', mode === 'activity' && tab === 'showcase' ? 'showcase' : mode);
+    for (const key of ['tab', 'section', 'scenario']) url.searchParams.delete(key);
+    if (mode === 'activity') {
+      if (tab === 'showcase') {
+        url.searchParams.set('section', showcaseSection());
+        if (showcaseSection() === 'scenarios') url.searchParams.set('scenario', scenario());
+      } else url.searchParams.set('tab', tab);
+    }
+    return url;
+  };
+  createEffect(() => {
+    if (!routeReady()) return;
+    const url = currentRoute();
+    if (url.href !== location.href) history.pushState(null, '', url);
+  });
 
   const demoLaunchpadItems: LaunchpadItemData[] = [
     {
@@ -381,22 +415,44 @@ function AppContent() {
   // gallery, and the component catalog. The sidebar selects which one, so the
   // render has to follow the persisted section rather than mount once.
   const ShowcaseRoute: Component = () => (
-    <Switch
-      fallback={
-        <ShowcasePage
-          section={showcaseSection()}
-          onOpenFile={openFile}
-          onSelectSection={selectShowcaseSection}
-        />
+    <KeepAliveStack
+      activeId={
+        showcaseSection() === 'home'
+          ? 'home'
+          : showcaseSection() === 'scenarios'
+            ? 'scenarios'
+            : 'catalog'
       }
-    >
-      <Match when={showcaseSection() === 'home'}>
-        <HomePage onSelectSection={selectShowcaseSection} onOpenFile={openFile} />
-      </Match>
-      <Match when={showcaseSection() === 'scenarios'}>
-        <ScenariosPage onSelectSection={selectShowcaseSection} />
-      </Match>
-    </Switch>
+      views={[
+        {
+          id: 'home',
+          render: () => (
+            <HomePage
+              onSelectSection={selectShowcaseSection}
+              onOpenFile={openFile}
+              onOpenMode={openDisplayMode}
+              onOpenScenario={openScenario}
+            />
+          ),
+        },
+        {
+          id: 'scenarios',
+          render: () => (
+            <ScenariosPage activeScenario={scenario()} onSelectScenario={openScenario} />
+          ),
+        },
+        {
+          id: 'catalog',
+          render: () => (
+            <ShowcasePage
+              section={showcaseSection()}
+              onOpenFile={openFile}
+              onSelectSection={selectShowcaseSection}
+            />
+          ),
+        },
+      ]}
+    />
   );
 
   const FilesView: Component = () => (
@@ -617,52 +673,6 @@ function AppContent() {
 
   registry.registerAll(demoComponents);
 
-  // Initialize Shiki highlighter globally for CodeSnippet components
-  const initShiki = async () => {
-    try {
-      const highlighter = await createHighlighter({
-        themes: ['github-dark', 'github-light'],
-        langs: [
-          'typescript',
-          'javascript',
-          'tsx',
-          'jsx',
-          'python',
-          'json',
-          'html',
-          'css',
-          'bash',
-          'text',
-          'shell',
-        ],
-      });
-
-      configureSyncHighlighter({
-        codeToHtml: (code: string, options: { lang: string; theme: string }) => {
-          try {
-            const loadedLangs = highlighter.getLoadedLanguages();
-            const lang = loadedLangs.includes(options.lang as never) ? options.lang : 'text';
-            return highlighter.codeToHtml(code, {
-              lang,
-              theme: options.theme,
-            });
-          } catch {
-            const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return `<pre class="shiki"><code>${escaped}</code></pre>`;
-          }
-        },
-      });
-    } catch (error) {
-      console.error('Failed to initialize Shiki:', error);
-      configureSyncHighlighter({
-        codeToHtml: (code: string) => {
-          const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<pre class="shiki"><code>${escaped}</code></pre>`;
-        },
-      });
-    }
-  };
-
   onMount(() => {
     const preview = new URLSearchParams(window.location.search);
     const colorMode = preview.get('mode');
@@ -671,25 +681,64 @@ function AppContent() {
     if (shellPreset?.mode === 'light' || shellPreset?.mode === 'dark') {
       theme.selectShellTheme(shellPreset.mode, shellPreset.name);
     }
-    if (preview.get('view') === 'workbench' || preview.get('view') === 'deck') {
-      setDisplayMode(sanitizeDisplayMode(preview.get('view')));
-    }
-    if (preview.get('view') === 'showcase') {
-      setDisplayMode('activity');
-      setSidebarActiveTab('showcase');
-    }
-    // UI-first: allow the initial frame to paint before initializing the syntax highlighter.
-    deferAfterPaint(() => void initShiki());
-
-    // Configure workers for non-blocking large markdown/diff rendering in chat.
-    deferAfterPaint(() => {
-      const md = createMarkdownWorker();
-      if (md) void configureMarkdownWorker(md);
-      const diff = createDiffWorker();
-      if (diff) void configureDiffWorker(diff);
-    });
+    const applyRoute = () =>
+      batch(() => {
+        const route = new URLSearchParams(location.search);
+        const view = route.get('view');
+        if (view === 'workbench' || view === 'deck') {
+          setDisplayMode(view);
+        } else if (view === 'showcase') {
+          const selectedScenario = route.get('scenario');
+          if (
+            selectedScenario &&
+            ['overview', 'files', 'task', 'compositions'].includes(selectedScenario)
+          )
+            setScenario(selectedScenario);
+          const section = route.get('section');
+          if (section && SHOWCASE_BY_ID.has(section)) setShowcaseSection(section);
+          setDisplayMode('activity');
+          setSidebarActiveTab('showcase');
+        } else if (view === 'activity') {
+          const tab = route.get('tab');
+          if (tab && registry.getComponent(tab)) setSidebarActiveTab(tab);
+          setDisplayMode('activity');
+        }
+      });
+    applyRoute();
+    history.replaceState(null, '', currentRoute());
+    setRouteReady(true);
+    window.addEventListener('popstate', applyRoute);
+    onCleanup(() => window.removeEventListener('popstate', applyRoute));
 
     void registry.mountAll((id) => createCtx(id, { protocol }));
+  });
+
+  let contentRuntimeStarted = false;
+  let disposed = false;
+  onCleanup(() => {
+    disposed = true;
+    if (contentRuntimeStarted) {
+      terminateMarkdownWorker();
+      terminateDiffWorker();
+    }
+  });
+  createEffect(() => {
+    if (contentRuntimeStarted || !['files', 'chat'].includes(layout.sidebarActiveTab())) return;
+    contentRuntimeStarted = true;
+    deferAfterPaint(() => {
+      if (disposed) return;
+      void ensureDemoHighlighting();
+      const md = createMarkdownWorker();
+      if (md)
+        void configureMarkdownWorker(md).catch((error) =>
+          console.error('Markdown initialization failed', error)
+        );
+      const diff = createDiffWorker();
+      if (diff)
+        void configureDiffWorker(diff).catch((error) =>
+          console.error('Diff initialization failed', error)
+        );
+    });
   });
 
   const desktopMainViews: KeepAliveView[] = [
@@ -801,7 +850,9 @@ function AppContent() {
         ? 'var(--success)'
         : state() === 'connecting' || state() === 'waiting'
           ? 'var(--warning)'
-          : 'var(--error)';
+          : state() === 'idle'
+            ? 'var(--floe-ink-quiet)'
+            : 'var(--error)';
     const label = () =>
       state() === 'connected'
         ? 'Connected'
@@ -809,7 +860,9 @@ function AppContent() {
           ? 'Connecting'
           : state() === 'failed'
             ? 'Error'
-            : 'Disconnected';
+            : state() === 'idle'
+              ? 'Local demo'
+              : 'Disconnected';
     return (
       <span class="hidden items-center gap-1.5 text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)] sm:inline-flex">
         <span
@@ -829,45 +882,53 @@ function AppContent() {
   const HeaderActions: Component = () => (
     <div class="flex items-center gap-2">
       <DemoConnectionChip />
-      <DisplayModeSwitcher mode={displayMode()} onChange={setDisplayMode} />
+      <DisplayModeSwitcher mode={displayMode()} onChange={openDisplayMode} />
       <ThemeToggle />
     </div>
   );
 
-  const Logo: Component = () => <img src="/logo.svg" alt="Floe" class="w-7 h-7" />;
+  const Logo = FloeLogo;
 
   return (
     <>
-      <Show when={displayMode() === 'activity'}>
-        <Shell
-          logo={<Logo />}
-          activitySelectionMode="ui-first"
-          activityItems={shellActivityItems()}
-          activityBottomItemsMobileMode="topBar"
-          activityBottomItems={[
-            {
-              id: 'settings',
-              icon: RailSettings,
-              label: 'Settings',
-              onClick: () => layout.setSidebarActiveTab('settings'),
-            },
-          ]}
-          topBarActions={<HeaderActions />}
-          terminalPanel={
-            <div class="h-full flex items-center justify-center text-[var(--floe-ink-soft)] text-xs">
-              <Terminal class="w-4 h-4 mr-1.5" />
-              Terminal placeholder
-            </div>
-          }
-        >
-          <Show when={!layout.isMobile()}>
-            <DesktopMain />
-          </Show>
-          <Show when={layout.isMobile()}>
-            <MobileMain />
-          </Show>
-        </Shell>
-      </Show>
+      <KeepAliveStack
+        activeId={displayMode() === 'activity' ? 'activity' : ''}
+        views={[
+          {
+            id: 'activity',
+            render: () => (
+              <Shell
+                logo={<Logo />}
+                activitySelectionMode="ui-first"
+                activityItems={shellActivityItems()}
+                activityBottomItemsMobileMode="topBar"
+                activityBottomItems={[
+                  {
+                    id: 'settings',
+                    icon: RailSettings,
+                    label: 'Settings',
+                    onClick: () => layout.setSidebarActiveTab('settings'),
+                  },
+                ]}
+                topBarActions={<HeaderActions />}
+                terminalPanel={
+                  <div class="h-full flex items-center justify-center text-[var(--floe-ink-soft)] text-xs">
+                    <Terminal class="w-4 h-4 mr-1.5" />
+                    Terminal placeholder
+                  </div>
+                }
+              >
+                <Show when={!layout.isMobile()}>
+                  <DesktopMain />
+                </Show>
+                <Show when={layout.isMobile()}>
+                  <MobileMain />
+                </Show>
+              </Shell>
+            ),
+          },
+        ]}
+      />
 
       <Show when={displayMode() === 'deck'}>
         <DisplayModePageShell logo={<Logo />} actions={<HeaderActions />}>
@@ -907,7 +968,7 @@ export function App() {
   const demoFloeConfig = {
     storage: { namespace: 'floe-demo-notes' },
     layout: {
-      sidebar: { defaultActiveTab: 'files' },
+      sidebar: { defaultActiveTab: 'showcase' },
     },
     theme: {
       defaultPreset: 'default',

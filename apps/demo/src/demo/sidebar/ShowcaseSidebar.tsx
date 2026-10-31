@@ -16,6 +16,7 @@ import {
 } from '@floegence/floe-webapp-core/icons';
 import {
   COMPONENT_GROUPS,
+  START_PAGES,
   SHOWCASE_COMPONENTS,
   type ShowcaseEntry,
   type ShowcaseGroup,
@@ -33,11 +34,8 @@ export interface ShowcaseSidebarProps {
  * list, so it stays grouped and gains a filter that searches labels,
  * descriptions and group names. */
 
-const START_ITEMS = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'scenarios', label: 'Scenarios', icon: Sparkles },
-  { id: 'overview', label: 'Components', icon: Grid3x3 },
-] as const;
+const startIcons = { home: Home, scenarios: Sparkles, overview: Grid3x3 };
+const START_ITEMS = START_PAGES.map(entry => ({ ...entry, icon: startIcons[entry.id as keyof typeof startIcons] }));
 
 const SOURCE_ITEMS = [
   { file: 'core.shell', label: 'Shell.tsx', icon: FileCode },
