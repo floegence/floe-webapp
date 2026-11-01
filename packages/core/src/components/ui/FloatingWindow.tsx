@@ -690,7 +690,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               onDblClick={handleTitleBarDoubleClick}
               style={{ 'touch-action': 'none' }}
             >
-              <div class="flex-1 min-w-0 px-2">
+              <div class="flex-1 min-w-0 px-3">
                 <Show when={props.title}>
                   <h2
                     id={titleId()}

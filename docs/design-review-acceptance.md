@@ -60,6 +60,22 @@ Performance follow-up uses five interleaved control-toggle repetitions (includin
 
 The subsequent dark **same-material** comparison used soft baseline and soft current, with no source, workload, data or threshold changes. It passed: paint 38.21 vs 37.77 ms/s (+1.2%, one paired increase), raster 4.92 vs 5.82 ms/s, input P95 7.7 vs 7.8 ms. Every recorded sample in these follow-up runs had zero missed frames and zero long tasks. The same-material result does not establish a repeatable regression from this change, but the first cross-material alert and sample variability remain limitations. Reports: design-review-followup-light, design-review-followup-dark and design-review-followup-dark-matched under .cache/surface-style. This is local control-toggle evidence, not a universal performance guarantee or a rerun of the previous full workload suite.
 
+## Floating window title inset follow-up
+
+The shared FloatingWindow title now uses the same 12px horizontal inset as its body instead of 8px. The 32px titlebar, edge-aligned controls, drag ownership and window geometry remain unchanged. This is a static spacing change with no additional nodes, JavaScript work, observers or animation.
+
+The existing header browser check now asserts title/body alignment and opens the Demo through its explicit section route. It fails against the previous production build (8px instead of 12px) and passes the rebuilt Demo at 390px and 1440px in light and dark modes, including maximize/restore, edge clicks, keyboard focus and close. Focused lint, core typecheck, all 26 floating-window geometry/open-cycle tests and the production build passed. Chromium and WebKit drag checks also passed, covering reachability, release recovery, retained content, cancellation and reduced motion. Evidence and screenshots are under .cache/design-review/window-inset.
+
+A fresh Home resource comparison uses the same 1440px viewport, fresh browser contexts and two-second observation window. Requested gzip-equivalent JS/CSS bytes and resource counts are:
+
+| Build | JavaScript bytes | CSS bytes | JS/CSS requests |
+| --- | ---: | ---: | ---: |
+| Original cf8753b3 baseline | 1,785,417 | 106,874 | 58 |
+| Before Tabs/Scenarios refinements (e4e6fec8, port 61342) | 237,034 | 75,164 | 11 |
+| Current, including title inset (port 61341) | 237,223 | 75,308 | 12 |
+
+The overall review reduces requested startup JavaScript by 86.7% and CSS by 29.5% relative to the original baseline. The later visual refinements do not introduce a further startup reduction: compared with e4e6fec8 they add 189 JavaScript bytes, 144 CSS bytes and one request. These figures measure loading volume, not elapsed startup time, CPU usage, memory or task completion speed. The runtime comparisons above predate this padding-only change and establish no general speedup; no new runtime performance qualification is claimed for this follow-up.
+
 The user remains the owner of product acceptance; this branch has not been integrated.
 
 ## Restart the review server

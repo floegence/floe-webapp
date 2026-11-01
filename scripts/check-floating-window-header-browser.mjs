@@ -21,7 +21,7 @@ try {
           page.on('pageerror', (error) => errors.push(error.message));
           const base = demo ?? `${runtime.baseURL}/current-${entry}/dist/`;
           await page.goto(
-            `${base}?view=showcase&panel=windows&surface=${surface}&mode=${mode}&theme=${mode === 'dark' ? 'classic-dark' : 'paper'}#ui-floating-window`
+            `${base}?view=showcase&section=ui-floating-window&panel=windows&surface=${surface}&mode=${mode}&theme=${mode === 'dark' ? 'classic-dark' : 'paper'}`
           );
           if (demo)
             await page.getByRole('button', { name: 'Open Floating Window', exact: true }).click();
@@ -34,9 +34,14 @@ try {
           const dimensions = await titlebar.evaluate((element) => {
             const header = element.getBoundingClientRect();
             const style = getComputedStyle(element);
+            const title = element.querySelector('h2').getBoundingClientRect();
+            const content = element.parentElement.querySelector('[data-floe-floating-window-content]');
+            const contentRect = content.getBoundingClientRect();
             return {
               height: header.height,
               titleFont: getComputedStyle(element.querySelector('h2')).fontSize,
+              titleInset: title.left - header.left,
+              contentInset: contentRect.left + parseFloat(getComputedStyle(content).paddingLeft) - header.left,
               buttons: [...element.querySelectorAll('button')].map((button) => {
                 const rect = button.getBoundingClientRect();
                 return {
@@ -53,6 +58,8 @@ try {
           });
           assert.equal(dimensions.height, 32, `${name}: header stays compact`);
           assert.equal(dimensions.titleFont, '12px', `${name}: title size is actually applied`);
+          assert.equal(dimensions.titleInset, 12, `${name}: title clears the rounded window edge`);
+          assert.equal(dimensions.titleInset, dimensions.contentInset, `${name}: title aligns with body content`);
           assert.deepEqual(
             dimensions.buttons.map((button) => button.width),
             [36, 40]
