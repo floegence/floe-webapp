@@ -491,3 +491,14 @@ owns all floating geometry.
 ## Optional surface material
 
 [Surface styles](surface-style.md) owns the optional material contract. During drag and resize, only the affected shell changes to a fixed lightweight shadow using its existing local interaction state. Material changes do not write geometry or persistence on pointermove. FloatingWindow uses the shared pointer session for document release, pointer cancellation, lost capture, window blur, visibility loss, and unmount. Its existing commit-on-pointer-cancel behavior is preserved. Workbench input ownership, stable widget bodies, and surface-local portals remain unchanged.
+
+
+## Retained split workspaces
+
+The public layout entry exports SplitWorkspace and pure split-tree operations. Hosts own stable item IDs, persistence, session lifecycle and authorization. The serializable tree describes placement only; removing a pane does not delete its item. Validate persisted trees with isSplitWorkspaceLayout and reconcile only after authoritative item hydration.
+
+The surface renders a flat keyed list, independent of the split tree. Docking, center swaps, presets, maximizing and compact presentation retain mounted item nodes and their input state. Compact mode displays the active item without rewriting the desktop layout. Hosts supply localized headers and resize labels and distinguish visible content from the exclusive input owner.
+
+Resize previews stay local and use the shared pointer session and hot-interaction contracts. Only a committed gesture emits a layout update; Escape and pointer cancellation restore the previous tree. Separators support axis arrow keys, Home/End, Enter and double-click equalization. Native header dragging supports four edge targets and center swaps; external payloads require a host resolver and an existing allowed item ID.
+
+Acceptance: scripts/check-split-workspace-browser.mjs verifies retained drafts and nodes, preset geometry, resize preview/commit separation, docking, maximize and compact restoration; split-workspace-model.test.ts covers tree reconciliation and persistence validation.

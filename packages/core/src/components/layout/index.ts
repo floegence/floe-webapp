@@ -48,3 +48,5 @@ export { DisplayModePageShell, type DisplayModePageShellProps } from './DisplayM
 export { ThemeToggle, type ThemeToggleProps } from './ThemeToggle';
 
 export { AppViewport, type AppViewportProps } from './AppViewport';
+export * from './splitWorkspaceModel';
+export * from './SplitWorkspace';
