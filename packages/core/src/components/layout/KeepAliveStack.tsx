@@ -215,7 +215,7 @@ export function KeepAliveStack(props: KeepAliveStackProps) {
     });
   });
 
-  const renderedIds = createMemo<string[]>(() => {
+  const requestedIds = createMemo<string[]>(() => {
     const order = viewIndex().order;
     const id = activeId();
 
@@ -228,6 +228,13 @@ export function KeepAliveStack(props: KeepAliveStackProps) {
     const m = mounted();
     return order.filter((x) => m.has(x) || x === id);
   });
+
+  // Moving an existing iframe can reload its document. These overlapping views
+  // have no visual ordering, so preserve retained DOM order and append newcomers.
+  const renderedIds = createMemo<string[]>((previous) => {
+    const remaining = new Set(requestedIds());
+    return [...previous.filter((id) => remaining.delete(id)), ...remaining];
+  }, []);
 
   const hasActiveView = createMemo(() => {
     const id = activeId();
@@ -242,7 +249,8 @@ export function KeepAliveStack(props: KeepAliveStackProps) {
     >
       <For each={renderedIds()}>
         {(id) => {
-          const view = () => cachedById().get(id);
+          // A sibling addition/removal changes the map, not this view's lifetime.
+          const view = createMemo(() => cachedById().get(id));
           const isActive = () => activeId() === id;
 
           return (

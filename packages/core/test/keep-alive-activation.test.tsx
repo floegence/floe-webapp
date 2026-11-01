@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createSignal, lazy, type JSX } from 'solid-js';
+import { createSignal, lazy, onCleanup, type JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { KeepAliveStack } from '../src/components/layout/KeepAliveStack';
@@ -15,6 +15,36 @@ describe('KeepAliveStack activation presentation', () => {
     hosts.splice(0).forEach((host) => host.remove());
     vi.restoreAllMocks();
     afterPaint.length = 0;
+  });
+
+  it.each([false, true])('retains independent documents while siblings change, boundaries=%s', (boundaries) => {
+    const host = document.createElement('div');
+    document.body.append(host); hosts.push(host);
+    const disposed: string[] = [];
+    const View = (props: { id: string }) => {
+      onCleanup(() => disposed.push(props.id));
+      return <input aria-label={props.id} />;
+    };
+    const first = { id: 'first', render: () => <View id="first" /> };
+    const second = { id: 'second', render: () => <View id="second" /> };
+    const [views, setViews] = createSignal([first, second]);
+    const dispose = render(() => <KeepAliveStack views={views()} activeId="second" lazyMount={false}
+      renderFallback={boundaries ? () => <p>Loading</p> : undefined}
+      renderError={boundaries ? () => <p>Failed</p> : undefined} />, host);
+    try {
+      const draft = host.querySelector<HTMLInputElement>('[aria-label="second"]')!;
+      draft.value = 'Unsaved document';
+      setViews([second]);
+      expect(host.querySelector('[aria-label="second"]')).toBe(draft);
+      expect(draft.value).toBe('Unsaved document');
+      expect(disposed).toEqual(['first']);
+      setViews([second, first]);
+      expect(host.querySelector('[aria-label="second"]')).toBe(draft);
+      setViews([first, second]);
+      expect(host.querySelector('[aria-label="second"]')).toBe(draft);
+      expect(disposed).toEqual(['first']);
+    } finally { dispose(); }
+    expect(disposed.filter(id => id === 'second')).toHaveLength(1);
   });
 
   it('replaces a rejected lazy page with a local error and preserves another page draft', async () => {

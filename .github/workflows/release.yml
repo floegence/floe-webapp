@@ -123,6 +123,9 @@ jobs:
       - name: Build packages
         run: pnpm -r --filter './packages/*' build
 
+      - name: Verify retained iframe document isolation
+        run: node scripts/check-keep-alive-browser.mjs
+
       - name: Verify graph canvas worker and interaction
         run: node scripts/check-graph-browser.mjs && node scripts/check-graph-blob-workers.mjs && node scripts/check-graph-production.mjs
 

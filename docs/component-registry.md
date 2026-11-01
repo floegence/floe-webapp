@@ -45,6 +45,7 @@ export function ProductActivities() {
 - Removing an id waits for `onUnmount`, then unregisters it.
 - Lifecycle work is serialized, including changes received while an earlier mount or unmount is still pending.
 - Updating a retained id refreshes its registry projection without restarting lifecycle. Existing `ActivityAppsMain` / `KeepAliveStack` views therefore keep their mounted DOM and local state.
+- Adding, removing, or reordering sibling views preserves each retained view's document identity, including iframe documents and unsaved input. Removing a view still disposes that exact view; retaining layout must never keep a removed authority alive. Per-view memoization isolates collection changes, and overlapping containers retain their DOM order because moving an iframe can reload its document.
 - Empty, non-canonical, duplicate, or already-owned ids fail through `onError`; dynamic contributions never replace a separately registered component.
 
 ## FloeComponent

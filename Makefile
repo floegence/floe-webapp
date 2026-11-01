@@ -41,6 +41,7 @@ persistent-scrollbar:
 
 activity-navigation:
 	pnpm test:activity-navigation
+	node scripts/check-keep-alive-browser.mjs
 
 chat-media:
 	node scripts/check-chat-media-browser.mjs
