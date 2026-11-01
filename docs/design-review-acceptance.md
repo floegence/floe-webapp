@@ -4,7 +4,7 @@
 
 This review keeps Floe's current design language and improves the demo's information hierarchy, executable workflows, state semantics, navigation, accessibility and consistency. It adds no visual dependency or continuous decorative work. The follow-up corrects shared tab face geometry and reorganizes the four scenario views with lazy, static CSS. Control heights and existing interaction ownership remain unchanged.
 
-The review environment is isolated in the floe-webapp-design-review worktree on codex/floe-design-review, based on cf8753b3c6d489228c5238048a373f44a4518822. Main is not merged or modified. There is no push, release or pull request.
+The review was developed in the isolated floe-webapp-design-review worktree on codex/floe-design-review, based on cf8753b3c6d489228c5238048a373f44a4518822. After visual review, the user authorized main integration and publication as v0.86.70. The release workflow validates the versioned packages and reads back published artifacts.
 
 ## What to review
 
@@ -76,7 +76,7 @@ A fresh Home resource comparison uses the same 1440px viewport, fresh browser co
 
 The overall review reduces requested startup JavaScript by 86.7% and CSS by 29.5% relative to the original baseline. The later visual refinements do not introduce a further startup reduction: compared with e4e6fec8 they add 189 JavaScript bytes, 144 CSS bytes and one request. These figures measure loading volume, not elapsed startup time, CPU usage, memory or task completion speed. The runtime comparisons above predate this padding-only change and establish no general speedup; no new runtime performance qualification is claimed for this follow-up.
 
-The user remains the owner of product acceptance; this branch has not been integrated.
+The user remains the owner of product acceptance. The review implementation and the floating-window correction are included in the v0.86.70 release scope.
 
 ## Restart the review server
 
