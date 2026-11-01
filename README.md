@@ -199,6 +199,8 @@ pnpm dev:dist     # run the demo against built package outputs
 make check        # lint, typecheck, test, build, and verify distributions
 ```
 
+The development lint engine uses ESLint 10 with the existing ESLint 9 recommended rule policy. Solid lint supports that engine, and the pnpm override requires minimatch 11.0.1 or newer to address glob-parts amplification. These tools are not included in the published runtime packages.
+
 The live workspace development server imports `packages/*` source directly for fast startup and HMR. For the Cloudflare Pages demo, build with `pnpm build:demo` and publish `apps/demo/dist` with `NODE_VERSION=24`.
 
 <details>
