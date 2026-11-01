@@ -767,60 +767,60 @@ export function FloatingWindow(props: FloatingWindowProps) {
               </div>
             </Show>
 
-            <Show when={resizable() && !isMaximized() && !compact()}>
-              <div
-                class={getResizeHandleClass('n')}
-                data-floe-floating-window-resize-handle="n"
-                style={{ 'touch-action': 'none' }}
-                onPointerDown={handleResizeStart('n')}
-              />
-              <div
-                class={getResizeHandleClass('s')}
-                data-floe-floating-window-resize-handle="s"
-                style={{ 'touch-action': 'none' }}
-                onPointerDown={handleResizeStart('s')}
-              />
-
-              <Show when={!isMobile()}>
-                <div
-                  class={getResizeHandleClass('e')}
-                  data-floe-floating-window-resize-handle="e"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('e')}
-                />
-                <div
-                  class={getResizeHandleClass('w')}
-                  data-floe-floating-window-resize-handle="w"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('w')}
-                />
-                <div
-                  class={getResizeHandleClass('ne')}
-                  data-floe-floating-window-resize-handle="ne"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('ne')}
-                />
-                <div
-                  class={getResizeHandleClass('nw')}
-                  data-floe-floating-window-resize-handle="nw"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('nw')}
-                />
-                <div
-                  class={getResizeHandleClass('se')}
-                  data-floe-floating-window-resize-handle="se"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('se')}
-                />
-                <div
-                  class={getResizeHandleClass('sw')}
-                  data-floe-floating-window-resize-handle="sw"
-                  style={{ 'touch-action': 'none' }}
-                  onPointerDown={handleResizeStart('sw')}
-                />
-              </Show>
-            </Show>
           </div>
+          <Show when={resizable() && !isMaximized() && !compact()}>
+            <div
+              class={getResizeHandleClass('n')}
+              data-floe-floating-window-resize-handle="n"
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('n')}
+            />
+            <div
+              class={getResizeHandleClass('s')}
+              data-floe-floating-window-resize-handle="s"
+              style={{ 'touch-action': 'none' }}
+              onPointerDown={handleResizeStart('s')}
+            />
+
+            <Show when={!isMobile()}>
+              <div
+                class={getResizeHandleClass('e')}
+                data-floe-floating-window-resize-handle="e"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('e')}
+              />
+              <div
+                class={getResizeHandleClass('w')}
+                data-floe-floating-window-resize-handle="w"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('w')}
+              />
+              <div
+                class={getResizeHandleClass('ne')}
+                data-floe-floating-window-resize-handle="ne"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('ne')}
+              />
+              <div
+                class={getResizeHandleClass('nw')}
+                data-floe-floating-window-resize-handle="nw"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('nw')}
+              />
+              <div
+                class={getResizeHandleClass('se')}
+                data-floe-floating-window-resize-handle="se"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('se')}
+              />
+              <div
+                class={getResizeHandleClass('sw')}
+                data-floe-floating-window-resize-handle="sw"
+                style={{ 'touch-action': 'none' }}
+                onPointerDown={handleResizeStart('sw')}
+              />
+            </Show>
+          </Show>
         </div>
       </Portal>
     </Show>

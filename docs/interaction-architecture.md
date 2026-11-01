@@ -502,3 +502,7 @@ The surface renders a flat keyed list, independent of the split tree. Docking, c
 Resize previews stay local and use the shared pointer session and hot-interaction contracts. Only a committed gesture emits a layout update; Escape and pointer cancellation restore the previous tree. Separators support axis arrow keys, Home/End, Enter and double-click equalization. Native header dragging supports four edge targets and center swaps; external payloads require a host resolver and an existing allowed item ID.
 
 Acceptance: scripts/check-split-workspace-browser.mjs verifies retained drafts and nodes, preset geometry, resize preview/commit separation, docking, maximize and compact restoration; split-workspace-model.test.ts covers tree reconciliation and persistence validation.
+
+### Floating window resize targets
+
+Resize handles belong to the outer geometry surface, outside the rounded content clip. Their centers remain hit-testable at all eight desktop edges/corners, including browsers that strictly clip rounded overflow. The inner panel retains content clipping and presence motion. Handles stay absent while compact or maximized; pointer capture, cancellation, preview and commit ownership remain unchanged. Browser acceptance uses real pointer input in Chromium and WebKit.

@@ -25,7 +25,7 @@ try {
     optimizeDeps: { entries: [resolve(fixture, 'index.html')] }, server: { host: '127.0.0.1', port: 0 } });
   await server.listen();
   for (const engine of [chromium, webkit]) {
-    const browser = await engine.launch();
+    const browser = await engine.launch(engine === chromium && process.env.FLOE_CHROMIUM_EXECUTABLE ? { executablePath: process.env.FLOE_CHROMIUM_EXECUTABLE } : {});
     try {
       const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
       const errors = [];
@@ -37,7 +37,9 @@ try {
       const reset = async () => {
         await page.goto(server.resolvedUrls.local[0] + fixture.split('/').pop() + '/');
         await panel.waitFor();
+        await panel.locator('[data-floe-floating-window-surface]').evaluate(el => { el.style.borderRadius = '20px'; el.style.overflow = 'hidden'; });
         await page.waitForTimeout(220);
+        await panel.evaluate(async el => { await Promise.all(el.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => undefined))); });
       };
       const within = async () => {
         await page.waitForFunction(() => {
@@ -45,6 +47,27 @@ try {
           return rect.left >= 15.5 && rect.top >= 47.5 && rect.right <= window.innerWidth - 19.5 && rect.bottom <= window.innerHeight - 23.5;
         });
       };
+      for (const direction of ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw']) {
+        await reset();
+        const handle = panel.locator('[data-floe-floating-window-resize-handle="' + direction + '"]');
+        assert(await handle.evaluate(el => {
+          const rect = el.getBoundingClientRect();
+          return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === el;
+        }), direction + ': rounded panel must not clip the resize hit target');
+        const before = await panel.boundingBox();
+        const hit = await handle.boundingBox();
+        const dx = direction.includes('e') ? 40 : direction.includes('w') ? -40 : 0;
+        const dy = direction.includes('s') ? 30 : direction.includes('n') ? -30 : 0;
+        await page.mouse.move(hit.x + hit.width / 2, hit.y + hit.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(hit.x + hit.width / 2 + dx, hit.y + hit.height / 2 + dy);
+        await page.mouse.up();
+        await settle();
+        const after = await panel.boundingBox();
+        assert.equal(after.width, before.width + Math.abs(dx), direction + ': horizontal resize follows pointer');
+        assert.equal(after.height, before.height + Math.abs(dy), direction + ': vertical resize follows pointer');
+        assert.equal(await page.locator('html').getAttribute('data-floe-hot-interaction'), null);
+      }
       for (const target of [{ x: -600, y: -600 }, { x: 1800, y: 1400 }]) {
         await reset();
         await page.mouse.move(260, 156);
