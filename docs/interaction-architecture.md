@@ -495,7 +495,7 @@ owns all floating geometry.
 
 ## Retained split workspaces
 
-The public layout entry exports SplitWorkspace and pure split-tree operations. Hosts own stable item IDs, persistence, session lifecycle and authorization. The serializable tree describes placement only; removing a pane does not delete its item. Validate persisted trees with isSplitWorkspaceLayout and reconcile only after authoritative item hydration.
+The public layout entry exports SplitWorkspace and pure split-tree operations. createSplitWorkspaceArrangements returns a bounded, geometrically deduplicated gallery for 2–32 unique items: balanced rows/columns, grids and four primary-pane orientations. Every option retains the complete item set in visual reading order; invalid counts/identities return no choices instead of truncating. Hosts own accessible labels, preview presentation, selected state and persistence. The legacy fixed-capacity preset API remains unchanged. Hosts own stable item IDs, persistence, session lifecycle and authorization. The serializable tree describes placement only; removing a pane does not delete its item. Validate persisted trees with isSplitWorkspaceLayout and reconcile only after authoritative item hydration.
 
 The surface renders a flat keyed list, independent of the split tree. Docking, center swaps, presets, maximizing and compact presentation retain mounted item nodes and their input state. Compact mode displays the active item without rewriting the desktop layout. Hosts supply localized headers and resize labels and distinguish visible content from the exclusive input owner.
 

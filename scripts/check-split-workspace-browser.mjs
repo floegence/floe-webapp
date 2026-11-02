@@ -21,6 +21,13 @@ try {
     assert.equal(await page.evaluate(() => document.querySelector('textarea') === window.savedInput), true);
     assert.equal(await page.getByRole('textbox', { name: 'a', exact: true }).inputValue(), 'retained draft');
   }
+  for (const arrangement of await page.evaluate(() => window.workspace.arrangements())) {
+    await page.evaluate(value => window.workspace.arrange(value), arrangement);
+    assert.equal(await page.locator('[data-floe-split-pane]').count(), 4);
+    assert.equal(await page.getByRole('textbox', { name: 'a', exact: true }).inputValue(), 'retained draft');
+    assert.equal(await page.evaluate(() => document.querySelector('textarea') === window.savedInput), true);
+  }
+  await page.evaluate(() => window.workspace.preset('grid'));
   const separator = page.getByRole('separator').first();
   await separator.focus(); await page.keyboard.press('ArrowRight');
   assert.equal(await separator.getAttribute('aria-valuenow'), '55');

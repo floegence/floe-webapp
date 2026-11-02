@@ -193,3 +193,110 @@ export function measureSplitWorkspace(layout: SplitWorkspaceLayout | null): {
   if (layout) visit(layout, { x: 0, y: 0, width: 100, height: 100 });
   return { panes, dividers };
 }
+
+export interface SplitWorkspaceArrangement {
+  id: string;
+  kind: 'rows' | 'columns' | 'grid' | 'main-left' | 'main-right' | 'main-top' | 'main-bottom';
+  layout: SplitWorkspaceLayout;
+}
+
+/** Bounded alternatives that preserve every item in visual reading order. */
+export function createSplitWorkspaceArrangements(
+  itemIds: readonly string[],
+  id: () => string
+): SplitWorkspaceArrangement[] {
+  const count = itemIds.length;
+  if (
+    count < 2 ||
+    count > 32 ||
+    new Set(itemIds).size !== count ||
+    itemIds.some((item) => !item.trim())
+  )
+    return [];
+  const split = (
+    axis: 'x' | 'y',
+    first: SplitWorkspaceLayout,
+    second: SplitWorkspaceLayout,
+    ratio: number
+  ): SplitWorkspaceLayout => ({ type: 'split', id: id(), axis, ratio, first, second });
+  // Balanced recursion keeps every divider inside the public ratio bounds,
+  // even for long rows. A linear chain would create invalid tiny ratios.
+  const strip = (nodes: SplitWorkspaceLayout[], axis: 'x' | 'y'): SplitWorkspaceLayout => {
+    if (nodes.length === 1) return nodes[0];
+    const middle = Math.ceil(nodes.length / 2);
+    return split(
+      axis,
+      strip(nodes.slice(0, middle), axis),
+      strip(nodes.slice(middle), axis),
+      middle / nodes.length
+    );
+  };
+  const grid = (items: readonly string[], bands: number, axis: 'x' | 'y'): SplitWorkspaceLayout => {
+    let offset = 0;
+    const groups = Array.from({ length: bands }, (_, index) => {
+      const size = Math.floor(items.length / bands) + (index < items.length % bands ? 1 : 0);
+      const nodes = items.slice(offset, offset + size).map(splitWorkspacePane);
+      offset += size;
+      return strip(nodes, axis === 'x' ? 'y' : 'x');
+    });
+    return strip(groups, axis);
+  };
+  const choices: SplitWorkspaceArrangement[] = [];
+  const shapes = new Set<string>();
+  const add = (
+    key: string,
+    kind: SplitWorkspaceArrangement['kind'],
+    source: SplitWorkspaceLayout
+  ) => {
+    const panes = [...measureSplitWorkspace(source).panes.entries()].sort(
+      ([, a], [, b]) => Math.round(a.y * 1e6) - Math.round(b.y * 1e6) || a.x - b.x
+    );
+    const signature = JSON.stringify(
+      panes.map(([, rect]) =>
+        [rect.x, rect.y, rect.width, rect.height].map((value) => Math.round(value * 1e6))
+      )
+    );
+    if (shapes.has(signature)) return;
+    shapes.add(signature);
+    const names = new Map(panes.map(([key], index) => [key, itemIds[index]]));
+    const assign = (node: SplitWorkspaceLayout): SplitWorkspaceLayout =>
+      node.type === 'pane'
+        ? splitWorkspacePane(names.get(node.id)!)
+        : { ...node, first: assign(node.first), second: assign(node.second) };
+    choices.push({ id: key, kind, layout: assign(source) });
+  };
+  const bands = [...new Set([Math.ceil(Math.sqrt(count)), 1, 2, 3, 4, count])].filter(
+    (value) => value <= count
+  );
+  for (const size of bands) {
+    add(
+      'rows-' + size,
+      size === 1 ? 'columns' : size === count ? 'rows' : 'grid',
+      grid(itemIds, size, 'y')
+    );
+  }
+  // Transposed grids add useful alternatives for uneven pane counts.
+  for (const size of [2, 3])
+    if (size < count) add('columns-' + size, 'grid', grid(itemIds, size, 'x'));
+  for (const edge of ['left', 'right', 'top', 'bottom'] as const) {
+    const horizontal = edge === 'left' || edge === 'right';
+    const primary = splitWorkspacePane(itemIds[0]);
+    const secondary = grid(
+      itemIds.slice(1),
+      Math.ceil(Math.sqrt((count - 1) / 2)),
+      horizontal ? 'x' : 'y'
+    );
+    const first = edge === 'left' || edge === 'top';
+    add(
+      'main-' + edge,
+      ('main-' + edge) as SplitWorkspaceArrangement['kind'],
+      split(
+        horizontal ? 'x' : 'y',
+        first ? primary : secondary,
+        first ? secondary : primary,
+        first ? 0.62 : 0.38
+      )
+    );
+  }
+  return choices;
+}
