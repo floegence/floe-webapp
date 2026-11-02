@@ -1,4 +1,5 @@
 export { createSimpleContext } from './createSimpleContext';
+export { LocaleProvider, useFloeLocale, defaultFloeMessages, type FloeLocale, type FloeMessages, type FloeMessageKey } from './LocaleContext';
 export {
   FloeConfigProvider,
   useFloeConfig,

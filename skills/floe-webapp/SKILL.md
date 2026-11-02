@@ -155,3 +155,7 @@ When editing this repository, `make check` already includes `pnpm verify`; if yo
 ## Mermaid diagrams
 
 Use `@floegence/floe-webapp-core/diagrams` and `@floegence/floe-webapp-core/diagrams.css` for shared Diagram rendering. Install the optional pele@1.13.0 and katex@0.18.10 peers. Supply complete localized DiagramLabels and original source; the host owns authorization and navigation. isClosedMarkdownFence from the Markdown entry admits complete code fences. Do not copy rendering, sanitization or lifecycle into products. See docs/diagrams.md.
+
+## Business controls
+
+Read docs/business-controls.md in the upstream repository for form identity, native submission/reset, selection semantics, host-owned tables, civil dates, locale completeness, and package budgets. Use /ui for generic Calendar and Breadcrumb; umbrella exports retain legacy icon/file-browser meanings. Use LocaleProvider with a complete host catalog. Dropdown is an action menu; Select and Combobox expose listbox options. Popover trigger render bindings belong on the actual button.

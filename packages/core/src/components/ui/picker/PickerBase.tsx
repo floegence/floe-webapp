@@ -294,8 +294,8 @@ function NewFolderSection(props: PickerPanelProps & { source: FilesystemPickerDa
       if (next) {
         if (!props.disabled && props.source.valid()) setVisible(true);
       } else reset();
-    }} trigger={<Button ref={trigger} size="sm" variant="ghost" icon={FolderPlus}
-      aria-haspopup="dialog" aria-expanded={visible()} disabled={props.disabled || !props.source.valid()}>{copy().newFolder}</Button>}>
+    }} trigger={triggerProps => <Button {...triggerProps} ref={trigger} size="sm" variant="ghost" icon={FolderPlus}
+      disabled={props.disabled || !props.source.valid()}>{copy().newFolder}</Button>}>
     <form data-picker-create-folder="" class="flex min-w-0 flex-col gap-4 p-4"
       onSubmit={event => { event.preventDefault(); void create(); }}
       onKeyDown={event => {

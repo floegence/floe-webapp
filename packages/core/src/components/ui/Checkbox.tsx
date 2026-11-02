@@ -1,4 +1,5 @@
 import { splitProps, type JSX, type Component, For, Show, Match, createEffect, Switch, createContext, useContext, createUniqueId } from 'solid-js';
+import { useFormControl } from './formFieldContext';
 import { cn } from '../../utils/cn';
 
 export type CheckboxSize = 'sm' | 'md' | 'lg';
@@ -179,6 +180,7 @@ export function CheckboxGroup(props: CheckboxGroupProps) {
 }
 
 export function Checkbox(props: CheckboxProps) {
+  const field = useFormControl();
   const context = useCheckboxContext();
   const [local, rest] = splitProps(props, [
     'value',
@@ -197,14 +199,14 @@ export function Checkbox(props: CheckboxProps) {
   ]);
 
   const generatedId = createUniqueId();
-  const id = () => local.id ?? generatedId;
+  const id = () => local.id ?? (context ? generatedId : field.id) ?? generatedId;
 
   // Determine if we're in a group context
   const isInGroup = () => context !== undefined;
 
   const size = () => local.size ?? context?.size() ?? 'md';
   const variant = () => local.variant ?? context?.variant() ?? 'default';
-  const isDisabled = () => local.disabled ?? context?.disabled() ?? false;
+  const isDisabled = () => local.disabled ?? (context?.disabled() || field.disabled || false);
 
   const isChecked = () => {
     if (isInGroup() && local.value) {
@@ -256,6 +258,7 @@ export function Checkbox(props: CheckboxProps) {
     });
     return (
       <input
+        {...field}
         data-floe-choice-input
         type="checkbox"
         id={id()}
@@ -263,6 +266,7 @@ export function Checkbox(props: CheckboxProps) {
         checked={isChecked()}
         aria-checked={local.indeterminate ? 'mixed' : isChecked()}
         disabled={isDisabled()}
+        onClick={event => {if (props.readOnly ?? field.readOnly) event.preventDefault();}}
         onChange={handleChange}
         class={inputProps.class ?? 'sr-only peer'}
         {...rest}

@@ -25,6 +25,9 @@ importers:
       '@types/node':
         specifier: ^25.9.8
         version: 25.9.8
+      axe-core:
+        specifier: 4.12.1
+        version: 4.12.1
       eslint:
         specifier: ^10.14.0
         version: 10.14.0(jiti@2.7.0)
@@ -1494,6 +1497,10 @@ packages:
     hasBin: true
     peerDependencies:
       postcss: ^8.5.23
+
+  axe-core@4.12.1:
+    resolution: {integrity: sha512-s7iGf5GaVMxEG0ENN9x+xTr7GFZCb1ZP/1uATUpCEK2X78nDB3RwbtFCo9pGAf9ru+VwoQ464DkaLEeRM08wJA==}
+    engines: {node: '>=4'}
 
   babel-plugin-jsx-dom-expressions@0.40.10:
     resolution: {integrity: sha512-lxve6Y02YiZTldB7efKpnbf1BH00XCFZNYYW235jSGsYaJNFtHrYlKV6/O+miHbjqpIr9FTe5+0no4hofAMbfA==}
@@ -4112,6 +4119,8 @@ snapshots:
       picocolors: 1.1.1
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
+
+  axe-core@4.12.1: {}
 
   babel-plugin-jsx-dom-expressions@0.40.10(@babel/core@7.29.7):
     dependencies:

@@ -108,8 +108,8 @@ try {
     const projectName =
       'release-preview-' + viewport.width + '-long-project-name-for-responsive-review';
     await page.getByRole('textbox', { name: 'Project name', exact: true }).fill(projectName);
-    await page.getByRole('button', { name: 'Visibility', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Internal', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Visibility', exact: true }).click();
+    await page.getByRole('option', { name: 'Internal', exact: true }).click();
     const create = page.getByRole('button', { name: 'Create project', exact: true });
     await create.scrollIntoViewIfNeeded();
     const createBefore = await create.boundingBox();

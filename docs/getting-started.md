@@ -631,3 +631,7 @@ The exported `createLongPressContextMenuHandlers` lets custom file-tree rows use
 same hold, movement cancellation, multi-pointer cancellation, and release-click
 suppression as the shared grid and list. `pnpm test:file-menu` verifies desktop,
 mobile, short-height, projected, and scaled-host behavior in Chromium and WebKit.
+
+## Business application foundations
+
+See [Business controls and framework contracts](business-controls.md) for composed forms, selection, tables, civil dates, localization, public API compatibility, and consumer budgets. The demo includes a tested Business controls example.

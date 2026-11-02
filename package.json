@@ -42,11 +42,14 @@
     "test:remote-pointer": "node scripts/check-remote-pointer-browser.mjs --all",
     "test:code-highlight": "node scripts/check-code-highlight-browser.mjs && node scripts/check-inline-code-browser.mjs",
     "test:demo-workflows": "node scripts/check-demo-workflows-browser.mjs && node scripts/check-demo-navigation-browser.mjs",
-    "test:diagrams": "node scripts/check-diagrams-browser.mjs"
+    "test:diagrams": "node scripts/check-diagrams-browser.mjs",
+    "test:business-controls": "node scripts/check-business-controls-browser.mjs --all",
+    "test:consumer-budgets": "node scripts/check-consumer-budgets.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/node": "^25.9.8",
+    "axe-core": "4.12.1",
     "eslint": "^10.14.0",
     "eslint-plugin-solid": "^0.18.1",
     "playwright": "1.61.1",

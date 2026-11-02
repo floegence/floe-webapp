@@ -1,5 +1,6 @@
 import { splitProps, type JSX, For, Show, Match, Switch, createMemo } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { useFloeLocale } from '../../context/LocaleContext';
 
 export type PaginationSize = 'sm' | 'md' | 'lg';
 export type PaginationVariant = 'default' | 'simple' | 'minimal';
@@ -137,6 +138,7 @@ function generatePageNumbers(
 }
 
 export function Pagination(props: PaginationProps) {
+  const locale = useFloeLocale();
   const [local, rest] = splitProps(props, [
     'page',
     'totalPages',
@@ -203,6 +205,7 @@ export function Pagination(props: PaginationProps) {
         aria-current={buttonProps.isActive ? 'page' : undefined}
         disabled={buttonProps.disabled || local.disabled}
         onClick={handleClick}
+        aria-label={buttonProps.title ?? (buttonProps.page ? locale.t('page', { page: buttonProps.page }) : undefined)}
         title={buttonProps.title}
         class={cn(
           'inline-flex items-center justify-center rounded-sm font-medium',
@@ -224,26 +227,26 @@ export function Pagination(props: PaginationProps) {
       {/* Simple variant - just prev/next with current page */}
       <Match when={variant() === 'simple'}>
         <nav
-          aria-label="Pagination"
+          dir={locale.direction} aria-label={locale.t('pagination')}
           class={cn('flex items-center gap-2', local.class)}
           {...rest}
         >
           <PageButton
             disabled={!canGoPrev()}
             onClick={() => goToPage(local.page - 1)}
-            title="Previous page"
+            title={locale.t('previousPage')}
           >
-            <ChevronLeftIcon class="w-4 h-4" />
+            <ChevronLeftIcon class="w-4 h-4 rtl:rotate-180" />
           </PageButton>
           <span class={cn('text-[var(--floe-ink-soft)] px-2', styles().text)}>
-            Page {local.page} of {local.totalPages}
+            {locale.t('pageOf', { page: local.page, total: local.totalPages })}
           </span>
           <PageButton
             disabled={!canGoNext()}
             onClick={() => goToPage(local.page + 1)}
-            title="Next page"
+            title={locale.t('nextPage')}
           >
-            <ChevronRightIcon class="w-4 h-4" />
+            <ChevronRightIcon class="w-4 h-4 rtl:rotate-180" />
           </PageButton>
         </nav>
       </Match>
@@ -251,7 +254,7 @@ export function Pagination(props: PaginationProps) {
       {/* Minimal variant - arrows only */}
       <Match when={variant() === 'minimal'}>
         <nav
-          aria-label="Pagination"
+          dir={locale.direction} aria-label={locale.t('pagination')}
           class={cn('flex items-center gap-1', local.class)}
           {...rest}
         >
@@ -259,17 +262,17 @@ export function Pagination(props: PaginationProps) {
             <PageButton
               disabled={!canGoPrev()}
               onClick={() => goToPage(1)}
-              title="First page"
+              title={locale.t('firstPage')}
             >
-              <ChevronDoubleLeftIcon class="w-4 h-4" />
+              <ChevronDoubleLeftIcon class="w-4 h-4 rtl:rotate-180" />
             </PageButton>
           </Show>
           <PageButton
             disabled={!canGoPrev()}
             onClick={() => goToPage(local.page - 1)}
-            title="Previous page"
+            title={locale.t('previousPage')}
           >
-            <ChevronLeftIcon class="w-4 h-4" />
+            <ChevronLeftIcon class="w-4 h-4 rtl:rotate-180" />
           </PageButton>
           <span class={cn('text-[var(--floe-ink-soft)] px-3 tabular-nums', styles().text)}>
             {local.page} / {local.totalPages}
@@ -277,17 +280,17 @@ export function Pagination(props: PaginationProps) {
           <PageButton
             disabled={!canGoNext()}
             onClick={() => goToPage(local.page + 1)}
-            title="Next page"
+            title={locale.t('nextPage')}
           >
-            <ChevronRightIcon class="w-4 h-4" />
+            <ChevronRightIcon class="w-4 h-4 rtl:rotate-180" />
           </PageButton>
           <Show when={local.showFirstLast}>
             <PageButton
               disabled={!canGoNext()}
               onClick={() => goToPage(local.totalPages)}
-              title="Last page"
+              title={locale.t('lastPage')}
             >
-              <ChevronDoubleRightIcon class="w-4 h-4" />
+              <ChevronDoubleRightIcon class="w-4 h-4 rtl:rotate-180" />
             </PageButton>
           </Show>
         </nav>
@@ -296,23 +299,24 @@ export function Pagination(props: PaginationProps) {
       {/* Default variant - full pagination with page numbers */}
       <Match when={variant() === 'default'}>
         <nav
-          aria-label="Pagination"
-          class={cn('flex items-center gap-4', local.class)}
+          dir={locale.direction} aria-label={locale.t('pagination')}
+          class={cn('flex flex-wrap items-center gap-4', local.class)}
           {...rest}
         >
           {/* Items count */}
           <Show when={local.totalItems !== undefined}>
             <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>
-              {local.totalItems} items
+              {locale.t('itemCount', { count: local.totalItems ?? 0 })}
             </span>
           </Show>
 
           {/* Page size selector */}
           <Show when={local.showPageSize && local.pageSizes}>
             <div class="flex items-center gap-2">
-              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>Show</span>
+              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>{locale.t('pageSize')}</span>
               <select
                 data-floe-surface="inset"
+                aria-label={locale.t('pageSize')}
                 value={local.pageSize}
                 onChange={(e) => local.onPageSizeChange?.(parseInt(e.target.value, 10))}
                 disabled={local.disabled}
@@ -336,9 +340,9 @@ export function Pagination(props: PaginationProps) {
               <PageButton
                 disabled={!canGoPrev()}
                 onClick={() => goToPage(1)}
-                title="First page"
+                title={locale.t('firstPage')}
               >
-                <ChevronDoubleLeftIcon class="w-4 h-4" />
+                <ChevronDoubleLeftIcon class="w-4 h-4 rtl:rotate-180" />
               </PageButton>
             </Show>
 
@@ -346,9 +350,9 @@ export function Pagination(props: PaginationProps) {
             <PageButton
               disabled={!canGoPrev()}
               onClick={() => goToPage(local.page - 1)}
-              title="Previous page"
+              title={locale.t('previousPage')}
             >
-              <ChevronLeftIcon class="w-4 h-4" />
+              <ChevronLeftIcon class="w-4 h-4 rtl:rotate-180" />
             </PageButton>
 
             {/* Page numbers */}
@@ -357,7 +361,7 @@ export function Pagination(props: PaginationProps) {
                 <>
                   {item === 'ellipsis' ? (
                     <span class={cn('px-2 text-[var(--floe-ink-soft)]', styles().text)}>
-                      <MoreIcon class="w-4 h-4" />
+                      <MoreIcon class="w-4 h-4 rtl:rotate-180" />
                     </span>
                   ) : (
                     <PageButton
@@ -376,9 +380,9 @@ export function Pagination(props: PaginationProps) {
             <PageButton
               disabled={!canGoNext()}
               onClick={() => goToPage(local.page + 1)}
-              title="Next page"
+              title={locale.t('nextPage')}
             >
-              <ChevronRightIcon class="w-4 h-4" />
+              <ChevronRightIcon class="w-4 h-4 rtl:rotate-180" />
             </PageButton>
 
             {/* Last page button */}
@@ -386,9 +390,9 @@ export function Pagination(props: PaginationProps) {
               <PageButton
                 disabled={!canGoNext()}
                 onClick={() => goToPage(local.totalPages)}
-                title="Last page"
+                title={locale.t('lastPage')}
               >
-                <ChevronDoubleRightIcon class="w-4 h-4" />
+                <ChevronDoubleRightIcon class="w-4 h-4 rtl:rotate-180" />
               </PageButton>
             </Show>
           </div>
@@ -396,9 +400,10 @@ export function Pagination(props: PaginationProps) {
           {/* Jump to page */}
           <Show when={local.showJumpTo}>
             <div class="flex items-center gap-2">
-              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>Go to</span>
+              <span class={cn('text-[var(--floe-ink-soft)]', styles().text)}>{locale.t('jumpTo')}</span>
               <input
                 data-floe-surface="inset"
+                aria-label={locale.t('jumpTo')}
                 type="number"
                 min={1}
                 max={local.totalPages}

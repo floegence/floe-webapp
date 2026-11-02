@@ -14,3 +14,7 @@ export * from './notes';
 export * from './widgets';
 export * from './terminal';
 export { Tag, type TagProps, type TagVariant, type TagSize } from './ui';
+
+// Preserve legacy umbrella names; new primitives use the explicit /ui entry.
+export { Calendar } from './components/icons';
+export { Breadcrumb, type BreadcrumbProps } from './components/file-browser';

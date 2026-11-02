@@ -1,4 +1,5 @@
 import { splitProps, type JSX, Show, createUniqueId } from 'solid-js';
+import { useFormControl } from './formFieldContext';
 import { cn } from '../../utils/cn';
 
 export type SwitchSize = 'sm' | 'md' | 'lg';
@@ -53,6 +54,7 @@ const sizeStyles: Record<SwitchSize, {
 };
 
 export function Switch(props: SwitchProps) {
+  const field = useFormControl();
   const [local, rest] = splitProps(props, [
     'checked',
     'onChange',
@@ -66,7 +68,7 @@ export function Switch(props: SwitchProps) {
   ]);
 
   const generatedId = createUniqueId();
-  const id = () => local.id ?? generatedId;
+  const id = () => local.id ?? field.id ?? generatedId;
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
   const labelPos = () => local.labelPosition ?? 'right';
@@ -79,12 +81,14 @@ export function Switch(props: SwitchProps) {
   const SwitchControl = () => (
     <div class="relative inline-flex items-center shrink-0">
       <input
+        {...field}
         data-floe-choice-input
         type="checkbox"
         role="switch"
         id={id()}
         checked={local.checked}
-        disabled={local.disabled}
+        disabled={local.disabled ?? field.disabled}
+        onClick={event => {if (props.readOnly ?? field.readOnly) event.preventDefault();}}
         onChange={handleChange}
         class="sr-only peer"
         aria-checked={local.checked}

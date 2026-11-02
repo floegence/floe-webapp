@@ -73,6 +73,7 @@ export { Tooltip, type TooltipProps } from './Tooltip';
 export {
   Popover,
   type PopoverProps,
+  type PopoverTriggerProps,
   type PopoverPlacement,
 } from './Popover';
 export { CommandPalette } from './CommandPalette';
@@ -345,3 +346,16 @@ export { KeyedFor, type KeyedForProps } from './KeyedFor';
 
 export { DirectoryFavoriteButton } from './picker/DirectoryFavorites';
 export type { DirectoryFavorites } from './picker/DirectoryFavorites';
+export { useFormControl, useFormField, joinAriaIds, type FormFieldBinding } from './formFieldContext';
+export { createControllableValue } from './controllable';
+
+export { Combobox, MultiSelect, type SelectOption, type SelectBaseProps, type MultiSelectProps } from './Select';
+export { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from './Table';
+export { DataTable, type DataTableProps, type DataTableColumn } from './DataTable';
+export { createTableModel, type TableSort, type TableModelOptions } from './dataTableModel';
+export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './Breadcrumb';
+export { Accordion, type AccordionProps, type AccordionItem } from './Accordion';
+export { Slider, type SliderProps } from './Slider';
+export { Calendar, type CalendarProps } from './Calendar';
+export { DatePicker, DateRangePicker, type DatePickerProps, type DateRangePickerProps, type DateRange } from './DatePicker';
+export { parseCalendarDate, formatCalendarDate, addCalendarDays, addCalendarMonths, calendarDays } from './calendarModel';

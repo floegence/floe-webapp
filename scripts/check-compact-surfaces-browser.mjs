@@ -23,7 +23,7 @@ try {
       if (await page.getByTestId('untitled-chart').locator('.chart-monitoring-header').count()) failures.push(`${engine.name()}: empty chart header occupies space`);
       await page.getByRole('textbox', { name: 'Retained setting' }).evaluate(element => { window.retainedSetting = element; });
       await page.getByRole('button', { name: 'Toggle navigation' }).click();
-      await page.getByRole('combobox').waitFor({ state: 'attached' });
+      await page.getByRole('combobox', {name: 'Settings section', exact: true}).waitFor({ state: 'attached' });
       await page.getByRole('button', { name: 'Toggle navigation' }).click();
       assert.equal(await page.getByRole('textbox', { name: 'Retained setting' }).evaluate(element => window.retainedSetting === element), true);
       if (await page.getByTestId('reading').count()) {

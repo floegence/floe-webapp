@@ -1,3 +1,4 @@
+import { BusinessControlsDemo } from '../components/BusinessControlsDemo';
 import { SurfaceComponentGallery } from '../components/SurfaceComponentGallery';
 import { For, Show, createMemo, createSignal, type JSX } from 'solid-js';
 import {
@@ -1901,6 +1902,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
           <PropsTable props={cardDoc.props} componentName="Card" />
         </div>
       </Show>
+      <Show when={isSection('business-controls')}><BusinessControlsDemo /></Show>
       <Show when={isSection('ui-inputs')}>
         <div class="space-y-4">
           <SectionHeader
@@ -3407,8 +3409,8 @@ export function ShowcasePage(props: ShowcasePageProps) {
               <Popover
                 ariaLabel="Workspace filters"
                 width={240}
-                trigger={
-                  <Button variant="outline" icon={Search}>
+                trigger={triggerProps =>
+                  <Button {...triggerProps} variant="outline" icon={Search}>
                     Filters
                   </Button>
                 }
@@ -3431,7 +3433,7 @@ export function ShowcasePage(props: ShowcasePageProps) {
                 placement="bottom-end"
                 ariaLabel="Release notes"
                 width={280}
-                trigger={<Button variant="ghost">What&apos;s new</Button>}
+                trigger={triggerProps => <Button {...triggerProps} variant="ghost">What&apos;s new</Button>}
               >
                 <div class="space-y-1.5 p-3 text-caption">
                   <p class="font-medium">Release notes</p>

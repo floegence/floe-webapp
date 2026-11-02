@@ -1,8 +1,10 @@
+import { createControllableValue } from './controllable';
+import { useFloeLocale } from '../../context/LocaleContext';
 import { createSignal, Show, Index, type Accessor, type JSX, createEffect, createMemo, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
-import { ChevronDown, ChevronRight, Check } from '../icons';
+import { ChevronRight, Check } from '../icons';
 import {
   calculateMenuPosition,
   calculateSubmenuPosition,
@@ -40,6 +42,9 @@ export interface DropdownItem {
 }
 
 export interface DropdownProps {
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   trigger: JSX.Element;
   triggerClass?: string;
   triggerAriaLabel?: string;
@@ -102,7 +107,8 @@ export function resolveDropdownTriggerKeyAction(
  * Dropdown menu component with cascade submenu support
  */
 export function Dropdown(props: DropdownProps) {
-  const [open, setOpen] = createSignal(false);
+  const locale = useFloeLocale();
+  const [open, setOpen] = createControllableValue({ value: () => props.open, defaultValue: props.defaultOpen ?? false, onChange: value => props.onOpenChange?.(value) });
   const menuPresence = createFloatingPresence({
     open,
     element: () => menuRef,
@@ -155,7 +161,7 @@ export function Dropdown(props: DropdownProps) {
     const pos = calculateMenuPosition(
       triggerRect,
       menuRect,
-      props.align ?? 'start',
+      locale.direction === 'rtl' ? (props.align === 'end' ? 'start' : props.align === 'center' ? 'center' : 'end') : props.align ?? 'start',
       portalLayout.boundaryRect()
     );
     setMenuPosition(pos);
@@ -582,54 +588,4 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   );
 }
 
-/**
- * Simple select dropdown
- */
-export interface SelectProps {
-  /** Localized field name, independent of the currently selected value. */
-  ariaLabel?: string;
-  /** Prefer a visible field label when one is available. */
-  ariaLabelledBy?: string;
-  ariaDescribedBy?: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-  disabled?: boolean;
-  class?: string;
-}
-
-export function Select(props: SelectProps) {
-  const selectedOption = () => props.options.find((o) => o.value === props.value);
-  const items = () =>
-    props.options.map((o) => ({
-      id: o.value,
-      label: o.label,
-    }));
-
-  return (
-    <Dropdown
-      triggerInputSurface
-      triggerAriaLabel={props.ariaLabel}
-      triggerAriaLabelledBy={props.ariaLabelledBy}
-      triggerAriaDescribedBy={props.ariaDescribedBy}
-      triggerClass={cn(
-        'flex items-center justify-between gap-2 h-8 px-2.5 w-full',
-        'floe-field text-[length:var(--floe-type-control)]',
-        props.class
-      )}
-      trigger={
-        <>
-          <span class={cn('truncate', !selectedOption() && 'text-[var(--floe-ink-soft)]')}>
-            {selectedOption()?.label ?? props.placeholder ?? 'Select...'}
-          </span>
-          <ChevronDown class="w-3.5 h-3.5 text-[var(--floe-ink-quiet)]" />
-        </>
-      }
-      items={items()}
-      value={props.value}
-      onSelect={props.onChange}
-      disabled={props.disabled}
-    />
-  );
-}
+export { Select, type SelectProps } from './Select';

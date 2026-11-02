@@ -74,6 +74,7 @@ export const COMPONENT_GROUPS: ShowcaseGroup[] = [
   {
     label: 'Inputs',
     items: [
+      { id: 'business-controls', label: 'Business controls', description: 'Accessible forms, search, tables, dates and keyboard navigation.' },
       {
         id: 'ui-inputs',
         label: 'Inputs',

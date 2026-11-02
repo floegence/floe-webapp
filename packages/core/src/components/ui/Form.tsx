@@ -7,8 +7,11 @@ import {
   createSignal,
   createUniqueId,
   type Accessor,
+  onCleanup,
+  For,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { FormFieldContext, useFormField, useFormControl, type FormFieldBinding } from './formFieldContext';
 
 // ============================================================================
 // Form Context
@@ -19,6 +22,7 @@ interface FormContextValue {
   isSubmitting: Accessor<boolean>;
   /** Set submitting state */
   setSubmitting: (value: boolean) => void;
+  errors: Accessor<Record<string, string>>;
 }
 
 const FormContext = createContext<FormContextValue>();
@@ -31,9 +35,13 @@ function useFormContext() {
 // Form Component
 // ============================================================================
 
-export interface FormProps extends Omit<JSX.FormHTMLAttributes<HTMLFormElement>, 'onSubmit'> {
+export interface FormProps extends Omit<JSX.FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'onReset'> {
   /** Called when form is submitted */
-  onSubmit?: (e: SubmitEvent) => void | Promise<void>;
+  onSubmit?: (e: SubmitEvent, context: { form: HTMLFormElement; data: FormData }) => void | Promise<void>;
+  /** Host-owned validation. Return field messages; undefined means valid. */
+  validate?: (data: FormData) => Record<string, string> | undefined | Promise<Record<string, string> | undefined>;
+  onReset?: (event: Event) => void;
+  onSubmitError?: (error: unknown) => void;
   /** Additional class names */
   class?: string;
   children: JSX.Element;
@@ -44,32 +52,58 @@ export interface FormProps extends Omit<JSX.FormHTMLAttributes<HTMLFormElement>,
  * Automatically prevents default form behavior and tracks submitting state.
  */
 export function Form(props: FormProps) {
-  const [local, rest] = splitProps(props, ['onSubmit', 'class', 'children']);
+  const [local, rest] = splitProps(props, ['onSubmit', 'onReset', 'validate', 'onSubmitError', 'class', 'children']);
   const [isSubmitting, setSubmitting] = createSignal(false);
+  const [errors, setErrors] = createSignal<Record<string, string>>({});
+  let generation = 0;
+  onCleanup(() => { generation++; });
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (isSubmitting()) return;
 
-    if (local.onSubmit) {
-      setSubmitting(true);
-      try {
-        await local.onSubmit(e);
-      } finally {
-        setSubmitting(false);
+    const form = e.currentTarget as HTMLFormElement;
+    const data = new FormData(form, e.submitter);
+    const current = ++generation;
+    setSubmitting(true);
+    try {
+      const result = local.validate ? await local.validate(data) : undefined;
+      if (current !== generation) return;
+      setErrors(result ?? {});
+      if (result && Object.values(result).some(Boolean)) {
+        const control = Array.from(form.elements).find(element => 'name' in element && result[String(element.name)]);
+        if (control instanceof HTMLElement) {
+          const field = control.closest('[data-field]');
+          (field?.querySelector<HTMLElement>('[role="combobox"]') ?? control).focus();
+        }
+        return;
       }
+      await local.onSubmit?.(e, { form, data });
+    } catch (error) {
+      if (current !== generation) return;
+      if (local.onSubmitError) local.onSubmitError(error);
+      else throw error;
+    } finally {
+      if (current === generation) setSubmitting(false);
     }
   };
 
   const contextValue: FormContextValue = {
     isSubmitting,
     setSubmitting,
+    errors,
   };
 
   return (
     <FormContext.Provider value={contextValue}>
       <form
         onSubmit={handleSubmit}
+        onReset={event => {
+          local.onReset?.(event);
+          if (event.defaultPrevented) return;
+          generation++; setErrors({}); setSubmitting(false);
+        }}
+        aria-busy={isSubmitting() || undefined}
         class={cn('space-y-4', local.class)}
         {...rest}
       >
@@ -83,25 +117,14 @@ export function Form(props: FormProps) {
 // FormField Component
 // ============================================================================
 
-interface FormFieldContextValue {
-  id: string;
-  errorId: string;
-  helperId: string;
-  hasError: Accessor<boolean>;
-  setError: (error: string | undefined) => void;
-}
-
-const FormFieldContext = createContext<FormFieldContextValue>();
-
-function useFormField() {
-  const ctx = useContext(FormFieldContext);
-  if (!ctx) {
-    throw new Error('useFormField must be used within a FormField');
-  }
-  return ctx;
-}
-
 export interface FormFieldProps {
+  /** Put explicit control identities here so the label shares the same ID. */
+  id?: string;
+  error?: string;
+  description?: string;
+  required?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
   /** Field name for identification */
   name?: string;
   /** Additional class names */
@@ -113,22 +136,33 @@ export interface FormFieldProps {
  * Container for a form field. Provides context for label, control, and message components.
  */
 export function FormField(props: FormFieldProps) {
-  const [local, rest] = splitProps(props, ['name', 'class', 'children']);
-  const id = createUniqueId();
-  const [error, setError] = createSignal<string | undefined>();
-
-  const contextValue: FormFieldContextValue = {
-    id: `field-${id}`,
-    errorId: `field-${id}-error`,
-    helperId: `field-${id}-helper`,
-    hasError: () => !!error(),
-    setError,
+  const form = useFormContext();
+  const [local, rest] = splitProps(props, ['id', 'name', 'error', 'description', 'required', 'disabled', 'readOnly', 'class', 'children']);
+  const generatedId = createUniqueId();
+  const id = () => local.id ?? `field-${generatedId}`;
+  const [descriptions, setDescriptions] = createSignal<string[]>([]);
+  const [messages, setMessages] = createSignal<{ id: string; error: Accessor<string | undefined> }[]>([]);
+  const contextValue: FormFieldBinding = {
+    id, name: () => local.name,
+    error: () => local.error || (local.name ? form?.errors()[local.name] : undefined) || messages().map(item => item.error()).find(Boolean),
+    required: () => local.required, disabled: () => local.disabled, readOnly: () => local.readOnly,
+    descriptionIds: () => [...(local.description ? [`${id()}-helper`] : []), ...descriptions()],
+    messageIds: () => [...((local.error || (local.name && form?.errors()[local.name])) ? [`${id()}-error`] : []), ...messages().filter(item => item.error()).map(item => item.id)],
+    registerDescription: entry => {
+      setDescriptions(items => [...items, entry]);
+      return () => setDescriptions(items => items.filter(item => item !== entry));
+    },
+    registerMessage: (entry, error) => {
+      setMessages(items => [...items, { id: entry, error }]);
+      return () => setMessages(items => items.filter(item => item.id !== entry));
+    },
   };
 
   return (
     <FormFieldContext.Provider value={contextValue}>
       <div class={cn('space-y-1.5', local.class)} data-field={local.name} {...rest}>
         {local.children}
+        <Show when={local.description}><p id={`${id()}-helper`} class="text-caption text-muted-foreground">{local.description}</p></Show>
       </div>
     </FormFieldContext.Provider>
   );
@@ -155,16 +189,16 @@ export function FormLabel(props: FormLabelProps) {
 
   return (
     <label
-      for={fieldCtx.id}
+      for={fieldCtx?.id()}
       class={cn(
         'block text-xs font-medium text-foreground',
-        fieldCtx.hasError() && 'text-error',
+        fieldCtx?.error() && 'text-error',
         local.class
       )}
       {...rest}
     >
       {local.children}
-      <Show when={local.required}>
+      <Show when={local.required ?? fieldCtx?.required()}>
         <span class="text-error ml-0.5" aria-hidden="true">*</span>
       </Show>
     </label>
@@ -178,26 +212,25 @@ export function FormLabel(props: FormLabelProps) {
 export interface FormControlProps {
   /** Additional class names */
   class?: string;
-  children: JSX.Element;
+  children: JSX.Element | ((control: ReturnType<typeof useFormControl>) => JSX.Element);
 }
 
 /**
- * Wrapper for form input elements. Passes field context props to children.
- * Children should accept id, aria-describedby, and aria-invalid props.
+ * Layout wrapper. Floe inputs consume the context directly. Custom controls
+ * can use the render function to spread the same reactive field properties.
  */
 export function FormControl(props: FormControlProps) {
   const [local] = splitProps(props, ['class', 'children']);
   const fieldCtx = useFormField();
 
-  // Clone the child element and inject field context props
-  // Since SolidJS doesn't support cloneElement, we wrap and rely on CSS
+  const control = useFormControl();
   return (
     <div
       class={cn('relative', local.class)}
       data-field-control
-      data-field-id={fieldCtx.id}
+      data-field-id={fieldCtx?.id()}
     >
-      {local.children}
+      {typeof local.children === 'function' ? local.children(control) : local.children}
     </div>
   );
 }
@@ -218,10 +251,13 @@ export interface FormDescriptionProps {
 export function FormDescription(props: FormDescriptionProps) {
   const [local] = splitProps(props, ['class', 'children']);
   const fieldCtx = useFormField();
+  const generatedId = createUniqueId();
+  const id = `${fieldCtx?.id() ?? generatedId}-description-${generatedId}`;
+  if (fieldCtx) onCleanup(fieldCtx.registerDescription(id));
 
   return (
     <p
-      id={fieldCtx.helperId}
+      id={id}
       class={cn('text-[length:var(--floe-type-caption)] text-[var(--floe-ink-soft)]', local.class)}
     >
       {local.children}
@@ -236,6 +272,8 @@ export function FormDescription(props: FormDescriptionProps) {
 export interface FormMessageProps {
   /** Error message to display */
   error?: string;
+  /** Issues from validators implementing Standard Schema. */
+  errors?: readonly { message: string }[];
   /** Additional class names */
   class?: string;
   children?: JSX.Element;
@@ -246,23 +284,18 @@ export interface FormMessageProps {
  * Automatically uses field context for accessibility.
  */
 export function FormMessage(props: FormMessageProps) {
-  const [local] = splitProps(props, ['error', 'class', 'children']);
-  const fieldCtx = useFormField();
-
-  // Update field error state when error prop changes
-  const hasError = () => !!local.error || !!local.children;
-
-  return (
-    <Show when={hasError()}>
-      <p
-        id={fieldCtx.errorId}
-        class={cn('text-caption text-error', local.class)}
-        role="alert"
-      >
-        {local.error ?? local.children}
-      </p>
-    </Show>
-  );
+  const field = useFormField();
+  const generatedId = createUniqueId();
+  const ownId = `message-${generatedId}`;
+  const ownError = () => props.error || props.errors?.map(item => item.message).join(' ') || (props.children ? String(props.children) : undefined);
+  if (field) onCleanup(field.registerMessage(ownId, () => ownError()));
+  return <Show when={ownError() || field?.error()}>
+    <div id={ownError() ? ownId : `${field?.id() ?? generatedId}-error`} class={cn('text-caption text-error', props.class)} role="alert">
+      <Show when={props.errors?.length} fallback={props.error ?? props.children ?? field?.error()}>
+        <ul><For each={props.errors}>{issue => <li>{issue.message}</li>}</For></ul>
+      </Show>
+    </div>
+  </Show>;
 }
 
 // ============================================================================

@@ -1,6 +1,8 @@
 import { splitProps, type JSX, Show, createUniqueId, createSignal, For, createEffect, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { useFloeLocale } from '../../context/LocaleContext';
+import { useFormControl, joinAriaIds } from './formFieldContext';
 import { Plus, Minus, ChevronDown } from '../icons';
 
 export type InputSize = 'sm' | 'md' | 'lg';
@@ -19,16 +21,18 @@ export interface InputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElemen
 }
 
 const sizeStyles: Record<InputSize, string> = {
-  sm: 'h-7 text-xs px-2',
-  md: 'h-8 text-[length:var(--floe-type-control)] px-2.5',
-  lg: 'h-9 text-sm px-3',
+  sm: 'h-[var(--floe-control-height-sm)] text-xs px-2',
+  md: 'h-[var(--floe-control-height-md)] text-[length:var(--floe-type-control)] px-2.5',
+  lg: 'h-[var(--floe-control-height-lg)] text-sm px-3',
 };
 
 export function Input(props: InputProps) {
+  const field = useFormControl();
   const [local, rest] = splitProps(props, [
     'size',
     'error',
     'helperText',
+    'aria-describedby',
     'leftIcon',
     'rightIcon',
     'class',
@@ -36,7 +40,7 @@ export function Input(props: InputProps) {
   ]);
 
   const fallbackId = createUniqueId();
-  const inputId = () => local.id ?? fallbackId;
+  const inputId = () => local.id ?? field.id ?? fallbackId;
   const errorId = () => `${inputId()}-error`;
   const helperId = () => `${inputId()}-helper`;
 
@@ -50,32 +54,33 @@ export function Input(props: InputProps) {
   return (
     <div class="relative">
       <Show when={local.leftIcon}>
-        <div class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
+        <div class="absolute start-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
           {local.leftIcon}
         </div>
       </Show>
 
       <input
+        {...field}
         id={inputId()}
         data-floe-control="input"
         data-floe-surface="inset"
-        aria-invalid={local.error ? true : undefined}
-        aria-describedby={ariaDescribedBy()}
+        aria-invalid={local.error ? true : field['aria-invalid']}
+        aria-describedby={joinAriaIds(field['aria-describedby'], local['aria-describedby'], ariaDescribedBy())}
         class={cn(
           'floe-field w-full',
           'focus:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-60',
           sizeStyles[local.size ?? 'md'],
           // Icon padding must come AFTER sizeStyles to override px-*
-          local.leftIcon && 'pl-10',
-          local.rightIcon && 'pr-10',
+          local.leftIcon && 'ps-10',
+          local.rightIcon && 'pe-10',
           local.class
         )}
         {...rest}
       />
 
       <Show when={local.rightIcon}>
-        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
+        <div class="absolute end-2.5 top-1/2 -translate-y-1/2 text-[var(--floe-ink-quiet)] pointer-events-none">
           {local.rightIcon}
         </div>
       </Show>
@@ -106,10 +111,11 @@ export interface TextareaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
 }
 
 export function Textarea(props: TextareaProps) {
-  const [local, rest] = splitProps(props, ['error', 'helperText', 'class', 'id']);
+  const field = useFormControl();
+  const [local, rest] = splitProps(props, ['error', 'helperText', 'aria-describedby', 'class', 'id']);
 
   const fallbackId = createUniqueId();
-  const textareaId = () => local.id ?? fallbackId;
+  const textareaId = () => local.id ?? field.id ?? fallbackId;
   const errorId = () => `${textareaId()}-error`;
   const helperId = () => `${textareaId()}-helper`;
 
@@ -123,11 +129,12 @@ export function Textarea(props: TextareaProps) {
   return (
     <div>
       <textarea
+        {...field}
         data-floe-control="input"
         id={textareaId()}
         data-floe-surface="inset"
-        aria-invalid={local.error ? true : undefined}
-        aria-describedby={ariaDescribedBy()}
+        aria-invalid={local.error ? true : field['aria-invalid']}
+        aria-describedby={joinAriaIds(field['aria-describedby'], local['aria-describedby'], ariaDescribedBy())}
         class={cn(
           'floe-field w-full min-h-16 p-2.5 text-[length:var(--floe-type-control)]',
           'focus:outline-none',
@@ -155,6 +162,12 @@ export function Textarea(props: TextareaProps) {
  * NumberInput - Number input with increment/decrement buttons
  */
 export interface NumberInputProps {
+  id?: string;
+  name?: string;
+  required?: boolean;
+  ariaLabel?: string;
+  ariaDescribedBy?: string;
+  readOnly?: boolean;
   /** Current value */
   value: number;
   /** Called when value changes */
@@ -182,9 +195,12 @@ export interface NumberInputProps {
 }
 
 export function NumberInput(props: NumberInputProps) {
-  const inputId = createUniqueId();
-  const errorId = `${inputId}-error`;
-  const helperId = `${inputId}-helper`;
+  const field = useFormControl();
+  const locale = useFloeLocale();
+  const generatedId = createUniqueId();
+  const inputId = () => props.id ?? field.id ?? generatedId;
+  const errorId = () => inputId() + '-error';
+  const helperId = () => inputId() + '-helper';
 
   const step = () => props.step ?? 1;
   const min = () => props.min ?? -Infinity;
@@ -192,8 +208,8 @@ export function NumberInput(props: NumberInputProps) {
 
   const clamp = (value: number) => Math.min(max(), Math.max(min(), value));
 
-  const canDecrement = () => !props.disabled && props.value > min();
-  const canIncrement = () => !props.disabled && props.value < max();
+  const canDecrement = () => !(props.disabled ?? field.disabled) && !(props.readOnly ?? field.readOnly) && props.value > min();
+  const canIncrement = () => !(props.disabled ?? field.disabled) && !(props.readOnly ?? field.readOnly) && props.value < max();
 
   const handleDecrement = () => {
     if (canDecrement()) {
@@ -225,8 +241,8 @@ export function NumberInput(props: NumberInputProps) {
 
   const ariaDescribedBy = () => {
     const ids: string[] = [];
-    if (props.error) ids.push(errorId);
-    if (props.helperText && !props.error) ids.push(helperId);
+    if (props.error) ids.push(errorId());
+    if (props.helperText && !props.error) ids.push(helperId());
     return ids.length > 0 ? ids.join(' ') : undefined;
   };
 
@@ -244,7 +260,7 @@ export function NumberInput(props: NumberInputProps) {
         data-floe-input-surface
         data-floe-control="compound-input"
         data-floe-surface="inset"
-        aria-invalid={props.error ? true : undefined}
+        aria-invalid={props.error ? true : field['aria-invalid']}
         aria-disabled={props.disabled ? true : undefined}
         class={cn(
           'floe-field inline-flex items-center',
@@ -266,14 +282,18 @@ export function NumberInput(props: NumberInputProps) {
             config().btnSize,
             config().height
           )}
-          aria-label="Decrease value"
+          aria-label={locale.t('decrease')}
         >
           <Minus class={config().iconSize} />
         </button>
 
         {/* Input */}
         <input
-          id={inputId}
+          {...field}
+          name={props.name ?? field.name}
+          required={props.required ?? field.required}
+          aria-label={props.ariaLabel}
+          id={inputId()}
           type="number"
           value={props.value}
           onInput={handleInput}
@@ -281,11 +301,11 @@ export function NumberInput(props: NumberInputProps) {
           min={props.min}
           max={props.max}
           step={props.step}
-          disabled={props.disabled}
-          readOnly={props.inputDisabled}
+          disabled={props.disabled ?? field.disabled}
+          readOnly={props.inputDisabled || (props.readOnly ?? field.readOnly)}
           placeholder={props.placeholder}
-          aria-invalid={props.error ? true : undefined}
-          aria-describedby={ariaDescribedBy()}
+          aria-invalid={props.error ? true : field['aria-invalid']}
+          aria-describedby={joinAriaIds(field['aria-describedby'], props.ariaDescribedBy, ariaDescribedBy())}
           class={cn(
             'w-16 text-center text-[length:var(--floe-type-control)] bg-transparent border-none',
             'outline-none focus:outline-none focus:ring-0',
@@ -308,20 +328,20 @@ export function NumberInput(props: NumberInputProps) {
             config().btnSize,
             config().height
           )}
-          aria-label="Increase value"
+          aria-label={locale.t('increase')}
         >
           <Plus class={config().iconSize} />
         </button>
       </div>
 
       <Show when={props.error}>
-        <p id={errorId} class="mt-1 text-caption text-error" role="alert">
+        <p id={errorId()} class="mt-1 text-caption text-error" role="alert">
           {props.error}
         </p>
       </Show>
 
       <Show when={props.helperText && !props.error}>
-        <p id={helperId} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
+        <p id={helperId()} class="mt-1 text-[length:var(--floe-type-caption)] leading-[var(--floe-line-caption)] text-[var(--floe-ink-soft)]">
           {props.helperText}
         </p>
       </Show>
@@ -370,6 +390,7 @@ export function AffixInput(props: AffixInputProps) {
     'size',
     'error',
     'helperText',
+    'aria-describedby',
     'prefix',
     'suffix',
     'prefixOptions',
@@ -382,8 +403,9 @@ export function AffixInput(props: AffixInputProps) {
     'id',
   ]);
 
+  const field = useFormControl();
   const fallbackId = createUniqueId();
-  const inputId = () => local.id ?? fallbackId;
+  const inputId = () => local.id ?? field.id ?? fallbackId;
   const errorId = () => `${inputId()}-error`;
   const helperId = () => `${inputId()}-helper`;
 
@@ -421,7 +443,7 @@ export function AffixInput(props: AffixInputProps) {
         data-floe-input-surface
         data-floe-control="compound-input"
         data-floe-surface="inset"
-        aria-invalid={local.error ? true : undefined}
+        aria-invalid={local.error ? true : field['aria-invalid']}
         aria-disabled={rest.disabled ? true : undefined}
         class={cn(
           'floe-field inline-flex items-center',
@@ -460,9 +482,11 @@ export function AffixInput(props: AffixInputProps) {
 
         {/* Input */}
         <input
+          {...field}
+          readOnly={props.readOnly ?? field.readOnly}
           id={inputId()}
-          aria-invalid={local.error ? true : undefined}
-          aria-describedby={ariaDescribedBy()}
+          aria-invalid={local.error ? true : field['aria-invalid']}
+          aria-describedby={joinAriaIds(field['aria-describedby'], local['aria-describedby'], ariaDescribedBy())}
           class={cn(
             'flex-1 min-w-0 bg-transparent border-none',
             'placeholder:text-[var(--floe-field-placeholder)]',

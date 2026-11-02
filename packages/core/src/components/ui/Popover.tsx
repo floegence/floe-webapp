@@ -24,9 +24,15 @@ import { useOverlayMask } from '../../hooks/useOverlayMask';
 
 export type PopoverPlacement = 'bottom-start' | 'bottom-center' | 'bottom-end' | 'top-start' | 'top-center' | 'top-end';
 
+export interface PopoverTriggerProps {
+  'aria-haspopup': 'dialog';
+  'aria-expanded': boolean;
+  'aria-controls': string | undefined;
+}
+
 export interface PopoverProps {
   /** The element that opens the panel. It keeps its own layout and semantics. */
-  trigger: JSX.Element;
+  trigger: JSX.Element | ((props: PopoverTriggerProps) => JSX.Element);
   children: JSX.Element | ((close: () => void) => JSX.Element);
   /** Controlled visibility. Omit for uncontrolled use with `defaultOpen`. */
   open?: boolean;
@@ -63,8 +69,9 @@ export function Popover(props: PopoverProps) {
   const open: Accessor<boolean> = () => (isControlled() ? Boolean(props.open) : uncontrolledOpen());
 
   const setOpen = (next: boolean) => {
+    const changed = next !== open();
     if (!isControlled()) setUncontrolledOpen(next);
-    if (next !== open()) props.onOpenChange?.(next);
+    if (changed) props.onOpenChange?.(next);
   };
 
   const presence = createFloatingPresence({ open, element: () => panelRef });
@@ -93,6 +100,10 @@ export function Popover(props: PopoverProps) {
     (props.placement ?? 'bottom-start').slice(side() === 'top' ? 5 : 7) as Align;
 
   const close = () => setOpen(false);
+  const closeAndRestoreFocus = () => {
+    setOpen(false);
+    triggerRef?.querySelector<HTMLElement>('button, input, [tabindex="0"]')?.focus({preventScroll: true});
+  };
 
   useOverlayMask({
     open: presence.mounted,
@@ -103,7 +114,7 @@ export function Popover(props: PopoverProps) {
       if (element?.closest(`[data-floe-popover="${popoverId}"]`)) return true;
       return Boolean(triggerRef?.contains(element ?? null));
     },
-    onClose: () => setOpen(false),
+    onClose: closeAndRestoreFocus,
     onInteractOutside: () => setOpen(false),
     onEscapeOutside: () => setOpen(false),
     lockBodyScroll: false,
@@ -150,6 +161,12 @@ export function Popover(props: PopoverProps) {
     });
   });
 
+  const triggerProps: PopoverTriggerProps = {
+    'aria-haspopup': 'dialog',
+    get 'aria-expanded'() { return open(); },
+    get 'aria-controls'() { return presence.mounted() ? panelId : undefined; },
+  };
+
   return (
     <div class="relative inline-flex" data-floe-popover={popoverId}>
       <div
@@ -158,9 +175,6 @@ export function Popover(props: PopoverProps) {
         data-floe-popover-trigger=""
         data-floe-input-surface={props.triggerInputSurface ? 'true' : undefined}
         data-floe-surface={props.triggerInputSurface ? 'inset' : undefined}
-        aria-haspopup="dialog"
-        aria-expanded={open()}
-        aria-controls={presence.mounted() ? panelId : undefined}
         onClick={() => setOpen(!open())}
         onKeyDown={(event) => {
           if (event.key === 'Escape' && open()) {
@@ -169,7 +183,7 @@ export function Popover(props: PopoverProps) {
           }
         }}
       >
-        {props.trigger}
+        {typeof props.trigger === 'function' ? props.trigger(triggerProps) : props.trigger}
       </div>
 
       <Show when={presence.mounted()}>
@@ -188,6 +202,7 @@ export function Popover(props: PopoverProps) {
             data-floe-popover-panel=""
             data-floating-presence={presence.state()}
             aria-hidden={presence.exiting() ? 'true' : undefined}
+            inert={presence.exiting()}
             role="dialog"
             aria-label={props.ariaLabel}
             aria-modal="false"
