@@ -151,3 +151,7 @@ When editing this repository, `make check` already includes `pnpm verify`; if yo
 1. Brief summary of intent and implementation.
 2. Changed files with behavior impact.
 3. Verification result for each executed command.
+
+## Mermaid diagrams
+
+Use `@floegence/floe-webapp-core/diagrams` and `@floegence/floe-webapp-core/diagrams.css` for shared Diagram rendering. Install the optional pele@1.13.0 and katex@0.18.10 peers. Supply complete localized DiagramLabels and original source; the host owns authorization and navigation. isClosedMarkdownFence from the Markdown entry admits complete code fences. Do not copy rendering, sanitization or lifecycle into products. See docs/diagrams.md.

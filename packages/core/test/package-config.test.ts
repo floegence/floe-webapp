@@ -16,6 +16,8 @@ describe('@floegence/floe-webapp-core package config', () => {
     expect(pkg.sideEffects).toBe(false);
 
     expect(pkg.exports).toEqual({
+      './diagrams': { types: './dist/diagrams.d.ts', import: './dist/diagrams.js' },
+      './diagrams.css': './dist/diagrams.css',
       './pptx': { types: './dist/pptx.d.ts', import: './dist/pptx.js' },
       './graph-assets': { types: './scripts/graph-assets.d.mts', import: './scripts/graph-assets.mjs' },
       './graph': {

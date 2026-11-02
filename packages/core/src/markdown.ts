@@ -1,5 +1,6 @@
 // Public parser entry without chat components or browser dependencies.
 export { createMarkdownParser } from './components/chat/markdown/parser';
+export { isClosedMarkdownFence } from './components/chat/markdown/fence';
 export { createIncrementalMarkdownParser } from './components/chat/markdown/incremental';
 export { createMarkdownSessionWorker } from './components/chat/markdown/createSessionWorker';
 export { createMarkdownSessionHandler, createMarkdownWorkerClient } from './components/chat/markdown/workerSession';

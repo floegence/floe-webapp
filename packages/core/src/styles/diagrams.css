@@ -1,0 +1,29 @@
+.floe-diagram {
+  --pele-bg: var(--background); --pele-fg: var(--foreground);
+  --pele-muted: var(--muted-foreground); --pele-line: var(--muted-foreground);
+  --pele-surface: var(--card); --pele-surface-alt: var(--muted);
+  --pele-border: var(--border); --pele-accent: var(--primary);
+  --pele-font: var(--font-sans, Inter, system-ui, sans-serif);
+  --pele-font-mono: var(--font-mono, monospace);
+  --pele-fg-on-light: #171717; --pele-fg-on-dark: #fafafa;
+  min-width: 0; background:var(--background); color: var(--foreground); font: 14px/1.5 var(--pele-font);
+  border: 1px solid var(--border); border-radius: .5rem; overflow: hidden;
+}
+.floe-diagram-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:.25rem; padding:.375rem; border-bottom:1px solid var(--border); }
+.floe-diagram-toolbar button { font:inherit; white-space:nowrap; border:0; border-radius:.25rem; padding:.25rem .5rem; background:transparent; color:inherit; cursor:pointer; }
+.floe-diagram-toolbar button:hover,.floe-diagram-toolbar button[aria-pressed=true] { background:var(--accent); }
+.floe-diagram-toolbar button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
+.floe-diagram-feedback { flex:1; min-width:0; font-size:.85em; }
+.floe-diagram-viewport { padding:.75rem; min-width:0; max-height:65vh; }
+.floe-diagram-svg { min-height:2rem; width:100%; }
+.floe-diagram-svg > svg { display:block; max-width:100%; height:auto; margin:auto; }
+.floe-diagram-source,.floe-diagram-error pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:0; padding:.75rem; font:12px/1.6 var(--pele-font-mono); }
+.floe-diagram-status,.floe-diagram-error { padding:.75rem; }
+.floe-diagram-error { color:var(--error,var(--foreground)); }
+.floe-diagram-dialog { width:min(94vw,1100px); max-width:94vw; }
+@media (forced-colors:active) { .floe-diagram { --pele-fg:CanvasText; --pele-line:CanvasText; --pele-bg:Canvas; --pele-surface:Canvas; --pele-surface-alt:Canvas; --pele-border:CanvasText; --pele-accent:Highlight; } }
+
+.floe-diagram-zoomed > svg { width:calc(100% * var(--floe-diagram-scale,1)); max-width:none; }
+.floe-diagram-toolbar button:disabled { opacity:.5; cursor:default; }
+
+.floe-diagram-svg:not(.floe-diagram-zoomed) > svg { max-height:60vh; }

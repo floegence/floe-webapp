@@ -1,6 +1,7 @@
 import { secureRandomUUID } from '../../../utils/secureRandom';
 import { createSignal } from 'solid-js';
 import type { MermaidWorkerResponse } from '../types';
+import { renderDiagram, sanitizeDiagramSvg, type DiagramRenderOptions } from '../../../diagrams/render';
 
 // Worker instance (optional, configured by the host).
 let mermaidWorker: Worker | null = null;
@@ -12,11 +13,7 @@ const pendingRequests = new Map<string, {
   reject: (error: Error) => void;
 }>();
 
-// Cache
-const mermaidCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 200;
-
-// Synchronous renderer (fallback).
+// Explicit host renderer; errors never select another engine.
 let syncMermaid: {
   render: (id: string, content: string) => Promise<{ svg: string }>;
 } | null = null;
@@ -59,7 +56,7 @@ export function configureMermaidWorker(worker: Worker): Promise<void> {
 }
 
 /**
- * Configure a synchronous Mermaid renderer (fallback).
+ * Configure an explicit host Mermaid renderer.
  * If you don't use a worker, pass a Mermaid instance directly.
  */
 export function configureSyncMermaid(mermaid: {
@@ -80,13 +77,9 @@ async function waitForWorker(): Promise<boolean> {
 
 export async function renderMermaid(
   content: string,
-  theme: string = 'default'
+  theme: string = 'default',
+  options: DiagramRenderOptions = {}
 ): Promise<string> {
-  // Check cache
-  const cacheKey = `${theme}:${content}`;
-  const cached = mermaidCache.get(cacheKey);
-  if (cached) return cached;
-
   // Try worker
   const hasWorker = await waitForWorker();
 
@@ -96,12 +89,7 @@ export async function renderMermaid(
 
       pendingRequests.set(id, {
         resolve: (svg) => {
-          if (mermaidCache.size >= MAX_CACHE_SIZE) {
-            const firstKey = mermaidCache.keys().next().value;
-            if (firstKey) mermaidCache.delete(firstKey);
-          }
-          mermaidCache.set(cacheKey, svg);
-          resolve(svg);
+          try { resolve(sanitizeDiagramSvg(svg, options.document)); } catch (error) { reject(error instanceof Error ? error : new Error(String(error))); }
         },
         reject
       });
@@ -115,16 +103,14 @@ export async function renderMermaid(
     try {
       const graphId = `mermaid-sync-${renderCounter++}`;
       const { svg } = await syncMermaid.render(graphId, content);
-      mermaidCache.set(cacheKey, svg);
-      return svg;
+      return sanitizeDiagramSvg(svg, options.document);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to render diagram';
       throw new Error(errorMessage);
     }
   }
 
-  // No renderer available
-  throw new Error('Mermaid renderer not configured. Call configureMermaidWorker() or configureSyncMermaid() first.');
+  return (await renderDiagram(content, options)).svg;
 }
 
 export function useMermaid() {
@@ -151,7 +137,8 @@ export function terminateMermaidWorker(): void {
     mermaidWorker = null;
     workerReady = false;
     workerReadyPromise = null;
+    for (const pending of pendingRequests.values()) pending.reject(new Error('Diagram worker terminated.'));
     pendingRequests.clear();
   }
-  mermaidCache.clear();
+
 }

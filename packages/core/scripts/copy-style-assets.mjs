@@ -26,7 +26,7 @@ const copies = [
     src: resolve(pkgRoot, 'src/components/graph/NOTICE.txt'),
     dest: resolve(pkgRoot, 'dist/licenses/graph-notice.txt'),
   },
-  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer', 'graph'].map(
+  ...['progress-shimmer', 'window-status', 'remote-input', 'remote-pointer', 'graph', 'diagrams'].map(
     (name) => ({
       src: resolve(pkgRoot, `src/styles/${name}.css`),
       dest: resolve(pkgRoot, `dist/${name}.css`),

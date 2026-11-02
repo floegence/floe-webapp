@@ -1,11 +1,9 @@
 import { createSignal, onMount, onCleanup, type Component } from 'solid-js';
 import { ensureDemoHighlighting } from '../highlighting';
-import mermaid from 'mermaid';
 import { useNotification } from '@floegence/floe-webapp-core';
 import { Button } from '@floegence/floe-webapp-core/ui';
 import {
   ChatContainer,
-  configureSyncMermaid,
   type Attachment,
   type Message,
 } from '@floegence/floe-webapp-core/chat';
@@ -511,32 +509,6 @@ export const ChatPage: Component<ChatPageProps> = (props) => {
 
   // Initialize renderers BEFORE loading messages
   onMount(async () => {
-    // Initialize Mermaid
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'dark',
-      securityLevel: 'loose',
-    });
-
-    configureSyncMermaid({
-      render: async (id: string, content: string) => {
-        try {
-          const { svg } = await mermaid.render(id, content);
-          return { svg };
-        } catch (error) {
-          console.error('Mermaid render error:', error);
-          return {
-            svg: `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100" viewBox="0 0 400 100">
-              <rect width="100%" height="100%" fill="var(--muted)" rx="8"/>
-              <text x="50%" y="50%" text-anchor="middle" fill="var(--error)" font-size="12">
-                Failed to render diagram
-              </text>
-            </svg>`,
-          };
-        }
-      },
-    });
-
     await ensureDemoHighlighting();
     if (disposed) return;
 
