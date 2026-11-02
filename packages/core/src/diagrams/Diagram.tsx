@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show, type Component } from 'solid-js';
 import { Dialog } from '../components/ui/Dialog';
+import { StableText } from '../components/ui/StableText';
 import { renderDiagram, sanitizeDiagramSvg, type DiagramRenderOptions, type DiagramRenderResult } from './render';
 
 export interface DiagramLabels {
@@ -97,11 +98,11 @@ const DiagramView: Component<DiagramProps & { expanded?: boolean; scale?: number
       data-floe-workbench-text-selection-surface="true" style={{ overflow: props.expanded ? 'auto' : 'hidden' }}>
       <div ref={root} class="floe-diagram-svg" classList={{ 'floe-diagram-zoomed': props.expanded }} onClick={openLink} aria-busy={status() === 'loading'}
         style={{ '--floe-diagram-scale': props.scale ?? 1 }} />
-    </div>
     <Show when={status() === 'loading'}><div class="floe-diagram-status" role="status">{props.labels.loading}</div></Show>
     <Show when={status() === 'error'}><div class="floe-diagram-error" role="alert">
       <strong>{props.labels.unavailable}</strong><pre>{error()}</pre><pre><code>{props.source}</code></pre>
     </div></Show>
+    </div>
   </>;
 };
 
@@ -130,9 +131,9 @@ export const Diagram: Component<DiagramProps> = props => {
   };
   return <section class={'floe-diagram ' + (props.class ?? '')}>
     <div class="floe-diagram-toolbar">
-      <button type="button" onClick={() => setShowSource(value => !value)} aria-pressed={showSource()}>{showSource() ? props.labels.preview : props.labels.source}</button>
+      <button type="button" onClick={() => setShowSource(value => !value)} aria-pressed={showSource()}><StableText reserve={[props.labels.source, props.labels.preview]}>{showSource() ? props.labels.preview : props.labels.source}</StableText></button>
       <button type="button" onClick={() => void copy()}>{props.labels.copy}</button>
-      <span class="floe-diagram-feedback" role="status">{copyState() === 'copied' ? props.labels.copied : copyState() === 'error' ? props.labels.copyFailed : ''}</span>
+      <span class="floe-diagram-feedback" role="status"><StableText reserve={[props.labels.copied, props.labels.copyFailed]}>{copyState() === 'copied' ? props.labels.copied : copyState() === 'error' ? props.labels.copyFailed : ''}</StableText></span>
       <Show when={status() === 'error'}><button type="button" onClick={() => setRevision(n => n + 1)}>{props.labels.retry}</button></Show>
       <button ref={expandTrigger} type="button" disabled={status() !== 'ready'} onClick={() => { setScale(1); setExpanded(true); }} aria-label={props.labels.expand}>⤢</button>
     </div>

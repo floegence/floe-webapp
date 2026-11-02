@@ -55,3 +55,5 @@ source/copy, retained themes and expansion in Chromium and WebKit at wide and
 narrow widths. This fixture does not certify unlimited graph size. Product
 hosts must separately qualify streaming, input ownership and their shipped
 asset protocol using published package installations.
+
+The shared viewport reserves its loading/error geometry. Source/preview and copy feedback use intrinsically reserved localized labels; browser acceptance compares geometry across these transitions at desktop and narrow widths.

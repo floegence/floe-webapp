@@ -14,11 +14,13 @@
 .floe-diagram-toolbar button:hover,.floe-diagram-toolbar button[aria-pressed=true] { background:var(--accent); }
 .floe-diagram-toolbar button:focus-visible { outline:2px solid var(--ring); outline-offset:-2px; }
 .floe-diagram-feedback { flex:1; min-width:0; font-size:.85em; }
-.floe-diagram-viewport { padding:.75rem; min-width:0; max-height:65vh; }
+.floe-diagram-viewport { position:relative; box-sizing:border-box; padding:.75rem; min-width:0; height:clamp(12rem,36vw,24rem); max-height:65vh; }
 .floe-diagram-svg { min-height:2rem; width:100%; }
 .floe-diagram-svg > svg { display:block; max-width:100%; height:auto; margin:auto; }
+.floe-diagram-source { box-sizing:border-box; height:clamp(12rem,36vw,24rem); max-height:65vh; overflow:auto; }
 .floe-diagram-source,.floe-diagram-error pre { white-space:pre-wrap; overflow-wrap:anywhere; margin:0; padding:.75rem; font:12px/1.6 var(--pele-font-mono); }
-.floe-diagram-status,.floe-diagram-error { padding:.75rem; }
+.floe-diagram-status,.floe-diagram-error { position:absolute; inset:0; box-sizing:border-box; padding:.75rem; overflow:auto; background:var(--background); }
+.floe-diagram-status { display:grid; place-items:center; }
 .floe-diagram-error { color:var(--error,var(--foreground)); }
 .floe-diagram-dialog { width:min(94vw,1100px); max-width:94vw; }
 @media (forced-colors:active) { .floe-diagram { --pele-fg:CanvasText; --pele-line:CanvasText; --pele-bg:Canvas; --pele-surface:Canvas; --pele-surface-alt:Canvas; --pele-border:CanvasText; --pele-accent:Highlight; } }
@@ -26,4 +28,4 @@
 .floe-diagram-zoomed > svg { width:calc(100% * var(--floe-diagram-scale,1)); max-width:none; }
 .floe-diagram-toolbar button:disabled { opacity:.5; cursor:default; }
 
-.floe-diagram-svg:not(.floe-diagram-zoomed) > svg { max-height:60vh; }
+.floe-diagram-svg:not(.floe-diagram-zoomed) > svg { max-height:min(60vh,calc(clamp(12rem,36vw,24rem) - 1.5rem)); }

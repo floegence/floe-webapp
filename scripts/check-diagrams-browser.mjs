@@ -49,8 +49,13 @@ try {
       const page = await browser.newPage({ viewport: { width, height: 800 } });
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
+      await page.route('**/*flowchart*.js', async route => { await new Promise(resolve => setTimeout(resolve, 100)); await route.continue(); });
       await page.goto(server.resolvedUrls.local[0]);
+      await page.waitForSelector('.floe-diagram-viewport');
+      const geometry = () => page.locator('main > .floe-diagram').evaluate(node => ({width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height}));
+      const loadingGeometry = await geometry();
       await page.waitForSelector('.floe-diagram-svg svg');
+      assert.deepEqual(await geometry(), loadingGeometry, 'loading must preserve diagram geometry');
       const results = await page.evaluate(async inputs => {
         const out=[];
         for(const [type,source] of inputs) {const before=performance.now();try { const result=await window.renderDiagram(source,{maxWidth:500});out.push({type,width:result.width,height:result.height,ms:performance.now()-before}); } catch(error){out.push({type,error:error.message});}}
@@ -66,10 +71,13 @@ try {
         return {retained:svg===document.querySelector('.floe-diagram-svg svg'),html:before===svg.outerHTML,color:getComputedStyle(svg).color};
       });
       assert.deepEqual(theme,{retained:true,html:true,color:'rgb(238, 238, 238)'});
+      const readyGeometry = await geometry();
       await page.getByRole('button',{name:'Copy source',exact:true}).click();
+      assert.deepEqual(await geometry(),readyGeometry,'copy feedback preserves toolbar geometry');
       assert.deepEqual(await page.evaluate(()=>window.copies),['flowchart LR\nA[Client] --> B[Server]']);
       await page.getByRole('button',{name:'Source',exact:true}).click();
       assert.match(await page.locator('.floe-diagram-source').textContent(),/Client/);
+      assert.deepEqual(await geometry(),readyGeometry,'source toggle preserves control and content geometry');
       await page.getByRole('button',{name:'Preview',exact:true}).click();
       await page.getByRole('button',{name:'Expand diagram',exact:true}).click();
       await page.waitForSelector('[role="dialog"] svg.pele');
