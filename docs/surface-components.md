@@ -20,7 +20,7 @@ precompiled styles, Tailwind entry and standalone documents consume that palette
 Secondary text and placeholders stay opaque; ordinary text clears 4.5:1 and
 essential controls/focus clear 3:1 on the tested surfaces. Decorative seams and
 labelled idle fields keep their quiet hierarchy. Inactive editor selection and
-search highlights preserve syntax contrast. The palette remains scoped to this
+search highlights preserve syntax contrast, including six authored bracket-pair colors and unexpected-bracket ink. The palette remains scoped to this
 preset and yields to forced system colors.
 
 Run check-porcelain-visibility-browser.mjs after prepare-surface-consumer.mjs to

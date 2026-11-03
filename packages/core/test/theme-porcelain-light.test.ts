@@ -48,6 +48,13 @@ describe('Porcelain Light reading and interaction palette', () => {
     for (const surface of ['editor.background', 'editor.lineHighlightBackground', 'editor.inactiveSelectionBackground', 'editor.selectionHighlightBackground', 'editor.findMatchBackground', 'editor.findMatchHighlightBackground']) {
       for (const rule of editor.rules) expect(contrast(rule.foreground, editor.colors[surface]), rule.token + '/' + surface).toBeGreaterThanOrEqual(4.5);
     }
+    const brackets = [...Array.from({ length: 6 }, (_, index) => 'editorBracketHighlight.foreground' + (index + 1)), 'editorBracketHighlight.unexpectedBracket.foreground'];
+    for (const role of brackets) {
+      expect(editor.colors[role], role + ' must not inherit VS Light colors').toMatch(/^#[0-9a-f]{6}$/i);
+      for (const surface of ['editor.background', 'editor.lineHighlightBackground', 'editor.inactiveSelectionBackground', 'editor.findMatchBackground']) {
+        expect(contrast(editor.colors[role], editor.colors[surface]), role + '/' + surface).toBeGreaterThanOrEqual(4.5);
+      }
+    }
     expect(contrast(editor.colors['editor.selectionForeground'], editor.colors['editor.selectionBackground'])).toBeGreaterThanOrEqual(4.5);
   });
 });

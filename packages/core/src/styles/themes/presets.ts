@@ -577,6 +577,13 @@ export const builtInShellThemePresets = [
         'editor.findMatchBackground': '#EAEAEA',
         'editor.findMatchHighlightBackground': '#EEEEEE',
         'editor.findMatchBorder': '#343434',
+        'editorBracketHighlight.foreground1': '#005FB8',
+        'editorBracketHighlight.foreground2': '#26736F',
+        'editorBracketHighlight.foreground3': '#674778',
+        'editorBracketHighlight.foreground4': '#8A5A00',
+        'editorBracketHighlight.foreground5': '#245B9B',
+        'editorBracketHighlight.foreground6': '#9C225E',
+        'editorBracketHighlight.unexpectedBracket.foreground': '#B32635',
       },
     },
     syntax: {
