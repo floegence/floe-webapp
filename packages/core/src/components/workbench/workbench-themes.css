@@ -1135,6 +1135,9 @@
     --wb-window-shadow: 0 6px 16px -8px rgb(0 0 0 / 22%);
     --wb-text: var(--foreground);
   }
+  .workbench-surface[data-workbench-theme='default'] {
+    --wb-canvas: var(--floe-workbench-canvas, oklch(from var(--background) clamp(0.78, calc(l - 0.085), 0.91) c h));
+  }
   html.dark .workbench-surface[data-workbench-theme] {
     --wb-canvas: oklch(from var(--background) clamp(0.21, calc(l - 0.08), 0.28) c h);
     --wb-window: color-mix(in oklab, var(--background) 94%, var(--foreground));

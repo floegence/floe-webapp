@@ -10,6 +10,25 @@ The optional soft neumorphic material is a lightweight shared component system: 
 - Neutral borders and separators remain quiet. Input focus changes the existing uniform border to the semantic ring color, with at least 3:1 adjacent contrast in the built-in non-HC palette matrix. All four edges use one color so native editors retain the uniform-border raster path. Error and high-contrast boundaries remain explicit.
 - Add material to existing semantic elements. Do not add wrappers, alternate controls, state stores, polling, cursor lighting, or decoration animation loops. Existing functional transforms and progress animations retain their contracts.
 
+## Porcelain Light
+
+Porcelain Light uses achromatic porcelain surfaces and charcoal controls, with
+plum inline-code references and unchanged semantic status hues. Its authored
+palette in presets.ts owns the reading ramp, fields, default Workbench canvas,
+native-host metadata, thumbnails, and Monaco roles. The generated theme CSS,
+precompiled styles, Tailwind entry and standalone documents consume that palette.
+Secondary text and placeholders stay opaque; ordinary text clears 4.5:1 and
+essential controls/focus clear 3:1 on the tested surfaces. Decorative seams and
+labelled idle fields keep their quiet hierarchy. Inactive editor selection and
+search highlights preserve syntax contrast. The palette remains scoped to this
+preset and yields to forced system colors.
+
+Run check-porcelain-visibility-browser.mjs after prepare-surface-consumer.mjs to
+measure real packaged inputs, four reading surfaces, both CSS entries, focus
+geometry, native editing continuity and forced colors. Palette tests cover every
+authored syntax role on its text-preserving highlight surfaces. These checks do
+not certify the accessibility of arbitrary consumer content.
+
 ## Component matrix
 
 | Component | Material and state treatment | Behavioral boundary |

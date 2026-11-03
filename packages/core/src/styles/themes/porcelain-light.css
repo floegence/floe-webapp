@@ -1,0 +1,19 @@
+/* Porcelain's reading ramp stays opaque: attenuating secondary ink again makes
+ * small labels and placeholders unreadable on near-white surfaces. Palette
+ * values live in presets.ts; this file only maps existing component recipes. */
+@media (forced-colors: none) {
+  :root[data-floe-shell-theme='porcelain-light']:not(.dark)
+    :is(input, textarea)::placeholder {
+    color: var(--floe-field-placeholder);
+    opacity: 1;
+  }
+
+  :root[data-floe-shell-theme='porcelain-light']:not(.dark)
+    :is([class~='text-muted-foreground/40'], [class~='text-muted-foreground/45'],
+      [class~='text-muted-foreground/50'], [class~='text-muted-foreground/60'],
+      [class~='text-muted-foreground/65'], [class~='text-muted-foreground/70'],
+      [class~='text-muted-foreground/75'], [class~='text-muted-foreground/80'],
+      [class~='text-muted-foreground/90']) {
+    color: var(--muted-foreground);
+  }
+}

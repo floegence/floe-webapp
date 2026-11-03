@@ -133,6 +133,9 @@ jobs:
       - name: Verify progress shimmer across shell themes
         run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs
 
+      - name: Verify Porcelain Light visibility in packed consumers
+        run: node scripts/check-porcelain-visibility-browser.mjs
+
       - name: Verify floating panel interaction in Chromium
         run: |
           node scripts/check-floating-window-drag-browser.mjs

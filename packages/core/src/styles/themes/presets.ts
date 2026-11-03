@@ -1,6 +1,6 @@
 import { createProgressTokens } from './progressTokens.ts';
 import { LIGHT_WINDOW_TOKENS, DARK_WINDOW_TOKENS } from './windowTokens.ts';
-import type { FloeThemePreset, FloeThemePresetMode, FloeThemeTokenMap } from './index';
+import type { FloeMonacoThemeDefinition, FloeThemePreset, FloeThemePresetMode, FloeThemeTokenMap } from './index';
 import {
   CLASSIC_DARK_SEMANTIC_TOKENS,
   CLASSIC_LIGHT_SEMANTIC_TOKENS,
@@ -201,6 +201,10 @@ interface ShellThemePaletteDefinition {
   fileIconColors?: Partial<Record<'primary' | 'warning' | 'info' | 'success' | 'error', string>>;
   status?: Partial<Record<keyof typeof LIGHT_STATUS, string>>;
   windowTokens?: Partial<Record<keyof typeof LIGHT_WINDOW_TOKENS, string>>;
+  /** Authored material and reading roles, shared by CSS and non-renderer hosts. */
+  semanticTokens?: FloeThemeTokenMap;
+  /** Complete inherited editor roles when the base syntax is unsuitable. */
+  monaco?: Partial<Pick<FloeMonacoThemeDefinition, 'rules' | 'colors'>>;
   syntax?: {
     comment: string;
     keyword: string;
@@ -339,6 +343,8 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
     tokenMap[`--floe-file-icon-${tone}`] = color;
   }
 
+  Object.assign(tokenMap, definition.semanticTokens);
+
   return {
     name: definition.name,
     displayName: definition.displayName,
@@ -375,6 +381,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
           { token: 'support.function', foreground: syntax.function },
           { token: 'constant.language', foreground: syntax.constant },
           { token: 'variable.predefined', foreground: syntax.constant },
+          ...(definition.monaco?.rules ?? []),
         ],
         colors: {
           'editor.background': definition.background,
@@ -409,6 +416,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
           'scrollbarSlider.background': `${definition.input}66`,
           'scrollbarSlider.hoverBackground': `${definition.input}99`,
           'scrollbarSlider.activeBackground': `${definition.input}CC`,
+          ...definition.monaco?.colors,
         },
       },
     },
@@ -494,35 +502,85 @@ const classicDarkPreset = {
 export const builtInShellThemePresets = [
   createShellThemePreset({
     name: 'porcelain-light',
-    inlineCode: { foreground: '#006A85', background: '#E9EBE8' },
+    inlineCode: { foreground: '#674778', background: '#F0F0F0' },
     displayName: 'Porcelain Light',
-    description: 'Original Redeven warm ivory and blue-gray ink, with quiet modern surfaces.',
+    description: 'Clean porcelain whites, neutral layers, and restrained charcoal.',
     fileIconColors: {
-      primary: 'hsl(214 26% 17%)',
+      primary: '#343434',
       warning: 'hsl(38 92% 50%)',
       info: 'hsl(217 91% 60%)',
       success: 'oklch(0.68 0.16 150)',
       error: 'oklch(0.65 0.2 25)',
     },
     mode: 'light',
-    background: '#F4F1ED',
-    foreground: '#202A37',
-    card: '#FFFDFA',
-    muted: '#F1EFEC',
-    accent: '#E4E1DD',
-    mutedForeground: '#576579',
-    primary: '#202A37',
-    primaryForeground: '#FFFDFA',
-    border: '#D8D3CC',
-    input: '#828891',
-    sidebar: '#EEECE9',
+    background: '#FAFAFA',
+    foreground: '#292929',
+    card: '#FFFFFF',
+    muted: '#F4F4F4',
+    accent: '#EEEEEE',
+    mutedForeground: '#686868',
+    primary: '#343434',
+    primaryForeground: '#FFFFFF',
+    border: '#DEDEDE',
+    input: '#878787',
+    sidebar: '#F7F7F7',
     terminalBackground: '#202A37',
     terminalForeground: '#EBEBEB',
-    selectionBackground: '#2671D9',
+    selectionBackground: '#343434',
     selectionForeground: '#FFFFFF',
-    chart: ['#202A37', '#5A687C', '#2671D9', '#287A4B', '#835800'],
+    chart: ['#343434', '#626262', '#2671D9', '#287A4B', '#835800'],
+    semanticTokens: {
+      '--accent-foreground': '#353535',
+      '--sidebar-accent': '#E9E9E9',
+      '--sidebar-accent-foreground': '#353535',
+      '--activity-bar-foreground-active': '#343434',
+      '--selection-on-primary-bg': '#EAEAEA',
+      '--selection-on-primary-fg': '#292929',
+      '--selection-code-bg': '#EAEAEA',
+      '--selection-code-fg': '#292929',
+      '--floe-progress-text-base': '#292929',
+      '--floe-progress-text-peak': '#686868',
+      '--floe-progress-primary-base': '#343434',
+      '--floe-field-fill': '#FAFAFA',
+      '--floe-field-fill-hover': '#F5F5F5',
+      '--floe-field-placeholder': '#686868',
+      '--floe-ink-quiet': '#686868',
+      '--floe-ink-ghost': '#686868',
+      '--floe-field-edge': '#C4C4C4',
+      '--floe-field-edge-hover': '#A3A3A3',
+      '--floe-control-edge': '#878787',
+      '--floe-control-edge-hover': '#686868',
+      '--floe-well': '#F6F6F6',
+      '--floe-well-strong': '#F0F0F0',
+      '--floe-well-on-plane': '#F6F6F6',
+      '--floe-workbench-canvas': '#F4F4F4',
+    },
+    monaco: {
+      rules: [
+        { token: 'attribute.name', foreground: '#9C225E' },
+        { token: 'attribute.value', foreground: '#26736F' },
+        { token: 'attribute.value.number', foreground: '#8A5A00' },
+        { token: 'attribute.value.unit', foreground: '#8A5A00' },
+        { token: 'tag', foreground: '#245B9B' },
+        { token: 'metatag', foreground: '#005FB8' },
+        { token: 'metatag.content', foreground: '#26736F' },
+        { token: 'delimiter', foreground: '#292929' },
+        { token: 'delimiter.bracket', foreground: '#292929' },
+        { token: 'operator', foreground: '#292929' },
+        { token: 'regexp', foreground: '#26736F' },
+        { token: 'invalid', foreground: '#B32635' },
+        { token: 'string.invalid', foreground: '#B32635' },
+      ],
+      colors: {
+        'editor.inactiveSelectionBackground': '#EAEAEA',
+        'editor.selectionHighlightBackground': '#EAEAEA',
+        'editor.findMatchBackground': '#EAEAEA',
+        'editor.findMatchHighlightBackground': '#EEEEEE',
+        'editor.findMatchBorder': '#343434',
+      },
+    },
     syntax: {
-      comment: '#5A687C',
+      comment: '#686868',
       keyword: '#005FB8',
       string: '#26736F',
       number: '#8A5A00',

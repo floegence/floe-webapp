@@ -60,11 +60,11 @@ describe('built-in shell theme presets', () => {
   it('keeps porcelain available as an opt-in preset', () => {
     const light = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-light');
     const dark = builtInShellThemePresets.find((preset) => preset.name === 'porcelain-dark');
-    expect(light?.semanticTokens?.['--background']).toBe('#F4F1ED');
-    expect(light?.semanticTokens?.['--foreground']).toBe('#202A37');
-    expect(light?.semanticTokens?.['--primary']).toBe('#202A37');
-    expect(light?.semanticTokens?.['--sidebar']).toBe('#EEECE9');
-    expect(light?.semanticTokens?.['--card']).toBe('#FFFDFA');
+    expect(light?.semanticTokens?.['--background']).toBe('#FAFAFA');
+    expect(light?.semanticTokens?.['--foreground']).toBe('#292929');
+    expect(light?.semanticTokens?.['--primary']).toBe('#343434');
+    expect(light?.semanticTokens?.['--sidebar']).toBe('#F7F7F7');
+    expect(light?.semanticTokens?.['--card']).toBe('#FFFFFF');
     expect(dark?.semanticTokens?.['--background']).toBe('#0C0C0D');
     expect(dark?.semanticTokens?.['--foreground']).toBe('#F2F1EE');
     expect(dark?.semanticTokens?.['--primary']).toBe('#E8E7E3');

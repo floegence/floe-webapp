@@ -9,5 +9,6 @@
 @import './themes/light.css';
 @import './themes/dark.css';
 @import './themes/shell-presets.generated.css';
+@import './themes/porcelain-light.css';
 @import './surface.css';
 @import './input-focus.css';

@@ -73,6 +73,10 @@ const copies = [
     dest: resolve(pkgRoot, 'dist/themes/dark.css'),
   },
   {
+    src: resolve(pkgRoot, 'src/styles/themes/porcelain-light.css'),
+    dest: resolve(pkgRoot, 'dist/themes/porcelain-light.css'),
+  },
+  {
     src: resolve(pkgRoot, 'src/styles/themes/shell-presets.generated.css'),
     dest: resolve(pkgRoot, 'dist/themes/shell-presets.generated.css'),
   },

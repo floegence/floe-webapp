@@ -37,8 +37,13 @@ describe('inline code theme palette', () => {
     }
   });
 
-  it.each(builtInShellThemePresets)('$name emphasizes references with a saturated nonpurple foreground', preset => {
+  it.each(builtInShellThemePresets)('$name emphasizes references with a distinct chromatic foreground', preset => {
     const { hue, saturation } = hueAndSaturation(preset.semanticTokens!['--inline-code-foreground']!);
+    if (preset.name === 'porcelain-light') {
+      expect(preset.semanticTokens!['--inline-code-foreground']).toBe('#674778');
+      expect(saturation).toBeGreaterThanOrEqual(0.25);
+      return;
+    }
     expect(saturation).toBeGreaterThanOrEqual(0.55);
     expect(hue < 245 || hue > 330).toBe(true);
   });
