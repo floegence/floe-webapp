@@ -506,6 +506,7 @@
     "WORKBENCH_WIDGET_ACTIVATION_SURFACE_ATTR",
     "WORKBENCH_WIDGET_SHELL_ATTR",
     "WarningBlock",
+    "WindowTabs",
     "Wizard",
     "WizardProps",
     "WizardStepContent",
