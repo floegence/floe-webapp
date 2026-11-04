@@ -6,17 +6,7 @@ export interface IconProps extends JSX.SvgSVGAttributes<SVGSVGElement> {
   size?: number | string;
 }
 
-export {
-  ActivityRailIcons,
-  RailLaunchpad,
-  RailNotes,
-  RailShowcase,
-  RailFiles,
-  RailSearch,
-  RailSettings,
-  RailChat,
-  RailDesignTokens,
-} from './ActivityRailIcons';
+export * from './ActivityRailIcons';
 
 export {
   DockTerminal,

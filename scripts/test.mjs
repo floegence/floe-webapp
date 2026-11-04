@@ -9,6 +9,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/resize-observer.test.tsx',
   'packages/core/test/choice-controls.test.tsx',
   'packages/core/test/activity-bar-trigger-context.test.tsx',
+  'packages/core/test/activity-rail-icons.test.tsx',
   'packages/core/test/bottom-bar-companion.test.tsx',
   'packages/core/test/deck-pointer-session.test.tsx',
   'packages/core/test/dialog-placement-provider.test.tsx',

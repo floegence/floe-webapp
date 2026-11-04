@@ -12,7 +12,7 @@ import {
 
 export interface ActivityBarItem {
   id: string;
-  icon: Component<{ class?: string }>;
+  icon: Component<{ class?: string; active?: boolean }>;
   label: string;
   badge?: number | string | (() => number | string | undefined);
   onClick?: () => void;
@@ -143,6 +143,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
     typeof props.item.ariaExpanded === 'function'
       ? props.item.ariaExpanded()
       : props.item.ariaExpanded;
+  const visuallyActive = () => props.isActive || expanded() === true;
 
   onMount(() => props.item.buttonRef?.(buttonRef ?? null));
   onCleanup(() => props.item.buttonRef?.(null));
@@ -176,7 +177,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           'group/activity-item relative w-full aspect-square flex items-center justify-center cursor-pointer',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
           'text-activity-bar-foreground',
-          props.isActive && 'text-activity-bar-foreground-active'
+          visuallyActive() && 'text-activity-bar-foreground-active'
         )}
         onClick={() => props.onClick()}
         onContextMenu={handleContextMenu}
@@ -196,7 +197,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           class={cn(
             'absolute inset-1 rounded-md',
             'transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
-            props.isActive
+            visuallyActive()
               ? 'bg-[var(--floe-state-selected)]'
               : 'bg-transparent group-hover/activity-item:bg-[var(--floe-state-hover)]'
           )}
@@ -210,9 +211,10 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
             step holds the silhouette exactly while still reading as attention. */}
         <Dynamic
           component={props.item.icon}
+          active={visuallyActive()}
           class={cn(
             'relative w-5 h-5 transition-colors duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
-            props.isActive
+            visuallyActive()
               ? 'text-activity-bar-foreground-active'
               : 'group-hover/activity-item:text-activity-bar-foreground-active'
           )}

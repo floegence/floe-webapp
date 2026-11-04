@@ -14,6 +14,8 @@ Shared Tabs keeps symmetric face borders and vertically centered content at both
 
 ## State semantics
 
+Activity rail icons share a 24-unit frame, round 1.5-unit ink and a 20px desktop slot. A 13% current-color face becomes a solid silhouette on selection; alpha cutouts reveal the actual surface in every theme. Monitoring retains its rounded trace and restrained area fill; switch arrows retain slender shafts. ActivityBar and MobileTabBar pass the optional reactive icon active prop from navigation selection or an expanded disclosure, without changing navigation ownership or making hover appear selected. Product-specific marks use the exported ActivityRailGlyph recipe; destinations reuse the shared Rail icons.
+
 - Numeric direction and business assessment are independent. Falling duration can improve; increasing activity can remain neutral. Percentage-point differences are explicit.
 - Overview metrics, comparison periods, chart totals and deployment rows derive from one deterministic fixture ending October 31, 2026. Search and environment filters scope the history; the chart explicitly remains all environments.
 - Local demo status is neutral. A real failed connection remains an error; successful transport is never invented.

@@ -36,7 +36,7 @@
     "test:workbench-example": "node scripts/check-workbench-example-browser.mjs",
     "test:workbench-header": "node scripts/check-workbench-header-browser.mjs",
     "test:persistent-scrollbar": "node scripts/check-persistent-scrollbar-browser.mjs",
-    "test:activity-navigation": "node scripts/check-activity-navigation-browser.mjs",
+    "test:activity-navigation": "node scripts/check-activity-navigation-browser.mjs && node scripts/check-activity-icons-browser.mjs",
     "test:adaptive-layout": "node scripts/check-adaptive-layout-browser.mjs",
     "test:mobile-navigation": "node scripts/check-mobile-navigation-browser.mjs",
     "test:pdf": "node scripts/check-pdf-browser.mjs",

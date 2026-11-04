@@ -308,6 +308,27 @@
 }
 
 @media (forced-colors: active) {
+  [data-floe-rail-icon] {
+    color: CanvasText;
+  }
+  /* Navigation owns system ink and its selected surface together. Preserve
+     black/white mask geometry while allowing user-selected system colors. */
+  :is([data-floe-shell-slot='activity-bar'], [data-floe-shell-slot='mobile-tab-bar']) button {
+    forced-color-adjust: none;
+    color: ButtonText;
+    background-color: Canvas;
+  }
+  :is([data-floe-shell-slot='activity-bar'], [data-floe-shell-slot='mobile-tab-bar'])
+    button:is(:hover, :focus-visible, [aria-pressed='true'], [aria-selected='true'], [aria-expanded='true']) {
+    color: HighlightText;
+    background-color: Highlight;
+  }
+  :is([data-floe-shell-slot='activity-bar'], [data-floe-shell-slot='mobile-tab-bar']) button svg {
+    color: inherit;
+  }
+  [data-floe-rail-icon] mask {
+    forced-color-adjust: none;
+  }
   :root,
   [data-floe-theme] {
     --floe-line: CanvasText;

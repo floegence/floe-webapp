@@ -6,7 +6,7 @@ import type { ActivityBarItem } from './ActivityBar';
 
 export interface MobileTabBarItem extends Pick<ActivityBarItem, 'buttonRef' | 'ariaExpanded' | 'ariaControls' | 'ariaHasPopup'> {
   id: string;
-  icon: Component<{ class?: string }>;
+  icon: Component<{ class?: string; active?: boolean }>;
   label: string;
   badge?: number | string | (() => number | string | undefined);
   /** Custom click handler. If provided, takes precedence over onSelect (consistent with ActivityBar). */
@@ -231,7 +231,7 @@ function MobileTabItem(props: MobileTabItemProps) {
           props.isActive && 'scale-110'
         )}
       >
-        <Dynamic component={props.item.icon} class="w-6 h-6" />
+        <Dynamic component={props.item.icon} class="w-6 h-6" active={props.isActive || expanded() === true} />
         {/* Badge */}
         <Show when={badgeValue()}>
           <span
