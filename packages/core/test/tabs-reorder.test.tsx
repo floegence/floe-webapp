@@ -68,3 +68,15 @@ it('moves the held face with the pointer and shifts neighbors before committing'
   await vi.waitFor(() => expect(view.tabs[0].hasAttribute('data-floe-tab-motion')).toBe(false));
   expect(view.tabs[0].style.getPropertyValue('--floe-tab-offset')).toBe('');
 });
+
+it('allows a wide first tab to settle after a narrower last tab', () => {
+  const view = setup();
+  const widths = [180, 100, 80]; let left = 0;
+  view.tabs.forEach((tab, index) => {
+    const x = left; const width = widths[index]; left += width;
+    tab.getBoundingClientRect = () => ({ left: x, width, right: x + width, top: 0, height: 24, bottom: 24, x, y: 0, toJSON() {} });
+  });
+  pointer(view.tabs[0], 'pointerdown', 20); pointer(document, 'pointermove', 350);
+  pointer(document, 'pointerup', 350, 0);
+  expect(view.items().map(item => item.id)).toEqual(['b', 'c', 'a']);
+});

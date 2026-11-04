@@ -56,12 +56,19 @@ export function createTabReorder(options: {
     const first = slots[0]; const last = slots.at(-1)!;
     const left = Math.max(first.left, Math.min(last.left + last.width - held.width,
       held.left + (pointerX - startX) / scale + rail.scrollLeft - startScroll));
-    const center = left + held.width / 2;
     const others = slots.filter(slot => slot !== held);
-    const insertion = others.findIndex(slot => center < slot.left + slot.width / 2);
-    const ordered = [...others]; ordered.splice(insertion < 0 ? others.length : insertion, 0, held);
-    proposed = ordered.map(slot => slot.id);
     const gap = slots.length > 1 ? slots[1].left - first.left - first.width : 0;
+    // Compare candidate resting positions after removing the held tab. Original
+    // neighbor centers can make the last slot unreachable for a wider tab.
+    let insertion = 0;
+    let candidate = first.left;
+    for (const slot of others) {
+      const next = candidate + slot.width + gap;
+      if (left >= (candidate + next) / 2) insertion += 1;
+      candidate = next;
+    }
+    const ordered = [...others]; ordered.splice(insertion, 0, held);
+    proposed = ordered.map(slot => slot.id);
     let position = first.left;
     for (const slot of ordered) {
       slot.element.dataset.floeTabMotion = slot === held ? 'dragging' : 'neighbor';

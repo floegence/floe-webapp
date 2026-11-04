@@ -19,7 +19,7 @@ export function WindowMaterialStudy() {
   const [scene, setScene] = createSignal(params.get('scene') ?? 'files');
   const [open, setOpen] = createSignal([true, params.get('scene') === 'overlap', false]);
   const [front, setFront] = createSignal(params.get('scene') === 'overlap' ? 1 : 0);
-  const names = params.has('mixedTabs') ? ['a.md', 'Quarterly review and implementation notes.md', 'report.csv', 'notes.txt'] : undefined;
+  const names = params.has('mixedTabs') ? ['Quarterly review and implementation notes.md', 'a.md', 'report.csv', 'notes.txt'] : undefined;
   const [documents, setDocuments] = createSignal(Array.from({ length: names?.length ?? 9 }, (_, i) => ({ id: String(i), label: names?.[i] ?? 'Document ' + i + '.md', title: '/workspace/reports/document-' + i + '.md' })));
   const [documentId, setDocumentId] = createSignal('0');
   const [headerActionCount, setHeaderActionCount] = createSignal(0);
