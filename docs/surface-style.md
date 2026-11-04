@@ -192,9 +192,9 @@ or footer spacing.
 before a quiet separator and the built-in window controls. The title truncates
 to leave these actions accessible at narrow widths. Hosts own action labels,
 state, and behavior; use controls no taller than 28px to fit the existing header.
-The whole action region is excluded from title-bar drag and double-click
-maximization without canceling native input or suppressing bubbling activation
-events. Omitting the slot preserves the existing header layout.
+Actual controls are excluded from title-bar drag and double-click maximization
+without canceling native input or suppressing bubbling activation events. Blank
+action gaps and inactive feedback slots remain part of the draggable header. Omitting the slot preserves the existing header layout.
 
 `check-floating-window-header-browser.mjs`, included in `test:window-material`,
 checks computed header and title sizes, button edge hit-testing, pointer and

@@ -158,14 +158,15 @@ try {
             await copy.focus();
             await page.keyboard.press('Enter');
             assert.equal(await copy.textContent(), '2');
-            await actions.dispatchEvent('dblclick');
+            await copy.dispatchEvent('dblclick');
             assert.deepEqual(await geometry.boundingBox(), beforeActions);
-            await page.mouse.move(actionRect.x + actionRect.width - 8, actionRect.y + 10);
+            const inactiveFeedback = await actions.locator('[data-floe-status-indicator]').boundingBox();
+            await page.mouse.move(inactiveFeedback.x + inactiveFeedback.width / 2, inactiveFeedback.y + 10);
             await page.mouse.down();
-            await page.mouse.move(actionRect.x + actionRect.width - 5, actionRect.y + 12);
-            assert.equal(await panel.getAttribute('data-floe-surface-interacting'), null);
+            await page.mouse.move(inactiveFeedback.x + inactiveFeedback.width / 2, inactiveFeedback.y + 45, { steps: 6 });
+            assert.equal(await panel.getAttribute('data-floe-surface-interacting'), 'true');
             await page.mouse.up();
-            assert.deepEqual(await geometry.boundingBox(), beforeActions);
+            assert.ok((await geometry.boundingBox()).y > beforeActions.y + 25, 'Inactive feedback space drags the window');
             await panel.screenshot({ path: resolve(output, `${name}-actions.png`) });
           }
           assert.deepEqual(errors, []);

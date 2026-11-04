@@ -46,7 +46,20 @@ try {
     const oldOrder = await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id')));
     await page.mouse.move(Math.max(movingRect.x, railRect.x) + 5, movingRect.y + movingRect.height / 2);
     await page.mouse.down(); await page.mouse.move(railRect.x + 24, movingRect.y + movingRect.height / 2); await page.mouse.move(railRect.x + 1, movingRect.y + movingRect.height / 2, { steps: 8 });
-    await page.waitForTimeout(500); await page.mouse.up();
+    await page.waitForTimeout(500);
+    const motion = await moving.evaluate(element => {
+      const style = getComputedStyle(element);
+      return { phase: element.dataset.floeTabMotion, opacity: style.opacity, outline: style.outlineStyle,
+        transform: style.transform, transition: style.transitionDuration, shadow: style.boxShadow, border: style.borderTopColor };
+    });
+    assert.equal(motion.phase, 'dragging'); assert.equal(motion.opacity, '1');
+    assert.equal(motion.outline, 'none'); assert.equal(motion.transition, '0s');
+    assert.notEqual(motion.transform, 'none'); assert.ok(!motion.shadow.includes('inset'));
+    assert.equal(motion.border, 'rgba(0, 0, 0, 0)');
+    assert.deepEqual(await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id'))), oldOrder);
+    await root.screenshot({ path: resolve(output, entry + '-' + mode + '-' + width + '-dragging.png') });
+    await page.mouse.up();
+    await page.waitForFunction(() => !document.querySelector('[data-floe-tab-motion]'));
     assert.notDeepEqual(await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id'))), oldOrder);
     assert.equal(await root.locator('[role="tab"][aria-selected="true"]').getAttribute('data-floe-tab-id'), selectedBefore);
     assert.deepEqual(await root.boundingBox(), initial);
@@ -55,11 +68,49 @@ try {
     const blankX = dragSlot.x + dragSlot.width - 16; const blankY = dragSlot.y + dragSlot.height / 2;
     await page.mouse.move(blankX, blankY); await page.mouse.down(); await page.mouse.move(blankX + 12, blankY + 45, { steps: 6 }); await page.mouse.up();
     await page.waitForFunction(y => document.querySelector('[data-floe-geometry-surface="floating-window"]').getBoundingClientRect().y > y + 20, initial.y);
+    const feedback = await root.locator('[data-floe-status-indicator]').boundingBox();
+    const beforeFeedbackDrag = await root.boundingBox();
+    await page.mouse.move(feedback.x + feedback.width / 2, feedback.y + feedback.height / 2);
+    await page.mouse.down(); await page.mouse.move(feedback.x + feedback.width / 2, feedback.y + feedback.height / 2 + 30, { steps: 5 }); await page.mouse.up();
+    assert.ok((await root.boundingBox()).y > beforeFeedbackDrag.y + 20, 'Blank feedback slot remains draggable');
+    const separator = await root.locator('[data-floe-floating-window-header-actions] > span:last-child').boundingBox();
+    const beforeSeparatorDrag = await root.boundingBox();
+    await page.mouse.move(separator.x - 3, separator.y + separator.height / 2);
+    await page.mouse.down(); await page.mouse.move(separator.x - 3, separator.y + separator.height / 2 - 28, { steps: 5 }); await page.mouse.up();
+    assert.ok((await root.boundingBox()).y < beforeSeparatorDrag.y - 20, 'Action separator whitespace remains draggable');
     await tabs.last().focus(); await page.keyboard.press('Delete');
     await page.waitForFunction(() => document.querySelectorAll('[role="tab"]').length === 8);
     if (await editor.count()) assert.equal(await editor.inputValue(), 'Preserved draft');
     await root.screenshot({ path: resolve(output, entry + '-' + mode + '-' + width + '.png') });
     assert.deepEqual(errors, []); results.push({ entry, mode, width, passed: true }); await page.close();
+  }
+  for (const entry of ['styles', 'tailwind']) for (const reducedMotion of ['reduce', 'no-preference']) {
+    const page = await runtime.browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion });
+    await page.goto(runtime.baseURL + '/current-' + entry + '/dist/?panel=windows&tabs=1&mixedTabs=1&headerActions=1&mode=light&theme=porcelain-light');
+    const root = page.locator('[data-floe-geometry-surface="floating-window"]').first();
+    await page.waitForFunction(() => document.querySelector('[data-floating-presence]')?.getAttribute('data-floating-presence') === 'open');
+    const tabs = root.getByRole('tab'); const held = root.locator('[data-floe-tab-id="0"]');
+    const order = await tabs.evaluateAll(elements => elements.map(element => element.dataset.floeTabId));
+    const initial = await root.boundingBox();
+    const from = await held.boundingBox(); const target = await tabs.nth(2).boundingBox();
+    await page.mouse.move(from.x + 10, from.y + from.height / 2); await page.mouse.down();
+    await page.mouse.move(target.x + 10, from.y + from.height / 2, { steps: 8 });
+    assert.equal(await held.getAttribute('data-floe-tab-motion'), 'dragging');
+    assert.ok(Math.abs((await held.boundingBox()).x - target.x) < 2, 'The original face tracks the pointer at mixed widths');
+    await page.keyboard.press('Escape'); await page.mouse.up();
+    await page.waitForFunction(() => !document.querySelector('[data-floe-tab-motion]'));
+    assert.deepEqual(await tabs.evaluateAll(elements => elements.map(element => element.dataset.floeTabId)), order);
+    assert.deepEqual(await root.boundingBox(), initial);
+    await page.mouse.move(from.x + 10, from.y + from.height / 2); await page.mouse.down();
+    await page.mouse.move(target.x + 10, from.y + from.height / 2, { steps: 8 }); await page.mouse.up();
+    await page.waitForFunction(() => !document.querySelector('[data-floe-tab-motion]'));
+    assert.notDeepEqual(await tabs.evaluateAll(elements => elements.map(element => element.dataset.floeTabId)), order);
+    assert.equal(await held.getAttribute('aria-selected'), 'true');
+    await page.keyboard.press('Tab'); await held.focus();
+    assert.ok(await held.evaluate(element => getComputedStyle(element).boxShadow.includes('inset')), 'Keyboard focus stays inside the tab face');
+    await page.emulateMedia({ forcedColors: 'active' });
+    assert.equal(await held.evaluate(element => getComputedStyle(element).outlineStyle), 'solid');
+    results.push({ entry, reducedMotion, mixedWidthsAndCancellation: true, passed: true }); await page.close();
   }
 } finally { await runtime.close(); writeFileSync(resolve(output, 'report.json'), JSON.stringify(results, null, 2)); }
 console.log(results.length + ' window tab browser scenarios passed');

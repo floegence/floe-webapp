@@ -522,7 +522,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
-    if (target?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [data-floe-floating-window-header-actions], [contenteditable="true"]')) return;
+    if (target?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [contenteditable="true"]')) return;
 
     e.preventDefault();
 
@@ -603,7 +603,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const handleTitleBarDoubleClick = (event: MouseEvent) => {
-    if ((event.target as Element | null)?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [data-floe-floating-window-header-actions], [contenteditable="true"]')) return;
+    if ((event.target as Element | null)?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [contenteditable="true"]')) return;
     toggleMaximize();
   };
 
@@ -718,7 +718,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
               <Show when={props.headerActions}>
                 <div
                   data-floe-floating-window-header-actions="true"
-                  class="flex shrink-0 cursor-default items-center gap-1"
+                  class="flex shrink-0 items-center gap-1"
                 >
                   {props.headerActions}
                   <span aria-hidden="true" class="mx-2 h-4 w-px shrink-0 bg-border" />

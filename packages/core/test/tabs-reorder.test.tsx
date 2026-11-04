@@ -54,3 +54,17 @@ it('offers keyboard sorting while preserving focus and active selection', () => 
   expect(document.activeElement).toBe(view.tabs[1]);
   expect(view.changed).not.toHaveBeenCalled();
 });
+
+it('moves the held face with the pointer and shifts neighbors before committing', async () => {
+  const view = setup();
+  pointer(view.tabs[0], 'pointerdown', 20);
+  pointer(document, 'pointermove', 190);
+  await vi.waitFor(() => expect(view.tabs[0].style.getPropertyValue('--floe-tab-offset')).toBe('170px'));
+  expect(view.tabs[1].style.getPropertyValue('--floe-tab-offset')).toBe('-100px');
+  expect(view.tabs[0].dataset.floeTabMotion).toBe('dragging');
+  expect(view.items().map(item => item.id)).toEqual(['a', 'b', 'c']);
+  pointer(document, 'pointercancel', 190, 0);
+  expect(view.ordered).not.toHaveBeenCalled();
+  await vi.waitFor(() => expect(view.tabs[0].hasAttribute('data-floe-tab-motion')).toBe(false));
+  expect(view.tabs[0].style.getPropertyValue('--floe-tab-offset')).toBe('');
+});

@@ -292,7 +292,7 @@ describe('FloatingWindow open cycle', () => {
     expect(root.style.width).toBe('1200px');
   });
 
-  it('keeps reactive header actions outside titlebar drag and double-click ownership', async () => {
+  it('excludes actual header controls while allowing every unused action gap to drag', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const activate = vi.fn();
@@ -323,18 +323,19 @@ describe('FloatingWindow open cycle', () => {
     root.addEventListener('pointerdown', observedPointer);
     const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
     Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
-    actions!.dispatchEvent(down);
+    actions!.querySelector('button')!.dispatchEvent(down);
     expect(down.defaultPrevented).toBe(false);
     expect(observedPointer).toHaveBeenCalledOnce();
     expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
-    actions!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    actions!.querySelector('button')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(root.style.transform).toBe(initialTransform);
     expect(root.style.width).toBe(initialWidth);
     actions!.querySelector('button')!.click();
     expect(activate).toHaveBeenCalledOnce();
     expect(actions!.textContent).toContain('Save file');
     expect(root.querySelector('[data-floe-floating-window-content]')?.textContent).toBe('Selected reading content');
-    titlebar.dispatchEvent(down);
+    actions!.dispatchEvent(down);
+    expect(down.defaultPrevented).toBe(true);
     expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
   });
 

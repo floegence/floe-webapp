@@ -701,11 +701,7 @@ export function Tabs(props: TabsProps) {
                 onDragStart={event => event.preventDefault()}
                 data-floe-tab-id={item().id}
                 data-floe-tab-dragging={reorder.dragging() === item().id ? 'true' : undefined}
-                style={{ 'user-select': 'none', '-webkit-user-select': 'none', 'touch-action': local.onReorder ? 'none' : 'pan-x',
-                  opacity: reorder.dragging() === item().id ? '0.55' : undefined,
-                  cursor: reorder.dragging() ? 'grabbing' : undefined,
-                  'box-shadow': reorder.before() === item().id ? '-2px 0 0 var(--floe-accent-ink)' : reorder.after() === item().id ? '2px 0 0 var(--floe-accent-ink)' : undefined,
-                }}
+                style={{ 'user-select': 'none', '-webkit-user-select': 'none', 'touch-action': local.onReorder ? 'none' : 'pan-x' }}
                 role="tab"
                 id={item().domId}
                 aria-controls={item().panelId}

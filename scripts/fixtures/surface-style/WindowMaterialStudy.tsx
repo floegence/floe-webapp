@@ -7,6 +7,7 @@ import {
   CardContent,
   Dropdown,
   FloatingWindow,
+  FeedbackIndicator,
   WindowTabs,
   Textarea,
 } from '@floegence/floe-webapp-core/ui';
@@ -18,7 +19,8 @@ export function WindowMaterialStudy() {
   const [scene, setScene] = createSignal(params.get('scene') ?? 'files');
   const [open, setOpen] = createSignal([true, params.get('scene') === 'overlap', false]);
   const [front, setFront] = createSignal(params.get('scene') === 'overlap' ? 1 : 0);
-  const [documents, setDocuments] = createSignal(Array.from({ length: 9 }, (_, i) => ({ id: String(i), label: 'Document ' + i + '.md', title: '/workspace/reports/document-' + i + '.md' })));
+  const names = params.has('mixedTabs') ? ['a.md', 'Quarterly review and implementation notes.md', 'report.csv', 'notes.txt'] : undefined;
+  const [documents, setDocuments] = createSignal(Array.from({ length: names?.length ?? 9 }, (_, i) => ({ id: String(i), label: names?.[i] ?? 'Document ' + i + '.md', title: '/workspace/reports/document-' + i + '.md' })));
   const [documentId, setDocumentId] = createSignal('0');
   const [headerActionCount, setHeaderActionCount] = createSignal(0);
   const [draft, setDraft] = createSignal(
@@ -176,17 +178,21 @@ export function WindowMaterialStudy() {
             titleIcon={index === 0 && params.has('headerActions') ? <FileText class="size-4" /> : undefined}
             headerActions={index === 0 && params.has('headerActions') ? (
               <>
+                <FeedbackIndicator entries={[]} label="Save feedback" closeLabel="Close feedback" restoreFocus={() => undefined} />
                 <Button
                   size="icon"
                   variant="ghost"
                   class="size-7"
+                  style={{ width: '28px', height: '28px' }}
                   aria-label="Copy reference"
                   onClick={() => setHeaderActionCount((count) => count + 1)}
                 >
                   {headerActionCount()}
                 </Button>
-                <Button size="icon" variant="ghost" class="size-7" aria-label="Edit document">E</Button>
-                <Button size="icon" variant="ghost" class="size-7" aria-label="Download document">D</Button>
+                <Show when={!params.has('tabs')}>
+                  <Button size="icon" variant="ghost" style={{ width: '28px', height: '28px' }} aria-label="Edit document">E</Button>
+                </Show>
+                <Button size="icon" variant="ghost" style={{ width: '28px', height: '28px' }} aria-label="Download document">D</Button>
               </>
             ) : undefined}
             defaultPosition={{ x: 210 + index * 210, y: 175 + index * 88 }}
