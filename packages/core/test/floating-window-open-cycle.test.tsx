@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Show, createSignal } from 'solid-js';
-import { render as renderSolid } from 'solid-js/web';
+import { Portal, render as renderSolid } from 'solid-js/web';
 
 import { Dropdown } from '../src/components/ui/Dropdown';
 import { WindowTabs } from '../src/components/ui/WindowTabs';
@@ -334,9 +334,36 @@ describe('FloatingWindow open cycle', () => {
     expect(activate).toHaveBeenCalledOnce();
     expect(actions!.textContent).toContain('Save file');
     expect(root.querySelector('[data-floe-floating-window-content]')?.textContent).toBe('Selected reading content');
-    actions!.dispatchEvent(down);
+    const gapDown = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    Object.defineProperties(gapDown, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+    actions!.dispatchEvent(gapDown);
+    expect(gapDown.defaultPrevented).toBe(true);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+  });
+
+  it('uses physical titlebar ownership for portaled header whitespace and controls', async () => {
+    const host = document.createElement('div'); document.body.append(host);
+    const [actionsHost, setActionsHost] = createSignal<HTMLDivElement>();
+    mount(() => <FloatingWindow open onOpenChange={() => undefined} title="Portal header"
+      headerActions={<div ref={setActionsHost} />}>
+      <Show when={actionsHost()}>{target => <Portal mount={target()}>
+        <span data-test-header-gap> </span><button type="button">Action</button>
+      </Portal>}</Show>
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+    const gap = document.querySelector('[data-test-header-gap]')!;
+    const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 });
+    Object.defineProperties(down, { pointerId: { value: 7 }, pointerType: { value: 'mouse' } });
+    gap.dispatchEvent(down);
     expect(down.defaultPrevented).toBe(true);
     expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+    window.dispatchEvent(new Event('blur'));
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const width = root.style.width;
+    gap.parentElement!.querySelector('button')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(root.style.width).toBe(width);
+    gap.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(root.style.width).toBe('1200px');
   });
 
   it.each(['blur', 'lostpointercapture', 'pointercancel', 'unmount'])(

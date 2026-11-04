@@ -688,8 +688,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 isMaximized() ? 'rounded-none' : 'rounded-t-panel',
                 draggable() && !compact() && (isDragging() ? 'cursor-grabbing' : 'cursor-move')
               )}
-              onPointerDown={handleDragStart}
-              onDblClick={handleTitleBarDoubleClick}
+              // Portaled actions retain a different Solid owner. Native
+              // bubbling follows the visible header's physical DOM boundary.
+              on:pointerdown={handleDragStart}
+              on:dblclick={handleTitleBarDoubleClick}
               style={{ 'touch-action': 'none' }}
             >
               <div class="flex h-full flex-1 min-w-0 items-center px-3">
