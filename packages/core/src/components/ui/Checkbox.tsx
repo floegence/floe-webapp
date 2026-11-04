@@ -287,12 +287,13 @@ export function Checkbox(props: CheckboxProps) {
         <label
           data-floe-checkbox-target
           class={cn(
-            'inline-flex items-start gap-2 cursor-pointer select-none',
+            'inline-flex gap-2 cursor-pointer select-none',
+            local.description ? 'items-start' : 'items-center',
             isDisabled() && 'opacity-50 cursor-not-allowed',
             local.class
           )}
         >
-          <div class="relative flex items-center justify-center pt-0.5">
+          <div class={cn('relative flex items-center justify-center', local.description && 'pt-0.5')}>
             <CheckboxInput />
             <CheckboxIndicator />
           </div>

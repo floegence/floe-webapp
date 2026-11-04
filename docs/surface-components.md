@@ -288,3 +288,5 @@ The unpublished 0.90.5 run was cancelled before publication because its new
 release test assumed a locally prepared baseline. Version 0.90.6 prepares the
 immutable npm 0.90.4 baseline explicitly, including npm integrity verification,
 so clean local and Actions runners execute the same comparison.
+
+Version 0.90.8 centers single-line and indicator-only Checkbox content within its 24px/44px native target. Descriptions retain first-line alignment. Browser acceptance measures the indicator center in both pointer modes; hosts align associated model names without compensating top margins.

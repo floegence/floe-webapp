@@ -76,6 +76,8 @@ try {
         const label = input.locator('xpath=ancestor::label');
         await page.waitForTimeout(160);
         const before = await label.boundingBox();
+        const indicatorBefore = await label.locator('[data-floe-choice-kind="checkbox"]').boundingBox();
+        assert.ok(Math.abs(before.y + before.height / 2 - indicatorBefore.y - indicatorBefore.height / 2) <= .5, 'single-line faces center within their native targets');
         await label.hover();
         assert.equal(await label.locator('[data-floe-surface-part="indicator"]').evaluate(n => getComputedStyle(n).backgroundColor), 'rgba(0, 0, 0, 0)');
         await label.click(); assert.equal(await input.isChecked(), true);
@@ -142,6 +144,9 @@ try {
         await touchPage.goto(`${runtime.baseURL}/${version}-${entry}/dist/?panel=checkboxes`);
         const touchLabel = touchPage.getByRole('checkbox', { name: 'Interactive choice', exact: true }).locator('xpath=ancestor::label');
         await touchLabel.waitFor(); assert.ok((await touchLabel.boundingBox()).height >= 44, 'touch target is 44px');
+        const touchBounds = await touchLabel.boundingBox();
+        const touchFace = await touchLabel.locator('[data-floe-choice-kind="checkbox"]').boundingBox();
+        assert.ok(Math.abs(touchBounds.y + touchBounds.height / 2 - touchFace.y - touchFace.height / 2) <= .5, 'touch faces center within their native targets');
         await touchLabel.tap(); assert.equal(await touchPage.getByRole('checkbox', { name: 'Interactive choice', exact: true }).isChecked(), true);
         await touchPage.screenshot({ path: resolve(output, engine + '-' + entry + '-touch-2x.png'), fullPage: true });
         await touch.close();
