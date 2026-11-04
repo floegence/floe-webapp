@@ -258,7 +258,7 @@ muted planes. Porcelain retains its explicit reviewed edge. Monokai's primary
 is adjusted from #F92672 to #FA2874 so the selected compact face also clears
 3:1 on its muted plane, while retaining the same pink action identity.
 
-### Checkbox repair acceptance (0.90.5)
+### Checkbox repair acceptance (0.90.6)
 
 Published 0.90.4 fails the hollow-unchecked assertion: Porcelain Light paints
 rgb(104,104,104) with no visible boundary. The repaired packed consumers pass
@@ -283,3 +283,8 @@ the existing sustained-regression criterion of four. Input-to-next-frame P95
 medians were 8.0 to 7.7ms light and 7.7 to 7.5ms dark. All samples had zero
 missed frames and long tasks. These are local measurements, not a general
 performance improvement claim. Task evidence lives under .cache/surface-style.
+
+The unpublished 0.90.5 run was cancelled before publication because its new
+release test assumed a locally prepared baseline. Version 0.90.6 prepares the
+immutable npm 0.90.4 baseline explicitly, including npm integrity verification,
+so clean local and Actions runners execute the same comparison.
