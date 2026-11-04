@@ -1,4 +1,4 @@
-/* global document */
+/* global document, window, getComputedStyle */
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -34,6 +34,27 @@ try {
     const rect = await tabs.last().boundingBox();
     await page.mouse.move(rect.x + 10, rect.y + 10); await page.mouse.down(); await page.mouse.move(rect.x + 30, rect.y + 15); await page.mouse.up();
     assert.deepEqual(await root.boundingBox(), initial);
+    assert.equal(await tabs.last().evaluate(element => getComputedStyle(element).userSelect), 'none');
+    const selectedBefore = await tabs.last().getAttribute('data-floe-tab-id');
+    const orderBefore = await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id')));
+    await tabs.last().focus(); await page.keyboard.press('Alt+Shift+ArrowLeft');
+    await page.waitForFunction(previous => [...document.querySelectorAll('[role="tab"]')].map(element => element.getAttribute('data-floe-tab-id')).join() !== previous, orderBefore.join());
+    assert.equal(await root.locator('[role="tab"][aria-selected="true"]').getAttribute('data-floe-tab-id'), selectedBefore);
+    const moving = root.locator('[role="tab"][aria-selected="true"]');
+    await moving.evaluate(element => element.scrollIntoView({ inline: 'nearest' }));
+    const movingRect = await moving.boundingBox(); const railRect = await root.getByRole('tablist').boundingBox();
+    const oldOrder = await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id')));
+    await page.mouse.move(Math.max(movingRect.x, railRect.x) + 5, movingRect.y + movingRect.height / 2);
+    await page.mouse.down(); await page.mouse.move(railRect.x + 24, movingRect.y + movingRect.height / 2); await page.mouse.move(railRect.x + 1, movingRect.y + movingRect.height / 2, { steps: 8 });
+    await page.waitForTimeout(500); await page.mouse.up();
+    assert.notDeepEqual(await tabs.evaluateAll(elements => elements.map(element => element.getAttribute('data-floe-tab-id'))), oldOrder);
+    assert.equal(await root.locator('[role="tab"][aria-selected="true"]').getAttribute('data-floe-tab-id'), selectedBefore);
+    assert.deepEqual(await root.boundingBox(), initial);
+    assert.equal(await page.evaluate(() => String(window.getSelection())), '');
+    const dragSlot = await root.locator('[data-floe-floating-window-title-content]').boundingBox();
+    const blankX = dragSlot.x + dragSlot.width - 16; const blankY = dragSlot.y + dragSlot.height / 2;
+    await page.mouse.move(blankX, blankY); await page.mouse.down(); await page.mouse.move(blankX + 12, blankY + 45, { steps: 6 }); await page.mouse.up();
+    await page.waitForFunction(y => document.querySelector('[data-floe-geometry-surface="floating-window"]').getBoundingClientRect().y > y + 20, initial.y);
     await tabs.last().focus(); await page.keyboard.press('Delete');
     await page.waitForFunction(() => document.querySelectorAll('[role="tab"]').length === 8);
     if (await editor.count()) assert.equal(await editor.inputValue(), 'Preserved draft');

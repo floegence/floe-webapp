@@ -33,6 +33,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/overlay-mask-hotkeys.test.tsx',
   'packages/core/test/shell-ui-first-selection.test.tsx',
   'packages/core/test/tabs-slider-geometry.test.tsx',
+  'packages/core/test/tabs-reorder.test.tsx',
   'packages/core/test/theme-shell-context.test.tsx',
   'packages/core/test/workbench-projected-surface.test.tsx',
   'packages/core/test/workbench-navigation-center.test.ts',

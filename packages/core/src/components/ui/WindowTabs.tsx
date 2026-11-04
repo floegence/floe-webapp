@@ -6,7 +6,7 @@ export function WindowTabs(props: TabsProps) {
   return <Tabs
     {...props}
     size="sm"
-    class={cn('h-full min-h-0 min-w-0 flex-1', props.class)}
+    class={cn('h-full min-h-0 min-w-0 flex-1 pr-8 select-none', props.class)}
     features={{ containerBorder: false, indicator: { mode: 'none' }, ...props.features }}
     slotClassNames={{
       ...props.slotClassNames,

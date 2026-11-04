@@ -522,7 +522,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
-    if (target?.closest('button, input, select, textarea, a, [role="button"], [data-floe-floating-window-header-actions], [data-floe-floating-window-title-content]')) return;
+    if (target?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [data-floe-floating-window-header-actions], [contenteditable="true"]')) return;
 
     e.preventDefault();
 
@@ -603,7 +603,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const handleTitleBarDoubleClick = (event: MouseEvent) => {
-    if ((event.target as Element | null)?.closest('button, [data-floe-floating-window-header-actions], [data-floe-floating-window-title-content]')) return;
+    if ((event.target as Element | null)?.closest('button, input, select, textarea, a, [role="button"], [role="tab"], [data-floe-interactive], [data-floe-floating-window-header-actions], [contenteditable="true"]')) return;
     toggleMaximize();
   };
 
@@ -709,7 +709,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
                 </Show>
                 </>}>
                   <Show when={props.title}><h2 id={titleId()} class="sr-only">{props.title}</h2></Show>
-                  <div data-floe-floating-window-title-content="true" class="flex h-full min-w-0 flex-1 items-center cursor-default" style={{ 'touch-action': 'pan-x' }}>
+                  <div data-floe-floating-window-title-content="true" class="flex h-full min-w-0 flex-1 items-center">
                     {props.titleContent}
                   </div>
                 </Show>

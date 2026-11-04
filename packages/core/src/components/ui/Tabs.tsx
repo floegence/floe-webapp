@@ -13,6 +13,7 @@ import { KeyedFor } from './KeyedFor';
 import { createUIFirstSelection } from '../../utils/uiFirstSelection';
 import { useViewActivation } from '../../context/ViewActivationContext';
 import { Plus, X, ChevronRight } from '../icons';
+import { createTabReorder } from './tabReorder';
 
 // Tab item interface
 export interface TabItem {
@@ -96,6 +97,8 @@ export interface TabsProps extends Omit<
   onActiveIdChange?: (id: string) => void;
   /** Callback when tab is closed */
   onClose?: (id: string) => void;
+  /** Enable pointer sorting and Alt+Shift+Left/Right. Receives the complete ordered IDs. */
+  onReorder?: (ids: string[]) => void;
   /** Callback when add button is clicked */
   onAdd?: () => void;
   /** Whether to show add button (legacy alias; overridden by features.addButton.enabled when provided) */
@@ -274,6 +277,7 @@ export function Tabs(props: TabsProps) {
     'onActiveIdChange',
     'onClose',
     'onAdd',
+    'onReorder',
     'showAdd',
     'closable',
     'size',
@@ -325,6 +329,13 @@ export function Tabs(props: TabsProps) {
 
   // Track tab elements by id for indicator measurements.
   const tabEls = new Map<string, HTMLDivElement>();
+
+  const reorder = createTabReorder({
+    items: () => local.items,
+    onReorder: () => local.onReorder,
+    container: () => scrollContainerRef,
+    elements: tabEls,
+  });
 
   let sliderScheduled = false;
 
@@ -554,7 +565,7 @@ export function Tabs(props: TabsProps) {
      * the selected face is the surface layer's job, and movement uses the one
      * motion family. The component only chooses which primitive applies. */
     const base = cn(
-      'relative inline-flex items-center gap-1.5 whitespace-nowrap',
+      'relative inline-flex items-center gap-1.5 whitespace-nowrap select-none',
       'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]'
     );
     const cursor = disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer';
@@ -682,7 +693,19 @@ export function Tabs(props: TabsProps) {
                   onCleanup(() => tabEls.delete(item().id));
                 }}
                 class={getTabStyles(isCurrentActive(), item().disabled)}
-                onClick={() => handleTabClick(item().id, item().disabled)}
+                onClick={(event) => {
+                  if (reorder.suppressClick()) { event.preventDefault(); event.stopPropagation(); return; }
+                  handleTabClick(item().id, item().disabled);
+                }}
+                onPointerDown={event => reorder.start(event, item())}
+                onDragStart={event => event.preventDefault()}
+                data-floe-tab-id={item().id}
+                data-floe-tab-dragging={reorder.dragging() === item().id ? 'true' : undefined}
+                style={{ 'user-select': 'none', '-webkit-user-select': 'none', 'touch-action': local.onReorder ? 'none' : 'pan-x',
+                  opacity: reorder.dragging() === item().id ? '0.55' : undefined,
+                  cursor: reorder.dragging() ? 'grabbing' : undefined,
+                  'box-shadow': reorder.before() === item().id ? '-2px 0 0 var(--floe-accent-ink)' : reorder.after() === item().id ? '2px 0 0 var(--floe-accent-ink)' : undefined,
+                }}
                 role="tab"
                 id={item().domId}
                 aria-controls={item().panelId}
@@ -695,6 +718,7 @@ export function Tabs(props: TabsProps) {
                 tabIndex={item().disabled ? -1 : isCurrentActive() ? 0 : -1}
                 onKeyDown={(e) => {
                   if (e.target !== e.currentTarget) return;
+                  if (reorder.keyDown(e, item())) return;
                   if (e.key === 'Delete' && isClosable() && !item().disabled) {
                     e.preventDefault();
                     requestClose(item().id);

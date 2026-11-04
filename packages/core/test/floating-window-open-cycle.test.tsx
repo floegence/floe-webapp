@@ -70,6 +70,29 @@ describe('FloatingWindow open cycle', () => {
     expect(root.getAttribute('aria-labelledby')).toBe(root.querySelector('h2')?.id);
   });
 
+  it('drags from unused title content without selecting text', async () => {
+    const host = document.createElement('div'); document.body.append(host);
+    mount(() => <FloatingWindow open title="Documents" onOpenChange={() => undefined}
+      titleContent={<WindowTabs items={[{ id: 'a', label: 'Alpha' }, { id: 'b', label: 'Beta' }]} />}
+      defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}><textarea /></FloatingWindow>, host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const blank = root.querySelector<HTMLElement>('[data-floe-floating-window-title-content]')!;
+    const pointer = (type: string, x: number, y: number, buttons = 1) => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, buttons, clientX: x, clientY: y });
+      Object.defineProperties(event, { pointerId: { value: 31 }, pointerType: { value: 'mouse' } });
+      return event;
+    };
+    const down = pointer('pointerdown', 300, 75);
+    blank.dispatchEvent(down);
+    expect(down.defaultPrevented).toBe(true);
+    expect(document.documentElement.getAttribute('data-floe-hot-interaction')).toBe('drag');
+    document.dispatchEvent(pointer('pointermove', 340, 115));
+    await flushAnimationFrame();
+    document.dispatchEvent(pointer('pointerup', 340, 115, 0));
+    expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
+  });
+
   it('applies committed geometry when an initially closed window mounts', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
