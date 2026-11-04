@@ -45,7 +45,7 @@
     "test:code-highlight": "node scripts/check-code-highlight-browser.mjs && node scripts/check-inline-code-browser.mjs",
     "test:demo-workflows": "node scripts/check-demo-workflows-browser.mjs && node scripts/check-demo-navigation-browser.mjs",
     "test:diagrams": "node scripts/check-diagrams-browser.mjs",
-    "test:business-controls": "node scripts/check-business-controls-browser.mjs --all",
+    "test:business-controls": "node scripts/check-business-controls-browser.mjs --all && node scripts/check-select-motion-browser.mjs --all",
     "test:consumer-budgets": "node scripts/check-consumer-budgets.mjs",
     "test:checkbox-states": "node scripts/prepare-checkbox-baseline.mjs && node scripts/prepare-surface-consumer.mjs && node scripts/check-checkbox-states-browser.mjs --all"
   },

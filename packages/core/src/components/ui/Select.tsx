@@ -14,6 +14,7 @@ import { cn } from '../../utils/cn';
 import { useFloeLocale } from '../../context/LocaleContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { SurfaceFloatingLayer } from './SurfaceFloatingLayer';
+import { createFloatingPresence } from './floatingPresence';
 import { calculateMenuPosition } from './menuUtils';
 import { resolveSurfacePortalBoundaryRect, resolveSurfacePortalHost } from './surfacePortalScope';
 import { useFormControl, joinAriaIds } from './formFieldContext';
@@ -90,6 +91,9 @@ function Choice(props: ChoiceProps) {
   let control: HTMLButtonElement | HTMLInputElement | undefined;
   let native: HTMLSelectElement | undefined;
   let panel: HTMLDivElement | undefined;
+  let layer: HTMLDivElement | undefined;
+  const presence = createFloatingPresence({ open, element: () => panel });
+  const [side, setSide] = createSignal<'top' | 'bottom'>('bottom');
   let typeahead = '';
   let typedAt = 0;
   const options = createMemo(() => {
@@ -151,14 +155,15 @@ function Choice(props: ChoiceProps) {
     const rect = control.getBoundingClientRect();
     setWidth(rect.width);
     const bounds = resolveSurfacePortalBoundaryRect(resolveSurfacePortalHost({ owner: control }));
-    setPosition(
-      calculateMenuPosition(
-        rect,
-        panel.getBoundingClientRect(),
-        locale.direction === 'rtl' ? 'end' : 'start',
-        bounds
-      )
+    const next = calculateMenuPosition(
+      rect,
+      // The position layer is never transformed; motion belongs to its child.
+      layer?.getBoundingClientRect() ?? panel.getBoundingClientRect(),
+      locale.direction === 'rtl' ? 'end' : 'start',
+      bounds
     );
+    setSide(next.y < rect.top ? 'top' : 'bottom');
+    setPosition(next);
   };
   createEffect(() => {
     if (!open()) return;
@@ -171,18 +176,26 @@ function Choice(props: ChoiceProps) {
     }
   });
   createEffect(() => {
-    if (!open() || typeof window === 'undefined') return;
-    const frame = requestAnimationFrame(measure);
-    const observer = new ResizeObserver(measure);
+    if (!presence.mounted() || presence.exiting() || typeof window === 'undefined') return;
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        measure();
+      });
+    };
+    schedule();
+    const observer = new ResizeObserver(schedule);
     if (control) observer.observe(control);
-    if (panel) observer.observe(panel);
-    window.addEventListener('resize', measure);
-    window.addEventListener('scroll', measure, true);
+    if (layer) observer.observe(layer);
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, true);
     onCleanup(() => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      window.removeEventListener('resize', measure);
-      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, true);
     });
   });
   useOverlayMask({
@@ -383,7 +396,7 @@ function Choice(props: ChoiceProps) {
           )
         }
       >
-        <Show when={!props.multiple && !props.options.some(option => option.value === '')}>
+        <Show when={!props.multiple && !props.options.some((option) => option.value === '')}>
           <option value="" selected={!props.values.length || props.values[0] === ''} />
         </Show>
         <For
@@ -409,74 +422,82 @@ function Choice(props: ChoiceProps) {
           )}
         </For>
       </select>
-      <Show when={open()}>
+      <Show when={presence.mounted()}>
         <SurfaceFloatingLayer
           owner={control}
           position={position()}
           layerRef={(node) => {
-            panel = node;
+            layer = node;
           }}
           dir={locale.direction}
-          class="rounded-panel border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)] p-1"
           style={{ width: width() + 'px', 'max-width': 'calc(100vw - 24px)' }}
-          data-floe-surface="floating"
         >
-          <Show when={props.loading}>
-            <div role="status" class="px-2 py-2 text-caption">
-              {locale.t('loading')}
-            </div>
-          </Show>
-          <Show when={props.error}>
-            <div role="alert" class="p-2 text-error">
-              {props.error}
-              <Show when={props.onRetry}>
-                <button type="button" onClick={() => props.onRetry?.()}>
-                  {locale.t('retry')}
-                </button>
-              </Show>
-            </div>
-          </Show>
           <div
-            id={listId}
-            role="listbox"
-            aria-label={props.ariaLabel}
-            aria-labelledby={props.ariaLabelledBy ?? (props.ariaLabel ? undefined : id())}
-            aria-multiselectable={props.multiple || undefined}
-            class="max-h-64 overflow-y-auto"
-            data-floe-local-interaction-surface="true"
+            ref={panel}
+            class="floe-floating-presence floe-floating-menu rounded-panel border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)] p-1"
+            data-floating-presence={presence.state()}
+            data-floating-side={side()}
+            inert={presence.exiting()}
+            aria-hidden={presence.exiting() ? 'true' : undefined}
+            data-floe-surface="floating"
           >
-            <For each={options()}>
-              {(option, index) => (
-                <div
-                  id={listId + '-' + index()}
-                  role="option"
-                  aria-selected={props.values.includes(option.value)}
-                  aria-disabled={option.disabled || undefined}
-                  data-floe-selected={props.values.includes(option.value) ? 'true' : undefined}
-                  class={cn(
-                    'flex min-h-[var(--floe-row-height)] items-center gap-2 rounded-sm px-2 text-[length:var(--floe-type-control)]',
-                    active() === index() && 'bg-accent text-accent-foreground',
-                    option.disabled ? 'opacity-50' : 'cursor-pointer'
-                  )}
-                  onPointerDown={(event) => event.preventDefault()}
-                  onPointerMove={() => !option.disabled && setActive(index())}
-                  onClick={() => select(option)}
-                >
-                  <span class="h-3.5 w-3.5 shrink-0">
-                    <Show when={props.values.includes(option.value)}>
-                      <Check class="h-3.5 w-3.5" />
-                    </Show>
-                  </span>
-                  {props.renderOption ? props.renderOption(option) : option.label}
-                </div>
-              )}
-            </For>
-          </div>
-          <Show when={!options().length && !props.loading && !props.error}>
-            <div role="status" class="p-2 text-caption">
-              {locale.t('noResults')}
+            <Show when={props.loading}>
+              <div role="status" class="px-2 py-2 text-caption">
+                {locale.t('loading')}
+              </div>
+            </Show>
+            <Show when={props.error}>
+              <div role="alert" class="p-2 text-error">
+                {props.error}
+                <Show when={props.onRetry}>
+                  <button type="button" onClick={() => props.onRetry?.()}>
+                    {locale.t('retry')}
+                  </button>
+                </Show>
+              </div>
+            </Show>
+            <div
+              id={listId}
+              role="listbox"
+              aria-label={props.ariaLabel}
+              aria-labelledby={props.ariaLabelledBy ?? (props.ariaLabel ? undefined : id())}
+              aria-multiselectable={props.multiple || undefined}
+              class="max-h-64 overflow-y-auto"
+              data-floe-local-interaction-surface="true"
+            >
+              <For each={options()}>
+                {(option, index) => (
+                  <div
+                    id={listId + '-' + index()}
+                    role="option"
+                    aria-selected={props.values.includes(option.value)}
+                    aria-disabled={option.disabled || undefined}
+                    data-floe-selected={props.values.includes(option.value) ? 'true' : undefined}
+                    class={cn(
+                      'flex min-h-[var(--floe-row-height)] items-center gap-2 rounded-sm px-2 text-[length:var(--floe-type-control)]',
+                      active() === index() && 'bg-accent text-accent-foreground',
+                      option.disabled ? 'opacity-50' : 'cursor-pointer'
+                    )}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onPointerMove={() => !option.disabled && setActive(index())}
+                    onClick={() => select(option)}
+                  >
+                    <span class="h-3.5 w-3.5 shrink-0">
+                      <Show when={props.values.includes(option.value)}>
+                        <Check class="h-3.5 w-3.5" />
+                      </Show>
+                    </span>
+                    {props.renderOption ? props.renderOption(option) : option.label}
+                  </div>
+                )}
+              </For>
             </div>
-          </Show>
+            <Show when={!options().length && !props.loading && !props.error}>
+              <div role="status" class="p-2 text-caption">
+                {locale.t('noResults')}
+              </div>
+            </Show>
+          </div>
         </SurfaceFloatingLayer>
       </Show>
     </div>

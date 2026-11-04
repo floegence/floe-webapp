@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { RadioGroup, RadioOption } from '../src/components/ui/Radio';
 import { Checkbox } from '../src/components/ui/Checkbox';
 
@@ -9,6 +9,7 @@ let dispose: (() => void) | undefined;
 afterEach(() => {
   dispose?.();
   document.body.innerHTML = '';
+  vi.unstubAllGlobals();
 });
 
 it('assigns one stable native name per generated radio group', () => {
@@ -84,8 +85,20 @@ it('keeps mixed visuals, native state, ARIA and consumer refs in agreement', () 
 it('keeps one native checkbox and indicator while requesting each controlled change once', () => {
   const [checked, setChecked] = createSignal(false);
   const changes: boolean[] = [];
-  dispose = render(() => <Checkbox id="stable-choice" label="Choice" checked={checked()}
-    onChange={value => { changes.push(value); setChecked(value); }} />, document.body);
+  dispose = render(
+    () => (
+      <Checkbox
+        id="stable-choice"
+        label="Choice"
+        checked={checked()}
+        onChange={(value) => {
+          changes.push(value);
+          setChecked(value);
+        }}
+      />
+    ),
+    document.body
+  );
   const input = document.querySelector('input')!;
   const face = document.querySelector('[data-floe-choice-kind="checkbox"]')!;
   const label = document.querySelector('label')!;
@@ -103,12 +116,64 @@ it('keeps one native checkbox and indicator while requesting each controlled cha
   expect(document.querySelector('[data-floe-choice-kind="checkbox"]')).toBe(face);
 });
 
-it.each(['disabled', 'readOnly'] as const)('retains the unchecked state for %s choices', state => {
-  const changes: boolean[] = [];
-  dispose = render(() => <Checkbox {...{ [state]: true }} checked={false} label="Unavailable choice"
-    onChange={value => changes.push(value)} />, document.body);
-  document.querySelector('label')!.click();
-  expect(changes).toEqual([]);
-  expect(document.querySelector('input')!.checked).toBe(false);
-  expect(document.querySelector('[data-floe-choice-kind="checkbox"]')!.querySelector('svg')).toBeNull();
+it.each(['disabled', 'readOnly'] as const)(
+  'retains the unchecked state for %s choices',
+  (state) => {
+    const changes: boolean[] = [];
+    dispose = render(
+      () => (
+        <Checkbox
+          {...{ [state]: true }}
+          checked={false}
+          label="Unavailable choice"
+          onChange={(value) => changes.push(value)}
+        />
+      ),
+      document.body
+    );
+    document.querySelector('label')!.click();
+    expect(changes).toEqual([]);
+    expect(document.querySelector('input')!.checked).toBe(false);
+    expect(
+      document.querySelector('[data-floe-choice-kind="checkbox"]')!.querySelector('svg')
+    ).toBeNull();
+  }
+);
+
+it('retains a Select popup through exit, reverses on the same options, and disables closed input', async () => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      disconnect() {}
+    }
+  );
+  const { Select } = await import('../src/components/ui/Select');
+  const [open, setOpen] = createSignal(true);
+  dispose = render(
+    () => (
+      <Select
+        open={open()}
+        onOpenChange={setOpen}
+        ariaLabel="Environment"
+        value="local"
+        options={[{ value: 'local', label: 'Local' }]}
+      />
+    ),
+    document.body
+  );
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  const list = document.querySelector('[role="listbox"]')!;
+  const panel = list.closest<HTMLElement>('[data-floating-presence]')!;
+  expect(panel).not.toBeNull();
+  setOpen(false);
+  expect(panel.dataset.floatingPresence).toBe('exiting');
+  expect(panel.inert).toBe(true);
+  expect(panel.getAttribute('aria-hidden')).toBe('true');
+  setOpen(true);
+  expect(document.querySelector('[role="listbox"]')).toBe(list);
+  expect(panel.dataset.floatingPresence).toBe('open');
+  setOpen(false);
+  await new Promise((resolve) => setTimeout(resolve, 280));
+  expect(document.querySelector('[role="listbox"]')).toBeNull();
 });
