@@ -5,6 +5,7 @@ import {
   onCleanup,
   onMount,
   splitProps,
+  untrack,
   type JSX,
 } from 'solid-js';
 import { SurfaceFloatingLayer } from './SurfaceFloatingLayer';
@@ -225,7 +226,13 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
         layerRef={(node) => {
           setPanel(node);
           local.layerRef?.(node);
-          schedule();
+          // Resolve the side after attachment but before presence advances on
+          // the next frame. Otherwise a flipped panel starts on the old side.
+          queueMicrotask(() => untrack(() => {
+            if (!node.isConnected) return;
+            if (frame !== undefined) cancelAnimationFrame(frame);
+            measure();
+          }));
         }}
       >
         {local.children}

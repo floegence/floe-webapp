@@ -2,7 +2,7 @@
 
 import { render } from 'solid-js/web';
 import { createSignal, untrack } from 'solid-js';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -34,6 +34,12 @@ import {
   WORKBENCH_TEXT_EMOJI_OPTIONS,
   WORKBENCH_TEXT_FONT_OPTIONS,
 } from '../src/components/workbench/workbenchOptions';
+
+afterEach(() => vi.unstubAllGlobals());
+
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+});
 
 function openAdvancedTextTools() {
   const select = document.querySelector<HTMLSelectElement>('select[aria-label="Typography"]');

@@ -480,6 +480,9 @@
    * which costs memory and rasterisation on every window, menu and dialog that
    * merely sits on screen. Only the two transitions need it. */
   .floe-floating-presence[data-floating-presence='entering'] {
+    /* Placement may resolve after the initial size read. Set its starting pose
+     * immediately; only the subsequent open state should transition. */
+    transition: none;
     opacity: 0;
     --floe-floating-presence-x: var(--floe-floating-enter-x);
     --floe-floating-presence-y: var(--floe-floating-enter-y);
@@ -589,6 +592,46 @@
     --floe-floating-enter-x: -0.25rem;
     --floe-floating-exit-x: -0.125rem;
     --floe-floating-origin: left top;
+  }
+
+  /* The positioning owner supplies the resolved side, including collision flips.
+   * Keep motion on the child so measuring the anchor layer never reads a scale. */
+  [data-floe-surface-floating-layer][data-placement='above'] > .floe-floating-menu,
+  .floe-floating-menu[data-floating-side='top'] {
+    --floe-floating-enter-y: 0.375rem;
+    --floe-floating-exit-y: 0.125rem;
+    --floe-floating-origin: var(--floe-anchored-layer-anchor-x, 50%) bottom;
+  }
+
+  [data-floe-surface-floating-layer][data-placement='below'] > .floe-floating-menu,
+  .floe-floating-menu[data-floating-side='bottom'] {
+    --floe-floating-origin: var(--floe-anchored-layer-anchor-x, 50%) top;
+  }
+
+  [data-floe-surface-floating-layer][data-placement='right'] > .floe-floating-menu,
+  .floe-floating-menu[data-floating-side='right'] {
+    --floe-floating-enter-x: -0.375rem;
+    --floe-floating-exit-x: -0.125rem;
+    --floe-floating-enter-y: 0;
+    --floe-floating-exit-y: 0;
+    --floe-floating-origin: left var(--floe-anchored-layer-anchor-y, 50%);
+  }
+
+  [data-floe-surface-floating-layer][data-placement='left'] > .floe-floating-menu,
+  .floe-floating-menu[data-floating-side='left'] {
+    --floe-floating-enter-x: 0.375rem;
+    --floe-floating-exit-x: 0.125rem;
+    --floe-floating-enter-y: 0;
+    --floe-floating-exit-y: 0;
+    --floe-floating-origin: right var(--floe-anchored-layer-anchor-y, 50%);
+  }
+
+  /* A fully clamped panel has no reliable opening side. Fade it in place. */
+  [data-floe-surface-floating-layer][data-placement='edge'] > .floe-floating-menu {
+    --floe-floating-enter-y: 0;
+    --floe-floating-exit-y: 0;
+    --floe-floating-enter-scale: 1;
+    --floe-floating-exit-scale: 1;
   }
 
   .floe-floating-tooltip {

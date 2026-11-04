@@ -314,3 +314,10 @@ identity. Children receive item and index accessors. Read these in reactive
 properties and event handlers so retained nodes use current labels, permissions
 and callbacks. Removed identities dispose their owners; duplicate identities are
 rejected. Stepper applies this contract to StepItem.id.
+
+Anchored popup motion follows the resolved opening side, including viewport flips:
+menus above their trigger rise from the bottom edge, menus below descend from the
+top edge, and side panels move away from their anchor. `SurfaceAnchoredLayer`
+provides the placement for its direct `.floe-floating-menu` child; Dropdown and
+Popover use the same motion rules. Closing returns toward the anchor. Clamped
+edge panels fade in place, and reduced-motion preferences suppress travel.

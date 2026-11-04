@@ -114,6 +114,7 @@ export function Dropdown(props: DropdownProps) {
     element: () => menuRef,
   });
   const [menuPosition, setMenuPosition] = createSignal({ x: -9999, y: -9999 });
+  const [menuSide, setMenuSide] = createSignal<'top' | 'bottom'>('bottom');
   let triggerRef: HTMLDivElement | undefined;
   let menuRef: HTMLDivElement | undefined;
   const dropdownId = `floe-dropdown-${(dropdownIdSeq += 1)}`;
@@ -164,6 +165,7 @@ export function Dropdown(props: DropdownProps) {
       locale.direction === 'rtl' ? (props.align === 'end' ? 'start' : props.align === 'center' ? 'center' : 'end') : props.align ?? 'start',
       portalLayout.boundaryRect()
     );
+    setMenuSide(pos.y < triggerRect.top ? 'top' : 'bottom');
     setMenuPosition(pos);
   };
 
@@ -306,7 +308,10 @@ export function Dropdown(props: DropdownProps) {
       <Show when={menuPresence.mounted()}>
         <Portal mount={portalLayout.mount()}>
           <div
-            ref={menuRef}
+            ref={(node) => {
+              menuRef = node;
+              queueMicrotask(() => { if (node.isConnected) updateMenuPosition(); });
+            }}
             class={cn(
               portalLayout.isSurfaceMode()
                 ? 'absolute z-20 min-w-36'
@@ -318,6 +323,7 @@ export function Dropdown(props: DropdownProps) {
             )}
             data-floe-dropdown={dropdownId}
             data-floating-presence={menuPresence.state()}
+            data-floating-side={menuSide()}
             aria-hidden={menuPresence.exiting() ? 'true' : undefined}
             {...{
               [LOCAL_INTERACTION_SURFACE_ATTR]: portalLayout.isSurfaceMode() ? 'true' : undefined,
@@ -373,6 +379,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
     element: () => submenuRef,
   });
   const [submenuPosition, setSubmenuPosition] = createSignal({ x: -9999, y: -9999 });
+  const [submenuSide, setSubmenuSide] = createSignal<'left' | 'right'>('right');
   let itemRef: HTMLDivElement | undefined;
   let buttonRef: HTMLButtonElement | undefined;
   let submenuRef: HTMLDivElement | undefined;
@@ -395,6 +402,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       submenuRect,
       props.portalLayout.boundaryRect()
     );
+    setSubmenuSide(pos.x < parentRect.left ? 'left' : 'right');
     setSubmenuPosition(pos);
   };
 
@@ -528,7 +536,10 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
       <Show when={submenuPresence.mounted() && hasChildren()}>
         <Portal mount={props.portalLayout.mount()}>
           <div
-            ref={submenuRef}
+            ref={(node) => {
+              submenuRef = node;
+              queueMicrotask(() => { if (node.isConnected) updateSubmenuPosition(); });
+            }}
             class={cn(
               props.portalLayout.isSurfaceMode()
                 ? 'absolute z-20 min-w-36'
@@ -540,6 +551,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
             )}
             data-floe-dropdown={props.dropdownId}
             data-floating-presence={submenuPresence.state()}
+            data-floating-side={submenuSide()}
             aria-hidden={submenuPresence.exiting() ? 'true' : undefined}
             {...{
               [LOCAL_INTERACTION_SURFACE_ATTR]: props.portalLayout.isSurfaceMode()

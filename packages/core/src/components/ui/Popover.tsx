@@ -76,6 +76,7 @@ export function Popover(props: PopoverProps) {
 
   const presence = createFloatingPresence({ open, element: () => panelRef });
   const [position, setPosition] = createSignal({ x: -9999, y: -9999 });
+  const [resolvedSide, setResolvedSide] = createSignal<'top' | 'bottom'>('bottom');
   let triggerRef: HTMLDivElement | undefined;
   let panelRef: HTMLDivElement | undefined;
 
@@ -139,9 +140,11 @@ export function Popover(props: PopoverProps) {
     if (side() === 'top') {
       const triggerRect = triggerRef.getBoundingClientRect();
       const panelRect = panelRef.getBoundingClientRect();
+      setResolvedSide('top');
       setPosition({ x: base.x, y: triggerRect.top - panelRect.height - 6 });
       return;
     }
+    setResolvedSide(base.y < triggerRef.getBoundingClientRect().top ? 'top' : 'bottom');
     setPosition(base);
   };
 
@@ -189,7 +192,10 @@ export function Popover(props: PopoverProps) {
       <Show when={presence.mounted()}>
         <Portal mount={mount()}>
           <div
-            ref={panelRef}
+            ref={(node) => {
+              panelRef = node;
+              queueMicrotask(() => { if (node.isConnected) updatePosition(); });
+            }}
             id={panelId}
             class={cn(
               isSurfaceMode() ? 'absolute z-20' : 'fixed z-50',
@@ -201,6 +207,7 @@ export function Popover(props: PopoverProps) {
             )}
             data-floe-popover-panel=""
             data-floating-presence={presence.state()}
+            data-floating-side={resolvedSide()}
             aria-hidden={presence.exiting() ? 'true' : undefined}
             inert={presence.exiting()}
             role="dialog"
