@@ -115,6 +115,12 @@ render(() => <App/>, document.getElementById('root'));
         await page.waitForTimeout(200);
         await trigger.evaluate(el => { el.parentElement.parentElement.style.left = '960px'; });
         await trigger.click();
+        // Opening assigns focus on the next frame; wait before choosing another
+        // item so a slower runner cannot redirect ArrowRight to the first item.
+        await page.waitForFunction(() => {
+          const menu = document.querySelector('[role="menu"]');
+          return menu?.dataset.floatingPresence === 'open' && menu.contains(document.activeElement);
+        });
         await parent.focus();
         await parent.press('ArrowRight');
         await submenu.waitFor();
