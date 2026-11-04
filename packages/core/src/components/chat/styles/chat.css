@@ -371,8 +371,8 @@
   background-color: var(--inline-code-background);
   color: var(--inline-code-foreground);
   font-family: var(--font-mono);
-  font-size: 0.91em;
-  font-weight: 400;
+  font-size: 0.96em;
+  font-weight: 500;
   line-height: inherit;
   white-space: break-spaces;
   overflow-wrap: anywhere;

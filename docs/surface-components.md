@@ -13,7 +13,7 @@ The optional soft neumorphic material is a lightweight shared component system: 
 ## Porcelain Light
 
 Porcelain Light uses achromatic porcelain surfaces and charcoal controls, with
-plum inline-code references and unchanged semantic status hues. Its authored
+deep burgundy inline-code references on a pale rose reading surface and unchanged semantic status hues. Its authored
 palette in presets.ts owns the reading ramp, fields, default Workbench canvas,
 native-host metadata, thumbnails, and Monaco roles. The generated theme CSS,
 precompiled styles, Tailwind entry and standalone documents consume that palette.
@@ -21,7 +21,7 @@ Secondary text and placeholders stay opaque; ordinary text clears 4.5:1 and
 essential controls/focus clear 3:1 on the tested surfaces. Decorative seams and
 labelled idle fields keep their quiet hierarchy. Inactive editor selection and
 search highlights preserve syntax contrast, including six authored bracket-pair colors and unexpected-bracket ink. The palette remains scoped to this
-preset and yields to forced system colors.
+preset and yields to forced system colors. Compact inline-code references clear 7:1 for normal and selected text. Their fill separates from the porcelain canvas by 1.14–1.2:1, a design visibility budget rather than a control-boundary requirement; monochrome syntax and forced colors remain independent.
 
 Run check-porcelain-visibility-browser.mjs after prepare-surface-consumer.mjs to
 measure real packaged inputs, four reading surfaces, both CSS entries, focus

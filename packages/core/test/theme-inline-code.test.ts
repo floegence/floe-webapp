@@ -25,6 +25,21 @@ function hueAndSaturation(hex: string): { hue: number; saturation: number } {
 }
 
 describe('inline code theme palette', () => {
+  it('gives compact Porcelain references strong ink and a distinct restrained reading surface', () => {
+    const tokens = builtInShellThemePresets.find(preset => preset.name === 'porcelain-light')!.semanticTokens!;
+    const ink = tokens['--inline-code-foreground']!;
+    const fill = tokens['--inline-code-background']!;
+    expect(contrast(ink, fill)).toBeGreaterThanOrEqual(7);
+    expect(contrast(fill, tokens['--background']!)).toBeGreaterThanOrEqual(1.14);
+    expect(contrast(fill, tokens['--background']!)).toBeLessThan(1.2);
+    const { hue } = hueAndSaturation(ink);
+    expect(hue).toBeGreaterThanOrEqual(330);
+    expect(hue).toBeLessThanOrEqual(355);
+    const channels = [1, 3, 5].map(offset => parseInt(fill.slice(offset, offset + 2), 16));
+    expect(Math.max(...channels) - Math.min(...channels)).toBeGreaterThanOrEqual(10);
+    expect(Math.max(...channels) - Math.min(...channels)).toBeLessThanOrEqual(20);
+  });
+
   it.each(builtInShellThemePresets)('$name pairs readable text with a quiet theme-specific fill', preset => {
     const tokens = preset.semanticTokens!;
     const foreground = tokens['--inline-code-foreground']!;
@@ -40,7 +55,7 @@ describe('inline code theme palette', () => {
   it.each(builtInShellThemePresets)('$name emphasizes references with a distinct chromatic foreground', preset => {
     const { hue, saturation } = hueAndSaturation(preset.semanticTokens!['--inline-code-foreground']!);
     if (preset.name === 'porcelain-light') {
-      expect(preset.semanticTokens!['--inline-code-foreground']).toBe('#674778');
+      expect(preset.semanticTokens!['--inline-code-foreground']).toBe('#742D45');
       expect(saturation).toBeGreaterThanOrEqual(0.25);
       return;
     }

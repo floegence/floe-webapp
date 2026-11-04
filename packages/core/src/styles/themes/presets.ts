@@ -502,7 +502,7 @@ const classicDarkPreset = {
 export const builtInShellThemePresets = [
   createShellThemePreset({
     name: 'porcelain-light',
-    inlineCode: { foreground: '#674778', background: '#F0F0F0' },
+    inlineCode: { foreground: '#742D45', background: '#F4E7EB' },
     displayName: 'Porcelain Light',
     description: 'Clean porcelain whites, neutral layers, and restrained charcoal.',
     fileIconColors: {
