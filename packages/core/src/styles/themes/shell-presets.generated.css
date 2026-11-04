@@ -1569,7 +1569,7 @@
   --inline-code-foreground: #70ddea;
   --inline-code-background: #2c3631;
   --primary: #f92672;
-  --primary-foreground: #11120f;
+  --primary-foreground: #050604;
   --secondary: #3a3b34;
   --secondary-foreground: #f8f8f2;
   --muted: #3a3b34;
@@ -1605,7 +1605,7 @@
   --sidebar: #20211c;
   --sidebar-foreground: #f8f8f2;
   --sidebar-primary: #f92672;
-  --sidebar-primary-foreground: #11120f;
+  --sidebar-primary-foreground: #050604;
   --sidebar-accent: #3a3b34;
   --sidebar-accent-foreground: #f8f8f2;
   --sidebar-border: #494a42;
@@ -1614,7 +1614,7 @@
   --activity-bar-foreground: #c5c8b5;
   --activity-bar-foreground-active: #f8f8f2;
   --activity-bar-badge: #f92672;
-  --activity-bar-badge-foreground: #11120f;
+  --activity-bar-badge-foreground: #050604;
   --terminal-background: #1d1e19;
   --terminal-foreground: #f8f8f2;
   --chart-1: #f92672;

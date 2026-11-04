@@ -220,3 +220,12 @@ in Chromium and WebKit.
 For an editing-only change, run the composition browser script with
 `--interactions-only` to cover both compositors, browsers, and surface styles
 without repeating the unchanged theme/material matrix.
+
+### Primary action contrast
+
+Primary and default Button labels retain at least 4.5:1 contrast at rest, hover,
+pressed and keyboard-focus endpoints across every built-in shell theme. Monokai
+uses darker warm ink on its original pink fill so the shared hover mix remains
+readable. Hover feedback and keyboard focus remain visible without changing
+control geometry. The three-engine browser matrix runs in local and release
+checks; product consumers need no local color overrides.

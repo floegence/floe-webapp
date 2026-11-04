@@ -63,6 +63,19 @@ describe('shell theme accessibility', () => {
     }
   });
 
+  it('keeps primary action labels readable after the shared hover color mix', () => {
+    for (const preset of builtInShellThemePresets) {
+      const tokens = preset.semanticTokens!;
+      const foreground = tokens['--primary-foreground']!;
+      const fill = parseHex(tokens['--primary']!);
+      const ink = parseHex(foreground);
+      const hover = '#' + fill.map((value, index) =>
+        Math.round(value * 0.92 + ink[index] * 0.08).toString(16).padStart(2, '0')
+      ).join('');
+      expect(contrastRatio(foreground, hover), preset.name).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it('keeps text, controls, statuses, selections, and charts readable in every preset', () => {
     for (const preset of builtInShellThemePresets) {
       const mode = preset.mode === 'dark' ? 'dark' : 'light';

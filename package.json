@@ -17,6 +17,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "node scripts/test.mjs",
     "clean": "pnpm -r clean && rm -rf node_modules",
+    "test:button-contrast": "node scripts/check-button-contrast-browser.mjs --all",
     "test:input-focus": "pnpm exec vitest run scripts/input-focus-policy.test.mjs && node scripts/check-input-focus-browser.mjs",
     "test:porcelain": "node scripts/prepare-surface-consumer.mjs && node scripts/check-porcelain-visibility-browser.mjs",
     "test:compact-surfaces": "node scripts/check-compact-surfaces-browser.mjs && node scripts/check-interface-scale-browser.mjs",

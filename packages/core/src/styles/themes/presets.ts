@@ -1115,7 +1115,8 @@ export const builtInShellThemePresets = [
     muted: '#3A3B34',
     mutedForeground: '#C5C8B5',
     primary: '#F92672',
-    primaryForeground: '#11120F',
+    // Preserve the pink action fill while keeping its darker hover state readable.
+    primaryForeground: '#050604',
     border: '#494A42',
     input: '#7B7D6E',
     sidebar: '#20211C',
