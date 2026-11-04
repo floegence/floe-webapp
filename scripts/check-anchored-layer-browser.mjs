@@ -24,17 +24,32 @@ import { SurfaceAnchoredLayer } from '../dist/ui.js';
 import '../dist/styles.css';
 function App() {
  const [anchor, setAnchor] = createSignal();
- const [open, setOpen] = createSignal(true);
+ const menu = location.search.includes('menu');
+ const [open, setOpen] = createSignal(!menu);
+ const toggle = () => {
+   setOpen(value => !value);
+   window.openingFrames = [];
+   const sample = () => {
+     const panel = document.querySelector('[data-panel]');
+     if (panel) {
+       const rect = panel.getBoundingClientRect();
+       window.openingFrames.push({ y: rect.y, bottom: rect.bottom, height: rect.height, visible: getComputedStyle(panel).visibility });
+     }
+     if (window.openingFrames.length < 18 && open()) requestAnimationFrame(sample);
+   };
+   if (open()) requestAnimationFrame(sample);
+ };
  const projected = location.search.includes('projected');
  return <div data-floe-surface-portal-layer={projected ? 'true' : undefined}
    style={projected ? {position:'absolute',left:'80px',top:'60px',width:'900px',height:'800px'} : undefined}>
    <div data-floe-dialog-surface-host={projected ? 'true' : undefined}
    style={projected ? {position:'absolute',left:'0px',top:'0px',width:'900px',height:'800px',transform:'scale(.75)','transform-origin':'top left'} : undefined}>
-   <button ref={setAnchor} data-anchor style={{position:'absolute',left:'8px',top:'96px',width:'40px',height:'40px'}}>Open</button>
-   <Show when={open()}><SurfaceAnchoredLayer anchor={anchor()} placement="right" gap={16}
+   <button ref={setAnchor} onClick={toggle} data-anchor style={{position:'absolute',left:'8px',top:menu ? '700px' : '96px',width:'40px',height:'40px'}}>Open</button>
+   <Show when={open()}><SurfaceAnchoredLayer anchor={anchor()} placement={menu ? undefined : "right"} gap={16}
      onAnchorDisconnect={() => setOpen(false)} data-panel
-     style={{width:'424px',height:'427px','box-sizing':'border-box','max-height':'var(--floe-anchored-layer-max-height)'}}>
-     <input aria-label="Search" />
+     style={menu ? undefined : {width:'424px',height:'427px','box-sizing':'border-box','max-height':'var(--floe-anchored-layer-max-height)'}}>
+     {menu ? <div style={{width:'256px','max-height':'min(352px, var(--floe-anchored-layer-max-height))',overflow:'auto',padding:'4px',border:'1px solid gray','box-sizing':'border-box'}}>
+       <div style={{height:'220px'}}>Permission choices</div></div> : <input aria-label="Search" />}
    </SurfaceAnchoredLayer></Show>
  </div></div>;
 }
@@ -51,6 +66,35 @@ render(() => <App/>, document.getElementById('root'));
   await server.listen();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').pop()}/`;
   browser = await chromium.launch();
+  for (const height of [400, 900]) {
+    const page = await browser.newPage({ viewport: { width: 1100, height } });
+    await page.goto(`${url}?menu`);
+    const trigger = page.locator('[data-anchor]');
+    await trigger.evaluate((button, height) => {
+      button.style.top = `${height - 80}px`;
+    }, height);
+    for (let cycle = 0; cycle < 3; cycle++) {
+      await trigger.click();
+      await page.waitForFunction(() => window.openingFrames?.length >= 18);
+      const visible = (await page.evaluate(() => window.openingFrames)).filter(
+        (frame) => frame.visible === 'visible'
+      );
+      assert(visible.length > 1, 'capture the first and subsequent painted positions');
+      for (const frame of visible) {
+        assert.equal(
+          frame.y,
+          visible.at(-1).y,
+          `first-paint position must be settled: ${JSON.stringify(visible)}`
+        );
+        assert(
+          frame.y >= 12 && frame.bottom <= height - 12,
+          'every painted frame stays inside the viewport'
+        );
+      }
+      await trigger.click();
+    }
+    await page.close();
+  }
   for (const projected of [false, true]) {
     const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
     const errors = [];
@@ -120,7 +164,7 @@ render(() => <App/>, document.getElementById('root'));
     await page.close();
   }
   console.log(
-    'PASS: anchored side placement, flip, boundary clamp, projected screen size, retained input and disconnect'
+    'PASS: stable first paint, repeated opens, short viewports, side flip, boundary clamp, projected size, retained input and disconnect'
   );
 } finally {
   await browser?.close();

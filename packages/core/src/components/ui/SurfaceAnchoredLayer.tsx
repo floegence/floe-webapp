@@ -76,8 +76,16 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
       return;
     }
     const rect = anchor.getBoundingClientRect();
-    const maxWidth = Math.max(120, bounds.width - 24);
-    setWidth(maxWidth);
+    const padding = local.reservedSpace;
+    const minY =
+      bounds.top +
+      (window.matchMedia('(max-width:760px)').matches
+        ? (padding?.narrowTop ?? padding?.top ?? 12)
+        : (padding?.top ?? 12));
+    // Children consume these constraints. Apply them before reading their size;
+    // measuring the initial zero-height constraint exposes a misplaced first frame.
+    setWidth(Math.max(120, bounds.width - 24));
+    setMaxHeight(Math.max(0, bounds.bottom - (padding?.bottom ?? 12) - minY));
     const size = panelElement.getBoundingClientRect();
     const center = (Math.max(bounds.left, rect.left) + Math.min(bounds.right, rect.right)) / 2;
     let x = Math.max(
@@ -87,15 +95,8 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     const top = rect.top - (local.topOffset ?? 0);
     const gap = Math.max(0, local.gap ?? 12);
     const above = top - size.height - gap;
-    const padding = local.reservedSpace;
-    const minY =
-      bounds.top +
-      (window.matchMedia('(max-width:760px)').matches
-        ? (padding?.narrowTop ?? padding?.top ?? 12)
-        : (padding?.top ?? 12));
     const maxY = Math.max(minY, bounds.bottom - (padding?.bottom ?? 12) - size.height);
     const clampY = (value: number) => Math.max(minY, Math.min(value, maxY));
-    setMaxHeight(Math.max(0, bounds.bottom - (padding?.bottom ?? 12) - minY));
     let y = above;
     let side = 'above';
     if (local.placement === 'right' || local.placement === 'left') {

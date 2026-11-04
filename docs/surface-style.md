@@ -268,3 +268,7 @@ soft graphite text, a nearly white sidebar and restrained blue actions. Soft
 Black uses a near-black canvas and subtly raised panels with warm-gray text,
 muted status and syntax colors, and palette-relative dark window material. Both
 are optional presets; defaults and valid stored selections remain unchanged.
+
+## Anchored layer first paint
+
+`SurfaceAnchoredLayer` applies the available width and height constraints before measuring its panel. Children may consume `--floe-anchored-layer-max-height` without painting at a temporary zero-height position. The first visible frame is boundary-clamped; later content and viewport changes retain the same positioning owner. Browser acceptance samples every opening frame across short and tall viewports, including repeated opens, projected surfaces, side flips, and retained editor identity.
