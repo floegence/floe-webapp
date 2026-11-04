@@ -7,6 +7,7 @@ import {
   CardContent,
   Dropdown,
   FloatingWindow,
+  WindowTabs,
   Textarea,
 } from '@floegence/floe-webapp-core/ui';
 
@@ -17,6 +18,8 @@ export function WindowMaterialStudy() {
   const [scene, setScene] = createSignal(params.get('scene') ?? 'files');
   const [open, setOpen] = createSignal([true, params.get('scene') === 'overlap', false]);
   const [front, setFront] = createSignal(params.get('scene') === 'overlap' ? 1 : 0);
+  const [documents, setDocuments] = createSignal(Array.from({ length: 9 }, (_, i) => ({ id: String(i), label: 'Document ' + i + '.md', title: '/workspace/reports/document-' + i + '.md' })));
+  const [documentId, setDocumentId] = createSignal('0');
   const [headerActionCount, setHeaderActionCount] = createSignal(0);
   const [draft, setDraft] = createSignal(
     'Keep the reading surface quiet. Changes remain here while switching themes and windows.'
@@ -168,6 +171,8 @@ export function WindowMaterialStudy() {
             open={open()[index]}
             onOpenChange={(value) => show(index, value)}
             title={['architecture.md', 'Workspace notes', 'Review checklist'][index]}
+            titleContent={index === 0 && params.has('tabs') && documents().length > 1 ? <WindowTabs items={documents()} activeId={documentId()} onChange={setDocumentId} closable
+              onClose={id => { const remaining = documents().filter(item => item.id !== id); setDocuments(remaining); if (id === documentId()) setDocumentId(remaining[0]?.id ?? ''); }} ariaLabel="Documents" /> : undefined}
             titleIcon={index === 0 && params.has('headerActions') ? <FileText class="size-4" /> : undefined}
             headerActions={index === 0 && params.has('headerActions') ? (
               <>

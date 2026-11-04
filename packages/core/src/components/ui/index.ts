@@ -326,6 +326,7 @@ export {
 } from './Progress';
 
 export { SurfaceAnchoredLayer, type SurfaceAnchoredLayerProps } from './SurfaceAnchoredLayer';
+export { WindowTabs } from './WindowTabs';
 
 export { PersistentHorizontalScrollbar, type PersistentHorizontalScrollbarProps } from './PersistentHorizontalScrollbar';
 

@@ -22,6 +22,10 @@ export interface TabItem {
   domId?: string;
   /** DOM identity of the host-owned panel controlled by this tab. */
   panelId?: string;
+  /** Full identity shown when the visible label is truncated. */
+  title?: string;
+  /** Localized accessible close action for this item. */
+  closeLabel?: string;
   icon?: JSX.Element;
   closable?: boolean;
   disabled?: boolean;
@@ -106,6 +110,7 @@ export interface TabsProps extends Omit<
   slotClassNames?: TabsSlotClassNames;
   /** Accessible name for the tablist container. */
   ariaLabel?: string;
+  labels?: { scrollLeft: string; scrollRight: string };
 }
 
 type TabsSliderGeometry = {
@@ -275,6 +280,7 @@ export function Tabs(props: TabsProps) {
     'features',
     'slotClassNames',
     'ariaLabel',
+    'labels',
     'class',
   ]);
 
@@ -465,6 +471,14 @@ export function Tabs(props: TabsProps) {
     });
   });
 
+  // New documents and programmatic selections stay visible in an overflowed strip.
+  createEffect(() => {
+    const id = currentActiveId();
+    deferAfterPaint(() => {
+      if (isActive()) tabEls.get(id)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    });
+  });
+
   // Re-check when items change
   createEffect(() => {
     if (!isActive()) return;
@@ -508,12 +522,24 @@ export function Tabs(props: TabsProps) {
   };
 
   // Handle close with UI-first response
+  const requestClose = (id: string) => {
+    const tab = tabEls.get(id);
+    const restoreFocus = Boolean(tab?.contains(document.activeElement));
+    const index = local.items.findIndex(item => item.id === id);
+    local.onClose?.(id);
+    // A guarded close may retain the tab or open a confirmation. Never take its focus.
+    if (restoreFocus && !local.items.some(item => item.id === id)) {
+      const target = local.items.find(item => item.id === currentActiveId())
+        ?? local.items[Math.min(index, local.items.length - 1)];
+      if (target) tabEls.get(target.id)?.focus({ preventScroll: true });
+    }
+  };
   const handleClose = (e: MouseEvent, id: string) => {
     e.stopPropagation();
     const onClose = local.onClose;
     if (!onClose) return;
     const nextId = id;
-    deferAfterPaint(() => onClose(nextId));
+    deferAfterPaint(() => untrack(() => requestClose(nextId)));
   };
 
   // Size styles
@@ -597,7 +623,7 @@ export function Tabs(props: TabsProps) {
               : 'opacity-0 pointer-events-none',
             local.slotClassNames?.scrollButton
           )}
-          aria-label="Scroll left"
+          aria-label={local.labels?.scrollLeft ?? 'Scroll left'}
         >
           <ChevronLeft class="w-4 h-4" />
         </button>
@@ -660,6 +686,7 @@ export function Tabs(props: TabsProps) {
                 role="tab"
                 id={item().domId}
                 aria-controls={item().panelId}
+                title={item().title}
                 data-floe-surface={isCurrentActive() ? 'raised' : 'flat'}
                 data-floe-surface-part="tab"
                 data-floe-interactive="item"
@@ -667,6 +694,12 @@ export function Tabs(props: TabsProps) {
                 aria-disabled={item().disabled}
                 tabIndex={item().disabled ? -1 : isCurrentActive() ? 0 : -1}
                 onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === 'Delete' && isClosable() && !item().disabled) {
+                    e.preventDefault();
+                    requestClose(item().id);
+                    return;
+                  }
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleTabClick(item().id, item().disabled);
@@ -681,7 +714,7 @@ export function Tabs(props: TabsProps) {
                 </Show>
 
                 {/* Tab label */}
-                <span class="truncate max-w-32">{item().label}</span>
+                <span class="min-w-0 truncate max-w-32">{item().label}</span>
 
                 {/* Close button - show red background only on hover */}
                 <Show when={isClosable() && !item().disabled}>
@@ -699,7 +732,7 @@ export function Tabs(props: TabsProps) {
                       'ml-1.5',
                       local.slotClassNames?.closeButton
                     )}
-                    aria-label={`Close ${item().label}`}
+                    aria-label={item().closeLabel ?? `Close ${item().label}`}
                   >
                     <X class="w-3 h-3" />
                   </button>
@@ -749,7 +782,7 @@ export function Tabs(props: TabsProps) {
               : 'opacity-0 pointer-events-none',
             local.slotClassNames?.scrollButton
           )}
-          aria-label="Scroll right"
+          aria-label={local.labels?.scrollRight ?? 'Scroll right'}
         >
           <ChevronRight class="w-4 h-4" />
         </button>

@@ -229,3 +229,8 @@ uses darker warm ink on its original pink fill so the shared hover mix remains
 readable. Hover feedback and keyboard focus remain visible without changing
 control geometry. The three-engine browser matrix runs in local and release
 checks; product consumers need no local color overrides.
+
+
+## Document tabs in floating headers
+
+FloatingWindow.titleContent replaces the visible title with interactive identity content while title remains the accessible window name. The slot excludes pointer drags and double-click maximize; the surrounding titlebar retains its normal window behavior. WindowTabs composes the shared Tabs primitive at titlebar height with horizontal overflow, keyboard navigation and per-document close actions. Hosts own document state, dirty confirmation and retained panels; one document should use the ordinary title. Provide translated tab close and overflow labels, full identity tooltips, and panel relationships where applicable.

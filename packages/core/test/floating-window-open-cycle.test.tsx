@@ -5,6 +5,7 @@ import { Show, createSignal } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
 import { Dropdown } from '../src/components/ui/Dropdown';
+import { WindowTabs } from '../src/components/ui/WindowTabs';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
 
 vi.mock('../src/context/LayoutContext', () => ({
@@ -34,6 +35,41 @@ function flushAnimationFrame(): Promise<void> {
 }
 
 describe('FloatingWindow open cycle', () => {
+  it('hosts document tabs without dragging, maximizing or replacing content', async () => {
+    const host = document.createElement('div'); document.body.append(host);
+    const [active, setActive] = createSignal('one');
+    const close = vi.fn();
+    vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
+    mount(() => <FloatingWindow open title={active()} onOpenChange={() => undefined}
+      titleContent={<WindowTabs items={[{ id: 'one', label: 'One', closeLabel: 'Close document One' }, { id: 'two', label: 'Two' }]}
+        activeId={active()} onChange={setActive} closable onClose={close} ariaLabel="Documents" />}
+      defaultPosition={{ x: 80, y: 60 }} defaultSize={{ width: 420, height: 300 }}>
+      <textarea />
+    </FloatingWindow>, host);
+    await flushAnimationFrame();
+    const root = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const editor = root.querySelector('textarea')!; editor.value = 'Retained draft';
+    const tabs = root.querySelectorAll<HTMLElement>('[role="tab"]');
+    tabs[0].focus();
+    tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await flushAnimationFrame();
+    await vi.waitFor(() => expect(active()).toBe('two'));
+    expect(document.activeElement).toBe(tabs[1]);
+    const rect = root.style.cssText;
+    tabs[1].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    const pointer = new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 150, clientY: 70 });
+    Object.defineProperties(pointer, { pointerId: { value: 23 }, pointerType: { value: 'mouse' } });
+    tabs[1].dispatchEvent(pointer);
+    expect(root.style.cssText).toBe(rect);
+    expect(root.querySelector('textarea')).toBe(editor);
+    expect(editor.value).toBe('Retained draft');
+    tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    expect(close).toHaveBeenCalledWith('two');
+    expect(root.querySelector('[aria-label="Close document One"]')).toBeTruthy();
+    expect(root.getAttribute('aria-labelledby')).toBe(root.querySelector('h2')?.id);
+  });
+
   it('applies committed geometry when an initially closed window mounts', async () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

@@ -41,6 +41,8 @@ export interface FloatingWindowProps {
   title?: string;
   /** Decorative identity icon beside the title; excluded from the accessible name. */
   titleIcon?: JSX.Element;
+  /** Interactive identity content replacing the visible title. Keep title set for accessibility. */
+  titleContent?: JSX.Element;
   /** Compact actions at the right of the title bar, before the window controls. */
   headerActions?: JSX.Element;
   /** Window content */
@@ -520,7 +522,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
     const target = e.target as HTMLElement | null;
-    if (target?.closest('button, input, select, textarea, a, [role="button"], [data-floe-floating-window-header-actions]')) return;
+    if (target?.closest('button, input, select, textarea, a, [role="button"], [data-floe-floating-window-header-actions], [data-floe-floating-window-title-content]')) return;
 
     e.preventDefault();
 
@@ -601,7 +603,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const handleTitleBarDoubleClick = (event: MouseEvent) => {
-    if ((event.target as Element | null)?.closest('button, [data-floe-floating-window-header-actions]')) return;
+    if ((event.target as Element | null)?.closest('button, [data-floe-floating-window-header-actions], [data-floe-floating-window-title-content]')) return;
     toggleMaximize();
   };
 
@@ -690,7 +692,8 @@ export function FloatingWindow(props: FloatingWindowProps) {
               onDblClick={handleTitleBarDoubleClick}
               style={{ 'touch-action': 'none' }}
             >
-              <div class="flex-1 min-w-0 px-3">
+              <div class="flex h-full flex-1 min-w-0 items-center px-3">
+                <Show when={props.titleContent} fallback={<>
                 <Show when={props.title}>
                   <h2
                     id={titleId()}
@@ -703,6 +706,12 @@ export function FloatingWindow(props: FloatingWindowProps) {
                     </Show>
                     <span class="min-w-0 truncate">{props.title}</span>
                   </h2>
+                </Show>
+                </>}>
+                  <Show when={props.title}><h2 id={titleId()} class="sr-only">{props.title}</h2></Show>
+                  <div data-floe-floating-window-title-content="true" class="flex h-full min-w-0 flex-1 items-center cursor-default" style={{ 'touch-action': 'pan-x' }}>
+                    {props.titleContent}
+                  </div>
                 </Show>
               </div>
 
