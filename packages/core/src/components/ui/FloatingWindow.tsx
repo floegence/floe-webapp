@@ -456,7 +456,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
     if (!props.open) return;
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
+      if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
 
       const activeElement = typeof document !== 'undefined' ? document.activeElement : null;
       if (!isTargetInsideWindow(e.target) && !isTargetInsideWindow(activeElement)) return;
@@ -471,8 +471,10 @@ export function FloatingWindow(props: FloatingWindowProps) {
       props.onOpenChange(false);
     };
 
-    document.addEventListener('keydown', handleEscape, true);
-    onCleanup(() => document.removeEventListener('keydown', handleEscape, true));
+    // Controls keep focus on their trigger while a portaled listbox is open.
+    // Let that control consume Escape before dismissing its containing window.
+    document.addEventListener('keydown', handleEscape);
+    onCleanup(() => document.removeEventListener('keydown', handleEscape));
   });
 
   createEffect(() => {

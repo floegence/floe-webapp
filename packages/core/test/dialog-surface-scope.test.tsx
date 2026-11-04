@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, untrack } from 'solid-js';
 import { render as renderSolid } from 'solid-js/web';
 
 import { Dialog } from '../src/components/ui/Dialog';
 import { FloatingWindow } from '../src/components/ui/FloatingWindow';
+import { Select, Combobox, MultiSelect } from '../src/components/ui/Select';
 import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import {
@@ -831,6 +832,91 @@ describe('dialog surface scope', () => {
     expect(floatingWindow!.getAttribute('aria-hidden')).toBeNull();
     await flushFloatingExit();
     expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBe(floatingWindow);
+  });
+
+  it.each(['Select', 'Combobox', 'MultiSelect'] as const)(
+    'lets a nested %s consume Escape while focus stays on its control',
+    async (kind) => {
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe() {}
+          disconnect() {}
+        }
+      );
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const [windowOpen, setWindowOpen] = createSignal(true);
+      const options = [
+        { value: 'one', label: 'One' },
+        { value: 'two', label: 'Two' },
+      ];
+      mount(
+        () => (
+          <FloatingWindow open={windowOpen()} onOpenChange={setWindowOpen} title="Nested selection">
+            {kind === 'Select' ? (
+              <Select ariaLabel="Choice" value="one" options={options} />
+            ) : kind === 'Combobox' ? (
+              <Combobox ariaLabel="Choice" value="one" options={options} />
+            ) : (
+              <MultiSelect ariaLabel="Choice" value={['one']} options={options} />
+            )}
+          </FloatingWindow>
+        ),
+        host
+      );
+      const control = document.querySelector<HTMLElement>('[role=combobox]')!;
+      control.focus();
+      control.click();
+      await flushMicrotasks();
+      expect(control.getAttribute('aria-expanded')).toBe('true');
+      dispatchEscape(control);
+      await flushMicrotasks();
+      expect(untrack(windowOpen)).toBe(true);
+      expect(control.getAttribute('aria-expanded')).toBe('false');
+      expect(
+        document
+          .querySelector('[role=listbox]')
+          ?.closest('[data-floating-presence]')
+          ?.getAttribute('data-floating-presence')
+      ).toBe('exiting');
+      await flushFloatingExit();
+      expect(document.querySelector('[role=listbox]')).toBeNull();
+      expect(document.activeElement).toBe(control);
+      dispatchEscape(control);
+      expect(untrack(windowOpen)).toBe(false);
+    }
+  );
+
+  it('preserves floating-window text composition and consumed Escape', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const close = vi.fn();
+    mount(
+      () => (
+        <FloatingWindow open onOpenChange={close} title="Editor">
+          <input
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') event.preventDefault();
+            }}
+          />
+        </FloatingWindow>
+      ),
+      host
+    );
+    const input = document.querySelector('input')!;
+    input.focus();
+    dispatchEscape(input);
+    expect(close).not.toHaveBeenCalled();
+    const root = document.querySelector<HTMLElement>(
+      '[data-floe-geometry-surface="floating-window"]'
+    )!;
+    root.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, isComposing: true })
+    );
+    expect(close).not.toHaveBeenCalled();
+    dispatchEscape(root);
+    expect(close).toHaveBeenCalledExactlyOnceWith(false);
   });
 
   it('keeps the floating-window Escape behavior for a static ARIA menu', async () => {

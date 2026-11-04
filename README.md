@@ -270,6 +270,9 @@ The icon is decorative and excluded from the window's accessible name. The
 identity remains part of the shared drag region; `headerActions` and native
 window controls retain their own pointer and keyboard ownership.
 Nested menus and dialogs own Escape before the containing window can close.
+Selection controls also retain focus on their trigger and close only their
+listbox on the first Escape. A second Escape closes the focused window; consumed
+Escape events and active text composition never dismiss it.
 
 ### Whole-window status surfaces
 

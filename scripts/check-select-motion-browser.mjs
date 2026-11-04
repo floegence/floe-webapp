@@ -118,6 +118,30 @@ try {
             await panel.waitFor({ state: 'detached' });
             cases++;
           }
+        for (const kind of ['Select', 'Combobox', 'MultiSelect']) {
+          await page.evaluate((kind) => {
+            window.selectMotion.setKind(kind);
+            window.selectMotion.setWindowOpen(true);
+            window.selectMotion.setNested(true);
+          }, kind);
+          const control = page.getByRole('combobox');
+          await control.click();
+          await page.locator('.floe-floating-menu').waitFor();
+          await control.press('Escape');
+          await page.locator('.floe-floating-menu').waitFor({ state: 'detached' });
+          const floatingWindow = page.locator('[data-floe-geometry-surface="floating-window"]');
+          assert.equal(
+            await floatingWindow.getAttribute('data-floating-presence'),
+            'open',
+            `${name}/${kind}: Escape preserves containing window`
+          );
+          assert.equal(await control.getAttribute('aria-expanded'), 'false');
+          assert.equal(await control.evaluate((el) => el === document.activeElement), true);
+          await control.press('Escape');
+          await floatingWindow.waitFor({ state: 'detached' });
+          cases++;
+          await page.evaluate(() => window.selectMotion.setNested(false));
+        }
         assert.deepEqual(errors, [], `${name}: console errors`);
         await page.close();
       }
