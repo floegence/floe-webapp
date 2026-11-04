@@ -77,9 +77,10 @@
   --floe-field-edge-hover: color-mix(in srgb, var(--foreground) 32%, var(--card));
   --floe-field-placeholder: color-mix(in srgb, var(--foreground) 42%, var(--background));
   /* An unchecked box or switch has no fill of its own, so its boundary *is*
-  * the control and must clear 3:1 against every plane it can sit on. */
-  --floe-control-edge: color-mix(in srgb, var(--foreground) 50%, var(--card));
-  --floe-control-edge-hover: color-mix(in srgb, var(--foreground) 66%, var(--card));
+  * the control and must clear 3:1 against every plane it can sit on. The 66%
+  * default covers the built-in planes; low-ink palettes own stronger overrides. */
+  --floe-control-edge: color-mix(in srgb, var(--foreground) 66%, var(--card));
+  --floe-control-edge-hover: color-mix(in srgb, var(--foreground) 80%, var(--card));
 
   /* ---------------------------------------------------------------------
    * State — the only hover/press/selection values in the system. They are

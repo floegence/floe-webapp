@@ -107,6 +107,14 @@ async function workload(page, scenario) {
     return;
   }
   if (scenario === 'control-toggle') {
+    const checkbox = page.getByRole('checkbox', { name: 'Notifications', exact: true });
+    const checkboxBefore = await checkbox.isChecked();
+    await checkbox.focus();
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Space');
+      await pause(100);
+    }
+    assert.equal(await checkbox.isChecked(), checkboxBefore, 'checkbox workload retains its initial state');
     const switchInput = page.getByRole('switch', { name: 'Off md', exact: true });
     await page.locator('[data-gallery-group="checks"]').scrollIntoViewIfNeeded();
     await switchInput.focus();

@@ -1,3 +1,4 @@
+import { CheckboxStateStudy } from './CheckboxStateStudy';
 import { WindowMaterialStudy } from './WindowMaterialStudy';
 import { FileAppearanceStudy } from './FileAppearanceStudy';
 import { ProgressShimmerStudy } from './ProgressShimmerStudy';
@@ -104,6 +105,7 @@ function Content() {
       },
     });
   });
+  if (params.get('panel') === 'checkboxes') return <CheckboxStateStudy />;
   return (
     <Show when={params.get('panel') === 'progress'} fallback={
     <Shell

@@ -53,6 +53,7 @@
         .floe-field,
         [data-floe-control],
         [data-floe-surface-part='tab'],
+        [data-floe-choice-kind='checkbox'],
         [data-floe-card-variant]:not([data-floe-card-variant='default'])
       )
     ) {
@@ -332,7 +333,7 @@
       :is(
         [data-floe-card-variant='default'],
         [data-floe-surface-part='choice'],
-        [data-floe-surface-part='indicator'],
+        [data-floe-surface-part='indicator']:not(:where([data-floe-choice-kind='checkbox'])),
         [data-floe-surface-part='rail'],
         [data-floe-surface-part='tab-rail'],
         [data-floe-surface-part='segment'],
@@ -411,7 +412,7 @@
       background-color: var(--floe-state-selected-strong);
       color: var(--foreground);
     }
-    & [data-floe-surface-part='indicator']:not([data-floe-selected='true']),
+    & [data-floe-surface-part='indicator']:not(:where([data-floe-choice-kind='checkbox'])):not([data-floe-selected='true']),
     & [data-floe-surface-part='switch-track']:not([data-floe-selected='true']) {
       /* The control face, not a strong outline, supplies non-text contrast. */
       background-color: var(--muted-foreground);
@@ -687,4 +688,51 @@
 @media (forced-colors: active) {
   [data-floe-surface-part='tab']:focus-visible { outline: 2px solid Highlight; outline-offset: -2px; }
   [data-floe-surface-part='tab'][data-floe-tab-motion='dragging'] { border-color: Highlight; }
+}
+
+/* Checkbox state is carried by hollow versus solid faces, independently of
+ * the material's seams. Hover never supplies a selected-looking fill. */
+[data-floe-choice-kind='checkbox'] {
+  border-width: 1px;
+  border-color: var(--floe-control-edge);
+  background-color: transparent;
+  --floe-surface-decoration: 0 0 transparent;
+}
+[data-floe-choice-kind='checkbox'][data-floe-selected='true'] {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+label:hover:not(:has(:disabled))
+  [data-floe-choice-kind='checkbox']:not([data-floe-selected='true']) {
+  border-color: var(--floe-control-edge-hover);
+}
+/* Increase the native label target without changing the indicator's scale or
+ * pushing adjacent content sideways. Hosts may associate an external label. */
+[data-floe-checkbox-target] {
+  position: relative;
+  min-height: 24px;
+  min-width: 24px;
+}
+[data-floe-checkbox-target]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+@media (pointer: coarse) {
+  [data-floe-checkbox-target] { min-height: 44px; min-width: 44px; }
+}
+@media (forced-colors: active) {
+  [data-floe-choice-kind='checkbox'] {
+    forced-color-adjust: none;
+    border-color: ButtonText;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+  [data-floe-choice-kind='checkbox'][data-floe-selected='true'] {
+    border-color: Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+  }
+  label:has(:disabled) [data-floe-choice-kind='checkbox'] { border-color: GrayText; }
 }

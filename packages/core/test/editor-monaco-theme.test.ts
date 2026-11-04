@@ -22,7 +22,7 @@ describe('Monaco shell themes', () => {
         base: 'vs-dark',
         colors: expect.objectContaining({
           'editor.background': '#272822',
-          'editorCursor.foreground': '#F92672',
+          'editorCursor.foreground': '#FA2874',
         }),
       })
     );

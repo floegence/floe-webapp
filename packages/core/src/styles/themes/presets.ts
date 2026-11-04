@@ -802,6 +802,10 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'solarized-light',
+    semanticTokens: {
+      '--floe-control-edge': 'color-mix(in srgb, #586E75 85%, #FFFDF4)',
+      '--floe-control-edge-hover': '#586E75',
+    },
     inlineCode: { foreground: '#135BA7', background: '#F2EFE0' },
     displayName: 'Solarized Light',
     description: 'Solarized warmth with measured cyan, green, and amber syntax.',
@@ -1114,7 +1118,7 @@ export const builtInShellThemePresets = [
     card: '#30312B',
     muted: '#3A3B34',
     mutedForeground: '#C5C8B5',
-    primary: '#F92672',
+    primary: '#FA2874',
     // Preserve the pink action fill while keeping its darker hover state readable.
     primaryForeground: '#050604',
     border: '#494A42',

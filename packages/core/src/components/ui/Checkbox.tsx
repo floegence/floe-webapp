@@ -230,9 +230,11 @@ export function Checkbox(props: CheckboxProps) {
     <div
       data-floe-surface="inset"
       data-floe-surface-part="indicator"
+      data-floe-choice-kind="checkbox"
+      aria-hidden="true"
       data-floe-selected={isChecked() || local.indeterminate ? 'true' : undefined}
       class={cn(
-        'rounded-xs border-2 transition-[background-color,border-color,color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
+        'rounded-xs border transition-[background-color,border-color,color,transform] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
         'flex items-center justify-center',
         sizeStyles[size()].box,
         isChecked() || local.indeterminate
@@ -283,6 +285,7 @@ export function Checkbox(props: CheckboxProps) {
       {/* Default variant */}
       <Match when={variant() === 'default'}>
         <label
+          data-floe-checkbox-target
           class={cn(
             'inline-flex items-start gap-2 cursor-pointer select-none',
             isDisabled() && 'opacity-50 cursor-not-allowed',

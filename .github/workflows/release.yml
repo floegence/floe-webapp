@@ -134,6 +134,9 @@ jobs:
       - name: Verify progress shimmer across shell themes
         run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs
 
+      - name: Verify checkbox states in packed consumers
+        run: pnpm test:checkbox-states
+
       - name: Verify Porcelain Light visibility in packed consumers
         run: node scripts/check-porcelain-visibility-browser.mjs
 

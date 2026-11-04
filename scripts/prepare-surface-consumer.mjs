@@ -118,6 +118,7 @@ writeFileSync(
           'WindowMaterialStudy.tsx',
           'FileAppearanceStudy.tsx',
           'ProgressShimmerStudy.tsx',
+          'CheckboxStateStudy.tsx',
         ].map((file) => [file, sha256(resolve(repo, 'scripts/fixtures/surface-style', file))])
       ),
       gallerySha256: sha256(

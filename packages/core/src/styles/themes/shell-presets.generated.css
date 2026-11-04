@@ -786,6 +786,8 @@
   --floe-progress-text-peak: rgb(91 105 108);
   --floe-progress-primary-base: rgb(5 72 89);
   --floe-progress-primary-white-mix: 28.0%;
+  --floe-control-edge: color-mix(in srgb, #586E75 85%, #FFFDF4);
+  --floe-control-edge-hover: #586e75;
 }
 :root[data-floe-shell-theme='github-light'] {
   --floe-window-background: color-mix(in srgb, var(--card) 35%, white);
@@ -1568,7 +1570,7 @@
   --foreground: #f8f8f2;
   --inline-code-foreground: #70ddea;
   --inline-code-background: #2c3631;
-  --primary: #f92672;
+  --primary: #fa2874;
   --primary-foreground: #050604;
   --secondary: #3a3b34;
   --secondary-foreground: #f8f8f2;
@@ -1578,7 +1580,7 @@
   --accent-foreground: #f8f8f2;
   --border: #494a42;
   --input: #7b7d6e;
-  --ring: #f92672;
+  --ring: #fa2874;
   --chrome-border: #494a42;
   --top-bar-border: #494a42;
   --activity-bar-border: #494a42;
@@ -1604,16 +1606,16 @@
   --highlight-block-tip-accent: #71c8c0;
   --sidebar: #20211c;
   --sidebar-foreground: #f8f8f2;
-  --sidebar-primary: #f92672;
+  --sidebar-primary: #fa2874;
   --sidebar-primary-foreground: #050604;
   --sidebar-accent: #3a3b34;
   --sidebar-accent-foreground: #f8f8f2;
   --sidebar-border: #494a42;
-  --sidebar-ring: #f92672;
+  --sidebar-ring: #fa2874;
   --activity-bar: #20211c;
   --activity-bar-foreground: #c5c8b5;
   --activity-bar-foreground-active: #f8f8f2;
-  --activity-bar-badge: #f92672;
+  --activity-bar-badge: #fa2874;
   --activity-bar-badge-foreground: #050604;
   --terminal-background: #1d1e19;
   --terminal-foreground: #f8f8f2;
@@ -1631,8 +1633,8 @@
   --glow: #5a594e;
   --floe-progress-text-base: rgb(165 165 159);
   --floe-progress-text-peak: rgb(255 255 255);
-  --floe-progress-primary-base: rgb(249 38 114);
-  --floe-progress-primary-white-mix: 33.0%;
+  --floe-progress-primary-base: rgb(250 40 116);
+  --floe-progress-primary-white-mix: 33.5%;
 }
 :root[data-floe-shell-theme='nord'] {
   --floe-window-background: color-mix(in srgb, var(--card) 90%, white);

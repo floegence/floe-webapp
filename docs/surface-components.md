@@ -234,3 +234,52 @@ checks; product consumers need no local color overrides.
 ## Document tabs in floating headers
 
 FloatingWindow.titleContent replaces the visible title with interactive identity content while title remains the accessible window name. Only actual controls exclude pointer drags and double-click maximize; unused title space, action gaps and inactive feedback slots keep normal window behavior. Native titlebar listeners preserve this physical ownership when a host portals its document actions into the header. WindowTabs reserves a trailing 32px window drag area even when the strip overflows. WindowTabs composes the shared Tabs primitive at titlebar height with horizontal overflow, keyboard navigation and per-document close actions. Tab labels cannot select text. Supplying onReorder enables pointer sorting with a directly held tab face, animated neighbor displacement, a short settle and edge scrolling, plus Alt+Shift+Left/Right keyboard sorting. Mouse gestures never show a focus outline; keyboard focus remains visible inside the tab, and reduced motion removes displacement/settle animation. A completed drop proposes the complete ordered IDs without changing selection; Escape, pointer cancellation, blur or removed sources cancel it. Hosts apply the order while retaining document identity. Hosts own document state, dirty confirmation and retained panels; one document should use the ordinary title. Provide translated tab close and overflow labels, full identity tooltips, and panel relationships where applicable.
+
+## Checkbox state distinction
+
+Checkbox indicators use one stable border-box (14/16/20px) and a 1px boundary.
+Unchecked faces are hollow with the shared control-edge token; hover changes
+only the edge. Checked and mixed faces use the primary semantic pair with a
+check or minus mark. Disabled faces retain the same state distinction. Native
+checked/indeterminate state and ARIA remain authoritative, and keyboard focus
+retains its independent ring. Default labels provide at least 24px targets,
+44px with a coarse pointer; hosts may associate a second native label with the
+input id for separate text. No whole-row click handler is required.
+
+`pnpm test:checkbox-states` verifies packed styles and Tailwind consumers in
+Chromium, WebKit and Firefox, all 28 presets, carrying planes, sizes, disabled
+and mixed states, keyboard and label activation, stable geometry, coarse
+pointers, forced colors and reduced motion. This complements contrast checks:
+a contrasting solid unchecked face still violates the state contract.
+
+The shared control edge uses 66% foreground on card by default; Solarized Light
+owns an 85% edge because its low-ink palette otherwise falls below 3:1 on
+muted planes. Porcelain retains its explicit reviewed edge. Monokai's primary
+is adjusted from #F92672 to #FA2874 so the selected compact face also clears
+3:1 on its muted plane, while retaining the same pink action identity.
+
+### Checkbox repair acceptance (0.90.5)
+
+Published 0.90.4 fails the hollow-unchecked assertion: Porcelain Light paints
+rgb(104,104,104) with no visible boundary. The repaired packed consumers pass
+168 browser/entry/preset combinations, 60 state/size/plane cases each, plus
+keyboard, label/group/variant activation, coarse-pointer 2x captures, forced
+colors, reduced motion and unchanged released Radio/Switch faces. Light and
+dark screenshots were inspected. Final focused sources have zero lint warnings;
+repository lint retains its existing unrelated warnings.
+
+The full local make check passed (995 root and 400 client tests, builds,
+distribution, clean packed consumers and browser gates). After the selector
+specificity correction, the final unit/lint/typecheck/build/verify, checkbox
+matrix, published Radio/Switch comparison and Porcelain checks passed again.
+The older optional surface-components script additionally exposes stale
+expectations about indicator/Switch relief and flat-tag public shadow overrides;
+those unrelated assertions were not weakened or claimed as passing.
+
+Five interleaved same-material Chromium control-toggle samples include native
+Checkbox, Switch, Radio and Tabs. Light paint/raster medians changed -4.1%/-1.0%;
+dark +5.1%/+10.9%, with only three of five dark raster pairs above 10%, below
+the existing sustained-regression criterion of four. Input-to-next-frame P95
+medians were 8.0 to 7.7ms light and 7.7 to 7.5ms dark. All samples had zero
+missed frames and long tasks. These are local measurements, not a general
+performance improvement claim. Task evidence lives under .cache/surface-style.

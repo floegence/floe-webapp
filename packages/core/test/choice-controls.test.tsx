@@ -80,3 +80,35 @@ it('keeps mixed visuals, native state, ARIA and consumer refs in agreement', () 
   expect(input.indeterminate).toBe(false);
   expect(input.getAttribute('aria-checked')).toBe('false');
 });
+
+it('keeps one native checkbox and indicator while requesting each controlled change once', () => {
+  const [checked, setChecked] = createSignal(false);
+  const changes: boolean[] = [];
+  dispose = render(() => <Checkbox id="stable-choice" label="Choice" checked={checked()}
+    onChange={value => { changes.push(value); setChecked(value); }} />, document.body);
+  const input = document.querySelector('input')!;
+  const face = document.querySelector('[data-floe-choice-kind="checkbox"]')!;
+  const label = document.querySelector('label')!;
+  expect(label.hasAttribute('data-floe-checkbox-target')).toBe(true);
+  expect(face.getAttribute('data-floe-selected')).toBeNull();
+  label.click();
+  expect(changes).toEqual([true]);
+  expect(input.checked).toBe(true);
+  expect(face.getAttribute('data-floe-selected')).toBe('true');
+  label.click();
+  expect(changes).toEqual([true, false]);
+  expect(input.checked).toBe(false);
+  expect(face.querySelector('svg')).toBeNull();
+  expect(document.querySelector('input')).toBe(input);
+  expect(document.querySelector('[data-floe-choice-kind="checkbox"]')).toBe(face);
+});
+
+it.each(['disabled', 'readOnly'] as const)('retains the unchecked state for %s choices', state => {
+  const changes: boolean[] = [];
+  dispose = render(() => <Checkbox {...{ [state]: true }} checked={false} label="Unavailable choice"
+    onChange={value => changes.push(value)} />, document.body);
+  document.querySelector('label')!.click();
+  expect(changes).toEqual([]);
+  expect(document.querySelector('input')!.checked).toBe(false);
+  expect(document.querySelector('[data-floe-choice-kind="checkbox"]')!.querySelector('svg')).toBeNull();
+});
