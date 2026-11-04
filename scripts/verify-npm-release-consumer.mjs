@@ -52,6 +52,9 @@ execFileSync(
   'npm',
   [
     'install',
+    // Publication checks may have cached metadata before this version existed.
+    // Revalidate it when testing the freshly published release.
+    '--prefer-online',
     '--prefix',
     root,
     '--no-audit',
@@ -147,7 +150,7 @@ for (const template of ['minimal', 'full']) {
   }
   // A packed check installs the candidate tarball into this disposable project.
   // The published check installs the generated manifest exactly as users receive it.
-  execFileSync('npm', ['install', '--prefix', project, '--no-audit', '--no-fund', '--ignore-scripts',
+  execFileSync('npm', ['install', '--prefer-online', '--prefix', project, '--no-audit', '--no-fund', '--ignore-scripts',
     ...(process.argv.includes('--packed') ? [packageSpecs[0]] : []),
   ], { cwd: project, stdio: 'inherit' });
   execFileSync('npm', ['audit', '--prefix', project, '--audit-level=low'], { cwd: project, stdio: 'inherit' });
