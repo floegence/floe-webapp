@@ -17,6 +17,7 @@ import {
   Input,
   MultiSelect,
   Pagination,
+  PromptCard,
   Select,
   Slider,
   createTableModel,
@@ -34,6 +35,10 @@ const records = [
   { id: 'three', name: 'Cirrus', region: 'Europe' },
 ];
 export function BusinessControlsDemo() {
+  const [promptOpen, setPromptOpen] = createSignal(false);
+  const [promptDraft, setPromptDraft] = createSignal('');
+  const [promptAnchor, setPromptAnchor] = createSignal<{ x: number; y: number }>();
+  const [lastPrompt, setLastPrompt] = createSignal('');
   const [rtl, setRtl] = createSignal(false),
     [pending, setPending] = createSignal(false),
     [remoteError, setRemoteError] = createSignal(false);
@@ -73,6 +78,41 @@ export function BusinessControlsDemo() {
             Toggle error
           </Button>
         </div>
+        <section class="space-y-2">
+          <h2 class="text-base font-semibold">Contextual question</h2>
+          <Button
+            variant="outline"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setPromptAnchor({ x: rect.left, y: rect.bottom });
+              setPromptOpen(true);
+            }}
+          >
+            Ask about this project
+          </Button>
+          <output class="block text-caption" aria-label="Last submitted question">
+            {lastPrompt()}
+          </output>
+          <PromptCard
+            open={promptOpen()}
+            anchor={promptAnchor()}
+            title="Project assistant"
+            closeLabel="Close"
+            question="What would you like to check?"
+            inputLabel="Your question"
+            placeholder="Describe what you need…"
+            value={promptDraft()}
+            onValueChange={setPromptDraft}
+            submitLabel="Ask"
+            submitDisabled={!promptDraft().trim()}
+            references={<span>Atlas project</span>}
+            onClose={() => setPromptOpen(false)}
+            onSubmit={() => {
+              setLastPrompt(promptDraft());
+              setPromptOpen(false);
+            }}
+          />
+        </section>
         <Breadcrumb
           items={[
             { id: 'home', label: 'Workspace', href: '#' },

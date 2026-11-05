@@ -49,6 +49,8 @@ window.disposeApp = render(() => <App />, document.getElementById('root'));
   server = await createServer({ configFile: false, root: resolve(root, 'packages/core'), plugins: [solid(), {name:'viewport-evidence',configureServer(s){s.middlewares.use('/__viewport-evidence',(req,res)=>{let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{if(process.argv.includes('--serve')) console.log(body);res.end('ok');});});}}],
     optimizeDeps: { entries: [resolve(fixture, 'index.html')] }, server: {host:'127.0.0.1',port:0} });
   await server.listen();
+  // Static generated fixtures must not reload during frame or focus measurements.
+  await server.watcher.close();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').at(-1)}/`;
   if (process.argv.includes('--serve')) {
     await writeFile(resolve(fixture, 'server-url'), url, { flag: 'wx' });

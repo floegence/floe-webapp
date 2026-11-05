@@ -41,6 +41,8 @@ export interface SelectBaseProps {
   options: readonly SelectOption[];
   placeholder?: string;
   class?: string;
+  /** Optional layer for choices nested in elevated overlays. */
+  zIndex?: number;
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -431,6 +433,7 @@ function Choice(props: ChoiceProps) {
           }}
           dir={locale.direction}
           style={{
+            'z-index': props.zIndex,
             width: 'max-content',
             'min-width': width() + 'px',
             'max-width': 'calc(100vw - 24px)',

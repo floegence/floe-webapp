@@ -326,3 +326,5 @@ Popover use the same motion rules. Closing returns toward the anchor. Clamped
 edge panels fade in place, and reduced-motion preferences suppress travel.
 
 Segmented controls use one moving selected face, with interrupted selections continuing from their current position. Labels and native radio state update immediately; reduced motion and forced colors settle directly. Geometry follows option resizing in local CSS pixels, including inside scaled Workbench surfaces.
+
+The shared [`PromptCard`](docs/business-controls.md#contextual-prompt-card) provides compact, immediately editable contextual questions with retained exit motion and host-owned drafts.

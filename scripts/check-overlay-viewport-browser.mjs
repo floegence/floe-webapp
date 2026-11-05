@@ -38,6 +38,8 @@ render(()=><App/>,document.getElementById('root'));
 `);
   server = await createServer({configFile:false,root:resolve(root,'packages/core'),plugins:[solid()],optimizeDeps:{entries:[resolve(fixture,'index.html')]},server:{host:'127.0.0.1',port:0}});
   await server.listen();
+  // Static generated fixtures must not reload during frame or focus measurements.
+  await server.watcher.close();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').pop()}/`;
   if(process.argv.includes('--serve')) {console.log(url);await new Promise(()=>{});}
   for(const engine of [chromium,webkit]) {

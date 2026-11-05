@@ -68,7 +68,7 @@ try {
       await page.keyboard.press('Escape');
       await page.getByRole('button', { name: 'Save settings', exact: true }).click();
       await page.waitForFunction(() =>
-        document.querySelector('output')?.textContent.includes('"environment","prod"')
+        document.querySelector('output[aria-label="Submitted settings"]')?.textContent.includes('"environment","prod"')
       );
       const submitted = JSON.parse(await page.getByLabel('Submitted settings').textContent());
       assert.deepEqual(

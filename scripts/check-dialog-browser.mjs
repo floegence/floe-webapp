@@ -170,7 +170,7 @@ try {
   await page.getByRole('button', { name: 'Open shape settings', exact: true }).click();
   const shapeDialog = page.getByRole('dialog', { name: 'Shape settings', exact: true });
   // The marker sits on the dialog root itself, not on a child.
-  const shapePanel = page.locator('[data-floe-dialog-panel]');
+  const shapePanel = shapeDialog; // Exiting dialogs may still be mounted and inaccessible.
   await shapePanel.waitFor();
   await page.waitForTimeout(400);
   const compactHeight = await shapePanel.evaluate((el) => el.getBoundingClientRect().height);
@@ -181,7 +181,7 @@ try {
   // lands in, and a single early sample reads the old height on a slow frame.
   await page.evaluate(() => {
     window.__heightSamples = [];
-    const panel = document.querySelector('[data-floe-dialog-panel]');
+    const panel = document.querySelector('[data-floe-dialog-panel][data-floating-presence="open"]');
     const start = performance.now();
     const tick = () => {
       window.__heightSamples.push(panel.getBoundingClientRect().height);

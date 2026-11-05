@@ -9,6 +9,7 @@ const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const temporary = mkdtempSync(join(root, '.consumer-budget-'));
 const cases = [
   { name: 'button', entry: './ui', exports: ['Button'], gzip: 24000 },
+  { name: 'prompt-card', entry: './ui', exports: ['PromptCard'], gzip: 32000 },
   {
     name: 'business-form',
     entry: './ui',

@@ -72,6 +72,8 @@ render(() => <App/>, document.getElementById('root'));
     server: { host: '127.0.0.1', port: 0 },
   });
   await server.listen();
+  // The generated fixture is immutable; filesystem delivery must not reload a measurement page.
+  await server.watcher.close();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').pop()}/`;
   browser = await chromium.launch();
   for (const primitive of ['dropdown', 'popover', 'popover-top']) {

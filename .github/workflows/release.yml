@@ -89,6 +89,7 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium webkit firefox
           pnpm test:business-controls
+          node scripts/check-prompt-card-browser.mjs --all
           pnpm test:button-contrast
           pnpm test:input-focus
           node scripts/check-content-sizing-browser.mjs

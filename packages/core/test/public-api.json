@@ -398,6 +398,8 @@
     "ProcessingIndicatorVariant",
     "ProgressColor",
     "ProgressSize",
+    "PromptCard",
+    "PromptCardProps",
     "QuoteBlock",
     "QuoteBlockProps",
     "RadioGroup",

@@ -1002,3 +1002,75 @@
       0 0 28px color-mix(in srgb, var(--glow) 38%, transparent);
   }
 }
+
+/* Contextual input uses the shared presence owner and language tokens. The
+ * positioning layer never animates, and typing never schedules a motion loop. */
+.floe-prompt-card-positioner { position: fixed; pointer-events: none; width: min(24rem, var(--floe-prompt-max-width)); }
+.floe-prompt-card {
+  --floe-floating-enter-duration: var(--floe-duration-base);
+  --floe-floating-exit-duration: var(--floe-duration-fast);
+  --floe-floating-enter-y: -0.25rem;
+  --floe-floating-exit-y: -0.125rem;
+  --floe-floating-enter-scale: 0.985;
+  --floe-floating-exit-scale: 0.995;
+  --floe-floating-origin: var(--floe-prompt-origin-x) top;
+  display: flex; flex-direction: column; min-width: 0;
+  max-height: var(--floe-prompt-max-height);
+  overflow: hidden; pointer-events: auto;
+  border: 1px solid var(--floe-line);
+  border-radius: var(--floe-radius-card);
+  background: var(--floe-plane-float);
+  color: var(--floe-ink);
+  font-size: var(--floe-type-body);
+  line-height: var(--floe-line-body);
+}
+.floe-prompt-card[data-floating-side='top'] {
+  --floe-floating-enter-y: 0.25rem;
+  --floe-floating-exit-y: 0.125rem;
+  --floe-floating-origin: var(--floe-prompt-origin-x) bottom;
+}
+.floe-prompt-card[data-floating-side='edge'] {
+  --floe-floating-enter-y: 0;
+  --floe-floating-exit-y: 0;
+  --floe-floating-enter-scale: 1;
+  --floe-floating-exit-scale: 1;
+}
+.floe-prompt-card-header {
+  display: flex; align-items: center; flex-shrink: 0;
+  gap: var(--floe-gap-control);
+  padding: var(--floe-pad-control) var(--floe-pad-control) 0 var(--floe-pad-card);
+}
+.floe-prompt-card-header h2 {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: var(--floe-type-supporting); line-height: var(--floe-line-control);
+  font-weight: 500; color: var(--floe-ink-soft);
+}
+.floe-prompt-card-icon { display: grid; place-items: center; flex-shrink: 0; width: 1rem; height: 1rem; }
+.floe-prompt-card-icon > svg { width: 100%; height: 100%; }
+.floe-prompt-card .floe-prompt-card-close { width: var(--floe-control-height-xs); height: var(--floe-control-height-xs); border-radius: var(--floe-radius-sm); }
+.floe-prompt-card-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: var(--floe-pad-tight) var(--floe-pad-card) var(--floe-pad-group); }
+.floe-prompt-card-question { margin-bottom: var(--floe-gap-control); font-size: var(--floe-type-body); line-height: var(--floe-line-body); font-weight: 500; overflow-wrap: anywhere; }
+.floe-prompt-card-field { border: 0; }
+.floe-prompt-card-input {
+  display: block; width: 100%; min-height: 2.5rem; max-height: min(10rem, 30dvh);
+  padding: var(--floe-pad-tight) 0; border: 0; border-radius: 0;
+  background: transparent; font: inherit; line-height: 1.5;
+  field-sizing: content; resize: none;
+}
+.floe-prompt-card-input::placeholder { color: var(--floe-field-placeholder); }
+.floe-prompt-card-actions { display: flex; align-items: center; gap: var(--floe-gap-control); padding: var(--floe-pad-control) 0 0; }
+.floe-prompt-card-references { min-width: 0; }
+.floe-prompt-card-tools { display: flex; align-items: center; flex: 1; min-width: 0; gap: var(--floe-gap-inline); }
+.floe-prompt-card-tools > .relative { min-width: 0; max-width: 15rem; }
+.floe-prompt-card .floe-prompt-card-attach { flex-shrink: 0; width: var(--floe-control-height-sm); height: var(--floe-control-height-sm); border-radius: var(--floe-radius-sm); }
+.floe-prompt-card .floe-prompt-card-selection { width: auto; max-width: 100%; height: var(--floe-control-height-sm); padding: 0 var(--floe-pad-control); border-color: transparent; background: transparent; font-size: var(--floe-type-supporting); box-shadow: none; }
+.floe-prompt-card .floe-prompt-card-selection:hover { background: var(--muted); }
+.floe-prompt-card .floe-prompt-card-submit { flex-shrink: 0; width: var(--floe-control-height-sm); height: var(--floe-control-height-sm); border-radius: 50%; }
+.floe-prompt-card-feedback { margin-top: var(--floe-gap-control); font-size: var(--floe-type-supporting); line-height: var(--floe-line-control); color: var(--error); }
+.floe-prompt-card-feedback > p { margin: 0; }
+@media (pointer: coarse) {
+  .floe-prompt-card .floe-prompt-card-close, .floe-prompt-card .floe-prompt-card-attach, .floe-prompt-card .floe-prompt-card-submit { width: 2.75rem; height: 2.75rem; }
+  .floe-prompt-card-input { font-size: 1rem; }
+  .floe-prompt-card .floe-prompt-card-selection { min-height: 2.75rem; }
+}
+@media (forced-colors: active) { .floe-prompt-card { border-color: CanvasText; } }

@@ -44,7 +44,7 @@ The built UI is browser DOM output. Source-level SSR tests verify pure render re
 
 scripts/check-public-api.mjs compares the built root, ui, and app export names with a reviewable inventory. Intentional additions require explicit inventory review; it is not a substitute for signature compatibility tests. Existing import paths and legacy names remain compatible. Deprecations must document the replacement and migration before removal; breaking behavior requires a versioned release and downstream acceptance.
 
-scripts/check-consumer-budgets.mjs bundles representative consumers from built public entrypoints, measures initial gzip JavaScript (Solid runtime external, styles excluded), and rejects eager optional editor/document/graph engines. Budgets are 24 KB for Button, 50 KB for the business-form composition, and 180 KB for the application shell. Installed dependency size and initial browser JavaScript are distinct; heavy optional dependency packaging should be split only with measured benefit and a migration contract.
+scripts/check-consumer-budgets.mjs bundles representative consumers from built public entrypoints, measures initial gzip JavaScript (Solid runtime external, styles excluded), and rejects eager optional editor/document/graph engines. Budgets are 24 KB for Button, 32 KB for PromptCard (including the accessible model menu and file controls), 50 KB for the business-form composition, and 180 KB for the application shell. Installed dependency size and initial browser JavaScript are distinct; heavy optional dependency packaging should be split only with measured benefit and a migration contract.
 
 Run make check for deterministic repository acceptance. test:business-controls exercises the actual example in Chromium, WebKit, and Firefox with keyboard, native submission/reset, validation, retained state, RTL, and axe WCAG checks. test:input-focus and overlay acceptance preserve border-only focus, theme geometry, and surface ownership. Automated axe coverage is evidence, not a claim of complete assistive-technology certification.
 
@@ -55,3 +55,32 @@ Run make check for deterministic repository acceptance. test:business-controls e
 The nested-window cases also verify that Escape dismisses the selection listbox while preserving the focused control and containing window, then closes the window on the next Escape (0.90.9).
 
 The same three-engine matrix verifies content-driven popup width, viewport bounds and readable long options (0.90.10).
+
+
+## Contextual prompt card
+
+`PromptCard` is a non-modal, controlled question-and-input surface exported from
+`@floegence/floe-webapp-core/ui`. Hosts supply localized title, question, labels,
+draft, references, feedback, submit/close callbacks and optional viewport-point
+anchor/insets. It adds no conversation state, transport, window chrome or retry
+policy. Optional `attachment` handles file selection, paste and drop; optional `selection` presents a compact accessible model or mode choice using the shared Select. File state, available choices and asynchronous loading remain host-owned. A host may declare related portalled controls through `containsTarget`; those controls keep their own Escape command. `bodyProps` carries host scroll/input ownership attributes to the constrained reading viewport. The default portal stays inside the initiating surface; `portalScope="viewport"` is an explicit host choice for cross-surface tasks.
+
+The 24rem card uses Floe's opaque floating plane, neutral shadow, 13px body and
+12px identity. The editor and compact toolbar form one seamless input, without an internal separator. Focus changes only the existing card border color, with no ring or glow. Touch
+inputs retain 16px text and 44px action targets. Height follows content, with a
+bounded editor and scrollable body for small visual viewports. Placement clamps
+to safe areas and native-header insets and flips above the trigger when needed.
+
+Shared floating presence owns mounting and reversal. A 200ms decelerating
+entrance and 140ms exit translate four/two pixels toward the resolved trigger
+edge with restrained scale; clamped placement fades in place. Input focuses in
+the opening task, without waiting for motion or a server response. Submission paints its reserved pending icon before deferring host work; subsequent busy state stays host-controlled and preserves action geometry. Closing
+revokes input immediately, retains content until exit ends, and restores trigger
+focus for Close/Escape. Outside pointer actions continue to their destination.
+IME composition does not submit or dismiss. Reduced motion removes transitions.
+
+Viewport and size observers exist only while mounted; there is no idle polling,
+per-keystroke measurement, blur, decorative animation loop or persistent layer
+promotion. `scripts/check-prompt-card-browser.mjs --all` covers Chromium, WebKit
+and Firefox across placement, density, themes, motion, immediate editing,
+reversal, related content, busy state, failure feedback and focus restoration.

@@ -24,6 +24,8 @@ try {
   server = await createServer({ configFile: false, root: resolve(root, 'packages/core'), plugins: [solid()],
     optimizeDeps: { entries: [resolve(fixture, 'index.html')] }, server: { host: '127.0.0.1', port: 0 } });
   await server.listen();
+  // Static generated fixtures must not reload during frame or focus measurements.
+  await server.watcher.close();
   for (const engine of [chromium, webkit]) {
     const browser = await engine.launch(engine === chromium && process.env.FLOE_CHROMIUM_EXECUTABLE ? { executablePath: process.env.FLOE_CHROMIUM_EXECUTABLE } : {});
     try {

@@ -1,0 +1,367 @@
+/* global window, document, getComputedStyle, requestAnimationFrame, KeyboardEvent, Event, performance, DOMMatrixReadOnly, DataTransfer, File, DragEvent */
+import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
+import { createRequire } from 'node:module';
+import { fileURLToPath, URL } from 'node:url';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { chromium, webkit, firefox } from 'playwright';
+import solid from 'vite-plugin-solid';
+const require = createRequire(new URL('../packages/core/package.json', import.meta.url));
+const { createServer } = await import(require.resolve('vite'));
+const { default: tailwind } = await import(require.resolve('@tailwindcss/vite'));
+const root = fileURLToPath(new URL('../', import.meta.url));
+const output = root + '.cache/prompt-card';
+await mkdir(output, { recursive: true });
+const server = await createServer({
+  configFile: false,
+  root: root + 'packages/core',
+  plugins: [solid(), tailwind()],
+  optimizeDeps: { entries: ['test/browser/prompt-card.html'] },
+  resolve: { dedupe: ['solid-js'] },
+  server: { host: '127.0.0.1', port: 0, fs: { allow: [root] } },
+});
+const report = [];
+let browser;
+try {
+  await server.listen();
+  await server.watcher.close();
+  for (const [engine, launcher] of Object.entries(
+    process.argv.includes('--all') ? { chromium, webkit, firefox } : { chromium }
+  )) {
+    browser = await launcher.launch({ headless: true });
+    for (const width of [390, 1280])
+      for (const dark of [false, true])
+        for (const reducedMotion of ['no-preference', 'reduce']) {
+          const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion });
+          const errors = [];
+          page.on('pageerror', (error) => errors.push(error.message));
+          await page.goto(server.resolvedUrls.local[0] + 'test/browser/prompt-card.html');
+          await page.evaluate((dark) => {
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.dataset.floeShellTheme = dark
+              ? 'porcelain-dark'
+              : 'porcelain-light';
+          }, dark);
+          const card = page.locator('[data-floe-prompt-card]');
+          const trigger = page.locator('#trigger');
+          for (const top of [160, 780]) {
+            await page.evaluate((top) => window.promptCard.setTop(top), top);
+            await trigger.evaluate((element) => {
+              window.promptFrames = [];
+              element.addEventListener(
+                'click',
+                () => {
+                  const start = performance.now();
+                  const record = () => {
+                    const panel = document.querySelector('[data-floe-prompt-card]');
+                    if (!panel) return;
+                    const style = getComputedStyle(panel);
+                    const matrix = new DOMMatrixReadOnly(style.transform);
+                    window.promptFrames.push({
+                      time: performance.now() - start,
+                      opacity: +style.opacity,
+                      y: matrix.m42,
+                      scale: matrix.m11,
+                      layout: panel.parentElement.getBoundingClientRect().toJSON(),
+                    });
+                    if (performance.now() - start < 240) requestAnimationFrame(record);
+                  };
+                  requestAnimationFrame(record);
+                },
+                { once: true }
+              );
+            });
+            await trigger.focus();
+            await trigger.click();
+            await card.waitFor();
+            const response = await card.evaluate(async (element) => {
+              const editor = element.querySelector('textarea');
+              const focused = document.activeElement === editor;
+              editor.value = 'Immediate draft';
+              editor.dispatchEvent(new Event('input', { bubbles: true }));
+              while (element.dataset.floatingPresence === 'entering')
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+              await Promise.allSettled(
+                element.getAnimations().map((animation) => animation.finished)
+              );
+              return {
+                focused,
+                draft: editor.value,
+                side: element.dataset.floatingSide,
+                bounds: element.getBoundingClientRect().toJSON(),
+                font: getComputedStyle(editor).fontSize,
+                question: getComputedStyle(element.querySelector('.floe-prompt-card-question'))
+                  .fontSize,
+                backgroundImage: getComputedStyle(element).backgroundImage,
+                blur: getComputedStyle(element).backdropFilter,
+                shadow: getComputedStyle(element).boxShadow,
+                willChange: getComputedStyle(element).willChange,
+              };
+            });
+            assert.equal(
+              response.focused,
+              true,
+              `${engine}/${width}/${reducedMotion}: editor is ready while entrance runs`
+            );
+            assert.equal(response.draft, 'Immediate draft');
+            assert.equal(response.side, top === 160 ? 'bottom' : 'top');
+            assert.ok(
+              response.bounds.width <= 384 && response.bounds.height <= 190,
+              JSON.stringify(response)
+            );
+            assert.ok(
+              response.bounds.x >= 7 &&
+                response.bounds.right <= width - 7 &&
+                response.bounds.bottom <= 892.5,
+              JSON.stringify({ engine, width, top, reducedMotion, response })
+            );
+            assert.equal(response.font, '13px');
+            assert.equal(response.question, '13px');
+            assert.equal(response.backgroundImage, 'none');
+            assert.equal(response.blur, 'none');
+            assert.equal(
+              await card
+                .locator('.floe-prompt-card-field')
+                .evaluate((element) => getComputedStyle(element).borderBottomWidth),
+              '0px',
+              'frameless input has no separator'
+            );
+            const model = card.getByRole('combobox', { name: 'Model' });
+            await model.click();
+            await page.getByRole('option', { name: 'Fast', exact: true }).click();
+            assert.equal(await page.evaluate(() => window.promptCard.model()), 'fast');
+            assert.equal(
+              await card.getAttribute('aria-hidden'),
+              null,
+              'model selection belongs to the card'
+            );
+            await model.click();
+            await model.press('Escape');
+            assert.equal(await model.getAttribute('aria-expanded'), 'false');
+            assert.equal(
+              await card.getAttribute('aria-hidden'),
+              null,
+              'first Escape closes only the model menu'
+            );
+            await card.locator('input[type=file]').setInputFiles({
+              name: 'notes.txt',
+              mimeType: 'text/plain',
+              buffer: Buffer.from('Attached notes'),
+            });
+            await card.locator('textarea').evaluate((element) => {
+              const paste = new DataTransfer();
+              paste.items.add(new File(['image'], 'pasted.png', { type: 'image/png' }));
+              const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+              Object.defineProperty(pasteEvent, 'clipboardData', { value: paste });
+              element.dispatchEvent(pasteEvent);
+              const drop = new DataTransfer();
+              drop.items.add(new File(['report'], 'report.csv', { type: 'text/csv' }));
+              element.dispatchEvent(
+                new DragEvent('drop', { dataTransfer: drop, bubbles: true, cancelable: true })
+              );
+            });
+            assert.deepEqual(
+              await page.evaluate(() =>
+                window.promptCard
+                  .files()
+                  .slice(-3)
+                  .map((file) => file.name)
+              ),
+              ['notes.txt', 'pasted.png', 'report.csv']
+            );
+            await card.locator('textarea').focus();
+            assert.ok(
+              !response.willChange.includes('transform'),
+              'no retained transform promotion'
+            );
+            const frames = await page.evaluate(() => window.promptFrames);
+            if (reducedMotion === 'no-preference') {
+              assert.ok(
+                frames.some((frame) => frame.opacity > 0 && frame.opacity < 1),
+                'entrance paints intermediate opacity'
+              );
+              assert.ok(
+                frames.some((frame) => frame.scale >= 0.985 && frame.scale < 1),
+                'restrained scale follows shared presence'
+              );
+              const moving = frames.filter((frame) => frame.opacity > 0);
+              assert.ok(
+                moving.every(
+                  (frame) =>
+                    Math.abs(frame.layout.x - moving.at(-1).layout.x) < 1 &&
+                    Math.abs(frame.layout.y - moving.at(-1).layout.y) < 1
+                ),
+                'positioning layer stays still during motion'
+              );
+            }
+            const input = card.locator('textarea');
+            await input.evaluate((element) => {
+              element.dispatchEvent(new Event('compositionstart', { bubbles: true }));
+              element.value = '即时草稿';
+              element.dispatchEvent(new Event('compositionupdate', { bubbles: true }));
+              element.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })
+              );
+            });
+            assert.equal(await page.evaluate(() => window.promptCard.submits()), 0);
+            assert.equal(await page.evaluate(() => window.promptCard.value()), '即时草稿');
+            await input.evaluate((element) =>
+              element.dispatchEvent(new Event('compositionend', { bubbles: true }))
+            );
+            await page.locator('#related button').click();
+            assert.equal(await card.count(), 1, 'related surface remains owned');
+            await page.locator('#related button').focus();
+            await page.locator('#related button').press('Escape');
+            assert.equal(
+              await card.getAttribute('aria-hidden'),
+              null,
+              'related preview owns Escape'
+            );
+            await input.focus();
+            if (reducedMotion === 'no-preference') {
+              const reverse = await card.evaluate((element) => {
+                const input = element.querySelector('textarea');
+                window.promptCard.setOpen(false);
+                const inert = element.inert && element.getAttribute('aria-hidden') === 'true';
+                window.promptCard.setOpen(true);
+                return {
+                  inert,
+                  same: input === element.querySelector('textarea'),
+                  draft: input.value,
+                };
+              });
+              assert.deepEqual(reverse, { inert: true, same: true, draft: '即时草稿' });
+            }
+            await input.press('Escape');
+            await card.waitFor({ state: 'detached' });
+            await page.waitForFunction(
+              () => document.activeElement === document.querySelector('#trigger')
+            );
+            report.push({ engine, width, dark, reducedMotion, top, ...response, frames });
+          }
+          await trigger.focus();
+          await trigger.click();
+          await card.waitFor();
+          await card.locator('textarea').fill('Submit one request');
+          await card.evaluate(async (element) => {
+            await Promise.allSettled(
+              element.getAnimations().map((animation) => animation.finished)
+            );
+          });
+          const before = await card
+            .locator('.floe-prompt-card-submit')
+            .evaluate((element) => ({ width: element.offsetWidth, height: element.offsetHeight }));
+          const acknowledgement = await card
+            .locator('.floe-prompt-card-submit')
+            .evaluate((element) => {
+              const before = window.promptCard.submits();
+              element.click();
+              element.click();
+              return {
+                before,
+                after: window.promptCard.submits(),
+                busy: element.getAttribute('aria-busy'),
+                disabled: element.disabled,
+              };
+            });
+          assert.deepEqual(
+            acknowledgement,
+            { before: 0, after: 0, busy: 'true', disabled: true },
+            'UI acknowledgement precedes host work and duplicate dispatch'
+          );
+          await page.waitForFunction(() => window.promptCard.submits() === 1);
+          assert.equal(
+            await card.locator('.floe-prompt-card-submit').getAttribute('aria-busy'),
+            'true'
+          );
+          assert.equal(await card.getByRole('combobox', { name: 'Model' }).isDisabled(), true);
+          assert.equal(await card.getByRole('button', { name: 'Attach files' }).isDisabled(), true);
+          const after = await card
+            .locator('.floe-prompt-card-submit')
+            .evaluate((element) => ({ width: element.offsetWidth, height: element.offsetHeight }));
+          assert.equal(before.width, after.width);
+          assert.equal(before.height, after.height);
+          await page.locator('#outside').click();
+          assert.equal(await card.count(), 1, 'busy card is retained');
+          await page.evaluate(() => {
+            window.promptCard.setBusy(false);
+            window.promptCard.setFeedback('Unable to send. Your draft is retained.');
+          });
+          assert.equal(await card.locator('textarea').inputValue(), 'Submit one request');
+          await card.getByRole('alert').waitFor();
+          await page.screenshot({
+            path: `${output}/${engine}-${width}-${dark ? 'dark' : 'light'}-${reducedMotion}.png`,
+          });
+          await page.locator('#outside').click();
+          await card.waitFor({ state: 'detached' });
+          assert.equal(
+            await page.evaluate(() => window.promptCard.outside()),
+            2,
+            'outside click reaches its destination'
+          );
+          assert.equal(
+            await trigger.evaluate((element) => element === document.activeElement),
+            false,
+            'outside click does not steal focus back'
+          );
+          assert.deepEqual(errors, []);
+          await page.close();
+        }
+    const scoped = await browser.newPage({
+      viewport: { width: 1280, height: 900 },
+      reducedMotion: 'reduce',
+    });
+    await scoped.goto(server.resolvedUrls.local[0] + 'test/browser/prompt-card.html?surface');
+    await scoped.locator('#trigger').click();
+    const localCard = scoped.locator('[data-floe-prompt-card]');
+    await localCard.waitFor();
+    const localBounds = await localCard.evaluate((element) => {
+      const host = element.closest('main');
+      return {
+        card: element.getBoundingClientRect().toJSON(),
+        host: host?.getBoundingClientRect().toJSON(),
+      };
+    });
+    assert.ok(localBounds.host, 'default portal belongs to the initiating surface');
+    assert.ok(
+      localBounds.card.left >= localBounds.host.left &&
+        localBounds.card.right <= localBounds.host.right
+    );
+    assert.ok(
+      localBounds.card.top >= localBounds.host.top &&
+        localBounds.card.bottom <= localBounds.host.bottom
+    );
+    await localCard.locator('textarea').fill('Draft in a scaled surface');
+    await localCard.locator('textarea').press('Escape');
+    await localCard.waitFor({ state: 'detached' });
+    report.push({ engine, scope: 'scaled-surface', ...localBounds });
+    await scoped.close();
+    const touch = await browser.newPage({
+      viewport: { width: 390, height: 700 },
+      hasTouch: true,
+      reducedMotion: 'reduce',
+    });
+    await touch.goto(server.resolvedUrls.local[0] + 'test/browser/prompt-card.html');
+    await touch.locator('#trigger').click();
+    const touchCard = touch.locator('[data-floe-prompt-card]');
+    await touchCard.waitFor();
+    const touchMetrics = await touchCard.evaluate((element) => ({
+      font: getComputedStyle(element.querySelector('textarea')).fontSize,
+      actions: [...element.querySelectorAll('button')].map((button) => ({
+        width: button.offsetWidth,
+        height: button.offsetHeight,
+      })),
+    }));
+    assert.equal(touchMetrics.font, '16px');
+    assert.ok(touchMetrics.actions.every((button) => button.width >= 44 && button.height >= 44));
+    report.push({ engine, scope: 'touch', ...touchMetrics });
+    await touch.close();
+    await browser.close();
+    browser = undefined;
+  }
+  await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2) + '\n');
+  console.log(`PromptCard: ${report.length} responsive/theme/motion/placement cases passed.`);
+} finally {
+  await browser?.close();
+  await server.close();
+}
