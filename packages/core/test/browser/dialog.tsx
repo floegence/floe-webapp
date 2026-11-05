@@ -19,6 +19,8 @@ function Fixture() {
   const [stopSharing, setStopSharing] = createSignal(false);
   const [shapeDialog, setShapeDialog] = createSignal(false);
   const [showHelp, setShowHelp] = createSignal(false);
+  const [scrollDialog, setScrollDialog] = createSignal(false);
+  const [showScrollableContent, setShowScrollableContent] = createSignal(false);
   return (
     <>
       <main inert={present()} class="relative h-screen bg-background p-10" data-background>
@@ -78,6 +80,32 @@ function Fixture() {
               Detailed mode lists every inherited setting, which is why the panel is taller than
               the compact one.
             </p>
+          </Show>
+        </Dialog>
+        <button onClick={() => setScrollDialog(true)}>Open scrollbar settings</button>
+        <Dialog
+          open={scrollDialog()}
+          onOpenChange={setScrollDialog}
+          title="Scrollbar settings"
+          class="w-[min(32rem,calc(100vw-2rem))]"
+          footer={<div>Stable footer</div>}
+        >
+          <button onClick={() => setShowScrollableContent((value) => !value)}>
+            {showScrollableContent() ? 'Hide overflow content' : 'Show overflow content'}
+          </button>
+          {Array.from({ length: 3 }, (_, index) => (
+            <p class="min-h-12" data-scrollbar-baseline-row={index}>
+              Baseline row {index + 1}: The dialog starts close to its viewport height limit.
+            </p>
+          ))}
+          <Show when={showScrollableContent()}>
+            <div data-scrollbar-overflow-content class="space-y-3">
+              {Array.from({ length: 48 }, (_, index) => (
+                <p class="min-h-12" data-scrollbar-overflow-row={index}>
+                  Row {index + 1}: This dialog content intentionally exceeds the available body height so the body must scroll.
+                </p>
+              ))}
+            </div>
           </Show>
         </Dialog>
         <div class="relative h-48 w-[600px]" data-dialog-canvas>

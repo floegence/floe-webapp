@@ -387,7 +387,7 @@ export function Dialog(props: DialogProps) {
                 <div
                   data-floe-dialog-body
                   class={cn(
-                    'min-h-0 flex-1 overflow-auto overscroll-contain px-[var(--floe-pad-group)] py-[var(--floe-pad-group)]',
+                    'min-h-0 flex-1 overflow-auto overscroll-contain px-[var(--floe-pad-group)] py-[var(--floe-pad-group)] [scrollbar-gutter:stable]',
                     props.contentClass
                   )}
                 >
