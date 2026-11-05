@@ -430,7 +430,11 @@ function Choice(props: ChoiceProps) {
             layer = node;
           }}
           dir={locale.direction}
-          style={{ width: width() + 'px', 'max-width': 'calc(100vw - 24px)' }}
+          style={{
+            width: 'max-content',
+            'min-width': width() + 'px',
+            'max-width': 'calc(100vw - 24px)',
+          }}
         >
           <div
             ref={panel}

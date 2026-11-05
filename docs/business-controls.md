@@ -14,6 +14,8 @@ Form validates native constraints before submission and optionally calls host va
 
 Select is a single-value combobox/listbox, Combobox adds text search, and MultiSelect retains a list of values. Dropdown remains an action menu. Never locate Select options as menuitem. Existing Select imports from Dropdown continue to work. Select, Combobox and MultiSelect use the shared directional menu presence: their untransformed layer owns placement, their child owns enter/exit motion, and a closing panel is immediately inert while retained until its CSS transition finishes. Reopening reverses the same panel; reduced motion uses the shared immediate recipe.
 
+Selection popups size to their content, with the trigger width as a minimum and the viewport as a maximum. A compact trigger must not force longer option labels into a narrow column. Labels wrap only when the available viewport width requires it.
+
 Controlled value/open props are authoritative; defaultValue/defaultOpen are initialization and reset defaults. Callbacks request state changes and do not mutate controlled props. Do not switch between controlled and uncontrolled modes during a component's lifetime. Selection participates in native FormData, required validation, disabled state, and reset through a hidden native select. Selected values remain in form submission even when remote search no longer returns their options. Hosts should retain selected labels in their option cache for display.
 
 Keyboard support includes arrows, Home/End for Select, typeahead, Enter, Escape, and Tab. Disabled options cannot be selected. Search hosts own fetch cancellation, query identity, stale-response rejection, and pagination; filter=false disables local filtering. Loading/error/retry do not discard selected values. These controls render the supplied option set; hosts must bound remote result sizes rather than passing unbounded collections.
@@ -51,3 +53,5 @@ Run make check for deterministic repository acceptance. test:business-controls e
 `node scripts/check-select-motion-browser.mjs --all` exercises Select, Combobox and MultiSelect in Chromium, WebKit and Firefox at 390px and 1280px, with normal and reduced motion, above/below placement, stable geometry, immediate exit input revocation and same-panel reversal. `check-business-controls-browser.mjs` retains field, form submission/reset, keyboard, RTL and accessibility coverage.
 
 The nested-window cases also verify that Escape dismisses the selection listbox while preserving the focused control and containing window, then closes the window on the next Escape (0.90.9).
+
+The same three-engine matrix verifies content-driven popup width, viewport bounds and readable long options (0.90.10).

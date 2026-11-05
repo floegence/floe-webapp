@@ -78,6 +78,40 @@ try {
             assert.equal(samples.side, top === 200 ? 'bottom' : 'top', label + ': collision side');
             assert.equal(samples.end.opacity, 1, label + ': settled opacity');
             assert.equal(samples.end.scale, 1, label + ': sharp content');
+            const sizing = await page.evaluate(() => {
+              const control = document.querySelector('[role="combobox"]');
+              const panel = document.querySelector('.floe-floating-menu');
+              const longOption = [...panel.querySelectorAll('[role="option"]')].find((option) =>
+                option.textContent?.includes('substantially longer')
+              );
+              const clippedOption = [...panel.querySelectorAll('[role="option"]')].find((option) =>
+                option.textContent?.includes('deliberately long label')
+              );
+              return {
+                triggerWidth: control.getBoundingClientRect().width,
+                panelWidth: panel.getBoundingClientRect().width,
+                longOptionWidth: longOption.getBoundingClientRect().width,
+                clippedOptionWidth: clippedOption.getBoundingClientRect().width,
+                clippedOptionScrollWidth: clippedOption.scrollWidth,
+                viewportWidth: window.innerWidth,
+              };
+            });
+            assert.ok(
+              sizing.panelWidth > sizing.triggerWidth + 8,
+              label + ': long option expands the menu'
+            );
+            assert.ok(
+              sizing.panelWidth <= sizing.viewportWidth - 24 + 1,
+              label + ': menu stays within the viewport'
+            );
+            assert.ok(
+              sizing.longOptionWidth > sizing.triggerWidth,
+              label + ': option row uses expanded menu width'
+            );
+            assert.ok(
+              sizing.clippedOptionScrollWidth <= sizing.clippedOptionWidth + 1,
+              label + ': long option content remains inside the viewport-clamped row'
+            );
             if (reducedMotion === 'reduce')
               assert.ok(
                 samples.durations.every((ms) => ms <= 1),

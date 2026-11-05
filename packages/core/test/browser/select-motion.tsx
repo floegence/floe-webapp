@@ -7,10 +7,17 @@ const [open, setOpen] = createSignal(false);
 const [top, setTop] = createSignal(200);
 const [nested, setNested] = createSignal(false);
 const [windowOpen, setWindowOpen] = createSignal(true);
-const options = Array.from({ length: 5 }, (_, i) => ({
-  value: String(i),
-  label: `Environment ${i}`,
-}));
+const options = [
+  { value: '0', label: 'Environment 0' },
+  { value: '1', label: 'Environment with a substantially longer provider choice' },
+  {
+    value: '2',
+    label:
+      'Imported runtime configuration with a deliberately long label that must remain readable in a narrow viewport',
+  },
+  { value: '3', label: 'Environment 3' },
+  { value: '4', label: 'Environment 4' },
+];
 Object.assign(window, { selectMotion: { setKind, setOpen, setTop, setNested, setWindowOpen } });
 const selection = () => (
   <>
