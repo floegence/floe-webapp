@@ -7,10 +7,10 @@ import {
   createUniqueId,
   onCleanup,
   onMount,
-  untrack,
   type JSX,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
+import { getFocusableElements } from '../../utils/focus';
 import { useFloeLocale } from '../../context/LocaleContext';
 import { useOverlayMask } from '../../hooks/useOverlayMask';
 import { SurfaceFloatingLayer } from './SurfaceFloatingLayer';
@@ -26,6 +26,10 @@ export interface SelectOption {
   label: string;
   disabled?: boolean;
   keywords?: string[];
+  /** Stable group identity; groupLabel supplies its user-facing heading. */
+  group?: string;
+  groupLabel?: string;
+  description?: string;
 }
 export interface SelectBaseProps {
   id?: string;
@@ -55,6 +59,9 @@ export interface SelectBaseProps {
   /** Disable local filtering when the host supplies remote search results. */
   filter?: boolean;
   renderOption?: (option: SelectOption) => JSX.Element;
+  /** Search inside a button-triggered dropdown without replacing its trigger. */
+  search?: Readonly<{ label: string; placeholder?: string }>;
+  popupClass?: string;
   ref?: (control: HTMLButtonElement | HTMLInputElement) => void;
 }
 export interface SelectProps extends SelectBaseProps {
@@ -93,6 +100,7 @@ function Choice(props: ChoiceProps) {
   const [position, setPosition] = createSignal({ x: 0, y: 0 });
   const [width, setWidth] = createSignal(200);
   let control: HTMLButtonElement | HTMLInputElement | undefined;
+  let searchInput: HTMLInputElement | undefined;
   let native: HTMLSelectElement | undefined;
   let panel: HTMLDivElement | undefined;
   let layer: HTMLDivElement | undefined;
@@ -101,13 +109,31 @@ function Choice(props: ChoiceProps) {
   let typeahead = '';
   let typedAt = 0;
   const options = createMemo(() => {
-    if (!props.searchable || props.filter === false || !query()) return props.options;
+    if ((!props.searchable && !props.search) || props.filter === false || !query())
+      return props.options;
     const text = query().toLocaleLowerCase(locale.locale);
     return props.options.filter((option) =>
-      [option.label, ...(option.keywords ?? [])].some((value) =>
-        value.toLocaleLowerCase(locale.locale).includes(text)
+      [option.label, option.groupLabel ?? option.group ?? '', ...(option.keywords ?? [])].some(
+        (value) => value.toLocaleLowerCase(locale.locale).includes(text)
       )
     );
+  });
+  const groups = createMemo(() => {
+    const result: {
+      key: string;
+      label?: string;
+      options: { option: SelectOption; index: number }[];
+    }[] = [];
+    options().forEach((option, index) => {
+      const key = option.group ?? '';
+      let group = result.at(-1);
+      if (!group || group.key !== key) {
+        group = { key, label: option.groupLabel ?? option.group, options: [] };
+        result.push(group);
+      }
+      group.options.push({ option, index });
+    });
+    return result;
   });
   const selectedText = () =>
     props.values
@@ -117,6 +143,10 @@ function Choice(props: ChoiceProps) {
     if (next && (disabled() || readOnly())) return;
     changeOpen(next);
     if (!next) setQuery('');
+    else
+      queueMicrotask(() => {
+        if (open()) searchInput?.focus({ preventScroll: true });
+      });
   };
   const select = (option: SelectOption) => {
     if (disabled() || readOnly() || option.disabled) return;
@@ -172,7 +202,7 @@ function Choice(props: ChoiceProps) {
   };
   createEffect(() => {
     if (!open()) return;
-    const current = untrack(active);
+    const current = active();
     if (current < 0 || !options()[current] || options()[current].disabled) {
       const selected = options().findIndex(
         (option) => !option.disabled && props.values.includes(option.value)
@@ -247,14 +277,35 @@ function Choice(props: ChoiceProps) {
   });
   const keydown = (event: KeyboardEvent) => {
     if (disabled() || readOnly() || event.isComposing) return;
+    const searching = event.target === searchInput || props.searchable;
     if (event.key === 'Escape' && open()) {
       event.preventDefault();
       event.stopPropagation();
       setOpen(false);
+      control?.focus({ preventScroll: true });
       return;
     }
     if (event.key === 'Tab') {
-      setOpen(false);
+      if (event.target === searchInput && control) {
+        // A portal is outside the trigger's tab order. Resolve its next control
+        // before making the search inert; WebKit otherwise drops focus to body.
+        const controls = getFocusableElements(control.ownerDocument)
+          .filter(
+            (element) =>
+              element.tabIndex >= 0 &&
+              !panel?.contains(element) &&
+              !element.closest('[inert], [hidden], [aria-hidden="true"]') &&
+              element.getClientRects().length > 0 &&
+              getComputedStyle(element).visibility !== 'hidden'
+          )
+          .sort((a, b) => (a.tabIndex || Infinity) - (b.tabIndex || Infinity));
+        const next = controls[controls.indexOf(control) + (event.shiftKey ? -1 : 1)];
+        setOpen(false);
+        if (next) {
+          event.preventDefault();
+          next.focus({ preventScroll: true });
+        } else control.focus({ preventScroll: true });
+      } else setOpen(false);
       return;
     }
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -264,24 +315,18 @@ function Choice(props: ChoiceProps) {
       if (wasOpen) move(event.key === 'ArrowDown' ? 1 : -1);
       return;
     }
-    if (open() && (event.key === 'Home' || event.key === 'End') && !props.searchable) {
+    if (open() && (event.key === 'Home' || event.key === 'End') && !searching) {
       event.preventDefault();
       move(0, event.key === 'Home' ? 'first' : 'last');
       return;
     }
-    if (event.key === 'Enter' || (!props.searchable && event.key === ' ')) {
+    if (event.key === 'Enter' || (!searching && event.key === ' ')) {
       event.preventDefault();
       if (open() && options()[active()]) select(options()[active()]);
       else setOpen(true);
       return;
     }
-    if (
-      !props.searchable &&
-      event.key.length === 1 &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
+    if (!searching && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       const now = Date.now();
       typeahead = now - typedAt > 700 ? event.key : typeahead + event.key;
       typedAt = now;
@@ -444,13 +489,37 @@ function Choice(props: ChoiceProps) {
         >
           <div
             ref={panel}
-            class="floe-floating-presence floe-floating-menu rounded-panel border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)] p-1"
+            class={cn(
+              'floe-floating-presence floe-floating-menu rounded-panel border border-[var(--floe-line)] bg-popover text-popover-foreground shadow-[var(--floe-elevation-float)] p-1',
+              props.popupClass
+            )}
             data-floating-presence={presence.state()}
             data-floating-side={side()}
             inert={presence.exiting()}
             aria-hidden={presence.exiting() ? 'true' : undefined}
             data-floe-surface="floating"
           >
+            <Show when={props.search}>
+              <div class="p-1">
+                <input
+                  ref={searchInput}
+                  type="search"
+                  class="floe-field w-full min-w-0 px-2 h-[var(--floe-control-height-sm)] text-[length:var(--floe-type-control)]"
+                  aria-label={props.search!.label}
+                  aria-controls={listId}
+                  aria-activedescendant={options()[active()] ? listId + '-' + active() : undefined}
+                  placeholder={props.search!.placeholder}
+                  value={query()}
+                  autocomplete="off"
+                  onKeyDown={keydown}
+                  onInput={(event) => {
+                    setQuery(event.currentTarget.value);
+                    setActive(-1);
+                    props.onQueryChange?.(event.currentTarget.value);
+                  }}
+                />
+              </div>
+            </Show>
             <Show when={props.loading}>
               <div role="status" class="px-2 py-2 text-caption">
                 {locale.t('loading')}
@@ -475,29 +544,48 @@ function Choice(props: ChoiceProps) {
               class="max-h-64 overflow-y-auto"
               data-floe-local-interaction-surface="true"
             >
-              <For each={options()}>
-                {(option, index) => (
-                  <div
-                    id={listId + '-' + index()}
-                    role="option"
-                    aria-selected={props.values.includes(option.value)}
-                    aria-disabled={option.disabled || undefined}
-                    data-floe-selected={props.values.includes(option.value) ? 'true' : undefined}
-                    class={cn(
-                      'flex min-h-[var(--floe-row-height)] items-center gap-2 rounded-sm px-2 text-[length:var(--floe-type-control)]',
-                      active() === index() && 'bg-accent text-accent-foreground',
-                      option.disabled ? 'opacity-50' : 'cursor-pointer'
-                    )}
-                    onPointerDown={(event) => event.preventDefault()}
-                    onPointerMove={() => !option.disabled && setActive(index())}
-                    onClick={() => select(option)}
-                  >
-                    <span class="h-3.5 w-3.5 shrink-0">
-                      <Show when={props.values.includes(option.value)}>
-                        <Check class="h-3.5 w-3.5" />
-                      </Show>
-                    </span>
-                    {props.renderOption ? props.renderOption(option) : option.label}
+              <For each={groups()}>
+                {(group) => (
+                  <div role={group.label ? 'group' : undefined} aria-label={group.label}>
+                    <Show when={group.label}>
+                      <div class="floe-select-group-label px-2 pt-2 pb-1 text-caption font-semibold text-muted-foreground">
+                        {group.label}
+                      </div>
+                    </Show>
+                    <For each={group.options}>
+                      {({ option, index }) => (
+                        <div
+                          id={listId + '-' + index}
+                          role="option"
+                          aria-description={option.description}
+                          title={
+                            option.description
+                              ? option.label + ' · ' + option.description
+                              : option.label
+                          }
+                          aria-selected={props.values.includes(option.value)}
+                          aria-disabled={option.disabled || undefined}
+                          data-floe-selected={
+                            props.values.includes(option.value) ? 'true' : undefined
+                          }
+                          class={cn(
+                            'flex min-h-[var(--floe-row-height)] items-center gap-2 rounded-sm px-2 text-[length:var(--floe-type-control)]',
+                            active() === index && 'bg-accent text-accent-foreground',
+                            option.disabled ? 'opacity-50' : 'cursor-pointer'
+                          )}
+                          onPointerDown={(event) => event.preventDefault()}
+                          onPointerMove={() => !option.disabled && setActive(index)}
+                          onClick={() => select(option)}
+                        >
+                          <span class="floe-select-option-check h-3.5 w-3.5 shrink-0">
+                            <Show when={props.values.includes(option.value)}>
+                              <Check class="h-3.5 w-3.5" />
+                            </Show>
+                          </span>
+                          {props.renderOption ? props.renderOption(option) : option.label}
+                        </div>
+                      )}
+                    </For>
                   </div>
                 )}
               </For>

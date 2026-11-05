@@ -15,9 +15,21 @@ render(() => {
   const [submits, setSubmits] = createSignal(0);
   const [outside, setOutside] = createSignal(0);
   const [model, setModel] = createSignal('balanced');
+  const [question, setQuestion] = createSignal<string>();
   const [files, setFiles] = createSignal<File[]>([]);
   Object.assign(window, {
-    promptCard: { setOpen, setBusy, setTop, setFeedback, submits, outside, value, model, files },
+    promptCard: {
+      setQuestion,
+      setOpen,
+      setBusy,
+      setTop,
+      setFeedback,
+      submits,
+      outside,
+      value,
+      model,
+      files,
+    },
   });
   return (
     <main
@@ -54,7 +66,7 @@ render(() => {
         anchor={anchor()}
         title="Ask assistant"
         icon={<Sparkles />}
-        question="What would you like to check?"
+        question={question()}
         inputLabel="Message"
         closeLabel="Close"
         submitLabel={busy() ? 'Sending' : 'Send'}
@@ -78,10 +90,23 @@ render(() => {
           label: 'Model',
           value: model(),
           onChange: setModel,
+          search: { label: 'Search models', placeholder: 'Search models' },
           options: [
-            { value: 'balanced', label: 'GPT-4.1' },
-            { value: 'fast', label: 'Claude Sonnet 4.5' },
-            { value: 'unavailable', label: 'Unavailable', disabled: true },
+            { value: 'balanced', label: 'GPT-4.1', group: 'openai', groupLabel: 'OpenAI' },
+            {
+              value: 'fast',
+              label: 'Claude Sonnet 4.5',
+              group: 'anthropic',
+              groupLabel: 'Anthropic',
+            },
+            {
+              value: 'unavailable',
+              label: 'Unavailable',
+              disabled: true,
+              group: 'anthropic',
+              groupLabel: 'Anthropic',
+              description: 'Missing key',
+            },
           ],
         }}
         references={<span>Project files</span>}

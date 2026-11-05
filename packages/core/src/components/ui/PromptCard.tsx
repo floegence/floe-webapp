@@ -27,7 +27,7 @@ import { cn } from '../../utils/cn';
 import { observeViewport, readViewportSnapshot } from '../../viewport';
 import { ArrowUp, Plus, X } from '../icons';
 import { Button } from './Button';
-import { Select, type SelectOption } from './Select';
+import { Select, type SelectOption, type SelectBaseProps } from './Select';
 import { createFloatingPresence } from './floatingPresence';
 
 export interface PromptCardProps {
@@ -41,7 +41,7 @@ export interface PromptCardProps {
   title: string;
   icon?: JSX.Element;
   closeLabel: string;
-  question: JSX.Element;
+  question?: JSX.Element;
   value: string;
   onValueChange: (value: string) => void;
   inputLabel: string;
@@ -62,6 +62,9 @@ export interface PromptCardProps {
     placeholder?: string;
     value: string;
     options: readonly SelectOption[];
+    renderOption?: SelectBaseProps['renderOption'];
+    search?: SelectBaseProps['search'];
+    popupClass?: string;
     onChange: (value: string) => void;
     loading?: boolean;
     error?: string;
@@ -103,10 +106,11 @@ export function PromptCard(props: PromptCardProps) {
   let selectionControl: HTMLButtonElement | HTMLInputElement | undefined;
   // Return to the existing insertion point after a completed toolbar action.
   // Select restores its own trigger synchronously, so settle this in a microtask.
-  const resumeEditing = () => queueMicrotask(() => {
-    if (!disposed && props.open && !busy() && !props.inputDisabled && editor?.isConnected)
-      editor.focus({ preventScroll: true });
-  });
+  const resumeEditing = () =>
+    queueMicrotask(() => {
+      if (!disposed && props.open && !busy() && !props.inputDisabled && editor?.isConnected)
+        editor.focus({ preventScroll: true });
+    });
   const receiveFiles = (files: File[]) => {
     if (props.open && !busy() && !props.inputDisabled && files.length) {
       props.attachment?.onFiles(files);
@@ -339,7 +343,9 @@ export function PromptCard(props: PromptCardProps) {
               />
             </header>
             <div {...props.bodyProps} class={cn('floe-prompt-card-body', props.bodyProps?.class)}>
-              <div class="floe-prompt-card-question">{props.question}</div>
+              <Show when={props.question}>
+                <div class="floe-prompt-card-question">{props.question}</div>
+              </Show>
               <div
                 class="floe-prompt-card-composer"
                 onDragOver={(event) => {
@@ -357,6 +363,11 @@ export function PromptCard(props: PromptCardProps) {
                   receiveFiles(Array.from(event.dataTransfer.files));
                 }}
               >
+                <Show when={props.references}>
+                  <div class="floe-prompt-card-references" inert={Boolean(busy())}>
+                    {props.references}
+                  </div>
+                </Show>
                 <div class="floe-prompt-card-field">
                   <textarea
                     ref={(element) => {
@@ -396,11 +407,6 @@ export function PromptCard(props: PromptCardProps) {
                     }}
                   />
                 </div>
-                <Show when={props.references}>
-                  <div class="floe-prompt-card-references" inert={Boolean(busy())}>
-                    {props.references}
-                  </div>
-                </Show>
                 <div class="floe-prompt-card-actions">
                   <div class="floe-prompt-card-tools">
                     <Show when={props.attachment}>
@@ -443,6 +449,9 @@ export function PromptCard(props: PromptCardProps) {
                         placeholder={props.selection!.placeholder}
                         value={props.selection!.value}
                         options={props.selection!.options}
+                        renderOption={props.selection!.renderOption}
+                        search={props.selection!.search}
+                        popupClass={props.selection!.popupClass}
                         onChange={(value) => props.selection!.onChange(value)}
                         disabled={busy() || props.inputDisabled}
                         loading={props.selection!.loading}

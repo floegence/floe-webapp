@@ -90,8 +90,10 @@ try {
                 side: element.dataset.floatingSide,
                 bounds: element.getBoundingClientRect().toJSON(),
                 font: getComputedStyle(editor).fontSize,
-                question: getComputedStyle(element.querySelector('.floe-prompt-card-question'))
-                  .fontSize,
+                question: !!element.querySelector('.floe-prompt-card-question'),
+                referencesAbove:
+                  element.querySelector('.floe-prompt-card-references').getBoundingClientRect()
+                    .bottom <= editor.getBoundingClientRect().top,
                 backgroundImage: getComputedStyle(element).backgroundImage,
                 fillContrast: (() => {
                   const sample = document.createElement('canvas').getContext('2d');
@@ -101,7 +103,9 @@ try {
                     sample.fillRect(0, 0, 1, 1);
                     const [r, g, b] = [...sample.getImageData(0, 0, 1, 1).data].map((value) => {
                       const channel = value / 255;
-                      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+                      return channel <= 0.04045
+                        ? channel / 12.92
+                        : ((channel + 0.055) / 1.055) ** 2.4;
                     });
                     return r * 0.2126 + g * 0.7152 + b * 0.0722;
                   };
@@ -135,14 +139,26 @@ try {
               JSON.stringify({ engine, width, top, reducedMotion, response })
             );
             assert.equal(response.font, '13px');
-            assert.equal(response.question, '13px');
+            assert.equal(response.question, false);
+            assert.equal(response.referencesAbove, true);
             assert.equal(response.backgroundImage, 'none');
-            assert.ok(response.fillContrast.every((contrast) => contrast >= 1.12),
-              `card fill separates from page and content: ${JSON.stringify(response.fillContrast)}`);
-            assert.deepEqual(await card.locator('.floe-prompt-card-attach svg path').evaluateAll(paths => paths.map(path => path.getAttribute('d'))), ['M5 12h14', 'M12 5v14'],
-              'attachment action uses the shared plus icon');
+            assert.ok(
+              response.fillContrast.every((contrast) => contrast >= 1.12),
+              `card fill separates from page and content: ${JSON.stringify(response.fillContrast)}`
+            );
+            assert.deepEqual(
+              await card
+                .locator('.floe-prompt-card-attach svg path')
+                .evaluateAll((paths) => paths.map((path) => path.getAttribute('d'))),
+              ['M5 12h14', 'M12 5v14'],
+              'attachment action uses the shared plus icon'
+            );
             assert.equal(response.blur, 'none');
-            assert.equal(await card.evaluate(element => getComputedStyle(element).borderWidth), '0px', 'focus does not introduce a visible outer frame');
+            assert.equal(
+              await card.evaluate((element) => getComputedStyle(element).borderWidth),
+              '0px',
+              'focus does not introduce a visible outer frame'
+            );
             assert.equal(
               await card
                 .locator('.floe-prompt-card-field')
@@ -151,40 +167,105 @@ try {
               'frameless input has no separator'
             );
             assert.equal(await card.locator('textarea').getAttribute('placeholder'), null);
-            await card.locator('textarea').evaluate(element => element.setSelectionRange(4, 4));
+            await card.locator('textarea').evaluate((element) => element.setSelectionRange(4, 4));
             const model = card.getByRole('combobox', { name: 'Model' });
             await model.click();
-            await page.getByRole('option', { name: 'Claude Sonnet 4.5', exact: true }).click();
+            assert.equal(
+              await page.getByRole('group', { name: 'Anthropic', exact: true }).count(),
+              1
+            );
+            assert.equal(await page.getByRole('group', { name: 'OpenAI', exact: true }).count(), 1);
+            await page.getByRole('searchbox', { name: 'Search models' }).fill('anthropic');
+            assert.equal(
+              await page.getByRole('option', { name: 'GPT-4.1', exact: true }).count(),
+              0
+            );
+            const search = page.getByRole('searchbox', { name: 'Search models' });
+            assert.equal(
+              await search.evaluate((element) => document.activeElement === element),
+              true
+            );
+            assert.equal(
+              await page
+                .getByRole('option', { name: 'Unavailable', exact: true })
+                .getAttribute('aria-disabled'),
+              'true'
+            );
+            await search.press('ArrowDown');
+            await search.press('Enter');
             assert.equal(await page.evaluate(() => window.promptCard.model()), 'fast');
-            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
-              'choosing a model returns to the writing caret');
-            assert.equal(await card.locator('textarea').evaluate(element => element.selectionStart), 4,
-              'the original insertion point survives model selection');
+            assert.equal(
+              await card
+                .locator('textarea')
+                .evaluate((element) => document.activeElement === element),
+              true,
+              'choosing a model returns to the writing caret'
+            );
+            assert.equal(
+              await card.locator('textarea').evaluate((element) => element.selectionStart),
+              4,
+              'the original insertion point survives model selection'
+            );
             assert.equal(
               await card.getAttribute('aria-hidden'),
               null,
               'model selection belongs to the card'
             );
             await model.click();
-            await model.press('Escape');
+            await page.getByRole('searchbox', { name: 'Search models' }).press('Escape');
+            assert.equal(
+              await model.evaluate((element) => document.activeElement === element),
+              true
+            );
             assert.equal(await model.getAttribute('aria-expanded'), 'false');
             assert.equal(
               await card.getAttribute('aria-hidden'),
               null,
               'first Escape closes only the model menu'
             );
+            await model.click();
+            await page.getByRole('searchbox', { name: 'Search models' }).press('Tab');
+            assert.equal(
+              await card
+                .locator('.floe-prompt-card-submit')
+                .evaluate((element) => document.activeElement === element),
+              true,
+              'Tab continues after the model trigger instead of the portal: ' + engine
+            );
+            await model.click();
+            await page.getByRole('searchbox', { name: 'Search models' }).press('Shift+Tab');
+            assert.equal(
+              await card
+                .locator('.floe-prompt-card-attach')
+                .evaluate((element) => document.activeElement === element),
+              true,
+              'Shift+Tab continues before the model trigger'
+            );
             await card.locator('input[type=file]').setInputFiles({
               name: 'notes.txt',
               mimeType: 'text/plain',
               buffer: Buffer.from('Attached notes'),
             });
-            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
-              'adding files returns to the writing caret');
-            assert.equal(await card.locator('textarea').evaluate(element => element.selectionStart), 4);
+            assert.equal(
+              await card
+                .locator('textarea')
+                .evaluate((element) => document.activeElement === element),
+              true,
+              'adding files returns to the writing caret'
+            );
+            assert.equal(
+              await card.locator('textarea').evaluate((element) => element.selectionStart),
+              4
+            );
             await card.locator('.floe-prompt-card-attach').focus();
             await card.locator('input[type=file]').dispatchEvent('cancel');
-            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
-              'cancelling the file picker resumes editing');
+            assert.equal(
+              await card
+                .locator('textarea')
+                .evaluate((element) => document.activeElement === element),
+              true,
+              'cancelling the file picker resumes editing'
+            );
             await card.locator('textarea').evaluate((element) => {
               const paste = new DataTransfer();
               paste.items.add(new File(['image'], 'pasted.png', { type: 'image/png' }));
