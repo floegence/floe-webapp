@@ -55,6 +55,8 @@ duration and settle curve. The beginning, travel and landing remain perceptible
 on short icon-only rails; the entrance curve must not consume nearly all travel
 in the first few frames. Selection state updates immediately. Interrupted
 selection reverses from the painted face, and reduced motion lands directly.
+CSS time tokens accept both milliseconds and seconds, including production
+minification of `280ms` to `.28s`; WAAPI always receives milliseconds.
 The segmented browser check measures early and middle geometry as well as
 unpaused pointer-driven frames across Chromium, WebKit and Firefox.
 
@@ -63,7 +65,6 @@ unpaused pointer-driven frames across Chromium, WebKit and Firefox.
 The nested-window cases also verify that Escape dismisses the selection listbox while preserving the focused control and containing window, then closes the window on the next Escape (0.90.9).
 
 The same three-engine matrix verifies content-driven popup width, viewport bounds and readable long options (0.90.10).
-
 
 ## Contextual prompt card
 

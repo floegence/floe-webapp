@@ -138,12 +138,14 @@ export function SegmentedControl(props: SegmentedControlProps) {
     selected = local.value;
     if (from && face) {
       const style = getComputedStyle(rail);
+      const durationToken = style.getPropertyValue('--floe-duration-slow').trim();
+      const duration = parseFloat(durationToken) * (durationToken.endsWith('ms') ? 1 : 1000);
       animation = face.animate(
         [from, { transform: `translate(${next.x}px, ${next.y}px)`, width: `${next.width}px` }],
         {
           // Position changes need visible travel: the fast entrance curve
           // covers almost 90% of this short rail in its first 60ms.
-          duration: parseFloat(style.getPropertyValue('--floe-duration-slow')) || 280,
+          duration: Number.isFinite(duration) ? duration : 280,
           easing: style.getPropertyValue('--floe-ease-in-out').trim() || 'ease-in-out',
         }
       );

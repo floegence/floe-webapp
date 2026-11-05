@@ -33,6 +33,10 @@ try {
         document.querySelector('[data-floe-segmented-motion="ready"]')
       );
       await page.evaluate(() => document.fonts.ready);
+      // Production CSS minification may serialize 280ms as .28s.
+      await page.evaluate(() =>
+        document.documentElement.style.setProperty('--floe-duration-slow', '.28s')
+      );
       await page.waitForTimeout(250);
       const result = await page.evaluate(async () => {
         const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
