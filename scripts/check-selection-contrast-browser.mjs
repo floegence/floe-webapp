@@ -40,7 +40,8 @@ const sample = () => {
     ),
   ].map((el) => {
     const style = getComputedStyle(el);
-    const bg = background(el);
+    const face = el.closest('[data-floe-segmented-pill]')?.querySelector('.floe-segmented-control__pill');
+    const bg = background(face ?? el);
     const parent = background(el.parentElement);
     return {
       control: el.textContent.trim(),

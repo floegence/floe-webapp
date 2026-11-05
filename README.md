@@ -324,3 +324,5 @@ top edge, and side panels move away from their anchor. `SurfaceAnchoredLayer`
 provides the placement for its direct `.floe-floating-menu` child; Dropdown and
 Popover use the same motion rules. Closing returns toward the anchor. Clamped
 edge panels fade in place, and reduced-motion preferences suppress travel.
+
+Segmented controls use one moving selected face, with interrupted selections continuing from their current position. Labels and native radio state update immediately; reduced motion and forced colors settle directly. Geometry follows option resizing in local CSS pixels, including inside scaled Workbench surfaces.

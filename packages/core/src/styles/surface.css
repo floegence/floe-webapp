@@ -216,6 +216,23 @@
   }
 }
 
+/* One filled face travels between segmented choices. Labels and native state
+ * update immediately; only this decorative face moves, including on reversal. */
+.floe-segmented-control__pill {
+  position: absolute; inset: 0 auto auto 0; pointer-events: none;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+}
+:root .floe-segmented-control[data-floe-segmented-pill] .floe-segmented-control__item[aria-checked='true'] {
+  background: transparent; border-color: transparent; box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .floe-segmented-control__pill { transition: none; }
+}
+@media (forced-colors: active) {
+  .floe-segmented-control__pill { background: Highlight; border-color: Highlight; forced-color-adjust: none; transition: none; }
+}
+
 /* A compound input has one decorative boundary, including host compositions
  * that contain an Input component. Dense nested actions stay flat. */
 [data-floe-input-surface] [data-floe-surface],

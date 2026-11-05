@@ -1,4 +1,14 @@
-import { splitProps, For, type JSX, type Component } from 'solid-js';
+import {
+  splitProps,
+  For,
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  untrack,
+  type JSX,
+  type Component,
+} from 'solid-js';
 import { cn } from '../../utils/cn';
 
 export type SegmentedControlSize = 'sm' | 'md' | 'lg';
@@ -14,7 +24,10 @@ export interface SegmentedControlOption {
   disabled?: boolean;
 }
 
-export interface SegmentedControlProps extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+export interface SegmentedControlProps extends Omit<
+  JSX.HTMLAttributes<HTMLDivElement>,
+  'onChange'
+> {
   /** Currently selected value */
   value: string;
   /** Callback when selection changes */
@@ -31,23 +44,23 @@ export interface SegmentedControlProps extends Omit<JSX.HTMLAttributes<HTMLDivEl
  * Button of the same size sit on one baseline in an action row. The padding
  * ring around the segments is the gap half of the concentric radius: a 10px
  * segment inside a 12px rail with 2px of ring lands exactly parallel. */
-const sizeStyles: Record<SegmentedControlSize, { container: string; button: string; icon: string }> = {
+const sizeStyles: Record<
+  SegmentedControlSize,
+  { container: string; button: string; icon: string }
+> = {
   sm: {
     container: 'p-0.5 gap-0.5',
-    button:
-      'h-[var(--floe-control-height-xs)] px-[var(--floe-control-padding-sm)] rounded-sm',
+    button: 'h-[var(--floe-control-height-xs)] px-[var(--floe-control-padding-sm)] rounded-sm',
     icon: 'w-3 h-3',
   },
   md: {
     container: 'p-0.5 gap-0.5',
-    button:
-      'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-md)] rounded-sm',
+    button: 'h-[var(--floe-control-height-sm)] px-[var(--floe-control-padding-md)] rounded-sm',
     icon: 'w-3.5 h-3.5',
   },
   lg: {
     container: 'p-1 gap-0.5',
-    button:
-      'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-lg)] rounded-md',
+    button: 'h-[var(--floe-control-height-md)] px-[var(--floe-control-padding-lg)] rounded-md',
     icon: 'w-4 h-4',
   },
 };
@@ -82,6 +95,78 @@ export function SegmentedControl(props: SegmentedControlProps) {
     'class',
   ]);
 
+  let rail: HTMLDivElement | undefined;
+  let face: HTMLSpanElement | undefined;
+  const buttons = new Map<string, HTMLButtonElement>();
+  const [pill, setPill] = createSignal<{ x: number; y: number; width: number; height: number }>();
+  let observer: ResizeObserver | undefined;
+  let animation: Animation | undefined;
+  let selected: string | undefined;
+  const measure = () => {
+    const button = buttons.get(local.value);
+    if (!rail || !button) {
+      animation?.cancel();
+      setPill(undefined);
+      selected = undefined;
+      return;
+    }
+    if (!button.offsetWidth || !rail.getClientRects().length) return;
+    const next = {
+      x: button.offsetLeft,
+      y: button.offsetTop,
+      width: button.offsetWidth,
+      height: button.offsetHeight,
+    };
+    const previous = untrack(pill);
+    if (
+      previous &&
+      Object.keys(next).every(
+        (key) => next[key as keyof typeof next] === previous[key as keyof typeof next]
+      ) &&
+      selected === local.value
+    )
+      return;
+    const moving =
+      previous &&
+      selected !== local.value &&
+      face &&
+      !window.matchMedia('(prefers-reduced-motion: reduce), (forced-colors: active)').matches;
+    const before = moving ? getComputedStyle(face!) : undefined;
+    const from = before ? { transform: before.transform, width: before.width } : undefined;
+    animation?.cancel();
+    setPill(next);
+    selected = local.value;
+    if (from && face) {
+      const style = getComputedStyle(rail);
+      animation = face.animate(
+        [from, { transform: `translate(${next.x}px, ${next.y}px)`, width: `${next.width}px` }],
+        {
+          duration: parseFloat(style.getPropertyValue('--floe-duration-base')) || 200,
+          easing: style.getPropertyValue('--floe-ease-out').trim() || 'ease-out',
+        }
+      );
+      animation.id = 'floe-segmented-selection';
+    }
+  };
+  createEffect(() => {
+    void local.value;
+    void local.options;
+    void local.size;
+    measure();
+  });
+  onMount(() => {
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(measure);
+      observer.observe(rail!);
+      for (const button of buttons.values()) observer.observe(button);
+    }
+    measure();
+  });
+  onCleanup(() => {
+    observer?.disconnect();
+    animation?.cancel();
+  });
+
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
 
@@ -94,11 +179,14 @@ export function SegmentedControl(props: SegmentedControlProps) {
 
   return (
     <div
+      ref={rail}
+      data-floe-segmented-pill={pill() ? 'true' : undefined}
+      data-floe-segmented-motion={pill() ? 'ready' : undefined}
       role="group"
       data-floe-surface="inset"
       data-floe-surface-part="rail"
       class={cn(
-        'floe-segmented-control inline-flex items-center border',
+        'floe-segmented-control relative inline-flex items-center border',
         'rounded-group',
         'text-[length:var(--floe-type-control)] leading-[var(--floe-line-control)]',
         styles().container,
@@ -107,6 +195,17 @@ export function SegmentedControl(props: SegmentedControlProps) {
       )}
       {...rest}
     >
+      <span
+        ref={face}
+        aria-hidden="true"
+        class={cn('floe-segmented-control__pill', size() === 'lg' ? 'rounded-md' : 'rounded-sm')}
+        style={{
+          visibility: pill() ? 'visible' : 'hidden',
+          transform: `translate(${pill()?.x ?? 0}px, ${pill()?.y ?? 0}px)`,
+          width: `${pill()?.width ?? 0}px`,
+          height: `${pill()?.height ?? 0}px`,
+        }}
+      />
       <For each={local.options}>
         {(option) => {
           const isSelected = () => local.value === option.value;
@@ -114,6 +213,16 @@ export function SegmentedControl(props: SegmentedControlProps) {
 
           return (
             <button
+              ref={(element) => {
+                buttons.set(option.value, element);
+                observer?.observe(element);
+                onCleanup(() => {
+                  observer?.unobserve(element);
+                  buttons.delete(option.value);
+                });
+              }}
+              aria-label={option.label}
+              title={option.label}
               type="button"
               role="radio"
               data-floe-surface={isSelected() ? 'raised' : 'flat'}
@@ -123,7 +232,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}
               class={cn(
-                'floe-segmented-control__item font-medium cursor-pointer border',
+                'floe-segmented-control__item relative font-medium cursor-pointer border',
                 'transition-[background-color,border-color,color,box-shadow] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--floe-plane)]',
                 styles().button,
@@ -135,7 +244,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
             >
               <span class="inline-flex items-center gap-1.5">
                 {option.icon && <option.icon class={styles().icon} />}
-                {option.label}
+                <span class="floe-segmented-control__label">{option.label}</span>
               </span>
             </button>
           );
