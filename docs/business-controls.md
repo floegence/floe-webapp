@@ -83,7 +83,7 @@ to safe areas and native-header insets and flips above the trigger when needed.
 Shared floating presence owns mounting and reversal. A 200ms decelerating
 entrance and 140ms exit translate four/two pixels toward the resolved trigger
 edge with restrained scale; clamped placement fades in place. Input focuses in
-the opening task, without waiting for motion or a server response. Submission paints its reserved pending icon before deferring host work; subsequent busy state stays host-controlled and preserves action geometry. Closing
+the opening task, without waiting for motion or a server response. The real insertion caret uses primary ink. Select exposes `onOptionSelect` after a committed option, including reselecting the current value; ordinary open/close and Tab retain their existing focus behavior. Completed model/file choices return focus to the existing insertion point; cancelling the file picker also resumes editing. When the question already explains the task, omit the optional placeholder. Submission paints its reserved pending icon before deferring host work; subsequent busy state stays host-controlled and preserves action geometry. Closing
 revokes input immediately, retains content until exit ends, and restores trigger
 focus for Close/Escape. Outside pointer actions continue to their destination.
 IME composition does not submit or dismiss. Reduced motion removes transitions.

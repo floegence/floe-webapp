@@ -1055,7 +1055,8 @@
 .floe-prompt-card-input {
   display: block; width: 100%; min-height: 2.5rem; max-height: min(10rem, 30dvh);
   padding: var(--floe-pad-tight) 0; border: 0; border-radius: 0;
-  background: transparent; font: inherit; line-height: 1.5;
+  background: transparent; color: var(--floe-ink); caret-color: var(--floe-ink);
+  font: inherit; line-height: 1.5;
   field-sizing: content; resize: none;
 }
 .floe-prompt-card-input::placeholder { color: var(--floe-field-placeholder); }

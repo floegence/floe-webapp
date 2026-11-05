@@ -46,6 +46,8 @@ export interface SelectBaseProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Runs after an enabled option is chosen, including reselecting its current value. */
+  onOptionSelect?: (option: SelectOption) => void;
   loading?: boolean;
   error?: string;
   onRetry?: () => void;
@@ -127,6 +129,7 @@ function Choice(props: ChoiceProps) {
     );
     if (!props.multiple) setOpen(false);
     control?.focus({ preventScroll: true });
+    props.onOptionSelect?.(option);
   };
   const move = (delta: number, edge?: 'first' | 'last') => {
     const enabled = options()

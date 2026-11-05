@@ -101,9 +101,17 @@ export function PromptCard(props: PromptCardProps) {
   let composing = false;
   let fileInput: HTMLInputElement | undefined;
   let selectionControl: HTMLButtonElement | HTMLInputElement | undefined;
+  // Return to the existing insertion point after a completed toolbar action.
+  // Select restores its own trigger synchronously, so settle this in a microtask.
+  const resumeEditing = () => queueMicrotask(() => {
+    if (!disposed && props.open && !busy() && !props.inputDisabled && editor?.isConnected)
+      editor.focus({ preventScroll: true });
+  });
   const receiveFiles = (files: File[]) => {
-    if (props.open && !busy() && !props.inputDisabled && files.length)
+    if (props.open && !busy() && !props.inputDisabled && files.length) {
       props.attachment?.onFiles(files);
+      resumeEditing();
+    }
   };
   createEffect(() => {
     if (!props.open || busy() || props.inputDisabled) setSelectionOpen(false);
@@ -404,6 +412,7 @@ export function PromptCard(props: PromptCardProps) {
                         tabIndex={-1}
                         accept={props.attachment?.accept}
                         disabled={busy() || props.inputDisabled}
+                        onCancel={resumeEditing}
                         onChange={(event) => {
                           receiveFiles(Array.from(event.currentTarget.files ?? []));
                           event.currentTarget.value = '';
@@ -428,6 +437,7 @@ export function PromptCard(props: PromptCardProps) {
                         class="floe-prompt-card-selection"
                         open={selectionOpen()}
                         onOpenChange={setSelectionOpen}
+                        onOptionSelect={resumeEditing}
                         zIndex={(props.zIndex ?? 100) + 1}
                         ariaLabel={props.selection!.label}
                         placeholder={props.selection!.placeholder}

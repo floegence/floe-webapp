@@ -56,7 +56,6 @@ render(() => {
         icon={<Sparkles />}
         question="What would you like to check?"
         inputLabel="Message"
-        placeholder="Describe what you need…"
         closeLabel="Close"
         submitLabel={busy() ? 'Sending' : 'Send'}
         value={value()}

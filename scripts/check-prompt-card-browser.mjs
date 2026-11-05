@@ -150,10 +150,16 @@ try {
               '0px',
               'frameless input has no separator'
             );
+            assert.equal(await card.locator('textarea').getAttribute('placeholder'), null);
+            await card.locator('textarea').evaluate(element => element.setSelectionRange(4, 4));
             const model = card.getByRole('combobox', { name: 'Model' });
             await model.click();
             await page.getByRole('option', { name: 'Claude Sonnet 4.5', exact: true }).click();
             assert.equal(await page.evaluate(() => window.promptCard.model()), 'fast');
+            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
+              'choosing a model returns to the writing caret');
+            assert.equal(await card.locator('textarea').evaluate(element => element.selectionStart), 4,
+              'the original insertion point survives model selection');
             assert.equal(
               await card.getAttribute('aria-hidden'),
               null,
@@ -172,6 +178,13 @@ try {
               mimeType: 'text/plain',
               buffer: Buffer.from('Attached notes'),
             });
+            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
+              'adding files returns to the writing caret');
+            assert.equal(await card.locator('textarea').evaluate(element => element.selectionStart), 4);
+            await card.locator('.floe-prompt-card-attach').focus();
+            await card.locator('input[type=file]').dispatchEvent('cancel');
+            assert.equal(await card.locator('textarea').evaluate(element => document.activeElement === element), true,
+              'cancelling the file picker resumes editing');
             await card.locator('textarea').evaluate((element) => {
               const paste = new DataTransfer();
               paste.items.add(new File(['image'], 'pasted.png', { type: 'image/png' }));
