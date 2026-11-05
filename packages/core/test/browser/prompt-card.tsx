@@ -80,8 +80,8 @@ render(() => {
           value: model(),
           onChange: setModel,
           options: [
-            { value: 'balanced', label: 'Balanced' },
-            { value: 'fast', label: 'Fast' },
+            { value: 'balanced', label: 'GPT-4.1' },
+            { value: 'fast', label: 'Claude Sonnet 4.5' },
             { value: 'unavailable', label: 'Unavailable', disabled: true },
           ],
         }}

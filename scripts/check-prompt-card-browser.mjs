@@ -119,6 +119,7 @@ try {
             assert.equal(response.question, '13px');
             assert.equal(response.backgroundImage, 'none');
             assert.equal(response.blur, 'none');
+            assert.equal(await card.evaluate(element => getComputedStyle(element).borderWidth), '0px', 'focus does not introduce a visible outer frame');
             assert.equal(
               await card
                 .locator('.floe-prompt-card-field')
@@ -128,7 +129,7 @@ try {
             );
             const model = card.getByRole('combobox', { name: 'Model' });
             await model.click();
-            await page.getByRole('option', { name: 'Fast', exact: true }).click();
+            await page.getByRole('option', { name: 'Claude Sonnet 4.5', exact: true }).click();
             assert.equal(await page.evaluate(() => window.promptCard.model()), 'fast');
             assert.equal(
               await card.getAttribute('aria-hidden'),

@@ -1017,7 +1017,7 @@
   display: flex; flex-direction: column; min-width: 0;
   max-height: var(--floe-prompt-max-height);
   overflow: hidden; pointer-events: auto;
-  border: 1px solid var(--floe-line);
+  border: 0;
   border-radius: var(--floe-radius-card);
   background: var(--floe-plane-float);
   color: var(--floe-ink);
@@ -1061,7 +1061,7 @@
 .floe-prompt-card-actions { display: flex; align-items: center; gap: var(--floe-gap-control); padding: var(--floe-pad-control) 0 0; }
 .floe-prompt-card-references { min-width: 0; }
 .floe-prompt-card-tools { display: flex; align-items: center; flex: 1; min-width: 0; gap: var(--floe-gap-inline); }
-.floe-prompt-card-tools > .relative { min-width: 0; max-width: 15rem; }
+.floe-prompt-card-tools > .relative { flex: 1; min-width: 0; }
 .floe-prompt-card .floe-prompt-card-attach { flex-shrink: 0; width: var(--floe-control-height-sm); height: var(--floe-control-height-sm); border-radius: var(--floe-radius-sm); }
 .floe-prompt-card .floe-prompt-card-selection { width: auto; max-width: 100%; height: var(--floe-control-height-sm); padding: 0 var(--floe-pad-control); border-color: transparent; background: transparent; font-size: var(--floe-type-supporting); box-shadow: none; }
 .floe-prompt-card .floe-prompt-card-selection:hover { background: var(--muted); }
@@ -1073,4 +1073,5 @@
   .floe-prompt-card-input { font-size: 1rem; }
   .floe-prompt-card .floe-prompt-card-selection { min-height: 2.75rem; }
 }
-@media (forced-colors: active) { .floe-prompt-card { border-color: CanvasText; } }
+:root[data-floe-shell-theme='hc-light'] .floe-prompt-card { border: 1px solid var(--floe-line); }
+@media (forced-colors: active) { .floe-prompt-card { border: 1px solid CanvasText; } }
