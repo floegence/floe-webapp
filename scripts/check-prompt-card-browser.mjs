@@ -93,6 +93,25 @@ try {
                 question: getComputedStyle(element.querySelector('.floe-prompt-card-question'))
                   .fontSize,
                 backgroundImage: getComputedStyle(element).backgroundImage,
+                fillContrast: (() => {
+                  const sample = document.createElement('canvas').getContext('2d');
+                  const luminance = (color) => {
+                    sample.clearRect(0, 0, 1, 1);
+                    sample.fillStyle = color;
+                    sample.fillRect(0, 0, 1, 1);
+                    const [r, g, b] = [...sample.getImageData(0, 0, 1, 1).data].map((value) => {
+                      const channel = value / 255;
+                      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+                    });
+                    return r * 0.2126 + g * 0.7152 + b * 0.0722;
+                  };
+                  const root = getComputedStyle(document.documentElement);
+                  const fill = luminance(getComputedStyle(element).backgroundColor);
+                  return ['--background', '--card'].map((token) => {
+                    const base = luminance(root.getPropertyValue(token));
+                    return (Math.max(fill, base) + 0.05) / (Math.min(fill, base) + 0.05);
+                  });
+                })(),
                 blur: getComputedStyle(element).backdropFilter,
                 shadow: getComputedStyle(element).boxShadow,
                 willChange: getComputedStyle(element).willChange,
@@ -118,6 +137,10 @@ try {
             assert.equal(response.font, '13px');
             assert.equal(response.question, '13px');
             assert.equal(response.backgroundImage, 'none');
+            assert.ok(response.fillContrast.every((contrast) => contrast >= 1.12),
+              `card fill separates from page and content: ${JSON.stringify(response.fillContrast)}`);
+            assert.deepEqual(await card.locator('.floe-prompt-card-attach svg path').evaluateAll(paths => paths.map(path => path.getAttribute('d'))), ['M5 12h14', 'M12 5v14'],
+              'attachment action uses the shared plus icon');
             assert.equal(response.blur, 'none');
             assert.equal(await card.evaluate(element => getComputedStyle(element).borderWidth), '0px', 'focus does not introduce a visible outer frame');
             assert.equal(

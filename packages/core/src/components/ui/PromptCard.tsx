@@ -25,7 +25,7 @@ import {
 } from './surfacePortalScope';
 import { cn } from '../../utils/cn';
 import { observeViewport, readViewportSnapshot } from '../../viewport';
-import { ArrowUp, Paperclip, X } from '../icons';
+import { ArrowUp, Plus, X } from '../icons';
 import { Button } from './Button';
 import { Select, type SelectOption } from './Select';
 import { createFloatingPresence } from './floatingPresence';
@@ -412,7 +412,7 @@ export function PromptCard(props: PromptCardProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        icon={Paperclip}
+                        icon={Plus}
                         class="floe-prompt-card-attach"
                         disabled={busy() || props.inputDisabled}
                         aria-label={props.attachment?.label}

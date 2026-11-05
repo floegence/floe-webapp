@@ -71,10 +71,10 @@ The same three-engine matrix verifies content-driven popup width, viewport bound
 `@floegence/floe-webapp-core/ui`. Hosts supply localized title, question, labels,
 draft, references, feedback, submit/close callbacks and optional viewport-point
 anchor/insets. It adds no conversation state, transport, window chrome or retry
-policy. Optional `attachment` handles file selection, paste and drop; optional `selection` presents a compact accessible model or mode choice using the shared Select. File state, available choices and asynchronous loading remain host-owned. A host may declare related portalled controls through `containsTarget`; those controls keep their own Escape command. `bodyProps` carries host scroll/input ownership attributes to the constrained reading viewport. The default portal stays inside the initiating surface; `portalScope="viewport"` is an explicit host choice for cross-surface tasks.
+policy. Optional `attachment` exposes a plus action and handles file selection, paste and drop; optional `selection` presents a compact accessible model or mode choice using the shared Select. File state, available choices and asynchronous loading remain host-owned. A host may declare related portalled controls through `containsTarget`; those controls keep their own Escape command. `bodyProps` carries host scroll/input ownership attributes to the constrained reading viewport. The default portal stays inside the initiating surface; `portalScope="viewport"` is an explicit host choice for cross-surface tasks.
 
-The 24rem card uses Floe's opaque floating plane, neutral shadow, 13px body and
-12px identity. The editor and compact toolbar form one seamless input, without an internal separator. The opaque floating background and neutral shadow carry separation; normal themes have no drawn outer border, including while editing. High-contrast and forced-color modes retain an explicit boundary. Touch
+The 24rem card uses Floe's opaque floating plane with a 10% ink fill step, a neutral shadow, 13px body and
+12px identity. The editor and compact toolbar form one seamless input, without an internal separator. The fill step distinguishes the editor from both page and content planes; the neutral shadow supports its elevation; normal themes have no drawn outer border, including while editing. High-contrast and forced-color modes retain an explicit boundary. Touch
 inputs retain 16px text and 44px action targets. Height follows content, with a
 bounded editor and scrollable body for small visual viewports. Placement clamps
 to safe areas and native-header insets and flips above the trigger when needed.
