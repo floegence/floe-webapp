@@ -141,8 +141,10 @@ export function SegmentedControl(props: SegmentedControlProps) {
       animation = face.animate(
         [from, { transform: `translate(${next.x}px, ${next.y}px)`, width: `${next.width}px` }],
         {
-          duration: parseFloat(style.getPropertyValue('--floe-duration-base')) || 200,
-          easing: style.getPropertyValue('--floe-ease-out').trim() || 'ease-out',
+          // Position changes need visible travel: the fast entrance curve
+          // covers almost 90% of this short rail in its first 60ms.
+          duration: parseFloat(style.getPropertyValue('--floe-duration-slow')) || 280,
+          easing: style.getPropertyValue('--floe-ease-in-out').trim() || 'ease-in-out',
         }
       );
       animation.id = 'floe-segmented-selection';

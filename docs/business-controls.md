@@ -50,6 +50,14 @@ Run make check for deterministic repository acceptance. test:business-controls e
 
 ## Selection popup motion acceptance (0.90.7)
 
+SegmentedControl moves one selected face between choices with the shared slow
+duration and settle curve. The beginning, travel and landing remain perceptible
+on short icon-only rails; the entrance curve must not consume nearly all travel
+in the first few frames. Selection state updates immediately. Interrupted
+selection reverses from the painted face, and reduced motion lands directly.
+The segmented browser check measures early and middle geometry as well as
+unpaused pointer-driven frames across Chromium, WebKit and Firefox.
+
 `node scripts/check-select-motion-browser.mjs --all` exercises Select, Combobox and MultiSelect in Chromium, WebKit and Firefox at 390px and 1280px, with normal and reduced motion, above/below placement, stable geometry, immediate exit input revocation and same-panel reversal. `check-business-controls-browser.mjs` retains field, form submission/reset, keyboard, RTL and accessibility coverage.
 
 The nested-window cases also verify that Escape dismisses the selection listbox while preserving the focused control and containing window, then closes the window on the next Escape (0.90.9).

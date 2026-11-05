@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle, requestAnimationFrame */
+/* global window, document, getComputedStyle, requestAnimationFrame, performance */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
@@ -50,8 +50,10 @@ try {
           .find((value) => value.id === 'floe-segmented-selection');
         if (animation) {
           animation.pause();
-          animation.currentTime = 90;
+          animation.currentTime = 60;
         }
+        const early = geometry();
+        if (animation) animation.currentTime = 140;
         const middle = geometry();
         window.segmented.setValue('time');
         const reversal = geometry();
@@ -63,10 +65,29 @@ try {
         await frame();
         pill.getAnimations().forEach((value) => value.finish());
         await frame();
-        return { initial, middle, reversal, returned, final: geometry(), animated: !!animation };
+        return {
+          initial,
+          early,
+          middle,
+          reversal,
+          returned,
+          final: geometry(),
+          animated: !!animation,
+        };
       });
       if (reducedMotion === 'no-preference') {
         assert.ok(result.animated, engineName + ': travelling face');
+        const travel = result.final.x - result.initial.x;
+        const earlyProgress = (result.early.x - result.initial.x) / travel;
+        const middleProgress = (result.middle.x - result.initial.x) / travel;
+        assert.ok(
+          earlyProgress > 0 && earlyProgress < 0.45,
+          engineName + ': visible departure instead of a first-frame jump ' + earlyProgress
+        );
+        assert.ok(
+          middleProgress > 0.25 && middleProgress < 0.85,
+          engineName + ': perceptible travel at 140ms ' + middleProgress
+        );
         assert.ok(
           result.middle.x > result.initial.x && result.middle.x < result.final.x,
           engineName + ': intermediate geometry'
@@ -108,6 +129,40 @@ try {
         await page.getByRole('radio', { name: 'Disabled', exact: true }).isDisabled(),
         true
       );
+      await page.waitForTimeout(300);
+      await page.evaluate(() => {
+        const pill = document.querySelector('.floe-segmented-control__pill');
+        window.segmented.frames = new Promise((resolve) => {
+          document.addEventListener(
+            'click',
+            () => {
+              const start = performance.now();
+              const frames = [];
+              const sample = () => {
+                frames.push({ t: performance.now() - start, x: pill.getBoundingClientRect().x });
+                if (performance.now() - start < 360) requestAnimationFrame(sample);
+                else resolve(frames);
+              };
+              sample();
+            },
+            { once: true }
+          );
+        });
+      });
+      await page.getByRole('radio', { name: 'Working directory', exact: true }).click();
+      const frames = await page.evaluate(() => window.segmented.frames);
+      const startX = frames[0].x,
+        endX = frames.at(-1).x;
+      if (reducedMotion === 'no-preference') {
+        const travelling = frames.filter((frame) => frame.x > startX + 1 && frame.x < endX - 1);
+        assert.ok(travelling.length >= 5, engineName + ': at least five painted travel frames');
+        assert.ok(
+          travelling.at(-1).t - travelling[0].t >= 100,
+          engineName + ': visible sustained travel'
+        );
+        for (let i = 1; i < frames.length; i++)
+          assert.ok(frames[i].x >= frames[i - 1].x - 0.5, engineName + ': monotonic live movement');
+      } else assert.ok(frames.every((frame) => Math.abs(frame.x - endX) < 1));
       assert.deepEqual(errors, []);
       cases++;
       await page.close();
