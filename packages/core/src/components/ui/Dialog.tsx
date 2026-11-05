@@ -383,11 +383,12 @@ export function Dialog(props: DialogProps) {
                   </Show>
                 </Show>
 
-                {/* Content */}
+                {/* Reserve a gutter only while the default body owns scrolling.
+                  * Custom overflow-hidden/clip content keeps its own full width. */}
                 <div
                   data-floe-dialog-body
                   class={cn(
-                    'min-h-0 flex-1 overflow-auto overscroll-contain px-[var(--floe-pad-group)] py-[var(--floe-pad-group)] [scrollbar-gutter:stable]',
+                    'min-h-0 flex-1 overflow-auto overscroll-contain px-[var(--floe-pad-group)] py-[var(--floe-pad-group)] [&.overflow-auto]:[scrollbar-gutter:stable]',
                     props.contentClass
                   )}
                 >
