@@ -80,9 +80,13 @@ inputs retain 16px text and 44px action targets. Height follows content, with a
 bounded editor and scrollable body for small visual viewports. Placement clamps
 to safe areas and native-header insets and flips above the trigger when needed.
 
-Shared floating presence owns mounting and reversal. A 200ms decelerating
-entrance and 140ms exit translate four/two pixels toward the resolved trigger
-edge with restrained scale; clamped placement fades in place. Input focuses in
+Hosts pass the original context-menu point through delayed actions. For control-based or keyboard actions, `capturePromptCardAnchor(owner?)` captures a connected control’s viewport position before focus moves, a menu closes or asynchronous work begins. Omitted anchors capture the current initiating control when the card opens; programmatic openings without a control retain the viewport default. Captured points remain fixed through exit.
+
+Shared floating presence owns mounting and reversal. A 280ms decelerating
+entrance and 140ms exit translate twelve/six pixels toward the resolved trigger
+edge with 0.975/0.985 scale. Viewport collision clamping retains the directional
+origin; unanchored openings use an eight/four-pixel lift. Entering styles are
+committed before the open state even when a host opens inside an animation frame. Input focuses in
 the opening task, without waiting for motion or a server response. The real insertion caret uses primary ink. Select exposes `onOptionSelect` after a committed option, including reselecting the current value; ordinary open/close and Tab retain their existing focus behavior. Completed model/file choices return focus to the existing insertion point; cancelling the file picker also resumes editing. When the question already explains the task, omit the optional placeholder. Submission paints its reserved pending icon before deferring host work; subsequent busy state stays host-controlled and preserves action geometry. Closing
 revokes input immediately, retains content until exit ends, and restores trigger
 focus for Close/Escape. Outside pointer actions continue to their destination.

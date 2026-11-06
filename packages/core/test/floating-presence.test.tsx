@@ -53,6 +53,25 @@ describe('createFloatingPresence', () => {
     vi.restoreAllMocks();
   });
 
+  it('commits the entering style once before opening even inside a scheduled frame', () => {
+    const element = document.createElement('div');
+    document.body.append(element);
+    let presence: FloatingPresence;
+    const readStyle = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(() => {
+      expect(presence.state()).toBe('entering');
+      return { opacity: '0' } as CSSStyleDeclaration;
+    });
+    createRoot(dispose => {
+      disposers.push(() => { dispose(); element.remove(); });
+      presence = createFloatingPresence({ open: () => true, element: () => element });
+    });
+    vi.advanceTimersByTime(16);
+    expect(readStyle).toHaveBeenCalledOnce();
+    expect(presence!.state()).toBe('open');
+    vi.advanceTimersByTime(400);
+    expect(readStyle).toHaveBeenCalledOnce();
+  });
+
   it('keeps a surface mounted during exit and then unmounts it', async () => {
     const presence = createPresenceHarness(false);
 

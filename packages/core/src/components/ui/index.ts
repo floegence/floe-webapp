@@ -1,4 +1,4 @@
-export { PromptCard, type PromptCardProps } from './PromptCard';
+export { PromptCard, capturePromptCardAnchor, type PromptCardProps } from './PromptCard';
 export { FeedbackIndicator, type FeedbackIndicatorProps, type FeedbackIndicatorEntry } from './FeedbackIndicator';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
 export { StableText, type StableTextProps } from './StableText';

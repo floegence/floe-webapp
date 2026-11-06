@@ -1,12 +1,12 @@
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { PromptCard, Button } from '../../src/ui';
+import { PromptCard, Button, type PromptCardProps } from '../../src/ui';
 import { Sparkles } from '../../src/icons';
 import '../../src/styles/globals.css';
 
 render(() => {
   const surface = new URLSearchParams(location.search).has('surface');
-  const [anchor, setAnchor] = createSignal({ x: 28, y: 192 });
+  const [anchor, setAnchor] = createSignal<PromptCardProps['anchor']>({ x: 28, y: 192 });
   const [open, setOpen] = createSignal(false);
   const [value, setValue] = createSignal('');
   const [busy, setBusy] = createSignal(false);
@@ -20,6 +20,7 @@ render(() => {
   Object.assign(window, {
     promptCard: {
       setQuestion,
+      setAnchor,
       setOpen,
       setBusy,
       setTop,
@@ -48,8 +49,14 @@ render(() => {
         id="trigger"
         onClick={(event) => {
           const bounds = event.currentTarget.getBoundingClientRect();
-          setAnchor({ x: bounds.left + 4, y: bounds.bottom });
-          setOpen(true);
+          setAnchor(
+            new URLSearchParams(location.search).has('implicit')
+              ? undefined
+              : { x: bounds.left + 4, y: bounds.bottom }
+          );
+          if (new URLSearchParams(location.search).has('frame'))
+            requestAnimationFrame(() => setOpen(true));
+          else setOpen(true);
         }}
         style={{ position: 'fixed', top: `${top()}px`, left: '24px' }}
       >

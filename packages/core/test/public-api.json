@@ -519,6 +519,7 @@
     "addCalendarDays",
     "addCalendarMonths",
     "calendarDays",
+    "capturePromptCardAnchor",
     "clientToCanvasLocal",
     "clientToCanvasWorld",
     "createControllableValue",

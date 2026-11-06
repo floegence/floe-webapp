@@ -21,6 +21,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/file-browser-status-bar.test.tsx',
   'packages/core/test/file-browser-set-current-path.test.tsx',
   'packages/core/test/floating-presence.test.tsx',
+  'packages/core/test/prompt-card-anchor.test.tsx',
   'packages/core/test/floating-window-open-cycle.test.tsx',
   'packages/core/test/floe-registry-contributions.test.tsx',
   'packages/core/test/surface-floating-layer.test.tsx',

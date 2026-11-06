@@ -64,7 +64,7 @@ try {
                       scale: matrix.m11,
                       layout: panel.parentElement.getBoundingClientRect().toJSON(),
                     });
-                    if (performance.now() - start < 240) requestAnimationFrame(record);
+                    if (performance.now() - start < 360) requestAnimationFrame(record);
                   };
                   requestAnimationFrame(record);
                 },
@@ -299,8 +299,12 @@ try {
                 'entrance paints intermediate opacity'
               );
               assert.ok(
-                frames.some((frame) => frame.scale >= 0.985 && frame.scale < 1),
+                frames.some((frame) => frame.scale >= 0.975 && frame.scale < 1),
                 'restrained scale follows shared presence'
+              );
+              assert.ok(
+                frames.some((frame) => Math.abs(frame.y) >= 6),
+                'entrance has a perceptible directional lift before settling'
               );
               const moving = frames.filter((frame) => frame.opacity > 0);
               assert.ok(
@@ -425,6 +429,99 @@ try {
           assert.deepEqual(errors, []);
           await page.close();
         }
+    // No explicit point: pointer/keyboard controls and frame-deferred opening
+    // retain their own location, including viewport collision placement.
+    const contextual = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    for (const query of ['implicit', 'implicit&frame', 'frame']) {
+      await contextual.goto(
+        server.resolvedUrls.local[0] + 'test/browser/prompt-card.html?' + query
+      );
+      const trigger = contextual.locator('#trigger');
+      await trigger.evaluate((element) => {
+        element.style.left = '1090px';
+        element.style.top = '700px';
+        window.contextualFrames = [];
+        element.addEventListener(
+          'click',
+          () => {
+            const start = performance.now();
+            const sample = () => {
+              const panel = document.querySelector('[data-floe-prompt-card]');
+              if (panel) {
+                const style = getComputedStyle(panel);
+                const matrix = new DOMMatrixReadOnly(style.transform);
+                window.contextualFrames.push({
+                  time: performance.now() - start,
+                  opacity: +style.opacity,
+                  y: matrix.m42,
+                });
+              }
+              if (performance.now() - start < 350) requestAnimationFrame(sample);
+            };
+            requestAnimationFrame(sample);
+          },
+          { once: true }
+        );
+      });
+      await trigger.click();
+      const panel = contextual.locator('[data-floe-prompt-card]');
+      await panel.waitFor();
+      await panel.evaluate(async (element) => {
+        while (element.dataset.floatingPresence === 'entering')
+          await new Promise(requestAnimationFrame);
+        await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
+      });
+      const geometry = await panel.evaluate((element) => ({
+        panel: element.getBoundingClientRect().toJSON(),
+        trigger: document.querySelector('#trigger').getBoundingClientRect().toJSON(),
+        frames: window.contextualFrames,
+      }));
+      assert.ok(
+        Math.abs(geometry.panel.right - 1268) < 1,
+        'right edge clamps without losing the source'
+      );
+      assert.ok(
+        Math.min(
+          Math.abs(geometry.panel.top - geometry.trigger.bottom - 8),
+          Math.abs(geometry.panel.bottom - geometry.trigger.bottom + 8)
+        ) < 1,
+        'card stays adjacent to the initiating control: ' + JSON.stringify(geometry)
+      );
+      assert.ok(
+        geometry.frames.some(
+          (frame) => frame.opacity > 0 && frame.opacity < 1 && Math.abs(frame.y) > 0.5
+        ),
+        'frame-deferred entry paints real movement'
+      );
+      const exit = await panel.evaluate(async (element) => {
+        window.promptCard.setOpen(false);
+        const frames = [];
+        const start = performance.now();
+        while (element.isConnected && performance.now() - start < 500) {
+          const style = getComputedStyle(element);
+          frames.push({
+            opacity: +style.opacity,
+            y: new DOMMatrixReadOnly(style.transform).m42,
+            inert: element.inert,
+          });
+          await new Promise(requestAnimationFrame);
+        }
+        return { frames, detached: !element.isConnected };
+      });
+      assert.ok(exit.detached);
+      assert.ok(
+        exit.frames.every((frame) => frame.inert),
+        'exit immediately releases pointer and keyboard ownership'
+      );
+      assert.ok(
+        exit.frames.some(
+          (frame) => frame.opacity > 0 && frame.opacity < 1 && Math.abs(frame.y) >= 1
+        ),
+        'exit visibly returns toward its source'
+      );
+      report.push({ engine, scope: query, ...geometry, exit });
+    }
+    await contextual.close();
     const scoped = await browser.newPage({
       viewport: { width: 1280, height: 900 },
       reducedMotion: 'reduce',

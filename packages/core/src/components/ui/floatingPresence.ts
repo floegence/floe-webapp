@@ -97,7 +97,9 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
   const open = createMemo(() => options.open());
   const initiallyOpen = untrack(open);
   const [mounted, setMounted] = createSignal(initiallyOpen);
-  const [state, setState] = createSignal<FloatingPresenceState>(initiallyOpen ? 'entering' : 'exiting');
+  const [state, setState] = createSignal<FloatingPresenceState>(
+    initiallyOpen ? 'entering' : 'exiting'
+  );
   let presenceFrame: number | null = null;
   let exitTimer: number | null = null;
   let detachExitWatch: (() => void) | null = null;
@@ -131,6 +133,10 @@ export function createFloatingPresence(options: FloatingPresenceOptions): Floati
       presenceFrame = requestPresenceFrame(() => {
         presenceFrame = null;
         if (untrack(open)) {
+          // A surface opened inside an animation frame may not have painted yet.
+          // Commit its entering style before changing state in this same frame.
+          const element = options.element?.();
+          if (element?.isConnected) void globalThis.getComputedStyle?.(element).opacity;
           setState('open');
         }
       });

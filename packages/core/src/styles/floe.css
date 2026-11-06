@@ -1007,12 +1007,12 @@
  * positioning layer never animates, and typing never schedules a motion loop. */
 .floe-prompt-card-positioner { position: fixed; pointer-events: none; width: min(24rem, var(--floe-prompt-max-width)); }
 .floe-prompt-card {
-  --floe-floating-enter-duration: var(--floe-duration-base);
+  --floe-floating-enter-duration: var(--floe-duration-slow);
   --floe-floating-exit-duration: var(--floe-duration-fast);
-  --floe-floating-enter-y: -0.25rem;
-  --floe-floating-exit-y: -0.125rem;
-  --floe-floating-enter-scale: 0.985;
-  --floe-floating-exit-scale: 0.995;
+  --floe-floating-enter-y: -0.75rem;
+  --floe-floating-exit-y: -0.375rem;
+  --floe-floating-enter-scale: 0.975;
+  --floe-floating-exit-scale: 0.985;
   --floe-floating-origin: var(--floe-prompt-origin-x) top;
   display: flex; flex-direction: column; min-width: 0;
   max-height: var(--floe-prompt-max-height);
@@ -1026,15 +1026,14 @@
   line-height: var(--floe-line-body);
 }
 .floe-prompt-card[data-floating-side='top'] {
-  --floe-floating-enter-y: 0.25rem;
-  --floe-floating-exit-y: 0.125rem;
+  --floe-floating-enter-y: 0.75rem;
+  --floe-floating-exit-y: 0.375rem;
   --floe-floating-origin: var(--floe-prompt-origin-x) bottom;
 }
 .floe-prompt-card[data-floating-side='edge'] {
-  --floe-floating-enter-y: 0;
-  --floe-floating-exit-y: 0;
-  --floe-floating-enter-scale: 1;
-  --floe-floating-exit-scale: 1;
+  --floe-floating-enter-y: 0.5rem;
+  --floe-floating-exit-y: 0.25rem;
+  --floe-floating-origin: center;
 }
 .floe-prompt-card-header {
   display: flex; align-items: center; flex-shrink: 0;

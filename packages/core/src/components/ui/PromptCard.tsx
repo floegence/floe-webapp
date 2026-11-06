@@ -81,6 +81,17 @@ export interface PromptCardProps {
   zIndex?: number;
 }
 
+/** Capture the initiating control before a menu closes or asynchronous work starts. */
+export function capturePromptCardAnchor(owner?: Element | null): PromptCardProps['anchor'] {
+  if (typeof document === 'undefined') return null;
+  ensureSurfacePortalInteractionTracking();
+  const target = owner ?? readFreshInteractionSnapshot()?.target ?? document.activeElement;
+  if (!target?.isConnected || target === document.body || target === document.documentElement)
+    return null;
+  const rect = target.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 ? { x: rect.left, y: rect.bottom } : null;
+}
+
 /** A short contextual input. The host owns the draft and asynchronous result. */
 export function PromptCard(props: PromptCardProps) {
   ensureSurfacePortalInteractionTracking();
@@ -96,7 +107,7 @@ export function PromptCard(props: PromptCardProps) {
   const [card, setCard] = createSignal<HTMLDivElement>();
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const anchor = createMemo<PromptCardProps['anchor']>((previous) =>
-    props.open ? props.anchor : previous
+    props.open ? (props.anchor ?? untrack(() => capturePromptCardAnchor(props.owner))) : previous
   );
   const presence = createFloatingPresence({ open: () => props.open, element: card });
   let editor: HTMLTextAreaElement | undefined;
@@ -188,7 +199,7 @@ export function PromptCard(props: PromptCardProps) {
         : point.y - height - 8
       : top + Math.max(0, (maxHeight - height) * 0.32);
     const y = clamp(desiredY, top, bottom - height);
-    const side = !point || y !== desiredY ? 'edge' : below ? 'bottom' : 'top';
+    const side = point ? (below ? 'bottom' : 'top') : 'edge';
     return {
       x,
       y,
