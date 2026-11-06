@@ -82,6 +82,8 @@ to safe areas and native-header insets and flips above the trigger when needed.
 
 Hosts pass the original context-menu point through delayed actions. For control-based or keyboard actions, `capturePromptCardAnchor(owner?)` captures a connected control’s viewport position before focus moves, a menu closes or asynchronous work begins. Omitted anchors capture the current initiating control when the card opens; programmatic openings without a control retain the viewport default. Captured points remain fixed through exit.
 
+Mark each host-rendered reference or attachment chip with `data-floe-prompt-reference`. Inside the references slot, Floe supplies an opaque floating-plane fill that separates each chip from the contextual editor, without a border, glow or extra shadow. Hosts retain reference content, actions and layout; they must not override this fill with transparency.
+
 Shared floating presence owns mounting and reversal. A 280ms decelerating
 entrance and 140ms exit translate twelve/six pixels toward the resolved trigger
 edge with 0.975/0.985 scale. Viewport collision clamping retains the directional

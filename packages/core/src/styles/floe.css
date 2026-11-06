@@ -1061,6 +1061,13 @@
 .floe-prompt-card-input::placeholder { color: var(--floe-field-placeholder); }
 .floe-prompt-card-actions { display: flex; align-items: center; gap: var(--floe-gap-control); padding: var(--floe-pad-control) 0 0; }
 .floe-prompt-card-references { min-width: 0; }
+.floe-prompt-card-references [data-floe-prompt-reference] {
+  border: 0;
+  border-radius: var(--floe-radius-xs);
+  background: var(--floe-plane-float);
+  color: var(--floe-ink);
+  box-shadow: none;
+}
 .floe-prompt-card-tools { display: flex; align-items: center; flex: 1; min-width: 0; gap: var(--floe-gap-inline); }
 .floe-prompt-card-tools > .relative { flex: 1; min-width: 0; }
 .floe-prompt-card .floe-prompt-card-attach { flex-shrink: 0; width: var(--floe-control-height-sm); height: var(--floe-control-height-sm); border-radius: var(--floe-radius-sm); }

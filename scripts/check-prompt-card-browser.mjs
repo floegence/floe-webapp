@@ -116,6 +116,34 @@ try {
                     return (Math.max(fill, base) + 0.05) / (Math.min(fill, base) + 0.05);
                   });
                 })(),
+                reference: (() => {
+                  const style = getComputedStyle(
+                    element.querySelector('[data-floe-prompt-reference]')
+                  );
+                  const sample = document.createElement('canvas').getContext('2d');
+                  const luminance = (color) => {
+                    sample.clearRect(0, 0, 1, 1);
+                    sample.fillStyle = color;
+                    sample.fillRect(0, 0, 1, 1);
+                    const rgba = [...sample.getImageData(0, 0, 1, 1).data];
+                    if (rgba[3] !== 255) return null;
+                    const [r, g, b] = rgba.map((value) => {
+                      const c = value / 255;
+                      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+                    });
+                    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                  };
+                  const chip = luminance(style.backgroundColor);
+                  const card = luminance(getComputedStyle(element).backgroundColor);
+                  return {
+                    contrast:
+                      chip === null
+                        ? 0
+                        : (Math.max(chip, card) + 0.05) / (Math.min(chip, card) + 0.05),
+                    border: style.borderWidth,
+                    shadow: style.boxShadow,
+                  };
+                })(),
                 blur: getComputedStyle(element).backdropFilter,
                 shadow: getComputedStyle(element).boxShadow,
                 willChange: getComputedStyle(element).willChange,
@@ -146,6 +174,12 @@ try {
               response.fillContrast.every((contrast) => contrast >= 1.12),
               `card fill separates from page and content: ${JSON.stringify(response.fillContrast)}`
             );
+            assert.ok(
+              response.reference.contrast >= 1.12,
+              `reference fill separates from the editor: ${JSON.stringify(response.reference)}`
+            );
+            assert.equal(response.reference.border, '0px');
+            assert.equal(response.reference.shadow, 'none');
             assert.deepEqual(
               await card
                 .locator('.floe-prompt-card-attach svg path')

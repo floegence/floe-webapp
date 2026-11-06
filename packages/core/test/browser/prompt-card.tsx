@@ -116,7 +116,11 @@ render(() => {
             },
           ],
         }}
-        references={<span>Project files</span>}
+        references={
+          <span data-floe-prompt-reference style={{ display: 'inline-flex', padding: '2px 6px' }}>
+            Project files
+          </span>
+        }
         feedback={feedback() && <p role="alert">{feedback()}</p>}
       />
     </main>
