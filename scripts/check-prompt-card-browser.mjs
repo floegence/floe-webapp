@@ -263,7 +263,7 @@ try {
             await page.getByRole('searchbox', { name: 'Search models' }).press('Shift+Tab');
             assert.equal(
               await card
-                .locator('.floe-prompt-card-attach')
+                .getByRole('button', { name: 'Capture view' })
                 .evaluate((element) => document.activeElement === element),
               true,
               'Shift+Tab continues before the model trigger'

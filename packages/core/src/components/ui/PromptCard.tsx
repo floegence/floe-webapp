@@ -56,6 +56,8 @@ export interface PromptCardProps {
   references?: JSX.Element;
   /** Optional host-owned files; selection, paste and drop share this callback. */
   attachment?: Readonly<{ label: string; accept?: string; onFiles: (files: File[]) => void }>;
+  /** Host-owned actions beside attachments; asynchronous work stays with the host. */
+  tools?: JSX.Element;
   /** Compact host-owned choice, for example an assistant model. */
   selection?: Readonly<{
     label: string;
@@ -446,6 +448,7 @@ export function PromptCard(props: PromptCardProps) {
                         onClick={() => fileInput?.click()}
                       />
                     </Show>
+                    {props.tools}
                     <Show when={props.selection}>
                       <Select
                         ref={(element) => {

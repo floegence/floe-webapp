@@ -93,6 +93,15 @@ render(() => {
           label: 'Attach files',
           onFiles: (added) => setFiles((previous) => [...previous, ...added]),
         }}
+        tools={
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Capture view"
+            icon={Sparkles}
+            onClick={() => setFeedback('Captured view')}
+          />
+        }
         selection={{
           label: 'Model',
           value: model(),

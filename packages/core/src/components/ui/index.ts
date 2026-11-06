@@ -1,3 +1,4 @@
+export { createContextSourceRegistry, type ContextSource, type ContextSourceSnapshot } from './contextSource';
 export { PromptCard, capturePromptCardAnchor, type PromptCardProps } from './PromptCard';
 export { FeedbackIndicator, type FeedbackIndicatorProps, type FeedbackIndicatorEntry } from './FeedbackIndicator';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './Button';
