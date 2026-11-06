@@ -35,6 +35,8 @@ export interface SurfaceFloatingLayerProps extends Omit<
   position: SurfaceFloatingLayerPosition;
   /** Stable trigger or anchor used to resolve the owning projected surface. */
   owner?: Element | null;
+  /** Global commands may escape their source surface without changing the owner. */
+  portalScope?: 'surface' | 'viewport';
   boundary?: SurfaceFloatingBoundary;
   estimatedSize?: SurfaceFloatingLayerSize;
   clamp?: boolean;
@@ -62,6 +64,7 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   const [local, rest] = splitProps(props, [
     'position',
     'owner',
+    'portalScope',
     'boundary',
     'estimatedSize',
     'clamp',
@@ -72,7 +75,11 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   ]);
   const [viewport, setViewport] = createSignal<ViewportSnapshot>();
   onMount(() => onCleanup(observeViewport(window, setViewport)));
-  const surfaceHost = createMemo(() => resolveSurfacePortalHost({ owner: local.owner ?? null }));
+  const surfaceHost = createMemo(() =>
+    resolveSurfacePortalHost({
+      owner: local.portalScope === 'viewport' ? document.documentElement : (local.owner ?? null),
+    })
+  );
   const isSurfaceMode = () => isSurfacePortalMode(surfaceHost());
   const safeArea = createMemo(() => {
     void local.position;
@@ -89,7 +96,9 @@ export function SurfaceFloatingLayer(props: SurfaceFloatingLayerProps) {
   const projectedPosition = () => {
     const position = projectSurfacePortalPosition(resolvedPosition(), surfaceHost());
     const offset = viewport()?.fixedOffset;
-    return isSurfaceMode() || !offset ? position : { x: position.x + offset.left, y: position.y + offset.top };
+    return isSurfaceMode() || !offset
+      ? position
+      : { x: position.x + offset.left, y: position.y + offset.top };
   };
   const layerStyle = () => ({
     ...(local.style ?? {}),

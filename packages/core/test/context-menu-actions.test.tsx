@@ -44,6 +44,37 @@ it('opens a fallback on blank surfaces and freezes the original target', async (
   expect(selected).toHaveBeenCalledWith('source');
   expect(document.querySelector('[role=menu]')).toBeNull();
 });
+it('mounts an explicitly viewport-scoped menu outside its local source surface', async () => {
+  const selected = vi.fn();
+  const host = document.createElement('main');
+  document.body.append(host);
+  dispose = render(
+    () => (
+      <ContextMenuActions
+        label="Actions"
+        portalScope="viewport"
+        actions={(request) => [
+          { id: 'ask', label: 'Ask', onSelect: () => selected(request.target.id) },
+        ]}
+      >
+        <div data-floe-dialog-surface-host="true">
+          <button id="scoped-source">Source</button>
+        </div>
+      </ContextMenuActions>
+    ),
+    host
+  );
+  document
+    .querySelector('#scoped-source')!
+    .dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 12, clientY: 24 })
+    );
+  await flush();
+  const menu = document.querySelector<HTMLElement>('[role=menu]')!;
+  expect(menu.closest('[data-floe-dialog-surface-host]')).toBeNull();
+  menu.querySelector<HTMLButtonElement>('[role=menuitem]')!.click();
+  expect(selected).toHaveBeenCalledWith('scoped-source');
+});
 it('contributes to a stopped local menu without opening a second menu or duplicating semantic actions', async () => {
   const host = document.createElement('main');
   document.body.append(host);

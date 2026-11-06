@@ -56,6 +56,8 @@ export function ContextMenuActions(props: {
   actions: (request: ContextMenuRequest) => readonly ContextMenuAction[];
   enabled?: boolean;
   zIndex?: number;
+  /** Only the fallback menu changes scope; contributed local menus keep their owner. */
+  portalScope?: 'surface' | 'viewport';
   editing?: { labels: ContextMenuEditingLabels; onError: (error: unknown) => void };
   children: JSX.Element;
 }) {
@@ -170,6 +172,7 @@ export function ContextMenuActions(props: {
             request={request}
             label={props.label}
             zIndex={props.zIndex}
+            portalScope={props.portalScope}
             onClose={() => setFallback(undefined)}
           />
         )}
@@ -213,6 +216,7 @@ function FallbackMenu(props: {
   request: ContextMenuActionRequest;
   label: string;
   zIndex?: number;
+  portalScope?: 'surface' | 'viewport';
   onClose: () => void;
 }) {
   let menu!: HTMLDivElement;
@@ -251,6 +255,7 @@ function FallbackMenu(props: {
   return (
     <SurfaceFloatingLayer
       owner={props.request.origin.target}
+      portalScope={props.portalScope}
       position={props.request.origin}
       estimatedSize={menuSize()}
       role="menu"

@@ -65,7 +65,10 @@ try {
           await ask.waitFor();
           assert.equal(await page.getByRole('menu').count(), 1);
           const icon = await ask.locator('svg').boundingBox();
-          assert.ok(icon && icon.width > 0 && icon.width <= 16 && icon.height <= 16, `Custom menu icon must remain compact: ${JSON.stringify(icon)}`);
+          assert.ok(
+            icon && icon.width > 0 && icon.width <= 16 && icon.height <= 16,
+            `Custom menu icon must remain compact: ${JSON.stringify(icon)}`
+          );
           await page.getByRole('menuitem', { name: 'Original action' }).click();
           assert.equal(await page.locator('#result').textContent(), 'original');
           await page.locator('#reading').evaluate((el) => {
@@ -93,6 +96,29 @@ try {
           await page.locator('#remote').click({ button: 'right' });
           assert.equal(await page.getByRole('menu').count(), 0);
           assert.deepEqual(errors, []);
+          await page.goto(
+            server.resolvedUrls.local[0] + 'test/browser/context-menu-actions.html?viewport'
+          );
+          await page.locator('#blank').click({ button: 'right', position: { x: 4, y: 40 } });
+          await ask.waitFor();
+          assert.equal(
+            await ask.evaluate((element) => {
+              const bounds = element.getBoundingClientRect();
+              return element.contains(
+                document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+              );
+            }),
+            true,
+            'Global menus remain hit-testable above viewport prompts'
+          );
+          assert.equal(
+            await page
+              .getByRole('menu')
+              .evaluate((element) => element.closest('[data-floe-dialog-surface-host]')),
+            null
+          );
+          await ask.click();
+          assert.ok((await page.locator('#result').textContent()).includes('blank'));
           results.push({ engine, width, dark, passed: true });
           await page.close();
         }

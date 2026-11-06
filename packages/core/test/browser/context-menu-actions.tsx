@@ -1,15 +1,18 @@
 import { ThemeProvider } from '../../src/context/ThemeContext';
 import { CodeEditor } from '../../src/components/editor/CodeEditor';
 import { createSignal, Show } from 'solid-js';
-import { render } from 'solid-js/web';
+import { Portal, render } from 'solid-js/web';
 import { ContextMenuActions, ContextMenuActionItems, SurfaceFloatingLayer } from '../../src/ui';
 import '../../src/styles/globals.css';
 render(() => {
   const [local, setLocal] = createSignal<{ x: number; y: number }>();
   const [result, setResult] = createSignal('');
+  const viewport = new URLSearchParams(location.search).has('viewport');
   return (
     <ContextMenuActions
       label="Actions"
+      portalScope={viewport ? 'viewport' : undefined}
+      zIndex={5100}
       actions={(request) => [
         {
           id: 'ask',
@@ -42,7 +45,9 @@ render(() => {
       }}
     >
       <main
+        data-floe-dialog-surface-host={viewport ? 'true' : undefined}
         style={{
+          isolation: 'isolate',
           padding: '32px',
           height: '100vh',
           background: 'var(--background)',
@@ -112,6 +117,24 @@ render(() => {
           )}
         </Show>
       </main>
+      <Show when={viewport}>
+        <Portal>
+          <div
+            id="global-prompt"
+            style={{
+              position: 'fixed',
+              left: '20px',
+              top: '100px',
+              width: '300px',
+              height: '200px',
+              'z-index': 1000,
+              background: 'var(--background)',
+            }}
+          >
+            Existing prompt
+          </div>
+        </Portal>
+      </Show>
     </ContextMenuActions>
   );
 }, document.getElementById('root')!);
