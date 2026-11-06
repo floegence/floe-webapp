@@ -1,4 +1,4 @@
-/* global document */
+/* global document, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
@@ -46,6 +46,16 @@ try {
           const ask = page.getByRole('menuitem', { name: 'Ask assistant' });
           await ask.waitFor();
           assert.equal(await page.getByRole('menu').count(), 1);
+          await page.locator('#independent-scroll').evaluate(
+            (element) =>
+              new Promise((resolve) => {
+                element.addEventListener('scroll', () => requestAnimationFrame(resolve), {
+                  once: true,
+                });
+                element.scrollTop = 40;
+              })
+          );
+          assert.equal(await ask.isVisible(), true, 'Independent pane scrolling retains the menu');
           await page.screenshot({
             path: `${output}/${engine}-${width}-${dark ? 'dark' : 'light'}.png`,
           });

@@ -75,6 +75,43 @@ it('mounts an explicitly viewport-scoped menu outside its local source surface',
   menu.querySelector<HTMLButtonElement>('[role=menuitem]')!.click();
   expect(selected).toHaveBeenCalledWith('scoped-source');
 });
+it('ignores unrelated scrolling and dismisses when the source scrolls', async () => {
+  const host = document.createElement('main');
+  document.body.append(host);
+  dispose = render(
+    () => (
+      <ContextMenuActions
+        label="Actions"
+        actions={() => [{ id: 'ask', label: 'Ask', onSelect: vi.fn() }]}
+      >
+        <div id="source-scroll">
+          <button id="scroll-source">Source</button>
+        </div>
+        <div id="other-scroll">Independent content</div>
+      </ContextMenuActions>
+    ),
+    host
+  );
+  const open = async () => {
+    document
+      .querySelector('#scroll-source')!
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    await flush();
+  };
+  await open();
+  document.querySelector('#other-scroll')!.dispatchEvent(new Event('scroll'));
+  await flush();
+  expect(document.querySelector('[role=menu]')).not.toBeNull();
+  document.querySelector('[role=menu]')!.dispatchEvent(new Event('scroll'));
+  expect(document.querySelector('[role=menu]')).not.toBeNull();
+  document.querySelector('#source-scroll')!.dispatchEvent(new Event('scroll'));
+  await flush();
+  expect(document.querySelector('[role=menu]')).toBeNull();
+  await open();
+  document.dispatchEvent(new Event('scroll'));
+  await flush();
+  expect(document.querySelector('[role=menu]')).toBeNull();
+});
 it('contributes to a stopped local menu without opening a second menu or duplicating semantic actions', async () => {
   const host = document.createElement('main');
   document.body.append(host);

@@ -238,16 +238,22 @@ function FallbackMenu(props: {
     const outside = (event: Event) => {
       if (event.target instanceof Node && !menu.contains(event.target)) close();
     };
+    const scroll = (event: Event) => {
+      // Only scrolling the source's ancestry invalidates its frozen anchor.
+      // Independent panes may keep streaming or animating while a menu is open.
+      if (event.target instanceof Node && event.target.contains(props.request.origin.target))
+        close();
+    };
     const blur = () => close();
     document.addEventListener('pointerdown', outside, true);
     document.addEventListener('focusin', outside, true);
-    document.addEventListener('scroll', outside, true);
+    document.addEventListener('scroll', scroll, true);
     window.addEventListener('resize', blur);
     window.addEventListener('blur', blur);
     onCleanup(() => {
       document.removeEventListener('pointerdown', outside, true);
       document.removeEventListener('focusin', outside, true);
-      document.removeEventListener('scroll', outside, true);
+      document.removeEventListener('scroll', scroll, true);
       window.removeEventListener('resize', blur);
       window.removeEventListener('blur', blur);
     });

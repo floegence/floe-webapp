@@ -57,6 +57,9 @@ render(() => {
         <section id="blank" tabIndex={0} style={{ height: '120px' }}>
           Blank surface
         </section>
+        <div id="independent-scroll" style={{ height: '24px', overflow: 'auto' }}>
+          <div style={{ height: '160px' }}>Independent content</div>
+        </div>
         <p id="reading">Selected document context</p>
         <textarea id="editor" aria-label="Editor" value="Existing input" />
         <section

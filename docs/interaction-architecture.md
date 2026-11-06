@@ -516,6 +516,9 @@ surface-scoped menu.
 Global command owners can opt into `portalScope="viewport"` so a fallback menu
 remains above viewport-level prompts. The exact target and anchor remain unchanged;
 local contributed menus retain their own placement and dismissal.
+Scrolling the target or its ancestors dismisses a fallback menu because its
+frozen anchor is no longer valid. Scrolling independent panes or the menu itself
+does not dismiss it; background streaming and layout motion remain independent.
 `ContextMenuActionItems` contributes to an existing menu; `excludeIds` preserves a richer object-specific action with the same semantic ID.
 Workbench, Notes, Deck, FileBrowser and CodeEditor participate through their
 existing owners. Editors retain their own selection, undo and menu implementations.
