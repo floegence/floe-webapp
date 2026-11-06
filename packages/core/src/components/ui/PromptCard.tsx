@@ -261,7 +261,7 @@ export function PromptCard(props: PromptCardProps) {
       ),
     onClose: () => close(true),
     onInteractOutside: (event) => {
-      if (event.type === 'pointerdown') close(false);
+      if (event.type === 'pointerdown' && (event as PointerEvent).button === 0) close(false);
     },
     // Related previews belong to pointer ownership, but own their Escape command.
     closeOnEscape: 'none',

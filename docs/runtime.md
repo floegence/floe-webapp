@@ -134,3 +134,12 @@ only the observed session; the Flowersec controller remains the sole owner of
 reacquisition, retry delays, and terminal failures. Replacement and disposal abort
 outstanding probes and remove timers and browser listeners. Browser suspension
 can still interrupt a session; health checking resumes when the page wakes.
+
+### Product response headers
+
+Authenticated responses retain only the proxy response allowlist. A trusted host can
+declare `extraResponseHeaders` on direct connection options or the remote
+`ProxyBootstrapOwnerOptions` to retain product fields such as an upload capability.
+The server must independently permit the same fields; this option grants no resource
+access. Header policy alone does not install a browser bridge, and capabilities must
+remain in memory rather than appear in URLs, transcripts or diagnostic logs.

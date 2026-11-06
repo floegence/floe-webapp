@@ -73,7 +73,25 @@ try {
             });
             await trigger.focus();
             await trigger.click();
-            await card.waitFor();
+            try {
+              await card.waitFor();
+            } catch (error) {
+              await page.screenshot({
+                path: `${output}/opening-failure-${engine}-${width}-${dark}-${reducedMotion}-${top}.png`,
+              });
+              console.error({
+                engine,
+                width,
+                dark,
+                reducedMotion,
+                top,
+                errors,
+                open: await page.evaluate(() =>
+                  Boolean(document.querySelector('[data-floe-prompt-card]'))
+                ),
+              });
+              throw error;
+            }
             const response = await card.evaluate(async (element) => {
               const editor = element.querySelector('textarea');
               const focused = document.activeElement === editor;
@@ -344,6 +362,23 @@ try {
               );
             }
             const input = card.locator('textarea');
+            // Product context menus consume this event. A native WebKit menu
+            // would otherwise absorb a later click outside the DOM fixture.
+            await page.locator('#outside').evaluate((element) => {
+              element.addEventListener('contextmenu', (event) => event.preventDefault(), {
+                once: true,
+              });
+            });
+            await page.locator('#outside').click({ button: 'right' });
+            assert.equal(
+              await card.getAttribute('aria-hidden'),
+              null,
+              'context-menu invocation preserves the open prompt'
+            );
+            assert.equal(
+              await input.inputValue(),
+              await page.evaluate(() => window.promptCard.value())
+            );
             await input.evaluate((element) => {
               element.dispatchEvent(new Event('compositionstart', { bubbles: true }));
               element.value = '即时草稿';

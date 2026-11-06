@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.97.2
+
+- Preserve host-declared response headers in authenticated session HTTP across direct and bridged connections.
+- Keep prompt drafts open during secondary-pointer context-menu invocation.
+
 ## 0.97.1
 
 - Add logical start/end alignment to anchored panels while preserving default centering, boundary clamping and side placement.

@@ -40,6 +40,7 @@ export type FlowersecConnectionConfig = SharedFlowersecConnectionConfig &
   );
 
 type AcquisitionConnectionOptions = Readonly<{
+  extraResponseHeaders?: readonly string[];
   source: ArtifactSource;
   controller?: ConnectionControllerOptions;
   onConnected?: (acquisition: ConnectedAcquisition) => void;
@@ -49,12 +50,14 @@ export type TunnelArtifactConnectionOptions = AcquisitionConnectionOptions;
 export type DirectArtifactConnectionOptions = AcquisitionConnectionOptions;
 
 export type PrivateLoopbackDirectConnectionOptions = Readonly<{
+  extraResponseHeaders?: readonly string[];
   source: PrivateLoopbackArtifactSourceV1;
   privateLoopback: PrivateLoopbackConnectionControllerOptionsV1;
   onConnected?: (acquisition: ConnectedAcquisition) => void;
 }>;
 
 export type HTTPDirectConnectionOptions = Readonly<{
+  extraResponseHeaders?: readonly string[];
   source: HTTPDirectArtifactSourceV1;
   httpDirect: HTTPDirectConnectionControllerOptionsV1;
   onConnected?: (acquisition: ConnectedAcquisition) => void;
@@ -67,12 +70,16 @@ export function createHTTPDirectConnectionConfig(
     source: options.source,
     httpDirect: options.httpDirect,
     lifecycle: createAcquisitionConnectionLifecycle(options.source, {
+      extraResponseHeaders: options.extraResponseHeaders,
       ...(options.onConnected === undefined ? {} : { onConnected: options.onConnected }),
     }),
   });
 }
 
-export type ProxyRuntimeTunnelConnectionOptions = AcquisitionConnectionOptions &
+export type ProxyRuntimeTunnelConnectionOptions = Omit<
+  AcquisitionConnectionOptions,
+  'extraResponseHeaders'
+> &
   Readonly<{
     proxyBootstrap: ProxyBootstrapOwner;
   }>;
@@ -102,6 +109,7 @@ export function createPrivateLoopbackDirectConnectionConfig(
     source: options.source,
     privateLoopback: options.privateLoopback,
     lifecycle: createAcquisitionConnectionLifecycle(options.source, {
+      extraResponseHeaders: options.extraResponseHeaders,
       ...(options.onConnected === undefined ? {} : { onConnected: options.onConnected }),
     }),
   });
@@ -115,6 +123,7 @@ function withLifecycle(
     source: options.source,
     ...(options.controller === undefined ? {} : { controller: options.controller }),
     lifecycle: createAcquisitionConnectionLifecycle(options.source, {
+      extraResponseHeaders: options.extraResponseHeaders,
       ...(proxyBootstrap === undefined ? {} : { proxyBootstrap }),
       ...(options.onConnected === undefined ? {} : { onConnected: options.onConnected }),
     }),

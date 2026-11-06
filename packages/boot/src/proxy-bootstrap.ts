@@ -1,13 +1,11 @@
-import { fetchServerSentEvents, ServerSentEventStreamError, type FetchServerSentEventsOptions, type ServerSentEvent } from './server-sent-events';
 import {
-  createProxyRuntime,
-  type ProxyRuntime,
-} from '@floegence/flowersec-core/proxy';
-import {
-  AcquisitionError,
-  ConnectedAcquisition,
-  connectedAcquisitionDetails,
-} from './acquisition';
+  fetchServerSentEvents,
+  ServerSentEventStreamError,
+  type FetchServerSentEventsOptions,
+  type ServerSentEvent,
+} from './server-sent-events';
+import { createProxyRuntime, type ProxyRuntime } from '@floegence/flowersec-core/proxy';
+import { AcquisitionError, ConnectedAcquisition, connectedAcquisitionDetails } from './acquisition';
 
 export type ProxyBootstrapBinding = Readonly<{
   dispose(): void;
@@ -32,6 +30,8 @@ export type ControllerBridgeProxyBootstrapContext = Readonly<{
 }>;
 
 export type ProxyBootstrapOwnerOptions = Readonly<{
+  /** Host response fields retained after the server's own header policy. */
+  extraResponseHeaders?: readonly string[];
   serviceWorker?: (context: ServiceWorkerProxyBootstrapContext) => ProxyBootstrapBinding;
   controllerBridge?: (context: ControllerBridgeProxyBootstrapContext) => ProxyBootstrapBinding;
 }>;
@@ -69,7 +69,9 @@ type ProxyBootstrapOwnerState = {
 
 const proxyBootstrapOwners = new WeakMap<ProxyBootstrapOwner, ProxyBootstrapOwnerState>();
 
-export function createProxyBootstrapOwner(options?: ProxyBootstrapOwnerOptions): ProxyBootstrapOwner {
+export function createProxyBootstrapOwner(
+  options?: ProxyBootstrapOwnerOptions
+): ProxyBootstrapOwner {
   const owner = ProxyBootstrapOwner.create();
   proxyBootstrapOwners.set(owner, { options, generation: 0 });
   return owner;
@@ -77,7 +79,7 @@ export function createProxyBootstrapOwner(options?: ProxyBootstrapOwnerOptions):
 
 export function synchronizeProxyBootstrap(
   owner: ProxyBootstrapOwner,
-  acquisition: ConnectedAcquisition | null,
+  acquisition: ConnectedAcquisition | null
 ): ProxyBootstrapSnapshot | null {
   const state = ownerState(owner);
   if (acquisition === null) {
@@ -95,45 +97,72 @@ export function synchronizeProxyBootstrap(
     session: details.session,
     externalOrigin: details.appOrigin,
     ...(scope.limits ?? {}),
-    ...(scope.http?.extraRequestHeaders === undefined ? {} : { extraRequestHeaders: scope.http.extraRequestHeaders }),
+    ...(scope.http?.extraRequestHeaders === undefined
+      ? {}
+      : { extraRequestHeaders: scope.http.extraRequestHeaders }),
+    ...(state.options?.extraResponseHeaders === undefined
+      ? {}
+      : { extraResponseHeaders: state.options.extraResponseHeaders }),
     ...(scope.appBasePath === undefined
       ? {}
-      : { pathPolicy: {
-          allowedPathPrefixes: Object.freeze([scope.appBasePath, ...(scope.http?.additionalPathPrefixes ?? [])]),
-          allowedWebSocketPathPrefixes: Object.freeze([scope.appBasePath]),
-        } }),
+      : {
+          pathPolicy: {
+            allowedPathPrefixes: Object.freeze([
+              scope.appBasePath,
+              ...(scope.http?.additionalPathPrefixes ?? []),
+            ]),
+            allowedWebSocketPathPrefixes: Object.freeze([scope.appBasePath]),
+          },
+        }),
   });
   try {
     let binding: ProxyBootstrapBinding | undefined;
-    if (state.options === undefined) {
+    const hasBridge =
+      state.options !== undefined &&
+      (state.options.extraResponseHeaders === undefined ||
+        state.options.serviceWorker !== undefined ||
+        state.options.controllerBridge !== undefined);
+    if (!hasBridge) {
       // Direct documents need no browser bridge; the session runtime is sufficient.
     } else if (scope.mode === 'service_worker') {
-      const adapter = state.options.serviceWorker;
+      const adapter = state.options?.serviceWorker;
       if (adapter === undefined) throw new AcquisitionError('service_worker_bootstrap_unavailable');
-      binding = adapter(Object.freeze({
-        runtime,
-        generation,
-        bindingIdentity: details.bindingIdentity,
-        scriptUrl: scope.serviceWorker.scriptUrl,
-        serviceWorkerScope: scope.serviceWorker.scope,
-        ...(scope.appBasePath === undefined ? {} : { appBasePath: scope.appBasePath }),
-      }));
+      binding = adapter(
+        Object.freeze({
+          runtime,
+          generation,
+          bindingIdentity: details.bindingIdentity,
+          scriptUrl: scope.serviceWorker.scriptUrl,
+          serviceWorkerScope: scope.serviceWorker.scope,
+          ...(scope.appBasePath === undefined ? {} : { appBasePath: scope.appBasePath }),
+        })
+      );
     } else {
-      const adapter = state.options.controllerBridge;
-      if (adapter === undefined) throw new AcquisitionError('controller_bridge_bootstrap_unavailable');
-      binding = adapter(Object.freeze({
-        runtime,
-        generation,
-        bindingIdentity: details.bindingIdentity,
-        allowedOrigins: scope.controllerBridge.allowedOrigins,
-        ...(scope.appBasePath === undefined ? {} : { appBasePath: scope.appBasePath }),
-        capabilityNonce: randomCapabilityNonce(),
-      }));
+      const adapter = state.options?.controllerBridge;
+      if (adapter === undefined)
+        throw new AcquisitionError('controller_bridge_bootstrap_unavailable');
+      binding = adapter(
+        Object.freeze({
+          runtime,
+          generation,
+          bindingIdentity: details.bindingIdentity,
+          allowedOrigins: scope.controllerBridge.allowedOrigins,
+          ...(scope.appBasePath === undefined ? {} : { appBasePath: scope.appBasePath }),
+          capabilityNonce: randomCapabilityNonce(),
+        })
+      );
     }
-    if (state.options !== undefined && (binding === null || typeof binding !== 'object' || typeof binding.dispose !== 'function')) {
+    if (
+      hasBridge &&
+      (binding === null || typeof binding !== 'object' || typeof binding.dispose !== 'function')
+    ) {
       throw new AcquisitionError('invalid_proxy_bootstrap_binding');
     }
-    const snapshot = Object.freeze({ generation, mode: state.options === undefined ? 'session' as const : scope.mode, bindingIdentity: details.bindingIdentity });
+    const snapshot = Object.freeze({
+      generation,
+      mode: hasBridge ? scope.mode : ('session' as const),
+      bindingIdentity: details.bindingIdentity,
+    });
     state.acquisition = acquisition;
     state.runtime = runtime;
     state.binding = binding;
@@ -146,7 +175,11 @@ export function synchronizeProxyBootstrap(
 }
 
 // Connection lifecycles expose these operations without exposing a mutable runtime.
-export async function fetchProxyBootstrap(owner: ProxyBootstrapOwner, input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export async function fetchProxyBootstrap(
+  owner: ProxyBootstrapOwner,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
   const state = ownerState(owner);
   const runtime = state.runtime;
   if (runtime === undefined) throw new AcquisitionError('session_http_unavailable');
@@ -161,21 +194,28 @@ export async function fetchProxyBootstrap(owner: ProxyBootstrapOwner, input: Req
 export async function* readProxyBootstrapEvents(
   owner: ProxyBootstrapOwner,
   input: RequestInfo | URL,
-  options: Omit<FetchServerSentEventsOptions, 'fetch'> = {},
+  options: Omit<FetchServerSentEventsOptions, 'fetch'> = {}
 ): AsyncGenerator<ServerSentEvent> {
   const state = ownerState(owner);
   const runtime = state.runtime;
-  if (runtime === undefined) throw new ServerSentEventStreamError('transport', 'session HTTP is unavailable');
+  if (runtime === undefined)
+    throw new ServerSentEventStreamError('transport', 'session HTTP is unavailable');
   options.signal?.throwIfAborted();
-  const headers = new Headers(options.headers ?? (input instanceof Request ? input.headers : undefined));
+  const headers = new Headers(
+    options.headers ?? (input instanceof Request ? input.headers : undefined)
+  );
   headers.set('Accept', 'text/event-stream');
   for await (const event of fetchServerSentEvents(input, {
-    ...options, headers,
+    ...options,
+    headers,
     fetch: (request, init) => runtime.fetch(request, init),
-    onActivity: () => { if (state.runtime === runtime && !options.signal?.aborted) options.onActivity?.(); },
+    onActivity: () => {
+      if (state.runtime === runtime && !options.signal?.aborted) options.onActivity?.();
+    },
   })) {
     options.signal?.throwIfAborted();
-    if (state.runtime !== runtime) throw new ServerSentEventStreamError('transport', 'session HTTP was replaced');
+    if (state.runtime !== runtime)
+      throw new ServerSentEventStreamError('transport', 'session HTTP was replaced');
     yield event;
   }
 }
@@ -206,7 +246,8 @@ function disposeCurrent(state: ProxyBootstrapOwnerState): void {
 }
 
 function randomCapabilityNonce(): string {
-  if (globalThis.crypto?.getRandomValues === undefined) throw new AcquisitionError('acquisition_entropy_unavailable');
+  if (globalThis.crypto?.getRandomValues === undefined)
+    throw new AcquisitionError('acquisition_entropy_unavailable');
   const bytes = globalThis.crypto.getRandomValues(new Uint8Array(32));
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);

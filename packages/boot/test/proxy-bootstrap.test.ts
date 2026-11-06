@@ -4,14 +4,20 @@ const runtimes: Array<{ dispose: ReturnType<typeof vi.fn>; fetch: ReturnType<typ
 
 vi.mock('@floegence/flowersec-core', () => ({
   parseArtifact: (value: string | Uint8Array) => ({ value }),
-  createArtifactLease: (_artifact: unknown, commitSpend: (signal?: AbortSignal) => Promise<void>) => ({ commitSpend }),
+  createArtifactLease: (
+    _artifact: unknown,
+    commitSpend: (signal?: AbortSignal) => Promise<void>
+  ) => ({ commitSpend }),
 }));
 
 vi.mock('@floegence/flowersec-core/proxy', () => ({
   assertProxyRuntimeScope: (payload: unknown) => payload,
   PROXY_RUNTIME_SCOPE: { name: 'proxy.runtime', version: 2 },
   createProxyRuntime: vi.fn(() => {
-    const runtime = { dispose: vi.fn(), fetch: vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('ok')) };
+    const runtime = {
+      dispose: vi.fn(),
+      fetch: vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('ok')),
+    };
     runtimes.push(runtime);
     return runtime;
   }),
@@ -70,18 +76,27 @@ describe('proxy bootstrap ownership', () => {
     runtimes.length = 0;
     const acquisition = await import('../src/acquisition');
     const mod = await import('../src/index');
-    const source = { acquire: async () => ({ kind: 'failure', code: 'unused', disposition: { kind: 'terminal' } }) } as never;
+    const source = {
+      acquire: async () => ({ kind: 'failure', code: 'unused', disposition: { kind: 'terminal' } }),
+    } as never;
     acquisition.registerAcquisitionSource(source);
     const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
       expectedConsumer: 'trusted',
       commitSpend: vi.fn(async () => {}),
       validateSpendBinding: () => 'binding',
     });
-    const state = acquisition.synchronizeAcquisitionSourceSnapshot(source, { state: 'connecting', attempt: 1 });
+    const state = acquisition.synchronizeAcquisitionSourceSnapshot(source, {
+      state: 'connecting',
+      attempt: 1,
+    });
     expect(state).toBeNull();
     const sourceState = acquisition.synchronizeAcquisitionSourceSnapshot;
     await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
-    const connected = acquisition.synchronizeAcquisitionSourceSnapshot(source, { state: 'connected', attempt: 1, currentSession: session as never });
+    const connected = acquisition.synchronizeAcquisitionSourceSnapshot(source, {
+      state: 'connected',
+      attempt: 1,
+      currentSession: session as never,
+    });
     expect(connected).toBeDefined();
     const disposedBinding = vi.fn();
     const owner = mod.createProxyBootstrapOwner({
@@ -94,14 +109,17 @@ describe('proxy bootstrap ownership', () => {
       },
     });
     const first = mod.synchronizeProxyBootstrap(owner, connected);
-    expect(first).toMatchObject({ generation: 1, mode: 'service_worker', bindingIdentity: 'binding' });
+    expect(first).toMatchObject({
+      generation: 1,
+      mode: 'service_worker',
+      bindingIdentity: 'binding',
+    });
     mod.synchronizeProxyBootstrap(owner, null);
     expect(disposedBinding).toHaveBeenCalledOnce();
     expect(runtimes[0]?.dispose).toHaveBeenCalledOnce();
     expect(sourceState).toBeDefined();
   });
 });
-
 
 it('uses one session HTTP runtime across direct HTTP, TLS, private bridge and remote configurations', async () => {
   const acquisition = await import('../src/acquisition');
@@ -111,14 +129,26 @@ it('uses one session HTTP runtime across direct HTTP, TLS, private bridge and re
     const source = { acquire: vi.fn() } as never;
     acquisition.registerAcquisitionSource(source);
     const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
-      expectedConsumer: 'trusted', commitSpend: vi.fn(async () => {}), validateSpendBinding: () => 'binding',
+      expectedConsumer: 'trusted',
+      commitSpend: vi.fn(async () => {}),
+      validateSpendBinding: () => 'binding',
     });
     await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
     const bootstrap = boot.createProxyBootstrapOwner({ serviceWorker: () => ({ dispose() {} }) });
-    const config = mode === 'http' ? boot.createHTTPDirectConnectionConfig({ source, httpDirect: { origin: 'http://localhost:1234' } })
-      : mode === 'private' ? boot.createPrivateLoopbackDirectConnectionConfig({ source, privateLoopback: { origin: 'http://localhost:1234' } })
-      : mode === 'remote' ? boot.createProxyRuntimeTunnelConnectionConfig({ source, proxyBootstrap: bootstrap })
-      : boot.createArtifactDirectConnectionConfig({ source });
+    const config =
+      mode === 'http'
+        ? boot.createHTTPDirectConnectionConfig({
+            source,
+            httpDirect: { origin: 'http://localhost:1234' },
+          })
+        : mode === 'private'
+          ? boot.createPrivateLoopbackDirectConnectionConfig({
+              source,
+              privateLoopback: { origin: 'http://localhost:1234' },
+            })
+          : mode === 'remote'
+            ? boot.createProxyRuntimeTunnelConnectionConfig({ source, proxyBootstrap: bootstrap })
+            : boot.createArtifactDirectConnectionConfig({ source });
     try {
       await expect(config.lifecycle.fetch('/app/events')).rejects.toThrow(/unavailable/);
       const snapshot = { state: 'connected', attempt: 1, currentSession: session } as never;
@@ -129,9 +159,64 @@ it('uses one session HTTP runtime across direct HTTP, TLS, private bridge and re
       config.lifecycle.synchronize({ state: 'waiting', attempt: 1 } as never);
       expect(runtimes[0]!.dispose).toHaveBeenCalledOnce();
       await expect(config.lifecycle.fetch('/app/events')).rejects.toThrow(/unavailable/);
-    } finally { config.lifecycle.dispose(); }
+    } finally {
+      config.lifecycle.dispose();
+    }
   }
 });
+
+it.each(['http', 'tls', 'private', 'remote'])(
+  'passes explicit response fields through %s without adding a bridge',
+  async (mode) => {
+    const acquisition = await import('../src/acquisition');
+    const boot = await import('../src/index');
+    const proxy = await import('@floegence/flowersec-core/proxy');
+    const source = { acquire: vi.fn() } as never;
+    acquisition.registerAcquisitionSource(source);
+    const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
+      expectedConsumer: 'trusted',
+      commitSpend: vi.fn(async () => {}),
+      validateSpendBinding: () => 'headers',
+    });
+    await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
+    const extraResponseHeaders = ['X-Product-Capability'];
+    const config =
+      mode === 'http'
+        ? boot.createHTTPDirectConnectionConfig({
+            source,
+            httpDirect: { origin: 'http://localhost:1234' },
+            extraResponseHeaders,
+          })
+        : mode === 'private'
+          ? boot.createPrivateLoopbackDirectConnectionConfig({
+              source,
+              privateLoopback: { origin: 'http://localhost:1234' },
+              extraResponseHeaders,
+            })
+          : mode === 'remote'
+            ? boot.createProxyRuntimeTunnelConnectionConfig({
+                source,
+                proxyBootstrap: boot.createProxyBootstrapOwner({
+                  extraResponseHeaders,
+                  serviceWorker: () => ({ dispose() {} }),
+                }),
+              })
+            : boot.createArtifactDirectConnectionConfig({ source, extraResponseHeaders });
+    try {
+      config.lifecycle.synchronize({
+        state: 'connected',
+        attempt: 1,
+        currentSession: session,
+      } as never);
+      expect(proxy.createProxyRuntime).toHaveBeenLastCalledWith(
+        expect.objectContaining({ extraResponseHeaders })
+      );
+      expect(await (await config.lifecycle.fetch('/app/upload-scope')).text()).toBe('ok');
+    } finally {
+      config.lifecycle.dispose();
+    }
+  }
+);
 
 it('fences already parsed events when the acquisition changes without adding a reconnect loop', async () => {
   const acquisition = await import('../src/acquisition');
@@ -139,7 +224,9 @@ it('fences already parsed events when the acquisition changes without adding a r
   const source = { acquire: vi.fn() } as never;
   acquisition.registerAcquisitionSource(source);
   const lease = await acquisition.materializeAcquisitionForSource(source, await validEnvelope(), {
-    expectedConsumer: 'trusted', commitSpend: vi.fn(async () => {}), validateSpendBinding: () => 'binding',
+    expectedConsumer: 'trusted',
+    commitSpend: vi.fn(async () => {}),
+    validateSpendBinding: () => 'binding',
   });
   await (lease as unknown as { commitSpend(): Promise<void> }).commitSpend();
   const lifecycle = boot.createArtifactDirectConnectionConfig({ source }).lifecycle;
@@ -147,7 +234,9 @@ it('fences already parsed events when the acquisition changes without adding a r
   const runtime = runtimes.at(-1)!;
   runtime.fetch.mockImplementation(async (_input: unknown, init?: RequestInit) => {
     expect(new Headers(init?.headers).get('accept')).toBe('text/event-stream');
-    return new Response('data: first\n\ndata: stale\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+    return new Response('data: first\n\ndata: stale\n\n', {
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
   });
   const iterator = lifecycle.events('/app/events');
   expect(await iterator.next()).toMatchObject({ value: { data: 'first' } });
