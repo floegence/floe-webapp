@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.97.3
+
+- Pin scaffold Tailwind dependencies to the verified release so new consumers do not resolve partially published native dependency sets.
+
 ## 0.97.2
 
 - Preserve host-declared response headers in authenticated session HTTP across direct and bridged connections.
