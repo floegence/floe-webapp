@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, type JSX } from 'solid-js';
+import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack, type JSX } from 'solid-js';
 import { sandboxedMarkdownHtml } from '../chat/markdown/media';
 import { secureRandomUUID } from '../../utils/secureRandom';
 
@@ -13,6 +13,11 @@ export interface SandboxedHtmlFrameProps {
   class?: string;
   style?: JSX.CSSProperties;
   inert?: boolean;
+  /** Deactivation pauses native media without restarting it on reactivation. */
+  active?: boolean;
+  /** Localized presentation while this exact document loads and reaches a render opportunity. */
+  renderPending?: () => JSX.Element;
+  onPresentationStateChange?: (state: 'loading' | 'ready') => void;
   tabIndex?: number;
   labels?: SandboxedHtmlFrameLabels;
   /** An untrusted link intent. The host must resolve and authorize every target. */
@@ -25,6 +30,18 @@ function linkBootstrap(token: string): string {
   return `<script>(()=>{
     const channel=new MessageChannel();
     const publish=channel.port1.postMessage.bind(channel.port1);
+    const query=document.querySelectorAll.bind(document);
+    const MediaElementType=HTMLMediaElement;
+    const pause=Function.call.bind(MediaElementType.prototype.pause);
+    let active=true;
+    channel.port1.onmessage=event=>{
+      if(event.data?.type!=='activation')return;
+      active=event.data.active===true;
+      if(!active)for(const media of query('video,audio'))pause(media);
+    };
+    channel.port1.start();
+    window.addEventListener('play',event=>{const media=eventTarget(event);if(!active&&media instanceof MediaElementType)pause(media)},true);
+    window.addEventListener('load',event=>{if(event.isTrusted)publish({type:'document-loaded'})},{once:true});
     const stop=Function.call.bind(Event.prototype.stopImmediatePropagation);
     const prevent=Function.call.bind(Event.prototype.preventDefault);
     const eventTarget=Function.call.bind(Object.getOwnPropertyDescriptor(Event.prototype,'target').get);
@@ -68,25 +85,50 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
   let frame!: HTMLIFrameElement;
   let connect: ((event: MessageEvent) => void) | undefined;
   const [error, setError] = createSignal('');
+  const [readyToken, setReadyToken] = createSignal('');
+  const [channel, setChannel] = createSignal<MessagePort>();
   const document = createMemo(() => {
     const token = secureRandomUUID();
     return { token, html: sandboxedMarkdownHtml(linkBootstrap(token) + props.html) };
   });
 
+  const ready = () => readyToken() === document().token;
   createEffect(() => {
-    const { token } = document();
+    const state = ready() ? 'ready' : 'loading';
+    untrack(() => props.onPresentationStateChange?.(state));
+  });
+  createEffect(() => { channel()?.postMessage({ type: 'activation', active: props.active !== false }); });
+
+  createEffect(() => {
+    const { token: initialToken } = document();
     const controller = new AbortController();
     let port: MessagePort | undefined;
     let request = 0;
+    let paintRequest = 0;
+    let loaded = false;
     setError('');
     connect = (event: MessageEvent) => {
       if (!event.isTrusted || event.source !== frame.contentWindow || port
-        || event.data?.type !== 'floe-html-ready' || event.data?.token !== token
+        || event.data?.type !== 'floe-html-ready' || event.data?.token !== initialToken
         || event.ports.length !== 1) return;
       port = event.ports[0];
+      setChannel(port);
       port.onmessage = (message: MessageEvent<unknown>) => {
-        if (controller.signal.aborted || props.inert) return;
+        if (controller.signal.aborted) return;
         const data = message.data as { type?: unknown; href?: unknown } | null;
+        if (data?.type === 'document-loaded') {
+          if (loaded) return;
+          loaded = true;
+          // Keep the iframe laid out behind the pending surface while the new
+          // srcdoc reaches rendering opportunities. This is not an app-idle claim.
+          paintRequest = requestAnimationFrame(() => {
+            paintRequest = requestAnimationFrame(() => {
+              if (!controller.signal.aborted) setReadyToken(initialToken);
+            });
+          });
+          return;
+        }
+        if (props.inert || props.active === false || !ready()) return;
         if (data?.type === 'anchor-opened') { setError(''); return; }
         if (data?.type === 'anchor-missing') {
           setError(props.labels?.anchorUnavailable ?? 'The linked section was not found.');
@@ -111,7 +153,10 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
       };
       port.start();
     };
-    onCleanup(() => { controller.abort(); port?.close(); connect = undefined; });
+    onCleanup(() => {
+      controller.abort(); cancelAnimationFrame(paintRequest); port?.close();
+      setChannel(undefined); connect = undefined;
+    });
   });
 
   const receive = (event: MessageEvent) => connect?.(event);
@@ -121,11 +166,14 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
   });
 
   return (
-    <span class="flex h-full min-h-0 w-full flex-col">
+    <span class="relative flex h-full min-h-0 w-full flex-col" data-floe-html-state={ready() ? 'ready' : 'loading'} aria-busy={!ready()}>
+      <Show when={!ready()}><span data-floe-html-pending style={{ position: 'absolute', inset: '0', 'z-index': '1', background: 'var(--background, Canvas)' }}>
+        {props.renderPending?.()}
+      </span></Show>
       <iframe ref={frame} class={props.class} title={props.title}
         srcdoc={document().html} sandbox="allow-scripts" referrerPolicy="no-referrer"
-        inert={props.inert} tabIndex={props.tabIndex}
-        style={{ display: 'block', width: '100%', 'min-height': '0', flex: '1 1 0%', border: '0', ...props.style }} />
+        inert={props.inert || props.active === false || !ready()} tabIndex={props.inert || props.active === false || !ready() ? -1 : props.tabIndex}
+        style={{ display: 'block', width: '100%', 'min-height': '0', flex: '1 1 0%', border: '0', ...props.style, opacity: ready() ? undefined : '0' }} />
       <Show when={error()}>
         <span role="alert" class="max-h-24 shrink-0 overflow-auto break-words bg-background px-3 py-2 text-xs text-destructive">{error()}</span>
       </Show>

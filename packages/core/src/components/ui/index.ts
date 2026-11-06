@@ -414,3 +414,5 @@ export {
   addCalendarMonths,
   calendarDays,
 } from './calendarModel';
+
+export { RetainedPanel, type RetainedPanelProps } from './RetainedPanel';

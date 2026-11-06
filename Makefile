@@ -47,6 +47,7 @@ activity-navigation:
 chat-media:
 	node scripts/check-chat-media-browser.mjs
 	node scripts/check-html-preview-browser.mjs
+	node scripts/check-preview-continuity-browser.mjs
 
 .PHONY: input-history
 input-history:

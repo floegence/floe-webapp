@@ -332,3 +332,20 @@ The shared [`PromptCard`](docs/business-controls.md#contextual-prompt-card) prov
 Contextual host actions use `ContextMenuActions` from `/ui`: capture the origin once,
 contribute to existing menus, and provide a scoped fallback on blank surfaces. See
 [the interaction contract](docs/interaction-architecture.md#context-menu-actions).
+
+### Retained document previews
+
+`RetainedPanel` from `@floegence/floe-webapp-core/ui` overlays a positioned host
+viewport and switches visibility without removing inactive documents from layout.
+It preserves iframe identity and scroll, and marks inactive content inert and
+ARIA-hidden. Hosts retain stable DOM order, own disposal and pass activation to
+embedded renderers; do not combine this primitive with `hidden`/`display:none`.
+
+`SandboxedHtmlFrame` exposes `renderPending`, `onPresentationStateChange` and
+`active`. Each source revision stays noninteractive behind the host's localized
+pending surface until its private document-load message and rendering opportunities
+complete. This signals initial document presentation, not completion of arbitrary
+asynchronous application code. Superseded documents cannot release the pending
+surface or publish stale link errors. Inactive HTML pauses native audio/video;
+reactivation never autoplays. Scripts and canvases are not forcibly suspended.
+The opaque sandbox, CSP and trusted user-activated link boundary remain unchanged.

@@ -420,6 +420,8 @@
     "RadioSize",
     "RadioVariant",
     "ResolvedSurfacePortalHost",
+    "RetainedPanel",
+    "RetainedPanelProps",
     "SURFACE_PORTAL_HOST_ATTR",
     "SURFACE_PORTAL_LAYER_ATTR",
     "SegmentedControl",
