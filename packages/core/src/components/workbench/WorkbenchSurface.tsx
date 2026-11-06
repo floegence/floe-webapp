@@ -1,3 +1,4 @@
+import { useContextMenuActions } from '../ui/ContextMenuActions';
 import {
   WorkbenchCompositionMessagesContext,
   WorkbenchCompositionActionsContext,
@@ -259,7 +260,16 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     }
     return definitions.filter((entry) => allowed.has(entry.type));
   });
-  const contextMenuItems = createMemo<readonly WorkbenchContextMenuItem[]>(() => {
+  const sharedContextActions = useContextMenuActions();
+  const contributedContextItems = createMemo(() => {
+    if (!model.contextMenu.state()) return [];
+    return sharedContextActions?.claim()?.actions.map(action => ({
+      id: action.id, kind: 'action' as const, label: action.label,
+      icon: () => action.icon?.(), disabled: action.disabled,
+      onSelect: () => { (model.contextMenu.close)(); action.onSelect(); },
+    })) ?? [];
+  });
+  const baseContextMenuItems = createMemo<readonly WorkbenchContextMenuItem[]>(() => {
     const menu = model.contextMenu.state();
     const modelItems = model.contextMenu.items();
     const allowed = manuallyAddableWidgetTypes();
@@ -295,6 +305,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
       closeMenu: model.contextMenu.close,
     });
   });
+  const contextMenuItems = createMemo(() => [...contributedContextItems(), ...baseContextMenuItems()]);
   const contextMenuPosition = createMemo(() => {
     const menu = model.contextMenu.state();
     if (!menu) return undefined;

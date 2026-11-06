@@ -1867,3 +1867,36 @@
     .floe-settings-navigation__item { min-height: 44px; }
   }
 }
+
+/* Shared context actions retain each menu's native owner and compact rhythm. */
+.floe-context-actions {
+  width: max-content;
+  min-width: 180px;
+  max-width: calc(100vw - 16px);
+  max-height: min(512px, calc(100dvh - 16px));
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--floe-radius-control);
+  background: var(--floe-plane-float);
+  color: var(--floe-ink);
+  box-shadow: var(--floe-elevation-float);
+}
+.floe-context-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--floe-radius-xs);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: var(--floe-type-supporting);
+  cursor: pointer;
+}
+.floe-context-action svg { width: 14px; height: 14px; }
+.floe-context-action:is(:hover, :focus-visible) { outline: none; background: var(--floe-state-hover); }
+.floe-context-action:disabled { opacity: .4; cursor: default; }
+@media (pointer: coarse) { .floe-context-action { min-height: 44px; } }

@@ -506,3 +506,21 @@ Acceptance: scripts/check-split-workspace-browser.mjs verifies retained drafts a
 ### Floating window resize targets
 
 Resize handles belong to the outer geometry surface, outside the rounded content clip. Their centers remain hit-testable at all eight desktop edges/corners, including browsers that strictly clip rounded overflow. The inner panel retains content clipping and presence motion. Handles stay absent while compact or maximized; pointer capture, cancellation, preview and commit ownership remain unchanged. Browser acceptance uses real pointer input in Chromium and WebKit.
+
+## Context menu actions
+
+`ContextMenuActions` owns one document's optional shared right-click actions. It
+captures the exact target, client anchor and selected text before menu focus,
+then lets the local surface handle the event. Unhandled requests use one compact,
+surface-scoped menu. `ContextMenuActionItems` contributes to an existing menu;
+`excludeIds` preserves a richer object-specific action with the same semantic ID.
+Workbench, Notes, Deck, FileBrowser and CodeEditor participate through their
+existing owners. Editors retain their own selection, undo and menu implementations.
+
+Hosts provide localized action/editing labels, freeze their semantic context in
+`actions(request)`, and execute only after selection. `useContextMenuActions`
+lets model-owned menus claim that request during the same native event. Requests
+expire at the next task, never at a microtask checkpoint between native event
+listeners. Keyboard context-menu keys follow the same path. Native/remote input
+owners can consume the event or declare `data-floe-context-menu-native`; iframe
+integration belongs to its authenticated host channel, never DOM inspection.

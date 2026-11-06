@@ -1,8 +1,8 @@
+import { useContextMenuActions, type ContextMenuAction } from '../ui/ContextMenuActions';
 import { createEffect, onCleanup, onMount, type JSX } from 'solid-js';
 import type * as Monaco from 'monaco-editor/editor';
 import { useTheme } from '../../context/ThemeContext';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
-
 
 import { resolveCodeEditorLanguageSpec } from './languages';
 import { applyFloeMonacoTheme } from './monacoTheme';
@@ -67,6 +67,7 @@ function readSelectedText(
 
 export function CodeEditor(props: CodeEditorProps) {
   const theme = useTheme();
+  const sharedContextActions = useContextMenuActions();
   let container: HTMLDivElement | undefined;
   const instanceId = ++codeEditorInstanceId;
 
@@ -154,6 +155,9 @@ export function CodeEditor(props: CodeEditorProps) {
     let cancelled = false;
     let contentDisposable: MonacoDisposable | undefined;
     let selectionDisposable: MonacoDisposable | undefined;
+    let removeContextMenu: (() => void) | undefined;
+    let actionDisposables: MonacoDisposable[] = [];
+    let contextActions: readonly ContextMenuAction[] = [];
 
     const initializeEditor = async () => {
       if (!container) return;
@@ -168,6 +172,60 @@ export function CodeEditor(props: CodeEditorProps) {
         ...(props.options ?? {}),
       });
 
+      // Monaco owns its menu, selection and clipboard. Contribute through its API.
+      // Register menu metadata before Monaco builds its cached menu. Each
+      // invocation replaces only callbacks with the newly frozen request.
+      const contextMenuOwner = container;
+      const bounds = contextMenuOwner.getBoundingClientRect();
+      const descriptors =
+        sharedContextActions?.resolve({
+          target: contextMenuOwner,
+          x: bounds.left,
+          y: bounds.top,
+          selection: '',
+        }) ?? [];
+      actionDisposables = descriptors.map((descriptor) =>
+        editor!.addAction({
+          id: descriptor.id,
+          label: descriptor.label,
+          contextMenuGroupId: 'navigation',
+          contextMenuOrder: 0,
+          run: () => {
+            const action = contextActions.find((action) => action.id === descriptor.id);
+            if (action && !action.disabled) action.onSelect();
+          },
+        })
+      );
+      const prepareContextMenu = (event: MouseEvent | KeyboardEvent) => {
+        if (
+          event instanceof KeyboardEvent &&
+          event.key !== 'ContextMenu' &&
+          !(event.shiftKey && event.key === 'F10')
+        )
+          return;
+        if (event instanceof MouseEvent && event.type === 'pointerdown' && event.button !== 2)
+          return;
+        const pending = sharedContextActions?.claim();
+        const rect = contextMenuOwner.getBoundingClientRect();
+        contextActions =
+          pending?.actions ??
+          sharedContextActions?.resolve({
+            target: contextMenuOwner,
+            x: event instanceof MouseEvent ? event.clientX : rect.left + 8,
+            y: event instanceof MouseEvent ? event.clientY : rect.top + 24,
+            selection: readSelectedText(editor, model),
+          }) ??
+          [];
+      };
+      contextMenuOwner.addEventListener('pointerdown', prepareContextMenu, true);
+      contextMenuOwner.addEventListener('contextmenu', prepareContextMenu, true);
+      contextMenuOwner.addEventListener('keydown', prepareContextMenu, true);
+      removeContextMenu = () => {
+        contextActions = [];
+        contextMenuOwner.removeEventListener('pointerdown', prepareContextMenu, true);
+        contextMenuOwner.removeEventListener('contextmenu', prepareContextMenu, true);
+        contextMenuOwner.removeEventListener('keydown', prepareContextMenu, true);
+      };
       applyTheme();
       await ensureModel();
       if (cancelled || !editor) return;
@@ -200,6 +258,8 @@ export function CodeEditor(props: CodeEditorProps) {
       cancelled = true;
       contentDisposable?.dispose();
       selectionDisposable?.dispose();
+      removeContextMenu?.();
+      actionDisposables.forEach((action) => action.dispose());
       if (rafId) cancelAnimationFrame(rafId);
       editor?.dispose();
       model?.dispose();

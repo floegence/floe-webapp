@@ -103,6 +103,8 @@ export interface ContextMenuDirectory {
  * Context menu item definition
  */
 export interface ContextMenuItem {
+  /** Semantic identity for deduplicating shared context actions. */
+  contextActionId?: string;
   /** Unique identifier for the action */
   id: string;
   /** Display label */

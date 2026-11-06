@@ -328,3 +328,7 @@ edge panels fade in place, and reduced-motion preferences suppress travel.
 Segmented controls use one moving selected face, with interrupted selections continuing from their current position. Labels and native radio state update immediately; reduced motion and forced colors settle directly. Geometry follows option resizing in local CSS pixels, including inside scaled Workbench surfaces.
 
 The shared [`PromptCard`](docs/business-controls.md#contextual-prompt-card) provides compact, immediately editable contextual questions with retained directional motion and host-owned drafts. `capturePromptCardAnchor` preserves a control’s viewport position across menu dismissal and asynchronous preparation.
+
+Contextual host actions use `ContextMenuActions` from `/ui`: capture the origin once,
+contribute to existing menus, and provide a scoped fallback on blank surfaces. See
+[the interaction contract](docs/interaction-architecture.md#context-menu-actions).

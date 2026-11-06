@@ -1,3 +1,4 @@
+import { ContextMenuActionItems } from '../ui/ContextMenuActions';
 import { For, Show, type Component } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
@@ -48,6 +49,7 @@ export function DeckContextMenu(props: DeckContextMenuProps) {
             left: `${props.x}px`,
           }}
         >
+          <ContextMenuActionItems onClose={props.onDismiss} />
           <div class="px-2 py-1 text-caption font-semibold uppercase tracking-wider text-[var(--floe-ink-quiet)] flex items-center gap-1.5">
             <Plus class="w-2.5 h-2.5" />
             Add widget here

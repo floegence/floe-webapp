@@ -1,3 +1,4 @@
+import { ContextMenuActionItems } from '../ui/ContextMenuActions';
 import {
   For,
   Show,
@@ -1075,6 +1076,9 @@ export function FileContextMenu(props: FileContextMenuProps) {
             {inlinePath().at(-1)?.label}
           </span>
         </button>
+      </Show>
+      <Show when={inlinePath().length === 0}>
+        <ContextMenuActionItems onClose={() => dismiss(false)} excludeIds={menuItems().map(item => item.contextActionId ?? item.id)} />
       </Show>
       <For each={menuItems()}>
         {(item) => (
