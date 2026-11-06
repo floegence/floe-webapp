@@ -95,26 +95,13 @@ try {
                   element.querySelector('.floe-prompt-card-references').getBoundingClientRect()
                     .bottom <= editor.getBoundingClientRect().top,
                 backgroundImage: getComputedStyle(element).backgroundImage,
-                fillContrast: (() => {
-                  const sample = document.createElement('canvas').getContext('2d');
-                  const luminance = (color) => {
-                    sample.clearRect(0, 0, 1, 1);
-                    sample.fillStyle = color;
-                    sample.fillRect(0, 0, 1, 1);
-                    const [r, g, b] = [...sample.getImageData(0, 0, 1, 1).data].map((value) => {
-                      const channel = value / 255;
-                      return channel <= 0.04045
-                        ? channel / 12.92
-                        : ((channel + 0.055) / 1.055) ** 2.4;
-                    });
-                    return r * 0.2126 + g * 0.7152 + b * 0.0722;
-                  };
-                  const root = getComputedStyle(document.documentElement);
-                  const fill = luminance(getComputedStyle(element).backgroundColor);
-                  return ['--background', '--card'].map((token) => {
-                    const base = luminance(root.getPropertyValue(token));
-                    return (Math.max(fill, base) + 0.05) / (Math.min(fill, base) + 0.05);
-                  });
+                activeSurface: (() => {
+                  const probe = document.createElement('div');
+                  probe.style.background = 'var(--floe-plane-float)';
+                  element.append(probe);
+                  const expected = getComputedStyle(probe).backgroundColor;
+                  probe.remove();
+                  return { actual: getComputedStyle(element).backgroundColor, expected };
                 })(),
                 reference: (() => {
                   const style = getComputedStyle(
@@ -170,9 +157,15 @@ try {
             assert.equal(response.question, false);
             assert.equal(response.referencesAbove, true);
             assert.equal(response.backgroundImage, 'none');
-            assert.ok(
-              response.fillContrast.every((contrast) => contrast >= 1.12),
-              `card fill separates from page and content: ${JSON.stringify(response.fillContrast)}`
+            assert.equal(
+              response.activeSurface.actual,
+              response.activeSurface.expected,
+              'active editor uses the clean floating plane'
+            );
+            assert.notEqual(
+              response.shadow,
+              'none',
+              'neutral elevation separates the active editor'
             );
             assert.ok(
               response.reference.contrast >= 1.12,

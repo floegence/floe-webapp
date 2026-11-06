@@ -1019,8 +1019,8 @@
   overflow: hidden; pointer-events: auto;
   border: 0;
   border-radius: var(--floe-radius-card);
-  /* A contextual editor must separate from both the page and content cards. */
-  background: color-mix(in srgb, var(--floe-ink) 10%, var(--floe-plane-float));
+  /* An active editor uses the clean floating plane; elevation locates it. */
+  background: var(--floe-plane-float);
   color: var(--floe-ink);
   font-size: var(--floe-type-body);
   line-height: var(--floe-line-body);
@@ -1064,7 +1064,7 @@
 .floe-prompt-card-references [data-floe-prompt-reference] {
   border: 0;
   border-radius: var(--floe-radius-xs);
-  background: var(--floe-plane-float);
+  background: var(--floe-well-strong);
   color: var(--floe-ink);
   box-shadow: none;
 }

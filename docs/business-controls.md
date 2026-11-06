@@ -74,15 +74,15 @@ draft, references, feedback, submit/close callbacks and optional viewport-point
 anchor/insets. It adds no conversation state, transport, window chrome or retry
 policy. Optional `attachment` exposes a plus action and handles file selection, paste and drop; optional `selection` presents a compact accessible model or mode choice using the shared Select. Choices support stable `group` identities, separate `groupLabel` headings, accessible descriptions, custom option content, and an optional in-dropdown `search` field. The button trigger retains the selected label while search filters labels, groups and keywords. File state, available choices and asynchronous loading remain host-owned. A host may declare related portalled controls through `containsTarget`; those controls keep their own Escape command. `bodyProps` carries host scroll/input ownership attributes to the constrained reading viewport. The default portal stays inside the initiating surface; `portalScope="viewport"` is an explicit host choice for cross-surface tasks.
 
-The 24rem card uses Floe's opaque floating plane with a 10% ink fill step, a neutral shadow, 13px body and
-12px identity. References precede the editor in both DOM and visual order. Omitted questions create no empty guidance region. The editor and compact toolbar form one seamless input, without an internal separator. The fill step distinguishes the editor from both page and content planes; the neutral shadow supports its elevation; normal themes have no drawn outer border, including while editing. High-contrast and forced-color modes retain an explicit boundary. Touch
+The 24rem card uses Floe's clean opaque floating plane, a neutral shadow, 13px body and
+12px identity. References precede the editor in both DOM and visual order. Omitted questions create no empty guidance region. The editor and compact toolbar form one seamless input, without an internal separator. The floating-plane fill and neutral elevation identify an active input surface; do not mute the whole editor with an ink wash to create contrast. Normal themes have no drawn outer border, including while editing. High-contrast and forced-color modes retain an explicit boundary. Touch
 inputs retain 16px text and 44px action targets. Height follows content, with a
 bounded editor and scrollable body for small visual viewports. Placement clamps
 to safe areas and native-header insets and flips above the trigger when needed.
 
 Hosts pass the original context-menu point through delayed actions. For control-based or keyboard actions, `capturePromptCardAnchor(owner?)` captures a connected control’s viewport position before focus moves, a menu closes or asynchronous work begins. Omitted anchors capture the current initiating control when the card opens; programmatic openings without a control retain the viewport default. Captured points remain fixed through exit.
 
-Mark each host-rendered reference or attachment chip with `data-floe-prompt-reference`. Inside the references slot, Floe supplies an opaque floating-plane fill that separates each chip from the contextual editor, without a border, glow or extra shadow. Hosts retain reference content, actions and layout; they must not override this fill with transparency.
+Mark each host-rendered reference or attachment chip with `data-floe-prompt-reference`. Inside the references slot, Floe supplies an opaque inset-well fill that separates each chip from the contextual editor, without a border, glow or extra shadow. Hosts retain reference content, actions and layout; they must not override this fill with transparency.
 
 Shared floating presence owns mounting and reversal. A 280ms decelerating
 entrance and 140ms exit translate twelve/six pixels toward the resolved trigger
