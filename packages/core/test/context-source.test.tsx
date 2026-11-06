@@ -51,6 +51,29 @@ describe('context source ownership', () => {
     expect(registry.capture()?.selection).toBe('');
     registry.dispose();
   });
+  it('retains reading selection when body owns focus and rejects hidden sources', () => {
+    const registry = createContextSourceRegistry(document);
+    const root = surface();
+    root.removeAttribute('tabindex');
+    root.textContent = 'Read this selected paragraph';
+    registry.register({ id: 'reading', element: root, read: () => null });
+    root.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    const range = document.createRange();
+    range.selectNodeContents(root);
+    const selection = document.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    document.dispatchEvent(new Event('selectionchange'));
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    selection.removeAllRanges();
+    trigger.focus();
+    expect(registry.capture()?.selection).toBe('Read this selected paragraph');
+    root.setAttribute('inert', '');
+    expect(registry.capture()).toBeUndefined();
+    registry.dispose();
+  });
   it('uses the innermost source and cannot retire its replacement', () => {
     const registry = createContextSourceRegistry(document);
     const parent = surface();
