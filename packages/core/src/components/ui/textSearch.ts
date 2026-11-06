@@ -61,7 +61,7 @@ export function createTextSearch(options: TextSearchOptions) {
   let style: HTMLStyleElement | undefined;
   const identity = () => options.identity?.();
   const active = () => options.active?.() !== false;
-  const clear = () => { CSS.highlights?.delete(name); CSS.highlights?.delete(name + '-current'); };
+  const clear = () => { globalThis.CSS?.highlights?.delete(name); globalThis.CSS?.highlights?.delete(name + '-current'); };
   const reveal = (range: Range | undefined) => {
     const viewport = options.viewport?.() ?? options.content();
     if (!range || !viewport || !active()) return;

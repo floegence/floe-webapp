@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.98.1
+
+- Align the release gate contract with preview search qualification and allow renderer-free cleanup.
+
 ## 0.98.0
 
 - Add scoped rendered-text search with keyboard navigation, CSS highlights and retained document state.
