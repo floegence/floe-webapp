@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.99.1
+
+- Keep context menus open while unrelated panes scroll, and dismiss only when their source anchor moves.
+
 ## 0.99.0
 
 - Allow global context menus to use the viewport portal above retained prompts while preserving local menu ownership.
