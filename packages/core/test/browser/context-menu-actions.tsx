@@ -14,6 +14,13 @@ render(() => {
         {
           id: 'ask',
           label: 'Ask assistant',
+          icon: () => (
+            <span style={{ display: 'inline-flex' }}>
+              <svg viewBox="0 0 24 24" style={{ width: '84%', height: '84%' }}>
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+              </svg>
+            </span>
+          ),
           onSelect: () =>
             setResult(JSON.stringify({ target: request.target.id, selection: request.selection })),
         },
@@ -87,7 +94,10 @@ render(() => {
               class="floe-context-actions"
               estimatedSize={{ width: 208, height: 68 }}
             >
-              <ContextMenuActionItems onClose={() => setLocal(undefined)} />
+              <ContextMenuActionItems
+                itemClass="custom-menu-item"
+                onClose={() => setLocal(undefined)}
+              />
               <button
                 role="menuitem"
                 class="floe-context-action"

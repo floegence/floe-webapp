@@ -37,6 +37,19 @@ const ActionsContext = createContext<{
 /** Explicit adapter boundary for editors and model-owned menus. */
 export const useContextMenuActions = () => useContext(ActionsContext);
 
+/** Composite icons must never determine the menu's intrinsic size. */
+export function ContextMenuActionIcon(props: { icon?: () => JSX.Element; class?: string }) {
+  return (
+    <Show when={props.icon}>
+      {(icon) => (
+        <span class={`floe-context-action-icon ${props.class ?? ''}`} aria-hidden="true">
+          {icon()()}
+        </span>
+      )}
+    </Show>
+  );
+}
+
 /** One document owner. Capture before focus changes; local menus retain priority. */
 export function ContextMenuActions(props: {
   label: string;
@@ -188,7 +201,7 @@ export function ContextMenuActionItems(props: {
             action.onSelect();
           }}
         >
-          <Show when={action.icon}>{(icon) => <span aria-hidden="true">{icon()()}</span>}</Show>
+          <ContextMenuActionIcon icon={action.icon} />
           <span>{action.label}</span>
         </button>
       )}
@@ -269,7 +282,7 @@ function FallbackMenu(props: {
               action.onSelect();
             }}
           >
-            <Show when={action.icon}>{(icon) => <span aria-hidden="true">{icon()()}</span>}</Show>
+            <ContextMenuActionIcon icon={action.icon} />
             <span>{action.label}</span>
           </button>
         )}

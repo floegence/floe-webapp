@@ -1,4 +1,4 @@
-import { useContextMenuActions } from '../ui/ContextMenuActions';
+import { ContextMenuActionIcon, useContextMenuActions } from '../ui/ContextMenuActions';
 import {
   WorkbenchCompositionMessagesContext,
   WorkbenchCompositionActionsContext,
@@ -265,7 +265,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
     if (!model.contextMenu.state()) return [];
     return sharedContextActions?.claim()?.actions.map(action => ({
       id: action.id, kind: 'action' as const, label: action.label,
-      icon: () => action.icon?.(), disabled: action.disabled,
+      icon: (props: { class?: string }) => ContextMenuActionIcon({ icon: action.icon, class: props.class }), disabled: action.disabled,
       onSelect: () => { (model.contextMenu.close)(); action.onSelect(); },
     })) ?? [];
   });

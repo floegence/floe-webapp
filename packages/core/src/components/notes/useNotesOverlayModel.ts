@@ -1,4 +1,4 @@
-import { useContextMenuActions } from '../ui/ContextMenuActions';
+import { ContextMenuActionIcon, useContextMenuActions } from '../ui/ContextMenuActions';
 import { createEffect, createMemo, createSignal, onCleanup, untrack, type JSX } from 'solid-js';
 import { useNotification } from '../../context';
 import { useMobileLayout } from '../../context/LayoutContext';
@@ -935,7 +935,7 @@ export function useNotesOverlayModel(options: UseNotesOverlayModelOptions) {
     if (!contextMenu()) return [];
     return sharedContextActions?.claim()?.actions.map(action => ({
       id: action.id, kind: 'action' as const, label: action.label,
-      icon: () => action.icon?.(), disabled: action.disabled,
+      icon: (props: { class?: string }) => ContextMenuActionIcon({ icon: action.icon, class: props.class }), disabled: action.disabled,
       onSelect: () => { (() => setContextMenu(null))(); action.onSelect(); },
     })) ?? [];
   });

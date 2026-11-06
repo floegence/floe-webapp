@@ -266,6 +266,7 @@
     "ConfirmDialog",
     "ConfirmDialogProps",
     "ContextMenuAction",
+    "ContextMenuActionIcon",
     "ContextMenuActionItems",
     "ContextMenuActionRequest",
     "ContextMenuActions",

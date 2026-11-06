@@ -64,6 +64,8 @@ try {
           await page.locator('#local').click({ button: 'right' });
           await ask.waitFor();
           assert.equal(await page.getByRole('menu').count(), 1);
+          const icon = await ask.locator('svg').boundingBox();
+          assert.ok(icon && icon.width > 0 && icon.width <= 16 && icon.height <= 16, `Custom menu icon must remain compact: ${JSON.stringify(icon)}`);
           await page.getByRole('menuitem', { name: 'Original action' }).click();
           assert.equal(await page.locator('#result').textContent(), 'original');
           await page.locator('#reading').evaluate((el) => {

@@ -524,3 +524,21 @@ expire at the next task, never at a microtask checkpoint between native event
 listeners. Keyboard context-menu keys follow the same path. Native/remote input
 owners can consume the event or declare `data-floe-context-menu-native`; iframe
 integration belongs to its authenticated host channel, never DOM inspection.
+
+
+### Explicit context ownership and menu icons
+
+`createContextSourceRegistry` resolves the nearest registered owner along the input
+node's ancestor path. `captureTarget(target, selection)` is the explicit-target
+contract: a miss or unavailable inner owner never substitutes an active or parent
+source, and an empty selection never restores a cached reading selection. Readers
+receive the concrete target for host-owned object resolution. Navigation sources
+can set `activateOnInteraction: false` to preserve the active reading surface.
+Use `enabled` for an unavailable owner that must continue to bound its descendants.
+Hosts own semantic identity, authorized facts, bounded snapshots and scope policy;
+Floe never derives business objects from labels, URLs or DOM text.
+
+`ContextMenuActionIcon` owns a compact icon slot independently of the consuming
+menu's row class. Use it when adapting shared actions into an existing menu,
+including composite icons that contain wrappers or percentage-sized SVGs.
+`ContextMenuActionItems` and the document fallback use the same slot.

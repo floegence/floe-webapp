@@ -1,7 +1,11 @@
 export interface ContextSource<T> {
   id: string;
   element: HTMLElement;
-  read: () => T;
+  read: (target?: EventTarget | null) => T;
+  /** An unavailable inner owner remains a boundary; never substitute its parent. */
+  enabled?: () => boolean;
+  /** Navigation and chrome can be targets without becoming active reading sources. */
+  activateOnInteraction?: boolean;
 }
 
 export interface ContextSourceSnapshot<T> {
@@ -15,9 +19,11 @@ export interface ContextSourceSnapshot<T> {
 /** Connection-local readers. Opening a menu or prompt never replaces its origin. */
 export function createContextSourceRegistry<T>(doc: Document) {
   const sources = new Map<string, ContextSource<T>>();
+  const elements = new WeakMap<Node, ContextSource<T>>();
   let active: ContextSource<T> | undefined;
   let selection = '';
   const available = (source: ContextSource<T>) =>
+    source.enabled?.() !== false &&
     source.element.isConnected &&
     !source.element.closest('[hidden], [inert], [aria-hidden="true"]');
   const readSelection = (source: ContextSource<T>) => {
@@ -40,16 +46,13 @@ export function createContextSourceRegistry<T>(doc: Document) {
   };
   const resolve = (target: EventTarget | null) => {
     if (!(target instanceof Node)) return undefined;
-    let result: ContextSource<T> | undefined;
-    for (const source of sources.values()) {
-      if (
-        available(source) &&
-        source.element.contains(target) &&
-        (!result || result.element.contains(source.element))
-      )
-        result = source;
+    let node: Node | null = target;
+    while (node) {
+      const source = elements.get(node);
+      if (source) return source;
+      node = node.parentNode ?? (node instanceof ShadowRoot ? node.host : null);
     }
-    return result;
+    return undefined;
   };
   const activate = (source: ContextSource<T> | undefined) => {
     if (!source || !available(source)) return;
@@ -63,7 +66,8 @@ export function createContextSourceRegistry<T>(doc: Document) {
       const current = readSelection(active);
       if (current || active.element.contains(doc.activeElement)) selection = current;
     }
-    activate(resolve(event.target));
+    const source = resolve(event.composedPath()[0] ?? event.target);
+    if (source?.activateOnInteraction !== false) activate(source);
   };
   const onSelection = () => {
     if (!active) return;
@@ -76,9 +80,14 @@ export function createContextSourceRegistry<T>(doc: Document) {
   doc.addEventListener('selectionchange', onSelection);
   return {
     register(source: ContextSource<T>): () => void {
+      const previous = sources.get(source.id);
+      if (previous && elements.get(previous.element) === previous)
+        elements.delete(previous.element);
       sources.set(source.id, source);
+      elements.set(source.element, source);
       return () => {
         if (sources.get(source.id) === source) sources.delete(source.id);
+        if (elements.get(source.element) === source) elements.delete(source.element);
         if (active === source) {
           active = undefined;
           selection = '';
@@ -97,8 +106,35 @@ export function createContextSourceRegistry<T>(doc: Document) {
       return {
         id: source.id,
         element: source.element,
-        value: source.read(),
+        value: source.read(target),
         selection: readSelection(source) || (source === active ? selection : ''),
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      };
+    },
+    /** Explicit-target capture never inherits an unrelated or cached selection. */
+    captureTarget(target: EventTarget, selectedText = ''): ContextSourceSnapshot<T> | undefined {
+      const source = resolve(target);
+      if (!source || !available(source) || sources.get(source.id) !== source) return undefined;
+      const rect = source.element.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return undefined;
+      return {
+        id: source.id,
+        element: source.element,
+        value: source.read(target),
+        selection: (() => {
+          const selected = doc.getSelection();
+          // Native selections spanning sibling owners are not owned by this target.
+          // Explicit editor adapters can supply a model selection without a DOM range.
+          if (
+            selectedText &&
+            selected?.toString() === selectedText &&
+            selected.anchorNode &&
+            selected.focusNode &&
+            (resolve(selected.anchorNode) !== source || resolve(selected.focusNode) !== source)
+          )
+            return '';
+          return selectedText;
+        })(),
         rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
       };
     },
@@ -106,6 +142,7 @@ export function createContextSourceRegistry<T>(doc: Document) {
       doc.removeEventListener('pointerdown', onInteraction, true);
       doc.removeEventListener('focusin', onInteraction, true);
       doc.removeEventListener('selectionchange', onSelection);
+      for (const source of sources.values()) elements.delete(source.element);
       sources.clear();
       active = undefined;
       selection = '';

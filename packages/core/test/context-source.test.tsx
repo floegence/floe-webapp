@@ -88,3 +88,71 @@ describe('context source ownership', () => {
     registry.dispose();
   });
 });
+
+describe('explicit context targets', () => {
+  it('does not substitute active content for an outside target or a disabled inner owner', () => {
+    const registry = createContextSourceRegistry(document);
+    const parent = surface();
+    const child = surface();
+    parent.append(child);
+    registry.register({ id: 'parent', element: parent, read: () => 'parent' });
+    registry.register({ id: 'child', element: child, enabled: () => false, read: () => 'child' });
+    parent.focus();
+    expect(registry.captureTarget(child)).toBeUndefined();
+    expect(registry.captureTarget(document.body)).toBeUndefined();
+    registry.dispose();
+  });
+  it('passes the concrete target and excludes cached selection from explicit capture', () => {
+    const registry = createContextSourceRegistry(document);
+    const root = surface();
+    const input = document.createElement('textarea');
+    root.append(input);
+    input.value = 'old selection';
+    const read = vi.fn((target) => ({ target }));
+    registry.register({ id: 'surface', element: root, read });
+    input.focus();
+    input.select();
+    expect(registry.captureTarget(root)?.selection).toBe('');
+    expect(read).toHaveBeenLastCalledWith(root);
+    expect(registry.captureTarget(input, 'owned selection')?.selection).toBe('owned selection');
+    registry.dispose();
+  });
+  it('resolves navigation without making it the active reading source', () => {
+    const registry = createContextSourceRegistry(document);
+    const page = surface();
+    const nav = surface();
+    registry.register({ id: 'page', element: page, read: () => 'page' });
+    registry.register({
+      id: 'nav',
+      element: nav,
+      read: () => 'navigation',
+      activateOnInteraction: false,
+    });
+    page.focus();
+    nav.focus();
+    expect(registry.capture()?.value).toBe('page');
+    expect(registry.captureTarget(nav)?.value).toBe('navigation');
+    registry.dispose();
+  });
+  it('rejects a native selection crossing independently registered owners', () => {
+    const registry = createContextSourceRegistry(document);
+    const first = surface();
+    first.textContent = 'first';
+    const second = surface();
+    second.textContent = 'second';
+    registry.register({ id: 'first', element: first, read: () => 'first' });
+    registry.register({ id: 'second', element: second, read: () => 'second' });
+    const range = document.createRange();
+    range.setStart(first.firstChild!, 0);
+    range.setEnd(second.firstChild!, 6);
+    const selection = document.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    expect(registry.captureTarget(first, selection.toString())?.selection).toBe('');
+    range.selectNodeContents(first);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    expect(registry.captureTarget(first, selection.toString())?.selection).toBe('first');
+    registry.dispose();
+  });
+});

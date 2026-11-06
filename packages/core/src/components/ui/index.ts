@@ -1,6 +1,7 @@
 export {
   ContextMenuActions,
   ContextMenuActionItems,
+  ContextMenuActionIcon,
   useContextMenuActions,
   type ContextMenuEditingLabels,
   type ContextMenuActionRequest,
