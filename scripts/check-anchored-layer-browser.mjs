@@ -23,7 +23,8 @@ import { render } from 'solid-js/web';
 import { SurfaceAnchoredLayer, createFloatingPresence, Dropdown, Popover } from '../dist/ui.js';
 import '../dist/styles.css';
 function App() {
- const primitive = new URLSearchParams(location.search).get('primitive');
+ const params = new URLSearchParams(location.search);
+ const primitive = params.get('primitive');
  if (primitive) return <div style={{position:'fixed',left:'600px',top:location.search.includes('above') ? '800px' : '40px'}}>
    {primitive === 'dropdown' ? <Dropdown trigger={<span>Open choices</span>} items={[{id:'first',label:'First choice'},{id:'next',label:'More choices',children:[{id:'child',label:'Nested choice'}]}]} onSelect={() => {}} /> :
    <Popover placement={primitive === 'popover-top' ? 'top-start' : 'bottom-start'} trigger={<button>Open choices</button>} ariaLabel="Choices"><div style={{padding:'24px'}}>Popover choices</div></Popover>}
@@ -53,7 +54,7 @@ function App() {
    <div data-floe-dialog-surface-host={projected ? 'true' : undefined}
    style={projected ? {position:'absolute',left:'0px',top:'0px',width:'900px',height:'800px',transform:'scale(.75)','transform-origin':'top left'} : undefined}>
    <button ref={setAnchor} onClick={toggle} data-anchor style={{position:'absolute',left:'8px',top:menu ? '700px' : '96px',width:'40px',height:'40px'}}>Open</button>
-   <Show when={motion ? presence.mounted() : open()}><SurfaceAnchoredLayer anchor={anchor()} placement={motion === 'left' || motion === 'right' ? motion : menu ? undefined : "right"} gap={16}
+   <Show when={motion ? presence.mounted() : open()}><SurfaceAnchoredLayer anchor={anchor()} align={params.get('align') || undefined} placement={motion === 'left' || motion === 'right' ? motion : menu ? undefined : "right"} gap={16}
      onAnchorDisconnect={() => setOpen(false)} data-panel
      style={menu ? undefined : {width:'424px',height:'427px','box-sizing':'border-box','max-height':'var(--floe-anchored-layer-max-height)'}}>
      {menu ? <div ref={motionPanel} data-motion-panel class={motion ? 'floe-floating-presence floe-floating-menu' : undefined} data-floating-presence={presence.state()} style={{width:'256px','max-height':'min(352px, var(--floe-anchored-layer-max-height))',overflow:'auto',padding:'4px',border:'1px solid gray','box-sizing':'border-box'}}>
@@ -137,6 +138,38 @@ render(() => <App/>, document.getElementById('root'));
       }
       await page.keyboard.press('Escape');
       await page.close();
+    }
+  }
+  for (const projected of [false, true]) {
+    for (const direction of ['ltr', 'rtl']) {
+      for (const align of ['start', 'center', 'end']) {
+        const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
+        await page.goto(`${url}?menu&align=${align}${projected ? '&projected' : ''}`);
+        const trigger = page.locator('[data-anchor]');
+        await trigger.evaluate((el, direction) => {
+          el.style.left = '300px'; el.style.width = '80px'; el.style.direction = direction;
+        }, direction);
+        await trigger.click();
+        const panel = page.locator('[data-panel]');
+        await panel.waitFor({ state: 'visible' });
+        for (const width of [80, 240, 120]) {
+          await trigger.evaluate((el, width) => { el.style.width = `${width}px`; }, width);
+          await page.waitForFunction(({ align, direction }) => {
+            const a = document.querySelector('[data-anchor]').getBoundingClientRect();
+            const p = document.querySelector('[data-panel]').getBoundingClientRect();
+            const expected = align === 'center' ? (a.left + a.right - p.width) / 2
+              : (align === 'start') === (direction === 'ltr') ? a.left : a.right - p.width;
+            return Math.abs(p.left - expected) <= 1;
+          }, { align, direction });
+        }
+        await trigger.evaluate(el => { el.style.left = '1050px'; });
+        await page.waitForFunction(() => {
+          const panel = document.querySelector('[data-panel]').getBoundingClientRect();
+          const host = document.querySelector('[data-floe-dialog-surface-host]')?.getBoundingClientRect();
+          return panel.left >= (host?.left ?? 0) + 11 && panel.right <= (host?.right ?? window.innerWidth) - 11;
+        });
+        await page.close();
+      }
     }
   }
   for (const height of [400, 900]) {

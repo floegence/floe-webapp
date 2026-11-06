@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.97.1
+
+- Add logical start/end alignment to anchored panels while preserving default centering, boundary clamping and side placement.
+
 ## 0.97.0
 
 - Add explicit target capture, unavailable owner boundaries and non-activating context sources.

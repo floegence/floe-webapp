@@ -26,6 +26,8 @@ export interface SurfaceAnchoredLayerProps extends Omit<
   reservedSpace?: { top: number; narrowTop?: number; bottom: number };
   /** Auto places object tools above/below; side panels prefer the requested side and flip when needed. */
   placement?: 'auto' | 'right' | 'left';
+  /** Horizontal alignment for above/below panels. Logical start/end follow the anchor direction; defaults to center. */
+  align?: 'start' | 'center' | 'end';
   gap?: number;
   children: JSX.Element;
   class?: string;
@@ -42,6 +44,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     'topOffset',
     'reservedSpace',
     'placement',
+    'align',
     'gap',
     'children',
     'class',
@@ -89,9 +92,15 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     setMaxHeight(Math.max(0, bounds.bottom - (padding?.bottom ?? 12) - minY));
     const size = panelElement.getBoundingClientRect();
     const center = (Math.max(bounds.left, rect.left) + Math.min(bounds.right, rect.right)) / 2;
+    const rtl = getComputedStyle(anchor).direction === 'rtl';
+    const alignedX = local.align === 'start'
+      ? (rtl ? rect.right - size.width : rect.left)
+      : local.align === 'end'
+        ? (rtl ? rect.left : rect.right - size.width)
+        : center - size.width / 2;
     let x = Math.max(
       bounds.left + 12,
-      Math.min(center - size.width / 2, bounds.right - size.width - 12)
+      Math.min(alignedX, bounds.right - size.width - 12)
     );
     const top = rect.top - (local.topOffset ?? 0);
     const gap = Math.max(0, local.gap ?? 12);
@@ -159,6 +168,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     void local.topOffset;
     void local.reservedSpace;
     void local.placement;
+    void local.align;
     void local.gap;
     schedule();
   });

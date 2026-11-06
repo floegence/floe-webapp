@@ -376,6 +376,46 @@ describe('SurfaceFloatingLayer', () => {
     expect(surface.contains(layer)).toBe(true);
   });
 
+  it.each(['start', 'center', 'end'] as const)('aligns %s edges across anchor resizing and boundary changes', async (align) => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const flush = () => { while (frames.length) frames.shift()!(0); };
+    const anchor = document.createElement('button');
+    host.append(anchor);
+    let left = 240;
+    let width = 80;
+    Object.defineProperty(anchor, 'getBoundingClientRect', { value: () => new DOMRect(left, 500, width, 32) });
+    mount(() => <SurfaceAnchoredLayer anchor={anchor} align={align} gap={8} data-testid="aligned-panel"
+      layerRef={element => {
+        Object.defineProperty(element, 'getBoundingClientRect', { value: () => new DOMRect(0, 0, 320, 200) });
+      }}><input aria-label="Aligned search" /></SurfaceAnchoredLayer>, host);
+    await Promise.resolve();
+    flush();
+    const layer = document.querySelector<HTMLElement>('[data-testid="aligned-panel"]')!;
+    const input = layer.querySelector('input')!;
+    input.value = 'Retained query';
+    expect(layer.style.left).toBe(`${align === 'start' ? 240 : align === 'end' ? 12 : 120}px`);
+    width = 240;
+    window.dispatchEvent(new Event('resize'));
+    flush();
+    expect(layer.style.left).toBe(`${align === 'start' ? 240 : align === 'end' ? 160 : 200}px`);
+    expect(layer.style.top).toBe('292px');
+    expect(layer.dataset.placement).toBe('above');
+    left = 700;
+    window.dispatchEvent(new Event('resize'));
+    flush();
+    expect(layer.style.left).toBe('468px');
+    expect(layer.querySelector('input')).toBe(input);
+    expect(input.value).toBe('Retained query');
+  });
+
   it('anchors a side panel, flips at the boundary and retains content during movement', async () => {
     const host = document.createElement('div');
     document.body.append(host);

@@ -349,3 +349,7 @@ asynchronous application code. Superseded documents cannot release the pending
 surface or publish stale link errors. Inactive HTML pauses native audio/video;
 reactivation never autoplays. Scripts and canvases are not forcibly suspended.
 The opaque sandbox, CSP and trusted user-activated link boundary remain unchanged.
+
+Anchored menus may set `align="start"` or `align="end"` to follow the logical
+edge of their trigger instead of its changing center. The default remains
+centered; all alignments retain surface boundary clamping and side placement.
