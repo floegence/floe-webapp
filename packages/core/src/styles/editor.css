@@ -1,0 +1,7 @@
+/* Monaco measures a hover before moving its context view to the anchor. Keep
+ * the measured intrinsic width at the editor edge, so wrapping cannot enlarge
+ * the tooltip over its trigger and repeatedly retrigger pointer enter/leave. */
+.floe-code-editor .workbench-hover-container {
+  width: max-content;
+  max-width: calc(100vw - 8px);
+}

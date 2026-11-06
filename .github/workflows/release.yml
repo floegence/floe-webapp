@@ -171,6 +171,11 @@ jobs:
       - name: Verify remote pointer ownership
         run: pnpm test:remote-pointer
 
+      - name: Verify document search and editor overlays
+        run: |
+          node scripts/check-editor-preview-browser.mjs --dist
+          node scripts/check-text-search-browser.mjs --dist
+
       - name: Verify published diagram rendering
         run: pnpm test:diagrams
 

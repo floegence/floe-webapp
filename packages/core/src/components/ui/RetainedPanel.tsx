@@ -13,7 +13,7 @@ export function RetainedPanel(props: RetainedPanelProps) {
   return <div {...attributes} data-floe-retained-panel
     aria-hidden={local.active ? undefined : 'true'} inert={!local.active}
     style={{ position: 'absolute', inset: '0', 'min-width': '0', 'min-height': '0',
-      visibility: local.active ? 'visible' : 'hidden', 'pointer-events': local.active ? undefined : 'none' }}>
+      visibility: local.active ? 'visible' : 'hidden', opacity: local.active ? '1' : '0', 'pointer-events': local.active ? undefined : 'none' }}>
     {local.children}
   </div>;
 }

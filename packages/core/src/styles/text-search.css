@@ -1,0 +1,7 @@
+.floe-text-search { display:flex; align-items:center; gap:4px; flex:0 0 auto; min-width:0; padding:6px 8px; border-bottom:1px solid var(--border); background:var(--background); color:var(--foreground); font-size:12px; }
+.floe-text-search input { flex:1 1 12rem; min-width:4rem; height:28px; padding:2px 7px; border:1px solid var(--border); border-radius:4px; background:var(--background); color:var(--foreground); }
+.floe-text-search [role=status] { flex:0 1 auto; min-width:0; font-variant-numeric:tabular-nums; color:var(--muted-foreground); }
+.floe-text-search button { display:inline-flex; align-items:center; justify-content:center; flex:0 0 28px; width:28px; height:28px; border-radius:4px; }
+.floe-text-search button:hover:not(:disabled) { background:var(--accent); }
+.floe-text-search button:disabled { opacity:.4; }
+.floe-text-search button svg { width:16px; height:16px; }

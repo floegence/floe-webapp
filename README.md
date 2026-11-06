@@ -353,3 +353,20 @@ The opaque sandbox, CSP and trusted user-activated link boundary remain unchange
 Anchored menus may set `align="start"` or `align="end"` to follow the logical
 edge of their trigger instead of its changing center. The default remains
 centered; all alignments retain surface boundary clamping and side placement.
+
+### Document search and retained editor surfaces
+
+`createTextSearch` and `TextSearchBar` provide scoped literal search over rendered text.
+Pass the content element, optional local scroll viewport, document identity and active
+state; pass localized labels to the bar. Wire `onKeyDown` on the owning surface and
+`show(trigger)` to its search button. Search highlights preserve the DOM and reading
+selection, match across inline formatting, skip controls and hidden content, and retain
+queries while inactive. Source replacement resets the search.
+
+`RetainedPanel` suppresses the whole inactive painted subtree, including descendants
+that explicitly declare visibility, without changing layout or remounting documents.
+`CodeEditor` keeps Monaco pointer tooltips within the target editor and uses intrinsic
+hover widths so right-edge placement cannot wrap over the hovered control.
+
+Acceptance: `node scripts/check-editor-preview-browser.mjs` and
+`node scripts/check-text-search-browser.mjs --all`.

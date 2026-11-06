@@ -9,6 +9,8 @@ import { applyFloeMonacoTheme } from './monacoTheme';
 import { ensureMonacoEnvironment } from './monacoEnvironment';
 import { loadMonacoEditorApi, type CodeEditorRuntimeOptions } from './monacoStandaloneRuntime';
 
+import { ensureFloeMonacoHover } from './monacoHover';
+
 type MonacoEditorApi = typeof import('monaco-editor/editor');
 type MonacoEditorOptions = Monaco.editor.IStandaloneEditorConstructionOptions;
 type MonacoStandaloneCodeEditor = Monaco.editor.IStandaloneCodeEditor;
@@ -163,6 +165,7 @@ export function CodeEditor(props: CodeEditorProps) {
       if (!container) return;
 
       ensureMonacoEnvironment();
+      ensureFloeMonacoHover();
       monaco = await loadMonacoEditorApi(props.runtimeOptions);
       if (cancelled || !container) return;
 
@@ -298,5 +301,5 @@ export function CodeEditor(props: CodeEditorProps) {
     });
   });
 
-  return <div ref={container} class={props.class} style={props.style} />;
+  return <div ref={container} class={`floe-code-editor${props.class ? ` ${props.class}` : ''}`} style={props.style} />;
 }

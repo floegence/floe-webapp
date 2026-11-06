@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.98.0
+
+- Add scoped rendered-text search with keyboard navigation, CSS highlights and retained document state.
+- Keep Monaco control tooltips within their owning editor and prevent right-edge reflow from covering controls.
+- Suppress all inactive retained-panel paint without changing document layout or identity.
+
+
 ## 0.97.3
 
 - Pin scaffold Tailwind dependencies to the verified release so new consumers do not resolve partially published native dependency sets.
