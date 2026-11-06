@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.99.0
+
+- Allow global context menus to use the viewport portal above retained prompts while preserving local menu ownership.
+- Give the full release qualification and registry propagation sufficient time to finish without cancelling publication readback.
+
 ## 0.98.1
 
 - Align the release gate contract with preview search qualification and allow renderer-free cleanup.

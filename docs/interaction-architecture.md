@@ -512,11 +512,11 @@ Resize handles belong to the outer geometry surface, outside the rounded content
 `ContextMenuActions` owns one document's optional shared right-click actions. It
 captures the exact target, client anchor and selected text before menu focus,
 then lets the local surface handle the event. Unhandled requests use one compact,
-surface-scoped menu. `ContextMenuActionItems` contributes to an existing menu;
+surface-scoped menu.
 Global command owners can opt into `portalScope="viewport"` so a fallback menu
 remains above viewport-level prompts. The exact target and anchor remain unchanged;
 local contributed menus retain their own placement and dismissal.
-`excludeIds` preserves a richer object-specific action with the same semantic ID.
+`ContextMenuActionItems` contributes to an existing menu; `excludeIds` preserves a richer object-specific action with the same semantic ID.
 Workbench, Notes, Deck, FileBrowser and CodeEditor participate through their
 existing owners. Editors retain their own selection, undo and menu implementations.
 
