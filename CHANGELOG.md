@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.100.0
+
+- Add document-engine search integration, private HTML preview search and all-slide PPTX search.
+
 ## 0.99.1
 
 - Keep context menus open while unrelated panes scroll, and dismiss only when their source anchor moves.

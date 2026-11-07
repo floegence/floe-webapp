@@ -43,6 +43,9 @@ try {
   assert.deepEqual(errors, []); assert.deepEqual(remote, []); assert.deepEqual(result.failures, []);
   assert(result.pages > 0);
   if (!suppliedFile) {
+    const found = await page.evaluate(() => window.surface.search('中文预览'));
+    assert.equal(found.length, 1); assert.equal(found[0].slideIndex, 0);
+    assert.equal((await page.evaluate(() => window.surface.search('[missing]'))).length, 0);
     assert.equal(result.pages, 1); assert.equal(result.external, true);
     assert.match(await page.locator('#viewer').innerText(), /中文预览/);
     assert.equal(await page.locator('a[href]').count(), 0);

@@ -49,3 +49,7 @@ It is a pinned build dependency, not a production dependency: clean consumers
 must not install its duplicate ECharts, ZIP, or font tool development trees.
 Public page handles use Floe-owned structural types so declarations remain
 self-contained without the renderer package.
+
+## Search
+
+`PptxDocumentSurface.search(query)` delegates literal case-insensitive search to the published renderer across all slides, including unmounted pages. Results carry slide indexes and intrinsic text bounds for host-owned navigation and highlighting; searching does not mount pages.

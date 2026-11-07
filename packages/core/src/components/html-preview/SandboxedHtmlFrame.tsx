@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack, type JSX } from 'solid-js';
 import { sandboxedMarkdownHtml } from '../chat/markdown/media';
+import { findTextRanges } from '../ui/textSearch';
 import { secureRandomUUID } from '../../utils/secureRandom';
 
 export interface SandboxedHtmlFrameLabels {
@@ -7,7 +8,15 @@ export interface SandboxedHtmlFrameLabels {
   anchorUnavailable: string;
 }
 
+export interface SandboxedHtmlSearch {
+  search: (query: string, direction?: -1 | 0 | 1) => void;
+  clear: () => void;
+}
+
 export interface SandboxedHtmlFrameProps {
+  onSearchReady?: (search: SandboxedHtmlSearch | undefined) => void;
+  onSearchState?: (state: { current: number; total: number }) => void;
+  onSearchRequest?: (action: 'open' | 'close') => void;
   html: string;
   title: string;
   class?: string;
@@ -33,10 +42,34 @@ function linkBootstrap(token: string): string {
     const query=document.querySelectorAll.bind(document);
     const MediaElementType=HTMLMediaElement;
     const pause=Function.call.bind(MediaElementType.prototype.pause);
-    let active=true;
+    let active=true,searchEnabled=false,searchOpen=false,searchQuery='',matches=[],matchIndex=0;
+    const findRanges=(${findTextRanges.toString()});
+    const clearHighlights=()=>{CSS.highlights?.delete('floe-html-find');CSS.highlights?.delete('floe-html-find-current')};
+    const paint=()=>{
+      clearHighlights();
+      if(!active||!searchOpen)return;
+      if(typeof Highlight!=='undefined'&&CSS.highlights){
+        CSS.highlights.set('floe-html-find',new Highlight(...matches));
+        if(matches[matchIndex])CSS.highlights.set('floe-html-find-current',new Highlight(matches[matchIndex]));
+      }
+    };
+    const search=data=>{
+      if(!active||typeof data.query!=='string')return;
+      searchOpen=true;
+      const previous=searchQuery;
+      searchQuery=data.query;matches=findRanges(document.body,searchQuery);
+      matchIndex=matches.length?(previous!==searchQuery||!data.direction?0:(matchIndex+data.direction+matches.length)%matches.length):0;
+      paint();
+      const range=matches[matchIndex];
+      if(range){const element=range.startContainer.parentElement;scroll(element,{block:'center',inline:'nearest'})}
+      publish({type:'search-state',request:data.request,current:matches.length?matchIndex+1:0,total:matches.length});
+    };
     channel.port1.onmessage=event=>{
+      if(event.data?.type==='search'){search(event.data);return}
+      if(event.data?.type==='clear-search'){searchOpen=false;clearHighlights();return}
       if(event.data?.type!=='activation')return;
-      active=event.data.active===true;
+      active=event.data.active===true;searchEnabled=event.data.searchEnabled===true;
+      paint();
       if(!active)for(const media of query('video,audio'))pause(media);
     };
     channel.port1.start();
@@ -53,6 +86,11 @@ function linkBootstrap(token: string): string {
     const focus=Function.call.bind(HTMLElement.prototype.focus);
     const decode=decodeURIComponent;
     const ElementType=Element,HtmlElementType=HTMLElement;
+    window.addEventListener('keydown',event=>{
+      if(!active||!searchEnabled||!event.isTrusted||event.isComposing)return;
+      if((event.ctrlKey||event.metaKey)&&!event.altKey&&event.key.toLowerCase()==='f'){prevent(event);stop(event);publish({type:'search-open'})}
+      else if(searchOpen&&event.key==='Escape'){prevent(event);stop(event);publish({type:'search-close'})}
+    },true);
     window.addEventListener('click',activate,true);
     window.addEventListener('auxclick',activate,true);
     function activate(event){
@@ -77,7 +115,7 @@ function linkBootstrap(token: string): string {
       publish({type:'open-link',href});
     }
     parent.postMessage({type:'floe-html-ready',token:${JSON.stringify(token)}},'*',[channel.port2]);
-  })()</script>`;
+  })()</script><style>::highlight(floe-html-find){background:#fde68a;color:#111}::highlight(floe-html-find-current){background:#2563eb;color:#fff}</style>`;
 }
 
 /** A self-contained opaque document with a user-activated, host-authorized link boundary. */
@@ -97,7 +135,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
     const state = ready() ? 'ready' : 'loading';
     untrack(() => props.onPresentationStateChange?.(state));
   });
-  createEffect(() => { channel()?.postMessage({ type: 'activation', active: props.active !== false }); });
+  createEffect(() => { channel()?.postMessage({ type: 'activation', active: props.active !== false, searchEnabled: !!props.onSearchRequest }); });
 
   createEffect(() => {
     const { token: initialToken } = document();
@@ -106,6 +144,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
     let request = 0;
     let paintRequest = 0;
     let loaded = false;
+    let searchRequest = 0;
     setError('');
     connect = (event: MessageEvent) => {
       if (!event.isTrusted || event.source !== frame.contentWindow || port
@@ -113,9 +152,16 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
         || event.ports.length !== 1) return;
       port = event.ports[0];
       setChannel(port);
+      props.onSearchReady?.({
+        search: (query, direction = 0) => {
+          if (controller.signal.aborted || props.inert || props.active === false || !ready()) return;
+          port?.postMessage({ type: 'search', query, direction, request: ++searchRequest });
+        },
+        clear: () => { if (!controller.signal.aborted) { searchRequest++; port?.postMessage({ type: 'clear-search' }); } },
+      });
       port.onmessage = (message: MessageEvent<unknown>) => {
         if (controller.signal.aborted) return;
-        const data = message.data as { type?: unknown; href?: unknown } | null;
+        const data = message.data as { type?: unknown; href?: unknown; request?: unknown; current?: unknown; total?: unknown } | null;
         if (data?.type === 'document-loaded') {
           if (loaded) return;
           loaded = true;
@@ -129,6 +175,15 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
           return;
         }
         if (props.inert || props.active === false || !ready()) return;
+        if (data?.type === 'search-state') {
+          if (data.request === searchRequest && Number.isSafeInteger(data.current) && Number.isSafeInteger(data.total)
+            && (data.current as number) >= 0 && (data.current as number) <= (data.total as number))
+            props.onSearchState?.({ current: data.current as number, total: data.total as number });
+          return;
+        }
+        if (data?.type === 'search-open' || data?.type === 'search-close') {
+          props.onSearchRequest?.(data.type === 'search-open' ? 'open' : 'close'); return;
+        }
         if (data?.type === 'anchor-opened') { setError(''); return; }
         if (data?.type === 'anchor-missing') {
           setError(props.labels?.anchorUnavailable ?? 'The linked section was not found.');
@@ -155,7 +210,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
     };
     onCleanup(() => {
       controller.abort(); cancelAnimationFrame(paintRequest); port?.close();
-      setChannel(undefined); connect = undefined;
+      setChannel(undefined); connect = undefined; props.onSearchReady?.(undefined);
     });
   });
 

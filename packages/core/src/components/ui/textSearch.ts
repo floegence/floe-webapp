@@ -42,7 +42,13 @@ export function findTextRanges(root: HTMLElement, query: string): Range[] {
 }
 
 export interface TextSearchOptions {
-  content: Accessor<HTMLElement | undefined>;
+  content?: Accessor<HTMLElement | undefined>;
+  /** External document engines retain ownership of indexing, navigation and highlights. */
+  engine?: {
+    state: Accessor<{ current: number; total: number }>;
+    search: (query: string, direction: -1 | 0 | 1) => void;
+    clear: () => void;
+  };
   viewport?: Accessor<HTMLElement | undefined>;
   active?: Accessor<boolean>;
   identity?: Accessor<unknown>;
@@ -63,7 +69,7 @@ export function createTextSearch(options: TextSearchOptions) {
   const active = () => options.active?.() !== false;
   const clear = () => { globalThis.CSS?.highlights?.delete(name); globalThis.CSS?.highlights?.delete(name + '-current'); };
   const reveal = (range: Range | undefined) => {
-    const viewport = options.viewport?.() ?? options.content();
+    const viewport = options.viewport?.() ?? options.content?.();
     if (!range || !viewport || !active()) return;
     const bounds = viewport.getBoundingClientRect(), match = range.getBoundingClientRect();
     const scaleX = bounds.width / viewport.offsetWidth || 1, scaleY = bounds.height / viewport.offsetHeight || 1;
@@ -71,7 +77,7 @@ export function createTextSearch(options: TextSearchOptions) {
     if (match.left < bounds.left || match.right > bounds.right) viewport.scrollLeft += (match.left - bounds.left - bounds.width / 2) / scaleX;
   };
   const close = () => {
-    setOpen(false); clear();
+    setOpen(false); clear(); options.engine?.clear();
     if (active() && returnFocus?.isConnected && !returnFocus.closest('[inert]')) returnFocus.focus({ preventScroll: true });
   };
   const show = (trigger?: HTMLElement) => {
@@ -79,7 +85,8 @@ export function createTextSearch(options: TextSearchOptions) {
     if (!open()) returnFocus = trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : undefined);
     setOpen(true); queueMicrotask(() => { if (untrack(open) && untrack(active) && input?.isConnected) { input.focus(); input.select(); } });
   };
-  const move = (delta: number) => {
+  const move = (delta: -1 | 1) => {
+    if (options.engine) { if (active()) options.engine.search(query(), delta); return; }
     const count = ranges().length;
     if (count) setIndex(value => (value + delta + count) % count);
   };
@@ -88,7 +95,12 @@ export function createTextSearch(options: TextSearchOptions) {
     batch(() => { setOpen(false); setQuery(''); setIndex(0); });
   });
   createEffect(() => {
-    const root = options.content();
+    if (!options.engine) return;
+    if (open() && active()) options.engine.search(query(), 0);
+    else options.engine.clear();
+  });
+  createEffect(() => {
+    const root = options.content?.();
     if (!root || !open() || !active()) return;
     const observer = new MutationObserver(() => {
       cancelAnimationFrame(scheduled); scheduled = requestAnimationFrame(() => setRevision(value => value + 1));
@@ -97,7 +109,7 @@ export function createTextSearch(options: TextSearchOptions) {
     onCleanup(() => { observer.disconnect(); cancelAnimationFrame(scheduled); });
   });
   createEffect(() => {
-    const root = options.content(); void revision();
+    const root = options.content?.(); void revision();
     const term = query();
     if (!open() || !active()) return;
     const matches = root ? findTextRanges(root, term) : [];
@@ -120,9 +132,9 @@ export function createTextSearch(options: TextSearchOptions) {
     }
     reveal(current);
   });
-  onCleanup(() => { clear(); style?.remove(); cancelAnimationFrame(scheduled); });
+  onCleanup(() => { clear(); options.engine?.clear(); style?.remove(); cancelAnimationFrame(scheduled); });
   return { open, query, setQuery, show, close, next: () => move(1), previous: () => move(-1),
-    count: () => ranges().length, current: () => ranges().length ? index() + 1 : 0,
+    count: () => options.engine?.state().total ?? ranges().length, current: () => options.engine?.state().current ?? (ranges().length ? index() + 1 : 0),
     bindInput: (element: HTMLInputElement) => { input = element; },
     onKeyDown: (event: KeyboardEvent) => {
       if (!active() || event.isComposing || event.defaultPrevented) return;

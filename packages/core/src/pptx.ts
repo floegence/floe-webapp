@@ -4,7 +4,10 @@ import {
   buildPresentation,
   parseZip,
   RECOMMENDED_ZIP_LIMITS,
+  type TextSearchResult,
 } from '@aiden0z/pptx-renderer/browser';
+
+export type PptxSearchResult = TextSearchResult;
 
 export interface PptxSurfaceOptions {
   signal?: AbortSignal;
@@ -116,6 +119,12 @@ export class PptxDocumentSurface {
     });
     viewer.load(presentation);
     return new PptxDocumentSurface(viewer, hasExternalLinks);
+  }
+
+  /** Search all slides through the published renderer, including unmounted pages. */
+  search(query: string): PptxSearchResult[] {
+    if (this.disposed) throw new Error('Presentation is closed.');
+    return this.viewer.searchText(query, { matchCase: false, useRegex: false });
   }
 
   renderPage(index: number, container: HTMLElement): PptxPageHandle {

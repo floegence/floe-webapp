@@ -4,6 +4,7 @@ const mock = vi.hoisted(() => ({
   files: {} as Record<string, unknown>,
   model: {} as Record<string, unknown>,
   destroyed: vi.fn(),
+  search: vi.fn(() => [{ slideIndex: 1, text: "Needle" }]),
   released: vi.fn(),
 }));
 vi.mock('@aiden0z/pptx-renderer/browser', () => ({
@@ -15,6 +16,7 @@ vi.mock('@aiden0z/pptx-renderer/browser', () => ({
     slideWidth = 1280;
     slideHeight = 720;
     load() {}
+    searchText = mock.search;
     renderSlideToContainer() {
       return {
         element: document.createElement('div'),
@@ -40,6 +42,14 @@ function fixture() {
   mock.model = { slides: [{}, {}], width: 1280, height: 720 };
 }
 describe('presentation surface', () => {
+  it('searches every slide through the renderer without mounting pages', async () => {
+    fixture();
+    const surface = await PptxDocumentSurface.open(bytes);
+    expect(surface.search('needle')).toEqual([{ slideIndex: 1, text: 'Needle' }]);
+    expect(mock.search).toHaveBeenLastCalledWith('needle', { matchCase: false, useRegex: false });
+    surface.dispose();
+    expect(() => surface.search('needle')).toThrow('closed');
+  });
   it('removes external relationships before building the model', async () => {
     fixture();
     const relationships = new Map([

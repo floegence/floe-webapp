@@ -45,3 +45,7 @@ state, geometry, source persistence, and sandbox acceptance. The dedicated
 scripts/check-html-preview-browser.mjs covers private link authorization,
 independent floating copies, focus restoration, and cleanup in Chromium and
 WebKit.
+
+## Scoped search
+
+`onSearchReady` exposes search/clear operations over the private revision-fenced channel. The opaque frame owns rendered-text matching, inline-spanning ranges, highlight cleanup and local scrolling. `onSearchState` returns counts for the current request; no frame DOM or source text crosses into the host. Optional `onSearchRequest` handles trusted Ctrl/Cmd+F and Escape inside the frame. Inactive and replaced documents cannot deliver search state or input authority. Hosts may use the external-engine option of `createTextSearch` with the same localized `TextSearchBar`.
