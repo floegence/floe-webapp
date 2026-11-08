@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.0
+
+- Allow anchored application commands to use the viewport portal above retained windows while preserving surface-local placement by default.
+- Measure and observe the selected portal boundary consistently when positioning, flipping and resizing anchored panels.
+
 ## 0.100.0
 
 - Add document-engine search integration, private HTML preview search and all-slide PPTX search.

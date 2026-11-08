@@ -30,6 +30,17 @@ function App() {
    <Popover placement={primitive === 'popover-top' ? 'top-start' : 'bottom-start'} trigger={<button>Open choices</button>} ariaLabel="Choices"><div style={{padding:'24px'}}>Popover choices</div></Popover>}
  </div>;
  const [anchor, setAnchor] = createSignal();
+ if (params.has('viewport')) return <>
+   <div data-floe-dialog-surface-host="true" data-floe-surface-portal-layer="true"
+     style={{position:'fixed',inset:'0',isolation:'isolate','z-index':'0'}}>
+     <button ref={setAnchor} data-viewport-anchor style={{position:'absolute',left:'12px',top:'300px'}}>Applications</button>
+     <SurfaceAnchoredLayer anchor={anchor()} portalScope="viewport" placement="right" gap={16}
+       data-viewport-panel style={{'z-index':'3000',width:'424px',height:'300px',background:'white'}}>
+       <button data-viewport-action onClick={event => { event.currentTarget.textContent = 'Opened'; }}>Open catalog</button>
+     </SurfaceAnchoredLayer>
+   </div>
+   <iframe title="Live application" style={{position:'fixed',left:'160px',top:'100px',width:'800px',height:'700px','z-index':'1000'}} />
+ </>;
  const motion = new URLSearchParams(location.search).get('motion');
  const menu = location.search.includes('menu') || !!motion;
  const [open, setOpen] = createSignal(!menu);
@@ -77,6 +88,19 @@ render(() => <App/>, document.getElementById('root'));
   await server.watcher.close();
   const url = `${server.resolvedUrls.local[0]}${fixture.split('/').pop()}/`;
   browser = await chromium.launch();
+  {
+    const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
+    await page.goto(`${url}?viewport`);
+    const panel = page.locator('[data-viewport-panel]');
+    await panel.waitFor({ state: 'visible' });
+    assert.equal(await panel.evaluate(element => element.closest('[data-floe-dialog-surface-host]')), null);
+    await page.locator('[data-viewport-action]').click();
+    assert.equal(await page.locator('[data-viewport-action]').textContent(), 'Opened');
+    await page.locator('[data-viewport-anchor]').evaluate(element => { element.style.left = '650px'; });
+    await page.waitForFunction(() => document.querySelector('[data-viewport-panel]').getAttribute('data-placement') === 'left');
+    assert.equal(await page.locator('[data-viewport-action]').textContent(), 'Opened');
+    await page.close();
+  }
   for (const primitive of ['dropdown', 'popover', 'popover-top']) {
     for (const above of primitive === 'popover-top' ? [true] : [false, true]) {
       const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });

@@ -18,6 +18,8 @@ export interface SurfaceAnchoredLayerProps extends Omit<
   'children' | 'class' | 'style' | 'ref'
 > {
   anchor: HTMLElement | undefined;
+  /** Global navigation may escape its source surface while retaining the anchor. */
+  portalScope?: 'surface' | 'viewport';
   /** Changes when the anchor moves through a transform; no idle polling is used. */
   revision?: unknown;
   /** Screen-space clearance above labels outside the object bounds. */
@@ -40,6 +42,7 @@ export interface SurfaceAnchoredLayerProps extends Omit<
 export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
   const [local, rest] = splitProps(props, [
     'anchor',
+    'portalScope',
     'revision',
     'topOffset',
     'reservedSpace',
@@ -62,6 +65,9 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
   let disconnectReported = false;
   const [anchorPoint, setAnchorPoint] = createSignal({ x: 0, y: 0 });
   const [maxHeight, setMaxHeight] = createSignal(0);
+  const portalHost = () => resolveSurfacePortalHost({
+    owner: local.portalScope === 'viewport' ? document.documentElement : local.anchor,
+  });
   const measure = () => {
     frame = undefined;
     const anchor = local.anchor;
@@ -74,7 +80,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
       return;
     }
     disconnectReported = false;
-    const bounds = resolveFloatingBoundary(resolveSurfacePortalHost({ owner: anchor }));
+    const bounds = resolveFloatingBoundary(portalHost());
     if (!bounds) {
       setVisible(false);
       return;
@@ -164,6 +170,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
   };
   createEffect(() => {
     void local.anchor;
+    void local.portalScope;
     void local.revision;
     void local.topOffset;
     void local.reservedSpace;
@@ -186,7 +193,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
     const observer =
       typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : undefined;
 
-    const boundary = resolveSurfacePortalHost({ owner: anchor }).boundaryHost;
+    const boundary = portalHost().boundaryHost;
     if (boundary) observer?.observe(boundary);
     if (anchor) observer?.observe(anchor);
     // Canvas movement is a transform on an ancestor in the world compositor.
@@ -220,6 +227,7 @@ export function SurfaceAnchoredLayer(props: SurfaceAnchoredLayerProps) {
       <SurfaceFloatingLayer
         {...rest}
         owner={local.anchor}
+        portalScope={local.portalScope}
         position={position()}
         class={local.class}
         data-placement={placement()}

@@ -376,6 +376,36 @@ describe('SurfaceFloatingLayer', () => {
     expect(surface.contains(layer)).toBe(true);
   });
 
+  it('anchors viewport commands outside a projected surface and uses viewport bounds', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length; });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const surface = document.createElement('div');
+    surface.setAttribute('data-floe-dialog-surface-host', 'true');
+    surface.setAttribute('data-floe-surface-portal-layer', 'true');
+    host.append(surface);
+    mockRect(surface, { left: 100, top: 80, right: 300, bottom: 240, width: 200, height: 160 });
+    const anchor = document.createElement('button');
+    surface.append(anchor);
+    mockRect(anchor, { left: 120, top: 100, right: 160, bottom: 140, width: 40, height: 40 });
+    mount(() => <SurfaceAnchoredLayer anchor={anchor} portalScope="viewport" placement="right" gap={16} data-testid="viewport-command"
+      layerRef={element => mockRect(element, { left: 0, top: 0, right: 424, bottom: 300, width: 424, height: 300 })}>
+      <button>Global action</button>
+    </SurfaceAnchoredLayer>, host);
+    await Promise.resolve();
+    while (frames.length) frames.shift()!(0);
+    const layer = document.querySelector<HTMLElement>('[data-testid="viewport-command"]')!;
+    expect(surface.contains(layer)).toBe(false);
+    expect(layer.className).toContain('fixed');
+    expect(layer.style.left).toBe('176px');
+    expect(layer.style.top).toBe('12px');
+    expect(layer.style.maxWidth).toBe('776px');
+    expect(layer.getAttribute('portalScope')).toBeNull();
+  });
+
   it.each(['start', 'center', 'end'] as const)('aligns %s edges across anchor resizing and boundary changes', async (align) => {
     const host = document.createElement('div');
     document.body.append(host);
