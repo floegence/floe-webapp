@@ -105,9 +105,14 @@ try {
         await page.evaluate(() => { window.preview.replace('<h1>Obsolete</h1>'); window.preview.replace('<h1>Current</h1>'); });
         await frames[0].getByRole('heading',{name:'Current',exact:true}).waitFor();
         await page.waitForFunction(()=>document.querySelector('[data-document="a"] [data-floe-html-state]')?.dataset.floeHtmlState==='ready');
-        await page.evaluate(() => window.preview.replace('<h1>Slow document</h1><script>const until=performance.now()+180;while(performance.now()<until){}</script>'));
-        assert.equal(await page.locator('[data-document="a"] [data-floe-html-state]').getAttribute('data-floe-html-state'),'loading');
-        assert.equal(await page.locator('[data-document="a"] iframe').evaluate(element=>element.inert),true);
+        // Observe the same loading generation in one browser task: separate
+        // protocol roundtrips may straddle the document becoming ready on CI.
+        const pending = await page.evaluate(() => {
+          window.preview.replace('<h1>Slow document</h1><script>const until=performance.now()+180;while(performance.now()<until){}</script>');
+          return { state: document.querySelector('[data-document="a"] [data-floe-html-state]').getAttribute('data-floe-html-state'),
+            inert: document.querySelector('[data-document="a"] iframe').inert };
+        });
+        assert.deepEqual(pending, { state: 'loading', inert: true });
         await page.waitForFunction(()=>document.querySelector('[data-document="a"] [data-floe-html-state]')?.dataset.floeHtmlState==='ready');
         const states = await page.evaluate(()=>window.preview.events.filter(event=>event.id==='a').map(event=>event.state));
         assert.equal(states[0],'loading'); assert.equal(states.at(-1),'ready');

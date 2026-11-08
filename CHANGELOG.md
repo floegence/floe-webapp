@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.1
+
+- Qualify retained preview loading and inertness in one browser observation so CI cannot compare different document generations.
+
 ## 0.101.0
 
 - Allow anchored application commands to use the viewport portal above retained windows while preserving surface-local placement by default.
