@@ -13,6 +13,7 @@ const CORE_CLIENT_TEST_ROOT_PATHS = [
   'packages/core/test/activity-bar-trigger-context.test.tsx',
   'packages/core/test/activity-rail-icons.test.tsx',
   'packages/core/test/bottom-bar-companion.test.tsx',
+  'packages/core/test/settings-section.test.tsx',
   'packages/core/test/deck-pointer-session.test.tsx',
   'packages/core/test/dialog-placement-provider.test.tsx',
   'packages/core/test/dialog-surface-scope.test.tsx',

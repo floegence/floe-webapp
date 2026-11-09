@@ -24,19 +24,29 @@ try {
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { BottomBarCompanion } from '../dist/layout.js';
+import { FloatingWindow } from '../dist/ui.js';
 import '../dist/styles.css';
 function App() {
   const [open, setOpen] = createSignal(false);
   const [anchor, setAnchor] = createSignal(null);
   const [host, setHost] = createSignal(null);
+  const [previewOpen, setPreviewOpen] = createSignal(false);
   window.setCompanionOpen = setOpen;
+  window.setPreviewOpen = setPreviewOpen;
+  window.getPreviewOpen = previewOpen;
   return <>
     <div ref={setAnchor} data-anchor style={{position:'fixed',bottom:'3px',left:'calc(50% - 160px)',width:'320px',height:'22px'}} />
     <div ref={setHost} />
     <BottomBarCompanion retained visible open={open()} anchor={anchor()} mount={host()}
-      expandedWidth={544} maxHeight={410} id="companion" label="Companion" onDismiss={() => setOpen(false)}>
+      expandedWidth={544} maxHeight={410} id="companion" label="Companion" onDismiss={() => setOpen(false)}
+      isOwnedInteraction={(event) => event.composedPath().some((node) =>
+        node instanceof Element && Boolean(node.closest('[data-floe-floating-window-surface]')?.querySelector('[data-companion-preview]')))}>
       <textarea aria-label="Message" onFocus={() => setOpen(true)} />
     </BottomBarCompanion>
+    <FloatingWindow open={previewOpen()} onOpenChange={setPreviewOpen} title="Owned preview"
+      defaultSize={{width: 300, height: 200}}>
+      <input aria-label="Preview input" data-companion-preview />
+    </FloatingWindow>
     <button data-outside>Outside</button>
   </>;
 }
@@ -143,6 +153,18 @@ render(() => <App />, document.getElementById('root'));
     'expanded',
     'IME Escape must not dismiss'
   );
+  // The real nested window mounts its document listener after the companion.
+  // Its first Escape must dismiss only that window, without consuming the outer disclosure.
+  await page.evaluate(() => window.setPreviewOpen(true));
+  await page.getByLabel('Preview input').focus();
+  await page.getByLabel('Preview input').press('Escape');
+  await page.waitForFunction(() => window.getPreviewOpen() === false);
+  assert.equal(
+    await surface.getAttribute('data-companion-phase'),
+    'expanded',
+    'owned floating window must receive Escape before its companion'
+  );
+  await page.getByLabel('Message').focus();
   await page.locator('textarea').press('Escape');
   await page.waitForFunction(
     () => document.querySelector('#companion')?.dataset.companionPhase === 'collapsed'
@@ -159,7 +181,7 @@ render(() => <App />, document.getElementById('root'));
   );
   assert.deepEqual(errors, []);
   console.log(
-    'Companion morph, fixed bottom edge, reversal, resize, native input, IME and reduced motion passed in Chromium.'
+    'Companion morph, fixed bottom edge, reversal, resize, native input, nested Escape ownership, IME and reduced motion passed in Chromium.'
   );
 } finally {
   await browser?.close();

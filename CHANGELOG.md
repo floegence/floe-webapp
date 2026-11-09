@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.2
+
+- Let later-mounted owned floating windows consume Escape before their containing bottom bar companion.
+- Add `SettingsSection.showHeading` for dialog-owned page identity while retaining accessible naming, metadata, actions and body state.
+
 ## 0.101.1
 
 - Qualify retained preview loading and inertness in one browser observation so CI cannot compare different document generations.

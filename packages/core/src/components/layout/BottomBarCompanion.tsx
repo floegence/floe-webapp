@@ -425,7 +425,8 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
       return;
     const mount = portalMount();
     const document = mount?.ownerDocument;
-    if (!document) return;
+    const view = document?.defaultView;
+    if (!document || !view) return;
 
     const inside = (event: PointerEvent | KeyboardEvent) => {
       const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
@@ -452,10 +453,13 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     };
 
     document.addEventListener('pointerdown', handlePointerDown, true);
-    document.addEventListener('keydown', handleKeyDown);
+    // IMPORTANT: this outer disclosure handles Escape at the owning window, after
+    // document-owned floating surfaces, regardless of their mount/listener order.
+    // Stay synchronous so preventDefault and propagation retain native semantics.
+    view.addEventListener('keydown', handleKeyDown);
     onCleanup(() => {
       document.removeEventListener('pointerdown', handlePointerDown, true);
-      document.removeEventListener('keydown', handleKeyDown);
+      view.removeEventListener('keydown', handleKeyDown);
     });
   });
 

@@ -896,6 +896,89 @@ describe('BottomBarCompanion', () => {
     expect(onDismiss).not.toHaveBeenCalled();
   });
 
+  it.each(['prevent-default', 'stop-propagation'])(
+    'lets a later document owner consume Escape with %s before dismissing',
+    (consumption) => {
+      const { anchor, portalMount, renderHost } = createFixture();
+      const ownedPortal = document.createElement('div');
+      const ownedInput = document.createElement('input');
+      ownedPortal.append(ownedInput);
+      document.body.append(ownedPortal);
+      const onDismiss = vi.fn();
+      mount(
+        () => (
+          <BottomBarCompanion
+            retained
+            visible
+            open
+            anchor={anchor}
+            mount={portalMount}
+            id="companion"
+            label="Companion"
+            isOwnedInteraction={(event) => event.composedPath().includes(ownedPortal)}
+            onDismiss={onDismiss}
+          />
+        ),
+        renderHost
+      );
+      flushAllAnimationFrames();
+      const consumeEscape = vi.fn((event: KeyboardEvent) => {
+        if (event.key !== 'Escape' || event.defaultPrevented) return;
+        event.preventDefault();
+        if (consumption === 'stop-propagation') event.stopImmediatePropagation();
+      });
+      // IMPORTANT: floating surfaces mount after their companion. Document listener
+      // registration order must never let the outer disclosure steal their Escape.
+      document.addEventListener('keydown', consumeEscape);
+      disposers.push(() => document.removeEventListener('keydown', consumeEscape));
+      ownedInput.focus();
+      ownedInput.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+      );
+      expect(consumeEscape).toHaveBeenCalledOnce();
+      expect(onDismiss).not.toHaveBeenCalled();
+
+      document.removeEventListener('keydown', consumeEscape);
+      ownedInput.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+      );
+      expect(onDismiss).toHaveBeenCalledExactlyOnceWith('escape');
+    }
+  );
+
+  it('does not dismiss after an owned document listener closes the companion', () => {
+    const { anchor, portalMount, renderHost } = createFixture();
+    const [open, setOpen] = createSignal(true);
+    const onDismiss = vi.fn();
+    mount(
+      () => (
+        <BottomBarCompanion
+          retained
+          visible
+          open={open()}
+          anchor={anchor}
+          mount={portalMount}
+          id="companion"
+          label="Companion"
+          onDismiss={onDismiss}
+        >
+          <input />
+        </BottomBarCompanion>
+      ),
+      renderHost
+    );
+    flushAllAnimationFrames();
+    const closeCompanion = () => setOpen(false);
+    document.addEventListener('keydown', closeCompanion);
+    disposers.push(() => document.removeEventListener('keydown', closeCompanion));
+    const input = portalMount.querySelector('input')!;
+    input.focus();
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
   it('applies geometry immediately when reduced motion is preferred', () => {
     const { anchor, portalMount, renderHost } = createFixture();
     Object.defineProperty(window, 'matchMedia', {

@@ -2,7 +2,7 @@
 
 # Local CI entrypoint.
 # Keep it deterministic (no watch mode) so it can be used in automation.
-check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog directory-favorites adaptive-layout async-layout svg-editor-security graph-blob-workers graph-production tabs-accessibility inline-code long-thread-primitives split-workspace business-controls consumer-budgets button-contrast checkbox-states prompt-card context-menu-actions preview-search
+check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation bottom-bar-companion settings input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog directory-favorites adaptive-layout async-layout svg-editor-security graph-blob-workers graph-production tabs-accessibility inline-code long-thread-primitives split-workspace business-controls consumer-budgets button-contrast checkbox-states prompt-card context-menu-actions preview-search
 
 .PHONY: async-layout
 async-layout:
@@ -43,6 +43,14 @@ persistent-scrollbar:
 activity-navigation:
 	pnpm test:activity-navigation
 	node scripts/check-keep-alive-browser.mjs
+
+.PHONY: bottom-bar-companion
+bottom-bar-companion:
+	node scripts/check-bottom-bar-companion-browser.mjs
+
+.PHONY: settings
+settings:
+	pnpm test:settings
 
 chat-media:
 	node scripts/check-chat-media-browser.mjs

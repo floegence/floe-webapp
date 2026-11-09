@@ -75,22 +75,42 @@ export interface SettingsSectionProps extends Omit<JSX.HTMLAttributes<HTMLElemen
   actions?: JSX.Element;
   /** A page owns its primary heading; sections are subordinate groups. */
   variant?: 'page' | 'section';
+  /** Defaults to true. Hide when an enclosing dialog already owns this page identity. */
+  showHeading?: boolean;
 }
 
 export function SettingsSection(props: SettingsSectionProps) {
-  const [local, rest] = splitProps(props, ['title', 'description', 'badge', 'actions', 'variant', 'class', 'children']);
+  const [local, rest] = splitProps(props, ['title', 'description', 'badge', 'actions', 'variant', 'showHeading', 'class', 'children']);
+  const badge = children(() => local.badge);
+  const actions = children(() => local.actions);
+  const hasContent = (content: ReturnType<typeof children>) =>
+    content.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '');
+  const showHeading = () => local.showHeading !== false;
+  const hasIdentity = () => showHeading() || hasContent(badge);
+  const hasHeadingContent = () => hasIdentity() || Boolean(local.description);
+  // IMPORTANT: an enclosing dialog may own the page title. Hide only that repeated
+  // identity; retain section naming, metadata, actions and the stable body subtree.
   return (
-    <section {...rest} class={cn('floe-settings-section', local.class)} data-settings-variant={local.variant ?? 'section'}>
-      <header class="floe-settings-section__header">
-        <div class="floe-settings-section__heading">
-          <div class="floe-settings-section__title">
-            <Show when={local.variant === 'page'} fallback={<h2>{local.title}</h2>}><h1>{local.title}</h1></Show>
-            {local.badge}
-          </div>
-          <Show when={local.description}><p>{local.description}</p></Show>
-        </div>
-        <Show when={local.actions}><div class="floe-settings-section__actions">{local.actions}</div></Show>
-      </header>
+    <section {...rest} class={cn('floe-settings-section', local.class)} data-settings-variant={local.variant ?? 'section'}
+      aria-label={rest['aria-label'] ?? (!showHeading() && !rest['aria-labelledby'] ? local.title : undefined)}>
+      <Show when={hasHeadingContent() || hasContent(actions)}>
+        <header class="floe-settings-section__header">
+          <Show when={hasHeadingContent()}>
+            <div class="floe-settings-section__heading">
+              <Show when={hasIdentity()}>
+                <div class="floe-settings-section__title">
+                  <Show when={showHeading()}>
+                    <Show when={local.variant === 'page'} fallback={<h2>{local.title}</h2>}><h1>{local.title}</h1></Show>
+                  </Show>
+                  {badge()}
+                </div>
+              </Show>
+              <Show when={local.description}><p>{local.description}</p></Show>
+            </div>
+          </Show>
+          <Show when={hasContent(actions)}><div class="floe-settings-section__actions">{actions()}</div></Show>
+        </header>
+      </Show>
       <div class="floe-settings-section__body">{local.children}</div>
     </section>
   );

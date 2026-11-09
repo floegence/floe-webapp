@@ -89,6 +89,8 @@
 - 新 overlay 自己重新拼 document 监听和 body lock。
 - 打开 overlay 后仍让背景滚动和全局快捷键穿透。
 
+Settings page identity has one visible owner. `SettingsSection` renders its page or group heading by default. When a containing dialog already presents the current page title, pass `showHeading={false}`: the section retains an accessible name from `title` (or the caller's explicit ARIA label/reference), descriptions, badges, actions and its stable body. Empty or reactively absent metadata produces no header or header spacing. Subordinate group headings remain visible.
+
 ### 2.5 non-modal anchored companion 语义
 
 `BottomBarCompanion` 是从可测量布局锚点向上展开的非模态 disclosure。锚点可以位于 Bottom Bar，也可以独立位于 `AppViewport`。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。
@@ -102,7 +104,7 @@
 - `retained`、`visible`、`open` 是正交状态。`visible=false` 只负责 inert/hidden，不能卸载 retained root；`open` 只选择几何形态。
 - `mount` 必须显式传入。mount 或 anchor 暂时不可用时保留最后一次有效 host/frame 并隐藏，只有 connected mount 与当前有效 anchor 同时 ready 才能原子切换；禁止回退到 `document.body`。
 - outside pointer 使用 owner document 的 capture listener，保证目标组件即使停止冒泡也能触发收起；相关 consumer Portal 由产品通过 `isOwnedInteraction` 显式声明为 inside。
-- Escape 使用 bubble listener，让 consumer-owned Portal 先消费；未被消费且焦点属于 companion 时才收起。
+- Escape uses the owning window's bubble listener, after document-owned floating surfaces regardless of mount order. A nested surface consumes the same synchronous event before the companion; only an unconsumed Escape with companion-owned focus dismisses the disclosure. Do not move this listener back onto the document or defer native cancellation to a later task.
 - 该 surface 无 backdrop、body lock、focus trap，也不阻断背景交互，因此不使用 `useOverlayMask()`。产品负责关闭后的领域焦点策略。
 - 动画只发生在离散的 disclosure 状态切换，不与 pointer drag/resize 热路径并发；reduced motion 直接提交目标 frame。
 
