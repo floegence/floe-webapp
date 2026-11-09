@@ -140,6 +140,7 @@ render(() => <App />, document.getElementById('root'));
   assert.ok(modeBox.width < 300 && modeBox.height <= 36, JSON.stringify(modeBox));
   await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().click();
   assert.equal(await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().getAttribute('aria-checked'), 'true');
+  assert.equal(await page.locator('.floe-theme-picker__check').evaluateAll(elements => elements.filter(e => getComputedStyle(e).visibility === 'visible').length), 1, 'only the committed preset displays a check');
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     assert.ok(await page.locator('.floe-theme-picker').evaluate(e => e.scrollWidth <= e.clientWidth + 1));

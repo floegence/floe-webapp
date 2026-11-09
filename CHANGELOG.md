@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.5
+
+- Show the appearance check only on the committed preset using native wrapper visibility; verify rendered checks in the published consumer.
+
 ## 0.101.4
 
 - Export a controlled, compact ThemePicker with responsive previews, keyboard navigation, pending feedback and shared theme tokens.

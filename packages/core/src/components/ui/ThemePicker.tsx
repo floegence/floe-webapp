@@ -63,7 +63,7 @@ export function ThemePicker(props: ThemePickerProps) {
         <span class="floe-theme-picker__preview" aria-hidden="true" style={{ '--theme-preview-bg': preset.preview?.background, '--theme-preview-surface': preset.preview?.surface, '--theme-preview-sidebar': preset.preview?.sidebar, '--theme-preview-border': preset.preview?.border, '--theme-preview-primary': preset.preview?.primary }}>
           <span class="floe-theme-picker__preview-sidebar" /><span class="floe-theme-picker__preview-body"><i /><span><For each={preset.preview?.colors?.slice(0, 4)}>{color => <i style={{ background: color }} />}</For></span></span>
         </span>
-        <span class="floe-theme-picker__caption"><span>{props.presetLabel(preset)}</span><Check aria-hidden="true" style={{ visibility: props.selectedPreset === preset.name ? 'visible' : 'hidden' }} /></span>
+        <span class="floe-theme-picker__caption"><span>{props.presetLabel(preset)}</span><span class="floe-theme-picker__check" aria-hidden="true"><Check /></span></span>
       </button>}</For>
     </div>
     <Show when={props.error}><p role="alert" id={`${id}-error`} class="floe-theme-picker__error">{props.error}</p></Show>
