@@ -417,3 +417,5 @@ export {
 } from './calendarModel';
 
 export { RetainedPanel, type RetainedPanelProps } from './RetainedPanel';
+
+export { ThemePicker, type ThemePickerProps } from "./ThemePicker";

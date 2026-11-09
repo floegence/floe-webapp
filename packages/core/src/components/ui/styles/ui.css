@@ -1808,10 +1808,8 @@
   .floe-settings-navigation__item[aria-current='page'] {
     background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); font-weight: 500;
   }
-  .floe-settings-navigation__item[aria-current='page']::before {
-    content: ''; position: absolute; inset-inline-start: 0; inset-block: 9px;
-    width: 3px; border-radius: 3px; background: currentColor;
-  }
+  /* IMPORTANT: Selected settings use a quiet filled row, never a left rail.
+     Keep keyboard focus independent from the current navigation state. */
   .floe-settings-navigation__item:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
   .floe-settings-navigation__icon { width: 15px; height: 15px; flex-shrink: 0; }
   .floe-settings-section + .floe-settings-section { margin-top: 24px; }
@@ -1912,3 +1910,39 @@
 .floe-context-action:is(:hover, :focus-visible) { outline: none; background: var(--floe-state-hover); }
 .floe-context-action:disabled { opacity: .4; cursor: default; }
 @media (pointer: coarse) { .floe-context-action { min-height: 44px; } }
+
+@layer components {
+  /* IMPORTANT: Appearance controls use one compact intrinsic mode rail and
+     responsive previews. Never stretch the three choices across a settings page. */
+  .floe-theme-picker { min-width: 0; container: floe-theme-picker / inline-size; }
+  .floe-theme-picker__toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px; }
+  .floe-theme-picker__modes { display: inline-flex; max-width: 100%; padding: 2px; gap: 2px; border: 1px solid var(--border); border-radius: var(--floe-radius-field); background: var(--muted); }
+  .floe-theme-picker__modes > button { min-width: 0; height: var(--floe-control-height-sm); padding-inline: 12px; border-radius: var(--floe-radius-sm); font-size: var(--floe-type-control); color: var(--muted-foreground); cursor: pointer; transition: background-color var(--floe-duration-fast), color var(--floe-duration-fast); }
+  .floe-theme-picker__modes > [aria-checked='true'] { background: var(--primary); color: var(--primary-foreground); }
+  /* Pending feedback cannot wrap into an extra toolbar row. Keep the spoken
+     status and show progress on the exact choice being committed. */
+  .floe-theme-picker__status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .floe-theme-picker button { position: relative; }
+  .floe-theme-picker button[aria-busy='true']::after { content: ''; position: absolute; inset-inline-end: 3px; top: 3px; width: 8px; height: 8px; border: 1px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: floe-theme-picker-spin 700ms linear infinite; }
+  @keyframes floe-theme-picker-spin { to { transform: rotate(360deg); } }
+  .floe-theme-picker__presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .floe-theme-picker__presets > button { min-width: 0; padding: 6px; border: 1px solid var(--border); border-radius: var(--floe-radius-md); background: var(--card); text-align: start; cursor: pointer; transition: border-color var(--floe-duration-fast), background-color var(--floe-duration-fast); }
+  .floe-theme-picker__presets > button:hover { background: var(--accent); }
+  .floe-theme-picker__presets > [aria-checked='true'] { border-color: var(--primary); background: var(--accent); }
+  .floe-theme-picker button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .floe-theme-picker button[aria-disabled='true'] { cursor: progress; }
+  .floe-theme-picker__preview { display: flex; gap: 6px; height: 48px; padding: 6px; border: 1px solid var(--theme-preview-border, var(--border)); border-radius: var(--floe-radius-sm); background: var(--theme-preview-bg, var(--background)); }
+  .floe-theme-picker__preview-sidebar { width: 12px; border-radius: 3px; background: var(--theme-preview-sidebar, var(--muted)); }
+  .floe-theme-picker__preview-body { display: flex; flex: 1; min-width: 0; flex-direction: column; justify-content: space-between; padding: 5px; border-radius: 3px; background: var(--theme-preview-surface, var(--card)); }
+  .floe-theme-picker__preview-body > i { width: 28px; height: 7px; border-radius: 3px; background: var(--theme-preview-primary, var(--primary)); }
+  .floe-theme-picker__preview-body > span { display: flex; gap: 3px; }
+  .floe-theme-picker__preview-body > span > i { flex: 1; height: 5px; border-radius: 3px; }
+  .floe-theme-picker__caption { display: flex; align-items: start; justify-content: space-between; gap: 4px; min-height: 24px; padding: 6px 2px 0; font-size: var(--floe-type-supporting); line-height: var(--floe-line-control); }
+  .floe-theme-picker__caption > span { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+  .floe-theme-picker__caption > svg { width: 14px; height: 14px; flex: none; }
+  .floe-theme-picker__error { margin-top: 8px; font-size: var(--floe-type-control); color: var(--destructive); }
+  @container floe-theme-picker (width < 450px) { .floe-theme-picker__presets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (pointer: coarse) { .floe-theme-picker__modes > button { min-height: 44px; } }
+  @media (prefers-reduced-motion: reduce) { .floe-theme-picker button { transition: none; } .floe-theme-picker button::after { animation: none; } }
+  @media (forced-colors: active) { .floe-theme-picker [aria-checked='true'] { outline: 2px solid Highlight; outline-offset: -2px; } }
+}

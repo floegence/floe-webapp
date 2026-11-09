@@ -370,3 +370,12 @@ hover widths so right-edge placement cannot wrap over the hovered control.
 
 Acceptance: `node scripts/check-editor-preview-browser.mjs` and
 `node scripts/check-text-search-browser.mjs --all`.
+
+### Appearance settings
+
+Use the controlled `ThemePicker` from `@floegence/floe-webapp-core/ui` for inline
+appearance settings. Supply localized mode/preset labels and callbacks; the host
+owns persistence, pending admission and failures. Its intrinsic mode rail and
+responsive preview grid share the control scale, keyboard navigation and reduced
+motion/forced-color behavior. Settings navigation marks selection with a filled
+row, without an edge rail; keyboard focus remains independently visible.

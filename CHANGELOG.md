@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.101.4
+
+- Export a controlled, compact ThemePicker with responsive previews, keyboard navigation, pending feedback and shared theme tokens.
+
+- Keep settings selection on the row surface without a decorative edge rail; preserve keyboard focus.
+- Omit empty navigation group labels so ungrouped categories have no blank heading spacer.
+
 ## 0.101.3
 
 - Resolve settings control, body and navigation search slots once so stateful controls own one portal and one cleanup lifecycle.

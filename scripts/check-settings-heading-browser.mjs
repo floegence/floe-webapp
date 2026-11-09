@@ -18,8 +18,9 @@ try {
   await writeFile(resolve(fixture, 'main.tsx'), `
 import { Show, createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { Dialog, Select, SettingRow, SettingsSection } from '../dist/ui.js';
+import { Dialog, Select, SettingRow, SettingsSection, ThemePicker } from '../dist/ui.js';
 import '../dist/styles.css';
+import { builtInShellThemePresets, getShellThemePresetsForMode } from '../dist/themes.js';
 function App() {
   const [hosted, setHosted] = createSignal(true);
   const [metadata, setMetadata] = createSignal('');
@@ -28,6 +29,8 @@ function App() {
   const [choiceOpen, setChoiceOpen] = createSignal(false);
   const [choice, setChoice] = createSignal('balanced');
   const changes = [];
+  const [mode, setMode] = createSignal('system');
+  const [preset, setPreset] = createSignal('porcelain-dark');
   window.settingsHeadingFixture = { setHosted, setMetadata, setTitle, setRowVisible, setChoiceOpen, changes };
   return <Dialog open onOpenChange={() => {}} title={hosted() ? title() : 'Settings'} closeLabel="Close settings">
     <SettingsSection data-page title={title()} variant="page" showHeading={!hosted()}
@@ -35,7 +38,12 @@ function App() {
       badge={<Show when={metadata() === 'badge' || metadata() === 'all'}><span>Managed</span></Show>}
       actions={<Show when={metadata() === 'actions' || metadata() === 'all'}><button type="button">Reset</button></Show>}>
       <input aria-label="Shell" />
-      <SettingsSection title="Appearance"><p>Retained detail</p></SettingsSection>
+      <SettingsSection title="Appearance"><p>Retained detail</p>
+        <ThemePicker mode={mode()} modes={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
+          modeLabel="Color mode" presetsLabel="Themes" pendingLabel="Switching appearance" selectedPreset={preset()} presetLabel={p => p.displayName}
+          presets={getShellThemePresetsForMode(builtInShellThemePresets, mode() === 'light' ? 'light' : 'dark')}
+          onModeChange={setMode} onPresetChange={p => setPreset(p.name)} />
+      </SettingsSection>
       <Show when={rowVisible()}>
         <SettingRow title="Picture quality" control={<Select ariaLabel="Picture quality"
           value={choice()} onChange={(value) => { changes.push(value); setChoice(value); }}
@@ -121,6 +129,22 @@ render(() => <App />, document.getElementById('root'));
   assert.equal(await section.locator('h1').textContent(), 'Host applications');
   assert.equal(await page.getByRole('dialog', { name: 'Settings', exact: true }).count(), 1);
   assert.equal(await page.getByRole('heading', { name: 'Appearance', exact: true }).count(), 1);
+
+  // IMPORTANT: Qualify the published controlled picker, including intrinsic
+  // sizing and keyboard selection; source-class checks cannot prove geometry.
+  const modeRail = page.getByRole('radiogroup', { name: 'Color mode' });
+  await modeRail.getByRole('radio', { name: 'System', exact: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await modeRail.getByRole('radio', { name: 'Light', exact: true }).getAttribute('aria-checked'), 'true');
+  const modeBox = await modeRail.boundingBox();
+  assert.ok(modeBox.width < 300 && modeBox.height <= 36, JSON.stringify(modeBox));
+  await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().click();
+  assert.equal(await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().getAttribute('aria-checked'), 'true');
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    assert.ok(await page.locator('.floe-theme-picker').evaluate(e => e.scrollWidth <= e.clientWidth + 1));
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
   assert.deepEqual(errors, []);
   console.log('Settings ownership passed: real dialog, single controlled Select portal, selection and disposal, accessible naming, heading ownership, retained input and three widths.');
 } finally {

@@ -54,7 +54,7 @@ export function SettingsNavigation(props: SettingsNavigationProps) {
           <For each={props.groups}>{(group) => (
             <Show when={group.items.length}>
               <div class="floe-settings-navigation__group" data-settings-group={group.id}>
-                <div class="floe-settings-navigation__label">{group.label}</div>
+                <Show when={group.label}><div class="floe-settings-navigation__label">{group.label}</div></Show>
                 <For each={group.items}>{(item) => (
                   <button {...item.attributes} type="button"
                     class={cn('floe-settings-navigation__item', item.attributes?.class)}

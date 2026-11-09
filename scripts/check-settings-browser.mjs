@@ -19,6 +19,9 @@ try {
   await page.keyboard.press('Enter');
   await page.getByRole('heading', { name: 'Security & permissions', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Security & permissions' }).getAttribute('aria-current'), 'page');
+  // IMPORTANT: Selection uses the row surface, never an edge rail. Keyboard
+  // focus remains independent and visible.
+  assert.equal(await page.locator('.floe-settings-navigation__item[aria-current]').evaluate(element => getComputedStyle(element, '::before').content), 'none');
   await page.getByRole('textbox', { name: 'Search settings' }).fill('no match');
   await page.getByText('No settings found').waitFor();
   await page.getByRole('textbox', { name: 'Search settings' }).fill('');
