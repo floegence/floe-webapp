@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.12
+
+- Resolve editor context actions from the Monaco model selection, preserving indentation and multiline text in floating previews and ordinary editors.
+
 ## 0.101.11
 
 - Let controlled Tabs delegate activation timing to an existing host transaction while preserving shared indicator motion and keyboard behavior.

@@ -208,17 +208,17 @@ export function CodeEditor(props: CodeEditorProps) {
           return;
         if (event instanceof MouseEvent && event.type === 'pointerdown' && event.button !== 2)
           return;
-        const pending = sharedContextActions?.claim();
+        // Claim the document event to suppress a second menu, but resolve from
+        // Monaco's model: its DOM textarea is not the selected document text.
+        sharedContextActions?.claim();
         const rect = contextMenuOwner.getBoundingClientRect();
         contextActions =
-          pending?.actions ??
           sharedContextActions?.resolve({
             target: contextMenuOwner,
             x: event instanceof MouseEvent ? event.clientX : rect.left + 8,
             y: event instanceof MouseEvent ? event.clientY : rect.top + 24,
             selection: readSelectedText(editor, model),
-          }) ??
-          [];
+          }) ?? [];
       };
       contextMenuOwner.addEventListener('pointerdown', prepareContextMenu, true);
       contextMenuOwner.addEventListener('contextmenu', prepareContextMenu, true);
@@ -301,5 +301,11 @@ export function CodeEditor(props: CodeEditorProps) {
     });
   });
 
-  return <div ref={container} class={`floe-code-editor${props.class ? ` ${props.class}` : ''}`} style={props.style} />;
+  return (
+    <div
+      ref={container}
+      class={`floe-code-editor${props.class ? ` ${props.class}` : ''}`}
+      style={props.style}
+    />
+  );
 }

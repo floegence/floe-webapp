@@ -132,21 +132,37 @@ try {
           results.push({ engine, width, dark, passed: true });
           await page.close();
         }
-      if (engine === 'chromium') {
-        const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
-        await page.goto(
-          server.resolvedUrls.local[0] + 'test/browser/context-menu-actions.html?editor'
-        );
-        await page.locator('.monaco-editor .view-lines').click({ button: 'right' });
-        // Monaco intentionally arms pointer selection 100 ms after opening.
-        await page.waitForTimeout(120);
-        await page.getByRole('menuitem', { name: 'Ask assistant' }).click();
-        await page.waitForFunction(() =>
-          document.querySelector('#result').textContent.includes('target')
-        );
-        results.push({ engine, editor: true, passed: true });
-        await page.close();
-      }
+      if (engine === 'chromium')
+        for (const floating of [true, false]) {
+          const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
+          await page.goto(
+            server.resolvedUrls.local[0] +
+              `test/browser/context-menu-actions.html?editor${floating ? '&floating' : ''}`
+          );
+          await page.locator('.monaco-editor .view-lines').click();
+          await page.keyboard.press('ControlOrMeta+a');
+          assert.equal(
+            await page.locator('#selection').textContent(),
+            '  const selected = true;\n  const untouched = false;',
+            'Selection exists before opening the menu'
+          );
+          await page
+            .locator('.monaco-editor .view-lines')
+            .click({ button: 'right', position: { x: 100, y: 9 } });
+          // Monaco intentionally arms pointer selection 100 ms after opening.
+          await page.waitForTimeout(120);
+          await page.getByRole('menuitem', { name: 'Ask assistant' }).click();
+          await page.waitForFunction(() =>
+            document.querySelector('#result').textContent.includes('target')
+          );
+          assert.equal(
+            JSON.parse(await page.locator('#result').textContent()).selection,
+            '  const selected = true;\n  const untouched = false;',
+            'Editor selection is frozen from its model'
+          );
+          results.push({ engine, editor: true, floating, passed: true });
+          await page.close();
+        }
     } finally {
       await browser.close();
     }

@@ -2,12 +2,29 @@ import { ThemeProvider } from '../../src/context/ThemeContext';
 import { CodeEditor } from '../../src/components/editor/CodeEditor';
 import { createSignal, Show } from 'solid-js';
 import { Portal, render } from 'solid-js/web';
-import { ContextMenuActions, ContextMenuActionItems, SurfaceFloatingLayer } from '../../src/ui';
+import {
+  ContextMenuActions,
+  ContextMenuActionItems,
+  SurfaceFloatingLayer,
+  FloatingWindow,
+} from '../../src/ui';
 import '../../src/styles/globals.css';
 render(() => {
   const [local, setLocal] = createSignal<{ x: number; y: number }>();
   const [result, setResult] = createSignal('');
   const viewport = new URLSearchParams(location.search).has('viewport');
+  const [selection, setSelection] = createSignal('');
+  const editor = () => (
+    <ThemeProvider>
+      <CodeEditor
+        onSelectionChange={setSelection}
+        style={{ height: '220px' }}
+        path="menu.ts"
+        language="typescript"
+        value={'  const selected = true;\n  const untouched = false;'}
+      />
+    </ThemeProvider>
+  );
   return (
     <ContextMenuActions
       label="Actions"
@@ -82,17 +99,20 @@ render(() => {
         </section>
         <Show when={new URLSearchParams(location.search).has('editor')}>
           <div id="monaco-source" style={{ height: '220px' }}>
-            <ThemeProvider>
-              <CodeEditor
-                style={{ height: '220px' }}
-                path="menu.ts"
-                language="typescript"
-                value="const selected = true;"
-              />
-            </ThemeProvider>
+            <Show when={new URLSearchParams(location.search).has('floating')} fallback={editor()}>
+              <FloatingWindow
+                open
+                title="Editor preview"
+                onOpenChange={() => {}}
+                defaultSize={{ width: 640, height: 420 }}
+              >
+                {editor()}
+              </FloatingWindow>
+            </Show>
           </div>
         </Show>
         <button id="outside">Outside</button>
+        <output id="selection">{selection()}</output>
         <output id="result">{result()}</output>
         <Show when={local()} keyed>
           {(point) => (
