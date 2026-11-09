@@ -40,13 +40,17 @@ const sample = () => {
     ),
   ].map((el) => {
     const style = getComputedStyle(el);
-    const face = el.closest('[data-floe-segmented-pill]')?.querySelector('.floe-segmented-control__pill');
+    const face = el
+      .closest('[data-floe-segmented-pill]')
+      ?.querySelector('.floe-segmented-control__pill');
+    const ink = face?.querySelector('.floe-segmented-control__ink');
     const bg = background(face ?? el);
     const parent = background(el.parentElement);
     return {
       control: el.textContent.trim(),
-      text: contrast(mix(rgba(style.color), bg), bg),
+      text: contrast(mix(rgba(face ? getComputedStyle(ink ?? el).color : style.color), bg), bg),
       selection: contrast(bg, parent),
+      ...(ink ? { railText: contrast(mix(rgba(style.color), parent), parent) } : {}),
       background: style.backgroundColor,
       color: style.color,
       shadow: style.boxShadow,
@@ -87,6 +91,28 @@ try {
           'hover preserves the selected appearance'
         );
         await page.mouse.move(0, 0);
+        if (version === 'current') {
+          await page.getByRole('radio', { name: 'Week', exact: true }).click();
+          for (const time of [0, 70, 140, 210, 280]) {
+            await page.evaluate((value) => {
+              document.querySelectorAll('[aria-label="Time range"] *').forEach((element) => {
+                element.getAnimations().forEach((animation) => {
+                  animation.pause();
+                  animation.currentTime = value;
+                });
+              });
+            }, time);
+            const travelling = (await page.evaluate(sample))[0];
+            assert.ok(
+              travelling.text >= 4.5 && travelling.railText >= 4.5,
+              `${entry}/${theme.name}: both sides of travelling selection retain readable labels at ${time}ms`
+            );
+          }
+          await selected.click();
+          await page.evaluate(() =>
+            document.getAnimations().filter(animation => animation.id.startsWith('floe-segmented-')).forEach(animation => animation.finish())
+          );
+        }
         results.push({ entry, surface, ...theme, controls, failures });
         await page.screenshot({ path: resolve(output, `${entry}-${surface}-${theme.name}.png`) });
       }

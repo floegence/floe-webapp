@@ -38,10 +38,41 @@ try {
         document.documentElement.style.setProperty('--floe-duration-slow', '.28s')
       );
       await page.waitForTimeout(250);
+      const continuity = await page.evaluate(async () => {
+        window.segmented.setValue('directory');
+        await new Promise(requestAnimationFrame);
+        const pill = document.querySelector('.floe-segmented-control__pill');
+        pill.getAnimations().forEach((animation) => {
+          animation.pause();
+          animation.currentTime = 0;
+        });
+        const selected = document.querySelector('[aria-checked="true"]');
+        const label = selected.querySelector('.floe-segmented-control__label');
+        return {
+          color: getComputedStyle(label).color,
+          rail: getComputedStyle(pill.parentElement).backgroundColor,
+          overlays: pill.querySelectorAll('[data-segmented-label]').length,
+        };
+      });
+      assert.equal(
+        continuity.overlays,
+        3,
+        engineName + ': travelling face owns clipped readable labels'
+      );
+      await page.evaluate(() => {
+        window.segmented.setValue('time');
+        document.getAnimations().forEach((animation) => animation.finish());
+      });
       const result = await page.evaluate(async () => {
         const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
         const pill = document.querySelector('.floe-segmented-control__pill');
         const geometry = () => ({
+          labelDeltas: [...pill.querySelectorAll('[data-segmented-label]')].map((label) => {
+            const button = [...document.querySelectorAll('.floe-segmented-control__item')].find(
+              (button) => button.getAttribute('aria-label') === label.textContent
+            );
+            return Math.abs(label.getBoundingClientRect().x - button.getBoundingClientRect().x);
+          }),
           x: pill.getBoundingClientRect().x,
           width: pill.getBoundingClientRect().width,
         });
@@ -56,8 +87,21 @@ try {
           animation.pause();
           animation.currentTime = 60;
         }
+        pill
+          .querySelector('.floe-segmented-control__ink')
+          .getAnimations()
+          .forEach((ink) => {
+            ink.pause();
+            ink.currentTime = 60;
+          });
         const early = geometry();
         if (animation) animation.currentTime = 140;
+        pill
+          .querySelector('.floe-segmented-control__ink')
+          .getAnimations()
+          .forEach((ink) => {
+            ink.currentTime = 140;
+          });
         const middle = geometry();
         window.segmented.setValue('time');
         const reversal = geometry();
@@ -79,6 +123,11 @@ try {
           animated: !!animation,
         };
       });
+      for (const sample of [result.early, result.middle])
+        assert.ok(
+          sample.labelDeltas.every((delta) => delta < 1.1),
+          engineName + ': label positions stay fixed during travel ' + JSON.stringify(sample)
+        );
       if (reducedMotion === 'no-preference') {
         assert.ok(result.animated, engineName + ': travelling face');
         const travel = result.final.x - result.initial.x;

@@ -55,6 +55,9 @@ duration and settle curve. The beginning, travel and landing remain perceptible
 on short icon-only rails; the entrance curve must not consume nearly all travel
 in the first few frames. Selection state updates immediately. Interrupted
 selection reverses from the painted face, and reduced motion lands directly.
+Labels remain stationary and readable on both sides of the travelling face: native
+labels keep rail ink while an aria-hidden, clipped ink layer follows the fill.
+Forced colors uses system text/fill colors; the duplicate ink has no accessible name.
 CSS time tokens accept both milliseconds and seconds, including production
 minification of `280ms` to `.28s`; WAAPI always receives milliseconds.
 The segmented browser check measures early and middle geometry as well as

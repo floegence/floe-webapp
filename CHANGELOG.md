@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.10
+
+- Keep segmented-control labels stationary and readable throughout selection travel, reversal, resizing and forced-color rendering without duplicating accessible names.
+
 ## 0.101.9
 
 - Pin scaffold Rollup to the available 4.68.1 artifact while registry metadata advertises a missing 4.68.2 tarball; keep npm and pnpm overrides identical.

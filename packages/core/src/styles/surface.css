@@ -216,21 +216,60 @@
   }
 }
 
-/* One filled face travels between segmented choices. Labels and native state
- * update immediately; only this decorative face moves, including on reversal. */
+/* Native labels retain rail ink. The travelling face clips a second ink layer
+ * against its fill, keeping text readable throughout movement and reversal. */
 .floe-segmented-control__pill {
-  position: absolute; inset: 0 auto auto 0; pointer-events: none;
+  position: absolute;
+  inset: 0 auto auto 0;
+  pointer-events: none;
   border: 1px solid var(--primary);
   background: var(--primary);
+  overflow: hidden;
+  z-index: 1;
 }
-:root .floe-segmented-control[data-floe-segmented-pill] .floe-segmented-control__item[aria-checked='true'] {
-  background: transparent; border-color: transparent; box-shadow: none;
+.floe-segmented-control__ink {
+  position: absolute;
+  inset: -1px auto auto -1px;
+  font-weight: 500;
+  color: var(--segmented-control-item-active-color);
+}
+.floe-segmented-control__ink-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+:root .floe-segmented-control[data-floe-segmented-pill] .floe-segmented-control__item {
+  color: var(--segmented-control-item-color);
+  transition-property: background-color, border-color, box-shadow;
+}
+:root
+  .floe-segmented-control[data-floe-segmented-pill]
+  .floe-segmented-control__item[aria-checked='true'] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .floe-segmented-control__pill { transition: none; }
+  .floe-segmented-control__pill {
+    transition: none;
+  }
 }
 @media (forced-colors: active) {
-  .floe-segmented-control__pill { background: Highlight; border-color: Highlight; forced-color-adjust: none; transition: none; }
+  .floe-segmented-control__ink {
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+  :root .floe-segmented-control[data-floe-segmented-pill] .floe-segmented-control__item {
+    color: ButtonText;
+  }
+  .floe-segmented-control__pill {
+    background: Highlight;
+    border-color: Highlight;
+    forced-color-adjust: none;
+    transition: none;
+  }
 }
 
 /* A compound input has one decorative boundary, including host compositions

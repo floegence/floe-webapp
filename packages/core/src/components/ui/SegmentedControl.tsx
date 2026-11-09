@@ -97,15 +97,21 @@ export function SegmentedControl(props: SegmentedControlProps) {
 
   let rail: HTMLDivElement | undefined;
   let face: HTMLSpanElement | undefined;
+  let ink: HTMLSpanElement | undefined;
+  const [slots, setSlots] = createSignal<
+    Record<string, { x: number; y: number; width: number; height: number }>
+  >({});
   const buttons = new Map<string, HTMLButtonElement>();
   const [pill, setPill] = createSignal<{ x: number; y: number; width: number; height: number }>();
   let observer: ResizeObserver | undefined;
   let animation: Animation | undefined;
+  let inkAnimation: Animation | undefined;
   let selected: string | undefined;
   const measure = () => {
     const button = buttons.get(local.value);
     if (!rail || !button) {
       animation?.cancel();
+      inkAnimation?.cancel();
       setPill(undefined);
       selected = undefined;
       return;
@@ -117,6 +123,19 @@ export function SegmentedControl(props: SegmentedControlProps) {
       width: button.offsetWidth,
       height: button.offsetHeight,
     };
+    setSlots(
+      Object.fromEntries(
+        [...buttons].map(([value, element]) => [
+          value,
+          {
+            x: element.offsetLeft,
+            y: element.offsetTop,
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+          },
+        ])
+      )
+    );
     const previous = untrack(pill);
     if (
       previous &&
@@ -133,7 +152,9 @@ export function SegmentedControl(props: SegmentedControlProps) {
       !window.matchMedia('(prefers-reduced-motion: reduce), (forced-colors: active)').matches;
     const before = moving ? getComputedStyle(face!) : undefined;
     const from = before ? { transform: before.transform, width: before.width } : undefined;
+    const inkFrom = moving && ink ? getComputedStyle(ink).transform : undefined;
     animation?.cancel();
+    inkAnimation?.cancel();
     setPill(next);
     selected = local.value;
     if (from && face) {
@@ -150,6 +171,13 @@ export function SegmentedControl(props: SegmentedControlProps) {
         }
       );
       animation.id = 'floe-segmented-selection';
+      if (ink && inkFrom) {
+        inkAnimation = ink.animate(
+          [{ transform: inkFrom }, { transform: `translate(${-next.x}px, ${-next.y}px)` }],
+          animation.effect!.getTiming()
+        );
+        inkAnimation.id = 'floe-segmented-ink';
+      }
     }
   };
   createEffect(() => {
@@ -169,6 +197,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
   onCleanup(() => {
     observer?.disconnect();
     animation?.cancel();
+    inkAnimation?.cancel();
   });
 
   const size = () => local.size ?? 'md';
@@ -209,7 +238,33 @@ export function SegmentedControl(props: SegmentedControlProps) {
           width: `${pill()?.width ?? 0}px`,
           height: `${pill()?.height ?? 0}px`,
         }}
-      />
+      >
+        <span
+          ref={ink}
+          class="floe-segmented-control__ink"
+          style={{ transform: `translate(${-(pill()?.x ?? 0)}px, ${-(pill()?.y ?? 0)}px)` }}
+        >
+          <For each={local.options}>
+            {(option) => (
+              <span
+                data-segmented-label={option.value}
+                class="floe-segmented-control__ink-label"
+                style={{
+                  left: `${slots()[option.value]?.x ?? 0}px`,
+                  top: `${slots()[option.value]?.y ?? 0}px`,
+                  width: `${slots()[option.value]?.width ?? 0}px`,
+                  height: `${slots()[option.value]?.height ?? 0}px`,
+                }}
+              >
+                <span class="inline-flex items-center gap-1.5">
+                  {option.icon && <option.icon class={styles().icon} />}
+                  <span>{option.label}</span>
+                </span>
+              </span>
+            )}
+          </For>
+        </span>
+      </span>
       <For each={local.options}>
         {(option) => {
           const isSelected = () => local.value === option.value;
