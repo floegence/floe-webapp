@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.6
+
+- Add SettingsDisclosure with shared rounded settings surfaces, reversible height and chevron motion, reduced-motion support, accessible focus return, lazy first mount and retained content.
+
 ## 0.101.5
 
 - Show the appearance check only on the committed preset using native wrapper visibility; verify rendered checks in the published consumer.

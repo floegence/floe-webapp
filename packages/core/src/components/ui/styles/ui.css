@@ -1950,3 +1950,31 @@
   @media (prefers-reduced-motion: reduce) { .floe-theme-picker button { transition: none; } .floe-theme-picker button::after { animation: none; } }
   @media (forced-colors: active) { .floe-theme-picker [aria-checked='true'] { outline: 2px solid Highlight; outline-offset: -2px; } }
 }
+
+@layer components {
+  .floe-settings-disclosure { min-width: 0; }
+  .floe-settings-disclosure[hidden] { display: none; }
+  .floe-settings-disclosure__trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; padding: 12px; text-align: start; cursor: pointer; border-radius: inherit;
+    color: var(--foreground); font-size: var(--floe-type-control); line-height: var(--floe-line-control);
+    transition: background-color var(--floe-duration-fast) var(--floe-ease-out);
+  }
+  .floe-settings-disclosure__trigger:hover { background: var(--muted); }
+  .floe-settings-disclosure__trigger:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; }
+  .floe-settings-disclosure__trigger:disabled { opacity: .5; cursor: not-allowed; }
+  .floe-settings-disclosure__heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; min-width: 0; white-space: normal; overflow-wrap: anywhere; font-weight: 500; }
+  .floe-settings-disclosure__description { color: var(--muted-foreground); font-size: var(--floe-type-supporting); font-weight: 400; }
+  .floe-settings-disclosure__chevron { width: 16px; height: 16px; flex: none; color: var(--muted-foreground); transition: transform var(--floe-duration-base) var(--floe-ease-out); }
+  .floe-settings-disclosure[data-open='true'] > .floe-settings-disclosure__trigger > .floe-settings-disclosure__chevron { transform: rotate(90deg); }
+  .floe-settings-disclosure__panel {
+    display: grid; grid-template-rows: 0fr; visibility: hidden; opacity: 0;
+    transition: grid-template-rows var(--floe-duration-base) var(--floe-ease-out), opacity var(--floe-duration-fast) var(--floe-ease-out), visibility var(--floe-duration-base);
+  }
+  .floe-settings-disclosure[data-open='true'] > .floe-settings-disclosure__panel { grid-template-rows: 1fr; visibility: visible; opacity: 1; }
+  .floe-settings-disclosure__clip { min-height: 0; overflow: hidden; }
+  .floe-settings-disclosure__content { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-top: 1px solid var(--border); min-width: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .floe-settings-disclosure__panel, .floe-settings-disclosure__chevron, .floe-settings-disclosure__trigger { transition: none; }
+  }
+}

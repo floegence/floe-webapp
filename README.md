@@ -379,3 +379,16 @@ owns persistence, pending admission and failures. Its intrinsic mode rail and
 responsive preview grid share the control scale, keyboard navigation and reduced
 motion/forced-color behavior. Settings navigation marks selection with a filled
 row, without an edge rail; keyboard focus remains independently visible.
+
+### Settings disclosures
+
+`SettingsDisclosure` from the `ui` entry groups optional settings in the same
+rounded surface as `SettingsList`. Use `title`, optional `description`, controlled
+`open`/`onOpenChange` or `defaultOpen`, and children. The entire header is a keyboard
+button with an animated chevron and `aria-expanded`/`aria-controls`. Both directions
+animate natural content height using Floe motion tokens; reduced motion settles
+immediately. Nested and changing content stays in normal flow without fixed-height
+limits. Content mounts on first expansion and retains its owner thereafter. Closing
+makes the panel inert and accessibility-hidden immediately and returns contained
+focus to the trigger. Hosts remain responsible for admission and visibility of
+portalled controls; use the same authoritative `open` state for those controls.
