@@ -437,6 +437,8 @@
     "SelectProps",
     "SettingRow",
     "SettingRowProps",
+    "SettingsDisclosure",
+    "SettingsDisclosureProps",
     "SettingsLayout",
     "SettingsList",
     "SettingsNavigation",
