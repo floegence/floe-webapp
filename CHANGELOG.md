@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.9
+
+- Pin scaffold Rollup to the available 4.68.1 artifact while registry metadata advertises a missing 4.68.2 tarball; keep npm and pnpm overrides identical.
+
 ## 0.101.8
 
 - Keep dialog height measurements in the same layout-pixel space so fractional Firefox/WebKit sizing settles after a content change.

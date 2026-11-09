@@ -392,3 +392,5 @@ limits. Content mounts on first expansion and retains its owner thereafter. Clos
 makes the panel inert and accessibility-hidden immediately and returns contained
 focus to the trigger. Hosts remain responsible for admission and visibility of
 portalled controls; use the same authoritative `open` state for those controls.
+
+Scaffold templates pin Rollup 4.68.1 in both package-manager overrides: the 4.68.2 registry tarball returns 404 as of 2026-11-09. Revisit this pin when a verified successor is available; packed-consumer installation and audit remain required.
