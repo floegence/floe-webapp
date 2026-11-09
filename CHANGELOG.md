@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.101.6
+## 0.101.7
+
+- Record the additive disclosure exports in the reviewed public API inventory.
+
+## 0.101.6 (unpublished)
 
 - Add SettingsDisclosure with shared rounded settings surfaces, reversible height and chevron motion, reduced-motion support, accessible focus return, lazy first mount and retained content.
 
