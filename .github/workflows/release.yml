@@ -102,7 +102,6 @@ jobs:
           pnpm test:event-stream-media
           pnpm test:workbench-composition
           pnpm test:workbench-header
-          pnpm test:settings
           pnpm test:compact-surfaces
           pnpm test:dialog
           node scripts/check-directory-favorites-browser.mjs
@@ -151,6 +150,9 @@ jobs:
 
       - name: Verify bottom bar companion morph in Chromium
         run: node scripts/check-bottom-bar-companion-browser.mjs
+
+      - name: Verify settings ownership in Chromium
+        run: pnpm test:settings
 
       - name: Verify mobile viewport in Chromium and WebKit
         run: node scripts/check-mobile-viewport-browser.mjs

@@ -91,6 +91,8 @@
 
 Settings page identity has one visible owner. `SettingsSection` renders its page or group heading by default. When a containing dialog already presents the current page title, pass `showHeading={false}`: the section retains an accessible name from `title` (or the caller's explicit ARIA label/reference), descriptions, badges, actions and its stable body. Empty or reactively absent metadata produces no header or header spacing. Subordinate group headings remain visible.
 
+Conditional settings JSX slots resolve through Solid `children()` once before presence checks and rendering. `SettingRow` control/body and `SettingsNavigation` search must each have one component owner, including any retained portal, native listener and cleanup. Never inspect a raw JSX prop getter and render it again: controlled popups would mount duplicate portals. Browser acceptance opens, changes, externally closes and disposes a real controlled `Select` inside a row, and runs in local checks and before publication.
+
 ### 2.5 non-modal anchored companion 语义
 
 `BottomBarCompanion` 是从可测量布局锚点向上展开的非模态 disclosure。锚点可以位于 Bottom Bar，也可以独立位于 `AppViewport`。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。

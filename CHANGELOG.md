@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.3
+
+- Resolve settings control, body and navigation search slots once so stateful controls own one portal and one cleanup lifecycle.
+- Require real controlled-select settings acceptance after package build and before publication.
+
 ## 0.101.2
 
 - Let later-mounted owned floating windows consume Escape before their containing bottom bar companion.

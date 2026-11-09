@@ -1,6 +1,10 @@
 import { For, Show, children, splitProps, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 
+function hasContent(content: ReturnType<typeof children>) {
+  return content.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '');
+}
+
 /** Host-owned routing and state stay outside this responsive settings frame. */
 export function SettingsLayout(props: {
   sidebar: JSX.Element;
@@ -12,7 +16,7 @@ export function SettingsLayout(props: {
   return (
     <div class={cn('floe-settings-layout', props.class)}>
       <aside class="floe-settings-layout__sidebar">{props.sidebar}</aside>
-      <Show when={mobileNavigation.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '')}>
+      <Show when={hasContent(mobileNavigation)}>
         <div class="floe-settings-layout__mobile">{mobileNavigation()}</div>
       </Show>
       <div class="floe-settings-layout__content">{props.children}</div>
@@ -41,9 +45,10 @@ export interface SettingsNavigationProps {
 }
 
 export function SettingsNavigation(props: SettingsNavigationProps) {
+  const search = children(() => props.search);
   return (
     <nav class="floe-settings-navigation" aria-label={props.label}>
-      <Show when={props.search}><div class="floe-settings-navigation__search">{props.search}</div></Show>
+      <Show when={hasContent(search)}><div class="floe-settings-navigation__search">{search()}</div></Show>
       <div class="floe-settings-navigation__groups">
         <Show when={props.groups.some((group) => group.items.length)} fallback={props.empty}>
           <For each={props.groups}>{(group) => (
@@ -83,8 +88,6 @@ export function SettingsSection(props: SettingsSectionProps) {
   const [local, rest] = splitProps(props, ['title', 'description', 'badge', 'actions', 'variant', 'showHeading', 'class', 'children']);
   const badge = children(() => local.badge);
   const actions = children(() => local.actions);
-  const hasContent = (content: ReturnType<typeof children>) =>
-    content.toArray().some((child) => child != null && typeof child !== 'boolean' && child !== '');
   const showHeading = () => local.showHeading !== false;
   const hasIdentity = () => showHeading() || hasContent(badge);
   const hasHeadingContent = () => hasIdentity() || Boolean(local.description);
@@ -131,6 +134,10 @@ export interface SettingRowProps {
   class?: string;
 }
 export function SettingRow(props: SettingRowProps) {
+  // IMPORTANT: JSX prop getters may construct stateful controls and portals. Resolve
+  // each slot once; checking the raw getter before rendering creates a second owner.
+  const control = children(() => props.control);
+  const body = children(() => props.children);
   return (
     <div class={cn('floe-setting-row', props.class)} data-tone={props.tone ?? 'default'}>
       <div class="floe-setting-row__main">
@@ -138,9 +145,9 @@ export function SettingRow(props: SettingRowProps) {
           <Show when={props.icon}>{(Icon) => { const Component = Icon(); return <Component class="floe-setting-row__icon" />; }}</Show>
           <div><div class="floe-setting-row__title">{props.title}</div><Show when={props.description}><p>{props.description}</p></Show></div>
         </div>
-        <Show when={props.control}><div class="floe-setting-row__control">{props.control}</div></Show>
+        <Show when={hasContent(control)}><div class="floe-setting-row__control">{control()}</div></Show>
       </div>
-      <Show when={props.children}><div class="floe-setting-row__body">{props.children}</div></Show>
+      <Show when={hasContent(body)}><div class="floe-setting-row__body">{body()}</div></Show>
     </div>
   );
 }

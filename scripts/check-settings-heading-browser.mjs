@@ -18,13 +18,17 @@ try {
   await writeFile(resolve(fixture, 'main.tsx'), `
 import { Show, createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { Dialog, SettingsSection } from '../dist/ui.js';
+import { Dialog, Select, SettingRow, SettingsSection } from '../dist/ui.js';
 import '../dist/styles.css';
 function App() {
   const [hosted, setHosted] = createSignal(true);
   const [metadata, setMetadata] = createSignal('');
   const [title, setTitle] = createSignal('Terminal');
-  window.settingsHeadingFixture = { setHosted, setMetadata, setTitle };
+  const [rowVisible, setRowVisible] = createSignal(true);
+  const [choiceOpen, setChoiceOpen] = createSignal(false);
+  const [choice, setChoice] = createSignal('balanced');
+  const changes = [];
+  window.settingsHeadingFixture = { setHosted, setMetadata, setTitle, setRowVisible, setChoiceOpen, changes };
   return <Dialog open onOpenChange={() => {}} title={hosted() ? title() : 'Settings'} closeLabel="Close settings">
     <SettingsSection data-page title={title()} variant="page" showHeading={!hosted()}
       description={metadata() === 'description' || metadata() === 'all' ? 'Session preferences' : undefined}
@@ -32,6 +36,12 @@ function App() {
       actions={<Show when={metadata() === 'actions' || metadata() === 'all'}><button type="button">Reset</button></Show>}>
       <input aria-label="Shell" />
       <SettingsSection title="Appearance"><p>Retained detail</p></SettingsSection>
+      <Show when={rowVisible()}>
+        <SettingRow title="Picture quality" control={<Select ariaLabel="Picture quality"
+          value={choice()} onChange={(value) => { changes.push(value); setChoice(value); }}
+          open={choiceOpen()} onOpenChange={setChoiceOpen}
+          options={[{ value: 'balanced', label: 'Balanced' }, { value: 'smooth', label: 'Motion first' }]} />} />
+      </Show>
     </SettingsSection>
   </Dialog>;
 }
@@ -57,6 +67,29 @@ render(() => <App />, document.getElementById('root'));
   assert.equal(await header.count(), 0, 'a hosted page without metadata has no empty header');
   assert.equal(await page.getByRole('region', { name: 'Terminal', exact: true }).count(), 1);
   assert.equal(await page.getByRole('heading', { name: 'Appearance', exact: true }).count(), 1);
+  const picker = page.getByRole('combobox', { name: 'Picture quality', exact: true });
+  await picker.click();
+  await page.getByRole('listbox', { name: 'Picture quality', exact: true }).waitFor();
+  assert.equal(await page.getByRole('listbox', { name: 'Picture quality', exact: true }).count(), 1);
+  await page.getByRole('option', { name: 'Motion first', exact: true }).click();
+  await page.getByRole('listbox').waitFor({ state: 'detached' });
+  assert.deepEqual(await page.evaluate(() => window.settingsHeadingFixture.changes), ['smooth']);
+  assert.equal(await picker.textContent(), 'Motion first');
+  await picker.click();
+  await page.getByRole('listbox').waitFor();
+  await page.evaluate(() => window.settingsHeadingFixture.setMetadata('all'));
+  assert.equal(await page.getByRole('listbox').count(), 1);
+  await page.evaluate(() => window.settingsHeadingFixture.setChoiceOpen(false));
+  await page.getByRole('listbox').waitFor({ state: 'detached' });
+  await page.evaluate(() => window.settingsHeadingFixture.setChoiceOpen(true));
+  await page.getByRole('listbox').waitFor();
+  await page.evaluate(() => window.settingsHeadingFixture.setRowVisible(false));
+  await page.getByRole('listbox').waitFor({ state: 'detached' });
+  assert.equal(await picker.count(), 0);
+  await page.evaluate(() => {
+    window.settingsHeadingFixture.setChoiceOpen(false);
+    window.settingsHeadingFixture.setMetadata('');
+  });
   await page.getByLabel('Shell', { exact: true }).fill('Retained draft');
   await page.evaluate(() => { window.retainedSettingsInput = document.querySelector('[aria-label="Shell"]'); });
   for (const width of [1280, 390, 320]) {
@@ -89,7 +122,7 @@ render(() => <App />, document.getElementById('root'));
   assert.equal(await page.getByRole('dialog', { name: 'Settings', exact: true }).count(), 1);
   assert.equal(await page.getByRole('heading', { name: 'Appearance', exact: true }).count(), 1);
   assert.deepEqual(errors, []);
-  console.log('Settings heading ownership passed: real dialog, accessible name, standalone heading, reactive metadata, retained input and three widths.');
+  console.log('Settings ownership passed: real dialog, single controlled Select portal, selection and disposal, accessible naming, heading ownership, retained input and three widths.');
 } finally {
   await browser?.close();
   await server?.close();

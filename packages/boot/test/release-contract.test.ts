@@ -68,7 +68,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.101.2');
+    expect(corePkg.version).toBe('0.101.3');
     for (const template of ['minimal', 'full']) {
       const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
       expect(config.overrides.dompurify).toBe('^3.4.17');
@@ -199,6 +199,8 @@ describe('release dependency and runtime contract', () => {
 
   it('validates the frozen dependency graph before running the local quality gate', () => {
     const makefile = readText('Makefile');
+    const release = readText('.github/workflows/release.yml');
+    const rootPkg = readJson<PackageJson>('package.json');
 
     expect(makefile).toMatch(
       /^check: install flowersec-smoke-peer lint typecheck test build verify packed-consumer window-status workbench-header persistent-scrollbar chat-media activity-navigation bottom-bar-companion settings input-history pdf asset-recovery resource-cache reload-placeholder remote-input remote-pointer mobile-viewport overlay-viewport file-loading compact-surfaces dialog directory-favorites adaptive-layout async-layout svg-editor-security graph-blob-workers graph-production tabs-accessibility inline-code long-thread-primitives split-workspace business-controls consumer-budgets button-contrast checkbox-states prompt-card context-menu-actions preview-search$/mu
@@ -208,6 +210,12 @@ describe('release dependency and runtime contract', () => {
       /^bottom-bar-companion:\n\tnode scripts\/check-bottom-bar-companion-browser\.mjs$/mu
     );
     expect(makefile).toMatch(/^settings:\n\tpnpm test:settings$/mu);
+    expect(rootPkg.scripts?.['test:settings']).toContain('node scripts/check-settings-heading-browser.mjs');
+    expect(release).toContain('Verify settings ownership in Chromium');
+    expect(release).toContain('run: pnpm test:settings');
+    expect(release.match(/pnpm test:settings/gu)).toHaveLength(1);
+    expect(release).toContain('- name: Build packages');
+    expect(release.indexOf('run: pnpm test:settings')).toBeGreaterThan(release.indexOf('- name: Build packages'));
     expect(makefile).toMatch(
       /^flowersec-smoke-peer:\n\tcd scripts\/flowersec-smoke-peer && GOWORK=off go test \.\/\.\.\. && GOWORK=off go vet \.\/\.\.\.$/mu
     );
