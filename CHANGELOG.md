@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.11
+
+- Let controlled Tabs delegate activation timing to an existing host transaction while preserving shared indicator motion and keyboard behavior.
+
 ## 0.101.10
 
 - Keep segmented-control labels stationary and readable throughout selection travel, reversal, resizing and forced-color rendering without duplicating accessible names.

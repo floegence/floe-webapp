@@ -80,3 +80,22 @@ it('allows a wide first tab to settle after a narrower last tab', () => {
   pointer(document, 'pointerup', 350, 0);
   expect(view.items().map(item => item.id)).toEqual(['b', 'c', 'a']);
 });
+
+it('lets a host own activation timing for pointer and keyboard requests', () => {
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
+  const host = document.createElement('div'); document.body.append(host);
+  const [active, setActive] = createSignal('a');
+  const changed = vi.fn((id: string) => setActive(id));
+  dispose = render(() => <Tabs items={[{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C', disabled: true }]}
+    activeId={active()} onChange={changed} activationTiming="immediate" features={{ indicator: { mode: 'slider' } }} />, host);
+  const tabs = [...host.querySelectorAll<HTMLElement>('[role="tab"]')];
+  tabs[1].click();
+  expect(changed).toHaveBeenLastCalledWith('b');
+  expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+  tabs[2].click();
+  expect(changed).toHaveBeenCalledTimes(1);
+  tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+  expect(changed).toHaveBeenLastCalledWith('a');
+  expect(document.activeElement).toBe(tabs[0]);
+  expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+});

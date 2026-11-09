@@ -95,6 +95,8 @@ export interface TabsProps extends Omit<
    * Alias for onChange (consistent naming with Radix/shadcn patterns).
    */
   onActiveIdChange?: (id: string) => void;
+  /** Use immediate only when the host already owns a UI-first selection transaction. */
+  activationTiming?: 'after-paint' | 'immediate';
   /** Callback when tab is closed */
   onClose?: (id: string) => void;
   /** Enable pointer sorting and Alt+Shift+Left/Right. Receives the complete ordered IDs. */
@@ -275,6 +277,7 @@ export function Tabs(props: TabsProps) {
     'defaultActiveId',
     'onChange',
     'onActiveIdChange',
+    'activationTiming',
     'onClose',
     'onAdd',
     'onReorder',
@@ -504,14 +507,15 @@ export function Tabs(props: TabsProps) {
   const handleTabClick = (id: string, disabled?: boolean) => {
     if (disabled) return;
 
-    activeSelection.request(id);
+    if (local.activationTiming === 'immediate') activeSelection.commitNow(id);
+    else activeSelection.request(id);
     // Keep the slider indicator in sync with the optimistic highlight.
     // Do it synchronously for snappy feedback.
     if (isSliderIndicator()) {
       updateSliderIndicatorForId(id);
     }
 
-    // The shared selection transaction commits internal and controlled state after paint.
+    // The default transaction defers content; an immediate host owns that boundary.
   };
 
   const focusAndSelectById = (id: string) => {
