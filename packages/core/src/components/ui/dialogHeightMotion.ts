@@ -101,12 +101,11 @@ export function observeDialogHeight(
     // Retargeting from those makes the panel chase its own interpolation and
     // never settle; the finish handler measures the real height instead.
     if (running) return;
-    // `borderBoxSize` is the untransformed border box, which is the size the
-    // panel holds once it is still; `contentRect` omits the border around it.
-    const size = Array.isArray(entry.borderBoxSize)
-      ? entry.borderBoxSize[0]
-      : entry.borderBoxSize;
-    const reported = size ? size.blockSize : entry.contentRect.height;
+    // Use the same untransformed, integer border box as initial/final reads.
+    // ResizeObserver can report half pixels while offsetHeight rounds them;
+    // mixing those measurements restarts a phantom height change after every
+    // finish on Firefox/WebKit, even though the content has stopped changing.
+    const reported = measure();
     if ((options.isSettled && !options.isSettled()) || ownsMotion()) {
       previous = reported;
       return;

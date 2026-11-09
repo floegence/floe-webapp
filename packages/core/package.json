@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.101.7",
+  "version": "0.101.8",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

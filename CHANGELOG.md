@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.8
+
+- Keep dialog height measurements in the same layout-pixel space so fractional Firefox/WebKit sizing settles after a content change.
+
 ## 0.101.7
 
 - Record the additive disclosure exports in the reviewed public API inventory.
