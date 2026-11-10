@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Keep compact segmented controls icon-only in both the native buttons and the moving selected ink, including resizing, interrupted selection, and localized layouts.
+
 ## 0.101.14
 
 - Preserve embedded menu focus throughout pointer activation in floating windows, including Shadow DOM menus and multiline editor selections.

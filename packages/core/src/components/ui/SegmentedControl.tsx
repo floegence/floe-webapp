@@ -203,6 +203,15 @@ export function SegmentedControl(props: SegmentedControlProps) {
   const size = () => local.size ?? 'md';
   const styles = () => sizeStyles[size()];
 
+  // The native button and its decorative ink must obey the same presentation
+  // contract. Hosts may hide this label slot in a compact icon-only layout.
+  const renderContent = (option: SegmentedControlOption) => (
+    <span class="inline-flex items-center gap-1.5">
+      {option.icon && <option.icon class={styles().icon} />}
+      <span class="floe-segmented-control__label">{option.label}</span>
+    </span>
+  );
+
   const handleClick = (optionValue: string, optionDisabled?: boolean) => {
     if (local.disabled || optionDisabled) return;
     if (optionValue !== local.value) {
@@ -256,10 +265,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
                   height: `${slots()[option.value]?.height ?? 0}px`,
                 }}
               >
-                <span class="inline-flex items-center gap-1.5">
-                  {option.icon && <option.icon class={styles().icon} />}
-                  <span>{option.label}</span>
-                </span>
+                {renderContent(option)}
               </span>
             )}
           </For>
@@ -291,7 +297,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
               disabled={isDisabled()}
               onClick={() => handleClick(option.value, option.disabled)}
               class={cn(
-                'floe-segmented-control__item relative font-medium cursor-pointer border',
+                'floe-segmented-control__item relative inline-flex items-center justify-center font-medium cursor-pointer border',
                 'transition-[background-color,border-color,color,box-shadow] duration-[var(--floe-duration-fast)] ease-[var(--floe-ease-out)]',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--floe-plane)]',
                 styles().button,
@@ -301,10 +307,7 @@ export function SegmentedControl(props: SegmentedControlProps) {
                 isDisabled() && 'cursor-not-allowed opacity-50'
               )}
             >
-              <span class="inline-flex items-center gap-1.5">
-                {option.icon && <option.icon class={styles().icon} />}
-                <span class="floe-segmented-control__label">{option.label}</span>
-              </span>
+              {renderContent(option)}
             </button>
           );
         }}

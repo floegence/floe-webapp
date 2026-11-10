@@ -58,6 +58,13 @@ selection reverses from the painted face, and reduced motion lands directly.
 Labels remain stationary and readable on both sides of the travelling face: native
 labels keep rail ink while an aria-hidden, clipped ink layer follows the fill.
 Forced colors uses system text/fill colors; the duplicate ink has no accessible name.
+Native text and decorative ink share `.floe-segmented-control__label`. Hosts may
+hide that slot through a local container query for icon-bearing options; preserve
+text-only options and keep the full option label as the accessible name and native
+tooltip. Both layers share content layout and centered icon geometry during
+resize and interrupted selection. The host owns the breakpoint and never targets
+the decorative layer's internal structure. Browser acceptance checks both painted
+and native content at breakpoint boundaries, including touch and scaled surfaces.
 CSS time tokens accept both milliseconds and seconds, including production
 minification of `280ms` to `.28s`; WAAPI always receives milliseconds.
 The segmented browser check measures early and middle geometry as well as

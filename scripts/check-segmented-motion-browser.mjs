@@ -24,8 +24,14 @@ try {
     process.argv.includes('--all') ? { chromium, webkit, firefox } : { chromium }
   )) {
     browser = await engine.launch({ headless: true });
-    for (const reducedMotion of ['no-preference', 'reduce']) {
-      const page = await browser.newPage({ viewport: { width: 700, height: 400 }, reducedMotion });
+    for (const { hasTouch, reducedMotion } of [false, true].flatMap((hasTouch) =>
+      ['no-preference', 'reduce'].map((reducedMotion) => ({ hasTouch, reducedMotion }))
+    )) {
+      const page = await browser.newPage({
+        viewport: { width: 700, height: 400 },
+        reducedMotion,
+        hasTouch,
+      });
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       await page.goto(server.resolvedUrls.local[0] + 'test/browser/segmented-motion.html');
@@ -216,6 +222,102 @@ try {
         for (let i = 1; i < frames.length; i++)
           assert.ok(frames[i].x >= frames[i - 1].x - 0.5, engineName + ': monotonic live movement');
       } else assert.ok(frames.every((frame) => Math.abs(frame.x - endX) < 1));
+      // Validate the actually painted ink as well as the native buttons. A hidden
+      // native label alone does not prove icon-only presentation inside the face.
+      await page.evaluate(() => window.segmented.setWide(false));
+      for (const forcedColors of ['none', 'active']) {
+        await page.emulateMedia({ forcedColors });
+        for (const dark of [false, true]) {
+          await page.evaluate(
+            (value) => document.documentElement.classList.toggle('dark', value),
+            dark
+          );
+          for (const width of [240, 260, 261, 360, 361, 380, 240]) {
+            await page.locator('.segmented-fixture').evaluate((node, value) => {
+              node.style.width = `${value}px`;
+            }, width);
+            for (const value of ['time', 'directory', 'time']) {
+              const samples = await page.evaluate(
+                async ({ value }) => {
+                  const frame = () => new Promise(requestAnimationFrame);
+                  await frame();
+                  await frame();
+                  window.segmented.setValue(value);
+                  await frame();
+                  const animations = document.getAnimations();
+                  animations.forEach((animation) => {
+                    animation.pause();
+                    animation.currentTime = 140;
+                  });
+                  const inspect = () =>
+                    [...document.querySelectorAll('[data-segmented-label]')].map((ink) => {
+                      const button = [...document.querySelectorAll('button[role="radio"]')].find(
+                        (node) => node.getAttribute('aria-label') === ink.textContent
+                      );
+                      const nativeText = button.querySelector('.floe-segmented-control__label');
+                      const paintedText = ink.firstElementChild.lastElementChild;
+                      const nativeIcon = button.querySelector('svg');
+                      const paintedIcon = ink.querySelector('svg');
+                      const nativeBounds = nativeIcon?.getBoundingClientRect();
+                      const paintedBounds = paintedIcon?.getBoundingClientRect();
+                      return {
+                        name: button.getAttribute('aria-label'),
+                        title: button.title,
+                        hidden: getComputedStyle(nativeText).display === 'none',
+                        paintedHidden: getComputedStyle(paintedText).display === 'none',
+                        iconDelta: nativeBounds
+                          ? Math.max(
+                              Math.abs(nativeBounds.x - paintedBounds.x),
+                              Math.abs(nativeBounds.y - paintedBounds.y)
+                            )
+                          : 0,
+                        hasIcon: !!nativeIcon,
+                        ariaHidden: ink.closest('[aria-hidden="true"]') !== null,
+                      };
+                    });
+                  const moving = inspect();
+                  // Interrupt at the currently painted position, then settle both layers.
+                  window.segmented.setValue(value === 'time' ? 'directory' : 'time');
+                  document.getAnimations().forEach((animation) => animation.finish());
+                  await frame();
+                  await frame();
+                  return [...moving, ...inspect()];
+                },
+                { value }
+              );
+              for (const sample of samples) {
+                const context = `${engineName} ${reducedMotion} touch=${hasTouch} forced=${forcedColors} dark=${dark} width=${width} ${sample.name}`;
+                assert.equal(
+                  sample.hidden,
+                  sample.hasIcon && width <= (hasTouch ? 360 : 260),
+                  context + ': compact policy'
+                );
+                assert.equal(
+                  sample.paintedHidden,
+                  sample.hidden,
+                  context + ': painted and native labels agree'
+                );
+                assert.ok(
+                  sample.iconDelta <= 1.1,
+                  context +
+                    ': stationary icons align during travel and reversal ' +
+                    JSON.stringify(sample)
+                );
+                assert.equal(
+                  sample.title,
+                  sample.name,
+                  context + ': full accessible name and tooltip'
+                );
+                assert.equal(
+                  sample.ariaHidden,
+                  true,
+                  context + ': decorative ink stays inaccessible'
+                );
+              }
+            }
+          }
+        }
+      }
       assert.deepEqual(errors, []);
       cases++;
       await page.close();
@@ -224,7 +326,7 @@ try {
     browser = undefined;
   }
   console.log(
-    `PASS segmented motion: ${cases} browser/motion cases, scaled resize, reversal and keyboard selection`
+    `PASS segmented motion: ${cases} browser/motion cases, scaled resize, compact native/painted labels, reversal, touch, forced colors and keyboard selection`
   );
 } finally {
   await browser?.close();

@@ -35,6 +35,8 @@ describe('SegmentedControl', () => {
     expect(html).toContain('aria-checked="false"');
     expect(html).toContain('floe-segmented-control');
     expect(html).toContain('floe-segmented-control__item');
+    // Each native label and its aria-hidden painted counterpart share the slot.
+    expect(html.match(/class="floe-segmented-control__label"/g)).toHaveLength(4);
     expect(html).toContain('data-floe-surface-part="segment"');
     expect(html).toContain('data-floe-surface="raised"');
   });
