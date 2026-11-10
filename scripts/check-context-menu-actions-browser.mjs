@@ -141,6 +141,11 @@ try {
         );
         await page.locator('.monaco-editor .view-lines').click();
         await page.keyboard.press('ControlOrMeta+a');
+        await page.waitForFunction(
+          () =>
+            document.querySelector('#selection').textContent ===
+            '  const selected = true;\n  const untouched = false;'
+        );
         assert.equal(
           await page.locator('#selection').textContent(),
           '  const selected = true;\n  const untouched = false;',
