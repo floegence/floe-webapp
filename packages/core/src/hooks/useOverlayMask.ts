@@ -322,6 +322,10 @@ export function useOverlayMask(options: UseOverlayMaskOptions): void {
     };
 
     const handleInteractOutside = (event: PointerEvent | FocusEvent) => {
+      // Composed events retarget at a shadow host. Related editor menus may live
+      // inside that root; inspect the event path before treating it as outside.
+      const path = event.composedPath();
+      if (path.some(target => !ownsTarget(target) || entry.contains(target))) return;
       if (ownsTarget(event.target) && !entry.contains(event.target)) options.onInteractOutside?.(event);
     };
     if (options.onInteractOutside) {

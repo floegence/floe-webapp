@@ -7,11 +7,15 @@ import {
   ContextMenuActionItems,
   SurfaceFloatingLayer,
   FloatingWindow,
+  PromptCard,
 } from '../../src/ui';
 import '../../src/styles/globals.css';
 render(() => {
   const [local, setLocal] = createSignal<{ x: number; y: number }>();
   const [result, setResult] = createSignal('');
+  const [promptOpen, setPromptOpen] = createSignal(false);
+  const [draft, setDraft] = createSignal('');
+  const [closed, setClosed] = createSignal(0);
   const viewport = new URLSearchParams(location.search).has('viewport');
   const [selection, setSelection] = createSignal('');
   const editor = () => (
@@ -41,8 +45,10 @@ render(() => {
               </svg>
             </span>
           ),
-          onSelect: () =>
-            setResult(JSON.stringify({ target: request.target.id, selection: request.selection })),
+          onSelect: () => {
+            setResult(JSON.stringify({ target: request.target.id, selection: request.selection }));
+            setPromptOpen(true);
+          },
         },
       ]}
       editing={{
@@ -140,6 +146,14 @@ render(() => {
           )}
         </Show>
       </main>
+      <Show when={new URLSearchParams(location.search).has('prompt')}>
+        <PromptCard open={promptOpen()} portalScope="viewport" title="Ask" closeLabel="Close"
+          value={draft()} onValueChange={setDraft} inputLabel="Question" submitLabel="Send"
+          anchor={{ x: 850, y: 500 }} zIndex={5000}
+          onSubmit={() => {}} onClose={() => { setPromptOpen(false); setClosed(count => count + 1); }}
+          containsTarget={target => target instanceof Element && Boolean(target.closest('[role="menu"]'))} />
+        <output id="closed">{closed()}</output>
+      </Show>
       <Show when={viewport}>
         <Portal>
           <div

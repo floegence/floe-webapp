@@ -130,3 +130,24 @@ it('does not restore a retired overlay trigger over a newly opened interaction o
     expect(document.activeElement).not.toBe(trigger);
   } finally { dispose(); host.remove(); trigger.remove(); vi.useRealTimers(); }
 });
+
+it('recognizes related menu interactions through an open shadow root', () => {
+  const outside = vi.fn();
+  const host = document.createElement('div'); document.body.append(host);
+  const menuHost = document.createElement('div'); document.body.append(menuHost);
+  const shadow = menuHost.attachShadow({ mode: 'open' });
+  shadow.innerHTML = '<div role="menu"><button>Ask</button></div>';
+  const dispose = renderSolid(() => {
+    let root: HTMLDivElement | undefined;
+    useOverlayMask({ open: () => true, root: () => root, autoFocus: false,
+      lockBodyScroll: false, trapFocus: false, onInteractOutside: outside,
+      containsTarget: target => target instanceof Element && Boolean(target.closest('[role="menu"]')) });
+    return <div ref={root}>Prompt</div>;
+  }, host);
+  try {
+    shadow.querySelector('button')!.dispatchEvent(new Event('pointerdown', { bubbles: true, composed: true }));
+    expect(outside).not.toHaveBeenCalled();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(outside).toHaveBeenCalledOnce();
+  } finally { dispose(); host.remove(); menuHost.remove(); }
+});

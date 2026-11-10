@@ -137,7 +137,7 @@ try {
           const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
           await page.goto(
             server.resolvedUrls.local[0] +
-              `test/browser/context-menu-actions.html?editor${floating ? '&floating' : ''}`
+              `test/browser/context-menu-actions.html?editor&prompt${floating ? '&floating' : ''}`
           );
           await page.locator('.monaco-editor .view-lines').click();
           await page.keyboard.press('ControlOrMeta+a');
@@ -160,6 +160,12 @@ try {
             '  const selected = true;\n  const untouched = false;',
             'Editor selection is frozen from its model'
           );
+          await page.getByRole('textbox', { name: 'Question', exact: true }).fill('Retain this question');
+          await page.locator('.monaco-editor .view-lines').click({ button: 'right', position: { x: 100, y: 9 } });
+          await page.waitForTimeout(120);
+          await page.getByRole('menuitem', { name: 'Ask assistant' }).click();
+          assert.equal(await page.locator('#closed').textContent(), '0', 'Shadow menu does not dismiss the live prompt');
+          assert.equal(await page.getByRole('textbox', { name: 'Question', exact: true }).inputValue(), 'Retain this question');
           results.push({ engine, editor: true, floating, passed: true });
           await page.close();
         }

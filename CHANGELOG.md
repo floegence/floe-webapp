@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.13
+
+- Preserve overlay input and drafts when related editor menus dispatch composed events through Shadow DOM.
+
 ## 0.101.12
 
 - Resolve editor context actions from the Monaco model selection, preserving indentation and multiline text in floating previews and ordinary editors.
