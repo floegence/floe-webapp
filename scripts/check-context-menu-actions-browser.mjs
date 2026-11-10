@@ -139,8 +139,14 @@ try {
           server.resolvedUrls.local[0] +
             `test/browser/context-menu-actions.html?editor&prompt${floating ? '&floating' : ''}`
         );
-        await page.locator('.monaco-editor .view-lines').click();
-        await page.keyboard.press('ControlOrMeta+a');
+        const lines = page.locator('.monaco-editor .view-lines .view-line');
+        await lines.first().click();
+        const start = await lines.first().boundingBox();
+        const end = await lines.nth(1).boundingBox();
+        await page.mouse.move(start.x + 1, start.y + 9);
+        await page.mouse.down();
+        await page.mouse.move(end.x + 400, end.y + 9, { steps: 24 });
+        await page.mouse.up();
         await page.waitForFunction(
           () =>
             document.querySelector('#selection').textContent ===
