@@ -176,6 +176,7 @@ jobs:
 
       - name: Verify document search and editor overlays
         run: |
+          node scripts/check-editor-options-browser.mjs --dist
           node scripts/check-editor-preview-browser.mjs --dist
           node scripts/check-text-search-browser.mjs --dist
 

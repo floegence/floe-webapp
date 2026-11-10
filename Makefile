@@ -171,5 +171,6 @@ context-menu-actions:
 
 .PHONY: preview-search
 preview-search:
+	node scripts/check-editor-options-browser.mjs --dist
 	node scripts/check-editor-preview-browser.mjs --dist
 	node scripts/check-text-search-browser.mjs --all --dist

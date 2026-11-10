@@ -277,11 +277,10 @@ export function CodeEditor(props: CodeEditorProps) {
   });
 
   createEffect(() => {
-    if (!editor) return;
-    editor.updateOptions({
-      ...DEFAULT_EDITOR_OPTIONS,
-      ...(props.options ?? {}),
-    });
+    // IMPORTANT: Observe options before the async editor exists. Returning first
+    // drops the dependency, so later permission/read-only changes never apply.
+    const options = { ...DEFAULT_EDITOR_OPTIONS, ...(props.options ?? {}) };
+    editor?.updateOptions(options);
   });
 
   createEffect(() => {

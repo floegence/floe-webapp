@@ -367,6 +367,11 @@ queries while inactive. Source replacement resets the search.
 
 `RetainedPanel` suppresses the whole inactive painted subtree, including descendants
 that explicitly declare visibility, without changing layout or remounting documents.
+`CodeEditor` observes live options before asynchronous initialization and applies later
+read-only changes without replacing the editor or its model. The default remains
+read-only; editable consumers must explicitly provide their current admission state.
+Acceptance: `node scripts/check-editor-options-browser.mjs --dist`.
+
 `CodeEditor` keeps Monaco pointer tooltips within the target editor and uses intrinsic
 hover widths so right-edge placement cannot wrap over the hovered control.
 
