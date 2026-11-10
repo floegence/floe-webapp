@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.14
+
+- Preserve embedded menu focus throughout pointer activation in floating windows, including Shadow DOM menus and multiline editor selections.
+
 ## 0.101.13
 
 - Preserve overlay input and drafts when related editor menus dispatch composed events through Shadow DOM.

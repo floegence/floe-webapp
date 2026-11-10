@@ -535,6 +535,14 @@ listeners. Keyboard context-menu keys follow the same path. Native/remote input
 owners can consume the event or declare `data-floe-context-menu-native`; iframe
 integration belongs to its authenticated host channel, never DOM inspection.
 
+Floating windows inspect the composed pointer path only within their own boundary.
+Embedded controls and menus retain DOM focus between pointer press and release,
+including Shadow DOM menu items with negative tabindex. Window activation must
+not blur or cancel an owned menu before its action runs. Blank window surfaces
+continue to focus the window root. Browser acceptance uses separate pointer
+press/release timing and verifies selection, invocation count and retained drafts
+in Chromium, Firefox and WebKit.
+
 
 ### Explicit context ownership and menu icons
 

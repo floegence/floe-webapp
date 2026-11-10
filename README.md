@@ -332,6 +332,8 @@ The shared [`PromptCard`](docs/business-controls.md#contextual-prompt-card) prov
 Contextual host actions use `ContextMenuActions` from `/ui`: capture the origin once,
 contribute to existing menus, and provide a scoped fallback on blank surfaces. See
 [the interaction contract](docs/interaction-architecture.md#context-menu-actions).
+Floating previews preserve embedded menu focus throughout pointer activation,
+including Shadow DOM menus, so contextual actions can open their prompt reliably.
 
 ### Retained document previews
 

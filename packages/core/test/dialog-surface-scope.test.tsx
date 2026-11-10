@@ -834,6 +834,27 @@ describe('dialog surface scope', () => {
     expect(document.querySelector('[data-floe-geometry-surface="floating-window"]')).toBe(floatingWindow);
   });
 
+  it('preserves a shadow menu focus between pointerdown and mouseup', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    mount(() => <FloatingWindow open onOpenChange={() => {}}><div data-shadow-menu-host /></FloatingWindow>, host);
+    const windowRoot = document.querySelector<HTMLElement>('[data-floe-geometry-surface="floating-window"]')!;
+    const shadowHost = document.querySelector<HTMLElement>('[data-shadow-menu-host]')!;
+    const shadow = shadowHost.attachShadow({ mode: 'open' });
+    shadow.innerHTML = '<ul role="menu" tabindex="0"><li><a role="menuitem" tabindex="-1"><span>Ask assistant</span></a></li></ul>';
+    const menu = shadow.querySelector<HTMLElement>('[role="menu"]')!;
+    const label = shadow.querySelector('span')!;
+    const blurred = vi.fn();
+    menu.addEventListener('blur', blurred);
+    menu.focus();
+    label.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true, composed: true }));
+    expect(blurred).not.toHaveBeenCalled();
+    expect(shadow.activeElement).toBe(menu);
+    expect(document.activeElement).toBe(shadowHost);
+    windowRoot.dispatchEvent(new MouseEvent('pointerdown', { button: 0, bubbles: true, composed: true }));
+    expect(document.activeElement).toBe(windowRoot);
+  });
+
   it.each(['Select', 'Combobox', 'MultiSelect'] as const)(
     'lets a nested %s consume Escape while focus stays on its control',
     async (kind) => {

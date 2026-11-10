@@ -242,10 +242,17 @@ export function FloatingWindow(props: FloatingWindowProps) {
     }
   };
 
-  const shouldFocusWindowRootFromPointer = (target: EventTarget | null) => {
-    const element = target instanceof Element ? target : null;
-    if (!element) return true;
-    return element.closest('button, input, select, textarea, a, [role="button"], [tabindex]:not([tabindex="-1"])') === null;
+  const shouldFocusWindowRootFromPointer = (event: PointerEvent) => {
+    // A menu may be inside a ShadowRoot. Its composed event reaches this
+    // window with a retargeted host; closest() cannot cross that boundary.
+    // Stealing focus on pointerdown cancels the menu before a real mouseup.
+    for (const target of event.composedPath()) {
+      if (target === windowRef) break;
+      if (target instanceof Element && target.matches(
+        'button, input, select, textarea, a, [role="button"], [role="menu"], [role="menuitem"], [contenteditable="true"], [tabindex]:not([tabindex="-1"])'
+      )) return false;
+    }
+    return true;
   };
 
   const isTargetInsideWindow = (target: EventTarget | null) =>
@@ -610,7 +617,7 @@ export function FloatingWindow(props: FloatingWindowProps) {
   };
 
   const handleSurfacePointerDown: JSX.EventHandler<HTMLDivElement, PointerEvent> = (event) => {
-    if (!shouldFocusWindowRootFromPointer(event.target)) return;
+    if (!shouldFocusWindowRootFromPointer(event)) return;
     focusWindowRoot();
   };
 
