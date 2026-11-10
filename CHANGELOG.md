@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.16
+
+- Apply live CodeEditor options after asynchronous initialization, including read-only transitions, without replacing the editor or its document.
+
 ## 0.101.15
 
 - Keep compact segmented controls icon-only in both the native buttons and the moving selected ink, including resizing, interrupted selection, and localized layouts.
