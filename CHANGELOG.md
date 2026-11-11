@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.21
+
+- Give pointer-lock exit guidance an opaque theme background so it remains legible over arbitrary 3D and HTML content. Verify the computed background in the browser.
+
 ## 0.101.20
 
 - Add the isolated `image-annotation` entrypoint for immutable image point/region selection, resizing, keyboard adjustment, zoom and original-pixel PNG export. The editor and export share one validated overlay.

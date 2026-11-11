@@ -1,4 +1,4 @@
-/* global window, document */
+/* global window, document, getComputedStyle */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -7,7 +7,7 @@ import solid from 'vite-plugin-solid';
 const requireCore = createRequire(new URL('../packages/core/package.json', import.meta.url));
 const { createServer } = await import(requireCore.resolve('vite'));
 const html = `<button onclick="document.body.requestPointerLock().catch(e=>window.lockError=e.name)">Lock mouse</button><input value="Keep state"><script>window.tryLock=async()=>{await document.body.requestPointerLock().catch(()=>{});await new Promise(r=>setTimeout(r,100));};</script>`;
-const fixture = `import {createSignal} from 'solid-js';import {render} from 'solid-js/web';import {SandboxedHtmlFrame} from '/packages/core/src/components/html-preview/SandboxedHtmlFrame';const [active,setActive]=createSignal(true),[inert,setInert]=createSignal(false),[html,setHTML]=createSignal(${JSON.stringify(html)});const dispose=render(()=><SandboxedHtmlFrame title="Game" html={html()} active={active()} inert={inert()} labels={{linkUnavailable:'Unavailable',anchorUnavailable:'Missing',pointerLocked:'Mouse locked; press Esc to exit'}}/>,document.getElementById('root'));window.test={setActive,setInert,dispose,replace:()=>setHTML('<h1>Replacement</h1>')};`;
+const fixture = `import '/packages/core/dist/styles.css';import {createSignal} from 'solid-js';import {render} from 'solid-js/web';import {SandboxedHtmlFrame} from '/packages/core/src/components/html-preview/SandboxedHtmlFrame';const [active,setActive]=createSignal(true),[inert,setInert]=createSignal(false),[html,setHTML]=createSignal(${JSON.stringify(html)});const dispose=render(()=><SandboxedHtmlFrame title="Game" html={html()} active={active()} inert={inert()} labels={{linkUnavailable:'Unavailable',anchorUnavailable:'Missing',pointerLocked:'Mouse locked; press Esc to exit'}}/>,document.getElementById('root'));window.test={setActive,setInert,dispose,replace:()=>setHTML('<h1>Replacement</h1>')};`;
 const server = await createServer({
   configFile: false,
   resolve: {
@@ -64,6 +64,8 @@ try {
   };
   await child.locator('input').fill('Retained game');
   await lock();
+  const hintBackground = await page.getByRole('status').locator('span').evaluate(element => getComputedStyle(element).backgroundColor);
+  assert.notEqual(hintBackground, 'rgba(0, 0, 0, 0)', 'The exit hint must have an opaque theme background over arbitrary application content');
   await page.keyboard.press('Escape');
   await released();
   await child.evaluate(() => window.tryLock());

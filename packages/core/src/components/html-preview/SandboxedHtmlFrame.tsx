@@ -264,7 +264,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
         style={{ display: 'block', width: '100%', 'min-height': '0', flex: '1 1 0%', border: '0', ...props.style, opacity: ready() ? undefined : '0' }} />
       <Show when={pointerLockHint()}>
         <span role="status" class="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
-          <span class="rounded-md bg-background/95 px-3 py-2 text-xs text-foreground shadow-sm">{props.labels?.pointerLocked ?? 'Mouse locked; press Esc to exit'}</span>
+          <span class="rounded-md bg-background px-3 py-2 text-xs text-foreground shadow-sm">{props.labels?.pointerLocked ?? 'Mouse locked; press Esc to exit'}</span>
         </span>
       </Show>
       <Show when={error()}>
