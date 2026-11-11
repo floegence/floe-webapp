@@ -9,9 +9,9 @@ const { createServer } = await import(requireCore.resolve('vite'));
 const fixture = `import {createSignal} from 'solid-js';import {render} from 'solid-js/web';
 import {ImageAnnotationSurface,annotateImage} from '/packages/core/src/image-annotation';
 const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=1000;const ctx=canvas.getContext('2d');ctx.fillStyle='#263449';ctx.fillRect(0,0,1600,1000);ctx.fillStyle='#a3e635';ctx.fillRect(1196,396,8,8);
-const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[src,setSrc]=createSignal(URL.createObjectURL(blob));
-render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} onChange={setAnnotation} zoom={zoom()}/>,document.getElementById('root'));
-window.fixture={annotation,setAnnotation,setZoom,setSrc,export:async()=>{const result=await annotateImage(blob,annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
+const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[panning,setPanning]=createSignal(false),[src,setSrc]=createSignal(URL.createObjectURL(blob));
+render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} onChange={setAnnotation} zoom={zoom()} panning={panning()}/>,document.getElementById('root'));
+window.fixture={annotation,setAnnotation,setZoom,setSrc,setPanning,export:async()=>{const result=await annotateImage(blob,annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true },
   resolve: { alias: ['solid-js', 'solid-js/web', 'solid-js/store', 'solid-js/html', 'solid-js/h'].map(name => ({ find: new RegExp('^' + name + '$'), replacement: requireCore.resolve(name === 'solid-js' ? 'solid-js/dist/solid.js' : name + '/dist/' + name.split('/').at(-1) + '.js') })) },
   plugins: [solid({ hot: false }), { name: 'image-annotation-fixture', resolveId: id => id === '/fixture.tsx' ? id : undefined, load: id => id === '/fixture.tsx' ? fixture : undefined,
@@ -33,6 +33,12 @@ try {
     await page.waitForFunction(()=>document.querySelector('svg').getBoundingClientRect().width>document.querySelector('#root').clientWidth);
     await page.evaluate(()=>{const h=document.querySelector('[data-floe-image-annotation]');h.scrollLeft=100;h.scrollTop=40;});
     assert.deepEqual(await page.evaluate(()=>window.fixture.annotation()),{kind:'point',x:1200,y:400});
+    await page.evaluate(()=>window.fixture.setPanning(true));
+    const panBefore=await page.locator('[data-floe-image-annotation]').evaluate(e=>e.scrollLeft);
+    await page.mouse.move(width/2,300);await page.mouse.down();await page.mouse.move(width/2-50,260,{steps:5});await page.mouse.up();
+    assert((await page.locator('[data-floe-image-annotation]').evaluate(e=>e.scrollLeft))>panBefore+40,'Pan mode must drag the viewport');
+    assert.deepEqual(await page.evaluate(()=>window.fixture.annotation()),{kind:'point',x:1200,y:400});
+    await page.evaluate(()=>window.fixture.setPanning(false));
     await image.focus();await page.keyboard.press('ArrowLeft');assert.equal((await page.evaluate(()=>window.fixture.annotation())).x,1199);
     await page.evaluate(()=>{window.fixture.setZoom(1);window.fixture.setAnnotation(undefined);});
     await page.waitForFunction(()=>document.querySelector('svg').getBoundingClientRect().width<=document.querySelector('#root').clientWidth);

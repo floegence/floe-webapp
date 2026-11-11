@@ -8,6 +8,8 @@ export type ImageAnnotationSurfaceProps = ImageDimensions & {
   onChange?: (annotation: ImageAnnotation) => void;
   disabled?: boolean;
   zoom?: number;
+  /** Drag the zoomed viewport without changing its annotation. */
+  panning?: boolean;
   showAnnotation?: boolean;
   class?: string;
 };
@@ -20,6 +22,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
   const [size, setSize] = createSignal({ width: 1, height: 1 });
   const [draft, setDraft] = createSignal<ImageAnnotation>();
   let gesture: { id: number; start: ImagePoint; client: ImagePoint; original?: ImageAnnotation; corner?: number; src: string } | undefined;
+  let pan: { id: number; x: number; y: number; left: number; top: number } | undefined;
   const shown = () => draft() ?? props.annotation;
   const scale = createMemo(() => Math.min(size().width / props.width, size().height / props.height) * Math.max(1, props.zoom ?? 1));
   const markup = () => props.showAnnotation !== false && shown() && validateImageAnnotation(props, shown()!) ? imageAnnotationMarkup(props, shown()!) : '';
@@ -37,8 +40,13 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     onCleanup(() => { observer.disconnect(); cancelAnimationFrame(pending); });
   });
   const point = (event: PointerEvent, clamp = false) => imagePointFromClient(props, svg.getBoundingClientRect(), { x: event.clientX, y: event.clientY }, clamp);
-  const editable = () => Boolean(props.onChange) && !props.disabled;
+  const editable = () => Boolean(props.onChange) && !props.disabled && !props.panning;
   const move = (event: PointerEvent) => {
+    if (pan?.id === event.pointerId) {
+      host.scrollLeft = pan.left + pan.x - event.clientX;
+      host.scrollTop = pan.top + pan.y - event.clientY;
+      return;
+    }
     const current = gesture;
     if (!current || current.id !== event.pointerId || current.src !== props.src || !editable()) return;
     const end = point(event, true); if (!end) return;
@@ -56,6 +64,11 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     }
   };
   const finish = (event: PointerEvent, cancelled = false) => {
+    if (pan?.id === event.pointerId) {
+      pan = undefined;
+      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
+      return;
+    }
     const current = gesture; if (!current || current.id !== event.pointerId) return;
     if (!cancelled) move(event);
     const annotation = draft(); gesture = undefined; setDraft(undefined);
@@ -70,8 +83,12 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     <div style={{ width: `${Math.max(size().width, props.width * scale())}px`, height: `${Math.max(size().height, props.height * scale())}px`, display: 'grid', 'place-items': 'center' }}>
       <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={props.width * scale()} height={props.height * scale()} viewBox={`0 0 ${props.width} ${props.height}`}
         role="img" aria-label={props.label} tabindex={editable() ? 0 : undefined}
-        style={{ display: 'block', 'touch-action': editable() ? 'none' : 'auto', 'user-select': 'none', cursor: editable() ? 'crosshair' : 'default', flex: 'none' }}
+        style={{ display: 'block', 'touch-action': editable() || props.panning ? 'none' : 'auto', 'user-select': 'none', cursor: props.panning ? 'grab' : editable() ? 'crosshair' : 'default', flex: 'none' }}
         onPointerDown={event => {
+          if (props.panning && event.button === 0 && !pan) {
+            pan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: host.scrollLeft, top: host.scrollTop };
+            svg.setPointerCapture(event.pointerId); event.preventDefault(); return;
+          }
           if (!editable() || event.button !== 0 || gesture) return;
           const start = point(event); if (!start) return;
           const target = event.target as Element;

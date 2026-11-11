@@ -2,7 +2,7 @@
 
 ## 0.101.22
 
-- Stabilize image annotation measurements with visible system scrollbars; defer resize measurements outside observer delivery and retain exact coordinates across zoom.
+- Stabilize image annotation measurements with visible system scrollbars; defer resize measurements outside observer delivery and retain exact coordinates across zoom. Add explicit pointer/touch panning without changing annotations.
 
 ## 0.101.21
 
