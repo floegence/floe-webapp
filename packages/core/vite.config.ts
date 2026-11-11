@@ -56,6 +56,7 @@ export default defineConfig({
         'reload-placeholder': resolve(__dirname, 'src/reload-placeholder.ts'),
         'remote-input': resolve(__dirname, 'src/remote-input.ts'),
         'remote-pointer': resolve(__dirname, 'src/remote-pointer.ts'),
+        'image-annotation': resolve(__dirname, 'src/image-annotation.ts'),
         launchpad: resolve(__dirname, 'src/launchpad.ts'),
         'file-browser': resolve(__dirname, 'src/file-browser.ts'),
         chat: resolve(__dirname, 'src/chat.ts'),

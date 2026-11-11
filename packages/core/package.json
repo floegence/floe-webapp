@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-core",
-  "version": "0.101.19",
+  "version": "0.101.20",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -160,7 +160,11 @@
       "types": "./dist/diagrams.d.ts",
       "import": "./dist/diagrams.js"
     },
-    "./diagrams.css": "./dist/diagrams.css"
+    "./diagrams.css": "./dist/diagrams.css",
+    "./image-annotation": {
+      "types": "./dist/image-annotation.d.ts",
+      "import": "./dist/image-annotation.js"
+    }
   },
   "files": [
     "dist",

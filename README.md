@@ -401,3 +401,7 @@ focus to the trigger. Hosts remain responsible for admission and visibility of
 portalled controls; use the same authoritative `open` state for those controls.
 
 Scaffold templates pin Rollup 4.68.1 in both package-manager overrides: the 4.68.2 registry tarball returns 404 as of 2026-11-09. Revisit this pin when a verified successor is available; packed-consumer installation and audit remain required.
+
+### Image annotations
+
+`@floegence/floe-webapp-core/image-annotation` exposes `ImageAnnotationSurface`, original-image pixel geometry and `annotateImage`. Hosts own image capture, identity, draft persistence and submission. Click selects a point, drag selects a rectangle, handles resize, and arrow keys move by one original pixel (Shift: ten). The surface fits the image without including letterboxing in selection coordinates; `zoom` enlarges the same image and its overlay in a scrollable viewport. `label` is supplied by the host localization. The PNG exporter uses the identical numeric overlay and retains original image dimensions. No iframe access, live capture or object tracking is implied.

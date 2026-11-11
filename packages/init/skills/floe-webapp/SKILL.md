@@ -68,6 +68,7 @@ description: Implement, refactor, and debug Floe-Webapp apps and this monorepo u
    - `@floegence/floe-webapp-core/input-focus.css` (standalone input borders without shell styles)
    - `@floegence/floe-webapp-core/remote-input` (framework-free client composition and exclusive remote keyboard ownership)
    - `@floegence/floe-webapp-core/remote-input.css` (native input and bounded composition preview)
+   - `@floegence/floe-webapp-core/image-annotation` (immutable image point/region selection and matching original-pixel PNG export; host owns capture and persistence)
    - `@floegence/floe-webapp-core/remote-pointer` (exclusive remote pointer gestures, scrolling, cancellation and ordered delivery)
    - `@floegence/floe-webapp-core/remote-pointer.css` (remote pixel touch ownership and noninteractive hold feedback)
 4. Align registry behavior end-to-end:

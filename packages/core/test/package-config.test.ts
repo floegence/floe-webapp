@@ -16,6 +16,7 @@ describe('@floegence/floe-webapp-core package config', () => {
     expect(pkg.sideEffects).toBe(false);
 
     expect(pkg.exports).toEqual({
+      './image-annotation': { types: './dist/image-annotation.d.ts', import: './dist/image-annotation.js' },
       './diagrams': { types: './dist/diagrams.d.ts', import: './dist/diagrams.js' },
       './diagrams.css': './dist/diagrams.css',
       './pptx': { types: './dist/pptx.d.ts', import: './dist/pptx.js' },

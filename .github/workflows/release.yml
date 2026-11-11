@@ -88,6 +88,7 @@ jobs:
       - name: Verify input focus in Chromium
         run: |
           pnpm exec playwright install --with-deps chromium webkit firefox
+          node scripts/check-image-annotation-browser.mjs
           pnpm test:business-controls
           node scripts/check-prompt-card-browser.mjs --all
           pnpm test:button-contrast

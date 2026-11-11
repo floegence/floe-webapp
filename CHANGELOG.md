@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.20
+
+- Add the isolated `image-annotation` entrypoint for immutable image point/region selection, resizing, keyboard adjustment, zoom and original-pixel PNG export. The editor and export share one validated overlay.
+
 ## 0.101.19
 
 - Enable user-activated pointer lock in opaque HTML previews, release it on inactivity or blur, and show localized Escape guidance without moving the document.
