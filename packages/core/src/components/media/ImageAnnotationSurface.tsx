@@ -24,8 +24,17 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
   const scale = createMemo(() => Math.min(size().width / props.width, size().height / props.height) * Math.max(1, props.zoom ?? 1));
   const markup = () => props.showAnnotation !== false && shown() && validateImageAnnotation(props, shown()!) ? imageAnnotationMarkup(props, shown()!) : '';
   onMount(() => {
-    const observer = new ResizeObserver(() => setSize({ width: host.clientWidth, height: host.clientHeight }));
-    observer.observe(host); onCleanup(() => observer.disconnect());
+    let pending = 0;
+    const measure = () => {
+      pending = 0;
+      const width = host.clientWidth, height = host.clientHeight;
+      setSize(previous => previous.width === width && previous.height === height ? previous : { width, height });
+    };
+    // Scrollbars change the usable viewport. Measure in the next frame rather
+    // than changing scroll extents inside ResizeObserver delivery.
+    const observer = new ResizeObserver(() => { if (!pending) pending = requestAnimationFrame(measure); });
+    observer.observe(host); measure();
+    onCleanup(() => { observer.disconnect(); cancelAnimationFrame(pending); });
   });
   const point = (event: PointerEvent, clamp = false) => imagePointFromClient(props, svg.getBoundingClientRect(), { x: event.clientX, y: event.clientY }, clamp);
   const editable = () => Boolean(props.onChange) && !props.disabled;
@@ -57,7 +66,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     { x: value.x, y: value.y }, { x: value.x + value.width, y: value.y },
     { x: value.x, y: value.y + value.height }, { x: value.x + value.width, y: value.y + value.height },
   ] : []; };
-  return <div ref={host} class={props.class} data-floe-image-annotation style={{ width: '100%', height: '100%', overflow: 'auto', 'overscroll-behavior': 'contain' }}>
+  return <div ref={host} class={props.class} data-floe-image-annotation style={{ width: '100%', height: '100%', overflow: 'auto', 'scrollbar-gutter': 'stable', 'overscroll-behavior': 'contain' }}>
     <div style={{ width: `${Math.max(size().width, props.width * scale())}px`, height: `${Math.max(size().height, props.height * scale())}px`, display: 'grid', 'place-items': 'center' }}>
       <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={props.width * scale()} height={props.height * scale()} viewBox={`0 0 ${props.width} ${props.height}`}
         role="img" aria-label={props.label} tabindex={editable() ? 0 : undefined}

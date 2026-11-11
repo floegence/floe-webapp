@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.22
+
+- Stabilize image annotation measurements with visible system scrollbars; defer resize measurements outside observer delivery and retain exact coordinates across zoom.
+
 ## 0.101.21
 
 - Give pointer-lock exit guidance an opaque theme background so it remains legible over arbitrary 3D and HTML content. Verify the computed background in the browser.

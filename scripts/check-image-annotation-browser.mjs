@@ -19,7 +19,7 @@ const server = await createServer({ configFile: false, optimizeDeps: { noDiscove
   server: { host:'127.0.0.1',port:0,hmr:false } });
 let browser;
 try {
-  await server.listen(); browser=await chromium.launch({headless:true});
+  await server.listen(); browser=await chromium.launch({headless:true,ignoreDefaultArgs:['--hide-scrollbars']});
   for(const width of [390,1280]) for(const dpr of [1,1.25,2,3]) {
     const context=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:dpr});const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(server.resolvedUrls.local[0]);await page.waitForFunction(()=>window.fixture);
@@ -36,6 +36,7 @@ try {
     await image.focus();await page.keyboard.press('ArrowLeft');assert.equal((await page.evaluate(()=>window.fixture.annotation())).x,1199);
     await page.evaluate(()=>{window.fixture.setZoom(1);window.fixture.setAnnotation(undefined);});
     await page.waitForFunction(()=>document.querySelector('svg').getBoundingClientRect().width<=document.querySelector('#root').clientWidth);
+    await page.evaluate(()=>new Promise(r=>window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>window.requestAnimationFrame(r)))));
     const next=await image.boundingBox();await page.mouse.move(next.x+next.width*.1,next.y+next.height*.2);await page.mouse.down();await page.mouse.move(next.x+next.width*.4,next.y+next.height*.6,{steps:5});await page.mouse.up();
     const region=await page.evaluate(()=>window.fixture.annotation());assert.equal(region.kind,'rectangle');assert(Math.abs(region.x-160)<1);assert(Math.abs(region.width-480)<1);assert(Math.abs(region.height-400)<1);
     assert.deepEqual(errors,[]);await context.close();
