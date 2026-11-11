@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.101.18
+## 0.101.19
 
 - Enable user-activated pointer lock in opaque HTML previews, release it on inactivity or blur, and show localized Escape guidance without moving the document.
 

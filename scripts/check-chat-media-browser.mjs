@@ -72,7 +72,7 @@ try {
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   assert.equal(await page.evaluate(() => window.previewEscape), undefined);
   assert.equal(forbiddenRequests, 0);
-  assert.equal(await page.locator('iframe').getAttribute('sandbox'), 'allow-scripts');
+  assert.equal(await page.locator('iframe').getAttribute('sandbox'), 'allow-scripts allow-pointer-lock');
   const frame = await page.locator('iframe').elementHandle();
   await page.locator('[data-media-kind=html]').getByRole('button', {name:'Expand preview'}).click();
   assert.equal(await frame.evaluate(node => node === document.querySelector('iframe')), true);
