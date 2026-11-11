@@ -6,6 +6,7 @@ import {
   createMemo,
   createSignal,
   onCleanup,
+  onMount,
   type Component,
   type JSX,
 } from 'solid-js';
@@ -122,6 +123,8 @@ export type WorkbenchDockAction = Readonly<{
   /** Places the action before or after components, always before host items in that group. */
   dockPlacement?: WorkbenchDockItemPlacement;
   onActivate: (trigger: HTMLButtonElement) => void;
+  /** Receives the concrete action button on mount and null on disposal. */
+  buttonRef?: (button: HTMLButtonElement | null) => void;
 }>;
 
 export type WorkbenchHostDockItem = Readonly<{
@@ -498,12 +501,16 @@ function DockAction(props: {
 }) {
   const isHovered = () => props.hoverOffset === -1;
   const tileMotion = () => ({ scale: 1, y: 0, x: 0 });
+  let button: HTMLButtonElement | undefined;
+  onMount(() => props.action.buttonRef?.(button ?? null));
+  onCleanup(() => props.action.buttonRef?.(null));
 
   return (
     <button
       type="button"
       draggable={false}
       class="workbench-dock__item workbench-dock__action"
+      ref={button}
       data-workbench-dock-action={props.action.id}
       classList={{
         'is-active': Boolean(props.action.active),

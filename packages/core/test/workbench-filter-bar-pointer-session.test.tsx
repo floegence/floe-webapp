@@ -103,6 +103,24 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.innerHTML = '';
   });
 
+  it('exposes a mounted action trigger and releases it when the action leaves', () => {
+    const host = createWorkbenchHost();
+    const reference = vi.fn();
+    const activate = vi.fn();
+    const [shown, setShown] = createSignal(true);
+    const action = { id: 'library', label: 'Library', icon: () => <svg />, buttonRef: reference, onActivate: activate };
+    dispose = render(() => <WorkbenchFilterBar widgetDefinitions={widgetDefinitions} widgets={[]} filters={{}}
+      onSoloFilter={() => {}} mode="work" dockActions={shown() ? [action] : []} />, host);
+    const button = host.querySelector<HTMLButtonElement>('[data-workbench-dock-action="library"]')!;
+    expect(reference).toHaveBeenLastCalledWith(button);
+    expect(button.isConnected).toBe(true);
+    button.click();
+    expect(activate).toHaveBeenCalledWith(button);
+    setShown(false);
+    expect(reference).toHaveBeenLastCalledWith(null);
+    expect(button.isConnected).toBe(false);
+  });
+
   it('uses host mode artwork in both the trigger and menu while retaining mode selection and defaults', async () => {
     const host = createWorkbenchHost();
     const [mode, setMode] = createSignal<WorkbenchInteractionMode>('work');

@@ -103,6 +103,11 @@ trailing pinned shortcuts. Actions remain non-draggable native buttons with
 unchanged activation, accessible names, and stable hover geometry. Host items
 and external drop previews continue to use their independent placement contract.
 
+`WorkbenchDockAction.buttonRef` exposes the concrete native button on mount and
+receives `null` on disposal, matching Activity Bar trigger ownership. Hosts may
+anchor product surfaces or bind pointer/keyboard entry behavior without querying
+Dock internals; hosts own listener cleanup and action semantics.
+
 ### fullScreen semantics
 
 `sidebar.fullScreen: true` means "this tab is a page":

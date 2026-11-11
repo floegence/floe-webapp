@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.17
+
+- Expose Workbench Dock action button references for host-owned anchored surfaces and pointer/keyboard entry, with explicit disposal.
+
 ## 0.101.16
 
 - Apply live CodeEditor options after asynchronous initialization, including read-only transitions, without replacing the editor or its document.
