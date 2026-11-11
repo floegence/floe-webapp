@@ -348,7 +348,7 @@ authorization context is unchanged; replace it when that context changes.
 Replacement aborts the previous request and discards its late response. Labels
 and unrelated host updates never restart loading or replace ready media nodes.
 
-HTML is limited to one million characters and rendered with `sandbox="allow-scripts"`
+HTML is limited to one million characters and rendered with `sandbox="allow-scripts allow-pointer-lock"`
 without same-origin permission. Its leading CSP blocks network requests, nested
 frames, forms, external scripts, and assets. Inline styles/scripts and embedded
 data images remain usable. A host must also bound bytes before decoding fetched

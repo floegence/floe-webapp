@@ -69,7 +69,7 @@ describe('MarkdownMedia HTML controls', () => {
     await flush();
     expect(host.querySelector('pre')?.textContent).toBe('<main>Complete</main>');
     expect(host.querySelector('[data-chat-media-action=source]')?.getAttribute('aria-pressed')).toBe('true');
-    expect(host.querySelector('iframe')?.getAttribute('sandbox')).toBe('allow-scripts');
+    expect(host.querySelector('iframe')?.getAttribute('sandbox')).toBe('allow-scripts allow-pointer-lock');
   });
   it.each(['button', 'menu'])('opens an inline HTML snapshot from the %s without replacing the inline frame', async (trigger) => {
     const host = document.createElement('div');

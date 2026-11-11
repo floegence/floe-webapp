@@ -28,6 +28,7 @@ export interface MarkdownMediaLabels {
   previewHTMLWindow?: string;
   linkUnavailable?: string;
   anchorUnavailable?: string;
+  pointerLocked?: string;
   loading: string;
   unavailable: string;
   retry: string;
@@ -132,6 +133,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     return handler ? (href: string, signal: AbortSignal) => handler(request, href, signal) : undefined;
   };
   const htmlLabels = () => ({
+    pointerLocked: props.labels.pointerLocked,
     linkUnavailable: props.labels.linkUnavailable ?? 'Opening links is unavailable in this preview.',
     anchorUnavailable: props.labels.anchorUnavailable ?? 'The linked section was not found.',
   });

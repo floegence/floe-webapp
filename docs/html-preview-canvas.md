@@ -49,3 +49,19 @@ WebKit.
 ## Scoped search
 
 `onSearchReady` exposes search/clear operations over the private revision-fenced channel. The opaque frame owns rendered-text matching, inline-spanning ranges, highlight cleanup and local scrolling. `onSearchState` returns counts for the current request; no frame DOM or source text crosses into the host. Optional `onSearchRequest` handles trusted Ctrl/Cmd+F and Escape inside the frame. Inactive and replaced documents cannot deliver search state or input authority. Hosts may use the external-engine option of `createTextSearch` with the same localized `TextSearchBar`.
+
+## Pointer lock
+
+The opaque HTML sandbox permits browser pointer lock from a real pointer or
+keyboard activation. The private bootstrap releases it when `active` becomes
+false, `inert` becomes true, the document loses focus, or the page is hidden.
+Returning never acquires lock automatically: a new user activation is required.
+Document replacement and disposal retire the old iframe and its lock. Native
+Escape releases lock without closing the containing preview.
+
+The optional `pointerLocked` label localizes a three-second, noninteractive
+overlay explaining Escape. It reserves no layout space. The private port carries
+only lock state; HTML retains its opaque origin and existing network, link and
+parent isolation. `scripts/check-html-pointer-lock-browser.mjs` exercises actual
+Chromium lock acquisition and lifecycle release. Native window minimization and
+Escape belong to the consuming desktop application's acceptance.

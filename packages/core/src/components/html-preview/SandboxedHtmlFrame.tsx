@@ -6,6 +6,7 @@ import { secureRandomUUID } from '../../utils/secureRandom';
 export interface SandboxedHtmlFrameLabels {
   linkUnavailable: string;
   anchorUnavailable: string;
+  pointerLocked?: string;
 }
 
 export interface SandboxedHtmlSearch {
@@ -22,7 +23,7 @@ export interface SandboxedHtmlFrameProps {
   class?: string;
   style?: JSX.CSSProperties;
   inert?: boolean;
-  /** Deactivation pauses native media without restarting it on reactivation. */
+  /** Deactivation pauses native media and releases pointer lock; neither resumes automatically. */
   active?: boolean;
   /** Localized presentation while this exact document loads and reaches a render opportunity. */
   renderPending?: () => JSX.Element;
@@ -42,6 +43,26 @@ function linkBootstrap(token: string): string {
     const query=document.querySelectorAll.bind(document);
     const MediaElementType=HTMLMediaElement;
     const pause=Function.call.bind(MediaElementType.prototype.pause);
+    const lockGetter=Object.getOwnPropertyDescriptor(Document.prototype,'pointerLockElement')?.get;
+    const locked=lockGetter?Function.call.bind(lockGetter,document):()=>null;
+    const exitLock=document.exitPointerLock?.bind(document);
+    const hasFocus=document.hasFocus.bind(document);
+    let pointerLockAllowed=false,pointerGesture=false;
+    const releaseLock=()=>{pointerGesture=false;if(locked())exitLock()};
+    window.addEventListener('blur',releaseLock);
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseLock()});
+    const gesture=event=>{if(event.isTrusted&&pointerLockAllowed)pointerGesture=true};
+    window.addEventListener('pointerdown',gesture,true);
+    window.addEventListener('keydown',event=>{
+      if(event.isTrusted&&event.key==='Escape'&&locked()){event.preventDefault();event.stopImmediatePropagation();releaseLock();return}
+      if(event.key==='Enter'||event.key===' ')gesture(event);
+    },true);
+    document.addEventListener('pointerlockchange',()=>{
+      const value=!!locked();
+      if(value&&(!pointerLockAllowed||!pointerGesture||!hasFocus()||document.hidden)){releaseLock();return}
+      pointerGesture=false;
+      publish({type:'pointer-lock',locked:value});
+    });
     let active=true,searchEnabled=false,searchOpen=false,searchQuery='',matches=[],matchIndex=0;
     const findRanges=(${findTextRanges.toString()});
     const clearHighlights=()=>{CSS.highlights?.delete('floe-html-find');CSS.highlights?.delete('floe-html-find-current')};
@@ -69,6 +90,8 @@ function linkBootstrap(token: string): string {
       if(event.data?.type==='clear-search'){searchOpen=false;clearHighlights();return}
       if(event.data?.type!=='activation')return;
       active=event.data.active===true;searchEnabled=event.data.searchEnabled===true;
+      pointerLockAllowed=event.data.pointerLockAllowed===true;
+      if(!pointerLockAllowed)releaseLock();
       paint();
       if(!active)for(const media of query('video,audio'))pause(media);
     };
@@ -123,6 +146,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
   let frame!: HTMLIFrameElement;
   let connect: ((event: MessageEvent) => void) | undefined;
   const [error, setError] = createSignal('');
+  const [pointerLockHint, setPointerLockHint] = createSignal(false);
   const [readyToken, setReadyToken] = createSignal('');
   const [channel, setChannel] = createSignal<MessagePort>();
   const document = createMemo(() => {
@@ -135,7 +159,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
     const state = ready() ? 'ready' : 'loading';
     untrack(() => props.onPresentationStateChange?.(state));
   });
-  createEffect(() => { channel()?.postMessage({ type: 'activation', active: props.active !== false, searchEnabled: !!props.onSearchRequest }); });
+  createEffect(() => { channel()?.postMessage({ type: 'activation', active: props.active !== false, pointerLockAllowed: props.active !== false && !props.inert && ready(), searchEnabled: !!props.onSearchRequest }); });
 
   createEffect(() => {
     const { token: initialToken } = document();
@@ -145,7 +169,9 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
     let paintRequest = 0;
     let loaded = false;
     let searchRequest = 0;
+    let pointerLockHintTimer: ReturnType<typeof setTimeout> | undefined;
     setError('');
+    setPointerLockHint(false);
     connect = (event: MessageEvent) => {
       if (!event.isTrusted || event.source !== frame.contentWindow || port
         || event.data?.type !== 'floe-html-ready' || event.data?.token !== initialToken
@@ -161,7 +187,13 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
       });
       port.onmessage = (message: MessageEvent<unknown>) => {
         if (controller.signal.aborted) return;
-        const data = message.data as { type?: unknown; href?: unknown; request?: unknown; current?: unknown; total?: unknown } | null;
+        const data = message.data as { type?: unknown; locked?: unknown; href?: unknown; request?: unknown; current?: unknown; total?: unknown } | null;
+        if (data?.type === 'pointer-lock' && typeof data.locked === 'boolean') {
+          clearTimeout(pointerLockHintTimer);
+          if (data.locked) pointerLockHintTimer = setTimeout(() => setPointerLockHint(false), 3000);
+          setPointerLockHint(data.locked && !props.inert && props.active !== false && ready());
+          return;
+        }
         if (data?.type === 'document-loaded') {
           if (loaded) return;
           loaded = true;
@@ -209,6 +241,7 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
       port.start();
     };
     onCleanup(() => {
+      clearTimeout(pointerLockHintTimer);
       controller.abort(); cancelAnimationFrame(paintRequest); port?.close();
       setChannel(undefined); connect = undefined; props.onSearchReady?.(undefined);
     });
@@ -226,9 +259,14 @@ export function SandboxedHtmlFrame(props: SandboxedHtmlFrameProps) {
         {props.renderPending?.()}
       </span></Show>
       <iframe ref={frame} class={props.class} title={props.title}
-        srcdoc={document().html} sandbox="allow-scripts" referrerPolicy="no-referrer"
+        srcdoc={document().html} sandbox="allow-scripts allow-pointer-lock" referrerPolicy="no-referrer"
         inert={props.inert || props.active === false || !ready()} tabIndex={props.inert || props.active === false || !ready() ? -1 : props.tabIndex}
         style={{ display: 'block', width: '100%', 'min-height': '0', flex: '1 1 0%', border: '0', ...props.style, opacity: ready() ? undefined : '0' }} />
+      <Show when={pointerLockHint()}>
+        <span role="status" class="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
+          <span class="rounded-md bg-background/95 px-3 py-2 text-xs text-foreground shadow-sm">{props.labels?.pointerLocked ?? 'Mouse locked; press Esc to exit'}</span>
+        </span>
+      </Show>
       <Show when={error()}>
         <span role="alert" class="max-h-24 shrink-0 overflow-auto break-words bg-background px-3 py-2 text-xs text-destructive">{error()}</span>
       </Show>

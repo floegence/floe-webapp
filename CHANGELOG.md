@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.18
+
+- Enable user-activated pointer lock in opaque HTML previews, release it on inactivity or blur, and show localized Escape guidance without moving the document.
+
 ## 0.101.17
 
 - Expose Workbench Dock action button references for host-owned anchored surfaces and pointer/keyboard entry, with explicit disposal.
