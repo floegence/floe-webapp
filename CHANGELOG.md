@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.23
+
+- Build pointer-lock browser fixture styles directly from source so clean release workers verify the opaque guidance without a preexisting dist directory.
+
 ## 0.101.22
 
 - Stabilize image annotation measurements with visible system scrollbars; defer resize measurements outside observer delivery and retain exact coordinates across zoom. Add explicit pointer/touch panning without changing annotations.

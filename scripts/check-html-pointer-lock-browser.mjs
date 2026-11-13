@@ -6,8 +6,9 @@ import { chromium } from 'playwright';
 import solid from 'vite-plugin-solid';
 const requireCore = createRequire(new URL('../packages/core/package.json', import.meta.url));
 const { createServer } = await import(requireCore.resolve('vite'));
+const { default: tailwind } = await import(requireCore.resolve('@tailwindcss/vite'));
 const html = `<button onclick="document.body.requestPointerLock().catch(e=>window.lockError=e.name)">Lock mouse</button><input value="Keep state"><script>window.tryLock=async()=>{await document.body.requestPointerLock().catch(()=>{});await new Promise(r=>setTimeout(r,100));};</script>`;
-const fixture = `import '/packages/core/dist/styles.css';import {createSignal} from 'solid-js';import {render} from 'solid-js/web';import {SandboxedHtmlFrame} from '/packages/core/src/components/html-preview/SandboxedHtmlFrame';const [active,setActive]=createSignal(true),[inert,setInert]=createSignal(false),[html,setHTML]=createSignal(${JSON.stringify(html)});const dispose=render(()=><SandboxedHtmlFrame title="Game" html={html()} active={active()} inert={inert()} labels={{linkUnavailable:'Unavailable',anchorUnavailable:'Missing',pointerLocked:'Mouse locked; press Esc to exit'}}/>,document.getElementById('root'));window.test={setActive,setInert,dispose,replace:()=>setHTML('<h1>Replacement</h1>')};`;
+const fixture = `import '/packages/core/src/styles/globals.css';import {createSignal} from 'solid-js';import {render} from 'solid-js/web';import {SandboxedHtmlFrame} from '/packages/core/src/components/html-preview/SandboxedHtmlFrame';const [active,setActive]=createSignal(true),[inert,setInert]=createSignal(false),[html,setHTML]=createSignal(${JSON.stringify(html)});const dispose=render(()=><SandboxedHtmlFrame title="Game" html={html()} active={active()} inert={inert()} labels={{linkUnavailable:'Unavailable',anchorUnavailable:'Missing',pointerLocked:'Mouse locked; press Esc to exit'}}/>,document.getElementById('root'));window.test={setActive,setInert,dispose,replace:()=>setHTML('<h1>Replacement</h1>')};`;
 const server = await createServer({
   configFile: false,
   resolve: {
@@ -27,6 +28,7 @@ const server = await createServer({
   optimizeDeps: { noDiscovery: true },
   plugins: [
     solid({ hot: false }),
+    tailwind(),
     {
       name: 'pointer-lock-fixture',
       resolveId: (id) => (id === '/fixture.tsx' ? id : undefined),
