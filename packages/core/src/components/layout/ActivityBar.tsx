@@ -199,7 +199,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
   };
 
   return (
-    <Tooltip content={props.item.label} placement="right" delay={0}>
+    <Tooltip content={props.item.label} placement="right" delay={0} triggerClass="shrink-0" portalScope="viewport">
       <button
         ref={buttonRef}
         type="button"

@@ -46,6 +46,7 @@ export function createBarReorder(options: {
   const [position, setPosition] = createSignal<BarDropPosition>();
   let session: PointerSessionController | undefined;
   let suppressClick = false;
+  let scrollFrame = 0;
   let clickTimer: ReturnType<typeof setTimeout> | undefined;
   const cancel = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' || !session) return;
@@ -74,8 +75,10 @@ export function createBarReorder(options: {
       const owner = event.currentTarget as HTMLElement;
       const startY = event.clientY;
       const startX = event.clientX;
+      let pointerX = startX, pointerY = startY;
       let moved = false;
       const update = (x: number, y: number) => {
+        pointerX = x; pointerY = y;
         moved ||= Math.hypot(x - startX, y - startY) >= 5;
         if (!moved) return;
         setDragging(key);
@@ -83,12 +86,28 @@ export function createBarReorder(options: {
         setPosition(rect && x >= rect.left - 24 && x <= rect.right + 24 && y >= rect.top && y <= rect.bottom
           ? barDropPosition(options.keys(), key, options.elements, 'y', y) : undefined);
       };
+      const scroll = () => {
+        const rail = options.container();
+        if (moved && rail) {
+          const rect = rail.getBoundingClientRect();
+          const distance = pointerY < rect.top + 28 ? pointerY - rect.top - 28
+            : pointerY > rect.bottom - 28 ? pointerY - rect.bottom + 28 : 0;
+          if (pointerX >= rect.left - 24 && pointerX <= rect.right + 24 && pointerY >= rect.top - 24 && pointerY <= rect.bottom + 24 && distance) {
+            const before = rail.scrollTop;
+            rail.scrollTop += Math.sign(distance) * Math.min(10, Math.abs(distance) / 3);
+            if (rail.scrollTop !== before) update(pointerX, pointerY);
+          }
+        }
+        scrollFrame = requestAnimationFrame(scroll);
+      };
+      scrollFrame = requestAnimationFrame(scroll);
       owner.ownerDocument.addEventListener('keydown', cancel, true);
       session = startPointerSession({ pointerEvent: event, captureEl: owner,
         onMove: point => update(point.clientX, point.clientY),
         onEnd: ({ commit: accepted, snapshot }) => {
           update(snapshot.latestClientX, snapshot.latestClientY);
           const proposal = position();
+          cancelAnimationFrame(scrollFrame);
           session = undefined;
           owner.ownerDocument.removeEventListener('keydown', cancel, true);
           setDragging(undefined); setPosition(undefined);
@@ -114,46 +133,57 @@ export function createBarLayoutMotion(options: {
   const previous = new Map<string, { left: number; top: number }>();
   const animations = new Map<string, Animation>();
   let initialized = false;
+  let revision = 0;
   createEffect(() => {
     const keys = [...options.keys()];
     const preview = options.preview();
-    const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const positions = new Map(keys.flatMap(key => {
-      const element = options.elements.get(key);
-      if (!element) return [];
-      const rect = element.getBoundingClientRect();
-      const transform = getComputedStyle(element).transform;
-      const matrix = typeof DOMMatrix === 'function' ? new DOMMatrix(transform === 'none' ? undefined : transform) : undefined;
-      return [[key, { left: rect.left - (matrix?.m41 ?? 0), top: rect.top - (matrix?.m42 ?? 0), dx: matrix?.m41 ?? 0, dy: matrix?.m42 ?? 0 }] as const];
-    }));
-    for (const key of keys) {
-      const element = options.elements.get(key), position = positions.get(key);
-      if (!element || !position) continue;
-      const before = previous.get(key);
-      const slotKey = preview ? keys[preview.indexOf(key)] : key;
-      const slot = positions.get(slotKey) ?? position;
-      const dx = options.axis === 'x' ? slot.left - position.left : 0;
-      const dy = options.axis === 'y' ? slot.top - position.top : 0;
-      animations.get(key)?.cancel(); animations.delete(key);
-      element.style.transform = dx || dy ? `translate3d(${dx}px, ${dy}px, 0)` : '';
-      if (!reduced && initialized && typeof element.animate === 'function') {
-        const fromX = before ? before.left - position.left + position.dx : dx;
-        const fromY = before ? before.top - position.top + position.dy : dy;
-        if (!before || Math.abs(fromX - dx) + Math.abs(fromY - dy) > .5) {
-          const animation = element.animate([
-            { transform: `translate3d(${fromX}px, ${fromY}px, 0)`, opacity: before ? 1 : 0 },
-            { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1 },
-          ], { duration: 180, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' });
-          animations.set(key, animation);
-          animation.onfinish = () => { if (animations.get(key) === animation) animations.delete(key); };
+    const currentRevision = ++revision;
+    // Child trigger refs settle after parent effects; sample after that boundary.
+    queueMicrotask(() => {
+      if (revision !== currentRevision) return;
+      const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const positions = new Map(keys.flatMap(key => {
+        const element = options.elements.get(key);
+        if (!element) return [];
+        const rect = element.getBoundingClientRect();
+        const transform = getComputedStyle(element).transform;
+        const matrix = typeof DOMMatrix === 'function' ? new DOMMatrix(transform === 'none' ? undefined : transform) : undefined;
+        // Scroll is viewport movement, not a layout change to animate.
+        let scrollX = 0, scrollY = 0;
+        for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+          scrollX += parent.scrollLeft; scrollY += parent.scrollTop;
         }
+        return [[key, { left: rect.left + scrollX - (matrix?.m41 ?? 0), top: rect.top + scrollY - (matrix?.m42 ?? 0), dx: matrix?.m41 ?? 0, dy: matrix?.m42 ?? 0 }] as const];
+      }));
+      for (const key of keys) {
+        const element = options.elements.get(key), position = positions.get(key);
+        if (!element || !position) continue;
+        const before = previous.get(key);
+        const slotKey = preview ? keys[preview.indexOf(key)] : key;
+        const slot = positions.get(slotKey) ?? position;
+        const dx = options.axis === 'x' ? slot.left - position.left : 0;
+        const dy = options.axis === 'y' ? slot.top - position.top : 0;
+        animations.get(key)?.cancel(); animations.delete(key);
+        element.style.transform = dx || dy ? `translate3d(${dx}px, ${dy}px, 0)` : '';
+        if (!reduced && initialized && typeof element.animate === 'function') {
+          const fromX = before ? before.left - position.left + position.dx : dx;
+          const fromY = before ? before.top - position.top + position.dy : dy;
+          if (!before || Math.abs(fromX - dx) + Math.abs(fromY - dy) > .5) {
+            const animation = element.animate([
+              { transform: `translate3d(${fromX}px, ${fromY}px, 0)`, opacity: before ? 1 : 0 },
+              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1 },
+            ], { duration: 180, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' });
+            animations.set(key, animation);
+            animation.onfinish = () => { if (animations.get(key) === animation) animations.delete(key); };
+          }
+        }
+        previous.set(key, { left: position.left, top: position.top });
       }
-      previous.set(key, { left: position.left, top: position.top });
-    }
-    for (const key of previous.keys()) if (!keys.includes(key)) {
-      previous.delete(key); animations.get(key)?.cancel(); animations.delete(key);
-    }
-    initialized = true;
+      for (const key of previous.keys()) if (!keys.includes(key)) {
+        previous.delete(key); animations.get(key)?.cancel(); animations.delete(key);
+      }
+      initialized = true;
+    });
   });
-  onCleanup(() => { for (const animation of animations.values()) animation.cancel(); });
+  onCleanup(() => { revision += 1; for (const animation of animations.values()) animation.cancel(); });
 }

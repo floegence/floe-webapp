@@ -1,4 +1,4 @@
-/* global document */
+/* global document, window, Element */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
@@ -11,6 +11,14 @@ let browser;
 try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1100, height: 750 } });
+  await page.addInitScript(() => {
+    window.barAnimations = [];
+    const original = Element.prototype.animate;
+    Element.prototype.animate = function (frames, options) {
+      if (this.hasAttribute('data-floe-bar-key')) window.barAnimations.push({ key: this.getAttribute('data-floe-bar-key'), frames });
+      return original.call(this, frames, options);
+    };
+  });
   const errors = []; page.on('pageerror', error => { errors.push(error.message); console.error(error.message); });
   const url = `http://127.0.0.1:${server.httpServer.address().port}/bar-customization.html`;
   const keys = locator => locator.locator('[data-floe-bar-key]').evaluateAll(nodes => nodes.map(node => node.dataset.floeBarKey));
@@ -28,6 +36,8 @@ try {
     const rail = page.locator('nav'), dock = page.locator('.workbench-dock');
     await drag(rail.locator('[data-floe-bar-key="files"]'), rail.locator('[data-floe-bar-key="plugins"]'), 'y');
     assert.deepEqual(await keys(rail), ['terminal', 'plugins', 'files']);
+    const fades = await page.evaluate(() => window.barAnimations.filter(animation => animation.frames[0].opacity === 0));
+    assert.deepEqual(fades, [], 'Existing navigation must never fade out during the first reorder');
     assert.equal(await page.locator('[data-active]').textContent(), 'files');
     await rail.locator('[data-floe-bar-key="files"]').press('Alt+Shift+ArrowUp');
     assert.deepEqual(await keys(rail), ['terminal', 'files', 'plugins']);
@@ -47,6 +57,25 @@ try {
     assert.equal(await page.locator('[data-created]').textContent(), '1');
     await dock.locator('[data-floe-bar-key="action:plugins"]').click();
     assert.equal(await page.locator('[data-activated]').textContent(), '1');
+
+    await page.goto(url);
+    const shortRail = page.locator('nav > div').first();
+    await shortRail.evaluate(element => { element.style.maxHeight = '68px'; });
+    await rail.locator('[data-floe-bar-key="files"]').hover();
+    const tooltip = page.getByRole('tooltip', { name: 'files', exact: true });
+    await tooltip.waitFor({ state: 'visible' });
+    assert.ok((await tooltip.boundingBox()).x >= (await rail.boundingBox()).width, 'Rail labels escape the scroll clip');
+    const first = await rail.locator('[data-floe-bar-key="files"]').boundingBox();
+    const viewport = await shortRail.boundingBox();
+    await page.mouse.move(first.x + first.width / 2, first.y + first.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(viewport.x + viewport.width / 2, viewport.y + viewport.height - 2, { steps: 5 });
+    await page.waitForFunction(() => {
+      const element = document.querySelector('nav > div');
+      return element.scrollTop > 0 && element.scrollTop + element.clientHeight >= element.scrollHeight - 1;
+    }, undefined, { timeout: 5000 });
+    await page.mouse.up();
+    assert.deepEqual(await keys(rail), ['terminal', 'plugins', 'files'], 'Edge scrolling makes the final slot reachable');
   }
   assert.deepEqual(errors, []);
   console.log('Navigation customization: pointer/keyboard order, cancellation, stable selection and canvas creation passed in light/dark.');

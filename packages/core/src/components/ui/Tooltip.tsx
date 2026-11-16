@@ -1,6 +1,7 @@
 import { Show, createSignal, onCleanup, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { createFloatingPresence } from './floatingPresence';
+import { SurfaceAnchoredLayer } from './SurfaceAnchoredLayer';
 
 export interface TooltipProps {
   content: string | JSX.Element;
@@ -8,6 +9,9 @@ export interface TooltipProps {
   placement?: 'top' | 'bottom' | 'left' | 'right';
   delay?: number;
   class?: string;
+  triggerClass?: string;
+  /** Escape a scrolling navigation rail while retaining viewport anchoring. */
+  portalScope?: 'surface' | 'viewport';
 }
 
 /**
@@ -19,6 +23,7 @@ export function Tooltip(props: TooltipProps) {
     open: visible,
     element: () => panelRef,
   });
+  let triggerRef: HTMLDivElement | undefined;
   let panelRef: HTMLDivElement | undefined;
   let timeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -56,48 +61,66 @@ export function Tooltip(props: TooltipProps) {
 
   const arrowStyles = {
     top: 'top-full left-1/2 -translate-x-1/2 border-t-popover border-x-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-popover border-x-transparent border-t-transparent',
+    bottom:
+      'bottom-full left-1/2 -translate-x-1/2 border-b-popover border-x-transparent border-t-transparent',
     left: 'left-full top-1/2 -translate-y-1/2 border-l-popover border-y-transparent border-r-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-popover border-y-transparent border-l-transparent',
+    right:
+      'right-full top-1/2 -translate-y-1/2 border-r-popover border-y-transparent border-l-transparent',
   };
 
+  const content = () => (
+    <div
+      ref={panelRef}
+      class={cn(
+        'z-50 px-2.5 py-1.5',
+        !props.portalScope && 'absolute',
+        'bg-popover text-popover-foreground text-[length:var(--floe-type-caption)]',
+        'rounded-panel border border-[var(--floe-line)]',
+        'shadow-[var(--floe-elevation-float)]',
+        'tracking-[var(--floe-tracking-normal)]',
+        'whitespace-nowrap',
+        'floe-floating-presence floe-floating-tooltip',
+        !props.portalScope && placementStyles[props.placement ?? 'top'],
+        props.class
+      )}
+      data-floating-presence={tooltipPresence.state()}
+      aria-hidden={tooltipPresence.exiting() ? 'true' : undefined}
+      role="tooltip"
+      data-floe-surface="floating"
+    >
+      {props.content}
+      {/* Inline tooltips retain their directional arrow. */}
+      <Show when={!props.portalScope}>
+        <div class={cn('absolute w-0 h-0 border-4', arrowStyles[props.placement ?? 'top'])} />
+      </Show>
+    </div>
+  );
   return (
     <div
-      class="relative inline-block"
+      ref={triggerRef}
+      class={cn('relative inline-block', props.triggerClass)}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocusIn={show}
       onFocusOut={hide}
+      onPointerDown={hide}
     >
       {props.children}
       <Show when={tooltipPresence.mounted()}>
-        <div
-          ref={panelRef}
-          class={cn(
-            'absolute z-50 px-2.5 py-1.5',
-            'bg-popover text-popover-foreground text-[length:var(--floe-type-caption)]',
-            'rounded-panel border border-[var(--floe-line)]',
-            'shadow-[var(--floe-elevation-float)]',
-            'tracking-[var(--floe-tracking-normal)]',
-            'whitespace-nowrap',
-            'floe-floating-presence floe-floating-tooltip',
-            placementStyles[props.placement ?? 'top'],
-            props.class
-          )}
-          data-floating-presence={tooltipPresence.state()}
-          aria-hidden={tooltipPresence.exiting() ? 'true' : undefined}
-          role="tooltip"
-          data-floe-surface="floating"
-        >
-          {props.content}
-          {/* Arrow */}
-          <div
-            class={cn(
-              'absolute w-0 h-0 border-4',
-              arrowStyles[props.placement ?? 'top']
-            )}
-          />
-        </div>
+        <Show when={props.portalScope} fallback={content()}>
+          <SurfaceAnchoredLayer
+            anchor={triggerRef}
+            portalScope={props.portalScope}
+            placement={
+              props.placement === 'left' || props.placement === 'right' ? props.placement : 'auto'
+            }
+            gap={8}
+            style={{ 'z-index': 50, 'pointer-events': 'none' }}
+            onAnchorDisconnect={hide}
+          >
+            {content()}
+          </SurfaceAnchoredLayer>
+        </Show>
       </Show>
     </div>
   );
