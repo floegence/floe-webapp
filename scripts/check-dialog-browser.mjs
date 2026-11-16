@@ -241,6 +241,34 @@ try {
   );
   await page.getByRole('button', { name: 'Close manager', exact: true }).click();
   await drawer.waitFor({ state: 'detached' });
+  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/dialog.html?shadow`);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const trigger = page.getByRole('button', { name: 'Open shadow settings', exact: true });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: 'Shadow settings', exact: true });
+    await dialog.getByRole('textbox', { name: 'Shadow note' }).fill('Retained input');
+    assert.equal(await dialog.evaluate(el => el.closest('[data-floe-dialog-mode]').dataset.floeDialogMode), 'surface');
+    assert.equal(await dialog.evaluate(el => el.getRootNode().host?.dataset.shadowDialogFixture), 'true');
+    await dialog.getByRole('button', { name: 'Shadow options' }).click();
+    await page.getByRole('menuitem', { name: 'Select shadow option' }).focus();
+    await page.keyboard.press('Escape');
+    await page.getByRole('menu').waitFor({ state: 'detached' });
+    assert.equal(await dialog.count(), 1);
+    await dialog.getByRole('button', { name: 'Shadow options' }).click();
+    await page.getByRole('menuitem', { name: 'Select shadow option' }).click();
+    await page.getByRole('menu').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.querySelector('[data-shadow-dialog-fixture]').shadowRoot.querySelector('output')?.textContent === 'selected');
+    await dialog.getByRole('button', { name: 'Close shadow settings' }).focus();
+    await page.keyboard.press('Tab');
+    assert.equal(await dialog.getByRole('button', { name: 'Close', exact: true }).evaluate(el => el.getRootNode().activeElement === el), true);
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'detached' });
+    await page.waitForFunction(() => {
+      const root = document.querySelector('[data-shadow-dialog-fixture]').shadowRoot;
+      return root.activeElement?.textContent === 'Open shadow settings';
+    });
+  }
   assert.deepEqual(errors, []);
   console.log(
     'Dialog browser contract passed: native input, nested menus/confirmation, exit isolation, projected placement, reduced motion.'

@@ -11,6 +11,7 @@ import {
 } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { cn } from '../../utils/cn';
+import { composedClosest } from '../../utils/domScope';
 import { Button } from './Button';
 import { X } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
@@ -162,15 +163,7 @@ export function Dialog(props: DialogProps) {
   });
 
   const isWithinDialogBoundary = (target: EventTarget | null) => {
-    if (typeof Element !== 'undefined' && target instanceof Element) {
-      return Boolean(target.closest(`[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`));
-    }
-    if (typeof Node !== 'undefined' && target instanceof Node) {
-      return Boolean(
-        target.parentElement?.closest(`[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`)
-      );
-    }
-    return false;
+    return Boolean(composedClosest(target, `[${DIALOG_SURFACE_BOUNDARY_ATTR}="${dialogBoundaryId()}"]`));
   };
 
   createEffect(() => {

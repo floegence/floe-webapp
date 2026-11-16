@@ -1,4 +1,5 @@
 import type { SurfacePortalRect } from './surfacePortalTypes';
+import { composedClosest, composedEventTarget, deepActiveElement } from '../../utils/domScope';
 
 export const DIALOG_SURFACE_HOST_ATTR = 'data-floe-dialog-surface-host';
 export const SURFACE_PORTAL_HOST_ATTR = DIALOG_SURFACE_HOST_ATTR;
@@ -46,7 +47,7 @@ function resolveElement(target: EventTarget | null): Element | null {
 }
 
 function readActiveElement(doc: Document | null): Element | null {
-  const activeElement = doc?.activeElement;
+  const activeElement = doc ? deepActiveElement(doc) : null;
   return activeElement instanceof Element ? activeElement : null;
 }
 
@@ -60,15 +61,15 @@ function captureInteractionTarget(target: EventTarget | null): void {
 }
 
 function handlePointerDownCapture(event: PointerEvent): void {
-  captureInteractionTarget(event.target);
+  captureInteractionTarget(composedEventTarget(event));
 }
 
 function handleFocusInCapture(event: FocusEvent): void {
-  captureInteractionTarget(event.target);
+  captureInteractionTarget(composedEventTarget(event));
 }
 
 function handleContextMenuCapture(event: MouseEvent): void {
-  captureInteractionTarget(event.target);
+  captureInteractionTarget(composedEventTarget(event));
 }
 
 export function ensureDialogSurfaceInteractionTracking(): void {
@@ -100,14 +101,14 @@ export function readFreshInteractionSnapshot(): DialogSurfaceInteractionSnapshot
 }
 
 function findSurfaceHostFromElement(element: Element | null): HTMLElement | null {
-  const host = element?.closest(`[${DIALOG_SURFACE_HOST_ATTR}="true"]`);
+  const host = composedClosest(element, `[${DIALOG_SURFACE_HOST_ATTR}="true"]`);
   if (typeof HTMLElement === 'undefined') return null;
   return host instanceof HTMLElement ? host : null;
 }
 
 function findSurfacePortalLayerFromHost(host: HTMLElement | null): HTMLElement | null {
   if (!host) return null;
-  const layer = host.closest(`[${SURFACE_PORTAL_LAYER_ATTR}="true"]`);
+  const layer = composedClosest(host, `[${SURFACE_PORTAL_LAYER_ATTR}="true"]`);
   if (typeof HTMLElement === 'undefined') return null;
   return layer instanceof HTMLElement ? layer : null;
 }

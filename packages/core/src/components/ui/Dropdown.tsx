@@ -2,6 +2,7 @@ import { createControllableValue } from './controllable';
 import { useFloeLocale } from '../../context/LocaleContext';
 import { createSignal, Show, Index, type Accessor, type JSX, createEffect, createMemo, onCleanup } from 'solid-js';
 import { Portal } from 'solid-js/web';
+import { composedClosest, composedEventTarget } from '../../utils/domScope';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { ChevronRight, Check } from '../icons';
@@ -140,8 +141,7 @@ export function Dropdown(props: DropdownProps) {
     open: menuPresence.mounted,
     root: () => menuRef,
     containsTarget: (target) => {
-      const element = target instanceof Element ? target : document.activeElement;
-      return Boolean(element?.closest(`[data-floe-dropdown="${dropdownId}"]`));
+      return Boolean(composedClosest(target, `[data-floe-dropdown="${dropdownId}"]`));
     },
     onClose: dismissMenu,
     onEscapeOutside: dismissMenu,
@@ -178,10 +178,7 @@ export function Dropdown(props: DropdownProps) {
     if (!open()) return;
 
     const handleClickOutside = (e: PointerEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && typeof target.closest === 'function') {
-        if (target.closest(`[data-floe-dropdown="${dropdownId}"]`)) return;
-      }
+      if (composedClosest(composedEventTarget(e), `[data-floe-dropdown="${dropdownId}"]`)) return;
       setOpen(false);
     };
 

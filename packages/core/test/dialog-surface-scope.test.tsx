@@ -11,6 +11,7 @@ import { InfiniteCanvas } from '../src/components/ui/InfiniteCanvas';
 import { SurfaceFloatingLayer } from '../src/components/ui/SurfaceFloatingLayer';
 import {
   __resetDialogSurfaceScopeForTests,
+  readFreshInteractionSnapshot,
   resolveSurfacePortalHost,
 } from '../src/components/ui/dialogSurfaceScope';
 import { handleMenuKeyboardNavigation } from '../src/components/ui/menuUtils';
@@ -25,6 +26,60 @@ vi.mock('../src/context/LayoutContext', () => ({
 }));
 
 const disposers: Array<() => void> = [];
+
+it('keeps composed interactions and explicit owners in their shadow surface', () => {
+  const outer = document.createElement('div');
+  document.body.append(outer);
+  const shadow = outer.attachShadow({ mode: 'open' });
+  shadow.innerHTML = '<section data-floe-surface-portal-layer="true"><div data-floe-dialog-surface-host="true"><div id="nested"></div></div></section>';
+  const nested = shadow.querySelector('#nested')!.attachShadow({ mode: 'open' });
+  nested.innerHTML = '<button>Open</button>';
+  const button = nested.querySelector('button')!;
+  const boundary = shadow.querySelector<HTMLElement>('[data-floe-dialog-surface-host]')!;
+  const layer = shadow.querySelector<HTMLElement>('section')!;
+  try {
+    button.focus();
+    button.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, composed: true }));
+    expect(readFreshInteractionSnapshot()?.target).toBe(button);
+    expect(readFreshInteractionSnapshot()?.activeElement).toBe(button);
+    expect(resolveSurfacePortalHost()).toMatchObject({ boundaryHost: boundary, mountHost: layer, mode: 'surface' });
+    expect(resolveSurfacePortalHost({ owner: button })).toMatchObject({ boundaryHost: boundary, mountHost: layer, mode: 'surface' });
+  } finally {
+    outer.remove();
+    __resetDialogSurfaceScopeForTests();
+  }
+});
+
+it('keeps shadow dialog keyboard focus, Escape and restoration local', async () => {
+  const outer = document.createElement('div');
+  document.body.append(outer);
+  const shadow = outer.attachShadow({ mode: 'open' });
+  const host = document.createElement('div');
+  shadow.append(host);
+  mount(() => <SurfaceDialogHarness />, host);
+  const trigger = host.querySelector<HTMLButtonElement>('[data-testid="surface-trigger"]')!;
+  trigger.focus();
+  trigger.click();
+  await flushMicrotasks();
+  const action = host.querySelector<HTMLButtonElement>('[data-testid="dialog-action"]')!;
+  expect(action).toBeTruthy();
+  const outside = host.querySelector<HTMLButtonElement>('[data-testid="outside-button"]')!;
+  outside.focus();
+  const outsideTab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, composed: true, cancelable: true });
+  outside.dispatchEvent(outsideTab);
+  expect(outsideTab.defaultPrevented).toBe(false);
+  action.focus();
+  const forward = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, composed: true, cancelable: true });
+  action.dispatchEvent(forward);
+  expect(forward.defaultPrevented).toBe(true);
+  expect(shadow.activeElement).toBe(host.querySelector('[data-floe-dialog-panel] button'));
+  action.focus();
+  action.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true, cancelable: true }));
+  expect(host.querySelector('[data-floating-presence="exiting"]')).toBeTruthy();
+  await flushFloatingExit();
+  await vi.waitFor(() => expect(shadow.activeElement).toBe(trigger));
+  expect(host.querySelector('[data-floe-dialog-overlay-root]')).toBeNull();
+});
 
 it('keeps an explicit global owner independent of another window interaction', () => {
   const owner = document.createElement('span');

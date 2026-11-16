@@ -5,6 +5,7 @@ import { DialogPlacementProvider } from '../../src/components/ui/DialogPlacement
 import { Dropdown } from '../../src/components/ui/Dropdown';
 import { InfiniteCanvas } from '../../src/components/ui/InfiniteCanvas';
 import '../../src/styles/globals.css';
+import shadowStyles from '../../src/styles/globals.css?inline';
 
 function Fixture() {
   const [open, setOpen] = createSignal(false);
@@ -181,4 +182,34 @@ function Fixture() {
     </>
   );
 }
-render(Fixture, document.getElementById('root')!);
+const shadowOnly = new URLSearchParams(location.search).has('shadow');
+if (!shadowOnly) render(Fixture, document.getElementById('root')!);
+
+const shadowHost = document.createElement('section');
+shadowHost.hidden = !shadowOnly;
+shadowHost.dataset.shadowDialogFixture = 'true';
+document.body.append(shadowHost);
+const shadow = shadowHost.attachShadow({ mode: 'open' });
+const style = document.createElement('style');
+style.textContent = shadowStyles;
+shadow.append(style);
+const mount = document.createElement('div');
+shadow.append(mount);
+render(() => {
+  const [open, setOpen] = createSignal(false);
+  const [choice, setChoice] = createSignal('none');
+  return (
+    <div data-floe-surface-portal-layer="true" data-floe-dialog-surface-host="true"
+      class="relative bg-background" style={{ width: 'min(650px, 100vw)', height: '500px' }}>
+      <button onClick={() => setOpen(true)}>Open shadow settings</button>
+      <Dialog open={open()} onOpenChange={setOpen} title="Shadow settings" escapeKeyPhase="bubble">
+        <input aria-label="Shadow note" />
+        <Dropdown trigger={<span>Shadow options</span>}
+          items={[{ id: 'selected', label: 'Select shadow option' }]}
+          onSelect={setChoice} />
+        <output>{choice()}</output>
+        <button onClick={() => setOpen(false)}>Close shadow settings</button>
+      </Dialog>
+    </div>
+  );
+}, mount);
