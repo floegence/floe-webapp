@@ -148,3 +148,19 @@ Hosts may compose the fixed geometry with their current route subset and set
 `highlight={null}` to own the subset without automatic group isolation.
 `minimap.edges` keeps a persistent overview independent of transient main edges.
 Geometry memoization follows the stable node-array identity when only edges change.
+
+## Layout motion
+
+`animateLayout` opts into a 280ms eased presentation transition after the initial
+layout. Group bounds, node positions, route points, hit targets and minimap share
+one geometry clock. Interruptions start at the painted frame; the final frame is
+the exact supplied layout. Newly visible children fade in at full text size; departing nodes fade out while inert.
+Reduced motion settles immediately, including when the preference changes during
+an active transition. Unmount cancels the frame callback.
+
+Animated nodes retain their DOM owners by ID, including a node becoming a group.
+Render slots receive reactive node properties; consumers must read changing
+semantic content reactively as well. Supplying the same renderer to both slots
+retains its content across container-kind changes. Product schemas and saved
+positions never receive interpolated coordinates. Hover-only route updates do
+not restart layout travel, and culling follows current presentation geometry.

@@ -184,3 +184,21 @@
 .floe-graph__edges [data-selected='true'] .floe-graph__edge-label {
   opacity: 1;
 }
+
+/* New routes arrive quietly; keyed paths retain their identity while geometry moves. */
+.floe-graph[data-animate-layout='true'] .floe-graph__edges > g {
+  animation: floe-graph-route-enter 160ms ease-out;
+}
+@keyframes floe-graph-route-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floe-graph[data-animate-layout='true'] .floe-graph__edges > g {
+    animation: none;
+  }
+}

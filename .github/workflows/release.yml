@@ -133,7 +133,7 @@ jobs:
         run: node scripts/check-keep-alive-browser.mjs
 
       - name: Verify graph canvas worker and interaction
-        run: node scripts/check-graph-browser.mjs && node scripts/check-graph-blob-workers.mjs && node scripts/check-graph-production.mjs
+        run: node scripts/check-graph-motion-browser.mjs && node scripts/check-graph-browser.mjs && node scripts/check-graph-blob-workers.mjs && node scripts/check-graph-production.mjs
 
       - name: Verify progress shimmer across shell themes
         run: pnpm test:progress-shimmer && pnpm test:window-status && node scripts/check-reload-placeholder-browser.mjs

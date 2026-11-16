@@ -2,12 +2,16 @@ import {
   For,
   Show,
   createMemo,
+  createEffect,
+  untrack,
   createSignal,
   createUniqueId,
   onCleanup,
   onMount,
   type JSX,
 } from 'solid-js';
+import { createStore, reconcile, unwrap } from 'solid-js/store';
+import { createGraphLayoutTransition, type MotionLayout, type MotionNode } from './layout-motion';
 import { InfiniteCanvas } from '../ui/InfiniteCanvas';
 import { resolveSurfaceInteractionTargetRole } from '../ui/localInteractionSurface';
 import { graphEdgeLabelPosition, graphRelatedEdges, graphSectionPath } from './geometry';
@@ -28,6 +32,8 @@ export interface GraphNodeRenderContext {
 
 export interface GraphCanvasProps {
   layout: GraphLayout;
+  /** Animate layout changes with one geometry clock. Reduced motion settles immediately. */
+  animateLayout?: boolean;
   viewport: GraphViewport;
   onViewportChange: (viewport: GraphViewport) => void;
   ariaLabel: string;
@@ -54,12 +60,65 @@ export function GraphCanvas(props: GraphCanvasProps) {
   const [hovered, setHovered] = createSignal<GraphObjectRef | null>(null);
   const [size, setSize] = createSignal({ width: 0, height: 0 });
   const highlight = () => (props.highlight === undefined ? hovered() : props.highlight);
-  const nodes = createMemo(() => props.layout.nodes);
+  const [painted, setPainted] = createStore<MotionLayout>({
+    nodes: [],
+    edges: [],
+    bounds: { x: 0, y: 0, width: 0, height: 0 },
+  });
+  const [moving, setMoving] = createSignal(false);
+  const [reducedMotion, setReducedMotion] = createSignal(false);
+  let frame = 0;
+  let lastNodes: GraphLayout['nodes'] | undefined;
+  let deadline = 0;
+  onMount(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(media.matches);
+    update();
+    media.addEventListener('change', update);
+    onCleanup(() => media.removeEventListener('change', update));
+  });
+  createEffect(() => {
+    const target = props.layout;
+    const reduce =
+      reducedMotion() ||
+      (typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const geometryChanged = lastNodes !== target.nodes;
+    lastNodes = target.nodes;
+    cancelAnimationFrame(frame);
+    if (!props.animateLayout) {
+      setMoving(false);
+      return;
+    }
+    const previous = untrack(() => structuredClone(unwrap(painted)));
+    if (reduce || !previous.nodes.length || (!geometryChanged && !untrack(moving))) {
+      setPainted(reconcile(structuredClone(target)));
+      setMoving(false);
+      return;
+    }
+    const sample = createGraphLayoutTransition(previous, structuredClone(target));
+    const start = performance.now();
+    if (geometryChanged) deadline = start + 280;
+    const duration = Math.max(1, deadline - start);
+    setMoving(true);
+    setPainted(reconcile(sample(0)));
+    const tick = (now: number) => {
+      const elapsed = Math.min(1, (now - start) / duration);
+      // A calm, quick departure and soft landing, without spring overshoot.
+      setPainted(reconcile(sample(1 - Math.pow(1 - elapsed, 3))));
+      if (elapsed < 1) frame = requestAnimationFrame(tick);
+      else setMoving(false);
+    };
+    frame = requestAnimationFrame(tick);
+  });
+  onCleanup(() => cancelAnimationFrame(frame));
+  const scene = () => (props.animateLayout ? painted : props.layout);
+  const nodes = createMemo(() => scene().nodes);
   const nodeMap = createMemo(() => new Map(nodes().map((node) => [node.id, node])));
   const highlightedEdges = createMemo(() => {
     const current = highlight();
     return current?.kind === 'node'
-      ? graphRelatedEdges(props.layout, current.id)
+      ? graphRelatedEdges(scene(), current.id)
       : new Set(current ? [current.id] : []);
   });
   const isolatedEdges = createMemo(() => {
@@ -67,7 +126,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
     if (current?.kind !== 'node') return null;
     const node = nodeMap().get(current.id);
     const groupId = node?.kind === 'group' ? node.id : node?.parentId;
-    return groupId ? graphRelatedEdges(props.layout, groupId) : null;
+    return groupId ? graphRelatedEdges(scene(), groupId) : null;
   });
   const isSelected = (object: GraphObjectRef) =>
     props.selected?.kind === object.kind && props.selected.id === object.id;
@@ -94,7 +153,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
     );
   };
   const edgeGeometry = createMemo(() =>
-    props.layout.edges.map((edge) => ({
+    scene().edges.map((edge) => ({
       edge,
       path: edge.sections.map(graphSectionPath).join(' '),
       label: graphEdgeLabelPosition(edge.sections),
@@ -107,6 +166,9 @@ export function GraphCanvas(props: GraphCanvasProps) {
         }))
       ),
     }))
+  );
+  const edgeMap = createMemo(
+    () => new Map(edgeGeometry().map((geometry) => [geometry.edge.id, geometry]))
   );
   const visibleEdges = (viewport: GraphViewport) => {
     const bounds = visibleBounds(viewport);
@@ -177,6 +239,9 @@ export function GraphCanvas(props: GraphCanvasProps) {
       selected: () => isSelected(object),
       openMenu: (event) => menu(object, event),
     };
+    const renderer = createMemo(() =>
+      node.kind === 'group' && props.renderGroup ? props.renderGroup : props.renderNode
+    );
     return (
       <div
         class={node.kind === 'group' ? 'floe-graph__group' : 'floe-graph__node'}
@@ -188,7 +253,10 @@ export function GraphCanvas(props: GraphCanvasProps) {
           top: `${node.y}px`,
           width: `${node.width}px`,
           height: `${node.height}px`,
+          opacity: (node as MotionNode).opacity ?? 1,
         }}
+        inert={(node as MotionNode).exiting || undefined}
+        aria-hidden={(node as MotionNode).exiting || undefined}
         role="group"
         tabindex="0"
         aria-label={node.label}
@@ -209,9 +277,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
         onContextMenu={(event) => menu(object, event)}
         onKeyDown={(event) => key(object, event)}
       >
-        {node.kind === 'group' && props.renderGroup
-          ? props.renderGroup(node, context)
-          : props.renderNode(node, context)}
+        {renderer()(node, context)}
       </div>
     );
   };
@@ -219,6 +285,8 @@ export function GraphCanvas(props: GraphCanvasProps) {
     <div
       ref={root}
       class={`floe-graph ${props.class ?? ''}`}
+      data-layout-moving={moving() || undefined}
+      data-animate-layout={props.animateLayout || undefined}
       role="region"
       aria-label={props.ariaLabel}
       tabindex="0"
@@ -258,7 +326,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
           const paintBounds = createMemo(() => {
             const bounds = visibleBounds(liveViewport());
             if (bounds) return bounds;
-            const { x, y, width, height } = props.layout.bounds;
+            const { x, y, width, height } = scene().bounds;
             return {
               left: x - 240,
               top: y - 240,
@@ -267,12 +335,11 @@ export function GraphCanvas(props: GraphCanvasProps) {
             };
           });
           const visible = createMemo(() => visibleNodes(liveViewport()));
-          const groups = createMemo(() => visible().filter((node) => node.kind === 'group'));
-          const nodes = createMemo(() => visible().filter((node) => node.kind !== 'group'));
-          const edges = createMemo(() => visibleEdges(liveViewport()));
+          const edges = createMemo(() =>
+            visibleEdges(liveViewport()).map((geometry) => geometry.edge.id)
+          );
           return (
             <>
-              <For each={groups()}>{render}</For>
               <svg
                 class="floe-graph__edges"
                 width={paintBounds().right - paintBounds().left}
@@ -300,16 +367,17 @@ export function GraphCanvas(props: GraphCanvasProps) {
                   </marker>
                 </defs>
                 <For each={edges()}>
-                  {(geometry) => {
-                    const { edge } = geometry;
-                    const object: GraphObjectRef = { kind: 'edge', id: edge.id };
-                    const path = () => geometry.path;
-                    const label = () => geometry.label;
+                  {(id) => {
+                    const geometry = () => edgeMap().get(id)!;
+                    const edge = () => geometry().edge;
+                    const object: GraphObjectRef = { kind: 'edge', id };
+                    const path = () => geometry().path;
+                    const label = () => geometry().label;
                     return (
-                      <Show when={!isolatedEdges() || isolatedEdges()!.has(edge.id)}>
+                      <Show when={!isolatedEdges() || isolatedEdges()!.has(id)}>
                         <g
-                          data-graph-object={edge.id}
-                          data-emphasized={highlightedEdges().has(edge.id)}
+                          data-graph-object={id}
+                          data-emphasized={highlightedEdges().has(id)}
                           data-selected={isSelected(object)}
                         >
                           <path
@@ -321,12 +389,12 @@ export function GraphCanvas(props: GraphCanvasProps) {
                             {(position) => (
                               <text
                                 class="floe-graph__edge-label"
-                                data-count={/^\d+$/.test(edge.label)}
+                                data-count={/^\d+$/.test(edge().label)}
                                 x={position().x}
                                 y={position().y - 6}
                                 aria-hidden="true"
                               >
-                                {edge.label}
+                                {edge().label}
                               </text>
                             )}
                           </Show>
@@ -335,7 +403,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
                             d={path()}
                             tabindex="0"
                             role="button"
-                            aria-label={edge.label}
+                            aria-label={edge().label}
                             data-floe-canvas-pan-surface="true"
                             onPointerEnter={() => hover(object)}
                             onPointerLeave={() => hover(null)}
@@ -354,7 +422,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
                   }}
                 </For>
               </svg>
-              <For each={nodes()}>{render}</For>
+              <For each={visible()}>{render}</For>
             </>
           );
         }}
@@ -362,14 +430,14 @@ export function GraphCanvas(props: GraphCanvasProps) {
       <Show when={props.minimap}>
         {(minimap) => (
           <GraphMinimap
-            layout={props.layout}
+            layout={scene()}
             viewport={props.viewport}
             size={size()}
             onViewportChange={props.onViewportChange}
             onInteractionStart={props.onInteractionStart}
             ariaLabel={minimap().ariaLabel}
             nodeStyle={minimap().nodeStyle}
-            edges={minimap().edges}
+            edges={moving() ? scene().edges : minimap().edges}
           />
         )}
       </Show>

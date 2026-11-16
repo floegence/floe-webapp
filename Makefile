@@ -124,6 +124,7 @@ graph-blob-workers:
 .PHONY: graph-production
 graph-production:
 	node scripts/check-graph-production.mjs
+	node scripts/check-graph-motion-browser.mjs
 
 .PHONY: tabs-accessibility
 tabs-accessibility:
