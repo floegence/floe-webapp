@@ -59,6 +59,8 @@ export interface GraphLayoutOptions {
   groupLayouts?: Readonly<Record<string, GraphGroupLayout>>;
   /** Clearance around routing obstacles in world units. Defaults to 4; never changes node geometry. */
   edgeClearance?: number;
+  /** Automatic border-anchor distance from corners. Defaults to 8, capped at one quarter of the side. Named ports stay exact. */
+  edgeAnchorInset?: number;
   /** Desired width/height when packing disconnected objects, including group members. */
   aspectRatio?: number;
   /** Absolute world positions. Descendants move with their group. Invalid positions always fail. */
@@ -74,7 +76,7 @@ export interface GraphLayoutOptions {
   anchor?: { nodeId: string; position: GraphPoint };
 }
 
-export type GraphRoutingOptions = Pick<GraphLayoutOptions, 'edgeClearance'>;
+export type GraphRoutingOptions = Pick<GraphLayoutOptions, 'edgeClearance' | 'edgeAnchorInset'>;
 
 export interface GraphGroupLayout {
   /** Row fills left to right; column fills top to bottom. Omitted rules retain automatic layout. */

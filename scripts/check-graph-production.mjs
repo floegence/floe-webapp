@@ -18,8 +18,8 @@ for(const module of ['vite','vite8']) {
     await writeFile(join(root,'entry.js'),`
       import {createGraphLayoutEngine} from ${JSON.stringify(join(core,'dist/components/graph/engine.js'))};
       const engine=createGraphLayoutEngine();
-      engine.layout({nodes:[{id:'a',width:100,height:80},{id:'b',width:100,height:80}],edges:[{id:'ab',source:'a',target:'b'}]})
-      .then(result=>{window.result=result;engine.dispose();}).catch(error=>{window.failure=String(error);});
+      engine.layout({nodes:[{id:'a',width:100,height:80},{id:'b',width:100,height:80}],edges:[{id:'ab',source:'a',target:'b'}]}, {edgeAnchorInset:20,edgeClearance:24,spacing:64})
+      .then(async result=>{result.edges=await engine.route(result,result.edges,{edgeAnchorInset:20,edgeClearance:24});window.result=result;engine.dispose();}).catch(error=>{window.failure=String(error);});
     `);
     await build({configFile:false,root,base:'./',build:{outDir:join(root,'dist')}});
     server=createServer(async(request,response)=>{

@@ -64,6 +64,11 @@ export async function computeGraphLayout(
     (!Number.isFinite(options.edgeClearance) || options.edgeClearance < 0)
   )
     throw new Error('Graph edge clearance must be finite and nonnegative');
+  if (
+    options.edgeAnchorInset !== undefined &&
+    (!Number.isFinite(options.edgeAnchorInset) || options.edgeAnchorInset < 0)
+  )
+    throw new Error('Graph edge anchor inset must be finite and nonnegative');
   const layoutInput = orderCompactNodes(input, options);
   if (
     options.aspectRatio !== undefined &&

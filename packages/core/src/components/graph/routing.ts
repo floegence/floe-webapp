@@ -16,9 +16,12 @@ const release = (value: unknown) => (value as { delete(): void }).delete();
 /** Joint orthogonal routing through the final rectangular geometry. */
 export async function routeGraphGeometry(
   layout: GraphLayout,
-  options: Pick<GraphLayoutOptions, 'edgeClearance' | 'routing'> = {}
+  options: Pick<GraphLayoutOptions, 'edgeClearance' | 'edgeAnchorInset' | 'routing'> = {}
 ): Promise<GraphLayout> {
   const clearance = options.edgeClearance ?? 4;
+  const anchorInset = options.edgeAnchorInset ?? 8;
+  if (!Number.isFinite(anchorInset) || anchorInset < 0)
+    throw new Error('Graph edge anchor inset must be finite and nonnegative');
   if (!Number.isFinite(clearance) || clearance < 0)
     throw new Error('Graph edge clearance must be finite and nonnegative');
   if (options.routing === 'none')
@@ -60,10 +63,12 @@ export async function routeGraphGeometry(
       router.setRoutingParameter(avoid.RoutingParameter.fixedSharedPathPenalty, 120);
       router.setRoutingParameter(avoid.RoutingParameter.portDirectionPenalty, 0);
       // Automatic anchors may move along a border to separate shared lanes.
-      // Constrained ports and loops retain their exact endpoint geometry.
+      // Constrained ports, loops, and an explicit corner inset retain their pin geometry.
+      // Libavoid endpoint nudging can otherwise move pins back inside the corner budget.
       router.setRoutingOption(
         avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes,
-        !edges.some((edge) => edge.sourcePort || edge.targetPort || edge.source === edge.target)
+        options.edgeAnchorInset === undefined &&
+          !edges.some((edge) => edge.sourcePort || edge.targetPort || edge.source === edge.target)
       );
       router.setRoutingOption(avoid.RoutingOption.nudgeSharedPathsWithCommonEndPoint, true);
       const shapes = new Map(
@@ -171,13 +176,13 @@ export async function routeGraphGeometry(
           : selfPosition
             ? [{ side: 'EAST' as const, position: selfPosition }]
             : (parallel ? [facingSides(node, other).source] : sides).flatMap((side) => {
-                const projected = projectedAnchor(node, side, other, offset);
+                const projected = projectedAnchor(node, side, other, offset, anchorInset);
                 if (parallel) return [{ side, position: projected }];
                 const horizontal = side === 'NORTH' || side === 'SOUTH';
                 const start = horizontal ? node.x : node.y,
                   size = horizontal ? node.width : node.height;
-                const low = start + Math.min(8, size / 4),
-                  high = start + size - Math.min(8, size / 4);
+                const low = start + Math.min(anchorInset, size / 4),
+                  high = start + size - Math.min(anchorInset, size / 4);
                 const coordinates = [
                   horizontal ? projected.x : projected.y,
                   low,
@@ -431,9 +436,10 @@ function projectedAnchor(
   node: GraphLayoutNode,
   side: GraphPort['side'],
   other: GraphLayoutNode,
-  offset = 0
+  offset = 0,
+  anchorInset = 8
 ): GraphPoint {
-  const inset = (size: number) => Math.min(8, size / 4);
+  const inset = (size: number) => Math.min(anchorInset, size / 4);
   const clamp = (value: number, start: number, size: number) =>
     Math.max(start + inset(size), Math.min(start + size - inset(size), value));
   const overlap = (start: number, size: number, otherStart: number, otherSize: number) => {

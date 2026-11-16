@@ -16,7 +16,9 @@ export function applyGraphPositions(
   input: readonly GraphNode[]
 ): GraphLayout | Promise<GraphLayout> {
   if (!options.positions?.length || options.positionMode === 'compact')
-    return options.routing !== 'none' && options.edgeClearance === undefined
+    return options.routing !== 'none' &&
+      options.edgeClearance === undefined &&
+      options.edgeAnchorInset === undefined
       ? layout
       : routeGraphGeometry(layout, options);
   const nodes = new Map(layout.nodes.map((node) => [node.id, { ...node }]));
