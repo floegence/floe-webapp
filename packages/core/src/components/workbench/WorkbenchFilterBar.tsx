@@ -6,6 +6,7 @@ import {
   createSignal,
   onCleanup,
   onMount,
+  untrack,
   type Component,
   type JSX,
 } from 'solid-js';
@@ -1131,7 +1132,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         </div>
         <Show when={showExternalPlaceholder('before-components')}><ExternalDockPlaceholder /></Show>
         <For each={visibleEntries().map(entry => entry.key)}>{(key, index) => {
-          const entry = () => entryByKey().get(key)!;
+          // Keep the last record until keyed disposal completes. Child effects
+          // may run after the catalog removes a key but before For disposes it.
+          const entry = createMemo<DockEntry>(previous => entryByKey().get(key) ?? previous!,
+            untrack(() => entryByKey().get(key)!));
           const initialBindAction = entry().action?.buttonRef;
           const presentation = () => entry().kind === 'widget' || entry().kind === 'tool'
             ? componentPresentation(entry().kind as 'widget' | 'tool', entry().id) : undefined;

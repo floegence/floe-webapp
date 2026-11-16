@@ -1,4 +1,4 @@
-import { type Component, For, Show, createMemo, onCleanup, onMount, type JSX } from 'solid-js';
+import { type Component, For, Show, createMemo, onCleanup, onMount, untrack, type JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
@@ -114,19 +114,21 @@ export function ActivityBar(props: ActivityBarProps) {
       {/* Top items */}
       <div ref={rail} class="flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
         <For each={props.items.map(item => item.id)}>
-          {(id) => (
-            <ActivityBarButton
-              item={itemByID().get(id)!}
+          {(id) => {
+            const item = createMemo<ActivityBarItem>(previous => itemByID().get(id) ?? previous!,
+              untrack(() => itemByID().get(id)!));
+            return <ActivityBarButton
+              item={item()}
               isActive={activeId() === id}
-              onClick={() => { if (!reorder.consumeClick()) handleItemClick(itemByID().get(id)!); }}
+              onClick={() => { if (!reorder.consumeClick()) handleItemClick(item()); }}
               elementRef={element => { if (element) elements.set(id, element); else elements.delete(id); }}
               onPointerDown={event => reorder.begin(id, event)}
               onReorderKey={event => reorder.keyDown(id, event)}
-              reorderable={Boolean(props.onReorder) && itemByID().get(id)?.reorderable !== false}
+              reorderable={Boolean(props.onReorder) && item().reorderable !== false}
               dragging={reorder.dragging() === id}
               dropEdge={reorder.position()?.key === id ? reorder.position()?.edge : undefined}
-            />
-          )}
+            />;
+          }}
         </For>
       </div>
 

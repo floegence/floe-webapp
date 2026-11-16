@@ -58,6 +58,12 @@ try {
     await dock.locator('[data-floe-bar-key="action:plugins"]').click();
     assert.equal(await page.locator('[data-activated]').textContent(), '1');
 
+    for (const key of ['widget:files', 'tool:sticky-note', 'action:plugins', 'host:weather']) {
+      await dock.locator(`[data-floe-bar-key="${key}"]`).click({ button: 'right' });
+      assert.ok(!(await keys(dock)).includes(key), `Unpin removes ${key} without a reactive read after disposal`);
+      await page.locator(`[data-restore="${key}"]`).click();
+      assert.ok((await keys(dock)).includes(key));
+    }
     await page.goto(url);
     const shortRail = page.locator('nav > div').first();
     await shortRail.evaluate(element => { element.style.maxHeight = '68px'; });
@@ -76,6 +82,10 @@ try {
     }, undefined, { timeout: 5000 });
     await page.mouse.up();
     assert.deepEqual(await keys(rail), ['terminal', 'plugins', 'files'], 'Edge scrolling makes the final slot reachable');
+    for (const key of ['files', 'plugins', 'terminal']) {
+      await rail.locator(`[data-floe-bar-key="${key}"]`).click({ button: 'right' });
+      assert.ok(!(await keys(rail)).includes(key));
+    }
   }
   assert.deepEqual(errors, []);
   console.log('Navigation customization: pointer/keyboard order, cancellation, stable selection and canvas creation passed in light/dark.');
