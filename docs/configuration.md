@@ -1,5 +1,13 @@
 # Configuration (FloeConfig)
 
+Embedded views can pass a stable, owned element as `FloeProvider.themeTarget`
+(or `ThemeProvider.target`). Theme classes, color scheme, material, palette
+tokens, and palette transition completion stay within that element. Use an
+element inside a ShadowRoot when its styles belong to that root. Removing the
+provider restores the element's original theme attributes and inline tokens;
+the enclosing document and sibling views are not changed. Omit the target for
+the normal document-wide application theme. Remount to change target ownership.
+
 Floe is configured via `FloeConfig` (deep-partial merge on top of defaults).
 
 You can pass it through:

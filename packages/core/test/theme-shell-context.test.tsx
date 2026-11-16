@@ -102,6 +102,52 @@ describe('shell theme context', () => {
     expect(document.documentElement.hasAttribute('data-floe-surface-style')).toBe(false);
   });
 
+  it('confines an embedded theme and palette motion to its owned target', async () => {
+    const page = document.documentElement;
+    page.classList.add('light');
+    page.style.colorScheme = 'light';
+    page.style.setProperty('--background', 'rgb(250, 250, 250)');
+    page.setAttribute('data-floe-shell-theme', 'outer-shell');
+    const before = page.outerHTML.slice(0, page.outerHTML.indexOf('>') + 1);
+    const target = document.createElement('section');
+    target.className = 'retained light';
+    target.style.setProperty('--background', 'rgb(1, 2, 3)');
+    document.body.append(target);
+    const root = target.attachShadow({ mode: 'open' });
+    const content = document.createElement('div');
+    root.append(content);
+    const outsideTransition = { transitionProperty: 'color', finish: vi.fn() };
+    const insideTransition = { transitionProperty: 'color', finish: vi.fn() };
+    Object.defineProperty(page, 'getAnimations', { configurable: true, value: () => [outsideTransition] });
+    Object.defineProperty(target, 'getAnimations', { configurable: true, value: () => [insideTransition] });
+    let theme!: ThemeContextValue;
+    function Probe() { theme = useTheme(); return <input value="Keep draft" />; }
+    try {
+      dispose = render(() => <FloeConfigProvider config={{ storage: { enabled: false }, theme: {
+        defaultTheme: 'dark', tokens: { dark: { '--background': 'rgb(4, 5, 6)' } },
+      } }}><ThemeProvider target={target}><Probe /></ThemeProvider></FloeConfigProvider>, content);
+      await Promise.resolve();
+      expect(target.classList.contains('dark')).toBe(true);
+      expect(target.style.getPropertyValue('--background')).toBe('rgb(4, 5, 6)');
+      expect(page.outerHTML.slice(0, page.outerHTML.indexOf('>') + 1)).toBe(before);
+      expect(outsideTransition.finish).not.toHaveBeenCalled();
+      expect(insideTransition.finish).toHaveBeenCalledTimes(1);
+      const input = root.querySelector('input')!;
+      input.focus(); input.setSelectionRange(1, 4);
+      theme.setTheme('light');
+      expect(target.style.getPropertyValue('--background')).toBe('rgb(1, 2, 3)');
+      expect(root.activeElement).toBe(input);
+      expect(input.selectionStart).toBe(1);
+      dispose(); dispose = undefined;
+      expect(target.className).toBe('retained light');
+      expect(target.style.getPropertyValue('--background')).toBe('rgb(1, 2, 3)');
+      expect(target.hasAttribute('data-floe-surface-style')).toBe(false);
+      expect(page.outerHTML.slice(0, page.outerHTML.indexOf('>') + 1)).toBe(before);
+    } finally {
+      Reflect.deleteProperty(page, 'getAnimations');
+    }
+  });
+
   it('finishes palette transitions without interrupting functional motion or remounting drafts', async () => {
     const color = { transitionProperty: 'background-color', finish: vi.fn() };
     const inherited = { transitionProperty: 'color', finish: vi.fn() };

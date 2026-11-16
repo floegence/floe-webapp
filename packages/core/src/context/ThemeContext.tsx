@@ -1,4 +1,4 @@
-import { createMemo, createSignal, createEffect, onCleanup, type Accessor } from 'solid-js';
+import { createMemo, createSignal, createEffect, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { createSimpleContext } from './createSimpleContext';
 import { useResolvedFloeConfig } from './FloeConfigContext';
 import {
@@ -48,8 +48,25 @@ function resolvePresetName(
   return presets[0]?.name;
 }
 
-export function createThemeService(): ThemeContextValue {
+/** An explicit target is owned for this service's lifetime. Its theme changes
+ * and palette motion never reach an enclosing document or sibling surface. */
+export function createThemeService(target?: HTMLElement): ThemeContextValue {
   const floe = useResolvedFloeConfig();
+  const root = target ?? (typeof document === 'undefined' ? undefined : document.documentElement);
+  const original = target ? {
+    light: target.classList.contains('light'), dark: target.classList.contains('dark'),
+    colorScheme: target.style.getPropertyValue('color-scheme'),
+    colorSchemePriority: target.style.getPropertyPriority('color-scheme'),
+    material: target.getAttribute('data-floe-surface-style'),
+    shell: target.getAttribute('data-floe-shell-theme'),
+  } : undefined;
+  const originalTokens = new Map<string, { value: string; priority: string }>();
+  const restoreToken = (name: string) => {
+    const prior = originalTokens.get(name);
+    if (prior?.value) target?.style.setProperty(name, prior.value, prior.priority);
+    else target?.style.removeProperty(name);
+  };
+  let disposed = false;
   const storageKey = () => floe.config.theme.storageKey;
   const defaultTheme = () => floe.config.theme.defaultTheme;
   const surfaceStyleStorageKey = () => floe.config.theme.surfaceStyleStorageKey ?? `${storageKey()}-surface-style`;
@@ -69,7 +86,7 @@ export function createThemeService(): ThemeContextValue {
     setSurfaceStyleSignal(isFloeSurfaceStyle(style) ? style : defaultSurfaceStyle);
   };
   // Material updates never rerun palette application or recreate the consumer tree.
-  createEffect(() => applySurfaceStyleAttribute(surfaceStyle()));
+  createEffect(() => applySurfaceStyleAttribute(surfaceStyle(), root));
   const themeTokens = () => floe.config.theme.tokens;
   const themePresets = () => floe.config.theme.presets ?? [];
   const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
@@ -161,21 +178,31 @@ export function createThemeService(): ThemeContextValue {
     const currentTheme = theme();
     const resolved = resolvedTheme();
     const activeShellPreset = shellPreset();
-    applyTheme(currentTheme);
-    applyShellThemeAttribute(activeShellPreset?.name);
+    applyTheme(currentTheme, root);
+    applyShellThemeAttribute(activeShellPreset?.name, root);
+    const tokens = resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens);
+    if (target) {
+      for (const name of Object.keys(tokens)) {
+        if (!originalTokens.has(name)) originalTokens.set(name, {
+          value: target.style.getPropertyValue(name), priority: target.style.getPropertyPriority(name),
+        });
+      }
+    }
+    const previousNames = appliedTokenNames;
     appliedTokenNames = syncThemeTokenOverrides(
-      resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens),
-      appliedTokenNames
+      tokens, previousNames, root
     );
+    if (target) for (const name of previousNames) if (!appliedTokenNames.includes(name)) restoreToken(name);
     // Resolve only palette transitions before the next paint. Functional motion
     // (including an in-flight drawer, switch, or exit) retains its own timeline.
-    if (typeof document !== 'undefined') {
+    if (root) {
       queueMicrotask(() => {
+        if (disposed) return;
         const finished = new Set<Animation>();
         // Finishing an inherited color can start a descendant's own transition.
         // Resolve that finite cascade in this same paint, once per animation.
         for (;;) {
-          const pending = (document.documentElement.getAnimations?.({ subtree: true }) ?? [])
+          const pending = (root.getAnimations?.({ subtree: true }) ?? [])
             .filter((animation) => !finished.has(animation) &&
               'transitionProperty' in animation &&
               /(^|-)color$|^(fill|stroke|box-shadow)$/.test(String(animation.transitionProperty)));
@@ -190,9 +217,21 @@ export function createThemeService(): ThemeContextValue {
   });
 
   onCleanup(() => {
-    applySurfaceStyleAttribute(undefined);
-    applyShellThemeAttribute(undefined);
-    appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames);
+    disposed = true;
+    applySurfaceStyleAttribute(undefined, root);
+    applyShellThemeAttribute(undefined, root);
+    appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames, root);
+    if (target && original) {
+      target.classList.toggle('light', original.light);
+      target.classList.toggle('dark', original.dark);
+      if (original.colorScheme) target.style.setProperty('color-scheme', original.colorScheme, original.colorSchemePriority);
+      else target.style.removeProperty('color-scheme');
+      for (const [name, value] of [['data-floe-surface-style', original.material], ['data-floe-shell-theme', original.shell]] as const) {
+        if (value === null) target.removeAttribute(name);
+        else target.setAttribute(name, value);
+      }
+      for (const name of originalTokens.keys()) restoreToken(name);
+    }
   });
 
   const setTheme = (newTheme: ThemeType) => {
@@ -259,7 +298,14 @@ export function createThemeService(): ThemeContextValue {
   };
 }
 
-export const { Provider: ThemeProvider, use: useTheme } = createSimpleContext<ThemeContextValue>({
+const themeContext = createSimpleContext<ThemeContextValue>({
   name: 'Theme',
   init: createThemeService,
 });
+
+export const useTheme = themeContext.use;
+
+export function ThemeProvider(props: { children: JSX.Element; /** Stable owned element; omitted uses the document root. */ target?: HTMLElement }) {
+  const value = createThemeService(untrack(() => props.target));
+  return <themeContext.Context.Provider value={value}>{props.children}</themeContext.Context.Provider>;
+}

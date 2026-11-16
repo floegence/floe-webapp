@@ -242,12 +242,24 @@ try {
   await page.getByRole('button', { name: 'Close manager', exact: true }).click();
   await drawer.waitFor({ state: 'detached' });
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/dialog.html?shadow`);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), false, 'embedded theme must not modify its document');
+  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-floe-surface-style')), false);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const trigger = page.getByRole('button', { name: 'Open shadow settings', exact: true });
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: 'Shadow settings', exact: true });
     await dialog.getByRole('textbox', { name: 'Shadow note' }).fill('Retained input');
+    for (const expected of ['rgb(240, 241, 242)', 'rgb(20, 21, 22)']) {
+      await page.evaluate(() => {
+        const root = document.querySelector('[data-shadow-dialog-fixture]').shadowRoot;
+        root.querySelector('input').setSelectionRange(2, 6);
+        [...root.querySelectorAll('button')].find(button => button.textContent === 'Toggle embedded theme').click();
+      });
+      assert.equal(await dialog.evaluate(el => getComputedStyle(el).getPropertyValue('--background').trim()), expected);
+      assert.equal(await dialog.getByRole('textbox', { name: 'Shadow note' }).evaluate(el => el.getRootNode().activeElement === el && el.selectionStart === 2 && el.selectionEnd === 6 && el.value === 'Retained input'), true);
+      assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), false);
+    }
     assert.equal(await dialog.evaluate(el => el.closest('[data-floe-dialog-mode]').dataset.floeDialogMode), 'surface');
     assert.equal(await dialog.evaluate(el => el.getRootNode().host?.dataset.shadowDialogFixture), 'true');
     await dialog.getByRole('button', { name: 'Shadow options' }).click();
@@ -269,6 +281,11 @@ try {
       return root.activeElement?.textContent === 'Open shadow settings';
     });
   }
+  await page.getByRole('button', { name: 'Unmount embedded theme', exact: true }).click();
+  assert.deepEqual(await page.locator('[data-shadow-theme-target]').evaluate(el => ({
+    classes: el.className, background: el.style.getPropertyValue('--background'), priority: el.style.getPropertyPriority('--background'),
+    material: el.getAttribute('data-floe-surface-style'), scheme: el.style.colorScheme,
+  })), { classes: 'retained light', background: 'rgb(1, 2, 3)', priority: 'important', material: null, scheme: '' });
   assert.deepEqual(errors, []);
   console.log(
     'Dialog browser contract passed: native input, nested menus/confirmation, exit isolation, projected placement, reduced motion.'

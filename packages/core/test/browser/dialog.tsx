@@ -4,6 +4,8 @@ import { ConfirmDialog, Dialog } from '../../src/components/ui/Dialog';
 import { DialogPlacementProvider } from '../../src/components/ui/DialogPlacementContext';
 import { Dropdown } from '../../src/components/ui/Dropdown';
 import { InfiniteCanvas } from '../../src/components/ui/InfiniteCanvas';
+import { FloeProvider } from '../../src/app/FloeProvider';
+import { useTheme } from '../../src/context/ThemeContext';
 import '../../src/styles/globals.css';
 import shadowStyles from '../../src/styles/globals.css?inline';
 
@@ -194,14 +196,20 @@ const style = document.createElement('style');
 style.textContent = shadowStyles;
 shadow.append(style);
 const mount = document.createElement('div');
+mount.dataset.shadowThemeTarget = 'true';
+mount.className = 'retained light';
+mount.style.setProperty('--background', 'rgb(1, 2, 3)', 'important');
 shadow.append(mount);
-render(() => {
+function ShadowFixture() {
+  const theme = useTheme();
   const [open, setOpen] = createSignal(false);
   const [choice, setChoice] = createSignal('none');
   return (
     <div data-floe-surface-portal-layer="true" data-floe-dialog-surface-host="true"
       class="relative bg-background" style={{ width: 'min(650px, 100vw)', height: '500px' }}>
       <button onClick={() => setOpen(true)}>Open shadow settings</button>
+      <button onClick={() => theme.toggleTheme()}>Toggle embedded theme</button>
+      <button onClick={() => disposeShadow()}>Unmount embedded theme</button>
       <Dialog open={open()} onOpenChange={setOpen} title="Shadow settings" escapeKeyPhase="bubble">
         <input aria-label="Shadow note" />
         <Dropdown trigger={<span>Shadow options</span>}
@@ -212,4 +220,7 @@ render(() => {
       </Dialog>
     </div>
   );
-}, mount);
+}
+const disposeShadow = render(() => <FloeProvider themeTarget={mount} config={{ storage: { enabled: false }, theme: {
+  defaultTheme: 'dark', tokens: { dark: { '--background': 'rgb(20, 21, 22)' }, light: { '--background': 'rgb(240, 241, 242)' } },
+} }}><ShadowFixture /></FloeProvider>, mount);

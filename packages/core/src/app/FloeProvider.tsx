@@ -13,6 +13,8 @@ export interface FloeProviderProps {
   children: JSX.Element;
   /** Global Floe configuration (storage, keybinds, strings, defaults). */
   config?: DeepPartial<FloeConfig>;
+  /** Stable owned element for embedded theme tokens and palette motion. */
+  themeTarget?: HTMLElement;
   /**
    * Allows consumers to inject their own providers *after* ThemeProvider,
    * while ensuring the inner tree is created inside the injected provider.
@@ -41,7 +43,7 @@ export function FloeProvider(props: FloeProviderProps) {
 
   return (
     <FloeConfigProvider config={props.config}>
-      <ThemeProvider>
+      <ThemeProvider target={props.themeTarget}>
         {props.wrapAfterTheme ? props.wrapAfterTheme(renderInner) : renderInner()}
       </ThemeProvider>
     </FloeConfigProvider>
