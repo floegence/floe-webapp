@@ -32,7 +32,12 @@ try {
   for (const theme of ['light', 'dark']) {
     await page.goto(url);
     await page.locator('[data-floe-bar-key="files"]').waitFor();
-    await page.evaluate(mode => document.documentElement.classList.add(mode), theme);
+    await page.evaluate(mode => {
+      const root = document.documentElement;
+      root.classList.toggle('light', mode === 'light');
+      root.classList.toggle('dark', mode === 'dark');
+      root.dataset.floeShellTheme = `porcelain-${mode}`;
+    }, theme);
     const rail = page.locator('nav'), dock = page.locator('.workbench-dock');
     const press = await rail.locator('[data-floe-bar-key="terminal"]').boundingBox();
     await page.mouse.move(press.x + press.width / 2, press.y + press.height / 2);
