@@ -49,9 +49,12 @@ for (const name of packages) {
   if (metadata.license !== expectedLicense) {
     throw new Error(`registry license mismatch for ${name}@${version}`);
   }
-  const tarballResponse = await globalThis.fetch(metadata.dist.tarball);
-  if (!tarballResponse.ok) throw new Error(`tarball readback failed for ${name}@${version}`);
-  const bytes = new Uint8Array(await tarballResponse.arrayBuffer());
+  // Package metadata and tarballs propagate independently through npm's CDN.
+  const bytes = await retry(async () => {
+    const response = await globalThis.fetch(metadata.dist.tarball);
+    if (!response.ok) throw new Error(`tarball readback failed for ${name}@${version}: ${response.status}`);
+    return new Uint8Array(await response.arrayBuffer());
+  });
   const digest = createHash('sha512').update(bytes).digest('base64');
   if (metadata.dist.integrity !== `sha512-${digest}`)
     throw new Error(`tarball integrity mismatch for ${name}@${version}`);
