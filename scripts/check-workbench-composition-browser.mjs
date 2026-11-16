@@ -1202,6 +1202,14 @@ try {
       );
       assert.deepEqual(errors, []);
       if (engine.startsWith('chromium')) {
+        // Idle starts after finite placement motion and ResizeObserver work
+        // settle. CSS overrides above do not disable Web Animations API motion.
+        await page.evaluate(async () => {
+          await Promise.all(document.getAnimations().filter(animation =>
+            Number.isFinite(Number(animation.effect?.getComputedTiming().endTime))
+          ).map(animation => animation.finished.catch(() => undefined)));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
         const cdp = await page.context().newCDPSession(page);
         await cdp.send('Performance.enable');
         const first = await cdp.send('Performance.getMetrics');
