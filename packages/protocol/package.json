@@ -1,6 +1,6 @@
 {
   "name": "@floegence/floe-webapp-protocol",
-  "version": "0.101.26",
+  "version": "0.101.27",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

@@ -194,6 +194,10 @@ export function GraphCanvas(props: GraphCanvasProps) {
     setHovered(object);
     props.onHover?.(object);
   };
+  const pointerHover = (object: GraphObjectRef) => {
+    if (!moving() && (hovered()?.kind !== object.kind || hovered()?.id !== object.id))
+      hover(object);
+  };
   const eventAt = (
     object: GraphObjectRef | null,
     owner: Element,
@@ -278,8 +282,11 @@ export function GraphCanvas(props: GraphCanvasProps) {
         role="group"
         tabindex="0"
         aria-label={node.label}
-        onPointerEnter={() => hover(object)}
-        onPointerLeave={() => hover(null)}
+        onPointerEnter={() => pointerHover(object)}
+        onPointerMove={() => pointerHover(object)}
+        onPointerLeave={() => {
+          if (!moving()) hover(null);
+        }}
         onFocusIn={() => hover(object)}
         onFocusOut={() => hover(null)}
         onClick={(event) => {
@@ -423,8 +430,11 @@ export function GraphCanvas(props: GraphCanvasProps) {
                             role="button"
                             aria-label={edge().label}
                             data-floe-canvas-pan-surface="true"
-                            onPointerEnter={() => hover(object)}
-                            onPointerLeave={() => hover(null)}
+                            onPointerEnter={() => pointerHover(object)}
+                            onPointerMove={() => pointerHover(object)}
+                            onPointerLeave={() => {
+                              if (!moving()) hover(null);
+                            }}
                             onFocus={() => hover(object)}
                             onBlur={() => hover(null)}
                             onClick={(event) => {

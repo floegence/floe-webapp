@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.27
+
+- Keep graph hover targets stable while nodes travel beneath a stationary pointer; resume on deliberate pointer movement after settlement.
+
 ## 0.101.26
 
 - Clip entering and departing child nodes to their animating group bounds.

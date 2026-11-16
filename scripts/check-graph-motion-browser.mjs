@@ -32,7 +32,7 @@ function App(){
  let original=JSON.stringify(layout());
  window.change=expanded=>{setLayout(scene(expanded));original=JSON.stringify(layout());};
  window.sceneIntact=()=>original===JSON.stringify(layout());
- return <div style="width:1000px;height:650px"><GraphCanvas animateLayout layout={layout()} viewport={{x:0,y:0,scale:1}} onViewportChange={()=>{}} ariaLabel="Motion graph"
+ return <div style="width:1000px;height:650px"><GraphCanvas animateLayout layout={layout()} viewport={{x:0,y:0,scale:1}} onViewportChange={()=>{}} ariaLabel="Motion graph" onHover={value=>{window.lastHover=value;}}
  renderNode={card} renderGroup={card}/></div>;
 }
 render(()=><App/>,document.getElementById('root'));
@@ -54,6 +54,7 @@ render(()=><App/>,document.getElementById('root'));
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(`${server.resolvedUrls.local[0]}${fixture.split('/').at(-1)}/`);
+  await page.mouse.move(100, 210);
   const frames = await page.evaluate(async () => {
     const group = document.querySelector('[data-graph-object="group"]');
     const peer = document.querySelector('[data-graph-object="peer"]');
@@ -81,6 +82,7 @@ render(()=><App/>,document.getElementById('root'));
       sameInput: input === document.querySelector('[aria-label="Peer notes"]'),
       focused: document.activeElement === toggle,
       value: input.value,
+      hover: window.lastHover,
     };
   });
   assert.ok(
@@ -100,6 +102,13 @@ render(()=><App/>,document.getElementById('root'));
     'entering children stay clipped to their growing parent'
   );
   assert.equal(frames.value, 'Retained draft');
+  assert.notEqual(
+    frames.hover?.id,
+    'child',
+    'layout travel does not retarget a stationary pointer'
+  );
+  await page.mouse.move(110, 210);
+  await page.waitForFunction(() => window.lastHover?.id === 'child');
   await page.evaluate(() => window.change(false));
   await page.waitForTimeout(70);
   const reversal = await page.evaluate(() => {

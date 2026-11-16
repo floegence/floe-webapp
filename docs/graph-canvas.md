@@ -164,3 +164,5 @@ semantic content reactively as well. Supplying the same renderer to both slots
 retains its content across container-kind changes. Product schemas and saved
 positions never receive interpolated coordinates. Hover-only route updates do
 not restart layout travel, and culling follows current presentation geometry.
+Children stay clipped to moving parent bounds. Geometry travel never retargets a
+stationary pointer; deliberate pointer movement resumes hover after settlement.
