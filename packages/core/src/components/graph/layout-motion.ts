@@ -46,13 +46,33 @@ export function createGraphLayoutTransition(from: MotionLayout, to: GraphLayout)
     };
     return { node, start };
   });
+  const starts = new Map(nodes.map(({ node, start }) => [node.id, start]));
   const leaving = from.nodes.filter((node) => !targets.has(node.id));
   const previousEdges = new Map(from.edges.map((edge) => [edge.id, edge]));
   const edges = to.edges.map((edge) => {
     const old = previousEdges.get(edge.id);
     const sections = edge.sections.map((section, index) => {
-      const before = old?.sections[index];
-      if (!before?.length || !section.length) return () => section;
+      let before =
+        old?.source === edge.source && old.target === edge.target ? old.sections[index] : undefined;
+      if (!section.length) return () => section;
+      if (!before?.length) {
+        const source = targets.get(edge.source),
+          target = targets.get(edge.target);
+        const sourceStart = starts.get(edge.source),
+          targetStart = starts.get(edge.target);
+        if (!source || !target || !sourceStart || !targetStart) return () => section;
+        const offset = (value: GraphPoint, end: GraphLayoutNode, start: GraphLayoutNode) => ({
+          x: start.x - end.x + ((value.x - end.x) / end.width) * (start.width - end.width),
+          y: start.y - end.y + ((value.y - end.y) / end.height) * (start.height - end.height),
+        });
+        const first = offset(section[0]!, source, sourceStart);
+        const last = offset(section[section.length - 1]!, target, targetStart);
+        const fractions = parameterize(section).stops;
+        before = section.map((value, i) => ({
+          x: value.x + mix(first.x, last.x, fractions[i]!),
+          y: value.y + mix(first.y, last.y, fractions[i]!),
+        }));
+      }
       const a = parameterize(before),
         b = parameterize(section);
       // Keep every bend from both routes; differing router point counts never detach endpoints.

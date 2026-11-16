@@ -78,4 +78,41 @@ describe('graph layout presentation', () => {
     expect(sample(0.5).nodes.at(-1)?.opacity).toBe(0.5);
     expect(sample(1)).toBe(expanded);
   });
+  it('attaches a newly routed child edge to its entering node from the first frame', () => {
+    const child = {
+      id: 'child',
+      label: 'Child',
+      parentId: 'a',
+      x: 20,
+      y: 60,
+      width: 160,
+      height: 100,
+    };
+    const target = {
+      ...after,
+      nodes: [...after.nodes, child],
+      edges: [
+        {
+          id: 'new',
+          label: 'New',
+          source: 'child',
+          target: 'b',
+          sections: [
+            [
+              { x: 180, y: 110 },
+              { x: 400, y: 190 },
+            ],
+          ],
+        },
+      ],
+    };
+    const sample = createGraphLayoutTransition(before, target);
+    for (const t of [0, 0.2, 0.6, 1]) {
+      const value = sample(t),
+        entered = value.nodes.find((node) => node.id === 'child')!;
+      const route = value.edges[0]!.sections[0]!;
+      expect(route[0]!.x).toBeCloseTo(entered.x + entered.width);
+      expect(route[0]!.y).toBeCloseTo(entered.y + entered.height / 2);
+    }
+  });
 });
