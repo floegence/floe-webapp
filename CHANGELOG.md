@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.26
+
+- Clip entering and departing child nodes to their animating group bounds.
+- Keep route-only focus updates independent of graph geometry copies for large canvases.
+
 ## 0.101.25
 
 - Add opt-in graph layout motion with synchronized node bounds, routes and minimap, interruptible transitions and reduced-motion support.

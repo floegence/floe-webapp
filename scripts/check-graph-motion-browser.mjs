@@ -1,4 +1,4 @@
-/* global window, document, requestAnimationFrame, performance */
+/* global window, document, requestAnimationFrame, performance, getComputedStyle */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -69,7 +69,11 @@ render(()=><App/>,document.getElementById('root'));
       const edge = document.querySelector('.floe-graph__edge');
       const box = group.getBoundingClientRect();
       const point = edge.getPointAtLength(0).matrixTransform(edge.getScreenCTM());
-      samples.push({ width: box.width, attachment: Math.abs(point.x - box.right) });
+      const child = document.querySelector('[data-graph-object="child"]');
+      const bounds = child?.getBoundingClientRect();
+      const clipped =
+        !bounds || bounds.bottom <= box.bottom || getComputedStyle(child).clipPath !== 'none';
+      samples.push({ width: box.width, attachment: Math.abs(point.x - box.right), clipped });
     }
     return {
       samples,
@@ -90,6 +94,10 @@ render(()=><App/>,document.getElementById('root'));
   assert.ok(
     frames.sameGroup && frames.sameInput && frames.focused,
     'motion retains DOM owners, draft and keyboard focus'
+  );
+  assert.ok(
+    frames.samples.every((frame) => frame.clipped),
+    'entering children stay clipped to their growing parent'
   );
   assert.equal(frames.value, 'Retained draft');
   await page.evaluate(() => window.change(false));

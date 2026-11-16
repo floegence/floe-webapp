@@ -90,6 +90,11 @@ export function GraphCanvas(props: GraphCanvasProps) {
       setMoving(false);
       return;
     }
+    // Route focus changes do not touch stable node geometry or copy the full scene.
+    if (!geometryChanged && !untrack(moving) && untrack(() => painted.nodes.length)) {
+      setPainted('edges', reconcile(structuredClone(target.edges)));
+      return;
+    }
     const previous = untrack(() => structuredClone(unwrap(painted)));
     if (reduce || !previous.nodes.length || (!geometryChanged && !untrack(moving))) {
       setPainted(reconcile(structuredClone(target)));
@@ -233,6 +238,18 @@ export function GraphCanvas(props: GraphCanvasProps) {
     observer.observe(root);
     onCleanup(() => observer.disconnect());
   });
+  const clipToParent = (node: GraphLayoutNode) => {
+    if (!moving() || !node.parentId) return undefined;
+    const parent = nodeMap().get(node.parentId);
+    if (!parent) return undefined;
+    const top = Math.max(0, parent.y - node.y),
+      left = Math.max(0, parent.x - node.x);
+    const right = Math.max(0, node.x + node.width - parent.x - parent.width);
+    const bottom = Math.max(0, node.y + node.height - parent.y - parent.height);
+    return top || left || right || bottom
+      ? `inset(${top}px ${right}px ${bottom}px ${left}px)`
+      : undefined;
+  };
   const render = (node: GraphLayoutNode) => {
     const object: GraphObjectRef = { kind: 'node', id: node.id };
     const context: GraphNodeRenderContext = {
@@ -254,6 +271,7 @@ export function GraphCanvas(props: GraphCanvasProps) {
           width: `${node.width}px`,
           height: `${node.height}px`,
           opacity: (node as MotionNode).opacity ?? 1,
+          'clip-path': clipToParent(node),
         }}
         inert={(node as MotionNode).exiting || undefined}
         aria-hidden={(node as MotionNode).exiting || undefined}
