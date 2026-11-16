@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.101.25
+
+- Add opt-in graph layout motion with synchronized node bounds, routes and minimap, interruptible transitions and reduced-motion support.
+- Retain graph owners and keyboard focus across group expansion; fade departing nodes without allowing stale interaction.
+- Correct release version checks after the unpublished 0.101.24 candidate.
+
 ## 0.101.23
 
 - Build pointer-lock browser fixture styles directly from source so clean release workers verify the opaque guidance without a preexisting dist directory.
