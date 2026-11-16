@@ -7,7 +7,8 @@
  * imported last silently won. What stays here is what `language.css` does not
  * own, plus the touch overrides that must land on `body` instead of `:root`.
  */
-:root {
+:root,
+[data-floe-theme] {
   /* `--radius` predates the language ladder and is still read by downstream
    * consumers. Point it at the ladder rather than hard-coding a second control
    * radius; the reference resolves at computed-value time, so import order no
@@ -34,7 +35,8 @@
 
 /* Compact visual controls retain usable, non-overlapping touch geometry. */
 @media (pointer: coarse) {
-  body {
+  body,
+  [data-floe-theme] {
     --floe-type-control: 0.8125rem;
     --floe-type-body: 0.875rem;
     --floe-line-control: 1.25rem;

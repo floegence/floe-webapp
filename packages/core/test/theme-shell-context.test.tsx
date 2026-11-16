@@ -128,6 +128,7 @@ describe('shell theme context', () => {
       } }}><ThemeProvider target={target}><Probe /></ThemeProvider></FloeConfigProvider>, content);
       await Promise.resolve();
       expect(target.classList.contains('dark')).toBe(true);
+      expect(target.hasAttribute('data-floe-theme')).toBe(true);
       expect(target.style.getPropertyValue('--background')).toBe('rgb(4, 5, 6)');
       expect(page.outerHTML.slice(0, page.outerHTML.indexOf('>') + 1)).toBe(before);
       expect(outsideTransition.finish).not.toHaveBeenCalled();
@@ -142,6 +143,7 @@ describe('shell theme context', () => {
       expect(target.className).toBe('retained light');
       expect(target.style.getPropertyValue('--background')).toBe('rgb(1, 2, 3)');
       expect(target.hasAttribute('data-floe-surface-style')).toBe(false);
+      expect(target.hasAttribute('data-floe-theme')).toBe(false);
       expect(page.outerHTML.slice(0, page.outerHTML.indexOf('>') + 1)).toBe(before);
     } finally {
       Reflect.deleteProperty(page, 'getAnimations');

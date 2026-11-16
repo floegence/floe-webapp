@@ -244,6 +244,8 @@ try {
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/test/browser/dialog.html?shadow`);
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), false, 'embedded theme must not modify its document');
   assert.equal(await page.evaluate(() => document.documentElement.hasAttribute('data-floe-surface-style')), false);
+  await page.evaluate(() => document.documentElement.style.setProperty('--floe-type-body', '37px'));
+  assert.equal(await page.locator('[data-shadow-theme-target]').evaluate(el => getComputedStyle(el).getPropertyValue('--floe-type-body').trim()), '0.8125rem', 'embedded typography must own its language scale');
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const trigger = page.getByRole('button', { name: 'Open shadow settings', exact: true });

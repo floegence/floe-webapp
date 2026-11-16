@@ -331,3 +331,6 @@ in exactly one placement at a time. Its parent owns the content lifetime;
 placement cleanup captures native scroll offsets before detachment and the next
 mount restores them. Dialog continues to own focus and disclosure. Reusing a bare
 DOM node alone does not preserve native scrolling through detach/reattach.
+
+Embedded theme targets establish `data-floe-theme` for the published typography, shape and spacing tokens, including inside a ShadowRoot. Disposing the provider restores the original marker and style values.
+Embedded consumers can use the public `deepActiveElement`, `composedEventTarget`, and `composedContains` utilities to preserve focus and event ownership across Shadow DOM boundaries. They resolve browser state without moving focus or changing event propagation.

@@ -5,6 +5,7 @@ export * from './keybind';
 export * from './bodyStyleLock';
 export * from './animations';
 export * from './dom';
+export * from './domScope';
 export * from './gridCollision';
 export * from './gridLayout';
 export * from './hotInteraction';

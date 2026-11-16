@@ -59,6 +59,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
     colorSchemePriority: target.style.getPropertyPriority('color-scheme'),
     material: target.getAttribute('data-floe-surface-style'),
     shell: target.getAttribute('data-floe-shell-theme'),
+    themeScope: target.getAttribute('data-floe-theme'),
   } : undefined;
   const originalTokens = new Map<string, { value: string; priority: string }>();
   const restoreToken = (name: string) => {
@@ -178,6 +179,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
     const currentTheme = theme();
     const resolved = resolvedTheme();
     const activeShellPreset = shellPreset();
+    if (target) target.setAttribute('data-floe-theme', '');
     applyTheme(currentTheme, root);
     applyShellThemeAttribute(activeShellPreset?.name, root);
     const tokens = resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens);
@@ -226,7 +228,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
       target.classList.toggle('dark', original.dark);
       if (original.colorScheme) target.style.setProperty('color-scheme', original.colorScheme, original.colorSchemePriority);
       else target.style.removeProperty('color-scheme');
-      for (const [name, value] of [['data-floe-surface-style', original.material], ['data-floe-shell-theme', original.shell]] as const) {
+      for (const [name, value] of [['data-floe-surface-style', original.material], ['data-floe-shell-theme', original.shell], ['data-floe-theme', original.themeScope]] as const) {
         if (value === null) target.removeAttribute(name);
         else target.setAttribute(name, value);
       }
