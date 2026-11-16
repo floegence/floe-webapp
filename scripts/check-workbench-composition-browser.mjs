@@ -1184,8 +1184,22 @@ try {
       }
       await page.setViewportSize({ width: 390, height: 760 });
       await page.waitForTimeout(100);
+      // Observe the ResizeObserver-driven placement after a viewport change.
+      // Loaded CI runners must satisfy the same settled boundary without
+      // depending on an arbitrary 100ms scheduling assumption.
+      await page.waitForFunction(
+        () => {
+          const tools = document.querySelector('.workbench-object-tools')?.getBoundingClientRect();
+          return tools && tools.x >= 0 && tools.right <= 391;
+        },
+        undefined,
+        { timeout: 5000 }
+      );
       const tools = await page.locator('.workbench-object-tools').boundingBox();
-      assert.ok(tools.x >= 0 && tools.x + tools.width <= 391, 'toolbar fits narrow viewport');
+      assert.ok(
+        tools.x >= 0 && tools.x + tools.width <= 391,
+        `toolbar fits narrow viewport: ${JSON.stringify({ engine, tools })}`
+      );
       assert.deepEqual(errors, []);
       if (engine.startsWith('chromium')) {
         const cdp = await page.context().newCDPSession(page);

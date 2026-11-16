@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.28
+
+- Await observed narrow Workbench toolbar placement in browser qualification, preserving its viewport boundary assertion across WebKit resize scheduling.
+
 ## 0.101.27
 
 - Keep graph hover targets stable while nodes travel beneath a stationary pointer; resume on deliberate pointer movement after settlement.
