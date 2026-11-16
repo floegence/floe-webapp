@@ -34,6 +34,13 @@ try {
     await page.locator('[data-floe-bar-key="files"]').waitFor();
     await page.evaluate(mode => document.documentElement.classList.add(mode), theme);
     const rail = page.locator('nav'), dock = page.locator('.workbench-dock');
+    const press = await rail.locator('[data-floe-bar-key="terminal"]').boundingBox();
+    await page.mouse.move(press.x + press.width / 2, press.y + press.height / 2);
+    await page.mouse.down(); await page.keyboard.press('Escape'); await page.mouse.up();
+    assert.equal(await page.locator('[data-active]').textContent(), 'files', 'Escape before threshold must not activate');
+    await rail.locator('[data-floe-bar-key="terminal"]').press('Enter');
+    assert.equal(await page.locator('[data-active]').textContent(), 'terminal', 'Cancel does not swallow a later keyboard activation');
+    await rail.locator('[data-floe-bar-key="files"]').click();
     await drag(rail.locator('[data-floe-bar-key="files"]'), rail.locator('[data-floe-bar-key="plugins"]'), 'y');
     assert.deepEqual(await keys(rail), ['terminal', 'plugins', 'files']);
     const fades = await page.evaluate(() => window.barAnimations.filter(animation => animation.frames[0].opacity === 0));

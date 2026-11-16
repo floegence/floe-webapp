@@ -120,7 +120,7 @@ export function ActivityBar(props: ActivityBarProps) {
             return <ActivityBarButton
               item={item()}
               isActive={activeId() === id}
-              onClick={() => { if (!reorder.consumeClick()) handleItemClick(item()); }}
+              onClick={event => { if (!reorder.consumeClick(event)) handleItemClick(item()); }}
               elementRef={element => { if (element) elements.set(id, element); else elements.delete(id); }}
               onPointerDown={event => reorder.begin(id, event)}
               onReorderKey={event => reorder.keyDown(id, event)}
@@ -153,7 +153,7 @@ export function ActivityBar(props: ActivityBarProps) {
 interface ActivityBarButtonProps {
   item: ActivityBarItem;
   isActive: boolean;
-  onClick: () => void;
+  onClick: (event: MouseEvent) => void;
   elementRef?: (element: HTMLButtonElement | null) => void;
   onPointerDown?: (event: PointerEvent) => void;
   onReorderKey?: (event: KeyboardEvent) => void;
@@ -217,7 +217,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           'text-activity-bar-foreground',
           visuallyActive() && 'text-activity-bar-foreground-active'
         )}
-        onClick={() => props.onClick()}
+        onClick={event => props.onClick(event)}
         onContextMenu={handleContextMenu}
         onKeyDown={handleKeyDown}
         aria-label={props.item.label}

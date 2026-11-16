@@ -47,7 +47,6 @@ export function createBarReorder(options: {
   let session: PointerSessionController | undefined;
   let suppressClick = false;
   let scrollFrame = 0;
-  let clickTimer: ReturnType<typeof setTimeout> | undefined;
   const cancel = (event: KeyboardEvent) => {
     if (event.key !== 'Escape' || !session) return;
     event.preventDefault(); event.stopPropagation(); session.stop({ commit: false });
@@ -56,7 +55,7 @@ export function createBarReorder(options: {
     options.keys(); options.onReorder();
     session?.stop({ commit: false });
   });
-  onCleanup(() => { session?.stop({ commit: false }); if (clickTimer) clearTimeout(clickTimer); });
+  onCleanup(() => session?.stop({ commit: false }));
   const commit = (key: string, order: string[]) => {
     options.onReorder()?.(order);
     options.elements.get(key)?.focus({ preventScroll: true });
@@ -68,9 +67,15 @@ export function createBarReorder(options: {
       const order = keyboardBarOrder(options.keys(), key, event, 'y');
       if (order) commit(key, order);
     },
-    consumeClick() { if (!suppressClick) return false; suppressClick = false; return true; },
+    consumeClick(event: MouseEvent) {
+      const suppressed = suppressClick && event.detail !== 0;
+      suppressClick = false;
+      return suppressed;
+    },
     begin(key: string, event: PointerEvent) {
-      if (event.button !== 0 || !options.onReorder() || !options.keys().includes(key)) return;
+      if (event.button !== 0) return;
+      suppressClick = false;
+      if (!options.onReorder() || !options.keys().includes(key)) return;
       session?.stop({ commit: false });
       const owner = event.currentTarget as HTMLElement;
       const startY = event.clientY;
@@ -111,11 +116,9 @@ export function createBarReorder(options: {
           session = undefined;
           owner.ownerDocument.removeEventListener('keydown', cancel, true);
           setDragging(undefined); setPosition(undefined);
-          if (moved) {
-            suppressClick = true;
-            if (clickTimer) clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => { suppressClick = false; }, 0);
-          }
+          // A canceled press still produces a native click on pointer release.
+          // Retain suppression until that click or the next explicit press.
+          suppressClick = moved || !accepted;
           if (accepted && moved && proposal) commit(key, proposal.order);
         },
       });
@@ -170,8 +173,8 @@ export function createBarLayoutMotion(options: {
           const fromY = before ? before.top - position.top + position.dy : dy;
           if (!before || Math.abs(fromX - dx) + Math.abs(fromY - dy) > .5) {
             const animation = element.animate([
-              { transform: `translate3d(${fromX}px, ${fromY}px, 0)`, opacity: before ? 1 : 0 },
-              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1 },
+              { transform: `translate3d(${fromX}px, ${fromY}px, 0)`, ...(!before ? { opacity: 0 } : {}) },
+              { transform: `translate3d(${dx}px, ${dy}px, 0)`, ...(!before ? { opacity: 1 } : {}) },
             ], { duration: 180, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' });
             animations.set(key, animation);
             animation.onfinish = () => { if (animations.get(key) === animation) animations.delete(key); };
