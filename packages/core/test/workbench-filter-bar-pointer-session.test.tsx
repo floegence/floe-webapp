@@ -103,6 +103,33 @@ describe('WorkbenchFilterBar pointer session', () => {
     document.body.innerHTML = '';
   });
 
+  it('keeps hidden entries activatable and reorders components with actions without creating or filtering', () => {
+    const host = createWorkbenchHost();
+    const [order, setOrder] = createSignal(['widget:custom.files', 'action:library', 'tool:sticky-note']);
+    const [hidden, setHidden] = createSignal(['tool:sticky-note']);
+    const activate = vi.fn(); const solo = vi.fn(); const create = vi.fn(); const menu = vi.fn();
+    dispose = render(() => <WorkbenchFilterBar widgetDefinitions={widgetDefinitions} widgets={[]} filters={{}}
+      onSoloFilter={solo} onCreateAt={create} onFocusCycleItem={activate} activationMode="focus-cycle"
+      dockActions={[{ id: 'library', label: 'Library', icon: () => <svg />, onActivate: activate }]}
+      customization={{ order: order(), hidden: hidden(), onOrderChange: setOrder, onContextMenu: menu,
+        overflow: props => <button data-overflow onClick={event => props.entries[0].activate(event.currentTarget)}>{props.entries.map(item => item.label).join(',')}</button> }} />, host);
+    const library = host.querySelector<HTMLButtonElement>('[data-workbench-dock-action="library"]')!;
+    library.focus();
+    library.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+    expect(order()).toEqual(['action:library', 'widget:custom.files']);
+    expect(host.querySelector('[data-floe-bar-key]')).toBe(library);
+    expect(document.activeElement).toBe(library);
+    expect(activate).not.toHaveBeenCalled(); expect(create).not.toHaveBeenCalled(); expect(solo).not.toHaveBeenCalled();
+    expect(host.querySelector('[data-workbench-dock-component="sticky-note"]')).toBeNull();
+    host.querySelector<HTMLButtonElement>('[data-overflow]')!.click();
+    expect(activate.mock.calls[0][0]).toMatchObject({ kind: 'tool', id: 'sticky-note' });
+    library.dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true, cancelable: true }));
+    expect(menu.mock.calls[0][0].key).toBe('action:library');
+    setHidden([]);
+    expect(host.querySelector('[data-workbench-dock-component="sticky-note"]')).not.toBeNull();
+    expect(host.querySelector('[data-workbench-dock-action="library"]')).toBe(library);
+  });
+
   it('exposes a mounted action trigger and releases it when the action leaves', () => {
     const host = createWorkbenchHost();
     const reference = vi.fn();

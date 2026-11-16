@@ -110,6 +110,7 @@ jobs:
           node scripts/check-directory-create-browser.mjs
           pnpm test:persistent-scrollbar
           pnpm test:activity-navigation
+          node scripts/check-bar-customization-browser.mjs
           node scripts/check-tabs-accessibility-browser.mjs
           pnpm test:mobile-navigation
           pnpm test:adaptive-layout

@@ -19,6 +19,7 @@ import {
   type WorkbenchDockItemActivationMode,
   type WorkbenchDockItemPresentation,
   type WorkbenchDockAction,
+  type WorkbenchDockCustomization,
   type WorkbenchDockModeIcons,
   type WorkbenchExternalDockDragController,
   type WorkbenchHostDockItem,
@@ -157,6 +158,7 @@ export interface WorkbenchSurfaceProps {
   /** Host artwork for the Dock mode trigger and its menu. */
   dockModeIcons?: WorkbenchDockModeIcons;
   dockActions?: readonly WorkbenchDockAction[];
+  dockCustomization?: WorkbenchDockCustomization;
   dockItems?: readonly WorkbenchHostDockItem[];
   registerExternalDockDragController?: (
     controller: WorkbenchExternalDockDragController | null
@@ -1010,6 +1012,7 @@ export function WorkbenchSurface(props: WorkbenchSurfaceProps) {
             onItemClick={props.onDockItemClick}
             modeIcons={props.dockModeIcons}
             dockActions={props.dockActions}
+            customization={props.dockCustomization}
             componentOrder={props.dockComponentOrder}
             dockItems={props.dockItems}
             registerExternalDockDragController={props.registerExternalDockDragController}

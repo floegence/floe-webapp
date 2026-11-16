@@ -14,6 +14,8 @@ export {
 } from './WorkbenchSurface';
 export type {
   WorkbenchDockAction,
+  WorkbenchDockCustomization,
+  WorkbenchDockEntry,
   WorkbenchDockModeIcons,
   WorkbenchCanvasWidgetPlacement,
   WorkbenchDockCanvasPlacement,

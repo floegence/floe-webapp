@@ -15,6 +15,26 @@ afterEach(() => {
 });
 
 describe('ActivityBar disclosure trigger context', () => {
+  it('reorders by keyboard without navigating, replacing buttons or touching fixed entries', () => {
+    const host = document.createElement('div'); document.body.append(host);
+    const [ids, setIDs] = createSignal(['files', 'terminal', 'plugins']);
+    const activate = vi.fn(); const ref = vi.fn();
+    const Icon = () => <svg />;
+    disposers.push(render(() => <ActivityBar activeId="files" onActiveChange={activate} onReorder={setIDs}
+      items={[...ids().map(id => ({ id, label: id, icon: Icon, buttonRef: ref })), { id: 'more', label: 'More', icon: Icon, reorderable: false }]} />, host));
+    const terminal = host.querySelector<HTMLButtonElement>('[aria-label="terminal"]')!;
+    terminal.focus();
+    terminal.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+    expect(ids()).toEqual(['terminal', 'files', 'plugins']);
+    expect(host.querySelector('button')).toBe(terminal);
+    expect(document.activeElement).toBe(terminal);
+    expect(activate).not.toHaveBeenCalled();
+    expect(ref.mock.calls.filter(([node]) => node === null)).toEqual([]);
+    expect(host.querySelector('[aria-label="More"]')?.hasAttribute('aria-keyshortcuts')).toBe(false);
+    setIDs(['files', 'plugins']);
+    expect(ref).toHaveBeenLastCalledWith(null);
+  });
+
   it.each([false, true])(
     'passes navigation and disclosure state into the glyph (mobile=%s)',
     (mobile) => {

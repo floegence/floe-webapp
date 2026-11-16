@@ -58,6 +58,7 @@ export interface ShellProps {
   fillParent?: boolean;
   logo?: JSX.Element;
   activityItems?: ActivityBarItem[];
+  onActivityReorder?: (ids: string[]) => void;
   activityBottomItems?: ActivityBarItem[];
   /**
    * Where to render `activityBottomItems` on mobile.
@@ -470,6 +471,7 @@ export function Shell(props: ShellProps) {
           <Show when={activityItems().length > 0}>
             <div ref={setActivityRegion} class="flex shrink-0 min-h-0"><ActivityBar
               items={desktopActivityItems()}
+              onReorder={props.onActivityReorder}
               bottomItems={props.activityBottomItems}
               activeId={activityVisualActiveId()}
               onActiveChange={requestSidebarActiveTab}

@@ -1,6 +1,5 @@
 import {
   For,
-  Index,
   Show,
   createEffect,
   createMemo,
@@ -12,6 +11,7 @@ import {
 } from 'solid-js';
 import { Dynamic, Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
+import { createBarLayoutMotion, barDropPosition, keyboardBarOrder, type BarDropPosition } from '../layout/barReorder';
 import { duration, easing } from '../../utils/animations';
 import {
   DockLayers,
@@ -28,6 +28,7 @@ import {
   isBarItemContextMenuKey,
   keyboardBarItemContextMenuRequest,
   type BarItemContextMenuHandler,
+  type BarItemContextMenuRequest,
 } from '../layout/barItemContextMenu';
 import { createWorkbenchWidgetFrame, type WorkbenchWidgetFrame } from './workbenchHelpers';
 import { getWidgetEntry } from './widgets/widgetRegistry';
@@ -58,6 +59,7 @@ export interface WorkbenchFilterBarProps {
   activationMode?: WorkbenchDockItemActivationMode;
   /** Orders work-mode widgets and tools by id; unlisted entries retain their relative order at the end. */
   componentOrder?: readonly (WorkbenchWidgetType | WorkbenchDockToolId)[];
+  customization?: WorkbenchDockCustomization;
   /** Solo a single dock component in the supplied mode scope; soloing it again shows the full scope. */
   onSoloFilter: (id: string, scope: readonly string[]) => void;
   onSelectMode?: (mode: WorkbenchInteractionMode) => void;
@@ -103,6 +105,27 @@ export interface WorkbenchFilterBarProps {
   onViewportInteractionStart?: (kind: 'pan') => void;
 }
 
+/** Keys distinguish built-in components, host actions and host instances. */
+export type WorkbenchDockEntry = Readonly<{
+  key: string;
+  kind: 'widget' | 'tool' | 'action' | 'host';
+  id: string;
+  label: string;
+  icon: Component<{ class?: string }>;
+  activate: (trigger: HTMLButtonElement) => void;
+  /** Focuses this entry after the host restores its visibility. */
+  focus: () => void;
+}>;
+
+export type WorkbenchDockCustomization = Readonly<{
+  order?: readonly string[];
+  hidden?: readonly string[];
+  onOrderChange?: (keys: string[]) => void;
+  onContextMenu?: (entry: WorkbenchDockEntry, request: BarItemContextMenuRequest) => void;
+  /** Host renders its localized overflow trigger/panel; hidden entries remain activatable. */
+  overflow?: Component<{ entries: readonly WorkbenchDockEntry[] }>;
+}>;
+
 export type WorkbenchDockItemActivationMode = 'solo-filter' | 'focus-cycle';
 
 export type WorkbenchDockItemPresentation = Readonly<{
@@ -125,6 +148,7 @@ export type WorkbenchDockAction = Readonly<{
   onActivate: (trigger: HTMLButtonElement) => void;
   /** Receives the concrete action button on mount and null on disposal. */
   buttonRef?: (button: HTMLButtonElement | null) => void;
+  onContextMenu?: BarItemContextMenuHandler;
 }>;
 
 export type WorkbenchHostDockItem = Readonly<{
@@ -221,7 +245,7 @@ interface DragStateBase {
 
 type DragState = DragStateBase &
   Readonly<{
-    kind: 'widget' | 'tool' | 'host' | 'external';
+    kind: 'widget' | 'tool' | 'host' | 'external' | 'action';
     id: WorkbenchWidgetType | WorkbenchDockToolId | string;
     trigger: HTMLElement;
   }>;
@@ -365,6 +389,10 @@ interface DockItemProps {
   onLeave: () => void;
   canvasPlacement: NormalizedWorkbenchCanvasPlacement | null;
   onContextMenu?: BarItemContextMenuHandler;
+  buttonRef?: (button: HTMLButtonElement | null) => void;
+  onReorderKey?: (event: KeyboardEvent) => void;
+  reorderable?: boolean;
+  dropEdge?: 'before' | 'after';
   onKeyboardActivate: (trigger: HTMLButtonElement) => void;
   onDragBegin: (
     event: PointerEvent,
@@ -379,7 +407,11 @@ interface DockItemProps {
 }
 
 function DockItem(props: DockItemProps) {
+  let button: HTMLButtonElement | undefined;
+  onMount(() => props.buttonRef?.(button ?? null));
+  onCleanup(() => props.buttonRef?.(null));
   const tileMotion = () => {
+    if (props.kind === 'action') return { scale: 1, y: 0, x: 0 };
     if (props.hoverOffset === -1) return { scale: 1.26, y: -6, x: 0 };
     if (props.hoverOffset === 1) return { scale: 1.08, y: -2, x: 5 };
     if (props.hoverOffset === -2) return { scale: 1.08, y: -2, x: -5 };
@@ -389,7 +421,7 @@ function DockItem(props: DockItemProps) {
   const isHovered = () => props.hoverOffset === -1;
 
   const handlePointerDown: JSX.EventHandler<HTMLButtonElement, PointerEvent> = (event) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || (props.kind === 'action' && !props.reorderable)) return;
     props.onDragBegin(
       event,
       props.kind,
@@ -415,7 +447,8 @@ function DockItem(props: DockItemProps) {
   };
 
   const handleKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (event) => {
-    if (!props.onContextMenu || !isBarItemContextMenuKey(event)) return;
+    props.onReorderKey?.(event);
+    if (event.defaultPrevented || !props.onContextMenu || !isBarItemContextMenuKey(event)) return;
     event.preventDefault();
     event.stopPropagation();
     props.onContextMenu(keyboardBarItemContextMenuRequest(event.currentTarget));
@@ -424,7 +457,7 @@ function DockItem(props: DockItemProps) {
   const handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     // Pointer activation is committed by the pointer session so drag and click
     // remain mutually exclusive. Native keyboard activation produces detail=0.
-    if (event.detail !== 0) return;
+    if (event.detail !== 0 && !(props.kind === 'action' && !props.reorderable)) return;
     props.onKeyboardActivate(event.currentTarget);
   };
 
@@ -442,7 +475,13 @@ function DockItem(props: DockItemProps) {
   return (
     <button
       type="button"
+      ref={button}
+      style={{ 'touch-action': 'none' }}
       class="workbench-dock__item"
+      data-floe-bar-key={`${props.kind}:${props.id}`}
+      data-workbench-dock-action={props.kind === 'action' ? props.id : undefined}
+      aria-keyshortcuts={props.reorderable ? 'Alt+Shift+ArrowLeft Alt+Shift+ArrowRight' : undefined}
+      onDragStart={event => event.preventDefault()}
       data-workbench-dock-item={props.kind === 'host' ? props.id : undefined}
       data-workbench-dock-component={
         props.kind === 'widget' || props.kind === 'tool' ? props.id : undefined
@@ -452,16 +491,17 @@ function DockItem(props: DockItemProps) {
         'is-filter-muted': props.filterable && !props.visible,
         'is-hovered': isHovered(),
         'is-source-dragging': props.isDragging,
+        'workbench-dock__action': props.kind === 'action',
       }}
       aria-label={
-        props.activationMode === 'focus-cycle' && props.presentation
+        props.kind === 'action' ? props.label : props.activationMode === 'focus-cycle' && props.presentation
           ? focusCycleLabel()
           : props.filterable
             ? `${props.label} — click to solo, drag to canvas to create`
             : `${props.label} — drag to canvas to create`
       }
       aria-pressed={
-        props.activationMode === 'focus-cycle' ? props.presentation?.active : props.active
+        props.activationMode === 'focus-cycle' && props.presentation ? props.presentation.active : props.active
       }
       aria-haspopup={props.onContextMenu ? 'menu' : undefined}
       onPointerEnter={() => props.onEnter()}
@@ -471,15 +511,13 @@ function DockItem(props: DockItemProps) {
       onContextMenu={handleContextMenu}
       onKeyDown={handleKeyDown}
     >
+      <Show when={props.dropEdge}><span aria-hidden="true" style={{ position: 'absolute', top: '8px', bottom: '8px', width: '2px', background: 'var(--ring)', 'border-radius': '2px', left: props.dropEdge === 'before' ? '-3px' : undefined, right: props.dropEdge === 'after' ? '-3px' : undefined }} /></Show>
       <Motion.span
         class="workbench-dock__tile"
         animate={tileMotion()}
         transition={{ duration: duration.fast, easing: easing.easeOut }}
       >
-        {(() => {
-          const Icon = props.icon;
-          return <Icon class="workbench-dock__icon" />;
-        })()}
+        <Dynamic component={props.icon} class="workbench-dock__icon" />
       </Motion.span>
       <Motion.span
         class="workbench-dock__tooltip"
@@ -492,58 +530,11 @@ function DockItem(props: DockItemProps) {
   );
 }
 
-function DockAction(props: {
-  action: WorkbenchDockAction;
-  hoverOffset: number;
-  onEnter: () => void;
-  onLeave: () => void;
-  onActivate: (trigger: HTMLButtonElement) => void;
-}) {
-  const isHovered = () => props.hoverOffset === -1;
-  const tileMotion = () => ({ scale: 1, y: 0, x: 0 });
-  let button: HTMLButtonElement | undefined;
-  onMount(() => props.action.buttonRef?.(button ?? null));
-  onCleanup(() => props.action.buttonRef?.(null));
-
-  return (
-    <button
-      type="button"
-      draggable={false}
-      class="workbench-dock__item workbench-dock__action"
-      ref={button}
-      data-workbench-dock-action={props.action.id}
-      classList={{
-        'is-active': Boolean(props.action.active),
-        'is-hovered': isHovered(),
-      }}
-      aria-label={props.action.label}
-      aria-pressed={props.action.active}
-      onPointerEnter={() => props.onEnter()}
-      onPointerLeave={() => props.onLeave()}
-      onDragStart={(event) => event.preventDefault()}
-      onClick={(event) => props.onActivate(event.currentTarget)}
-    >
-      <Motion.span
-        class="workbench-dock__tile"
-        animate={tileMotion()}
-        transition={{ duration: duration.fast, easing: easing.easeOut }}
-      >
-        <Dynamic component={props.action.icon} class="workbench-dock__icon" />
-      </Motion.span>
-      <Motion.span
-        class="workbench-dock__tooltip"
-        animate={{ opacity: isHovered() ? 1 : 0, y: isHovered() ? -6 : 0 }}
-        transition={{ duration: duration.fast, easing: easing.easeOut }}
-      >
-        {props.action.label}
-      </Motion.span>
-    </button>
-  );
-}
-
 export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const [hoveredIndex, setHoveredIndex] = createSignal<number | null>(null);
   const [dragState, setDragState] = createSignal<DragState | null>(null);
+  const elements = new Map<string, HTMLElement>();
+  const [dropPosition, setDropPosition] = createSignal<BarDropPosition>();
   const [modeMenuOpen, setModeMenuOpen] = createSignal(false);
 
   let dockRootEl: HTMLDivElement | undefined;
@@ -609,8 +600,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const offsetFor = (slot: number): number => {
     const hovered = hoveredIndex();
     if (hovered === null) return 0;
-    if (hovered <= leadingActionItems().length) return 0;
-    if (hovered >= trailingActionOffset() && hovered < trailingHostOffset()) return 0;
+    if (visibleEntries()[hovered - 1]?.kind === 'action') return 0;
     if (hovered === slot) return -1;
     if (hovered === slot + 1) return -2;
     if (hovered === slot - 1) return 1;
@@ -658,6 +648,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   ) => {
     props.onDockActivation?.({ kind, id: String(id) });
     if (kind === 'external') return;
+    if (kind === 'action') { props.dockActions?.find(item => item.id === id)?.onActivate(trigger); return; }
     if (kind === 'host') {
       props.dockItems?.find((item) => item.id === id)?.onActivate?.(trigger);
       return;
@@ -687,6 +678,8 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     const dropViewport = edgeAutoPanViewport ?? props.viewport;
     current.stopInteraction();
     stopEdgeAutoPan();
+    const proposal = dropPosition();
+    setDropPosition(undefined);
     setDragState(null);
     dragSession = undefined;
 
@@ -694,10 +687,18 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       externalClickSuppression?.expire();
     }
 
+    if (!commitDrop) return;
+
     if (isClick) {
       if (current.kind === 'external') return;
       if (!(current.trigger instanceof HTMLButtonElement)) return;
       activateDockItem(current.kind, current.id, current.label, current.trigger);
+      return;
+    }
+
+    if (current.overDock && current.kind !== 'external' && proposal && props.customization?.onOrderChange) {
+      props.customization.onOrderChange(proposal.order);
+      elements.get(`${current.kind}:${current.id}`)?.focus({ preventScroll: true });
       return;
     }
 
@@ -801,6 +802,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           externalClickSuppression = { clear, expire };
         }
         const overDock = isOverDock(next.clientX, next.clientY, dockRootEl);
+        setDropPosition(moved && overDock && current.kind !== 'external' && props.customization?.onOrderChange
+          ? barDropPosition(visibleEntries().map(entry => entry.key), `${current.kind}:${current.id}`, elements, 'x', next.clientX)
+          : undefined);
         const canvasFrame = current.canvasFrame;
         const insideCanvas = moved && isOverCanvas(next.clientX, next.clientY, canvasFrame);
         const overCanvas = insideCanvas && !overDock;
@@ -831,7 +835,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           overCanvas,
           hasEnteredCanvas,
           preview:
-            moved && canvasFrame && current.canvasPlacement?.preview
+            moved && (!overDock || !props.customization?.onOrderChange) && canvasFrame && current.canvasPlacement?.preview
               ? {
                   kind: current.canvasPlacement.preview.kind,
                   id: current.canvasPlacement.preview.id,
@@ -908,10 +912,6 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     onCleanup(() => props.registerExternalDockDragController?.(null));
   });
 
-  const draggingWidgetType = (): WorkbenchWidgetType | null =>
-    dragState()?.kind === 'widget' ? (dragState()!.id as WorkbenchWidgetType) : null;
-  const draggingTool = (): WorkbenchDockToolId | null =>
-    dragState()?.kind === 'tool' ? (dragState()!.id as WorkbenchDockToolId) : null;
   const ExternalPlaceholderIcon = () =>
     dragState()?.kind === 'external' ? dragState()?.icon : undefined;
   const activeMode = (): WorkbenchInteractionMode =>
@@ -958,36 +958,45 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const hostDockItems = createMemo(() =>
     activeMode() === 'background' ? [] : [...(props.dockItems ?? [])]
   );
-  const leadingHostDockItems = createMemo(() =>
-    hostDockItems().filter((item) => item.dockPlacement !== 'after-components')
-  );
-  const trailingHostDockItems = createMemo(() =>
-    hostDockItems().filter((item) => item.dockPlacement === 'after-components')
-  );
-  const actionItems = createMemo(() =>
-    activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]
-  );
-  const leadingActionItems = createMemo(() =>
-    actionItems().filter((action) => action.dockPlacement !== 'after-components')
-  );
-  const trailingActionItems = createMemo(() =>
-    actionItems().filter((action) => action.dockPlacement === 'after-components')
-  );
-  const componentOffset = () => leadingActionItems().length + leadingHostDockItems().length + 1;
-  const trailingActionOffset = () => componentOffset() + componentItems().length;
-  const trailingHostOffset = () => trailingActionOffset() + trailingActionItems().length;
-  const DockActionAtSlot = (actionProps: { action: WorkbenchDockAction; slot: number }) => (
-    <DockAction
-      action={actionProps.action}
-      hoverOffset={offsetFor(actionProps.slot)}
-      onEnter={() => setHoveredIndex(actionProps.slot)}
-      onLeave={() => setHoveredIndex((current) => (current === actionProps.slot ? null : current))}
-      onActivate={(trigger) => {
-        props.onDockActivation?.({ kind: 'action', id: actionProps.action.id });
-        actionProps.action.onActivate(trigger);
-      }}
-    />
-  );
+  const actionItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]);
+  type DockEntry = WorkbenchDockEntry & { action?: WorkbenchDockAction; host?: WorkbenchHostDockItem; group: number };
+  const catalog = createMemo<DockEntry[]>(() => {
+    const entries: DockEntry[] = [
+      ...actionItems().map(action => ({ ...action, action, kind: 'action' as const, key: `action:${action.id}`,
+        group: action.dockPlacement === 'after-components' ? 3 : 0,
+        focus: () => elements.get(`action:${action.id}`)?.focus({ preventScroll: true }),
+        activate: (trigger: HTMLButtonElement) => activateDockItem('action', action.id, action.label, trigger) })),
+      ...hostDockItems().map(host => ({ ...host, host, kind: 'host' as const, key: `host:${host.id}`,
+        group: host.dockPlacement === 'after-components' ? 4 : 1,
+        focus: () => elements.get(`host:${host.id}`)?.focus({ preventScroll: true }),
+        activate: (trigger: HTMLButtonElement) => activateDockItem('host', host.id, host.label, trigger) })),
+      ...componentItems().map(entry => ({ ...entry, key: `${entry.kind}:${entry.id}`, group: 2,
+        focus: () => elements.get(`${entry.kind}:${entry.id}`)?.focus({ preventScroll: true }),
+        activate: (trigger: HTMLButtonElement) => activateDockItem(entry.kind, entry.id, entry.label, trigger) })),
+    ];
+    entries.sort((a, b) => a.group - b.group);
+    const order = activeMode() === 'work' ? props.customization?.order : undefined;
+    if (order) entries.sort((a, b) => {
+      const ai = order.indexOf(a.key), bi = order.indexOf(b.key);
+      return (ai < 0 ? Infinity : ai) - (bi < 0 ? Infinity : bi);
+    });
+    return entries;
+  });
+  const hiddenEntries = createMemo(() => activeMode() === 'work' && props.customization?.overflow
+    ? catalog().filter(entry => props.customization?.hidden?.includes(entry.key)) : []);
+  const visibleEntries = createMemo(() => catalog().filter(entry => !hiddenEntries().includes(entry)));
+  createBarLayoutMotion({ keys: () => visibleEntries().map(entry => entry.key), elements, preview: () => dropPosition()?.order, axis: 'x' });
+  const entryByKey = createMemo(() => new Map(visibleEntries().map(entry => [entry.key, entry])));
+  const reorderKey = (key: string, event: KeyboardEvent) => {
+    if (activeMode() !== 'work' || !props.customization?.onOrderChange) return;
+    const order = keyboardBarOrder(visibleEntries().map(entry => entry.key), key, event, 'x');
+    if (order) { props.customization.onOrderChange(order); elements.get(key)?.focus({ preventScroll: true }); }
+  };
+  createEffect(() => {
+    const keys = visibleEntries().map(entry => entry.key).join('\0');
+    void keys;
+    if (dragSession) dragSession.stop({ commit: false });
+  });
   const componentScope = createMemo(() => componentItems().map((item) => String(item.id)));
   const componentFilterable = (): boolean => activeMode() !== 'background';
   const componentVisible = (id: string): boolean =>
@@ -1120,135 +1129,48 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
             </div>
           </Show>
         </div>
-        <Index each={leadingActionItems()}>
-          {(action, index) => <DockActionAtSlot action={action()} slot={index + 1} />}
-        </Index>
-        <Show when={showExternalPlaceholder('before-components')}>
-          <ExternalDockPlaceholder />
-        </Show>
-        <For each={leadingHostDockItems()}>
-          {(item, index) => {
-            const slot = () => index() + leadingActionItems().length + 1;
-            return (
-              <DockItem
-                id={item.id}
-                kind="host"
-                label={item.label}
-                icon={item.icon}
-                active={Boolean(item.active)}
-                visible
-                filterable={false}
-                activationMode={activationMode()}
-                hoverOffset={offsetFor(slot())}
-                isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
-                canvasPlacement={normalizeWidgetCanvasPlacement(item.canvasPlacement)}
-                onContextMenu={item.onContextMenu}
-                onKeyboardActivate={(trigger) =>
-                  activateDockItem('host', item.id, item.label, trigger)
-                }
-                onEnter={() => setHoveredIndex(slot())}
-                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
-                onDragBegin={beginItemDragGesture}
-              />
-            );
-          }}
-        </For>
-        <span class="workbench-dock__divider" aria-hidden="true" />
-        <For each={componentItems()}>
-          {(entry, index) => {
-            const slot = () => index() + componentOffset();
-            const presentation = () => componentPresentation(entry.kind, entry.id);
-            return (
-              <DockItem
-                id={String(entry.id)}
-                kind={entry.kind}
-                label={entry.label}
-                icon={entry.icon}
-                active={presentation()?.active ?? componentSoloed(String(entry.id))}
-                visible={
-                  activationMode() === 'focus-cycle' ? true : componentVisible(String(entry.id))
-                }
-                filterable={activationMode() === 'solo-filter' && componentFilterable()}
-                activationMode={activationMode()}
-                presentation={presentation()}
-                hoverOffset={offsetFor(slot())}
-                isDragging={
-                  entry.kind === 'widget'
-                    ? draggingWidgetType() === entry.id
-                    : draggingTool() === entry.id
-                }
-                canvasPlacement={
-                  entry.kind === 'widget'
-                    ? {
-                        preview: { kind: 'widget', id: entry.id },
-                        onDrop: (clientX, clientY, context) =>
-                          props.onCreateAt?.(
-                            entry.id as WorkbenchWidgetType,
-                            clientX,
-                            clientY,
-                            context
-                          ),
-                      }
-                    : {
-                        preview: { kind: 'tool', id: entry.id },
-                        onDrop: (clientX, clientY, context) =>
-                          props.onCreateToolAt?.(
-                            entry.id as WorkbenchDockToolId,
-                            clientX,
-                            clientY,
-                            context
-                          ),
-                      }
-                }
-                onEnter={() => setHoveredIndex(slot())}
-                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
-                onKeyboardActivate={(trigger) =>
-                  activateDockItem(entry.kind, entry.id, entry.label, trigger)
-                }
-                onDragBegin={beginItemDragGesture}
-              />
-            );
-          }}
-        </For>
-        <Index each={trailingActionItems()}>
-          {(action, index) => (
-            <DockActionAtSlot action={action()} slot={index + trailingActionOffset()} />
-          )}
-        </Index>
-        <Show
-          when={trailingHostDockItems().length > 0 || showExternalPlaceholder('after-components')}
-        >
-          <span class="workbench-dock__divider" aria-hidden="true" />
-        </Show>
-        <For each={trailingHostDockItems()}>
-          {(item, index) => {
-            const slot = () => index() + trailingHostOffset();
-            return (
-              <DockItem
-                id={item.id}
-                kind="host"
-                label={item.label}
-                icon={item.icon}
-                active={Boolean(item.active)}
-                visible
-                filterable={false}
-                activationMode={activationMode()}
-                hoverOffset={offsetFor(slot())}
-                isDragging={dragState()?.kind === 'host' && dragState()?.id === item.id}
-                canvasPlacement={normalizeWidgetCanvasPlacement(item.canvasPlacement)}
-                onContextMenu={item.onContextMenu}
-                onKeyboardActivate={(trigger) =>
-                  activateDockItem('host', item.id, item.label, trigger)
-                }
-                onEnter={() => setHoveredIndex(slot())}
-                onLeave={() => setHoveredIndex((current) => (current === slot() ? null : current))}
-                onDragBegin={beginItemDragGesture}
-              />
-            );
-          }}
-        </For>
-        <Show when={showExternalPlaceholder('after-components')}>
-          <ExternalDockPlaceholder />
+        <Show when={showExternalPlaceholder('before-components')}><ExternalDockPlaceholder /></Show>
+        <For each={visibleEntries().map(entry => entry.key)}>{(key, index) => {
+          const entry = () => entryByKey().get(key)!;
+          const initialBindAction = entry().action?.buttonRef;
+          const presentation = () => entry().kind === 'widget' || entry().kind === 'tool'
+            ? componentPresentation(entry().kind as 'widget' | 'tool', entry().id) : undefined;
+          const contextMenu = (): BarItemContextMenuHandler | undefined => entry().host?.onContextMenu ?? entry().action?.onContextMenu
+            ?? (props.customization?.onContextMenu && activeMode() === 'work'
+              ? request => props.customization?.onContextMenu?.(entry(), request) : undefined);
+          return <>
+            <Show when={props.customization ? index() === 0 : (entry().group === 2 || entry().group === 4) && visibleEntries()[index() - 1]?.group !== entry().group}>
+              <span class="workbench-dock__divider" aria-hidden="true" />
+            </Show>
+            <DockItem id={entry().id} kind={entry().kind} label={entry().label} icon={entry().icon}
+              active={entry().action ? Boolean(entry().action!.active) : entry().host ? Boolean(entry().host!.active) : presentation()?.active ?? componentSoloed(entry().id)}
+              visible={entry().group !== 2 || activationMode() === 'focus-cycle' || componentVisible(entry().id)}
+              filterable={entry().group === 2 && activationMode() === 'solo-filter' && componentFilterable()}
+              activationMode={activationMode()} presentation={presentation()}
+              hoverOffset={offsetFor(index() + 1)}
+              isDragging={dragState()?.kind === entry().kind && dragState()?.id === entry().id}
+              canvasPlacement={entry().host ? normalizeWidgetCanvasPlacement(entry().host!.canvasPlacement)
+                : entry().kind === 'action' ? null : {
+                  preview: { kind: entry().kind as 'widget' | 'tool', id: entry().id },
+                  onDrop: (x, y, context) => entry().kind === 'widget'
+                    ? props.onCreateAt?.(entry().id, x, y, context)
+                    : props.onCreateToolAt?.(entry().id as WorkbenchDockToolId, x, y, context),
+                }}
+              buttonRef={button => {
+                if (button) elements.set(key, button); else elements.delete(key);
+                initialBindAction?.(button);
+              }}
+              onContextMenu={contextMenu()}
+              onKeyboardActivate={trigger => entry().activate(trigger)}
+              onEnter={() => setHoveredIndex(index() + 1)} onLeave={() => setHoveredIndex(null)}
+              onDragBegin={beginItemDragGesture} onReorderKey={event => reorderKey(key, event)}
+              reorderable={activeMode() === 'work' && Boolean(props.customization?.onOrderChange)}
+              dropEdge={dropPosition()?.key === key ? dropPosition()?.edge : undefined} />
+          </>;
+        }}</For>
+        <Show when={showExternalPlaceholder('after-components')}><ExternalDockPlaceholder /></Show>
+        <Show when={activeMode() === 'work' && props.customization?.overflow}>
+          <Dynamic component={props.customization?.overflow} entries={hiddenEntries()} />
         </Show>
       </div>
 

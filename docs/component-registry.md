@@ -418,3 +418,11 @@ error isolation, unchanged-version checks, retained drafts, and explicit reload.
 ### Compact asynchronous feedback
 
 `FeedbackIndicator` owns an inline icon slot and a surface-aware, bounded details panel. Callers provide current entries (`id`, severity, localized summary, optional detail and actions), localized labels, and a stable focus destination. No entries means no visible or keyboard-focusable trigger; the inline footprint stays fixed. Background changes announce feedback without opening the panel or moving focus. Closing details never clears errors. Initial load failures and field validation stay directly visible. `StatusRegion` retains its fixed-line contract only for intentional progress or existing bounded feedback areas; never add empty rows above retained content.
+
+## User-owned navigation placement
+
+`ActivityBar.onReorder` and `Shell.onActivityReorder` commit visible reorderable IDs. `ActivityBarItem.reorderable=false` retains disclosures outside ordering. Pointer dragging uses a threshold, insertion preview and Escape cancellation; Alt+Shift+Up/Down moves the focused entry without activation. Keyed buttons preserve native focus and trigger ownership.
+
+`WorkbenchSurface.dockCustomization` supplies `order`, `hidden`, `onOrderChange`, `onContextMenu` and an optional `overflow` component. Entry keys are `widget:<id>`, `tool:<id>`, `action:<id>` and `host:<id>`. Overflow receives hidden entries with their original activation path. Hidden entries are excluded only when an overflow renderer exists. The mode control and composition tools stay independent. Within the Dock, a completed drag changes order; outside it, existing canvas creation remains authoritative. Alt+Shift+Left/Right provides keyboard ordering. Products own localization, persistence, availability and pin policy; Floe never saves placement preferences. Order callbacks include visible keys only, so hosts must retain unavailable/hidden keys in their records.
+
+Both bars animate neighbor displacement, pin insertion and committed placement with interruptible 180 ms ease-out motion. Reduced motion disables travel; layout and hit targets do not animate independently of their buttons. `scripts/check-bar-customization-browser.mjs` exercises pointer/keyboard order, cancellation, unchanged activation, and canvas drops in both color modes.

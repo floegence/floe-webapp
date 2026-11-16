@@ -3,6 +3,7 @@ import { Dynamic } from 'solid-js/web';
 import { cn } from '../../utils/cn';
 import { deferNonBlocking } from '../../utils/defer';
 import { Tooltip } from '../ui/Tooltip';
+import { createBarReorder, createBarLayoutMotion } from './barReorder';
 import { resolveActivityBarClick, type ActivityBarCollapseBehavior } from './activityBarBehavior';
 import {
   isBarItemContextMenuKey,
@@ -14,6 +15,8 @@ export interface ActivityBarItem {
   id: string;
   icon: Component<{ class?: string; active?: boolean }>;
   label: string;
+  /** Fixed disclosures may opt out of user ordering. */
+  reorderable?: boolean;
   badge?: number | string | (() => number | string | undefined);
   onClick?: () => void;
   /** Requests a product-owned context menu for this concrete Activity Bar button. */
@@ -38,6 +41,8 @@ export interface ActivityBarItem {
 export interface ActivityBarProps {
   items: ActivityBarItem[];
   bottomItems?: ActivityBarItem[];
+  /** Commits the visible reorderable IDs; persistence belongs to the host. */
+  onReorder?: (ids: string[]) => void;
   activeId: string;
   onActiveChange: (id: string, opts?: { openSidebar?: boolean }) => void;
   collapsed?: boolean;
@@ -53,6 +58,14 @@ export interface ActivityBarProps {
 export function ActivityBar(props: ActivityBarProps) {
   // Cache potentially-dynamic props under a reactive owner so reading them in event handlers
   // doesn't create detached computations (Solid warns when that happens).
+  let rail: HTMLDivElement | undefined;
+  const elements = new Map<string, HTMLElement>();
+  const itemByID = createMemo(() => new Map(props.items.map(item => [item.id, item])));
+  const reorder = createBarReorder({
+    keys: () => props.items.filter(item => item.reorderable !== false).map(item => item.id),
+    elements, container: () => rail, onReorder: () => props.onReorder,
+  });
+  createBarLayoutMotion({ keys: () => props.items.map(item => item.id), elements, preview: () => reorder.position()?.order, axis: 'y' });
   const activeId = createMemo(() => props.activeId);
   const collapsed = createMemo(() => props.collapsed ?? false);
   const onActiveChange = createMemo(() => props.onActiveChange);
@@ -99,13 +112,19 @@ export function ActivityBar(props: ActivityBarProps) {
       aria-label={props.ariaLabel}
     >
       {/* Top items */}
-      <div class="flex flex-col">
-        <For each={props.items}>
-          {(item) => (
+      <div ref={rail} class="flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+        <For each={props.items.map(item => item.id)}>
+          {(id) => (
             <ActivityBarButton
-              item={item}
-              isActive={activeId() === item.id}
-              onClick={() => handleItemClick(item)}
+              item={itemByID().get(id)!}
+              isActive={activeId() === id}
+              onClick={() => { if (!reorder.consumeClick()) handleItemClick(itemByID().get(id)!); }}
+              elementRef={element => { if (element) elements.set(id, element); else elements.delete(id); }}
+              onPointerDown={event => reorder.begin(id, event)}
+              onReorderKey={event => reorder.keyDown(id, event)}
+              reorderable={Boolean(props.onReorder) && itemByID().get(id)?.reorderable !== false}
+              dragging={reorder.dragging() === id}
+              dropEdge={reorder.position()?.key === id ? reorder.position()?.edge : undefined}
             />
           )}
         </For>
@@ -133,6 +152,12 @@ interface ActivityBarButtonProps {
   item: ActivityBarItem;
   isActive: boolean;
   onClick: () => void;
+  elementRef?: (element: HTMLButtonElement | null) => void;
+  onPointerDown?: (event: PointerEvent) => void;
+  onReorderKey?: (event: KeyboardEvent) => void;
+  reorderable?: boolean;
+  dragging?: boolean;
+  dropEdge?: 'before' | 'after';
 }
 
 function ActivityBarButton(props: ActivityBarButtonProps) {
@@ -145,8 +170,13 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
       : props.item.ariaExpanded;
   const visuallyActive = () => props.isActive || expanded() === true;
 
-  onMount(() => props.item.buttonRef?.(buttonRef ?? null));
-  onCleanup(() => props.item.buttonRef?.(null));
+  let releaseButtonRef: (() => void) | undefined;
+  onMount(() => {
+    const bind = props.item.buttonRef;
+    bind?.(buttonRef ?? null); props.elementRef?.(buttonRef ?? null);
+    releaseButtonRef = () => { bind?.(null); props.elementRef?.(null); };
+  });
+  onCleanup(() => releaseButtonRef?.());
 
   const handleContextMenu: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     if (!props.item.onContextMenu) return;
@@ -161,7 +191,8 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
   };
 
   const handleKeyDown: JSX.EventHandler<HTMLButtonElement, KeyboardEvent> = (event) => {
-    if (!props.item.onContextMenu || !isBarItemContextMenuKey(event)) return;
+    props.onReorderKey?.(event);
+    if (event.defaultPrevented || !props.item.onContextMenu || !isBarItemContextMenuKey(event)) return;
     event.preventDefault();
     event.stopPropagation();
     props.item.onContextMenu(keyboardBarItemContextMenuRequest(event.currentTarget));
@@ -173,8 +204,13 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         ref={buttonRef}
         type="button"
         data-floe-interactive="press"
+        data-floe-bar-key={props.item.id}
+        aria-keyshortcuts={props.reorderable ? 'Alt+Shift+ArrowUp Alt+Shift+ArrowDown' : undefined}
+        style={{ 'touch-action': props.reorderable ? 'none' : undefined, opacity: props.dragging ? 0.5 : undefined }}
+        onPointerDown={event => props.onPointerDown?.(event)}
+        onDragStart={event => event.preventDefault()}
         class={cn(
-          'group/activity-item relative w-full aspect-square flex items-center justify-center cursor-pointer',
+          'group/activity-item relative w-full shrink-0 aspect-square flex items-center justify-center cursor-pointer',
           'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-inset',
           'text-activity-bar-foreground',
           visuallyActive() && 'text-activity-bar-foreground-active'
@@ -220,6 +256,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
           )}
         />
 
+        <Show when={props.dropEdge}><span aria-hidden="true" style={{ position: 'absolute', left: '6px', right: '6px', height: '2px', background: 'var(--ring)', 'border-radius': '2px', top: props.dropEdge === 'before' ? '0' : undefined, bottom: props.dropEdge === 'after' ? '0' : undefined }} /></Show>
         {/* Badge */}
         <Show when={badgeValue()}>
           <span
