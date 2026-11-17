@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.101.40
+## 0.101.41
 
 - Support ordered image annotations with selectable numbered markers and matching multi-marker PNG export. Existing single-annotation editing remains compatible.
 
