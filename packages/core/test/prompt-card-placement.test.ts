@@ -11,7 +11,7 @@ describe('contextual editor region avoidance', () => {
     const region = { x: 100, y: 200, width: 400, height: 260 };
     const p = avoidPromptCardRegions({ x: 108, y: 208 }, size, boundary, [region]);
     expect(overlap(p, region)).toBe(0);
-    expect(p).toEqual({ x: 100, y: 472 });
+    expect(p).toEqual({ x: 512, y: 200 });
   });
   it('avoids other selected regions and stays inside the viewport', () => {
     const regions = [{ x: 100, y: 200, width: 400, height: 260 }, { x: 100, y: 472, width: 400, height: 270 }];

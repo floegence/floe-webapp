@@ -35,7 +35,7 @@ export interface PromptCardProps {
   open: boolean;
   /** Viewport coordinates captured by the host at the contextual action. */
   anchor?: Readonly<{ x: number; y: number }> | null;
-  /** Selected content to keep visible where space permits, in viewport pixels. */
+  /** Selected content to keep visible where space permits, in viewport pixels and preferred order. */
   avoidRegions?: readonly PromptCardRegion[];
   viewportInsets?: Readonly<{ top?: number; right?: number; bottom?: number; left?: number }>;
   /** Defaults to the trigger's surface. Viewport scope is an explicit host choice. */

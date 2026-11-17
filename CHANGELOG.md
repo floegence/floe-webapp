@@ -1,9 +1,9 @@
 # Changelog
 
-## 0.101.49
+## 0.101.50
 
 - Keep fitted annotation images at the full viewport size without reserving unused scrollbar space.
-- Let contextual PromptCards avoid selected regions while respecting measured card size, visible viewport and scaled surface boundaries.
+- Let contextual PromptCards avoid selected regions while respecting measured card size, visible viewport, scaled surface boundaries and the existing consumer bundle budget.
 
 ## 0.101.48
 
