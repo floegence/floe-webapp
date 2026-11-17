@@ -62,6 +62,14 @@ inspected node's world position when content dimensions change. For independent
 regions, hosts can lay out only that region and keep other layout results;
 never create a second mutable domain graph to persist renderer geometry.
 
+`createGraphViewport(initial)` owns a controlled camera signal. Pass its
+`viewport()` and `setViewport` to `GraphCanvas`; use `animateTo(target)` for
+explicit fit/overview commands. Camera movement uses the same 280 ms ease-out
+as layout motion, exposes `moving()`, and reverses from the painted viewport.
+Direct input through `setViewport` interrupts immediately without a delayed
+snap-back. Reduced motion settles at the target, including preference changes
+during a transition. The Solid owner cancels pending frames on disposal.
+
 Optional `positions: [{ nodeId, x, y }]` use absolute world coordinates.
 `positionMode: 'fixed'` is the default: positions are exact, descendants move
 with their group, and impossible containment or obstructed routes reject the

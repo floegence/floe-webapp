@@ -1,4 +1,4 @@
-/* global window, document, requestAnimationFrame, performance, getComputedStyle */
+/* global window, document, requestAnimationFrame, performance, getComputedStyle, DOMMatrix, setTimeout */
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -18,7 +18,7 @@ try {
     `
 import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
-import { GraphCanvas } from '../dist/graph.js';
+import { GraphCanvas, createGraphViewport } from '../dist/graph.js';
 import '../dist/graph.css';
 const scene = expanded => ({nodes:[
  {id:'group',label:'Group',kind:expanded?'group':'node',x:20,y:20,width:expanded?480:220,height:expanded?300:130},
@@ -29,13 +29,15 @@ const scene = expanded => ({nodes:[
 const card = node=>node.id==='group'?<div style="height:100%;background:#ddd;border:1px solid #aaa"><button onClick={()=>window.change(node.width<300)}>Toggle group</button></div>:<div style="height:100%;background:#eee;border:1px solid #999"><span>{node.label}</span><input aria-label={node.label+' notes'} /></div>;
 function App(){
  const [layout,setLayout]=createSignal(scene(false));
+ const camera=createGraphViewport({x:0,y:0,scale:1});
+ window.camera=camera;
  let original=JSON.stringify(layout());
  window.change=expanded=>{setLayout(scene(expanded));original=JSON.stringify(layout());};
  window.sceneIntact=()=>original===JSON.stringify(layout());
- return <div style="width:1000px;height:650px"><GraphCanvas animateLayout layout={layout()} viewport={{x:0,y:0,scale:1}} onViewportChange={()=>{}} ariaLabel="Motion graph" onHover={value=>{window.lastHover=value;}}
+ return <div style="width:1000px;height:650px"><GraphCanvas animateLayout layout={layout()} viewport={camera.viewport()} onViewportChange={camera.setViewport} ariaLabel="Motion graph" onHover={value=>{window.lastHover=value;}}
  renderNode={card} renderGroup={card}/></div>;
 }
-render(()=><App/>,document.getElementById('root'));
+window.dispose=render(()=><App/>,document.getElementById('root'));
 `
   );
   server = await createServer({
@@ -142,6 +144,63 @@ render(()=><App/>,document.getElementById('root'));
     await page.evaluate(() => window.sceneIntact()),
     'animation never mutates the supplied layout'
   );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const cameraFrames = await page.evaluate(async () => {
+    window.camera.animateTo({ x: 100, y: 80, scale: 0.7 });
+    const samples = [];
+    while (window.camera.moving()) {
+      await new Promise(requestAnimationFrame);
+      const viewport = window.camera.viewport();
+      const matrix = new DOMMatrix(
+        getComputedStyle(document.querySelector('.floe-infinite-canvas__viewport')).transform
+      );
+      samples.push({ ...viewport, painted: matrix.a });
+    }
+    return samples;
+  });
+  assert.ok(cameraFrames.some((frame) => frame.scale > 0.71 && frame.scale < 0.99));
+  assert.ok(cameraFrames.every((frame) => Math.abs(frame.painted - frame.scale) < 0.001));
+  const interrupted = await page.evaluate(async () => {
+    window.camera.animateTo({ x: 0, y: 0, scale: 1 });
+    await new Promise(requestAnimationFrame);
+    await new Promise(requestAnimationFrame);
+    const before = window.camera.viewport();
+    window.camera.animateTo({ x: 200, y: 80, scale: 0.5 });
+    const after = window.camera.viewport();
+    window.camera.setViewport((previous) => ({ ...previous, x: previous.x + 20 }));
+    const manual = window.camera.viewport();
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return {
+      before,
+      after,
+      manual,
+      settled: window.camera.viewport(),
+      moving: window.camera.moving(),
+    };
+  });
+  assert.deepEqual(interrupted.before, interrupted.after, 'reversing the camera does not jump');
+  assert.deepEqual(
+    interrupted.manual,
+    interrupted.settled,
+    'direct input cancels pending camera frames'
+  );
+  assert.equal(interrupted.moving, false);
+  await page.evaluate(() => window.camera.animateTo({ x: 0, y: 0, scale: 1 }));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(() => !window.camera.moving());
+  assert.deepEqual(await page.evaluate(() => window.camera.viewport()), { x: 0, y: 0, scale: 1 });
+  await page.evaluate(() => window.camera.animateTo({ x: 10, y: 20, scale: 2 }));
+  assert.deepEqual(await page.evaluate(() => window.camera.viewport()), { x: 10, y: 20, scale: 2 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const disposed = await page.evaluate(async () => {
+    window.camera.animateTo({ x: 100, y: 100, scale: 1 });
+    window.dispose();
+    const before = window.camera.viewport();
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return { before, after: window.camera.viewport(), moving: window.camera.moving() };
+  });
+  assert.deepEqual(disposed.before, disposed.after, 'owner disposal cancels the camera');
+  assert.equal(disposed.moving, false);
   assert.deepEqual(errors, []);
   console.log(
     'Graph layout motion: intermediate geometry, attached routes, retained owners/focus, interrupted reversal and reduced motion passed.'
