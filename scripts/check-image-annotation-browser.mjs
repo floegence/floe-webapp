@@ -28,7 +28,7 @@ try {
     const selected=await page.evaluate(()=>window.fixture.annotation());assert(Math.abs(selected.x-1200)<1);assert(Math.abs(selected.y-400)<1);
     // Lock the exact subpixel-independent source coordinate for raster verification.
     await page.evaluate(()=>window.fixture.setAnnotation({kind:'point',x:1200,y:400}));
-    const exported=await page.evaluate(()=>window.fixture.export());assert.equal(exported.width,1600);assert.equal(exported.height,1000);assert(exported.pixel[0]>230 && exported.pixel[1]>100 && exported.pixel[1]<210 && exported.pixel[2]<60 && exported.pixel[3]===255,'Export must mark the original target pixel');
+    const exported=await page.evaluate(()=>window.fixture.export());assert.equal(exported.width,1600);assert.equal(exported.height,1000);assert(exported.pixel[0]<100 && exported.pixel[1]>60 && exported.pixel[1]<170 && exported.pixel[2]>200 && exported.pixel[3]===255,'Export must mark the original target pixel');
     await page.evaluate(()=>window.fixture.setZoom(2));
     await page.waitForFunction(()=>document.querySelector('svg').getBoundingClientRect().width>document.querySelector('#root').clientWidth);
     await page.evaluate(()=>{const h=document.querySelector('[data-floe-image-annotation]');h.scrollLeft=100;h.scrollTop=40;});
@@ -50,7 +50,7 @@ try {
     await image.locator('[data-annotation-index="1"] text').click();
     assert.equal(await page.evaluate(()=>window.fixture.activeIndex()),1);
     assert.equal(await page.evaluate(()=>window.fixture.annotation().kind),'rectangle');
-    const multi=await page.evaluate(()=>window.fixture.export());assert(multi.pixel[0]>230,'Multi-marker PNG preserves marker 1');
+    const multi=await page.evaluate(()=>window.fixture.export());assert(multi.pixel[2]>200 && multi.pixel[0]<100,'Multi-marker PNG preserves marker 1');
     await page.evaluate(()=>{window.fixture.setAnnotation(undefined);window.fixture.setAnnotations([{kind:'rectangle',x:0,y:0,width:1600,height:1000}]);});
     const overlap=await image.boundingBox();await page.mouse.move(overlap.x+overlap.width*.5,overlap.y+overlap.height*.5);await page.mouse.down();await page.mouse.move(overlap.x+overlap.width*.7,overlap.y+overlap.height*.7,{steps:5});await page.mouse.up();
     assert.equal((await page.evaluate(()=>window.fixture.annotation())).kind,'rectangle','Existing regions must not swallow overlapping new selections');

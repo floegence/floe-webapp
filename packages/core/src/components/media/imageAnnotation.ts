@@ -28,15 +28,19 @@ export function imagePointFromClient(image: ImageDimensions, rect: Readonly<{ le
 export function imageAnnotationMarkup(image: ImageDimensions, annotation: ImageAnnotation, marker = 1): string {
   if (!Number.isSafeInteger(marker) || marker < 1 || marker > 99) throw new Error('Invalid annotation marker');
   if (!validateImageAnnotation(image, annotation)) throw new Error('Invalid image annotation');
-  const unit = Math.max(1, Math.min(image.width, image.height) / 500);
+  // Scale with the source image so native-DPR captures and exported PNGs share
+  // the same restrained stroke and badge proportions. No theme-only overlay.
+  const unit = Math.max(1, Math.min(image.width, image.height) / 800);
   const { x, y } = annotation;
-  const r = 9 * unit;
-  const bx = Math.max(r + unit, Math.min(image.width - r - unit, x + 17 * unit));
-  const by = Math.max(r + unit, Math.min(image.height - r - unit, y - 17 * unit));
+  const r = 11 * unit;
+  const bx = Math.max(r + unit, Math.min(image.width - r - unit, x + r));
+  const by = Math.max(r + unit, Math.min(image.height - r - unit, y - r - 3 * unit));
   const shape = annotation.kind === 'rectangle'
-    ? `<rect x="${x}" y="${y}" width="${annotation.width}" height="${annotation.height}" fill="#f59e0b" fill-opacity=".08"/>`
-    : `<path d="M${x - 6 * unit},${y}h${12 * unit}M${x},${y - 6 * unit}v${12 * unit}"/><circle cx="${x}" cy="${y}" r="${2 * unit}" fill="#f59e0b"/>`;
-  return `<g fill="none" stroke-linejoin="round"><g stroke="#111827" stroke-width="${4 * unit}">${shape}</g><g stroke="#fbbf24" stroke-width="${2 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><circle data-annotation-marker="" pointer-events="all" cx="${bx}" cy="${by}" r="${r}" fill="#fbbf24" stroke="#111827" stroke-width="${unit}"/><text data-annotation-marker="" pointer-events="all" x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="#111827" stroke="none" font-family="sans-serif" font-size="${12 * unit}" font-weight="700">${marker}</text></g>`;
+    ? `<rect x="${x}" y="${y}" width="${annotation.width}" height="${annotation.height}"/>`
+    : `<path d="M${x - 5 * unit},${y}h${10 * unit}M${x},${y - 5 * unit}v${10 * unit}"/>`;
+  const tint = annotation.kind === 'rectangle'
+    ? `<rect x="${x}" y="${y}" width="${annotation.width}" height="${annotation.height}" fill="#2563eb" fill-opacity=".035"/>` : '';
+  return `<g fill="none" stroke-linejoin="round">${tint}<g stroke="white" stroke-opacity=".9" stroke-width="${3.5 * unit}">${shape}</g><g stroke="#2563eb" stroke-width="${1.5 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><rect data-annotation-marker="" pointer-events="all" x="${bx - r}" y="${by - r}" width="${2 * r}" height="${2 * r}" rx="${7 * unit}" fill="#2563eb" stroke="white" stroke-width="${1.5 * unit}"/><text data-annotation-marker="" pointer-events="all" x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="white" stroke="none" font-family="system-ui, sans-serif" font-size="${11 * unit}" font-weight="600">${marker}</text></g>`;
 }
 
 export async function annotateImage(source: Blob, annotation: ImageAnnotation | readonly ImageAnnotation[]): Promise<Blob> {

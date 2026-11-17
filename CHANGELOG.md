@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.46
+
+- Refine image annotations with fine blue outlines, subtle region fills and compact numbered badges. Screen review and exported PNGs use identical markup and original-image geometry.
+
 ## 0.101.43
 
 - Position dropdowns and nested menus from their full layout dimensions so entry motion cannot push content beyond viewport or scaled Workbench boundaries.

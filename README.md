@@ -411,3 +411,6 @@ Image review surfaces can pass ordered `annotations`, an `activeIndex`, and
 the active selection; pass the same ordered list to `annotateImage` to export
 matching numbered markers. Coordinates remain original-image pixels; lists
 are limited to 99 markers.
+Fine blue outlines, a subtle region fill and compact numbered badges keep the
+underlying content readable. A white halo preserves contrast on dark images;
+the exported PNG uses the same styling as the interactive surface.
