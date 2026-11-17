@@ -36,7 +36,7 @@ export function imageAnnotationMarkup(image: ImageDimensions, annotation: ImageA
   const shape = annotation.kind === 'rectangle'
     ? `<rect x="${x}" y="${y}" width="${annotation.width}" height="${annotation.height}" fill="#f59e0b" fill-opacity=".08"/>`
     : `<path d="M${x - 6 * unit},${y}h${12 * unit}M${x},${y - 6 * unit}v${12 * unit}"/><circle cx="${x}" cy="${y}" r="${2 * unit}" fill="#f59e0b"/>`;
-  return `<g fill="none" stroke-linejoin="round"><g stroke="#111827" stroke-width="${4 * unit}">${shape}</g><g stroke="#fbbf24" stroke-width="${2 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><circle cx="${bx}" cy="${by}" r="${r}" fill="#fbbf24" stroke="#111827" stroke-width="${unit}"/><text x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="#111827" stroke="none" font-family="sans-serif" font-size="${12 * unit}" font-weight="700">${marker}</text></g>`;
+  return `<g fill="none" stroke-linejoin="round"><g stroke="#111827" stroke-width="${4 * unit}">${shape}</g><g stroke="#fbbf24" stroke-width="${2 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><circle data-annotation-marker="" pointer-events="all" cx="${bx}" cy="${by}" r="${r}" fill="#fbbf24" stroke="#111827" stroke-width="${unit}"/><text data-annotation-marker="" pointer-events="all" x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="#111827" stroke="none" font-family="sans-serif" font-size="${12 * unit}" font-weight="700">${marker}</text></g>`;
 }
 
 export async function annotateImage(source: Blob, annotation: ImageAnnotation | readonly ImageAnnotation[]): Promise<Blob> {

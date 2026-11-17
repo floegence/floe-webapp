@@ -51,6 +51,9 @@ try {
     assert.equal(await page.evaluate(()=>window.fixture.activeIndex()),1);
     assert.equal(await page.evaluate(()=>window.fixture.annotation().kind),'rectangle');
     const multi=await page.evaluate(()=>window.fixture.export());assert(multi.pixel[0]>230,'Multi-marker PNG preserves marker 1');
+    await page.evaluate(()=>{window.fixture.setAnnotation(undefined);window.fixture.setAnnotations([{kind:'rectangle',x:0,y:0,width:1600,height:1000}]);});
+    const overlap=await image.boundingBox();await page.mouse.move(overlap.x+overlap.width*.5,overlap.y+overlap.height*.5);await page.mouse.down();await page.mouse.move(overlap.x+overlap.width*.7,overlap.y+overlap.height*.7,{steps:5});await page.mouse.up();
+    assert.equal((await page.evaluate(()=>window.fixture.annotation())).kind,'rectangle','Existing regions must not swallow overlapping new selections');
     assert.deepEqual(errors,[]);await context.close();
   }
   console.log('PASS image annotation: 8 viewport/DPR combinations, original-pixel point/region, zoom/pan, keyboard and matching exported PNG pixels');

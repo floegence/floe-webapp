@@ -121,7 +121,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
         <image href={props.src} width={props.width} height={props.height} />
         <For each={props.annotations?.slice(0, 99)}>{(item, index) => <Show when={props.showAnnotation !== false && index() !== props.activeIndex && validateImageAnnotation(props, item)}>
           {/* eslint-disable-next-line solid/no-innerhtml */}
-          <g data-annotation-index={index()} innerHTML={imageAnnotationMarkup(props, item, index() + 1)} style={{ cursor: props.onSelect ? 'pointer' : undefined }} />
+          <g data-annotation-index={index()} innerHTML={imageAnnotationMarkup(props, item, index() + 1)} style={{ 'pointer-events': 'none', cursor: props.onSelect ? 'pointer' : undefined }} />
         </Show>}</For>
         {/* Only validated numeric geometry and fixed markup enter this overlay. */}
         {/* eslint-disable-next-line solid/no-innerhtml */}
