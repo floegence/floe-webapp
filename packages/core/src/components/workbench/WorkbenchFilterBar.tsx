@@ -23,7 +23,7 @@ import {
   Plus,
 } from '../../icons';
 import { startHotInteraction } from '../../utils/hotInteraction';
-import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
+import { startPointerSession, type PointerSessionController, type PointerSessionEndReason } from '../ui/pointerSession';
 import { clientToCanvasWorld } from '../ui/canvasGeometry';
 import {
   isBarItemContextMenuKey,
@@ -123,7 +123,7 @@ export type WorkbenchDockEntry = Readonly<{
 export type WorkbenchDockOverflowDragLifecycle = Readonly<{
   /** Fires only after the drag threshold, while capture is held by the stable Dock. */
   onStart: () => void;
-  onEnd: (result: Readonly<{ dropped: boolean }>) => void;
+  onEnd: (result: Readonly<{ dropped: boolean; reason: PointerSessionEndReason }>) => void;
 }>;
 
 export type WorkbenchDockCustomization = Readonly<{
@@ -705,7 +705,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     externalClickSuppression = { clear, expire };
   };
 
-  const finalizeDrag = (commitDrop: boolean) => {
+  const finalizeDrag = (commitDrop: boolean, reason: PointerSessionEndReason) => {
     const current = dragState();
     if (!current) return;
 
@@ -724,7 +724,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
 
     const initialOverflow = current.moved ? current.overflow : undefined;
     const finishOverflow = (dropped: boolean) => {
-      initialOverflow?.onEnd({ dropped });
+      initialOverflow?.onEnd({ dropped, reason });
     };
     if (!commitDrop) {
       if (current.overflow && !current.moved) { suppressGestureClick(current.trigger); externalClickSuppression?.expire(); }
@@ -903,7 +903,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           clientX: snapshot.latestClientX,
           clientY: snapshot.latestClientY,
         });
-        finalizeDrag(commit && (reason === 'pointer_up' || reason === 'buttons_released'));
+        finalizeDrag(commit && (reason === 'pointer_up' || reason === 'buttons_released'), reason);
       },
     });
   };
