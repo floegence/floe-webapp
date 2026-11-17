@@ -5,6 +5,12 @@ export type ImageAnnotationSurfaceProps = ImageDimensions & {
   src: string;
   label: string;
   annotation?: ImageAnnotation;
+  /** Ordered markers rendered identically in the exported image. */
+  annotations?: readonly ImageAnnotation[];
+  activeIndex?: number;
+  onSelect?: (index: number) => void;
+  /** Number used for a new or independently edited annotation. */
+  marker?: number;
   onChange?: (annotation: ImageAnnotation) => void;
   disabled?: boolean;
   zoom?: number;
@@ -25,7 +31,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
   let pan: { id: number; x: number; y: number; left: number; top: number } | undefined;
   const shown = () => draft() ?? props.annotation;
   const scale = createMemo(() => Math.min(size().width / props.width, size().height / props.height) * Math.max(1, props.zoom ?? 1));
-  const markup = () => props.showAnnotation !== false && shown() && validateImageAnnotation(props, shown()!) ? imageAnnotationMarkup(props, shown()!) : '';
+  const markup = () => props.showAnnotation !== false && shown() && validateImageAnnotation(props, shown()!) ? imageAnnotationMarkup(props, shown()!, props.marker ?? (props.activeIndex !== undefined ? props.activeIndex + 1 : 1)) : '';
   onMount(() => {
     let pending = 0;
     const measure = () => {
@@ -92,6 +98,10 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
           if (!editable() || event.button !== 0 || gesture) return;
           const start = point(event); if (!start) return;
           const target = event.target as Element;
+          const selected = target.closest('[data-annotation-index]')?.getAttribute('data-annotation-index');
+          if (selected !== undefined && selected !== null && Number(selected) !== props.activeIndex) {
+            props.onSelect?.(Number(selected)); event.preventDefault(); return;
+          }
           const corner = target.getAttribute('data-corner');
           gesture = { id: event.pointerId, start, client: { x: event.clientX, y: event.clientY }, src: props.src,
             ...(target.closest('[data-annotation-target]') ? { original: props.annotation } : {}), ...(corner !== null ? { corner: Number(corner) } : {}) };
@@ -109,6 +119,10 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
           props.onChange?.({ ...original, x: Math.max(0, Math.min(props.width - (original.kind === 'rectangle' ? original.width : 0), original.x + (delta?.[0] ?? 0) * step)), y: Math.max(0, Math.min(props.height - (original.kind === 'rectangle' ? original.height : 0), original.y + (delta?.[1] ?? 0) * step)) });
         }}>
         <image href={props.src} width={props.width} height={props.height} />
+        <For each={props.annotations?.slice(0, 99)}>{(item, index) => <Show when={props.showAnnotation !== false && index() !== props.activeIndex && validateImageAnnotation(props, item)}>
+          {/* eslint-disable-next-line solid/no-innerhtml */}
+          <g data-annotation-index={index()} innerHTML={imageAnnotationMarkup(props, item, index() + 1)} style={{ cursor: props.onSelect ? 'pointer' : undefined }} />
+        </Show>}</For>
         {/* Only validated numeric geometry and fixed markup enter this overlay. */}
         {/* eslint-disable-next-line solid/no-innerhtml */}
         <g data-annotation-target innerHTML={markup()} />

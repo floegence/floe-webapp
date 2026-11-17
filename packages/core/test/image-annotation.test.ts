@@ -21,3 +21,9 @@ describe('original-image annotation coordinates', () => {
     expect(validateImageAnnotation(image, { kind: 'point', x: 800, y: 500 })).toBe(true);
   });
 });
+
+it('renders explicit ordered marker numbers and rejects unsafe labels', () => {
+  const image = { width: 800, height: 500 }, annotation = { kind: 'point' as const, x: 10, y: 20 };
+  expect(imageAnnotationMarkup(image, annotation, 12)).toContain('>12</text>');
+  for (const label of [0, -1, 100, NaN, 1.5, '<script>']) expect(() => imageAnnotationMarkup(image, annotation, label as number)).toThrow();
+});

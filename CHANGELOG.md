@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.40
+
+- Support ordered image annotations with selectable numbered markers and matching multi-marker PNG export. Existing single-annotation editing remains compatible.
+
 ## 0.101.28
 
 - Await observed narrow Workbench toolbar placement in browser qualification, preserving its viewport boundary assertion across WebKit resize scheduling.

@@ -9,9 +9,9 @@ const { createServer } = await import(requireCore.resolve('vite'));
 const fixture = `import {createSignal} from 'solid-js';import {render} from 'solid-js/web';
 import {ImageAnnotationSurface,annotateImage} from '/packages/core/src/image-annotation';
 const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=1000;const ctx=canvas.getContext('2d');ctx.fillStyle='#263449';ctx.fillRect(0,0,1600,1000);ctx.fillStyle='#a3e635';ctx.fillRect(1196,396,8,8);
-const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[panning,setPanning]=createSignal(false),[src,setSrc]=createSignal(URL.createObjectURL(blob));
-render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} onChange={setAnnotation} zoom={zoom()} panning={panning()}/>,document.getElementById('root'));
-window.fixture={annotation,setAnnotation,setZoom,setSrc,setPanning,export:async()=>{const result=await annotateImage(blob,annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
+const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[panning,setPanning]=createSignal(false),[src,setSrc]=createSignal(URL.createObjectURL(blob)),[annotations,setAnnotations]=createSignal([]),[activeIndex,setActiveIndex]=createSignal();
+render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} annotations={annotations()} activeIndex={activeIndex()} onSelect={index=>{setActiveIndex(index);setAnnotation(annotations()[index]);}} onChange={setAnnotation} zoom={zoom()} panning={panning()}/>,document.getElementById('root'));
+window.fixture={annotation,setAnnotation,setAnnotations,activeIndex,setZoom,setSrc,setPanning,export:async()=>{const result=await annotateImage(blob,annotations().length ? annotations() : annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true },
   resolve: { alias: ['solid-js', 'solid-js/web', 'solid-js/store', 'solid-js/html', 'solid-js/h'].map(name => ({ find: new RegExp('^' + name + '$'), replacement: requireCore.resolve(name === 'solid-js' ? 'solid-js/dist/solid.js' : name + '/dist/' + name.split('/').at(-1) + '.js') })) },
   plugins: [solid({ hot: false }), { name: 'image-annotation-fixture', resolveId: id => id === '/fixture.tsx' ? id : undefined, load: id => id === '/fixture.tsx' ? fixture : undefined,
@@ -45,6 +45,12 @@ try {
     await page.evaluate(()=>new Promise(r=>window.requestAnimationFrame(()=>window.requestAnimationFrame(()=>window.requestAnimationFrame(r)))));
     const next=await image.boundingBox();await page.mouse.move(next.x+next.width*.1,next.y+next.height*.2);await page.mouse.down();await page.mouse.move(next.x+next.width*.4,next.y+next.height*.6,{steps:5});await page.mouse.up();
     const region=await page.evaluate(()=>window.fixture.annotation());assert.equal(region.kind,'rectangle');assert(Math.abs(region.x-160)<1);assert(Math.abs(region.width-480)<1);assert(Math.abs(region.height-400)<1);
+    await page.evaluate(()=>{window.fixture.setAnnotation(undefined);window.fixture.setAnnotations([{kind:'point',x:1200,y:400},{kind:'rectangle',x:100,y:100,width:300,height:200}]);});
+    assert.deepEqual(await image.locator('text').allTextContents(),['1','2']);
+    await image.locator('[data-annotation-index="1"] text').click();
+    assert.equal(await page.evaluate(()=>window.fixture.activeIndex()),1);
+    assert.equal(await page.evaluate(()=>window.fixture.annotation().kind),'rectangle');
+    const multi=await page.evaluate(()=>window.fixture.export());assert(multi.pixel[0]>230,'Multi-marker PNG preserves marker 1');
     assert.deepEqual(errors,[]);await context.close();
   }
   console.log('PASS image annotation: 8 viewport/DPR combinations, original-pixel point/region, zoom/pan, keyboard and matching exported PNG pixels');

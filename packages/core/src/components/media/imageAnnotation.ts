@@ -25,7 +25,8 @@ export function imagePointFromClient(image: ImageDimensions, rect: Readonly<{ le
 }
 
 /** One deterministic overlay is used by the editor and exported/model-visible PNG. */
-export function imageAnnotationMarkup(image: ImageDimensions, annotation: ImageAnnotation): string {
+export function imageAnnotationMarkup(image: ImageDimensions, annotation: ImageAnnotation, marker = 1): string {
+  if (!Number.isSafeInteger(marker) || marker < 1 || marker > 99) throw new Error('Invalid annotation marker');
   if (!validateImageAnnotation(image, annotation)) throw new Error('Invalid image annotation');
   const unit = Math.max(1, Math.min(image.width, image.height) / 500);
   const { x, y } = annotation;
@@ -35,16 +36,18 @@ export function imageAnnotationMarkup(image: ImageDimensions, annotation: ImageA
   const shape = annotation.kind === 'rectangle'
     ? `<rect x="${x}" y="${y}" width="${annotation.width}" height="${annotation.height}" fill="#f59e0b" fill-opacity=".08"/>`
     : `<path d="M${x - 6 * unit},${y}h${12 * unit}M${x},${y - 6 * unit}v${12 * unit}"/><circle cx="${x}" cy="${y}" r="${2 * unit}" fill="#f59e0b"/>`;
-  return `<g fill="none" stroke-linejoin="round"><g stroke="#111827" stroke-width="${4 * unit}">${shape}</g><g stroke="#fbbf24" stroke-width="${2 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><circle cx="${bx}" cy="${by}" r="${r}" fill="#fbbf24" stroke="#111827" stroke-width="${unit}"/><text x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="#111827" stroke="none" font-family="sans-serif" font-size="${12 * unit}" font-weight="700">1</text></g>`;
+  return `<g fill="none" stroke-linejoin="round"><g stroke="#111827" stroke-width="${4 * unit}">${shape}</g><g stroke="#fbbf24" stroke-width="${2 * unit}">${shape}<path d="M${x},${y}L${bx},${by}"/></g><circle cx="${bx}" cy="${by}" r="${r}" fill="#fbbf24" stroke="#111827" stroke-width="${unit}"/><text x="${bx}" y="${by}" dy=".35em" text-anchor="middle" fill="#111827" stroke="none" font-family="sans-serif" font-size="${12 * unit}" font-weight="700">${marker}</text></g>`;
 }
 
-export async function annotateImage(source: Blob, annotation: ImageAnnotation): Promise<Blob> {
+export async function annotateImage(source: Blob, annotation: ImageAnnotation | readonly ImageAnnotation[]): Promise<Blob> {
   const bitmap = await createImageBitmap(source);
   let overlayURL: string | undefined;
   try {
     const { width, height } = bitmap;
     if (width * height > 32_000_000) throw new Error('Image exceeds annotation pixel limit');
-    const markup = imageAnnotationMarkup({ width, height }, annotation);
+    const annotations: readonly ImageAnnotation[] = Array.isArray(annotation) ? annotation : [annotation as ImageAnnotation];
+    if (!annotations.length || annotations.length > 99) throw new Error('Invalid annotation count');
+    const markup = annotations.map((item, index) => imageAnnotationMarkup({ width, height }, item, index + 1)).join('');
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Image annotation is unavailable');
