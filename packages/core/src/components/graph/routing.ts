@@ -1,3 +1,4 @@
+import { separateRouteLanes } from './route-lanes';
 import { AvoidLib } from 'libavoid-js';
 import wasmUrl from 'libavoid-js/wasm?url&no-inline';
 import type {
@@ -54,6 +55,7 @@ export async function routeGraphGeometry(
     batches.set(key, batch);
   }
   const paths = new Map<string, GraphPoint[]>();
+  const routeObstacles = new Map<string, readonly GraphLayoutNode[]>();
   for (const { open, edges } of batches.values()) {
     const router = new avoid.Router(2);
     try {
@@ -71,6 +73,7 @@ export async function routeGraphGeometry(
           !edges.some((edge) => edge.sourcePort || edge.targetPort || edge.source === edge.target)
       );
       router.setRoutingOption(avoid.RoutingOption.nudgeSharedPathsWithCommonEndPoint, true);
+      router.setRoutingOption(avoid.RoutingOption.penaliseOrthogonalSharedPathsAtConnEnds, true);
       const shapes = new Map(
         layout.nodes
           .filter((node) => !open.has(node.id) && ancestors(node.id).every((id) => open.has(id)))
@@ -85,13 +88,18 @@ export async function routeGraphGeometry(
             return [node.id, shape] as const;
           })
       );
+      const pairKey = (edge: (typeof edges)[number]) =>
+        [edge.source, edge.target].sort().join('\u0000');
+      const pairCounts = new Map<string, number>();
+      for (const edge of edges)
+        pairCounts.set(pairKey(edge), (pairCounts.get(pairKey(edge)) ?? 0) + 1);
       const pairOrdinals = new Map<string, number>();
       const offsets = new Map<string, number>();
       for (const edge of edges) {
-        const key = [edge.source, edge.target].sort().join('\u0000');
-        const ordinal = pairOrdinals.get(key) ?? 0;
+        const key = pairKey(edge),
+          ordinal = pairOrdinals.get(key) ?? 0;
         pairOrdinals.set(key, ordinal + 1);
-        offsets.set(edge.id, ordinal % 2 === 0 ? -6 : 6);
+        offsets.set(edge.id, (ordinal - (pairCounts.get(key)! - 1) / 2) * 12);
       }
       let nextPinClass = sides.length + 2;
       const borderPinClasses = new Map<string, number>();
@@ -135,6 +143,7 @@ export async function routeGraphGeometry(
         }
       }
       const obstacles = layout.nodes.filter((node) => shapes.has(node.id));
+      for (const edge of edges) routeObstacles.set(edge.id, obstacles);
       const endpoint = (
         node: GraphLayoutNode,
         other: GraphLayoutNode,
@@ -203,7 +212,8 @@ export async function routeGraphGeometry(
                 }));
               });
         if (shape) {
-          // Each connection chooses from its own peer-facing border candidates.
+          // Share automatic candidates as exclusive physical pins. Per-edge pin
+          // classes cannot arbitrate ownership of a shared attachment coordinate.
           const location = (side: GraphPort['side'], position: GraphPoint) =>
             JSON.stringify([
               node.id,
@@ -211,16 +221,12 @@ export async function routeGraphGeometry(
               fraction(position.y - node.y, node.height),
               side,
             ]);
-          const limited = Boolean(portId || selfPosition || parallel);
-          const existing =
-            limited ||
-            candidates.every((candidate) =>
-              borderPinClasses.has(location(candidate.side, candidate.position))
-            )
-              ? borderPinClasses.get(location(candidates[0]!.side, candidates[0]!.position))
-              : undefined;
+          const limited = Boolean(portId || selfPosition);
+          const existing = limited
+            ? borderPinClasses.get(location(candidates[0]!.side, candidates[0]!.position))
+            : undefined;
           if (existing !== undefined) return new avoid.ConnEnd(shape, existing);
-          const pinClass = existing ?? nextPinClass++;
+          const pinClass = limited ? nextPinClass++ : 1;
           for (const { side, position } of candidates) {
             const key = location(side, position);
             if (borderPinClasses.has(key)) continue;
@@ -236,7 +242,7 @@ export async function routeGraphGeometry(
               0,
               directions[side]
             );
-            pin.setExclusive(false);
+            pin.setExclusive(!limited);
             pin.setConnectionCost(
               node.width / 2 +
                 node.height / 2 -
@@ -345,6 +351,7 @@ export async function routeGraphGeometry(
     }
   }
   const edges = layout.edges.map((edge) => ({ ...edge, sections: [paths.get(edge.id)!] }));
+  separateRouteLanes({ ...layout, edges }, routeObstacles, clearance, anchorInset);
   return withBounds({
     nodes: layout.nodes,
     edges,

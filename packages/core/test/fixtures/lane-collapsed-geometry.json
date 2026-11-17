@@ -1,0 +1,212 @@
+{
+  "nodes": [
+    {
+      "id": "g-access",
+      "kind": "node",
+      "width": 320,
+      "height": 152,
+      "x": 12,
+      "y": 0,
+      "label": "g-access"
+    },
+    {
+      "id": "res-domain",
+      "width": 220,
+      "height": 110,
+      "x": 408,
+      "y": 105.5,
+      "label": "res-domain"
+    },
+    {
+      "id": "g-lb",
+      "kind": "node",
+      "width": 320,
+      "height": 152,
+      "x": 184,
+      "y": 279.5,
+      "label": "g-lb"
+    },
+    {
+      "id": "res-ingress-lb",
+      "width": 220,
+      "height": 110,
+      "x": 740,
+      "y": 385,
+      "label": "res-ingress-lb"
+    },
+    {
+      "id": "g-apiserver",
+      "kind": "node",
+      "width": 320,
+      "height": 188,
+      "x": 356,
+      "y": 559,
+      "label": "g-apiserver"
+    },
+    {
+      "id": "g-etcd",
+      "kind": "node",
+      "width": 320,
+      "height": 152,
+      "x": 356,
+      "y": 811,
+      "label": "g-etcd"
+    },
+    {
+      "id": "g-controllers",
+      "kind": "node",
+      "width": 320,
+      "height": 224,
+      "x": 356,
+      "y": 1027,
+      "label": "g-controllers"
+    },
+    {
+      "id": "g-addon-nodes",
+      "kind": "node",
+      "width": 320,
+      "height": 260,
+      "x": 356,
+      "y": 1315,
+      "label": "g-addon-nodes"
+    },
+    {
+      "id": "g-app-nodes",
+      "kind": "node",
+      "width": 320,
+      "height": 188,
+      "x": 356,
+      "y": 1639,
+      "label": "g-app-nodes"
+    },
+    {
+      "id": "res-registry",
+      "width": 220,
+      "height": 110,
+      "x": 0,
+      "y": 1891,
+      "label": "res-registry"
+    },
+    {
+      "id": "res-storage",
+      "width": 220,
+      "height": 110,
+      "x": 284,
+      "y": 1891,
+      "label": "res-storage"
+    }
+  ],
+  "edges": [
+    {
+      "id": "@overview/g-access/g-lb",
+      "source": "g-access",
+      "target": "g-lb",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-lb/g-apiserver",
+      "source": "g-lb",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-controllers/g-apiserver",
+      "source": "g-controllers",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-apiserver/g-etcd",
+      "source": "g-apiserver",
+      "target": "g-etcd",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/g-apiserver",
+      "source": "g-addon-nodes",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/g-apiserver",
+      "source": "g-app-nodes",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-apiserver/res-registry",
+      "source": "g-apiserver",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-controllers/res-registry",
+      "source": "g-controllers",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/res-registry",
+      "source": "g-addon-nodes",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/res-registry",
+      "source": "g-app-nodes",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/res-ingress-lb/g-addon-nodes",
+      "source": "res-ingress-lb",
+      "target": "g-addon-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/res-domain/res-ingress-lb",
+      "source": "res-domain",
+      "target": "res-ingress-lb",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/g-app-nodes",
+      "source": "g-addon-nodes",
+      "target": "g-app-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/g-addon-nodes",
+      "source": "g-app-nodes",
+      "target": "g-addon-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/res-storage",
+      "source": "g-app-nodes",
+      "target": "res-storage",
+      "label": "",
+      "sections": []
+    }
+  ],
+  "bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 960,
+    "height": 2001
+  }
+}

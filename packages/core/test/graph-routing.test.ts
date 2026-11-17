@@ -60,7 +60,7 @@ describe('readable graph routing', () => {
           shared += overlap;
         }
       }
-    expect(shared).toBeLessThan(1100);
+    expect(shared).toBe(0);
     expect(await routeGraphGeometry(structuredClone(layeredGeometry) as GraphLayout)).toEqual(
       result
     );

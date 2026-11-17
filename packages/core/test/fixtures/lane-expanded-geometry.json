@@ -1,0 +1,374 @@
+{
+  "nodes": [
+    {
+      "id": "g-access",
+      "kind": "group",
+      "width": 344,
+      "height": 321,
+      "x": 0,
+      "y": 0,
+      "label": "g-access"
+    },
+    {
+      "id": "res-domain",
+      "width": 220,
+      "height": 110,
+      "x": 408,
+      "y": 105.5,
+      "label": "res-domain"
+    },
+    {
+      "id": "g-lb",
+      "kind": "group",
+      "width": 688,
+      "height": 321,
+      "x": 0,
+      "y": 385,
+      "label": "g-lb"
+    },
+    {
+      "id": "res-ingress-lb",
+      "width": 220,
+      "height": 110,
+      "x": 752,
+      "y": 490.5,
+      "label": "res-ingress-lb"
+    },
+    {
+      "id": "g-apiserver",
+      "kind": "group",
+      "width": 1032,
+      "height": 436,
+      "x": 0,
+      "y": 770,
+      "label": "g-apiserver"
+    },
+    {
+      "id": "g-etcd",
+      "kind": "group",
+      "width": 1032,
+      "height": 321,
+      "x": 0,
+      "y": 1270,
+      "label": "g-etcd"
+    },
+    {
+      "id": "g-controllers",
+      "kind": "group",
+      "width": 1032,
+      "height": 419,
+      "x": 0,
+      "y": 1655,
+      "label": "g-controllers"
+    },
+    {
+      "id": "g-addon-nodes",
+      "kind": "group",
+      "width": 1032,
+      "height": 419,
+      "x": 0,
+      "y": 2138,
+      "label": "g-addon-nodes"
+    },
+    {
+      "id": "g-app-nodes",
+      "kind": "group",
+      "width": 1032,
+      "height": 370,
+      "x": 0,
+      "y": 2621,
+      "label": "g-app-nodes"
+    },
+    {
+      "id": "res-registry",
+      "width": 220,
+      "height": 110,
+      "x": 0,
+      "y": 3055,
+      "label": "res-registry"
+    },
+    {
+      "id": "res-storage",
+      "width": 220,
+      "height": 110,
+      "x": 284,
+      "y": 3055,
+      "label": "res-storage"
+    },
+    {
+      "id": "n-client",
+      "parentId": "g-access",
+      "width": 280,
+      "height": 177,
+      "x": 32,
+      "y": 112,
+      "label": "n-client"
+    },
+    {
+      "id": "n-lb-1",
+      "parentId": "g-lb",
+      "width": 280,
+      "height": 177,
+      "x": 32,
+      "y": 497,
+      "label": "n-lb-1"
+    },
+    {
+      "id": "n-lb-2",
+      "parentId": "g-lb",
+      "width": 280,
+      "height": 177,
+      "x": 376,
+      "y": 497,
+      "label": "n-lb-2"
+    },
+    {
+      "id": "n-api-1",
+      "parentId": "g-apiserver",
+      "width": 280,
+      "height": 292,
+      "x": 32,
+      "y": 882,
+      "label": "n-api-1"
+    },
+    {
+      "id": "n-api-2",
+      "parentId": "g-apiserver",
+      "width": 280,
+      "height": 292,
+      "x": 376,
+      "y": 882,
+      "label": "n-api-2"
+    },
+    {
+      "id": "n-api-3",
+      "parentId": "g-apiserver",
+      "width": 280,
+      "height": 292,
+      "x": 720,
+      "y": 882,
+      "label": "n-api-3"
+    },
+    {
+      "id": "n-etcd-1",
+      "parentId": "g-etcd",
+      "width": 280,
+      "height": 177,
+      "x": 32,
+      "y": 1382,
+      "label": "n-etcd-1"
+    },
+    {
+      "id": "n-etcd-2",
+      "parentId": "g-etcd",
+      "width": 280,
+      "height": 177,
+      "x": 376,
+      "y": 1382,
+      "label": "n-etcd-2"
+    },
+    {
+      "id": "n-etcd-3",
+      "parentId": "g-etcd",
+      "width": 280,
+      "height": 177,
+      "x": 720,
+      "y": 1382,
+      "label": "n-etcd-3"
+    },
+    {
+      "id": "n-ctrl-1",
+      "parentId": "g-controllers",
+      "width": 280,
+      "height": 275,
+      "x": 32,
+      "y": 1767,
+      "label": "n-ctrl-1"
+    },
+    {
+      "id": "n-ctrl-2",
+      "parentId": "g-controllers",
+      "width": 280,
+      "height": 275,
+      "x": 376,
+      "y": 1767,
+      "label": "n-ctrl-2"
+    },
+    {
+      "id": "n-ctrl-3",
+      "parentId": "g-controllers",
+      "width": 280,
+      "height": 275,
+      "x": 720,
+      "y": 1767,
+      "label": "n-ctrl-3"
+    },
+    {
+      "id": "n-addon-1",
+      "parentId": "g-addon-nodes",
+      "width": 280,
+      "height": 275,
+      "x": 32,
+      "y": 2250,
+      "label": "n-addon-1"
+    },
+    {
+      "id": "n-addon-2",
+      "parentId": "g-addon-nodes",
+      "width": 280,
+      "height": 275,
+      "x": 376,
+      "y": 2250,
+      "label": "n-addon-2"
+    },
+    {
+      "id": "n-addon-3",
+      "parentId": "g-addon-nodes",
+      "width": 280,
+      "height": 275,
+      "x": 720,
+      "y": 2250,
+      "label": "n-addon-3"
+    },
+    {
+      "id": "n-app-1",
+      "parentId": "g-app-nodes",
+      "width": 280,
+      "height": 226,
+      "x": 32,
+      "y": 2733,
+      "label": "n-app-1"
+    },
+    {
+      "id": "n-app-2",
+      "parentId": "g-app-nodes",
+      "width": 280,
+      "height": 226,
+      "x": 376,
+      "y": 2733,
+      "label": "n-app-2"
+    },
+    {
+      "id": "n-app-3",
+      "parentId": "g-app-nodes",
+      "width": 280,
+      "height": 226,
+      "x": 720,
+      "y": 2733,
+      "label": "n-app-3"
+    }
+  ],
+  "edges": [
+    {
+      "id": "@overview/g-access/g-lb",
+      "source": "g-access",
+      "target": "g-lb",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-lb/g-apiserver",
+      "source": "g-lb",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-controllers/g-apiserver",
+      "source": "g-controllers",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-apiserver/g-etcd",
+      "source": "g-apiserver",
+      "target": "g-etcd",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/g-apiserver",
+      "source": "g-addon-nodes",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/g-apiserver",
+      "source": "g-app-nodes",
+      "target": "g-apiserver",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-apiserver/res-registry",
+      "source": "g-apiserver",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-controllers/res-registry",
+      "source": "g-controllers",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/res-registry",
+      "source": "g-addon-nodes",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/res-registry",
+      "source": "g-app-nodes",
+      "target": "res-registry",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/res-ingress-lb/g-addon-nodes",
+      "source": "res-ingress-lb",
+      "target": "g-addon-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/res-domain/res-ingress-lb",
+      "source": "res-domain",
+      "target": "res-ingress-lb",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-addon-nodes/g-app-nodes",
+      "source": "g-addon-nodes",
+      "target": "g-app-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/g-addon-nodes",
+      "source": "g-app-nodes",
+      "target": "g-addon-nodes",
+      "label": "",
+      "sections": []
+    },
+    {
+      "id": "@overview/g-app-nodes/res-storage",
+      "source": "g-app-nodes",
+      "target": "res-storage",
+      "label": "",
+      "sections": []
+    }
+  ],
+  "bounds": {
+    "x": 0,
+    "y": 0,
+    "width": 1032,
+    "height": 3165
+  }
+}

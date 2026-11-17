@@ -39,8 +39,15 @@ Put selectable detail text in a shared floating layer outside the zoomed plane.
 Routes are faint but visible by default. Hovering or focusing a node emphasizes
 its relations; a group traces descendant relations and hides unrelated edges.
 Automatic border anchors are chosen jointly from peer-facing spans and free
-obstacle corridors. Their attached segments can separate into lanes; batches
-with explicit ports or self loops preserve their exact endpoint constraints.
+obstacle corridors. Automatic connections claim exclusive border pins, including reciprocal and
+parallel relations. A shared lane pass separates collinear segments across
+compound routing scopes, including terminal approaches. It prefers eight-unit
+lanes, permits tighter spacing in dense fixed corridors, and adds an obstacle-safe
+elbow when a whole straight segment cannot shift. It preserves corner inset,
+arrow approach length, node geometry and explicit port/self-loop constraints.
+Impossible automatic separation rejects with the affected edge IDs rather than
+silently drawing a shared track. Explicit coincident ports remain caller-owned;
+perpendicular crossings do not imply a junction.
 `edgeAnchorInset` keeps automatic anchors away from rounded corners (default 8,
 capped at one quarter of the chosen side); setting it also prevents endpoint
 nudging from erasing that budget. Named ports remain exact. `edgeClearance`
