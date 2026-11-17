@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.43
+
+- Position dropdowns and nested menus from their full layout dimensions so entry motion cannot push content beyond viewport or scaled Workbench boundaries.
+
 ## 0.101.42
 
 - Restrict inactive image-annotation hit targets to numbered pins so existing regions do not swallow overlapping new selections.

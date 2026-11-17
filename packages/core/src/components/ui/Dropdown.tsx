@@ -21,6 +21,7 @@ import {
   resolveSurfacePortalBoundaryRect,
   resolveSurfacePortalHost,
   resolveSurfacePortalMount,
+  resolveSurfacePortalScale,
   type ResolvedSurfacePortalHost,
 } from './surfacePortalScope';
 import { createFloatingPresence } from './floatingPresence';
@@ -65,6 +66,7 @@ type DropdownPortalLayout = Readonly<{
   mount: () => HTMLElement | undefined;
   isSurfaceMode: () => boolean;
   boundaryRect: () => MenuBoundaryRect;
+  measureSize: (element: HTMLElement) => Pick<DOMRect, 'width' | 'height'>;
   projectPosition: (
     position: Readonly<{ x: number; y: number }>
   ) => Readonly<{ x: number; y: number }>;
@@ -130,6 +132,12 @@ export function Dropdown(props: DropdownProps) {
     mount: () => resolveSurfacePortalMount(surfaceHost()),
     isSurfaceMode: () => isSurfacePortalMode(surfaceHost()),
     boundaryRect: () => resolveSurfacePortalBoundaryRect(surfaceHost()),
+    measureSize: (element) => {
+      // Presence scales the menu itself. Collision placement needs its final
+      // layout size, projected only through the containing surface's scale.
+      const scale = resolveSurfacePortalScale(surfaceHost());
+      return { width: element.offsetWidth * scale.x, height: element.offsetHeight * scale.y };
+    },
     projectPosition: (position) => projectSurfacePortalPosition(position, surfaceHost()),
   };
 
@@ -158,7 +166,7 @@ export function Dropdown(props: DropdownProps) {
   const updateMenuPosition = () => {
     if (!triggerRef || !menuRef) return;
     const triggerRect = triggerRef.getBoundingClientRect();
-    const menuRect = menuRef.getBoundingClientRect();
+    const menuRect = portalLayout.measureSize(menuRef);
     const pos = calculateMenuPosition(
       triggerRect,
       menuRect,
@@ -393,7 +401,7 @@ function DropdownMenuItem(props: DropdownMenuItemProps) {
   const updateSubmenuPosition = () => {
     if (!itemRef || !submenuRef) return;
     const parentRect = itemRef.getBoundingClientRect();
-    const submenuRect = submenuRef.getBoundingClientRect();
+    const submenuRect = props.portalLayout.measureSize(submenuRef);
     const pos = calculateSubmenuPosition(
       parentRect,
       submenuRect,

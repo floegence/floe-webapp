@@ -170,6 +170,7 @@ prompt-card:
 .PHONY: context-menu-actions
 context-menu-actions:
 	node scripts/check-context-menu-actions-browser.mjs --all
+	node scripts/check-dropdown-bounds-browser.mjs --all
 
 .PHONY: preview-search
 preview-search:

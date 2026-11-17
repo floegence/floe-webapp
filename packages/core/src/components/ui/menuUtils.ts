@@ -73,7 +73,7 @@ export function clampMenuPosition(
 
 export function calculateMenuPosition(
   triggerRect: DOMRect,
-  menuRect: DOMRect,
+  menuRect: Pick<DOMRect, 'width' | 'height'>,
   align: 'start' | 'center' | 'end',
   boundaryRect?: MenuBoundaryRect
 ): { x: number; y: number } {
@@ -116,7 +116,7 @@ export function calculateMenuPosition(
 
 export function calculateSubmenuPosition(
   parentRect: DOMRect,
-  submenuRect: DOMRect,
+  submenuRect: Pick<DOMRect, 'width' | 'height'>,
   boundaryRect?: MenuBoundaryRect
 ): { x: number; y: number } {
   const boundary = resolveMenuBoundaryRect(boundaryRect);
