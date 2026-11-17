@@ -1677,7 +1677,8 @@
     position: relative;
     height: 100%;
     width: 100%;
-    overflow: hidden;
+    /* The transformed viewport owns navigation; focus must not scroll its host. */
+    overflow: clip;
     touch-action: none;
     user-select: none;
     cursor: grab;

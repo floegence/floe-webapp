@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.48
+
+- Keep InfiniteCanvas navigation in its transformed viewport so native focus and scrolling cannot offset or clip nodes after fitting, panning or zooming. Verify the visible geometry in Chromium, WebKit and Firefox.
+
 ## 0.101.47
 
 - Let image annotation hosts choose one consistent cursor for selection, numbered pins, resize handles and panning, while preserving contextual cursors by default.

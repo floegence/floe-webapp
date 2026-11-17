@@ -414,3 +414,5 @@ are limited to 99 markers.
 Fine blue outlines, a subtle region fill and compact numbered badges keep the
 underlying content readable. A white halo preserves contrast on dark images;
 the exported PNG uses the same styling as the interactive surface.
+
+InfiniteCanvas keeps one authoritative transformed viewport. Its host clips overflow without native scrolling, so keyboard focus and scroll-into-view cannot offset world coordinates. Local scrolling remains owned by explicitly constrained content surfaces.

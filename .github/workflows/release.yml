@@ -90,6 +90,7 @@ jobs:
           pnpm exec playwright install --with-deps chromium webkit firefox
           pnpm test:workbench-composition
           node scripts/check-image-annotation-browser.mjs
+          node scripts/check-canvas-viewport-browser.mjs
           pnpm test:business-controls
           node scripts/check-dropdown-bounds-browser.mjs --all
           node scripts/check-prompt-card-browser.mjs --all
