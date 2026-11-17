@@ -186,6 +186,18 @@ export function createBarLayoutMotion(options: {
   let revision = 0;
   const dragKey = createMemo(() => options.drag?.()?.key);
   createEffect(() => {
+    const key = dragKey();
+    const element = key ? options.elements.get(key) : undefined;
+    if (!element) return;
+    const previousZIndex = element.style.zIndex, previousCursor = element.style.cursor;
+    element.style.zIndex = '1';
+    element.style.cursor = 'grabbing';
+    onCleanup(() => {
+      element.style.zIndex = previousZIndex;
+      element.style.cursor = previousCursor;
+    });
+  });
+  createEffect(() => {
     const drag = options.drag?.();
     if (!drag) return;
     const element = options.elements.get(drag.key);

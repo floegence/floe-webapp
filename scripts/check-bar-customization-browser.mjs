@@ -94,6 +94,7 @@ try {
     for (const delta of [8, 60, 64, 68, 80, 72, 65, 7]) {
       await page.mouse.move(movingStart.x + movingStart.width / 2, movingStart.y + movingStart.height / 2 + delta);
       const live = await moving.boundingBox();
+      assert.equal(await moving.evaluate(element => getComputedStyle(element).zIndex), '1', 'The dragged icon stays above crossing neighbors');
       assert.ok(Math.abs(live.y - movingStart.y - delta) < 1, `Dragged rail entry must track the pointer without easing or lag: ${JSON.stringify({ delta, live, movingStart, style: await moving.getAttribute('style') })}`);
       if (delta === 60) neighborAnimations = await page.evaluate(() => window.barAnimations.length);
       if ([64, 68, 80, 72, 65].includes(delta)) assert.equal(await page.evaluate(() => window.barAnimations.length), neighborAnimations, 'Pointer movement within a slot must not restart neighbor motion');
@@ -106,6 +107,7 @@ try {
     await page.mouse.down();
     for (const delta of [8, 16, 24, 13, 7]) {
       await page.mouse.move(dockStart.x + dockStart.width / 2 + delta, dockStart.y + dockStart.height / 2);
+      assert.equal(await trackingDock.evaluate(element => getComputedStyle(element).zIndex), '1', 'The dragged Dock icon stays above crossing neighbors');
       assert.ok(Math.abs((await trackingDock.boundingBox()).x - dockStart.x - delta) < 1, 'Dragged Dock entry must follow the pointer synchronously');
     }
     await page.keyboard.press('Escape'); await page.mouse.up();

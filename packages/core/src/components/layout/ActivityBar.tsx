@@ -208,7 +208,7 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         data-floe-interactive="press"
         data-floe-bar-key={props.item.id}
         aria-keyshortcuts={props.reorderable ? 'Alt+Shift+ArrowUp Alt+Shift+ArrowDown' : undefined}
-        style={{ 'touch-action': props.reorderable ? 'none' : undefined, 'z-index': props.dragging ? 1 : undefined,
+        style={{ 'touch-action': props.reorderable ? 'none' : undefined,
           // Inner ink/plate own hover motion; the outer slot has one transform owner.
           transition: 'none' }}
         onPointerDown={event => props.onPointerDown?.(event)}
