@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
+import { For, Show, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js';
 import { imageAnnotationMarkup, imagePointFromClient, validateImageAnnotation, type ImageAnnotation, type ImageDimensions, type ImagePoint } from './imageAnnotation';
 
 export type ImageAnnotationSurfaceProps = ImageDimensions & {
@@ -16,6 +16,8 @@ export type ImageAnnotationSurfaceProps = ImageDimensions & {
   zoom?: number;
   /** Drag the zoomed viewport without changing its annotation. */
   panning?: boolean;
+  /** Use one cursor for selection, numbered pins, resizing and panning. */
+  cursor?: JSX.CSSProperties['cursor'];
   showAnnotation?: boolean;
   class?: string;
 };
@@ -89,7 +91,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     <div style={{ width: `${Math.max(size().width, props.width * scale())}px`, height: `${Math.max(size().height, props.height * scale())}px`, display: 'grid', 'place-items': 'center' }}>
       <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={props.width * scale()} height={props.height * scale()} viewBox={`0 0 ${props.width} ${props.height}`}
         role="img" aria-label={props.label} tabindex={editable() ? 0 : undefined}
-        style={{ display: 'block', 'touch-action': editable() || props.panning ? 'none' : 'auto', 'user-select': 'none', cursor: props.panning ? 'grab' : editable() ? 'crosshair' : 'default', flex: 'none' }}
+        style={{ display: 'block', 'touch-action': editable() || props.panning ? 'none' : 'auto', 'user-select': 'none', cursor: props.cursor ?? (props.panning ? 'grab' : editable() ? 'crosshair' : 'default'), flex: 'none' }}
         onPointerDown={event => {
           if (props.panning && event.button === 0 && !pan) {
             pan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: host.scrollLeft, top: host.scrollTop };
@@ -121,13 +123,13 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
         <image href={props.src} width={props.width} height={props.height} />
         <For each={props.annotations?.slice(0, 99)}>{(item, index) => <Show when={props.showAnnotation !== false && index() !== props.activeIndex && validateImageAnnotation(props, item)}>
           {/* eslint-disable-next-line solid/no-innerhtml */}
-          <g data-annotation-index={index()} innerHTML={imageAnnotationMarkup(props, item, index() + 1)} style={{ 'pointer-events': 'none', cursor: props.onSelect ? 'pointer' : undefined }} />
+          <g data-annotation-index={index()} innerHTML={imageAnnotationMarkup(props, item, index() + 1)} style={{ 'pointer-events': 'none', cursor: props.cursor ?? (props.onSelect ? 'pointer' : undefined) }} />
         </Show>}</For>
         {/* Only validated numeric geometry and fixed markup enter this overlay. */}
         {/* eslint-disable-next-line solid/no-innerhtml */}
         <g data-annotation-target innerHTML={markup()} />
         <Show when={editable() && props.showAnnotation !== false}>
-          <For each={corners()}>{(corner, index) => <rect data-annotation-target data-corner={index()} x={corner.x - 5 / scale()} y={corner.y - 5 / scale()} width={10 / scale()} height={10 / scale()} fill="white" stroke="#111827" stroke-width={1 / scale()} style={{ cursor: index() === 0 || index() === 3 ? 'nwse-resize' : 'nesw-resize' }} />}</For>
+          <For each={corners()}>{(corner, index) => <rect data-annotation-target data-corner={index()} x={corner.x - 5 / scale()} y={corner.y - 5 / scale()} width={10 / scale()} height={10 / scale()} fill="white" stroke="#111827" stroke-width={1 / scale()} style={{ cursor: props.cursor ?? (index() === 0 || index() === 3 ? 'nwse-resize' : 'nesw-resize') }} />}</For>
         </Show>
       </svg>
     </div>

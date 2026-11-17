@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.47
+
+- Let image annotation hosts choose one consistent cursor for selection, numbered pins, resize handles and panning, while preserving contextual cursors by default.
+
 ## 0.101.46
 
 - Refine image annotations with fine blue outlines, subtle region fills and compact numbered badges. Screen review and exported PNGs use identical markup and original-image geometry.

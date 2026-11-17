@@ -1,4 +1,4 @@
-/* global window, document */
+/* global window, document, getComputedStyle */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -9,9 +9,9 @@ const { createServer } = await import(requireCore.resolve('vite'));
 const fixture = `import {createSignal} from 'solid-js';import {render} from 'solid-js/web';
 import {ImageAnnotationSurface,annotateImage} from '/packages/core/src/image-annotation';
 const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=1000;const ctx=canvas.getContext('2d');ctx.fillStyle='#263449';ctx.fillRect(0,0,1600,1000);ctx.fillStyle='#a3e635';ctx.fillRect(1196,396,8,8);
-const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[panning,setPanning]=createSignal(false),[src,setSrc]=createSignal(URL.createObjectURL(blob)),[annotations,setAnnotations]=createSignal([]),[activeIndex,setActiveIndex]=createSignal();
-render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} annotations={annotations()} activeIndex={activeIndex()} onSelect={index=>{setActiveIndex(index);setAnnotation(annotations()[index]);}} onChange={setAnnotation} zoom={zoom()} panning={panning()}/>,document.getElementById('root'));
-window.fixture={annotation,setAnnotation,setAnnotations,activeIndex,setZoom,setSrc,setPanning,export:async()=>{const result=await annotateImage(blob,annotations().length ? annotations() : annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
+const blob=await new Promise(r=>canvas.toBlob(r));const [annotation,setAnnotation]=createSignal(),[zoom,setZoom]=createSignal(1),[panning,setPanning]=createSignal(false),[src,setSrc]=createSignal(URL.createObjectURL(blob)),[annotations,setAnnotations]=createSignal([]),[activeIndex,setActiveIndex]=createSignal(),[cursor,setCursor]=createSignal();
+render(()=><ImageAnnotationSurface width={1600} height={1000} src={src()} label="Frozen image" annotation={annotation()} annotations={annotations()} activeIndex={activeIndex()} onSelect={index=>{setActiveIndex(index);setAnnotation(annotations()[index]);}} onChange={setAnnotation} zoom={zoom()} panning={panning()} cursor={cursor()}/>,document.getElementById('root'));
+window.fixture={setCursor,annotation,setAnnotation,setAnnotations,activeIndex,setZoom,setSrc,setPanning,export:async()=>{const result=await annotateImage(blob,annotations().length ? annotations() : annotation());const bitmap=await createImageBitmap(result);const out=document.createElement('canvas');out.width=bitmap.width;out.height=bitmap.height;const c=out.getContext('2d');c.drawImage(bitmap,0,0);bitmap.close();return {width:out.width,height:out.height,pixel:Array.from(c.getImageData(1200,400,1,1).data)};}};`;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true },
   resolve: { alias: ['solid-js', 'solid-js/web', 'solid-js/store', 'solid-js/html', 'solid-js/h'].map(name => ({ find: new RegExp('^' + name + '$'), replacement: requireCore.resolve(name === 'solid-js' ? 'solid-js/dist/solid.js' : name + '/dist/' + name.split('/').at(-1) + '.js') })) },
   plugins: [solid({ hot: false }), { name: 'image-annotation-fixture', resolveId: id => id === '/fixture.tsx' ? id : undefined, load: id => id === '/fixture.tsx' ? fixture : undefined,
@@ -50,6 +50,15 @@ try {
     await image.locator('[data-annotation-index="1"] text').click();
     assert.equal(await page.evaluate(()=>window.fixture.activeIndex()),1);
     assert.equal(await page.evaluate(()=>window.fixture.annotation().kind),'rectangle');
+    assert.equal(await image.evaluate(element=>getComputedStyle(element).cursor),'crosshair');
+    await page.evaluate(()=>window.fixture.setCursor('default'));
+    for (const target of [image, image.locator('[data-annotation-index="0"] text'), image.locator('[data-corner="0"]')]) {
+      assert.equal(await target.evaluate(element=>getComputedStyle(element).cursor),'default','Fixed cursor applies to canvas, pins and resize handles');
+    }
+    await page.evaluate(()=>window.fixture.setPanning(true));
+    assert.equal(await image.evaluate(element=>getComputedStyle(element).cursor),'default','Panning retains the configured cursor');
+    await page.evaluate(()=>{window.fixture.setCursor(undefined);window.fixture.setPanning(false);});
+    assert.equal(await image.evaluate(element=>getComputedStyle(element).cursor),'crosshair');
     const multi=await page.evaluate(()=>window.fixture.export());assert(multi.pixel[2]>200 && multi.pixel[0]<100,'Multi-marker PNG preserves marker 1');
     await page.evaluate(()=>{window.fixture.setAnnotation(undefined);window.fixture.setAnnotations([{kind:'rectangle',x:0,y:0,width:1600,height:1000}]);});
     const overlap=await image.boundingBox();await page.mouse.move(overlap.x+overlap.width*.5,overlap.y+overlap.height*.5);await page.mouse.down();await page.mouse.move(overlap.x+overlap.width*.7,overlap.y+overlap.height*.7,{steps:5});await page.mouse.up();
