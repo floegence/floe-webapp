@@ -29,11 +29,14 @@ import { ArrowUp, Plus, X } from '../icons';
 import { Button } from './Button';
 import { Select, type SelectOption, type SelectBaseProps } from './Select';
 import { createFloatingPresence } from './floatingPresence';
+import { avoidPromptCardRegions, type PromptCardRegion } from './promptCardPlacement';
 
 export interface PromptCardProps {
   open: boolean;
   /** Viewport coordinates captured by the host at the contextual action. */
   anchor?: Readonly<{ x: number; y: number }> | null;
+  /** Selected content to keep visible where space permits, in viewport pixels. */
+  avoidRegions?: readonly PromptCardRegion[];
   viewportInsets?: Readonly<{ top?: number; right?: number; bottom?: number; left?: number }>;
   /** Defaults to the trigger's surface. Viewport scope is an explicit host choice. */
   portalScope?: 'surface' | 'viewport';
@@ -201,14 +204,14 @@ export function PromptCard(props: PromptCardProps) {
         : point.y - height - 8
       : top + Math.max(0, (maxHeight - height) * 0.32);
     const y = clamp(desiredY, top, bottom - height);
-    const side = point ? (below ? 'bottom' : 'top') : 'edge';
+    const placed = avoidPromptCardRegions({ x, y }, { width, height }, { left, top, right, bottom }, props.avoidRegions ?? []);
+    const side = point ? (placed.y >= point.y ? 'bottom' : 'top') : 'edge';
     return {
-      x,
-      y,
+      ...placed,
       availableWidth,
       maxHeight,
       side,
-      originX: point ? clamp(point.x - x, 16, width - 16) : width / 2,
+      originX: point ? clamp(point.x - placed.x, 16, width - 16) : width / 2,
     };
   });
   const position = createMemo(() =>

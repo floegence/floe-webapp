@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.49
+
+- Keep fitted annotation images at the full viewport size without reserving unused scrollbar space.
+- Let contextual PromptCards avoid selected regions while respecting measured card size, visible viewport and scaled surface boundaries.
+
 ## 0.101.48
 
 - Keep InfiniteCanvas navigation in its transformed viewport so native focus and scrolling cannot offset or clip nodes after fitting, panning or zooming. Verify the visible geometry in Chromium, WebKit and Firefox.

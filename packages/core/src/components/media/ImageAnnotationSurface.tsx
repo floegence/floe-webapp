@@ -87,7 +87,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     { x: value.x, y: value.y }, { x: value.x + value.width, y: value.y },
     { x: value.x, y: value.y + value.height }, { x: value.x + value.width, y: value.y + value.height },
   ] : []; };
-  return <div ref={host} class={props.class} data-floe-image-annotation style={{ width: '100%', height: '100%', overflow: 'auto', 'scrollbar-gutter': 'stable', 'overscroll-behavior': 'contain' }}>
+  return <div ref={host} class={props.class} data-floe-image-annotation style={{ width: '100%', height: '100%', overflow: (props.zoom ?? 1) > 1 ? 'auto' : 'hidden', 'scrollbar-gutter': (props.zoom ?? 1) > 1 ? 'stable' : 'auto', 'overscroll-behavior': 'contain' }}>
     <div style={{ width: `${Math.max(size().width, props.width * scale())}px`, height: `${Math.max(size().height, props.height * scale())}px`, display: 'grid', 'place-items': 'center' }}>
       <svg ref={svg} xmlns="http://www.w3.org/2000/svg" width={props.width * scale()} height={props.height * scale()} viewBox={`0 0 ${props.width} ${props.height}`}
         role="img" aria-label={props.label} tabindex={editable() ? 0 : undefined}

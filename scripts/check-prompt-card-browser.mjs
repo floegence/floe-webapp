@@ -633,6 +633,21 @@ try {
     assert.ok(touchMetrics.actions.every((button) => button.width >= 44 && button.height >= 44));
     report.push({ engine, scope: 'touch', ...touchMetrics });
     await touch.close();
+    const avoidance = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+    await avoidance.goto(server.resolvedUrls.local[0] + 'test/browser/prompt-card.html');
+    await avoidance.waitForFunction(() => window.promptCard);
+    await avoidance.evaluate(() => {
+      window.promptCard.setAnchor({ x: 108, y: 208 });
+      window.promptCard.setAvoidRegions([{ x: 100, y: 200, width: 400, height: 260 }]);
+      window.promptCard.setOpen(true);
+    });
+    const avoidingCard = avoidance.locator('[data-floe-prompt-card]');
+    await avoidingCard.waitFor();
+    const rect = await avoidingCard.boundingBox();
+    assert.equal(Math.max(0, Math.min(rect.x + rect.width, 500) - Math.max(rect.x, 100)) *
+      Math.max(0, Math.min(rect.y + rect.height, 460) - Math.max(rect.y, 200)), 0);
+    report.push({ engine, scope: 'region-avoidance', ...rect });
+    await avoidance.close();
     await browser.close();
     browser = undefined;
   }

@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle */
+/* global window, document, getComputedStyle, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { createRequire } from 'node:module';
@@ -15,7 +15,7 @@ window.fixture={setCursor,annotation,setAnnotation,setAnnotations,activeIndex,se
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true },
   resolve: { alias: ['solid-js', 'solid-js/web', 'solid-js/store', 'solid-js/html', 'solid-js/h'].map(name => ({ find: new RegExp('^' + name + '$'), replacement: requireCore.resolve(name === 'solid-js' ? 'solid-js/dist/solid.js' : name + '/dist/' + name.split('/').at(-1) + '.js') })) },
   plugins: [solid({ hot: false }), { name: 'image-annotation-fixture', resolveId: id => id === '/fixture.tsx' ? id : undefined, load: id => id === '/fixture.tsx' ? fixture : undefined,
-    configureServer(server) { server.middlewares.use((req,res,next) => { if (req.url !== '/') return next(); res.setHeader('Content-Type','text/html');res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}#root{position:absolute;left:20px;top:30px;width:calc(100% - 40px);height:600px}</style><div id="root"></div><script type="module" src="/fixture.tsx"></script>'); }); } }],
+    configureServer(server) { server.middlewares.use((req,res,next) => { if (req.url !== '/') return next(); res.setHeader('Content-Type','text/html');res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}::-webkit-scrollbar{width:15px;height:15px}#root{position:absolute;left:20px;top:30px;width:calc(100% - 40px);height:600px}</style><div id="root"></div><script type="module" src="/fixture.tsx"></script>'); }); } }],
   server: { host:'127.0.0.1',port:0,hmr:false } });
 let browser;
 try {
@@ -23,7 +23,11 @@ try {
   for(const width of [390,1280]) for(const dpr of [1,1.25,2,3]) {
     const context=await browser.newContext({viewport:{width,height:800},deviceScaleFactor:dpr});const page=await context.newPage(); const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(server.resolvedUrls.local[0]);await page.waitForFunction(()=>window.fixture);
-    const image=page.getByRole('img',{name:'Frozen image'});const bounds=await image.boundingBox();
+    const image=page.getByRole('img',{name:'Frozen image'});
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    const bounds=await image.boundingBox();
+    const host=await page.locator('#root').boundingBox();
+    assert(Math.abs(bounds.width-Math.min(host.width,host.height*1.6))<1,'Fit view must use the full viewport without a reserved scrollbar shrinking the image');
     await page.mouse.click(bounds.x+bounds.width*.75,bounds.y+bounds.height*.4);
     const selected=await page.evaluate(()=>window.fixture.annotation());assert(Math.abs(selected.x-1200)<1);assert(Math.abs(selected.y-400)<1);
     // Lock the exact subpixel-independent source coordinate for raster verification.

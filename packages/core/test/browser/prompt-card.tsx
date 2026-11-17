@@ -7,6 +7,7 @@ import '../../src/styles/globals.css';
 render(() => {
   const surface = new URLSearchParams(location.search).has('surface');
   const [anchor, setAnchor] = createSignal<PromptCardProps['anchor']>({ x: 28, y: 192 });
+  const [avoidRegions, setAvoidRegions] = createSignal<PromptCardProps['avoidRegions']>();
   const [open, setOpen] = createSignal(false);
   const [value, setValue] = createSignal('');
   const [busy, setBusy] = createSignal(false);
@@ -19,6 +20,7 @@ render(() => {
   const [files, setFiles] = createSignal<File[]>([]);
   Object.assign(window, {
     promptCard: {
+      setAvoidRegions,
       setQuestion,
       setAnchor,
       setOpen,
@@ -71,6 +73,7 @@ render(() => {
       <PromptCard
         open={open()}
         anchor={anchor()}
+        avoidRegions={avoidRegions()}
         title="Ask assistant"
         icon={<Sparkles />}
         question={question()}
