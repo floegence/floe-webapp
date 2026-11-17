@@ -560,3 +560,13 @@ Floe never derives business objects from labels, URLs or DOM text.
 menu's row class. Use it when adapting shared actions into an existing menu,
 including composite icons that contain wrappers or percentage-sized SVGs.
 `ContextMenuActionItems` and the document fallback use the same slot.
+
+## Navigation placement gestures
+
+Activity rails use the available vertical space so retained-item transforms cannot manufacture a scrollbar after an unpin. Layout motion preserves the last presented scroll offset when removing an item clamps the scroll position. The outer Activity slot has one transform owner; hover ink and selection remain on its inner layers.
+
+Activity and Dock sorting follow the pointer directly without transform easing. Gesture-start slot measurements drive insertion proposals; unchanged proposals do not restart neighbor animations. Release or cancellation settles from the current visible position. Escape, pointer cancellation, blur and visibility loss never commit a placement. Reduced motion disables decorative travel without delaying direct manipulation.
+
+`WorkbenchDockEntry.beginDrag(event, lifecycle)` exposes the same canvas preview, world-coordinate placement and edge-pan path to overflow rows. The host retains ordinary click activation. `onStart` fires after the threshold with capture on the stable Dock, allowing the menu to exit and unmount. `onEnd({ dropped })` reports the committed canvas drop or cancellation; hosts may restore the menu and its source-row focus after cancellation. Dragging never changes pin membership.
+
+`check-bar-customization-browser.mjs` covers sequential unpin frames, scroll-clamp continuity, synchronous pointer tracking, stable neighbor animation counts, overflow click/drag/cancel and short-rail scrolling in Chromium and WebKit (`--webkit`).

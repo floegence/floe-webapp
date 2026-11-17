@@ -13,6 +13,8 @@ function Fixture() {
   const [active, setActive] = createSignal('files');
   const [created, setCreated] = createSignal(0);
   const [activations, setActivations] = createSignal(0);
+  const [overflowDragging, setOverflowDragging] = createSignal(false);
+  const [overflowResult, setOverflowResult] = createSignal('');
   const icons = { files: RailFiles, terminal: RailTerminal, plugins: RailLaunchpad };
   return <div class="flex h-screen bg-background text-foreground">
     <ActivityBar activeId={active()} onActiveChange={setActive} onReorder={setRail}
@@ -20,6 +22,7 @@ function Fixture() {
     <div class="workbench-surface relative flex-1" style={{ height: '100vh' }}>
       <div data-floe-workbench-canvas-frame="true" style={{ position: 'absolute', inset: '0 0 100px' }} />
       <output data-active>{active()}</output><output data-created>{created()}</output><output data-activated>{activations()}</output>
+      <output data-overflow-result>{overflowResult()}</output>
       <WorkbenchDock widgets={[]} filters={{}} onSoloFilter={() => setActivations(value => value + 1)}
         onCreateAt={() => setCreated(value => value + 1)}
         widgetDefinitions={['files', 'terminal'].map(id => ({ type: id, label: id, icon: icons[id as 'files' | 'terminal'], body: () => null, defaultTitle: id, defaultSize: { width: 300, height: 200 } }))}
@@ -27,7 +30,13 @@ function Fixture() {
         dockItems={[{ id: 'weather', label: 'weather', icon: RailLaunchpad, onActivate: () => setActivations(value => value + 1) }]}
         customization={{ order: dock(), onOrderChange: setDock, hidden: hidden(),
           onContextMenu: entry => setHidden(current => [...current, entry.key]),
-          overflow: props => <For each={props.entries}>{entry => <button data-restore={entry.key} onClick={() => setHidden(current => current.filter(key => key !== entry.key))}>Restore {entry.label}</button>}</For>,
+          overflow: props => <For each={props.entries}>{entry => <>
+            <button data-restore={entry.key} onClick={() => setHidden(current => current.filter(key => key !== entry.key))}>Restore {entry.label}</button>
+            <button data-overflow-drag={entry.key} style={{ visibility: overflowDragging() ? 'hidden' : undefined }}
+              onPointerDown={event => entry.beginDrag?.(event, { onStart: () => setOverflowDragging(true),
+                onEnd: result => { setOverflowDragging(false); setOverflowResult(result.dropped ? 'dropped' : 'canceled'); } })}
+              onClick={event => entry.activate(event.currentTarget)}>Open {entry.label}</button>
+          </>}</For>,
         }} />
     </div>
   </div>;

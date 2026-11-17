@@ -65,7 +65,7 @@ export function ActivityBar(props: ActivityBarProps) {
     keys: () => props.items.filter(item => item.reorderable !== false).map(item => item.id),
     elements, container: () => rail, onReorder: () => props.onReorder,
   });
-  createBarLayoutMotion({ keys: () => props.items.map(item => item.id), elements, preview: () => reorder.position()?.order, axis: 'y' });
+  createBarLayoutMotion({ keys: () => props.items.map(item => item.id), elements, preview: () => reorder.position()?.order, drag: reorder.translation, axis: 'y' });
   const activeId = createMemo(() => props.activeId);
   const collapsed = createMemo(() => props.collapsed ?? false);
   const onActiveChange = createMemo(() => props.onActiveChange);
@@ -112,7 +112,7 @@ export function ActivityBar(props: ActivityBarProps) {
       aria-label={props.ariaLabel}
     >
       {/* Top items */}
-      <div ref={rail} class="flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
+      <div ref={rail} class="flex flex-1 flex-col min-h-0 overflow-y-auto overflow-x-hidden">
         <For each={props.items.map(item => item.id)}>
           {(id) => {
             const item = createMemo<ActivityBarItem>(previous => itemByID().get(id) ?? previous!,
@@ -208,7 +208,9 @@ function ActivityBarButton(props: ActivityBarButtonProps) {
         data-floe-interactive="press"
         data-floe-bar-key={props.item.id}
         aria-keyshortcuts={props.reorderable ? 'Alt+Shift+ArrowUp Alt+Shift+ArrowDown' : undefined}
-        style={{ 'touch-action': props.reorderable ? 'none' : undefined, opacity: props.dragging ? 0.5 : undefined }}
+        style={{ 'touch-action': props.reorderable ? 'none' : undefined, 'z-index': props.dragging ? 1 : undefined,
+          // Inner ink/plate own hover motion; the outer slot has one transform owner.
+          transition: 'none' }}
         onPointerDown={event => props.onPointerDown?.(event)}
         onDragStart={event => event.preventDefault()}
         class={cn(

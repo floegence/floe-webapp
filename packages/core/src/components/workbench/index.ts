@@ -16,6 +16,7 @@ export type {
   WorkbenchDockAction,
   WorkbenchDockCustomization,
   WorkbenchDockEntry,
+  WorkbenchDockOverflowDragLifecycle,
   WorkbenchDockModeIcons,
   WorkbenchCanvasWidgetPlacement,
   WorkbenchDockCanvasPlacement,

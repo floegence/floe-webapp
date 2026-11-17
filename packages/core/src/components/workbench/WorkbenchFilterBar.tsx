@@ -12,7 +12,7 @@ import {
 } from 'solid-js';
 import { Dynamic, Portal } from 'solid-js/web';
 import { Motion } from 'solid-motionone';
-import { createBarLayoutMotion, barDropPosition, keyboardBarOrder, type BarDropPosition } from '../layout/barReorder';
+import { createBarLayoutMotion, barDropPosition, keyboardBarOrder, measureBarSlots, sameBarDropPosition, type BarDropPosition } from '../layout/barReorder';
 import { duration, easing } from '../../utils/animations';
 import {
   DockLayers,
@@ -116,6 +116,14 @@ export type WorkbenchDockEntry = Readonly<{
   activate: (trigger: HTMLButtonElement) => void;
   /** Focuses this entry after the host restores its visibility. */
   focus: () => void;
+  /** Uses the Dock's canvas gesture from a host-owned overflow row. Click remains host-owned. */
+  beginDrag?: (event: PointerEvent, lifecycle: WorkbenchDockOverflowDragLifecycle) => void;
+}>;
+
+export type WorkbenchDockOverflowDragLifecycle = Readonly<{
+  /** Fires only after the drag threshold, while capture is held by the stable Dock. */
+  onStart: () => void;
+  onEnd: (result: Readonly<{ dropped: boolean }>) => void;
 }>;
 
 export type WorkbenchDockCustomization = Readonly<{
@@ -230,6 +238,7 @@ interface DragStateBase {
   pointerId: number;
   startClientX: number;
   startClientY: number;
+  startTranslateX: number;
   clientX: number;
   clientY: number;
   moved: boolean;
@@ -242,6 +251,7 @@ interface DragStateBase {
   dockPlacement: WorkbenchDockItemPlacement;
   stopInteraction: () => void;
   overDock: boolean;
+  overflow?: WorkbenchDockOverflowDragLifecycle;
 }
 
 type DragState = DragStateBase &
@@ -535,7 +545,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   const [hoveredIndex, setHoveredIndex] = createSignal<number | null>(null);
   const [dragState, setDragState] = createSignal<DragState | null>(null);
   const elements = new Map<string, HTMLElement>();
-  const [dropPosition, setDropPosition] = createSignal<BarDropPosition>();
+  const [dropPosition, setDropPosition] = createSignal<BarDropPosition | undefined>(undefined, { equals: sameBarDropPosition });
   const [modeMenuOpen, setModeMenuOpen] = createSignal(false);
 
   let dockRootEl: HTMLDivElement | undefined;
@@ -671,6 +681,30 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     }
   };
 
+  const suppressGestureClick = (trigger: HTMLElement) => {
+    externalClickSuppression?.clear();
+    let timeout: number | undefined;
+    const clear = () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      trigger.removeEventListener('click', suppressClick, true);
+      window.removeEventListener('pointerdown', clearOnNextPointerDown, true);
+      if (externalClickSuppression?.clear === clear) externalClickSuppression = undefined;
+    };
+    const suppressClick = (click: MouseEvent) => {
+      click.preventDefault();
+      click.stopImmediatePropagation();
+      clear();
+    };
+    const clearOnNextPointerDown = () => clear();
+    const expire = () => {
+      if (timeout !== undefined) window.clearTimeout(timeout);
+      timeout = window.setTimeout(clear, EXTERNAL_DRAG_CLICK_SUPPRESSION_EXPIRY_MS);
+    };
+    trigger.addEventListener('click', suppressClick, true);
+    window.addEventListener('pointerdown', clearOnNextPointerDown, true);
+    externalClickSuppression = { clear, expire };
+  };
+
   const finalizeDrag = (commitDrop: boolean) => {
     const current = dragState();
     if (!current) return;
@@ -684,14 +718,21 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     setDragState(null);
     dragSession = undefined;
 
-    if (current.kind === 'external' && current.moved) {
+    if ((current.kind === 'external' || current.overflow) && current.moved) {
       externalClickSuppression?.expire();
     }
 
-    if (!commitDrop) return;
+    const initialOverflow = current.moved ? current.overflow : undefined;
+    const finishOverflow = (dropped: boolean) => {
+      initialOverflow?.onEnd({ dropped });
+    };
+    if (!commitDrop) {
+      if (current.overflow && !current.moved) { suppressGestureClick(current.trigger); externalClickSuppression?.expire(); }
+      finishOverflow(false); return;
+    }
 
     if (isClick) {
-      if (current.kind === 'external') return;
+      if (current.kind === 'external' || current.overflow) return;
       if (!(current.trigger instanceof HTMLButtonElement)) return;
       activateDockItem(current.kind, current.id, current.label, current.trigger);
       return;
@@ -724,7 +765,10 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
           }
         : undefined;
       current.canvasPlacement.onDrop(current.clientX, current.clientY, context);
+      finishOverflow(true);
+      return;
     }
+    finishOverflow(false);
   };
 
   const beginItemDragGesture = (
@@ -736,13 +780,16 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
     trigger: HTMLElement,
     canvasPlacement: NormalizedWorkbenchCanvasPlacement | null,
     dockDrop: (() => void) | null,
-    dockPlacement: WorkbenchDockItemPlacement = 'before-components'
+    dockPlacement: WorkbenchDockItemPlacement = 'before-components',
+    overflow?: WorkbenchDockOverflowDragLifecycle,
   ) => {
     event.preventDefault();
     dragSession?.stop({ reason: 'manual_stop', commit: false });
     startEdgeAutoPan();
     const canvasFrame = readCanvasFrame(dockRootEl);
 
+    const transform = getComputedStyle(trigger).transform;
+    const startTranslateX = typeof DOMMatrix === 'function' ? new DOMMatrix(transform === 'none' ? undefined : transform).m41 : 0;
     setDragState({
       kind,
       id,
@@ -751,6 +798,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       pointerId: event.pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
+      startTranslateX,
       clientX: event.clientX,
       clientY: event.clientY,
       moved: false,
@@ -764,7 +812,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       stopInteraction: startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
       trigger,
       overDock: false,
+      overflow,
     });
+    const slots = measureBarSlots(elements, 'x');
 
     const resolveDragAtClientPoint = (
       next: Readonly<{
@@ -780,31 +830,12 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         const dy = next.clientY - current.startClientY;
         const moved =
           current.moved || Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX;
-        if (current.kind === 'external' && moved && !current.moved) {
-          let timeout: number | undefined;
-          const clear = () => {
-            if (timeout !== undefined) window.clearTimeout(timeout);
-            current.trigger.removeEventListener('click', suppressClick, true);
-            window.removeEventListener('pointerdown', clearOnNextPointerDown, true);
-            if (externalClickSuppression?.clear === clear) externalClickSuppression = undefined;
-          };
-          const suppressClick = (click: MouseEvent) => {
-            click.preventDefault();
-            click.stopImmediatePropagation();
-            clear();
-          };
-          const clearOnNextPointerDown = () => clear();
-          const expire = () => {
-            if (timeout !== undefined) window.clearTimeout(timeout);
-            timeout = window.setTimeout(clear, EXTERNAL_DRAG_CLICK_SUPPRESSION_EXPIRY_MS);
-          };
-          current.trigger.addEventListener('click', suppressClick, true);
-          window.addEventListener('pointerdown', clearOnNextPointerDown, true);
-          externalClickSuppression = { clear, expire };
+        if ((current.kind === 'external' || current.overflow) && moved && !current.moved) {
+          suppressGestureClick(current.trigger);
         }
         const overDock = isOverDock(next.clientX, next.clientY, dockRootEl);
         setDropPosition(moved && overDock && current.kind !== 'external' && props.customization?.onOrderChange
-          ? barDropPosition(visibleEntries().map(entry => entry.key), `${current.kind}:${current.id}`, elements, 'x', next.clientX)
+          ? barDropPosition(visibleEntries().map(entry => entry.key), `${current.kind}:${current.id}`, elements, 'x', next.clientX, slots)
           : undefined);
         const canvasFrame = current.canvasFrame;
         const insideCanvas = moved && isOverCanvas(next.clientX, next.clientY, canvasFrame);
@@ -849,22 +880,30 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
               : null,
         };
       });
+      const current = dragState();
+      if (current?.moved && current.overflow && !overflowStarted) {
+        overflowStarted = true;
+        dragSession?.capturePointer();
+        current.overflow.onStart();
+      }
       if (shouldUpdateEdgeAutoPan) {
         edgeAutoPan?.updatePointer(next.clientX, next.clientY);
       }
     };
 
+    let overflowStarted = false;
     dragSession = startPointerSession({
       pointerEvent: event,
-      captureEl: event.currentTarget as HTMLElement,
+      captureEl: overflow ? dockRootEl : event.currentTarget as HTMLElement,
+      capturePointer: !overflow,
       onMove: resolveDragAtClientPoint,
-      onEnd: ({ commit, snapshot }) => {
+      onEnd: ({ commit, snapshot, reason }) => {
         resolveDragAtClientPoint({
           pointerId: snapshot.pointerId,
           clientX: snapshot.latestClientX,
           clientY: snapshot.latestClientY,
         });
-        finalizeDrag(commit);
+        finalizeDrag(commit && (reason === 'pointer_up' || reason === 'buttons_released'));
       },
     });
   };
@@ -961,6 +1000,14 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
   );
   const actionItems = createMemo(() => activeMode() === 'background' ? [] : [...(props.dockActions ?? [])]);
   type DockEntry = WorkbenchDockEntry & { action?: WorkbenchDockAction; host?: WorkbenchHostDockItem; group: number };
+  const canvasPlacementForEntry = (entry: DockEntry): NormalizedWorkbenchCanvasPlacement | null =>
+    entry.host ? normalizeWidgetCanvasPlacement(entry.host.canvasPlacement)
+      : entry.kind === 'action' ? null : {
+        preview: { kind: entry.kind as 'widget' | 'tool', id: entry.id },
+        onDrop: (x, y, context) => entry.kind === 'widget'
+          ? props.onCreateAt?.(entry.id, x, y, context)
+          : props.onCreateToolAt?.(entry.id as WorkbenchDockToolId, x, y, context),
+      };
   const catalog = createMemo<DockEntry[]>(() => {
     const entries: DockEntry[] = [
       ...actionItems().map(action => ({ ...action, action, kind: 'action' as const, key: `action:${action.id}`,
@@ -981,12 +1028,26 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
       const ai = order.indexOf(a.key), bi = order.indexOf(b.key);
       return (ai < 0 ? Infinity : ai) - (bi < 0 ? Infinity : bi);
     });
-    return entries;
+    return entries.map(entry => ({ ...entry, beginDrag: canvasPlacementForEntry(entry)
+      ? (event: PointerEvent, lifecycle: WorkbenchDockOverflowDragLifecycle) => {
+        if (event.button !== 0 || !(event.currentTarget instanceof HTMLElement)) return;
+        beginItemDragGesture(event, entry.kind, entry.id, entry.label, entry.icon, event.currentTarget,
+          canvasPlacementForEntry(entry), null, 'before-components', lifecycle);
+      } : undefined }));
   });
   const hiddenEntries = createMemo(() => activeMode() === 'work' && props.customization?.overflow
     ? catalog().filter(entry => props.customization?.hidden?.includes(entry.key)) : []);
   const visibleEntries = createMemo(() => catalog().filter(entry => !hiddenEntries().includes(entry)));
-  createBarLayoutMotion({ keys: () => visibleEntries().map(entry => entry.key), elements, preview: () => dropPosition()?.order, axis: 'x' });
+  const sortingKey = createMemo(() => {
+    const current = dragState();
+    return current?.moved && current.overDock && !current.overflow && current.kind !== 'external' && props.customization?.onOrderChange
+      ? `${current.kind}:${current.id}` : undefined;
+  });
+  createBarLayoutMotion({ keys: () => visibleEntries().map(entry => entry.key), elements, preview: () => dropPosition()?.order,
+    drag: () => {
+      const key = sortingKey(), current = dragState();
+      return key && current ? { key, x: current.clientX - current.startClientX + current.startTranslateX, y: 0 } : undefined;
+    }, axis: 'x' });
   const entryByKey = createMemo(() => new Map(visibleEntries().map(entry => [entry.key, entry])));
   const reorderKey = (key: string, event: KeyboardEvent) => {
     if (activeMode() !== 'work' || !props.customization?.onOrderChange) return;
@@ -1151,15 +1212,9 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
               visible={entry().group !== 2 || activationMode() === 'focus-cycle' || componentVisible(entry().id)}
               filterable={entry().group === 2 && activationMode() === 'solo-filter' && componentFilterable()}
               activationMode={activationMode()} presentation={presentation()}
-              hoverOffset={offsetFor(index() + 1)}
-              isDragging={dragState()?.kind === entry().kind && dragState()?.id === entry().id}
-              canvasPlacement={entry().host ? normalizeWidgetCanvasPlacement(entry().host!.canvasPlacement)
-                : entry().kind === 'action' ? null : {
-                  preview: { kind: entry().kind as 'widget' | 'tool', id: entry().id },
-                  onDrop: (x, y, context) => entry().kind === 'widget'
-                    ? props.onCreateAt?.(entry().id, x, y, context)
-                    : props.onCreateToolAt?.(entry().id as WorkbenchDockToolId, x, y, context),
-                }}
+              hoverOffset={dragState()?.moved ? 0 : offsetFor(index() + 1)}
+              isDragging={!sortingKey() && dragState()?.kind === entry().kind && dragState()?.id === entry().id}
+              canvasPlacement={canvasPlacementForEntry(entry())}
               buttonRef={button => {
                 if (button) elements.set(key, button); else elements.delete(key);
                 initialBindAction?.(button);
@@ -1178,7 +1233,7 @@ export function WorkbenchDock(props: WorkbenchFilterBarProps) {
         </Show>
       </div>
 
-      <Show when={Boolean(dragState()?.moved && !dragState()?.preview)}>
+      <Show when={Boolean(dragState()?.moved && !dragState()?.preview && !sortingKey())}>
         <DragGhost state={dragState} />
       </Show>
     </>
