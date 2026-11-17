@@ -67,8 +67,8 @@ export interface GraphLayoutOptions {
   positions?: readonly (GraphPoint & { nodeId: string })[];
   /** Root-level ranks. Unassigned roots are placed deterministically near their closest ranked neighbors. */
   layers?: readonly (readonly string[])[];
-  /** Fixed (default) rejects impossible geometry. Preferred retains positions; compact uses them only as stable ordering hints. */
-  positionMode?: 'fixed' | 'preferred' | 'compact';
+  /** Fixed rejects impossible geometry. Preferred retains positions; compressed removes empty bands between peers. Compact uses positions only as ordering hints. */
+  positionMode?: 'fixed' | 'preferred' | 'compressed' | 'compact';
   direction?: 'RIGHT' | 'DOWN' | 'LEFT' | 'UP';
   spacing?: number;
   groupPadding?: { top: number; right: number; bottom: number; left: number };

@@ -41,7 +41,7 @@ export function applyGraphPositions(
       children.set(node.parentId, members);
     }
   const padding = options.groupPadding ?? { top: 64, left: 28, right: 28, bottom: 28 };
-  const preferred = options.positionMode === 'preferred';
+  const preferred = options.positionMode === 'preferred' || options.positionMode === 'compressed';
   const minimums = new Map(input.map((node) => [node.id, node]));
   const move = (node: GraphLayoutNode, dx: number, dy: number) => {
     const old = { x: node.x, y: node.y },
@@ -80,6 +80,23 @@ export function applyGraphPositions(
       node.x += dx;
       node.y += dy;
       for (const child of children.get(node.id) ?? []) translate(child, dx, dy);
+    };
+    // Remove only globally empty bands among siblings. The monotone mapping
+    // preserves both axes, alignment and separation; edges never choose a new
+    // reading direction. Descendants travel with their complete container.
+    const compress = (siblings: GraphLayoutNode[]) => {
+      if (options.positionMode !== 'compressed') return;
+      for (const axis of ['x', 'y'] as const) {
+        const size = axis === 'x' ? 'width' : 'height';
+        let end = -Infinity,
+          removed = 0;
+        for (const node of [...siblings].sort((a, b) => a[axis] - b[axis])) {
+          const start = node[axis];
+          if (Number.isFinite(end)) removed += Math.max(0, start - end - gap);
+          end = Math.max(end, start + node[size]);
+          translate(node, axis === 'x' ? -removed : 0, axis === 'y' ? -removed : 0);
+        }
+      }
     };
     const separate = (siblings: GraphLayoutNode[]) => {
       const placed: GraphLayoutNode[] = [];
@@ -130,6 +147,7 @@ export function applyGraphPositions(
         return;
       }
       separate(members);
+      compress(members);
       // Preferred coordinates cannot pin a child outside its parent. Fit the
       // container around actual content rather than retaining ELK's old bounds.
       const left = Math.max(12, padding.left),
@@ -151,6 +169,7 @@ export function applyGraphPositions(
     const roots = [...nodes.values()].filter((node) => !node.parentId);
     for (const node of roots) arrange(node);
     separate(roots);
+    compress(roots);
   }
   return routeGraphGeometry({ ...layout, nodes: [...nodes.values()] }, options);
 }

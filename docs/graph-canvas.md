@@ -84,6 +84,16 @@ Unknown, duplicate, or nonfinite positions still reject. Positions take
 precedence over the transient anchor in both modes. Preferred geometry is a
 render result; hosts need not rewrite persisted hints.
 
+`positionMode: 'compressed'` applies preferred placement, then removes empty
+horizontal and vertical bands between siblings down to the spacing budget.
+It preserves the spatial order and alignment on both axes, moves complete
+subtrees and refits containers. It never derives a new direction from edges or
+the viewport. Use it with the visible positions of a canonical layout when
+collapsing details; recomputing that reference also makes reopened overviews
+deterministic. Explicit layers and group packing remain authoritative. In
+contrast, `compact` recomputes automatic placement using positions only as
+ordering hints and may change the spatial map.
+
 The surface uses semantic theme tokens and supports forced colors. Consumers
 can set `--graph-background`, `--graph-dot`, `--graph-edge`, and
 `--graph-edge-active` without injecting arbitrary styles into graph documents.

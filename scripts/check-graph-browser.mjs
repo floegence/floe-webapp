@@ -58,6 +58,8 @@ function App(){
    let disposed=false; try { await pending; } catch(error) { disposed=error.message.includes('disposed'); }
    return {rejected,disposed,equal:JSON.stringify(results[0])===JSON.stringify(results[1])};
  };
+ window.compressGraph=async()=>engine.layout({nodes:['a','b','c'].map(id=>({id,label:id,width:200,height:100})),edges:[]},
+   {positionMode:'compressed',aspectRatio:1.6,spacing:64,positions:['a','b','c'].map((nodeId,index)=>({nodeId,x:0,y:index*2000}))});
  window.demandGraph=async()=>{
    const geometry=await engine.layout({nodes,edges},{aspectRatio:1.6,routing:'none'});
    const before=JSON.stringify(geometry);
@@ -160,6 +162,15 @@ render(()=><App/>,document.getElementById('root'));
     disposed: true,
     equal: true,
   });
+  const compressed = await page.evaluate(() => window.compressGraph());
+  assert.deepEqual(
+    compressed.nodes.map((node) => [node.x, node.y]),
+    [
+      [0, 0],
+      [0, 164],
+      [0, 328],
+    ]
+  );
   const node = page.locator('[data-graph-object="a"]');
   await node.click({ position: { x: 30, y: 25 } });
   assert.deepEqual(await page.evaluate(() => window.lastGraphEvent), { kind: 'node', id: 'a' });
