@@ -53,7 +53,13 @@ try {
     assert.deepEqual(await image.locator('text').allTextContents(),['1','2']);
     const badge = await image.locator('[data-annotation-index="1"] [data-annotation-marker]').first().boundingBox();
     const bx = badge.x + badge.width / 2, by = badge.y + badge.height / 2;
-    await page.mouse.move(bx, by); await page.mouse.down(); await page.mouse.move(bx + 45, by + 30); await page.mouse.up();
+    await page.mouse.move(bx, by); await page.mouse.down(); await page.mouse.move(bx + 20, by + 12);
+    await image.evaluate(svg => {
+      const capture = [svg, svg.closest('[data-floe-image-annotation]')].find(el => el.hasPointerCapture(1));
+      if (!capture) throw new Error('Expected captured mouse gesture');
+      capture.releasePointerCapture(1);
+    });
+    await page.mouse.move(bx + 45, by + 30); await page.mouse.up();
     assert.equal(await page.evaluate(()=>window.fixture.activeIndex()), undefined, 'Dragging from a marker must not activate it');
     const fromMarker = await page.evaluate(()=>window.fixture.annotation());
     assert.equal(fromMarker.kind, 'rectangle'); assert(Math.abs(fromMarker.width - 45 * 1600 / next.width) < 1);

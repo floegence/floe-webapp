@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Keep image annotation drags through native mouse capture loss. The matching pointer release commits the final geometry; cancellation or blur discards the gesture.
+
 ## 0.101.51
 
 - On the image annotation surface, clicking a numbered pin selects it; starting a new rectangle on the same pin keeps the drag through release.

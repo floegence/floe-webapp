@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js';
 import { imageAnnotationMarkup, imagePointFromClient, validateImageAnnotation, type ImageAnnotation, type ImageDimensions, type ImagePoint } from './imageAnnotation';
+import { startPointerSession, type PointerSessionController } from '../ui/pointerSession';
 
 export type ImageAnnotationSurfaceProps = ImageDimensions & {
   src: string;
@@ -31,6 +32,8 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
   const [draft, setDraft] = createSignal<ImageAnnotation>();
   let gesture: { id: number; start: ImagePoint; client: ImagePoint; original?: ImageAnnotation; corner?: number; pin?: { index: number; annotation: ImageAnnotation }; dragged: boolean; src: string } | undefined;
   let pan: { id: number; x: number; y: number; left: number; top: number } | undefined;
+  let session: PointerSessionController | undefined;
+  onCleanup(() => session?.stop());
   const shown = () => draft() ?? props.annotation;
   const scale = createMemo(() => Math.min(size().width / props.width, size().height / props.height) * Math.max(1, props.zoom ?? 1));
   const markup = () => props.showAnnotation !== false && shown() && validateImageAnnotation(props, shown()!) ? imageAnnotationMarkup(props, shown()!, props.marker ?? (props.activeIndex !== undefined ? props.activeIndex + 1 : 1)) : '';
@@ -47,9 +50,10 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     observer.observe(host); measure();
     onCleanup(() => { observer.disconnect(); cancelAnimationFrame(pending); });
   });
-  const point = (event: PointerEvent, clamp = false) => imagePointFromClient(props, svg.getBoundingClientRect(), { x: event.clientX, y: event.clientY }, clamp);
+  type Sample = Pick<PointerEvent, 'pointerId' | 'clientX' | 'clientY'>;
+  const point = (event: Sample, clamp = false) => imagePointFromClient(props, svg.getBoundingClientRect(), { x: event.clientX, y: event.clientY }, clamp);
   const editable = () => Boolean(props.onChange) && !props.disabled && !props.panning;
-  const move = (event: PointerEvent) => {
+  const move = (event: Sample) => {
     if (pan?.id === event.pointerId) {
       host.scrollLeft = pan.left + pan.x - event.clientX;
       host.scrollTop = pan.top + pan.y - event.clientY;
@@ -72,20 +76,22 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
       else if (width > 0 && height > 0) setDraft({ kind: 'rectangle', x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), width, height });
     }
   };
-  const finish = (event: PointerEvent, cancelled = false) => {
-    if (pan?.id === event.pointerId) {
-      pan = undefined;
-      if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
-      return;
-    }
-    const current = gesture; if (!current || current.id !== event.pointerId) return;
-    if (!cancelled) move(event);
-    const annotation = draft(); gesture = undefined; setDraft(undefined);
-    if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
-    if (cancelled || current.src !== props.src || !editable()) return;
-    if (current.pin && !current.dragged) {
-      if (props.annotations?.[current.pin.index] === current.pin.annotation) props.onSelect?.(current.pin.index);
-    } else if (annotation && validateImageAnnotation(props, annotation)) props.onChange?.(annotation);
+  const track = (event: PointerEvent) => {
+    session = startPointerSession({
+      pointerEvent: event, captureEl: host, continueOnCaptureLoss: true, onMove: move,
+      onEnd: end => {
+        session = undefined;
+        const released = end.reason === 'pointer_up' && end.event;
+        if (released) move(released);
+        pan = undefined;
+        const current = gesture, annotation = draft();
+        gesture = undefined; setDraft(undefined);
+        if (!current || !released || current.src !== props.src || !editable()) return;
+        if (current.pin && !current.dragged) {
+          if (props.annotations?.[current.pin.index] === current.pin.annotation) props.onSelect?.(current.pin.index);
+        } else if (annotation && validateImageAnnotation(props, annotation)) props.onChange?.(annotation);
+      },
+    });
   };
   const corners = () => { const value = shown(); return value?.kind === 'rectangle' ? [
     { x: value.x, y: value.y }, { x: value.x + value.width, y: value.y },
@@ -97,9 +103,10 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
         role="img" aria-label={props.label} tabindex={editable() ? 0 : undefined}
         style={{ display: 'block', 'touch-action': editable() || props.panning ? 'none' : 'auto', 'user-select': 'none', cursor: props.cursor ?? (props.panning ? 'grab' : editable() ? 'crosshair' : 'default'), flex: 'none' }}
         onPointerDown={event => {
+          if (session) return;
           if (props.panning && event.button === 0 && !pan) {
             pan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: host.scrollLeft, top: host.scrollTop };
-            svg.setPointerCapture(event.pointerId); event.preventDefault(); return;
+            track(event); event.preventDefault(); return;
           }
           if (!editable() || event.button !== 0 || gesture) return;
           const start = point(event); if (!start) return;
@@ -114,11 +121,11 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
             ...(item ? { pin: { index: Number(selected), annotation: item } } : {}),
             ...(target.closest('[data-annotation-target]') ? { original: props.annotation } : {}), ...(corner !== null ? { corner: Number(corner) } : {}) };
           setDraft(gesture.pin ? undefined : gesture.original ?? { kind: 'point', ...start });
-          svg.setPointerCapture(event.pointerId); svg.focus({ preventScroll: true }); event.preventDefault();
-        }} onPointerMove={move} onPointerUp={event => finish(event)} onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => finish(event, true)}
+          track(event); svg.focus({ preventScroll: true }); event.preventDefault();
+        }}
         onKeyDown={event => {
           if (!editable()) return;
-          if (event.key === 'Escape') { gesture = undefined; setDraft(undefined); return; }
+          if (event.key === 'Escape') { session?.stop(); return; }
           const delta = ({ ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as Record<string, number[]>)[event.key];
           if (!delta && event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
