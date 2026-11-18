@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.0
+
+- Theme Studio passes a live preset accessor to custom previews. Read the accessor inside the preview component to retain view and focus while editing or comparing drafts.
+
 ## 0.102.1
 
 - Start a standalone light or dark palette, design from the current unsaved draft, and preserve named links and host-specific overrides when re-exporting a resolved theme.

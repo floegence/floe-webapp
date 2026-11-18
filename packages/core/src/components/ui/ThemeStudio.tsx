@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js';
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, type Accessor, type JSX } from 'solid-js';
 import { Plus, Download, Upload, Sparkles, Check, Pencil, Eye, ChevronLeft, ChevronRight } from '../icons';
 import { Button } from './Button';
 import { Input, Textarea } from './Input';
@@ -12,7 +12,7 @@ export interface ThemeStudioProps {
   current: PortableShellTheme;
   parts?: readonly string[];
   features?: readonly string[];
-  renderPreview?: (preset: FloeThemePreset, inspect: (group: 'colors'|'parts'|'editor'|'terminal', role: string) => void) => JSX.Element;
+  renderPreview?: (preset: Accessor<FloeThemePreset>, inspect: (group: 'colors'|'parts'|'editor'|'terminal', role: string) => void) => JSX.Element;
   currentID?: string;
   label: (key: ThemeStudioLabel) => string;
   save: (document: PortableShellTheme, existingID?: string) => Promise<void>;
@@ -83,13 +83,16 @@ export function ThemeStudio(props: ThemeStudioProps) {
     <Show when={error() && !open()}><p role="alert" class="floe-theme-picker__error">{error()}</p></Show>
     <Dialog class="floe-theme-studio" open={props.active && open()} title={props.label(editing() ? 'edit' : 'create')} closeLabel={props.label('cancel')} onOpenChange={next => { if (!pending()) setOpen(next); }}
       footer={<><Button variant="ghost" disabled={pending()} onClick={() => setOpen(false)}>{props.label('cancel')}</Button><Button icon={Check} loading={pending()} disabled={!!issue()} onClick={() => void save()}>{props.label('save')}</Button></>}>
-      <div class="floe-theme-studio__body">
-        <label>{props.label('name')}<Input maxLength={80} value={typeof fields()?.name === 'string' ? fields()!.name : ''} disabled={pending() || !fields()} onInput={event => { const doc = fields(); if (doc) write(JSON.stringify({ ...doc, name: event.currentTarget.value }, null, 2)); }} /></label>
-        <Show when={!editing()}><div class="floe-theme-studio__actions"><select aria-label={props.label('settings')} value={decode().doc?.mode} disabled={pending() || !decode().doc} onChange={event => { const mode = event.currentTarget.value; if (mode === 'light' || mode === 'dark') draftAction(doc => write(JSON.stringify({...doc,mode}, null, 2))); }}><For each={['light','dark'] as const}>{mode => <option value={mode}>{props.label(mode)}</option>}</For></select><Button size="sm" variant="ghost" disabled={pending() || !decode().doc} onClick={() => draftAction(doc => write(JSON.stringify(createBlankShellTheme(doc.mode,doc.name),null,2)))}>{props.label('blank')}</Button></div></Show>
+      <div class="floe-theme-studio__body" data-custom-preview={props.renderPreview ? '' : undefined}>
+        <div class="floe-theme-studio__preview">
         <Show when={props.renderPreview && preview()} fallback={<div class="floe-theme-studio__sample" aria-hidden="true" style={{ background: preview()?.preview?.background, color: preview()?.semanticTokens?.['--foreground'], 'border-color': preview()?.preview?.border }}>
           <aside style={{ background: preview()?.preview?.sidebar }}><i/><i/><i/></aside>
           <div style={{ background: preview()?.preview?.surface }}><strong>Aa</strong><span style={{ background: preview()?.preview?.primary }} /><section><For each={preview()?.preview?.colors}>{color => <i style={{ background: color }} />}</For></section></div>
-        </div>}>{preset => props.renderPreview!(preset(),(group,role) => setInspect({group,role}))}</Show>
+        </div>}>{preset => props.renderPreview!(preset,(group,role) => setInspect({group,role}))}</Show>
+        </div>
+        <div class="floe-theme-studio__controls">
+        <label>{props.label('name')}<Input maxLength={80} value={typeof fields()?.name === 'string' ? fields()!.name : ''} disabled={pending() || !fields()} onInput={event => { const doc = fields(); if (doc) write(JSON.stringify({ ...doc, name: event.currentTarget.value }, null, 2)); }} /></label>
+        <Show when={!editing()}><div class="floe-theme-studio__actions floe-theme-studio__origin"><select aria-label={props.label('settings')} value={decode().doc?.mode} disabled={pending() || !decode().doc} onChange={event => { const mode = event.currentTarget.value; if (mode === 'light' || mode === 'dark') draftAction(doc => write(JSON.stringify({...doc,mode}, null, 2))); }}><For each={['light','dark'] as const}>{mode => <option value={mode}>{props.label(mode)}</option>}</For></select><Button size="sm" variant="ghost" disabled={pending() || !decode().doc} onClick={() => draftAction(doc => write(JSON.stringify(createBlankShellTheme(doc.mode,doc.name),null,2)))}>{props.label('blank')}</Button></div></Show>
         <fieldset disabled={pending() || !decode().doc}><legend>{props.label('colors')}</legend><div class="floe-theme-studio__swatches"><For each={roles}>{role => <label>
           <input type="color" value={preview()?.semanticTokens?.[`--${role}`]?.slice(0,7)} onInput={event => { const doc = decode().doc; if (doc) write(JSON.stringify({ ...doc, colors: { ...doc.colors, [`--${role}`]: event.currentTarget.value } }, null, 2)); }} />{props.label(role)}
         </label>}</For></div></fieldset>
@@ -98,6 +101,7 @@ export function ThemeStudio(props: ThemeStudioProps) {
         <details><summary>{props.label('advanced')}</summary><Textarea aria-label={props.label('advanced')} value={raw()} rows={9} spellcheck={false} disabled={pending()} onInput={event => write(event.currentTarget.value)} /></details>
         <Show when={props.generate}><Button icon={Sparkles} size="sm" variant="ghost" disabled={!decode().doc || !!fieldError() || pending()} onClick={() => draftAction(doc => props.generate?.(doc))}>{props.label('generate')}</Button></Show>
         <Show when={error() || issue()}><p role="alert" class="floe-theme-picker__error">{error() || `${props.label('invalid')}: ${issue()}`}</p></Show>
+        </div>
       </div>
     </Dialog>
   </>;
