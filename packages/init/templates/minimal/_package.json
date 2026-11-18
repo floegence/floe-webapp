@@ -20,12 +20,14 @@
     "vite-plugin-solid": "^2.11.0"
   },
   "overrides": {
+    "picomatch@4": "npm:@ryotsu/picomatch@4.0.7-a",
     "dompurify": "^3.4.17",
     "katex": "0.18.10",
     "rollup": "4.68.1"
   },
   "pnpm": {
     "overrides": {
+      "picomatch@4": "npm:@ryotsu/picomatch@4.0.7-a",
       "dompurify": "^3.4.17",
       "katex": "0.18.10",
       "rollup": "4.68.1"

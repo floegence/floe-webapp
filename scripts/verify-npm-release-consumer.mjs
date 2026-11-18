@@ -154,6 +154,11 @@ for (const template of ['minimal', 'full']) {
     ...(process.argv.includes('--packed') ? [packageSpecs[0]] : []),
   ], { cwd: project, stdio: 'inherit' });
   execFileSync('npm', ['audit', '--prefix', project, '--audit-level=low'], { cwd: project, stdio: 'inherit' });
+  const lock = JSON.parse(readFileSync(join(project, 'package-lock.json'), 'utf8'));
+  const matchers = Object.entries(lock.packages).filter(([path]) => path.endsWith('/node_modules/picomatch') || path === 'node_modules/picomatch');
+  if (!matchers.length || matchers.some(([, dependency]) => dependency.name !== '@ryotsu/picomatch' || dependency.version !== '4.0.7-a' || dependency.integrity !== 'sha512-JroBFEmaejC7szGSfqOhF1QZHLKvX2wTA1+fWyfkpy3BjzdQKNPLKa2FtgeKVUDy5/UPUNkXEeCHJ5ZRBMLTVA==' || dependency.dev !== true)) {
+    throw new Error(`The ${template} template must resolve only the reviewed build-time glob matcher`);
+  }
   writeFileSync(join(project, 'src/pptx-contract.ts'), [
     "import type { PptxDocumentSurface, PptxPageHandle } from '@floegence/floe-webapp-core/pptx';",
     "export const mountPage = (source: PptxDocumentSurface): PptxPageHandle => source.renderPage(0, document.createElement('div'));",
