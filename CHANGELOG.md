@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.102.0
+
+- Export independent shell themes with a complete semantic palette, window shadows, terminal overrides and ordered editor syntax rules. Read legacy theme files without changing their appearance.
+- Edit searchable theme fields, named colors and references in the shared studio. Draft edits support undo and redo; host appearance features no longer require a built-in installation identity.
+
 ## 0.101.52
 
 - Create, preview, import and export portable shell themes through the optional ThemePicker studio. Hosts can register presets at runtime and offer a theme generation action.

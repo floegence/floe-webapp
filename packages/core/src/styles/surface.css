@@ -27,7 +27,7 @@
  * quiet seams; material and existing fills carry the grouping. High contrast
  * retains the original boundaries. Explicit rich Card variants stay independent. */
 @media (forced-colors: none) {
-  :where(:root:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))))
     :is(
       .border-border,
       [class~='border-border/40'],
@@ -59,7 +59,7 @@
     ) {
     border-color: var(--floe-surface-edge);
   }
-  :where(:root:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))))
     :is(
       [data-floe-shell-slot],
       .workbench-widget__header,
@@ -74,7 +74,7 @@
     --terminal-panel-border: var(--floe-surface-divider);
     border-color: var(--floe-surface-divider);
   }
-  :where(:root:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))))
     :is(
       .bg-border,
       .workbench-dock__divider,
@@ -85,15 +85,15 @@
     ) {
     background-color: var(--floe-surface-divider);
   }
-  :where(:root:not([data-floe-shell-theme='hc-light']))
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))))
     .workbench-canvas__grid {
     opacity: 0.35;
   }
-  :root:not([data-floe-shell-theme='hc-light'])
+  :root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))
     [data-floe-surface-divider] {
     border-color: var(--floe-surface-divider);
   }
-  :root:not([data-floe-shell-theme='hc-light'])
+  :root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))
     .workbench-surface {
     --wb-dock-material-border: var(--floe-surface-edge);
     --wb-dock-material-border-top: var(--floe-surface-edge);
@@ -317,11 +317,11 @@
  * Tight static highlights carry material without large soft shadows per item.
  * Functional transforms, progress widths, and SVG strokes retain their motion. */
 @media (forced-colors: none) {
-  :root:not([data-floe-shell-theme='hc-light']) {
+  :root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))) {
     --floe-surface-compact-raised: var(--floe-elevation-raised);
     --floe-surface-compact-inset: 0 0 transparent;
   }
-  :where(:root:not([data-floe-shell-theme='hc-light'])) {
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))) {
     & [data-floe-surface-part][data-floe-surface='raised'] {
       --floe-surface-decoration: var(
         --floe-surface-shadow-raised,
@@ -526,7 +526,7 @@
       box-shadow: var(--floe-surface-decoration);
     }
   }
-  :where(:root:not([data-floe-shell-theme='hc-light'])) {
+  :where(:root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))) {
     & :is([data-floe-input-surface], input, textarea, select)[data-floe-surface='inset'] {
       background-color: var(--floe-well);
     }
@@ -561,7 +561,7 @@
  * distinct from ordinary Cards, Dialogs and menus. Only this visible panel owns
  * material; the outer geometry owner and its input lifecycle stay unchanged. */
 @media (forced-colors: none) {
-  :root:not([data-floe-shell-theme='hc-light'])
+  :root:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))
     [data-floe-floating-window-surface='true'][data-floe-surface='floating'] {
     --floe-window-radius: var(--floe-radius-floating);
     background: var(--floe-window-background);
@@ -615,7 +615,7 @@
  * guarantees an upward step from any accent while title text keeps 5.3:1 or
  * better. Light presets take no such step: their background is already far from
  * the accent wash, and darkening it there would eat title text contrast. */
-:root.dark:not([data-floe-shell-theme='hc-light'])
+:root.dark:not(:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))))
   [data-floe-floating-window-surface='true'][data-floe-floating-window-state='active']
   > [data-floe-floating-window-titlebar='true'] {
   background-color: color-mix(
@@ -640,11 +640,11 @@
 }
 
 /* High contrast stays flat, with real boundaries and keyboard indicators. */
-:root[data-floe-shell-theme='hc-light']
+:root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))
   [data-floe-surface] {
   --floe-surface-decoration: 0 0 transparent;
 }
-:root[data-floe-shell-theme='hc-light']
+:root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))
   .workbench-widget.is-selected {
   border-color: var(--wb-accent);
 }
@@ -695,9 +695,9 @@
   }
 }
 
-:root[data-floe-shell-theme='hc-light']
+:root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))
   [data-floe-surface-part='choice']:has([data-floe-choice-input]:focus-visible),
-:root[data-floe-shell-theme='hc-light']
+:root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))
   [data-floe-choice-input]:focus-visible
   + :is([data-floe-surface-part='indicator'], [data-floe-surface-part='switch-track']) {
   outline: 2px solid var(--ring);

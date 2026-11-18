@@ -36,6 +36,7 @@ export interface FloeThemeTokenOverrides {
 
 export interface FloeThemePreset {
   name: string;
+  features?: readonly string[];
   displayName: string;
   description?: string;
   mode?: FloeThemePresetMode;

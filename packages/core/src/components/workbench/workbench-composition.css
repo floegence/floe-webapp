@@ -838,7 +838,7 @@
     opacity: 0.6;
     pointer-events: none;
   }
-  :root[data-floe-shell-theme='hc-light']
+  :root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features])))
     :is(
       .workbench-background-region,
       .workbench-region-material__sample,
@@ -847,7 +847,7 @@
     --region-outline: oklch(0.44 var(--region-outline-chroma) var(--region-hue));
     --region-border: var(--region-outline);
   }
-  :root[data-floe-shell-theme='hc-light'] [data-note-material] {
+  :root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))) [data-note-material] {
     border-color: var(--foreground);
   }
   @media (max-width: 1100px) {

@@ -1920,6 +1920,15 @@
   .floe-theme-studio__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-inline-start: auto; }
   .floe-theme-studio__body { display: grid; gap: 14px; font-size: var(--floe-type-control); }
   .floe-theme-studio__body label, .floe-theme-studio__body fieldset { min-width: 0; }
+  .floe-theme-fields__tools, .floe-theme-fields__rule { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .floe-theme-fields__tools > input { flex: 1 1 8rem; min-width: 0; }
+  .floe-theme-fields__list { max-height: min(35vh, 24rem); overflow: auto; overscroll-behavior: contain; display: grid; gap: 4px; margin-block: 6px; }
+  .floe-theme-fields__row { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 5px; align-items: center; }
+  .floe-theme-fields__row > span { overflow-wrap: anywhere; }
+  .floe-theme-fields__row > input[type=color] { width: 24px; height: 24px; cursor: pointer; }
+  .floe-theme-fields__rule { padding-block: 6px; border-block-end: 1px solid var(--border); }
+  .floe-theme-fields__rule input:not([type=checkbox]) { width: 100%; min-width: 0; }
+  .floe-theme-fields__rule label:has(input[type=number]) { flex: 1 1 3rem; }
   .floe-theme-studio__body :is(summary,legend) { padding-block: 4px; font-weight: 500; }
   .floe-theme-studio__body summary { cursor: pointer; }
   .floe-theme-studio__body textarea { font-family: var(--font-mono, monospace); }

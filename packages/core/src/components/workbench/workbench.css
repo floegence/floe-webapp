@@ -360,7 +360,7 @@
     opacity: 0.55;
   }
 
-  :root[data-floe-shell-theme='hc-light'] .workbench-canvas__grid {
+  :root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))) .workbench-canvas__grid {
     display: none;
   }
 
