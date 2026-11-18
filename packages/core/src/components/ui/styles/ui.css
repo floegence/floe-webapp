@@ -1917,6 +1917,24 @@
      responsive previews. Never stretch the three choices across a settings page. */
   .floe-theme-picker { min-width: 0; container: floe-theme-picker / inline-size; }
   .floe-theme-picker__toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px; }
+  .floe-theme-studio__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-inline-start: auto; }
+  .floe-theme-studio__body { display: grid; gap: 14px; font-size: var(--floe-type-control); }
+  .floe-theme-studio__body label, .floe-theme-studio__body fieldset { min-width: 0; }
+  .floe-theme-studio__body :is(summary,legend) { padding-block: 4px; font-weight: 500; }
+  .floe-theme-studio__body summary { cursor: pointer; }
+  .floe-theme-studio__body textarea { font-family: var(--font-mono, monospace); }
+  .floe-theme-studio__sample { display: flex; height: 96px; padding: 8px; gap: 6px; border: 1px solid; border-radius: var(--floe-radius-md); }
+  .floe-theme-studio__sample > :is(aside,div) { border-radius: 4px; padding: 8px; }
+  .floe-theme-studio__sample aside { width: 17%; }
+  .floe-theme-studio__sample aside i { display: block; width: 65%; height: 3px; margin-bottom: 8px; background: currentColor; opacity: .4; }
+  .floe-theme-studio__sample > div { flex: 1; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px; }
+  .floe-theme-studio__sample strong { font-size: 24px; }
+  .floe-theme-studio__sample span { width: 32px; height: 12px; border-radius: 3px; }
+  .floe-theme-studio__sample section { display: flex; gap: 4px; grid-column: 1 / -1; }
+  .floe-theme-studio__sample section i { flex: 1; height: 6px; border-radius: 2px; }
+  .floe-theme-studio__swatches { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,125px),1fr)); gap: 6px; }
+  .floe-theme-studio__swatches label { display: flex; gap: 6px; align-items: center; }
+  .floe-theme-studio__swatches input { width: 28px; height: 28px; flex: none; cursor: pointer; }
   .floe-theme-picker__modes { display: inline-flex; max-width: 100%; padding: 2px; gap: 2px; border: 1px solid var(--border); border-radius: var(--floe-radius-field); background: var(--muted); }
   .floe-theme-picker__modes > button { min-width: 0; height: var(--floe-control-height-sm); padding-inline: 12px; border-radius: var(--floe-radius-sm); font-size: var(--floe-type-control); color: var(--muted-foreground); cursor: pointer; transition: background-color var(--floe-duration-fast), color var(--floe-duration-fast); }
   .floe-theme-picker__modes > [aria-checked='true'] { background: var(--primary); color: var(--primary-foreground); }

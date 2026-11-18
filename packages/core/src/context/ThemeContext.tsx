@@ -93,7 +93,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
   const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
   const defaultPresetName = () =>
     resolvePresetName(floe.config.theme.defaultPreset, themePresets());
-  const shellPresets = () => floe.config.theme.shellPresets ?? [];
+  const shellPresets = createMemo(() => [...(floe.config.theme.shellPresets ?? []), ...(floe.config.theme.additionalShellPresets?.() ?? [])]);
   const shellPresetStorageKey = () =>
     floe.config.theme.shellPresetStorageKey ?? `${storageKey()}-shell-preset`;
   const defaultShellPreset = () => floe.config.theme.defaultShellPreset ?? {};

@@ -1,8 +1,10 @@
 import { For, Show, createUniqueId, createEffect, onCleanup, type JSX } from 'solid-js';
 import { Check } from '../../icons';
 import type { FloeThemePreset } from '../../themes';
+import { ThemeStudio, type ThemeStudioProps } from './ThemeStudio';
 
 export interface ThemePickerProps {
+  studio?: ThemeStudioProps;
   mode: string;
   modes: readonly { value: string; label: string }[];
   modeLabel: string;
@@ -52,6 +54,7 @@ export function ThemePicker(props: ThemePickerProps) {
           onClick={() => { if (!props.pending) props.onModeChange(mode.value); }}>{mode.label}</button>}</For>
       </div>
       <span role="status" aria-live="polite" class="floe-theme-picker__status">{props.pending ? props.pendingLabel : ''}</span>
+      <Show when={props.studio}>{studio => <ThemeStudio {...studio()} />}</Show>
     </div>
     <div ref={presetGroup} onFocusIn={event => { focusedPreset = (event.target as HTMLElement).closest<HTMLElement>('[data-theme-preset]')?.dataset.themePreset; }}
       onFocusOut={event => { if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) focusedPreset = undefined; }}

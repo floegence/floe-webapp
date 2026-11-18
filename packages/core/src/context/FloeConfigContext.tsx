@@ -88,6 +88,7 @@ export interface FloeThemeConfig {
   presets?: readonly FloeThemePreset[];
   /** Optional shell-wide presets. Kept separate from product-scoped presets such as chart palettes. */
   shellPresets?: readonly FloeThemePreset[];
+  additionalShellPresets?: () => readonly FloeThemePreset[];
   /** Optional per-mode defaults for shell presets. Falls back to the first compatible preset. */
   defaultShellPreset?: Partial<Record<'light' | 'dark', string>>;
   /** Storage key for the versioned per-mode shell preset selection map. */
