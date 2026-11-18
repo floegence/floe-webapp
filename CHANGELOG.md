@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.101.52
+
+- Create, preview, import and export portable shell themes through the optional ThemePicker studio. Hosts can register presets at runtime and offer a theme generation action.
+- Apply a verified, build-only picomatch mitigation pending an upstream release.
+
 ## 0.101.51
 
 - On the image annotation surface, clicking a numbered pin selects it; starting a new rectangle on the same pin keeps the drag through release.
