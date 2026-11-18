@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.102.1
+
+- Start a standalone light or dark palette, design from the current unsaved draft, and preserve named links and host-specific overrides when re-exporting a resolved theme.
+
 ## 0.102.0
 
 - Export independent shell themes with a complete semantic palette, window shadows, terminal overrides and ordered editor syntax rules. Read legacy theme files without changing their appearance.

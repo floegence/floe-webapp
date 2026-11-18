@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createBlankShellTheme,
   builtInShellThemePresets,
   exportShellTheme,
   portableContrastIssue,
@@ -8,6 +9,15 @@ import {
 } from '../src/themes';
 
 describe('independent shell themes', () => {
+  it('exports independent editable palette links and renderer overrides intact', () => {
+    const doc = createBlankShellTheme('dark','Scratch');
+    doc.parts = {'flower-link':'$primary'}; doc.terminal = {brightRed:'@primary'};
+    const copy = exportShellTheme(resolvePortableShellTheme('scratch-copy',doc));
+    expect(copy).toEqual(doc);
+    copy.palette.primary = '#123456';
+    expect(copy.palette.primary).not.toBe(doc.palette.primary);
+    expect(resolvePortableShellTheme('changed',copy).semanticTokens?.['--terminal-bright-red']).toBe('#123456');
+  });
   it.each(builtInShellThemePresets)('renders $name under a new installation identity', (preset) => {
     const file = exportShellTheme(preset);
     expect(file).not.toHaveProperty('base');

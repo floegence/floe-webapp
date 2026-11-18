@@ -99,7 +99,10 @@ function decodeShadow(value: string): ThemeShadowLayer[] {
   });
 }
 
+const documents = new WeakMap<FloeThemePreset, PortableShellTheme>();
 export function exportShellTheme(preset: FloeThemePreset): PortableShellTheme {
+  const source = documents.get(preset);
+  if (source) return structuredClone(source);
   const mode = preset.mode;
   if (mode !== 'light' && mode !== 'dark') return fail('mode');
   const editor = preset.monaco?.[mode];
@@ -405,7 +408,7 @@ export function portableContrastIssue(doc: PortableShellTheme): string | undefin
 export function resolvePortableShellTheme(id: string, input: PortableShellTheme): FloeThemePreset {
   const doc = readPortableShellTheme(input);
   const { tokens, editor, syntax } = project(doc);
-  return {
+  const preset: FloeThemePreset = {
     name: id,
     displayName: doc.name,
     mode: doc.mode,
@@ -435,4 +438,19 @@ export function resolvePortableShellTheme(id: string, input: PortableShellTheme)
       },
     },
   };
+  documents.set(preset, doc);
+  return preset;
+}
+
+export function createBlankShellTheme(mode: 'light'|'dark', name: string): PortableShellTheme {
+  const baseline = builtInShellThemePresets.find(preset => preset.mode === mode && preset.inheritsBaseTokens)!;
+  const doc = exportShellTheme(baseline);
+  doc.name = name;
+  for (const [role,value] of Object.entries(doc.colors)) {
+    if (!hex.test(value)) continue;
+    const key = role.slice(2);
+    doc.palette[key] = value;
+    doc.colors[role] = `$${key}`;
+  }
+  return doc;
 }
