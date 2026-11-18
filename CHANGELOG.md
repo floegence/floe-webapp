@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.101.51
+
+- On the image annotation surface, clicking a numbered pin selects it; starting a new rectangle on the same pin keeps the drag through release.
+
 ## 0.101.50
 
 - Keep fitted annotation images at the full viewport size without reserving unused scrollbar space.

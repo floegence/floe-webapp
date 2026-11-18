@@ -51,6 +51,13 @@ try {
     const region=await page.evaluate(()=>window.fixture.annotation());assert.equal(region.kind,'rectangle');assert(Math.abs(region.x-160)<1);assert(Math.abs(region.width-480)<1);assert(Math.abs(region.height-400)<1);
     await page.evaluate(()=>{window.fixture.setAnnotation(undefined);window.fixture.setAnnotations([{kind:'point',x:1200,y:400},{kind:'rectangle',x:100,y:100,width:300,height:200}]);});
     assert.deepEqual(await image.locator('text').allTextContents(),['1','2']);
+    const badge = await image.locator('[data-annotation-index="1"] [data-annotation-marker]').first().boundingBox();
+    const bx = badge.x + badge.width / 2, by = badge.y + badge.height / 2;
+    await page.mouse.move(bx, by); await page.mouse.down(); await page.mouse.move(bx + 45, by + 30); await page.mouse.up();
+    assert.equal(await page.evaluate(()=>window.fixture.activeIndex()), undefined, 'Dragging from a marker must not activate it');
+    const fromMarker = await page.evaluate(()=>window.fixture.annotation());
+    assert.equal(fromMarker.kind, 'rectangle'); assert(Math.abs(fromMarker.width - 45 * 1600 / next.width) < 1);
+    await page.evaluate(()=>window.fixture.setAnnotation(undefined));
     await image.locator('[data-annotation-index="1"] text').click();
     assert.equal(await page.evaluate(()=>window.fixture.activeIndex()),1);
     assert.equal(await page.evaluate(()=>window.fixture.annotation().kind),'rectangle');

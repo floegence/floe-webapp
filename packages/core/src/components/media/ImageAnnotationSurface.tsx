@@ -29,7 +29,7 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
   let host!: HTMLDivElement, svg!: SVGSVGElement;
   const [size, setSize] = createSignal({ width: 1, height: 1 });
   const [draft, setDraft] = createSignal<ImageAnnotation>();
-  let gesture: { id: number; start: ImagePoint; client: ImagePoint; original?: ImageAnnotation; corner?: number; src: string } | undefined;
+  let gesture: { id: number; start: ImagePoint; client: ImagePoint; original?: ImageAnnotation; corner?: number; pin?: { index: number; annotation: ImageAnnotation }; dragged: boolean; src: string } | undefined;
   let pan: { id: number; x: number; y: number; left: number; top: number } | undefined;
   const shown = () => draft() ?? props.annotation;
   const scale = createMemo(() => Math.min(size().width / props.width, size().height / props.height) * Math.max(1, props.zoom ?? 1));
@@ -67,7 +67,8 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
       const start = original?.kind === 'rectangle' && current.corner !== undefined
         ? { x: original.x + (current.corner % 2 ? 0 : original.width), y: original.y + (current.corner < 2 ? original.height : 0) } : current.start;
       const width = Math.abs(end.x - start.x), height = Math.abs(end.y - start.y);
-      if (Math.hypot(event.clientX - current.client.x, event.clientY - current.client.y) < 5 && !original) setDraft({ kind: 'point', ...start });
+      if (Math.hypot(event.clientX - current.client.x, event.clientY - current.client.y) >= 5) current.dragged = true;
+      if (!current.dragged && !original) setDraft(current.pin ? undefined : { kind: 'point', ...start });
       else if (width > 0 && height > 0) setDraft({ kind: 'rectangle', x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), width, height });
     }
   };
@@ -81,7 +82,10 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
     if (!cancelled) move(event);
     const annotation = draft(); gesture = undefined; setDraft(undefined);
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
-    if (!cancelled && current.src === props.src && editable() && annotation && validateImageAnnotation(props, annotation)) props.onChange?.(annotation);
+    if (cancelled || current.src !== props.src || !editable()) return;
+    if (current.pin && !current.dragged) {
+      if (props.annotations?.[current.pin.index] === current.pin.annotation) props.onSelect?.(current.pin.index);
+    } else if (annotation && validateImageAnnotation(props, annotation)) props.onChange?.(annotation);
   };
   const corners = () => { const value = shown(); return value?.kind === 'rectangle' ? [
     { x: value.x, y: value.y }, { x: value.x + value.width, y: value.y },
@@ -101,13 +105,15 @@ export function ImageAnnotationSurface(props: ImageAnnotationSurfaceProps) {
           const start = point(event); if (!start) return;
           const target = event.target as Element;
           const selected = target.closest('[data-annotation-index]')?.getAttribute('data-annotation-index');
-          if (selected !== undefined && selected !== null && Number(selected) !== props.activeIndex) {
+          const item = selected == null ? undefined : props.annotations?.[Number(selected)];
+          if (item && (props.annotation || props.activeIndex !== undefined)) {
             props.onSelect?.(Number(selected)); event.preventDefault(); return;
           }
           const corner = target.getAttribute('data-corner');
-          gesture = { id: event.pointerId, start, client: { x: event.clientX, y: event.clientY }, src: props.src,
+          gesture = { id: event.pointerId, start, client: { x: event.clientX, y: event.clientY }, dragged: false, src: props.src,
+            ...(item ? { pin: { index: Number(selected), annotation: item } } : {}),
             ...(target.closest('[data-annotation-target]') ? { original: props.annotation } : {}), ...(corner !== null ? { corner: Number(corner) } : {}) };
-          setDraft(gesture.original ?? { kind: 'point', ...start });
+          setDraft(gesture.pin ? undefined : gesture.original ?? { kind: 'point', ...start });
           svg.setPointerCapture(event.pointerId); svg.focus({ preventScroll: true }); event.preventDefault();
         }} onPointerMove={move} onPointerUp={event => finish(event)} onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => finish(event, true)}
         onKeyDown={event => {
