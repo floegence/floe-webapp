@@ -63,6 +63,37 @@ function consumer(markdown: ReturnType<typeof createMarkdownParser>) {
 }
 
 describe('incremental Markdown', () => {
+  it('retains bounded literal checkpoints without creating an inline region for every word', () => {
+    const markdown = createMarkdownParser();
+    const model = createIncrementalMarkdownParser(markdown);
+    const view = consumer(markdown);
+    let source = 'Initial paragraph ';
+    view.apply(model.reset(source));
+    let insertions = 0;
+    const append = (delta: string) => {
+      source += delta;
+      const update = model.append(delta);
+      insertions += update.changes.filter((change) => change.kind === 'inline').length;
+      view.apply(update);
+      expect(view.html()).toBe(markdown.parse(source));
+    };
+    for (let index = 0; index < 400; index++) append('word ');
+    expect(insertions).toBeLessThan(12);
+    const parsed = model.diagnostics().parsedCharacters;
+    for (const delta of [
+      '**bold',
+      '**',
+      ' user',
+      '@example.com',
+      ' [guide]',
+      '(/url)',
+      ' `code',
+      '`',
+    ])
+      append(delta);
+    expect(model.diagnostics().parsedCharacters - parsed).toBeLessThan(1024);
+  });
+
   it('retains unchanged block identities when replacing a corrected source', () => {
     const markdown = createMarkdownParser({ breaks: false });
     const model = createIncrementalMarkdownParser(markdown);

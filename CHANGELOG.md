@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.1
+
+- Streaming Markdown retains short literal words in one append region between bounded checkpoints, avoiding a new inline element for every word without delaying content or changing Markdown syntax.
+
 ## 0.103.0
 
 - Theme Studio passes a live preset accessor to custom previews. Read the accessor inside the preview component to retain view and focus while editing or comparing drafts.
