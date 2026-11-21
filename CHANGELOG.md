@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.2
+
+- Publish the streaming Markdown improvement from the unpublished 0.103.1 candidate. Restore the unmodified workspace registry audit after withdrawal of the temporary build dependency advisories; generated projects retain their existing build filter behavior.
+
 ## 0.103.1
 
 - Streaming Markdown retains short literal words in one append region between bounded checkpoints, avoiding a new inline element for every word without delaying content or changing Markdown syntax.

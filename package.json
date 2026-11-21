@@ -11,7 +11,7 @@
     "build:demo": "NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter '@floegence/floe-webapp-demo...' build",
     "verify": "node scripts/verify-dist.mjs",
     "sync:skills": "node scripts/sync-skills.mjs",
-    "audit:dependencies": "node scripts/audit-dependencies.mjs",
+    "audit:dependencies": "pnpm audit --audit-level=low",
     "lint": "node scripts/generate-file-icon-artwork.mjs --check && eslint packages apps scripts --ext .ts,.tsx,.mjs && node scripts/check-input-focus-styles.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "typecheck": "pnpm -r typecheck",
@@ -70,12 +70,6 @@
   },
   "packageManager": "pnpm@9.15.0",
   "pnpm": {
-    "//auditConfig": "deepmerge@4.3.1 reaches us only as a build-time devDependency of packages/init (unbuild > @rollup/plugin-node-resolve); it is never bundled into a published package, and no patched version exists yet. Drop this entry once upstream ships a fix.",
-    "auditConfig": {
-      "ignoreCves": [
-        "CVE-2026-93753"
-      ]
-    },
     "overrides": {
       "dompurify": "^3.4.17",
       "katex": "0.18.10",
@@ -86,9 +80,6 @@
       "uuid": "^14.0.0",
       "vite": "^7.3.6",
       "minimatch@>=10.0.0 <11.0.1": "^11.0.1"
-    },
-    "patchedDependencies": {
-      "picomatch@4.0.7": "patches/picomatch@4.0.7.patch"
     }
   }
 }
