@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.3
+
+- Theme choices retain the normal pointer and confirmed checkmark during saves. Only slow requests show a local indicator, and a rejected choice presents its error at the control.
+
 ## 0.103.2
 
 - Publish the streaming Markdown improvement from the unpublished 0.103.1 candidate. Restore the unmodified workspace registry audit after withdrawal of the temporary build dependency advisories; generated projects retain their existing build filter behavior.
