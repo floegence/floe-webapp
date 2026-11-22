@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.5
+
+- Desktop shells can replace the command field with a header accessory without changing title bar height. A retained companion can expand down from its top anchor.
+
 ## 0.103.4
 
 - Line and monitoring charts reserve space for rendered Y-axis ticks without shrinking the gutter between updates. An optional scale resolver can round the visible domain and display a single unit above the ticks without changing tooltip values.

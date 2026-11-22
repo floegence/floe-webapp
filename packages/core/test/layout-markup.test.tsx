@@ -3,6 +3,7 @@ import { renderToString } from 'solid-js/web';
 import { CommandProvider } from '../src/context/CommandContext';
 import { LayoutProvider } from '../src/context/LayoutContext';
 import { TopBar } from '../src/components/layout/TopBar';
+import { DisplayModePageShell } from '../src/components/layout/DisplayModePageShell';
 import { TopBarIconButton } from '../src/components/layout/TopBarIconButton';
 import { MobileTabBar } from '../src/components/layout/MobileTabBar';
 import { Shell } from '../src/components/layout/Shell';
@@ -17,6 +18,21 @@ function renderWithCoreProviders(node: () => unknown): string {
 }
 
 describe('layout markup', () => {
+  it('keeps the default command field and replaces it only for an explicit accessory', () => {
+    const accessory = () => <button aria-label="Status" />;
+    const standard = renderWithCoreProviders(() => <TopBar />);
+    expect(standard).toContain('<kbd');
+    for (const html of [
+      renderWithCoreProviders(() => <Shell topBarAccessory={accessory}>Body</Shell>),
+      renderWithCoreProviders(() => <DisplayModePageShell topBarAccessory={accessory}>Body</DisplayModePageShell>),
+    ]) {
+      expect(html).toContain('data-floe-top-bar-accessory');
+      expect(html).toContain('aria-label="Status"');
+      expect(html).not.toContain('<kbd');
+      expect(html).toContain('h-10');
+    }
+  });
+
   it('Shell has no desktop bottom bar slot', () => {
     const html = renderWithCoreProviders(() => (
       <Shell>

@@ -95,7 +95,7 @@ Conditional settings JSX slots resolve through Solid `children()` once before pr
 
 ### 2.5 non-modal anchored companion 语义
 
-`BottomBarCompanion` 是从可测量布局锚点向上展开的非模态 disclosure。锚点可以位于 Bottom Bar，也可以独立位于 `AppViewport`。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。
+`BottomBarCompanion` 是从可测量布局锚点展开的非模态 disclosure。默认从底部向上展开；`anchorEdge="top"` 从顶部向下展开。锚点可位于 `Shell` / `DisplayModePageShell` 的 `topBarAccessory`、Bottom Bar 或独立的 `AppViewport`。它不是 modal drawer、popover、`FloatingWindow` 或 `SurfaceFloatingLayer`，也不能通过组合这些组件来模拟。
 
 共享契约：
 
