@@ -10,6 +10,7 @@ import {
   untrack,
   children,
   type JSX,
+  onMount,
 } from 'solid-js';
 import { cn } from '../../utils/cn';
 import { useResizeObserver } from '../../hooks/useResizeObserver';
@@ -78,6 +79,11 @@ export interface LineChartProps {
   yMax?: number;
   /** Format function for y-axis tick labels */
   formatYTick?: (value: number) => string;
+  resolveYAxis?: (bounds: { min: number; max: number }) => {
+    max: number;
+    unit: string;
+    formatTick: (value: number) => string;
+  };
   /** Format function for tooltip values (and point titles) */
   formatTooltipValue?: (value: number, ctx: { series: ChartSeries; seriesIndex: number; pointIndex: number }) => string;
   /** Maximum number of x-axis tick labels to render (helps avoid overlap/ghosting) */
@@ -134,6 +140,7 @@ export function LineChart(props: LineChartProps) {
     'yMin',
     'yMax',
     'formatYTick',
+    'resolveYAxis',
     'formatTooltipValue',
     'maxXAxisLabels',
   ]);
@@ -149,7 +156,7 @@ export function LineChart(props: LineChartProps) {
   const variant = () => local.variant ?? 'default';
   const yMin = () => clampFiniteNumber(local.yMin);
   const yMax = () => clampFiniteNumber(local.yMax);
-  const formatYTick = () => local.formatYTick ?? ((v: number) => String(Math.round(v)));
+  const formatYTick = () => axis()?.formatTick ?? local.formatYTick ?? ((v: number) => String(Math.round(v)));
   const formatTooltipValue = () =>
     local.formatTooltipValue ?? ((v: number) => formatNumberFixed(v, 2));
   const maxXAxisLabels = () => {
@@ -161,7 +168,12 @@ export function LineChart(props: LineChartProps) {
 
   // Chart dimensions - keep SVG user units aligned with rendered pixel size.
   // This avoids "letterboxing" on wide containers when height is fixed (common in dashboards).
-  const padding = { top: 20, right: 20, bottom: 40, left: 45 };
+  const [axisWidth, setAxisWidth] = createSignal(45);
+  const padding = {
+    get top() { return axis()?.unit ? 34 : 20; },
+    right: 20, bottom: 40,
+    get left() { return Math.min(axisWidth(), chartWidth() - 40); },
+  };
   const chartHeight = () => height();
 
   let containerRef: HTMLDivElement | undefined;
@@ -246,7 +258,7 @@ export function LineChart(props: LineChartProps) {
   });
 
   // Calculate data bounds
-  const bounds = createMemo(() => {
+  const dataBounds = createMemo(() => {
     const allValues = local.series.flatMap((s) => s.data).filter((v) => Number.isFinite(v));
 
     const computedMin = allValues.length > 0 ? Math.min(0, ...allValues) : 0;
@@ -260,8 +272,28 @@ export function LineChart(props: LineChartProps) {
     let max = Number.isFinite(rawMax) ? rawMax : 0;
     if (max < min) [min, max] = [max, min];
     if (max === min) max = min + 1;
-    const range = max - min || 1;
-    return { min, max, range };
+    return { min, max };
+  });
+  const axis = createMemo(() => local.resolveYAxis?.(dataBounds()));
+  const bounds = createMemo(() => {
+    const data = dataBounds();
+    const maximum = clampFiniteNumber(axis()?.max);
+    const max = Math.max(data.max, maximum ?? data.max);
+    return { min: data.min, max, range: max - data.min };
+  });
+
+  let axisLabels: SVGGElement | undefined;
+  onMount(() => {
+    if (!axisLabels || typeof ResizeObserver === 'undefined') return;
+    const labels = axisLabels;
+    const measure = () => {
+      const needed = Math.ceil(labels.getBBox().width) + 10;
+      setAxisWidth(previous => Math.max(previous, needed));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(labels);
+    onCleanup(() => observer.disconnect());
   });
 
   // Get data point positions
@@ -556,7 +588,10 @@ export function LineChart(props: LineChartProps) {
         </Show>
 
         {/* Y-axis labels */}
-        <g class="chart-axis-labels">
+        <g ref={axisLabels} class="chart-axis-labels">
+          <Show when={axis()?.unit}>{unit => (
+            <text x={padding.left - 6} y={14} class="chart-axis-label chart-axis-unit" text-anchor="end">{unit()}</text>
+          )}</Show>
           <For each={yTicks()}>
             {(tick) => (
               <text x={padding.left - 6} y={tick.y} class="chart-axis-label" text-anchor="end" dominant-baseline="middle">
@@ -1247,6 +1282,7 @@ export interface MonitoringChartProps {
   yMax?: number;
   /** Format function for y-axis tick labels */
   formatYTick?: (value: number) => string;
+  resolveYAxis?: LineChartProps['resolveYAxis'];
   /** Format function for tooltip values */
   formatTooltipValue?: (value: number, ctx: { series: ChartSeries; seriesIndex: number; pointIndex: number }) => string;
   /** Maximum number of x-axis tick labels to render */
@@ -1280,6 +1316,7 @@ export function MonitoringChart(props: MonitoringChartProps) {
     'yMin',
     'yMax',
     'formatYTick',
+    'resolveYAxis',
     'formatTooltipValue',
     'maxXAxisLabels',
   ]);
@@ -1370,6 +1407,7 @@ export function MonitoringChart(props: MonitoringChartProps) {
         yMin={local.yMin}
         yMax={local.yMax}
         formatYTick={local.formatYTick}
+        resolveYAxis={local.resolveYAxis}
         formatTooltipValue={local.formatTooltipValue}
         maxXAxisLabels={local.maxXAxisLabels}
       />

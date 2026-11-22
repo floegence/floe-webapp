@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.4
+
+- Line and monitoring charts reserve space for rendered Y-axis ticks without shrinking the gutter between updates. An optional scale resolver can round the visible domain and display a single unit above the ticks without changing tooltip values.
+
 ## 0.103.3
 
 - Theme choices retain the normal pointer and confirmed checkmark during saves. Only slow requests show a local indicator, and a rejected choice presents its error at the control.
