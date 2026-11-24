@@ -1,5 +1,7 @@
 /* global document */
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, URL } from 'node:url';
 import { chromium } from 'playwright';
@@ -82,7 +84,7 @@ try {
         );
       }
       if (width === 1280 && !mode)
-        await page.screenshot({ path: '/tmp/redeven-feedback-upstream.png' });
+        await page.screenshot({ path: join(process.env.FLOEGENCE_TEST_ARTIFACTS ?? tmpdir(), 'redeven-feedback-upstream.png') });
       await page.keyboard.press('Escape');
       await panel.waitFor({ state: 'hidden' });
       assert.equal(await trigger.evaluate((node) => node === document.activeElement), true);

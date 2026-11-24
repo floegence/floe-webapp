@@ -1,6 +1,8 @@
 /* global document, requestAnimationFrame */
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL, URL } from 'node:url';
 import { chromium } from 'playwright';
@@ -14,7 +16,8 @@ let browser;
 try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
-  await mkdir('/tmp/floe-directory-popup-evidence', { recursive: true });
+  const evidence = join(process.env.FLOEGENCE_TEST_ARTIFACTS ?? tmpdir(), 'floe-directory-popup-evidence');
+  await mkdir(evidence, { recursive: true });
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('http://127.0.0.1:' + server.httpServer.address().port + '/test/browser/directory-create.html');
   for (const theme of ['light', 'dark']) for (const width of [1280, 390]) {
@@ -53,7 +56,7 @@ try {
     await page.waitForFunction(() => document.querySelector('[data-floe-popover-panel]')?.getAttribute('data-floating-presence') === 'open');
     assert.equal(await name.evaluate(el => document.activeElement === el), true, 'reopened popup must refocus the name');
     await popup.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
-    await page.screenshot({ path: '/tmp/floe-directory-popup-evidence/' + theme + '-' + width + '.png' });
+    await page.screenshot({ path: join(evidence, `${theme}-${width}.png`) });
     const create = popup.getByRole('button', { name: 'Create', exact: true });
     for (const invalid of ['.', '..', 'nested/folder']) {
       await name.fill(invalid); assert.equal(await create.isDisabled(), true);

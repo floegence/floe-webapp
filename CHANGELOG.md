@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.104.0
 
+- Boot and Protocol use Flowersec 7.2.0. Upgrade the issuing control plane, tunnel and session peers together: public connections require Transport v5 and do not negotiate the older wire.
 - Keep image annotation drags through native mouse capture loss. The matching pointer release commits the final geometry; cancellation or blur discards the gesture.
 
 ## 0.103.7
