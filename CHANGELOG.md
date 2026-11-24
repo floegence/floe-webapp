@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.6
+
+- Canvas panning keeps pointer capture and cursor styling local to the canvas, applies the first displacement immediately, and coalesces subsequent input before paint. Retained shell headers expose their presentation state for global dialog placement.
+
 ## 0.103.5
 
 - Desktop shells can replace the command field with a header accessory without changing title bar height. A retained companion can expand down from its top anchor.
