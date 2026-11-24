@@ -199,6 +199,25 @@ describe('MarkdownMedia request lifecycle', () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it('offers only the resolved remote source on image decode failure and clears it on retry', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const source = { kind: 'image' as const, title: 'Icon', src: 'https://example.org/input.svg' };
+    const target = 'https://example.org/source.svg';
+    const resolve = vi.fn().mockResolvedValueOnce({ src: '/invalid', openURL: target }).mockRejectedValueOnce(new Error('Denied'));
+    disposers.push(render(() => <MarkdownMedia source={source} labels={labels} resolve={resolve} />, host));
+    await flush();
+    host.querySelector('img')!.dispatchEvent(new Event('error'));
+    const link = host.querySelector('a');
+    expect(link?.href).toBe(target);
+    expect(link?.textContent).toContain(labels.open);
+    expect(link?.rel).toBe('noopener noreferrer');
+    host.querySelector<HTMLButtonElement>('.chat-media-retry')!.click();
+    await flush();
+    expect(host.querySelector('.chat-media-retry')).not.toBeNull();
+    expect(host.querySelector('a')).toBeNull();
+  });
+
   it('uses one deadline for resolution and HTML loading', async () => {
     vi.useFakeTimers();
     try {

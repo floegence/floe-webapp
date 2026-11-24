@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.103.7
+
+- Failed Markdown image previews retain the authorized remote source link alongside Retry without moving the conversation.
+
 ## 0.103.6
 
 - Canvas panning keeps pointer capture and cursor styling local to the canvas, applies the first displacement immediately, and coalesces subsequent input before paint. Retained shell headers expose their presentation state for global dialog placement.
