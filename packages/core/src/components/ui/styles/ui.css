@@ -1700,7 +1700,12 @@
     user-select: text;
   }
 
-  .floe-infinite-canvas.is-panning {
+  .floe-infinite-canvas.is-panning::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    pointer-events: auto;
     cursor: grabbing;
   }
 

@@ -3,6 +3,7 @@ import { cn } from '../../utils/cn';
 import { useCommand } from '../../context/CommandContext';
 import { Search } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { useViewVisibility } from '../../context/ViewActivationContext';
 
 export interface TopBarProps {
   logo?: JSX.Element;
@@ -19,11 +20,13 @@ export interface TopBarProps {
 export function TopBar(props: TopBarProps) {
   const command = useCommand();
   const floe = useResolvedFloeConfig();
+  const visible = useViewVisibility();
   const paletteEnabled = () => floe.config.commands.palette.enabled;
 
   return (
     <header
       data-floe-shell-slot="top-bar"
+      data-floe-visible-header={visible() ? '' : undefined}
       class={cn(
         // Safe-area padding must not be applied on a fixed-height element (border-box),
         // otherwise the content gets squeezed on iOS notch devices.

@@ -242,6 +242,9 @@ describe('InfiniteCanvas wheel routing', () => {
     await Promise.resolve();
 
     expect(canvas!.classList.contains('is-panning')).toBe(true);
+    expect(document.documentElement.hasAttribute('data-floe-hot-interaction')).toBe(false);
+    expect(document.body.style.cursor).toBe('');
+    expect(document.body.style.userSelect).toBe('');
     expect(readViewportSnapshot(host)).toEqual(INITIAL_VIEWPORT);
 
     dispatchPointerEvent('pointermove', document, {

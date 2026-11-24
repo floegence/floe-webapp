@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToString } from 'solid-js/web';
 import { CommandProvider } from '../src/context/CommandContext';
 import { LayoutProvider } from '../src/context/LayoutContext';
+import { ViewActivationProvider } from '../src/context/ViewActivationContext';
 import { TopBar } from '../src/components/layout/TopBar';
 import { DisplayModePageShell } from '../src/components/layout/DisplayModePageShell';
 import { TopBarIconButton } from '../src/components/layout/TopBarIconButton';
@@ -18,6 +19,17 @@ function renderWithCoreProviders(node: () => unknown): string {
 }
 
 describe('layout markup', () => {
+  it('exposes only presented headers to document-level dialogs', () => {
+    expect(renderWithCoreProviders(() => <TopBar />)).toContain('data-floe-visible-header');
+    for (const visible of [true, false]) {
+      const html = renderWithCoreProviders(() => (
+        <ViewActivationProvider value={{ id: 'workspace', visible: () => visible, active: () => false, activationSeq: () => 0 }}>
+          <DisplayModePageShell>Body</DisplayModePageShell>
+        </ViewActivationProvider>
+      ));
+      expect(html.includes('data-floe-visible-header')).toBe(visible);
+    }
+  });
   it('keeps the default command field and replaces it only for an explicit accessory', () => {
     const accessory = () => <button aria-label="Status" />;
     const standard = renderWithCoreProviders(() => <TopBar />);
