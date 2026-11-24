@@ -38,3 +38,7 @@ export function useViewActivation(): Required<ViewActivationContextValue> {
   }
   return ctx;
 }
+
+export function useViewVisibility(): Accessor<boolean> {
+  return useContext(ViewActivationContext)?.visible ?? (() => true);
+}

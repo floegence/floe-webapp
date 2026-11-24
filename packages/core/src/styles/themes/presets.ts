@@ -165,6 +165,7 @@ export const REQUIRED_SHELL_THEME_TOKENS: readonly ShellThemeTokenName[] = [
 ];
 
 interface ShellThemePaletteDefinition {
+  features?: readonly string[];
   name: string;
   displayName: string;
   description: string;
@@ -347,6 +348,7 @@ export function createShellThemePreset(definition: ShellThemePaletteDefinition):
 
   return {
     name: definition.name,
+    features: definition.features ?? [],
     displayName: definition.displayName,
     description: definition.description,
     mode: definition.mode,
@@ -502,6 +504,7 @@ const classicDarkPreset = {
 export const builtInShellThemePresets = [
   createShellThemePreset({
     name: 'porcelain-light',
+    features: ['opaque-muted-ink'],
     inlineCode: { foreground: '#742D45', background: '#F4E7EB' },
     displayName: 'Porcelain Light',
     description: 'Clean porcelain whites, neutral layers, and restrained charcoal.',
@@ -868,6 +871,7 @@ export const builtInShellThemePresets = [
   }),
   createShellThemePreset({
     name: 'hc-light',
+    features: ['high-contrast'],
     inlineCode: { foreground: '#00499C', background: '#F4F7FB' },
     displayName: 'High Contrast Light',
     description: 'Maximum edge definition for bright environments and low vision.',

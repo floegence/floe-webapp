@@ -85,6 +85,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     onCleanup(() => observer.disconnect());
   });
   const [resource, setResource] = createSignal<ResolvedMarkdownMedia>();
+  const [failedSourceURL, setFailedSourceURL] = createSignal<string>();
   const [document, setDocument] = createSignal<string>();
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'error'>('loading');
   const [retry, setRetry] = createSignal(0);
@@ -148,6 +149,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     failRequest = () => {
       if (controller.signal.aborted) return;
       clearTimer();
+      setFailedSourceURL(request.kind === 'image' ? safeMarkdownMediaURL(resource()?.openURL ?? '') : undefined);
       setStatus('error');
       setExpanded(false);
       setHtmlPreviewOpen(false);
@@ -156,6 +158,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       controller.abort();
     };
     const fail = failRequest;
+    setFailedSourceURL(undefined);
     setResource(undefined);
     setDocument(undefined);
     setStatus('loading');
@@ -190,7 +193,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       <span class="chat-media-viewport">
       <Switch>
         <Match when={status() === 'loading'}><span class="chat-media-placeholder" role="status">{props.labels.loading}</span></Match>
-        <Match when={status() === 'error'}><span class="chat-media-placeholder" role="status"><span>{props.labels.unavailable}</span><button type="button" class="chat-media-retry" onClick={() => setRetry(value => value + 1)}><Refresh />{props.labels.retry}</button></span></Match>
+        <Match when={status() === 'error'}><span class="chat-media-placeholder" role="status"><span>{props.labels.unavailable}</span><Show when={failedSourceURL()}>{url => <a class="chat-media-source-link" href={url()} target="_blank" rel="noopener noreferrer"><ExternalLink />{props.labels.open}</a>}</Show><button type="button" class="chat-media-retry" onClick={() => setRetry(value => value + 1)}><Refresh />{props.labels.retry}</button></span></Match>
         <Match when={status() === 'ready'}>
           <Switch>
             <Match when={props.source.kind === 'image'}>

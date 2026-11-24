@@ -1,0 +1,9 @@
+# Portable shell themes
+
+Use `@floegence/floe-webapp-core/themes` in renderer and native hosts. `exportShellTheme(preset)` creates an independent v2 JSON document. Imports receive a host-owned installation ID. Neither the ID nor the selected system/light/dark preference belongs in the file.
+
+`readPortableShellTheme` validates data without evaluating CSS or contacting a service. V2 stores a name, light/dark mode, named palette, semantic colors, ordered shadow layers, appearance features, Monaco color IDs and ordered syntax rules. Optional terminal colors and host-specific part colors are independent overrides. Syntax supports foreground and font style. References use `$name` in the palette or `@role` for a shell color. References must resolve without cycles. Renderer-only color recipes support bounded color literals, token references and sRGB mixes. Native host roles resolve to hex. Files are limited to 128 KiB, including pretty-printed export.
+
+`resolvePortableShellTheme(id, document)` produces shell tokens, preview and Monaco configuration. `portableContrastIssue(document)` checks the composited text/surface pairs before installation. Supply installed presets through `additionalShellPresets`; hosts advertise their part and feature names to the studio. Applied roots expose `data-floe-theme-features`; appearance behavior must use these values, not installation IDs. Legacy static markup without this attribute retains its published built-in styles.
+
+The picker edits a local draft and waits for an acknowledged save. Imports never replace a theme by name. Generation receives the same document format, not authority to write preferences. Existing v1 base/override documents remain readable: the new reader captures their resolved values without adopting features that were not active on the original custom ID. The v1 API remains available for existing consumers.

@@ -3,11 +3,13 @@ import { cn } from '../../utils/cn';
 import { useCommand } from '../../context/CommandContext';
 import { Search } from '../icons';
 import { useResolvedFloeConfig } from '../../context/FloeConfigContext';
+import { useViewVisibility } from '../../context/ViewActivationContext';
 
 export interface TopBarProps {
   logo?: JSX.Element;
   title?: string;
   actions?: JSX.Element;
+  accessory?: () => JSX.Element;
   ariaLabel?: string;
   class?: string;
 }
@@ -18,11 +20,13 @@ export interface TopBarProps {
 export function TopBar(props: TopBarProps) {
   const command = useCommand();
   const floe = useResolvedFloeConfig();
+  const visible = useViewVisibility();
   const paletteEnabled = () => floe.config.commands.palette.enabled;
 
   return (
     <header
       data-floe-shell-slot="top-bar"
+      data-floe-visible-header={visible() ? '' : undefined}
       class={cn(
         // Safe-area padding must not be applied on a fixed-height element (border-box),
         // otherwise the content gets squeezed on iOS notch devices.
@@ -46,7 +50,7 @@ export function TopBar(props: TopBarProps) {
         </div>
 
         {/* Search / Command Palette Trigger */}
-        <button
+        <Show when={props.accessory} keyed fallback={<button
           type="button"
           disabled={!paletteEnabled()}
           class={cn(
@@ -68,7 +72,9 @@ export function TopBar(props: TopBarProps) {
               {command.getKeybindDisplay(floe.config.commands.palette.keybind)}
             </kbd>
           </Show>
-        </button>
+        </button>}>
+          {render => <div data-floe-top-bar-accessory class="relative min-w-0 flex-1 self-stretch">{render()}</div>}
+        </Show>
 
         {/* Actions */}
         <div class="flex items-center gap-0.5">{props.actions}</div>

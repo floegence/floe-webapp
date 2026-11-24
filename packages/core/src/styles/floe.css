@@ -1083,5 +1083,5 @@
   .floe-prompt-card-input { font-size: 1rem; }
   .floe-prompt-card .floe-prompt-card-selection { min-height: 2.75rem; }
 }
-:root[data-floe-shell-theme='hc-light'] .floe-prompt-card { border: 1px solid var(--floe-line); }
+:root:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))) .floe-prompt-card { border: 1px solid var(--floe-line); }
 @media (forced-colors: active) { .floe-prompt-card { border: 1px solid CanvasText; } }

@@ -306,7 +306,10 @@ with the renderer's `Refresh` icon. Hosts must escape their own dynamic copy.
 area, so per-widget and per-page affordances own everything below it and host
 apps place their own status language where it belongs. `BottomBarCompanion`
 remains available and accepts a measurable layout anchor, including an
-independent anchor inside `AppViewport`.
+independent anchor inside `AppViewport`. Set `anchorEdge="top"` for a disclosure
+that grows down from the header. `Shell` and `DisplayModePageShell` accept a
+`topBarAccessory` render function in place of the default command button;
+the header keeps its standard height and command bindings remain registered.
 
 ### Stable observed lists
 

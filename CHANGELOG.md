@@ -4,6 +4,52 @@
 
 - Keep image annotation drags through native mouse capture loss. The matching pointer release commits the final geometry; cancellation or blur discards the gesture.
 
+## 0.103.7
+
+- Failed Markdown image previews retain the authorized remote source link alongside Retry without moving the conversation.
+
+## 0.103.6
+
+- Canvas panning keeps pointer capture and cursor styling local to the canvas, applies the first displacement immediately, and coalesces subsequent input before paint. Retained shell headers expose their presentation state for global dialog placement.
+
+## 0.103.5
+
+- Desktop shells can replace the command field with a header accessory without changing title bar height. A retained companion can expand down from its top anchor.
+
+## 0.103.4
+
+- Line and monitoring charts reserve space for rendered Y-axis ticks without shrinking the gutter between updates. An optional scale resolver can round the visible domain and display a single unit above the ticks without changing tooltip values.
+
+## 0.103.3
+
+- Theme choices retain the normal pointer and confirmed checkmark during saves. Only slow requests show a local indicator, and a rejected choice presents its error at the control.
+
+## 0.103.2
+
+- Publish the streaming Markdown improvement from the unpublished 0.103.1 candidate. Restore the unmodified workspace registry audit after withdrawal of the temporary build dependency advisories; generated projects retain their existing build filter behavior.
+
+## 0.103.1
+
+- Streaming Markdown retains short literal words in one append region between bounded checkpoints, avoiding a new inline element for every word without delaying content or changing Markdown syntax.
+
+## 0.103.0
+
+- Theme Studio passes a live preset accessor to custom previews. Read the accessor inside the preview component to retain view and focus while editing or comparing drafts.
+
+## 0.102.1
+
+- Start a standalone light or dark palette, design from the current unsaved draft, and preserve named links and host-specific overrides when re-exporting a resolved theme.
+
+## 0.102.0
+
+- Export independent shell themes with a complete semantic palette, window shadows, terminal overrides and ordered editor syntax rules. Read legacy theme files without changing their appearance.
+- Edit searchable theme fields, named colors and references in the shared studio. Draft edits support undo and redo; host appearance features no longer require a built-in installation identity.
+
+## 0.101.52
+
+- Create, preview, import and export portable shell themes through the optional ThemePicker studio. Hosts can register presets at runtime and offer a theme generation action.
+- Apply a verified, build-only picomatch mitigation pending an upstream release.
+
 ## 0.101.51
 
 - On the image annotation surface, clicking a numbered pin selects it; starting a new rectangle on the same pin keeps the drag through release.

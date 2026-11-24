@@ -162,6 +162,22 @@ describe('BottomBarCompanion', () => {
     expect(surface.querySelector('textarea')).toBe(textarea);
   });
 
+  it('keeps a titlebar origin fixed when expanding downward', () => {
+    const { anchor, portalMount, renderHost } = createFixture({ left: 480, top: 0, width: 144, height: 26 });
+    const [open, setOpen] = createSignal(false);
+    mount(() => <BottomBarCompanion retained visible open={open()} anchorEdge="top" anchor={anchor}
+      mount={portalMount} expandedWidth={400} maxHeight={180} id="top-companion" label="Activity"><textarea /></BottomBarCompanion>, renderHost);
+    flushAllAnimationFrames();
+    const surface = portalMount.querySelector<HTMLElement>('#top-companion')!;
+    const editor = surface.querySelector('textarea');
+    expect(surface.style.height).toBe('26px');
+    setOpen(true);
+    flushAllAnimationFrames();
+    expect(surface.style.top).toBe('0px');
+    expect(surface.style.height).toBe('180px');
+    expect(surface.querySelector('textarea')).toBe(editor);
+  });
+
   it('widens a compact entry upward without moving its bottom edge or replacing its input', () => {
     const { anchor, portalMount, renderHost } = createFixture({
       left: 400,

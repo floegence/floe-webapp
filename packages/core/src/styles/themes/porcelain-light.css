@@ -2,13 +2,13 @@
  * small labels and placeholders unreadable on near-white surfaces. Palette
  * values live in presets.ts; this file only maps existing component recipes. */
 @media (forced-colors: none) {
-  :root[data-floe-shell-theme='porcelain-light']:not(.dark)
+  :root:is([data-floe-theme-features~='opaque-muted-ink'],[data-floe-shell-theme='porcelain-light']:where(:not([data-floe-theme-features]))):not(.dark)
     :is(input, textarea)::placeholder {
     color: var(--floe-field-placeholder);
     opacity: 1;
   }
 
-  :root[data-floe-shell-theme='porcelain-light']:not(.dark)
+  :root:is([data-floe-theme-features~='opaque-muted-ink'],[data-floe-shell-theme='porcelain-light']:where(:not([data-floe-theme-features]))):not(.dark)
     :is([class~='text-muted-foreground/40'], [class~='text-muted-foreground/45'],
       [class~='text-muted-foreground/50'], [class~='text-muted-foreground/60'],
       [class~='text-muted-foreground/65'], [class~='text-muted-foreground/70'],

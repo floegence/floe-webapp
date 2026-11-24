@@ -1179,7 +1179,7 @@
   .workbench-surface[data-workbench-theme] .workbench-widget__title-area svg {
     color: var(--foreground);
   }
-  html[data-floe-shell-theme='hc-light'] .workbench-surface[data-workbench-theme] {
+  html:is([data-floe-theme-features~='high-contrast'],[data-floe-shell-theme='hc-light']:where(:not([data-floe-theme-features]))) .workbench-surface[data-workbench-theme] {
     --wb-window-edge: var(--foreground);
     --wb-window-active: var(--foreground);
     --wb-canvas: var(--muted);

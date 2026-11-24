@@ -18,6 +18,7 @@ export interface BottomBarCompanionProps {
   children?: JSX.Element;
   /** Preferred expanded width in pixels; defaults to the anchor width and respects maxWidth. */
   expandedWidth?: number;
+  anchorEdge?: 'top' | 'bottom';
   maxWidth?: number;
   maxHeight?: number;
   viewportPadding?: number;
@@ -105,7 +106,8 @@ function expandedFrame(
   expandedWidth: number,
   maxWidth: number,
   maxHeight: number,
-  padding: number
+  padding: number,
+  edge: 'top' | 'bottom'
 ): CompanionFrame {
   const view = mount.ownerDocument.defaultView;
   const viewport = view ? readViewportSnapshot(view).visible : null;
@@ -122,6 +124,10 @@ function expandedFrame(
   const width = Math.min(expandedWidth, maxWidth, availableWidth);
   const desiredLeft = anchor.left + (anchor.width - width) / 2;
   const left = Math.max(safeLeft, Math.min(desiredLeft, safeRight - width));
+  if (edge === 'top') {
+    const top = Math.max(anchor.top, viewportTop + insets.top);
+    return { left, top, width, height: Math.min(maxHeight, Math.max(anchor.height, safeBottom - padding - top)) };
+  }
   const bottom = Math.min(anchor.top + anchor.height, safeBottom);
   const availableHeight = Math.max(anchor.height, bottom - safeTop);
   const height = Math.min(maxHeight, availableHeight);
@@ -157,7 +163,7 @@ function frameStyle(frame: CompanionFrame | null, mount: HTMLElement | null): JS
 }
 
 /**
- * A non-modal surface that grows upward from a measurable layout anchor.
+ * A non-modal surface that grows inward from a measurable layout anchor.
  * The anchor may live in a Bottom Bar or independently within an AppViewport.
  *
  * This is intentionally distinct from windows, popovers, and modal drawers:
@@ -230,7 +236,8 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
       finitePositive(props.expandedWidth, anchorFrame.width),
       finitePositive(props.maxWidth, DEFAULT_MAX_WIDTH),
       finitePositive(props.maxHeight, DEFAULT_MAX_HEIGHT),
-      finiteNonNegative(props.viewportPadding, DEFAULT_VIEWPORT_PADDING)
+      finiteNonNegative(props.viewportPadding, DEFAULT_VIEWPORT_PADDING),
+      props.anchorEdge ?? 'bottom'
     );
   };
 
@@ -306,6 +313,7 @@ export function BottomBarCompanion(props: BottomBarCompanionProps) {
     void props.maxWidth;
     void props.maxHeight;
     void props.viewportPadding;
+    void props.anchorEdge;
 
     if (!retained) {
       cancelScheduledGeometry();

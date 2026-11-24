@@ -71,6 +71,7 @@ export interface ShellProps {
    */
   activityBottomItemsMobileMode?: 'hidden' | 'topBar';
   topBarActions?: JSX.Element;
+  topBarAccessory?: () => JSX.Element;
   /** Stable content directly above mobile navigation, such as a composer anchor. */
   mobileAccessory?: JSX.Element;
   /** Hide navigation only while a focused editor is occluded by the soft keyboard. */
@@ -448,6 +449,7 @@ export function Shell(props: ShellProps) {
       {/* Top Bar */}
       <Show when={!isMobile() || props.topBarMobileMode !== 'hidden'}><TopBar
         logo={props.logo}
+        accessory={props.topBarAccessory}
         actions={effectiveTopBarActions()}
         ariaLabel={accessibility().topBarLabel}
         class={props.slotClassNames?.topBar}

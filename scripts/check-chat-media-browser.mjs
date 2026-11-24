@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import { URL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { chromium } from 'playwright';
 import solid from 'vite-plugin-solid';
 const requireCore = createRequire(new URL('../packages/core/package.json', import.meta.url));
+const evidencePath = name => join(process.env.FLOEGENCE_TEST_REPORTS ?? tmpdir(), name);
 const { createServer } = await import(requireCore.resolve('vite'));
 const { default: tailwind } = await import(requireCore.resolve('@tailwindcss/vite'));
 const video = readFileSync(new URL('./fixtures/media/scheduler.mp4', import.meta.url));
@@ -36,6 +39,7 @@ window.mediaTest = {
   resolver: () => setResolver(() => (source, signal) => resolve(source, signal)),
   stats: () => ({calls: requests.length, aborted: requests.filter(request => request.signal.aborted).length}),
   accept: (index, name) => requests[index].accept({src: location.origin+'/image.svg?'+name}),
+  acceptPage: index => requests[index].accept({src: location.origin+'/lifecycle',openURL:location.origin+'/lifecycle'}),
   reject: index => requests[index].reject(new Error('Unavailable')),
   dispose,
 };`;
@@ -63,7 +67,7 @@ let browser;
 let page;
 try {
   await server.listen();
-  browser = await chromium.launch({headless:true,channel:'chromium'});
+  browser = await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHROMIUM_CHANNEL ?? 'chromium'});
   page = await browser.newPage({viewport:{width:1000,height:1100}});
   await page.goto(server.resolvedUrls.local[0]);
   const iframe = page.frameLocator('iframe');
@@ -106,10 +110,10 @@ try {
   assert.equal(await page.locator('[data-media-kind=video]').evaluate(node => getComputedStyle(node).borderWidth), '0px');
   await page.locator('iframe').scrollIntoViewIfNeeded();
   await iframe.getByRole('button', {name:'Clicked'}).waitFor({state:'visible'});
-  await page.screenshot({path:'/tmp/floe-chat-media-desktop.png',fullPage:true});
+  await page.screenshot({path:evidencePath('floe-chat-media-desktop.png'),fullPage:true});
   await page.setViewportSize({width:360,height:900});
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.screenshot({path:'/tmp/floe-chat-media-mobile.png',fullPage:true});
+  await page.screenshot({path:evidencePath('floe-chat-media-mobile.png'),fullPage:true});
   for (const width of [1000, 390, 320]) {
     await page.setViewportSize({width, height:900});
     await hosted.scrollIntoViewIfNeeded();
@@ -141,12 +145,12 @@ try {
         assert.equal(button.width, button.height);
         assert.equal(button.radius, '50%');
       }
-      await hosted.screenshot({path:`/tmp/floe-chat-image-canvas-${theme}-${width}.png`});
+      await hosted.screenshot({path:evidencePath(`floe-chat-image-canvas-${theme}-${width}.png`)});
       const bounds = await hosted.boundingBox();
       await hosted.locator('img').evaluate(image => { image.src = location.origin + '/image.svg?portrait'; });
       await page.waitForFunction(() => document.querySelector('#host-image img').naturalHeight === 640);
       assert.deepEqual(await hosted.boundingBox(), bounds, 'Portrait images keep the canvas and caption stable');
-      await hosted.screenshot({path:`/tmp/floe-chat-image-portrait-${theme}-${width}.png`});
+      await hosted.screenshot({path:evidencePath(`floe-chat-image-portrait-${theme}-${width}.png`)});
       await hosted.locator('img').evaluate(image => { image.src = location.origin + '/image.svg'; });
       await page.waitForFunction(() => document.querySelector('#host-image img').naturalWidth === 640);
     }
@@ -166,7 +170,7 @@ try {
   assert.ok(touchButton.y + touchButton.height <= touchContent.y, 'Touch actions remain above the image');
   await touchImage.getByRole('button', {name:'Open containing folder', exact:true}).tap();
   assert.equal(await touch.evaluate(() => window.revealCount), 1);
-  await touchImage.screenshot({path:'/tmp/floe-chat-image-canvas-touch.png'});
+  await touchImage.screenshot({path:evidencePath('floe-chat-image-canvas-touch.png')});
   await touch.close();
   await page.goto(new URL('/canvas', server.resolvedUrls.local[0]).href);
   const canvas = page.locator('.chat-html-canvas');
@@ -190,7 +194,7 @@ try {
       assert.equal(await shimmer.evaluate(node => getComputedStyle(node).animationName), 'floe-progress-shimmer');
       assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName), 'chat-html-sweep');
       assert.equal(await status.evaluate(node => getComputedStyle(node).borderWidth), '0px');
-      await page.screenshot({path:'/tmp/floe-html-generating-'+theme+'-'+width+'.png'});
+      await page.screenshot({path:evidencePath('floe-html-generating-'+theme+'-'+width+'.png')});
     }
   }
   for (const media of [{reducedMotion:'reduce'}, {forcedColors:'active'}]) {
@@ -200,7 +204,7 @@ try {
     await page.emulateMedia({reducedMotion:'no-preference', forcedColors:'none'});
   }
   await page.setViewportSize({width:360,height:900});
-  await page.screenshot({path:'/tmp/floe-html-canvas-generating.png'});
+  await page.screenshot({path:evidencePath('floe-html-canvas-generating.png')});
   await canvas.locator('[data-chat-media-action=source]').click();
   await page.evaluate(() => window.canvasTest.append());
   assert.equal(await canvas.locator('pre').textContent(), '<main>Partial source grows</main>');
@@ -234,7 +238,7 @@ try {
       }
       await checkHTMLGeometry(canvas);
       await canvas.locator('.chat-html-sheet').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
-      await page.screenshot({path:'/tmp/floe-html-canvas-'+theme+'-'+width+'.png'});
+      await page.screenshot({path:evidencePath('floe-html-canvas-'+theme+'-'+width+'.png')});
     }
   }
   await page.mouse.move(700, 700);
@@ -261,7 +265,7 @@ try {
   assert.ok(touchPreviewBounds.width >= 42 && touchPreviewBounds.height >= 42);
   await touchPreview.tap();
   await touchHTML.locator('.chat-media-preview-window iframe').waitFor();
-  await touchHTML.screenshot({path:'/tmp/floe-html-direct-preview-touch.png'});
+  await touchHTML.screenshot({path:evidencePath('floe-html-direct-preview-touch.png')});
   await touchHTML.close();
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await canvas.locator('.chat-html-sheen').evaluate(node => getComputedStyle(node).animationName),'none');
@@ -314,14 +318,28 @@ try {
   await page.getByRole('button', {name:'Retry',exact:true}).click();
   await page.waitForFunction(() => window.mediaTest.stats().calls === 5);
   assert.deepEqual(await page.locator('.chat-media-viewport').boundingBox(), loadingCanvas, 'Retry keeps canvas geometry stable');
+  await page.evaluate(() => window.mediaTest.acceptPage(4));
+  const sourceLink = page.getByRole('link', {name: labels.open});
+  await sourceLink.waitFor();
+  assert.deepEqual(await page.locator('.chat-media-viewport').boundingBox(), loadingCanvas);
+  const [sourcePage] = await Promise.all([page.waitForEvent('popup'), sourceLink.click()]);
+  await sourcePage.waitForURL('**/lifecycle');
+  await sourcePage.close();
+  await page.setViewportSize({width:320,height:800});
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  const linkBounds = await sourceLink.boundingBox();
+  const retryBounds = await page.getByRole('button', {name:labels.retry}).boundingBox();
+  assert.ok(linkBounds.x + linkBounds.width <= retryBounds.x || linkBounds.y + linkBounds.height <= retryBounds.y);
+  await page.getByRole('button', {name:labels.retry}).click();
+  await page.waitForFunction(() => window.mediaTest.stats().calls === 6);
   await page.evaluate(() => window.mediaTest.dispose());
-  assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:5,aborted:5});
-  await page.evaluate(() => window.mediaTest.accept(4, 'disposed'));
+  assert.deepEqual(await page.evaluate(() => window.mediaTest.stats()), {calls:6,aborted:6});
+  await page.evaluate(() => window.mediaTest.accept(5, 'disposed'));
   assert.equal(await page.locator('img.chat-media-image').count(), 0);
   console.log('PASS: stable host snapshots, explicit source/resolver invalidation, stale response rejection, retry, disposal');
   console.log('PASS: interactive sandbox, network isolation, stable expansion, video playback/seek, image window, host preview/reveal actions, keyboard, narrow layout');
 } catch (error) {
-  await page?.screenshot({path:'/tmp/floe-chat-media-failure.png',fullPage:true});
+  await page?.screenshot({path:evidencePath('floe-chat-media-failure.png'),fullPage:true});
   throw error;
 } finally { await browser?.close(); await server.close(); }
 

@@ -59,6 +59,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
     colorSchemePriority: target.style.getPropertyPriority('color-scheme'),
     material: target.getAttribute('data-floe-surface-style'),
     shell: target.getAttribute('data-floe-shell-theme'),
+    features: target.getAttribute('data-floe-theme-features'),
     themeScope: target.getAttribute('data-floe-theme'),
   } : undefined;
   const originalTokens = new Map<string, { value: string; priority: string }>();
@@ -93,7 +94,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
   const presetStorageKey = () => floe.config.theme.presetStorageKey ?? `${storageKey()}-preset`;
   const defaultPresetName = () =>
     resolvePresetName(floe.config.theme.defaultPreset, themePresets());
-  const shellPresets = () => floe.config.theme.shellPresets ?? [];
+  const shellPresets = createMemo(() => [...(floe.config.theme.shellPresets ?? []), ...(floe.config.theme.additionalShellPresets?.() ?? [])]);
   const shellPresetStorageKey = () =>
     floe.config.theme.shellPresetStorageKey ?? `${storageKey()}-shell-preset`;
   const defaultShellPreset = () => floe.config.theme.defaultShellPreset ?? {};
@@ -182,6 +183,7 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
     if (target) target.setAttribute('data-floe-theme', '');
     applyTheme(currentTheme, root);
     applyShellThemeAttribute(activeShellPreset?.name, root);
+    root?.setAttribute('data-floe-theme-features', (activeShellPreset?.features ?? []).join(' '));
     const tokens = resolveThemeTokens(resolved, themeTokens(), activeShellPreset?.tokens, themePreset()?.tokens);
     if (target) {
       for (const name of Object.keys(tokens)) {
@@ -222,13 +224,14 @@ export function createThemeService(target?: HTMLElement): ThemeContextValue {
     disposed = true;
     applySurfaceStyleAttribute(undefined, root);
     applyShellThemeAttribute(undefined, root);
+    root?.removeAttribute('data-floe-theme-features');
     appliedTokenNames = syncThemeTokenOverrides(undefined, appliedTokenNames, root);
     if (target && original) {
       target.classList.toggle('light', original.light);
       target.classList.toggle('dark', original.dark);
       if (original.colorScheme) target.style.setProperty('color-scheme', original.colorScheme, original.colorSchemePriority);
       else target.style.removeProperty('color-scheme');
-      for (const [name, value] of [['data-floe-surface-style', original.material], ['data-floe-shell-theme', original.shell], ['data-floe-theme', original.themeScope]] as const) {
+      for (const [name, value] of [['data-floe-surface-style', original.material], ['data-floe-shell-theme', original.shell], ['data-floe-theme-features', original.features], ['data-floe-theme', original.themeScope]] as const) {
         if (value === null) target.removeAttribute(name);
         else target.setAttribute(name, value);
       }

@@ -1,6 +1,5 @@
 import { createEffect, createMemo, createSignal, onCleanup, untrack, type Accessor, type JSX } from 'solid-js';
 import { cn } from '../../utils/cn';
-import { startHotInteraction } from '../../utils/hotInteraction';
 import {
   DEFAULT_CANVAS_WHEEL_INTERACTIVE_SELECTOR,
   type SurfaceInteractionTargetRole,
@@ -85,7 +84,6 @@ interface DragState {
   startViewport: InfiniteCanvasPoint;
   moved: boolean;
   startedFromPanSurface: boolean;
-  stopInteraction?: () => void;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -118,6 +116,13 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
   });
   let rootRef: HTMLDivElement | undefined;
   let dragSession: PointerSessionController | undefined;
+  let pendingPan: InfiniteCanvasPoint | undefined;
+  let panFrame: number | undefined;
+  const flushPan = () => {
+    panFrame = undefined;
+    if (pendingPan) setLiveViewport(pendingPan);
+    pendingPan = undefined;
+  };
   let wheelCommitTimer: number | undefined;
   let suppressPanSurfaceClick = false;
   let clearPanSurfaceClickTimer: number | undefined;
@@ -196,7 +201,8 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
     const current = dragState();
     if (!current) return;
 
-    current.stopInteraction?.();
+    if (panFrame !== undefined) window.cancelAnimationFrame(panFrame);
+    flushPan();
     const next = liveViewport();
     setDragState(null);
     dragSession = undefined;
@@ -303,9 +309,6 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       startViewport: liveViewport(),
       moved: false,
       startedFromPanSurface,
-      stopInteraction: startedFromPanSurface
-        ? undefined
-        : startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
     });
 
     dragSession = startPointerSession({
@@ -354,12 +357,13 @@ export function InfiniteCanvas(props: InfiniteCanvasProps) {
       setDragState({
         ...current,
         moved: true,
-        stopInteraction:
-          current.stopInteraction ?? startHotInteraction({ kind: 'drag', cursor: 'grabbing' }),
       });
+      setLiveViewport(next);
+      return;
     }
 
-    setLiveViewport(next);
+    pendingPan = next;
+    panFrame ??= window.requestAnimationFrame(flushPan);
   };
 
   // Plain-function signature (not a JSX.EventHandler) because this listener

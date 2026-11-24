@@ -31,7 +31,8 @@ function App() {
   const changes = [];
   const [mode, setMode] = createSignal('system');
   const [preset, setPreset] = createSignal('porcelain-dark');
-  window.settingsHeadingFixture = { setHosted, setMetadata, setTitle, setRowVisible, setChoiceOpen, changes };
+  const [pending, setPending] = createSignal('');
+  window.settingsHeadingFixture = { setHosted, setMetadata, setTitle, setRowVisible, setChoiceOpen, setPending, changes };
   return <Dialog open onOpenChange={() => {}} title={hosted() ? title() : 'Settings'} closeLabel="Close settings">
     <SettingsSection data-page title={title()} variant="page" showHeading={!hosted()}
       description={metadata() === 'description' || metadata() === 'all' ? 'Session preferences' : undefined}
@@ -40,7 +41,7 @@ function App() {
       <input aria-label="Shell" />
       <SettingsSection title="Appearance"><p>Retained detail</p>
         <ThemePicker mode={mode()} modes={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
-          modeLabel="Color mode" presetsLabel="Themes" pendingLabel="Switching appearance" selectedPreset={preset()} presetLabel={p => p.displayName}
+          modeLabel="Color mode" presetsLabel="Themes" pending={pending()} pendingLabel="Switching appearance" selectedPreset={preset()} presetLabel={p => p.displayName}
           presets={getShellThemePresetsForMode(builtInShellThemePresets, mode() === 'light' ? 'light' : 'dark')}
           onModeChange={setMode} onPresetChange={p => setPreset(p.name)} />
       </SettingsSection>
@@ -141,9 +142,23 @@ render(() => <App />, document.getElementById('root'));
   await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().click();
   assert.equal(await page.getByRole('radiogroup', { name: 'Themes' }).getByRole('radio').first().getAttribute('aria-checked'), 'true');
   assert.equal(await page.locator('.floe-theme-picker__check').evaluateAll(elements => elements.filter(e => getComputedStyle(e).visibility === 'visible').length), 1, 'only the committed preset displays a check');
-  for (const width of [390, 320]) {
+  for (const width of [1280, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     assert.ok(await page.locator('.floe-theme-picker').evaluate(e => e.scrollWidth <= e.clientWidth + 1));
+    const target = page.locator('[data-theme-preset]').nth(1);
+    await target.hover();
+    const before = await target.boundingBox();
+    assert.equal(await target.evaluate(el => {
+      window.settingsHeadingFixture.setPending(el.dataset.themePreset);
+      return el.hasAttribute('data-progress');
+    }), false);
+    await page.waitForSelector('[data-theme-preset][data-progress]');
+    assert.equal(await target.getAttribute('aria-checked'), 'false');
+    assert.ok(await page.locator('[role="radio"]').evaluateAll(items => items.every(item => getComputedStyle(item).cursor === 'pointer')));
+    assert.deepEqual(await target.boundingBox(), before);
+    await page.evaluate(() => window.settingsHeadingFixture.setPending(''));
+    assert.equal(await page.locator('[data-progress]').count(), 0);
+    assert.deepEqual(await target.boundingBox(), before);
   }
   await page.setViewportSize({ width: 1280, height: 800 });
   assert.deepEqual(errors, []);

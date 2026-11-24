@@ -344,7 +344,10 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       paragraph.text += delta;
       if (literal) {
         const text = leaf as Tokens.Text;
-        const boundary = !tail.unresolved ? delta.lastIndexOf(' ') : -1;
+        const boundary =
+          !tail.unresolved && tail.source.length + delta.length >= 256
+            ? delta.lastIndexOf(' ')
+            : -1;
         const prefix = boundary > 0 ? delta.slice(0, boundary) : boundary === 0 ? '' : delta;
         const changes: MarkdownBlockChange[] = [];
         const index = paragraph.tokens.length - 1;

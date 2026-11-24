@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@floegence/floe-webapp-core": "^0.101.51",
+    "@floegence/floe-webapp-core": "^0.103.7",
     "solid-js": "^1.9.17"
   },
   "devDependencies": {
@@ -20,12 +20,14 @@
     "vite-plugin-solid": "^2.11.0"
   },
   "overrides": {
+    "picomatch@4": "npm:@ryotsu/picomatch@4.0.7-a",
     "dompurify": "^3.4.17",
     "katex": "0.18.10",
     "rollup": "4.68.1"
   },
   "pnpm": {
     "overrides": {
+      "picomatch@4": "npm:@ryotsu/picomatch@4.0.7-a",
       "dompurify": "^3.4.17",
       "katex": "0.18.10",
       "rollup": "4.68.1"

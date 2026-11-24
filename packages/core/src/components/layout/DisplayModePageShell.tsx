@@ -4,6 +4,7 @@ import { TopBar } from './TopBar';
 export interface DisplayModePageShellProps {
   logo?: JSX.Element;
   actions?: JSX.Element;
+  topBarAccessory?: () => JSX.Element;
   title?: string;
   children: JSX.Element;
 }
@@ -15,6 +16,7 @@ export const DisplayModePageShell: Component<DisplayModePageShellProps> = (props
         logo={props.logo}
         title={props.title}
         actions={props.actions}
+        accessory={props.topBarAccessory}
         ariaLabel="Display mode top bar"
       />
       <main class="display-mode-page-shell__body">{props.children}</main>

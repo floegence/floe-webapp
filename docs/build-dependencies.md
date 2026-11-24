@@ -1,0 +1,5 @@
+# Build dependency audit
+
+CI and releases run `pnpm audit:dependencies` on the complete frozen workspace graph, including development dependencies. Registry failures and findings at any severity block publication. The workspace uses unmodified picomatch. Its [advisory](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) and the prior deepmerge advisory (CVE-2026-93753) were withdrawn; neither has an audit exception.
+
+The minimal and full Vite templates independently pin the build-only `@ryotsu/picomatch@4.0.7-a` for npm and pnpm. This preserves the matcher behavior of previously generated projects: for example, `**.js` does not cross directory boundaries, while `**/*.js` does. The tarball corresponds to commit `3ab5a7627d480259e3d9ca67fbc14c125d374f0e`, based on upstream `9fab7bf61913ea334c4203ed321c426cfde44a42`. The packed and published consumer gates verify its integrity, dev-only placement and matching behavior for both scaffolds, then typecheck and build them. Replace the pin and integrity check together when an official release preserves this behavior. Neither template suppresses audit findings.
