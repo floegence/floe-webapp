@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.105.3
+
+- Boot and Protocol pin Flowersec 7.3.0, matching Gateways that accept direct WebSocket sessions through explicitly configured forwarded ports.
+
 ## 0.105.2
 
 - Porcelain Light pairs warm navigation with white reading surfaces, graphite Markdown references, neutral block quotes and a blue selected-theme border.

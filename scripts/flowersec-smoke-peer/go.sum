@@ -1,7 +1,7 @@
 github.com/dunglas/httpsfv v1.1.1 h1:HoSs101zIE9I23DlqlmljJ/OIi7ILwrH347pXhRZdxI=
 github.com/dunglas/httpsfv v1.1.1/go.mod h1:zID2mqw9mFsnt7YC3vYQ9/cjq30q41W+1AnDwH8TiMg=
-github.com/floegence/flowersec/flowersec-go/v7 v7.2.1 h1:cnPqZU7PzFlJEsES7U7ldF4JT1r+g3p64/9PUkACqeU=
-github.com/floegence/flowersec/flowersec-go/v7 v7.2.1/go.mod h1:SWWfdwb/N2pPWhuYBk33iZke1Jokj3pzzqUIXqg96qA=
+github.com/floegence/flowersec/flowersec-go/v7 v7.3.0 h1:apcYyt5G2+onZYamXpD1omtWj0fqOMtgj56iIze/ilk=
+github.com/floegence/flowersec/flowersec-go/v7 v7.3.0/go.mod h1:SWWfdwb/N2pPWhuYBk33iZke1Jokj3pzzqUIXqg96qA=
 github.com/flynn/noise v1.1.0 h1:KjPQoQCEFdZDiP03phOvGi11+SVVhBG2wOWAorLsstg=
 github.com/flynn/noise v1.1.0/go.mod h1:xbMo+0i6+IGbYdJhF31t2eR1BIU0CYc12+BNAKwUTag=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=

@@ -32,7 +32,7 @@ type PackageJson = {
 };
 
 describe('release dependency and runtime contract', () => {
-  const flowersecVersion = '7.2.1';
+  const flowersecVersion = '7.3.0';
   const flowersecGoModule = `github.com/floegence/flowersec/flowersec-go/v${flowersecVersion.split('.')[0]}`;
   const nodeVersion = '24.20.0';
   const goVersion = '1.27.1';
@@ -69,7 +69,7 @@ describe('release dependency and runtime contract', () => {
     const protocolPkg = readJson<PackageJson>('packages/protocol/package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
 
-    expect(corePkg.version).toBe('0.105.2');
+    expect(corePkg.version).toBe('0.105.3');
     for (const template of ['minimal', 'full']) {
       const config = readJson<{overrides: Record<string, string>; pnpm: {overrides: Record<string, string>}}>(`packages/init/templates/${template}/_package.json`);
       expect(config.overrides.dompurify).toBe('^3.4.17');
