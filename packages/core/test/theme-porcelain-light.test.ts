@@ -12,15 +12,12 @@ function contrast(first: string, second: string): number {
 }
 
 describe('Porcelain Light reading and interaction palette', () => {
-  it('keeps broad surfaces achromatic and matches renderer, thumbnail and editor roles', () => {
+  it('keeps warmth in the navigation and matches renderer, thumbnail and editor roles', () => {
     const tokens = preset.semanticTokens!;
-    for (const role of ['background', 'foreground', 'card', 'sidebar', 'muted', 'primary', 'accent', 'border']) {
-      const color = tokens['--' + role]!;
-      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
-      expect(color.slice(1, 3), role).toBe(color.slice(3, 5));
-      expect(color.slice(3, 5), role).toBe(color.slice(5, 7));
-    }
-    expect(tokens['--background']).toBe('#FAFAFA');
+    expect(tokens['--sidebar']).toBe('#FCFBFA');
+    expect(preset.preview?.sidebar).toBe(tokens['--sidebar']);
+    expect(tokens['--ring']).toBe('#2684FF');
+    expect(tokens['--background']).toBe('#FFFFFF');
     expect(tokens['--card']).toBe('#FFFFFF');
     expect(preset.tokens?.light).toEqual(tokens);
     expect(preset.preview?.background).toBe(tokens['--background']);

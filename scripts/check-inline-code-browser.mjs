@@ -7,7 +7,7 @@ import { builtInShellThemePresets } from '../packages/core/src/styles/themes/pre
 
 const css = readFileSync(new URL('../packages/core/dist/styles.css', import.meta.url), 'utf8');
 const path = '/workspace/project/src/' + 'deeply-nested-reference/'.repeat(10) + 'ThemeProvider.tsx';
-const browser = await chromium.launch({ headless: true, channel: 'chromium' });
+const browser = await chromium.launch({ headless: true, channel: process.argv.includes('--headless-shell') ? undefined : 'chromium' });
 let cases = 0;
 const porcelain = [];
 mkdirSync('.cache/inline-code', { recursive: true });
@@ -54,7 +54,9 @@ try {
           assert.equal(result.weight, '500', label);
           assert.ok(result.scale >= 0.959, label);
           if (preset.name === 'porcelain-light') {
-            assert.ok(result.fillContrast >= 1.14 && result.fillContrast < 1.2, label);
+            assert.deepEqual(result.color, [70, 69, 65], label);
+            assert.deepEqual(result.fill, [241, 241, 240], label);
+            assert.ok(result.fillContrast >= 1.12 && result.fillContrast < 1.2, label);
             assert.ok(result.selectionContrast >= 7, label);
           }
           assert.ok(result.selectionContrast >= 4.5 && result.selectionVisible >= 1.5, label);

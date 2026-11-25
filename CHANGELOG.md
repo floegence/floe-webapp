@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.105.1
+
+- Porcelain Light pairs warm navigation with white reading surfaces, graphite Markdown references, neutral block quotes and a blue selected-theme border.
+
 ## 0.105.0
 
 - Streaming Markdown consumers can opt into detached table-row patches and inert labels for unfinished inline links. Existing append and Worker update formats are unchanged by default.

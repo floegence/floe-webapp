@@ -1962,7 +1962,7 @@
   .floe-theme-picker__presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .floe-theme-picker__presets > button { min-width: 0; padding: 6px; border: 1px solid var(--border); border-radius: var(--floe-radius-md); background: var(--card); text-align: start; cursor: pointer; transition: border-color var(--floe-duration-fast), background-color var(--floe-duration-fast); }
   .floe-theme-picker__presets > button:hover { background: var(--accent); }
-  .floe-theme-picker__presets > [aria-checked='true'] { border-color: var(--primary); background: var(--accent); }
+  .floe-theme-picker__presets > [aria-checked='true'] { border-color: var(--floe-choice-selected-edge, var(--primary)); background: var(--accent); }
   .floe-theme-picker button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   .floe-theme-picker button:active:not([aria-disabled='true']) { background: var(--accent); }
   .floe-theme-picker__preview { display: flex; gap: 6px; height: 48px; padding: 6px; border: 1px solid var(--theme-preview-border, var(--border)); border-radius: var(--floe-radius-sm); background: var(--theme-preview-bg, var(--background)); }
