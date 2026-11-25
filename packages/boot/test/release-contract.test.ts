@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -33,10 +33,11 @@ type PackageJson = {
 
 describe('release dependency and runtime contract', () => {
   const flowersecVersion = '7.2.0';
+  const flowersecGoModule = `github.com/floegence/flowersec/flowersec-go/v${flowersecVersion.split('.')[0]}`;
   const nodeVersion = '24.20.0';
   const goVersion = '1.27.1';
 
-  it('keeps Node and Go requirements aligned with Flowersec 5', () => {
+  it(`keeps Node and Go requirements aligned with Flowersec SDK ${flowersecVersion}`, () => {
     const rootPkg = readJson<PackageJson>('package.json');
     const initPkg = readJson<PackageJson>('packages/init/package.json');
     const corePkg = readJson<PackageJson>('packages/core/package.json');
@@ -81,11 +82,9 @@ describe('release dependency and runtime contract', () => {
     expect(initPkg.version).toBe(corePkg.version);
   });
 
-  it('keeps removed Boot compatibility APIs and Flowersec 4 paths out of release surfaces', () => {
+  it('keeps removed Boot compatibility APIs out of release surfaces', () => {
     const bootIndex = readText('packages/boot/src/index.ts');
     const acquisition = readText('packages/boot/src/acquisition.ts');
-    const goModule = readText('scripts/flowersec-smoke-peer/go.mod');
-    const goPeer = readText('scripts/flowersec-smoke-peer/main.go');
     const forbiddenBootApi = [
       'BrowserControllerOptions',
       'ScopeResolver',
@@ -99,8 +98,16 @@ describe('release dependency and runtime contract', () => {
     expect(existsSync(join(repoRoot(), 'packages/boot/test/scope.test.ts'))).toBe(false);
     for (const symbol of forbiddenBootApi) expect(bootIndex).not.toContain(symbol);
     expect(acquisition).not.toContain('BrowserControllerOptions');
-    expect(goModule).not.toMatch(/flowersec-go\/v[1-4](?:\s|$)/u);
-    expect(goPeer).not.toMatch(/flowersec-go\/v[1-4](?:\/|['"])/u);
+  });
+
+  it('references only the pinned Flowersec SDK major in the Go smoke peer', () => {
+    const peerDir = join(repoRoot(), 'scripts/flowersec-smoke-peer');
+    const files = ['go.mod', 'go.sum', ...readdirSync(peerDir).filter((name) => name.endsWith('.go'))];
+    for (const file of files) {
+      const text = readFileSync(join(peerDir, file), 'utf-8');
+      const modulePaths = text.match(/github\.com\/floegence\/flowersec\/flowersec-go(?:\/v\d+)?\b/gu) ?? [];
+      for (const modulePath of modulePaths) expect(modulePath, file).toBe(flowersecGoModule);
+    }
   });
 
   it('ships the repository MIT license in every published package', () => {
@@ -181,13 +188,11 @@ describe('release dependency and runtime contract', () => {
     const goChecksums = readText('scripts/flowersec-smoke-peer/go.sum');
     const goPeer = readText('scripts/flowersec-smoke-peer/main.go');
     expect(goModule).toContain(`go ${goVersion}`);
-    expect(goModule).toMatch(
-      /^require github\.com\/floegence\/flowersec\/flowersec-go\/v7 v7\.2\.0$/mu
-    );
+    expect(goModule.split('\n')).toContain(`require ${flowersecGoModule} v${flowersecVersion}`);
     expect(goModule).not.toMatch(/^replace\s/mu);
     expect(goModule).not.toContain('../');
     expect(existsSync(join(repoRoot(), 'scripts/flowersec-smoke-peer/go.work'))).toBe(false);
-    expect(goChecksums).toContain('flowersec-go/v7 v7.2.0');
+    expect(goChecksums).toContain(`${flowersecGoModule} v${flowersecVersion} h1:`);
     expect(goPeer).toContain('flowersec.NewAcceptor');
     expect(goPeer).toContain('flowersec.NewWebSocketHTTPServer');
     expect(goPeer).toContain('controlplane.NewIssuer().IssueDirect');
