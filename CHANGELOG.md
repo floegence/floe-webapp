@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.104.1
+
+- Boot and Protocol use Flowersec 7.2.1 so established browser sessions can reconnect after network interruptions and runtime restarts. Protocol and policy failures still stop the controller.
+
 ## 0.104.0
 
 - Boot and Protocol use Flowersec 7.2.0. Upgrade the issuing control plane, tunnel and session peers together: public connections require Transport v5 and do not negotiate the older wire.

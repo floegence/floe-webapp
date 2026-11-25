@@ -209,8 +209,8 @@ walk(join(root, 'node_modules'));
 if (coreManifests.length !== 1)
   throw new Error(`expected one Flowersec core package, found ${coreManifests.length}`);
 const flowersecManifest = JSON.parse(readFileSync(coreManifests[0], 'utf8'));
-if (flowersecManifest.version !== '7.2.0')
-  throw new Error(`expected Flowersec 7.2.0, found ${flowersecManifest.version}`);
+if (flowersecManifest.version !== '7.2.1')
+  throw new Error(`expected Flowersec 7.2.1, found ${flowersecManifest.version}`);
 console.log(
   `verified clean consumer ${version} with one Flowersec core ${flowersecManifest.version}`
 );
