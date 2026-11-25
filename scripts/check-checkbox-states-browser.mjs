@@ -6,7 +6,7 @@ import { chromium, webkit, firefox } from 'playwright';
 import { artifactRoot, openSurfaceBrowser } from './surface-browser-utils.mjs';
 
 const version = process.env.FLOE_CHECKBOX_VERSION ?? 'current';
-const runtime = await openSurfaceBrowser();
+const runtime = await openSurfaceBrowser({ renderer: process.argv.includes('--headless-shell') ? 'shell' : 'chromium' });
 const output = resolve(artifactRoot, 'checkbox-states-' + version);
 mkdirSync(output, { recursive: true });
 const report = [];
@@ -126,10 +126,21 @@ try {
         // presentation. Compare both faces and geometry against the old pack.
         if (engine === 'chromium') for (const mode of ['light', 'dark']) {
           const faces = [];
+          let releasedPalette;
           for (const candidate of ['baseline', version]) {
             const probe = await browser.newPage({ viewport: { width: 1440, height: 1080 } });
             await probe.goto(`${runtime.baseURL}/${candidate}-${entry}/dist/?panel=components&mode=${mode}`);
             await probe.waitForFunction(() => !!window.surfaceFixture);
+            if (candidate === 'baseline') {
+              releasedPalette = await probe.evaluate(() => {
+                const name = document.documentElement.dataset.floeShellTheme;
+                return window.surfaceFixture.themes.find(theme => theme.name === name).semanticTokens;
+              });
+            } else {
+              await probe.evaluate(tokens => {
+                for (const [name, value] of Object.entries(tokens)) document.documentElement.style.setProperty(name, value);
+              }, releasedPalette);
+            }
             await probe.waitForTimeout(350);
             faces.push(await probe.locator('[data-floe-surface-part="switch-track"], [data-floe-surface-part="indicator"]:has([data-floe-surface-part="radio-dot"])').evaluateAll(nodes => nodes.map(node => {
               const style = getComputedStyle(node), rect = node.getBoundingClientRect();

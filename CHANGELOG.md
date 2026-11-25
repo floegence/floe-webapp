@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.105.1
+## 0.105.2
 
 - Porcelain Light pairs warm navigation with white reading surfaces, graphite Markdown references, neutral block quotes and a blue selected-theme border.
 
