@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.105.0
+
+- Streaming Markdown consumers can opt into detached table-row patches and inert labels for unfinished inline links. Existing append and Worker update formats are unchanged by default.
+
 ## 0.104.1
 
 - Boot and Protocol use Flowersec 7.2.1 so established browser sessions can reconnect after network interruptions and runtime restarts. Protocol and policy failures still stop the controller.

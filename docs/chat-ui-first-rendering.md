@@ -72,6 +72,15 @@ verification, not a streaming render input. Block offsets use normalized LF
 source positions; `sourceLength` counts the original UTF-16 input, including
 CRLF split across appends.
 
+For a live DOM consumer, `appendWithTableTail` can return a `tableTail` in the
+same atomic update. Keep rows before `from`, replace the suffix with `rows`,
+and append `delta` to the table's normalized source. `start` and `raw` locate
+the replacement suffix. A structural change still uses ordinary block updates.
+The original `append` and worker sessions never emit this optional patch.
+Passing `{ liveLinkLabels: () => streaming }` when creating a parser opts into
+formatted, inert label text for simple unfinished inline destinations in the
+active paragraph or table cell. `finish()` always restores authoritative GFM.
+
 Ordinary literal and open fenced-code growth processes new text only. Inline
 extension start hints participate in the same dependency boundary, including
 partial prefixes split across updates. Extensions without start hints retain

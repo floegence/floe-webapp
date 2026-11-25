@@ -9,4 +9,5 @@ export type {
   MarkdownBlock,
   MarkdownBlockChange,
   MarkdownUpdate,
+  MarkdownTableTail,
 } from './components/chat/markdown/incremental';

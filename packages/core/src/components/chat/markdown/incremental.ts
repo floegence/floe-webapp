@@ -1,4 +1,5 @@
 import type { Links, Marked, Token, Tokens, TokensList } from 'marked';
+import { presentPendingLink } from './pendingLink';
 
 export type MarkdownBlock = Readonly<{ id: number; start: number; token: Token }>;
 export type MarkdownBlockChange =
@@ -12,8 +13,13 @@ export type MarkdownBlockChange =
       deleteCount: number;
       tokens: readonly Token[];
     }>;
+export type MarkdownTableTail = Readonly<{
+  id: number; from: number; start: number; raw: string; delta: string;
+  rows: readonly Tokens.TableCell[][];
+}>;
 export type MarkdownUpdate = Readonly<{
   changes: readonly MarkdownBlockChange[];
+  tableTail?: MarkdownTableTail;
   links: Links;
   sourceLength: number;
 }>;
@@ -36,7 +42,7 @@ type Fence = {
 };
 
 /** One append-only source, Marked semantics, and explicit changed blocks. */
-export function createIncrementalMarkdownParser(markdown: Marked<string, string>) {
+export function createIncrementalMarkdownParser(markdown: Marked<string, string>, options?: { liveLinkLabels: () => boolean }) {
   let sourceLength = 0;
   let sourceChunks: { start: number; text: string }[] = [];
   let inputLength = 0;
@@ -49,6 +55,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
   let fence: Fence | undefined;
   let inlineTail: InlineTail | undefined;
   let inlineEligible = false;
+  let tableCursor: { header: string; tail: string; from: number } | undefined;
   let fullParses = 0;
   let parsedCharacters = 0;
   const dependencies = new Map<string, Set<Block>>();
@@ -187,7 +194,16 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     fence = undefined;
     inlineTail = undefined;
     inlineEligible = false;
+    tableCursor = undefined;
     const last = blocks.at(-1)?.token;
+    if (last?.type === 'table' && !markdown.defaults.extensions?.block?.length) {
+      const table = last as Tokens.Table;
+      const headerEnd = table.raw.indexOf('\n', table.raw.indexOf('\n') + 1);
+      if (headerEnd > 0 && !table.raw.endsWith('\n\n')) {
+        const tail = table.raw.slice(table.raw.lastIndexOf('\n') + 1);
+        tableCursor = { header: table.raw.slice(0, headerEnd + 1), tail, from: table.rows.length - Number(Boolean(tail)) };
+      }
+    }
     if (last?.type === 'paragraph') {
       prepareInline(last as Tokens.Paragraph);
       const start = last.raw.lastIndexOf('\n') + 1;
@@ -213,7 +229,28 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     fence = state;
   }
 
-  function parseActive(final = false): MarkdownUpdate {
+  function presentTail(token: Token | undefined) {
+    if (!options?.liveLinkLabels() || !token) return;
+    let raw: string; let tokens: Token[];
+    if (token.type === 'paragraph' && !token.raw.endsWith('\n')) {
+      const paragraph = token as Tokens.Paragraph;
+      raw = paragraph.text; tokens = paragraph.tokens;
+    } else if (token.type === 'table') {
+      const cells = (token as Tokens.Table).rows.at(-1);
+      let end = cells?.length ?? 0;
+      while (end && !cells![end - 1]!.text) end--;
+      const cell = cells?.[end - 1];
+      if (!cell || !token.raw.endsWith(cell.text)) return;
+      raw = cell.text; tokens = cell.tokens;
+    } else return;
+    presentPendingLink(raw, tokens, input => {
+      const lexer = new markdown.Lexer({ ...markdown.defaults });
+      lexer.tokens.links = links;
+      return lexer.inlineTokens(input);
+    });
+  }
+
+  function parseActive(final = false, settled = false): MarkdownUpdate {
     const start = blocks[active]?.start ?? 0;
     const old = blocks.splice(active);
     for (const block of old) unindex(block);
@@ -237,6 +274,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       };
       blocks.push(block);
       index(block);
+      if (!settled && i === tokens.length - 1) presentTail(token);
       if (i === tokens.length - 1 && token.type === 'paragraph')
         prepareInline(token as Tokens.Paragraph);
       if (!final || !previous || JSON.stringify(previous.token) !== JSON.stringify(token))
@@ -295,7 +333,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     return (skipLF ? delta.slice(1) : delta).replace(/\r\n?/g, '\n');
   }
 
-  function append(delta: string): MarkdownUpdate {
+  function appendInput(delta: string, liveTables: boolean): MarkdownUpdate {
     if (!delta) return update([]);
     inputLength += delta.length;
     delta = normalize(delta);
@@ -304,6 +342,27 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     sourceLength += delta.length;
     const block = blocks.at(-1);
     const token = block?.token;
+    if (liveTables && block && token?.type === 'table' && tableCursor && active === blocks.length - 1) {
+      const table = token as Tokens.Table;
+      const { header, tail, from } = tableCursor;
+      const raw = tail + delta;
+      const lines = raw.split('\n');
+      const last = lines.at(-1)!;
+      if (!last) lines.pop();
+      if (lines.length && lines.every(line => line.startsWith('|'))) {
+        const parts = tokenize(header + raw, links);
+        const parsed = parts[0] as Tokens.Table | undefined;
+        if (parts.length === 1 && parsed?.type === 'table' && parsed.raw.length === header.length + raw.length && parsed.rows.length === lines.length) {
+          presentTail(parsed);
+          const start = block.start + table.raw.length - tail.length;
+          table.rows.length = from;
+          for (const row of parsed.rows) table.rows.push(row);
+          table.raw += delta;
+          tableCursor = { header, tail: last, from: table.rows.length - Number(Boolean(last)) };
+          return { ...update([]), tableTail: { id: block.id, start, from, raw, delta, rows: structuredClone(parsed.rows) } };
+        }
+      }
+    }
     if (
       block &&
       active === blocks.length - 1 &&
@@ -335,6 +394,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       const leaf = paragraph.tokens.at(-1);
       const literal =
         leaf?.type === 'text' &&
+        !('pendingMarkdownLink' in leaf) &&
         tail.from === paragraph.tokens.length - 1 &&
         !extensionSyntax(delta) &&
         !tail.extensionPending &&
@@ -391,6 +451,7 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
       const input = tail.source + delta;
       parsedCharacters += input.length;
       const next = lexer.inlineTokens(input);
+      if (options?.liveLinkLabels()) presentPendingLink(input, next, value => lexer.inlineTokens(value));
       const removed = paragraph.tokens.length - tail.from;
       paragraph.tokens.splice(tail.from, removed, ...next);
       prepareInline(paragraph, tail.from);
@@ -435,11 +496,12 @@ export function createIncrementalMarkdownParser(markdown: Marked<string, string>
     fullParses++;
     active = 0;
     stableLinks = Object.create(null);
-    return parseActive(true);
+    return parseActive(true, true);
   }
 
   return {
-    append,
+    append: (delta: string) => appendInput(delta, false),
+    appendWithTableTail: (delta: string) => appendInput(delta, true),
     reset,
     finish,
     snapshot,
