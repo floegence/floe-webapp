@@ -2,9 +2,11 @@ import { createMemo, createSignal, onCleanup, Show, type Component, type JSX } f
 import { Check, Code, Copy, ExternalLink, Eye, FolderOpen, Maximize, Minus, MoreHorizontal, Refresh } from '../../icons';
 import { Dropdown, type DropdownItem } from '../../ui/Dropdown';
 import type { MarkdownMediaLabels, ResolvedMarkdownMedia } from './MarkdownMedia';
+import type { MarkdownPreviewUnavailable } from '../markdown/media';
 
 export interface HtmlPreviewCanvasProps {
   state: 'loading' | 'generating' | 'incomplete' | 'ready' | 'error';
+  failure?: MarkdownPreviewUnavailable;
   html: string;
   labels: MarkdownMediaLabels;
   expanded: boolean;
@@ -61,20 +63,21 @@ export const HtmlPreviewCanvas: Component<HtmlPreviewCanvasProps> = (props) => {
   ]);
   const statusLabel = () => props.state === 'generating' ? props.labels.generating ?? props.labels.loading
     : props.state === 'incomplete' ? props.labels.incomplete ?? 'Generation interrupted. Source is available.'
-    : props.state === 'error' ? props.labels.unavailable : props.labels.loading;
+    : props.state === 'error' ? props.failure?.message ?? props.labels.unavailable : props.labels.loading;
   return <span class="chat-html-canvas" data-state={props.state} data-view={sourceVisible() ? 'source' : 'preview'} aria-busy={props.state === 'generating' || props.state === 'loading'}
     onKeyDown={event => { if (event.key === 'Escape' && props.expanded && !event.defaultPrevented) { event.preventDefault(); props.onExpand(); } }}>
     <span class="chat-html-dots" aria-hidden="true" />
     <span class="chat-html-sheen" aria-hidden="true" />
     <span class="chat-html-sheet" classList={{ 'chat-html-sheet-hidden': sourceVisible() || props.state !== 'ready' }} inert={sourceVisible() || props.state !== 'ready'}>{props.children}</span>
-    <Show when={sourceVisible()}><pre ref={source} class="chat-html-source" tabIndex={0} aria-label={props.labels.showSource ?? 'HTML source'}><code>{props.html}</code></pre></Show>
-    <Show when={!sourceVisible() && props.state !== 'ready'}>
+    <Show when={sourceVisible() && !props.failure}><pre ref={source} class="chat-html-source" tabIndex={0} aria-label={props.labels.showSource ?? 'HTML source'}><code>{props.html}</code></pre></Show>
+    <Show when={(!sourceVisible() || props.failure) && props.state !== 'ready'}>
       <span class="chat-html-loading" role="status">
         <span data-floe-progress-shimmer={props.state === 'loading' || props.state === 'generating' ? 'text' : undefined}>{statusLabel()}</span>
-        <Show when={props.state === 'error'}><button type="button" class="chat-media-retry" onClick={() => props.onRetry()}><Refresh />{props.labels.retry}</button></Show>
+        <Show when={props.state === 'error' && !props.failure}><button type="button" class="chat-media-retry" onClick={() => props.onRetry()}><Refresh />{props.labels.retry}</button></Show>
+        <Show when={props.failure?.reveal}>{action => <button type="button" class="chat-media-retry" onClick={() => action().onSelect()}><FolderOpen />{action().label}</button>}</Show>
       </span>
     </Show>
-    <span class="chat-html-toolbar">
+    <Show when={!props.failure}><span class="chat-html-toolbar">
       <span class="chat-html-controls">
         <button type="button" class="chat-html-orb" data-chat-media-action="source" aria-pressed={sourceVisible()}
           aria-label={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} title={sourceVisible() ? props.labels.showPreview ?? 'Show preview' : props.labels.showSource ?? 'Show HTML source'} onClick={() => setSourceVisible(value => !value)}>
@@ -92,6 +95,6 @@ export const HtmlPreviewCanvas: Component<HtmlPreviewCanvasProps> = (props) => {
           <Show when={props.expanded} fallback={<Maximize />}><Minus /></Show>
         </button>
       </span>
-    </span>
+    </span></Show>
   </span>;
 };

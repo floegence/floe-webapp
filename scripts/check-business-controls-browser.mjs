@@ -173,22 +173,30 @@ try {
       await page.keyboard.press('Escape');
       assert.equal(await dateTrigger.evaluate((node) => node === document.activeElement), true);
       const table = page.getByRole('table', { name: 'Projects', exact: true });
-      const before = await table.boundingBox();
-      await page.getByRole('button', { name: 'Toggle loading', exact: true }).click();
+      const toggleLoading = page.getByRole('button', { name: 'Toggle loading', exact: true });
+      const toggleError = page.getByRole('button', { name: 'Toggle error', exact: true });
+      // Clicks can scroll the document on narrow viewports. Compare layout in document coordinates.
+      const tableBounds = () => table.evaluate(node => {
+        const {x, y, width, height} = node.getBoundingClientRect();
+        return {x: x + window.scrollX, y: y + window.scrollY, width, height};
+      });
+      await toggleLoading.scrollIntoViewIfNeeded();
+      const before = await tableBounds();
+      await toggleLoading.click();
       assert.deepEqual(
-        await table.boundingBox(),
+        await tableBounds(),
         before,
         name + ' retained table loading geometry'
       );
-      await page.getByRole('button', { name: 'Toggle loading', exact: true }).click();
+      await toggleLoading.click();
       assert.equal(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
         true,
         name + ' page overflow'
       );
-      await page.getByRole('button', { name: 'Toggle error', exact: true }).click();
-      assert.deepEqual(await table.boundingBox(), before, name + ' retained table error geometry');
-      await page.getByRole('button', { name: 'Toggle error', exact: true }).click();
+      await toggleError.click();
+      assert.deepEqual(await tableBounds(), before, name + ' retained table error geometry');
+      await toggleError.click();
       await page.emulateMedia({reducedMotion:'reduce',colorScheme:'dark'});
       await page.evaluate(() => {document.documentElement.classList.add('dark');document.documentElement.dataset.floeShellTheme='porcelain-dark';});
       await page.waitForFunction(() => getComputedStyle(document.querySelector('button')).color === 'rgb(242, 241, 238)');

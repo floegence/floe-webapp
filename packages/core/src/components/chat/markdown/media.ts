@@ -1,5 +1,12 @@
 export type MarkdownMediaKind = 'image' | 'video' | 'audio' | 'html';
 
+/** A terminal failure from the host. Recovery is a capability, not a URL from markup. */
+export class MarkdownPreviewUnavailable extends Error {
+  constructor(message: string, readonly reveal?: { label: string; onSelect: () => void }) {
+    super(message);
+  }
+}
+
 /** A display request, never an authorization or filesystem capability. */
 export interface MarkdownMediaSource {
   kind: MarkdownMediaKind;

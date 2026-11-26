@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.105.4
+
+- Chat HTML previews support host-defined byte budgets and compact, actionable terminal failures without changing inline fences or sandbox permissions.
+
 ## 0.105.3
 
 - Boot and Protocol pin Flowersec 7.3.0, matching Gateways that accept direct WebSocket sessions through explicitly configured forwarded ports.

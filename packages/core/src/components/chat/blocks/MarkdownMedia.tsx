@@ -3,7 +3,7 @@ import { HtmlPreviewCanvas } from './HtmlPreviewCanvas';
 import { FloatingWindow } from '../../ui/FloatingWindow';
 import { ExternalLink, Eye, FolderOpen, Refresh } from '../../icons';
 import { cn } from '../../../utils/cn';
-import { safeMarkdownMediaURL, type MarkdownMediaSource } from '../markdown/media';
+import { MarkdownPreviewUnavailable, safeMarkdownMediaURL, type MarkdownMediaSource } from '../markdown/media';
 import { SandboxedHtmlFrame } from '../../html-preview/SandboxedHtmlFrame';
 
 export interface MarkdownMediaLabels {
@@ -44,6 +44,8 @@ export interface ResolvedMarkdownMedia {
   /** Optional host-authorized source link. */
   openURL?: string;
   loadHTML?: (signal: AbortSignal) => Promise<string>;
+  /** UTF-8 byte budget for this host-resolved document only. Otherwise retain the legacy character bound. */
+  htmlMaxBytes?: number;
   /** Open the media in the host's existing preview surface. */
   preview?: { label: string; onSelect: () => void };
   /** Reveal the authorized file in its containing folder. Omit for non-file resources. */
@@ -86,6 +88,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   });
   const [resource, setResource] = createSignal<ResolvedMarkdownMedia>();
   const [failedSourceURL, setFailedSourceURL] = createSignal<string>();
+  const [failure, setFailure] = createSignal<MarkdownPreviewUnavailable>();
   const [document, setDocument] = createSignal<string>();
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'error'>('loading');
   const [retry, setRetry] = createSignal(0);
@@ -96,7 +99,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     equals: (previous, next) => previous.kind === next.kind && previous.src === next.src
       && previous.html === next.html && previous.title === next.title,
   });
-  let failRequest = () => {};
+  let failRequest: (error?: unknown) => void = () => {};
   const closePreview = (setOpen: (open: boolean) => void) => {
     const active = root.ownerDocument.activeElement;
     const restoreFocus = active instanceof Element && previewContent?.closest('[role=dialog]')?.contains(active)
@@ -146,9 +149,10 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const clearTimer = () => { if (timer !== undefined) { clearTimeout(timer); timer = undefined; } };
     onCleanup(() => { clearTimer(); controller.abort(); });
-    failRequest = () => {
+    failRequest = error => {
       if (controller.signal.aborted) return;
       clearTimer();
+      setFailure(error instanceof MarkdownPreviewUnavailable ? error : undefined);
       setFailedSourceURL(request.kind === 'image' ? safeMarkdownMediaURL(resource()?.openURL ?? '') : undefined);
       setStatus('error');
       setExpanded(false);
@@ -158,6 +162,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
       controller.abort();
     };
     const fail = failRequest;
+    setFailure(undefined);
     setFailedSourceURL(undefined);
     setResource(undefined);
     setDocument(undefined);
@@ -178,7 +183,9 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
           if (!resolved.loadHTML) throw new Error('HTML loader is required');
           const html = await resolved.loadHTML(controller.signal);
           if (controller.signal.aborted) return;
-          if (html.length > 1_000_000) throw new Error('HTML preview is too large');
+          const limit = resolved.htmlMaxBytes;
+          if (limit === undefined ? html.length > 1_000_000 : !Number.isSafeInteger(limit) || limit <= 0
+            || html.length > limit || new Blob([html]).size > limit) throw new Error('HTML preview is too large');
           setDocument(html);
         } else if (!resolved.src) throw new Error('Media URL is required');
         setResource(resolved);
@@ -221,7 +228,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
         </span>
       </span>
       </>}>
-        <HtmlPreviewCanvas state={props.htmlState ?? status()} html={document() ?? props.source.html ?? ''} labels={props.labels} expanded={expanded()}
+        <HtmlPreviewCanvas state={props.htmlState ?? status()} failure={failure()} html={document() ?? props.source.html ?? ''} labels={props.labels} expanded={expanded()}
           onExpand={() => setExpanded(value => !value)} onRetry={() => setRetry(value => value + 1)} onPreview={previewHTML} previewLabel={previewLabel()} resource={resource()}>
           <Show when={status() === 'ready' && !props.htmlState}><SandboxedHtmlFrame class="chat-media-html" title={title()} html={document() ?? ''} labels={htmlLabels()} onOpenLink={openHtmlLink()} /></Show>
         </HtmlPreviewCanvas>

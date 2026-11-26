@@ -22,6 +22,7 @@ render(() => <main style="max-width:680px;margin:auto"><MarkdownMedia labels={la
 const lifecycleFixture = `import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/MarkdownMedia';
+import { MarkdownPreviewUnavailable } from '/packages/core/src/components/chat/markdown/media';
 import '/packages/core/src/styles/globals.css';
 const [snapshot, setSnapshot] = createSignal(0);
 const [source, setSource] = createSignal({kind:'image',title:'Stable image',src:'/first.png'});
@@ -36,6 +37,9 @@ window.mediaTest = {
   bump: () => setSnapshot(value => value + 1),
   equalSource: () => setSource(value => ({...value})),
   source: src => setSource({kind:'image',title:'Stable image',src}),
+  file: src => setSource({kind:'html',title:'Local document',src}),
+  document: (index,html,htmlMaxBytes) => requests[index].accept({loadHTML:async()=>html,htmlMaxBytes}),
+  terminal: (index,authorized) => requests[index].reject(new MarkdownPreviewUnavailable('File exceeds the preview limit.',authorized ? {label:'Show in folder',onSelect:()=>{window.revealed=true}} : undefined)),
   resolver: () => setResolver(() => (source, signal) => resolve(source, signal)),
   stats: () => ({calls: requests.length, aborted: requests.filter(request => request.signal.aborted).length}),
   accept: (index, name) => requests[index].accept({src: location.origin+'/image.svg?'+name}),
@@ -337,6 +341,36 @@ try {
   await page.evaluate(() => window.mediaTest.accept(5, 'disposed'));
   assert.equal(await page.locator('img.chat-media-image').count(), 0);
   console.log('PASS: stable host snapshots, explicit source/resolver invalidation, stale response rejection, retry, disposal');
+  for (const width of [1000, 320]) {
+    await page.setViewportSize({width,height:800});
+    await page.goto(new URL('/lifecycle',server.resolvedUrls.local[0]).href);
+    await page.waitForFunction(() => window.mediaTest?.stats().calls === 1);
+    await page.evaluate(() => window.mediaTest.file('/report.html'));
+    await page.waitForFunction(() => window.mediaTest.stats().calls === 2);
+    const canvas = page.locator('.chat-html-canvas');
+    const initial = await canvas.boundingBox();
+    await page.evaluate(() => window.mediaTest.document(1,'<button>Document</button><!--'+'x'.repeat(1_209_100)+'-->',2**21));
+    await page.frameLocator('iframe').getByRole('button',{name:'Document'}).waitFor();
+    assert.deepEqual(await canvas.boundingBox(),initial);
+    for (const [index, authorized] of [[2,true],[3,false]]) {
+      await page.evaluate(i => window.mediaTest.file('/large'+i+'.html'),index);
+      await page.waitForFunction(i => window.mediaTest.stats().calls === i+1,index);
+      await page.evaluate(([i,a]) => window.mediaTest.terminal(i,a),[index,authorized]);
+      await page.getByText('File exceeds the preview limit.').waitFor();
+      assert.deepEqual(await canvas.boundingBox(),initial);
+      assert.equal(await canvas.getByRole('button').count(),authorized ? 1 : 0);
+      if (authorized) {
+        await canvas.getByRole('button',{name:'Show in folder'}).click();
+        assert.equal(await page.evaluate(() => window.revealed),true);
+      }
+    }
+    await page.evaluate(() => window.mediaTest.file('/unicode.html'));
+    await page.waitForFunction(() => window.mediaTest.stats().calls === 5);
+    await page.evaluate(() => window.mediaTest.document(4,'\u754c'.repeat(20),59));
+    await canvas.getByText(labels.unavailable).waitFor();
+    assert.equal(await canvas.locator('iframe').count(),0);
+  }
+  console.log('PASS: host byte budgets, multibyte overflow, terminal recovery, stable desktop and narrow geometry');
   console.log('PASS: interactive sandbox, network isolation, stable expansion, video playback/seek, image window, host preview/reveal actions, keyboard, narrow layout');
 } catch (error) {
   await page?.screenshot({path:evidencePath('floe-chat-media-failure.png'),fullPage:true});
