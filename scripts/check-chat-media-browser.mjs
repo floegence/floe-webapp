@@ -18,7 +18,13 @@ import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/Markdow
 import '/packages/core/src/styles/globals.css';
 const labels = ${JSON.stringify(labels)};
 const html = ${JSON.stringify(`<h1>Preview workspace</h1><button onclick="this.textContent='Clicked'">Try interaction</button><script>try{parent.previewEscape=true}catch{};fetch('/should-not-fetch').catch(()=>{});document.documentElement.dataset.ready='true';</script>`)};
-render(() => <main style="max-width:680px;margin:auto"><MarkdownMedia labels={labels} source={{kind:'html',title:'Interactive report',html}}/><MarkdownMedia labels={labels} source={{kind:'video',title:'Demo clip',src:location.origin+'/media.mp4'}}/><MarkdownMedia labels={labels} source={{kind:'image',title:'Design study',src:location.origin+'/image.svg'}}/><section id="host-image"><MarkdownMedia labels={labels} source={{kind:'image',title:'Host file',src:'/host/image.png'}} resolve={async () => ({src:location.origin+'/image.svg',openURL:location.origin+'/image.svg',preview:{label:'Preview image',onSelect:()=>{window.previewCount=(window.previewCount||0)+1}},reveal:{label:'Open containing folder',onSelect:()=>{window.revealCount=(window.revealCount||0)+1}}})}/></section></main>, document.getElementById('root'));`;
+render(() => <main style="max-width:896px;margin:auto">
+  <MarkdownMedia layout="reading-column" labels={labels} source={{kind:'html',title:'Interactive report',html}}/>
+  <MarkdownMedia layout="reading-column" labels={labels} source={{kind:'video',title:'Demo clip',src:location.origin+'/media.mp4'}}/>
+  <MarkdownMedia layout="reading-column" labels={labels} source={{kind:'image',title:'Design study',src:location.origin+'/image.svg'}}/>
+  <MarkdownMedia layout="reading-column" labels={labels} source={{kind:'audio',title:'Audio track',src:location.origin+'/media.mp4'}}/>
+  <section id="host-image"><MarkdownMedia labels={labels} source={{kind:'image',title:'Host file',src:'/host/image.png'}} resolve={async () => ({src:location.origin+'/image.svg',openURL:location.origin+'/image.svg',preview:{label:'Preview image',onSelect:()=>{window.previewCount=(window.previewCount||0)+1}},reveal:{label:'Open containing folder',onSelect:()=>{window.revealCount=(window.revealCount||0)+1}}})}/></section>
+</main>, document.getElementById('root'));`;
 const lifecycleFixture = `import { createSignal } from 'solid-js';
 import { render } from 'solid-js/web';
 import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/MarkdownMedia';
@@ -32,7 +38,7 @@ const resolve = (source, signal) => {
   return new Promise((accept, reject) => requests.push({source, signal, accept, reject}));
 };
 const [resolver, setResolver] = createSignal(resolve);
-const dispose = render(() => <MarkdownMedia source={source()} labels={${JSON.stringify(labels)}} resolve={resolver()}/>, document.getElementById('root'));
+const dispose = render(() => <MarkdownMedia layout="reading-column" source={source()} labels={${JSON.stringify(labels)}} resolve={resolver()}/>, document.getElementById('root'));
 window.mediaTest = {
   bump: () => setSnapshot(value => value + 1),
   equalSource: () => setSource(value => ({...value})),
@@ -53,13 +59,13 @@ import { MarkdownMedia } from '/packages/core/src/components/chat/blocks/Markdow
 import '/packages/core/src/styles/globals.css';
 const [html,setHTML]=createSignal('<main>Partial source</main>');
 const [state,setState]=createSignal('generating');
-render(()=><main style="max-width:680px;margin:auto"><MarkdownMedia labels={${JSON.stringify(labels)}} source={{kind:'html',html:html(),title:'Canvas'}} htmlState={state()}/></main>,document.getElementById('root'));
+render(()=><main style="max-width:896px;margin:auto"><MarkdownMedia layout="reading-column" labels={${JSON.stringify(labels)}} source={{kind:'html',html:html(),title:'Canvas'}} htmlState={state()}/></main>,document.getElementById('root'));
 window.canvasTest={generate:()=>setState('generating'),append:()=>setHTML('<main>Partial source grows</main>'),interrupt:()=>setState('incomplete'),finish:()=>{setHTML('<button>Try interaction</button>');setState(undefined)}};`;
 let forbiddenRequests = 0;
 const server = await createServer({ configFile: false, optimizeDeps: { noDiscovery: true }, resolve: { alias: [{ find: /^solid-js$/, replacement: requireCore.resolve('solid-js/dist/solid.js') }, { find: 'solid-js/web', replacement: requireCore.resolve('solid-js/web/dist/web.js') }, { find: 'solid-js/html', replacement: requireCore.resolve('solid-js/html/dist/html.js') }, { find: 'solid-js/h', replacement: requireCore.resolve('solid-js/h/dist/h.js') }, { find: 'solid-js/store', replacement: requireCore.resolve('solid-js/store/dist/store.js') }] }, plugins: [solid({ hot: false }), tailwind(), { name: 'chat-media-fixture', resolveId(id) { if (id === '/fixture.tsx' || id === '/lifecycle.tsx' || id === '/canvas.tsx') return id; }, load(id) { if (id === '/fixture.tsx') return fixture; if (id === '/lifecycle.tsx') return lifecycleFixture; if (id === '/canvas.tsx') return canvasFixture; }, configureServer(instance) {
   instance.middlewares.use((req, res, next) => {
-    if (req.url === '/') { res.setHeader('Content-Type','text/html'); res.end('<html><head><style>:root{--background:#fff;--card:#fff;--foreground:#262626;--muted:#f5f5f5;--muted-foreground:#666;--border:#ddd;--ring:#555}body{font-family:system-ui}</style></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>'); }
-    else if (req.url === '/canvas') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/canvas.tsx"></script></body></html>'); }
+    if (req.url === '/') { res.setHeader('Content-Type','text/html'); res.end('<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><style>:root{--background:#fff;--card:#fff;--foreground:#262626;--muted:#f5f5f5;--muted-foreground:#666;--border:#ddd;--ring:#555}body{font-family:system-ui}</style></head><body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>'); }
+    else if (req.url === '/canvas') { res.setHeader('Content-Type','text/html'); res.end('<html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script type="module" src="/canvas.tsx"></script></body></html>'); }
     else if (req.url === '/lifecycle') { res.setHeader('Content-Type','text/html'); res.end('<html><body><div id="root"></div><script type="module" src="/lifecycle.tsx"></script></body></html>'); }
     else if (req.url === '/media.mp4') { const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? ''); const start = range ? Number(range[1]) : 0; const end = range?.[2] ? Math.min(Number(range[2]),video.length-1) : video.length-1; res.writeHead(range ? 206 : 200, {'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':end-start+1,...(range ? {'Content-Range':`bytes ${start}-${end}/${video.length}`} : {})}); res.end(video.subarray(start,end+1)); }
     else if (req.url.split('?')[0] === '/image.svg') { const portrait = req.url.includes('portrait'); res.setHeader('Content-Type','image/svg+xml'); res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="${portrait ? 280 : 640}" height="${portrait ? 640 : 280}"><rect width="100%" height="100%" fill="#dde5d7"/><circle cx="50%" cy="50%" r="80" fill="#597b58"/></svg>`); }
@@ -76,6 +82,20 @@ try {
   await page.goto(server.resolvedUrls.local[0]);
   const iframe = page.frameLocator('iframe');
   await iframe.locator('html[data-ready=true]').waitFor();
+  for (const width of [1000, 640, 320]) {
+    await page.setViewportSize({width, height:1100});
+    const column = await page.locator('main').boundingBox();
+    for (const [kind, cap] of [['html', Infinity], ['video', Infinity], ['image', Infinity], ['audio', 448]]) {
+      const card = await page.locator(`main > [data-media-kind=${kind}]`).boundingBox();
+      assert.equal(card.x, column.x);
+      assert.equal(card.width, Math.min(column.width, cap), `${kind} width at ${width}`);
+    }
+    assert.equal((await page.locator('#host-image .chat-media').boundingBox()).width, Math.min(column.width,672));
+    const image = page.locator('main > [data-media-kind=image] img');
+    await image.evaluate(img => img.decode());
+    assert.ok(await image.evaluate(img => img.width <= img.naturalWidth && img.height <= img.naturalHeight), 'Never enlarge image pixels to fill the column');
+  }
+  await page.setViewportSize({width:1000,height:1100});
   await iframe.getByRole('button', {name:'Try interaction'}).evaluate(button => button.click());
   await iframe.getByRole('button', {name:'Clicked'}).waitFor();
   assert.equal(await page.evaluate(() => window.previewEscape), undefined);
@@ -170,7 +190,7 @@ try {
   await touchImage.locator('.chat-media-image').waitFor();
   const touchButton = await touchImage.getByRole('button', {name:'Preview image', exact:true}).boundingBox();
   const touchContent = await touchImage.locator('.chat-media-image').boundingBox();
-  assert.ok(touchButton.width >= 42 && touchButton.height >= 42, 'Touch actions retain a usable target');
+  assert.ok(touchButton.width >= 42 && touchButton.height >= 42, `Touch actions retain a usable target: ${touchButton.width} x ${touchButton.height}`);
   assert.ok(touchButton.y + touchButton.height <= touchContent.y, 'Touch actions remain above the image');
   await touchImage.getByRole('button', {name:'Open containing folder', exact:true}).tap();
   assert.equal(await touch.evaluate(() => window.revealCount), 1);

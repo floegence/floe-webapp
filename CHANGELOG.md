@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.106.0
+
+- Chat Markdown media can opt into a reading-column layout. HTML, image and video frames follow the host width without enlarging small images or stretching audio controls.
+
 ## 0.105.4
 
 - Chat HTML previews support host-defined byte budgets and compact, actionable terminal failures without changing inline fences or sandbox permissions.

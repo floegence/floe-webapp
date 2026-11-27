@@ -54,6 +54,8 @@ export interface ResolvedMarkdownMedia {
 
 export interface MarkdownMediaProps {
   source: MarkdownMediaSource;
+  /** Fill the host reading column with visual previews; audio stays compact. */
+  layout?: 'compact' | 'reading-column';
   /** Partial HTML remains inspectable but never executes before a closed fence. */
   htmlState?: 'generating' | 'incomplete';
   labels: MarkdownMediaLabels;
@@ -195,7 +197,7 @@ export const MarkdownMedia: Component<MarkdownMediaProps> = (props) => {
   }));
 
   return (
-    <span ref={root} class={cn('chat-media', expanded() && props.source.kind === 'html' && 'chat-media-expanded', props.class)} data-media-kind={props.source.kind}>
+    <span ref={root} class={cn('chat-media', expanded() && props.source.kind === 'html' && 'chat-media-expanded', props.class)} data-media-kind={props.source.kind} data-media-layout={props.layout}>
       <Show when={props.source.kind === 'html'} fallback={<>
       <span class="chat-media-viewport">
       <Switch>
