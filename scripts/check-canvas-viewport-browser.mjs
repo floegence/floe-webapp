@@ -41,6 +41,7 @@ render(()=><App/>,document.getElementById('root'));
     root,
     plugins: [solid()],
     resolve: { dedupe: ['solid-js'] },
+    optimizeDeps: { entries: [resolve(fixture, 'index.html')] },
     server: { host: '127.0.0.1', port: 0 },
   });
   await server.listen();
